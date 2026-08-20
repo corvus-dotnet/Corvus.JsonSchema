@@ -6633,7 +6633,7 @@
     "Title": "IMessageDeliveryContextTransport",
     "Description": "Optional message-transport capability that exposes delivery metadata.",
     "Keywords": "IMessageDeliveryContextTransport interface Corvus.Text.Json.AsyncApi",
-    "Body": "Optional message-transport capability that exposes delivery metadata.\nThis is separate from [`IMessageTransport`](/api/v5/corvus-text-json-asyncapi-imessagetransport.html) so existing transport implementations remain source-compatible and the legacy subscription API is not changed or adapted through an allocating closure.\nSubscribeWithDeliveryContextAsync: Subscribes while exposing transport delivery metadata.\nSubscribeWithDeliveryContextAsync: Subscribes while exposing transport delivery metadata, with protocol-specific metadata."
+    "Body": "Optional message-transport capability that exposes delivery metadata.\nThis is separate from [`IMessageTransport`](/api/v5/corvus-text-json-asyncapi-imessagetransport.html) so existing transport implementations remain source-compatible and the legacy subscription API is not changed or adapted through an allocating closure.\nSubscribeWithDeliveryContextAsync: Subscribes while exposing transport delivery metadata.\nSubscribeWithDeliveryContextAsync: Subscribes while exposing transport delivery metadata, with protocol-specific metadata.\nSubscribeReplyWithDeliveryContextAsync: Subscribes a responder to a request channel while exposing transport delivery metadata — the delivery-context counterpart of [`SubscribeReplyAsync`](/api/v5/corvus-text-json-asyncapi-imessagetransport.subscribereplyasync.html).\nSubscribeReplyWithDeliveryContextAsync: Subscribes a delivery-context-aware responder to a request channel, with protocol-specific metadata."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-imessagedeliverycontexttransport.subscribewithdeliverycontextasync.html",
@@ -6641,6 +6641,13 @@
     "Description": "Subscribes while exposing transport delivery metadata.",
     "Keywords": "IMessageDeliveryContextTransport SubscribeWithDeliveryContextAsync method Corvus.Text.Json.AsyncApi",
     "Body": "Subscribes while exposing transport delivery metadata. Subscribes while exposing transport delivery metadata, with protocol-specific metadata."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-imessagedeliverycontexttransport.subscribereplywithdeliverycontextasync.html",
+    "Title": "IMessageDeliveryContextTransport.SubscribeReplyWithDeliveryContextAsync",
+    "Description": "Subscribes a responder to a request channel while exposing transport delivery metadata — the delivery-context counterpart of [`SubscribeReplyAsync`](/api/v5/corvus-text-json-asyncapi-imessagetransport.subscribereplyasync.html).",
+    "Keywords": "IMessageDeliveryContextTransport SubscribeReplyWithDeliveryContextAsync method Corvus.Text.Json.AsyncApi",
+    "Body": "Subscribes a responder to a request channel while exposing transport delivery metadata — the delivery-context counterpart of [`SubscribeReplyAsync`](/api/v5/corvus-text-json-asyncapi-imessagetransport.subscribereplyasync.html). Subscribes a delivery-context-aware responder to a request channel, with protocol-specific metadata."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-imessageerrorpolicy.html",
@@ -8085,6 +8092,41 @@
     "Body": "Invokes the stored callback for one delivered message."
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-messagereplyhandler-trequest-treply.html",
+    "Title": "MessageReplyHandler<TRequest, TReply>",
+    "Description": "Stores one responder subscription's legacy or delivery-context-aware callback without an adapter delegate on the delivery path — the request/reply counterpart of [`MessageHandler`](/api/v5/corvus-text-json-asyncapi-internal-messagehandler-tpayload.html).",
+    "Keywords": "MessageReplyHandler<TRequest, TReply> struct Corvus.Text.Json.AsyncApi.Internal TRequest TReply",
+    "Body": "Stores one responder subscription's legacy or delivery-context-aware callback without an adapter delegate on the delivery path — the request/reply counterpart of [`MessageHandler`](/api/v5/corvus-text-json-asyncapi-internal-messagehandler-tpayload.html).\nThis is infrastructure for [`IMessageTransport`](/api/v5/corvus-text-json-asyncapi-imessagetransport.html) implementations. Application code should not use it directly.\nUsesDeliveryContext: Gets a value indicating whether the stored callback consumes a [`MessageDeliveryContext`](/api/v5/corvus-text-json-asyncapi-messagedeliverycontext.html) (and therefore needs the transport's native message on delivery).\nWithoutDeliveryContext: Creates a handler wrapping a legacy (request and headers) callback.\nWithDeliveryContext: Creates a handler wrapping a delivery-context-aware callback.\nInvokeReply: Invokes the stored callback for one delivered request, returning the reply payload."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-messagereplyhandler-trequest-treply.usesdeliverycontext.html",
+    "Title": "MessageReplyHandler<TRequest, TReply>.UsesDeliveryContext",
+    "Description": "Gets a value indicating whether the stored callback consumes a [`MessageDeliveryContext`](/api/v5/corvus-text-json-asyncapi-messagedeliverycontext.html) (and therefore needs the transport's native message on delivery).",
+    "Keywords": "MessageReplyHandler<TRequest, TReply> UsesDeliveryContext property Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Gets a value indicating whether the stored callback consumes a [`MessageDeliveryContext`](/api/v5/corvus-text-json-asyncapi-messagedeliverycontext.html) (and therefore needs the transport's native message on delivery)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-messagereplyhandler-trequest-treply.withoutdeliverycontext.html",
+    "Title": "MessageReplyHandler<TRequest, TReply>.WithoutDeliveryContext",
+    "Description": "Creates a handler wrapping a legacy (request and headers) callback.",
+    "Keywords": "MessageReplyHandler<TRequest, TReply> WithoutDeliveryContext method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Creates a handler wrapping a legacy (request and headers) callback."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-messagereplyhandler-trequest-treply.withdeliverycontext.html",
+    "Title": "MessageReplyHandler<TRequest, TReply>.WithDeliveryContext",
+    "Description": "Creates a handler wrapping a delivery-context-aware callback.",
+    "Keywords": "MessageReplyHandler<TRequest, TReply> WithDeliveryContext method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Creates a handler wrapping a delivery-context-aware callback."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-messagereplyhandler-trequest-treply.invokereply.html",
+    "Title": "MessageReplyHandler<TRequest, TReply>.InvokeReply",
+    "Description": "Invokes the stored callback for one delivered request, returning the reply payload.",
+    "Keywords": "MessageReplyHandler<TRequest, TReply> InvokeReply method Corvus.Text.Json.AsyncApi.Internal",
+    "Body": "Invokes the stored callback for one delivered request, returning the reply payload."
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-testing-deadletteredmessage.html",
     "Title": "DeadLetteredMessage",
     "Description": "Represents a message that was sent to a dead-letter channel via the [`InMemoryMessageTransport`](/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.html).",
@@ -8327,6 +8369,13 @@
     "Title": "InMemoryMessageTransport.SubscribeReplyAsync",
     "Description": "",
     "Keywords": "InMemoryMessageTransport SubscribeReplyAsync method Corvus.Text.Json.AsyncApi.Testing",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-testing-inmemorymessagetransport.subscribereplywithdeliverycontextasync.html",
+    "Title": "InMemoryMessageTransport.SubscribeReplyWithDeliveryContextAsync",
+    "Description": "",
+    "Keywords": "InMemoryMessageTransport SubscribeReplyWithDeliveryContextAsync method Corvus.Text.Json.AsyncApi.Testing",
     "Body": ""
   },
   {
