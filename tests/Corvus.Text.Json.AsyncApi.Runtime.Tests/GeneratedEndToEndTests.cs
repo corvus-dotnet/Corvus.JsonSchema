@@ -35,6 +35,8 @@ public class GeneratedEndToEndTests
 
     private const string DimChannel = "smartylighting.streetlights.1.0.action.dim";
 
+    private const string DimReplyChannel = "smartylighting.streetlights.1.0.action.dim.reply";
+
     [TestMethod]
     public async Task Producer_PublishTurnOnOff_SerializesPayloadToChannel()
     {
@@ -690,6 +692,90 @@ public class GeneratedEndToEndTests
             async () => await producer.SendAndReceiveDimLightAsync(payload, workspace));
 
         Assert.AreEqual(0, transport.PublishedMessages.Count);
+    }
+
+    [TestMethod]
+    public async Task Responder_GeneratedConsumer_RepliesToRequest()
+    {
+        // Compiles and exercises the generated legacy responder consumer end to end: the
+        // responder subscribes through ProcessDimLightConsumer, and an in-process RequestAsync
+        // round-trip receives the reply its handler returns. The Testing transport is used
+        // rather than this project's local shim because responders need its full in-process
+        // request/reply round-trip (the local shim only parks requests for CompleteRequest).
+        await using Testing.InMemoryMessageTransport transport = new();
+        DimResponderHandler handler = new();
+        await using ProcessDimLightConsumer consumer = new(transport, handler, ValidationMode.Basic);
+
+        await consumer.StartAsync();
+
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        DimLightPayload request = DimLightPayload.ParseValue("""{"percentage":40,"sentAt":"2024-01-01T00:00:00Z"}"""u8);
+        (DimLightResponsePayload reply, JsonElement _) = await transport.RequestAsync<DimLightPayload, DimLightResponsePayload>(
+            Encoding.UTF8.GetBytes(DimChannel),
+            Encoding.UTF8.GetBytes(DimReplyChannel),
+            request,
+            "corr-dim-legacy"u8.ToArray(),
+            workspace);
+
+        Assert.IsTrue(reply.Status.ValueEquals("ok"u8));
+        Assert.AreEqual(40L, (long)reply.CurrentLevel);
+        Assert.AreEqual(40L, handler.SeenPercentage);
+    }
+
+    [TestMethod]
+    public async Task Responder_GeneratedWithDeliveryContextConsumer_RepliesAndSeesContext()
+    {
+        // The delivery-context counterpart: the responder subscribes through the generated
+        // ProcessDimLightWithDeliveryContextConsumer (SubscribeReplyWithDeliveryContextAsync
+        // under the covers), so its handler sees the delivery context while still producing
+        // the reply the requester waits for. The in-memory transport has no native broker
+        // message, so NativeMessage must be null.
+        await using Testing.InMemoryMessageTransport transport = new();
+        DimResponderContextHandler handler = new();
+        await using ProcessDimLightWithDeliveryContextConsumer consumer = new(transport, handler, ValidationMode.Basic);
+
+        await consumer.StartAsync();
+
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        DimLightPayload request = DimLightPayload.ParseValue("""{"percentage":40,"sentAt":"2024-01-01T00:00:00Z"}"""u8);
+        (DimLightResponsePayload reply, JsonElement _) = await transport.RequestAsync<DimLightPayload, DimLightResponsePayload>(
+            Encoding.UTF8.GetBytes(DimChannel),
+            Encoding.UTF8.GetBytes(DimReplyChannel),
+            request,
+            "corr-dim-context"u8.ToArray(),
+            workspace);
+
+        Assert.IsTrue(reply.Status.ValueEquals("ok"u8));
+        Assert.AreEqual(40L, (long)reply.CurrentLevel);
+        Assert.AreEqual(DimChannel, handler.SeenChannel);
+        Assert.IsFalse(handler.SawNativeMessage, "The in-memory transport has no native broker message; NativeMessage must be null.");
+    }
+
+    private sealed class DimResponderHandler : IProcessDimLightHandler
+    {
+        public long SeenPercentage { get; private set; }
+
+        public ValueTask<DimLightResponsePayload> HandleDimLightAsync(DimLightPayload payload, CancellationToken cancellationToken = default)
+        {
+            this.SeenPercentage = (long)payload.Percentage;
+            return ValueTask.FromResult(
+                DimLightResponsePayload.ParseValue(Encoding.UTF8.GetBytes($$"""{"status":"ok","currentLevel":{{(long)payload.Percentage}}}""")));
+        }
+    }
+
+    private sealed class DimResponderContextHandler : IProcessDimLightWithDeliveryContextHandler
+    {
+        public string? SeenChannel { get; private set; }
+
+        public bool SawNativeMessage { get; private set; }
+
+        public ValueTask<DimLightResponsePayload> HandleDimLightAsync(DimLightPayload payload, MessageDeliveryContext context, CancellationToken cancellationToken = default)
+        {
+            this.SeenChannel = Encoding.UTF8.GetString(context.ChannelUtf8.Span);
+            this.SawNativeMessage = context.NativeMessage is not null;
+            return ValueTask.FromResult(
+                DimLightResponsePayload.ParseValue(Encoding.UTF8.GetBytes($$"""{"status":"ok","currentLevel":{{(long)payload.Percentage}}}""")));
+        }
     }
 
     private sealed class RecordingAuthProvider : IMessageAuthenticationProvider
