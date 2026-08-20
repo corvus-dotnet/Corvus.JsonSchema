@@ -775,22 +775,20 @@ public sealed class AsyncApi30CodeGenerator
             files.Add(EmitConsumer(op, withDeliveryContext: false));
 
             // Responders get delivery-context variants too: IMessageDeliveryContextTransport
-            // exposes SubscribeReplyWithDeliveryContextAsync, so a responder's handler can now
+            // exposes SubscribeReplyWithDeliveryContextAsync, so a responder's handler can
             // receive MessageDeliveryContext exactly as a plain consumer's can.
+            string variantBaseName = ToPascalCase(op.Name) + "WithDeliveryContext";
+            if (receiveOpPascalNames.Contains(variantBaseName))
             {
-                string variantBaseName = ToPascalCase(op.Name) + "WithDeliveryContext";
-                if (receiveOpPascalNames.Contains(variantBaseName))
-                {
-                    this.diagnostics.Add(new(
-                        AsyncApiGenerationDiagnosticSeverity.Warning,
-                        $"#/operations/{op.Name}",
-                        $"The delivery-context variants were skipped: their generated names would collide with the operation named '{variantBaseName}'."));
-                }
-                else
-                {
-                    files.Add(EmitConsumerHandler(op, withDeliveryContext: true));
-                    files.Add(EmitConsumer(op, withDeliveryContext: true));
-                }
+                this.diagnostics.Add(new(
+                    AsyncApiGenerationDiagnosticSeverity.Warning,
+                    $"#/operations/{op.Name}",
+                    $"The delivery-context variants were skipped: their generated names would collide with the operation named '{variantBaseName}'."));
+            }
+            else
+            {
+                files.Add(EmitConsumerHandler(op, withDeliveryContext: true));
+                files.Add(EmitConsumer(op, withDeliveryContext: true));
             }
 
             // Multi-message operations need a discriminated received message type
@@ -2910,7 +2908,9 @@ public sealed class AsyncApi30CodeGenerator
                 : $"private ValueTask<{replyType}> HandleMessageAsync({payloadType} payload, Corvus.Text.Json.JsonElement headers, CancellationToken cancellationToken)");
             w.OpenBrace();
 
-            if (withDeliveryContext)
+            // Unlike the plain-consumer path below, the responder path only reads headers when the
+            // message declares a typed headers schema, so only then is the local worth emitting.
+            if (withDeliveryContext && msg.HeadersTypeName is not null)
             {
                 w.WriteLine("Corvus.Text.Json.JsonElement headers = deliveryContext.Headers;");
             }
