@@ -169,6 +169,26 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
     }
 
     /// <inheritdoc/>
+    public ValueTask SubscribeReplyWithDeliveryContextAsync<TRequest, TReply>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TRequest, MessageDeliveryContext, CancellationToken, ValueTask<TReply>> handler,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+        return this.SubscribeCoreAsync(
+            channel,
+            new Subscription
+            {
+                ReplyHandler = (payload, headers, replyChannel, correlationId, ct) =>
+                    this.DispatchToReplyContextHandlerAsync(channel, channelUtf8, handler, payload, headers, replyChannel, correlationId, ct),
+            },
+            cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public ValueTask UnsubscribeAsync(ReadOnlyMemory<byte> channelUtf8, CancellationToken cancellationToken = default)
     {
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
@@ -606,6 +626,93 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
             else
             {
                 reply = await handler(typedRequest, headers, cancellationToken).ConfigureAwait(false);
+            }
+
+            // Without a reply channel there is nowhere to send the response; the request cannot be answered.
+            if (replyChannel is null)
+            {
+                AsyncApiTelemetry.RecordSkip(channel, "websocket", MessageErrorKind.Handler);
+                return;
+            }
+
+            // Send the reply on the reply channel with the request's correlation id so the requester's
+            // RequestAsync (which correlates by that id) receives it.
+            JsonElement replyHeaders = default;
+            (byte[] rented, int length) = BuildPublishEnvelopeRented(replyChannel, in reply, in replyHeaders, correlationId);
+            await this.SendAndReturnAsync(rented, length, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
+        catch (Exception ex)
+        {
+            MessageErrorContext ctx = new(channelUtf8, MessageErrorKind.Handler, payload, headers);
+            MessageErrorAction action = await this.errorPolicy.HandleErrorAsync(ex, ctx, cancellationToken).ConfigureAwait(false);
+            if (action == MessageErrorAction.DeadLetter)
+            {
+                try
+                {
+                    string dlChannel = channel + this.options.DeadLetterSuffix;
+                    (byte[] rented, int length) = BuildDeadLetterEnvelopeRented(dlChannel, channel, in payload, in headers, ex);
+                    await this.SendAndReturnAsync(rented, length, cancellationToken).ConfigureAwait(false);
+                    AsyncApiTelemetry.RecordDeadLetter(dlChannel, channel, "websocket");
+                }
+                catch (Exception dlEx) when (dlEx is not OperationCanceledException)
+                {
+                    AsyncApiTelemetry.RecordDeadLetterFailure(channel + this.options.DeadLetterSuffix, channel, "websocket", dlEx);
+                }
+            }
+            else if (action == MessageErrorAction.Abort)
+            {
+                AsyncApiTelemetry.RecordAbort(channel, "websocket", MessageErrorKind.Handler);
+                await this.UnsubscribeAsync(channelUtf8, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                AsyncApiTelemetry.RecordSkip(channel, "websocket", MessageErrorKind.Handler);
+            }
+        }
+    }
+
+    private async ValueTask DispatchToReplyContextHandlerAsync<TRequest, TReply>(
+        string channel,
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TRequest, MessageDeliveryContext, CancellationToken, ValueTask<TReply>> handler,
+        JsonElement payload,
+        JsonElement headers,
+        string? replyChannel,
+        string? correlationId,
+        CancellationToken cancellationToken)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        try
+        {
+            TRequest typedRequest = JsonElementHelpers.Reinterpret<JsonElement, TRequest>(in payload);
+
+            // WebSocket has no native broker message representation — the whole "message" is
+            // already the JSON envelope this transport itself parsed, so NativeMessage is always
+            // null here, exactly as it is for the plain delivery-context subscribe path (see
+            // DispatchToContextHandlerAsync).
+            MessageDeliveryContext context = new()
+            {
+                ChannelUtf8 = channelUtf8,
+                Headers = headers,
+                NativeMessage = null,
+            };
+
+            TReply reply;
+            if (this.middleware is not null)
+            {
+                reply = await this.middleware.InvokeAsync(
+                    static (s, ct) => s.handler(s.typedRequest, s.context, ct),
+                    (handler, typedRequest, context),
+                    cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                reply = await handler(typedRequest, context, cancellationToken).ConfigureAwait(false);
             }
 
             // Without a reply channel there is nowhere to send the response; the request cannot be answered.

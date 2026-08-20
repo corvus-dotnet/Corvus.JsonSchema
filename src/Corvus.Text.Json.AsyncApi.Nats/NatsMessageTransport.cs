@@ -375,7 +375,24 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
 
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
         ThrowIfSubscribed(channel);
-        return this.SubscribeReplyToCoreNatsAsync(channel, channelUtf8, handler, cancellationToken);
+        return this.SubscribeReplyToCoreNatsAsync(
+            channel, channelUtf8, MessageReplyHandler<TRequest, TReply>.WithoutDeliveryContext(handler), cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeReplyWithDeliveryContextAsync<TRequest, TReply>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TRequest, MessageDeliveryContext, CancellationToken, ValueTask<TReply>> handler,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        ThrowIfSubscribed(channel);
+        return this.SubscribeReplyToCoreNatsAsync(
+            channel, channelUtf8, MessageReplyHandler<TRequest, TReply>.WithDeliveryContext(handler), cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -1225,7 +1242,7 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
     private async ValueTask SubscribeReplyToCoreNatsAsync<TRequest, TReply>(
         string channel,
         ReadOnlyMemory<byte> channelUtf8,
-        Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
+        MessageReplyHandler<TRequest, TReply> handler,
         CancellationToken cancellationToken)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
@@ -1368,18 +1385,20 @@ public sealed class NatsMessageTransport : IMessageDeliveryContextTransport, IHe
                                     using (headersDoc)
                                     {
                                         JsonElement headers = headersDoc?.RootElement ?? default;
+                                        object? nativeMessage = handler.UsesDeliveryContext ? msg : null;
 
                                         TReply reply;
                                         if (this.middleware is not null)
                                         {
                                             reply = await this.middleware.InvokeAsync(
-                                                static (s, ct) => s.handler(s.request, s.headers, ct),
-                                                (handler, request, headers),
+                                                static (s, ct) => s.handler.InvokeReply(s.request, s.channelUtf8, s.headers, s.nativeMessage, ct),
+                                                (handler, request, channelUtf8, headers, nativeMessage),
                                                 cts.Token).ConfigureAwait(false);
                                         }
                                         else
                                         {
-                                            reply = await handler(request, headers, cts.Token).ConfigureAwait(false);
+                                            reply = await handler.InvokeReply(request, channelUtf8, headers, nativeMessage, cts.Token)
+                                                .ConfigureAwait(false);
                                         }
 
                                         // Publish the reply to the request's reply-to subject. NATS correlates

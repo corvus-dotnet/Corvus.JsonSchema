@@ -995,6 +995,73 @@ public class MqttTransportTests
     }
 
     [TestMethod]
+    public async Task RequestReplyResponderWithDeliveryContextRoundTrip()
+    {
+        // The delivery-context counterpart of RequestReplyResponderRoundTrip: the responder is
+        // registered with SubscribeReplyWithDeliveryContextAsync instead of SubscribeReplyAsync,
+        // so its handler receives MessageDeliveryContext (channel and native message) alongside
+        // the request, in addition to still producing the reply the requester's RequestAsync waits
+        // for.
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        MqttMessageTransport responderTransport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-responder-context-" + Guid.NewGuid().ToString("N")[..8],
+        });
+
+        MqttMessageTransport requesterTransport = await MqttMessageTransport.CreateAsync(new MqttTransportOptions
+        {
+            Host = MqttFixture.Host,
+            Port = MqttFixture.Port,
+            ClientId = "corvus-requester-context-" + Guid.NewGuid().ToString("N")[..8],
+        });
+
+        ReadOnlyMemory<byte> requestChannel = "mqtt/test/reqreply-context/request"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "mqtt/test/reqreply-context/reply"u8.ToArray();
+
+        string? deliveredChannel = null;
+        object? nativeMessage = null;
+
+        await responderTransport.SubscribeReplyWithDeliveryContextAsync<JsonElement, JsonElement>(
+            requestChannel,
+            (request, deliveryContext, ct) =>
+            {
+                deliveredChannel = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span);
+                nativeMessage = deliveryContext.NativeMessage;
+
+                int input = request.GetProperty("value"u8).GetInt32();
+                byte[] replyJson = Encoding.UTF8.GetBytes($$"""{"result":{{input * 2}}}""");
+
+                ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(replyJson);
+                workspace.TakeOwnership(replyDoc);
+                return ValueTask.FromResult(replyDoc.RootElement);
+            });
+
+        await Task.Delay(500);
+
+        byte[] correlationId = "mqtt-context-roundtrip-1"u8.ToArray();
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"value":21}"""u8.ToArray());
+
+        (JsonElement replyPayload, JsonElement replyHeaders) = await requesterTransport.RequestAsync<JsonElement, JsonElement>(
+            requestChannel,
+            replyChannel,
+            requestDoc.RootElement,
+            correlationId,
+            workspace);
+
+        Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
+        Assert.AreEqual(42, replyPayload.GetProperty("result"u8).GetInt32());
+        Assert.AreEqual("mqtt/test/reqreply-context/request", deliveredChannel);
+        Assert.IsNotNull(nativeMessage);
+
+        await requesterTransport.DisposeAsync();
+        await responderTransport.UnsubscribeAsync(requestChannel);
+        await responderTransport.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task ReceiveOneAndReplyRoundTrip()
     {
         // Owns the reply document the handler builds so it outlives the handler yet is still cleaned up

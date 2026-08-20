@@ -862,6 +862,73 @@ public class WebSocketTransportTests
     }
 
     [TestMethod]
+    public async Task RequestReplyResponderWithDeliveryContextRoundTrip()
+    {
+        // The delivery-context counterpart of RequestReplyResponderRoundTrip: the responder is
+        // registered with SubscribeReplyWithDeliveryContextAsync instead of SubscribeReplyAsync,
+        // so its handler receives MessageDeliveryContext (channel) alongside the request, in
+        // addition to still producing the reply the requester's RequestAsync waits for.
+        // WebSocket has no native broker message representation — NativeMessage is always null
+        // here, exactly as it is for the plain SubscribeWithDeliveryContextAsync_ProvidesDeliveryMetadata
+        // path above, so this test asserts on the channel only.
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        WebSocketMessageTransport responderTransport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+        });
+
+        WebSocketMessageTransport requesterTransport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
+        {
+            ServerUri = WebSocketFixture.ServerUri,
+        });
+
+        ReadOnlyMemory<byte> requestChannel = "ws/test/reqreply-responder-context/request"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "ws/test/reqreply-responder-context/reply"u8.ToArray();
+
+        // The requester must be subscribed to the reply channel so the relay forwards the reply to it
+        // (correlationId match takes priority over the dummy handler).
+        await requesterTransport.SubscribeAsync<JsonElement>(
+            replyChannel,
+            (_, _, _) => ValueTask.CompletedTask);
+
+        string? deliveredChannel = null;
+
+        await responderTransport.SubscribeReplyWithDeliveryContextAsync<JsonElement, JsonElement>(
+            requestChannel,
+            (request, deliveryContext, ct) =>
+            {
+                deliveredChannel = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span);
+
+                int input = request.GetProperty("value"u8).GetInt32();
+                byte[] replyJson = Encoding.UTF8.GetBytes($$"""{"result":{{input + 1}}}""");
+
+                ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(replyJson);
+                workspace.TakeOwnership(replyDoc);
+                return ValueTask.FromResult(replyDoc.RootElement);
+            });
+
+        await Task.Delay(500);
+
+        byte[] correlationId = "ws-responder-context-001"u8.ToArray();
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"value":41}"""u8.ToArray());
+
+        (JsonElement replyPayload, JsonElement replyHeaders) = await requesterTransport.RequestAsync<JsonElement, JsonElement>(
+            requestChannel,
+            replyChannel,
+            requestDoc.RootElement,
+            correlationId,
+            workspace);
+
+        Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
+        Assert.AreEqual(42, replyPayload.GetProperty("result"u8).GetInt32());
+        Assert.AreEqual("ws/test/reqreply-responder-context/request", deliveredChannel);
+
+        await responderTransport.DisposeAsync();
+        await requesterTransport.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task ReceiveOneAndReplyRoundTrip()
     {
         // Owns the reply document the handler builds so it outlives the handler yet is still cleaned up

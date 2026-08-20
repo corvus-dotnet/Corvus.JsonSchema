@@ -1007,6 +1007,76 @@ public class AmqpTransportTests
     }
 
     [TestMethod]
+    public async Task RequestReplyResponderWithDeliveryContextRoundTrip()
+    {
+        // The delivery-context counterpart of RequestReplyResponderRoundTrip: the responder is
+        // registered with SubscribeReplyWithDeliveryContextAsync instead of SubscribeReplyAsync,
+        // so its handler receives MessageDeliveryContext (channel and native message) alongside
+        // the request, in addition to still producing the reply the requester's RequestAsync waits
+        // for.
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        static AmqpTransportOptions Options() => new()
+        {
+            ConnectionUri = AmqpFixture.ConnectionUri,
+            ExchangeName = "corvus.test.responder-context",
+            ExchangeType = "topic",
+            ExchangeDurable = false,
+            ConsumerTagPrefix = "corvus-responder-context",
+        };
+
+        AmqpMessageTransport responder = await AmqpMessageTransport.CreateAsync(Options());
+        AmqpMessageTransport requester = await AmqpMessageTransport.CreateAsync(Options());
+
+        try
+        {
+            ReadOnlyMemory<byte> requestChannel = "amqp.test.responder-context.request"u8.ToArray();
+            ReadOnlyMemory<byte> replyChannel = "amqp.test.responder-context.reply"u8.ToArray();
+            byte[] correlationId = "amqp-responder-context-001"u8.ToArray();
+
+            string? deliveredChannel = null;
+            object? nativeMessage = null;
+
+            await responder.SubscribeReplyWithDeliveryContextAsync<JsonElement, JsonElement>(
+                requestChannel,
+                (request, deliveryContext, ct) =>
+                {
+                    deliveredChannel = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span);
+                    nativeMessage = deliveryContext.NativeMessage;
+
+                    int value = request.GetProperty("value"u8).GetInt32();
+
+                    ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(
+                        Encoding.UTF8.GetBytes($$"""{"doubled":{{value * 2}}}"""));
+                    workspace.TakeOwnership(replyDoc);
+                    return ValueTask.FromResult(replyDoc.RootElement);
+                });
+
+            await Task.Delay(500);
+
+            using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"value":21}"""u8.ToArray());
+            (JsonElement replyPayload, _) = await requester.RequestAsync<JsonElement, JsonElement>(
+                requestChannel,
+                replyChannel,
+                requestDoc.RootElement,
+                correlationId,
+                workspace);
+
+            Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
+            Assert.AreEqual(42, replyPayload.GetProperty("doubled"u8).GetInt32());
+            Assert.AreEqual("amqp.test.responder-context.request", deliveredChannel);
+            Assert.IsNotNull(nativeMessage);
+
+            await responder.UnsubscribeAsync(requestChannel);
+        }
+        finally
+        {
+            await responder.DisposeAsync();
+            await requester.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public async Task ReceiveOneAndReplyRoundTrip()
     {
         // Owns the reply document the handler builds so it outlives the handler yet is still cleaned up

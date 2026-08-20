@@ -207,7 +207,7 @@ Message arrives on transport
 
 ## Message Delivery Context
 
-Consumers can opt into transport delivery metadata. For every receive operation that is not a request/reply responder, the generator emits a second handler/consumer pair alongside the legacy one, named by appending `WithDeliveryContext` to the operation name: `I{Operation}WithDeliveryContextHandler` and `{Operation}WithDeliveryContextConsumer`. The handler receives a `MessageDeliveryContext` carrying the subscribed channel (as UTF-8 bytes), the message headers, and the transport-native message when one exists (for example RabbitMQ's `BasicDeliverEventArgs`):
+Consumers can opt into transport delivery metadata. For every receive operation — plain consumers and request/reply responders alike — the generator emits a second handler/consumer pair alongside the legacy one, named by appending `WithDeliveryContext` to the operation name: `I{Operation}WithDeliveryContextHandler` and `{Operation}WithDeliveryContextConsumer`. The handler receives a `MessageDeliveryContext` carrying the subscribed channel (as UTF-8 bytes), the message headers, and the transport-native message when one exists (for example RabbitMQ's `BasicDeliverEventArgs`):
 
 ```csharp
 public sealed class LightMeasuredHandler : IReceiveLightMeasurementWithDeliveryContextHandler
@@ -224,6 +224,8 @@ public sealed class LightMeasuredHandler : IReceiveLightMeasurementWithDeliveryC
 ```
 
 A message that declares a typed headers schema keeps its typed headers parameter: the handler signature becomes `(payload, headers, context, cancellationToken)`.
+
+A request/reply responder's delivery-context handler still returns the reply payload — the same `ValueTask<TReply>` return type its legacy handler has — with `MessageDeliveryContext` added as a parameter, not replacing anything. The generated consumer subscribes through `SubscribeReplyWithDeliveryContextAsync<TRequest, TReply>` rather than `SubscribeReplyAsync`; both are on `IMessageDeliveryContextTransport`, and, like the plain-consumer delivery-context capability, are opt-in per transport (the default implementation throws `NotSupportedException`).
 
 The rules that come with the capability:
 
@@ -1194,7 +1196,7 @@ The transport owns correlation: for each delivered request it reads the request'
 
 **Reply ownership.** `RequestAsync` takes a `JsonWorkspace` and threads it through to the parse of the reply: the returned payload and headers are views over documents that workspace owns, so they stay valid until the workspace is disposed. The generated `SendAndReceive*` requester surfaces the same contract. You pass the workspace that will own the reply, and the reply stays valid until you dispose it. Dispose the workspace once the reply is no longer needed. This mirrors `IApiResponse` on the OpenAPI side, which owns its parsed response body and is itself disposable. (Internally the requester builds the outgoing request in a separate short-lived workspace, disposed when the exchange completes; it never affects the reply's lifetime.)
 
-**Implementation status.** Every transport implements `SubscribeReplyAsync`: the broker transports (NATS, Kafka, AMQP, MQTT, WebSocket, Azure Service Bus) each run a real responder over their native correlation fields, and the in-memory testing transport implements a full in-process round-trip — a `RequestAsync` call delivers the request to a registered responder, whose reply completes the requester's pending call. With no responder registered, the request is delivered to any data subscription on the channel (plain or delivery-context, exactly as a publish would be) and parked for the test helper `CompleteRequest`. A responder subscription occupies its channel's single subscription slot like any other, and the internal reply-channel consumers that serve `RequestAsync` live apart from that registry with the transport's own lifetime, so a cancelled request neither kills request-reply on the channel nor blocks an application subscription on the reply channel.
+**Implementation status.** Every transport implements `SubscribeReplyAsync`, and every transport that implements `IMessageDeliveryContextTransport` also implements `SubscribeReplyWithDeliveryContextAsync`: the broker transports (NATS, Kafka, AMQP, MQTT, WebSocket, Azure Service Bus) each run a real responder over their native correlation fields, and the in-memory testing transport implements a full in-process round-trip — a `RequestAsync` call delivers the request to a registered responder, whose reply completes the requester's pending call. With no responder registered, the request is delivered to any data subscription on the channel (plain or delivery-context, exactly as a publish would be) and parked for the test helper `CompleteRequest`. A responder subscription occupies its channel's single subscription slot like any other, and the internal reply-channel consumers that serve `RequestAsync` live apart from that registry with the transport's own lifetime, so a cancelled request neither kills request-reply on the channel nor blocks an application subscription on the reply channel.
 
 
 ## Bindings
