@@ -1,0 +1,125 @@
+// ==========================================================================
+// Sanitize — Minimal modern CSS reset (sanitize.css–inspired)
+// ==========================================================================
+
+// Use border-box by default
+*,
+::before,
+::after {
+  box-sizing: border-box;
+}
+
+// Prevent font-size inflation on mobile
+html {
+  -moz-text-size-adjust: none;
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+}
+
+// Remove default margins
+body,
+h1, h2, h3, h4, h5, h6,
+p,
+figure,
+blockquote,
+dl, dd {
+  margin: 0;
+}
+
+// Set core body defaults
+body {
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+// Headings and interactive elements get balanced wrapping
+h1, h2, h3, h4 {
+  text-wrap: balance;
+}
+
+// Links without a class get default styles
+a:not([class]) {
+  text-decoration-skip-ink: auto;
+  color: currentColor;
+}
+
+// Improve media defaults
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+// Inherit fonts for inputs and buttons
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+// Make sure textareas without a rows attribute are usable
+textarea:not([rows]) {
+  min-height: 10em;
+}
+
+// Anything targeted by an anchor gets extra scroll margin
+:target {
+  scroll-margin-block: 5ex;
+}
+
+// Remove list styles on ul/ol with role="list"
+ul[role='list'],
+ol[role='list'] {
+  list-style: none;
+}
+
+// Correct table border collapse
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+// Normalize form elements
+button {
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+// Remove built-in form typography styles
+::-webkit-input-placeholder { color: inherit; opacity: 0.54; }
+::-moz-placeholder          { color: inherit; opacity: 0.54; }
+:-ms-input-placeholder      { color: inherit; opacity: 0.54; }
+
+// Prevent overflow on pre
+pre {
+  white-space: pre-wrap;
+}
+
+// Hidden attribute
+[hidden] {
+  display: none !important;
+}
+
+// Remove animations for people who prefer reduced motion
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
