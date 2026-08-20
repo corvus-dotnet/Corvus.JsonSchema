@@ -870,7 +870,7 @@ public class WebSocketTransportTests
         // addition to still producing the reply the requester's RequestAsync waits for.
         // WebSocket has no native broker message representation — NativeMessage is always null
         // here, exactly as it is for the plain SubscribeWithDeliveryContextAsync_ProvidesDeliveryMetadata
-        // path above, so this test asserts on the channel only.
+        // path above, so this test pins that null contract alongside the channel.
         using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
 
         WebSocketMessageTransport responderTransport = await WebSocketMessageTransport.CreateAsync(new WebSocketTransportOptions
@@ -893,12 +893,14 @@ public class WebSocketTransportTests
             (_, _, _) => ValueTask.CompletedTask);
 
         string? deliveredChannel = null;
+        bool sawNativeMessage = true;
 
         await responderTransport.SubscribeReplyWithDeliveryContextAsync<JsonElement, JsonElement>(
             requestChannel,
             (request, deliveryContext, ct) =>
             {
                 deliveredChannel = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span);
+                sawNativeMessage = deliveryContext.NativeMessage is not null;
 
                 int input = request.GetProperty("value"u8).GetInt32();
                 byte[] replyJson = Encoding.UTF8.GetBytes($$"""{"result":{{input + 1}}}""");
@@ -923,6 +925,7 @@ public class WebSocketTransportTests
         Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
         Assert.AreEqual(42, replyPayload.GetProperty("result"u8).GetInt32());
         Assert.AreEqual("ws/test/reqreply-responder-context/request", deliveredChannel);
+        Assert.IsFalse(sawNativeMessage, "WebSocket has no native broker message; NativeMessage must be null.");
 
         await responderTransport.DisposeAsync();
         await requesterTransport.DisposeAsync();
