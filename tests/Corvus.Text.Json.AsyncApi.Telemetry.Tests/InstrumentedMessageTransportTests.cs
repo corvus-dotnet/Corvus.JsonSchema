@@ -387,6 +387,42 @@ public class InstrumentedMessageTransportTests
     }
 
     [TestMethod]
+    public async Task SubscribeReplyWithDeliveryContextAsync_ForwardsThroughWrapperAndInstruments()
+    {
+        List<Activity> activities = [];
+        using ActivityListener listener = CreateActivityListener(activities);
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        await using InMemoryMessageTransport inner = new();
+        IMessageDeliveryContextTransport transport = InstrumentedMessageTransport.Create(inner, "inmemory");
+
+        string? deliveredChannel = null;
+
+        await transport.SubscribeReplyWithDeliveryContextAsync<JsonElement, JsonElement>(
+            "rpc/double-context"u8.ToArray(),
+            (request, deliveryContext, ct) =>
+            {
+                deliveredChannel = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span);
+                int n = request.GetProperty("n"u8).GetInt32();
+                JsonElement reply = JsonElement.ParseValue(Encoding.UTF8.GetBytes($$"""{"result":{{n * 2}}}"""));
+                return ValueTask.FromResult(reply);
+            });
+
+        JsonElement request = JsonElement.ParseValue("""{"n":21}"""u8);
+        (JsonElement reply, JsonElement _) = await inner.RequestAsync<JsonElement, JsonElement>(
+            "rpc/double-context"u8.ToArray(),
+            "rpc/double-context/replies"u8.ToArray(),
+            request,
+            "corr-rr-ctx"u8.ToArray(),
+            workspace);
+
+        // The wrapper must not downgrade the capability: the context handler still sees its
+        // delivery context through the instrumentation, and the process span is recorded.
+        Assert.AreEqual(42, reply.GetProperty("result"u8).GetInt32());
+        Assert.AreEqual("rpc/double-context", deliveredChannel);
+        Assert.AreEqual(1, activities.Count(a => a.OperationName.StartsWith("process", StringComparison.Ordinal)));
+    }
+
+    [TestMethod]
     public void Create_PlainTransport_DoesNotClaimCapabilities()
     {
         DisposableTrackingTransport inner = new();
