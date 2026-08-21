@@ -316,6 +316,38 @@ public class InMemoryMessageTransportTests
     }
 
     [TestMethod]
+    public async Task SubscribeReplyWithDeliveryContextAsync_RespondsToRequestAndProvidesDeliveryMetadata()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        await using Testing.InMemoryMessageTransport transport = new();
+
+        string? deliveredChannel = null;
+
+        // Same responder shape as SubscribeReplyAsync_RespondsToRequestInProcess, but registered
+        // with the delivery-context overload: the handler receives MessageDeliveryContext instead
+        // of headers directly, and still produces the reply RequestAsync waits for.
+        await transport.SubscribeReplyWithDeliveryContextAsync<JsonElement, JsonElement>(
+            "rpc/double-context"u8.ToArray(),
+            (request, deliveryContext, _) =>
+            {
+                deliveredChannel = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span);
+                int n = request.GetProperty("n"u8).GetInt32();
+                JsonElement reply = JsonElement.ParseValue(Encoding.UTF8.GetBytes($$"""{"result":{{n * 2}}}"""));
+                return ValueTask.FromResult(reply);
+            });
+
+        JsonElement request = JsonElement.ParseValue("""{"n":21}"""u8);
+        (JsonElement reply, JsonElement _) = await transport.RequestAsync<JsonElement, JsonElement>(
+            "rpc/double-context"u8.ToArray(),
+            "rpc/double-context/replies"u8.ToArray(),
+            request,
+            "corr-rr-context"u8.ToArray(), workspace);
+
+        Assert.AreEqual(42, reply.GetProperty("result"u8).GetInt32());
+        Assert.AreEqual("rpc/double-context", deliveredChannel);
+    }
+
+    [TestMethod]
     public async Task ReceiveOneAndReplyAsync_RepliesToOneRequestThenUnsubscribes()
     {
         using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();

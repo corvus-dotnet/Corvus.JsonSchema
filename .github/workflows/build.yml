@@ -483,7 +483,11 @@ jobs:
     name: Deploy PR Preview
     needs:
       - build
-    if: github.event_name == 'pull_request'
+    # Fork PRs run without repository secrets, so the Post-Compile website build cannot
+    # download the access-gated Vellum SSG and skips itself; no website-output artifact
+    # exists to deploy. The fork PR's read-only GITHUB_TOKEN could not push to gh-pages
+    # anyway. Deploy previews for same-repo PRs only.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     concurrency: preview-${{ github.event.pull_request.number }}
     steps:

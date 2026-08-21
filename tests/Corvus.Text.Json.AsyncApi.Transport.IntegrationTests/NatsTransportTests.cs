@@ -448,6 +448,66 @@ public class NatsTransportTests
     }
 
     [TestMethod]
+    public async Task RequestReplyResponderWithDeliveryContextRoundTrip()
+    {
+        // The delivery-context counterpart of RequestReplyResponderRoundTrip: the responder is
+        // registered with SubscribeReplyWithDeliveryContextAsync instead of SubscribeReplyAsync,
+        // so its handler receives MessageDeliveryContext (channel and native message) alongside
+        // the request, in addition to still producing the reply the requester's RequestAsync waits
+        // for — proving the delivery-context capability actually reaches a real broker responder,
+        // not just the plain-consumer path SubscribeWithDeliveryContextAsync_ProvidesDeliveryMetadata
+        // already covers.
+        using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+
+        ReadOnlyMemory<byte> requestChannel = "test.responder-context-roundtrip"u8.ToArray();
+        ReadOnlyMemory<byte> replyChannel = "test.responder-context-roundtrip-reply"u8.ToArray();
+
+        await using NatsMessageTransport responder = await NatsMessageTransport.CreateAsync(new NatsTransportOptions
+        {
+            Url = NatsFixture.ConnectionString,
+        });
+
+        string? deliveredChannel = null;
+        object? nativeMessage = null;
+
+        await responder.SubscribeReplyWithDeliveryContextAsync<JsonElement, JsonElement>(
+            requestChannel,
+            (request, deliveryContext, ct) =>
+            {
+                deliveredChannel = Encoding.UTF8.GetString(deliveryContext.ChannelUtf8.Span);
+                nativeMessage = deliveryContext.NativeMessage;
+
+                int value = request.GetProperty("value"u8).GetInt32();
+                byte[] replyJson = Encoding.UTF8.GetBytes($$"""{"doubled":{{value * 2}}}""");
+
+                // The reply document is handed to the test's workspace so it outlives the handler (the transport
+                // serialises the returned element after the handler returns) and is disposed with the workspace.
+                ParsedJsonDocument<JsonElement> replyDoc = ParsedJsonDocument<JsonElement>.Parse(replyJson);
+                workspace.TakeOwnership(replyDoc);
+                return ValueTask.FromResult(replyDoc.RootElement);
+            });
+
+        await Task.Delay(500);
+
+        using ParsedJsonDocument<JsonElement> requestDoc = ParsedJsonDocument<JsonElement>.Parse("""{"value":21}"""u8.ToArray());
+        byte[] correlationId = "responder-context-corr-001"u8.ToArray();
+
+        (JsonElement replyPayload, JsonElement replyHeaders) = await s_transport.RequestAsync<JsonElement, JsonElement>(
+            requestChannel,
+            replyChannel,
+            requestDoc.RootElement,
+            correlationId,
+            workspace);
+
+        Assert.AreEqual(JsonValueKind.Object, replyPayload.ValueKind);
+        Assert.AreEqual(42, replyPayload.GetProperty("doubled"u8).GetInt32());
+        Assert.AreEqual("test.responder-context-roundtrip", deliveredChannel);
+        Assert.IsNotNull(nativeMessage);
+
+        await responder.UnsubscribeAsync(requestChannel);
+    }
+
+    [TestMethod]
     public async Task ReceiveOneAndReplyRoundTrip()
     {
         // Owns the reply document the handler builds so it outlives the handler yet is still cleaned up

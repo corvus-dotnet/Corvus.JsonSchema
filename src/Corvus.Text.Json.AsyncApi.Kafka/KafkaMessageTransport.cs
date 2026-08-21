@@ -296,10 +296,29 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
     }
 
     /// <inheritdoc/>
-    public async ValueTask SubscribeReplyAsync<TRequest, TReply>(
+    public ValueTask SubscribeReplyAsync<TRequest, TReply>(
         ReadOnlyMemory<byte> channelUtf8,
         Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
         CancellationToken cancellationToken = default)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+        => this.SubscribeReplyCoreAsync<TRequest, TReply>(
+            channelUtf8, MessageReplyHandler<TRequest, TReply>.WithoutDeliveryContext(handler), cancellationToken);
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeReplyWithDeliveryContextAsync<TRequest, TReply>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TRequest, MessageDeliveryContext, CancellationToken, ValueTask<TReply>> handler,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+        => this.SubscribeReplyCoreAsync<TRequest, TReply>(
+            channelUtf8, MessageReplyHandler<TRequest, TReply>.WithDeliveryContext(handler), cancellationToken);
+
+    private async ValueTask SubscribeReplyCoreAsync<TRequest, TReply>(
+        ReadOnlyMemory<byte> channelUtf8,
+        MessageReplyHandler<TRequest, TReply> handler,
+        CancellationToken cancellationToken)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
     {
@@ -991,7 +1010,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
         string channel,
         ReadOnlyMemory<byte> channelUtf8,
         IConsumer<Null, byte[]> consumer,
-        Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
+        MessageReplyHandler<TRequest, TReply> handler,
         object marker,
         CancellationToken cancellationToken)
         where TRequest : struct, IJsonElement<TRequest>
@@ -1115,6 +1134,7 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                     using (headersDoc)
                     {
                         JsonElement headers = headersDoc?.RootElement ?? default;
+                        object? nativeMessage = handler.UsesDeliveryContext ? result : null;
 
                         try
                         {
@@ -1122,13 +1142,14 @@ public sealed class KafkaMessageTransport : IMessageDeliveryContextTransport, IH
                             if (this.middleware is not null)
                             {
                                 reply = await this.middleware.InvokeAsync(
-                                    static (s, ct) => s.handler(s.request, s.headers, ct),
-                                    (handler, request, headers),
+                                    static (s, ct) => s.handler.InvokeReply(s.request, s.channelUtf8, s.headers, s.nativeMessage, ct),
+                                    (handler, request, channelUtf8, headers, nativeMessage),
                                     cancellationToken).ConfigureAwait(false);
                             }
                             else
                             {
-                                reply = await handler(request, headers, cancellationToken).ConfigureAwait(false);
+                                reply = await handler.InvokeReply(request, channelUtf8, headers, nativeMessage, cancellationToken)
+                                    .ConfigureAwait(false);
                             }
 
                             // Route the reply back to the requester. The reply-to topic and

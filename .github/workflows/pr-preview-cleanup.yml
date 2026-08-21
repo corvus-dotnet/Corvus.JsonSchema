@@ -11,6 +11,9 @@ permissions:
 jobs:
   cleanup-preview:
     name: Clean up PR Preview
+    # Fork PRs never get a preview deployed (see deploy-preview in build.yml), and their
+    # read-only GITHUB_TOKEN could not push the removal commit to gh-pages anyway.
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     concurrency: preview-${{ github.event.pull_request.number }}
     steps:

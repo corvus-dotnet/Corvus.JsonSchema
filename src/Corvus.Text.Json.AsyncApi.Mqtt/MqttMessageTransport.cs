@@ -184,7 +184,22 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
     {
         ObjectDisposedException.ThrowIf(this.disposed, this);
         string channel = Encoding.UTF8.GetString(channelUtf8.Span);
-        return SubscribeReplyCoreAsync(channel, channelUtf8, handler, cancellationToken);
+        return SubscribeReplyCoreAsync(
+            channel, channelUtf8, MessageReplyHandler<TRequest, TReply>.WithoutDeliveryContext(handler), cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask SubscribeReplyWithDeliveryContextAsync<TRequest, TReply>(
+        ReadOnlyMemory<byte> channelUtf8,
+        Func<TRequest, MessageDeliveryContext, CancellationToken, ValueTask<TReply>> handler,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IJsonElement<TRequest>
+        where TReply : struct, IJsonElement<TReply>
+    {
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+        string channel = Encoding.UTF8.GetString(channelUtf8.Span);
+        return SubscribeReplyCoreAsync(
+            channel, channelUtf8, MessageReplyHandler<TRequest, TReply>.WithDeliveryContext(handler), cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -517,7 +532,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
     private async ValueTask SubscribeReplyCoreAsync<TRequest, TReply>(
         string channel,
         ReadOnlyMemory<byte> channelUtf8,
-        Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
+        MessageReplyHandler<TRequest, TReply> handler,
         CancellationToken cancellationToken)
         where TRequest : struct, IJsonElement<TRequest>
         where TReply : struct, IJsonElement<TReply>
@@ -831,7 +846,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
         string channel,
         ReadOnlyMemory<byte> channelUtf8,
         string deadLetterChannel,
-        Func<TRequest, JsonElement, CancellationToken, ValueTask<TReply>> handler,
+        MessageReplyHandler<TRequest, TReply> handler,
         MqttApplicationMessage message,
         CancellationToken cancellationToken)
         where TRequest : struct, IJsonElement<TRequest>
@@ -917,6 +932,7 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
             using (headersDoc)
             {
                 JsonElement headers = headersDoc?.RootElement ?? default;
+                object? nativeMessage = handler.UsesDeliveryContext ? message : null;
 
                 try
                 {
@@ -924,13 +940,14 @@ public sealed class MqttMessageTransport : IMessageDeliveryContextTransport
                     if (this.middleware is not null)
                     {
                         reply = await this.middleware.InvokeAsync(
-                            static (s, ct) => s.handler(s.request, s.headers, ct),
-                            (handler, request, headers),
+                            static (s, ct) => s.handler.InvokeReply(s.request, s.channelUtf8, s.headers, s.nativeMessage, ct),
+                            (handler, request, channelUtf8, headers, nativeMessage),
                             cancellationToken).ConfigureAwait(false);
                     }
                     else
                     {
-                        reply = await handler(request, headers, cancellationToken).ConfigureAwait(false);
+                        reply = await handler.InvokeReply(request, channelUtf8, headers, nativeMessage, cancellationToken)
+                            .ConfigureAwait(false);
                     }
 
                     // Determine where to send the reply: the requester advertises the reply topic via
