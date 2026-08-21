@@ -59,10 +59,12 @@ public static class MySqlControlPlaneDeployment
     {
         ArgumentException.ThrowIfNullOrEmpty(connectionString);
 
-        // Durable execution + catalog + runner registration.
+        // Durable execution + catalog + runner registration + the deployment-global schedule registry (the sole
+        // guardian of schedule-id uniqueness under the composite run key, ADR 0065 decision 9).
         await MySqlWorkflowStateStore.PrepareAsync(connectionString, cancellationToken).ConfigureAwait(false);
         await MySqlWorkflowCatalogStore.PrepareAsync(connectionString, cancellationToken).ConfigureAwait(false);
         await MySqlRunnerRegistry.PrepareAsync(connectionString, cancellationToken).ConfigureAwait(false);
+        await MySqlScheduleRegistry.PrepareAsync(connectionString, cancellationToken).ConfigureAwait(false);
         await MySqlEnvironmentRunnerAuthorizationStore.PrepareAsync(connectionString, cancellationToken).ConfigureAwait(false);
         await MySqlSourceCredentialStore.PrepareAsync(connectionString, cancellationToken).ConfigureAwait(false);
 

@@ -93,4 +93,7 @@
   <data name="WorkflowDeploymentNotDeployingForLeaseRenewal" xml:space="preserve">
     <value>The workflow deployment '{0}' cannot have its lease renewed because it is not deploying.</value>
   </data>
+  <data name="ScheduleRegistrationConflict" xml:space="preserve">
+    <value>Schedule id '{0}' is already registered to a different schedule; schedule ids are globally unique across the deployment.</value>
+  </data>
 </root>

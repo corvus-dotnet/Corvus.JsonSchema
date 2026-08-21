@@ -8,20 +8,18 @@ using MySqlConnector;
 namespace Corvus.Text.Json.Arazzo.Durability.MySql;
 
 /// <summary>
-/// A MySQL-backed <see cref="IWorkflowStateStore"/> and <see cref="IWorkflowWaitIndex"/>. The checkpoint is
-/// held as an opaque <c>LONGBLOB</c> alongside the projected index columns (the store never parses it);
-/// optimistic concurrency maps to a version column and the single-owner lease to a small leases table. It
-/// speaks the MySQL wire protocol directly (MySqlConnector, no ORM, no migrations runtime), so it also serves
-/// MariaDB and Aurora MySQL.
+/// A MySQL-backed <see cref="IWorkflowStateStore"/> and <see cref="IWorkflowWaitIndex"/>. Runs are keyed by
+/// their full <c>(environment, run_id)</c> composite primary key (ADR 0065 decision 9), so the same run id in
+/// two environments names two distinct rows. The checkpoint is held as an opaque <c>LONGBLOB</c> alongside
+/// the projected index columns (the store never parses it); optimistic concurrency maps to a version column
+/// and the single-owner lease to a small leases table keyed by the same composite. It speaks the MySQL wire
+/// protocol directly (MySqlConnector, no ORM, no migrations runtime), so it also serves MariaDB and Aurora
+/// MySQL.
 /// </summary>
 /// <remarks>
 /// Each operation opens a pooled connection, so the store is naturally concurrent. Create instances with
 /// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> after provisioning with <see cref="PrepareAsync(string, CancellationToken)"/>.
 /// </remarks>
-// TRANSITIONAL (ADR 0065 decision 9): the seam addresses runs by (environment, runId), but this backend still keys
-// its rows by run id alone — the composite-key conversion is this backend's own commit, and the composite-address
-// conformance oracles pin the gap until it lands. The environment column is written from the address and projected
-// back into every answered address.
 public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
@@ -166,8 +164,8 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             await using MySqlCommand insert = connection.CreateCommand();
             insert.CommandText =
                 """
-                INSERT INTO workflow_runs (run_id, checkpoint, version, status, workflow_id, environment, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type, correlation_id, tags, resume_requested_at)
-                VALUES (@id, @checkpoint, 1, @status, @workflow_id, @environment, @created_at, @updated_at, @due_at, @awaiting_channel, @awaiting_correlation_id, @error_type, @correlation_id, @tags, @resume_requested_at)
+                INSERT INTO workflow_runs (environment, run_id, checkpoint, version, status, workflow_id, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type, correlation_id, tags, resume_requested_at)
+                VALUES (@environment, @id, @checkpoint, 1, @status, @workflow_id, @created_at, @updated_at, @due_at, @awaiting_channel, @awaiting_correlation_id, @error_type, @correlation_id, @tags, @resume_requested_at)
                 ON DUPLICATE KEY UPDATE run_id = run_id;
                 """;
             BindRun(insert, address, checkpoint, index);
@@ -177,7 +175,7 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
                 throw new WorkflowConflictException(address, expected);
             }
 
-            await SyncSecurityTagsAsync(connection, address.RunId, index.SecurityTags, cancellationToken).ConfigureAwait(false);
+            await SyncSecurityTagsAsync(connection, address, index.SecurityTags, cancellationToken).ConfigureAwait(false);
             return new WorkflowEtag("1");
         }
 
@@ -187,10 +185,10 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             """
             UPDATE workflow_runs
             SET checkpoint = @checkpoint, version = version + 1, status = @status, workflow_id = @workflow_id,
-                environment = @environment, created_at = @created_at, updated_at = @updated_at, due_at = @due_at,
+                created_at = @created_at, updated_at = @updated_at, due_at = @due_at,
                 awaiting_channel = @awaiting_channel, awaiting_correlation_id = @awaiting_correlation_id, error_type = @error_type,
                 correlation_id = @correlation_id, tags = @tags, resume_requested_at = @resume_requested_at
-            WHERE run_id = @id AND version = @expected_version;
+            WHERE environment = @environment AND run_id = @id AND version = @expected_version;
             """;
         BindRun(update, address, checkpoint, index);
         update.Parameters.AddWithValue("@expected_version", expectedVersion);
@@ -200,16 +198,17 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             throw new WorkflowConflictException(address, expected);
         }
 
-        await SyncSecurityTagsAsync(connection, address.RunId, index.SecurityTags, cancellationToken).ConfigureAwait(false);
+        await SyncSecurityTagsAsync(connection, address, index.SecurityTags, cancellationToken).ConfigureAwait(false);
         return new WorkflowEtag((expectedVersion + 1).ToString(CultureInfo.InvariantCulture));
     }
 
-    private static async Task SyncSecurityTagsAsync(MySqlConnection connection, WorkflowRunId id, SecurityTagSet securityTags, CancellationToken cancellationToken)
+    private static async Task SyncSecurityTagsAsync(MySqlConnection connection, WorkflowRunAddress address, SecurityTagSet securityTags, CancellationToken cancellationToken)
     {
         await using (MySqlCommand delete = connection.CreateCommand())
         {
-            delete.CommandText = "DELETE FROM workflow_run_security_tags WHERE run_id = @id;";
-            delete.Parameters.AddWithValue("@id", id.Value);
+            delete.CommandText = "DELETE FROM workflow_run_security_tags WHERE environment = @environment AND run_id = @id;";
+            delete.Parameters.AddWithValue("@environment", address.Environment);
+            delete.Parameters.AddWithValue("@id", address.RunId.Value);
             await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
@@ -222,8 +221,9 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         foreach (SecurityTag tag in securityTags.ToList())
         {
             await using MySqlCommand insert = connection.CreateCommand();
-            insert.CommandText = "INSERT INTO workflow_run_security_tags (run_id, tag_key, tag_value) VALUES (@id, @key, @value);";
-            insert.Parameters.AddWithValue("@id", id.Value);
+            insert.CommandText = "INSERT INTO workflow_run_security_tags (environment, run_id, tag_key, tag_value) VALUES (@environment, @id, @key, @value);";
+            insert.Parameters.AddWithValue("@environment", address.Environment);
+            insert.Parameters.AddWithValue("@id", address.RunId.Value);
             insert.Parameters.AddWithValue("@key", tag.Key);
             insert.Parameters.AddWithValue("@value", tag.Value);
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -235,7 +235,8 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     {
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using MySqlCommand select = connection.CreateCommand();
-        select.CommandText = "SELECT checkpoint, version FROM workflow_runs WHERE run_id = @id;";
+        select.CommandText = "SELECT checkpoint, version FROM workflow_runs WHERE environment = @environment AND run_id = @id;";
+        select.Parameters.AddWithValue("@environment", address.Environment);
         select.Parameters.AddWithValue("@id", address.RunId.Value);
         await using MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
@@ -267,15 +268,16 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         // holder's row exactly as it was".
         upsert.CommandText =
             """
-            INSERT INTO workflow_leases (run_id, owner, token, expires_at, epoch)
-            VALUES (@id, @owner, @token, @expires_at, 1) AS new
+            INSERT INTO workflow_leases (environment, run_id, owner, token, expires_at, epoch)
+            VALUES (@environment, @id, @owner, @token, @expires_at, 1) AS new
             ON DUPLICATE KEY UPDATE
                 owner = IF(workflow_leases.expires_at <= @now OR workflow_leases.owner = @owner, new.owner, workflow_leases.owner),
                 token = IF(workflow_leases.expires_at <= @now OR workflow_leases.owner = @owner, new.token, workflow_leases.token),
                 expires_at = IF(workflow_leases.expires_at <= @now OR workflow_leases.owner = @owner, new.expires_at, workflow_leases.expires_at),
                 epoch = IF(workflow_leases.expires_at <= @now OR workflow_leases.owner = @owner, workflow_leases.epoch + 1, workflow_leases.epoch);
-            SELECT epoch FROM workflow_leases WHERE run_id = @id AND token = @token;
+            SELECT epoch FROM workflow_leases WHERE environment = @environment AND run_id = @id AND token = @token;
             """;
+        upsert.Parameters.AddWithValue("@environment", address.Environment);
         upsert.Parameters.AddWithValue("@id", address.RunId.Value);
         upsert.Parameters.AddWithValue("@owner", owner);
         upsert.Parameters.AddWithValue("@token", token);
@@ -310,9 +312,10 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         await using MySqlCommand update = connection.CreateCommand();
         update.CommandText =
             """
-            UPDATE workflow_leases SET expires_at = @expires_at WHERE run_id = @id AND token = @token AND owner = @owner AND expires_at > @now;
-            SELECT epoch FROM workflow_leases WHERE run_id = @id AND token = @token AND owner = @owner AND expires_at > @now;
+            UPDATE workflow_leases SET expires_at = @expires_at WHERE environment = @environment AND run_id = @id AND token = @token AND owner = @owner AND expires_at > @now;
+            SELECT epoch FROM workflow_leases WHERE environment = @environment AND run_id = @id AND token = @token AND owner = @owner AND expires_at > @now;
             """;
+        update.Parameters.AddWithValue("@environment", lease.Address.Environment);
         update.Parameters.AddWithValue("@id", lease.RunId.Value);
         update.Parameters.AddWithValue("@token", lease.Token);
         update.Parameters.AddWithValue("@owner", lease.Owner);
@@ -331,7 +334,8 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         // a grant ends, and the one a counter kept only alongside a live lease would forget. The row is re-acquirable at
         // once: every reader tests expires_at > now. DeleteAsync still removes it with the run.
         await using MySqlCommand release = connection.CreateCommand();
-        release.CommandText = "UPDATE workflow_leases SET expires_at = @now WHERE run_id = @id AND token = @token;";
+        release.CommandText = "UPDATE workflow_leases SET expires_at = @now WHERE environment = @environment AND run_id = @id AND token = @token;";
+        release.Parameters.AddWithValue("@environment", lease.Address.Environment);
         release.Parameters.AddWithValue("@id", lease.RunId.Value);
         release.Parameters.AddWithValue("@token", lease.Token);
         release.Parameters.AddWithValue("@now", this.timeProvider.GetUtcNow().ToUnixTimeMilliseconds());
@@ -343,12 +347,14 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     {
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using MySqlCommand deleteRun = connection.CreateCommand();
-        deleteRun.CommandText = "DELETE FROM workflow_runs WHERE run_id = @id; DELETE FROM workflow_run_security_tags WHERE run_id = @id;";
+        deleteRun.CommandText = "DELETE FROM workflow_runs WHERE environment = @environment AND run_id = @id; DELETE FROM workflow_run_security_tags WHERE environment = @environment AND run_id = @id;";
+        deleteRun.Parameters.AddWithValue("@environment", address.Environment);
         deleteRun.Parameters.AddWithValue("@id", address.RunId.Value);
         await deleteRun.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
         await using MySqlCommand deleteLease = connection.CreateCommand();
-        deleteLease.CommandText = "DELETE FROM workflow_leases WHERE run_id = @id;";
+        deleteLease.CommandText = "DELETE FROM workflow_leases WHERE environment = @environment AND run_id = @id;";
+        deleteLease.Parameters.AddWithValue("@environment", address.Environment);
         deleteLease.Parameters.AddWithValue("@id", address.RunId.Value);
         await deleteLease.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -407,7 +413,7 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         select.CommandText =
             $"""
             SELECT r.environment, r.run_id FROM workflow_runs r
-            LEFT JOIN workflow_leases l ON l.run_id = r.run_id
+            LEFT JOIN workflow_leases l ON l.environment = r.environment AND l.run_id = r.run_id
             WHERE r.workflow_id IN ({string.Join(", ", placeholders)})
               AND (@runner_environment IS NULL OR r.environment = @runner_environment)
               AND (r.status = @pending
@@ -578,7 +584,7 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             int securityParam = 0;
             var emitter = new SqlSecurityRuleEmitter(
                 "workflow_run_security_tags",
-                ["run_id"],
+                ["environment", "run_id"],
                 "tag_key",
                 "tag_value",
                 "workflow_runs",
@@ -619,7 +625,8 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     private static async ValueTask<WorkflowLease?> ReadCurrentLeaseAsync(MySqlConnection connection, WorkflowLease lease, long nowMs, CancellationToken cancellationToken)
     {
         await using MySqlCommand select = connection.CreateCommand();
-        select.CommandText = "SELECT expires_at, epoch FROM workflow_leases WHERE run_id = @id AND token = @token AND owner = @owner AND expires_at > @now;";
+        select.CommandText = "SELECT expires_at, epoch FROM workflow_leases WHERE environment = @environment AND run_id = @id AND token = @token AND owner = @owner AND expires_at > @now;";
+        select.Parameters.AddWithValue("@environment", lease.Address.Environment);
         select.Parameters.AddWithValue("@id", lease.RunId.Value);
         select.Parameters.AddWithValue("@token", lease.Token);
         select.Parameters.AddWithValue("@owner", lease.Owner);
@@ -633,16 +640,21 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     private ValueTask<MySqlConnection> OpenAsync(CancellationToken cancellationToken)
         => this.dataSource.OpenConnectionAsync(cancellationToken);
 
+    // The key columns are COLLATE utf8mb4_bin so the composite ORDER BY and the keyset-cursor range predicates
+    // are byte-ordinal — the order WorkflowRunAddress.Compare and the reference stores use (the server default
+    // utf8mb4_0900_ai_ci is accent/case-insensitive dictionary order, which would both reorder hyphenated
+    // environment names and alias keys differing only in case) — and the collation is uniform across the three
+    // tables so the lease join and the reach EXISTS compare indexably without coercion.
     private static readonly string[] SchemaStatements =
     [
         """
         CREATE TABLE IF NOT EXISTS workflow_runs (
-            run_id VARCHAR(255) PRIMARY KEY NOT NULL,
+            environment VARCHAR(63) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+            run_id VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
             checkpoint LONGBLOB NOT NULL,
             version BIGINT NOT NULL,
             status VARCHAR(64) NOT NULL,
             workflow_id VARCHAR(255) NOT NULL,
-            environment VARCHAR(255) NULL,
             created_at BIGINT NOT NULL,
             updated_at BIGINT NOT NULL,
             due_at BIGINT NULL,
@@ -652,26 +664,30 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             correlation_id VARCHAR(512) NULL,
             tags TEXT NULL,
             resume_requested_at BIGINT NULL,
+            PRIMARY KEY (environment, run_id),
             INDEX ix_workflow_runs_due (status, due_at),
             INDEX ix_workflow_runs_awaiting (status, awaiting_channel, awaiting_correlation_id)
         );
         """,
         """
         CREATE TABLE IF NOT EXISTS workflow_run_security_tags (
-            run_id VARCHAR(255) NOT NULL,
+            environment VARCHAR(63) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+            run_id VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
             tag_key VARCHAR(255) NOT NULL,
             tag_value VARCHAR(255) NOT NULL,
-            INDEX ix_workflow_run_security_tags_run (run_id),
+            INDEX ix_workflow_run_security_tags_run (environment, run_id),
             INDEX ix_workflow_run_security_tags_kv (tag_key, tag_value)
         );
         """,
         """
         CREATE TABLE IF NOT EXISTS workflow_leases (
-            run_id VARCHAR(255) PRIMARY KEY NOT NULL,
+            environment VARCHAR(63) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+            run_id VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
             owner VARCHAR(255) NOT NULL,
             token VARCHAR(255) NOT NULL,
             expires_at BIGINT NOT NULL,
-            epoch BIGINT NOT NULL
+            epoch BIGINT NOT NULL,
+            PRIMARY KEY (environment, run_id)
         );
         """,
     ];

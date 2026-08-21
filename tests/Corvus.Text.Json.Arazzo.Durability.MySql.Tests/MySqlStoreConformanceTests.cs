@@ -52,7 +52,7 @@ public sealed class MySqlStoreConformanceTests : WorkflowStateStoreConformance
     {
         await using (MySqlConnection connection = await dataSource.OpenConnectionAsync())
         {
-            foreach (string table in new[] { "workflow_runs", "workflow_leases" })
+            foreach (string table in new[] { "workflow_runs", "workflow_leases", "workflow_run_security_tags" })
             {
                 await using MySqlCommand reset = connection.CreateCommand();
                 reset.CommandText = $"DROP TABLE IF EXISTS {table};";
