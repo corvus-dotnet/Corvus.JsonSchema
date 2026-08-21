@@ -31,15 +31,17 @@ public readonly partial struct LeaseDocument
     /// so the lease is serialized exactly once, into a pooled stream).
     /// </summary>
     /// <param name="writer">The writer to write the document to.</param>
+    /// <param name="environment">The environment half of the guarded run's address (also the partition key).</param>
     /// <param name="id">The run id the lease guards.</param>
     /// <param name="owner">The lease owner.</param>
     /// <param name="token">The lease token.</param>
     /// <param name="expiresAtUnixMs">The lease expiry, Unix milliseconds.</param>
     /// <param name="epoch">The grant's epoch.</param>
-    public static void WriteJson(Utf8JsonWriter writer, string id, string owner, string token, long expiresAtUnixMs, long epoch)
+    public static void WriteJson(Utf8JsonWriter writer, string environment, string id, string owner, string token, long expiresAtUnixMs, long epoch)
     {
         writer.WriteStartObject();
         writer.WriteString(JsonPropertyNames.IdUtf8, id);
+        writer.WriteString(JsonPropertyNames.EnvironmentUtf8, environment);
         writer.WriteString(JsonPropertyNames.OwnerUtf8, owner);
         writer.WriteString(JsonPropertyNames.TokenUtf8, token);
         writer.WriteNumber(JsonPropertyNames.ExpiresAtUtf8, expiresAtUnixMs);

@@ -61,10 +61,12 @@ public static class CosmosControlPlaneDeployment
     {
         ArgumentException.ThrowIfNullOrEmpty(connectionString);
 
-        // Durable execution + catalog + runner registration.
+        // Durable execution + catalog + runner registration + the deployment-global schedule registry (the sole
+        // guardian of schedule-id uniqueness under the composite run key, ADR 0065 decision 9).
         await CosmosWorkflowStateStore.PrepareAsync(connectionString, databaseName, cancellationToken).ConfigureAwait(false);
         await CosmosWorkflowCatalogStore.PrepareAsync(connectionString, databaseName, cancellationToken).ConfigureAwait(false);
         await CosmosRunnerRegistry.PrepareAsync(connectionString, databaseName, cancellationToken).ConfigureAwait(false);
+        await CosmosScheduleRegistry.PrepareAsync(connectionString, databaseName, cancellationToken).ConfigureAwait(false);
         await CosmosEnvironmentRunnerAuthorizationStore.PrepareAsync(connectionString, databaseName, cancellationToken).ConfigureAwait(false);
         await CosmosSourceCredentialStore.PrepareAsync(connectionString, databaseName, cancellationToken).ConfigureAwait(false);
 

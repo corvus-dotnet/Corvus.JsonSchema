@@ -3,11 +3,15 @@
   "title": "LeaseDocument",
   "description": "The Azure Cosmos DB document shape for a single-owner workflow lease.",
   "type": "object",
-  "required": ["id", "owner", "token", "expiresAt", "epoch"],
+  "required": ["id", "environment", "owner", "token", "expiresAt", "epoch"],
   "properties": {
     "id": {
       "type": "string",
-      "description": "The run id the lease guards (also the partition key)."
+      "description": "The run id the lease guards."
+    },
+    "environment": {
+      "type": "string",
+      "description": "The environment half of the guarded run's (environment, runId) address (ADR 0065 decision 9); also the partition key, so the container's (partition key, id) uniqueness is exactly the composite run address."
     },
     "owner": {
       "type": "string",

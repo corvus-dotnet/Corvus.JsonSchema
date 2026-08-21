@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ScheduleRegistrationDocument",
+  "description": "The Azure Cosmos DB document shape for a deployment-global schedule registration: scheduleId to the (environment, runId) address of its scheduler run.",
+  "type": "object",
+  "required": ["id", "environment", "runId"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "The deployment-globally-unique schedule id (also the partition key, so the create conflict on (partition key, id) is the uniqueness gate)."
+    },
+    "environment": {
+      "type": "string",
+      "description": "The deployment environment the schedule (and its fired runs) are pinned to."
+    },
+    "runId": {
+      "type": "string",
+      "description": "The scheduler run's id (the schedule's derived address, ADR 0065 decision 9)."
+    }
+  },
+  "additionalProperties": true
+}
