@@ -30,14 +30,6 @@ public static class DemoData
     /// </summary>
     public static WorkflowRunDerivation RunDerivation { get; } = new("demo-run-derivation-key-32-bytes!"u8.ToArray());
 
-    /// <summary>
-    /// The demo deployment's schedule registry: the host's schedules surface and the seeded schedule register and
-    /// resolve through the same instance. In-memory, so it re-seeds on each start; the seeding registers before it
-    /// creates the run, so a restart against a durable run store re-registers the existing schedule and it stays
-    /// addressable.
-    /// </summary>
-    public static InMemoryScheduleRegistry ScheduleRegistry { get; } = new();
-
     private static readonly CatalogOwner OnboardingOwner = new("Onboarding Team", "onboarding@example.com", "Identity", "https://runbooks.example.com/onboard");
     private static readonly CatalogOwner ReconcileOwner = new("Reconciliation Team", "reconcile@example.com", "Platform", "https://runbooks.example.com/nightly-reconcile");
 
@@ -178,12 +170,14 @@ public static class DemoData
     /// and faults live at the verifyIdentity success criterion. Best-effort — a failure is logged, not fatal.</summary>
     /// <param name="runStore">The run state store.</param>
     /// <param name="resumer">The live resumer (from <see cref="CreateLiveResumer"/>).</param>
+    /// <param name="scheduleRegistry">The deployment's schedule registry, which the seeded nightly-reconcile schedule registers through.</param>
     /// <param name="log">An optional sink for the outcome line.</param>
     /// <param name="timeProvider">The time provider (defaults to the system clock).</param>
-    public static async ValueTask RunLiveOnboardingAsync(IWorkflowStateStore runStore, WorkflowResumer resumer, Action<string>? log = null, TimeProvider? timeProvider = null)
+    public static async ValueTask RunLiveOnboardingAsync(IWorkflowStateStore runStore, WorkflowResumer resumer, IScheduleRegistry scheduleRegistry, Action<string>? log = null, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(runStore);
         ArgumentNullException.ThrowIfNull(resumer);
+        ArgumentNullException.ThrowIfNull(scheduleRegistry);
         TimeProvider time = timeProvider ?? TimeProvider.System;
 
         // A standard applicant clears the KYC score threshold → the run completes all four steps.
@@ -217,10 +211,10 @@ public static class DemoData
         // Unlike the runs above (executed here in-process), this is left Pending so the app runner (which serves
         // schedules) claims it, evaluates the cadence, and fires nightly-reconcile-v2 through the GOVERNED run endpoint
         // on each due occurrence: cron-driven initiation, live.
-        await SeedNightlyReconcileScheduleAsync(runStore, time, log).ConfigureAwait(false);
+        await SeedNightlyReconcileScheduleAsync(runStore, scheduleRegistry, time, log).ConfigureAwait(false);
     }
 
-    private static async ValueTask SeedNightlyReconcileScheduleAsync(IWorkflowStateStore runStore, TimeProvider time, Action<string>? log)
+    private static async ValueTask SeedNightlyReconcileScheduleAsync(IWorkflowStateStore runStore, IScheduleRegistry scheduleRegistry, TimeProvider time, Action<string>? log)
     {
         try
         {
@@ -238,7 +232,7 @@ public static class DemoData
             // demo's run-derivation key — so the seeded schedule is addressable (get / delete / run-now on
             // 'nightly-reconcile-cron') like any API-created one.
             WorkflowRunId derivedRunId = RunDerivation.ScheduleAddress(scheduleId);
-            await ScheduleRegistry.RegisterAsync(scheduleId, new ScheduleRegistration("development", derivedRunId), default).ConfigureAwait(false);
+            await scheduleRegistry.RegisterAsync(scheduleId, new ScheduleRegistration("development", derivedRunId), default).ConfigureAwait(false);
             string runId = derivedRunId.Value;
             using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, ScheduleHostedWorkflow.ScheduleWorkflowId, inputs.RootElement, "development", time, tags: TagSet.FromTags(["prod", "billing"]));
             await run.EnqueueAsync(default).ConfigureAwait(false);

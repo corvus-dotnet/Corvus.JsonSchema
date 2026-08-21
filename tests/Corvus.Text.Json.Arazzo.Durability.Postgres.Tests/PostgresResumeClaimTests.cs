@@ -64,7 +64,7 @@ public sealed class PostgresResumeClaimTests
         await using (NpgsqlConnection connection = await dataSource.OpenConnectionAsync())
         {
             await using NpgsqlCommand reset = connection.CreateCommand();
-            reset.CommandText = "DROP TABLE IF EXISTS workflow_runs; DROP TABLE IF EXISTS workflow_leases;";
+            reset.CommandText = "DROP TABLE IF EXISTS workflow_runs; DROP TABLE IF EXISTS workflow_leases; DROP TABLE IF EXISTS workflow_run_security_tags;";
             await reset.ExecuteNonQueryAsync();
         }
 

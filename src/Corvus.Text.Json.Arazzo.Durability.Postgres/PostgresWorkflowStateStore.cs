@@ -10,19 +10,17 @@ namespace Corvus.Text.Json.Arazzo.Durability.Postgres;
 
 /// <summary>
 /// A PostgreSQL-backed <see cref="IWorkflowStateStore"/> and <see cref="IWorkflowWaitIndex"/> — the
-/// relational default. The checkpoint is held as an opaque <c>bytea</c> blob alongside the projected index
-/// columns (the store never parses it); optimistic concurrency maps to a version column and the single-owner
-/// lease to a small leases table. It speaks the PostgreSQL wire protocol directly (Npgsql, no ORM, no
-/// migrations runtime), so it also serves CockroachDB, YugabyteDB, AlloyDB, Aurora PostgreSQL, Neon and Citus.
+/// relational default. Runs are keyed by their full <c>(environment, run_id)</c> composite primary key
+/// (ADR 0065 decision 9), so the same run id in two environments names two distinct rows. The checkpoint is
+/// held as an opaque <c>bytea</c> blob alongside the projected index columns (the store never parses it);
+/// optimistic concurrency maps to a version column and the single-owner lease to a small leases table keyed
+/// by the same composite. It speaks the PostgreSQL wire protocol directly (Npgsql, no ORM, no migrations
+/// runtime), so it also serves CockroachDB, YugabyteDB, AlloyDB, Aurora PostgreSQL, Neon and Citus.
 /// </summary>
 /// <remarks>
 /// Each operation opens a pooled connection, so the store is naturally concurrent. Create instances with
 /// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> after provisioning with <see cref="PrepareAsync(string, CancellationToken)"/>.
 /// </remarks>
-// TRANSITIONAL (ADR 0065 decision 9): the seam addresses runs by (environment, runId), but this backend still keys
-// its rows by run id alone — the composite-key conversion is this backend's own commit, and the composite-address
-// conformance oracles pin the gap until it lands. The environment column is written from the address and projected
-// back into every answered address.
 public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, IWorkflowLeaseAdministration, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
@@ -151,9 +149,9 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
             await using NpgsqlCommand insert = connection.CreateCommand();
             insert.CommandText =
                 """
-                INSERT INTO workflow_runs (run_id, checkpoint, version, status, workflow_id, environment, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type, correlation_id, tags, resume_requested_at)
-                VALUES (@id, @checkpoint, 1, @status, @workflow_id, @environment, @created_at, @updated_at, @due_at, @awaiting_channel, @awaiting_correlation_id, @error_type, @correlation_id, @tags, @resume_requested_at)
-                ON CONFLICT (run_id) DO NOTHING;
+                INSERT INTO workflow_runs (environment, run_id, checkpoint, version, status, workflow_id, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type, correlation_id, tags, resume_requested_at)
+                VALUES (@environment, @id, @checkpoint, 1, @status, @workflow_id, @created_at, @updated_at, @due_at, @awaiting_channel, @awaiting_correlation_id, @error_type, @correlation_id, @tags, @resume_requested_at)
+                ON CONFLICT (environment, run_id) DO NOTHING;
                 """;
             BindRun(insert, address, checkpoint, index);
             int inserted = await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -162,7 +160,7 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
                 throw new WorkflowConflictException(address, expected);
             }
 
-            await SyncSecurityTagsAsync(connection, address.RunId, index.SecurityTags, cancellationToken).ConfigureAwait(false);
+            await SyncSecurityTagsAsync(connection, address, index.SecurityTags, cancellationToken).ConfigureAwait(false);
             return new WorkflowEtag("1");
         }
 
@@ -172,10 +170,10 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
             """
             UPDATE workflow_runs
             SET checkpoint = @checkpoint, version = version + 1, status = @status, workflow_id = @workflow_id,
-                environment = @environment, created_at = @created_at, updated_at = @updated_at, due_at = @due_at,
+                created_at = @created_at, updated_at = @updated_at, due_at = @due_at,
                 awaiting_channel = @awaiting_channel, awaiting_correlation_id = @awaiting_correlation_id, error_type = @error_type,
                 correlation_id = @correlation_id, tags = @tags, resume_requested_at = @resume_requested_at
-            WHERE run_id = @id AND version = @expected_version;
+            WHERE environment = @environment AND run_id = @id AND version = @expected_version;
             """;
         BindRun(update, address, checkpoint, index);
         update.Parameters.AddWithValue("expected_version", expectedVersion);
@@ -185,16 +183,17 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
             throw new WorkflowConflictException(address, expected);
         }
 
-        await SyncSecurityTagsAsync(connection, address.RunId, index.SecurityTags, cancellationToken).ConfigureAwait(false);
+        await SyncSecurityTagsAsync(connection, address, index.SecurityTags, cancellationToken).ConfigureAwait(false);
         return new WorkflowEtag((expectedVersion + 1).ToString(CultureInfo.InvariantCulture));
     }
 
-    private static async Task SyncSecurityTagsAsync(NpgsqlConnection connection, WorkflowRunId id, SecurityTagSet securityTags, CancellationToken cancellationToken)
+    private static async Task SyncSecurityTagsAsync(NpgsqlConnection connection, WorkflowRunAddress address, SecurityTagSet securityTags, CancellationToken cancellationToken)
     {
         await using (NpgsqlCommand delete = connection.CreateCommand())
         {
-            delete.CommandText = "DELETE FROM workflow_run_security_tags WHERE run_id = @id;";
-            delete.Parameters.AddWithValue("id", id.Value);
+            delete.CommandText = "DELETE FROM workflow_run_security_tags WHERE environment = @environment AND run_id = @id;";
+            delete.Parameters.AddWithValue("environment", address.Environment);
+            delete.Parameters.AddWithValue("id", address.RunId.Value);
             await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
@@ -207,8 +206,9 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         foreach (SecurityTag tag in securityTags.ToList())
         {
             await using NpgsqlCommand insert = connection.CreateCommand();
-            insert.CommandText = "INSERT INTO workflow_run_security_tags (run_id, tag_key, tag_value) VALUES (@id, @key, @value);";
-            insert.Parameters.AddWithValue("id", id.Value);
+            insert.CommandText = "INSERT INTO workflow_run_security_tags (environment, run_id, tag_key, tag_value) VALUES (@environment, @id, @key, @value);";
+            insert.Parameters.AddWithValue("environment", address.Environment);
+            insert.Parameters.AddWithValue("id", address.RunId.Value);
             insert.Parameters.AddWithValue("key", tag.Key);
             insert.Parameters.AddWithValue("value", tag.Value);
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -220,7 +220,8 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
     {
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlCommand select = connection.CreateCommand();
-        select.CommandText = "SELECT checkpoint, version FROM workflow_runs WHERE run_id = @id;";
+        select.CommandText = "SELECT checkpoint, version FROM workflow_runs WHERE environment = @environment AND run_id = @id;";
+        select.Parameters.AddWithValue("environment", address.Environment);
         select.Parameters.AddWithValue("id", address.RunId.Value);
         await using NpgsqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
@@ -250,12 +251,13 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         // a separate read could not tell this grant's epoch from the next one's.
         upsert.CommandText =
             """
-            INSERT INTO workflow_leases (run_id, owner, token, expires_at, epoch)
-            VALUES (@id, @owner, @token, @expires_at, 1)
-            ON CONFLICT (run_id) DO UPDATE SET owner = excluded.owner, token = excluded.token, expires_at = excluded.expires_at, epoch = workflow_leases.epoch + 1
+            INSERT INTO workflow_leases (environment, run_id, owner, token, expires_at, epoch)
+            VALUES (@environment, @id, @owner, @token, @expires_at, 1)
+            ON CONFLICT (environment, run_id) DO UPDATE SET owner = excluded.owner, token = excluded.token, expires_at = excluded.expires_at, epoch = workflow_leases.epoch + 1
             WHERE workflow_leases.expires_at <= @now OR workflow_leases.owner = @owner
             RETURNING epoch;
             """;
+        upsert.Parameters.AddWithValue("environment", address.Environment);
         upsert.Parameters.AddWithValue("id", address.RunId.Value);
         upsert.Parameters.AddWithValue("owner", owner);
         upsert.Parameters.AddWithValue("token", token);
@@ -282,7 +284,8 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         if (extension == TimeSpan.Zero)
         {
             await using NpgsqlCommand select = connection.CreateCommand();
-            select.CommandText = "SELECT expires_at, epoch FROM workflow_leases WHERE run_id = @id AND token = @token AND owner = @owner AND expires_at > @now;";
+            select.CommandText = "SELECT expires_at, epoch FROM workflow_leases WHERE environment = @environment AND run_id = @id AND token = @token AND owner = @owner AND expires_at > @now;";
+            select.Parameters.AddWithValue("environment", lease.Address.Environment);
             select.Parameters.AddWithValue("id", lease.RunId.Value);
             select.Parameters.AddWithValue("token", lease.Token);
             select.Parameters.AddWithValue("owner", lease.Owner);
@@ -295,7 +298,8 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
 
         DateTimeOffset extendedTo = now + extension;
         await using NpgsqlCommand update = connection.CreateCommand();
-        update.CommandText = "UPDATE workflow_leases SET expires_at = @expires_at WHERE run_id = @id AND token = @token AND owner = @owner AND expires_at > @now RETURNING epoch;";
+        update.CommandText = "UPDATE workflow_leases SET expires_at = @expires_at WHERE environment = @environment AND run_id = @id AND token = @token AND owner = @owner AND expires_at > @now RETURNING epoch;";
+        update.Parameters.AddWithValue("environment", lease.Address.Environment);
         update.Parameters.AddWithValue("id", lease.RunId.Value);
         update.Parameters.AddWithValue("token", lease.Token);
         update.Parameters.AddWithValue("owner", lease.Owner);
@@ -314,7 +318,8 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         // a grant ends, and the one a counter kept only alongside a live lease would forget. The row is re-acquirable at
         // once: every reader tests expires_at > now. DeleteAsync still removes it with the run.
         await using NpgsqlCommand release = connection.CreateCommand();
-        release.CommandText = "UPDATE workflow_leases SET expires_at = @now WHERE run_id = @id AND token = @token;";
+        release.CommandText = "UPDATE workflow_leases SET expires_at = @now WHERE environment = @environment AND run_id = @id AND token = @token;";
+        release.Parameters.AddWithValue("environment", lease.Address.Environment);
         release.Parameters.AddWithValue("id", lease.RunId.Value);
         release.Parameters.AddWithValue("token", lease.Token);
         release.Parameters.AddWithValue("now", this.timeProvider.GetUtcNow().ToUnixTimeMilliseconds());
@@ -329,13 +334,12 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         // The control-plane revocation fence (§5.5): expire every live lease this owner holds in place, so an authorized peer
         // reclaims its in-flight runs at the next poll (expires_at <= now makes the row re-acquirable) rather than after the
         // TTL. The affected count is the number of live leases fenced. The scope is the environment being withdrawn
-        // (ADR 0065 decision 9), resolved through the run row while leases are still keyed by run id alone; a null
-        // environment fences the owner everywhere.
+        // (ADR 0065 decision 9): a runner keeping other environments keeps its leases there; a null environment
+        // fences the owner everywhere.
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlCommand expire = connection.CreateCommand();
-        expire.CommandText = "UPDATE workflow_leases SET expires_at = @now WHERE owner = @owner AND expires_at > @now"
-            + " AND (@environment IS NULL OR run_id IN (SELECT run_id FROM workflow_runs WHERE environment = @environment));";
+        expire.CommandText = "UPDATE workflow_leases SET expires_at = @now WHERE owner = @owner AND expires_at > @now AND (@environment IS NULL OR environment = @environment);";
         expire.Parameters.AddWithValue("owner", owner);
         expire.Parameters.Add(NullableText("environment", environment));
         expire.Parameters.AddWithValue("now", now.ToUnixTimeMilliseconds());
@@ -347,7 +351,8 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
     {
         await using NpgsqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using NpgsqlCommand delete = connection.CreateCommand();
-        delete.CommandText = "DELETE FROM workflow_runs WHERE run_id = @id; DELETE FROM workflow_leases WHERE run_id = @id; DELETE FROM workflow_run_security_tags WHERE run_id = @id;";
+        delete.CommandText = "DELETE FROM workflow_runs WHERE environment = @environment AND run_id = @id; DELETE FROM workflow_leases WHERE environment = @environment AND run_id = @id; DELETE FROM workflow_run_security_tags WHERE environment = @environment AND run_id = @id;";
+        delete.Parameters.AddWithValue("environment", address.Environment);
         delete.Parameters.AddWithValue("id", address.RunId.Value);
         await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -444,7 +449,7 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         select.CommandText =
             $"""
             SELECT r.environment, r.run_id FROM workflow_runs r
-            LEFT JOIN workflow_leases l ON l.run_id = r.run_id
+            LEFT JOIN workflow_leases l ON l.environment = r.environment AND l.run_id = r.run_id
             WHERE r.workflow_id IN ({string.Join(", ", placeholders)})
               AND (@runner_environment IS NULL OR r.environment = @runner_environment)
               AND (r.status = @pending
@@ -584,7 +589,7 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
             int securityParam = 0;
             var emitter = new SqlSecurityRuleEmitter(
                 "workflow_run_security_tags",
-                ["run_id"],
+                ["environment", "run_id"],
                 "tag_key",
                 "tag_value",
                 "workflow_runs",
@@ -630,15 +635,18 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
     private ValueTask<NpgsqlConnection> OpenAsync(CancellationToken cancellationToken)
         => this.dataSource.OpenConnectionAsync(cancellationToken);
 
+    // The key columns are COLLATE "C" so the composite ORDER BY and the keyset-cursor range predicates are
+    // byte-ordinal — the same order WorkflowRunAddress.Compare and the reference stores use. A libc/ICU
+    // collation would reorder hyphenated environment names and break cursor continuity.
     private const string SchemaSql =
         """
         CREATE TABLE IF NOT EXISTS workflow_runs (
-            run_id TEXT PRIMARY KEY NOT NULL,
+            environment TEXT COLLATE "C" NOT NULL,
+            run_id TEXT COLLATE "C" NOT NULL,
             checkpoint BYTEA NOT NULL,
             version BIGINT NOT NULL,
             status TEXT NOT NULL,
             workflow_id TEXT NOT NULL,
-            environment TEXT NULL,
             created_at BIGINT NOT NULL,
             updated_at BIGINT NOT NULL,
             due_at BIGINT NULL,
@@ -647,23 +655,27 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
             error_type TEXT NULL,
             correlation_id TEXT NULL,
             tags TEXT NULL,
-            resume_requested_at BIGINT NULL
+            resume_requested_at BIGINT NULL,
+            PRIMARY KEY (environment, run_id)
         );
         CREATE INDEX IF NOT EXISTS ix_workflow_runs_due ON workflow_runs (status, due_at);
         CREATE INDEX IF NOT EXISTS ix_workflow_runs_awaiting ON workflow_runs (status, awaiting_channel, awaiting_correlation_id);
         CREATE TABLE IF NOT EXISTS workflow_run_security_tags (
-            run_id TEXT NOT NULL,
+            environment TEXT COLLATE "C" NOT NULL,
+            run_id TEXT COLLATE "C" NOT NULL,
             tag_key TEXT NOT NULL,
             tag_value TEXT NOT NULL
         );
-        CREATE INDEX IF NOT EXISTS ix_workflow_run_security_tags_run ON workflow_run_security_tags (run_id);
+        CREATE INDEX IF NOT EXISTS ix_workflow_run_security_tags_run ON workflow_run_security_tags (environment, run_id);
         CREATE INDEX IF NOT EXISTS ix_workflow_run_security_tags_kv ON workflow_run_security_tags (tag_key, tag_value);
         CREATE TABLE IF NOT EXISTS workflow_leases (
-            run_id TEXT PRIMARY KEY NOT NULL,
+            environment TEXT COLLATE "C" NOT NULL,
+            run_id TEXT COLLATE "C" NOT NULL,
             owner TEXT NOT NULL,
             token TEXT NOT NULL,
             expires_at BIGINT NOT NULL,
-            epoch BIGINT NOT NULL
+            epoch BIGINT NOT NULL,
+            PRIMARY KEY (environment, run_id)
         );
         """;
 }

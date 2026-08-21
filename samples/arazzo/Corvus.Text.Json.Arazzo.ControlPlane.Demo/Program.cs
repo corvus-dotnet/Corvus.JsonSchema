@@ -105,6 +105,12 @@ await Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.Postgres.Postgr
 var metadata = new WorkflowSchemaMetadataProvider();
 PostgresWorkflowStateStore postgresStateStore = await PostgresWorkflowStateStore.ConnectAsync(dataSource);
 
+// The deployment-global schedule registry (ADR 0065 decision 9): under the composite (environment, runId) run key it is
+// the sole guardian of schedule-id uniqueness, so it lives in the same Postgres as the runs — durable across restarts
+// and shared by every control-plane instance. Seeding re-registers idempotently, so the seeded schedule stays
+// addressable either way.
+PostgresScheduleRegistry scheduleRegistry = await PostgresScheduleRegistry.ConnectAsync(dataSource);
+
 // At rest (§14, backlog #861): checkpoints — step outputs included — are application-encrypted before the backend
 // ever sees them. The key arrives from deployment configuration: the AppHost generates one per composition boot
 // (the demo resets its data each run, so an ephemeral key is exactly right; a durable deployment sources it from
@@ -943,7 +949,7 @@ app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
     // rather than open is the ADR 0016 posture — a surface mapped without a secret would admit any caller this host
     // authenticates to every run in the deployment, and everyone at all in Open.
     checkpoints: checkpointCoordinator,
-    scheduleRegistry: DemoData.ScheduleRegistry);
+    scheduleRegistry: scheduleRegistry);
 
 // The runner API (ADR 0065) — the surface every runner store interaction goes through, so that a runner needs no store
 // credential to execute. It shares this host's stores because the demo is one process; the point of the split is that
@@ -1006,7 +1012,7 @@ app.Lifetime.ApplicationStarted.Register(() =>
     // Example fiction: one genuinely-executed onboarding run so the demo shows a real run, not only seeded states.
     if (seedExampleData)
     {
-        _ = exampleSeed.RunLiveSampleAsync(stateStore, liveResumer, message => app.Logger.LogInformation("{Message}", message));
+        _ = exampleSeed.RunLiveSampleAsync(stateStore, liveResumer, scheduleRegistry, message => app.Logger.LogInformation("{Message}", message));
     }
 });
 

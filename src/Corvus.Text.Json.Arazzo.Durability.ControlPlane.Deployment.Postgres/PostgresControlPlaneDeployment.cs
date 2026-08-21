@@ -67,10 +67,12 @@ public static class PostgresControlPlaneDeployment
     {
         ArgumentNullException.ThrowIfNull(dataSource);
 
-        // Durable execution + catalog + runner registration.
+        // Durable execution + catalog + runner registration + the deployment-global schedule registry (the sole
+        // guardian of schedule-id uniqueness under the composite run key, ADR 0065 decision 9).
         await PostgresWorkflowStateStore.PrepareAsync(dataSource, cancellationToken).ConfigureAwait(false);
         await PostgresWorkflowCatalogStore.PrepareAsync(dataSource, cancellationToken).ConfigureAwait(false);
         await PostgresRunnerRegistry.PrepareAsync(dataSource, cancellationToken).ConfigureAwait(false);
+        await PostgresScheduleRegistry.PrepareAsync(dataSource, cancellationToken).ConfigureAwait(false);
         await PostgresEnvironmentRunnerAuthorizationStore.PrepareAsync(dataSource, cancellationToken).ConfigureAwait(false);
         await PostgresSourceCredentialStore.PrepareAsync(dataSource, cancellationToken).ConfigureAwait(false);
 
