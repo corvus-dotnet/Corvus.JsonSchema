@@ -59,10 +59,12 @@ public static class SqlServerControlPlaneDeployment
     {
         ArgumentException.ThrowIfNullOrEmpty(connectionString);
 
-        // Durable execution + catalog + runner registration.
+        // Durable execution + catalog + runner registration + the deployment-global schedule registry (the sole
+        // guardian of schedule-id uniqueness under the composite run key, ADR 0065 decision 9).
         await SqlServerWorkflowStateStore.PrepareAsync(connectionString, cancellationToken).ConfigureAwait(false);
         await SqlServerWorkflowCatalogStore.PrepareAsync(connectionString, cancellationToken).ConfigureAwait(false);
         await SqlServerRunnerRegistry.PrepareAsync(connectionString, cancellationToken).ConfigureAwait(false);
+        await SqlServerScheduleRegistry.PrepareAsync(connectionString, cancellationToken).ConfigureAwait(false);
         await SqlServerEnvironmentRunnerAuthorizationStore.PrepareAsync(connectionString, cancellationToken).ConfigureAwait(false);
         await SqlServerSourceCredentialStore.PrepareAsync(connectionString, cancellationToken).ConfigureAwait(false);
 

@@ -9,20 +9,18 @@ using Microsoft.Data.SqlClient;
 namespace Corvus.Text.Json.Arazzo.Durability.SqlServer;
 
 /// <summary>
-/// A SQL Server-backed <see cref="IWorkflowStateStore"/> and <see cref="IWorkflowWaitIndex"/>. The checkpoint
-/// is held as an opaque <c>VARBINARY(MAX)</c> blob alongside the projected index columns (the store never
-/// parses it); optimistic concurrency maps to a version column and the single-owner lease to a small leases
-/// table (a race-safe <c>MERGE</c>). It uses Microsoft.Data.SqlClient directly (no ORM, no migrations
-/// runtime), so the same code covers SQL Server, Azure SQL Database and Azure SQL Managed Instance.
+/// A SQL Server-backed <see cref="IWorkflowStateStore"/> and <see cref="IWorkflowWaitIndex"/>. Runs are keyed
+/// by their full <c>(environment, run_id)</c> composite primary key (ADR 0065 decision 9), so the same run id
+/// in two environments names two distinct rows. The checkpoint is held as an opaque <c>VARBINARY(MAX)</c>
+/// blob alongside the projected index columns (the store never parses it); optimistic concurrency maps to a
+/// version column and the single-owner lease to a small leases table keyed by the same composite (a race-safe
+/// <c>MERGE</c>). It uses Microsoft.Data.SqlClient directly (no ORM, no migrations runtime), so the same code
+/// covers SQL Server, Azure SQL Database and Azure SQL Managed Instance.
 /// </summary>
 /// <remarks>
 /// Each operation opens a pooled connection, so the store is naturally concurrent. Create instances with
 /// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> after provisioning with <see cref="PrepareAsync(string, CancellationToken)"/>.
 /// </remarks>
-// TRANSITIONAL (ADR 0065 decision 9): the seam addresses runs by (environment, runId), but this backend still keys
-// its rows by run id alone — the composite-key conversion is this backend's own commit, and the composite-address
-// conformance oracles pin the gap until it lands. The environment column is written from the address and projected
-// back into every answered address.
 public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
@@ -105,8 +103,8 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
             await using SqlCommand insert = connection.CreateCommand();
             insert.CommandText =
                 """
-                INSERT INTO workflow_runs (run_id, [checkpoint], version, status, workflow_id, environment, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type, correlation_id, tags, resume_requested_at)
-                VALUES (@id, @checkpoint, 1, @status, @workflow_id, @environment, @created_at, @updated_at, @due_at, @awaiting_channel, @awaiting_correlation_id, @error_type, @correlation_id, @tags, @resume_requested_at);
+                INSERT INTO workflow_runs (environment, run_id, [checkpoint], version, status, workflow_id, created_at, updated_at, due_at, awaiting_channel, awaiting_correlation_id, error_type, correlation_id, tags, resume_requested_at)
+                VALUES (@environment, @id, @checkpoint, 1, @status, @workflow_id, @created_at, @updated_at, @due_at, @awaiting_channel, @awaiting_correlation_id, @error_type, @correlation_id, @tags, @resume_requested_at);
                 """;
             BindRun(insert, address, checkpointStream, index);
             try
@@ -118,7 +116,7 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
                 throw new WorkflowConflictException(address, expected);
             }
 
-            await SyncSecurityTagsAsync(connection, address.RunId, index.SecurityTags, cancellationToken).ConfigureAwait(false);
+            await SyncSecurityTagsAsync(connection, address, index.SecurityTags, cancellationToken).ConfigureAwait(false);
             return new WorkflowEtag("1");
         }
 
@@ -128,10 +126,10 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
             """
             UPDATE workflow_runs
             SET [checkpoint] = @checkpoint, version = version + 1, status = @status, workflow_id = @workflow_id,
-                environment = @environment, created_at = @created_at, updated_at = @updated_at, due_at = @due_at,
+                created_at = @created_at, updated_at = @updated_at, due_at = @due_at,
                 awaiting_channel = @awaiting_channel, awaiting_correlation_id = @awaiting_correlation_id, error_type = @error_type,
                 correlation_id = @correlation_id, tags = @tags, resume_requested_at = @resume_requested_at
-            WHERE run_id = @id AND version = @expected_version;
+            WHERE environment = @environment AND run_id = @id AND version = @expected_version;
             """;
         BindRun(update, address, checkpointStream, index);
         update.Parameters.AddWithValue("@expected_version", expectedVersion);
@@ -141,16 +139,17 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
             throw new WorkflowConflictException(address, expected);
         }
 
-        await SyncSecurityTagsAsync(connection, address.RunId, index.SecurityTags, cancellationToken).ConfigureAwait(false);
+        await SyncSecurityTagsAsync(connection, address, index.SecurityTags, cancellationToken).ConfigureAwait(false);
         return new WorkflowEtag((expectedVersion + 1).ToString(CultureInfo.InvariantCulture));
     }
 
-    private static async Task SyncSecurityTagsAsync(SqlConnection connection, WorkflowRunId id, SecurityTagSet securityTags, CancellationToken cancellationToken)
+    private static async Task SyncSecurityTagsAsync(SqlConnection connection, WorkflowRunAddress address, SecurityTagSet securityTags, CancellationToken cancellationToken)
     {
         await using (SqlCommand delete = connection.CreateCommand())
         {
-            delete.CommandText = "DELETE FROM workflow_run_security_tags WHERE run_id = @id;";
-            delete.Parameters.AddWithValue("@id", id.Value);
+            delete.CommandText = "DELETE FROM workflow_run_security_tags WHERE environment = @environment AND run_id = @id;";
+            delete.Parameters.AddWithValue("@environment", address.Environment);
+            delete.Parameters.AddWithValue("@id", address.RunId.Value);
             await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
@@ -163,8 +162,9 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
         foreach (SecurityTag tag in securityTags.ToList())
         {
             await using SqlCommand insert = connection.CreateCommand();
-            insert.CommandText = "INSERT INTO workflow_run_security_tags (run_id, tag_key, tag_value) VALUES (@id, @key, @value);";
-            insert.Parameters.AddWithValue("@id", id.Value);
+            insert.CommandText = "INSERT INTO workflow_run_security_tags (environment, run_id, tag_key, tag_value) VALUES (@environment, @id, @key, @value);";
+            insert.Parameters.AddWithValue("@environment", address.Environment);
+            insert.Parameters.AddWithValue("@id", address.RunId.Value);
             insert.Parameters.AddWithValue("@key", tag.Key);
             insert.Parameters.AddWithValue("@value", tag.Value);
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -176,7 +176,8 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
     {
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using SqlCommand select = connection.CreateCommand();
-        select.CommandText = "SELECT [checkpoint], version FROM workflow_runs WHERE run_id = @id;";
+        select.CommandText = "SELECT [checkpoint], version FROM workflow_runs WHERE environment = @environment AND run_id = @id;";
+        select.Parameters.AddWithValue("@environment", address.Environment);
         select.Parameters.AddWithValue("@id", address.RunId.Value);
         await using SqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
@@ -207,13 +208,14 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
         merge.CommandText =
             """
             MERGE workflow_leases WITH (HOLDLOCK) AS target
-            USING (SELECT @id AS run_id) AS source ON target.run_id = source.run_id
+            USING (SELECT @environment AS environment, @id AS run_id) AS source ON target.environment = source.environment AND target.run_id = source.run_id
             WHEN MATCHED AND (target.expires_at <= @now OR target.owner = @owner) THEN
                 UPDATE SET owner = @owner, token = @token, expires_at = @expires_at, epoch = target.epoch + 1
             WHEN NOT MATCHED THEN
-                INSERT (run_id, owner, token, expires_at, epoch) VALUES (@id, @owner, @token, @expires_at, 1)
+                INSERT (environment, run_id, owner, token, expires_at, epoch) VALUES (@environment, @id, @owner, @token, @expires_at, 1)
             OUTPUT inserted.epoch;
             """;
+        merge.Parameters.AddWithValue("@environment", address.Environment);
         merge.Parameters.AddWithValue("@id", address.RunId.Value);
         merge.Parameters.AddWithValue("@owner", owner);
         merge.Parameters.AddWithValue("@token", token);
@@ -240,7 +242,8 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
         if (extension == TimeSpan.Zero)
         {
             await using SqlCommand select = connection.CreateCommand();
-            select.CommandText = "SELECT expires_at, epoch FROM workflow_leases WHERE run_id = @id AND token = @token AND owner = @owner AND expires_at > @now;";
+            select.CommandText = "SELECT expires_at, epoch FROM workflow_leases WHERE environment = @environment AND run_id = @id AND token = @token AND owner = @owner AND expires_at > @now;";
+            select.Parameters.AddWithValue("@environment", lease.Address.Environment);
             select.Parameters.AddWithValue("@id", lease.RunId.Value);
             select.Parameters.AddWithValue("@token", lease.Token);
             select.Parameters.AddWithValue("@owner", lease.Owner);
@@ -253,7 +256,8 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
 
         DateTimeOffset extendedTo = now + extension;
         await using SqlCommand update = connection.CreateCommand();
-        update.CommandText = "UPDATE workflow_leases SET expires_at = @expires_at OUTPUT inserted.epoch WHERE run_id = @id AND token = @token AND owner = @owner AND expires_at > @now;";
+        update.CommandText = "UPDATE workflow_leases SET expires_at = @expires_at OUTPUT inserted.epoch WHERE environment = @environment AND run_id = @id AND token = @token AND owner = @owner AND expires_at > @now;";
+        update.Parameters.AddWithValue("@environment", lease.Address.Environment);
         update.Parameters.AddWithValue("@id", lease.RunId.Value);
         update.Parameters.AddWithValue("@token", lease.Token);
         update.Parameters.AddWithValue("@owner", lease.Owner);
@@ -272,7 +276,8 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
         // a grant ends, and the one a counter kept only alongside a live lease would forget. The row is re-acquirable at
         // once: every reader tests expires_at > now. DeleteAsync still removes it with the run.
         await using SqlCommand release = connection.CreateCommand();
-        release.CommandText = "UPDATE workflow_leases SET expires_at = @now WHERE run_id = @id AND token = @token;";
+        release.CommandText = "UPDATE workflow_leases SET expires_at = @now WHERE environment = @environment AND run_id = @id AND token = @token;";
+        release.Parameters.AddWithValue("@environment", lease.Address.Environment);
         release.Parameters.AddWithValue("@id", lease.RunId.Value);
         release.Parameters.AddWithValue("@token", lease.Token);
         release.Parameters.AddWithValue("@now", this.timeProvider.GetUtcNow().ToUnixTimeMilliseconds());
@@ -284,7 +289,8 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
     {
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using SqlCommand delete = connection.CreateCommand();
-        delete.CommandText = "DELETE FROM workflow_runs WHERE run_id = @id; DELETE FROM workflow_leases WHERE run_id = @id; DELETE FROM workflow_run_security_tags WHERE run_id = @id;";
+        delete.CommandText = "DELETE FROM workflow_runs WHERE environment = @environment AND run_id = @id; DELETE FROM workflow_leases WHERE environment = @environment AND run_id = @id; DELETE FROM workflow_run_security_tags WHERE environment = @environment AND run_id = @id;";
+        delete.Parameters.AddWithValue("@environment", address.Environment);
         delete.Parameters.AddWithValue("@id", address.RunId.Value);
         await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -375,7 +381,7 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
         select.CommandText =
             $"""
             SELECT r.environment, r.run_id FROM workflow_runs r
-            LEFT JOIN workflow_leases l ON l.run_id = r.run_id
+            LEFT JOIN workflow_leases l ON l.environment = r.environment AND l.run_id = r.run_id
             WHERE r.workflow_id IN ({string.Join(", ", placeholders)})
               AND (@runner_environment IS NULL OR r.environment = @runner_environment)
               AND (r.status = @pending
@@ -514,7 +520,7 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
             int securityParam = 0;
             var emitter = new SqlSecurityRuleEmitter(
                 "workflow_run_security_tags",
-                ["run_id"],
+                ["environment", "run_id"],
                 "tag_key",
                 "tag_value",
                 "workflow_runs",
@@ -572,17 +578,24 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
         }
     }
 
+    // The key columns are COLLATE Latin1_General_BIN2 so the composite ORDER BY and the keyset-cursor range
+    // predicates are byte-ordinal — the order WorkflowRunAddress.Compare and the reference stores use (a
+    // dictionary collation would reorder hyphenated environment names and break cursor continuity) — and the
+    // collation is uniform across the three tables so the lease join and the reach EXISTS never hit a
+    // collation conflict. The widths keep the composite clustered key inside SQL Server's 900-byte budget:
+    // environment is grammar-capped at 63 characters (the WorkflowRunAddress constructor enforces it), leaving
+    // 387 NVARCHAR characters for run_id (the ingress grammar pins real ids at 32).
     private const string SchemaSql =
         """
         IF OBJECT_ID(N'workflow_runs', N'U') IS NULL
         BEGIN
             CREATE TABLE workflow_runs (
-                run_id NVARCHAR(450) NOT NULL PRIMARY KEY,
+                environment NVARCHAR(63) COLLATE Latin1_General_BIN2 NOT NULL,
+                run_id NVARCHAR(387) COLLATE Latin1_General_BIN2 NOT NULL,
                 [checkpoint] VARBINARY(MAX) NOT NULL,
                 version BIGINT NOT NULL,
                 status NVARCHAR(255) NOT NULL,
                 workflow_id NVARCHAR(255) NOT NULL,
-                environment NVARCHAR(255) NULL,
                 created_at BIGINT NOT NULL,
                 updated_at BIGINT NOT NULL,
                 due_at BIGINT NULL,
@@ -591,7 +604,8 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
                 error_type NVARCHAR(1024) NULL,
                 correlation_id NVARCHAR(MAX) NULL,
                 tags NVARCHAR(MAX) NULL,
-                resume_requested_at BIGINT NULL
+                resume_requested_at BIGINT NULL,
+                CONSTRAINT PK_workflow_runs PRIMARY KEY (environment, run_id)
             );
             CREATE INDEX ix_workflow_runs_due ON workflow_runs (status, due_at);
             CREATE INDEX ix_workflow_runs_awaiting ON workflow_runs (status, awaiting_channel, awaiting_correlation_id);
@@ -599,21 +613,24 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
         IF OBJECT_ID(N'workflow_run_security_tags', N'U') IS NULL
         BEGIN
             CREATE TABLE workflow_run_security_tags (
-                run_id NVARCHAR(450) NOT NULL,
+                environment NVARCHAR(63) COLLATE Latin1_General_BIN2 NOT NULL,
+                run_id NVARCHAR(387) COLLATE Latin1_General_BIN2 NOT NULL,
                 tag_key NVARCHAR(255) NOT NULL,
                 tag_value NVARCHAR(255) NOT NULL
             );
-            CREATE INDEX ix_workflow_run_security_tags_run ON workflow_run_security_tags (run_id);
+            CREATE INDEX ix_workflow_run_security_tags_run ON workflow_run_security_tags (environment, run_id);
             CREATE INDEX ix_workflow_run_security_tags_kv ON workflow_run_security_tags (tag_key, tag_value);
         END;
         IF OBJECT_ID(N'workflow_leases', N'U') IS NULL
         BEGIN
             CREATE TABLE workflow_leases (
-                run_id NVARCHAR(450) NOT NULL PRIMARY KEY,
+                environment NVARCHAR(63) COLLATE Latin1_General_BIN2 NOT NULL,
+                run_id NVARCHAR(387) COLLATE Latin1_General_BIN2 NOT NULL,
                 owner NVARCHAR(255) NOT NULL,
                 token NVARCHAR(255) NOT NULL,
                 expires_at BIGINT NOT NULL,
-                epoch BIGINT NOT NULL
+                epoch BIGINT NOT NULL,
+                CONSTRAINT PK_workflow_leases PRIMARY KEY (environment, run_id)
             );
         END;
         """;

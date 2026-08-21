@@ -1,9 +1,9 @@
-// <copyright file="SqlServerStoreConformanceTests.cs" company="Endjin Limited">
+// <copyright file="SqlServerScheduleRegistryConformanceTests.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Conformance;
+using Corvus.Text.Json.Arazzo.Durability.Schedules;
 using Microsoft.Data.SqlClient;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Testcontainers.MsSql;
@@ -11,13 +11,13 @@ using Testcontainers.MsSql;
 namespace Corvus.Text.Json.Arazzo.Durability.SqlServer.Tests;
 
 /// <summary>
-/// Runs the shared store-conformance suite against <see cref="SqlServerWorkflowStateStore"/> over a real SQL
-/// Server in a container. Each test gets an empty store (the tables are dropped and recreated).
+/// Runs the shared schedule-registry conformance suite against <see cref="SqlServerScheduleRegistry"/> over a
+/// real SQL Server in a container. Each test gets an empty registry (the table is dropped and re-provisioned).
 /// </summary>
 [TestClass]
 [TestCategory("integration")]
 [TestCategory("docker")]
-public sealed class SqlServerStoreConformanceTests : WorkflowStateStoreConformance
+public sealed class SqlServerScheduleRegistryConformanceTests : ScheduleRegistryConformance
 {
     private static MsSqlContainer container = null!;
 
@@ -37,7 +37,7 @@ public sealed class SqlServerStoreConformanceTests : WorkflowStateStoreConforman
         }
     }
 
-    protected override async ValueTask<IWorkflowStateStore> CreateStoreAsync(TimeProvider timeProvider)
+    protected override async ValueTask<IScheduleRegistry> CreateRegistryAsync()
     {
         string connectionString = container.GetConnectionString();
 
@@ -45,12 +45,11 @@ public sealed class SqlServerStoreConformanceTests : WorkflowStateStoreConforman
         {
             await connection.OpenAsync();
             await using SqlCommand reset = connection.CreateCommand();
-            reset.CommandText = "DROP TABLE IF EXISTS workflow_runs; DROP TABLE IF EXISTS workflow_leases; DROP TABLE IF EXISTS workflow_run_security_tags;";
+            reset.CommandText = "DROP TABLE IF EXISTS schedule_registrations;";
             await reset.ExecuteNonQueryAsync();
         }
 
-        // Provision (DDL) with the test's admin credential, then open for operation with no DDL.
-        await SqlServerWorkflowStateStore.PrepareAsync(connectionString);
-        return await SqlServerWorkflowStateStore.ConnectAsync(connectionString, timeProvider);
+        await SqlServerScheduleRegistry.PrepareAsync(connectionString);
+        return await SqlServerScheduleRegistry.ConnectAsync(connectionString);
     }
 }

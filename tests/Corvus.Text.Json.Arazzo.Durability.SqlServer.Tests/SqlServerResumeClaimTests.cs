@@ -59,7 +59,7 @@ public sealed class SqlServerResumeClaimTests
         {
             await connection.OpenAsync();
             await using SqlCommand reset = connection.CreateCommand();
-            reset.CommandText = "DROP TABLE IF EXISTS workflow_runs; DROP TABLE IF EXISTS workflow_leases;";
+            reset.CommandText = "DROP TABLE IF EXISTS workflow_runs; DROP TABLE IF EXISTS workflow_leases; DROP TABLE IF EXISTS workflow_run_security_tags;";
             await reset.ExecuteNonQueryAsync();
         }
 
