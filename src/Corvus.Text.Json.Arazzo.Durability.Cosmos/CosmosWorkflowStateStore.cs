@@ -568,14 +568,21 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         return (count, false);
     }
 
-    // Builds the shared visibility conditions (status / workflow / draft-exclusion / timestamps / correlation / tags /
-    // §14.2 security reach) and their parameter bindings, WITHOUT the keyset cursor. QueryAsync appends the cursor +
-    // paging; CountAsync wraps it in a bounded id projection — both share this predicate so the reach filter cannot
-    // drift. The §14.2 reach is pushed to a native EXISTS over the embedded securityTags array.
+    // Builds the shared visibility conditions (run-id point lookup / status / workflow / draft-exclusion /
+    // timestamps / correlation / tags / §14.2 security reach) and their parameter bindings, WITHOUT the keyset
+    // cursor. QueryAsync appends the cursor + paging; CountAsync wraps it in a bounded id projection — both share
+    // this predicate so the reach filter cannot drift. The §14.2 reach is pushed to a native EXISTS over the
+    // embedded securityTags array.
     private static (List<string> Conditions, List<(string Name, object Value)> Parameters) BuildVisibilityFilter(in WorkflowQuery query)
     {
         var conditions = new List<string>();
         var parameters = new List<(string Name, object Value)>();
+
+        if (query.RunId is { } pointRunId)
+        {
+            conditions.Add("c.id = @pointRunId");
+            parameters.Add(("@pointRunId", pointRunId));
+        }
 
         if (query.Status is { } status)
         {
@@ -588,10 +595,11 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             conditions.Add("c.workflowId = @workflowId");
             parameters.Add(("@workflowId", workflowId));
         }
-        else
+        else if (query.RunId is null)
         {
             // §18: an unfiltered visibility query never surfaces draft runs — a caller must name the reserved $draft id.
-            // #896: schedule runs (the reserved $schedule kind) are hidden the same way.
+            // #896: schedule runs (the reserved $schedule kind) are hidden the same way. ADR 0065 §9 (C4): a point
+            // lookup names its run — as explicit as naming the reserved id — so it sees the reserved kinds too.
             conditions.Add("c.workflowId <> @draftId");
             parameters.Add(("@draftId", DraftRuns.RunWorkflowId));
             conditions.Add("c.workflowId <> @scheduleId");

@@ -268,7 +268,7 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
             {
                 WorkflowRunIndexEntry index = kvp.Value.Index;
 
-                if (!Matches(query, index)
+                if (!Matches(query, kvp.Key, index)
                     || (after is not null && string.CompareOrdinal(kvp.Key, after) <= 0))
                 {
                     continue;
@@ -302,7 +302,7 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         {
             foreach (KeyValuePair<string, Entry> kvp in this.entries)
             {
-                if (Matches(query, kvp.Value.Index) && ++count > cap)
+                if (Matches(query, kvp.Key, kvp.Value.Index) && ++count > cap)
                 {
                     return ValueTask.FromResult((cap, true));
                 }
@@ -312,17 +312,22 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         return ValueTask.FromResult((count, false));
     }
 
-    // The shared visibility filter (status / workflow / draft-exclusion / timestamps / correlation / tags / §14.4
-    // security reach), WITHOUT the keyset cursor: QueryAsync adds the cursor for paging, CountAsync scans with just
-    // this. Both share the one predicate so the reach filter cannot drift between list and count.
+    // The shared visibility filter (run-id point lookup / status / workflow / draft-exclusion / timestamps /
+    // correlation / tags / §14.4 security reach), WITHOUT the keyset cursor: QueryAsync adds the cursor for paging,
+    // CountAsync scans with just this. Both share the one predicate so the reach filter cannot drift between list
+    // and count.
     // §18: draft runs never surface on an unfiltered visibility query — a caller must name the reserved $draft
     // workflow id explicitly (the debug-run surface does; the runs listing never does). #896: schedule runs (the
     // reserved $schedule kind) are hidden the same way — internal scheduler machinery, not operator-facing runs.
-    private static bool Matches(in WorkflowQuery query, in WorkflowRunIndexEntry index)
-        => !((query.Status is { } status && index.Status != status)
+    // ADR 0065 §9 (C4): naming a RUN id is at least as explicit as naming the reserved workflow id, so the point
+    // lookup the management client resolves a bare id through sees the reserved kinds too; the reach filter still
+    // applies in full.
+    private static bool Matches(in WorkflowQuery query, string runId, in WorkflowRunIndexEntry index)
+        => !((query.RunId is { } id && !string.Equals(runId, id, StringComparison.Ordinal))
+            || (query.Status is { } status && index.Status != status)
             || (query.WorkflowId is { } workflowId && index.WorkflowId != workflowId)
-            || (query.WorkflowId is null && string.Equals(index.WorkflowId, DraftRuns.RunWorkflowId, StringComparison.Ordinal))
-            || (query.WorkflowId is null && string.Equals(index.WorkflowId, ScheduleHostedWorkflow.ScheduleWorkflowId, StringComparison.Ordinal))
+            || (query.WorkflowId is null && query.RunId is null && string.Equals(index.WorkflowId, DraftRuns.RunWorkflowId, StringComparison.Ordinal))
+            || (query.WorkflowId is null && query.RunId is null && string.Equals(index.WorkflowId, ScheduleHostedWorkflow.ScheduleWorkflowId, StringComparison.Ordinal))
             || (query.CreatedAfter is { } createdAfter && index.CreatedAt < createdAfter)
             || (query.CreatedBefore is { } createdBefore && index.CreatedAt >= createdBefore)
             || (query.UpdatedAfter is { } updatedAfter && index.UpdatedAt < updatedAfter)

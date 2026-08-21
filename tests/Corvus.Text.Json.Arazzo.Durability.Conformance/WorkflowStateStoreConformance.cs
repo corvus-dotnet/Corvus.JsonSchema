@@ -608,6 +608,68 @@ public abstract class WorkflowStateStoreConformance
     }
 
     [TestMethod]
+    public async Task Query_filters_to_the_named_run_alone()
+    {
+        IWorkflowStateStore store = await this.NewStoreAsync();
+        await store.SaveAsync("run-1", Bytes("a"), Index(WorkflowRunStatus.Pending), WorkflowEtag.None, default);
+        await store.SaveAsync("run-2", Bytes("a"), Index(WorkflowRunStatus.Running), WorkflowEtag.None, default);
+        await store.SaveAsync("run-3", Bytes("a"), Index(WorkflowRunStatus.Running), WorkflowEtag.None, default);
+
+        var index = (IWorkflowWaitIndex)store;
+
+        // ADR 0065 §9 (C4): the point lookup returns exactly the named run — the predicate the management client
+        // resolves a bare run id through — and the count shares it.
+        WorkflowRunPage named = await index.QueryAsync(new WorkflowQuery(RunId: "run-2", Limit: 10), default);
+        named.Runs.ShouldHaveSingleItem().Id.Value.ShouldBe("run-2");
+        named.Runs[0].Index.Status.ShouldBe(WorkflowRunStatus.Running);
+        (await index.CountAsync(new WorkflowQuery(RunId: "run-2"), 100, default)).ShouldBe((1, false));
+
+        // An id the store does not hold answers empty.
+        (await index.QueryAsync(new WorkflowQuery(RunId: "run-9", Limit: 10), default)).Runs.ShouldBeEmpty();
+
+        // The point lookup composes with the other filters rather than overriding them.
+        (await index.QueryAsync(new WorkflowQuery(RunId: "run-2", Status: WorkflowRunStatus.Pending, Limit: 10), default)).Runs.ShouldBeEmpty();
+        (await index.QueryAsync(new WorkflowQuery(RunId: "run-2", WorkflowId: "nope", Limit: 10), default)).Runs.ShouldBeEmpty();
+    }
+
+    [TestMethod]
+    public async Task A_run_named_by_id_is_listed_even_when_it_is_a_reserved_kind()
+    {
+        IWorkflowStateStore store = await this.NewStoreAsync();
+        await store.SaveAsync("draft-1", Bytes("a"), new WorkflowRunIndexEntry(DraftRuns.RunWorkflowId, WorkflowRunStatus.Pending, T0, T0, Environment: "development"), WorkflowEtag.None, default);
+        await store.SaveAsync("schedule-1", Bytes("a"), new WorkflowRunIndexEntry(ScheduleHostedWorkflow.ScheduleWorkflowId, WorkflowRunStatus.Suspended, T0, T0, Environment: "development"), WorkflowEtag.None, default);
+
+        var index = (IWorkflowWaitIndex)store;
+
+        // Naming the run id is at least as explicit as naming the reserved workflow id (§18/#896), so the browse
+        // exclusion does not apply to a point lookup: the debug-run and schedule surfaces resolve their runs by id.
+        WorkflowRunPage draft = await index.QueryAsync(new WorkflowQuery(RunId: "draft-1", Limit: 10), default);
+        draft.Runs.ShouldHaveSingleItem().Id.Value.ShouldBe("draft-1");
+
+        WorkflowRunPage schedule = await index.QueryAsync(new WorkflowQuery(RunId: "schedule-1", Limit: 10), default);
+        schedule.Runs.ShouldHaveSingleItem().Id.Value.ShouldBe("schedule-1");
+    }
+
+    [TestMethod]
+    public async Task A_run_named_by_id_stays_invisible_outside_the_reach_filter()
+    {
+        IWorkflowStateStore store = await this.NewStoreAsync();
+        await store.SaveAsync("run-1", Bytes("a"), Secured([new("tenant", "acme")]), WorkflowEtag.None, default);
+        await store.SaveAsync("run-2", Bytes("a"), Secured([new("tenant", "acme")]), WorkflowEtag.None, default);
+
+        var index = (IWorkflowWaitIndex)store;
+        var claims = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
+        var acme = new SecurityFilter([SecurityRule.Compile("tenant == 'acme'")], claims);
+        var globex = new SecurityFilter([SecurityRule.Compile("tenant == 'globex'")], claims);
+
+        // The reach filter applies to the point lookup exactly as to the browse (§14.2): a named run outside the
+        // caller's reach answers empty — never an existence oracle — and the count agrees.
+        (await index.QueryAsync(new WorkflowQuery(RunId: "run-1", Limit: 10, Security: acme), default)).Runs.ShouldHaveSingleItem().Id.Value.ShouldBe("run-1");
+        (await index.QueryAsync(new WorkflowQuery(RunId: "run-1", Limit: 10, Security: globex), default)).Runs.ShouldBeEmpty();
+        (await index.CountAsync(new WorkflowQuery(RunId: "run-1", Security: globex), 100, default)).ShouldBe((0, false));
+    }
+
+    [TestMethod]
     public async Task Query_filters_by_status_and_workflow()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();

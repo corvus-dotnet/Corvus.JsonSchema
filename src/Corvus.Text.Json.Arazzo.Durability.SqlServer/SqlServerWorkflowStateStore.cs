@@ -459,25 +459,30 @@ public sealed class SqlServerWorkflowStateStore : IWorkflowStateStore, IWorkflow
         return total > cap ? (cap, true) : (total, false);
     }
 
-    // Builds the shared visibility WHERE body (status / workflow / draft-exclusion / timestamps / correlation / tags /
-    // §14.4 security reach) and binds its parameters onto <paramref name="command"/>, returning the predicate SQL
-    // WITHOUT the "WHERE" keyword, the keyset cursor, TOP, or ORDER BY. QueryAsync adds TOP + cursor + paging;
-    // CountAsync wraps it in a bounded COUNT — both share this exact predicate so the reach filter cannot drift.
+    // Builds the shared visibility WHERE body (run-id point lookup / status / workflow / draft-exclusion /
+    // timestamps / correlation / tags / §14.4 security reach) and binds its parameters onto <paramref name="command"/>,
+    // returning the predicate SQL WITHOUT the "WHERE" keyword, the keyset cursor, TOP, or ORDER BY. QueryAsync adds
+    // TOP + cursor + paging; CountAsync wraps it in a bounded COUNT — both share this exact predicate so the reach
+    // filter cannot drift.
     private static string BuildVisibilityFilter(SqlCommand command, in WorkflowQuery query)
     {
         var sql = new System.Text.StringBuilder();
-        sql.Append("(@status IS NULL OR status = @status)");
+        sql.Append("(@point_run_id IS NULL OR run_id = @point_run_id)");
+        sql.Append(" AND (@status IS NULL OR status = @status)");
         sql.Append(" AND (@workflow_id IS NULL OR workflow_id = @workflow_id)");
 
         // §18: an unfiltered visibility query never surfaces draft runs — a caller must name the reserved $draft
-        // workflow id explicitly (the debug-run surface does; the runs listing never does).
-        sql.Append(" AND (@workflow_id IS NOT NULL OR (workflow_id <> @draft_id AND workflow_id <> @schedule_id))");
+        // workflow id explicitly (the debug-run surface does; the runs listing never does). ADR 0065 §9 (C4): a
+        // point lookup names its run — as explicit as naming the reserved id — so the exclusion applies only when
+        // neither the workflow id nor the run id is named.
+        sql.Append(" AND (@workflow_id IS NOT NULL OR @point_run_id IS NOT NULL OR (workflow_id <> @draft_id AND workflow_id <> @schedule_id))");
         sql.Append(" AND (@created_after IS NULL OR created_at >= @created_after)");
         sql.Append(" AND (@created_before IS NULL OR created_at < @created_before)");
         sql.Append(" AND (@updated_after IS NULL OR updated_at >= @updated_after)");
         sql.Append(" AND (@updated_before IS NULL OR updated_at < @updated_before)");
         sql.Append(" AND (@correlation_id IS NULL OR correlation_id = @correlation_id)");
 
+        command.Parameters.Add(NullableText("@point_run_id", query.RunId));
         command.Parameters.Add(NullableText("@status", query.Status?.ToString()));
         command.Parameters.Add(NullableText("@workflow_id", query.WorkflowId));
         command.Parameters.Add(NullableText("@draft_id", DraftRuns.RunWorkflowId));

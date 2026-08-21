@@ -507,7 +507,7 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             }
 
             var fields = entries.ToDictionary(e => (string)e.Name!, e => e.Value);
-            if (!Matches(query, fields))
+            if (!Matches(query, id, fields))
             {
                 continue;
             }
@@ -569,7 +569,7 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             }
 
             var fields = entries.ToDictionary(e => (string)e.Name!, e => e.Value);
-            if (Matches(query, fields) && ++count > cap)
+            if (Matches(query, member, fields) && ++count > cap)
             {
                 return (cap, true);
             }
@@ -578,11 +578,17 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         return (count, false);
     }
 
-    // The shared visibility filter (status / workflow / draft-exclusion / timestamps / correlation / tags / §14.2
-    // security reach) over a run's hash fields, WITHOUT the keyset cursor: QueryAsync adds the cursor + builds the
-    // listing, CountAsync scans with just this. Both share the one predicate so the reach filter cannot drift.
-    private static bool Matches(WorkflowQuery query, Dictionary<string, RedisValue> fields)
+    // The shared visibility filter (run-id point lookup / status / workflow / draft-exclusion / timestamps /
+    // correlation / tags / §14.2 security reach) over a run's hash fields, WITHOUT the keyset cursor: QueryAsync
+    // adds the cursor + builds the listing, CountAsync scans with just this. Both share the one predicate so the
+    // reach filter cannot drift.
+    private static bool Matches(WorkflowQuery query, string runId, Dictionary<string, RedisValue> fields)
     {
+        if (query.RunId is { } pointRunId && !string.Equals(runId, pointRunId, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
         var status = Enum.Parse<WorkflowRunStatus>((string)fields["status"]!);
         if (query.Status is { } wantStatus && status != wantStatus)
         {
@@ -596,8 +602,10 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         }
 
         // §18: an unfiltered visibility query never surfaces draft runs — a caller must name the reserved $draft id.
-        // #896: schedule runs (the reserved $schedule kind) are hidden the same way.
+        // #896: schedule runs (the reserved $schedule kind) are hidden the same way. ADR 0065 §9 (C4): a point
+        // lookup names its run — as explicit as naming the reserved id — so it sees the reserved kinds too.
         if (query.WorkflowId is null
+            && query.RunId is null
             && (string.Equals(workflowId, DraftRuns.RunWorkflowId, StringComparison.Ordinal)
                 || string.Equals(workflowId, ScheduleHostedWorkflow.ScheduleWorkflowId, StringComparison.Ordinal)))
         {

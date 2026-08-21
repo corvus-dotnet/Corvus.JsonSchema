@@ -12,7 +12,9 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 
 /// <summary>
 /// The default <see cref="ISecuredWorkflowManagement"/> over an <see cref="IWorkflowStateStore"/> (plan §11).
-/// Visibility queries use the store's <see cref="IWorkflowWaitIndex"/> (the same index Tier 2 uses for wakeups);
+/// Visibility queries use the store's <see cref="IWorkflowWaitIndex"/> (the same index Tier 2 uses for wakeups),
+/// and every bare-run-id operation resolves through the same reach-filtered index predicate the listing pushes
+/// down (ADR 0065 §9), so visibility by id cannot drift from visibility in the list;
 /// control operations take a single-owner lease and write under optimistic concurrency. Resuming a faulted run
 /// re-executes it through a host-supplied <see cref="WorkflowResumer"/> — the same adapter a
 /// <see cref="WorkflowWorker"/> uses — so the run advances from its last checkpoint (the faulted step), and the
@@ -33,7 +35,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
     private readonly byte[] ownerGroupTagKey;
 
     /// <summary>Initializes a new instance of the <see cref="SecuredWorkflowManagement"/> class.</summary>
-    /// <param name="store">The state store. Visibility queries (<see cref="ListAsync"/>/<see cref="PurgeAsync"/>) require it to also implement <see cref="IWorkflowWaitIndex"/>.</param>
+    /// <param name="store">The state store. Visibility queries (<see cref="ListAsync"/>/<see cref="PurgeAsync"/>) and every run-addressed operation (which resolves its bare id through the reach-filtered index query, ADR 0065 §9) require it to also implement <see cref="IWorkflowWaitIndex"/>.</param>
     /// <param name="owner">This client's identity, used to take run leases.</param>
     /// <param name="resumer">The adapter that re-enters a run's generated executor; required for <see cref="ResumeAsync"/>.</param>
     /// <param name="timeProvider">The time source for index timestamps and lease TTLs; defaults to <see cref="TimeProvider.System"/>.</param>
@@ -193,10 +195,32 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         return index.CountAsync(query with { Security = reach }, cap, cancellationToken);
     }
 
+    // Resolves a bare run id through the store's reach-filtered index query — the SAME predicate ListAsync pushes
+    // down (ADR 0065 §9, C4) — so a run's visibility by id can never drift from its visibility in the list, for any
+    // verb. A run outside the reach and a run the store does not hold answer identically: not resolved. The listing
+    // the query returns carries the run's environment, which is the other half of the run's address; the composite-key
+    // store operations take it from here when the seam is re-cut (C5).
+    private async ValueTask<bool> ResolveWithinReachAsync(WorkflowRunId id, AccessContext context, AccessVerb verb, CancellationToken cancellationToken)
+    {
+        SecurityFilter? reach = context.Reach(verb);
+        IWorkflowWaitIndex index = this.RequireIndex();
+        RowSecurityPushdown.EnsureSupported(reach, index);
+        using WorkflowRunPage page = await index.QueryAsync(new WorkflowQuery(RunId: id.Value, Limit: 1, Security: reach), cancellationToken).ConfigureAwait(false);
+        return page.Runs.Count > 0;
+    }
+
     /// <inheritdoc/>
     public async ValueTask<WorkflowRunDetail?> GetAsync(WorkflowRunId id, AccessContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
+
+        // A run outside the caller's read reach is reported as absent (non-disclosing, §14.2), decided by the store's
+        // index predicate — the one the listing pushes down — never by a second in-process check that could drift
+        // from it (ADR 0065 §9, C4).
+        if (!await this.ResolveWithinReachAsync(id, context, AccessVerb.Read, cancellationToken).ConfigureAwait(false))
+        {
+            return null;
+        }
 
         WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(id, cancellationToken).ConfigureAwait(false);
         if (checkpoint is not { } cp)
@@ -205,13 +229,6 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         }
 
         using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(cp.Utf8);
-
-        // A run outside the caller's read reach is reported as absent (non-disclosing, §14.2).
-        if (!context.Admits(AccessVerb.Read, state.SecurityTags))
-        {
-            return null;
-        }
-
         return new WorkflowRunDetail(state.RunId, state.WorkflowId, state.Status, state.Cursor, state.CreatedAt, state.Wait, state.Fault, cp.Etag, state.CorrelationId, state.Tags, state.SecurityTags, state.Environment, state.UpdatedAt);
     }
 
@@ -220,6 +237,13 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
     {
         ArgumentNullException.ThrowIfNull(context);
 
+        // A run outside the caller's read reach is reported as absent (non-disclosing, §14.2) — the same resolve as
+        // GetAsync, because the journal discloses strictly more than the detail.
+        if (!await this.ResolveWithinReachAsync(id, context, AccessVerb.Read, cancellationToken).ConfigureAwait(false))
+        {
+            return null;
+        }
+
         WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(id, cancellationToken).ConfigureAwait(false);
         if (checkpoint is not { } cp)
         {
@@ -227,13 +251,6 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         }
 
         using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(cp.Utf8);
-
-        // A run outside the caller's read reach is reported as absent (non-disclosing, §14.2) — the same
-        // gate as GetAsync, because the journal discloses strictly more than the detail.
-        if (!context.Admits(AccessVerb.Read, state.SecurityTags))
-        {
-            return null;
-        }
 
         // The projection is written while the checkpoint state is alive (its elements are views into the
         // pooled document); the returned array is fully detached. Outputs are copied bytes-to-bytes.
@@ -304,42 +321,20 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
     {
         ArgumentNullException.ThrowIfNull(context);
 
+        // A run outside the caller's read reach reads back as absent (non-disclosing, §14.2) — the same resolve as
+        // GetAsync.
+        if (!await this.ResolveWithinReachAsync(id, context, AccessVerb.Read, cancellationToken).ConfigureAwait(false))
+        {
+            return null;
+        }
+
         WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(id, cancellationToken).ConfigureAwait(false);
         if (checkpoint is not { } cp)
         {
             return null;
         }
 
-        WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(cp.Utf8);
-
-        // A run outside the caller's read reach reads back as absent (non-disclosing, §14.2) — the same gate as
-        // GetAsync. Dispose the deserialized state before returning null so its pooled buffers are not leaked.
-        if (!context.Admits(AccessVerb.Read, state.SecurityTags))
-        {
-            state.Dispose();
-            return null;
-        }
-
-        return state;
-    }
-
-    // Whether a run is within the caller's write reach (§14.2): unrestricted writers and a missing run pass (the
-    // operation then reports its own not-found / no-op); otherwise the run's security tags must satisfy the reach.
-    private async ValueTask<bool> IsWithinWriteReachAsync(WorkflowRunId id, AccessContext context, CancellationToken cancellationToken)
-    {
-        if (context.WriteReach is null)
-        {
-            return true;
-        }
-
-        WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(id, cancellationToken).ConfigureAwait(false);
-        if (checkpoint is not { } cp)
-        {
-            return true;
-        }
-
-        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(cp.Utf8);
-        return context.Admits(AccessVerb.Write, state.SecurityTags);
+        return WorkflowCheckpointSerializer.Deserialize(cp.Utf8);
     }
 
     /// <inheritdoc/>
@@ -351,8 +346,9 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
             ThrowHelper.ThrowResumerRequired();
         }
 
-        // A run outside the caller's write reach is not actionable (§14.2).
-        if (!await this.IsWithinWriteReachAsync(id, context, cancellationToken).ConfigureAwait(false))
+        // A run outside the caller's write reach is not actionable (§14.2), decided by the store's index predicate
+        // exactly as the listing decides visibility (ADR 0065 §9, C4); a missing run answers the same false.
+        if (!await this.ResolveWithinReachAsync(id, context, AccessVerb.Write, cancellationToken).ConfigureAwait(false))
         {
             return false;
         }
@@ -432,8 +428,9 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        // A run outside the caller's write reach is not actionable (§14.2).
-        if (!await this.IsWithinWriteReachAsync(id, context, cancellationToken).ConfigureAwait(false))
+        // A run outside the caller's write reach is not actionable (§14.2), decided by the store's index predicate
+        // exactly as the listing decides visibility (ADR 0065 §9, C4); a missing run answers the same false.
+        if (!await this.ResolveWithinReachAsync(id, context, AccessVerb.Write, cancellationToken).ConfigureAwait(false))
         {
             return false;
         }
@@ -488,8 +485,9 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         ArgumentNullException.ThrowIfNull(reason);
         ArgumentNullException.ThrowIfNull(context);
 
-        // A run outside the caller's write reach is not actionable (§14.2).
-        if (!await this.IsWithinWriteReachAsync(id, context, cancellationToken).ConfigureAwait(false))
+        // A run outside the caller's write reach is not actionable (§14.2), decided by the store's index predicate
+        // exactly as the listing decides visibility (ADR 0065 §9, C4); a missing run answers the same false.
+        if (!await this.ResolveWithinReachAsync(id, context, AccessVerb.Write, cancellationToken).ConfigureAwait(false))
         {
             return false;
         }
@@ -662,8 +660,9 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        // A run outside the caller's write reach is not actionable (§14.2).
-        if (!await this.IsWithinWriteReachAsync(id, context, cancellationToken).ConfigureAwait(false))
+        // A run outside the caller's write reach is not actionable (§14.2), decided by the store's index predicate
+        // exactly as the listing decides visibility (ADR 0065 §9, C4); a missing run answers the same false.
+        if (!await this.ResolveWithinReachAsync(id, context, AccessVerb.Write, cancellationToken).ConfigureAwait(false))
         {
             return false;
         }

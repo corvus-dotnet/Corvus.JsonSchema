@@ -504,13 +504,19 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         return total > cap ? (cap, true) : ((int)total, false);
     }
 
-    // Builds the shared server-side visibility filter (status / workflow / draft-exclusion / timestamps / correlation /
-    // tags / §14.2 reach), WITHOUT the keyset cursor. QueryAsync adds the cursor; CountAsync reuses this as-is. Both
-    // share it so the predicate that decides what a principal may see cannot drift between listing and counting.
+    // Builds the shared server-side visibility filter (run-id point lookup / status / workflow / draft-exclusion /
+    // timestamps / correlation / tags / §14.2 reach), WITHOUT the keyset cursor. QueryAsync adds the cursor;
+    // CountAsync reuses this as-is. Both share it so the predicate that decides what a principal may see cannot
+    // drift between listing and counting.
     private static FilterDefinition<BsonDocument> BuildFilter(in WorkflowQuery query)
     {
         FilterDefinitionBuilder<BsonDocument> b = Builders<BsonDocument>.Filter;
         FilterDefinition<BsonDocument> filter = b.Empty;
+        if (query.RunId is { } pointRunId)
+        {
+            filter = b.And(filter, b.Eq("_id", pointRunId));
+        }
+
         if (query.Status is { } status)
         {
             filter = b.And(filter, b.Eq("status", status.ToString()));
@@ -520,10 +526,11 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         {
             filter = b.And(filter, b.Eq("workflowId", workflowId));
         }
-        else
+        else if (query.RunId is null)
         {
             // §18: an unfiltered visibility query never surfaces draft runs — a caller must name the reserved $draft id.
-            // #896: schedule runs (the reserved $schedule kind) are hidden the same way.
+            // #896: schedule runs (the reserved $schedule kind) are hidden the same way. ADR 0065 §9 (C4): a point
+            // lookup names its run — as explicit as naming the reserved id — so it sees the reserved kinds too.
             filter = b.And(filter, b.Ne("workflowId", DraftRuns.RunWorkflowId), b.Ne("workflowId", ScheduleHostedWorkflow.ScheduleWorkflowId));
         }
 

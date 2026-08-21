@@ -654,13 +654,18 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         }
     }
 
-    // Builds the shared server-side OData filter (partition / status / workflow / draft-exclusion / correlation /
-    // timestamps), WITHOUT the keyset cursor and WITHOUT the client-side tag + §14.2 reach filters (Table OData cannot
-    // match inside the serialized tag JSON). QueryAsync appends the cursor; CountAsync reuses this. Both share it so
-    // the server-side predicate cannot drift.
+    // Builds the shared server-side OData filter (partition / run-id point lookup / status / workflow /
+    // draft-exclusion / correlation / timestamps), WITHOUT the keyset cursor and WITHOUT the client-side tag + §14.2
+    // reach filters (Table OData cannot match inside the serialized tag JSON). QueryAsync appends the cursor;
+    // CountAsync reuses this. Both share it so the server-side predicate cannot drift.
     private static string BuildVisibilityFilter(in WorkflowQuery query)
     {
         string filter = TableClient.CreateQueryFilter($"PartitionKey eq {IndexPartition}");
+        if (query.RunId is { } pointRunId)
+        {
+            filter += TableClient.CreateQueryFilter($" and RowKey eq {pointRunId}");
+        }
+
         if (query.Status is { } status)
         {
             filter += TableClient.CreateQueryFilter($" and Status eq {status.ToString()}");
@@ -670,10 +675,11 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         {
             filter += TableClient.CreateQueryFilter($" and WorkflowId eq {workflowId}");
         }
-        else
+        else if (query.RunId is null)
         {
             // §18: an unfiltered visibility query never surfaces draft runs — a caller must name the reserved $draft id.
-            // #896: schedule runs (the reserved $schedule kind) are hidden the same way.
+            // #896: schedule runs (the reserved $schedule kind) are hidden the same way. ADR 0065 §9 (C4): a point
+            // lookup names its run — as explicit as naming the reserved id — so it sees the reserved kinds too.
             filter += TableClient.CreateQueryFilter($" and WorkflowId ne {DraftRuns.RunWorkflowId}");
             filter += TableClient.CreateQueryFilter($" and WorkflowId ne {ScheduleHostedWorkflow.ScheduleWorkflowId}");
         }

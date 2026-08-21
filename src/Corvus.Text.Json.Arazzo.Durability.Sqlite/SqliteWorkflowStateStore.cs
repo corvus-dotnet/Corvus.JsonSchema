@@ -473,22 +473,28 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         }
     }
 
-    // Builds the shared visibility WHERE body (status / workflow / draft-exclusion / timestamps / correlation / tags /
-    // §14.4 security reach) and binds its parameters onto <paramref name="command"/>, returning the predicate SQL
-    // WITHOUT the "WHERE" keyword, the keyset cursor, ORDER BY, or LIMIT. QueryAsync appends the cursor + paging;
-    // CountAsync wraps it in a bounded COUNT — both share this exact predicate so the reach filter cannot drift.
+    // Builds the shared visibility WHERE body (run-id point lookup / status / workflow / draft-exclusion /
+    // timestamps / correlation / tags / §14.4 security reach) and binds its parameters onto <paramref name="command"/>,
+    // returning the predicate SQL WITHOUT the "WHERE" keyword, the keyset cursor, ORDER BY, or LIMIT. QueryAsync
+    // appends the cursor + paging; CountAsync wraps it in a bounded COUNT — both share this exact predicate so the
+    // reach filter cannot drift.
     private static string BuildVisibilityFilter(SqliteCommand command, in WorkflowQuery query)
     {
         var sql = new System.Text.StringBuilder();
-        sql.Append("(@status IS NULL OR Status = @status)");
+        sql.Append("(@runId IS NULL OR RunId = @runId)");
+        sql.Append(" AND (@status IS NULL OR Status = @status)");
         sql.Append(" AND (@workflowId IS NULL OR WorkflowId = @workflowId)");
-        sql.Append(" AND (@workflowId IS NOT NULL OR (WorkflowId <> @draftId AND WorkflowId <> @scheduleId))");
+
+        // ADR 0065 §9 (C4): a point lookup names its run — as explicit as naming the reserved workflow id — so the
+        // §18/#896 browse exclusion applies only when neither the workflow id nor the run id is named.
+        sql.Append(" AND (@workflowId IS NOT NULL OR @runId IS NOT NULL OR (WorkflowId <> @draftId AND WorkflowId <> @scheduleId))");
         sql.Append(" AND (@createdAfter IS NULL OR CreatedAt >= @createdAfter)");
         sql.Append(" AND (@createdBefore IS NULL OR CreatedAt < @createdBefore)");
         sql.Append(" AND (@updatedAfter IS NULL OR UpdatedAt >= @updatedAfter)");
         sql.Append(" AND (@updatedBefore IS NULL OR UpdatedAt < @updatedBefore)");
         sql.Append(" AND (@correlationId IS NULL OR CorrelationId = @correlationId)");
 
+        command.Parameters.AddWithValue("@runId", (object?)query.RunId ?? DBNull.Value);
         command.Parameters.AddWithValue("@status", (object?)query.Status?.ToString() ?? DBNull.Value);
         command.Parameters.AddWithValue("@workflowId", (object?)query.WorkflowId ?? DBNull.Value);
 

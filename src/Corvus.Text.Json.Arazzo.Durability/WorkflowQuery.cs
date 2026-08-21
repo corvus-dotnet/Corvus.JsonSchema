@@ -24,6 +24,11 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// <param name="CorrelationId">Restrict to runs with this telemetry correlation id (exact match), if set.</param>
 /// <param name="Tags">Restrict to runs carrying every one of these tags (AND), if set.</param>
 /// <param name="Security">A row-authorization filter restricting results to runs whose security tags satisfy the principal's rule(s) (§14.2); <see langword="null"/> is unrestricted.</param>
+/// <param name="RunId">Restrict to the run with exactly this id, if set — the point lookup the management client
+/// resolves a bare run id through (ADR 0065 §9), so a run's visibility by id is decided by the SAME predicate as its
+/// visibility in the list. Composes with every other filter; <see cref="Security"/> always applies. Naming a run id is
+/// at least as explicit as naming a reserved workflow id, so the §18/#896 browse exclusion of <c>$draft</c>/<c>$schedule</c>
+/// runs does not apply to a point lookup.</param>
 public readonly record struct WorkflowQuery(
     WorkflowRunStatus? Status = null,
     string? WorkflowId = null,
@@ -35,7 +40,8 @@ public readonly record struct WorkflowQuery(
     DateTimeOffset? UpdatedBefore = null,
     string? CorrelationId = null,
     TagSet Tags = default,
-    SecurityFilter? Security = null);
+    SecurityFilter? Security = null,
+    string? RunId = null);
 
 /// <summary>One run in a <see cref="WorkflowRunPage"/>: its id and the indexed projection.</summary>
 /// <param name="Id">The run id.</param>

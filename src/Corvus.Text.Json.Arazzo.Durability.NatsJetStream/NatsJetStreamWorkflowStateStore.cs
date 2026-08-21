@@ -472,7 +472,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         var listings = new List<WorkflowRunListing>();
         await foreach ((WorkflowRunId runId, WorkflowRunIndexEntry index) in this.ScanAsync(candidates, cancellationToken).ConfigureAwait(false))
         {
-            if (Matches(query, index)
+            if (Matches(query, runId.Value, index)
                 && (after is null || string.CompareOrdinal(runId.Value, after) > 0))
             {
                 listings.Add(new WorkflowRunListing(runId, index));
@@ -501,9 +501,9 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         // Bounded scan: count matches with the SAME filter the list applies (so the §14.2 reach cannot drift), stopping
         // one past the cap. A count is order-independent, so no sort or keyset paging.
         int count = 0;
-        await foreach ((WorkflowRunId _, WorkflowRunIndexEntry index) in this.ScanAsync(candidates, cancellationToken).ConfigureAwait(false))
+        await foreach ((WorkflowRunId runId, WorkflowRunIndexEntry index) in this.ScanAsync(candidates, cancellationToken).ConfigureAwait(false))
         {
-            if (Matches(query, index) && ++count > cap)
+            if (Matches(query, runId.Value, index) && ++count > cap)
             {
                 return (cap, true);
             }
@@ -512,17 +512,19 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         return (count, false);
     }
 
-    // The shared visibility filter (status / workflow / draft-exclusion / timestamps / correlation / tags / §14.2
-    // security reach), WITHOUT the keyset cursor: QueryAsync adds the cursor + sorts, CountAsync scans with just this.
-    // Both share the one predicate so the reach filter cannot drift.
-    private static bool Matches(in WorkflowQuery query, in WorkflowRunIndexEntry index)
-        => (query.Status is not { } status || index.Status == status)
+    // The shared visibility filter (run-id point lookup / status / workflow / draft-exclusion / timestamps /
+    // correlation / tags / §14.2 security reach), WITHOUT the keyset cursor: QueryAsync adds the cursor + sorts,
+    // CountAsync scans with just this. Both share the one predicate so the reach filter cannot drift.
+    private static bool Matches(in WorkflowQuery query, string runId, in WorkflowRunIndexEntry index)
+        => (query.RunId is not { } pointRunId || string.Equals(runId, pointRunId, StringComparison.Ordinal))
+            && (query.Status is not { } status || index.Status == status)
             && (query.WorkflowId is not { } workflowId || index.WorkflowId == workflowId)
 
             // §18: an unfiltered visibility query never surfaces draft runs — a caller must name the reserved $draft id.
-            // #896: schedule runs (the reserved $schedule kind) are hidden the same way.
-            && (query.WorkflowId is not null || !string.Equals(index.WorkflowId, DraftRuns.RunWorkflowId, StringComparison.Ordinal))
-            && (query.WorkflowId is not null || !string.Equals(index.WorkflowId, ScheduleHostedWorkflow.ScheduleWorkflowId, StringComparison.Ordinal))
+            // #896: schedule runs (the reserved $schedule kind) are hidden the same way. ADR 0065 §9 (C4): a point
+            // lookup names its run — as explicit as naming the reserved id — so it sees the reserved kinds too.
+            && (query.WorkflowId is not null || query.RunId is not null || !string.Equals(index.WorkflowId, DraftRuns.RunWorkflowId, StringComparison.Ordinal))
+            && (query.WorkflowId is not null || query.RunId is not null || !string.Equals(index.WorkflowId, ScheduleHostedWorkflow.ScheduleWorkflowId, StringComparison.Ordinal))
             && (query.CreatedAfter is not { } createdAfter || index.CreatedAt >= createdAfter)
             && (query.CreatedBefore is not { } createdBefore || index.CreatedAt < createdBefore)
             && (query.UpdatedAfter is not { } updatedAfter || index.UpdatedAt >= updatedAfter)
