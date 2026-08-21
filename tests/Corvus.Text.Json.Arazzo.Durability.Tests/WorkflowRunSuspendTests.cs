@@ -55,7 +55,7 @@ public sealed class WorkflowRunSuspendTests
             run.Status.ShouldBe(WorkflowRunStatus.Suspended);
         }
 
-        using WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, id, time);
+        using WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, TestAddresses.Dev(id), time);
         resumed.ShouldNotBeNull();
         resumed.Status.ShouldBe(WorkflowRunStatus.Suspended);
         resumed.Cursor.ShouldBe(2);
@@ -77,7 +77,7 @@ public sealed class WorkflowRunSuspendTests
             await run.SuspendForMessageAsync(cursor: 1, "responses", "order-9", default);
         }
 
-        using WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, id, time);
+        using WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, TestAddresses.Dev(id), time);
         resumed.ShouldNotBeNull();
         resumed.Status.ShouldBe(WorkflowRunStatus.Suspended);
         resumed.Wait!.Value.Kind.ShouldBe(WorkflowWaitKind.Message);
@@ -99,7 +99,7 @@ public sealed class WorkflowRunSuspendTests
             fault.At.ShouldBe(Start);
         }
 
-        using WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, id, time);
+        using WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, TestAddresses.Dev(id), time);
         resumed.ShouldNotBeNull();
         resumed.Status.ShouldBe(WorkflowRunStatus.Faulted);
         resumed.Fault.ShouldNotBeNull();
@@ -125,7 +125,7 @@ public sealed class WorkflowRunSuspendTests
             run.Wait.ShouldBeNull();
         }
 
-        using WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, id, time);
+        using WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, TestAddresses.Dev(id), time);
         resumed.ShouldNotBeNull();
         resumed.Status.ShouldBe(WorkflowRunStatus.Running);
         resumed.Wait.ShouldBeNull();

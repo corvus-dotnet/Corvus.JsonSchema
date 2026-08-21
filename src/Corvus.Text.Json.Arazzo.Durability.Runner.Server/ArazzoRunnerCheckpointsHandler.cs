@@ -71,16 +71,19 @@ public sealed class ArazzoRunnerCheckpointsHandler : IApiCheckpointsHandler
 
         var id = new WorkflowRunId((string)parameters.RunId);
 
+        // One materialisation serves the bindings check and the address (ADR 0065 decision 9).
+        string environment = (string)parameters.Environment;
+
         // Reading a run's state is a tenant-data read, so it takes the same interlock as writing it. The check is also
         // the non-disclosure rule: a run outside the bindings, one held by a peer, and one that does not exist all fail
         // here identically. The route's claimed environment is validated against the bindings inside the same check, so
         // an environment the principal is not bound to joins that indistinguishable set.
-        if (!await this.coordinator.HoldsLeaseAsync(principal, (string)parameters.Environment, id, (string)parameters.XArazzoLease, cancellationToken).ConfigureAwait(false))
+        if (!await this.coordinator.HoldsLeaseAsync(principal, environment, id, (string)parameters.XArazzoLease, cancellationToken).ConfigureAwait(false))
         {
             return LoadCheckpointResult.Conflict(RunnerProblems.LeaseLost(), workspace);
         }
 
-        CheckpointLoad? loaded = await this.checkpoints.LoadAsync(id, cancellationToken).ConfigureAwait(false);
+        CheckpointLoad? loaded = await this.checkpoints.LoadAsync(new WorkflowRunAddress(environment, id), cancellationToken).ConfigureAwait(false);
         if (loaded is not { } load)
         {
             // The lease is current and the row is absent: the narrow, serious case. A runner holding a non-terminal
@@ -111,7 +114,10 @@ public sealed class ArazzoRunnerCheckpointsHandler : IApiCheckpointsHandler
         }
 
         var id = new WorkflowRunId((string)parameters.RunId);
-        if (!await this.coordinator.HoldsLeaseAsync(principal, (string)parameters.Environment, id, (string)parameters.XArazzoLease, cancellationToken).ConfigureAwait(false))
+
+        // One materialisation serves the bindings check and the address (ADR 0065 decision 9).
+        string environment = (string)parameters.Environment;
+        if (!await this.coordinator.HoldsLeaseAsync(principal, environment, id, (string)parameters.XArazzoLease, cancellationToken).ConfigureAwait(false))
         {
             return SaveCheckpointResult.Conflict(RunnerProblems.LeaseLostOnWrite(), workspace);
         }
@@ -134,14 +140,16 @@ public sealed class ArazzoRunnerCheckpointsHandler : IApiCheckpointsHandler
             }
 
             // Project (and thereby validate) the index from the received bytes here, so a malformed body is a clean 400
-            // and the coordinator only ever handles a well-formed checkpoint. The same bytes are stored verbatim.
+            // and the coordinator only ever handles a well-formed checkpoint. The same bytes are stored verbatim. The
+            // one projection also reports the environment the body claims, which the coordinator checks against the
+            // address on every save (ADR 0065 decision 9) — a body claiming another environment is refused below.
             ReadOnlyMemory<byte> checkpointUtf8 = rented.AsMemory(0, length);
-            if (!WorkflowCheckpointSerializer.TryProjectIndex(checkpointUtf8, out WorkflowRunIndexEntry index))
+            if (!WorkflowCheckpointSerializer.TryProjectIndex(checkpointUtf8, out WorkflowRunIndexEntry index, out string? claimedEnvironment))
             {
                 return SaveCheckpointResult.BadRequest(RunnerProblems.MalformedCheckpoint(), workspace);
             }
 
-            CheckpointSaveResult result = await this.checkpoints.SaveAsync(id, checkpointUtf8, index, sequence, cancellationToken).ConfigureAwait(false);
+            CheckpointSaveResult result = await this.checkpoints.SaveAsync(new WorkflowRunAddress(environment, id), checkpointUtf8, index, claimedEnvironment, sequence, cancellationToken).ConfigureAwait(false);
             return result.Outcome switch
             {
                 CheckpointSaveOutcome.Applied => SaveCheckpointResult.NoContent(workspace, xArazzoCheckpointSeq: sequence),

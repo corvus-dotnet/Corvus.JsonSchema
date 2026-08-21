@@ -108,14 +108,14 @@ public sealed class AzureStorageReachPushdownTests
         (IWorkflowStateStore store, _) = await NewStoreAsync();
         var index = (IWorkflowWaitIndex)store;
 
-        await store.SaveAsync("acme-0", Bytes(), Secured([new("tenant", "acme")]), WorkflowEtag.None, default);
+        await store.SaveAsync(A("acme-0"), Bytes(), Secured([new("tenant", "acme")]), WorkflowEtag.None, default);
         (await index.QueryAsync(new WorkflowQuery(Limit: 10, Security: AcmeReach()), default)).Runs.Count.ShouldBe(1);
 
-        await store.DeleteAsync("acme-0", default);
+        await store.DeleteAsync(A("acme-0"), default);
 
         // A run recreated under the same id must not inherit the deleted run's labels, and the stale entry must not
         // resurrect it: the label index is torn down with the row.
-        await store.SaveAsync("acme-0", Bytes(), Secured([new("tenant", "globex")]), WorkflowEtag.None, default);
+        await store.SaveAsync(A("acme-0"), Bytes(), Secured([new("tenant", "globex")]), WorkflowEtag.None, default);
         (await index.QueryAsync(new WorkflowQuery(Limit: 10, Security: AcmeReach()), default)).Runs.ShouldBeEmpty();
     }
 
@@ -127,7 +127,7 @@ public sealed class AzureStorageReachPushdownTests
         (IWorkflowStateStore store, _) = await NewStoreAsync();
         var index = (IWorkflowWaitIndex)store;
 
-        await store.SaveAsync("odd-0", Bytes(), Secured([new("tenant", "a#b?c")]), WorkflowEtag.None, default);
+        await store.SaveAsync(A("odd-0"), Bytes(), Secured([new("tenant", "a#b?c")]), WorkflowEtag.None, default);
 
         (await index.QueryAsync(new WorkflowQuery(Limit: 10, Security: Reach("tenant == 'a#b?c'")), default))
             .Runs.Count.ShouldBe(1);
@@ -143,14 +143,17 @@ public sealed class AzureStorageReachPushdownTests
     private static WorkflowRunIndexEntry Secured(SecurityTag[] securityTags)
         => new("wf", WorkflowRunStatus.Running, T0, T0, SecurityTags: SecurityTagSet.FromTags(securityTags));
 
+    // The run's full (environment, runId) address (ADR 0065 decision 9).
+    private static WorkflowRunAddress A(string runId) => new("development", new WorkflowRunId(runId));
+
     // Ids are prefixed by tenant so the reachable ones do NOT lead in row-key order — a store that simply took the
     // first page of a sweep would still pass the count assertion, so the ordering has to make that impossible.
     private static async ValueTask SeedAsync(IWorkflowStateStore store, int count)
     {
         for (int i = 0; i < count / 2; ++i)
         {
-            await store.SaveAsync($"acme-{i:D3}", Bytes(), Secured([new("tenant", "acme")]), WorkflowEtag.None, default);
-            await store.SaveAsync($"globex-{i:D3}", Bytes(), Secured([new("tenant", "globex")]), WorkflowEtag.None, default);
+            await store.SaveAsync(A($"acme-{i:D3}"), Bytes(), Secured([new("tenant", "acme")]), WorkflowEtag.None, default);
+            await store.SaveAsync(A($"globex-{i:D3}"), Bytes(), Secured([new("tenant", "globex")]), WorkflowEtag.None, default);
         }
     }
 

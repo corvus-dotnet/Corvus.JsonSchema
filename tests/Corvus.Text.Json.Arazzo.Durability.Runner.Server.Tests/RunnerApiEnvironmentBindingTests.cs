@@ -52,7 +52,7 @@ public sealed class RunnerApiEnvironmentBindingTests
         // operation must refuse, indistinguishably from a lease that is not held.
         await using Host host = await Host.StartAsync(boundEnvironments: [Development]);
         await host.SeedAsync(ProdRunId, Production, WorkflowRunStatus.Running);
-        string lease = await host.PlantLeaseAsync(ProdRunId);
+        string lease = await host.PlantLeaseAsync(ProdRunId, Production);
 
         (await host.LoadCheckpointAsync(Runner, Production, ProdRunId, lease)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
         (await host.SaveCheckpointAsync(Runner, Production, ProdRunId, lease, Checkpoint(ProdRunId, Production, WorkflowRunStatus.Running, sequence: 2), 2)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
@@ -82,7 +82,7 @@ public sealed class RunnerApiEnvironmentBindingTests
         // difference is that the run's environment is inside the bindings.
         await using Host host = await Host.StartAsync(boundEnvironments: [Development]);
         await host.SeedAsync(DevRunId, Development, WorkflowRunStatus.Running);
-        string lease = await host.PlantLeaseAsync(DevRunId);
+        string lease = await host.PlantLeaseAsync(DevRunId, Development);
 
         (await host.LoadCheckpointAsync(Runner, Development, DevRunId, lease)).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await host.RenewLeaseAsync(Runner, Development, DevRunId, lease, 300)).StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -151,18 +151,18 @@ public sealed class RunnerApiEnvironmentBindingTests
         {
             byte[] checkpoint = Checkpoint(runId, environment, status, sequence: 1);
             await store.SaveAsync(
-                new WorkflowRunId(runId),
+                new WorkflowRunAddress(environment, new WorkflowRunId(runId)),
                 checkpoint,
                 WorkflowCheckpointSerializer.ProjectIndex(checkpoint),
                 WorkflowEtag.None,
                 default);
         }
 
-        public async ValueTask<string> PlantLeaseAsync(string runId)
+        public async ValueTask<string> PlantLeaseAsync(string runId, string environment)
         {
             // The wire header is the server-minted composite (epoch + store token), exactly what a claim
             // response would carry; the store token alone is not a presentable lease.
-            WorkflowLease? lease = await store.AcquireLeaseAsync(new WorkflowRunId(runId), Runner, TimeSpan.FromMinutes(5), default);
+            WorkflowLease? lease = await store.AcquireLeaseAsync(new WorkflowRunAddress(environment, new WorkflowRunId(runId)), Runner, TimeSpan.FromMinutes(5), default);
             return RunnerLeaseToken.Issue(lease!.Value.Epoch, lease.Value.Token);
         }
 

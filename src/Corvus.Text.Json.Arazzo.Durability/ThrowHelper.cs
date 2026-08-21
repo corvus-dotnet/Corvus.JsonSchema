@@ -254,6 +254,12 @@ internal static class ThrowHelper
     public static ArgumentException GetNamedRunIdOutsideGrammarException(string runId, string paramName)
         => new(SR.Format(SR.NamedRunIdOutsideGrammar, runId), paramName);
 
+    public static InvalidOperationException GetCheckpointEnvironmentMismatchException(in WorkflowRunAddress address, string? claimed)
+        => new(SR.Format(SR.CheckpointEnvironmentMismatch, address, claimed ?? "<none>"));
+
+    public static InvalidOperationException GetCheckpointMissingEnvironmentException(string runId)
+        => new(SR.Format(SR.CheckpointMissingEnvironment, runId));
+
     public static NotSupportedException GetStartNamedNotSupportedException()
         => new(SR.StartNamedNotSupported);
 

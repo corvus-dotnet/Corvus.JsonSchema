@@ -75,9 +75,9 @@ public sealed class WorkflowWorker
 
         int resumed = 0;
         DateTimeOffset now = this.timeProvider.GetUtcNow();
-        await foreach (WorkflowRunId id in this.index.QueryDueAsync(now, runnerEnvironment, cancellationToken).ConfigureAwait(false))
+        await foreach (WorkflowRunAddress address in this.index.QueryDueAsync(now, runnerEnvironment, cancellationToken).ConfigureAwait(false))
         {
-            if (await this.TryResumeAsync(id, deliveredMessage: default, deliveredHeaders: default, hasDelivered: false, resume, cancellationToken).ConfigureAwait(false))
+            if (await this.TryResumeAsync(address, deliveredMessage: default, deliveredHeaders: default, hasDelivered: false, resume, cancellationToken).ConfigureAwait(false))
             {
                 resumed++;
             }
@@ -150,9 +150,9 @@ public sealed class WorkflowWorker
         ArgumentNullException.ThrowIfNull(resume);
 
         int resumed = 0;
-        await foreach (WorkflowRunId id in this.index.QueryAwaitingAsync(channel, correlationId, runnerEnvironment, cancellationToken).ConfigureAwait(false))
+        await foreach (WorkflowRunAddress address in this.index.QueryAwaitingAsync(channel, correlationId, runnerEnvironment, cancellationToken).ConfigureAwait(false))
         {
-            if (await this.TryResumeAsync(id, payload, headers, hasDelivered: true, resume, cancellationToken).ConfigureAwait(false))
+            if (await this.TryResumeAsync(address, payload, headers, hasDelivered: true, resume, cancellationToken).ConfigureAwait(false))
             {
                 resumed++;
             }
@@ -161,9 +161,9 @@ public sealed class WorkflowWorker
         return resumed;
     }
 
-    private async ValueTask<bool> TryResumeAsync(WorkflowRunId id, JsonElement deliveredMessage, JsonElement deliveredHeaders, bool hasDelivered, WorkflowResumer resume, CancellationToken cancellationToken)
+    private async ValueTask<bool> TryResumeAsync(WorkflowRunAddress address, JsonElement deliveredMessage, JsonElement deliveredHeaders, bool hasDelivered, WorkflowResumer resume, CancellationToken cancellationToken)
     {
-        WorkflowLease? lease = await this.store.AcquireLeaseAsync(id, this.owner, this.leaseTtl, cancellationToken).ConfigureAwait(false);
+        WorkflowLease? lease = await this.store.AcquireLeaseAsync(address, this.owner, this.leaseTtl, cancellationToken).ConfigureAwait(false);
         if (lease is null)
         {
             // Another worker is advancing this run.
@@ -172,7 +172,7 @@ public sealed class WorkflowWorker
 
         try
         {
-            using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.store, id, this.timeProvider, cancellationToken).ConfigureAwait(false);
+            using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.store, address, this.timeProvider, cancellationToken).ConfigureAwait(false);
             if (run is null || run.Status != WorkflowRunStatus.Suspended)
             {
                 // The run was completed, faulted, or deleted between the query and the lease.

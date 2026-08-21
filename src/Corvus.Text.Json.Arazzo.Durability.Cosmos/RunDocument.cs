@@ -41,13 +41,13 @@ public readonly partial struct RunDocument
     /// <c>CosmosJson.WriteToStream</c> so the run is serialized exactly once, into a pooled stream).
     /// </summary>
     /// <param name="writer">The writer to write the document to.</param>
-    /// <param name="id">The run id.</param>
+    /// <param name="address">The run's <c>(environment, runId)</c> address (ADR 0065 decision 9).</param>
     /// <param name="checkpoint">The opaque checkpoint bytes.</param>
     /// <param name="index">The projected index entry.</param>
-    public static void WriteJson(Utf8JsonWriter writer, WorkflowRunId id, ReadOnlyMemory<byte> checkpoint, in WorkflowRunIndexEntry index)
+    public static void WriteJson(Utf8JsonWriter writer, in WorkflowRunAddress address, ReadOnlyMemory<byte> checkpoint, in WorkflowRunIndexEntry index)
     {
         writer.WriteStartObject();
-        writer.WriteString(JsonPropertyNames.IdUtf8, id.Value);
+        writer.WriteString(JsonPropertyNames.IdUtf8, address.RunId.Value);
 
         // Base64-encode the checkpoint straight into the writer — no intermediate base64 string (which would scale with
         // checkpoint size on every write). Read back by RunDocument.CheckpointBytes, which is bytes-native to match.
@@ -81,10 +81,9 @@ public readonly partial struct RunDocument
             writer.WriteString(JsonPropertyNames.CorrelationIdUtf8, correlationId);
         }
 
-        if (index.Environment is { } environment)
-        {
-            writer.WriteString(JsonPropertyNames.EnvironmentUtf8, environment);
-        }
+        // The environment is half the run's address (ADR 0065 decision 9), never absent: written unconditionally so
+        // every scan and dispatch filter can rely on it.
+        writer.WriteString(JsonPropertyNames.EnvironmentUtf8, address.Environment);
 
         if (index.ResumeRequestedAt is { } resumeRequestedAt)
         {
@@ -140,8 +139,7 @@ public readonly partial struct RunDocument
             this.ErrorType.IsNotUndefined() ? (string)this.ErrorType : null,
             CorrelationId: this.CorrelationId.IsNotUndefined() ? (string)this.CorrelationId : null,
             Tags: TagSet.CopyFrom(this.Tags),
-            SecurityTags: securityTags,
-            Environment: this.Environment.IsNotUndefined() ? (string)this.Environment : null);
+            SecurityTags: securityTags);
     }
 
     // Normalize the embedded { k, v } tags into the holder's canonical { key, value } bytes (Cosmos keeps the

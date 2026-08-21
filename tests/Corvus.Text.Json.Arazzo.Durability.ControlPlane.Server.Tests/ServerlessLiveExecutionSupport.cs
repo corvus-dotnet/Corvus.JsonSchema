@@ -169,7 +169,7 @@ internal static class ServerlessLiveExecutionSupport
         host.MapWorkflowCheckpointEndpoints(
             store,
             requireAuthorization: false,
-            authenticateCheckpointToken: (id, token) => CheckpointToken.TryValidate(checkpointSecret, token, id.Value, DateTimeOffset.UtcNow));
+            authenticateCheckpointToken: (address, token) => CheckpointToken.TryValidate(checkpointSecret, token, address, DateTimeOffset.UtcNow));
         host.MapGet("/demo/echo", () => Results.Json(new { status = "ok" }));
         await host.StartAsync();
         try
@@ -249,7 +249,7 @@ internal static class ServerlessLiveExecutionSupport
 
             // The durable proof: the seeded run, reloaded from the store the worker checkpointed back into, is Completed,
             // and its one step read the echo source's body — callEcho's output is { "status": "ok" }.
-            using WorkflowRun? finished = await WorkflowRun.ResumeAsync(store, runId);
+            using WorkflowRun? finished = await WorkflowRun.ResumeAsync(store, new WorkflowRunAddress("isolated", runId));
             finished.ShouldNotBeNull("the run's checkpoint is missing — the worker never saved its advance back to this host.");
             finished!.Status.ShouldBe(WorkflowRunStatus.Completed);
             finished.TryGetStepOutputs("callEcho", out JsonElement callEchoOutputs).ShouldBeTrue("the callEcho step recorded no outputs.");
@@ -340,12 +340,14 @@ internal static class ServerlessLiveExecutionSupport
         return runId;
     }
 
-    /// <summary>Mints a run-scoped checkpoint token (ADR 0062) valid for a window that comfortably outlives one invocation.</summary>
+    /// <summary>Mints a run-scoped checkpoint token (ADR 0062) valid for a window that comfortably outlives one
+    /// invocation. The token binds the run's full address (ADR 0065 decision 9); every live-execution run is seeded
+    /// in the <c>isolated</c> environment the invocations name.</summary>
     /// <param name="secret">The shared checkpoint secret.</param>
     /// <param name="runId">The run the token authorises checkpoints for.</param>
     /// <returns>The bearer token string.</returns>
     internal static string IssueCheckpointToken(ReadOnlySpan<byte> secret, WorkflowRunId runId)
-        => CheckpointToken.Issue(secret, runId.Value, DateTimeOffset.UtcNow.AddMinutes(30));
+        => CheckpointToken.Issue(secret, new WorkflowRunAddress("isolated", runId), DateTimeOffset.UtcNow.AddMinutes(30));
 
     /// <summary>
     /// Dispatches the real runner invocation to a function's invoke URL — the run id, its environment, the checkpoint base
@@ -405,7 +407,7 @@ internal static class ServerlessLiveExecutionSupport
     /// <returns>A task that completes when the run has been verified <c>Completed</c>.</returns>
     internal static async Task AssertRunCompletedWithEchoAsync(IWorkflowStateStore store, WorkflowRunId runId)
     {
-        using WorkflowRun? finished = await WorkflowRun.ResumeAsync(store, runId);
+        using WorkflowRun? finished = await WorkflowRun.ResumeAsync(store, new WorkflowRunAddress("isolated", runId));
         finished.ShouldNotBeNull("the run's checkpoint is missing — the function never saved its advance back through the listener.");
         finished!.Status.ShouldBe(WorkflowRunStatus.Completed);
         finished.TryGetStepOutputs("callEcho", out JsonElement callEchoOutputs).ShouldBeTrue("the callEcho step recorded no outputs.");

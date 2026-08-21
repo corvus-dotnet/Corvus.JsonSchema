@@ -73,6 +73,7 @@ public sealed class ArazzoRunnerLeasesHandler : IApiLeasesHandler
 
         await this.coordinator.ReleaseAsync(
             principal,
+            (string)parameters.Environment,
             new WorkflowRunId((string)parameters.RunId),
             (string)parameters.XArazzoLease,
             cancellationToken).ConfigureAwait(false);

@@ -43,7 +43,7 @@ public class ServerlessWorkflowRunHostTests
 
         var host = new ServerlessWorkflowRunHost(store, new BakedHostedWorkflowResolver(workflow), Binder, Time);
 
-        WorkflowRunResultKind? result = await host.InvokeAsync("run-1", default);
+        WorkflowRunResultKind? result = await host.InvokeAsync(TestAddresses.Dev("run-1"), default);
 
         // The invocation restored the run, bound its transports, ran the resolved workflow, and returned its outcome.
         result.ShouldBe(WorkflowRunResultKind.Completed);
@@ -60,7 +60,7 @@ public class ServerlessWorkflowRunHostTests
 
         var host = new ServerlessWorkflowRunHost(store, new BakedHostedWorkflowResolver(workflow), NoTransports, Time);
 
-        WorkflowRunResultKind? result = await host.InvokeAsync("run-1", default);
+        WorkflowRunResultKind? result = await host.InvokeAsync(TestAddresses.Dev("run-1"), default);
 
         // A Suspended run the control plane requested a resume for (§18) is dispatchable — it advances.
         result.ShouldBe(WorkflowRunResultKind.Completed);
@@ -76,7 +76,7 @@ public class ServerlessWorkflowRunHostTests
 
         var host = new ServerlessWorkflowRunHost(store, new BakedHostedWorkflowResolver(workflow), NoTransports, Time);
 
-        WorkflowRunResultKind? result = await host.InvokeAsync("run-1", default);
+        WorkflowRunResultKind? result = await host.InvokeAsync(TestAddresses.Dev("run-1"), default);
 
         // A run merely waiting (no resume request) is not something this host advances: null, and the workflow never ran.
         result.ShouldBeNull();
@@ -91,7 +91,7 @@ public class ServerlessWorkflowRunHostTests
 
         var host = new ServerlessWorkflowRunHost(store, new BakedHostedWorkflowResolver(workflow), NoTransports, Time);
 
-        WorkflowRunResultKind? result = await host.InvokeAsync("does-not-exist", default);
+        WorkflowRunResultKind? result = await host.InvokeAsync(TestAddresses.Dev("does-not-exist"), default);
 
         // A deleted/unknown run (an at-least-once duplicate that outlived the run) resolves to nothing: null, never run.
         result.ShouldBeNull();
@@ -107,7 +107,7 @@ public class ServerlessWorkflowRunHostTests
 
         // The run is dispatchable, so it reaches the resolver — which is baked for a different version and fails fast
         // rather than silently running the wrong workflow.
-        await Should.ThrowAsync<InvalidOperationException>(async () => await host.InvokeAsync("run-1", default));
+        await Should.ThrowAsync<InvalidOperationException>(async () => await host.InvokeAsync(TestAddresses.Dev("run-1"), default));
     }
 
     [TestMethod]

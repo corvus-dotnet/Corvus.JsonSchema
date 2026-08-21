@@ -150,7 +150,7 @@ public sealed class InProcessDraftRunnerTests
 
         // The runner claimed the draft, compiled it from the captured bytes, and drove it to completion.
         advanced.ShouldBe(1);
-        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, id);
+        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev(id));
         completed!.Status.ShouldBe(WorkflowRunStatus.Completed);
 
         // Proof of the real transport: the local endpoint received the resolved getPet request.
@@ -203,7 +203,7 @@ public sealed class InProcessDraftRunnerTests
         advanced.ShouldBe(2);
         foreach (WorkflowRunId id in new[] { first, second })
         {
-            using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, id);
+            using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev(id));
             completed!.Status.ShouldBe(WorkflowRunStatus.Completed);
 
             ReadOnlyMemory<byte>? traceUtf8 = await traceStore.GetAsync(id, default);
@@ -236,9 +236,9 @@ public sealed class InProcessDraftRunnerTests
         int advanced = await runner.RunPendingAsync();
         advanced.ShouldBe(2);
 
-        using WorkflowRun? badRun = await WorkflowRun.ResumeAsync(runStore, bad);
+        using WorkflowRun? badRun = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev(bad));
         badRun!.Status.ShouldBe(WorkflowRunStatus.Faulted);
-        using WorkflowRun? goodRun = await WorkflowRun.ResumeAsync(runStore, good);
+        using WorkflowRun? goodRun = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev(good));
         goodRun!.Status.ShouldBe(WorkflowRunStatus.Completed);
 
         // A second pump does not re-claim the faulted run (it is terminal), so it never blocks the pump again.
@@ -263,7 +263,7 @@ public sealed class InProcessDraftRunnerTests
         // The runner drove the draft; the real 5xx failed the step's $statusCode == 200 criterion, so the durable
         // executor faulted the run (a resumable terminal), and the cached trace reflects the fault + the exchange.
         advanced.ShouldBe(1);
-        using WorkflowRun? faulted = await WorkflowRun.ResumeAsync(runStore, id);
+        using WorkflowRun? faulted = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev(id));
         faulted!.Status.ShouldBe(WorkflowRunStatus.Faulted);
 
         ReadOnlyMemory<byte>? traceUtf8 = await traceStore.GetAsync(id, default);
@@ -305,7 +305,7 @@ public sealed class InProcessDraftRunnerTests
         advanced.ShouldBe(0);
         endpoint.Requests.Count.ShouldBe(0);
         (await traceStore.GetAsync(id, default)).HasValue.ShouldBeFalse();
-        using WorkflowRun? pending = await WorkflowRun.ResumeAsync(runStore, id);
+        using WorkflowRun? pending = await WorkflowRun.ResumeAsync(runStore, TestAddresses.In("staging", id));
         pending!.Status.ShouldBe(WorkflowRunStatus.Pending);
     }
 
@@ -330,7 +330,7 @@ public sealed class InProcessDraftRunnerTests
 
         // Segment 1: getPet runs, then the run pauses after the step; mark it resume-claimable for the next pump.
         (await runner.RunPendingAsync()).ShouldBe(1);
-        using (WorkflowRun? afterFirst = await WorkflowRun.ResumeAsync(runStore, id))
+        using (WorkflowRun? afterFirst = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev(id)))
         {
             afterFirst!.Status.ShouldBe(WorkflowRunStatus.Suspended);
             await afterFirst.RequestResumeAsync(pause, default);

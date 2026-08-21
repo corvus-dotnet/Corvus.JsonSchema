@@ -158,7 +158,7 @@ public sealed class StoreControlPlaneCapacityGuardTests
                 string runId = $"run-{this.seeded++}";
                 byte[] checkpoint = Checkpoint(runId, status);
                 await this.store.SaveAsync(
-                    new WorkflowRunId(runId),
+                    new WorkflowRunAddress(Environment, new WorkflowRunId(runId)),
                     checkpoint,
                     WorkflowCheckpointSerializer.ProjectIndex(checkpoint),
                     WorkflowEtag.None,

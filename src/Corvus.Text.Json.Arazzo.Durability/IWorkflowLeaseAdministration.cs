@@ -22,12 +22,16 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 public interface IWorkflowLeaseAdministration
 {
     /// <summary>
-    /// Expires every advisory lease currently held by <paramref name="owner"/>, so any run they hold becomes immediately
-    /// reclaimable by another owner (and the owner's next optimistic-concurrency write for that run conflicts). Idempotent —
-    /// an owner holding no live leases expires none.
+    /// Expires the advisory leases currently held by <paramref name="owner"/> on runs in
+    /// <paramref name="environment"/>, so any run they hold there becomes immediately reclaimable by another owner
+    /// (and the owner's next optimistic-concurrency write for that run conflicts). Idempotent — an owner holding no
+    /// live leases in scope expires none.
     /// </summary>
     /// <param name="owner">The lease owner whose leases to expire (a runner id — the same value passed to <see cref="IWorkflowStateStore.AcquireLeaseAsync"/>).</param>
+    /// <param name="environment">The environment whose leases to expire — revocation withdraws an environment, and
+    /// a runner that keeps other environments keeps its leases there (design §5.5, ADR 0065 decision 9); pass
+    /// <see langword="null"/> to fence the owner across every environment (a fully-revoked or compromised runner).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The number of live leases expired.</returns>
-    ValueTask<int> ExpireLeasesForOwnerAsync(string owner, CancellationToken cancellationToken);
+    ValueTask<int> ExpireLeasesForOwnerAsync(string owner, string? environment, CancellationToken cancellationToken);
 }

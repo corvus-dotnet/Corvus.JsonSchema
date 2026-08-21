@@ -1511,7 +1511,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         }
 
         var runId = new WorkflowRunId((string)parameters.DebugRunId);
-        if (!await this.RunBelongsToWorkingCopyAsync(runId, id, cancellationToken).ConfigureAwait(false))
+        if (await this.RunBelongsToWorkingCopyAsync(runId, id, cancellationToken).ConfigureAwait(false) is not { } runEnvironment)
         {
             return ResumeDebugRunResult.NotFound(DebugRunNotFoundProblem(), workspace);
         }
@@ -1550,7 +1550,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
             WorkflowPauseConfig? pause = body.Pause.IsNotUndefined()
                 ? TranslatePause(body.Pause, await this.CapturedStepIdsAsync(runId, cancellationToken).ConfigureAwait(false))
                 : null;
-            await this.MarkResumeClaimableAsync(runId, pause, cancellationToken).ConfigureAwait(false);
+            await this.MarkResumeClaimableAsync(new WorkflowRunAddress(runEnvironment, runId), pause, cancellationToken).ConfigureAwait(false);
         }
 
         ParsedJsonDocument<Models.DebugRun>? view = await this.BuildDebugRunViewAsync(runId, id, cancellationToken).ConfigureAwait(false);
@@ -1587,7 +1587,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         }
 
         var runId = new WorkflowRunId((string)parameters.DebugRunId);
-        if (!await this.RunBelongsToWorkingCopyAsync(runId, id, cancellationToken).ConfigureAwait(false))
+        if (await this.RunBelongsToWorkingCopyAsync(runId, id, cancellationToken).ConfigureAwait(false) is null)
         {
             return InjectDebugRunMessageResult.NotFound(DebugRunNotFoundProblem(), workspace);
         }
@@ -1650,7 +1650,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         }
 
         var runId = new WorkflowRunId((string)parameters.DebugRunId);
-        if (!await this.RunBelongsToWorkingCopyAsync(runId, id, cancellationToken).ConfigureAwait(false))
+        if (await this.RunBelongsToWorkingCopyAsync(runId, id, cancellationToken).ConfigureAwait(false) is null)
         {
             return CancelDebugRunResult.NotFound(DebugRunNotFoundProblem(), workspace);
         }
@@ -1694,41 +1694,44 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         }
 
         var runId = new WorkflowRunId((string)parameters.DebugRunId);
-        if (!await this.RunBelongsToWorkingCopyAsync(runId, id, cancellationToken).ConfigureAwait(false))
+        if (await this.RunBelongsToWorkingCopyAsync(runId, id, cancellationToken).ConfigureAwait(false) is not { } runEnvironment)
         {
             return DeleteDebugRunResult.NotFound(DebugRunNotFoundProblem(), workspace);
         }
 
         // §18 R5c: purge the run's metadata trace, its captured draft, and the durable run itself. Idempotent per
         // store — an id with no entry is a no-op. The trace store may be unwired (trace was optional); guard it.
+        // The durable run is addressed by (environment, runId) — the environment comes from the captured record
+        // (ADR 0065 decision 9); the draft-run and trace stores keep their own run-id keys.
         if (this.draftRunTraceStore is { } traceStore)
         {
             await traceStore.DeleteAsync(runId, cancellationToken).ConfigureAwait(false);
         }
 
         await this.draftRunStore!.DeleteAsync(runId, cancellationToken).ConfigureAwait(false);
-        await this.workflowStateStore!.DeleteAsync(runId, cancellationToken).ConfigureAwait(false);
+        await this.workflowStateStore!.DeleteAsync(new WorkflowRunAddress(runEnvironment, runId), cancellationToken).ConfigureAwait(false);
 
         GovernanceAudit.Mutation(this.auditLogger, "debug-run.delete", this.AuditActor(), DebugRunTargetKind, runId.Value, "deleted");
         return DeleteDebugRunResult.NoContent();
     }
 
-    /// <summary>Whether a run's captured record names this working copy (the nested route's parent) — the
-    /// non-disclosing cross-working-copy isolation a debug-run sub-route enforces (§14.2). A missing capture is
-    /// "not this working copy".</summary>
-    private async ValueTask<bool> RunBelongsToWorkingCopyAsync(WorkflowRunId runId, string workingCopyId, CancellationToken cancellationToken)
+    /// <summary>Resolves a run's environment when its captured record names this working copy (the nested route's
+    /// parent) — the non-disclosing cross-working-copy isolation a debug-run sub-route enforces (§14.2), and the
+    /// environment half of the run's address (ADR 0065 decision 9) in one read. A missing capture, or one naming a
+    /// different working copy, answers <see langword="null"/>: "not this working copy".</summary>
+    private async ValueTask<string?> RunBelongsToWorkingCopyAsync(WorkflowRunId runId, string workingCopyId, CancellationToken cancellationToken)
     {
         using ParsedJsonDocument<DraftRun>? record = await this.draftRunStore!.GetAsync(runId, cancellationToken).ConfigureAwait(false);
-        return record is { } r && r.RootElement.WorkingCopyIdValue == workingCopyId;
+        return record is { } r && r.RootElement.WorkingCopyIdValue == workingCopyId ? (string)r.RootElement.Environment : null;
     }
 
     /// <summary>Marks a §18 debug run resume-claimable with the requested pause (design §18 R5): the control plane
     /// persists the pause-hold (or clears it on a bare resume) and stamps the resume-requested marker, then returns —
     /// it never executes the run. A runner surfaces the run through its dispatch index, claims it, applies the
     /// persisted pause, advances it, and persists the trace; the UI polls <c>get-debug-run</c> for the new state.</summary>
-    private async ValueTask MarkResumeClaimableAsync(WorkflowRunId runId, WorkflowPauseConfig? pause, CancellationToken cancellationToken)
+    private async ValueTask MarkResumeClaimableAsync(WorkflowRunAddress address, WorkflowPauseConfig? pause, CancellationToken cancellationToken)
     {
-        using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.workflowStateStore!, runId, this.timeProvider, cancellationToken).ConfigureAwait(false);
+        using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.workflowStateStore!, address, this.timeProvider, cancellationToken).ConfigureAwait(false);
         if (run is null)
         {
             return;

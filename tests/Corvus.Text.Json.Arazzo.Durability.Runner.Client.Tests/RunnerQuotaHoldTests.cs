@@ -49,11 +49,11 @@ public sealed class RunnerQuotaHoldTests
 
         // The claim itself spends nothing on the checkpoint counter, so the first load takes the single burst token and
         // the save that follows is refused until the bucket refills.
-        await fixture.Client.Checkpoints.LoadAsync(claim.RunId, default);
+        await fixture.Client.Checkpoints.LoadAsync(claim.Address, default);
 
         byte[] next = RunnerApiFixture.Checkpoint(claim.RunId.Value, WorkflowRunStatus.Running, sequence: 2);
         WorkflowEtag etag = await fixture.Client.Checkpoints.SaveAsync(
-            claim.RunId,
+            claim.Address,
             next,
             WorkflowCheckpointSerializer.ProjectIndex(next),
             WorkflowEtag.None,
@@ -80,12 +80,12 @@ public sealed class RunnerQuotaHoldTests
         await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending);
         RunnerClaim claim = (await fixture.Client.TryClaimAsync([RunnerApiFixture.Version])).ShouldNotBeNull();
 
-        await fixture.Client.Checkpoints.LoadAsync(claim.RunId, default);
+        await fixture.Client.Checkpoints.LoadAsync(claim.Address, default);
 
         byte[] next = RunnerApiFixture.Checkpoint(claim.RunId.Value, WorkflowRunStatus.Running, sequence: 2);
         RunnerQuotaExhaustedException failed = await Should.ThrowAsync<RunnerQuotaExhaustedException>(
             async () => await fixture.Client.Checkpoints.SaveAsync(
-                claim.RunId,
+                claim.Address,
                 next,
                 WorkflowCheckpointSerializer.ProjectIndex(next),
                 WorkflowEtag.None,
@@ -113,15 +113,15 @@ public sealed class RunnerQuotaHoldTests
         RunnerClaim claim = (await fixture.Client.TryClaimAsync([RunnerApiFixture.Version])).ShouldNotBeNull();
 
         // The first load takes the only token. The second is refused, held once, refused again, and fails.
-        await fixture.Client.Checkpoints.LoadAsync(claim.RunId, default);
+        await fixture.Client.Checkpoints.LoadAsync(claim.Address, default);
         await Should.ThrowAsync<RunnerQuotaExhaustedException>(
-            async () => await fixture.Client.Checkpoints.LoadAsync(claim.RunId, default));
+            async () => await fixture.Client.Checkpoints.LoadAsync(claim.Address, default));
 
         // That single attempt belonged to the advance, so a save now has none left and fails without holding at all.
         byte[] next = RunnerApiFixture.Checkpoint(claim.RunId.Value, WorkflowRunStatus.Running, sequence: 2);
         await Should.ThrowAsync<RunnerQuotaExhaustedException>(
             async () => await fixture.Client.Checkpoints.SaveAsync(
-                claim.RunId,
+                claim.Address,
                 next,
                 WorkflowCheckpointSerializer.ProjectIndex(next),
                 WorkflowEtag.None,
@@ -159,18 +159,18 @@ public sealed class RunnerQuotaHoldTests
         RunnerClaim first = (await fixture.Client.TryClaimAsync([RunnerApiFixture.Version])).ShouldNotBeNull();
 
         // The one burst token goes to this load; everything after it is refused.
-        await fixture.Client.Checkpoints.LoadAsync(first.RunId, default);
+        await fixture.Client.Checkpoints.LoadAsync(first.Address, default);
         await Should.ThrowAsync<RunnerQuotaExhaustedException>(
-            async () => await fixture.Client.Checkpoints.LoadAsync(first.RunId, default));
+            async () => await fixture.Client.Checkpoints.LoadAsync(first.Address, default));
 
         // A third attempt on the SAME advance has no allowance left, so it fails without waiting at all.
         long beforeSpent = Stopwatch.GetTimestamp();
         await Should.ThrowAsync<RunnerQuotaExhaustedException>(
-            async () => await fixture.Client.Checkpoints.LoadAsync(first.RunId, default));
+            async () => await fixture.Client.Checkpoints.LoadAsync(first.Address, default));
         TimeSpan spent = Stopwatch.GetElapsedTime(beforeSpent);
 
         // Releasing ends the advance, and with it the allowance it had spent.
-        await fixture.Client.ReleaseAsync(first.RunId);
+        await fixture.Client.ReleaseAsync(first.Address);
 
         // The released run becomes claimable again and comes back, which makes this the stronger case: the allowance is
         // keyed by the same run, so a fresh hold proves the budget was genuinely reset rather than that a different key
@@ -179,7 +179,7 @@ public sealed class RunnerQuotaHoldTests
 
         long beforeFresh = Stopwatch.GetTimestamp();
         await Should.ThrowAsync<RunnerQuotaExhaustedException>(
-            async () => await fixture.Client.Checkpoints.LoadAsync(second.RunId, default));
+            async () => await fixture.Client.Checkpoints.LoadAsync(second.Address, default));
         TimeSpan fresh = Stopwatch.GetElapsedTime(beforeFresh);
 
         // The new advance held once before failing; the exhausted one did not hold at all.
@@ -203,12 +203,12 @@ public sealed class RunnerQuotaHoldTests
         await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending);
         RunnerClaim claim = (await fixture.Client.TryClaimAsync([RunnerApiFixture.Version])).ShouldNotBeNull();
 
-        await fixture.Client.Checkpoints.LoadAsync(claim.RunId, default);
+        await fixture.Client.Checkpoints.LoadAsync(claim.Address, default);
         await Should.ThrowAsync<RunnerQuotaExhaustedException>(
-            async () => await fixture.Client.Checkpoints.LoadAsync(claim.RunId, default));
+            async () => await fixture.Client.Checkpoints.LoadAsync(claim.Address, default));
 
         // The lease was never forgotten, so a renewal still works: the run is still this runner's.
-        DateTimeOffset renewed = await fixture.Client.RenewAsync(claim.RunId);
+        DateTimeOffset renewed = await fixture.Client.RenewAsync(claim.Address);
         renewed.ShouldBeGreaterThan(RunnerApiFixture.T0);
     }
 }

@@ -22,6 +22,10 @@ public static class ResumeClaimConformance
 {
     private static readonly DateTimeOffset T0 = new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
+    // The suite's default address half (ADR 0065 decision 9); tests name another environment where the scope matters.
+    private static WorkflowRunAddress A(string runId, string environment = "development")
+        => new(environment, new WorkflowRunId(runId));
+
     /// <summary>Asserts that only runs carrying the resume-requested marker (Suspended or Faulted) are surfaced —
     /// a plainly-paused Suspended run without the marker is not.</summary>
     /// <param name="store">The store under test (must implement <see cref="IWorkflowDispatchIndex"/>).</param>
@@ -32,15 +36,15 @@ public static class ResumeClaimConformance
         var dispatch = (IWorkflowDispatchIndex)store;
 
         // A plainly-paused run (Suspended, no marker) is NOT claimable — an interactive debug pause stays put.
-        await store.SaveAsync("paused", Bytes(), Suspended(resumeRequestedAt: null), WorkflowEtag.None, default);
+        await store.SaveAsync(A("paused"), Bytes(), Suspended(resumeRequestedAt: null), WorkflowEtag.None, default);
 
         // A Suspended run the control plane marked resume-claimable IS claimable (and stays Suspended, never Pending).
-        await store.SaveAsync("resume-suspended", Bytes(), Suspended(resumeRequestedAt: T0), WorkflowEtag.None, default);
+        await store.SaveAsync(A("resume-suspended"), Bytes(), Suspended(resumeRequestedAt: T0), WorkflowEtag.None, default);
 
         // A Faulted run whose checkpoint a caller mutated then marked resume-claimable IS claimable.
-        await store.SaveAsync("resume-faulted", Bytes(), Faulted(resumeRequestedAt: T0), WorkflowEtag.None, default);
+        await store.SaveAsync(A("resume-faulted"), Bytes(), Faulted(resumeRequestedAt: T0), WorkflowEtag.None, default);
 
-        List<string> claimable = (await Collect(dispatch.QueryClaimableAsync(["wf"], T0, default))).Select(r => r.Value).ToList();
+        List<string> claimable = (await Collect(dispatch.QueryClaimableAsync(["wf"], T0, default))).Select(a => a.RunId.Value).ToList();
         claimable.ShouldContain("resume-suspended");
         claimable.ShouldContain("resume-faulted");
         claimable.ShouldNotContain("paused");
@@ -55,40 +59,40 @@ public static class ResumeClaimConformance
         ArgumentNullException.ThrowIfNull(store);
         var dispatch = (IWorkflowDispatchIndex)store;
 
-        await store.SaveAsync("prod", Bytes(), Suspended(resumeRequestedAt: T0, environment: "production"), WorkflowEtag.None, default);
-        await store.SaveAsync("staging", Bytes(), Suspended(resumeRequestedAt: T0, environment: "staging"), WorkflowEtag.None, default);
-        await store.SaveAsync("other-wf", Bytes(), new WorkflowRunIndexEntry("other", WorkflowRunStatus.Suspended, T0, T0, ResumeRequestedAt: T0), WorkflowEtag.None, default);
+        await store.SaveAsync(A("prod", "production"), Bytes(), Suspended(resumeRequestedAt: T0), WorkflowEtag.None, default);
+        await store.SaveAsync(A("staging", "staging"), Bytes(), Suspended(resumeRequestedAt: T0), WorkflowEtag.None, default);
+        await store.SaveAsync(A("other-wf", "production"), Bytes(), new WorkflowRunIndexEntry("other", WorkflowRunStatus.Suspended, T0, T0, ResumeRequestedAt: T0), WorkflowEtag.None, default);
 
         // §5.5 pinning holds for the resume-claimable path: a production runner claims only the production-pinned run,
         // and never a run for a workflow it does not host.
-        List<string> production = (await Collect(dispatch.QueryClaimableAsync(["wf"], "production", T0, default))).Select(r => r.Value).ToList();
+        List<string> production = (await Collect(dispatch.QueryClaimableAsync(["wf"], "production", T0, default))).Select(a => a.RunId.Value).ToList();
         production.ShouldContain("prod");
         production.ShouldNotContain("staging");
         production.ShouldNotContain("other-wf");
 
         // An unscoped dispatcher (null environment) still filters by hosted id, but claims regardless of environment.
-        List<string> unscoped = (await Collect(dispatch.QueryClaimableAsync(["wf"], null, T0, default))).Select(r => r.Value).ToList();
+        List<string> unscoped = (await Collect(dispatch.QueryClaimableAsync(["wf"], null, T0, default))).Select(a => a.RunId.Value).ToList();
         unscoped.ShouldContain("prod");
         unscoped.ShouldContain("staging");
         unscoped.ShouldNotContain("other-wf");
     }
 
-    private static WorkflowRunIndexEntry Suspended(DateTimeOffset? resumeRequestedAt, string? environment = null)
-        => new("wf", WorkflowRunStatus.Suspended, T0, T0, Environment: environment, ResumeRequestedAt: resumeRequestedAt);
+    private static WorkflowRunIndexEntry Suspended(DateTimeOffset? resumeRequestedAt)
+        => new("wf", WorkflowRunStatus.Suspended, T0, T0, ResumeRequestedAt: resumeRequestedAt);
 
     private static WorkflowRunIndexEntry Faulted(DateTimeOffset? resumeRequestedAt)
         => new("wf", WorkflowRunStatus.Faulted, T0, T0, ErrorType: "boom", ResumeRequestedAt: resumeRequestedAt);
 
     private static byte[] Bytes() => "{}"u8.ToArray();
 
-    private static async Task<List<WorkflowRunId>> Collect(IAsyncEnumerable<WorkflowRunId> source)
+    private static async Task<List<WorkflowRunAddress>> Collect(IAsyncEnumerable<WorkflowRunAddress> source)
     {
-        var ids = new List<WorkflowRunId>();
-        await foreach (WorkflowRunId id in source)
+        var addresses = new List<WorkflowRunAddress>();
+        await foreach (WorkflowRunAddress address in source)
         {
-            ids.Add(id);
+            addresses.Add(address);
         }
 
-        return ids;
+        return addresses;
     }
 }

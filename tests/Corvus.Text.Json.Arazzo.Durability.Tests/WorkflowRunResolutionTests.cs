@@ -56,7 +56,7 @@ public sealed class WorkflowRunResolutionTests
         (await management.DeleteAsync("run-1", AcmeWriter, default)).ShouldBeFalse();
 
         // The run itself is untouched (the refusal came before any store write).
-        (await store.LoadAsync("run-1", default)).ShouldNotBeNull();
+        (await store.LoadAsync(TestAddresses.Dev("run-1"), default)).ShouldNotBeNull();
     }
 
     [TestMethod]
@@ -87,7 +87,7 @@ public sealed class WorkflowRunResolutionTests
         var store = new InMemoryWorkflowStateStore();
         await CreateRunAsync(store, runId, "wf", securityTags: SecurityTagSet.FromTags([new("tenant", "acme")]));
 
-        WorkflowCheckpoint? loaded = await store.LoadAsync(runId, default);
+        WorkflowCheckpoint? loaded = await store.LoadAsync(TestAddresses.Dev(runId), default);
         loaded.ShouldNotBeNull();
         WorkflowCheckpoint checkpoint = loaded.Value;
         var drifted = new WorkflowRunIndexEntry(
@@ -95,9 +95,8 @@ public sealed class WorkflowRunResolutionTests
             WorkflowRunStatus.Pending,
             Time.GetUtcNow(),
             Time.GetUtcNow(),
-            SecurityTags: SecurityTagSet.FromTags([new("tenant", "globex")]),
-            Environment: "development");
-        await store.SaveAsync(runId, checkpoint.Utf8.ToArray(), drifted, checkpoint.Etag, default);
+            SecurityTags: SecurityTagSet.FromTags([new("tenant", "globex")]));
+        await store.SaveAsync(TestAddresses.Dev(runId), checkpoint.Utf8.ToArray(), drifted, checkpoint.Etag, default);
         return store;
     }
 

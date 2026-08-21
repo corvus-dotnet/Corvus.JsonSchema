@@ -43,7 +43,12 @@ public readonly record struct WorkflowQuery(
     SecurityFilter? Security = null,
     string? RunId = null);
 
-/// <summary>One run in a <see cref="WorkflowRunPage"/>: its id and the indexed projection.</summary>
-/// <param name="Id">The run id.</param>
+/// <summary>One run in a <see cref="WorkflowRunPage"/>: its full <c>(environment, runId)</c> address and the
+/// indexed projection (ADR 0065 decision 9 — the address, not a bare id, is how a listing row is operated on).</summary>
+/// <param name="Address">The run's address.</param>
 /// <param name="Index">The indexed projection (status, workflow id, timestamps, wait/fault summary).</param>
-public readonly record struct WorkflowRunListing(WorkflowRunId Id, WorkflowRunIndexEntry Index);
+public readonly record struct WorkflowRunListing(WorkflowRunAddress Address, WorkflowRunIndexEntry Index)
+{
+    /// <summary>Gets the run id half of <see cref="Address"/>.</summary>
+    public WorkflowRunId Id => this.Address.RunId;
+}

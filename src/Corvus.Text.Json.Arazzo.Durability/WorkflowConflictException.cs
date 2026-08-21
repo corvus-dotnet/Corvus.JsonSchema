@@ -12,17 +12,20 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 public sealed class WorkflowConflictException : Exception
 {
     /// <summary>Initializes a new instance of the <see cref="WorkflowConflictException"/> class.</summary>
-    /// <param name="runId">The run whose save conflicted.</param>
+    /// <param name="address">The run whose save conflicted, by its full address (ADR 0065 decision 9).</param>
     /// <param name="expected">The etag the caller expected.</param>
-    public WorkflowConflictException(WorkflowRunId runId, WorkflowEtag expected)
-        : base($"The checkpoint for workflow run '{runId}' was modified concurrently (expected etag '{expected}'). Reload and retry.")
+    public WorkflowConflictException(WorkflowRunAddress address, WorkflowEtag expected)
+        : base($"The checkpoint for workflow run '{address}' was modified concurrently (expected etag '{expected}'). Reload and retry.")
     {
-        this.RunId = runId;
+        this.Address = address;
         this.Expected = expected;
     }
 
-    /// <summary>Gets the run whose save conflicted.</summary>
-    public WorkflowRunId RunId { get; }
+    /// <summary>Gets the run whose save conflicted, by its full <c>(environment, runId)</c> address.</summary>
+    public WorkflowRunAddress Address { get; }
+
+    /// <summary>Gets the run id half of <see cref="Address"/>.</summary>
+    public WorkflowRunId RunId => this.Address.RunId;
 
     /// <summary>Gets the etag the caller expected when the conflict occurred.</summary>
     public WorkflowEtag Expected { get; }

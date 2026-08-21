@@ -49,13 +49,13 @@ public sealed class SqliteWorkflowStateStoreTests
         WorkflowEtag etag;
         await using (SqliteWorkflowStateStore store = await SqliteWorkflowStateStore.ConnectAsync(this.connectionString))
         {
-            etag = await store.SaveAsync("p1", Encoding.UTF8.GetBytes("""{"v":42}"""), Index(), WorkflowEtag.None, default);
+            etag = await store.SaveAsync(A("p1"), Encoding.UTF8.GetBytes("""{"v":42}"""), Index(), WorkflowEtag.None, default);
         }
 
         // Re-open: ConnectAsync re-runs the idempotent schema; the checkpoint and its etag survive.
         await using (SqliteWorkflowStateStore reopened = await SqliteWorkflowStateStore.ConnectAsync(this.connectionString))
         {
-            WorkflowCheckpoint? loaded = await reopened.LoadAsync("p1", default);
+            WorkflowCheckpoint? loaded = await reopened.LoadAsync(A("p1"), default);
             loaded.ShouldNotBeNull();
             Encoding.UTF8.GetString(loaded.Value.Utf8.Span).ShouldBe("""{"v":42}""");
             loaded.Value.Etag.ShouldBe(etag);
@@ -68,7 +68,7 @@ public sealed class SqliteWorkflowStateStoreTests
         await using (SqliteWorkflowStateStore store = await SqliteWorkflowStateStore.ConnectAsync(this.connectionString))
         {
             await store.SaveAsync(
-                "timer",
+                A("timer"),
                 Encoding.UTF8.GetBytes("{}"),
                 new WorkflowRunIndexEntry("wf", WorkflowRunStatus.Suspended, T0, T0, DueAt: T0 + TimeSpan.FromMinutes(1)),
                 WorkflowEtag.None,
@@ -77,15 +77,18 @@ public sealed class SqliteWorkflowStateStoreTests
 
         await using (SqliteWorkflowStateStore reopened = await SqliteWorkflowStateStore.ConnectAsync(this.connectionString))
         {
-            var due = new List<WorkflowRunId>();
-            await foreach (WorkflowRunId id in reopened.QueryDueAsync(T0 + TimeSpan.FromMinutes(5), default))
+            var due = new List<WorkflowRunAddress>();
+            await foreach (WorkflowRunAddress address in reopened.QueryDueAsync(T0 + TimeSpan.FromMinutes(5), default))
             {
-                due.Add(id);
+                due.Add(address);
             }
 
-            due.ShouldHaveSingleItem().ShouldBe(new WorkflowRunId("timer"));
+            due.ShouldHaveSingleItem().ShouldBe(A("timer"));
         }
     }
 
     private static WorkflowRunIndexEntry Index() => new("wf", WorkflowRunStatus.Running, T0, T0);
+
+    // The run's full (environment, runId) address (ADR 0065 decision 9).
+    private static WorkflowRunAddress A(string runId) => new("development", new WorkflowRunId(runId));
 }

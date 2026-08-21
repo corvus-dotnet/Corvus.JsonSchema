@@ -70,7 +70,7 @@ public partial class WorkflowExecutorEndToEndTests
         // ── Resume with NO ambient context: the executor must rehydrate the trace from the stored
         //    correlation id, so the resumed step's request still rides the original trace. ──
         Activity.Current.ShouldBeNull();
-        using (WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, runId))
+        using (WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, TestAddresses.Dev(runId)))
         {
             resumed.ShouldNotBeNull();
             resumed.CorrelationId.ShouldBe(correlationId);

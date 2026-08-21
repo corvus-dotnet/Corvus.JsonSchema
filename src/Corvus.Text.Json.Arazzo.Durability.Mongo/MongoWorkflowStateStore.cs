@@ -18,6 +18,10 @@ namespace Corvus.Text.Json.Arazzo.Durability.Mongo;
 /// The driver pools connections internally, so the store is naturally concurrent. Create instances with
 /// <see cref="ConnectAsync(string, string, TimeProvider?, CancellationToken)"/> after provisioning with <see cref="PrepareAsync(string, string, CancellationToken)"/>.
 /// </remarks>
+// TRANSITIONAL (ADR 0065 decision 9): the seam addresses runs by (environment, runId), but this backend still keys
+// its documents by run id alone — the composite-key conversion is this backend's own commit, and the composite-address
+// conformance oracles pin the gap until it lands. The environment field is written from the address and projected
+// back into every answered address.
 public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
@@ -139,48 +143,48 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
 
     /// <inheritdoc/>
     public ValueTask<WorkflowEtag> SaveAsync(
-        WorkflowRunId id,
+        WorkflowRunAddress address,
         ReadOnlyMemory<byte> checkpointUtf8,
         in WorkflowRunIndexEntry index,
         WorkflowEtag expected,
         CancellationToken cancellationToken)
-        => this.SaveCoreAsync(id, checkpointUtf8.ToArray(), index, expected, cancellationToken);
+        => this.SaveCoreAsync(address, checkpointUtf8.ToArray(), index, expected, cancellationToken);
 
-    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunId id, byte[] checkpoint, WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunAddress address, byte[] checkpoint, WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
     {
         if (expected.IsNone)
         {
-            BsonDocument document = BuildDocument(id, checkpoint, index, version: 1);
+            BsonDocument document = BuildDocument(address, checkpoint, index, version: 1);
             try
             {
                 await this.runs.InsertOneAsync(document, options: null, cancellationToken).ConfigureAwait(false);
             }
             catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
             {
-                throw new WorkflowConflictException(id, expected);
+                throw new WorkflowConflictException(address, expected);
             }
 
             return new WorkflowEtag("1");
         }
 
         long expectedVersion = long.Parse(expected.Value!, CultureInfo.InvariantCulture);
-        BsonDocument replacement = BuildDocument(id, checkpoint, index, expectedVersion + 1);
+        BsonDocument replacement = BuildDocument(address, checkpoint, index, expectedVersion + 1);
         FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.And(
-            Builders<BsonDocument>.Filter.Eq("_id", id.Value),
+            Builders<BsonDocument>.Filter.Eq("_id", address.RunId.Value),
             Builders<BsonDocument>.Filter.Eq("version", expectedVersion));
         ReplaceOneResult result = await this.runs.ReplaceOneAsync(filter, replacement, options: (ReplaceOptions?)null, cancellationToken).ConfigureAwait(false);
         if (result.MatchedCount == 0)
         {
-            throw new WorkflowConflictException(id, expected);
+            throw new WorkflowConflictException(address, expected);
         }
 
         return new WorkflowEtag((expectedVersion + 1).ToString(CultureInfo.InvariantCulture));
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunId id, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
     {
-        FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Eq("_id", id.Value);
+        FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Eq("_id", address.RunId.Value);
         BsonDocument? document = await this.runs.Find(filter).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
         if (document is null)
         {
@@ -193,7 +197,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunId id, string owner, TimeSpan ttl, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunAddress address, string owner, TimeSpan ttl, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(owner);
 
@@ -202,7 +206,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         string token = Guid.NewGuid().ToString("N");
 
         FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.And(
-            Builders<BsonDocument>.Filter.Eq("_id", id.Value),
+            Builders<BsonDocument>.Filter.Eq("_id", address.RunId.Value),
             Builders<BsonDocument>.Filter.Or(
                 Builders<BsonDocument>.Filter.Lte("expiresAt", now.ToUnixTimeMilliseconds()),
                 Builders<BsonDocument>.Filter.Eq("owner", owner)));
@@ -220,7 +224,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         try
         {
             BsonDocument granted = await this.leases.FindOneAndUpdateAsync(filter, update, options, cancellationToken).ConfigureAwait(false);
-            return new WorkflowLease(id, owner, token, expiresAt, granted["epoch"].ToInt64());
+            return new WorkflowLease(address, owner, token, expiresAt, granted["epoch"].ToInt64());
         }
         catch (MongoCommandException ex) when (ex.Code == DuplicateKeyErrorCode)
         {
@@ -254,7 +258,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             BsonDocument? current = await this.leases.Find(filter).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
             return current is null
                 ? null
-                : new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(current["expiresAt"].ToInt64()), current["epoch"].ToInt64());
+                : new WorkflowLease(lease.Address, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(current["expiresAt"].ToInt64()), current["epoch"].ToInt64());
         }
 
         DateTimeOffset extendedTo = now + extension;
@@ -264,7 +268,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         // nothing and the lease it names is still current, and the document is also where the grant's epoch is read.
         var options = new FindOneAndUpdateOptions<BsonDocument> { ReturnDocument = ReturnDocument.After };
         BsonDocument? extended = await this.leases.FindOneAndUpdateAsync(filter, update, options, cancellationToken).ConfigureAwait(false);
-        return extended is null ? null : new WorkflowLease(lease.RunId, lease.Owner, lease.Token, extendedTo, extended["epoch"].ToInt64());
+        return extended is null ? null : new WorkflowLease(lease.Address, lease.Owner, lease.Token, extendedTo, extended["epoch"].ToInt64());
     }
 
     /// <inheritdoc/>
@@ -282,18 +286,18 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     }
 
     /// <inheritdoc/>
-    public async ValueTask DeleteAsync(WorkflowRunId id, CancellationToken cancellationToken)
+    public async ValueTask DeleteAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
     {
-        FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Eq("_id", id.Value);
+        FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Eq("_id", address.RunId.Value);
         await this.runs.DeleteOneAsync(filter, cancellationToken).ConfigureAwait(false);
         await this.leases.DeleteOneAsync(filter, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken) => this.QueryDueAsync(before, null, cancellationToken);
+    public IAsyncEnumerable<WorkflowRunAddress> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken) => this.QueryDueAsync(before, null, cancellationToken);
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<WorkflowRunAddress> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.And(
             Builders<BsonDocument>.Filter.Eq("status", SuspendedStatus),
@@ -308,21 +312,21 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             filter = Builders<BsonDocument>.Filter.And(filter, Builders<BsonDocument>.Filter.Eq("environment", runnerEnvironment));
         }
 
-        using IAsyncCursor<BsonDocument> cursor = await this.runs.Find(filter).Project(IdOnly).ToCursorAsync(cancellationToken).ConfigureAwait(false);
+        using IAsyncCursor<BsonDocument> cursor = await this.runs.Find(filter).Project(AddressOnly).ToCursorAsync(cancellationToken).ConfigureAwait(false);
         while (await cursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
         {
             foreach (BsonDocument document in cursor.Current)
             {
-                yield return new WorkflowRunId(document["_id"].AsString);
+                yield return new WorkflowRunAddress(document["environment"].AsString, new WorkflowRunId(document["_id"].AsString));
             }
         }
     }
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken) => this.QueryAwaitingAsync(channel, correlationId, null, cancellationToken);
+    public IAsyncEnumerable<WorkflowRunAddress> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken) => this.QueryAwaitingAsync(channel, correlationId, null, cancellationToken);
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<WorkflowRunAddress> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(channel);
 
@@ -345,22 +349,22 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             filter = b.And(filter, b.Eq("environment", runnerEnvironment));
         }
 
-        using IAsyncCursor<BsonDocument> cursor = await this.runs.Find(filter).Project(IdOnly).ToCursorAsync(cancellationToken).ConfigureAwait(false);
+        using IAsyncCursor<BsonDocument> cursor = await this.runs.Find(filter).Project(AddressOnly).ToCursorAsync(cancellationToken).ConfigureAwait(false);
         while (await cursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
         {
             foreach (BsonDocument document in cursor.Current)
             {
-                yield return new WorkflowRunId(document["_id"].AsString);
+                yield return new WorkflowRunAddress(document["environment"].AsString, new WorkflowRunId(document["_id"].AsString));
             }
         }
     }
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunAddress> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
         => this.QueryClaimableAsync(hostedWorkflowIds, null, now, cancellationToken);
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<WorkflowRunAddress> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
         if (hostedWorkflowIds.Count == 0)
@@ -391,9 +395,9 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         }
 
         // Buffer the candidates so we can run the leases query without yielding inside the cursor.
-        var candidates = new List<(string Id, string Status)>();
+        var candidates = new List<(string Environment, string Id, string Status)>();
         bool anyRunning = false;
-        using (IAsyncCursor<BsonDocument> cursor = await this.runs.Find(filter).Project(IdAndStatus).ToCursorAsync(cancellationToken).ConfigureAwait(false))
+        using (IAsyncCursor<BsonDocument> cursor = await this.runs.Find(filter).Project(AddressAndStatus).ToCursorAsync(cancellationToken).ConfigureAwait(false))
         {
             while (await cursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
             {
@@ -405,7 +409,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
                         anyRunning = true;
                     }
 
-                    candidates.Add((document["_id"].AsString, status));
+                    candidates.Add((document["environment"].AsString, document["_id"].AsString, status));
                 }
             }
         }
@@ -424,7 +428,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             }
         }
 
-        foreach ((string id, string status) in candidates)
+        foreach ((string environment, string id, string status) in candidates)
         {
             // A Suspended/Faulted candidate is present only because it carries the resume-requested marker (the
             // filter required it), so surface it unconditionally alongside Pending and orphaned-Running runs.
@@ -433,7 +437,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
                 || status == SuspendedStatus
                 || status == FaultedStatus)
             {
-                yield return new WorkflowRunId(id);
+                yield return new WorkflowRunAddress(environment, new WorkflowRunId(id));
             }
         }
     }
@@ -444,12 +448,17 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         FilterDefinition<BsonDocument> filter = BuildFilter(query);
 
         // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
+        // The cursor is the composite address (ADR 0065 decision 9): resume strictly after (environment, run id).
         if (query.ContinuationToken.IsNotUndefined())
         {
             using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
             if (WorkflowContinuationToken.Decode(tokenUtf8.Span) is { } after)
             {
-                filter = Builders<BsonDocument>.Filter.And(filter, Builders<BsonDocument>.Filter.Gt("_id", after));
+                filter = Builders<BsonDocument>.Filter.And(filter, Builders<BsonDocument>.Filter.Or(
+                    Builders<BsonDocument>.Filter.Gt("environment", after.Environment),
+                    Builders<BsonDocument>.Filter.And(
+                        Builders<BsonDocument>.Filter.Eq("environment", after.Environment),
+                        Builders<BsonDocument>.Filter.Gt("_id", after.RunId.Value))));
             }
         }
 
@@ -458,7 +467,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         // extra one being the keyset look-ahead.
         var listings = new List<WorkflowRunListing>(query.Limit + 1);
         IFindFluent<BsonDocument, BsonDocument> find = this.runs.Find(filter)
-            .Sort(Builders<BsonDocument>.Sort.Ascending("_id"))
+            .Sort(Builders<BsonDocument>.Sort.Ascending("environment").Ascending("_id"))
             .Limit(query.Limit + 1);
 
         using IAsyncCursor<BsonDocument> cursor = await find.ToCursorAsync(cancellationToken).ConfigureAwait(false);
@@ -480,9 +489,8 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
                     document["errorType"].IsBsonNull ? null : document["errorType"].AsString,
                     CorrelationId: correlationId,
                     Tags: tags,
-                    SecurityTags: securityTags,
-                    Environment: document.TryGetValue("environment", out BsonValue environment) && !environment.IsBsonNull ? environment.AsString : null);
-                listings.Add(new WorkflowRunListing(new WorkflowRunId(document["_id"].AsString), entry));
+                    SecurityTags: securityTags);
+                listings.Add(new WorkflowRunListing(new WorkflowRunAddress(document["environment"].AsString, new WorkflowRunId(document["_id"].AsString)), entry));
                 if (listings.Count > query.Limit)
                 {
                     return WorkflowContinuationToken.Paginate(listings, query.Limit);
@@ -592,15 +600,19 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     private static SecurityTagSet ReadSecurityTags(BsonDocument document)
         => MongoSecurityTags.Read(document);
 
+    // Lease documents carry no environment, so the id projection is theirs; the run projections include the
+    // environment field alongside _id — the two halves of every answered address (see the TRANSITIONAL note).
     private static readonly ProjectionDefinition<BsonDocument> IdOnly = Builders<BsonDocument>.Projection.Include("_id");
 
-    private static readonly ProjectionDefinition<BsonDocument> IdAndStatus = Builders<BsonDocument>.Projection.Include("_id").Include("status");
+    private static readonly ProjectionDefinition<BsonDocument> AddressOnly = Builders<BsonDocument>.Projection.Include("_id").Include("environment");
 
-    private static BsonDocument BuildDocument(WorkflowRunId id, byte[] checkpoint, in WorkflowRunIndexEntry index, long version)
+    private static readonly ProjectionDefinition<BsonDocument> AddressAndStatus = Builders<BsonDocument>.Projection.Include("_id").Include("environment").Include("status");
+
+    private static BsonDocument BuildDocument(in WorkflowRunAddress address, byte[] checkpoint, in WorkflowRunIndexEntry index, long version)
     {
         var document = new BsonDocument
         {
-            ["_id"] = id.Value,
+            ["_id"] = address.RunId.Value,
             ["checkpoint"] = new BsonBinaryData(checkpoint),
             ["version"] = version,
             ["status"] = index.Status.ToString(),
@@ -617,12 +629,10 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             ["resumeRequestedAt"] = index.ResumeRequestedAt is { } resume ? resume.ToUnixTimeMilliseconds() : BsonNull.Value,
         };
 
-        // §5.5 run→environment pinning: index the environment only when set, so the field is absent (matches anything)
-        // for a run created before pinning — see the environment-scoped claimable predicate.
-        if (index.Environment is { } environment)
-        {
-            document["environment"] = environment;
-        }
+        // §5.5 run→environment pinning: the environment is half the run's primary key (ADR 0065 decision 9), written
+        // from the address on every save — never null, never absent — and projected back into every answered address
+        // while the documents are still keyed by run id alone (see the TRANSITIONAL note on the class).
+        document["environment"] = address.Environment;
 
         return document;
     }

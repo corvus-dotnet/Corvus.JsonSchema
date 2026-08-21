@@ -12,7 +12,8 @@ using Microsoft.Extensions.Primitives;
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
 /// <summary>
-/// Maps the runner's serverless checkpoint surface — <c>GET</c>/<c>POST /runs/{runId}/checkpoint</c> — onto an
+/// Maps the runner's serverless checkpoint surface — <c>GET</c>/<c>POST /environments/{environment}/runs/{runId}/checkpoint</c>
+/// (the run's full address, ADR 0065 decision 9) — onto an
 /// endpoint route builder (ADR 0055). A baked, Native-AOT function advances a run out of process and loads and saves
 /// its checkpoint here rather than binding a store SDK; the <see cref="WorkflowCheckpointCoordinator"/> terminates
 /// those calls into the real store. This is the server half of the wire contract the function-side
@@ -35,10 +36,10 @@ public static class WorkflowCheckpointEndpoints
     /// <param name="endpoints">The endpoint route builder.</param>
     /// <param name="store">The real state store a checkpoint terminates into.</param>
     /// <param name="requireAuthorization">Whether to require an authenticated principal in addition to the token (every mode but Open). The two compose: the ambient principal says a caller belongs to the deployment, the token says which run it may touch.</param>
-    /// <param name="authenticateCheckpointToken">The run-scoped checkpoint-token authenticator (ADR 0062): given the request's run and the presented bearer token, returns whether it authorises checkpoints for that run. A request without a valid token is a 401 — this is how the checkpoint surface authenticates a serverless function's callback (e.g. <c>(id, token) =&gt; CheckpointToken.TryValidate(secret, token, id.Value, now)</c>). It is required rather than optional because the caller is a machine acting for one run, holding no principal of its own: without it the surface's only gate is the host's ambient authorization, which admits any authenticated caller to any run.</param>
+    /// <param name="authenticateCheckpointToken">The run-scoped checkpoint-token authenticator (ADR 0062): given the request's full run address and the presented bearer token, returns whether it authorises checkpoints for that run at that address. A request without a valid token is a 401 — this is how the checkpoint surface authenticates a serverless function's callback (e.g. <c>(address, token) =&gt; CheckpointToken.TryValidate(secret, token, address, now)</c>). It is required rather than optional because the caller is a machine acting for one run, holding no principal of its own: without it the surface's only gate is the host's ambient authorization, which admits any authenticated caller to any run.</param>
     /// <param name="checkpoints">The host's checkpoint coordinator. Pass the same instance every checkpoint-authoring surface in this host uses — ADR 0065 decision 6 requires the per-run single-flight interlock to be per run, not per component, and the coordinator holds that interlock in memory. When <see langword="null"/> a private one is built, which is correct only for a host mapping this surface alone.</param>
     /// <returns>The same endpoint route builder, for chaining.</returns>
-    public static IEndpointRouteBuilder MapWorkflowCheckpointEndpoints(this IEndpointRouteBuilder endpoints, IWorkflowCheckpointStore store, bool requireAuthorization, Func<WorkflowRunId, string, bool> authenticateCheckpointToken, WorkflowCheckpointCoordinator? checkpoints = null)
+    public static IEndpointRouteBuilder MapWorkflowCheckpointEndpoints(this IEndpointRouteBuilder endpoints, IWorkflowCheckpointStore store, bool requireAuthorization, Func<WorkflowRunAddress, string, bool> authenticateCheckpointToken, WorkflowCheckpointCoordinator? checkpoints = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(store);
@@ -46,20 +47,20 @@ public static class WorkflowCheckpointEndpoints
 
         WorkflowCheckpointCoordinator coordinator = checkpoints ?? new WorkflowCheckpointCoordinator(store);
 
-        IEndpointConventionBuilder get = endpoints.MapGet("/runs/{runId}/checkpoint", async (HttpContext context) =>
+        IEndpointConventionBuilder get = endpoints.MapGet("/environments/{environment}/runs/{runId}/checkpoint", async (HttpContext context) =>
         {
-            if (RunId(context) is not { } id)
+            if (Address(context) is not { } address)
             {
-                await WriteProblemAsync(context, StatusCodes.Status400BadRequest, "The 'runId' parameter must be exactly 32 lowercase hexadecimal characters (ADR 0065 \u00a79).").ConfigureAwait(false);
+                await WriteAddressProblemAsync(context).ConfigureAwait(false);
                 return;
             }
 
-            if (!Authenticated(context, id, authenticateCheckpointToken))
+            if (!Authenticated(context, address, authenticateCheckpointToken))
             {
                 return;
             }
 
-            CheckpointLoad? loaded = await coordinator.LoadAsync(id, context.RequestAborted).ConfigureAwait(false);
+            CheckpointLoad? loaded = await coordinator.LoadAsync(address, context.RequestAborted).ConfigureAwait(false);
             if (loaded is not { } load)
             {
                 context.Response.StatusCode = StatusCodes.Status404NotFound;
@@ -77,15 +78,15 @@ public static class WorkflowCheckpointEndpoints
             await context.Response.BodyWriter.WriteAsync(load.Checkpoint, context.RequestAborted).ConfigureAwait(false);
         });
 
-        IEndpointConventionBuilder post = endpoints.MapPost("/runs/{runId}/checkpoint", async (HttpContext context) =>
+        IEndpointConventionBuilder post = endpoints.MapPost("/environments/{environment}/runs/{runId}/checkpoint", async (HttpContext context) =>
         {
-            if (RunId(context) is not { } id)
+            if (Address(context) is not { } address)
             {
-                await WriteProblemAsync(context, StatusCodes.Status400BadRequest, "The 'runId' parameter must be exactly 32 lowercase hexadecimal characters (ADR 0065 \u00a79).").ConfigureAwait(false);
+                await WriteAddressProblemAsync(context).ConfigureAwait(false);
                 return;
             }
 
-            if (!Authenticated(context, id, authenticateCheckpointToken))
+            if (!Authenticated(context, address, authenticateCheckpointToken))
             {
                 return;
             }
@@ -113,14 +114,16 @@ public static class WorkflowCheckpointEndpoints
 
                 // Project (and thereby validate) the index from the received bytes here, so a malformed body is a clean
                 // 400 and the coordinator only ever handles a well-formed checkpoint. The same bytes are saved verbatim.
+                // The one projection also reports the environment the body claims, which the coordinator checks against
+                // the address on every save (ADR 0065 decision 9).
                 ReadOnlyMemory<byte> checkpointUtf8 = rented.AsMemory(0, length);
-                if (!WorkflowCheckpointSerializer.TryProjectIndex(checkpointUtf8, out WorkflowRunIndexEntry index))
+                if (!WorkflowCheckpointSerializer.TryProjectIndex(checkpointUtf8, out WorkflowRunIndexEntry index, out string? claimedEnvironment))
                 {
                     await WriteProblemAsync(context, StatusCodes.Status400BadRequest, "The request body is not a valid checkpoint document.").ConfigureAwait(false);
                     return;
                 }
 
-                CheckpointSaveResult result = await coordinator.SaveAsync(id, checkpointUtf8, index, sequence, context.RequestAborted).ConfigureAwait(false);
+                CheckpointSaveResult result = await coordinator.SaveAsync(address, checkpointUtf8, index, claimedEnvironment, sequence, context.RequestAborted).ConfigureAwait(false);
                 context.Response.Headers[WriteSequenceHeader] = result.AcceptedSequence.ToString(CultureInfo.InvariantCulture);
                 if (result.Outcome == CheckpointSaveOutcome.Applied)
                 {
@@ -151,11 +154,12 @@ public static class WorkflowCheckpointEndpoints
 
     // The request must carry a valid run-scoped bearer token; without one it is a 401. This runs whatever the host's
     // ambient authorization is, because the two answer different questions: ambient authorization says the caller
-    // belongs to the deployment, and only the token says which run it is entitled to read and overwrite.
-    private static bool Authenticated(HttpContext context, WorkflowRunId id, Func<WorkflowRunId, string, bool> authenticate)
+    // belongs to the deployment, and only the token says which run — at which address — it is entitled to read and
+    // overwrite.
+    private static bool Authenticated(HttpContext context, in WorkflowRunAddress address, Func<WorkflowRunAddress, string, bool> authenticate)
     {
         string? token = BearerToken(context.Request);
-        if (token is null || !authenticate(id, token))
+        if (token is null || !authenticate(address, token))
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             context.Response.Headers.WWWAuthenticate = "Bearer";
@@ -185,17 +189,22 @@ public static class WorkflowCheckpointEndpoints
         return null;
     }
 
-    // The grammar gate (ADR 0065 §9): a non-conforming id is refused here, before the token is honoured and before
-    // any store touch, exactly as the contract-generated surfaces refuse it through the RunId schema's pattern.
-    private static WorkflowRunId? RunId(HttpContext context)
+    // The grammar gate (ADR 0065 §9): a non-conforming id or environment is refused here, before the token is honoured
+    // and before any store touch, exactly as the contract-generated surfaces refuse them through the RunId and
+    // EnvironmentName schemas' patterns. Both halves of the address gate, because the environment is half the key.
+    private static WorkflowRunAddress? Address(HttpContext context)
     {
-        if (context.Request.RouteValues.TryGetValue("runId", out object? raw) && raw is string value && WorkflowRunId.IsWellFormed(value))
+        if (context.Request.RouteValues.TryGetValue("runId", out object? rawId) && rawId is string id && WorkflowRunId.IsWellFormed(id)
+            && context.Request.RouteValues.TryGetValue("environment", out object? rawEnvironment) && rawEnvironment is string environment && Environments.EnvironmentName.IsWellFormed(environment))
         {
-            return new WorkflowRunId(value);
+            return new WorkflowRunAddress(environment, new WorkflowRunId(id));
         }
 
         return null;
     }
+
+    private static Task WriteAddressProblemAsync(HttpContext context)
+        => WriteProblemAsync(context, StatusCodes.Status400BadRequest, "The 'runId' parameter must be exactly 32 lowercase hexadecimal characters, and the 'environment' parameter must satisfy the environment-name grammar (ADR 0065 \u00a79).");
 
     private static long? ReadSequence(HttpContext context)
         => context.Request.Headers.TryGetValue(WriteSequenceHeader, out StringValues values)

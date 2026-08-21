@@ -89,7 +89,7 @@ public class WorkflowDispatcherTests
         transport.Requests[0].Path.ShouldBe("/pets/42");
 
         // The run is now Completed and no longer claimable.
-        using WorkflowRun? reloaded = await WorkflowRun.ResumeAsync(runStore, "run-1", clock, default);
+        using WorkflowRun? reloaded = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev("run-1"), clock, default);
         reloaded!.Status.ShouldBe(WorkflowRunStatus.Completed);
         (await dispatcher.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default)).ShouldBe(0);
     }
@@ -108,7 +108,7 @@ public class WorkflowDispatcherTests
         }
 
         // Another runner holds an unexpired lease.
-        await runStore.AcquireLeaseAsync("run-1", "other-runner", TimeSpan.FromMinutes(5), default);
+        await runStore.AcquireLeaseAsync(TestAddresses.Dev("run-1"), "other-runner", TimeSpan.FromMinutes(5), default);
 
         using var loader = new WorkflowExecutorLoader();
         var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)new MockApiTransport(), System.StringComparer.Ordinal), WorkflowTransports.NoMessageTransports));
@@ -131,8 +131,8 @@ public class WorkflowDispatcherTests
             await orphan.CheckpointAsync(0, default);
         }
 
-        await runStore.AcquireLeaseAsync("dead-runner", "dead-runner", TimeSpan.FromMinutes(1), default);
-        await runStore.AcquireLeaseAsync("run-1", "dead-runner", TimeSpan.FromMinutes(1), default);
+        await runStore.AcquireLeaseAsync(TestAddresses.Dev("dead-runner"), "dead-runner", TimeSpan.FromMinutes(1), default);
+        await runStore.AcquireLeaseAsync(TestAddresses.Dev("run-1"), "dead-runner", TimeSpan.FromMinutes(1), default);
         clock.Advance(TimeSpan.FromMinutes(2)); // the dead runner's lease has now expired
 
         var transport = new MockApiTransport();
@@ -144,7 +144,7 @@ public class WorkflowDispatcherTests
         int dispatched = await dispatcher.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default);
 
         dispatched.ShouldBe(1);
-        using WorkflowRun? reloaded = await WorkflowRun.ResumeAsync(runStore, "run-1", clock, default);
+        using WorkflowRun? reloaded = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev("run-1"), clock, default);
         reloaded!.Status.ShouldBe(WorkflowRunStatus.Completed);
     }
 
@@ -172,7 +172,7 @@ public class WorkflowDispatcherTests
         var dispatcher = new WorkflowDispatcher(runStore, "runner-1", clock, dispatchGate: _ => ValueTask.FromResult(authorized), runnerEnvironment: "development");
 
         (await dispatcher.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default)).ShouldBe(0);
-        using (WorkflowRun? stillPending = await WorkflowRun.ResumeAsync(runStore, "run-1", clock, default))
+        using (WorkflowRun? stillPending = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev("run-1"), clock, default))
         {
             stillPending!.Status.ShouldBe(WorkflowRunStatus.Pending);
         }
@@ -182,7 +182,7 @@ public class WorkflowDispatcherTests
         // Once authorized, the same dispatcher claims and drives the run to completion.
         authorized = true;
         (await dispatcher.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default)).ShouldBe(1);
-        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, "run-1", clock, default);
+        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev("run-1"), clock, default);
         completed!.Status.ShouldBe(WorkflowRunStatus.Completed);
     }
 
@@ -201,7 +201,7 @@ public class WorkflowDispatcherTests
             await inflight.CheckpointAsync(0, default);
         }
 
-        (await runStore.AcquireLeaseAsync("run-1", "compromised-runner", TimeSpan.FromMinutes(1), default)).ShouldNotBeNull();
+        (await runStore.AcquireLeaseAsync(TestAddresses.Dev("run-1"), "compromised-runner", TimeSpan.FromMinutes(1), default)).ShouldNotBeNull();
 
         var transport = new MockApiTransport();
         transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
@@ -215,14 +215,14 @@ public class WorkflowDispatcherTests
         // The control plane fences the revoked runner: every lease it holds is expired immediately, without waiting for the
         // TTL. This is the control-plane-enforced half of the fence — cooperative self-checks are worthless against an
         // attacker-controlled runner, so the store, not the runner, invalidates the lease.
-        int fenced = await runStore.ExpireLeasesForOwnerAsync("compromised-runner", default);
+        int fenced = await runStore.ExpireLeasesForOwnerAsync("compromised-runner", environment: null, default);
         fenced.ShouldBe(1);
 
         // The healthy peer now reclaims the orphaned Running run within this poll (not after the lease TTL) and drives it to
         // completion. The compromised runner's own in-flight work is then rejected by optimistic concurrency: the etag it
         // holds is stale, so its next checkpoint save conflicts — it can no longer persist progress for this run.
         (await healthy.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default)).ShouldBe(1);
-        using WorkflowRun? reloaded = await WorkflowRun.ResumeAsync(runStore, "run-1", clock, default);
+        using WorkflowRun? reloaded = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev("run-1"), clock, default);
         reloaded!.Status.ShouldBe(WorkflowRunStatus.Completed);
     }
 
@@ -253,13 +253,13 @@ public class WorkflowDispatcherTests
         var dispatcher = new WorkflowDispatcher(runStore, "runner-prod", clock, runnerEnvironment: "production");
         (await dispatcher.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default)).ShouldBe(1);
 
-        using (WorkflowRun? prodRun = await WorkflowRun.ResumeAsync(runStore, "run-prod", clock, default))
+        using (WorkflowRun? prodRun = await WorkflowRun.ResumeAsync(runStore, TestAddresses.In("production", "run-prod"), clock, default))
         {
             prodRun!.Status.ShouldBe(WorkflowRunStatus.Completed);
             prodRun.Environment.ShouldBe("production"); // the pinned environment round-trips through the checkpoint
         }
 
-        using (WorkflowRun? stagingRun = await WorkflowRun.ResumeAsync(runStore, "run-staging", clock, default))
+        using (WorkflowRun? stagingRun = await WorkflowRun.ResumeAsync(runStore, TestAddresses.In("staging", "run-staging"), clock, default))
         {
             stagingRun!.Status.ShouldBe(WorkflowRunStatus.Pending); // not claimed by the production runner
             stagingRun.Environment.ShouldBe("staging");
@@ -268,7 +268,7 @@ public class WorkflowDispatcherTests
         // A staging runner then claims the staging run.
         var stagingDispatcher = new WorkflowDispatcher(runStore, "runner-staging", clock, runnerEnvironment: "staging");
         (await stagingDispatcher.DispatchClaimableAsync(["adopt-v1"], resumer.AsResumer(), default)).ShouldBe(1);
-        using WorkflowRun? nowDone = await WorkflowRun.ResumeAsync(runStore, "run-staging", clock, default);
+        using WorkflowRun? nowDone = await WorkflowRun.ResumeAsync(runStore, TestAddresses.In("staging", "run-staging"), clock, default);
         nowDone!.Status.ShouldBe(WorkflowRunStatus.Completed);
     }
 

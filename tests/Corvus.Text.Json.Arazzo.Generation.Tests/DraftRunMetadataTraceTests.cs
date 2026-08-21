@@ -138,7 +138,7 @@ public sealed class DraftRunMetadataTraceTests
 
         WorkflowRunId id = await RunDraftAsync(runStore, endpoint, recording);
 
-        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, id);
+        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev(id));
         completed!.Status.ShouldBe(WorkflowRunStatus.Completed);
 
         // The recording decorator captured exactly the one metadata-only exchange the run made.
@@ -181,7 +181,7 @@ public sealed class DraftRunMetadataTraceTests
 
         WorkflowRunId id = await RunDraftAsync(runStore, endpoint, recording);
 
-        using WorkflowRun? faulted = await WorkflowRun.ResumeAsync(runStore, id);
+        using WorkflowRun? faulted = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev(id));
         faulted!.Status.ShouldBe(WorkflowRunStatus.Faulted);
 
         IReadOnlyList<RecordedApiExchange> exchanges = recording.Exchanges;
@@ -241,13 +241,13 @@ public sealed class DraftRunMetadataTraceTests
         }
 
         // Advance once with an after-each-step pause: createAccount runs, then the pause fires before verifyIdentity.
-        using (WorkflowRun? toAdvance = await WorkflowRun.ResumeAsync(runStore, "run-paused"))
+        using (WorkflowRun? toAdvance = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev("run-paused")))
         {
             toAdvance!.SetPause(new WorkflowPauseConfig(AfterEachStep: true, new HashSet<int>()));
             (await resumer.AsResumer()(toAdvance, default)).ShouldBe(WorkflowRunResultKind.Suspended);
         }
 
-        using (WorkflowRun? paused = await WorkflowRun.ResumeAsync(runStore, "run-paused"))
+        using (WorkflowRun? paused = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev("run-paused")))
         {
             paused!.Status.ShouldBe(WorkflowRunStatus.Suspended);
             paused.Wait!.Value.Kind.ShouldBe(WorkflowWaitKind.Pause);
@@ -342,7 +342,7 @@ public sealed class DraftRunMetadataTraceTests
         var buffer = new ArrayBufferWriter<byte>();
         using (var writer = new Utf8JsonWriter(buffer))
         {
-            await MetadataTraceAssembler.WriteTraceAsync(writer, store, id, exchanges, pausedBefore);
+            await MetadataTraceAssembler.WriteTraceAsync(writer, store, TestAddresses.Dev(id), exchanges, pausedBefore);
             writer.Flush();
         }
 

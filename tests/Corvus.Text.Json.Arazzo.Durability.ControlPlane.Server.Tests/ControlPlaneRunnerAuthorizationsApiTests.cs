@@ -797,12 +797,12 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
         (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
         // The runner holds a live lease on a run it is executing. A peer cannot take it while the lease is live.
-        (await host.StateStore.AcquireLeaseAsync("run-1", "svc-runner-a", System.TimeSpan.FromMinutes(5), default)).ShouldNotBeNull();
-        (await host.StateStore.AcquireLeaseAsync("run-1", "peer", System.TimeSpan.FromMinutes(5), default)).ShouldBeNull();
+        (await host.StateStore.AcquireLeaseAsync(new WorkflowRunAddress("production", new WorkflowRunId("run-1")), "svc-runner-a", System.TimeSpan.FromMinutes(5), default)).ShouldNotBeNull();
+        (await host.StateStore.AcquireLeaseAsync(new WorkflowRunAddress("production", new WorkflowRunId("run-1")), "peer", System.TimeSpan.FromMinutes(5), default)).ShouldBeNull();
 
         // Revoking the runner fences its in-flight work: the lease is expired, so a peer reclaims the run at once.
         (await host.SendAsync(HttpMethod.Delete, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await host.StateStore.AcquireLeaseAsync("run-1", "peer", System.TimeSpan.FromMinutes(5), default)).ShouldNotBeNull();
+        (await host.StateStore.AcquireLeaseAsync(new WorkflowRunAddress("production", new WorkflowRunId("run-1")), "peer", System.TimeSpan.FromMinutes(5), default)).ShouldNotBeNull();
     }
 
     [TestMethod]
@@ -819,12 +819,12 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
         (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/svc-victim/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
         // An unrelated principal whose name happens to equal the revoked runner's id holds a live lease.
-        (await host.StateStore.AcquireLeaseAsync("run-2", "svc-victim", System.TimeSpan.FromMinutes(5), default)).ShouldNotBeNull();
+        (await host.StateStore.AcquireLeaseAsync(new WorkflowRunAddress("production", new WorkflowRunId("run-2")), "svc-victim", System.TimeSpan.FromMinutes(5), default)).ShouldNotBeNull();
 
         (await host.SendAsync(HttpMethod.Delete, "/environments/production/runners/svc-victim/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
         // Untouched: the fence expires what the revoked runner owns, which is what its bound principal owns.
-        (await host.StateStore.AcquireLeaseAsync("run-2", "peer", System.TimeSpan.FromMinutes(5), default)).ShouldBeNull();
+        (await host.StateStore.AcquireLeaseAsync(new WorkflowRunAddress("production", new WorkflowRunId("run-2")), "peer", System.TimeSpan.FromMinutes(5), default)).ShouldBeNull();
     }
 
     [TestMethod]

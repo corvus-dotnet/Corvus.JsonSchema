@@ -155,14 +155,14 @@ public sealed class RunnerApiDispatcherTests
             (await fixture.PeerClient.TryClaimAsync([Version])).ShouldNotBeNull();
 
             byte[] advanced = Fixture.Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2);
-            await fixture.Client.Checkpoints.SaveAsync(run.Id, advanced, WorkflowCheckpointSerializer.ProjectIndex(advanced), WorkflowEtag.None, ct);
+            await fixture.Client.Checkpoints.SaveAsync(run.Address, advanced, WorkflowCheckpointSerializer.ProjectIndex(advanced), WorkflowEtag.None, ct);
             return WorkflowRunResultKind.Suspended;
         }, default);
 
         dispatched.ShouldBe(0);
 
         // The peer's claim stands: releasing in the finally must not have taken the run off it.
-        WorkflowCheckpoint? stored = await fixture.Store.LoadAsync(new WorkflowRunId(Run1), default);
+        WorkflowCheckpoint? stored = await fixture.Store.LoadAsync(new WorkflowRunAddress(Fixture.Production, new WorkflowRunId(Run1)), default);
         WorkflowCheckpointSerializer.TryReadSequence(stored!.Value.Utf8, out long sequence).ShouldBeTrue();
         sequence.ShouldBe(1);
     }
@@ -195,7 +195,7 @@ public sealed class RunnerApiDispatcherTests
     private static async ValueTask<WorkflowRunResultKind> SuspendAsync(Fixture fixture, WorkflowRun run, CancellationToken cancellationToken)
     {
         byte[] advanced = Fixture.Checkpoint(run.Id.Value, WorkflowRunStatus.Suspended, sequence: 2);
-        await fixture.Client.Checkpoints.SaveAsync(run.Id, advanced, WorkflowCheckpointSerializer.ProjectIndex(advanced), WorkflowEtag.None, cancellationToken);
+        await fixture.Client.Checkpoints.SaveAsync(run.Address, advanced, WorkflowCheckpointSerializer.ProjectIndex(advanced), WorkflowEtag.None, cancellationToken);
         return WorkflowRunResultKind.Suspended;
     }
 }

@@ -56,7 +56,7 @@ public static class MetadataTraceAssembler
     /// <summary>Loads a run's checkpoint from the store and writes its metadata trace.</summary>
     /// <param name="writer">The writer to serialize the trace into.</param>
     /// <param name="store">The state store the run's checkpoint is loaded from.</param>
-    /// <param name="id">The run id.</param>
+    /// <param name="address">The run's <c>(environment, runId)</c> address.</param>
     /// <param name="exchanges">The metadata-only exchanges recorded for the run, in call order (typically
     /// <see cref="RecordingApiTransport.Exchanges"/>).</param>
     /// <param name="pausedBeforeStepId">For a paused run, the id of the step the run resumes at (the breakpoint
@@ -66,11 +66,11 @@ public static class MetadataTraceAssembler
     /// <see langword="null"/> or empty, exchanges are attributed by the legacy one-per-step position.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A task that completes when the trace has been written.</returns>
-    /// <exception cref="InvalidOperationException">No run with <paramref name="id"/> exists in the store.</exception>
+    /// <exception cref="InvalidOperationException">No run exists at <paramref name="address"/> in the store.</exception>
     public static async ValueTask WriteTraceAsync(
         Utf8JsonWriter writer,
         IWorkflowStateStore store,
-        WorkflowRunId id,
+        WorkflowRunAddress address,
         IReadOnlyList<RecordedApiExchange> exchanges,
         string? pausedBeforeStepId = null,
         IReadOnlyList<int>? stepBoundaries = null,
@@ -78,8 +78,8 @@ public static class MetadataTraceAssembler
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(store);
-        WorkflowCheckpoint checkpoint = await store.LoadAsync(id, cancellationToken).ConfigureAwait(false)
-            ?? throw ThrowHelper.GetNoRunToAssembleTraceException(id.Value);
+        WorkflowCheckpoint checkpoint = await store.LoadAsync(address, cancellationToken).ConfigureAwait(false)
+            ?? throw ThrowHelper.GetNoRunToAssembleTraceException(address.RunId.Value);
         WriteTrace(writer, checkpoint.Utf8, exchanges, pausedBeforeStepId, stepBoundaries, capturedSteps);
     }
 

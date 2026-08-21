@@ -183,7 +183,7 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
         if (query.ContinuationToken.IsNotUndefined())
         {
             using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
-            after = WorkflowContinuationToken.Decode(tokenUtf8.Span);
+            after = WorkflowContinuationToken.DecodeText(tokenUtf8.Span);
         }
 
         int limit = query.Limit <= 0 ? 100 : query.Limit;

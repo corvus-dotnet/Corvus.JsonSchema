@@ -254,7 +254,7 @@ public class HostedWorkflowResumerTests
         kind.ShouldBe(WorkflowRunResultKind.Completed);
 
         // The nested output survived the response's disposal and was checkpointed, so it is durably readable.
-        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, "run-1");
+        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev("run-1"));
         completed.ShouldNotBeNull();
         completed!.TryGetStepOutputs("getPet", out JsonElement getPetOutputs).ShouldBeTrue();
         getPetOutputs.TryGetProperty("profile"u8, out JsonElement profile).ShouldBeTrue();
@@ -344,7 +344,7 @@ public class HostedWorkflowResumerTests
         kind.ShouldBe(WorkflowRunResultKind.Completed);
         transport.Requests[1].Path.ShouldBe("/accounts/acc-42/identity");
 
-        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, "run-1");
+        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev("run-1"));
         completed.ShouldNotBeNull();
         completed!.TryGetStepOutputs("verifyIdentity", out JsonElement verifyOutputs).ShouldBeTrue();
         verifyOutputs.TryGetProperty("applicant"u8, out JsonElement applicant).ShouldBeTrue();

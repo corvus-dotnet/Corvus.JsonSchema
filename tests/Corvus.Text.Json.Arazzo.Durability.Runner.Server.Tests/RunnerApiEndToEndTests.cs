@@ -303,7 +303,7 @@ public sealed class RunnerApiEndToEndTests
         {
             byte[] checkpoint = Checkpoint(runId, status, sequence: 1);
             await store.SaveAsync(
-                new WorkflowRunId(runId),
+                new WorkflowRunAddress(Production, new WorkflowRunId(runId)),
                 checkpoint,
                 WorkflowCheckpointSerializer.ProjectIndex(checkpoint),
                 WorkflowEtag.None,

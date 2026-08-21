@@ -44,7 +44,7 @@ public sealed class WorkflowCheckpointCoordinator
 
     private readonly IWorkflowCheckpointStore store;
     private readonly TimeProvider timeProvider;
-    private readonly ConcurrentDictionary<string, RunSlot> slots = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<WorkflowRunAddress, RunSlot> slots = new();
     private long lastSweepTimestamp;
 
     /// <summary>Initializes a new instance of the <see cref="WorkflowCheckpointCoordinator"/> class.</summary>
@@ -62,12 +62,12 @@ public sealed class WorkflowCheckpointCoordinator
     /// Loads a run's checkpoint for a function to resume from, and aligns the coordinator's per-run state to the store
     /// so subsequent saves thread forward from it.
     /// </summary>
-    /// <param name="id">The run id.</param>
+    /// <param name="address">The run's <c>(environment, runId)</c> address.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The checkpoint bytes, its etag, and the last applied write-sequence; or <see langword="null"/> if the run has no checkpoint.</returns>
-    public async ValueTask<CheckpointLoad?> LoadAsync(WorkflowRunId id, CancellationToken cancellationToken)
+    public async ValueTask<CheckpointLoad?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
     {
-        WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(id, cancellationToken).ConfigureAwait(false);
+        WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(address, cancellationToken).ConfigureAwait(false);
         if (checkpoint is null)
         {
             // No checkpoint yet: the function reads this as a run with no persisted state. Do not create a slot — the
@@ -75,7 +75,7 @@ public sealed class WorkflowCheckpointCoordinator
             return null;
         }
 
-        RunSlot slot = this.GetSlot(id.Value);
+        RunSlot slot = this.GetSlot(address);
         long appliedSequence;
         await slot.Gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
@@ -104,15 +104,19 @@ public sealed class WorkflowCheckpointCoordinator
     /// invariants. The <paramref name="index"/> is projected by the caller from <paramref name="checkpointUtf8"/>, so a
     /// malformed body is rejected before it reaches the coordinator.
     /// </summary>
-    /// <param name="id">The run id.</param>
+    /// <param name="address">The run's <c>(environment, runId)</c> address.</param>
     /// <param name="checkpointUtf8">The checkpoint bytes to persist verbatim.</param>
     /// <param name="index">The index projected from the same bytes.</param>
+    /// <param name="claimedEnvironment">The environment the checkpoint BODY claims, taken from the caller's one
+    /// projection of the same bytes (<see cref="WorkflowCheckpointSerializer.ProjectIndex(ReadOnlyMemory{byte}, out string?)"/>).
+    /// A body claiming an environment other than <paramref name="address"/>'s — or claiming none — is refused on
+    /// EVERY save (ADR 0065 decision 9): the environment is the run's address, and no save may re-home it.</param>
     /// <param name="sequence">The save's monotonic per-run write-sequence.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The outcome, and the sequence the store will accept next.</returns>
-    public async ValueTask<CheckpointSaveResult> SaveAsync(WorkflowRunId id, ReadOnlyMemory<byte> checkpointUtf8, WorkflowRunIndexEntry index, long sequence, CancellationToken cancellationToken)
+    public async ValueTask<CheckpointSaveResult> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointUtf8, WorkflowRunIndexEntry index, string? claimedEnvironment, long sequence, CancellationToken cancellationToken)
     {
-        RunSlot slot = this.GetSlot(id.Value);
+        RunSlot slot = this.GetSlot(address);
         await slot.Gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -122,7 +126,7 @@ public sealed class WorkflowCheckpointCoordinator
                 // save). Seed the etag AND the persisted sequence from the store, so the write is conditioned correctly
                 // and the acceptance rule is evaluated against what the row actually holds rather than against a
                 // process-local counter that a restart reset to zero.
-                WorkflowCheckpoint? existing = await this.store.LoadAsync(id, cancellationToken).ConfigureAwait(false);
+                WorkflowCheckpoint? existing = await this.store.LoadAsync(address, cancellationToken).ConfigureAwait(false);
                 slot.Etag = existing?.Etag ?? WorkflowEtag.None;
                 slot.LastAppliedSequence = existing is { } row && WorkflowCheckpointSerializer.TryReadSequence(row.Utf8, out long persisted)
                     ? persisted
@@ -135,11 +139,18 @@ public sealed class WorkflowCheckpointCoordinator
                 slot.Seeded = true;
             }
 
-            // ADR 0065's mutual distrust, the control plane's half: the runner owns the run's working state and not the
-            // run's identity. The index arrives projected from the runner's own bytes and no store backend compares it
-            // to anything, so this is where a save that re-points a run at another environment, another workflow, or
-            // another owner group is refused. Checked before the sequence rule, so such a save is reported as what it
-            // is rather than as a race the caller should retry.
+            // ADR 0065's mutual distrust, the control plane's half: the runner owns the run's working state and not
+            // the run's identity. The environment IS the run's address (decision 9), so the body's claim is checked
+            // against the address structurally on EVERY save — first save included — replacing the old first-write
+            // identity pin for the environment: a first save could otherwise establish whatever environment it
+            // claimed. Workflow id and security tags stay first-write-pinned below (a fresh run legitimately states
+            // them once). Checked before the sequence rule, so such a save is reported as what it is rather than as
+            // a race the caller should retry.
+            if (!string.Equals(claimedEnvironment, address.Environment, StringComparison.Ordinal))
+            {
+                return new CheckpointSaveResult(CheckpointSaveOutcome.Rejected, slot.LastAppliedSequence + 1);
+            }
+
             if (slot.IdentityEstablished && !slot.Identity.Matches(index))
             {
                 return new CheckpointSaveResult(CheckpointSaveOutcome.Rejected, slot.LastAppliedSequence + 1);
@@ -155,7 +166,7 @@ public sealed class WorkflowCheckpointCoordinator
 
             try
             {
-                slot.Etag = await this.store.SaveAsync(id, checkpointUtf8, index, slot.Etag, cancellationToken).ConfigureAwait(false);
+                slot.Etag = await this.store.SaveAsync(address, checkpointUtf8, index, slot.Etag, cancellationToken).ConfigureAwait(false);
                 slot.LastAppliedSequence = sequence;
 
                 // A run with no stored row has no identity to preserve, so its first accepted save is what sets one.
@@ -183,10 +194,10 @@ public sealed class WorkflowCheckpointCoordinator
         }
     }
 
-    private RunSlot GetSlot(string runId)
+    private RunSlot GetSlot(in WorkflowRunAddress address)
     {
         this.MaybeSweep();
-        RunSlot slot = this.slots.GetOrAdd(runId, static _ => new RunSlot());
+        RunSlot slot = this.slots.GetOrAdd(address, static _ => new RunSlot());
 
         // Touch before the caller operates so an in-use slot always reads as fresh to the sweep.
         slot.TouchedTimestamp = this.timeProvider.GetTimestamp();
@@ -208,7 +219,7 @@ public sealed class WorkflowCheckpointCoordinator
             return;
         }
 
-        foreach (KeyValuePair<string, RunSlot> entry in this.slots)
+        foreach (KeyValuePair<WorkflowRunAddress, RunSlot> entry in this.slots)
         {
             RunSlot slot = entry.Value;
             if (this.timeProvider.GetElapsedTime(slot.TouchedTimestamp, now) < SlotIdleTtl)
@@ -249,17 +260,17 @@ public sealed class WorkflowCheckpointCoordinator
     }
 
     /// <summary>
-    /// The part of a run's index the writer does not own: which environment it belongs to, which workflow it is of, and
-    /// the tags that decide who can see and claim it.
+    /// The part of a run's index the writer does not own and that a first save legitimately states once: which
+    /// workflow it is of, and the tags that decide who can see and claim it. The run's environment is NOT here —
+    /// it is the address itself, checked structurally against the route on every save (ADR 0065 decision 9).
     /// </summary>
-    private readonly record struct RunIdentity(string? Environment, string WorkflowId, SecurityTagSet SecurityTags)
+    private readonly record struct RunIdentity(string WorkflowId, SecurityTagSet SecurityTags)
     {
         public static RunIdentity From(in WorkflowRunIndexEntry index)
-            => new(index.Environment, index.WorkflowId, index.SecurityTags);
+            => new(index.WorkflowId, index.SecurityTags);
 
         public bool Matches(in WorkflowRunIndexEntry index)
-            => string.Equals(this.Environment, index.Environment, StringComparison.Ordinal)
-            && string.Equals(this.WorkflowId, index.WorkflowId, StringComparison.Ordinal)
+            => string.Equals(this.WorkflowId, index.WorkflowId, StringComparison.Ordinal)
             && this.SecurityTags.SetEquals(index.SecurityTags);
     }
 
@@ -309,10 +320,12 @@ public enum CheckpointSaveOutcome
     Conflict,
 
     /// <summary>
-    /// The save carried an index that changed something the writer does not own — the run's environment, its workflow
-    /// id, or its security tags. Nothing was written. Distinct from <see cref="Superseded"/> and <see cref="Conflict"/>,
-    /// which are both ordinary races a healthy writer retries: this one is a write no honest writer produces, so a
-    /// caller that sees it has a defect or an attack rather than a lost lease.
+    /// The save changed something the writer does not own — the body claimed an environment other than the
+    /// addressed one (checked on every save: the environment is the run's address, ADR 0065 decision 9), or the
+    /// index re-pointed the run's workflow id or security tags. Nothing was written. Distinct from
+    /// <see cref="Superseded"/> and <see cref="Conflict"/>, which are both ordinary races a healthy writer retries:
+    /// this one is a write no well-behaved writer produces, so a caller that sees it has a defect or an attack
+    /// rather than a lost lease.
     /// </summary>
     Rejected,
 }

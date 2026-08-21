@@ -10,7 +10,8 @@ namespace Corvus.Text.Json.Arazzo.Durability.Benchmarks;
 /// <summary>
 /// Measures the allocation floor of the <see cref="IWorkflowWaitIndex.QueryAsync"/> keyset paging path (plan §11),
 /// isolated over the in-memory reference store (no driver / no I/O noise): one keyset page of runs ordered by ascending
-/// run id, on a corpus large enough that the page emits a continuation token. The seam carries that token; this is the
+/// address (environment, then run id — ADR 0065 decision 9), on a corpus large enough that the page emits a
+/// composite continuation token. The seam carries that token; this is the
 /// regression guard that the warm operator-list path stays small and CTJ-disciplined (no <c>System.Text.Json</c>).
 /// Also measures the <see cref="IWorkflowStateStore.SaveAsync"/> checkpoint <b>bind</b> on the run-state hot path: the
 /// opaque checkpoint arrives as a <see cref="ReadOnlyMemory{T}"/>, and the memory/stream backends (SqlServer/Postgres/
@@ -36,7 +37,7 @@ public class WorkflowStateStoreBenchmarks
         for (int i = 0; i < 100; i++)
         {
             this.store.SaveAsync(
-                $"run-{i:D3}",
+                new WorkflowRunAddress("development", new WorkflowRunId($"run-{i:D3}")),
                 new byte[] { 1 },
                 new WorkflowRunIndexEntry("wf", WorkflowRunStatus.Running, T0, T0),
                 WorkflowEtag.None,

@@ -125,7 +125,7 @@ public partial class WorkflowExecutorEndToEndTests
         }
 
         // The checkpoint after the first step survived the crash: cursor advanced, its outputs staged.
-        using (WorkflowRun? afterCrash = await WorkflowRun.ResumeAsync(store, runId))
+        using (WorkflowRun? afterCrash = await WorkflowRun.ResumeAsync(store, TestAddresses.Dev(runId)))
         {
             afterCrash.ShouldNotBeNull();
             afterCrash.Cursor.ShouldBe(1);
@@ -136,7 +136,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         // ── Run 2: a worker resumes and finishes the second step without re-running the first. ──
         using (var workspace = JsonWorkspace.Create())
-        using (WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, runId))
+        using (WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, TestAddresses.Dev(runId)))
         {
             resumed.ShouldNotBeNull();
 
@@ -157,7 +157,7 @@ public partial class WorkflowExecutorEndToEndTests
             transport.Requests[0].Path.ShouldBe("/pets/2");
         }
 
-        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(store, runId);
+        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(store, TestAddresses.Dev(runId));
         completed.ShouldNotBeNull();
         completed.Status.ShouldBe(WorkflowRunStatus.Completed);
     }
@@ -192,7 +192,7 @@ public partial class WorkflowExecutorEndToEndTests
         result.Fault.StepId.ShouldBe("second");
 
         // The fault was persisted; the run is recoverable, not lost.
-        using WorkflowRun? faulted = await WorkflowRun.ResumeAsync(store, runId);
+        using WorkflowRun? faulted = await WorkflowRun.ResumeAsync(store, TestAddresses.Dev(runId));
         faulted.ShouldNotBeNull();
         faulted.Status.ShouldBe(WorkflowRunStatus.Faulted);
         faulted.Fault!.Value.StepId.ShouldBe("second");
@@ -278,7 +278,7 @@ public partial class WorkflowExecutorEndToEndTests
 
         // ── Run 2: the worker resumes when the timer is due; the step now succeeds. ──
         using (var workspace = JsonWorkspace.Create())
-        using (WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, runId))
+        using (WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, TestAddresses.Dev(runId)))
         {
             resumed.ShouldNotBeNull();
             resumed.Status.ShouldBe(WorkflowRunStatus.Suspended);
@@ -487,7 +487,7 @@ public partial class WorkflowExecutorEndToEndTests
         // ── Run 2: a worker hands the awaited message to the resumed run, which completes immediately. ──
         using (var workspace = JsonWorkspace.Create())
         using (ParsedJsonDocument<JsonElement> payloadDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"lumens":150}""")))
-        using (WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, runId))
+        using (WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, TestAddresses.Dev(runId)))
         {
             resumed.ShouldNotBeNull();
             resumed.Status.ShouldBe(WorkflowRunStatus.Suspended);
@@ -547,7 +547,7 @@ public partial class WorkflowExecutorEndToEndTests
         time.Advance(TimeSpan.FromSeconds(120));
         (await worker.ResumeDueTimersAsync(Resume, default)).ShouldBe(1);
 
-        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(store, runId, time);
+        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(store, TestAddresses.Dev(runId), time);
         completed.ShouldNotBeNull();
         completed.Status.ShouldBe(WorkflowRunStatus.Completed);
     }
@@ -608,7 +608,7 @@ public partial class WorkflowExecutorEndToEndTests
             resumed.ShouldBe(1);
         }
 
-        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(store, runId);
+        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(store, TestAddresses.Dev(runId));
         completed.ShouldNotBeNull();
         completed.Status.ShouldBe(WorkflowRunStatus.Completed);
         completed.TryGetStepOutputs("receive", out JsonElement received).ShouldBeTrue();

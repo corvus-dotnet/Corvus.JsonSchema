@@ -698,7 +698,7 @@ public sealed class ControlPlaneServerTests
             runId = doc.RootElement.GetProperty("runId").GetString()!;
         }
 
-        using (WorkflowRun? run = await WorkflowRun.ResumeAsync(runStore, runId, clock, default))
+        using (WorkflowRun? run = await WorkflowRun.ResumeAsync(runStore, new WorkflowRunAddress("production", new WorkflowRunId(runId)), clock, default))
         {
             run.ShouldNotBeNull();
             run!.Status.ShouldBe(WorkflowRunStatus.Pending);
@@ -873,7 +873,7 @@ public sealed class ControlPlaneServerTests
 
         // Remove the occupant. The id must now be creatable, including from ANOTHER environment: a stale
         // registration row left behind by the refused create would shadow the id and refuse this with a conflict.
-        await runStore.DeleteAsync(derived, default);
+        await runStore.DeleteAsync(new WorkflowRunAddress("development", derived), default);
 
         const string createProd = """{"scheduleId":"nightly","environment":"production","targetBaseWorkflowId":"flow","targetVersionNumber":1,"cron":"0 9 * * *"}""";
         (await client.PostAsync("/schedules", new StringContent(createProd, Encoding.UTF8, "application/json"))).StatusCode.ShouldBe(HttpStatusCode.Created);
@@ -1176,7 +1176,7 @@ public sealed class ControlPlaneServerTests
         using (Stj.JsonDocument doc = await ReadJsonAsync(accepted))
         {
             string runId = doc.RootElement.GetProperty("runId").GetString()!;
-            using (WorkflowRun? run = await WorkflowRun.ResumeAsync(runStore, runId, clock, default))
+            using (WorkflowRun? run = await WorkflowRun.ResumeAsync(runStore, new WorkflowRunAddress("production", new WorkflowRunId(runId)), clock, default))
             {
                 run!.Environment.ShouldBe("production"); // pinned in the store (§5.5)
             }

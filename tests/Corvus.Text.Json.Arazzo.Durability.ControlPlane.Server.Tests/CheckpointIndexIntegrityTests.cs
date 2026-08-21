@@ -11,8 +11,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests;
 /// <summary>
 /// The control plane's half of ADR 0065's mutual distrust: it trusts the runner with the run's working state and not
 /// with the run's identity. The index a save carries is projected from the runner's own submitted bytes, and it holds
-/// the environment, the workflow id and the security tags that decide who may see and claim the run — so a save that
-/// changes them is a runner re-pointing its own run at another tenant, not a runner reporting progress.
+/// the workflow id and the security tags that decide who may see and claim the run — so a save that changes them is a
+/// runner re-pointing its own run at another tenant, not a runner reporting progress. The environment is stronger
+/// still: it is the run's ADDRESS (decision 9), so the body's claim is checked structurally against the addressed
+/// environment on EVERY save, first save included — no save can establish, or move to, an environment other than the
+/// one the run is addressed at.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -23,14 +26,15 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests;
 /// </para>
 /// <para>
 /// ADR 0065's eventual answer is the runner MAC over the runner-authored region, which is phase B. Until that exists
-/// the server-side comparison is the only thing standing in the way, and no store backend performs it: all nine write
-/// the submitted index verbatim.
+/// the server-side comparison is the only thing standing in the way, and no store backend performs it: all the
+/// backends write the submitted index verbatim.
 /// </para>
 /// </remarks>
 [TestClass]
 public sealed class CheckpointIndexIntegrityTests
 {
     private static readonly WorkflowRunId Run = new("run-1");
+    private static readonly WorkflowRunAddress Address = new("production", Run);
 
     [TestMethod]
     public async Task A_save_may_not_move_the_run_to_another_environment()
@@ -39,17 +43,35 @@ public sealed class CheckpointIndexIntegrityTests
         var coordinator = new WorkflowCheckpointCoordinator(store);
 
         byte[] established = Checkpoint(sequence: 1, environment: "production", workflowId: "onboard");
-        (await coordinator.SaveAsync(Run, established, Project(established), 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
+        (await SaveAsync(coordinator, established, 1)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
 
         byte[] moved = Checkpoint(sequence: 2, environment: "victim-tenant", workflowId: "onboard");
-        CheckpointSaveResult result = await coordinator.SaveAsync(Run, moved, Project(moved), 2, default);
+        CheckpointSaveResult result = await SaveAsync(coordinator, moved, 2);
 
         result.Outcome.ShouldBe(CheckpointSaveOutcome.Rejected);
 
         // Refusing is only half of it. The stored row must still say what it said, or the refusal reported a failure
         // the store had already accepted.
-        WorkflowCheckpoint stored = (await store.LoadAsync(Run, default))!.Value;
-        WorkflowCheckpointSerializer.ProjectIndex(stored.Utf8).Environment.ShouldBe("production");
+        WorkflowCheckpoint stored = (await store.LoadAsync(Address, default))!.Value;
+        WorkflowCheckpointSerializer.ProjectIndex(stored.Utf8, out string? storedEnvironment);
+        storedEnvironment.ShouldBe("production");
+    }
+
+    [TestMethod]
+    public async Task The_first_save_may_not_claim_an_environment_other_than_the_addressed_one()
+    {
+        // ADR 0065 decision 9: the environment is the run's address, checked structurally on EVERY save. Under the
+        // old first-write identity pin a fresh run's first save established whatever environment it claimed; under
+        // the composite address there is nothing for the body to establish — the address already says where the run
+        // lives, and a first save claiming anywhere else is the same re-pointing attack one save later.
+        var store = new InMemoryWorkflowStateStore();
+        var coordinator = new WorkflowCheckpointCoordinator(store);
+
+        byte[] first = Checkpoint(sequence: 1, environment: "victim-tenant", workflowId: "onboard");
+        CheckpointSaveResult result = await SaveAsync(coordinator, first, 1);
+
+        result.Outcome.ShouldBe(CheckpointSaveOutcome.Rejected);
+        (await store.LoadAsync(Address, default)).ShouldBeNull();
     }
 
     [TestMethod]
@@ -59,13 +81,13 @@ public sealed class CheckpointIndexIntegrityTests
         var coordinator = new WorkflowCheckpointCoordinator(store);
 
         byte[] established = Checkpoint(sequence: 1, environment: "production", workflowId: "onboard");
-        await coordinator.SaveAsync(Run, established, Project(established), 1, default);
+        await SaveAsync(coordinator, established, 1);
 
         byte[] rewritten = Checkpoint(sequence: 2, environment: "production", workflowId: "payroll");
-        CheckpointSaveResult result = await coordinator.SaveAsync(Run, rewritten, Project(rewritten), 2, default);
+        CheckpointSaveResult result = await SaveAsync(coordinator, rewritten, 2);
 
         result.Outcome.ShouldBe(CheckpointSaveOutcome.Rejected);
-        WorkflowCheckpointSerializer.ProjectIndex((await store.LoadAsync(Run, default))!.Value.Utf8).WorkflowId.ShouldBe("onboard");
+        WorkflowCheckpointSerializer.ProjectIndex((await store.LoadAsync(Address, default))!.Value.Utf8).WorkflowId.ShouldBe("onboard");
     }
 
     [TestMethod]
@@ -75,10 +97,10 @@ public sealed class CheckpointIndexIntegrityTests
         var coordinator = new WorkflowCheckpointCoordinator(store);
 
         byte[] established = Checkpoint(sequence: 1, environment: "production", workflowId: "onboard", securityTags: Tags("sys:tenant", "acme"));
-        await coordinator.SaveAsync(Run, established, Project(established), 1, default);
+        await SaveAsync(coordinator, established, 1);
 
         byte[] retagged = Checkpoint(sequence: 2, environment: "production", workflowId: "onboard", securityTags: Tags("sys:tenant", "globex"));
-        CheckpointSaveResult result = await coordinator.SaveAsync(Run, retagged, Project(retagged), 2, default);
+        CheckpointSaveResult result = await SaveAsync(coordinator, retagged, 2);
 
         result.Outcome.ShouldBe(CheckpointSaveOutcome.Rejected);
     }
@@ -92,26 +114,29 @@ public sealed class CheckpointIndexIntegrityTests
         var coordinator = new WorkflowCheckpointCoordinator(store);
 
         byte[] first = Checkpoint(sequence: 1, environment: "production", workflowId: "onboard", status: WorkflowRunStatus.Running, cursor: 0);
-        await coordinator.SaveAsync(Run, first, Project(first), 1, default);
+        await SaveAsync(coordinator, first, 1);
 
         byte[] advanced = Checkpoint(sequence: 2, environment: "production", workflowId: "onboard", status: WorkflowRunStatus.Completed, cursor: 3);
-        CheckpointSaveResult result = await coordinator.SaveAsync(Run, advanced, Project(advanced), 2, default);
+        CheckpointSaveResult result = await SaveAsync(coordinator, advanced, 2);
 
         result.Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
-        WorkflowCheckpointSerializer.ProjectIndex((await store.LoadAsync(Run, default))!.Value.Utf8).Status.ShouldBe(WorkflowRunStatus.Completed);
+        WorkflowCheckpointSerializer.ProjectIndex((await store.LoadAsync(Address, default))!.Value.Utf8).Status.ShouldBe(WorkflowRunStatus.Completed);
     }
 
     [TestMethod]
-    public async Task The_first_save_establishes_the_identity_it_carries()
+    public async Task The_first_save_establishes_the_workflow_and_tags_it_carries()
     {
-        // Nothing to compare against yet, so a run's first checkpoint is what sets its environment and workflow.
+        // A fresh run's first checkpoint is what sets its workflow id and security tags — there is nothing to compare
+        // them against yet. Its environment it does NOT set: that is the address (decision 9), and the first save is
+        // applied because its claim MATCHES the addressed environment, never because it established it.
         var store = new InMemoryWorkflowStateStore();
         var coordinator = new WorkflowCheckpointCoordinator(store);
 
         byte[] first = Checkpoint(sequence: 1, environment: "production", workflowId: "onboard");
 
-        (await coordinator.SaveAsync(Run, first, Project(first), 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
-        WorkflowCheckpointSerializer.ProjectIndex((await store.LoadAsync(Run, default))!.Value.Utf8).Environment.ShouldBe("production");
+        (await SaveAsync(coordinator, first, 1)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
+        WorkflowCheckpointSerializer.ProjectIndex((await store.LoadAsync(Address, default))!.Value.Utf8, out string? storedEnvironment).WorkflowId.ShouldBe("onboard");
+        storedEnvironment.ShouldBe("production");
     }
 
     [TestMethod]
@@ -124,15 +149,23 @@ public sealed class CheckpointIndexIntegrityTests
         var coordinator = new WorkflowCheckpointCoordinator(store);
 
         byte[] established = Checkpoint(sequence: 1, environment: "production", workflowId: "onboard");
-        await store.SaveAsync(Run, established, Project(established), WorkflowEtag.None, default);
+        await store.SaveAsync(Address, established, Project(established), WorkflowEtag.None, default);
 
-        (await coordinator.LoadAsync(Run, default)).ShouldNotBeNull();
+        (await coordinator.LoadAsync(Address, default)).ShouldNotBeNull();
 
         byte[] moved = Checkpoint(sequence: 2, environment: "victim-tenant", workflowId: "onboard");
-        CheckpointSaveResult result = await coordinator.SaveAsync(Run, moved, Project(moved), 2, default);
+        CheckpointSaveResult result = await SaveAsync(coordinator, moved, 2);
 
         result.Outcome.ShouldBe(CheckpointSaveOutcome.Rejected);
-        WorkflowCheckpointSerializer.ProjectIndex((await store.LoadAsync(Run, default))!.Value.Utf8).Environment.ShouldBe("production");
+        WorkflowCheckpointSerializer.ProjectIndex((await store.LoadAsync(Address, default))!.Value.Utf8, out string? storedEnvironment);
+        storedEnvironment.ShouldBe("production");
+    }
+
+    // One projection serves the index and the body's environment claim, exactly as the handlers make it.
+    private static ValueTask<CheckpointSaveResult> SaveAsync(WorkflowCheckpointCoordinator coordinator, byte[] checkpoint, long sequence)
+    {
+        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex(checkpoint, out string? claimedEnvironment);
+        return coordinator.SaveAsync(Address, checkpoint, index, claimedEnvironment, sequence, default);
     }
 
     private static SecurityTagSet Tags(string key, string value)

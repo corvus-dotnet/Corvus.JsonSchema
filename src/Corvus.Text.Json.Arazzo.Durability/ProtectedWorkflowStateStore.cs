@@ -46,42 +46,44 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
 
     /// <inheritdoc/>
     public ValueTask<WorkflowEtag> SaveAsync(
-        WorkflowRunId id,
+        WorkflowRunAddress address,
         ReadOnlyMemory<byte> checkpointUtf8,
         in WorkflowRunIndexEntry index,
         WorkflowEtag expected,
         CancellationToken cancellationToken)
-        => this.SaveCoreAsync(id, checkpointUtf8, index, expected, cancellationToken);
+        => this.SaveCoreAsync(address, checkpointUtf8, index, expected, cancellationToken);
 
     // The interface passes the index by `in`; an async method cannot take an `in` parameter, so SaveAsync
     // copies it (a small struct) and this private core does the encrypt-then-write.
     private async ValueTask<WorkflowEtag> SaveCoreAsync(
-        WorkflowRunId id,
+        WorkflowRunAddress address,
         ReadOnlyMemory<byte> checkpointUtf8,
         WorkflowRunIndexEntry index,
         WorkflowEtag expected,
         CancellationToken cancellationToken)
     {
-        ReadOnlyMemory<byte> protectedCheckpoint = await this.protector.ProtectAsync(checkpointUtf8, id, cancellationToken).ConfigureAwait(false);
-        return await this.inner.SaveAsync(id, protectedCheckpoint, index, expected, cancellationToken).ConfigureAwait(false);
+        // The protector's associated data stays bound to the run id (its own seam); the store row is addressed by
+        // the composite key.
+        ReadOnlyMemory<byte> protectedCheckpoint = await this.protector.ProtectAsync(checkpointUtf8, address.RunId, cancellationToken).ConfigureAwait(false);
+        return await this.inner.SaveAsync(address, protectedCheckpoint, index, expected, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunId id, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
     {
-        WorkflowCheckpoint? loaded = await this.inner.LoadAsync(id, cancellationToken).ConfigureAwait(false);
+        WorkflowCheckpoint? loaded = await this.inner.LoadAsync(address, cancellationToken).ConfigureAwait(false);
         if (loaded is not { } checkpoint)
         {
             return null;
         }
 
-        ReadOnlyMemory<byte> plaintext = await this.protector.UnprotectAsync(checkpoint.Utf8, id, cancellationToken).ConfigureAwait(false);
+        ReadOnlyMemory<byte> plaintext = await this.protector.UnprotectAsync(checkpoint.Utf8, address.RunId, cancellationToken).ConfigureAwait(false);
         return new WorkflowCheckpoint(plaintext, checkpoint.Etag);
     }
 
     /// <inheritdoc/>
-    public ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunId id, string owner, TimeSpan ttl, CancellationToken cancellationToken)
-        => this.inner.AcquireLeaseAsync(id, owner, ttl, cancellationToken);
+    public ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunAddress address, string owner, TimeSpan ttl, CancellationToken cancellationToken)
+        => this.inner.AcquireLeaseAsync(address, owner, ttl, cancellationToken);
 
     /// <inheritdoc/>
     public ValueTask<WorkflowLease?> TryExtendLeaseAsync(WorkflowLease lease, TimeSpan extension, CancellationToken cancellationToken)
@@ -92,31 +94,31 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
         => this.inner.ReleaseLeaseAsync(lease, cancellationToken);
 
     /// <inheritdoc/>
-    public ValueTask<int> ExpireLeasesForOwnerAsync(string owner, CancellationToken cancellationToken)
+    public ValueTask<int> ExpireLeasesForOwnerAsync(string owner, string? environment, CancellationToken cancellationToken)
     {
         // Leases pass through unprotected (they carry no run payload), so the revocation fence forwards straight to the
         // inner store when it supports it — a wrapped Postgres/Sqlite store fences exactly as an unwrapped one would.
-        return (this.innerLeaseAdmin ?? throw ThrowHelper.GetWrappedStoreNoLeaseAdministrationException()).ExpireLeasesForOwnerAsync(owner, cancellationToken);
+        return (this.innerLeaseAdmin ?? throw ThrowHelper.GetWrappedStoreNoLeaseAdministrationException()).ExpireLeasesForOwnerAsync(owner, environment, cancellationToken);
     }
 
     /// <inheritdoc/>
-    public ValueTask DeleteAsync(WorkflowRunId id, CancellationToken cancellationToken)
-        => this.inner.DeleteAsync(id, cancellationToken);
+    public ValueTask DeleteAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
+        => this.inner.DeleteAsync(address, cancellationToken);
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunAddress> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken)
         => this.RequireIndex().QueryDueAsync(before, cancellationToken);
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunAddress> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, CancellationToken cancellationToken)
         => this.RequireIndex().QueryDueAsync(before, runnerEnvironment, cancellationToken);
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunAddress> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken)
         => this.RequireIndex().QueryAwaitingAsync(channel, correlationId, cancellationToken);
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunAddress> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, CancellationToken cancellationToken)
         => this.RequireIndex().QueryAwaitingAsync(channel, correlationId, runnerEnvironment, cancellationToken);
 
     /// <inheritdoc/>
@@ -135,11 +137,11 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
     public bool SupportsRowSecurityFilter => this.inner is ISupportsRowSecurityFilter { SupportsRowSecurityFilter: true };
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunAddress> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
         => (this.innerDispatch ?? throw ThrowHelper.GetWrappedStoreNoDispatchIndexException()).QueryClaimableAsync(hostedWorkflowIds, now, cancellationToken);
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunAddress> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, CancellationToken cancellationToken)
         => (this.innerDispatch ?? throw ThrowHelper.GetWrappedStoreNoDispatchIndexException()).QueryClaimableAsync(hostedWorkflowIds, runnerEnvironment, now, cancellationToken);
 
     /// <inheritdoc/>

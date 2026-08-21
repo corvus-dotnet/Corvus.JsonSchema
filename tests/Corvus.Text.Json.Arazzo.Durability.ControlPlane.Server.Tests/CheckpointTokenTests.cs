@@ -14,109 +14,115 @@ using Shouldly;
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests;
 
 /// <summary>
-/// Coverage of the run-scoped checkpoint bearer token (ADR 0062): the token's own issue/validate semantics (run binding,
-/// expiry, tamper resistance) and the checkpoint endpoint's optional token authenticator — a request with no token, or a
-/// token for another run, is a 401, and a valid token is admitted to the load/save logic.
+/// Coverage of the run-scoped checkpoint bearer token (ADR 0062): the token's own issue/validate semantics (binding to
+/// the run's full (environment, runId) address per ADR 0065 decision 9, expiry, tamper resistance) and the checkpoint
+/// endpoint's optional token authenticator — a request with no token, or a token for another run, is a 401, and a
+/// valid token is admitted to the load/save logic.
 /// </summary>
 [TestClass]
 public sealed class CheckpointTokenTests
 {
     private const string Run1 = "0123456789abcdef0123456789abcdef";
     private const string Run2 = "fedcba9876543210fedcba9876543210";
+    private const string Env = "development";
+    private static readonly WorkflowRunAddress Address1 = new(Env, new WorkflowRunId(Run1));
+    private static readonly WorkflowRunAddress Address2 = new(Env, new WorkflowRunId(Run2));
     private static readonly byte[] Secret = Encoding.UTF8.GetBytes("a-shared-checkpoint-secret-of-sufficient-length");
     private static readonly DateTimeOffset Now = new(2026, 7, 29, 12, 0, 0, TimeSpan.Zero);
 
     [TestMethod]
     public void A_fresh_token_validates_for_its_run()
     {
-        string token = CheckpointToken.Issue(Secret, Run1, Now.AddMinutes(10));
+        string token = CheckpointToken.Issue(Secret, Address1, Now.AddMinutes(10));
 
-        CheckpointToken.TryValidate(Secret, token, Run1, Now).ShouldBeTrue();
+        CheckpointToken.TryValidate(Secret, token, Address1, Now).ShouldBeTrue();
     }
 
     [TestMethod]
     public void A_token_does_not_validate_for_another_run()
     {
-        string token = CheckpointToken.Issue(Secret, Run1, Now.AddMinutes(10));
+        string token = CheckpointToken.Issue(Secret, Address1, Now.AddMinutes(10));
 
-        CheckpointToken.TryValidate(Secret, token, Run2, Now).ShouldBeFalse();
+        CheckpointToken.TryValidate(Secret, token, Address2, Now).ShouldBeFalse();
     }
 
     [TestMethod]
     public void A_token_does_not_validate_under_another_secret()
     {
-        string token = CheckpointToken.Issue(Secret, Run1, Now.AddMinutes(10));
+        string token = CheckpointToken.Issue(Secret, Address1, Now.AddMinutes(10));
 
-        CheckpointToken.TryValidate(Encoding.UTF8.GetBytes("a-completely-different-secret-value"), token, Run1, Now).ShouldBeFalse();
+        CheckpointToken.TryValidate(Encoding.UTF8.GetBytes("a-completely-different-secret-value"), token, Address1, Now).ShouldBeFalse();
     }
 
     [TestMethod]
     public void An_expired_token_does_not_validate()
     {
-        string token = CheckpointToken.Issue(Secret, Run1, Now.AddMinutes(-1));
+        string token = CheckpointToken.Issue(Secret, Address1, Now.AddMinutes(-1));
 
-        CheckpointToken.TryValidate(Secret, token, Run1, Now).ShouldBeFalse();
+        CheckpointToken.TryValidate(Secret, token, Address1, Now).ShouldBeFalse();
     }
 
     [TestMethod]
     public void A_tampered_token_does_not_validate()
     {
-        string token = CheckpointToken.Issue(Secret, Run1, Now.AddMinutes(10));
+        string token = CheckpointToken.Issue(Secret, Address1, Now.AddMinutes(10));
         string tampered = token[..^1] + (token[^1] == 'A' ? 'B' : 'A');
 
-        CheckpointToken.TryValidate(Secret, tampered, Run1, Now).ShouldBeFalse();
+        CheckpointToken.TryValidate(Secret, tampered, Address1, Now).ShouldBeFalse();
     }
 
     [TestMethod]
     public void A_malformed_or_missing_token_does_not_validate()
     {
-        CheckpointToken.TryValidate(Secret, null, Run1, Now).ShouldBeFalse();
-        CheckpointToken.TryValidate(Secret, string.Empty, Run1, Now).ShouldBeFalse();
-        CheckpointToken.TryValidate(Secret, "no-separator", Run1, Now).ShouldBeFalse();
-        CheckpointToken.TryValidate(Secret, "not-a-number.signature", Run1, Now).ShouldBeFalse();
+        CheckpointToken.TryValidate(Secret, null, Address1, Now).ShouldBeFalse();
+        CheckpointToken.TryValidate(Secret, string.Empty, Address1, Now).ShouldBeFalse();
+        CheckpointToken.TryValidate(Secret, "no-separator", Address1, Now).ShouldBeFalse();
+        CheckpointToken.TryValidate(Secret, "not-a-number.signature", Address1, Now).ShouldBeFalse();
     }
 
     [TestMethod]
     public void Issue_rejects_a_secret_shorter_than_the_minimum()
     {
-        Should.Throw<ArgumentException>(() => CheckpointToken.Issue(Encoding.UTF8.GetBytes("too-short-secret"), Run1, Now.AddMinutes(10)));
+        Should.Throw<ArgumentException>(() => CheckpointToken.Issue(Encoding.UTF8.GetBytes("too-short-secret"), Address1, Now.AddMinutes(10)));
     }
 
     [TestMethod]
     public void Validation_fails_under_a_secret_shorter_than_the_minimum()
     {
-        string token = CheckpointToken.Issue(Secret, Run1, Now.AddMinutes(10));
+        string token = CheckpointToken.Issue(Secret, Address1, Now.AddMinutes(10));
 
-        CheckpointToken.TryValidate(Encoding.UTF8.GetBytes("too-short-secret"), token, Run1, Now).ShouldBeFalse();
+        CheckpointToken.TryValidate(Encoding.UTF8.GetBytes("too-short-secret"), token, Address1, Now).ShouldBeFalse();
     }
 
     [TestMethod]
     public void A_non_canonical_expiry_does_not_validate()
     {
-        string token = CheckpointToken.Issue(Secret, Run1, Now.AddMinutes(10));
+        string token = CheckpointToken.Issue(Secret, Address1, Now.AddMinutes(10));
         int separator = token.IndexOf('.');
         string expiry = token[..separator];
         string signature = token[(separator + 1)..];
 
         // A signed, or zero-padded, expiry carries the same signature but is not the one canonical token for the run.
-        CheckpointToken.TryValidate(Secret, $"+{expiry}.{signature}", Run1, Now).ShouldBeFalse();
-        CheckpointToken.TryValidate(Secret, $"0{expiry}.{signature}", Run1, Now).ShouldBeFalse();
+        CheckpointToken.TryValidate(Secret, $"+{expiry}.{signature}", Address1, Now).ShouldBeFalse();
+        CheckpointToken.TryValidate(Secret, $"0{expiry}.{signature}", Address1, Now).ShouldBeFalse();
 
         // Sanity: the canonical token still validates.
-        CheckpointToken.TryValidate(Secret, token, Run1, Now).ShouldBeTrue();
+        CheckpointToken.TryValidate(Secret, token, Address1, Now).ShouldBeTrue();
     }
 
     [TestMethod]
     public void A_run_spelled_with_the_separator_cannot_borrow_anothers_token()
     {
-        // The signed message is unframed, so this is the collision to rule out: a run id containing the separator must
-        // not be able to produce the same signed message as a different pair of run id and expiry. It cannot, because
-        // the expiry is a digits-only suffix after the final colon — asserted here rather than left as an assumption.
+        // The signed message is framed by its grammar, so this is the collision to rule out: a run id containing the
+        // separator must not be able to produce the same signed message as a different triple of environment, run id
+        // and expiry. It cannot, because the environment grammar admits no colon (the first colon ends it) and the
+        // expiry is a digits-only suffix after the final colon — asserted here rather than left as an assumption.
         long expiry = Now.AddMinutes(10).ToUnixTimeSeconds();
-        string token = CheckpointToken.Issue(Secret, $"run-1:{expiry}", Now.AddMinutes(10));
+        var spelled = new WorkflowRunAddress(Env, new WorkflowRunId($"run-1:{expiry}"));
+        string token = CheckpointToken.Issue(Secret, spelled, Now.AddMinutes(10));
 
-        CheckpointToken.TryValidate(Secret, token, Run1, Now).ShouldBeFalse();
-        CheckpointToken.TryValidate(Secret, token, $"run-1:{expiry}", Now).ShouldBeTrue();
+        CheckpointToken.TryValidate(Secret, token, Address1, Now).ShouldBeFalse();
+        CheckpointToken.TryValidate(Secret, token, spelled, Now).ShouldBeTrue();
     }
 
     [TestMethod]
@@ -125,12 +131,12 @@ public sealed class CheckpointTokenTests
         // This runs on every checkpoint callback from a deployed function, before the caller has proved anything, so
         // its cost is what someone presenting a wrong token can spend on the runner's behalf. The first shape allocated
         // 576 bytes a call, transcoding both sides of the comparison and materialising the expiry twice.
-        string token = CheckpointToken.Issue(Secret, Run1, Now.AddMinutes(10));
+        string token = CheckpointToken.Issue(Secret, Address1, Now.AddMinutes(10));
 
         // Warm up, so the measurement covers the work rather than the JIT.
         for (int i = 0; i < 1_000; ++i)
         {
-            CheckpointToken.TryValidate(Secret, token, Run1, Now);
+            CheckpointToken.TryValidate(Secret, token, Address1, Now);
         }
 
         GC.Collect();
@@ -142,7 +148,7 @@ public sealed class CheckpointTokenTests
         bool accepted = true;
         for (int i = 0; i < Iterations; ++i)
         {
-            accepted &= CheckpointToken.TryValidate(Secret, token, Run1, Now);
+            accepted &= CheckpointToken.TryValidate(Secret, token, Address1, Now);
         }
 
         long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
@@ -165,7 +171,7 @@ public sealed class CheckpointTokenTests
     public async Task The_endpoint_rejects_a_token_minted_for_another_run()
     {
         await using TokenHost host = await TokenHost.StartAsync();
-        string tokenForRun2 = CheckpointToken.Issue(Secret, Run2, DateTimeOffset.UtcNow.AddMinutes(10));
+        string tokenForRun2 = CheckpointToken.Issue(Secret, Address2, DateTimeOffset.UtcNow.AddMinutes(10));
 
         HttpResponseMessage response = await host.GetCheckpointAsync(Run1, tokenForRun2);
 
@@ -176,7 +182,7 @@ public sealed class CheckpointTokenTests
     public async Task The_endpoint_admits_a_valid_token_and_proceeds_to_the_load()
     {
         await using TokenHost host = await TokenHost.StartAsync();
-        string token = CheckpointToken.Issue(Secret, Run1, DateTimeOffset.UtcNow.AddMinutes(10));
+        string token = CheckpointToken.Issue(Secret, Address1, DateTimeOffset.UtcNow.AddMinutes(10));
 
         HttpResponseMessage response = await host.GetCheckpointAsync(Run1, token);
 
@@ -208,7 +214,7 @@ public sealed class CheckpointTokenTests
             app.MapWorkflowCheckpointEndpoints(
                 store,
                 requireAuthorization: false,
-                authenticateCheckpointToken: (id, token) => CheckpointToken.TryValidate(Secret, token, id.Value, DateTimeOffset.UtcNow));
+                authenticateCheckpointToken: (address, token) => CheckpointToken.TryValidate(Secret, token, address, DateTimeOffset.UtcNow));
             await app.StartAsync();
 
             return new TokenHost(app, app.GetTestClient());
@@ -216,7 +222,7 @@ public sealed class CheckpointTokenTests
 
         public Task<HttpResponseMessage> GetCheckpointAsync(string runId, string? token)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, $"/runs/{runId}/checkpoint");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"/environments/{Env}/runs/{runId}/checkpoint");
             if (token is not null)
             {
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -227,7 +233,7 @@ public sealed class CheckpointTokenTests
 
         public Task<HttpResponseMessage> PostCheckpointAsync(string runId, byte[] body, long sequence, string? token)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, $"/runs/{runId}/checkpoint")
+            var request = new HttpRequestMessage(HttpMethod.Post, $"/environments/{Env}/runs/{runId}/checkpoint")
             {
                 Content = new ByteArrayContent(body) { Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") } },
             };

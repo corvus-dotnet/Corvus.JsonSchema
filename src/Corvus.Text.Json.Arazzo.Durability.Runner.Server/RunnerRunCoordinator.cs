@@ -90,7 +90,7 @@ public sealed class RunnerRunCoordinator
 
         foreach (string environment in environments)
         {
-            await foreach (WorkflowRunId id in this.index.QueryClaimableAsync(hostedVersions, environment, now, cancellationToken).ConfigureAwait(false))
+            await foreach (WorkflowRunAddress address in this.index.QueryClaimableAsync(hostedVersions, environment, now, cancellationToken).ConfigureAwait(false))
             {
                 if (++considered > this.options.ClaimCandidates)
                 {
@@ -98,14 +98,14 @@ public sealed class RunnerRunCoordinator
                     return null;
                 }
 
-                WorkflowLease? acquired = await this.store.AcquireLeaseAsync(id, principal, lease, cancellationToken).ConfigureAwait(false);
+                WorkflowLease? acquired = await this.store.AcquireLeaseAsync(address, principal, lease, cancellationToken).ConfigureAwait(false);
                 if (acquired is not { } held)
                 {
                     // Another runner holds it.
                     continue;
                 }
 
-                ClaimedRunRecord? claimed = await this.ProjectClaimAsync(held, environment, hosted, cancellationToken).ConfigureAwait(false);
+                ClaimedRunRecord? claimed = await this.ProjectClaimAsync(held, hosted, cancellationToken).ConfigureAwait(false);
                 if (claimed is not null)
                 {
                     return claimed;
@@ -153,14 +153,14 @@ public sealed class RunnerRunCoordinator
 
         foreach (string environment in sweep.Environments)
         {
-            await foreach (WorkflowRunId id in this.waits.QueryDueAsync(now, environment, cancellationToken).ConfigureAwait(false))
+            await foreach (WorkflowRunAddress address in this.waits.QueryDueAsync(now, environment, cancellationToken).ConfigureAwait(false))
             {
                 if (claims.Count >= wanted)
                 {
                     return claims;
                 }
 
-                await this.TryTakeWaitingAsync(id, environment, principal, sweep.Hosted, lease, claims, cancellationToken).ConfigureAwait(false);
+                await this.TryTakeWaitingAsync(address, principal, sweep.Hosted, lease, claims, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -202,14 +202,14 @@ public sealed class RunnerRunCoordinator
 
         foreach (string environment in sweep.Environments)
         {
-            await foreach (WorkflowRunId id in this.waits.QueryAwaitingAsync(channel, correlationId, environment, cancellationToken).ConfigureAwait(false))
+            await foreach (WorkflowRunAddress address in this.waits.QueryAwaitingAsync(channel, correlationId, environment, cancellationToken).ConfigureAwait(false))
             {
                 if (claims.Count >= wanted)
                 {
                     return claims;
                 }
 
-                await this.TryTakeWaitingAsync(id, environment, principal, sweep.Hosted, lease, claims, cancellationToken).ConfigureAwait(false);
+                await this.TryTakeWaitingAsync(address, principal, sweep.Hosted, lease, claims, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -248,7 +248,7 @@ public sealed class RunnerRunCoordinator
         }
 
         WorkflowLease? extended = await this.store.TryExtendLeaseAsync(
-            new WorkflowLease(id, principal, storeToken, default),
+            new WorkflowLease(new WorkflowRunAddress(environment, id), principal, storeToken, default),
             this.options.BoundLease(requestedExtension),
             cancellationToken).ConfigureAwait(false);
 
@@ -267,6 +267,8 @@ public sealed class RunnerRunCoordinator
     /// Hands a run back so another runner may claim it without waiting for the lease to expire.
     /// </summary>
     /// <param name="principal">The authenticated machine principal.</param>
+    /// <param name="environment">The run's environment as the route claims it — half the run's address (ADR 0065
+    /// decision 9), grammar-validated at the ingress and deliberately NOT checked against the bindings (see remarks).</param>
     /// <param name="id">The run to release.</param>
     /// <param name="leaseToken">The presented <c>X-Arazzo-Lease</c> value.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
@@ -280,7 +282,7 @@ public sealed class RunnerRunCoordinator
     /// reason the bindings are not re-checked here: refusing a release would strand the run on a holder trying to hand
     /// the work back, and the token is already what proves the holder is this one.
     /// </remarks>
-    public async ValueTask ReleaseAsync(string principal, WorkflowRunId id, string? leaseToken, CancellationToken cancellationToken)
+    public async ValueTask ReleaseAsync(string principal, string environment, WorkflowRunId id, string? leaseToken, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(principal);
 
@@ -289,7 +291,7 @@ public sealed class RunnerRunCoordinator
             return;
         }
 
-        var presented = new WorkflowLease(id, principal, storeToken, default);
+        var presented = new WorkflowLease(new WorkflowRunAddress(environment, id), principal, storeToken, default);
         if (await this.store.TryExtendLeaseAsync(presented, TimeSpan.Zero, cancellationToken).ConfigureAwait(false) is not null)
         {
             await this.store.ReleaseLeaseAsync(presented, cancellationToken).ConfigureAwait(false);
@@ -334,7 +336,7 @@ public sealed class RunnerRunCoordinator
         // A mismatched epoch answers as a lost lease does, and joins the same set: the caller learns that this lease
         // does not authorise this operation, never which of the reasons it was.
         WorkflowLease? current = await this.store.TryExtendLeaseAsync(
-            new WorkflowLease(id, principal, storeToken, default),
+            new WorkflowLease(new WorkflowRunAddress(environment, id), principal, storeToken, default),
             TimeSpan.Zero,
             cancellationToken).ConfigureAwait(false);
 
@@ -384,16 +386,16 @@ public sealed class RunnerRunCoordinator
     // Leases one waiting candidate and keeps it only if it is still resumable under that lease. A run that changed
     // between the index query and the lease is handed straight back rather than held by a runner that will not advance
     // it, exactly as a dispatch claim does.
-    private async ValueTask TryTakeWaitingAsync(WorkflowRunId id, string environment, string principal, HashSet<string> hosted, TimeSpan lease, List<ClaimedRunRecord> claims, CancellationToken cancellationToken)
+    private async ValueTask TryTakeWaitingAsync(WorkflowRunAddress address, string principal, HashSet<string> hosted, TimeSpan lease, List<ClaimedRunRecord> claims, CancellationToken cancellationToken)
     {
-        WorkflowLease? acquired = await this.store.AcquireLeaseAsync(id, principal, lease, cancellationToken).ConfigureAwait(false);
+        WorkflowLease? acquired = await this.store.AcquireLeaseAsync(address, principal, lease, cancellationToken).ConfigureAwait(false);
         if (acquired is not { } held)
         {
             // Another runner is already advancing it.
             return;
         }
 
-        if (await this.ProjectWaitingClaimAsync(held, environment, hosted, cancellationToken).ConfigureAwait(false) is { } claimed)
+        if (await this.ProjectWaitingClaimAsync(held, hosted, cancellationToken).ConfigureAwait(false) is { } claimed)
         {
             claims.Add(claimed);
             return;
@@ -406,26 +408,31 @@ public sealed class RunnerRunCoordinator
     // deliberately so: the wait index says a timer fired or a message matched, but the run may have been advanced,
     // completed, or faulted since, and resuming a run that is no longer waiting would re-enter it at a step it has
     // already left.
-    private async ValueTask<ClaimedRunRecord?> ProjectWaitingClaimAsync(WorkflowLease held, string environment, HashSet<string> hostedVersions, CancellationToken cancellationToken)
+    private async ValueTask<ClaimedRunRecord?> ProjectWaitingClaimAsync(WorkflowLease held, HashSet<string> hostedVersions, CancellationToken cancellationToken)
     {
-        WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(held.RunId, cancellationToken).ConfigureAwait(false);
+        // The load is by the lease's full address (ADR 0065 decision 9), so the run's environment is structural:
+        // a row can only come back in the environment the sweep queried, and the old post-load environment
+        // comparison has nothing left to compare.
+        WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(held.Address, cancellationToken).ConfigureAwait(false);
         if (checkpoint is not { } row || !WorkflowCheckpointSerializer.TryProjectIndex(row.Utf8, out WorkflowRunIndexEntry entry))
         {
             return null;
         }
 
-        if (entry.Status != WorkflowRunStatus.Suspended || entry.Environment != environment || !hostedVersions.Contains(entry.WorkflowId))
+        if (entry.Status != WorkflowRunStatus.Suspended || !hostedVersions.Contains(entry.WorkflowId))
         {
             return null;
         }
 
         var grant = new RunnerLeaseGrant(RunnerLeaseToken.Issue(held.Epoch, held.Token), held.ExpiresAt, held.Epoch);
-        return new ClaimedRunRecord(held.RunId, entry.WorkflowId, environment, grant);
+        return new ClaimedRunRecord(held.RunId, entry.WorkflowId, held.Address.Environment, grant);
     }
 
-    private async ValueTask<ClaimedRunRecord?> ProjectClaimAsync(WorkflowLease held, string environment, HashSet<string> hostedVersions, CancellationToken cancellationToken)
+    private async ValueTask<ClaimedRunRecord?> ProjectClaimAsync(WorkflowLease held, HashSet<string> hostedVersions, CancellationToken cancellationToken)
     {
-        WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(held.RunId, cancellationToken).ConfigureAwait(false);
+        // The load is by the lease's full address (ADR 0065 decision 9), so the run's environment is structural:
+        // a row can only come back in the environment the claim queried.
+        WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(held.Address, cancellationToken).ConfigureAwait(false);
         if (checkpoint is not { } row || !WorkflowCheckpointSerializer.TryProjectIndex(row.Utf8, out WorkflowRunIndexEntry entry))
         {
             return null;
@@ -435,13 +442,13 @@ public sealed class RunnerRunCoordinator
         // (design §18) — never a terminal one, whatever a lingering marker says.
         bool claimable = entry.Status is WorkflowRunStatus.Pending or WorkflowRunStatus.Running
             || (entry.ResumeRequestedAt is not null && entry.Status is WorkflowRunStatus.Suspended or WorkflowRunStatus.Faulted);
-        if (!claimable || entry.Environment != environment || !hostedVersions.Contains(entry.WorkflowId))
+        if (!claimable || !hostedVersions.Contains(entry.WorkflowId))
         {
             return null;
         }
 
         var grant = new RunnerLeaseGrant(RunnerLeaseToken.Issue(held.Epoch, held.Token), held.ExpiresAt, held.Epoch);
-        return new ClaimedRunRecord(held.RunId, entry.WorkflowId, environment, grant);
+        return new ClaimedRunRecord(held.RunId, entry.WorkflowId, held.Address.Environment, grant);
     }
 }
 

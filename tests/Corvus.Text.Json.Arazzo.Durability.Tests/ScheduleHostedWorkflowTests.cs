@@ -127,7 +127,7 @@ public sealed class ScheduleHostedWorkflowTests
 
         (await CountPending(management)).ShouldBe(1);
 
-        using WorkflowRun? reloaded = await WorkflowRun.ResumeAsync(store, "sched-1", time, default);
+        using WorkflowRun? reloaded = await WorkflowRun.ResumeAsync(store, TestAddresses.Dev("sched-1"), time, default);
         reloaded.ShouldNotBeNull();
         reloaded!.Status.ShouldBe(WorkflowRunStatus.Suspended);
     }
@@ -158,7 +158,7 @@ public sealed class ScheduleHostedWorkflowTests
         int dispatched = await dispatcher.DispatchClaimableAsync([ScheduleHostedWorkflow.ScheduleWorkflowId], resume, default);
 
         dispatched.ShouldBe(1);
-        using WorkflowRun? reloaded = await WorkflowRun.ResumeAsync(store, scheduleRun, time, default);
+        using WorkflowRun? reloaded = await WorkflowRun.ResumeAsync(store, TestAddresses.Dev(scheduleRun), time, default);
         reloaded.ShouldNotBeNull();
         reloaded!.Status.ShouldBe(WorkflowRunStatus.Suspended);
     }

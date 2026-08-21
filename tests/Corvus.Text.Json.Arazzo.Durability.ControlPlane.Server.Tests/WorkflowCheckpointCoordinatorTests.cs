@@ -18,23 +18,24 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests;
 public sealed class WorkflowCheckpointCoordinatorTests
 {
     private static readonly WorkflowRunId Run = new("run-1");
+    private static readonly WorkflowRunAddress Address = new("development", Run);
 
     [TestMethod]
     public async Task Load_of_an_unknown_run_is_null()
     {
         var coordinator = new WorkflowCheckpointCoordinator(new InMemoryWorkflowStateStore());
 
-        (await coordinator.LoadAsync(Run, default)).ShouldBeNull();
+        (await coordinator.LoadAsync(Address, default)).ShouldBeNull();
     }
 
     [TestMethod]
     public async Task Load_returns_the_checkpoint_and_a_zero_sequence_before_any_save()
     {
         var store = new InMemoryWorkflowStateStore();
-        await store.SaveAsync(Run, Bytes(1), Index(WorkflowRunStatus.Running), WorkflowEtag.None, default);
+        await store.SaveAsync(Address, Bytes(1), Index(WorkflowRunStatus.Running), WorkflowEtag.None, default);
         var coordinator = new WorkflowCheckpointCoordinator(store);
 
-        CheckpointLoad? loaded = await coordinator.LoadAsync(Run, default);
+        CheckpointLoad? loaded = await coordinator.LoadAsync(Address, default);
 
         loaded.ShouldNotBeNull();
         loaded!.Value.Checkpoint.ToArray().ShouldBe(Bytes(1));
@@ -48,10 +49,10 @@ public sealed class WorkflowCheckpointCoordinatorTests
         var store = new InMemoryWorkflowStateStore();
         var coordinator = new WorkflowCheckpointCoordinator(store);
 
-        CheckpointSaveResult outcome = await coordinator.SaveAsync(Run, Bytes(7), Index(WorkflowRunStatus.Running), sequence: 1, default);
+        CheckpointSaveResult outcome = await coordinator.SaveAsync(Address, Bytes(7), Index(WorkflowRunStatus.Running), "development", 1, default);
 
         outcome.Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
-        (await store.LoadAsync(Run, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(7));
+        (await store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(7));
     }
 
     [TestMethod]
@@ -60,12 +61,12 @@ public sealed class WorkflowCheckpointCoordinatorTests
         var store = new InMemoryWorkflowStateStore();
         var coordinator = new WorkflowCheckpointCoordinator(store);
 
-        (await coordinator.SaveAsync(Run, Bytes(1), Index(WorkflowRunStatus.Running), 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
-        (await coordinator.SaveAsync(Run, Bytes(2), Index(WorkflowRunStatus.Running), 2, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
-        (await coordinator.SaveAsync(Run, Bytes(3), Index(WorkflowRunStatus.Completed), 3, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
+        (await coordinator.SaveAsync(Address, Bytes(1), Index(WorkflowRunStatus.Running), "development", 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
+        (await coordinator.SaveAsync(Address, Bytes(2), Index(WorkflowRunStatus.Running), "development", 2, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
+        (await coordinator.SaveAsync(Address, Bytes(3), Index(WorkflowRunStatus.Completed), "development", 3, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
 
         // No conflict despite the store's strict etag concurrency, because the coordinator threads the returned etag.
-        (await store.LoadAsync(Run, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(3));
+        (await store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(3));
     }
 
     [TestMethod]
@@ -74,15 +75,15 @@ public sealed class WorkflowCheckpointCoordinatorTests
         var store = new InMemoryWorkflowStateStore();
         var coordinator = new WorkflowCheckpointCoordinator(store);
 
-        await coordinator.SaveAsync(Run, Bytes(1), Index(WorkflowRunStatus.Running), sequence: 1, default);
+        await coordinator.SaveAsync(Address, Bytes(1), Index(WorkflowRunStatus.Running), "development", 1, default);
 
         // A resend of a sequence already persisted. It is refused, and told the sequence that would be accepted, so a
         // caller can tell its own duplicate from a genuine divergence.
-        CheckpointSaveResult outcome = await coordinator.SaveAsync(Run, Bytes(9), Index(WorkflowRunStatus.Running), sequence: 1, default);
+        CheckpointSaveResult outcome = await coordinator.SaveAsync(Address, Bytes(9), Index(WorkflowRunStatus.Running), "development", 1, default);
 
         outcome.Outcome.ShouldBe(CheckpointSaveOutcome.Superseded);
         outcome.AcceptedSequence.ShouldBe(2);
-        (await store.LoadAsync(Run, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(1));
+        (await store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(1));
     }
 
     [TestMethod]
@@ -91,10 +92,10 @@ public sealed class WorkflowCheckpointCoordinatorTests
         var store = new InMemoryWorkflowStateStore();
         var coordinator = new WorkflowCheckpointCoordinator(store);
 
-        await coordinator.SaveAsync(Run, Bytes(1), Index(WorkflowRunStatus.Running), sequence: 1, default);
+        await coordinator.SaveAsync(Address, Bytes(1), Index(WorkflowRunStatus.Running), "development", 1, default);
 
-        (await coordinator.SaveAsync(Run, Bytes(9), Index(WorkflowRunStatus.Running), sequence: 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Superseded);
-        (await store.LoadAsync(Run, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(1));
+        (await coordinator.SaveAsync(Address, Bytes(9), Index(WorkflowRunStatus.Running), "development", 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Superseded);
+        (await store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(1));
     }
 
     [TestMethod]
@@ -106,34 +107,34 @@ public sealed class WorkflowCheckpointCoordinatorTests
         var store = new InMemoryWorkflowStateStore();
         var coordinator = new WorkflowCheckpointCoordinator(store);
 
-        (await coordinator.SaveAsync(Run, Bytes(1), Index(WorkflowRunStatus.Running), 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
+        (await coordinator.SaveAsync(Address, Bytes(1), Index(WorkflowRunStatus.Running), "development", 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
 
-        CheckpointSaveResult ahead = await coordinator.SaveAsync(Run, Bytes(3), Index(WorkflowRunStatus.Running), 3, default);
+        CheckpointSaveResult ahead = await coordinator.SaveAsync(Address, Bytes(3), Index(WorkflowRunStatus.Running), "development", 3, default);
         ahead.Outcome.ShouldBe(CheckpointSaveOutcome.Superseded);
         ahead.AcceptedSequence.ShouldBe(2);
-        (await store.LoadAsync(Run, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(1));
+        (await store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(1));
 
         // The delayed sequence 2 is what the store was waiting for, so it lands.
-        (await coordinator.SaveAsync(Run, Bytes(2), Index(WorkflowRunStatus.Running), 2, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
-        (await store.LoadAsync(Run, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(2));
+        (await coordinator.SaveAsync(Address, Bytes(2), Index(WorkflowRunStatus.Running), "development", 2, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
+        (await store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(2));
     }
 
     [TestMethod]
     public async Task A_conflicting_write_is_surfaced_and_the_slot_is_not_advanced()
     {
         var store = new InMemoryWorkflowStateStore();
-        await store.SaveAsync(Run, Bytes(1), Index(WorkflowRunStatus.Running), WorkflowEtag.None, default);
+        await store.SaveAsync(Address, Bytes(1), Index(WorkflowRunStatus.Running), WorkflowEtag.None, default);
         var coordinator = new WorkflowCheckpointCoordinator(store);
 
         // The coordinator seeds the run's etag from the load.
-        CheckpointLoad seeded = (await coordinator.LoadAsync(Run, default))!.Value;
+        CheckpointLoad seeded = (await coordinator.LoadAsync(Address, default))!.Value;
 
         // A peer writes the run out of band (a lost/stolen lease), advancing the store's etag past the seeded one.
-        await store.SaveAsync(Run, Bytes(2), Index(WorkflowRunStatus.Running), seeded.Etag, default);
+        await store.SaveAsync(Address, Bytes(2), Index(WorkflowRunStatus.Running), seeded.Etag, default);
 
         // The coordinator's next save carries the now-stale seeded etag, so the store rejects it.
-        (await coordinator.SaveAsync(Run, Bytes(3), Index(WorkflowRunStatus.Running), sequence: 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Conflict);
-        (await store.LoadAsync(Run, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(2));
+        (await coordinator.SaveAsync(Address, Bytes(3), Index(WorkflowRunStatus.Running), "development", 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Conflict);
+        (await store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(2));
     }
 
     [TestMethod]
@@ -144,11 +145,11 @@ public sealed class WorkflowCheckpointCoordinatorTests
         var store = new InMemoryWorkflowStateStore();
         var coordinator = new WorkflowCheckpointCoordinator(store);
 
-        await coordinator.SaveAsync(Run, Bytes(1), Index(WorkflowRunStatus.Running), sequence: 1, default);
-        await coordinator.SaveAsync(Run, Bytes(2), Index(WorkflowRunStatus.Completed), sequence: 2, default);
+        await coordinator.SaveAsync(Address, Bytes(1), Index(WorkflowRunStatus.Running), "development", 1, default);
+        await coordinator.SaveAsync(Address, Bytes(2), Index(WorkflowRunStatus.Completed), "development", sequence: 2, default);
 
-        (await coordinator.SaveAsync(Run, Bytes(1), Index(WorkflowRunStatus.Running), sequence: 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Superseded);
-        (await store.LoadAsync(Run, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(2));
+        (await coordinator.SaveAsync(Address, Bytes(1), Index(WorkflowRunStatus.Running), "development", 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Superseded);
+        (await store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(2));
     }
 
     [TestMethod]
@@ -160,16 +161,16 @@ public sealed class WorkflowCheckpointCoordinatorTests
         var store = new InMemoryWorkflowStateStore();
         var coordinator = new WorkflowCheckpointCoordinator(store, time);
 
-        await coordinator.SaveAsync(Run, Bytes(5), Index(WorkflowRunStatus.Running), sequence: 5, default);
+        await coordinator.SaveAsync(Address, Bytes(5), Index(WorkflowRunStatus.Running), "development", 5, default);
 
         // Idle past the slot TTL, then touch a different run to trigger the opportunistic sweep of run-1's stale slot.
         time.Advance(TimeSpan.FromMinutes(20));
-        await coordinator.SaveAsync(new WorkflowRunId("run-2"), Bytes(1), Index(WorkflowRunStatus.Running), sequence: 1, default);
+        await coordinator.SaveAsync(new WorkflowRunAddress("development", new WorkflowRunId("run-2")), Bytes(1), Index(WorkflowRunStatus.Running), "development", 1, default);
 
-        CheckpointSaveResult afterSweep = await coordinator.SaveAsync(Run, Bytes(8), Index(WorkflowRunStatus.Running), sequence: 1, default);
+        CheckpointSaveResult afterSweep = await coordinator.SaveAsync(Address, Bytes(8), Index(WorkflowRunStatus.Running), "development", 1, default);
 
         afterSweep.Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
-        (await store.LoadAsync(Run, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(8));
+        (await store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(8));
     }
 
     [TestMethod]

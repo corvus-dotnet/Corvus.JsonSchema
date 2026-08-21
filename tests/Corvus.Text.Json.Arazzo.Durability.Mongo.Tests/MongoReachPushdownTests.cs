@@ -148,6 +148,9 @@ public sealed class MongoReachPushdownTests
         return await MongoWorkflowCatalogStore.ConnectAsync(client, DatabaseName);
     }
 
+    // The run's full (environment, runId) address (ADR 0065 decision 9).
+    private static WorkflowRunAddress A(string runId) => new("development", new WorkflowRunId(runId));
+
     // Half the runs are the reaching tenant's and half another's, interleaved, so a page of five is satisfied early
     // in the _id order and an unbounded scan is a choice rather than a necessity.
     private static async ValueTask SeedRunsAsync(IWorkflowStateStore store, int count)
@@ -156,7 +159,7 @@ public sealed class MongoReachPushdownTests
         {
             SecurityTag[] tags = [new("tenant", i % 2 == 0 ? "acme" : "globex")];
             var entry = new WorkflowRunIndexEntry("wf", WorkflowRunStatus.Running, T0, T0, SecurityTags: SecurityTagSet.FromTags(tags));
-            await store.SaveAsync($"run-{i:D3}", Encoding.UTF8.GetBytes("{}"), entry, WorkflowEtag.None, default);
+            await store.SaveAsync(A($"run-{i:D3}"), Encoding.UTF8.GetBytes("{}"), entry, WorkflowEtag.None, default);
         }
     }
 

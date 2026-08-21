@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Collections.ObjectModel;
 using System.Net;
 using System.Runtime.CompilerServices;
 using Microsoft.Azure.Cosmos;
@@ -24,6 +25,10 @@ namespace Corvus.Text.Json.Arazzo.Durability.Cosmos;
 /// <see cref="CosmosClient"/> let callers configure the client (for example a least-privileged data-plane
 /// managed identity) themselves.
 /// </remarks>
+// TRANSITIONAL (ADR 0065 decision 9): the seam addresses runs by (environment, runId), but this backend still keys
+// its documents by run id alone — the composite-key conversion is this backend's own commit, and the composite-address
+// conformance oracles pin the gap until it lands. The environment field is written from the address and projected
+// back into every answered address.
 public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
@@ -34,6 +39,7 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     private const string LeasesContainerId = "workflow_leases";
 
     private static readonly byte[] IdProperty = "id"u8.ToArray();
+    private static readonly byte[] EnvironmentProperty = "environment"u8.ToArray();
     private static readonly byte[] StatusProperty = "status"u8.ToArray();
     private static readonly byte[] AwaitingCorrelationIdProperty = "awaitingCorrelationId"u8.ToArray();
 
@@ -147,29 +153,30 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
 
     /// <inheritdoc/>
     public ValueTask<WorkflowEtag> SaveAsync(
-        WorkflowRunId id,
+        WorkflowRunAddress address,
         ReadOnlyMemory<byte> checkpointUtf8,
         in WorkflowRunIndexEntry index,
         WorkflowEtag expected,
         CancellationToken cancellationToken)
-        => this.SaveCoreAsync(id, checkpointUtf8, index, expected, cancellationToken);
+        => this.SaveCoreAsync(address, checkpointUtf8, index, expected, cancellationToken);
 
-    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunId id, ReadOnlyMemory<byte> checkpoint, WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpoint, WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
     {
-        var partition = new PartitionKey(id.Value);
+        var partition = new PartitionKey(address.RunId.Value);
 
         // Serialize the run straight into the pooled write stream — no intermediate RunDocument value, no re-serialization.
+        // The document's environment field is written from the address (never null), the run's other key half.
         using var stream = CosmosJson.WriteToStream(
-            (Id: id, Checkpoint: checkpoint, Index: index),
-            static (Utf8JsonWriter writer, in (WorkflowRunId Id, ReadOnlyMemory<byte> Checkpoint, WorkflowRunIndexEntry Index) ctx)
-                => RunDocument.WriteJson(writer, ctx.Id, ctx.Checkpoint, ctx.Index));
+            (Address: address, Checkpoint: checkpoint, Index: index),
+            static (Utf8JsonWriter writer, in (WorkflowRunAddress Address, ReadOnlyMemory<byte> Checkpoint, WorkflowRunIndexEntry Index) ctx)
+                => RunDocument.WriteJson(writer, ctx.Address, ctx.Checkpoint, ctx.Index));
 
         if (expected.IsNone)
         {
             using ResponseMessage response = await this.runs.CreateItemStreamAsync(stream, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (response.StatusCode is HttpStatusCode.Conflict)
             {
-                throw new WorkflowConflictException(id, expected);
+                throw new WorkflowConflictException(address, expected);
             }
 
             response.EnsureSuccessStatusCode();
@@ -178,10 +185,10 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         else
         {
             var options = new ItemRequestOptions { IfMatchEtag = expected.Value };
-            using ResponseMessage response = await this.runs.ReplaceItemStreamAsync(stream, id.Value, partition, options, cancellationToken).ConfigureAwait(false);
+            using ResponseMessage response = await this.runs.ReplaceItemStreamAsync(stream, address.RunId.Value, partition, options, cancellationToken).ConfigureAwait(false);
             if (response.StatusCode is HttpStatusCode.Conflict or HttpStatusCode.PreconditionFailed or HttpStatusCode.NotFound)
             {
-                throw new WorkflowConflictException(id, expected);
+                throw new WorkflowConflictException(address, expected);
             }
 
             response.EnsureSuccessStatusCode();
@@ -190,9 +197,9 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunId id, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
     {
-        using ResponseMessage response = await this.runs.ReadItemStreamAsync(id.Value, new PartitionKey(id.Value), cancellationToken: cancellationToken).ConfigureAwait(false);
+        using ResponseMessage response = await this.runs.ReadItemStreamAsync(address.RunId.Value, new PartitionKey(address.RunId.Value), cancellationToken: cancellationToken).ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return null;
@@ -205,25 +212,25 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunId id, string owner, TimeSpan ttl, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunAddress address, string owner, TimeSpan ttl, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(owner);
 
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         DateTimeOffset expiresAt = now + ttl;
         string token = Guid.NewGuid().ToString("N");
-        var partition = new PartitionKey(id.Value);
+        var partition = new PartitionKey(address.RunId.Value);
 
         // Serialize the lease straight into the pooled write stream — no intermediate LeaseDocument value. The epoch is
         // advanced from the stored document rather than supplied, so it counts this run's grants across every instance
         // and every restart (ADR 0065 §6). The document's own ETag is what makes read-then-advance atomic: a concurrent
         // grant changes it, and the conditional replace below is refused rather than reusing the epoch it read.
         Stream BuildLeaseStream(long epoch) => CosmosJson.WriteToStream(
-            (Id: id.Value, Owner: owner, Token: token, ExpiresAt: expiresAt.ToUnixTimeMilliseconds(), Epoch: epoch),
+            (Id: address.RunId.Value, Owner: owner, Token: token, ExpiresAt: expiresAt.ToUnixTimeMilliseconds(), Epoch: epoch),
             static (Utf8JsonWriter writer, in (string Id, string Owner, string Token, long ExpiresAt, long Epoch) ctx)
                 => LeaseDocument.WriteJson(writer, ctx.Id, ctx.Owner, ctx.Token, ctx.ExpiresAt, ctx.Epoch));
 
-        using ResponseMessage read = await this.leases.ReadItemStreamAsync(id.Value, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
+        using ResponseMessage read = await this.leases.ReadItemStreamAsync(address.RunId.Value, partition, cancellationToken: cancellationToken).ConfigureAwait(false);
         if (read.StatusCode == HttpStatusCode.NotFound)
         {
             using var createStream = BuildLeaseStream(1);
@@ -235,7 +242,7 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             }
 
             created.EnsureSuccessStatusCode();
-            return new WorkflowLease(id, owner, token, expiresAt, 1);
+            return new WorkflowLease(address, owner, token, expiresAt, 1);
         }
 
         read.EnsureSuccessStatusCode();
@@ -249,7 +256,7 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         long granted = existing.EpochValue + 1;
         var options = new ItemRequestOptions { IfMatchEtag = read.Headers.ETag };
         using var replaceStream = BuildLeaseStream(granted);
-        using ResponseMessage replaced = await this.leases.ReplaceItemStreamAsync(replaceStream, id.Value, partition, options, cancellationToken).ConfigureAwait(false);
+        using ResponseMessage replaced = await this.leases.ReplaceItemStreamAsync(replaceStream, address.RunId.Value, partition, options, cancellationToken).ConfigureAwait(false);
         if (replaced.StatusCode is HttpStatusCode.Conflict or HttpStatusCode.PreconditionFailed)
         {
             // Another worker advanced the lease concurrently.
@@ -257,7 +264,7 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         }
 
         replaced.EnsureSuccessStatusCode();
-        return new WorkflowLease(id, owner, token, expiresAt, granted);
+        return new WorkflowLease(address, owner, token, expiresAt, granted);
     }
 
     /// <inheritdoc/>
@@ -292,7 +299,7 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         long epoch = existing.EpochValue;
         if (extension == TimeSpan.Zero)
         {
-            return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(existing.ExpiresAtValue), epoch);
+            return new WorkflowLease(lease.Address, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(existing.ExpiresAtValue), epoch);
         }
 
         DateTimeOffset extendedTo = now + extension;
@@ -309,7 +316,7 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         }
 
         replaced.EnsureSuccessStatusCode();
-        return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, extendedTo, epoch);
+        return new WorkflowLease(lease.Address, lease.Owner, lease.Token, extendedTo, epoch);
     }
 
     /// <inheritdoc/>
@@ -349,42 +356,43 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     }
 
     /// <inheritdoc/>
-    public async ValueTask DeleteAsync(WorkflowRunId id, CancellationToken cancellationToken)
+    public async ValueTask DeleteAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
     {
-        var partition = new PartitionKey(id.Value);
-        await DeleteIfExistsAsync(this.runs, id.Value, partition, cancellationToken).ConfigureAwait(false);
-        await DeleteIfExistsAsync(this.leases, id.Value, partition, cancellationToken).ConfigureAwait(false);
+        var partition = new PartitionKey(address.RunId.Value);
+        await DeleteIfExistsAsync(this.runs, address.RunId.Value, partition, cancellationToken).ConfigureAwait(false);
+        await DeleteIfExistsAsync(this.leases, address.RunId.Value, partition, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken) => this.QueryDueAsync(before, null, cancellationToken);
+    public IAsyncEnumerable<WorkflowRunAddress> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken) => this.QueryDueAsync(before, null, cancellationToken);
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, [EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<WorkflowRunAddress> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         // §5.5 environment-scoped timer-resume: a real runner (non-null @runnerEnvironment) resumes a due suspended run
         // only when pinned to EXACTLY its environment — `c.environment = @runnerEnvironment` excludes an unpinned run
         // (undefined = value → false) and a differently-pinned run. A null @runnerEnvironment is the env-agnostic base
         // overload (list all due): NOT IS_DEFINED / IS_NULL short-circuit to true, so it filters by due timer only,
-        // never a runner.
-        var query = new QueryDefinition("SELECT c.id FROM c WHERE c.status = @status AND IS_DEFINED(c.dueAt) AND c.dueAt <= @before AND (NOT IS_DEFINED(@runnerEnvironment) OR IS_NULL(@runnerEnvironment) OR c.environment = @runnerEnvironment)")
+        // never a runner. The environment is projected back so every answer is a full run address.
+        var query = new QueryDefinition("SELECT c.id, c.environment FROM c WHERE c.status = @status AND IS_DEFINED(c.dueAt) AND c.dueAt <= @before AND (NOT IS_DEFINED(@runnerEnvironment) OR IS_NULL(@runnerEnvironment) OR c.environment = @runnerEnvironment)")
             .WithParameter("@status", SuspendedStatus)
             .WithParameter("@before", before.ToUnixTimeMilliseconds())
             .WithParameter("@runnerEnvironment", runnerEnvironment);
         await foreach (ReadOnlyMemory<byte> element in QueryElementsAsync(this.runs, query, cancellationToken).ConfigureAwait(false))
         {
-            if (CosmosJson.GetString(element, IdProperty) is { } runId)
+            if (CosmosJson.GetString(element, IdProperty) is { } runId
+                && CosmosJson.GetString(element, EnvironmentProperty) is { } environment)
             {
-                yield return new WorkflowRunId(runId);
+                yield return new WorkflowRunAddress(environment, new WorkflowRunId(runId));
             }
         }
     }
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken) => this.QueryAwaitingAsync(channel, correlationId, null, cancellationToken);
+    public IAsyncEnumerable<WorkflowRunAddress> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken) => this.QueryAwaitingAsync(channel, correlationId, null, cancellationToken);
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, [EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<WorkflowRunAddress> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(channel);
 
@@ -394,15 +402,16 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         // only when pinned to EXACTLY its environment. `c.environment = @runnerEnvironment` excludes an unpinned run
         // (undefined = value yields false) and a differently-pinned run. A null @runnerEnvironment is the env-agnostic
         // base overload (list all awaiting). NOT IS_DEFINED / IS_NULL short-circuit to true, so it filters by channel
-        // only, never a runner.
-        var query = new QueryDefinition("SELECT c.id, c.awaitingCorrelationId FROM c WHERE c.status = @status AND c.awaitingChannel = @channel AND (NOT IS_DEFINED(@runnerEnvironment) OR IS_NULL(@runnerEnvironment) OR c.environment = @runnerEnvironment)")
+        // only, never a runner. The environment is projected back so every answer is a full run address.
+        var query = new QueryDefinition("SELECT c.id, c.environment, c.awaitingCorrelationId FROM c WHERE c.status = @status AND c.awaitingChannel = @channel AND (NOT IS_DEFINED(@runnerEnvironment) OR IS_NULL(@runnerEnvironment) OR c.environment = @runnerEnvironment)")
             .WithParameter("@status", SuspendedStatus)
             .WithParameter("@channel", channel)
             .WithParameter("@runnerEnvironment", runnerEnvironment);
         await foreach (ReadOnlyMemory<byte> element in QueryElementsAsync(this.runs, query, cancellationToken).ConfigureAwait(false))
         {
             string? runId = CosmosJson.GetString(element, IdProperty);
-            if (runId is null)
+            string? environment = CosmosJson.GetString(element, EnvironmentProperty);
+            if (runId is null || environment is null)
             {
                 continue;
             }
@@ -410,17 +419,17 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             string? awaitingCorrelationId = CosmosJson.GetString(element, AwaitingCorrelationIdProperty);
             if (correlationId is null || awaitingCorrelationId is null || awaitingCorrelationId == correlationId)
             {
-                yield return new WorkflowRunId(runId);
+                yield return new WorkflowRunAddress(environment, new WorkflowRunId(runId));
             }
         }
     }
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunAddress> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
         => this.QueryClaimableAsync(hostedWorkflowIds, null, now, cancellationToken);
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, [EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<WorkflowRunAddress> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
         if (hostedWorkflowIds.Count == 0)
@@ -436,7 +445,7 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         // false) and a differently-pinned run. A null @runnerEnvironment is the env-agnostic base overload (list all
         // claimable): NOT IS_DEFINED / IS_NULL short-circuit to true, so it filters by hosted id only, never a runner.
         var candidateQuery = new QueryDefinition(
-            "SELECT c.id, c.status FROM c WHERE ((c.status = @pending OR c.status = @running) OR ((c.status = @suspended OR c.status = @faulted) AND IS_DEFINED(c.resumeRequestedAt))) AND ARRAY_CONTAINS(@hosted, c.workflowId) AND (NOT IS_DEFINED(@runnerEnvironment) OR IS_NULL(@runnerEnvironment) OR c.environment = @runnerEnvironment)")
+            "SELECT c.id, c.environment, c.status FROM c WHERE ((c.status = @pending OR c.status = @running) OR ((c.status = @suspended OR c.status = @faulted) AND IS_DEFINED(c.resumeRequestedAt))) AND ARRAY_CONTAINS(@hosted, c.workflowId) AND (NOT IS_DEFINED(@runnerEnvironment) OR IS_NULL(@runnerEnvironment) OR c.environment = @runnerEnvironment)")
             .WithParameter("@pending", PendingStatus)
             .WithParameter("@running", RunningStatus)
             .WithParameter("@suspended", SuspendedStatus)
@@ -444,18 +453,19 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             .WithParameter("@hosted", new List<string>(hostedWorkflowIds))
             .WithParameter("@runnerEnvironment", runnerEnvironment);
 
-        var candidates = new List<(string Id, string Status)>();
+        var candidates = new List<(string Id, string Environment, string Status)>();
         bool anyRunning = false;
         await foreach (ReadOnlyMemory<byte> element in QueryElementsAsync(this.runs, candidateQuery, cancellationToken).ConfigureAwait(false))
         {
             string? candidateId = CosmosJson.GetString(element, IdProperty);
+            string? candidateEnvironment = CosmosJson.GetString(element, EnvironmentProperty);
             string? candidateStatus = CosmosJson.GetString(element, StatusProperty);
-            if (candidateId is null || candidateStatus is null)
+            if (candidateId is null || candidateEnvironment is null || candidateStatus is null)
             {
                 continue;
             }
 
-            candidates.Add((candidateId, candidateStatus));
+            candidates.Add((candidateId, candidateEnvironment, candidateStatus));
             if (candidateStatus == RunningStatus)
             {
                 anyRunning = true;
@@ -477,7 +487,7 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             }
         }
 
-        foreach ((string id, string status) in candidates)
+        foreach ((string id, string environment, string status) in candidates)
         {
             // A Suspended/Faulted candidate is present only because it carries the resume-requested marker (the
             // query required IS_DEFINED(c.resumeRequestedAt)), so surface it unconditionally alongside Pending and
@@ -487,7 +497,7 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
                 || status == SuspendedStatus
                 || status == FaultedStatus)
             {
-                yield return new WorkflowRunId(id);
+                yield return new WorkflowRunAddress(environment, new WorkflowRunId(id));
             }
         }
     }
@@ -498,7 +508,7 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         (List<string> conditions, List<(string Name, object Value)> parameters) = BuildVisibilityFilter(query);
 
         // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
-        string? after = null;
+        WorkflowRunAddress? after = null;
         if (query.ContinuationToken.IsNotUndefined())
         {
             using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
@@ -507,26 +517,29 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
 
         if (after is not null)
         {
-            conditions.Add("c.id > @after");
+            // Keyset cursor over the composite (environment, run id) ascending — the same order the ORDER BY below
+            // pages by (ADR 0065 decision 9).
+            conditions.Add("(c.environment > @afterEnv OR (c.environment = @afterEnv AND c.id > @afterId))");
         }
 
         string where = conditions.Count == 0 ? string.Empty : " WHERE " + string.Join(" AND ", conditions);
-        var definition = new QueryDefinition("SELECT * FROM c" + where + " ORDER BY c.id");
+        var definition = new QueryDefinition("SELECT * FROM c" + where + " ORDER BY c.environment, c.id");
         foreach ((string name, object value) in parameters)
         {
             definition = definition.WithParameter(name, value);
         }
 
-        if (after is not null)
+        if (after is { } cursor)
         {
-            definition = definition.WithParameter("@after", after);
+            definition = definition.WithParameter("@afterEnv", cursor.Environment);
+            definition = definition.WithParameter("@afterId", cursor.RunId.Value);
         }
 
         var runs = new List<WorkflowRunListing>();
         await foreach (ReadOnlyMemory<byte> element in QueryElementsAsync(this.runs, definition, cancellationToken).ConfigureAwait(false))
         {
             RunDocument document = RunDocument.FromJson(element);
-            runs.Add(new WorkflowRunListing(new WorkflowRunId(document.IdValue), document.ToIndexEntry()));
+            runs.Add(new WorkflowRunListing(new WorkflowRunAddress((string)document.Environment, new WorkflowRunId(document.IdValue)), document.ToIndexEntry()));
             if (runs.Count > query.Limit)
             {
                 // Fetched one beyond the page — a next page exists; stop early to avoid draining the iterator.
@@ -681,7 +694,18 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     private static async ValueTask ProvisionAsync(CosmosClient client, string databaseName, CancellationToken cancellationToken)
     {
         Database database = await client.CreateDatabaseIfNotExistsAsync(databaseName, cancellationToken: cancellationToken).ConfigureAwait(false);
-        await database.CreateContainerIfNotExistsAsync(new ContainerProperties(RunsContainerId, "/id"), cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        // The visibility page orders by the composite run address (ORDER BY c.environment, c.id — ADR 0065
+        // decision 9), and a multi-property ORDER BY is served only from a matching composite index, so the runs
+        // container declares one. The document id and partition key are untouched (see the TRANSITIONAL note above).
+        var runsProperties = new ContainerProperties(RunsContainerId, "/id");
+        runsProperties.IndexingPolicy.CompositeIndexes.Add(
+            new Collection<CompositePath>
+            {
+                new CompositePath { Path = "/environment", Order = CompositePathSortOrder.Ascending },
+                new CompositePath { Path = "/id", Order = CompositePathSortOrder.Ascending },
+            });
+        await database.CreateContainerIfNotExistsAsync(runsProperties, cancellationToken: cancellationToken).ConfigureAwait(false);
         await database.CreateContainerIfNotExistsAsync(new ContainerProperties(LeasesContainerId, "/id"), cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 

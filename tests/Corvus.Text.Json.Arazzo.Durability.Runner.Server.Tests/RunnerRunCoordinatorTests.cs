@@ -140,14 +140,14 @@ public sealed class RunnerRunCoordinatorTests
         (await fixture.Coordinator.TryClaimAsync(Runner, [Version], null, default)).ShouldBeNull();
 
         // The lease taken to look at it was released, so a peer can take the run immediately rather than waiting a TTL.
-        (await fixture.Store.AcquireLeaseAsync("run-1", Peer, TimeSpan.FromMinutes(1), default)).ShouldNotBeNull();
+        (await fixture.Store.AcquireLeaseAsync(new WorkflowRunAddress(Production, new WorkflowRunId("run-1")), Peer, TimeSpan.FromMinutes(1), default)).ShouldNotBeNull();
     }
 
     [TestMethod]
     public async Task An_orphaned_running_run_is_reclaimable_once_its_lease_lapses()
     {
         var fixture = await Fixture.WithRunAsync("run-1", WorkflowRunStatus.Running, Production);
-        await fixture.Store.AcquireLeaseAsync("run-1", Peer, TimeSpan.FromSeconds(30), default);
+        await fixture.Store.AcquireLeaseAsync(new WorkflowRunAddress(Production, new WorkflowRunId("run-1")), Peer, TimeSpan.FromSeconds(30), default);
 
         // Held by a live peer: not claimable.
         (await fixture.Coordinator.TryClaimAsync(Runner, [Version], null, default)).ShouldBeNull();
@@ -239,7 +239,7 @@ public sealed class RunnerRunCoordinatorTests
         // a lease nobody holds, and would pass whether or not anything compares epochs — which is no evidence at all.
         var fixture = await Fixture.WithRunAsync("run-1", WorkflowRunStatus.Pending, Production);
         ClaimedRunRecord first = (await fixture.Coordinator.TryClaimAsync(Runner, [Version], null, default))!.Value;
-        await fixture.Coordinator.ReleaseAsync(Runner, first.RunId, first.Lease.Token, default);
+        await fixture.Coordinator.ReleaseAsync(Runner, Production, first.RunId, first.Lease.Token, default);
         ClaimedRunRecord current = (await fixture.Coordinator.TryClaimAsync(Runner, [Version], null, default))!.Value;
 
         current.Lease.Epoch.ShouldBeGreaterThan(first.Lease.Epoch);
@@ -261,7 +261,7 @@ public sealed class RunnerRunCoordinatorTests
         // there.
         var fixture = await Fixture.WithRunAsync("run-1", WorkflowRunStatus.Pending, Production);
         ClaimedRunRecord first = (await fixture.Coordinator.TryClaimAsync(Runner, [Version], null, default))!.Value;
-        await fixture.Coordinator.ReleaseAsync(Runner, first.RunId, first.Lease.Token, default);
+        await fixture.Coordinator.ReleaseAsync(Runner, Production, first.RunId, first.Lease.Token, default);
 
         var second = new RunnerRunCoordinator(fixture.Store, Bindings(), timeProvider: fixture.Clock);
         ClaimedRunRecord next = (await second.TryClaimAsync(Runner, [Version], null, default))!.Value;
@@ -310,9 +310,9 @@ public sealed class RunnerRunCoordinatorTests
         ClaimedRunRecord claimed = (await fixture.Coordinator.TryClaimAsync(Runner, [Version], null, default))!.Value;
 
         bindings.Revoke();
-        await fixture.Coordinator.ReleaseAsync(Runner, claimed.RunId, claimed.Lease.Token, default);
+        await fixture.Coordinator.ReleaseAsync(Runner, Production, claimed.RunId, claimed.Lease.Token, default);
 
-        (await fixture.Store.AcquireLeaseAsync("run-1", Peer, TimeSpan.FromMinutes(1), default)).ShouldNotBeNull();
+        (await fixture.Store.AcquireLeaseAsync(new WorkflowRunAddress(Production, new WorkflowRunId("run-1")), Peer, TimeSpan.FromMinutes(1), default)).ShouldNotBeNull();
     }
 
     [TestMethod]
@@ -321,7 +321,7 @@ public sealed class RunnerRunCoordinatorTests
         var fixture = await Fixture.WithRunAsync("run-1", WorkflowRunStatus.Pending, Production);
         ClaimedRunRecord claimed = (await fixture.Coordinator.TryClaimAsync(Runner, [Version], null, default))!.Value;
 
-        await fixture.Coordinator.ReleaseAsync(Peer, claimed.RunId, claimed.Lease.Token, default);
+        await fixture.Coordinator.ReleaseAsync(Peer, Production, claimed.RunId, claimed.Lease.Token, default);
 
         // The store matches a release on the run and the token alone, so without the ownership check this would have
         // handed one runner's in-flight run to another.
@@ -334,10 +334,10 @@ public sealed class RunnerRunCoordinatorTests
         var fixture = await Fixture.WithRunAsync("run-1", WorkflowRunStatus.Pending, Production);
         ClaimedRunRecord claimed = (await fixture.Coordinator.TryClaimAsync(Runner, [Version], null, default))!.Value;
 
-        await fixture.Coordinator.ReleaseAsync(Runner, claimed.RunId, claimed.Lease.Token, default);
+        await fixture.Coordinator.ReleaseAsync(Runner, Production, claimed.RunId, claimed.Lease.Token, default);
 
         (await fixture.Coordinator.HoldsLeaseAsync(Runner, Production, claimed.RunId, claimed.Lease.Token, default)).ShouldBeFalse();
-        (await fixture.Store.AcquireLeaseAsync("run-1", Peer, TimeSpan.FromMinutes(1), default)).ShouldNotBeNull();
+        (await fixture.Store.AcquireLeaseAsync(new WorkflowRunAddress(Production, new WorkflowRunId("run-1")), Peer, TimeSpan.FromMinutes(1), default)).ShouldNotBeNull();
     }
 
     [TestMethod]
@@ -392,7 +392,7 @@ public sealed class RunnerRunCoordinatorTests
         for (int i = 0; i < 5; i++)
         {
             await fixture.SeedAsync($"run-{i}", WorkflowRunStatus.Pending, Production);
-            await fixture.Store.AcquireLeaseAsync($"run-{i}", Peer, TimeSpan.FromMinutes(5), default);
+            await fixture.Store.AcquireLeaseAsync(new WorkflowRunAddress(Production, new WorkflowRunId($"run-{i}")), Peer, TimeSpan.FromMinutes(5), default);
         }
 
         int beforeClaim = fixture.Store.LeaseAttempts;
@@ -450,31 +450,31 @@ public sealed class RunnerRunCoordinatorTests
 
         public int LeaseAttempts { get; private set; }
 
-        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunId id, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
-            => this.inner.SaveAsync(id, checkpointUtf8, index, expected, cancellationToken);
+        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+            => this.inner.SaveAsync(address, checkpointUtf8, index, expected, cancellationToken);
 
-        public ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunId id, CancellationToken cancellationToken)
-            => this.inner.LoadAsync(id, cancellationToken);
+        public ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
+            => this.inner.LoadAsync(address, cancellationToken);
 
-        public ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunId id, string owner, TimeSpan ttl, CancellationToken cancellationToken)
+        public ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunAddress address, string owner, TimeSpan ttl, CancellationToken cancellationToken)
         {
             this.LeaseAttempts++;
-            return this.inner.AcquireLeaseAsync(id, owner, ttl, cancellationToken);
+            return this.inner.AcquireLeaseAsync(address, owner, ttl, cancellationToken);
         }
 
         public ValueTask<WorkflowLease?> TryExtendLeaseAsync(WorkflowLease lease, TimeSpan extension, CancellationToken cancellationToken)
             => this.inner.TryExtendLeaseAsync(lease, extension, cancellationToken);
 
-        public IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken)
+        public IAsyncEnumerable<WorkflowRunAddress> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken)
             => this.inner.QueryDueAsync(before, cancellationToken);
 
-        public IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, CancellationToken cancellationToken)
+        public IAsyncEnumerable<WorkflowRunAddress> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, CancellationToken cancellationToken)
             => this.inner.QueryDueAsync(before, runnerEnvironment, cancellationToken);
 
-        public IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken)
+        public IAsyncEnumerable<WorkflowRunAddress> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken)
             => this.inner.QueryAwaitingAsync(channel, correlationId, cancellationToken);
 
-        public IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, CancellationToken cancellationToken)
+        public IAsyncEnumerable<WorkflowRunAddress> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, CancellationToken cancellationToken)
             => this.inner.QueryAwaitingAsync(channel, correlationId, runnerEnvironment, cancellationToken);
 
         public ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
@@ -483,25 +483,25 @@ public sealed class RunnerRunCoordinatorTests
         public ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken)
             => this.inner.ReleaseLeaseAsync(lease, cancellationToken);
 
-        public ValueTask DeleteAsync(WorkflowRunId id, CancellationToken cancellationToken)
-            => this.inner.DeleteAsync(id, cancellationToken);
+        public ValueTask DeleteAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
+            => this.inner.DeleteAsync(address, cancellationToken);
 
-        public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
+        public IAsyncEnumerable<WorkflowRunAddress> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
             => this.inner.QueryClaimableAsync(hostedWorkflowIds, now, cancellationToken);
 
-        public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, CancellationToken cancellationToken)
+        public IAsyncEnumerable<WorkflowRunAddress> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, CancellationToken cancellationToken)
             => this.inner.QueryClaimableAsync(hostedWorkflowIds, runnerEnvironment, now, cancellationToken);
     }
 
     private sealed class CheckpointOnlyStore : IWorkflowStateStore
     {
-        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunId id, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
             => ValueTask.FromResult(WorkflowEtag.None);
 
-        public ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunId id, CancellationToken cancellationToken)
+        public ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
             => ValueTask.FromResult<WorkflowCheckpoint?>(null);
 
-        public ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunId id, string owner, TimeSpan ttl, CancellationToken cancellationToken)
+        public ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunAddress address, string owner, TimeSpan ttl, CancellationToken cancellationToken)
             => ValueTask.FromResult<WorkflowLease?>(null);
 
         public ValueTask<WorkflowLease?> TryExtendLeaseAsync(WorkflowLease lease, TimeSpan extension, CancellationToken cancellationToken)
@@ -509,7 +509,7 @@ public sealed class RunnerRunCoordinatorTests
 
         public ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken) => default;
 
-        public ValueTask DeleteAsync(WorkflowRunId id, CancellationToken cancellationToken) => default;
+        public ValueTask DeleteAsync(WorkflowRunAddress address, CancellationToken cancellationToken) => default;
     }
 
     private sealed class Fixture
@@ -546,7 +546,7 @@ public sealed class RunnerRunCoordinatorTests
         {
             byte[] checkpoint = Checkpoint(runId, WorkflowRunStatus.Suspended, environment, null, wait);
             await this.Store.SaveAsync(
-                new WorkflowRunId(runId),
+                new WorkflowRunAddress(environment, new WorkflowRunId(runId)),
                 checkpoint,
                 WorkflowCheckpointSerializer.ProjectIndex(checkpoint),
                 WorkflowEtag.None,
@@ -558,7 +558,7 @@ public sealed class RunnerRunCoordinatorTests
             DateTimeOffset resumeRequestedAt = this.Clock.GetUtcNow();
             byte[] checkpoint = Checkpoint(runId, status, environment, resumeRequested ? resumeRequestedAt : null);
             await this.Store.SaveAsync(
-                new WorkflowRunId(runId),
+                new WorkflowRunAddress(environment, new WorkflowRunId(runId)),
                 checkpoint,
                 WorkflowCheckpointSerializer.ProjectIndex(checkpoint),
                 WorkflowEtag.None,

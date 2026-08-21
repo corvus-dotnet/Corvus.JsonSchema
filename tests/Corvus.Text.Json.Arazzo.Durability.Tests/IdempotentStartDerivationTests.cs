@@ -32,8 +32,8 @@ public sealed class IdempotentStartDerivationTests
         // One business key, two environments: two runs (the finding: today both derive one id, so the production
         // start silently returns the development run and never executes).
         b.ShouldNotBe(a);
-        (await store.LoadAsync(a, default)).ShouldNotBeNull();
-        (await store.LoadAsync(b, default)).ShouldNotBeNull();
+        (await store.LoadAsync(TestAddresses.Dev(a), default)).ShouldNotBeNull();
+        (await store.LoadAsync(TestAddresses.In("production", b), default)).ShouldNotBeNull();
     }
 
     [TestMethod]
@@ -101,10 +101,15 @@ public sealed class IdempotentStartDerivationTests
         (await management.StartNamedAsync(id, "wf-v1", default, "development")).Created.ShouldBeTrue();
         (await management.StartNamedAsync(id, "wf-v1", default, "development")).Created.ShouldBeFalse();
 
-        // The same address presented from another environment, or for another workflow, is a collision — never a
-        // silent adoption of the existing run (the schedules surface turns this into its 409).
-        await Should.ThrowAsync<WorkflowRunCollisionException>(
-            async () => await management.StartNamedAsync(id, "wf-v1", default, "production"));
+        // Under the composite (environment, runId) key (ADR 0065 decision 9) the same id presented from another
+        // environment names a DIFFERENT run: the development occupant is invisible there — no collision, no
+        // existence oracle — and a fresh run is created at the other address. Schedule ids stay globally unique
+        // through the schedule REGISTRY, whose insert conflict is the schedules surface's 409 (piece 3 / C2);
+        // the run key no longer carries that.
+        (await management.StartNamedAsync(id, "wf-v1", default, "production")).Created.ShouldBeTrue();
+
+        // Within the environment, an occupant that is NOT this logical start (another workflow) is refused —
+        // never a silent adoption of the existing run.
         await Should.ThrowAsync<WorkflowRunCollisionException>(
             async () => await management.StartNamedAsync(id, "other-wf", default, "development"));
     }

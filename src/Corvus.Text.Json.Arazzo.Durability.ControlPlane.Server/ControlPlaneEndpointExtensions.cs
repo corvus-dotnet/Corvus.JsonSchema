@@ -375,7 +375,7 @@ public static class ControlPlaneEndpointExtensions
             endpoints.MapWorkflowCheckpointEndpoints(
                 workflowStateStore,
                 requireAuthorization: securityMode != ControlPlaneSecurityMode.Open,
-                authenticateCheckpointToken: (id, token) => CheckpointToken.TryValidate(checkpointSecret.Span, token, id.Value, DateTimeOffset.UtcNow),
+                authenticateCheckpointToken: (address, token) => CheckpointToken.TryValidate(checkpointSecret.Span, token, address, DateTimeOffset.UtcNow),
                 checkpoints: checkpoints);
         }
 

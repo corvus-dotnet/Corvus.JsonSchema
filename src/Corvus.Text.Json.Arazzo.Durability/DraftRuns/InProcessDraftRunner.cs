@@ -71,6 +71,7 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
     private readonly DraftWorkflowResumer resumer;
     private readonly WorkflowDispatcher dispatcher;
     private readonly WorkflowWorker worker;
+    private readonly string runnerEnvironment;
     private readonly bool hostTimerWaits;
     private readonly WorkflowResumer tracingResumer;
     private readonly AsyncLocal<DraftRunRecording?> currentRecording = new();
@@ -140,6 +141,7 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
         // because ResumeDueTimersAsync resumes EVERY due-timer run in the shared store, including catalog runs a
         // draft-only resumer cannot host.
         this.worker = new WorkflowWorker(store, owner, timeProvider);
+        this.runnerEnvironment = runnerEnvironment;
         this.hostTimerWaits = hostTimerWaits;
         this.tracingResumer = this.RunAndTraceAsync;
     }
@@ -156,7 +158,10 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
         int advanced = await this.dispatcher.DispatchClaimableAsync(DraftHosting, this.tracingResumer, cancellationToken).ConfigureAwait(false);
         if (this.hostTimerWaits)
         {
-            advanced += await this.worker.ResumeDueTimersAsync(this.tracingResumer, cancellationToken).ConfigureAwait(false);
+            // Environment-scoped exactly as dispatch is (§5.5, ADR 0065 decision 9): this runner resumes only its own
+            // environment's due runs — the env-agnostic overload would resume another environment's runs through a
+            // draft-only resumer.
+            advanced += await this.worker.ResumeDueTimersAsync(this.tracingResumer, this.runnerEnvironment, cancellationToken).ConfigureAwait(false);
         }
 
         return advanced;
@@ -186,7 +191,11 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The number of runs the message resumed (0 when none awaited it).</returns>
     public ValueTask<int> DeliverMessageAsync(string channel, string? correlationId, JsonElement payload, CancellationToken cancellationToken = default)
-        => this.worker.DeliverMessageAsync(channel, correlationId, payload, this.tracingResumer, cancellationToken);
+
+        // Environment-scoped exactly as dispatch and timer-resume are (§5.5, ADR 0065 decision 9): the injection
+        // reaches only this runner's own environment's awaiting runs, even when two environments' runs await the
+        // same channel name.
+        => this.worker.DeliverMessageAsync(channel, correlationId, payload, this.tracingResumer, this.runnerEnvironment, cancellationToken);
 
     /// <summary>
     /// Starts the optional self-driving background loop: it pumps <see cref="RunPendingAsync"/> every
@@ -460,7 +469,7 @@ public sealed class InProcessDraftRunner : IAsyncDisposable
         var buffer = new ArrayBufferWriter<byte>();
         using (var writer = new Utf8JsonWriter(buffer))
         {
-            await MetadataTraceAssembler.WriteTraceAsync(writer, this.store, run.Id, exchanges, pausedBeforeStepId: pausedBefore, stepBoundaries: stepBoundaries, capturedSteps: recording.StepRecords, cancellationToken: cancellationToken).ConfigureAwait(false);
+            await MetadataTraceAssembler.WriteTraceAsync(writer, this.store, run.Address, exchanges, pausedBeforeStepId: pausedBefore, stepBoundaries: stepBoundaries, capturedSteps: recording.StepRecords, cancellationToken: cancellationToken).ConfigureAwait(false);
             writer.Flush();
         }
 

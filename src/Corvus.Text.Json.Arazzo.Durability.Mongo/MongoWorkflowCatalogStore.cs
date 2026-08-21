@@ -281,7 +281,7 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         if (query.ContinuationToken.IsNotUndefined())
         {
             using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
-            after = WorkflowContinuationToken.Decode(tokenUtf8.Span);
+            after = WorkflowContinuationToken.DecodeText(tokenUtf8.Span);
         }
 
         // Compute the representative-precedence status rank (Active=0, Obsolete=1, else=2) so the sort below can order

@@ -161,7 +161,7 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
     {
         byte[] checkpoint = Checkpoint(runId, status, sequence: 1);
         await this.Store.SaveAsync(
-            new WorkflowRunId(runId),
+            new WorkflowRunAddress(Production, new WorkflowRunId(runId)),
             checkpoint,
             WorkflowCheckpointSerializer.ProjectIndex(checkpoint),
             WorkflowEtag.None,
@@ -208,7 +208,7 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
     }
 
     private async ValueTask SaveAsync(string runId, byte[] checkpoint)
-        => await this.Store.SaveAsync(new WorkflowRunId(runId), checkpoint, WorkflowCheckpointSerializer.ProjectIndex(checkpoint), WorkflowEtag.None, default);
+        => await this.Store.SaveAsync(new WorkflowRunAddress(Production, new WorkflowRunId(runId)), checkpoint, WorkflowCheckpointSerializer.ProjectIndex(checkpoint), WorkflowEtag.None, default);
 
     internal sealed class TestClock(DateTimeOffset now) : TimeProvider
     {

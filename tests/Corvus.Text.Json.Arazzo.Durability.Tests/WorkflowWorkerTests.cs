@@ -31,7 +31,7 @@ public sealed class WorkflowWorkerTests
         await SuspendTimer(store, time, "held", TimeSpan.FromMinutes(1));
 
         // Another worker holds the lease; the timer is due.
-        await store.AcquireLeaseAsync("held", "other-worker", TimeSpan.FromMinutes(5), default);
+        await store.AcquireLeaseAsync(TestAddresses.Dev("held"), "other-worker", TimeSpan.FromMinutes(5), default);
         time.Advance(TimeSpan.FromMinutes(2));
 
         var worker = new WorkflowWorker(store, "me", time);
@@ -65,9 +65,10 @@ public sealed class WorkflowWorkerTests
             new Dictionary<string, byte[]>(),
             inputs: default,
             stepOutputs,
-            outputs: default);
+            outputs: default,
+            environment: TestAddresses.Development);
         var index = new WorkflowRunIndexEntry("wf", WorkflowRunStatus.Suspended, Start, Start, DueAt: Start);
-        await store.SaveAsync("stale", checkpoint, index, WorkflowEtag.None, default);
+        await store.SaveAsync(TestAddresses.Dev("stale"), checkpoint, index, WorkflowEtag.None, default);
         time.Advance(TimeSpan.FromMinutes(1));
 
         var worker = new WorkflowWorker(store, "me", time);
@@ -182,13 +183,13 @@ public sealed class WorkflowWorkerTests
     // A store that implements only the universal core (no IWorkflowWaitIndex), to prove the worker rejects it.
     private sealed class CoreOnlyStore : IWorkflowStateStore
     {
-        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunId id, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
             => ValueTask.FromResult(WorkflowEtag.None);
 
-        public ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunId id, CancellationToken cancellationToken)
+        public ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
             => ValueTask.FromResult<WorkflowCheckpoint?>(null);
 
-        public ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunId id, string owner, TimeSpan ttl, CancellationToken cancellationToken)
+        public ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunAddress address, string owner, TimeSpan ttl, CancellationToken cancellationToken)
             => ValueTask.FromResult<WorkflowLease?>(null);
 
         public ValueTask<WorkflowLease?> TryExtendLeaseAsync(WorkflowLease lease, TimeSpan extension, CancellationToken cancellationToken)
@@ -196,36 +197,36 @@ public sealed class WorkflowWorkerTests
 
         public ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken) => default;
 
-        public ValueTask DeleteAsync(WorkflowRunId id, CancellationToken cancellationToken) => default;
+        public ValueTask DeleteAsync(WorkflowRunAddress address, CancellationToken cancellationToken) => default;
     }
 
     // A store whose index reports a due run the store can never load (a delete-after-query race), to exercise
     // the worker's load-returned-null guard.
     private sealed class PhantomWaitIndexStore : IWorkflowStateStore, IWorkflowWaitIndex
     {
-        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunId id, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
             => ValueTask.FromResult(WorkflowEtag.None);
 
-        public ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunId id, CancellationToken cancellationToken)
+        public ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
             => ValueTask.FromResult<WorkflowCheckpoint?>(null);
 
-        public ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunId id, string owner, TimeSpan ttl, CancellationToken cancellationToken)
-            => ValueTask.FromResult<WorkflowLease?>(new WorkflowLease(id, owner, "token", Start + ttl));
+        public ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunAddress address, string owner, TimeSpan ttl, CancellationToken cancellationToken)
+            => ValueTask.FromResult<WorkflowLease?>(new WorkflowLease(address, owner, "token", Start + ttl));
 
         public ValueTask<WorkflowLease?> TryExtendLeaseAsync(WorkflowLease lease, TimeSpan extension, CancellationToken cancellationToken)
             => ValueTask.FromResult<WorkflowLease?>(null);
 
         public ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken) => default;
 
-        public ValueTask DeleteAsync(WorkflowRunId id, CancellationToken cancellationToken) => default;
+        public ValueTask DeleteAsync(WorkflowRunAddress address, CancellationToken cancellationToken) => default;
 
 #pragma warning disable CS1998 // async iterator with no await is the simplest shape for a fixed sequence
-        public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        public async IAsyncEnumerable<WorkflowRunAddress> QueryDueAsync(DateTimeOffset before, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
         {
-            yield return new WorkflowRunId("phantom");
+            yield return new WorkflowRunAddress("development", new WorkflowRunId("phantom"));
         }
 
-        public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        public async IAsyncEnumerable<WorkflowRunAddress> QueryAwaitingAsync(string channel, string? correlationId, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
         {
             yield break;
         }

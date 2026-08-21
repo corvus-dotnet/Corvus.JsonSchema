@@ -9,9 +9,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.Sqlite;
 
 /// <summary>
 /// A SQLite-backed <see cref="IWorkflowStateStore"/> and <see cref="IWorkflowWaitIndex"/> — a single-file,
-/// zero-setup durable store for local-development and embedded single-node runs. The checkpoint is held as
-/// an opaque blob alongside the projected index columns (the store never parses it); optimistic concurrency
-/// maps to a version column and the single-owner lease to a small leases table.
+/// zero-setup durable store for local-development and embedded single-node runs. Runs are keyed by their full
+/// <c>(Environment, RunId)</c> composite primary key (ADR 0065 decision 9), so the same run id in two
+/// environments names two distinct rows. The checkpoint is held as an opaque blob alongside the projected index
+/// columns (the store never parses it); optimistic concurrency maps to a version column and the single-owner
+/// lease to a small leases table keyed by the same composite.
 /// </summary>
 /// <remarks>
 /// One connection is held open for the store's lifetime (so an in-memory database survives between
@@ -94,17 +96,17 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
 
     /// <inheritdoc/>
     public ValueTask<WorkflowEtag> SaveAsync(
-        WorkflowRunId id,
+        WorkflowRunAddress address,
         ReadOnlyMemory<byte> checkpointUtf8,
         in WorkflowRunIndexEntry index,
         WorkflowEtag expected,
         CancellationToken cancellationToken)
-        => this.SaveCoreAsync(id, checkpointUtf8.ToArray(), index, expected, cancellationToken);
+        => this.SaveCoreAsync(address, checkpointUtf8.ToArray(), index, expected, cancellationToken);
 
     // The interface passes the index by `in`; an async method cannot take an `in` parameter, so SaveAsync
     // copies it (a small struct) and this private core does the work.
     private async ValueTask<WorkflowEtag> SaveCoreAsync(
-        WorkflowRunId id,
+        WorkflowRunAddress address,
         byte[] checkpoint,
         WorkflowRunIndexEntry indexCopy,
         WorkflowEtag expected,
@@ -118,18 +120,18 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
                 using SqliteCommand insert = this.connection.CreateCommand();
                 insert.CommandText =
                     """
-                    INSERT INTO WorkflowRuns (RunId, Checkpoint, Version, Status, WorkflowId, Environment, CreatedAt, UpdatedAt, DueAt, AwaitingChannel, AwaitingCorrelationId, ErrorType, CorrelationId, Tags, ResumeRequestedAt)
-                    VALUES (@id, @checkpoint, 1, @status, @workflowId, @environment, @createdAt, @updatedAt, @dueAt, @awaitingChannel, @awaitingCorrelationId, @errorType, @correlationId, @tags, @resumeRequestedAt)
-                    ON CONFLICT(RunId) DO NOTHING;
+                    INSERT INTO WorkflowRuns (Environment, RunId, Checkpoint, Version, Status, WorkflowId, CreatedAt, UpdatedAt, DueAt, AwaitingChannel, AwaitingCorrelationId, ErrorType, CorrelationId, Tags, ResumeRequestedAt)
+                    VALUES (@environment, @id, @checkpoint, 1, @status, @workflowId, @createdAt, @updatedAt, @dueAt, @awaitingChannel, @awaitingCorrelationId, @errorType, @correlationId, @tags, @resumeRequestedAt)
+                    ON CONFLICT(Environment, RunId) DO NOTHING;
                     """;
-                BindRun(insert, id, checkpoint, indexCopy);
+                BindRun(insert, address, checkpoint, indexCopy);
                 int inserted = await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
                 if (inserted == 0)
                 {
-                    throw new WorkflowConflictException(id, expected);
+                    throw new WorkflowConflictException(address, expected);
                 }
 
-                await this.SyncSecurityTagsAsync(id, indexCopy.SecurityTags, cancellationToken).ConfigureAwait(false);
+                await this.SyncSecurityTagsAsync(address, indexCopy.SecurityTags, cancellationToken).ConfigureAwait(false);
                 return new WorkflowEtag("1");
             }
 
@@ -139,20 +141,20 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
                 """
                 UPDATE WorkflowRuns
                 SET Checkpoint = @checkpoint, Version = Version + 1, Status = @status, WorkflowId = @workflowId,
-                    Environment = @environment, CreatedAt = @createdAt, UpdatedAt = @updatedAt, DueAt = @dueAt,
+                    CreatedAt = @createdAt, UpdatedAt = @updatedAt, DueAt = @dueAt,
                     AwaitingChannel = @awaitingChannel, AwaitingCorrelationId = @awaitingCorrelationId, ErrorType = @errorType,
                     CorrelationId = @correlationId, Tags = @tags, ResumeRequestedAt = @resumeRequestedAt
-                WHERE RunId = @id AND Version = @expectedVersion;
+                WHERE Environment = @environment AND RunId = @id AND Version = @expectedVersion;
                 """;
-            BindRun(update, id, checkpoint, indexCopy);
+            BindRun(update, address, checkpoint, indexCopy);
             update.Parameters.AddWithValue("@expectedVersion", expectedVersion);
             int updated = await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
             if (updated == 0)
             {
-                throw new WorkflowConflictException(id, expected);
+                throw new WorkflowConflictException(address, expected);
             }
 
-            await this.SyncSecurityTagsAsync(id, indexCopy.SecurityTags, cancellationToken).ConfigureAwait(false);
+            await this.SyncSecurityTagsAsync(address, indexCopy.SecurityTags, cancellationToken).ConfigureAwait(false);
             return new WorkflowEtag((expectedVersion + 1).ToString(CultureInfo.InvariantCulture));
         }
         finally
@@ -162,14 +164,15 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunId id, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
     {
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             using SqliteCommand select = this.connection.CreateCommand();
-            select.CommandText = "SELECT Checkpoint, Version FROM WorkflowRuns WHERE RunId = @id;";
-            select.Parameters.AddWithValue("@id", id.Value);
+            select.CommandText = "SELECT Checkpoint, Version FROM WorkflowRuns WHERE Environment = @environment AND RunId = @id;";
+            select.Parameters.AddWithValue("@environment", address.Environment);
+            select.Parameters.AddWithValue("@id", address.RunId.Value);
             using SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
             if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
@@ -187,7 +190,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunId id, string owner, TimeSpan ttl, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunAddress address, string owner, TimeSpan ttl, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(owner);
 
@@ -204,19 +207,20 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             using SqliteCommand upsert = this.connection.CreateCommand();
             upsert.CommandText =
                 """
-                INSERT INTO WorkflowLeases (RunId, Owner, Token, ExpiresAt, Epoch)
-                VALUES (@id, @owner, @token, @expiresAt, 1)
-                ON CONFLICT(RunId) DO UPDATE SET Owner = excluded.Owner, Token = excluded.Token, ExpiresAt = excluded.ExpiresAt, Epoch = WorkflowLeases.Epoch + 1
+                INSERT INTO WorkflowLeases (Environment, RunId, Owner, Token, ExpiresAt, Epoch)
+                VALUES (@environment, @id, @owner, @token, @expiresAt, 1)
+                ON CONFLICT(Environment, RunId) DO UPDATE SET Owner = excluded.Owner, Token = excluded.Token, ExpiresAt = excluded.ExpiresAt, Epoch = WorkflowLeases.Epoch + 1
                 WHERE WorkflowLeases.ExpiresAt <= @now OR WorkflowLeases.Owner = @owner
                 RETURNING Epoch;
                 """;
-            upsert.Parameters.AddWithValue("@id", id.Value);
+            upsert.Parameters.AddWithValue("@environment", address.Environment);
+            upsert.Parameters.AddWithValue("@id", address.RunId.Value);
             upsert.Parameters.AddWithValue("@owner", owner);
             upsert.Parameters.AddWithValue("@token", token);
             upsert.Parameters.AddWithValue("@expiresAt", expiresAt.ToUnixTimeMilliseconds());
             upsert.Parameters.AddWithValue("@now", now.ToUnixTimeMilliseconds());
             object? granted = await upsert.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
-            return granted is long epoch ? new WorkflowLease(id, owner, token, expiresAt, epoch) : null;
+            return granted is long epoch ? new WorkflowLease(address, owner, token, expiresAt, epoch) : null;
         }
         finally
         {
@@ -242,27 +246,29 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             if (extension == TimeSpan.Zero)
             {
                 using SqliteCommand select = this.connection.CreateCommand();
-                select.CommandText = "SELECT ExpiresAt, Epoch FROM WorkflowLeases WHERE RunId = @id AND Token = @token AND Owner = @owner AND ExpiresAt > @now;";
+                select.CommandText = "SELECT ExpiresAt, Epoch FROM WorkflowLeases WHERE Environment = @environment AND RunId = @id AND Token = @token AND Owner = @owner AND ExpiresAt > @now;";
+                select.Parameters.AddWithValue("@environment", lease.Address.Environment);
                 select.Parameters.AddWithValue("@id", lease.RunId.Value);
                 select.Parameters.AddWithValue("@token", lease.Token);
                 select.Parameters.AddWithValue("@owner", lease.Owner);
                 select.Parameters.AddWithValue("@now", nowMs);
                 using SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
                 return await reader.ReadAsync(cancellationToken).ConfigureAwait(false)
-                    ? new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(0)), reader.GetInt64(1))
+                    ? new WorkflowLease(lease.Address, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(0)), reader.GetInt64(1))
                     : null;
             }
 
             DateTimeOffset extendedTo = now + extension;
             using SqliteCommand update = this.connection.CreateCommand();
-            update.CommandText = "UPDATE WorkflowLeases SET ExpiresAt = @expiresAt WHERE RunId = @id AND Token = @token AND Owner = @owner AND ExpiresAt > @now RETURNING Epoch;";
+            update.CommandText = "UPDATE WorkflowLeases SET ExpiresAt = @expiresAt WHERE Environment = @environment AND RunId = @id AND Token = @token AND Owner = @owner AND ExpiresAt > @now RETURNING Epoch;";
+            update.Parameters.AddWithValue("@environment", lease.Address.Environment);
             update.Parameters.AddWithValue("@id", lease.RunId.Value);
             update.Parameters.AddWithValue("@token", lease.Token);
             update.Parameters.AddWithValue("@owner", lease.Owner);
             update.Parameters.AddWithValue("@expiresAt", extendedTo.ToUnixTimeMilliseconds());
             update.Parameters.AddWithValue("@now", nowMs);
             object? held = await update.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
-            return held is long epoch ? new WorkflowLease(lease.RunId, lease.Owner, lease.Token, extendedTo, epoch) : null;
+            return held is long epoch ? new WorkflowLease(lease.Address, lease.Owner, lease.Token, extendedTo, epoch) : null;
         }
         finally
         {
@@ -280,7 +286,8 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             // way a grant ends, and the one a counter kept only alongside a live lease would forget. The row is
             // re-acquirable at once: every reader tests ExpiresAt > now. DeleteAsync still removes it with the run.
             using SqliteCommand release = this.connection.CreateCommand();
-            release.CommandText = "UPDATE WorkflowLeases SET ExpiresAt = @now WHERE RunId = @id AND Token = @token;";
+            release.CommandText = "UPDATE WorkflowLeases SET ExpiresAt = @now WHERE Environment = @environment AND RunId = @id AND Token = @token;";
+            release.Parameters.AddWithValue("@environment", lease.Address.Environment);
             release.Parameters.AddWithValue("@id", lease.RunId.Value);
             release.Parameters.AddWithValue("@token", lease.Token);
             release.Parameters.AddWithValue("@now", this.timeProvider.GetUtcNow().ToUnixTimeMilliseconds());
@@ -293,20 +300,23 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     }
 
     /// <inheritdoc/>
-    public async ValueTask<int> ExpireLeasesForOwnerAsync(string owner, CancellationToken cancellationToken)
+    public async ValueTask<int> ExpireLeasesForOwnerAsync(string owner, string? environment, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(owner);
 
         // The control-plane revocation fence (§5.5): expire every live lease this owner holds in place, so an authorized peer
         // reclaims its in-flight runs at the next poll (WorkflowLeases.ExpiresAt <= now makes the row re-acquirable) rather
-        // than after the TTL. The affected count is the number of live leases fenced.
+        // than after the TTL. The affected count is the number of live leases fenced. The scope is the environment
+        // being withdrawn (ADR 0065 decision 9): a runner keeping other environments keeps its leases there; a null
+        // environment fences the owner everywhere.
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             using SqliteCommand expire = this.connection.CreateCommand();
-            expire.CommandText = "UPDATE WorkflowLeases SET ExpiresAt = @now WHERE Owner = @owner AND ExpiresAt > @now;";
+            expire.CommandText = "UPDATE WorkflowLeases SET ExpiresAt = @now WHERE Owner = @owner AND ExpiresAt > @now AND (@environment IS NULL OR Environment = @environment);";
             expire.Parameters.AddWithValue("@owner", owner);
+            expire.Parameters.AddWithValue("@environment", (object?)environment ?? DBNull.Value);
             expire.Parameters.AddWithValue("@now", now.ToUnixTimeMilliseconds());
             return await expire.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -317,14 +327,15 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     }
 
     /// <inheritdoc/>
-    public async ValueTask DeleteAsync(WorkflowRunId id, CancellationToken cancellationToken)
+    public async ValueTask DeleteAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
     {
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             using SqliteCommand delete = this.connection.CreateCommand();
-            delete.CommandText = "DELETE FROM WorkflowRuns WHERE RunId = @id; DELETE FROM WorkflowLeases WHERE RunId = @id; DELETE FROM WorkflowRunSecurityTags WHERE RunId = @id;";
-            delete.Parameters.AddWithValue("@id", id.Value);
+            delete.CommandText = "DELETE FROM WorkflowRuns WHERE Environment = @environment AND RunId = @id; DELETE FROM WorkflowLeases WHERE Environment = @environment AND RunId = @id; DELETE FROM WorkflowRunSecurityTags WHERE Environment = @environment AND RunId = @id;";
+            delete.Parameters.AddWithValue("@environment", address.Environment);
+            delete.Parameters.AddWithValue("@id", address.RunId.Value);
             await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
         finally
@@ -334,18 +345,18 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     }
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunAddress> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken)
         => this.QueryDueAsync(before, null, cancellationToken);
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<WorkflowRunAddress> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         // §5.5 environment-scoped timer-resume: a real runner (non-null @runnerEnvironment) resumes a due run only when
         // pinned to EXACTLY its environment — the equality excludes an unpinned run (Environment IS NULL, since NULL =
         // value is never true) and a differently-pinned run, mirroring the dispatch scope so a run never crosses the
         // credential boundary. A null @runnerEnvironment is the env-agnostic base overload (an in-process host resuming every due run).
-        List<WorkflowRunId> due = await this.QueryIdsAsync(
-            "SELECT RunId FROM WorkflowRuns WHERE Status = @status AND DueAt IS NOT NULL AND DueAt <= @before AND (@runnerEnvironment IS NULL OR Environment = @runnerEnvironment);",
+        List<WorkflowRunAddress> due = await this.QueryAddressesAsync(
+            "SELECT Environment, RunId FROM WorkflowRuns WHERE Status = @status AND DueAt IS NOT NULL AND DueAt <= @before AND (@runnerEnvironment IS NULL OR Environment = @runnerEnvironment);",
             cmd =>
             {
                 cmd.Parameters.AddWithValue("@status", SuspendedStatus);
@@ -354,28 +365,28 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             },
             cancellationToken).ConfigureAwait(false);
 
-        foreach (WorkflowRunId id in due)
+        foreach (WorkflowRunAddress address in due)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            yield return id;
+            yield return address;
         }
     }
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunAddress> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken)
         => this.QueryAwaitingAsync(channel, correlationId, null, cancellationToken);
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<WorkflowRunAddress> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(channel);
 
         // §5.5 environment-scoped message delivery: a real runner (non-null @runnerEnvironment) delivers to an awaiting
         // run only when pinned to EXACTLY its environment (the equality excludes an unpinned run); a null
         // @runnerEnvironment is the env-agnostic base overload that delivers to every awaiting run.
-        List<WorkflowRunId> awaiting = await this.QueryIdsAsync(
+        List<WorkflowRunAddress> awaiting = await this.QueryAddressesAsync(
             """
-            SELECT RunId FROM WorkflowRuns
+            SELECT Environment, RunId FROM WorkflowRuns
             WHERE Status = @status AND AwaitingChannel = @channel
               AND (@correlationId IS NULL OR AwaitingCorrelationId IS NULL OR AwaitingCorrelationId = @correlationId)
               AND (@runnerEnvironment IS NULL OR Environment = @runnerEnvironment);
@@ -389,10 +400,10 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             },
             cancellationToken).ConfigureAwait(false);
 
-        foreach (WorkflowRunId id in awaiting)
+        foreach (WorkflowRunAddress address in awaiting)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            yield return id;
+            yield return address;
         }
     }
 
@@ -400,7 +411,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     public async ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
     {
         // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
-        string? after = null;
+        WorkflowRunAddress? after = null;
         if (query.ContinuationToken.IsNotUndefined())
         {
             using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
@@ -414,14 +425,15 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             string filter = BuildVisibilityFilter(select, query);
             select.CommandText =
                 $"""
-                SELECT RunId, Status, WorkflowId, CreatedAt, UpdatedAt, DueAt, AwaitingChannel, AwaitingCorrelationId, ErrorType, CorrelationId, Tags, Environment
+                SELECT Environment, RunId, Status, WorkflowId, CreatedAt, UpdatedAt, DueAt, AwaitingChannel, AwaitingCorrelationId, ErrorType, CorrelationId, Tags
                 FROM WorkflowRuns
                 WHERE {filter}
-                  AND (@after IS NULL OR RunId > @after)
-                ORDER BY RunId
+                  AND (@afterEnvironment IS NULL OR Environment > @afterEnvironment OR (Environment = @afterEnvironment AND RunId > @afterId))
+                ORDER BY Environment, RunId
                 LIMIT @limit;
                 """;
-            select.Parameters.AddWithValue("@after", (object?)after ?? DBNull.Value);
+            select.Parameters.AddWithValue("@afterEnvironment", (object?)after?.Environment ?? DBNull.Value);
+            select.Parameters.AddWithValue("@afterId", (object?)after?.RunId.Value ?? DBNull.Value);
             select.Parameters.AddWithValue("@limit", query.Limit + 1);
 
             var runs = new List<WorkflowRunListing>();
@@ -429,18 +441,17 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
                 var entry = new WorkflowRunIndexEntry(
-                    reader.GetString(2),
-                    Enum.Parse<WorkflowRunStatus>(reader.GetString(1)),
-                    FromUnixMilliseconds(reader.GetInt64(3)),
+                    reader.GetString(3),
+                    Enum.Parse<WorkflowRunStatus>(reader.GetString(2)),
                     FromUnixMilliseconds(reader.GetInt64(4)),
-                    reader.IsDBNull(5) ? null : FromUnixMilliseconds(reader.GetInt64(5)),
-                    reader.IsDBNull(6) ? null : reader.GetString(6),
+                    FromUnixMilliseconds(reader.GetInt64(5)),
+                    reader.IsDBNull(6) ? null : FromUnixMilliseconds(reader.GetInt64(6)),
                     reader.IsDBNull(7) ? null : reader.GetString(7),
                     reader.IsDBNull(8) ? null : reader.GetString(8),
-                    CorrelationId: reader.IsDBNull(9) ? null : reader.GetString(9),
-                    Tags: TagSet.FromDelimited(reader.IsDBNull(10) ? null : reader.GetString(10), '\u001F'),
-                    Environment: reader.IsDBNull(11) ? null : reader.GetString(11));
-                runs.Add(new WorkflowRunListing(new WorkflowRunId(reader.GetString(0)), entry));
+                    reader.IsDBNull(9) ? null : reader.GetString(9),
+                    CorrelationId: reader.IsDBNull(10) ? null : reader.GetString(10),
+                    Tags: TagSet.FromDelimited(reader.IsDBNull(11) ? null : reader.GetString(11), '\u001F'));
+                runs.Add(new WorkflowRunListing(new WorkflowRunAddress(reader.GetString(0), new WorkflowRunId(reader.GetString(1))), entry));
             }
 
             return WorkflowContinuationToken.Paginate(runs, query.Limit);
@@ -528,7 +539,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             int securityParam = 0;
             var emitter = new SqlSecurityRuleEmitter(
                 "WorkflowRunSecurityTags",
-                ["RunId"],
+                ["Environment", "RunId"],
                 "TagKey",
                 "TagValue",
                 "WorkflowRuns",
@@ -551,13 +562,13 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         return this.connection.DisposeAsync();
     }
 
-    private static void BindRun(SqliteCommand command, WorkflowRunId id, byte[] checkpoint, in WorkflowRunIndexEntry index)
+    private static void BindRun(SqliteCommand command, in WorkflowRunAddress address, byte[] checkpoint, in WorkflowRunIndexEntry index)
     {
-        command.Parameters.AddWithValue("@id", id.Value);
+        command.Parameters.AddWithValue("@environment", address.Environment);
+        command.Parameters.AddWithValue("@id", address.RunId.Value);
         command.Parameters.AddWithValue("@checkpoint", checkpoint);
         command.Parameters.AddWithValue("@status", index.Status.ToString());
         command.Parameters.AddWithValue("@workflowId", index.WorkflowId);
-        command.Parameters.AddWithValue("@environment", (object?)index.Environment ?? DBNull.Value);
         command.Parameters.AddWithValue("@createdAt", index.CreatedAt.ToUnixTimeMilliseconds());
         command.Parameters.AddWithValue("@updatedAt", index.UpdatedAt.ToUnixTimeMilliseconds());
         command.Parameters.AddWithValue("@dueAt", (object?)index.DueAt?.ToUnixTimeMilliseconds() ?? DBNull.Value);
@@ -572,12 +583,13 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     // Re-syncs a run's security tags (§14.4) into the child table for indexed reach-filtering. Called under the
     // gate after the run row is written; run security tags are immutable, but a full delete+insert is simplest
     // and the tag count is tiny.
-    private async Task SyncSecurityTagsAsync(WorkflowRunId id, SecurityTagSet securityTags, CancellationToken cancellationToken)
+    private async Task SyncSecurityTagsAsync(WorkflowRunAddress address, SecurityTagSet securityTags, CancellationToken cancellationToken)
     {
         using (SqliteCommand delete = this.connection.CreateCommand())
         {
-            delete.CommandText = "DELETE FROM WorkflowRunSecurityTags WHERE RunId = @id;";
-            delete.Parameters.AddWithValue("@id", id.Value);
+            delete.CommandText = "DELETE FROM WorkflowRunSecurityTags WHERE Environment = @environment AND RunId = @id;";
+            delete.Parameters.AddWithValue("@environment", address.Environment);
+            delete.Parameters.AddWithValue("@id", address.RunId.Value);
             await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
@@ -590,8 +602,9 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         foreach (SecurityTag tag in securityTags.ToList())
         {
             using SqliteCommand insert = this.connection.CreateCommand();
-            insert.CommandText = "INSERT INTO WorkflowRunSecurityTags (RunId, TagKey, TagValue) VALUES (@id, @key, @value);";
-            insert.Parameters.AddWithValue("@id", id.Value);
+            insert.CommandText = "INSERT INTO WorkflowRunSecurityTags (Environment, RunId, TagKey, TagValue) VALUES (@environment, @id, @key, @value);";
+            insert.Parameters.AddWithValue("@environment", address.Environment);
+            insert.Parameters.AddWithValue("@id", address.RunId.Value);
             insert.Parameters.AddWithValue("@key", tag.Key);
             insert.Parameters.AddWithValue("@value", tag.Value);
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -604,11 +617,11 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     private static DateTimeOffset FromUnixMilliseconds(long milliseconds) => DateTimeOffset.FromUnixTimeMilliseconds(milliseconds);
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunAddress> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
         => this.QueryClaimableAsync(hostedWorkflowIds, null, now, cancellationToken);
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<WorkflowRunAddress> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
         if (hostedWorkflowIds.Count == 0)
@@ -631,8 +644,8 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         // surfaces here, so a separate runner can claim and advance it; the marker is cleared on its first checkpoint.
         string sql =
             $"""
-            SELECT r.RunId FROM WorkflowRuns r
-            LEFT JOIN WorkflowLeases l ON l.RunId = r.RunId
+            SELECT r.Environment, r.RunId FROM WorkflowRuns r
+            LEFT JOIN WorkflowLeases l ON l.Environment = r.Environment AND l.RunId = r.RunId
             WHERE r.WorkflowId IN ({string.Join(", ", placeholders)})
               AND (@runnerEnvironment IS NULL OR r.Environment = @runnerEnvironment)
               AND (r.Status = @pending
@@ -640,7 +653,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
                    OR (r.ResumeRequestedAt IS NOT NULL AND r.Status IN (@suspended, @faulted)));
             """;
 
-        List<WorkflowRunId> claimable = await this.QueryIdsAsync(
+        List<WorkflowRunAddress> claimable = await this.QueryAddressesAsync(
             sql,
             cmd =>
             {
@@ -657,14 +670,14 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             },
             cancellationToken).ConfigureAwait(false);
 
-        foreach (WorkflowRunId id in claimable)
+        foreach (WorkflowRunAddress address in claimable)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            yield return id;
+            yield return address;
         }
     }
 
-    private async ValueTask<List<WorkflowRunId>> QueryIdsAsync(string sql, Action<SqliteCommand> bind, CancellationToken cancellationToken)
+    private async ValueTask<List<WorkflowRunAddress>> QueryAddressesAsync(string sql, Action<SqliteCommand> bind, CancellationToken cancellationToken)
     {
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
@@ -673,14 +686,14 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             select.CommandText = sql;
             bind(select);
 
-            var ids = new List<WorkflowRunId>();
+            var addresses = new List<WorkflowRunAddress>();
             using SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
-                ids.Add(new WorkflowRunId(reader.GetString(0)));
+                addresses.Add(new WorkflowRunAddress(reader.GetString(0), new WorkflowRunId(reader.GetString(1))));
             }
 
-            return ids;
+            return addresses;
         }
         finally
         {
@@ -691,12 +704,12 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     private const string SchemaSql =
         """
         CREATE TABLE IF NOT EXISTS WorkflowRuns (
-            RunId TEXT PRIMARY KEY NOT NULL,
+            Environment TEXT NOT NULL,
+            RunId TEXT NOT NULL,
             Checkpoint BLOB NOT NULL,
             Version INTEGER NOT NULL,
             Status TEXT NOT NULL,
             WorkflowId TEXT NOT NULL,
-            Environment TEXT NULL,
             CreatedAt INTEGER NOT NULL,
             UpdatedAt INTEGER NOT NULL,
             DueAt INTEGER NULL,
@@ -705,23 +718,27 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             ErrorType TEXT NULL,
             CorrelationId TEXT NULL,
             Tags TEXT NULL,
-            ResumeRequestedAt INTEGER NULL
+            ResumeRequestedAt INTEGER NULL,
+            PRIMARY KEY (Environment, RunId)
         );
         CREATE INDEX IF NOT EXISTS IX_WorkflowRuns_Due ON WorkflowRuns (Status, DueAt);
         CREATE INDEX IF NOT EXISTS IX_WorkflowRuns_Awaiting ON WorkflowRuns (Status, AwaitingChannel, AwaitingCorrelationId);
         CREATE TABLE IF NOT EXISTS WorkflowRunSecurityTags (
+            Environment TEXT NOT NULL,
             RunId TEXT NOT NULL,
             TagKey TEXT NOT NULL,
             TagValue TEXT NOT NULL
         );
-        CREATE INDEX IF NOT EXISTS IX_WorkflowRunSecurityTags_Run ON WorkflowRunSecurityTags (RunId);
+        CREATE INDEX IF NOT EXISTS IX_WorkflowRunSecurityTags_Run ON WorkflowRunSecurityTags (Environment, RunId);
         CREATE INDEX IF NOT EXISTS IX_WorkflowRunSecurityTags_KeyValue ON WorkflowRunSecurityTags (TagKey, TagValue);
         CREATE TABLE IF NOT EXISTS WorkflowLeases (
-            RunId TEXT PRIMARY KEY NOT NULL,
+            Environment TEXT NOT NULL,
+            RunId TEXT NOT NULL,
             Owner TEXT NOT NULL,
             Token TEXT NOT NULL,
             ExpiresAt INTEGER NOT NULL,
-            Epoch INTEGER NOT NULL
+            Epoch INTEGER NOT NULL,
+            PRIMARY KEY (Environment, RunId)
         );
         """;
 }

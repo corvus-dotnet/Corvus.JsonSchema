@@ -294,7 +294,7 @@ public sealed class RunnerApiQuotaEndToEndTests
         {
             byte[] checkpoint = Checkpoint(runId, status, sequence: 1);
             await store.SaveAsync(
-                new WorkflowRunId(runId),
+                new WorkflowRunAddress(Production, new WorkflowRunId(runId)),
                 checkpoint,
                 WorkflowCheckpointSerializer.ProjectIndex(checkpoint),
                 WorkflowEtag.None,
@@ -303,7 +303,7 @@ public sealed class RunnerApiQuotaEndToEndTests
 
         public async ValueTask<long> StoredSequenceAsync(string runId)
         {
-            WorkflowCheckpoint? stored = await store.LoadAsync(new WorkflowRunId(runId), default);
+            WorkflowCheckpoint? stored = await store.LoadAsync(new WorkflowRunAddress(Production, new WorkflowRunId(runId)), default);
             stored.ShouldNotBeNull();
             WorkflowCheckpointSerializer.TryReadSequence(stored!.Value.Utf8, out long sequence).ShouldBeTrue();
             return sequence;

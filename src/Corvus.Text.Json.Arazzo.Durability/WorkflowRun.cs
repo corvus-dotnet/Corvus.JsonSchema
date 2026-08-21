@@ -33,7 +33,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     private readonly string? correlationId;
     private readonly TagSet tags;
     private readonly SecurityTagSet securityTags;
-    private readonly string? environment;
+    private readonly WorkflowRunAddress address;
     private readonly WorkflowCheckpointState? resumedState;
     private readonly JsonElement inputs;
     private WorkflowEtag etag;
@@ -69,7 +69,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         string? correlationId,
         TagSet tags,
         SecurityTagSet securityTags,
-        string? environment,
+        string environment,
         WorkflowWait? wait,
         WorkflowFault? fault,
         WorkflowCheckpointState? resumedState,
@@ -91,7 +91,10 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         this.correlationId = correlationId;
         this.tags = tags;
         this.securityTags = securityTags;
-        this.environment = environment;
+
+        // The run's full address (ADR 0065 decision 9): built once here, so every persist reuses the same
+        // environment string and no save can address a different environment than the run is pinned to.
+        this.address = new WorkflowRunAddress(environment, id);
         this.wait = wait;
         this.fault = fault;
         this.resumedState = resumedState;
@@ -153,9 +156,12 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     /// <summary>Gets the run-wide telemetry correlation id (the W3C trace id captured at creation), if any.</summary>
     public string? CorrelationId => this.correlationId;
 
-    /// <summary>Gets the deployment environment the run is pinned to (design §5.5), if any — its credential set and the
-    /// runners it can be dispatched to. Absent on a run created before run→environment pinning.</summary>
-    public string? Environment => this.environment;
+    /// <summary>Gets the deployment environment the run is pinned to (design §5.5) — its credential set and the
+    /// runners it can be dispatched to. Half the run's address (ADR 0065 decision 9); never absent.</summary>
+    public string Environment => this.address.Environment;
+
+    /// <summary>Gets the run's full <c>(environment, runId)</c> address (ADR 0065 decision 9).</summary>
+    public WorkflowRunAddress Address => this.address;
 
     /// <summary>Gets the free-form tags applied to the run at creation, if any.</summary>
     public TagSet Tags => this.tags;
@@ -233,6 +239,11 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(state);
 
+        // Every run is pinned to its address at creation (ADR 0065 decision 9), so a checkpoint without an
+        // environment is corrupt — resuming it would let the run re-save under an address it was never pinned to.
+        string environment = state.Environment
+            ?? throw ThrowHelper.GetCheckpointMissingEnvironmentException(state.RunId.Value);
+
         return new WorkflowRun(
             store,
             state.RunId,
@@ -249,7 +260,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             correlationId: state.CorrelationId,
             tags: state.Tags,
             securityTags: state.SecurityTags,
-            environment: state.Environment,
+            environment: environment,
             wait: state.Wait,
             fault: state.Fault,
             resumedState: state,
@@ -259,25 +270,35 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
 
     /// <summary>Loads a run's checkpoint from the store and builds a resumed run from it.</summary>
     /// <param name="store">The state store.</param>
-    /// <param name="id">The run id.</param>
+    /// <param name="address">The run's <c>(environment, runId)</c> address.</param>
     /// <param name="timeProvider">The time source for checkpoint timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The resumed run, or <see langword="null"/> if no run with that id exists.</returns>
+    /// <returns>The resumed run, or <see langword="null"/> if no run exists at that address.</returns>
     public static async ValueTask<WorkflowRun?> ResumeAsync(
         IWorkflowCheckpointStore store,
-        WorkflowRunId id,
+        WorkflowRunAddress address,
         TimeProvider? timeProvider = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(store);
 
-        WorkflowCheckpoint? checkpoint = await store.LoadAsync(id, cancellationToken).ConfigureAwait(false);
+        WorkflowCheckpoint? checkpoint = await store.LoadAsync(address, cancellationToken).ConfigureAwait(false);
         if (checkpoint is null)
         {
             return null;
         }
 
         WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(checkpoint.Value.Utf8);
+
+        // The row lives at the address, so a body claiming a different environment is corrupt: resuming it would
+        // re-save the run under the body's environment rather than the one it is stored at (ADR 0065 decision 9).
+        if (!string.Equals(state.Environment, address.Environment, StringComparison.Ordinal))
+        {
+            string? claimed = state.Environment;
+            state.Dispose();
+            throw ThrowHelper.GetCheckpointEnvironmentMismatchException(address, claimed);
+        }
+
         return Resume(store, state, checkpoint.Value.Etag, timeProvider);
     }
 
@@ -593,7 +614,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             this.correlationId,
             this.tags,
             this.securityTags,
-            this.environment,
+            this.address.Environment,
             this.pause,
             this.resumeRequestedAt,
             updatedAt,
@@ -610,11 +631,10 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             this.correlationId,
             this.tags,
             this.securityTags,
-            this.environment,
             this.resumeRequestedAt);
 
         long startedAt = Stopwatch.GetTimestamp();
-        this.etag = await this.store.SaveAsync(this.Id, checkpoint, index, this.etag, cancellationToken).ConfigureAwait(false);
+        this.etag = await this.store.SaveAsync(this.address, checkpoint, index, this.etag, cancellationToken).ConfigureAwait(false);
         ArazzoTelemetry.CheckpointDuration.Record(
             Stopwatch.GetElapsedTime(startedAt).TotalSeconds,
             new KeyValuePair<string, object?>(ArazzoTelemetry.WorkflowIdTag, this.WorkflowId),

@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests;
 
 /// <summary>
 /// Coverage of the runner's serverless checkpoint HTTP surface: the octet-stream <c>GET</c>/<c>POST
-/// /runs/{runId}/checkpoint</c> endpoints, the write-sequence + ETag headers, the malformed-body and missing-header
+/// /environments/{environment}/runs/{runId}/checkpoint</c> endpoints, the write-sequence + ETag headers, the malformed-body and missing-header
 /// rejections, the authenticated-principal gate, and — the capstone — the function-side <c>HttpWorkflowStateStore</c>
 /// round-tripping a run through the live surface, proving both halves of the wire contract agree.
 /// </summary>
@@ -31,7 +31,9 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests;
 public sealed class WorkflowCheckpointEndpointsTests
 {
     private const string SeqHeader = "X-Arazzo-Checkpoint-Seq";
+    private const string Env = "development";
     private static readonly WorkflowRunId Run = new("0123456789abcdef0123456789abcdef");
+    private static readonly WorkflowRunAddress Address = new(Env, Run);
     private static readonly byte[] CheckpointSecret = RandomNumberGenerator.GetBytes(CheckpointToken.MinimumSecretBytes);
 
     [TestMethod]
@@ -59,7 +61,7 @@ public sealed class WorkflowCheckpointEndpointsTests
         (await host.GetCheckpointAsync(runId)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await host.PostCheckpointAsync(runId, RealCheckpoint(WorkflowRunStatus.Running), sequence: 1)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
-        (await host.Store.LoadAsync(new WorkflowRunId(runId), default)).ShouldBeNull();
+        (await host.Store.LoadAsync(new WorkflowRunAddress(Env, new WorkflowRunId(runId)), default)).ShouldBeNull();
     }
 
     [TestMethod]
@@ -67,7 +69,7 @@ public sealed class WorkflowCheckpointEndpointsTests
     {
         await using Host host = await Host.StartAsync();
         byte[] checkpoint = RealCheckpoint(WorkflowRunStatus.Running);
-        await host.Store.SaveAsync(Run, checkpoint, ProjectIndex(checkpoint), WorkflowEtag.None, default);
+        await host.Store.SaveAsync(Address, checkpoint, ProjectIndex(checkpoint), WorkflowEtag.None, default);
 
         HttpResponseMessage response = await host.GetCheckpointAsync(Run.Value);
 
@@ -88,7 +90,7 @@ public sealed class WorkflowCheckpointEndpointsTests
         HttpResponseMessage posted = await host.PostCheckpointAsync(Run.Value, checkpoint, sequence: 1);
 
         posted.StatusCode.ShouldBe(HttpStatusCode.NoContent);
-        (await host.Store.LoadAsync(Run, default))!.Value.Utf8.ToArray().ShouldBe(checkpoint);
+        (await host.Store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(checkpoint);
 
         HttpResponseMessage got = await host.GetCheckpointAsync(Run.Value);
         got.Headers.GetValues(SeqHeader).Single().ShouldBe("1");
@@ -111,7 +113,7 @@ public sealed class WorkflowCheckpointEndpointsTests
         refused.StatusCode.ShouldBe(HttpStatusCode.Conflict);
         refused.Headers.GetValues(SeqHeader).Single().ShouldBe("2");
         (await refused.Content.ReadAsStringAsync()).ShouldContain("\"acceptedSequence\":2");
-        (await host.Store.LoadAsync(Run, default))!.Value.Utf8.ToArray().ShouldBe(first);
+        (await host.Store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(first);
     }
 
     [TestMethod]
@@ -119,12 +121,12 @@ public sealed class WorkflowCheckpointEndpointsTests
     {
         await using Host host = await Host.StartAsync();
 
-        var request = new HttpRequestMessage(HttpMethod.Post, $"/runs/{Run.Value}/checkpoint")
+        var request = new HttpRequestMessage(HttpMethod.Post, $"/environments/{Env}/runs/{Run.Value}/checkpoint")
         {
             Content = OctetStream(RealCheckpoint(WorkflowRunStatus.Running)),
         };
         request.Headers.Authorization = new AuthenticationHeaderValue(
-            "Bearer", CheckpointToken.Issue(CheckpointSecret, Run.Value, DateTimeOffset.UtcNow.AddMinutes(10)));
+            "Bearer", CheckpointToken.Issue(CheckpointSecret, Address, DateTimeOffset.UtcNow.AddMinutes(10)));
         HttpResponseMessage response = await host.Client.SendAsync(request);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -138,7 +140,7 @@ public sealed class WorkflowCheckpointEndpointsTests
         HttpResponseMessage response = await host.PostCheckpointAsync(Run.Value, [1, 2, 3], sequence: 1);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await host.Store.LoadAsync(Run, default)).ShouldBeNull();
+        (await host.Store.LoadAsync(Address, default)).ShouldBeNull();
     }
 
     [TestMethod]
@@ -162,16 +164,16 @@ public sealed class WorkflowCheckpointEndpointsTests
         // end to end rather than against a stub.
         await using Host host = await Host.StartAsync();
         byte[] initial = RealCheckpoint(WorkflowRunStatus.Running, cursor: 1);
-        await host.Store.SaveAsync(Run, initial, ProjectIndex(initial), WorkflowEtag.None, default);
+        await host.Store.SaveAsync(Address, initial, ProjectIndex(initial), WorkflowEtag.None, default);
 
         // The dispatched function presents the run-scoped token the dispatcher minted for it on every callback, which is
         // what ServerlessInvocationHandler sets on its per-invocation client.
         host.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-            "Bearer", CheckpointToken.Issue(CheckpointSecret, Run.Value, DateTimeOffset.UtcNow.AddMinutes(10)));
+            "Bearer", CheckpointToken.Issue(CheckpointSecret, Address, DateTimeOffset.UtcNow.AddMinutes(10)));
         await using var functionStore = new HttpWorkflowStateStore(host.Client);
 
         // The function loads the run, advances it, and checks a new checkpoint in.
-        WorkflowCheckpoint? loaded = await functionStore.LoadAsync(Run, default);
+        WorkflowCheckpoint? loaded = await functionStore.LoadAsync(Address, default);
         loaded.ShouldNotBeNull();
         loaded!.Value.Utf8.ToArray().ShouldBe(initial);
 
@@ -179,11 +181,11 @@ public sealed class WorkflowCheckpointEndpointsTests
         // loaded and increments, so this is what a real function sends; the server accepts only persisted plus one, so
         // re-sending 1 here would be refused exactly as a duplicate would.
         byte[] advanced = RealCheckpoint(WorkflowRunStatus.Completed, cursor: 2, sequence: 2);
-        await functionStore.SaveAsync(Run, advanced, ProjectIndex(advanced), default, default);
+        await functionStore.SaveAsync(Address, advanced, ProjectIndex(advanced), default, default);
         await functionStore.FlushAsync(default);
 
         // The runner terminated the fire-and-forget save into the store, re-projecting the index from the bytes.
-        WorkflowCheckpoint stored = (await host.Store.LoadAsync(Run, default))!.Value;
+        WorkflowCheckpoint stored = (await host.Store.LoadAsync(Address, default))!.Value;
         stored.Utf8.ToArray().ShouldBe(advanced);
         WorkflowCheckpointSerializer.ProjectIndex(stored.Utf8).Status.ShouldBe(WorkflowRunStatus.Completed);
     }
@@ -204,6 +206,7 @@ public sealed class WorkflowCheckpointEndpointsTests
             inputs: default,
             stepOutputs,
             outputs: default,
+            environment: Env,
             updatedAt: new DateTimeOffset(2026, 3, 4, 5, 10, 0, TimeSpan.Zero));
     }
 
@@ -243,11 +246,11 @@ public sealed class WorkflowCheckpointEndpointsTests
         }
 
         public Task<HttpResponseMessage> GetCheckpointAsync(string runId, string? scope = null)
-            => this.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"/runs/{runId}/checkpoint"), runId, scope);
+            => this.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"/environments/{Env}/runs/{runId}/checkpoint"), runId, scope);
 
         public Task<HttpResponseMessage> PostCheckpointAsync(string runId, byte[] body, long sequence, string? scope = null)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, $"/runs/{runId}/checkpoint") { Content = OctetStream(body) };
+            var request = new HttpRequestMessage(HttpMethod.Post, $"/environments/{Env}/runs/{runId}/checkpoint") { Content = OctetStream(body) };
             request.Headers.Add(SeqHeader, sequence.ToString(System.Globalization.CultureInfo.InvariantCulture));
             return this.SendAsync(request, runId, scope);
         }
@@ -264,7 +267,7 @@ public sealed class WorkflowCheckpointEndpointsTests
         private Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, string runId, string? scope)
         {
             request.Headers.Authorization = new AuthenticationHeaderValue(
-                "Bearer", CheckpointToken.Issue(CheckpointSecret, runId, DateTimeOffset.UtcNow.AddMinutes(10)));
+                "Bearer", CheckpointToken.Issue(CheckpointSecret, new WorkflowRunAddress(Env, new WorkflowRunId(runId)), DateTimeOffset.UtcNow.AddMinutes(10)));
 
             if (scope is not null)
             {

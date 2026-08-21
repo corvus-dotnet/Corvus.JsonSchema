@@ -127,11 +127,13 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
             // environment) reads as the idempotent convergence; anything else occupying the id — the pre-created-id
             // attack the keyed derivation exists to prevent, a leaked key, or an in-process caller minting a
             // colliding name — is refused rather than reported as this run (ADR 0065 §9).
-            WorkflowCheckpoint? existing = await this.store.LoadAsync(runId, cancellationToken).ConfigureAwait(false);
+            WorkflowCheckpoint? existing = await this.store.LoadAsync(new WorkflowRunAddress(environment, runId), cancellationToken).ConfigureAwait(false);
             if (existing is { } checkpoint)
             {
+                // The load was by the composite address, so the occupant IS in this environment structurally
+                // (ADR 0065 decision 9) — only the workflow id can still diverge.
                 WorkflowRunIndexEntry indexEntry = WorkflowCheckpointSerializer.ProjectIndex(checkpoint.Utf8);
-                if (indexEntry.WorkflowId == workflowId && indexEntry.Environment == environment)
+                if (indexEntry.WorkflowId == workflowId)
                 {
                     return new IdempotentStartResult(runId, Created: false);
                 }
@@ -195,18 +197,19 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         return index.CountAsync(query with { Security = reach }, cap, cancellationToken);
     }
 
-    // Resolves a bare run id through the store's reach-filtered index query — the SAME predicate ListAsync pushes
-    // down (ADR 0065 §9, C4) — so a run's visibility by id can never drift from its visibility in the list, for any
-    // verb. A run outside the reach and a run the store does not hold answer identically: not resolved. The listing
-    // the query returns carries the run's environment, which is the other half of the run's address; the composite-key
-    // store operations take it from here when the seam is re-cut (C5).
-    private async ValueTask<bool> ResolveWithinReachAsync(WorkflowRunId id, AccessContext context, AccessVerb verb, CancellationToken cancellationToken)
+    // Resolves a bare run id to its full (environment, runId) address through the store's reach-filtered index
+    // query — the SAME predicate ListAsync pushes down (ADR 0065 §9) — so a run's visibility by id can never drift
+    // from its visibility in the list, for any verb. A run outside the reach and a run the store does not hold
+    // answer identically: not resolved. Under the composite key the same bare id can name a run in two
+    // environments, both within reach (only by deliberate construction — canonical ids carry 128 bits of entropy);
+    // a bare-id operation refuses to guess between them and fails closed, while the listing shows both.
+    private async ValueTask<WorkflowRunAddress?> ResolveWithinReachAsync(WorkflowRunId id, AccessContext context, AccessVerb verb, CancellationToken cancellationToken)
     {
         SecurityFilter? reach = context.Reach(verb);
         IWorkflowWaitIndex index = this.RequireIndex();
         RowSecurityPushdown.EnsureSupported(reach, index);
-        using WorkflowRunPage page = await index.QueryAsync(new WorkflowQuery(RunId: id.Value, Limit: 1, Security: reach), cancellationToken).ConfigureAwait(false);
-        return page.Runs.Count > 0;
+        using WorkflowRunPage page = await index.QueryAsync(new WorkflowQuery(RunId: id.Value, Limit: 2, Security: reach), cancellationToken).ConfigureAwait(false);
+        return page.Runs.Count == 1 ? page.Runs[0].Address : null;
     }
 
     /// <inheritdoc/>
@@ -217,12 +220,12 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         // A run outside the caller's read reach is reported as absent (non-disclosing, §14.2), decided by the store's
         // index predicate — the one the listing pushes down — never by a second in-process check that could drift
         // from it (ADR 0065 §9, C4).
-        if (!await this.ResolveWithinReachAsync(id, context, AccessVerb.Read, cancellationToken).ConfigureAwait(false))
+        if (await this.ResolveWithinReachAsync(id, context, AccessVerb.Read, cancellationToken).ConfigureAwait(false) is not { } address)
         {
             return null;
         }
 
-        WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(id, cancellationToken).ConfigureAwait(false);
+        WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(address, cancellationToken).ConfigureAwait(false);
         if (checkpoint is not { } cp)
         {
             return null;
@@ -239,12 +242,12 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
 
         // A run outside the caller's read reach is reported as absent (non-disclosing, §14.2) — the same resolve as
         // GetAsync, because the journal discloses strictly more than the detail.
-        if (!await this.ResolveWithinReachAsync(id, context, AccessVerb.Read, cancellationToken).ConfigureAwait(false))
+        if (await this.ResolveWithinReachAsync(id, context, AccessVerb.Read, cancellationToken).ConfigureAwait(false) is not { } address)
         {
             return null;
         }
 
-        WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(id, cancellationToken).ConfigureAwait(false);
+        WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(address, cancellationToken).ConfigureAwait(false);
         if (checkpoint is not { } cp)
         {
             return null;
@@ -323,12 +326,12 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
 
         // A run outside the caller's read reach reads back as absent (non-disclosing, §14.2) — the same resolve as
         // GetAsync.
-        if (!await this.ResolveWithinReachAsync(id, context, AccessVerb.Read, cancellationToken).ConfigureAwait(false))
+        if (await this.ResolveWithinReachAsync(id, context, AccessVerb.Read, cancellationToken).ConfigureAwait(false) is not { } address)
         {
             return null;
         }
 
-        WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(id, cancellationToken).ConfigureAwait(false);
+        WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(address, cancellationToken).ConfigureAwait(false);
         if (checkpoint is not { } cp)
         {
             return null;
@@ -347,8 +350,9 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         }
 
         // A run outside the caller's write reach is not actionable (§14.2), decided by the store's index predicate
-        // exactly as the listing decides visibility (ADR 0065 §9, C4); a missing run answers the same false.
-        if (!await this.ResolveWithinReachAsync(id, context, AccessVerb.Write, cancellationToken).ConfigureAwait(false))
+        // exactly as the listing decides visibility (ADR 0065 §9); the resolve also names the run's address, which
+        // every store operation below takes. A missing run answers the same false.
+        if (await this.ResolveWithinReachAsync(id, context, AccessVerb.Write, cancellationToken).ConfigureAwait(false) is not { } address)
         {
             return false;
         }
@@ -361,7 +365,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
             activity.SetTag(ArazzoTelemetry.ResumeModeTag, options.Mode.ToString());
         }
 
-        WorkflowLease? lease = await this.store.AcquireLeaseAsync(id, this.owner, this.leaseTtl, cancellationToken).ConfigureAwait(false);
+        WorkflowLease? lease = await this.store.AcquireLeaseAsync(address, this.owner, this.leaseTtl, cancellationToken).ConfigureAwait(false);
         if (lease is null)
         {
             // Another owner (operator or worker) is acting on this run.
@@ -375,12 +379,12 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
             // before re-entering: rewind the cursor, skip past the faulted step, or apply a state patch. The run
             // stays Faulted, so the re-entered executor still clears the fault on its first checkpoint.
             if (options.Mode != ResumeMode.RetryFaultedStep &&
-                !await this.TryApplyResumeMutationAsync(id, options, activity, cancellationToken).ConfigureAwait(false))
+                !await this.TryApplyResumeMutationAsync(address, options, activity, cancellationToken).ConfigureAwait(false))
             {
                 return false;
             }
 
-            using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.store, id, this.timeProvider, cancellationToken).ConfigureAwait(false);
+            using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.store, address, this.timeProvider, cancellationToken).ConfigureAwait(false);
             if (run is null || run.Status != WorkflowRunStatus.Faulted)
             {
                 // Only a faulted run is retriable; it may have been resumed, cancelled, or deleted meanwhile.
@@ -429,8 +433,9 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         ArgumentNullException.ThrowIfNull(context);
 
         // A run outside the caller's write reach is not actionable (§14.2), decided by the store's index predicate
-        // exactly as the listing decides visibility (ADR 0065 §9, C4); a missing run answers the same false.
-        if (!await this.ResolveWithinReachAsync(id, context, AccessVerb.Write, cancellationToken).ConfigureAwait(false))
+        // exactly as the listing decides visibility (ADR 0065 §9); the resolve also names the run's address, which
+        // every store operation below takes. A missing run answers the same false.
+        if (await this.ResolveWithinReachAsync(id, context, AccessVerb.Write, cancellationToken).ConfigureAwait(false) is not { } address)
         {
             return false;
         }
@@ -443,7 +448,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
             activity.SetTag(ArazzoTelemetry.ResumeModeTag, options.Mode.ToString());
         }
 
-        WorkflowLease? lease = await this.store.AcquireLeaseAsync(id, this.owner, this.leaseTtl, cancellationToken).ConfigureAwait(false);
+        WorkflowLease? lease = await this.store.AcquireLeaseAsync(address, this.owner, this.leaseTtl, cancellationToken).ConfigureAwait(false);
         if (lease is null)
         {
             activity?.SetTag(ArazzoTelemetry.OutcomeTag, "leased-by-other");
@@ -455,12 +460,12 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
             // For every mode but a plain retry, mutate the checkpoint (cursor/state) under optimistic concurrency
             // before handing off: rewind the cursor, skip past the faulted step, or apply a state patch.
             if (options.Mode != ResumeMode.RetryFaultedStep &&
-                !await this.TryApplyResumeMutationAsync(id, options, activity, cancellationToken).ConfigureAwait(false))
+                !await this.TryApplyResumeMutationAsync(address, options, activity, cancellationToken).ConfigureAwait(false))
             {
                 return false;
             }
 
-            using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.store, id, this.timeProvider, cancellationToken).ConfigureAwait(false);
+            using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.store, address, this.timeProvider, cancellationToken).ConfigureAwait(false);
             if (run is null || run.Status != WorkflowRunStatus.Faulted)
             {
                 activity?.SetTag(ArazzoTelemetry.OutcomeTag, "not-faulted");
@@ -486,8 +491,9 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         ArgumentNullException.ThrowIfNull(context);
 
         // A run outside the caller's write reach is not actionable (§14.2), decided by the store's index predicate
-        // exactly as the listing decides visibility (ADR 0065 §9, C4); a missing run answers the same false.
-        if (!await this.ResolveWithinReachAsync(id, context, AccessVerb.Write, cancellationToken).ConfigureAwait(false))
+        // exactly as the listing decides visibility (ADR 0065 §9); the resolve also names the run's address, which
+        // every store operation below takes. A missing run answers the same false.
+        if (await this.ResolveWithinReachAsync(id, context, AccessVerb.Write, cancellationToken).ConfigureAwait(false) is not { } address)
         {
             return false;
         }
@@ -500,7 +506,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
             activity.SetTag("corvus.arazzo.cancel_reason", reason);
         }
 
-        WorkflowLease? lease = await this.store.AcquireLeaseAsync(id, this.owner, this.leaseTtl, cancellationToken).ConfigureAwait(false);
+        WorkflowLease? lease = await this.store.AcquireLeaseAsync(address, this.owner, this.leaseTtl, cancellationToken).ConfigureAwait(false);
         if (lease is null)
         {
             activity?.SetTag(ArazzoTelemetry.OutcomeTag, "leased-by-other");
@@ -509,7 +515,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
 
         try
         {
-            WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(id, cancellationToken).ConfigureAwait(false);
+            WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(address, cancellationToken).ConfigureAwait(false);
             if (checkpoint is not { } cp)
             {
                 activity?.SetTag(ArazzoTelemetry.OutcomeTag, "missing");
@@ -536,7 +542,6 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                 string? errorType = root.TryGetProperty("fault"u8, out JsonElement faultElement) && faultElement.TryGetProperty("error"u8, out JsonElement errorElement) ? errorElement.GetString() : null;
                 TagSet tags = root.TryGetProperty("tags"u8, out JsonElement tagsElement) ? TagSet.CopyFrom(tagsElement) : default;
                 SecurityTagSet securityTags = WorkflowCheckpointSerializer.ReadSecurityTags(root);
-                string? environment = root.TryGetProperty("environment"u8, out JsonElement environmentElement) ? environmentElement.GetString() : null;
 
                 // Mark cancelled and clear any wait by rewriting the document verbatim — the run-creation metadata and
                 // the working state (retry counters, correlation tokens, step outputs) are carried through as raw JSON,
@@ -551,8 +556,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                     ErrorType: errorType,
                     CorrelationId: correlationId,
                     Tags: tags,
-                    SecurityTags: securityTags,
-                    Environment: environment);
+                    SecurityTags: securityTags);
 
                 if (activity is { IsAllDataRequested: true } && correlationId is { } cid)
                 {
@@ -560,7 +564,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                 }
             }
 
-            await this.store.SaveAsync(id, updated, indexEntry, cp.Etag, cancellationToken).ConfigureAwait(false);
+            await this.store.SaveAsync(address, updated, indexEntry, cp.Etag, cancellationToken).ConfigureAwait(false);
 
             if (activity is { IsAllDataRequested: true })
             {
@@ -629,7 +633,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                             continue;
                         }
 
-                        await this.store.DeleteAsync(listing.Id, cancellationToken).ConfigureAwait(false);
+                        await this.store.DeleteAsync(listing.Address, cancellationToken).ConfigureAwait(false);
                         purged++;
                     }
 
@@ -661,8 +665,9 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         ArgumentNullException.ThrowIfNull(context);
 
         // A run outside the caller's write reach is not actionable (§14.2), decided by the store's index predicate
-        // exactly as the listing decides visibility (ADR 0065 §9, C4); a missing run answers the same false.
-        if (!await this.ResolveWithinReachAsync(id, context, AccessVerb.Write, cancellationToken).ConfigureAwait(false))
+        // exactly as the listing decides visibility (ADR 0065 §9); the resolve also names the run's address, which
+        // every store operation below takes. A missing run answers the same false.
+        if (await this.ResolveWithinReachAsync(id, context, AccessVerb.Write, cancellationToken).ConfigureAwait(false) is not { } address)
         {
             return false;
         }
@@ -675,7 +680,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         }
 
         // Take the lease so we don't delete a run a worker or operator is mid-operation on.
-        WorkflowLease? lease = await this.store.AcquireLeaseAsync(id, this.owner, this.leaseTtl, cancellationToken).ConfigureAwait(false);
+        WorkflowLease? lease = await this.store.AcquireLeaseAsync(address, this.owner, this.leaseTtl, cancellationToken).ConfigureAwait(false);
         if (lease is null)
         {
             activity?.SetTag(ArazzoTelemetry.OutcomeTag, "leased-by-other");
@@ -684,14 +689,14 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
 
         try
         {
-            WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(id, cancellationToken).ConfigureAwait(false);
+            WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(address, cancellationToken).ConfigureAwait(false);
             if (checkpoint is null)
             {
                 activity?.SetTag(ArazzoTelemetry.OutcomeTag, "missing");
                 return false;
             }
 
-            await this.store.DeleteAsync(id, cancellationToken).ConfigureAwait(false);
+            await this.store.DeleteAsync(address, cancellationToken).ConfigureAwait(false);
             activity?.SetTag(ArazzoTelemetry.OutcomeTag, "deleted");
             ArazzoTelemetry.WorkflowsDeleted.Add(1);
             return true;
@@ -706,9 +711,9 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
     /// Applies a resume mode's mutation (rewind / skip / state-patch) to a faulted run's checkpoint under
     /// optimistic concurrency, leaving it Faulted at the new cursor/state ready for the executor to re-enter.
     /// </summary>
-    private async ValueTask<bool> TryApplyResumeMutationAsync(WorkflowRunId id, ResumeOptions options, Activity? activity, CancellationToken cancellationToken)
+    private async ValueTask<bool> TryApplyResumeMutationAsync(WorkflowRunAddress address, ResumeOptions options, Activity? activity, CancellationToken cancellationToken)
     {
-        WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(id, cancellationToken).ConfigureAwait(false);
+        WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(address, cancellationToken).ConfigureAwait(false);
         if (checkpoint is not { } cp)
         {
             activity?.SetTag(ArazzoTelemetry.OutcomeTag, "missing");
@@ -806,8 +811,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                     ErrorType: state.Fault?.Error,
                     CorrelationId: state.CorrelationId,
                     Tags: state.Tags,
-                    SecurityTags: state.SecurityTags,
-                    Environment: state.Environment);
+                    SecurityTags: state.SecurityTags);
             }
         }
         finally
@@ -818,7 +822,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
 
         try
         {
-            await this.store.SaveAsync(id, mutated, indexEntry, cp.Etag, cancellationToken).ConfigureAwait(false);
+            await this.store.SaveAsync(address, mutated, indexEntry, cp.Etag, cancellationToken).ConfigureAwait(false);
             return true;
         }
         catch (WorkflowConflictException)

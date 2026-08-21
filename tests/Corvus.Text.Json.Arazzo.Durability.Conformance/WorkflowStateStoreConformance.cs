@@ -20,6 +20,10 @@ public abstract class WorkflowStateStoreConformance
 {
     private static readonly DateTimeOffset T0 = new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
+    // Every conformance run lives in the development environment unless a test names another: the suite's default
+    // address half (ADR 0065 decision 9).
+    private const string Dev = "development";
+
     private readonly List<IAsyncDisposable> disposables = [];
 
     /// <summary>Creates a fresh, empty store backed by the implementation under test.</summary>
@@ -44,10 +48,10 @@ public abstract class WorkflowStateStoreConformance
     public async Task Save_creates_then_load_returns_bytes_and_etag()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
-        WorkflowEtag etag = await store.SaveAsync("run-1", Bytes("""{"v":1}"""), Index(), WorkflowEtag.None, default);
+        WorkflowEtag etag = await store.SaveAsync(A("run-1"), Bytes("""{"v":1}"""), Index(), WorkflowEtag.None, default);
 
         etag.IsNone.ShouldBeFalse();
-        WorkflowCheckpoint? loaded = await store.LoadAsync("run-1", default);
+        WorkflowCheckpoint? loaded = await store.LoadAsync(A("run-1"), default);
         loaded.ShouldNotBeNull();
         loaded.Value.Etag.ShouldBe(etag);
         Encoding.UTF8.GetString(loaded.Value.Utf8.Span).ShouldBe("""{"v":1}""");
@@ -57,17 +61,17 @@ public abstract class WorkflowStateStoreConformance
     public async Task Load_of_unknown_run_returns_null()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
-        (await store.LoadAsync("missing", default)).ShouldBeNull();
+        (await store.LoadAsync(A("missing"), default)).ShouldBeNull();
     }
 
     [TestMethod]
     public async Task Save_with_None_when_run_exists_conflicts()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
-        await store.SaveAsync("run-1", Bytes("a"), Index(), WorkflowEtag.None, default);
+        await store.SaveAsync(A("run-1"), Bytes("a"), Index(), WorkflowEtag.None, default);
 
         WorkflowConflictException ex = await Should.ThrowAsync<WorkflowConflictException>(
-            async () => await store.SaveAsync("run-1", Bytes("b"), Index(), WorkflowEtag.None, default));
+            async () => await store.SaveAsync(A("run-1"), Bytes("b"), Index(), WorkflowEtag.None, default));
         ex.RunId.ShouldBe(new WorkflowRunId("run-1"));
     }
 
@@ -75,12 +79,12 @@ public abstract class WorkflowStateStoreConformance
     public async Task Save_with_current_etag_advances_the_etag()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
-        WorkflowEtag first = await store.SaveAsync("run-1", Bytes("a"), Index(), WorkflowEtag.None, default);
+        WorkflowEtag first = await store.SaveAsync(A("run-1"), Bytes("a"), Index(), WorkflowEtag.None, default);
 
-        WorkflowEtag second = await store.SaveAsync("run-1", Bytes("b"), Index(), first, default);
+        WorkflowEtag second = await store.SaveAsync(A("run-1"), Bytes("b"), Index(), first, default);
 
         second.ShouldNotBe(first);
-        WorkflowCheckpoint? loaded = await store.LoadAsync("run-1", default);
+        WorkflowCheckpoint? loaded = await store.LoadAsync(A("run-1"), default);
         Encoding.UTF8.GetString(loaded!.Value.Utf8.Span).ShouldBe("b");
         loaded.Value.Etag.ShouldBe(second);
     }
@@ -89,11 +93,11 @@ public abstract class WorkflowStateStoreConformance
     public async Task Save_with_stale_etag_conflicts()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
-        WorkflowEtag first = await store.SaveAsync("run-1", Bytes("a"), Index(), WorkflowEtag.None, default);
-        await store.SaveAsync("run-1", Bytes("b"), Index(), first, default);
+        WorkflowEtag first = await store.SaveAsync(A("run-1"), Bytes("a"), Index(), WorkflowEtag.None, default);
+        await store.SaveAsync(A("run-1"), Bytes("b"), Index(), first, default);
 
         await Should.ThrowAsync<WorkflowConflictException>(
-            async () => await store.SaveAsync("run-1", Bytes("c"), Index(), first, default));
+            async () => await store.SaveAsync(A("run-1"), Bytes("c"), Index(), first, default));
     }
 
     [TestMethod]
@@ -101,25 +105,25 @@ public abstract class WorkflowStateStoreConformance
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
         await Should.ThrowAsync<WorkflowConflictException>(
-            async () => await store.SaveAsync("ghost", Bytes("a"), Index(), new WorkflowEtag("7"), default));
+            async () => await store.SaveAsync(A("ghost"), Bytes("a"), Index(), new WorkflowEtag("7"), default));
     }
 
     [TestMethod]
     public async Task Delete_removes_the_run()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
-        await store.SaveAsync("run-1", Bytes("a"), Index(), WorkflowEtag.None, default);
+        await store.SaveAsync(A("run-1"), Bytes("a"), Index(), WorkflowEtag.None, default);
 
-        await store.DeleteAsync("run-1", default);
+        await store.DeleteAsync(A("run-1"), default);
 
-        (await store.LoadAsync("run-1", default)).ShouldBeNull();
+        (await store.LoadAsync(A("run-1"), default)).ShouldBeNull();
     }
 
     [TestMethod]
     public async Task Delete_of_unknown_run_is_a_no_op()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
-        await Should.NotThrowAsync(async () => await store.DeleteAsync("missing", default));
+        await Should.NotThrowAsync(async () => await store.DeleteAsync(A("missing"), default));
     }
 
     [TestMethod]
@@ -127,14 +131,14 @@ public abstract class WorkflowStateStoreConformance
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
 
-        WorkflowLease? a = await store.AcquireLeaseAsync("run-1", "worker-a", TimeSpan.FromMinutes(1), default);
-        WorkflowLease? b = await store.AcquireLeaseAsync("run-1", "worker-b", TimeSpan.FromMinutes(1), default);
+        WorkflowLease? a = await store.AcquireLeaseAsync(A("run-1"), "worker-a", TimeSpan.FromMinutes(1), default);
+        WorkflowLease? b = await store.AcquireLeaseAsync(A("run-1"), "worker-b", TimeSpan.FromMinutes(1), default);
 
         a.ShouldNotBeNull();
         b.ShouldBeNull();
 
         await store.ReleaseLeaseAsync(a.Value, default);
-        (await store.AcquireLeaseAsync("run-1", "worker-b", TimeSpan.FromMinutes(1), default)).ShouldNotBeNull();
+        (await store.AcquireLeaseAsync(A("run-1"), "worker-b", TimeSpan.FromMinutes(1), default)).ShouldNotBeNull();
     }
 
     [TestMethod]
@@ -143,10 +147,10 @@ public abstract class WorkflowStateStoreConformance
         var clock = new TestClock(T0);
         IWorkflowStateStore store = await this.NewStoreAsync(clock);
 
-        await store.AcquireLeaseAsync("run-1", "worker-a", TimeSpan.FromSeconds(30), default);
+        await store.AcquireLeaseAsync(A("run-1"), "worker-a", TimeSpan.FromSeconds(30), default);
         clock.Advance(TimeSpan.FromSeconds(31));
 
-        WorkflowLease? b = await store.AcquireLeaseAsync("run-1", "worker-b", TimeSpan.FromSeconds(30), default);
+        WorkflowLease? b = await store.AcquireLeaseAsync(A("run-1"), "worker-b", TimeSpan.FromSeconds(30), default);
         b.ShouldNotBeNull();
         b.Value.Owner.ShouldBe("worker-b");
     }
@@ -156,22 +160,22 @@ public abstract class WorkflowStateStoreConformance
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
 
-        await store.AcquireLeaseAsync("run-1", "worker-a", TimeSpan.FromMinutes(1), default);
-        (await store.AcquireLeaseAsync("run-1", "worker-a", TimeSpan.FromMinutes(1), default)).ShouldNotBeNull();
+        await store.AcquireLeaseAsync(A("run-1"), "worker-a", TimeSpan.FromMinutes(1), default);
+        (await store.AcquireLeaseAsync(A("run-1"), "worker-a", TimeSpan.FromMinutes(1), default)).ShouldNotBeNull();
     }
 
     [TestMethod]
     public async Task Releasing_a_superseded_lease_does_not_free_the_current_holder()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
-        WorkflowLease? stale = await store.AcquireLeaseAsync("run-1", "worker-a", TimeSpan.FromMinutes(1), default);
+        WorkflowLease? stale = await store.AcquireLeaseAsync(A("run-1"), "worker-a", TimeSpan.FromMinutes(1), default);
         await store.ReleaseLeaseAsync(stale!.Value, default);
-        WorkflowLease? current = await store.AcquireLeaseAsync("run-1", "worker-b", TimeSpan.FromMinutes(1), default);
+        WorkflowLease? current = await store.AcquireLeaseAsync(A("run-1"), "worker-b", TimeSpan.FromMinutes(1), default);
 
         await store.ReleaseLeaseAsync(stale.Value, default);
 
         current.ShouldNotBeNull();
-        (await store.AcquireLeaseAsync("run-1", "worker-c", TimeSpan.FromMinutes(1), default)).ShouldBeNull();
+        (await store.AcquireLeaseAsync(A("run-1"), "worker-c", TimeSpan.FromMinutes(1), default)).ShouldBeNull();
     }
 
     [TestMethod]
@@ -179,7 +183,7 @@ public abstract class WorkflowStateStoreConformance
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
         await Should.NotThrowAsync(async () =>
-            await store.ReleaseLeaseAsync(new WorkflowLease("never", "owner", "token", default), default));
+            await store.ReleaseLeaseAsync(new WorkflowLease(A("never"), "owner", "token", default), default));
     }
 
     [TestMethod]
@@ -187,7 +191,7 @@ public abstract class WorkflowStateStoreConformance
     {
         var clock = new TestClock(T0);
         IWorkflowStateStore store = await this.NewStoreAsync(clock);
-        WorkflowLease held = (await store.AcquireLeaseAsync("run-1", "worker-a", TimeSpan.FromSeconds(30), default))!.Value;
+        WorkflowLease held = (await store.AcquireLeaseAsync(A("run-1"), "worker-a", TimeSpan.FromSeconds(30), default))!.Value;
 
         WorkflowLease? extended = await store.TryExtendLeaseAsync(held, TimeSpan.FromMinutes(5), default);
 
@@ -198,7 +202,7 @@ public abstract class WorkflowStateStoreConformance
         // Past the original expiry the run would have been reclaimable; the extension is what keeps it held, so this is
         // what proves the write landed rather than merely being reported.
         clock.Advance(TimeSpan.FromSeconds(31));
-        (await store.AcquireLeaseAsync("run-1", "worker-b", TimeSpan.FromSeconds(30), default)).ShouldBeNull();
+        (await store.AcquireLeaseAsync(A("run-1"), "worker-b", TimeSpan.FromSeconds(30), default)).ShouldBeNull();
     }
 
     [TestMethod]
@@ -206,7 +210,7 @@ public abstract class WorkflowStateStoreConformance
     {
         var clock = new TestClock(T0);
         IWorkflowStateStore store = await this.NewStoreAsync(clock);
-        WorkflowLease held = (await store.AcquireLeaseAsync("run-1", "worker-a", TimeSpan.FromSeconds(30), default))!.Value;
+        WorkflowLease held = (await store.AcquireLeaseAsync(A("run-1"), "worker-a", TimeSpan.FromSeconds(30), default))!.Value;
 
         WorkflowLease? verified = await store.TryExtendLeaseAsync(held, TimeSpan.Zero, default);
 
@@ -216,7 +220,7 @@ public abstract class WorkflowStateStoreConformance
         // A zero extension must not keep the lease alive: an operation performed under a lease verifies it, and if that
         // silently renewed it, a crashed holder's run would never be reclaimed.
         clock.Advance(TimeSpan.FromSeconds(31));
-        (await store.AcquireLeaseAsync("run-1", "worker-b", TimeSpan.FromSeconds(30), default)).ShouldNotBeNull();
+        (await store.AcquireLeaseAsync(A("run-1"), "worker-b", TimeSpan.FromSeconds(30), default)).ShouldNotBeNull();
     }
 
     [TestMethod]
@@ -226,7 +230,7 @@ public abstract class WorkflowStateStoreConformance
         // one that had lapsed — on a run another runner may already have taken.
         var clock = new TestClock(T0);
         IWorkflowStateStore store = await this.NewStoreAsync(clock);
-        WorkflowLease held = (await store.AcquireLeaseAsync("run-1", "worker-a", TimeSpan.FromSeconds(30), default))!.Value;
+        WorkflowLease held = (await store.AcquireLeaseAsync(A("run-1"), "worker-a", TimeSpan.FromSeconds(30), default))!.Value;
 
         clock.Advance(TimeSpan.FromSeconds(31));
 
@@ -243,12 +247,12 @@ public abstract class WorkflowStateStoreConformance
         var clock = new TestClock(T0);
         IWorkflowStateStore store = await this.NewStoreAsync(clock);
 
-        WorkflowLease first = (await store.AcquireLeaseAsync("run-1", "worker-a", TimeSpan.FromMinutes(1), default))!.Value;
+        WorkflowLease first = (await store.AcquireLeaseAsync(A("run-1"), "worker-a", TimeSpan.FromMinutes(1), default))!.Value;
         await store.ReleaseLeaseAsync(first, default);
-        WorkflowLease second = (await store.AcquireLeaseAsync("run-1", "worker-b", TimeSpan.FromMinutes(1), default))!.Value;
+        WorkflowLease second = (await store.AcquireLeaseAsync(A("run-1"), "worker-b", TimeSpan.FromMinutes(1), default))!.Value;
 
         clock.Advance(TimeSpan.FromMinutes(2));
-        WorkflowLease third = (await store.AcquireLeaseAsync("run-1", "worker-c", TimeSpan.FromMinutes(1), default))!.Value;
+        WorkflowLease third = (await store.AcquireLeaseAsync(A("run-1"), "worker-c", TimeSpan.FromMinutes(1), default))!.Value;
 
         first.Epoch.ShouldBeGreaterThan(0);
         second.Epoch.ShouldBeGreaterThan(first.Epoch);
@@ -262,11 +266,11 @@ public abstract class WorkflowStateStoreConformance
         // one's first grant up, and a quiet one must not let a busy one's epoch be reused.
         IWorkflowStateStore store = await this.NewStoreAsync();
 
-        WorkflowLease busy = (await store.AcquireLeaseAsync("run-1", "worker-a", TimeSpan.FromMinutes(1), default))!.Value;
+        WorkflowLease busy = (await store.AcquireLeaseAsync(A("run-1"), "worker-a", TimeSpan.FromMinutes(1), default))!.Value;
         await store.ReleaseLeaseAsync(busy, default);
-        await store.AcquireLeaseAsync("run-1", "worker-a", TimeSpan.FromMinutes(1), default);
+        await store.AcquireLeaseAsync(A("run-1"), "worker-a", TimeSpan.FromMinutes(1), default);
 
-        WorkflowLease quiet = (await store.AcquireLeaseAsync("run-2", "worker-a", TimeSpan.FromMinutes(1), default))!.Value;
+        WorkflowLease quiet = (await store.AcquireLeaseAsync(A("run-2"), "worker-a", TimeSpan.FromMinutes(1), default))!.Value;
 
         quiet.Epoch.ShouldBe(1);
     }
@@ -277,7 +281,7 @@ public abstract class WorkflowStateStoreConformance
         // The presented lease is a claim and the returned one is the fact. A caller that rewrites its own copy of the
         // epoch must get the store's answer back, because that answer is what the epoch rules are then decided against.
         IWorkflowStateStore store = await this.NewStoreAsync();
-        WorkflowLease held = (await store.AcquireLeaseAsync("run-1", "worker-a", TimeSpan.FromMinutes(5), default))!.Value;
+        WorkflowLease held = (await store.AcquireLeaseAsync(A("run-1"), "worker-a", TimeSpan.FromMinutes(5), default))!.Value;
 
         WorkflowLease? verified = await store.TryExtendLeaseAsync(held with { Epoch = long.MaxValue }, TimeSpan.Zero, default);
         WorkflowLease? extended = await store.TryExtendLeaseAsync(held with { Epoch = 0 }, TimeSpan.FromMinutes(5), default);
@@ -298,10 +302,10 @@ public abstract class WorkflowStateStoreConformance
     {
         var clock = new TestClock(T0);
         IWorkflowStateStore store = await this.NewStoreAsync(clock);
-        WorkflowLease displaced = (await store.AcquireLeaseAsync("run-1", "worker-a", TimeSpan.FromSeconds(30), default))!.Value;
+        WorkflowLease displaced = (await store.AcquireLeaseAsync(A("run-1"), "worker-a", TimeSpan.FromSeconds(30), default))!.Value;
 
         clock.Advance(TimeSpan.FromSeconds(31));
-        (await store.AcquireLeaseAsync("run-1", "worker-b", TimeSpan.FromMinutes(5), default)).ShouldNotBeNull();
+        (await store.AcquireLeaseAsync(A("run-1"), "worker-b", TimeSpan.FromMinutes(5), default)).ShouldNotBeNull();
 
         // The displaced holder's token is no longer the current one, so its renewal fails rather than taking the run back
         // from the runner that legitimately reclaimed it.
@@ -312,7 +316,7 @@ public abstract class WorkflowStateStoreConformance
     public async Task A_lease_presented_under_another_owner_is_not_extended()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
-        WorkflowLease held = (await store.AcquireLeaseAsync("run-1", "worker-a", TimeSpan.FromMinutes(5), default))!.Value;
+        WorkflowLease held = (await store.AcquireLeaseAsync(A("run-1"), "worker-a", TimeSpan.FromMinutes(5), default))!.Value;
 
         // Lease ownership is the server's to decide, not the caller's to assert (ADR 0065 decision 2): presenting a valid
         // token under a different owner renews nothing.
@@ -323,7 +327,7 @@ public abstract class WorkflowStateStoreConformance
     public async Task Extending_a_lease_for_an_unleased_run_returns_null()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
-        (await store.TryExtendLeaseAsync(new WorkflowLease("never", "owner", "token", default), TimeSpan.FromMinutes(5), default)).ShouldBeNull();
+        (await store.TryExtendLeaseAsync(new WorkflowLease(A("never"), "owner", "token", default), TimeSpan.FromMinutes(5), default)).ShouldBeNull();
     }
 
     [TestMethod]
@@ -337,8 +341,8 @@ public abstract class WorkflowStateStoreConformance
             return;
         }
 
-        WorkflowLease held = (await store.AcquireLeaseAsync("run-1", "revoked-runner", TimeSpan.FromMinutes(5), default))!.Value;
-        await admin.ExpireLeasesForOwnerAsync("revoked-runner", default);
+        WorkflowLease held = (await store.AcquireLeaseAsync(A("run-1"), "revoked-runner", TimeSpan.FromMinutes(5), default))!.Value;
+        await admin.ExpireLeasesForOwnerAsync("revoked-runner", null, default);
 
         // The fence would be worth nothing if the fenced runner could renew its way back in.
         (await store.TryExtendLeaseAsync(held, TimeSpan.FromMinutes(5), default)).ShouldBeNull();
@@ -348,7 +352,7 @@ public abstract class WorkflowStateStoreConformance
     public async Task A_negative_extension_is_rejected()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
-        WorkflowLease held = (await store.AcquireLeaseAsync("run-1", "worker-a", TimeSpan.FromMinutes(5), default))!.Value;
+        WorkflowLease held = (await store.AcquireLeaseAsync(A("run-1"), "worker-a", TimeSpan.FromMinutes(5), default))!.Value;
 
         await Should.ThrowAsync<ArgumentOutOfRangeException>(
             async () => await store.TryExtendLeaseAsync(held, TimeSpan.FromSeconds(-1), default));
@@ -366,38 +370,38 @@ public abstract class WorkflowStateStoreConformance
         }
 
         // Two runs held by the runner about to be revoked, and one by a healthy peer — all under live (unexpired) leases.
-        await store.AcquireLeaseAsync("run-1", "revoked-runner", TimeSpan.FromMinutes(5), default);
-        await store.AcquireLeaseAsync("run-2", "revoked-runner", TimeSpan.FromMinutes(5), default);
-        await store.AcquireLeaseAsync("run-3", "healthy-runner", TimeSpan.FromMinutes(5), default);
+        await store.AcquireLeaseAsync(A("run-1"), "revoked-runner", TimeSpan.FromMinutes(5), default);
+        await store.AcquireLeaseAsync(A("run-2"), "revoked-runner", TimeSpan.FromMinutes(5), default);
+        await store.AcquireLeaseAsync(A("run-3"), "healthy-runner", TimeSpan.FromMinutes(5), default);
 
         // A peer cannot take run-1 while the revoked runner's lease is live.
-        (await store.AcquireLeaseAsync("run-1", "peer", TimeSpan.FromMinutes(5), default)).ShouldBeNull();
+        (await store.AcquireLeaseAsync(A("run-1"), "peer", TimeSpan.FromMinutes(5), default)).ShouldBeNull();
 
         // Fence the revoked runner: only its live leases are expired, and the count reports how many.
-        (await admin.ExpireLeasesForOwnerAsync("revoked-runner", default)).ShouldBe(2);
+        (await admin.ExpireLeasesForOwnerAsync("revoked-runner", null, default)).ShouldBe(2);
 
         // Its runs are re-acquirable by a peer now — at the same instant, without waiting for the TTL; the healthy peer's
         // own lease is untouched.
-        (await store.AcquireLeaseAsync("run-1", "peer", TimeSpan.FromMinutes(5), default)).ShouldNotBeNull();
-        (await store.AcquireLeaseAsync("run-2", "peer", TimeSpan.FromMinutes(5), default)).ShouldNotBeNull();
-        (await store.AcquireLeaseAsync("run-3", "peer", TimeSpan.FromMinutes(5), default)).ShouldBeNull();
+        (await store.AcquireLeaseAsync(A("run-1"), "peer", TimeSpan.FromMinutes(5), default)).ShouldNotBeNull();
+        (await store.AcquireLeaseAsync(A("run-2"), "peer", TimeSpan.FromMinutes(5), default)).ShouldNotBeNull();
+        (await store.AcquireLeaseAsync(A("run-3"), "peer", TimeSpan.FromMinutes(5), default)).ShouldBeNull();
 
         // Idempotent — an owner holding no live leases expires none.
-        (await admin.ExpireLeasesForOwnerAsync("nobody", default)).ShouldBe(0);
+        (await admin.ExpireLeasesForOwnerAsync("nobody", null, default)).ShouldBe(0);
     }
 
     [TestMethod]
     public async Task QueryDue_returns_only_suspended_runs_whose_timer_is_due()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
-        await store.SaveAsync("soon", Bytes("a"), Suspended(dueAt: T0 + TimeSpan.FromMinutes(1)), WorkflowEtag.None, default);
-        await store.SaveAsync("later", Bytes("a"), Suspended(dueAt: T0 + TimeSpan.FromHours(1)), WorkflowEtag.None, default);
-        await store.SaveAsync("running", Bytes("a"), Index(), WorkflowEtag.None, default);
+        await store.SaveAsync(A("soon"), Bytes("a"), Suspended(dueAt: T0 + TimeSpan.FromMinutes(1)), WorkflowEtag.None, default);
+        await store.SaveAsync(A("later"), Bytes("a"), Suspended(dueAt: T0 + TimeSpan.FromHours(1)), WorkflowEtag.None, default);
+        await store.SaveAsync(A("running"), Bytes("a"), Index(), WorkflowEtag.None, default);
 
-        List<WorkflowRunId> due = await Collect(((IWorkflowWaitIndex)store).QueryDueAsync(T0 + TimeSpan.FromMinutes(5), default));
+        List<WorkflowRunAddress> due = await Collect(((IWorkflowWaitIndex)store).QueryDueAsync(T0 + TimeSpan.FromMinutes(5), default));
 
         due.ShouldHaveSingleItem();
-        due[0].ShouldBe(new WorkflowRunId("soon"));
+        due[0].ShouldBe(A("soon"));
     }
 
     [TestMethod]
@@ -406,42 +410,44 @@ public abstract class WorkflowStateStoreConformance
         IWorkflowStateStore store = await this.NewStoreAsync();
         var index = (IWorkflowWaitIndex)store;
 
-        // Three suspended runs whose timers are all due, pinned to production, staging, and nothing (an unpinned legacy run).
-        await store.SaveAsync("prod", Bytes("a"), Suspended(dueAt: T0 + TimeSpan.FromMinutes(1), environment: "production"), WorkflowEtag.None, default);
-        await store.SaveAsync("staging", Bytes("a"), Suspended(dueAt: T0 + TimeSpan.FromMinutes(1), environment: "staging"), WorkflowEtag.None, default);
-        await store.SaveAsync("legacy", Bytes("a"), Suspended(dueAt: T0 + TimeSpan.FromMinutes(1)), WorkflowEtag.None, default); // unpinned (null environment)
+        // Three suspended runs whose timers are all due, pinned to production, staging, and sandbox: the environment
+        // is half the run's address (ADR 0065 decision 9), so an unpinned run no longer exists to test.
+        await store.SaveAsync(A("prod", "production"), Bytes("a"), Suspended(dueAt: T0 + TimeSpan.FromMinutes(1)), WorkflowEtag.None, default);
+        await store.SaveAsync(A("staging", "staging"), Bytes("a"), Suspended(dueAt: T0 + TimeSpan.FromMinutes(1)), WorkflowEtag.None, default);
+        await store.SaveAsync(A("legacy", "sandbox"), Bytes("a"), Suspended(dueAt: T0 + TimeSpan.FromMinutes(1)), WorkflowEtag.None, default);
 
         DateTimeOffset cutoff = T0 + TimeSpan.FromMinutes(5);
 
-        // §5.5: a runner serving production resumes ONLY the production-pinned due run — never the staging run, and never the
-        // unpinned legacy run. The timer-resume path is environment-scoped exactly as dispatch is, so a due run never
-        // crosses the credential boundary (mirrors QueryClaimable_constrains_runs_to_the_runners_environment). This is the
+        // §5.5: a runner serving production resumes ONLY the production-pinned due run — never the staging or sandbox
+        // runs. The timer-resume path is environment-scoped exactly as dispatch is, so a due run never crosses the
+        // credential boundary (mirrors QueryClaimable_constrains_runs_to_the_runners_environment). This is the
         // regression guard for the defect where the demo's system runner resumed a development-pinned $schedule run.
-        List<string> production = (await Collect(index.QueryDueAsync(cutoff, "production", default))).Select(r => r.Value).ToList();
-        production.ShouldBe(["prod"]);
+        // The answered ADDRESS carries the environment (ADR 0065 decision 9), asserted whole.
+        List<WorkflowRunAddress> production = await Collect(index.QueryDueAsync(cutoff, "production", default));
+        production.ShouldBe([A("prod", "production")]);
 
         // A runner serving staging resumes only the staging run (confirming each environment round-trips through the index).
-        List<string> staging = (await Collect(index.QueryDueAsync(cutoff, "staging", default))).Select(r => r.Value).ToList();
-        staging.ShouldBe(["staging"]);
+        List<WorkflowRunAddress> staging = await Collect(index.QueryDueAsync(cutoff, "staging", default));
+        staging.ShouldBe([A("staging", "staging")]);
 
-        // The env-agnostic base overload (null runnerEnvironment) is an in-process host, not a runner: it resumes EVERY due
-        // run regardless of environment — the pinned runs and the unpinned legacy one alike.
-        List<string> agnostic = (await Collect(index.QueryDueAsync(cutoff, null, default))).Select(r => r.Value).ToList();
-        agnostic.ShouldContain("prod");
-        agnostic.ShouldContain("staging");
-        agnostic.ShouldContain("legacy");
+        // The env-agnostic base overload (null runnerEnvironment) is an in-process host, not a runner: it resumes EVERY
+        // due run regardless of environment.
+        List<WorkflowRunAddress> agnostic = await Collect(index.QueryDueAsync(cutoff, null, default));
+        agnostic.ShouldContain(A("prod", "production"));
+        agnostic.ShouldContain(A("staging", "staging"));
+        agnostic.ShouldContain(A("legacy", "sandbox"));
     }
 
     [TestMethod]
     public async Task QueryAwaiting_matches_channel_and_correlation()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
-        await store.SaveAsync("orderA", Bytes("a"), Suspended(channel: "responses", correlationId: "order-A"), WorkflowEtag.None, default);
-        await store.SaveAsync("orderB", Bytes("a"), Suspended(channel: "responses", correlationId: "order-B"), WorkflowEtag.None, default);
-        await store.SaveAsync("other", Bytes("a"), Suspended(channel: "notifications", correlationId: "order-A"), WorkflowEtag.None, default);
+        await store.SaveAsync(A("orderA"), Bytes("a"), Suspended(channel: "responses", correlationId: "order-A"), WorkflowEtag.None, default);
+        await store.SaveAsync(A("orderB"), Bytes("a"), Suspended(channel: "responses", correlationId: "order-B"), WorkflowEtag.None, default);
+        await store.SaveAsync(A("other"), Bytes("a"), Suspended(channel: "notifications", correlationId: "order-A"), WorkflowEtag.None, default);
 
         var index = (IWorkflowWaitIndex)store;
-        (await Collect(index.QueryAwaitingAsync("responses", "order-A", default))).ShouldHaveSingleItem().ShouldBe(new WorkflowRunId("orderA"));
+        (await Collect(index.QueryAwaitingAsync("responses", "order-A", default))).ShouldHaveSingleItem().ShouldBe(A("orderA"));
         (await Collect(index.QueryAwaitingAsync("responses", null, default))).Count.ShouldBe(2);
         (await Collect(index.QueryAwaitingAsync("responses", "order-Z", default))).ShouldBeEmpty();
     }
@@ -450,10 +456,10 @@ public abstract class WorkflowStateStoreConformance
     public async Task QueryAwaiting_matches_a_run_awaiting_a_channel_with_no_correlation()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
-        await store.SaveAsync("any", Bytes("a"), Suspended(channel: "events", correlationId: null), WorkflowEtag.None, default);
+        await store.SaveAsync(A("any"), Bytes("a"), Suspended(channel: "events", correlationId: null), WorkflowEtag.None, default);
 
-        List<WorkflowRunId> matched = await Collect(((IWorkflowWaitIndex)store).QueryAwaitingAsync("events", "incoming-99", default));
-        matched.ShouldHaveSingleItem().ShouldBe(new WorkflowRunId("any"));
+        List<WorkflowRunAddress> matched = await Collect(((IWorkflowWaitIndex)store).QueryAwaitingAsync("events", "incoming-99", default));
+        matched.ShouldHaveSingleItem().ShouldBe(A("any"));
     }
 
     [TestMethod]
@@ -462,25 +468,26 @@ public abstract class WorkflowStateStoreConformance
         IWorkflowStateStore store = await this.NewStoreAsync();
         var index = (IWorkflowWaitIndex)store;
 
-        // Three suspended runs awaiting the SAME channel + correlation, pinned to production, staging, and nothing.
-        await store.SaveAsync("prod", Bytes("a"), Suspended(channel: "responses", correlationId: "order-1", environment: "production"), WorkflowEtag.None, default);
-        await store.SaveAsync("staging", Bytes("a"), Suspended(channel: "responses", correlationId: "order-1", environment: "staging"), WorkflowEtag.None, default);
-        await store.SaveAsync("legacy", Bytes("a"), Suspended(channel: "responses", correlationId: "order-1"), WorkflowEtag.None, default); // unpinned (null environment)
+        // Three suspended runs awaiting the SAME channel + correlation, pinned to production, staging, and sandbox
+        // (the environment is half the address, so no run is unpinned).
+        await store.SaveAsync(A("prod", "production"), Bytes("a"), Suspended(channel: "responses", correlationId: "order-1"), WorkflowEtag.None, default);
+        await store.SaveAsync(A("staging", "staging"), Bytes("a"), Suspended(channel: "responses", correlationId: "order-1"), WorkflowEtag.None, default);
+        await store.SaveAsync(A("legacy", "sandbox"), Bytes("a"), Suspended(channel: "responses", correlationId: "order-1"), WorkflowEtag.None, default);
 
         // §5.5: a consumer serving production delivers ONLY to the production-pinned awaiting run, even though all three
         // await the same channel and correlation. Message delivery is environment-scoped exactly as timer-resume and
         // dispatch are, so a run never crosses the credential boundary on a channel-name collision across environments.
-        List<string> production = (await Collect(index.QueryAwaitingAsync("responses", "order-1", "production", default))).Select(r => r.Value).ToList();
-        production.ShouldBe(["prod"]);
+        List<WorkflowRunAddress> production = await Collect(index.QueryAwaitingAsync("responses", "order-1", "production", default));
+        production.ShouldBe([A("prod", "production")]);
 
-        List<string> staging = (await Collect(index.QueryAwaitingAsync("responses", "order-1", "staging", default))).Select(r => r.Value).ToList();
-        staging.ShouldBe(["staging"]);
+        List<WorkflowRunAddress> staging = await Collect(index.QueryAwaitingAsync("responses", "order-1", "staging", default));
+        staging.ShouldBe([A("staging", "staging")]);
 
         // The env-agnostic base overload (null runnerEnvironment) delivers to every awaiting run regardless of environment.
-        List<string> agnostic = (await Collect(index.QueryAwaitingAsync("responses", "order-1", null, default))).Select(r => r.Value).ToList();
-        agnostic.ShouldContain("prod");
-        agnostic.ShouldContain("staging");
-        agnostic.ShouldContain("legacy");
+        List<WorkflowRunAddress> agnostic = await Collect(index.QueryAwaitingAsync("responses", "order-1", null, default));
+        agnostic.ShouldContain(A("prod", "production"));
+        agnostic.ShouldContain(A("staging", "staging"));
+        agnostic.ShouldContain(A("legacy", "sandbox"));
     }
 
     [TestMethod]
@@ -490,16 +497,16 @@ public abstract class WorkflowStateStoreConformance
         IWorkflowStateStore store = await this.NewStoreAsync(clock);
         var index = (IWorkflowDispatchIndex)store;
 
-        await store.SaveAsync("pending", Bytes("a"), Index(WorkflowRunStatus.Pending), WorkflowEtag.None, default);
-        await store.SaveAsync("orphan", Bytes("a"), Index(WorkflowRunStatus.Running), WorkflowEtag.None, default);
-        await store.SaveAsync("held", Bytes("a"), Index(WorkflowRunStatus.Running), WorkflowEtag.None, default);
-        await store.AcquireLeaseAsync("held", "other-runner", TimeSpan.FromMinutes(5), default);
-        await store.SaveAsync("done", Bytes("a"), Index(WorkflowRunStatus.Completed), WorkflowEtag.None, default);
-        await store.SaveAsync("unhosted", Bytes("a"), new WorkflowRunIndexEntry("other-wf", WorkflowRunStatus.Pending, T0, T0), WorkflowEtag.None, default);
+        await store.SaveAsync(A("pending"), Bytes("a"), Index(WorkflowRunStatus.Pending), WorkflowEtag.None, default);
+        await store.SaveAsync(A("orphan"), Bytes("a"), Index(WorkflowRunStatus.Running), WorkflowEtag.None, default);
+        await store.SaveAsync(A("held"), Bytes("a"), Index(WorkflowRunStatus.Running), WorkflowEtag.None, default);
+        await store.AcquireLeaseAsync(A("held"), "other-runner", TimeSpan.FromMinutes(5), default);
+        await store.SaveAsync(A("done"), Bytes("a"), Index(WorkflowRunStatus.Completed), WorkflowEtag.None, default);
+        await store.SaveAsync(A("unhosted"), Bytes("a"), new WorkflowRunIndexEntry("other-wf", WorkflowRunStatus.Pending, T0, T0), WorkflowEtag.None, default);
 
         // At T0 the held lease (expires at T0+5m) is still live, so that run is not claimable; the fresh
         // Pending run and the unleased Running orphan are. The completed and unhosted runs never are.
-        List<string> claimable = (await Collect(index.QueryClaimableAsync(["wf"], T0, default))).Select(r => r.Value).ToList();
+        List<string> claimable = (await Collect(index.QueryClaimableAsync(["wf"], T0, default))).Select(a => a.RunId.Value).ToList();
         claimable.ShouldContain("pending");
         claimable.ShouldContain("orphan");
         claimable.ShouldNotContain("held");
@@ -507,7 +514,7 @@ public abstract class WorkflowStateStoreConformance
         claimable.ShouldNotContain("unhosted");
 
         // Once the lease has expired, the previously-held Running run becomes a claimable orphan.
-        List<string> afterExpiry = (await Collect(index.QueryClaimableAsync(["wf"], T0 + TimeSpan.FromMinutes(6), default))).Select(r => r.Value).ToList();
+        List<string> afterExpiry = (await Collect(index.QueryClaimableAsync(["wf"], T0 + TimeSpan.FromMinutes(6), default))).Select(a => a.RunId.Value).ToList();
         afterExpiry.ShouldContain("held");
     }
 
@@ -518,25 +525,26 @@ public abstract class WorkflowStateStoreConformance
         IWorkflowStateStore store = await this.NewStoreAsync(clock);
         var index = (IWorkflowDispatchIndex)store;
 
-        await store.SaveAsync("prod", Bytes("a"), InEnvironment("production"), WorkflowEtag.None, default);
-        await store.SaveAsync("staging", Bytes("a"), InEnvironment("staging"), WorkflowEtag.None, default);
-        await store.SaveAsync("legacy", Bytes("a"), Index(WorkflowRunStatus.Pending), WorkflowEtag.None, default); // unpinned (null environment)
+        await store.SaveAsync(A("prod", "production"), Bytes("a"), Index(WorkflowRunStatus.Pending), WorkflowEtag.None, default);
+        await store.SaveAsync(A("staging", "staging"), Bytes("a"), Index(WorkflowRunStatus.Pending), WorkflowEtag.None, default);
+        await store.SaveAsync(A("legacy", "sandbox"), Bytes("a"), Index(WorkflowRunStatus.Pending), WorkflowEtag.None, default);
 
-        // §5.5: a runner serving production claims ONLY the production-pinned run — never the staging run, and never the
-        // unpinned legacy run. A real runner never claims a run outside its exact environment (the credential boundary).
-        List<string> production = (await Collect(index.QueryClaimableAsync(["wf"], "production", T0, default))).Select(r => r.Value).ToList();
-        production.ShouldBe(["prod"]);
+        // §5.5: a runner serving production claims ONLY the production-pinned run — never the staging or sandbox
+        // runs. A real runner never claims a run outside its exact environment (the credential boundary). The
+        // answered ADDRESS carries the environment (ADR 0065 decision 9), asserted whole.
+        List<WorkflowRunAddress> production = await Collect(index.QueryClaimableAsync(["wf"], "production", T0, default));
+        production.ShouldBe([A("prod", "production")]);
 
         // A runner serving staging claims only the staging run (confirming each environment round-trips through the index).
-        List<string> staging = (await Collect(index.QueryClaimableAsync(["wf"], "staging", T0, default))).Select(r => r.Value).ToList();
-        staging.ShouldBe(["staging"]);
+        List<WorkflowRunAddress> staging = await Collect(index.QueryClaimableAsync(["wf"], "staging", T0, default));
+        staging.ShouldBe([A("staging", "staging")]);
 
-        // The env-agnostic base overload (null runnerEnvironment) is not a runner: it lists ALL claimable runs regardless
-        // of environment — the pinned runs and the unpinned legacy one alike.
-        List<string> agnostic = (await Collect(index.QueryClaimableAsync(["wf"], null, T0, default))).Select(r => r.Value).ToList();
-        agnostic.ShouldContain("prod");
-        agnostic.ShouldContain("staging");
-        agnostic.ShouldContain("legacy");
+        // The env-agnostic base overload (null runnerEnvironment) is not a runner: it lists ALL claimable runs
+        // regardless of environment.
+        List<WorkflowRunAddress> agnostic = await Collect(index.QueryClaimableAsync(["wf"], null, T0, default));
+        agnostic.ShouldContain(A("prod", "production"));
+        agnostic.ShouldContain(A("staging", "staging"));
+        agnostic.ShouldContain(A("legacy", "sandbox"));
     }
 
     [TestMethod]
@@ -548,11 +556,11 @@ public abstract class WorkflowStateStoreConformance
 
         // §18: a draft run is an ordinary Pending run carrying the reserved $draft workflow id, pinned to its
         // environment; it rides the same dispatch filter as a versioned run.
-        await store.SaveAsync("draft-dev", Bytes("a"), new WorkflowRunIndexEntry(DraftRuns.RunWorkflowId, WorkflowRunStatus.Pending, T0, T0, Environment: "development"), WorkflowEtag.None, default);
-        await store.SaveAsync("catalog-dev", Bytes("a"), InEnvironment("development"), WorkflowEtag.None, default);
+        await store.SaveAsync(A("draft-dev"), Bytes("a"), new WorkflowRunIndexEntry(DraftRuns.RunWorkflowId, WorkflowRunStatus.Pending, T0, T0), WorkflowEtag.None, default);
+        await store.SaveAsync(A("catalog-dev"), Bytes("a"), Index(WorkflowRunStatus.Pending), WorkflowEtag.None, default);
 
         // A draft-hosting runner (it passes $draft among its hosted ids) pinned to the run's environment claims it.
-        List<string> draftHosting = (await Collect(index.QueryClaimableAsync([DraftRuns.RunWorkflowId], "development", T0, default))).Select(r => r.Value).ToList();
+        List<string> draftHosting = (await Collect(index.QueryClaimableAsync([DraftRuns.RunWorkflowId], "development", T0, default))).Select(a => a.RunId.Value).ToList();
         draftHosting.ShouldContain("draft-dev");
         draftHosting.ShouldNotContain("catalog-dev");
 
@@ -560,15 +568,15 @@ public abstract class WorkflowStateStoreConformance
         (await Collect(index.QueryClaimableAsync([DraftRuns.RunWorkflowId], "production", T0, default))).ShouldBeEmpty();
 
         // A runner that does not declare draft hosting never claims it, whatever its environment.
-        (await Collect(index.QueryClaimableAsync(["wf"], "development", T0, default))).Select(r => r.Value).ShouldBe(["catalog-dev"]);
+        (await Collect(index.QueryClaimableAsync(["wf"], "development", T0, default))).Select(a => a.RunId.Value).ShouldBe(["catalog-dev"]);
     }
 
     [TestMethod]
     public async Task Query_excludes_draft_runs_unless_the_reserved_id_is_asked_for()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
-        await store.SaveAsync("draft-1", Bytes("a"), new WorkflowRunIndexEntry(DraftRuns.RunWorkflowId, WorkflowRunStatus.Pending, T0, T0, Environment: "development"), WorkflowEtag.None, default);
-        await store.SaveAsync("run-1", Bytes("a"), Index(WorkflowRunStatus.Pending), WorkflowEtag.None, default);
+        await store.SaveAsync(A("draft-1"), Bytes("a"), new WorkflowRunIndexEntry(DraftRuns.RunWorkflowId, WorkflowRunStatus.Pending, T0, T0), WorkflowEtag.None, default);
+        await store.SaveAsync(A("run-1"), Bytes("a"), Index(WorkflowRunStatus.Pending), WorkflowEtag.None, default);
 
         var index = (IWorkflowWaitIndex)store;
 
@@ -589,8 +597,8 @@ public abstract class WorkflowStateStoreConformance
     public async Task Query_and_count_exclude_schedule_runs_unless_the_reserved_id_is_asked_for()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
-        await store.SaveAsync("schedule-1", Bytes("a"), new WorkflowRunIndexEntry(ScheduleHostedWorkflow.ScheduleWorkflowId, WorkflowRunStatus.Suspended, T0, T0, Environment: "development"), WorkflowEtag.None, default);
-        await store.SaveAsync("run-1", Bytes("a"), Index(WorkflowRunStatus.Pending), WorkflowEtag.None, default);
+        await store.SaveAsync(A("schedule-1"), Bytes("a"), new WorkflowRunIndexEntry(ScheduleHostedWorkflow.ScheduleWorkflowId, WorkflowRunStatus.Suspended, T0, T0), WorkflowEtag.None, default);
+        await store.SaveAsync(A("run-1"), Bytes("a"), Index(WorkflowRunStatus.Pending), WorkflowEtag.None, default);
 
         var index = (IWorkflowWaitIndex)store;
 
@@ -611,9 +619,9 @@ public abstract class WorkflowStateStoreConformance
     public async Task Query_filters_to_the_named_run_alone()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
-        await store.SaveAsync("run-1", Bytes("a"), Index(WorkflowRunStatus.Pending), WorkflowEtag.None, default);
-        await store.SaveAsync("run-2", Bytes("a"), Index(WorkflowRunStatus.Running), WorkflowEtag.None, default);
-        await store.SaveAsync("run-3", Bytes("a"), Index(WorkflowRunStatus.Running), WorkflowEtag.None, default);
+        await store.SaveAsync(A("run-1"), Bytes("a"), Index(WorkflowRunStatus.Pending), WorkflowEtag.None, default);
+        await store.SaveAsync(A("run-2"), Bytes("a"), Index(WorkflowRunStatus.Running), WorkflowEtag.None, default);
+        await store.SaveAsync(A("run-3"), Bytes("a"), Index(WorkflowRunStatus.Running), WorkflowEtag.None, default);
 
         var index = (IWorkflowWaitIndex)store;
 
@@ -636,8 +644,8 @@ public abstract class WorkflowStateStoreConformance
     public async Task A_run_named_by_id_is_listed_even_when_it_is_a_reserved_kind()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
-        await store.SaveAsync("draft-1", Bytes("a"), new WorkflowRunIndexEntry(DraftRuns.RunWorkflowId, WorkflowRunStatus.Pending, T0, T0, Environment: "development"), WorkflowEtag.None, default);
-        await store.SaveAsync("schedule-1", Bytes("a"), new WorkflowRunIndexEntry(ScheduleHostedWorkflow.ScheduleWorkflowId, WorkflowRunStatus.Suspended, T0, T0, Environment: "development"), WorkflowEtag.None, default);
+        await store.SaveAsync(A("draft-1"), Bytes("a"), new WorkflowRunIndexEntry(DraftRuns.RunWorkflowId, WorkflowRunStatus.Pending, T0, T0), WorkflowEtag.None, default);
+        await store.SaveAsync(A("schedule-1"), Bytes("a"), new WorkflowRunIndexEntry(ScheduleHostedWorkflow.ScheduleWorkflowId, WorkflowRunStatus.Suspended, T0, T0), WorkflowEtag.None, default);
 
         var index = (IWorkflowWaitIndex)store;
 
@@ -654,8 +662,8 @@ public abstract class WorkflowStateStoreConformance
     public async Task A_run_named_by_id_stays_invisible_outside_the_reach_filter()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
-        await store.SaveAsync("run-1", Bytes("a"), Secured([new("tenant", "acme")]), WorkflowEtag.None, default);
-        await store.SaveAsync("run-2", Bytes("a"), Secured([new("tenant", "acme")]), WorkflowEtag.None, default);
+        await store.SaveAsync(A("run-1"), Bytes("a"), Secured([new("tenant", "acme")]), WorkflowEtag.None, default);
+        await store.SaveAsync(A("run-2"), Bytes("a"), Secured([new("tenant", "acme")]), WorkflowEtag.None, default);
 
         var index = (IWorkflowWaitIndex)store;
         var claims = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
@@ -670,11 +678,124 @@ public abstract class WorkflowStateStoreConformance
     }
 
     [TestMethod]
+    public async Task Two_environments_hold_the_same_run_id_as_two_distinct_runs()
+    {
+        IWorkflowStateStore store = await this.NewStoreAsync();
+
+        // ADR 0065 decision 9: the primary key is (environment, runId). The same id saved in two environments is two
+        // runs — the second create does NOT collide (keyed by run id alone it would, making a caller-chosen id a
+        // cross-tenant handle and either collision branch an existence oracle over another tenant's runs).
+        WorkflowEtag dev = await store.SaveAsync(A("shared-id", "development"), Bytes("""{"env":"dev"}"""), Index(WorkflowRunStatus.Pending), WorkflowEtag.None, default);
+        WorkflowEtag prod = await store.SaveAsync(A("shared-id", "production"), Bytes("""{"env":"prod"}"""), Index(WorkflowRunStatus.Running), WorkflowEtag.None, default);
+
+        dev.IsNone.ShouldBeFalse();
+        prod.IsNone.ShouldBeFalse();
+
+        // Each address answers its own bytes.
+        WorkflowCheckpoint? devLoaded = await store.LoadAsync(A("shared-id", "development"), default);
+        Encoding.UTF8.GetString(devLoaded!.Value.Utf8.Span).ShouldBe("""{"env":"dev"}""");
+        WorkflowCheckpoint? prodLoaded = await store.LoadAsync(A("shared-id", "production"), default);
+        Encoding.UTF8.GetString(prodLoaded!.Value.Utf8.Span).ShouldBe("""{"env":"prod"}""");
+
+        // Deleting one address leaves the other untouched.
+        await store.DeleteAsync(A("shared-id", "development"), default);
+        (await store.LoadAsync(A("shared-id", "development"), default)).ShouldBeNull();
+        (await store.LoadAsync(A("shared-id", "production"), default)).ShouldNotBeNull();
+    }
+
+    [TestMethod]
+    public async Task A_lease_is_scoped_to_the_runs_environment()
+    {
+        IWorkflowStateStore store = await this.NewStoreAsync();
+
+        // ADR 0065 decision 9: a lease is held on the run at its address. The same run id in another environment is a
+        // different run, so a second worker takes its lease freely — a run-id-keyed lease table would refuse it.
+        WorkflowLease? dev = await store.AcquireLeaseAsync(A("shared-id", "development"), "worker-a", TimeSpan.FromMinutes(5), default);
+        WorkflowLease? prod = await store.AcquireLeaseAsync(A("shared-id", "production"), "worker-b", TimeSpan.FromMinutes(5), default);
+
+        dev.ShouldNotBeNull();
+        prod.ShouldNotBeNull();
+        dev.Value.Address.ShouldBe(A("shared-id", "development"));
+        prod.Value.Address.ShouldBe(A("shared-id", "production"));
+
+        // Releasing one environment's lease frees only that run; the other environment's holder is undisturbed.
+        await store.ReleaseLeaseAsync(dev.Value, default);
+        (await store.AcquireLeaseAsync(A("shared-id", "development"), "worker-c", TimeSpan.FromMinutes(5), default)).ShouldNotBeNull();
+        (await store.AcquireLeaseAsync(A("shared-id", "production"), "worker-c", TimeSpan.FromMinutes(5), default)).ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task Expiring_an_owners_leases_is_scoped_to_the_environment()
+    {
+        IWorkflowStateStore store = await this.NewStoreAsync();
+        if (store is not IWorkflowLeaseAdministration admin)
+        {
+            Assert.Inconclusive("This store does not implement IWorkflowLeaseAdministration (the §5.5 revocation fence).");
+            return;
+        }
+
+        // Runs exist so a backend resolving the environment through the run row can (the fence reads the run's home).
+        await store.SaveAsync(A("run-dev", "development"), Bytes("a"), Index(WorkflowRunStatus.Running), WorkflowEtag.None, default);
+        await store.SaveAsync(A("run-prod", "production"), Bytes("a"), Index(WorkflowRunStatus.Running), WorkflowEtag.None, default);
+        await store.AcquireLeaseAsync(A("run-dev", "development"), "revoked-runner", TimeSpan.FromMinutes(5), default);
+        await store.AcquireLeaseAsync(A("run-prod", "production"), "revoked-runner", TimeSpan.FromMinutes(5), default);
+
+        // ADR 0065 decision 9: revocation withdraws an environment. Fencing the owner in development expires the
+        // development lease ONLY — the production run stays held, because the runner may still be authorized there.
+        (await admin.ExpireLeasesForOwnerAsync("revoked-runner", "development", default)).ShouldBe(1);
+        (await store.AcquireLeaseAsync(A("run-dev", "development"), "peer", TimeSpan.FromMinutes(5), default)).ShouldNotBeNull();
+        (await store.AcquireLeaseAsync(A("run-prod", "production"), "peer", TimeSpan.FromMinutes(5), default)).ShouldBeNull();
+
+        // The null-environment form fences the owner everywhere (a fully revoked or compromised runner).
+        (await admin.ExpireLeasesForOwnerAsync("revoked-runner", null, default)).ShouldBe(1);
+        (await store.AcquireLeaseAsync(A("run-prod", "production"), "peer", TimeSpan.FromMinutes(5), default)).ShouldNotBeNull();
+    }
+
+    [TestMethod]
+    public async Task Query_pages_across_environments_in_address_order()
+    {
+        IWorkflowStateStore store = await this.NewStoreAsync();
+
+        // The same ids in two environments: the visibility listing pages by ascending ADDRESS — environment first,
+        // then run id (ADR 0065 decision 9) — so every row is returned exactly once across pages.
+        foreach (string environment in new[] { "development", "production" })
+        {
+            foreach (string id in new[] { "run-01", "run-02", "run-03" })
+            {
+                await store.SaveAsync(A(id, environment), Bytes("x"), Index(), WorkflowEtag.None, default);
+            }
+        }
+
+        var index = (IWorkflowWaitIndex)store;
+        var collected = new List<WorkflowRunAddress>();
+        byte[]? token = null;
+        int pages = 0;
+        do
+        {
+            using ParsedJsonDocument<JsonString>? tokenDoc = token is null ? null : AsPageToken(token);
+            using WorkflowRunPage page = await index.QueryAsync(new WorkflowQuery(Limit: 2, ContinuationToken: tokenDoc?.RootElement ?? default), default);
+            foreach (WorkflowRunListing listing in page.Runs)
+            {
+                collected.Add(listing.Address);
+            }
+
+            token = page.NextPageToken.IsEmpty ? null : page.NextPageToken.ToArray();
+            (++pages).ShouldBeLessThanOrEqualTo(10); // guard against a non-terminating cursor
+        }
+        while (token is not null);
+
+        collected.ShouldBe([
+            A("run-01", "development"), A("run-02", "development"), A("run-03", "development"),
+            A("run-01", "production"), A("run-02", "production"), A("run-03", "production")
+        ]);
+    }
+
+    [TestMethod]
     public async Task Query_filters_by_status_and_workflow()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
-        await store.SaveAsync("s1", Bytes("a"), Suspended(dueAt: T0 + TimeSpan.FromMinutes(1)), WorkflowEtag.None, default);
-        await store.SaveAsync("r1", Bytes("a"), Index(), WorkflowEtag.None, default);
+        await store.SaveAsync(A("s1"), Bytes("a"), Suspended(dueAt: T0 + TimeSpan.FromMinutes(1)), WorkflowEtag.None, default);
+        await store.SaveAsync(A("r1"), Bytes("a"), Index(), WorkflowEtag.None, default);
 
         var index = (IWorkflowWaitIndex)store;
         WorkflowRunPage suspended = await index.QueryAsync(new WorkflowQuery(Status: WorkflowRunStatus.Suspended), default);
@@ -695,9 +816,9 @@ public abstract class WorkflowStateStoreConformance
         IWorkflowStateStore store = await this.NewStoreAsync();
 
         // Three runs created an hour apart; each updated one minute after it was created.
-        await store.SaveAsync("c0", Bytes("x"), At(T0, T0 + TimeSpan.FromMinutes(1)), WorkflowEtag.None, default);
-        await store.SaveAsync("c1", Bytes("x"), At(T0 + TimeSpan.FromHours(1), T0 + TimeSpan.FromHours(1) + TimeSpan.FromMinutes(1)), WorkflowEtag.None, default);
-        await store.SaveAsync("c2", Bytes("x"), At(T0 + TimeSpan.FromHours(2), T0 + TimeSpan.FromHours(2) + TimeSpan.FromMinutes(1)), WorkflowEtag.None, default);
+        await store.SaveAsync(A("c0"), Bytes("x"), At(T0, T0 + TimeSpan.FromMinutes(1)), WorkflowEtag.None, default);
+        await store.SaveAsync(A("c1"), Bytes("x"), At(T0 + TimeSpan.FromHours(1), T0 + TimeSpan.FromHours(1) + TimeSpan.FromMinutes(1)), WorkflowEtag.None, default);
+        await store.SaveAsync(A("c2"), Bytes("x"), At(T0 + TimeSpan.FromHours(2), T0 + TimeSpan.FromHours(2) + TimeSpan.FromMinutes(1)), WorkflowEtag.None, default);
 
         var index = (IWorkflowWaitIndex)store;
 
@@ -724,13 +845,13 @@ public abstract class WorkflowStateStoreConformance
     public async Task Query_filters_by_tags_and_correlation_id()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();
-        await store.SaveAsync("r-a", Bytes("x"), Tagged("trace-1", "tenant-42", "priority"), WorkflowEtag.None, default);
-        await store.SaveAsync("r-b", Bytes("x"), Tagged("trace-2", "tenant-42"), WorkflowEtag.None, default);
-        await store.SaveAsync("r-c", Bytes("x"), Tagged(null), WorkflowEtag.None, default);
+        await store.SaveAsync(A("r-a"), Bytes("x"), Tagged("trace-1", "tenant-42", "priority"), WorkflowEtag.None, default);
+        await store.SaveAsync(A("r-b"), Bytes("x"), Tagged("trace-2", "tenant-42"), WorkflowEtag.None, default);
+        await store.SaveAsync(A("r-c"), Bytes("x"), Tagged(null), WorkflowEtag.None, default);
 
         // A LIKE-metacharacter tag must match literally, not as a wildcard (guards the SQL stores' escaping).
-        await store.SaveAsync("r-d", Bytes("x"), Tagged(null, "a_b"), WorkflowEtag.None, default);
-        await store.SaveAsync("r-e", Bytes("x"), Tagged(null, "axb"), WorkflowEtag.None, default);
+        await store.SaveAsync(A("r-d"), Bytes("x"), Tagged(null, "a_b"), WorkflowEtag.None, default);
+        await store.SaveAsync(A("r-e"), Bytes("x"), Tagged(null, "axb"), WorkflowEtag.None, default);
 
         var index = (IWorkflowWaitIndex)store;
 
@@ -766,7 +887,7 @@ public abstract class WorkflowStateStoreConformance
         string[] ids = ["run-01", "run-02", "run-03", "run-04", "run-05"];
         foreach (string id in ids)
         {
-            await store.SaveAsync(id, Bytes("x"), Index(), WorkflowEtag.None, default);
+            await store.SaveAsync(A(id), Bytes("x"), Index(), WorkflowEtag.None, default);
         }
 
         var index = (IWorkflowWaitIndex)store;
@@ -817,7 +938,7 @@ public abstract class WorkflowStateStoreConformance
         ];
         foreach ((string id, SecurityTag[] tags) in rows)
         {
-            await store.SaveAsync(id, Bytes("x"), Secured(tags), WorkflowEtag.None, default);
+            await store.SaveAsync(A(id), Bytes("x"), Secured(tags), WorkflowEtag.None, default);
         }
 
         var index = (IWorkflowWaitIndex)store;
@@ -907,13 +1028,13 @@ public abstract class WorkflowStateStoreConformance
         var index = (IWorkflowWaitIndex)store;
         var filter = new SecurityFilter([SecurityRule.Compile("tenant == 'acme'")], new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal));
 
-        await store.SaveAsync("run-x", Bytes("x"), Secured([new("tenant", "acme")]), WorkflowEtag.None, default);
+        await store.SaveAsync(A("run-x"), Bytes("x"), Secured([new("tenant", "acme")]), WorkflowEtag.None, default);
         (await index.QueryAsync(new WorkflowQuery(Limit: 10, Security: filter), default)).Runs.Count.ShouldBe(1);
 
-        await store.DeleteAsync("run-x", default);
+        await store.DeleteAsync(A("run-x"), default);
 
         // The tags are gone too: a run later re-created with the same id must not inherit the deleted run's tags.
-        await store.SaveAsync("run-x", Bytes("x"), Index(), WorkflowEtag.None, default);
+        await store.SaveAsync(A("run-x"), Bytes("x"), Index(), WorkflowEtag.None, default);
         (await index.QueryAsync(new WorkflowQuery(Limit: 10, Security: filter), default)).Runs.ShouldBeEmpty();
     }
 
@@ -934,7 +1055,7 @@ public abstract class WorkflowStateStoreConformance
         ];
         foreach ((string id, SecurityTag[] tags) in rows)
         {
-            await store.SaveAsync(id, Bytes("x"), Secured(tags), WorkflowEtag.None, default);
+            await store.SaveAsync(A(id), Bytes("x"), Secured(tags), WorkflowEtag.None, default);
         }
 
         // Unscoped: a cap above the total returns the exact count, uncapped.
@@ -965,17 +1086,18 @@ public abstract class WorkflowStateStoreConformance
     private static WorkflowRunIndexEntry Index(WorkflowRunStatus status = WorkflowRunStatus.Running)
         => new("wf", status, T0, T0);
 
-    private static WorkflowRunIndexEntry InEnvironment(string environment, WorkflowRunStatus status = WorkflowRunStatus.Pending)
-        => new("wf", status, T0, T0, Environment: environment);
-
     private static WorkflowRunIndexEntry At(DateTimeOffset createdAt, DateTimeOffset updatedAt)
         => new("wf", WorkflowRunStatus.Running, createdAt, updatedAt);
 
     private static WorkflowRunIndexEntry Tagged(string? correlationId, params string[] tags)
         => new("wf", WorkflowRunStatus.Running, T0, T0, CorrelationId: correlationId, Tags: TagSet.FromTags(tags));
 
-    private static WorkflowRunIndexEntry Suspended(DateTimeOffset? dueAt = null, string? channel = null, string? correlationId = null, string? environment = null)
-        => new("wf", WorkflowRunStatus.Suspended, T0, T0, dueAt, channel, correlationId, Environment: environment);
+    private static WorkflowRunIndexEntry Suspended(DateTimeOffset? dueAt = null, string? channel = null, string? correlationId = null)
+        => new("wf", WorkflowRunStatus.Suspended, T0, T0, dueAt, channel, correlationId);
+
+    // A run's full (environment, runId) address (ADR 0065 decision 9) — the key every store operation takes.
+    private static WorkflowRunAddress A(string runId, string environment = Dev)
+        => new(environment, new WorkflowRunId(runId));
 
     private static byte[] Bytes(string value) => Encoding.UTF8.GetBytes(value);
 
@@ -990,12 +1112,12 @@ public abstract class WorkflowStateStoreConformance
         return ParsedJsonDocument<JsonString>.Parse(quoted);
     }
 
-    private static async ValueTask<List<WorkflowRunId>> Collect(IAsyncEnumerable<WorkflowRunId> source)
+    private static async ValueTask<List<WorkflowRunAddress>> Collect(IAsyncEnumerable<WorkflowRunAddress> source)
     {
-        var list = new List<WorkflowRunId>();
-        await foreach (WorkflowRunId id in source)
+        var list = new List<WorkflowRunAddress>();
+        await foreach (WorkflowRunAddress address in source)
         {
-            list.Add(id);
+            list.Add(address);
         }
 
         return list;

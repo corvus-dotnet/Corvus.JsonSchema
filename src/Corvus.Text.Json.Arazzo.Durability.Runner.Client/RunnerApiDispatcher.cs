@@ -95,7 +95,7 @@ public sealed class RunnerApiDispatcher
             // one snapshot of claimable ids; claiming one at a time is what makes the check necessary here.
             if (!TryRecord(claim.RunId, ref first, ref seen, attempted))
             {
-                await this.client.ReleaseAsync(claim.RunId, CancellationToken.None).ConfigureAwait(false);
+                await this.client.ReleaseAsync(claim.Address, CancellationToken.None).ConfigureAwait(false);
                 break;
             }
 

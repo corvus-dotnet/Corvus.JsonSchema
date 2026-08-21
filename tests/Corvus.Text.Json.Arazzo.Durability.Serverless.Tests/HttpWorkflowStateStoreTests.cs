@@ -20,6 +20,10 @@ namespace Corvus.Text.Json.Arazzo.Durability.Serverless.Tests;
 [TestClass]
 public class HttpWorkflowStateStoreTests
 {
+    // The run's full (environment, runId) address (ADR 0065 decision 9): the guest posts checkpoints to the
+    // address-qualified route.
+    private static WorkflowRunAddress A(string runId) => new("development", new WorkflowRunId(runId));
+
     private static readonly WorkflowRunIndexEntry AnyIndex = new("wf", WorkflowRunStatus.Running, default, default);
     private static readonly ReadOnlyMemory<byte> Bytes = new byte[] { 1, 2, 3 };
 
@@ -39,19 +43,19 @@ public class HttpWorkflowStateStoreTests
         });
         var store = new HttpWorkflowStateStore(Client(handler));
 
-        WorkflowCheckpoint? loaded = await store.LoadAsync("run-1", default);
+        WorkflowCheckpoint? loaded = await store.LoadAsync(A("run-1"), default);
 
         loaded.ShouldNotBeNull();
         loaded!.Value.Utf8.ToArray().ShouldBe([9, 9]);
         handler.Requests[0].Method.ShouldBe(HttpMethod.Get);
-        handler.Requests[0].Path.ShouldBe("/runs/run-1/checkpoint");
+        handler.Requests[0].Path.ShouldBe("/environments/development/runs/run-1/checkpoint");
 
         // The store keeps no counter of its own: the sequence it sends is the one the run authored into the document,
         // so a header the load happened to carry cannot pull the two out of step.
-        await store.SaveAsync("run-1", At(8), AnyIndex, default, default);
+        await store.SaveAsync(A("run-1"), At(8), AnyIndex, default, default);
         await store.FlushAsync(default);
         (HttpMethod Method, string Path, string? Seq) post = handler.Requests.Single(r => r.Method == HttpMethod.Post);
-        post.Path.ShouldBe("/runs/run-1/checkpoint");
+        post.Path.ShouldBe("/environments/development/runs/run-1/checkpoint");
         post.Seq.ShouldBe("8");
     }
 
@@ -61,7 +65,7 @@ public class HttpWorkflowStateStoreTests
         var handler = new StubHandler(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound)));
         var store = new HttpWorkflowStateStore(Client(handler));
 
-        (await store.LoadAsync("missing", default)).ShouldBeNull();
+        (await store.LoadAsync(A("missing"), default)).ShouldBeNull();
     }
 
     [TestMethod]
@@ -76,7 +80,7 @@ public class HttpWorkflowStateStoreTests
         var store = new HttpWorkflowStateStore(Client(handler));
 
         // The save returns synchronously though the POST has not completed (it is gated).
-        ValueTask<WorkflowEtag> save = store.SaveAsync("run-1", Bytes, AnyIndex, default, default);
+        ValueTask<WorkflowEtag> save = store.SaveAsync(A("run-1"), Bytes, AnyIndex, default, default);
         save.IsCompleted.ShouldBeTrue();
 
         // Flush blocks on the in-flight POST until the gate releases it.
@@ -107,9 +111,9 @@ public class HttpWorkflowStateStoreTests
         });
         var store = new HttpWorkflowStateStore(Client(handler));
 
-        await store.SaveAsync("run-1", At(1), AnyIndex, default, default);
-        await store.SaveAsync("run-1", At(2), AnyIndex, default, default);
-        await store.SaveAsync("run-1", At(3), AnyIndex, default, default);
+        await store.SaveAsync(A("run-1"), At(1), AnyIndex, default, default);
+        await store.SaveAsync(A("run-1"), At(2), AnyIndex, default, default);
+        await store.SaveAsync(A("run-1"), At(3), AnyIndex, default, default);
         await store.FlushAsync(default);
 
         concurrent.ShouldBeFalse();
@@ -132,8 +136,8 @@ public class HttpWorkflowStateStoreTests
         });
         var store = new HttpWorkflowStateStore(Client(handler));
 
-        await store.SaveAsync("slow-run", At(1), AnyIndex, default, default);
-        await store.SaveAsync("quick-run", At(1), AnyIndex, default, default);
+        await store.SaveAsync(A("slow-run"), At(1), AnyIndex, default, default);
+        await store.SaveAsync(A("quick-run"), At(1), AnyIndex, default, default);
 
         // The quick run's save completes while the slow run's is still held.
         await Task.Delay(50);
@@ -149,7 +153,7 @@ public class HttpWorkflowStateStoreTests
         var handler = new StubHandler(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError)));
         var store = new HttpWorkflowStateStore(Client(handler));
 
-        await store.SaveAsync("run-1", Bytes, AnyIndex, default, default);
+        await store.SaveAsync(A("run-1"), Bytes, AnyIndex, default, default);
 
         // A 5xx on the terminal checkpoint means the run's final state is not durable, so Flush fails and the run
         // stays claimable for re-invocation.
@@ -172,7 +176,7 @@ public class HttpWorkflowStateStoreTests
         });
         var store = new HttpWorkflowStateStore(Client(handler));
 
-        await store.SaveAsync("run-1", At(4), AnyIndex, default, default);
+        await store.SaveAsync(A("run-1"), At(4), AnyIndex, default, default);
         await Should.NotThrowAsync(async () => await store.FlushAsync(default));
 
         attempts.ShouldBe(2);
@@ -192,8 +196,8 @@ public class HttpWorkflowStateStoreTests
         });
         var store = new HttpWorkflowStateStore(Client(handler));
 
-        await store.SaveAsync("run-1", Bytes, AnyIndex, default, default);
-        await store.SaveAsync("run-1", Bytes, AnyIndex, default, default);
+        await store.SaveAsync(A("run-1"), Bytes, AnyIndex, default, default);
+        await store.SaveAsync(A("run-1"), Bytes, AnyIndex, default, default);
 
         await Should.NotThrowAsync(async () => await store.FlushAsync(default));
     }

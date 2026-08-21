@@ -21,4 +21,8 @@ public readonly record struct RunnerClaim(
     string WorkflowId,
     string Environment,
     DateTimeOffset LeaseExpiresAt,
-    long LeaseEpoch);
+    long LeaseEpoch)
+{
+    /// <summary>Gets the run's full <c>(environment, runId)</c> address (ADR 0065 decision 9).</summary>
+    public WorkflowRunAddress Address => new(this.Environment, this.RunId);
+}

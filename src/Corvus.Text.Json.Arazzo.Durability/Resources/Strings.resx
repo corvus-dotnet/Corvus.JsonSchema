@@ -533,6 +533,12 @@
   <data name="NamedRunIdOutsideGrammar" xml:space="preserve">
     <value>Run id '{0}' is outside the run-id grammar: exactly 32 lowercase hexadecimal characters (ADR 0065 §9).</value>
   </data>
+  <data name="CheckpointEnvironmentMismatch" xml:space="preserve">
+    <value>The checkpoint stored at address '{0}' claims environment '{1}'. Every run is pinned to its (environment, runId) address (ADR 0065 decision 9), so a stored body claiming a different environment is corrupt; refusing to resume it.</value>
+  </data>
+  <data name="CheckpointMissingEnvironment" xml:space="preserve">
+    <value>The checkpoint for run '{0}' carries no environment. Every run is pinned to its (environment, runId) address at creation (ADR 0065 decision 9), so a checkpoint without one is corrupt; refusing to resume it.</value>
+  </data>
   <data name="StartNamedNotSupported" xml:space="preserve">
     <value>This management implementation does not support named starts.</value>
   </data>

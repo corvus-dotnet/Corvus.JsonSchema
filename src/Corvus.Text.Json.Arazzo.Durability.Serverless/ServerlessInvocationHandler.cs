@@ -59,7 +59,7 @@ public sealed class ServerlessInvocationHandler
     /// <returns>The outcome document (UTF-8 JSON) the runner-side backend parses.</returns>
     public async ValueTask<byte[]> HandleAsync(ReadOnlyMemory<byte> invocationJson, CancellationToken cancellationToken)
     {
-        (WorkflowRunId runId, Uri checkpointUrl, string? checkpointToken) = ParseInvocation(invocationJson);
+        (WorkflowRunAddress address, Uri checkpointUrl, string? checkpointToken) = ParseInvocation(invocationJson);
 
         // A bearer credential must never travel in cleartext, so refuse a token over a non-HTTPS checkpoint URL (a loopback
         // address is exempt: in-process and local tests use plain HTTP where TLS adds nothing, but a token never crosses
@@ -87,7 +87,7 @@ public sealed class ServerlessInvocationHandler
             try
             {
                 var host = new ServerlessWorkflowRunHost(store, this.resolver, this.transportBinder, this.timeProvider);
-                WorkflowRunResultKind? kind = await host.InvokeAsync(runId, cancellationToken).ConfigureAwait(false);
+                WorkflowRunResultKind? kind = await host.InvokeAsync(address, cancellationToken).ConfigureAwait(false);
                 return Outcome(kind);
             }
             finally
@@ -103,7 +103,7 @@ public sealed class ServerlessInvocationHandler
         }
     }
 
-    private static (WorkflowRunId RunId, Uri CheckpointUrl, string? CheckpointToken) ParseInvocation(ReadOnlyMemory<byte> invocationJson)
+    private static (WorkflowRunAddress Address, Uri CheckpointUrl, string? CheckpointToken) ParseInvocation(ReadOnlyMemory<byte> invocationJson)
     {
         using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(invocationJson);
         JsonElement root = document.RootElement;
@@ -144,8 +144,31 @@ public sealed class ServerlessInvocationHandler
             }
         }
 
-        // Exactly 32 ASCII characters, validated above: the one bounded allocation the string-keyed run seam needs.
+        // Exactly 32 ASCII characters, validated above: the one bounded allocation the run half of the address needs.
         string runId = runIdElement.GetString()!;
+
+        // The environment is the other half of the run's address (ADR 0065 decision 9) and is required: validated
+        // UTF-8-first against the environment-name grammar, so an oversized or malformed value is refused without
+        // materializing it as a string, exactly as the run id above.
+        if (!root.TryGetProperty("environment"u8, out JsonElement environmentElement) || environmentElement.ValueKind != JsonValueKind.String)
+        {
+            ThrowHelper.ThrowMissingEnvironment(nameof(invocationJson));
+        }
+
+        using (UnescapedUtf8JsonString environmentUtf8 = environmentElement.GetUtf8String())
+        {
+            if (environmentUtf8.Span.IsEmpty)
+            {
+                ThrowHelper.ThrowMissingEnvironment(nameof(invocationJson));
+            }
+
+            if (!Environments.EnvironmentName.IsWellFormedUtf8(environmentUtf8.Span))
+            {
+                ThrowHelper.ThrowMalformedEnvironment(nameof(invocationJson));
+            }
+        }
+
+        string environment = environmentElement.GetString()!;
 
         string? checkpointUrl = root.TryGetProperty("checkpointUrl"u8, out JsonElement urlElement) ? urlElement.GetString() : null;
         if (string.IsNullOrEmpty(checkpointUrl) || !Uri.TryCreate(checkpointUrl, UriKind.Absolute, out Uri? parsed))
@@ -159,7 +182,7 @@ public sealed class ServerlessInvocationHandler
             ? tokenElement.GetString()
             : null;
 
-        return (new WorkflowRunId(runId), parsed, checkpointToken);
+        return (new WorkflowRunAddress(environment, new WorkflowRunId(runId)), parsed, checkpointToken);
     }
 
     private static byte[] Outcome(WorkflowRunResultKind? kind) => kind switch

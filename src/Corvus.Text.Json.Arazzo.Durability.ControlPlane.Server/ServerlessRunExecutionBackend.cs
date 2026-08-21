@@ -30,14 +30,14 @@ public sealed class ServerlessRunExecutionBackend : IRunExecutionBackend
     private readonly HttpClient client;
     private readonly Func<WorkflowRun, CancellationToken, ValueTask<Uri>> functionUrl;
     private readonly string checkpointBaseUrl;
-    private readonly Func<WorkflowRunId, string>? checkpointTokenIssuer;
+    private readonly Func<WorkflowRunAddress, string>? checkpointTokenIssuer;
 
     /// <summary>Initializes a new instance of the <see cref="ServerlessRunExecutionBackend"/> class.</summary>
     /// <param name="client">The HTTP client the function is invoked through; its auth and timeout are the deployment's concern.</param>
     /// <param name="functionUrl">Resolves the invoke URL of the serverless function deployed for a run's (base workflow, version, environment). The resolution is asynchronous because it reads the run's Deployed <c>WorkflowDeployment</c> from the store (ADR 0059); <see cref="DeployedFunctionUrlResolver.ForStore"/> is the production resolver. It throws when the run has no deployed function, which leaves the run claimable for retry.</param>
-    /// <param name="checkpointBaseUrl">The base URL of this deployment's checkpoint surface (§6b) the invoked function checkpoints back to; the function posts <c>runs/{id}/checkpoint</c> relative to it.</param>
-    /// <param name="checkpointTokenIssuer">An optional run-scoped checkpoint-token issuer (ADR 0062): given a run, it mints the bearer token the invoked function presents on its checkpoint callbacks, which a publicly reachable checkpoint surface validates. When <see langword="null"/>, no token is carried (the checkpoint surface is not token-authenticated).</param>
-    public ServerlessRunExecutionBackend(HttpClient client, Func<WorkflowRun, CancellationToken, ValueTask<Uri>> functionUrl, Uri checkpointBaseUrl, Func<WorkflowRunId, string>? checkpointTokenIssuer = null)
+    /// <param name="checkpointBaseUrl">The base URL of this deployment's checkpoint surface (§6b) the invoked function checkpoints back to; the function posts <c>environments/{environment}/runs/{id}/checkpoint</c> — the run's full address (ADR 0065 decision 9) — relative to it.</param>
+    /// <param name="checkpointTokenIssuer">An optional run-scoped checkpoint-token issuer (ADR 0062): given a run's full address, it mints the bearer token the invoked function presents on its checkpoint callbacks, which a publicly reachable checkpoint surface validates against the same address. When <see langword="null"/>, no token is carried (the checkpoint surface is not token-authenticated).</param>
+    public ServerlessRunExecutionBackend(HttpClient client, Func<WorkflowRun, CancellationToken, ValueTask<Uri>> functionUrl, Uri checkpointBaseUrl, Func<WorkflowRunAddress, string>? checkpointTokenIssuer = null)
     {
         ArgumentNullException.ThrowIfNull(client);
         ArgumentNullException.ThrowIfNull(functionUrl);
@@ -61,17 +61,17 @@ public sealed class ServerlessRunExecutionBackend : IRunExecutionBackend
         ArgumentNullException.ThrowIfNull(run);
 
         Uri url = await this.functionUrl(run, cancellationToken).ConfigureAwait(false);
-        string? checkpointToken = this.checkpointTokenIssuer?.Invoke(run.Id);
+        string? checkpointToken = this.checkpointTokenIssuer?.Invoke(run.Address);
         byte[] body = PersistedJson.ToArray(
             (RunId: run.Id.Value, Environment: run.Environment, CheckpointUrl: this.checkpointBaseUrl, CheckpointToken: checkpointToken),
-            static (Utf8JsonWriter writer, in (string RunId, string? Environment, string CheckpointUrl, string? CheckpointToken) s) =>
+            static (Utf8JsonWriter writer, in (string RunId, string Environment, string CheckpointUrl, string? CheckpointToken) s) =>
             {
                 writer.WriteStartObject();
                 writer.WriteString("runId"u8, s.RunId);
-                if (s.Environment is not null)
-                {
-                    writer.WriteString("environment"u8, s.Environment);
-                }
+
+                // The environment is half the run's address (ADR 0065 decision 9): the guest posts its checkpoints to
+                // the address-qualified route, and the token above binds the same address.
+                writer.WriteString("environment"u8, s.Environment);
 
                 writer.WriteString("checkpointUrl"u8, s.CheckpointUrl);
                 if (s.CheckpointToken is not null)

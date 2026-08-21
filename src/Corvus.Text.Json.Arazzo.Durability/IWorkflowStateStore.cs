@@ -6,7 +6,8 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 
 /// <summary>
 /// The pluggable, backend-agnostic run store a <em>dispatching</em> runner sits on: the opaque checkpoint core
-/// (<see cref="IWorkflowCheckpointStore"/> — key/value by run id under an etag) plus an advisory single-owner
+/// (<see cref="IWorkflowCheckpointStore"/> — key/value by <see cref="WorkflowRunAddress"/> under an etag,
+/// ADR 0065 decision 9) plus an advisory single-owner
 /// lease and deletion. A dispatching host needs all of it; a checkpoint-only host (the serverless
 /// function-side store, which never leases or deletes) needs only the core. Richer backends additionally
 /// implement <c>IWorkflowWaitIndex</c> (Tier 2) to answer due-timer and correlation wakeups; capability is
@@ -19,13 +20,14 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// </remarks>
 public interface IWorkflowStateStore : IWorkflowCheckpointStore
 {
-    /// <summary>Acquires an advisory single-owner lease on a run.</summary>
-    /// <param name="id">The run id.</param>
+    /// <summary>Acquires an advisory single-owner lease on a run. The lease is scoped to the run's address: the
+    /// same run id held in another environment is a different run with its own lease.</summary>
+    /// <param name="address">The run's <c>(environment, runId)</c> address.</param>
     /// <param name="owner">The opaque identity of the worker requesting the lease.</param>
     /// <param name="ttl">How long the lease is held before it may be re-acquired by another owner.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The lease, or <see langword="null"/> if another owner currently holds an unexpired lease.</returns>
-    ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunId id, string owner, TimeSpan ttl, CancellationToken cancellationToken);
+    ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunAddress address, string owner, TimeSpan ttl, CancellationToken cancellationToken);
 
     /// <summary>Releases a lease previously acquired with <see cref="AcquireLeaseAsync"/>.</summary>
     /// <param name="lease">The lease to release.</param>
@@ -42,7 +44,7 @@ public interface IWorkflowStateStore : IWorkflowCheckpointStore
     /// succeeds, on a run another runner may already hold.
     /// </summary>
     /// <param name="lease">The lease the caller holds. It is current only when the store's lease for
-    /// <see cref="WorkflowLease.RunId"/> carries the same <see cref="WorkflowLease.Token"/> and
+    /// <see cref="WorkflowLease.Address"/> carries the same <see cref="WorkflowLease.Token"/> and
     /// <see cref="WorkflowLease.Owner"/> and has not expired. <see cref="WorkflowLease.ExpiresAt"/> is not read: a
     /// caller's view of its own expiry is not evidence, and taking it would let a holder extend itself without bound.</param>
     /// <param name="extension">How far past now to extend the lease. <see cref="TimeSpan.Zero"/> verifies the lease
@@ -56,8 +58,8 @@ public interface IWorkflowStateStore : IWorkflowCheckpointStore
     ValueTask<WorkflowLease?> TryExtendLeaseAsync(WorkflowLease lease, TimeSpan extension, CancellationToken cancellationToken);
 
     /// <summary>Deletes a run's checkpoint (e.g. after retention or operator removal).</summary>
-    /// <param name="id">The run id.</param>
+    /// <param name="address">The run's <c>(environment, runId)</c> address.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A task that completes when the run is removed. Deleting an unknown run is a no-op.</returns>
-    ValueTask DeleteAsync(WorkflowRunId id, CancellationToken cancellationToken);
+    ValueTask DeleteAsync(WorkflowRunAddress address, CancellationToken cancellationToken);
 }

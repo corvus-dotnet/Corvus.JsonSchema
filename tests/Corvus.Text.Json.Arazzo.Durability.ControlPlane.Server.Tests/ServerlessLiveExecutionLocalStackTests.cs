@@ -141,7 +141,7 @@ public sealed class ServerlessLiveExecutionLocalStackTests
         host.MapWorkflowCheckpointEndpoints(
             store,
             requireAuthorization: false,
-            authenticateCheckpointToken: (id, token) => CheckpointToken.TryValidate(checkpointSecret, token, id.Value, DateTimeOffset.UtcNow));
+            authenticateCheckpointToken: (address, token) => CheckpointToken.TryValidate(checkpointSecret, token, address, DateTimeOffset.UtcNow));
         host.MapGet("/demo/echo", () => Results.Json(new { status = "ok" }));
         await host.StartAsync();
         try
@@ -223,7 +223,7 @@ public sealed class ServerlessLiveExecutionLocalStackTests
 
             // 7. The durable proof: the seeded run, reloaded from the store the function checkpointed back into, is
             // Completed, and its one step read the echo source's body — callEcho's output is { "status": "ok" }.
-            using WorkflowRun? finished = await WorkflowRun.ResumeAsync(store, runId);
+            using WorkflowRun? finished = await WorkflowRun.ResumeAsync(store, new WorkflowRunAddress("isolated", runId));
             finished.ShouldNotBeNull("the run's checkpoint is missing — the function never saved its advance back to this host.");
             finished!.Status.ShouldBe(WorkflowRunStatus.Completed);
             finished.TryGetStepOutputs("callEcho", out JsonElement callEchoOutputs).ShouldBeTrue("the callEcho step recorded no outputs.");

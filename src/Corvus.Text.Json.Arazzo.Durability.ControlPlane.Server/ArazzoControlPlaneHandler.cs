@@ -510,11 +510,8 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
             tags = Models.WorkflowRunSummary.JsonStringArray.ParseValue(e.Tags.RawJson);
         }
 
-        Models.EnvironmentName.Source environment = default;
-        if (e.Environment is { } env)
-        {
-            environment = env;
-        }
+        // The environment is half the listing's address (ADR 0065 decision 9), never absent.
+        Models.EnvironmentName.Source environment = listing.Address.Environment;
 
         b.Create(
             createdAt: e.CreatedAt,

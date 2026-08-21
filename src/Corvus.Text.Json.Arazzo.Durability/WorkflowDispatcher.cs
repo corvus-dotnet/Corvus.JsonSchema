@@ -86,9 +86,9 @@ public sealed class WorkflowDispatcher
 
         int dispatched = 0;
         DateTimeOffset now = this.timeProvider.GetUtcNow();
-        await foreach (WorkflowRunId id in this.index.QueryClaimableAsync(hostedWorkflowIds, this.runnerEnvironment, now, cancellationToken).ConfigureAwait(false))
+        await foreach (WorkflowRunAddress address in this.index.QueryClaimableAsync(hostedWorkflowIds, this.runnerEnvironment, now, cancellationToken).ConfigureAwait(false))
         {
-            if (await this.TryDispatchAsync(id, resume, cancellationToken).ConfigureAwait(false))
+            if (await this.TryDispatchAsync(address, resume, cancellationToken).ConfigureAwait(false))
             {
                 dispatched++;
             }
@@ -97,9 +97,9 @@ public sealed class WorkflowDispatcher
         return dispatched;
     }
 
-    private async ValueTask<bool> TryDispatchAsync(WorkflowRunId id, WorkflowResumer resume, CancellationToken cancellationToken)
+    private async ValueTask<bool> TryDispatchAsync(WorkflowRunAddress address, WorkflowResumer resume, CancellationToken cancellationToken)
     {
-        WorkflowLease? lease = await this.store.AcquireLeaseAsync(id, this.owner, this.leaseTtl, cancellationToken).ConfigureAwait(false);
+        WorkflowLease? lease = await this.store.AcquireLeaseAsync(address, this.owner, this.leaseTtl, cancellationToken).ConfigureAwait(false);
         if (lease is null)
         {
             // Another runner holds the run.
@@ -108,7 +108,7 @@ public sealed class WorkflowDispatcher
 
         try
         {
-            using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.store, id, this.timeProvider, cancellationToken).ConfigureAwait(false);
+            using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.store, address, this.timeProvider, cancellationToken).ConfigureAwait(false);
 
             // Re-check under the lease: the run may have been claimed, completed, suspended, or deleted between
             // the index query and the lease. Dispatchable are fresh (Pending) runs, orphaned (Running) runs, and

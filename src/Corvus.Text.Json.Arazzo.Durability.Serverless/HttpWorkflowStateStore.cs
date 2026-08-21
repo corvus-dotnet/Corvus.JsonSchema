@@ -41,10 +41,10 @@ public sealed class HttpWorkflowStateStore : IWorkflowCheckpointStore, IWorkflow
     private readonly object gate = new();
 
     // The tail of each run's dispatch chain. ADR 0065 decision 6 allows at most one save per run in flight, and the
-    // interlock is per RUN rather than per component: the runner and the listener both author checkpoints for the same
-    // run, so a lock held per component would let two honest tenant components dispatch concurrently. Keyed by run so
-    // different runs never wait on each other.
-    private readonly Dictionary<string, Task> tails = [];
+    // interlock is per RUN rather than per component: the runner and the listener both author checkpoints for the
+    // same run, so a lock held per component would let two well-behaved tenant components dispatch concurrently.
+    // Keyed by the run's full address (ADR 0065 decision 9) so different runs never wait on each other.
+    private readonly Dictionary<WorkflowRunAddress, Task> tails = [];
     private readonly List<Task<bool>> pending = [];
 
     /// <summary>Initializes a new instance of the <see cref="HttpWorkflowStateStore"/> class.</summary>
@@ -56,9 +56,9 @@ public sealed class HttpWorkflowStateStore : IWorkflowCheckpointStore, IWorkflow
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunId id, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, CheckpointPath(id));
+        using var request = new HttpRequestMessage(HttpMethod.Get, CheckpointPath(address));
         using HttpResponseMessage response = await this.client.SendAsync(request, cancellationToken).ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
@@ -76,7 +76,7 @@ public sealed class HttpWorkflowStateStore : IWorkflowCheckpointStore, IWorkflow
     }
 
     /// <inheritdoc/>
-    public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunId id, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+    public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
     {
         // The runner re-projects the index from the bytes, so only the bytes and the write-sequence go over the wire.
         // The sequence comes from the document the run authored — one series, one author. Reading it is a forward-only
@@ -89,9 +89,9 @@ public sealed class HttpWorkflowStateStore : IWorkflowCheckpointStore, IWorkflow
         Task<bool> post;
         lock (this.gate)
         {
-            Task previous = this.tails.TryGetValue(id.Value, out Task? tail) ? tail : Task.CompletedTask;
-            post = this.DispatchAfterAsync(previous, id, body, seq, cancellationToken);
-            this.tails[id.Value] = post;
+            Task previous = this.tails.TryGetValue(address, out Task? tail) ? tail : Task.CompletedTask;
+            post = this.DispatchAfterAsync(previous, address, body, seq, cancellationToken);
+            this.tails[address] = post;
             this.pending.Add(post);
         }
 
@@ -144,7 +144,10 @@ public sealed class HttpWorkflowStateStore : IWorkflowCheckpointStore, IWorkflow
         }
     }
 
-    private static string CheckpointPath(WorkflowRunId id) => $"runs/{Uri.EscapeDataString(id.Value)}/checkpoint";
+    // The address rides the URL (ADR 0065 decision 9): the runner-side surface keys the run by (environment, runId),
+    // and the callback token binds the same address, so a guest cannot re-address its checkpoints.
+    private static string CheckpointPath(in WorkflowRunAddress address)
+        => $"environments/{Uri.EscapeDataString(address.Environment)}/runs/{Uri.EscapeDataString(address.RunId.Value)}/checkpoint";
 
     private static long ReadSequence(HttpHeaders headers)
         => headers.TryGetValues(WriteSequenceHeader, out IEnumerable<string>? values)
@@ -155,7 +158,7 @@ public sealed class HttpWorkflowStateStore : IWorkflowCheckpointStore, IWorkflow
     // Runs this save once the run's previous one has finished, so at most one is ever in flight for a run. The previous
     // task never faults (a failed send is a false, not an exception), but it is awaited defensively so one broken link
     // cannot stall the rest of the chain.
-    private async Task<bool> DispatchAfterAsync(Task previous, WorkflowRunId id, byte[] body, long seq, CancellationToken cancellationToken)
+    private async Task<bool> DispatchAfterAsync(Task previous, WorkflowRunAddress address, byte[] body, long seq, CancellationToken cancellationToken)
     {
         try
         {
@@ -166,14 +169,14 @@ public sealed class HttpWorkflowStateStore : IWorkflowCheckpointStore, IWorkflow
             // The predecessor's outcome is its own caller's business; this save still has to be dispatched.
         }
 
-        return await this.PostCheckpointAsync(id, body, seq, cancellationToken).ConfigureAwait(false);
+        return await this.PostCheckpointAsync(address, body, seq, cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task<bool> PostCheckpointAsync(WorkflowRunId id, byte[] body, long seq, CancellationToken cancellationToken)
+    private async Task<bool> PostCheckpointAsync(WorkflowRunAddress address, byte[] body, long seq, CancellationToken cancellationToken)
     {
         for (int attempt = 0; attempt < SendAttempts; ++attempt)
         {
-            if (await this.TrySendAsync(id, body, seq, attempt, cancellationToken).ConfigureAwait(false) is { } settled)
+            if (await this.TrySendAsync(address, body, seq, attempt, cancellationToken).ConfigureAwait(false) is { } settled)
             {
                 return settled;
             }
@@ -184,11 +187,11 @@ public sealed class HttpWorkflowStateStore : IWorkflowCheckpointStore, IWorkflow
 
     // Sends once. Answers null to ask for another attempt, so the retry decision lives in one place rather than being
     // spread across the transport and status paths.
-    private async Task<bool?> TrySendAsync(WorkflowRunId id, byte[] body, long seq, int attempt, CancellationToken cancellationToken)
+    private async Task<bool?> TrySendAsync(WorkflowRunAddress address, byte[] body, long seq, int attempt, CancellationToken cancellationToken)
     {
         try
         {
-            using var request = new HttpRequestMessage(HttpMethod.Post, CheckpointPath(id))
+            using var request = new HttpRequestMessage(HttpMethod.Post, CheckpointPath(address))
             {
                 Content = new ByteArrayContent(body) { Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") } },
             };

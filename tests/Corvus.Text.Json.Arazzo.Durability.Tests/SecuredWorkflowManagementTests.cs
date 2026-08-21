@@ -139,7 +139,7 @@ public sealed class SecuredWorkflowManagementTests
     {
         var store = new InMemoryWorkflowStateStore();
         await FaultRunAsync(store, "r1");
-        await store.AcquireLeaseAsync("r1", "worker-7", TimeSpan.FromMinutes(5), default);
+        await store.AcquireLeaseAsync(TestAddresses.Dev("r1"), "worker-7", TimeSpan.FromMinutes(5), default);
         var client = new SecuredWorkflowManagement(store, owner: "ops");
 
         (await client.CancelAsync("r1", "race", AccessContext.System, default)).ShouldBeFalse();
@@ -290,7 +290,7 @@ public sealed class SecuredWorkflowManagementTests
     {
         var store = new InMemoryWorkflowStateStore();
         await FaultRunAsync(store, "r1");
-        await store.AcquireLeaseAsync("r1", "worker-7", TimeSpan.FromMinutes(5), default);
+        await store.AcquireLeaseAsync(TestAddresses.Dev("r1"), "worker-7", TimeSpan.FromMinutes(5), default);
         var client = new SecuredWorkflowManagement(store, owner: "ops");
 
         (await client.DeleteAsync("r1", AccessContext.System, default)).ShouldBeFalse();

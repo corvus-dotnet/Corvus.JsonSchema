@@ -16,12 +16,17 @@ namespace Corvus.Text.Json.Arazzo.Durability.Redis;
 /// Targets a single Redis instance (or a primary): the index-maintenance Lua touches several keys derived
 /// from the run, which is not Redis-Cluster slot-safe. Create instances with <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> (or <see cref="Connect(StackExchange.Redis.IConnectionMultiplexer, TimeProvider?)"/>).
 /// </remarks>
+// TRANSITIONAL (ADR 0065 decision 9): the seam addresses runs by (environment, runId), but this backend still keys
+// its entries by run id alone — the composite-key conversion is this backend's own commit, and the composite-address
+// conformance oracles pin the gap until it lands. The environment field is written from the address and projected
+// back into every answered address.
 public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string Prefix = "arazzo:";
     private const string AllKey = Prefix + "runs";
     private const string DueKey = Prefix + "due";
     private const string RunKeyPrefix = Prefix + "run:";
+    private const string LeaseKeyPrefix = Prefix + "lease:";
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
     private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
     private const string RunningStatus = nameof(WorkflowRunStatus.Running);
@@ -197,22 +202,24 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
 
     /// <inheritdoc/>
     public ValueTask<WorkflowEtag> SaveAsync(
-        WorkflowRunId id,
+        WorkflowRunAddress address,
         ReadOnlyMemory<byte> checkpointUtf8,
         in WorkflowRunIndexEntry index,
         WorkflowEtag expected,
         CancellationToken cancellationToken)
-        => this.SaveCoreAsync(id, checkpointUtf8, index, expected, cancellationToken);
+        => this.SaveCoreAsync(address, checkpointUtf8, index, expected, cancellationToken);
 
-    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunId id, ReadOnlyMemory<byte> checkpoint, WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpoint, WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         // The opaque checkpoint binds straight to a RedisValue from its ReadOnlyMemory (RedisValue carries the exact
         // length) — no per-save GC array on the run-state hot path. It is written into the run hash's 'checkpoint' field.
+        // The 'environment' field comes from the address (never null): it is half the run's primary key (ADR 0065
+        // decision 9), stored here as a hash field until this backend's own composite-key conversion.
         RedisValue[] argv =
         [
-            id.Value,
+            address.RunId.Value,
             expected.IsNone ? string.Empty : expected.Value!,
             checkpoint,
             index.Status.ToString(),
@@ -226,25 +233,25 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             index.CorrelationId ?? string.Empty,
             index.Tags.ToJsonStringOrNull() ?? string.Empty,
             index.SecurityTags.ToJsonStringOrNull() ?? string.Empty,
-            index.Environment ?? string.Empty,
+            address.Environment,
             index.ResumeRequestedAt is { } resume ? resume.ToUnixTimeMilliseconds() : string.Empty,
         ];
 
-        RedisResult result = await this.database.ScriptEvaluateAsync(SaveScript, [RunKey(id.Value), AllKey, DueKey], argv).ConfigureAwait(false);
+        RedisResult result = await this.database.ScriptEvaluateAsync(SaveScript, [RunKey(address.RunId.Value), AllKey, DueKey], argv).ConfigureAwait(false);
         long version = (long)result;
         if (version < 0)
         {
-            throw new WorkflowConflictException(id, expected);
+            throw new WorkflowConflictException(address, expected);
         }
 
         return new WorkflowEtag(version.ToString(CultureInfo.InvariantCulture));
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunId id, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        RedisValue[] values = await this.database.HashGetAsync(RunKey(id.Value), ["checkpoint", "version"]).ConfigureAwait(false);
+        RedisValue[] values = await this.database.HashGetAsync(RunKey(address.RunId.Value), ["checkpoint", "version"]).ConfigureAwait(false);
         if (values[0].IsNull)
         {
             return null;
@@ -256,7 +263,7 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunId id, string owner, TimeSpan ttl, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunAddress address, string owner, TimeSpan ttl, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(owner);
         cancellationToken.ThrowIfCancellationRequested();
@@ -267,10 +274,10 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
 
         RedisResult result = await this.database.ScriptEvaluateAsync(
             AcquireLeaseScript,
-            [LeaseKey(id.Value)],
+            [LeaseKey(address.RunId.Value)],
             [owner, token, expiresAt.ToUnixTimeMilliseconds(), now.ToUnixTimeMilliseconds()]).ConfigureAwait(false);
         long epoch = (long)result;
-        return epoch > 0 ? new WorkflowLease(id, owner, token, expiresAt, epoch) : null;
+        return epoch > 0 ? new WorkflowLease(address, owner, token, expiresAt, epoch) : null;
     }
 
     /// <inheritdoc/>
@@ -287,7 +294,7 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             [lease.Owner, lease.Token, (now + extension).ToUnixTimeMilliseconds(), now.ToUnixTimeMilliseconds(), write ? "1" : "0"]).ConfigureAwait(false);
 
         long[] held = (long[])result!;
-        return held[0] < 0 ? null : new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(held[0]), held[1]);
+        return held[0] < 0 ? null : new WorkflowLease(lease.Address, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(held[0]), held[1]);
     }
 
     /// <inheritdoc/>
@@ -301,65 +308,69 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     }
 
     /// <inheritdoc/>
-    public async ValueTask DeleteAsync(WorkflowRunId id, CancellationToken cancellationToken)
+    public async ValueTask DeleteAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         // Read the run's labels while its hash still exists, then drop the hash before its label entries — the
         // §14.4 ordering: an interrupted delete leaves a stale entry, harmless when nothing loads behind it,
         // whereas dropping labels first would strand a still-visible run.
-        RedisValue[] pre = await this.database.HashGetAsync(RunKey(id.Value), ["awaiting_channel", "security_tags_json"]).ConfigureAwait(false);
+        string id = address.RunId.Value;
+        RedisValue[] pre = await this.database.HashGetAsync(RunKey(id), ["awaiting_channel", "security_tags_json"]).ConfigureAwait(false);
         RedisValue channel = pre[0];
         SecurityTagSet securityTags = pre[1].IsNull ? default : SecurityTagSet.FromJsonStringOrEmpty((string)pre[1]!);
 
-        await this.database.KeyDeleteAsync(RunKey(id.Value)).ConfigureAwait(false);
-        await this.database.KeyDeleteAsync(LeaseKey(id.Value)).ConfigureAwait(false);
-        await this.database.SetRemoveAsync(AllKey, id.Value).ConfigureAwait(false);
-        await this.database.SortedSetRemoveAsync(DueKey, id.Value).ConfigureAwait(false);
+        await this.database.KeyDeleteAsync(RunKey(id)).ConfigureAwait(false);
+        await this.database.KeyDeleteAsync(LeaseKey(id)).ConfigureAwait(false);
+        await this.database.SetRemoveAsync(AllKey, id).ConfigureAwait(false);
+        await this.database.SortedSetRemoveAsync(DueKey, id).ConfigureAwait(false);
         if (!channel.IsNull)
         {
-            await this.database.SetRemoveAsync(AwaitingKey(channel!), id.Value).ConfigureAwait(false);
+            await this.database.SetRemoveAsync(AwaitingKey(channel!), id).ConfigureAwait(false);
         }
 
         foreach (string setKey in RedisSecurityLabels.SetKeysFor(RedisSecurityLabels.RunLabelPrefix, securityTags))
         {
-            await this.database.SetRemoveAsync(setKey, id.Value).ConfigureAwait(false);
+            await this.database.SetRemoveAsync(setKey, id).ConfigureAwait(false);
         }
     }
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken) => this.QueryDueAsync(before, null, cancellationToken);
+    public IAsyncEnumerable<WorkflowRunAddress> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken) => this.QueryDueAsync(before, null, cancellationToken);
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<WorkflowRunAddress> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         RedisValue[] members = await this.database.SortedSetRangeByScoreAsync(DueKey, double.NegativeInfinity, before.ToUnixTimeMilliseconds()).ConfigureAwait(false);
         foreach (RedisValue member in members)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (runnerEnvironment is null)
+
+            // §5.5 environment-scoped timer-resume: a real runner (non-null runnerEnvironment) resumes a due run only when it
+            // is pinned to EXACTLY its environment (a differently-pinned run is skipped); a null runnerEnvironment is the
+            // env-agnostic base overload (return every due run regardless of environment), never a runner. The environment is
+            // always read — it is half the answered address (ADR 0065 decision 9); a hash unexpectedly without one is skipped
+            // (defensive — rows written by this code always carry one).
+            string id = (string)member!;
+            RedisValue storedEnvironment = await this.database.HashGetAsync(RunKey(id), "environment").ConfigureAwait(false);
+            if (storedEnvironment.IsNull)
             {
-                yield return new WorkflowRunId(member!);
                 continue;
             }
 
-            // §5.5 environment-scoped timer-resume: a real runner (non-null runnerEnvironment) resumes a due run only when it
-            // is pinned to EXACTLY its environment (an unpinned or differently-pinned run is skipped); a null runnerEnvironment
-            // is the env-agnostic base overload (return every due run regardless of environment), never a runner.
-            RedisValue storedEnvironment = await this.database.HashGetAsync(RunKey((string)member!), "environment").ConfigureAwait(false);
-            string? environment = storedEnvironment.IsNull ? null : (string)storedEnvironment!;
+            string environment = (string)storedEnvironment!;
             if (MatchesEnvironment(environment, runnerEnvironment))
             {
-                yield return new WorkflowRunId(member!);
+                yield return new WorkflowRunAddress(environment, new WorkflowRunId(id));
             }
         }
     }
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken) => this.QueryAwaitingAsync(channel, correlationId, null, cancellationToken);
+    public IAsyncEnumerable<WorkflowRunAddress> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken) => this.QueryAwaitingAsync(channel, correlationId, null, cancellationToken);
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<WorkflowRunAddress> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(channel);
         RedisValue[] candidates = await this.database.SetMembersAsync(AwaitingKey(channel)).ConfigureAwait(false);
@@ -367,38 +378,40 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (correlationId is not null)
+            // One hash read serves both filters and the answered address: the correlation gate, and the environment —
+            // always read, because it is half the address (ADR 0065 decision 9); a hash unexpectedly without one is
+            // skipped (defensive — rows written by this code always carry one).
+            string id = (string)candidate!;
+            RedisValue[] fields = await this.database.HashGetAsync(RunKey(id), ["awaiting_correlation_id", "environment"]).ConfigureAwait(false);
+            if (correlationId is not null && !fields[0].IsNull && fields[0] != correlationId)
             {
-                RedisValue stored = await this.database.HashGetAsync(RunKey((string)candidate!), "awaiting_correlation_id").ConfigureAwait(false);
-                if (!stored.IsNull && stored != correlationId)
-                {
-                    continue;
-                }
+                continue;
+            }
+
+            if (fields[1].IsNull)
+            {
+                continue;
             }
 
             // §5.5 environment-scoped event-resume. A real runner (non-null runnerEnvironment) resumes an awaiting run only
-            // when it is pinned to EXACTLY its environment (an unpinned or differently-pinned run is skipped). A null
-            // runnerEnvironment is the env-agnostic base overload (return every awaiting run regardless of environment), never a runner.
-            if (runnerEnvironment is not null)
+            // when it is pinned to EXACTLY its environment (a differently-pinned run is skipped). A null runnerEnvironment is
+            // the env-agnostic base overload (return every awaiting run regardless of environment), never a runner.
+            string environment = (string)fields[1]!;
+            if (!MatchesEnvironment(environment, runnerEnvironment))
             {
-                RedisValue storedEnvironment = await this.database.HashGetAsync(RunKey((string)candidate!), "environment").ConfigureAwait(false);
-                string? environment = storedEnvironment.IsNull ? null : (string)storedEnvironment!;
-                if (!MatchesEnvironment(environment, runnerEnvironment))
-                {
-                    continue;
-                }
+                continue;
             }
 
-            yield return new WorkflowRunId(candidate!);
+            yield return new WorkflowRunAddress(environment, new WorkflowRunId(id));
         }
     }
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunAddress> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
         => this.QueryClaimableAsync(hostedWorkflowIds, null, now, cancellationToken);
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<WorkflowRunAddress> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
         if (hostedWorkflowIds.Count == 0)
@@ -424,24 +437,33 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             }
 
             // §5.5 environment-scoped dispatch: a run pinned to an environment is claimable only by a runner serving it;
-            // an unpinned run or an unscoped dispatcher (runnerEnvironment is null) matches anything.
-            string? environment = fields[2].IsNull ? null : (string)fields[2]!;
+            // an unscoped dispatcher (runnerEnvironment is null) matches anything. The environment is half the answered
+            // address (ADR 0065 decision 9), so a hash unexpectedly without one is skipped (defensive — rows written by
+            // this code always carry one).
+            if (fields[2].IsNull)
+            {
+                continue;
+            }
+
+            string environment = (string)fields[2]!;
             if (!MatchesEnvironment(environment, runnerEnvironment))
             {
                 continue;
             }
 
+            var address = new WorkflowRunAddress(environment, new WorkflowRunId(id));
+
             // §18: a paused (or faulted) run the control plane marked resume-claimable (resume_requested_at present) also
             // surfaces here, so a separate runner can claim and advance it; the marker is cleared on its first checkpoint.
             if (!fields[3].IsNull && (status == SuspendedStatus || status == FaultedStatus))
             {
-                yield return new WorkflowRunId(id);
+                yield return address;
                 continue;
             }
 
             if (status == PendingStatus)
             {
-                yield return new WorkflowRunId(id);
+                yield return address;
                 continue;
             }
 
@@ -451,7 +473,7 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
                 bool leaseLive = !exp.IsNull && (long)exp > nowMs;
                 if (!leaseLive)
                 {
-                    yield return new WorkflowRunId(id);
+                    yield return address;
                 }
             }
         }
@@ -460,9 +482,11 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     /// <inheritdoc/>
     public async ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
     {
-        // Redis has no server-side ordering over the run set, so sort the ids and keyset-page client-side.
+        // Redis has no server-side ordering over the run set, and the environment half of each run's address lives
+        // in its hash (see the TRANSITIONAL note), so collect the matching listings with their addresses first, then
+        // sort by the composite (environment, then run id, both ordinal), cursor-filter and keyset-page client-side.
         // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
-        string? after = null;
+        WorkflowRunAddress? after = null;
         if (query.ContinuationToken.IsNotUndefined())
         {
             using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
@@ -480,25 +504,22 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             return WorkflowContinuationToken.Paginate([], query.Limit);
         }
 
-        string[] ids;
+        IEnumerable<string> ids;
         if (candidates is null)
         {
             RedisValue[] members = await this.database.SetMembersAsync(AllKey).ConfigureAwait(false);
-            ids = [.. members.Select(v => (string)v!).OrderBy(static s => s, StringComparer.Ordinal)];
+            ids = members.Select(v => (string)v!);
         }
         else
         {
-            ids = [.. candidates.OrderBy(static s => s, StringComparer.Ordinal)];
+            ids = candidates;
         }
 
+        // The composite order is only known once every candidate's environment has been read out of its hash, so the
+        // whole matching set is collected before the sort — no early break: an id scanned later can order first.
         var runs = new List<WorkflowRunListing>();
         foreach (string id in ids)
         {
-            if (after is not null && string.CompareOrdinal(id, after) <= 0)
-            {
-                continue;
-            }
-
             cancellationToken.ThrowIfCancellationRequested();
             HashEntry[] entries = await this.database.HashGetAllAsync(RunKey(id)).ConfigureAwait(false);
             if (entries.Length == 0)
@@ -512,6 +533,14 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
                 continue;
             }
 
+            // The environment is half the answered address (ADR 0065 decision 9); a hash unexpectedly without one is
+            // skipped (defensive — rows written by this code always carry one).
+            if (!fields.TryGetValue("environment", out RedisValue env) || env.IsNull)
+            {
+                continue;
+            }
+
+            var address = new WorkflowRunAddress((string)env!, new WorkflowRunId(id));
             var entry = new WorkflowRunIndexEntry(
                 (string)fields["workflow_id"]!,
                 Enum.Parse<WorkflowRunStatus>((string)fields["status"]!),
@@ -523,13 +552,28 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
                 fields.TryGetValue("error_type", out RedisValue err) ? (string)err! : null,
                 CorrelationId: fields.TryGetValue("correlation_id", out RedisValue cidV) && !cidV.IsNull ? (string)cidV! : null,
                 Tags: fields.TryGetValue("tags_json", out RedisValue tagsV) && !tagsV.IsNull ? TagSet.FromJsonStringOrEmpty((string?)tagsV) : default,
-                SecurityTags: fields.TryGetValue("security_tags_json", out RedisValue secV) && !secV.IsNull ? SecurityTagSet.FromJsonStringOrEmpty((string)secV!) : default,
-                Environment: fields.TryGetValue("environment", out RedisValue env) && !env.IsNull ? (string)env! : null);
-            runs.Add(new WorkflowRunListing(new WorkflowRunId(id), entry));
-            if (runs.Count > query.Limit)
+                SecurityTags: fields.TryGetValue("security_tags_json", out RedisValue secV) && !secV.IsNull ? SecurityTagSet.FromJsonStringOrEmpty((string)secV!) : default);
+            runs.Add(new WorkflowRunListing(address, entry));
+        }
+
+        // Sort by ascending address, drop everything at or before the cursor (the sorted prefix), and truncate to
+        // Limit + 1 — the extra row is what tells Paginate a next page exists.
+        runs.Sort(static (left, right) => WorkflowRunAddress.Compare(left.Address, right.Address));
+        if (after is { } cursor)
+        {
+            int skip = 0;
+            while (skip < runs.Count && WorkflowRunAddress.Compare(runs[skip].Address, cursor) <= 0)
             {
-                break;
+                skip++;
             }
+
+            runs.RemoveRange(0, skip);
+        }
+
+        int cap = query.Limit + 1;
+        if (runs.Count > cap)
+        {
+            runs.RemoveRange(cap, runs.Count - cap);
         }
 
         return WorkflowContinuationToken.Paginate(runs, query.Limit);
@@ -664,14 +708,15 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
 
     private static RedisKey RunKey(string id) => RunKeyPrefix + id;
 
-    private static RedisKey LeaseKey(string id) => Prefix + "lease:" + id;
+    private static RedisKey LeaseKey(string id) => LeaseKeyPrefix + id;
 
     private static RedisKey AwaitingKey(string channel) => Prefix + "awaiting:" + channel;
 
-    // §5.5 null-matches-anything: an unpinned run or an unscoped dispatcher matches any environment.
-    // §5.5: a real runner (non-null runnerEnvironment) claims a run only when pinned to EXACTLY its environment (an
-    // unpinned or differently-pinned run is never claimed); a null runnerEnvironment is the env-agnostic base overload
-    // (list all claimable regardless of environment), never a runner.
-    private static bool MatchesEnvironment(string? entryEnvironment, string? runnerEnvironment)
-        => runnerEnvironment is null || (entryEnvironment is not null && string.Equals(entryEnvironment, runnerEnvironment, StringComparison.Ordinal));
+    // §5.5 env-match: a real runner (non-null runnerEnvironment) claims or resumes a run only when it is pinned to
+    // EXACTLY its environment — a run pinned elsewhere is never claimed (the credential boundary). The environment is
+    // read out of the run's hash but originates from the run's ADDRESS (ADR 0065 decision 9), so it is never absent on
+    // a row this code wrote. A null runnerEnvironment is the env-agnostic base overload (list everything regardless of
+    // environment), never a runner.
+    private static bool MatchesEnvironment(string runEnvironment, string? runnerEnvironment)
+        => runnerEnvironment is null || string.Equals(runEnvironment, runnerEnvironment, StringComparison.Ordinal);
 }

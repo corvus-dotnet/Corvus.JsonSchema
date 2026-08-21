@@ -324,7 +324,7 @@ public partial class WorkflowExecutorEndToEndTests
         result.IsFaulted.ShouldBeFalse();
 
         // The completed run's checkpoint carries the journal.
-        Durability.WorkflowCheckpoint? checkpoint = await store.LoadAsync("journal-1", default);
+        Durability.WorkflowCheckpoint? checkpoint = await store.LoadAsync(TestAddresses.Dev("journal-1"), default);
         checkpoint.ShouldNotBeNull();
         using Durability.WorkflowCheckpointState state = Durability.WorkflowCheckpointSerializer.Deserialize(checkpoint.Value.Utf8);
 

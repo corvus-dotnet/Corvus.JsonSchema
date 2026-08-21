@@ -33,17 +33,17 @@ public sealed class WorkflowRunTests
             await run.CheckpointAsync(1, default);
         }
 
-        WorkflowCheckpoint stored = (await store.LoadAsync("run-seq", default))!.Value;
+        WorkflowCheckpoint stored = (await store.LoadAsync(TestAddresses.Dev("run-seq"), default))!.Value;
         WorkflowCheckpointSerializer.TryReadSequence(stored.Utf8, out long persisted).ShouldBeTrue();
         persisted.ShouldBe(2);
 
-        using (WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, "run-seq", Time))
+        using (WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, TestAddresses.Dev("run-seq"), Time))
         {
             resumed.ShouldNotBeNull();
             await resumed!.CheckpointAsync(2, default);
         }
 
-        WorkflowCheckpoint after = (await store.LoadAsync("run-seq", default))!.Value;
+        WorkflowCheckpoint after = (await store.LoadAsync(TestAddresses.Dev("run-seq"), default))!.Value;
         WorkflowCheckpointSerializer.TryReadSequence(after.Utf8, out long continued).ShouldBeTrue();
         continued.ShouldBe(3);
     }
@@ -100,7 +100,7 @@ public sealed class WorkflowRunTests
         }
 
         // A worker re-enters from the durable checkpoint.
-        using WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, id, Time);
+        using WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, TestAddresses.Dev(id), Time);
 
         resumed.ShouldNotBeNull();
         resumed.Cursor.ShouldBe(1);
@@ -127,7 +127,7 @@ public sealed class WorkflowRunTests
             await run.CheckpointAsync(cursor: 1, default);
         }
 
-        using (WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, id, Time))
+        using (WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, TestAddresses.Dev(id), Time))
         {
             resumed.ShouldNotBeNull();
             using ParsedJsonDocument<JsonElement> doc2 = ParsedJsonDocument<JsonElement>.Parse("""{ "result": "done" }"""u8.ToArray());
@@ -137,7 +137,7 @@ public sealed class WorkflowRunTests
             resumed.Status.ShouldBe(WorkflowRunStatus.Completed);
         }
 
-        using WorkflowRun? final = await WorkflowRun.ResumeAsync(store, id, Time);
+        using WorkflowRun? final = await WorkflowRun.ResumeAsync(store, TestAddresses.Dev(id), Time);
         final.ShouldNotBeNull();
         final.Status.ShouldBe(WorkflowRunStatus.Completed);
         final.TryGetStepOutputs("stepA", out _).ShouldBeTrue();
@@ -149,7 +149,7 @@ public sealed class WorkflowRunTests
     {
         var store = new InMemoryWorkflowStateStore();
 
-        (await WorkflowRun.ResumeAsync(store, "nope", Time)).ShouldBeNull();
+        (await WorkflowRun.ResumeAsync(store, TestAddresses.Dev("nope"), Time)).ShouldBeNull();
     }
 
     [TestMethod]
@@ -165,8 +165,8 @@ public sealed class WorkflowRunTests
         }
 
         // Two workers both load the same checkpoint (e.g. a partition hand-off race).
-        using WorkflowRun? workerA = await WorkflowRun.ResumeAsync(store, id, Time);
-        using WorkflowRun? workerB = await WorkflowRun.ResumeAsync(store, id, Time);
+        using WorkflowRun? workerA = await WorkflowRun.ResumeAsync(store, TestAddresses.Dev(id), Time);
+        using WorkflowRun? workerB = await WorkflowRun.ResumeAsync(store, TestAddresses.Dev(id), Time);
 
         await workerA!.CheckpointAsync(cursor: 2, default);
 

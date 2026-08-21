@@ -523,11 +523,22 @@ public static class WorkflowCheckpointSerializer
     /// tokens, step outputs, inputs, outputs and journal that <see cref="Deserialize"/> rents pooled maps and builds
     /// collections for. The returned entry owns its tag copies, so the parsed document is disposed before return. It
     /// is identical to the entry <see cref="WorkflowRun"/> stamped when it wrote these bytes, because both build it
-    /// through <see cref="WorkflowRunIndexEntry.Project(string, WorkflowRunStatus, DateTimeOffset, DateTimeOffset, WorkflowWait?, WorkflowFault?, string?, TagSet, SecurityTagSet, string?, DateTimeOffset?)"/>.
+    /// through <see cref="WorkflowRunIndexEntry.Project(string, WorkflowRunStatus, DateTimeOffset, DateTimeOffset, WorkflowWait?, WorkflowFault?, string?, TagSet, SecurityTagSet, DateTimeOffset?)"/>.
     /// </summary>
     /// <param name="checkpointUtf8">The serialized checkpoint document (UTF-8 JSON).</param>
     /// <returns>The index entry the checkpoint projects to.</returns>
     public static WorkflowRunIndexEntry ProjectIndex(ReadOnlyMemory<byte> checkpointUtf8)
+        => ProjectIndex(checkpointUtf8, out _);
+
+    /// <summary>
+    /// As <see cref="ProjectIndex(ReadOnlyMemory{byte})"/>, additionally reporting the environment the checkpoint
+    /// BODY claims — the input to the coordinator's every-save structural check (ADR 0065 decision 9): a body
+    /// claiming an environment other than the addressed one is refused, so no save can re-home a run.
+    /// </summary>
+    /// <param name="checkpointUtf8">The serialized checkpoint document (UTF-8 JSON).</param>
+    /// <param name="environment">The environment the body claims, or <see langword="null"/> when it claims none.</param>
+    /// <returns>The index entry the checkpoint projects to.</returns>
+    public static WorkflowRunIndexEntry ProjectIndex(ReadOnlyMemory<byte> checkpointUtf8, out string? environment)
     {
         using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(checkpointUtf8);
         JsonElement root = document.RootElement;
@@ -545,7 +556,7 @@ public static class WorkflowCheckpointSerializer
             : createdAt;
 
         string? correlationId = root.TryGetProperty("correlationId"u8, out JsonElement correlationIdElement) ? correlationIdElement.GetString() : null;
-        string? environment = root.TryGetProperty("environment"u8, out JsonElement environmentElement) ? environmentElement.GetString() : null;
+        environment = root.TryGetProperty("environment"u8, out JsonElement environmentElement) ? environmentElement.GetString() : null;
 
         TagSet tags = root.TryGetProperty("tags"u8, out JsonElement tagsElement) && tagsElement.ValueKind == JsonValueKind.Array
             ? TagSet.CopyFrom(tagsElement)
@@ -590,7 +601,6 @@ public static class WorkflowCheckpointSerializer
             correlationId,
             tags,
             securityTags,
-            environment,
             resumeRequestedAt);
     }
 
@@ -604,10 +614,21 @@ public static class WorkflowCheckpointSerializer
     /// <param name="index">The projected index entry, or <see langword="default"/> when the bytes are not a checkpoint.</param>
     /// <returns><see langword="true"/> if the bytes projected to an index entry; otherwise <see langword="false"/>.</returns>
     public static bool TryProjectIndex(ReadOnlyMemory<byte> checkpointUtf8, out WorkflowRunIndexEntry index)
+        => TryProjectIndex(checkpointUtf8, out index, out _);
+
+    /// <summary>
+    /// As <see cref="TryProjectIndex(ReadOnlyMemory{byte}, out WorkflowRunIndexEntry)"/>, additionally reporting
+    /// the environment the checkpoint body claims (see <see cref="ProjectIndex(ReadOnlyMemory{byte}, out string?)"/>).
+    /// </summary>
+    /// <param name="checkpointUtf8">The bytes to project.</param>
+    /// <param name="index">The projected index entry, or <see langword="default"/> when the bytes are not a checkpoint.</param>
+    /// <param name="environment">The environment the body claims, or <see langword="null"/>.</param>
+    /// <returns><see langword="true"/> if the bytes projected to an index entry; otherwise <see langword="false"/>.</returns>
+    public static bool TryProjectIndex(ReadOnlyMemory<byte> checkpointUtf8, out WorkflowRunIndexEntry index, out string? environment)
     {
         try
         {
-            index = ProjectIndex(checkpointUtf8);
+            index = ProjectIndex(checkpointUtf8, out environment);
             return true;
         }
         catch (Exception ex) when (ex is Corvus.Text.Json.JsonException or System.Text.Json.JsonException or FormatException or InvalidOperationException or ArgumentException or KeyNotFoundException)
@@ -616,6 +637,7 @@ public static class WorkflowCheckpointSerializer
             // missing required property, or a bad scalar (enum/number/date) — the bytes are not a checkpoint. Every
             // other exception (e.g. cancellation, out-of-memory) still propagates.
             index = default;
+            environment = null;
             return false;
         }
     }

@@ -31,8 +31,10 @@ public sealed class ControlPlaneCheckpointSurfaceTests
 {
     private const string Run1 = "0123456789abcdef0123456789abcdef";
     private const string Run2 = "fedcba9876543210fedcba9876543210";
+    private const string Env = "development";
     private const string SeqHeader = "X-Arazzo-Checkpoint-Seq";
     private static readonly WorkflowRunId Run = new(Run1);
+    private static readonly WorkflowRunAddress Address = new(Env, Run);
     private static readonly byte[] Secret = RandomNumberGenerator.GetBytes(CheckpointToken.MinimumSecretBytes);
 
     [TestMethod]
@@ -43,7 +45,7 @@ public sealed class ControlPlaneCheckpointSurfaceTests
         HttpResponseMessage response = await host.PostCheckpointAsync(Run.Value, RealCheckpoint(), sequence: 1, token: null);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
-        (await host.Store.LoadAsync(Run, default)).ShouldBeNull();
+        (await host.Store.LoadAsync(Address, default)).ShouldBeNull();
     }
 
     [TestMethod]
@@ -60,25 +62,39 @@ public sealed class ControlPlaneCheckpointSurfaceTests
     public async Task A_token_minted_for_another_run_does_not_authorise_this_one()
     {
         await using Host host = await Host.StartAsync(Secret);
-        string other = CheckpointToken.Issue(Secret, Run2, DateTimeOffset.UtcNow.AddMinutes(10));
+        string other = CheckpointToken.Issue(Secret, new WorkflowRunAddress(Env, new WorkflowRunId(Run2)), DateTimeOffset.UtcNow.AddMinutes(10));
 
         HttpResponseMessage response = await host.PostCheckpointAsync(Run.Value, RealCheckpoint(), sequence: 1, token: other);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
-        (await host.Store.LoadAsync(Run, default)).ShouldBeNull();
+        (await host.Store.LoadAsync(Address, default)).ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task A_token_minted_for_the_same_run_in_another_environment_does_not_authorise_this_one()
+    {
+        // ADR 0065 decision 9: the token binds the full (environment, runId) address, so the same run id at another
+        // environment is another run and its token borrows nothing here.
+        await using Host host = await Host.StartAsync(Secret);
+        string other = CheckpointToken.Issue(Secret, new WorkflowRunAddress("production", Run), DateTimeOffset.UtcNow.AddMinutes(10));
+
+        HttpResponseMessage response = await host.PostCheckpointAsync(Run.Value, RealCheckpoint(), sequence: 1, token: other);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        (await host.Store.LoadAsync(Address, default)).ShouldBeNull();
     }
 
     [TestMethod]
     public async Task A_valid_token_authorises_the_run_it_was_minted_for()
     {
         await using Host host = await Host.StartAsync(Secret);
-        string token = CheckpointToken.Issue(Secret, Run.Value, DateTimeOffset.UtcNow.AddMinutes(10));
+        string token = CheckpointToken.Issue(Secret, Address, DateTimeOffset.UtcNow.AddMinutes(10));
         byte[] checkpoint = RealCheckpoint();
 
         HttpResponseMessage response = await host.PostCheckpointAsync(Run.Value, checkpoint, sequence: 1, token: token);
 
         response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
-        (await host.Store.LoadAsync(Run, default))!.Value.Utf8.ToArray().ShouldBe(checkpoint);
+        (await host.Store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(checkpoint);
     }
 
     [TestMethod]
@@ -91,7 +107,7 @@ public sealed class ControlPlaneCheckpointSurfaceTests
         HttpResponseMessage response = await host.PostCheckpointAsync(Run.Value, RealCheckpoint(), sequence: 1, token: null);
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
-        (await host.Store.LoadAsync(Run, default)).ShouldBeNull();
+        (await host.Store.LoadAsync(Address, default)).ShouldBeNull();
     }
 
     [TestMethod]
@@ -117,11 +133,11 @@ public sealed class ControlPlaneCheckpointSurfaceTests
 
         // Seed the supplied coordinator's slot for this run, and take the load count that seeding cost.
         byte[] initial = RealCheckpoint();
-        await store.SaveAsync(Run, initial, WorkflowCheckpointSerializer.ProjectIndex(initial), WorkflowEtag.None, default);
-        (await coordinator.LoadAsync(Run, default)).ShouldNotBeNull();
+        await store.SaveAsync(Address, initial, WorkflowCheckpointSerializer.ProjectIndex(initial), WorkflowEtag.None, default);
+        (await coordinator.LoadAsync(Address, default)).ShouldNotBeNull();
         int loadsAfterSeeding = store.Loads;
 
-        string token = CheckpointToken.Issue(Secret, Run.Value, DateTimeOffset.UtcNow.AddMinutes(10));
+        string token = CheckpointToken.Issue(Secret, Address, DateTimeOffset.UtcNow.AddMinutes(10));
         HttpResponseMessage response = await host.PostCheckpointAsync(Run.Value, RealCheckpoint(cursor: 1, sequence: 2), sequence: 2, token: token);
 
         response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
@@ -147,6 +163,7 @@ public sealed class ControlPlaneCheckpointSurfaceTests
             inputs: default,
             stepOutputs,
             outputs: default,
+            environment: Env,
             updatedAt: new DateTimeOffset(2026, 3, 4, 5, 10, 0, TimeSpan.Zero));
     }
 
@@ -157,13 +174,13 @@ public sealed class ControlPlaneCheckpointSurfaceTests
 
         public int Loads => Volatile.Read(ref this.loads);
 
-        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunId id, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
-            => inner.SaveAsync(id, checkpointUtf8, index, expected, cancellationToken);
+        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+            => inner.SaveAsync(address, checkpointUtf8, index, expected, cancellationToken);
 
-        public ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunId id, CancellationToken cancellationToken)
+        public ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
         {
             Interlocked.Increment(ref this.loads);
-            return inner.LoadAsync(id, cancellationToken);
+            return inner.LoadAsync(address, cancellationToken);
         }
     }
 
@@ -202,11 +219,11 @@ public sealed class ControlPlaneCheckpointSurfaceTests
         }
 
         public Task<HttpResponseMessage> GetCheckpointAsync(string runId, string? token)
-            => this.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"/runs/{runId}/checkpoint"), token);
+            => this.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"/environments/{Env}/runs/{runId}/checkpoint"), token);
 
         public Task<HttpResponseMessage> PostCheckpointAsync(string runId, byte[] body, long sequence, string? token)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, $"/runs/{runId}/checkpoint")
+            var request = new HttpRequestMessage(HttpMethod.Post, $"/environments/{Env}/runs/{runId}/checkpoint")
             {
                 Content = new ByteArrayContent(body) { Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") } },
             };

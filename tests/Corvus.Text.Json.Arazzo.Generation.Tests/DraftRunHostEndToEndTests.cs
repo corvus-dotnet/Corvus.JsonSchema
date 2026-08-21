@@ -97,7 +97,7 @@ public sealed class DraftRunHostEndToEndTests
 
         // The run was claimed, compiled from the captured bytes, and driven to completion.
         dispatched.ShouldBe(1);
-        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, id);
+        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev(id));
         completed.ShouldNotBeNull();
         completed!.Status.ShouldBe(WorkflowRunStatus.Completed);
 
@@ -129,7 +129,7 @@ public sealed class DraftRunHostEndToEndTests
         // durable executor faulted the run (a resumable terminal, not a thrown exception through the dispatcher).
         dispatched.ShouldBe(1);
         endpoint.Requests.Count.ShouldBe(1, "the real transport reached the endpoint before the fault");
-        using WorkflowRun? faulted = await WorkflowRun.ResumeAsync(runStore, id);
+        using WorkflowRun? faulted = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev(id));
         faulted.ShouldNotBeNull();
         faulted!.Status.ShouldBe(WorkflowRunStatus.Faulted);
     }

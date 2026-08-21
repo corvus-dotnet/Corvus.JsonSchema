@@ -18,10 +18,11 @@ internal sealed class RunnerApiCheckpointStore : IWorkflowCheckpointStore
     internal RunnerApiCheckpointStore(ArazzoRunnerClient owner) => this.owner = owner;
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunId id, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
     {
-        ArazzoRunnerClient.HeldLease held = this.owner.RequireLease(id);
-        RunnerQuotaHold hold = this.owner.HoldFor(id);
+        WorkflowRunId id = address.RunId;
+        ArazzoRunnerClient.HeldLease held = this.owner.RequireLease(address);
+        RunnerQuotaHold hold = this.owner.HoldFor(address);
 
         while (true)
         {
@@ -43,7 +44,7 @@ internal sealed class RunnerApiCheckpointStore : IWorkflowCheckpointStore
 
             if (response.StatusCode == 409)
             {
-                this.owner.Forget(id);
+                this.owner.Forget(address);
                 throw new RunnerLeaseLostException(id);
             }
 
@@ -73,24 +74,25 @@ internal sealed class RunnerApiCheckpointStore : IWorkflowCheckpointStore
     /// <inheritdoc/>
     // Not async: the interface takes the index by `in`, which an async method may not. The synchronous part reads
     // the sequence and then hands off to the core, which is where the await lives.
-    public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunId id, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+    public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
     {
-        ArazzoRunnerClient.HeldLease held = this.owner.RequireLease(id);
+        ArazzoRunnerClient.HeldLease held = this.owner.RequireLease(address);
 
         // The sequence comes from the document the run authored — one series, one author — and is read by a forward-only
         // scan that stops at the property rather than a parse of the whole checkpoint. The index travels nowhere: the
         // server re-projects it from these same bytes, so sending it would be sending a second copy of what it already
         // has, and one the server could not trust anyway.
         WorkflowCheckpointSerializer.TryReadSequence(checkpointUtf8, out long sequence);
-        return this.SaveCoreAsync(id, checkpointUtf8, held, sequence, cancellationToken);
+        return this.SaveCoreAsync(address, checkpointUtf8, held, sequence, cancellationToken);
     }
 
     private static long SequenceHeader(LoadCheckpointResponse response)
         => response.XArazzoCheckpointSeqHeader.IsNotUndefined() ? (long)response.XArazzoCheckpointSeqHeader : 0;
 
-    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunId id, ReadOnlyMemory<byte> checkpointUtf8, ArazzoRunnerClient.HeldLease held, long sequence, CancellationToken cancellationToken)
+    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointUtf8, ArazzoRunnerClient.HeldLease held, long sequence, CancellationToken cancellationToken)
     {
-        RunnerQuotaHold hold = this.owner.HoldFor(id);
+        WorkflowRunId id = address.RunId;
+        RunnerQuotaHold hold = this.owner.HoldFor(address);
 
         while (true)
         {
@@ -120,7 +122,7 @@ internal sealed class RunnerApiCheckpointStore : IWorkflowCheckpointStore
                 CheckpointWriteProblem problem = response.ConflictBody;
                 if (problem.IsNotUndefined() && problem.Type.IsNotUndefined() && problem.Type.ValueEquals(RunnerProblemTypes.LeaseLost))
                 {
-                    this.owner.Forget(id);
+                    this.owner.Forget(address);
                     throw new RunnerLeaseLostException(id);
                 }
 

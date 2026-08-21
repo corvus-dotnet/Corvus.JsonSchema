@@ -23,6 +23,10 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 /// <see cref="PrepareAsync(string, CancellationToken)"/>, then open the store with
 /// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/>.
 /// </remarks>
+// TRANSITIONAL (ADR 0065 decision 9): the seam addresses runs by (environment, runId), but this backend still keys
+// its entities by run id alone — the composite-key conversion is this backend's own commit, and the composite-address
+// conformance oracles pin the gap until it lands. The Environment column is written from the address and projected
+// back into every answered address.
 public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
@@ -154,16 +158,16 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
 
     /// <inheritdoc/>
     public ValueTask<WorkflowEtag> SaveAsync(
-        WorkflowRunId id,
+        WorkflowRunAddress address,
         ReadOnlyMemory<byte> checkpointUtf8,
         in WorkflowRunIndexEntry index,
         WorkflowEtag expected,
         CancellationToken cancellationToken)
-        => this.SaveCoreAsync(id, checkpointUtf8.ToArray(), index, expected, cancellationToken);
+        => this.SaveCoreAsync(address, checkpointUtf8.ToArray(), index, expected, cancellationToken);
 
-    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunId id, byte[] checkpoint, WorkflowRunIndexEntry indexEntry, WorkflowEtag expected, CancellationToken cancellationToken)
+    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunAddress address, byte[] checkpoint, WorkflowRunIndexEntry indexEntry, WorkflowEtag expected, CancellationToken cancellationToken)
     {
-        BlobClient blob = this.runs.GetBlobClient(id.Value);
+        BlobClient blob = this.runs.GetBlobClient(address.RunId.Value);
         var conditions = expected.IsNone
             ? new BlobRequestConditions { IfNoneMatch = ETag.All }
             : new BlobRequestConditions { IfMatch = new ETag(expected.Value!) };
@@ -179,7 +183,7 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         }
         catch (RequestFailedException ex) when (ex.Status is 409 or 412)
         {
-            throw new WorkflowConflictException(id, expected);
+            throw new WorkflowConflictException(address, expected);
         }
 
         // §14.4 label index. The ordering is what keeps it safe to be imprecise: entries are ADDED before the row
@@ -189,23 +193,23 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         HashSet<string> desired = AzureStorageSecurityLabelIndex.TokensFor(indexEntry.SecurityTags);
         HashSet<string> previous = expected.IsNone
             ? []
-            : await this.ReadSecurityLabelTokensAsync(id, cancellationToken).ConfigureAwait(false);
+            : await this.ReadSecurityLabelTokensAsync(address.RunId, cancellationToken).ConfigureAwait(false);
 
         foreach (string token in desired)
         {
             if (!previous.Contains(token))
             {
-                await this.labels.UpsertEntityAsync(new TableEntity(token, id.Value), TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+                await this.labels.UpsertEntityAsync(new TableEntity(token, address.RunId.Value), TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
             }
         }
 
-        await this.index.UpsertEntityAsync(BuildIndexEntity(id, indexEntry), TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+        await this.index.UpsertEntityAsync(BuildIndexEntity(address, indexEntry), TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
 
         foreach (string token in previous)
         {
             if (!desired.Contains(token))
             {
-                await this.labels.DeleteEntityAsync(token, id.Value, ETag.All, cancellationToken).ConfigureAwait(false);
+                await this.labels.DeleteEntityAsync(token, address.RunId.Value, ETag.All, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -231,9 +235,9 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunId id, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
     {
-        BlobClient blob = this.runs.GetBlobClient(id.Value);
+        BlobClient blob = this.runs.GetBlobClient(address.RunId.Value);
         try
         {
             Response<BlobDownloadResult> response = await blob.DownloadContentAsync(cancellationToken).ConfigureAwait(false);
@@ -246,7 +250,7 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunId id, string owner, TimeSpan ttl, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunAddress address, string owner, TimeSpan ttl, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(owner);
 
@@ -257,7 +261,7 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         // The epoch is advanced from the stored entity rather than supplied, so it counts this run's grants across every
         // instance and every restart (ADR 0065 §6). The entity's own ETag is what makes read-then-advance atomic: a
         // concurrent grant changes it, and the conditional write below is refused rather than reusing the epoch it read.
-        TableEntity Entity(long epoch) => new(LeasePartition, id.Value)
+        TableEntity Entity(long epoch) => new(LeasePartition, address.RunId.Value)
         {
             ["Owner"] = owner,
             ["Token"] = token,
@@ -265,13 +269,13 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             ["Epoch"] = epoch,
         };
 
-        NullableResponse<TableEntity> existing = await this.leases.GetEntityIfExistsAsync<TableEntity>(LeasePartition, id.Value, cancellationToken: cancellationToken).ConfigureAwait(false);
+        NullableResponse<TableEntity> existing = await this.leases.GetEntityIfExistsAsync<TableEntity>(LeasePartition, address.RunId.Value, cancellationToken: cancellationToken).ConfigureAwait(false);
         try
         {
             if (!existing.HasValue)
             {
                 await this.leases.AddEntityAsync(Entity(1), cancellationToken).ConfigureAwait(false);
-                return new WorkflowLease(id, owner, token, expiresAt, 1);
+                return new WorkflowLease(address, owner, token, expiresAt, 1);
             }
 
             long currentExpiresAt = existing.Value!.GetInt64("ExpiresAt") ?? 0;
@@ -283,7 +287,7 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
 
             long granted = (existing.Value.GetInt64("Epoch") ?? 0) + 1;
             await this.leases.UpdateEntityAsync(Entity(granted), existing.Value.ETag, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
-            return new WorkflowLease(id, owner, token, expiresAt, granted);
+            return new WorkflowLease(address, owner, token, expiresAt, granted);
         }
         catch (RequestFailedException ex) when (ex.Status is 409 or 412)
         {
@@ -319,7 +323,7 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         long epoch = current.GetInt64("Epoch") ?? 0;
         if (extension == TimeSpan.Zero)
         {
-            return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(currentExpiresAt), epoch);
+            return new WorkflowLease(lease.Address, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(currentExpiresAt), epoch);
         }
 
         DateTimeOffset extendedTo = now + extension;
@@ -334,7 +338,7 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         try
         {
             await this.leases.UpdateEntityAsync(extended, current.ETag, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
-            return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, extendedTo, epoch);
+            return new WorkflowLease(lease.Address, lease.Owner, lease.Token, extendedTo, epoch);
         }
         catch (RequestFailedException ex) when (ex.Status is 404 or 412)
         {
@@ -365,53 +369,55 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
     }
 
     /// <inheritdoc/>
-    public async ValueTask DeleteAsync(WorkflowRunId id, CancellationToken cancellationToken)
+    public async ValueTask DeleteAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
     {
         // Read the run's labels while its row still exists, then drop the row before its labels — the same ordering
         // the save path uses, and for the same reason: a surviving label is discarded by the exact reach evaluation
         // when nothing loads behind it, whereas dropping labels first would strand a still-visible run.
-        HashSet<string> tokens = await this.ReadSecurityLabelTokensAsync(id, cancellationToken).ConfigureAwait(false);
+        HashSet<string> tokens = await this.ReadSecurityLabelTokensAsync(address.RunId, cancellationToken).ConfigureAwait(false);
 
-        await this.runs.GetBlobClient(id.Value).DeleteIfExistsAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
-        await this.index.DeleteEntityAsync(IndexPartition, id.Value, ETag.All, cancellationToken).ConfigureAwait(false);
-        await this.leases.DeleteEntityAsync(LeasePartition, id.Value, ETag.All, cancellationToken).ConfigureAwait(false);
+        await this.runs.GetBlobClient(address.RunId.Value).DeleteIfExistsAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        await this.index.DeleteEntityAsync(IndexPartition, address.RunId.Value, ETag.All, cancellationToken).ConfigureAwait(false);
+        await this.leases.DeleteEntityAsync(LeasePartition, address.RunId.Value, ETag.All, cancellationToken).ConfigureAwait(false);
 
         foreach (string token in tokens)
         {
-            await this.labels.DeleteEntityAsync(token, id.Value, ETag.All, cancellationToken).ConfigureAwait(false);
+            await this.labels.DeleteEntityAsync(token, address.RunId.Value, ETag.All, cancellationToken).ConfigureAwait(false);
         }
     }
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunAddress> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken)
         => this.QueryDueAsync(before, null, cancellationToken);
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<WorkflowRunAddress> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         string filter = TableClient.CreateQueryFilter($"PartitionKey eq {IndexPartition} and Status eq {SuspendedStatus} and DueAt le {before.ToUnixTimeMilliseconds()}");
         await foreach (TableEntity entity in this.index.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
         {
             // §5.5 environment-scoped timer-resume. A real runner (non-null runnerEnvironment) resumes a due timer
-            // only when the run is pinned to EXACTLY its environment; an unpinned or differently-pinned run is
-            // excluded. A null runnerEnvironment is the env-agnostic base overload (return all due runs). The §5.5
-            // environment predicate cannot be expressed over a possibly-absent property in OData, so it is applied
-            // in process, matching QueryClaimableAsync.
-            if (!MatchesEnvironment(entity.GetString("Environment"), runnerEnvironment))
+            // only when the run is pinned to EXACTLY its environment; a differently-pinned run is excluded. A null
+            // runnerEnvironment is the env-agnostic base overload (return all due runs). The §5.5 environment
+            // predicate cannot be expressed over a possibly-absent property in OData, so it is applied in process,
+            // matching QueryClaimableAsync. The environment is half the answered address (ADR 0065 decision 9), so
+            // an entity unexpectedly missing one is skipped — every entity this code writes carries it.
+            string? environment = entity.GetString("Environment");
+            if (environment is null || !MatchesEnvironment(environment, runnerEnvironment))
             {
                 continue;
             }
 
-            yield return new WorkflowRunId(entity.RowKey);
+            yield return new WorkflowRunAddress(environment, new WorkflowRunId(entity.RowKey));
         }
     }
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunAddress> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken)
         => this.QueryAwaitingAsync(channel, correlationId, null, cancellationToken);
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<WorkflowRunAddress> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(channel);
 
@@ -421,10 +427,13 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         await foreach (TableEntity entity in this.index.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
         {
             // §5.5 environment-scoped event-resume. A real runner (non-null runnerEnvironment) resumes an awaiting
-            // run only when it is pinned to EXACTLY its environment; an unpinned or differently-pinned run is excluded.
-            // A null runnerEnvironment is the env-agnostic base overload. The environment predicate cannot be expressed
-            // over a possibly-absent property in OData, so it is applied in process, matching QueryDueAsync.
-            if (!MatchesEnvironment(entity.GetString("Environment"), runnerEnvironment))
+            // run only when it is pinned to EXACTLY its environment; a differently-pinned run is excluded. A null
+            // runnerEnvironment is the env-agnostic base overload. The environment predicate cannot be expressed
+            // over a possibly-absent property in OData, so it is applied in process, matching QueryDueAsync. The
+            // environment is half the answered address (ADR 0065 decision 9), so an entity unexpectedly missing one
+            // is skipped — every entity this code writes carries it.
+            string? environment = entity.GetString("Environment");
+            if (environment is null || !MatchesEnvironment(environment, runnerEnvironment))
             {
                 continue;
             }
@@ -432,17 +441,17 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             string? stored = entity.GetString("AwaitingCorrelationId");
             if (correlationId is null || stored is null || stored == correlationId)
             {
-                yield return new WorkflowRunId(entity.RowKey);
+                yield return new WorkflowRunAddress(environment, new WorkflowRunId(entity.RowKey));
             }
         }
     }
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunAddress> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
         => this.QueryClaimableAsync(hostedWorkflowIds, null, now, cancellationToken);
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<WorkflowRunAddress> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
 
@@ -461,7 +470,7 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         // surfaces here, so a separate runner can claim and advance it; the marker is cleared on its first checkpoint.
         // The marker presence is checked in process too (OData cannot test a possibly-absent property).
         string filter = TableClient.CreateQueryFilter($"PartitionKey eq {IndexPartition} and (Status eq {PendingStatus} or Status eq {RunningStatus} or Status eq {SuspendedStatus} or Status eq {FaultedStatus})");
-        var candidates = new List<(string RowKey, string Status)>();
+        var candidates = new List<(string RowKey, string Environment, string Status)>();
         bool anyRunning = false;
         await foreach (TableEntity entity in this.index.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
         {
@@ -471,7 +480,10 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
                 continue;
             }
 
-            if (!MatchesEnvironment(entity.GetString("Environment"), runnerEnvironment))
+            // The environment is half the answered address (ADR 0065 decision 9), so an entity unexpectedly missing
+            // one is skipped — every entity this code writes carries it.
+            string? environment = entity.GetString("Environment");
+            if (environment is null || !MatchesEnvironment(environment, runnerEnvironment))
             {
                 continue;
             }
@@ -484,7 +496,7 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
                 continue;
             }
 
-            candidates.Add((entity.RowKey, status));
+            candidates.Add((entity.RowKey, environment, status));
             if (status == RunningStatus)
             {
                 anyRunning = true;
@@ -503,7 +515,7 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             }
         }
 
-        foreach ((string rowKey, string status) in candidates)
+        foreach ((string rowKey, string environment, string status) in candidates)
         {
             // A Suspended/Faulted candidate is present only because it carries the resume-requested marker (gated
             // above), so surface it unconditionally alongside Pending and orphaned-Running runs.
@@ -512,7 +524,7 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
                 || status == FaultedStatus
                 || held?.Contains(rowKey) != true)
             {
-                yield return new WorkflowRunId(rowKey);
+                yield return new WorkflowRunAddress(environment, new WorkflowRunId(rowKey));
             }
         }
     }
@@ -522,20 +534,17 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
     {
         string filter = BuildVisibilityFilter(query);
 
-        // Table storage returns entities ordered by PartitionKey then RowKey, and the run id is the RowKey
-        // within the single index partition — so results arrive in ascending run-id order and a RowKey keyset
-        // gives the continuation.
+        // Table storage returns entities ordered by PartitionKey then RowKey, and the run id is the RowKey within
+        // the single index partition — so results arrive in ascending run-id order, while the keyset is the
+        // composite (environment, run id) address (ADR 0065 decision 9). Until this backend keys its entities by
+        // the composite (see the TRANSITIONAL note on the class), the cursor and the page order are applied in
+        // process: filter to past-cursor matches, sort by address, then cut.
         // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
-        string? after = null;
+        WorkflowRunAddress? after = null;
         if (query.ContinuationToken.IsNotUndefined())
         {
             using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
             after = WorkflowContinuationToken.Decode(tokenUtf8.Span);
-        }
-
-        if (after is { })
-        {
-            filter += TableClient.CreateQueryFilter($" and RowKey gt {after}");
         }
 
         // §14.4: narrow to the candidate rows the label index admits before reading anything. A null plan means the
@@ -548,23 +557,39 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         }
 
         // Table OData cannot match inside the serialized TagsJson, so a contains-ALL tag predicate is applied
-        // client-side, as is the exact reach evaluation over the candidates the index proposed. Both must run before
-        // the keyset "take Limit (plus one to detect a further page)" cut so paging stays correct: filter the
-        // materialised stream, then take.
+        // client-side, as is the exact reach evaluation over the candidates the index proposed — and the composite
+        // cursor with them, because rows arrive in run-id order, not address order. Collect every match with its
+        // address, then sort and cut to Limit (plus one to detect a further page).
         var runs = new List<WorkflowRunListing>();
-        await foreach (TableEntity entity in this.QueryIndexAsync(filter, candidates, after, cancellationToken).ConfigureAwait(false))
+        await foreach (TableEntity entity in this.QueryIndexAsync(filter, candidates, cancellationToken).ConfigureAwait(false))
         {
+            // The environment is half the answered address (ADR 0065 decision 9), so an entity unexpectedly missing
+            // one is skipped — every entity this code writes carries it.
+            string? environment = entity.GetString("Environment");
+            if (environment is null)
+            {
+                continue;
+            }
+
+            var address = new WorkflowRunAddress(environment, new WorkflowRunId(entity.RowKey));
+            if (after is { } cursor && WorkflowRunAddress.Compare(address, cursor) <= 0)
+            {
+                continue;
+            }
+
             WorkflowRunIndexEntry entry = ReadIndexEntity(entity);
             if (!MatchesClientSide(query, entry))
             {
                 continue;
             }
 
-            runs.Add(new WorkflowRunListing(new WorkflowRunId(entity.RowKey), entry));
-            if (runs.Count > query.Limit)
-            {
-                break;
-            }
+            runs.Add(new WorkflowRunListing(address, entry));
+        }
+
+        runs.Sort(static (left, right) => WorkflowRunAddress.Compare(left.Address, right.Address));
+        if (runs.Count > query.Limit + 1)
+        {
+            runs.RemoveRange(query.Limit + 1, runs.Count - (query.Limit + 1));
         }
 
         return WorkflowContinuationToken.Paginate(runs, query.Limit);
@@ -586,8 +611,15 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         // JSON), so stream the candidate entities and bounded-count the rows the client-side filter admits, stopping
         // one past the cap. Same filter as the list, so the reach cannot drift.
         int count = 0;
-        await foreach (TableEntity entity in this.QueryIndexAsync(filter, candidates, after: null, cancellationToken).ConfigureAwait(false))
+        await foreach (TableEntity entity in this.QueryIndexAsync(filter, candidates, cancellationToken).ConfigureAwait(false))
         {
+            // Skip an entity missing its Environment exactly as the list does, so a count never admits a row the
+            // list would not have shown.
+            if (entity.GetString("Environment") is null)
+            {
+                continue;
+            }
+
             if (MatchesClientSide(query, ReadIndexEntity(entity)) && ++count > cap)
             {
                 return (cap, true);
@@ -615,7 +647,6 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
     private async IAsyncEnumerable<TableEntity> QueryIndexAsync(
         string filter,
         IReadOnlySet<string>? candidates,
-        string? after,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         if (candidates is null)
@@ -628,7 +659,7 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             yield break;
         }
 
-        string[] ordered = [.. candidates.Where(id => after is null || string.CompareOrdinal(id, after) > 0).OrderBy(id => id, StringComparer.Ordinal)];
+        string[] ordered = [.. candidates.OrderBy(id => id, StringComparer.Ordinal)];
         for (int start = 0; start < ordered.Length; start += CandidateChunkSize)
         {
             ReadOnlySpan<string> chunk = ordered.AsSpan(start, Math.Min(CandidateChunkSize, ordered.Length - start));
@@ -718,20 +749,21 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         => query.Tags.AllContainedIn(entry.Tags)
             && (query.Security is not { } security || security.IsSatisfiedBy(entry.SecurityTags));
 
-    // §5.5: an unscoped dispatcher (null runnerEnvironment) or an unpinned run (null run environment) matches
-    // anything; otherwise the run's pinned environment must equal the runner's.
-    // §5.5: a real runner (non-null runnerEnvironment) claims a run only when pinned to EXACTLY its environment (an
-    // unpinned or differently-pinned run is never claimed); a null runnerEnvironment is the env-agnostic base overload
-    // (list all claimable regardless of environment), never a runner.
-    private static bool MatchesEnvironment(string? runEnvironment, string? runnerEnvironment)
-        => runnerEnvironment is null || (runEnvironment is not null && string.Equals(runEnvironment, runnerEnvironment, StringComparison.Ordinal));
+    // §5.5: a real runner (non-null runnerEnvironment) claims a run only when pinned to EXACTLY its environment (a
+    // differently-pinned run is never claimed); a null runnerEnvironment is the env-agnostic base overload (list all
+    // claimable regardless of environment), never a runner. The environment is half the run's address (ADR 0065
+    // decision 9), carried by the entity's Environment column — every caller skips an entity missing one before
+    // matching, so it is never null here.
+    private static bool MatchesEnvironment(string runEnvironment, string? runnerEnvironment)
+        => runnerEnvironment is null || string.Equals(runEnvironment, runnerEnvironment, StringComparison.Ordinal);
 
-    private static TableEntity BuildIndexEntity(WorkflowRunId id, in WorkflowRunIndexEntry index)
+    private static TableEntity BuildIndexEntity(in WorkflowRunAddress address, in WorkflowRunIndexEntry index)
     {
-        var entity = new TableEntity(IndexPartition, id.Value)
+        var entity = new TableEntity(IndexPartition, address.RunId.Value)
         {
             ["Status"] = index.Status.ToString(),
             ["WorkflowId"] = index.WorkflowId,
+            ["Environment"] = address.Environment,
             ["CreatedAt"] = index.CreatedAt.ToUnixTimeMilliseconds(),
             ["UpdatedAt"] = index.UpdatedAt.ToUnixTimeMilliseconds(),
         };
@@ -759,11 +791,6 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         if (index.CorrelationId is { } cid)
         {
             entity["CorrelationId"] = cid;
-        }
-
-        if (index.Environment is { } environment)
-        {
-            entity["Environment"] = environment;
         }
 
         if (index.ResumeRequestedAt is { } resume)
@@ -801,7 +828,6 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             entity.GetString("ErrorType"),
             CorrelationId: entity.GetString("CorrelationId"),
             Tags: TagSet.FromJsonStringOrEmpty(entity.GetString("TagsJson")),
-            SecurityTags: SecurityTagSet.FromJsonStringOrEmpty(entity.GetString("SecurityTagsJson")),
-            Environment: entity.GetString("Environment"));
+            SecurityTags: SecurityTagSet.FromJsonStringOrEmpty(entity.GetString("SecurityTagsJson")));
     }
 }

@@ -61,12 +61,13 @@ public sealed class ServerlessWorkflowRunHost
     /// tri-state outcome — or <see langword="null"/> when the run is not dispatchable (not found, already terminal, or
     /// a resume kind this host does not serve) so nothing was run.
     /// </summary>
-    /// <param name="runId">The id of the run to advance, carried by the invocation.</param>
+    /// <param name="address">The <c>(environment, runId)</c> address of the run to advance, carried by the invocation
+    /// (ADR 0065 decision 9).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The run outcome, or <see langword="null"/> when there was nothing dispatchable to advance.</returns>
-    public async ValueTask<WorkflowRunResultKind?> InvokeAsync(WorkflowRunId runId, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowRunResultKind?> InvokeAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
     {
-        using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.store, runId, this.timeProvider, cancellationToken).ConfigureAwait(false);
+        using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.store, address, this.timeProvider, cancellationToken).ConfigureAwait(false);
 
         // Re-check dispatchability on the fresh checkpoint, matching WorkflowDispatcher: a Pending or Running run, or a
         // Suspended/Faulted run the control plane marked resume-claimable (§18), is advanced; a missing run (deleted)

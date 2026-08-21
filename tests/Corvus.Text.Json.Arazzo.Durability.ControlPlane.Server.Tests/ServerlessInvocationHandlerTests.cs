@@ -54,7 +54,7 @@ public sealed class ServerlessInvocationHandlerTests
         Encoding.UTF8.GetString(outcome).ShouldBe("""{"outcome":"Completed"}""");
 
         // ...and its terminal checkpoint landed in the store through the live checkpoint endpoints.
-        WorkflowCheckpoint stored = (await runner.Store.LoadAsync(Run1, default))!.Value;
+        WorkflowCheckpoint stored = (await runner.Store.LoadAsync(new WorkflowRunAddress("development", new WorkflowRunId(Run1)), default))!.Value;
         WorkflowCheckpointSerializer.ProjectIndex(stored.Utf8).Status.ShouldBe(WorkflowRunStatus.Completed);
     }
 
@@ -107,8 +107,32 @@ public sealed class ServerlessInvocationHandlerTests
         await using Runner runner = await Runner.StartAsync();
         var handler = new ServerlessInvocationHandler(new BakedHostedWorkflowResolver(new CompletingHostedWorkflow("wf")), NoTransports, runner.CheckpointHandler);
 
-        byte[] body = Encoding.UTF8.GetBytes($$"""{"runId":"{{Run1}}"}""");
+        byte[] body = Encoding.UTF8.GetBytes($$"""{"runId":"{{Run1}}","environment":"development"}""");
         await Should.ThrowAsync<ArgumentException>(async () => await handler.HandleAsync(body, default));
+    }
+
+    [TestMethod]
+    public async Task Rejects_an_invocation_missing_the_environment()
+    {
+        // The environment is half the run's address (ADR 0065 decision 9) and is required at this ingress: an
+        // invocation without one cannot address the run's checkpoints at all.
+        await using Runner runner = await Runner.StartAsync();
+        var handler = new ServerlessInvocationHandler(new BakedHostedWorkflowResolver(new CompletingHostedWorkflow("wf")), NoTransports, runner.CheckpointHandler);
+
+        byte[] body = Encoding.UTF8.GetBytes($$"""{"runId":"{{Run1}}","checkpointUrl":"{{runner.CheckpointBaseUrl}}"}""");
+        ArgumentException refusal = await Should.ThrowAsync<ArgumentException>(async () => await handler.HandleAsync(body, default));
+        refusal.Message.ShouldContain("environment");
+    }
+
+    [TestMethod]
+    public async Task Rejects_an_invocation_whose_environment_is_outside_the_grammar()
+    {
+        await using Runner runner = await Runner.StartAsync();
+        var handler = new ServerlessInvocationHandler(new BakedHostedWorkflowResolver(new CompletingHostedWorkflow("wf")), NoTransports, runner.CheckpointHandler);
+
+        byte[] body = Encoding.UTF8.GetBytes($$"""{"runId":"{{Run1}}","environment":"Not_A_Label","checkpointUrl":"{{runner.CheckpointBaseUrl}}"}""");
+        ArgumentException refusal = await Should.ThrowAsync<ArgumentException>(async () => await handler.HandleAsync(body, default));
+        refusal.Message.ShouldContain("grammar");
     }
 
     [TestMethod]
@@ -128,7 +152,7 @@ public sealed class ServerlessInvocationHandlerTests
     // Authorization: Bearer on its per-invocation checkpoint client. Without it the surface refuses every callback.
     private static byte[] Invocation(string runId, string checkpointUrl)
     {
-        string token = CheckpointToken.Issue(CheckpointSecret, runId, DateTimeOffset.UtcNow.AddMinutes(10));
+        string token = CheckpointToken.Issue(CheckpointSecret, new WorkflowRunAddress("development", new WorkflowRunId(runId)), DateTimeOffset.UtcNow.AddMinutes(10));
         return Encoding.UTF8.GetBytes($$"""{"runId":"{{runId}}","environment":"development","checkpointUrl":"{{checkpointUrl}}","checkpointToken":"{{token}}"}""");
     }
 

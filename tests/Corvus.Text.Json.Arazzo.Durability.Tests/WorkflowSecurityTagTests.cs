@@ -31,7 +31,7 @@ public sealed class WorkflowSecurityTagTests
         }
 
         // Re-enter from the persisted checkpoint: the security tags (and the separate user tags) are restored.
-        using WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, "run-1", Time, default);
+        using WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, TestAddresses.Dev("run-1"), Time, default);
         resumed.ShouldNotBeNull();
         resumed.SecurityTags.ToList().ShouldBe(security);
         resumed.Tags.ToList().ShouldBe(["nightly"]);

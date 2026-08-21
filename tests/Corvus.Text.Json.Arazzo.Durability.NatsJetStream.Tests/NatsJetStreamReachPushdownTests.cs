@@ -122,15 +122,15 @@ public sealed class NatsJetStreamReachPushdownTests
         IWorkflowStateStore store = await NewStoreAsync();
         var index = (IWorkflowWaitIndex)store;
 
-        await store.SaveAsync("acme-0", Bytes(), Secured([new("tenant", "acme")]), WorkflowEtag.None, default);
+        await store.SaveAsync(A("acme-0"), Bytes(), Secured([new("tenant", "acme")]), WorkflowEtag.None, default);
         (await index.QueryAsync(new WorkflowQuery(Limit: 10, Security: AcmeReach()), default)).Runs.Count.ShouldBe(1);
 
-        await store.DeleteAsync("acme-0", default);
+        await store.DeleteAsync(A("acme-0"), default);
 
         // A run recreated under the same id must not inherit the deleted run's labels: after the delete the acme
         // entry is gone, so an acme-reach query answers empty from the label bucket alone, without reading the
         // envelope the recreated globex run now occupies.
-        await store.SaveAsync("acme-0", Bytes(), Secured([new("tenant", "globex")]), WorkflowEtag.None, default);
+        await store.SaveAsync(A("acme-0"), Bytes(), Secured([new("tenant", "globex")]), WorkflowEtag.None, default);
 
         await using ApiLog log = await ApiLog.StartAsync(container.GetConnectionString());
         (await index.QueryAsync(new WorkflowQuery(Limit: 10, Security: AcmeReach()), default)).Runs.ShouldBeEmpty();
@@ -146,8 +146,8 @@ public sealed class NatsJetStreamReachPushdownTests
         IWorkflowStateStore store = await NewStoreAsync();
         var index = (IWorkflowWaitIndex)store;
 
-        WorkflowEtag first = await store.SaveAsync("retag-0", Bytes(), Secured([new("tenant", "acme")]), WorkflowEtag.None, default);
-        await store.SaveAsync("retag-0", Bytes(), Secured([new("tenant", "globex")]), first, default);
+        WorkflowEtag first = await store.SaveAsync(A("retag-0"), Bytes(), Secured([new("tenant", "acme")]), WorkflowEtag.None, default);
+        await store.SaveAsync(A("retag-0"), Bytes(), Secured([new("tenant", "globex")]), first, default);
 
         (await index.QueryAsync(new WorkflowQuery(Limit: 10, Security: GlobexReach()), default)).Runs.Count.ShouldBe(1);
 
@@ -166,8 +166,8 @@ public sealed class NatsJetStreamReachPushdownTests
         IWorkflowStateStore store = await NewStoreAsync();
         var index = (IWorkflowWaitIndex)store;
 
-        await store.SaveAsync("one", Bytes(), Secured([new("a", "bc")]), WorkflowEtag.None, default);
-        await store.SaveAsync("two", Bytes(), Secured([new("ab", "c")]), WorkflowEtag.None, default);
+        await store.SaveAsync(A("one"), Bytes(), Secured([new("a", "bc")]), WorkflowEtag.None, default);
+        await store.SaveAsync(A("two"), Bytes(), Secured([new("ab", "c")]), WorkflowEtag.None, default);
 
         await using ApiLog log = await ApiLog.StartAsync(container.GetConnectionString());
         WorkflowRunPage page = await index.QueryAsync(new WorkflowQuery(Limit: 10, Security: Reach("a == 'bc'")), default);
@@ -187,7 +187,7 @@ public sealed class NatsJetStreamReachPushdownTests
         IWorkflowStateStore store = await NewStoreAsync();
         var index = (IWorkflowWaitIndex)store;
 
-        await store.SaveAsync("odd-0", Bytes(), Secured([new("tenant", "a.b*c>d")]), WorkflowEtag.None, default);
+        await store.SaveAsync(A("odd-0"), Bytes(), Secured([new("tenant", "a.b*c>d")]), WorkflowEtag.None, default);
 
         (await index.QueryAsync(new WorkflowQuery(Limit: 10, Security: Reach("tenant == 'a.b*c>d'")), default))
             .Runs.Count.ShouldBe(1);
@@ -215,13 +215,16 @@ public sealed class NatsJetStreamReachPushdownTests
     private static WorkflowRunIndexEntry Secured(SecurityTag[] securityTags)
         => new("wf", WorkflowRunStatus.Running, T0, T0, SecurityTags: SecurityTagSet.FromTags(securityTags));
 
+    // The run's full (environment, runId) address (ADR 0065 decision 9).
+    private static WorkflowRunAddress A(string runId) => new("development", new WorkflowRunId(runId));
+
     // Ids are prefixed by tenant so the globex runs a reach test asks for do NOT lead in id order.
     private static async ValueTask SeedAsync(IWorkflowStateStore store, int count)
     {
         for (int i = 0; i < count / 2; ++i)
         {
-            await store.SaveAsync($"acme-{i:D3}", Bytes(), Secured([new("tenant", "acme")]), WorkflowEtag.None, default);
-            await store.SaveAsync($"globex-{i:D3}", Bytes(), Secured([new("tenant", "globex")]), WorkflowEtag.None, default);
+            await store.SaveAsync(A($"acme-{i:D3}"), Bytes(), Secured([new("tenant", "acme")]), WorkflowEtag.None, default);
+            await store.SaveAsync(A($"globex-{i:D3}"), Bytes(), Secured([new("tenant", "globex")]), WorkflowEtag.None, default);
         }
     }
 

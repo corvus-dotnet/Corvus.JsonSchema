@@ -32,7 +32,7 @@ WebApplication app = builder.Build();
 app.MapWorkflowCheckpointEndpoints(
     store,
     requireAuthorization: false,
-    authenticateCheckpointToken: (id, token) => CheckpointToken.TryValidate(checkpointSecret, token, id.Value, DateTimeOffset.UtcNow));
+    authenticateCheckpointToken: (address, token) => CheckpointToken.TryValidate(checkpointSecret, token, address, DateTimeOffset.UtcNow));
 
 // The workflow's `echo` source (the serverless-check workflow's one GET). Unauthenticated: it is a source the function
 // calls, not the checkpoint surface, and it carries no token.

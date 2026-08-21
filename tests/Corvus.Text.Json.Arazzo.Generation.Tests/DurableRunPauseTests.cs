@@ -105,7 +105,7 @@ public class DurableRunPauseTests
 
         // Advance 3: no pause — the run runs off the end of the step list and completes.
         (await AdvanceAsync(runStore, id, resume, pause: null)).ShouldBe(WorkflowRunResultKind.Completed);
-        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, id);
+        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev(id));
         completed.ShouldNotBeNull();
         completed!.Status.ShouldBe(WorkflowRunStatus.Completed);
     }
@@ -147,7 +147,7 @@ public class DurableRunPauseTests
             .ShouldBe(WorkflowRunResultKind.Suspended);
 
         // The run IS genuinely suspended in the store, with a Pause wait...
-        using (WorkflowRun? paused = await WorkflowRun.ResumeAsync(runStore, id))
+        using (WorkflowRun? paused = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev(id)))
         {
             paused.ShouldNotBeNull();
             paused!.Status.ShouldBe(WorkflowRunStatus.Suspended);
@@ -180,7 +180,7 @@ public class DurableRunPauseTests
         // No SetPause on the advance: the run behaves exactly as an ordinary durable run and completes.
         (await AdvanceAsync(runStore, id, resume, pause: null)).ShouldBe(WorkflowRunResultKind.Completed);
 
-        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, id);
+        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev(id));
         completed.ShouldNotBeNull();
         completed!.Status.ShouldBe(WorkflowRunStatus.Completed);
         transport.Requests.Count.ShouldBe(2);
@@ -212,7 +212,7 @@ public class DurableRunPauseTests
 
         // Advance 3 (still no SetPause) runs off the end — cursor 2 is past the last step — to completion.
         (await AdvanceAsync(runStore, id, resume, pause: null)).ShouldBe(WorkflowRunResultKind.Completed);
-        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, id);
+        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev(id));
         completed.ShouldNotBeNull();
         completed!.Status.ShouldBe(WorkflowRunStatus.Completed);
     }
@@ -236,26 +236,26 @@ public class DurableRunPauseTests
         // Pause at cursor 1. A plainly-paused run is NOT dispatch-claimable (as an interactive debug pause is today).
         (await AdvanceAsync(runStore, id, resume, afterEachStep)).ShouldBe(WorkflowRunResultKind.Suspended);
         await AssertPausedAtAsync(runStore, id, cursor: 1);
-        (await ClaimableAsync(dispatch, versionId)).ShouldNotContain(id);
+        (await ClaimableAsync(dispatch, versionId)).ShouldNotContain(TestAddresses.Dev(id));
 
         // The control plane marks it resume-claimable WITHOUT executing anything: it stays Suspended + Pause, and is
         // now surfaced as claimable.
         await RequestResumeAsync(runStore, id, afterEachStep);
         await AssertPausedAtAsync(runStore, id, cursor: 1);
-        (await ClaimableAsync(dispatch, versionId)).ShouldContain(id);
+        (await ClaimableAsync(dispatch, versionId)).ShouldContain(TestAddresses.Dev(id));
 
         // A separate runner claims + advances applying the PERSISTED config (never SetPause): it pauses at cursor 2
         // and the marker clears, so the run is not re-surfaced while merely paused.
         (await AdvanceAsync(runStore, id, resume, pause: null)).ShouldBe(WorkflowRunResultKind.Suspended);
         await AssertPausedAtAsync(runStore, id, cursor: 2);
-        (await ClaimableAsync(dispatch, versionId)).ShouldNotContain(id);
+        (await ClaimableAsync(dispatch, versionId)).ShouldNotContain(TestAddresses.Dev(id));
         transport.Requests.Count.ShouldBe(2);
 
         // Only the NEXT explicit resume makes it claimable again; resuming with no further stops runs to completion.
         await RequestResumeAsync(runStore, id, pause: null);
-        (await ClaimableAsync(dispatch, versionId)).ShouldContain(id);
+        (await ClaimableAsync(dispatch, versionId)).ShouldContain(TestAddresses.Dev(id));
         (await AdvanceAsync(runStore, id, resume, pause: null)).ShouldBe(WorkflowRunResultKind.Completed);
-        (await ClaimableAsync(dispatch, versionId)).ShouldNotContain(id);
+        (await ClaimableAsync(dispatch, versionId)).ShouldNotContain(TestAddresses.Dev(id));
     }
 
     [TestMethod]
@@ -289,7 +289,7 @@ public class DurableRunPauseTests
         transport.Requests.Count.ShouldBe(2);
 
         // The marker cleared on the advance's first checkpoint, so a second dispatch is a no-op.
-        (await ClaimableAsync(dispatch, versionId)).ShouldNotContain(id);
+        (await ClaimableAsync(dispatch, versionId)).ShouldNotContain(TestAddresses.Dev(id));
         (await dispatcher.DispatchClaimableAsync([versionId], resume, default)).ShouldBe(0);
     }
 
@@ -334,7 +334,7 @@ public class DurableRunPauseTests
     // and drive it through the resumer.
     private static async Task<WorkflowRunResultKind> AdvanceAsync(IWorkflowStateStore runStore, WorkflowRunId id, WorkflowResumer resume, WorkflowPauseConfig? pause)
     {
-        using WorkflowRun? run = await WorkflowRun.ResumeAsync(runStore, id);
+        using WorkflowRun? run = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev(id));
         run.ShouldNotBeNull();
         if (pause is { } p)
         {
@@ -348,17 +348,17 @@ public class DurableRunPauseTests
     // (persisting the requested pause config) WITHOUT executing — no resumer is driven here.
     private static async Task RequestResumeAsync(IWorkflowStateStore runStore, WorkflowRunId id, WorkflowPauseConfig? pause)
     {
-        using WorkflowRun? run = await WorkflowRun.ResumeAsync(runStore, id);
+        using WorkflowRun? run = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev(id));
         run.ShouldNotBeNull();
         await run!.RequestResumeAsync(pause, default);
     }
 
-    private static async Task<List<WorkflowRunId>> ClaimableAsync(IWorkflowDispatchIndex dispatch, string versionId)
+    private static async Task<List<WorkflowRunAddress>> ClaimableAsync(IWorkflowDispatchIndex dispatch, string versionId)
         => await CollectAsync(dispatch.QueryClaimableAsync([versionId], DateTimeOffset.UtcNow, default));
 
     private static async Task AssertPausedAtAsync(IWorkflowStateStore runStore, WorkflowRunId id, int cursor)
     {
-        using WorkflowRun? paused = await WorkflowRun.ResumeAsync(runStore, id);
+        using WorkflowRun? paused = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev(id));
         paused.ShouldNotBeNull();
         paused!.Status.ShouldBe(WorkflowRunStatus.Suspended);
         paused.Cursor.ShouldBe(cursor);
@@ -366,15 +366,15 @@ public class DurableRunPauseTests
         paused.Wait!.Value.Kind.ShouldBe(WorkflowWaitKind.Pause);
     }
 
-    private static async Task<List<WorkflowRunId>> CollectAsync(IAsyncEnumerable<WorkflowRunId> source)
+    private static async Task<List<WorkflowRunAddress>> CollectAsync(IAsyncEnumerable<WorkflowRunAddress> source)
     {
-        var ids = new List<WorkflowRunId>();
-        await foreach (WorkflowRunId id in source)
+        var addresses = new List<WorkflowRunAddress>();
+        await foreach (WorkflowRunAddress address in source)
         {
-            ids.Add(id);
+            addresses.Add(address);
         }
 
-        return ids;
+        return addresses;
     }
 
     private static CatalogMetadata Meta() => new(new CatalogOwner("Team", "team@example.com"), "alice");

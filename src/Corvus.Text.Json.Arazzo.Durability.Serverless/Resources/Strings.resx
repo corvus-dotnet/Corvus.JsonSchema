@@ -66,6 +66,12 @@
   <data name="MalformedRunId" xml:space="preserve">
     <value>The invocation's 'runId' must be exactly 32 lowercase hex characters (ADR 0065 §9).</value>
   </data>
+  <data name="MissingEnvironment" xml:space="preserve">
+    <value>The invocation is missing the required 'environment' (half the run's address, ADR 0065 decision 9).</value>
+  </data>
+  <data name="MalformedEnvironment" xml:space="preserve">
+    <value>The invocation's 'environment' is outside the environment-name grammar (a DNS label of at most 63 characters, ADR 0065 decision 9).</value>
+  </data>
   <data name="MissingCheckpointUrl" xml:space="preserve">
     <value>The invocation is missing a valid absolute 'checkpointUrl'.</value>
   </data>

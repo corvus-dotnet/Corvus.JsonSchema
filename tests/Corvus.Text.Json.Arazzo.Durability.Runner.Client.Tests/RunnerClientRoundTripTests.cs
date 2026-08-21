@@ -40,7 +40,7 @@ public sealed class RunnerClientRoundTripTests
         claimed.Value.LeaseExpiresAt.ShouldBe(T0 + TimeSpan.FromMinutes(1));
 
         // The run resumes through the client's checkpoint store exactly as it would over a database-backed one.
-        WorkflowCheckpoint? loaded = await fixture.Client.Checkpoints.LoadAsync(claimed.Value.RunId, default);
+        WorkflowCheckpoint? loaded = await fixture.Client.Checkpoints.LoadAsync(claimed.Value.Address, default);
         loaded.ShouldNotBeNull();
         WorkflowCheckpointSerializer.ProjectIndex(loaded!.Value.Utf8).WorkflowId.ShouldBe(Version);
     }
@@ -61,10 +61,10 @@ public sealed class RunnerClientRoundTripTests
         RunnerClaim claimed = (await fixture.Client.TryClaimAsync([Version]))!.Value;
 
         byte[] advanced = Fixture.Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2);
-        await fixture.Client.Checkpoints.SaveAsync(claimed.RunId, advanced, WorkflowCheckpointSerializer.ProjectIndex(advanced), WorkflowEtag.None, default);
+        await fixture.Client.Checkpoints.SaveAsync(claimed.Address, advanced, WorkflowCheckpointSerializer.ProjectIndex(advanced), WorkflowEtag.None, default);
 
         // Read back from the STORE, not the API: the point is that the write reached the real thing.
-        WorkflowCheckpoint? stored = await fixture.Store.LoadAsync(claimed.RunId, default);
+        WorkflowCheckpoint? stored = await fixture.Store.LoadAsync(claimed.Address, default);
         stored.ShouldNotBeNull();
         WorkflowCheckpointSerializer.ProjectIndex(stored!.Value.Utf8).Status.ShouldBe(WorkflowRunStatus.Running);
         WorkflowCheckpointSerializer.TryReadSequence(stored.Value.Utf8, out long sequence).ShouldBeTrue();
@@ -82,10 +82,10 @@ public sealed class RunnerClientRoundTripTests
 
         byte[] advanced = Fixture.Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2);
         WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex(advanced);
-        await fixture.Client.Checkpoints.SaveAsync(claimed.RunId, advanced, index, WorkflowEtag.None, default);
+        await fixture.Client.Checkpoints.SaveAsync(claimed.Address, advanced, index, WorkflowEtag.None, default);
 
         CheckpointSupersededException refused = await Should.ThrowAsync<CheckpointSupersededException>(
-            async () => await fixture.Client.Checkpoints.SaveAsync(claimed.RunId, advanced, index, WorkflowEtag.None, default));
+            async () => await fixture.Client.Checkpoints.SaveAsync(claimed.Address, advanced, index, WorkflowEtag.None, default));
 
         refused.ProposedSequence.ShouldBe(2);
         refused.AcceptedSequence.ShouldBe(3);
@@ -99,12 +99,12 @@ public sealed class RunnerClientRoundTripTests
         RunnerClaim claimed = (await fixture.Client.TryClaimAsync([Version]))!.Value;
 
         fixture.Clock.Advance(TimeSpan.FromSeconds(30));
-        DateTimeOffset extended = await fixture.Client.RenewAsync(claimed.RunId, TimeSpan.FromMinutes(5));
+        DateTimeOffset extended = await fixture.Client.RenewAsync(claimed.Address, TimeSpan.FromMinutes(5));
 
         extended.ShouldBe(T0 + TimeSpan.FromSeconds(30) + TimeSpan.FromMinutes(5));
 
         // The client threads the same token across the renewal, so the run keeps working.
-        (await fixture.Client.Checkpoints.LoadAsync(claimed.RunId, default)).ShouldNotBeNull();
+        (await fixture.Client.Checkpoints.LoadAsync(claimed.Address, default)).ShouldNotBeNull();
     }
 
     [TestMethod]
@@ -116,10 +116,10 @@ public sealed class RunnerClientRoundTripTests
 
         fixture.Clock.Advance(TimeSpan.FromMinutes(2));
 
-        await Should.ThrowAsync<RunnerLeaseLostException>(async () => await fixture.Client.RenewAsync(claimed.RunId));
+        await Should.ThrowAsync<RunnerLeaseLostException>(async () => await fixture.Client.RenewAsync(claimed.Address));
 
         // Having lost it, the client stops presenting it: the next operation fails without a round trip.
-        await Should.ThrowAsync<RunnerLeaseLostException>(async () => await fixture.Client.Checkpoints.LoadAsync(claimed.RunId, default));
+        await Should.ThrowAsync<RunnerLeaseLostException>(async () => await fixture.Client.Checkpoints.LoadAsync(claimed.Address, default));
     }
 
     [TestMethod]
@@ -129,7 +129,7 @@ public sealed class RunnerClientRoundTripTests
         await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending);
         RunnerClaim claimed = (await fixture.Client.TryClaimAsync([Version]))!.Value;
 
-        await fixture.Client.ReleaseAsync(claimed.RunId);
+        await fixture.Client.ReleaseAsync(claimed.Address);
 
         (await fixture.PeerClient.TryClaimAsync([Version])).ShouldNotBeNull();
     }
@@ -140,7 +140,7 @@ public sealed class RunnerClientRoundTripTests
         // So a runner can release in a finally without first working out whether it still holds the lease.
         await using Fixture fixture = await Fixture.StartAsync();
 
-        await Should.NotThrowAsync(async () => await fixture.Client.ReleaseAsync(new WorkflowRunId(AbsentRun)));
+        await Should.NotThrowAsync(async () => await fixture.Client.ReleaseAsync(new WorkflowRunAddress(Production, new WorkflowRunId(AbsentRun))));
     }
 
     [TestMethod]
@@ -152,6 +152,6 @@ public sealed class RunnerClientRoundTripTests
 
         // The peer holds no lease for this run, so it has nothing to present and never asks.
         await Should.ThrowAsync<RunnerLeaseLostException>(
-            async () => await fixture.PeerClient.Checkpoints.LoadAsync(new WorkflowRunId(Run1), default));
+            async () => await fixture.PeerClient.Checkpoints.LoadAsync(new WorkflowRunAddress(Production, new WorkflowRunId(Run1)), default));
     }
 }

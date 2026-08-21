@@ -152,7 +152,7 @@ var serverlessBackend = new ServerlessRunExecutionBackend(
     new HttpClient(),
     DeployedFunctionUrlResolver.ForStore(deployments, environments),
     new Uri(checkpointBaseUrl, UriKind.Absolute),
-    checkpointTokenIssuer: runId => CheckpointToken.Issue(checkpointSecret, runId.Value, DateTimeOffset.UtcNow.AddHours(1)));
+    checkpointTokenIssuer: address => CheckpointToken.Issue(checkpointSecret, address, DateTimeOffset.UtcNow.AddHours(1)));
 builder.Services.AddSingleton<WorkflowResumer>(serverlessBackend.AsResumer());
 
 // This runner's machine-principal credentials (design §16.4), required for the same reason as on every other runner:
@@ -235,7 +235,7 @@ app.MapDefaultEndpoints();
 app.MapWorkflowCheckpointEndpoints(
     stateStore,
     requireAuthorization: false,
-    authenticateCheckpointToken: (id, token) => CheckpointToken.TryValidate(checkpointSecret, token, id.Value, DateTimeOffset.UtcNow));
+    authenticateCheckpointToken: (address, token) => CheckpointToken.TryValidate(checkpointSecret, token, address, DateTimeOffset.UtcNow));
 
 // The demo's 'echo' source: a trivial always-200 endpoint the serverless-check workflow calls, served by this runner so
 // a serverless run has a reachable source and can run to completion. The invoked Lambda reaches it at the same

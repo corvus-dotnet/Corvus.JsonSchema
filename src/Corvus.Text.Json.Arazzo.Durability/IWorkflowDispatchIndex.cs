@@ -21,8 +21,8 @@ public interface IWorkflowDispatchIndex
     /// <param name="hostedWorkflowIds">The versioned workflow ids (<c>{base}-v{n}</c>) the runner hosts; only runs for these are returned.</param>
     /// <param name="now">The current instant, used to decide whether a <see cref="WorkflowRunStatus.Running"/> run's lease has expired.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The ids of the claimable runs.</returns>
-    IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken);
+    /// <returns>The addresses of the claimable runs.</returns>
+    IAsyncEnumerable<WorkflowRunAddress> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken);
 
     /// <summary>
     /// The environment-scoped overload (design §5.5): as <see cref="QueryClaimableAsync(IReadOnlyCollection{string}, DateTimeOffset, CancellationToken)"/>,
@@ -37,9 +37,9 @@ public interface IWorkflowDispatchIndex
     /// <param name="runnerEnvironment">The single environment a runner serves — a run is claimable only when pinned to exactly it; <see langword="null"/> is env-agnostic (the base overload, not a runner).</param>
     /// <param name="now">The current instant, used to decide whether a <see cref="WorkflowRunStatus.Running"/> run's lease has expired.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The ids of the claimable runs pinned to (or unpinned relative to) the runner's environment.</returns>
+    /// <returns>The addresses of the claimable runs pinned to (or unpinned relative to) the runner's environment.</returns>
     /// <remarks>The default implementation ignores <paramref name="runnerEnvironment"/> and delegates to the unscoped
     /// overload (the pre-pinning behaviour); a backend overrides it with a native environment-filtered query.</remarks>
-    IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, CancellationToken cancellationToken)
+    IAsyncEnumerable<WorkflowRunAddress> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, CancellationToken cancellationToken)
         => this.QueryClaimableAsync(hostedWorkflowIds, now, cancellationToken);
 }

@@ -25,7 +25,9 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// than believed.
 /// </para>
 /// </remarks>
-/// <param name="RunId">The run the lease is held on.</param>
+/// <param name="Address">The run the lease is held on, by its full <c>(environment, runId)</c> address (ADR 0065
+/// decision 9): a lease is scoped to the run in its environment, so the same run id held in another environment is
+/// a different run with its own lease.</param>
 /// <param name="Owner">The opaque identity of the worker that holds the lease.</param>
 /// <param name="Token">An opaque token proving ownership, presented when releasing the lease.</param>
 /// <param name="ExpiresAt">The instant after which the lease is no longer valid and may be re-acquired.</param>
@@ -35,4 +37,8 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// granted it exiting. Zero on a presented lease, meaning no epoch is claimed; the store never mints zero, so a
 /// stated epoch and an unstated one are never confused.
 /// </param>
-public readonly record struct WorkflowLease(WorkflowRunId RunId, string Owner, string Token, DateTimeOffset ExpiresAt, long Epoch = 0);
+public readonly record struct WorkflowLease(WorkflowRunAddress Address, string Owner, string Token, DateTimeOffset ExpiresAt, long Epoch = 0)
+{
+    /// <summary>Gets the run id half of <see cref="Address"/>.</summary>
+    public WorkflowRunId RunId => this.Address.RunId;
+}

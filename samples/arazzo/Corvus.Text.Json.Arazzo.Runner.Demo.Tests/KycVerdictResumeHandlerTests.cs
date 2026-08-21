@@ -63,7 +63,7 @@ public sealed class KycVerdictResumeHandlerTests
         }
 
         resumedRuns.ShouldBe(["run-acct-1"]);
-        using (WorkflowRun? untouched = await WorkflowRun.ResumeAsync(store, "run-acct-2"))
+        using (WorkflowRun? untouched = await WorkflowRun.ResumeAsync(store, new WorkflowRunAddress("development", new WorkflowRunId("run-acct-2"))))
         {
             untouched.ShouldNotBeNull();
             untouched!.Status.ShouldBe(WorkflowRunStatus.Suspended);
@@ -71,7 +71,7 @@ public sealed class KycVerdictResumeHandlerTests
         }
 
         // The resumed run reached its terminal state through the injected resumer.
-        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(store, "run-acct-1");
+        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(store, new WorkflowRunAddress("development", new WorkflowRunId("run-acct-1")));
         completed.ShouldNotBeNull();
         completed!.Status.ShouldBe(WorkflowRunStatus.Completed);
     }

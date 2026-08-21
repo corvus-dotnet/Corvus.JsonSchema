@@ -13,7 +13,9 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// The same projection serves the Tier-2 wait index (find runs that are <em>due</em> or <em>awaiting</em> a
 /// correlation) and the control-plane visibility queries (find runs by status / workflow / error), so one
 /// index answers timers, message wakeups, and operator queries alike. For Tier 1 (crash recovery) the entry
-/// is stored but not queried.
+/// is stored but not queried. The run's environment is deliberately NOT a field here: it is half the run's
+/// primary key (<see cref="WorkflowRunAddress"/>, ADR 0065 decision 9), carried by the address every store
+/// operation takes, never a nullable payload column a query might trust while the key ignores it.
 /// </remarks>
 /// <param name="WorkflowId">The id of the workflow this run executes.</param>
 /// <param name="Status">The run's lifecycle status.</param>
@@ -26,7 +28,6 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// <param name="CorrelationId">The run-wide telemetry correlation id (the W3C trace id) set at creation, if any.</param>
 /// <param name="Tags">The free-form tags applied to the run at creation, if any.</param>
 /// <param name="SecurityTags">The security tags (KVP labels) applied to the run at creation, if any — the input to tag-based row authorization (§14.2), distinct from the free-form <paramref name="Tags"/>.</param>
-/// <param name="Environment">The deployment environment the run is pinned to (design §5.5), if any — the store indexes it so dispatch can constrain a run to runners serving its environment; absent on a run created before run→environment pinning.</param>
 /// <param name="ResumeRequestedAt">When a <em>paused</em> (or faulted) run was marked resume-claimable through
 /// <see cref="WorkflowRun.RequestResumeAsync"/> by the control plane (design §18), if it has been. A run carrying
 /// this marker is surfaced by <see cref="IWorkflowDispatchIndex.QueryClaimableAsync(IReadOnlyCollection{string}, string?, DateTimeOffset, CancellationToken)"/>
@@ -45,7 +46,6 @@ public readonly record struct WorkflowRunIndexEntry(
     string? CorrelationId = null,
     TagSet Tags = default,
     SecurityTagSet SecurityTags = default,
-    string? Environment = null,
     DateTimeOffset? ResumeRequestedAt = null)
 {
     /// <summary>
@@ -67,7 +67,6 @@ public readonly record struct WorkflowRunIndexEntry(
     /// <param name="correlationId">The run-wide telemetry correlation id, if any.</param>
     /// <param name="tags">The free-form tags applied at creation, if any.</param>
     /// <param name="securityTags">The security tags applied at creation, if any (§14.2).</param>
-    /// <param name="environment">The deployment environment the run is pinned to, if any (§5.5).</param>
     /// <param name="resumeRequestedAt">When the run was marked resume-claimable (§18), if it has been.</param>
     /// <returns>The projected index entry.</returns>
     public static WorkflowRunIndexEntry Project(
@@ -80,7 +79,6 @@ public readonly record struct WorkflowRunIndexEntry(
         string? correlationId,
         TagSet tags,
         SecurityTagSet securityTags,
-        string? environment,
         DateTimeOffset? resumeRequestedAt)
         => new(
             workflowId,
@@ -94,6 +92,5 @@ public readonly record struct WorkflowRunIndexEntry(
             CorrelationId: correlationId,
             Tags: tags,
             SecurityTags: securityTags,
-            Environment: environment,
             ResumeRequestedAt: resumeRequestedAt);
 }

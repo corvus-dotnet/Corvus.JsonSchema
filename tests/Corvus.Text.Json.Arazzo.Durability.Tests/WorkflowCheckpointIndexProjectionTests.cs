@@ -35,7 +35,7 @@ public sealed class WorkflowCheckpointIndexProjectionTests
             environment: "prod",
             updatedAt: UpdatedAt);
 
-        WorkflowRunIndexEntry projected = WorkflowCheckpointSerializer.ProjectIndex(bytes);
+        WorkflowRunIndexEntry projected = WorkflowCheckpointSerializer.ProjectIndex(bytes, out string? claimedEnvironment);
 
         WorkflowRunIndexEntry expected = WorkflowRunIndexEntry.Project(
             "petWorkflow",
@@ -47,10 +47,13 @@ public sealed class WorkflowCheckpointIndexProjectionTests
             correlationId: "trace-abc",
             tags: default,
             securityTags: default,
-            environment: "prod",
             resumeRequestedAt: null);
 
         projected.ShouldBe(expected);
+
+        // The environment is not an entry field (it is half the run's address, ADR 0065 decision 9); the projection
+        // reports the body's claim separately, for the coordinator's every-save structural check.
+        claimedEnvironment.ShouldBe("prod");
     }
 
     [TestMethod]
@@ -152,7 +155,6 @@ public sealed class WorkflowCheckpointIndexProjectionTests
         projected.AwaitingCorrelationId.ShouldBeNull();
         projected.ErrorType.ShouldBeNull();
         projected.CorrelationId.ShouldBeNull();
-        projected.Environment.ShouldBeNull();
         projected.ResumeRequestedAt.ShouldBeNull();
         projected.Tags.IsEmpty.ShouldBeTrue();
         projected.SecurityTags.IsEmpty.ShouldBeTrue();

@@ -571,6 +571,10 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     // would both miss every real lease and hand an administrator a way to expire an unrelated principal's in-flight work
     // by registering a runner under an id equal to that principal's name.
     //
+    // The fence is scoped to the authorization's own environment (ADR 0065 decision 9): revoking one environment's
+    // authorization expires the principal's leases there and only there — a runner keeping other environments keeps
+    // its in-flight work in them, and each revocation fences its own.
+    //
     // A row with no bound principal has nothing to fence, and that is the whole answer rather than a reason to fall back
     // to the id. It means an administrator pre-authorized an id that no runner has yet claimed, so no lease exists to
     // expire; the authorization gate still refuses all future dispatch.
@@ -579,7 +583,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     // lets this take the document the caller already holds by reference.
     private ValueTask FenceRevokedRunnerAsync(in EnvironmentRunnerAuthorization authorization, CancellationToken cancellationToken)
         => this.leaseAdministration is { } admin && authorization.PrincipalOrNull is { } owner
-            ? new ValueTask(admin.ExpireLeasesForOwnerAsync(owner, cancellationToken).AsTask())
+            ? new ValueTask(admin.ExpireLeasesForOwnerAsync(owner, authorization.EnvironmentValue, cancellationToken).AsTask())
             : ValueTask.CompletedTask;
 
     /// <inheritdoc/>

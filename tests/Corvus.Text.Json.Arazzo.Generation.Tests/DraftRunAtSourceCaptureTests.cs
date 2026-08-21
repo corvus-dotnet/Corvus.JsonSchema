@@ -100,7 +100,7 @@ public sealed class DraftRunAtSourceCaptureTests
         int advanced = await runner.RunPendingAsync();
         advanced.ShouldBe(1);
 
-        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, id);
+        using WorkflowRun? completed = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev(id));
         completed!.Status.ShouldBe(WorkflowRunStatus.Completed);
 
         // The persisted trace's parent step carries the captured nested trace: the child's real HTTP

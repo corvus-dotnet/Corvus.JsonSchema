@@ -21,6 +21,10 @@ namespace Corvus.Text.Json.Arazzo.Durability.NatsJetStream;
 /// Wait/visibility queries scan the bucket's keys and filter on the index header. Create instances with
 /// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> after provisioning with <see cref="PrepareAsync(string, CancellationToken)"/>.
 /// </remarks>
+// TRANSITIONAL (ADR 0065 decision 9): the seam addresses runs by (environment, runId), but this backend still keys
+// its entries by run id alone — the composite-key conversion is this backend's own commit, and the composite-address
+// conformance oracles pin the gap until it lands. The environment is written from the address and projected
+// back into every answered address.
 public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
@@ -142,14 +146,14 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
 
     /// <inheritdoc/>
     public ValueTask<WorkflowEtag> SaveAsync(
-        WorkflowRunId id,
+        WorkflowRunAddress address,
         ReadOnlyMemory<byte> checkpointUtf8,
         in WorkflowRunIndexEntry index,
         WorkflowEtag expected,
         CancellationToken cancellationToken)
-        => this.SaveCoreAsync(id, Envelope.Encode(index, checkpointUtf8.Span), index.SecurityTags, expected, cancellationToken);
+        => this.SaveCoreAsync(address, Envelope.Encode(address.Environment, index, checkpointUtf8.Span), index.SecurityTags, expected, cancellationToken);
 
-    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunId id, byte[] value, SecurityTagSet securityTags, WorkflowEtag expected, CancellationToken cancellationToken)
+    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunAddress address, byte[] value, SecurityTagSet securityTags, WorkflowEtag expected, CancellationToken cancellationToken)
     {
         // §14.4 label entries, in the ordering that keeps an imprecise index safe: entries are ADDED before the
         // envelope becomes visible and REMOVED after it stops carrying the old tags, so an interrupted save can
@@ -159,10 +163,10 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         // token, transferring a handful of keys and never the checkpoint. That reverse lookup also makes the diff
         // self-healing — entries a crashed or conflicted save stranded are swept by the next successful one. A
         // run's security tags are fixed at creation, so the common checkpoint path finds both differences empty.
-        HashSet<string> desired = NatsSecurityLabels.EntryKeysFor(securityTags, id.Value);
+        HashSet<string> desired = NatsSecurityLabels.EntryKeysFor(securityTags, address.RunId.Value);
         HashSet<string> previous = expected.IsNone
             ? []
-            : await this.ReadLabelEntryKeysAsync(id.Value, cancellationToken).ConfigureAwait(false);
+            : await this.ReadLabelEntryKeysAsync(address.RunId.Value, cancellationToken).ConfigureAwait(false);
 
         foreach (string entryKey in desired)
         {
@@ -176,13 +180,13 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         try
         {
             revision = expected.IsNone
-                ? await this.runs.CreateAsync(id.Value, value, cancellationToken: cancellationToken).ConfigureAwait(false)
-                : await this.runs.UpdateAsync(id.Value, value, ulong.Parse(expected.Value!, CultureInfo.InvariantCulture), cancellationToken: cancellationToken).ConfigureAwait(false);
+                ? await this.runs.CreateAsync(address.RunId.Value, value, cancellationToken: cancellationToken).ConfigureAwait(false)
+                : await this.runs.UpdateAsync(address.RunId.Value, value, ulong.Parse(expected.Value!, CultureInfo.InvariantCulture), cancellationToken: cancellationToken).ConfigureAwait(false);
         }
         catch (NatsKVException)
         {
             // The entries added above stay behind as stale — removal here could race the writer that won.
-            throw new WorkflowConflictException(id, expected);
+            throw new WorkflowConflictException(address, expected);
         }
 
         foreach (string entryKey in previous)
@@ -209,9 +213,9 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunId id, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
     {
-        NatsKVEntry<byte[]>? entry = await this.TryGetAsync(this.runs, id.Value, cancellationToken).ConfigureAwait(false);
+        NatsKVEntry<byte[]>? entry = await this.TryGetAsync(this.runs, address.RunId.Value, cancellationToken).ConfigureAwait(false);
         if (entry is not { Value: { } value })
         {
             return null;
@@ -222,7 +226,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
     }
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunId id, string owner, TimeSpan ttl, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunAddress address, string owner, TimeSpan ttl, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(owner);
 
@@ -233,13 +237,13 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         // The epoch is advanced from the stored entry rather than supplied, so it counts this run's grants across every
         // instance and every restart (ADR 0065 §6). The entry's own revision is what makes read-then-advance atomic: a
         // concurrent grant moves it, and the conditional update below is refused rather than reusing the epoch it read.
-        NatsKVEntry<byte[]>? entry = await this.TryGetAsync(this.leases, id.Value, cancellationToken).ConfigureAwait(false);
+        NatsKVEntry<byte[]>? entry = await this.TryGetAsync(this.leases, address.RunId.Value, cancellationToken).ConfigureAwait(false);
         try
         {
             if (entry is not { Value: { } current })
             {
-                await this.leases.CreateAsync(id.Value, LeaseCodec.Encode(owner, token, expiresAt.ToUnixTimeMilliseconds(), 1), cancellationToken: cancellationToken).ConfigureAwait(false);
-                return new WorkflowLease(id, owner, token, expiresAt, 1);
+                await this.leases.CreateAsync(address.RunId.Value, LeaseCodec.Encode(owner, token, expiresAt.ToUnixTimeMilliseconds(), 1), cancellationToken: cancellationToken).ConfigureAwait(false);
+                return new WorkflowLease(address, owner, token, expiresAt, 1);
             }
 
             (string currentOwner, _, long currentExpiresAt, long currentEpoch) = LeaseCodec.Decode(current);
@@ -250,8 +254,8 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
 
             long granted = currentEpoch + 1;
             byte[] value = LeaseCodec.Encode(owner, token, expiresAt.ToUnixTimeMilliseconds(), granted);
-            await this.leases.UpdateAsync(id.Value, value, entry.Value.Revision, cancellationToken: cancellationToken).ConfigureAwait(false);
-            return new WorkflowLease(id, owner, token, expiresAt, granted);
+            await this.leases.UpdateAsync(address.RunId.Value, value, entry.Value.Revision, cancellationToken: cancellationToken).ConfigureAwait(false);
+            return new WorkflowLease(address, owner, token, expiresAt, granted);
         }
         catch (NatsKVException)
         {
@@ -284,7 +288,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         // mint one, so what the caller gets is the grant's own epoch.
         if (extension == TimeSpan.Zero)
         {
-            return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(currentExpiresAt), currentEpoch);
+            return new WorkflowLease(lease.Address, lease.Owner, lease.Token, DateTimeOffset.FromUnixTimeMilliseconds(currentExpiresAt), currentEpoch);
         }
 
         DateTimeOffset extendedTo = now + extension;
@@ -292,7 +296,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         try
         {
             await this.leases.UpdateAsync(lease.RunId.Value, value, entry.Value.Revision, cancellationToken: cancellationToken).ConfigureAwait(false);
-            return new WorkflowLease(lease.RunId, lease.Owner, lease.Token, extendedTo, currentEpoch);
+            return new WorkflowLease(lease.Address, lease.Owner, lease.Token, extendedTo, currentEpoch);
         }
         catch (NatsKVException)
         {
@@ -321,15 +325,15 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
     }
 
     /// <inheritdoc/>
-    public async ValueTask DeleteAsync(WorkflowRunId id, CancellationToken cancellationToken)
+    public async ValueTask DeleteAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
     {
         // Read the run's label entries while it still exists, then drop the run before its entries — the §14.4
         // ordering: an interrupted delete leaves a stale entry, harmless when nothing loads behind it, whereas
         // dropping entries first would strand a still-visible run.
-        HashSet<string> entryKeys = await this.ReadLabelEntryKeysAsync(id.Value, cancellationToken).ConfigureAwait(false);
+        HashSet<string> entryKeys = await this.ReadLabelEntryKeysAsync(address.RunId.Value, cancellationToken).ConfigureAwait(false);
 
-        await this.PurgeAsync(this.runs, id.Value, cancellationToken).ConfigureAwait(false);
-        await this.PurgeAsync(this.leases, id.Value, cancellationToken).ConfigureAwait(false);
+        await this.PurgeAsync(this.runs, address.RunId.Value, cancellationToken).ConfigureAwait(false);
+        await this.PurgeAsync(this.leases, address.RunId.Value, cancellationToken).ConfigureAwait(false);
 
         foreach (string entryKey in entryKeys)
         {
@@ -338,42 +342,42 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
     }
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken) => this.QueryDueAsync(before, null, cancellationToken);
+    public IAsyncEnumerable<WorkflowRunAddress> QueryDueAsync(DateTimeOffset before, CancellationToken cancellationToken) => this.QueryDueAsync(before, null, cancellationToken);
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<WorkflowRunAddress> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         long cutoff = before.ToUnixTimeMilliseconds();
-        await foreach ((WorkflowRunId runId, WorkflowRunIndexEntry index) in this.ScanAsync(candidates: null, cancellationToken).ConfigureAwait(false))
+        await foreach ((WorkflowRunAddress address, WorkflowRunIndexEntry index) in this.ScanAsync(candidates: null, cancellationToken).ConfigureAwait(false))
         {
             // §5.5 environment-scoped timer-resume: a real runner (non-null runnerEnvironment) resumes a due run only when
-            // it is pinned to EXACTLY that environment; an unpinned or differently-pinned run is skipped. A null
-            // runnerEnvironment is the env-agnostic base overload that surfaces every due run regardless of environment.
-            if (!MatchesEnvironment(index.Environment, runnerEnvironment))
+            // it is pinned to EXACTLY that environment; a differently-pinned run is skipped. A null runnerEnvironment is
+            // the env-agnostic base overload that surfaces every due run regardless of environment.
+            if (!MatchesEnvironment(address.Environment, runnerEnvironment))
             {
                 continue;
             }
 
             if (index.Status == WorkflowRunStatus.Suspended && index.DueAt is { } due && due.ToUnixTimeMilliseconds() <= cutoff)
             {
-                yield return runId;
+                yield return address;
             }
         }
     }
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken) => this.QueryAwaitingAsync(channel, correlationId, null, cancellationToken);
+    public IAsyncEnumerable<WorkflowRunAddress> QueryAwaitingAsync(string channel, string? correlationId, CancellationToken cancellationToken) => this.QueryAwaitingAsync(channel, correlationId, null, cancellationToken);
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<WorkflowRunAddress> QueryAwaitingAsync(string channel, string? correlationId, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(channel);
-        await foreach ((WorkflowRunId runId, WorkflowRunIndexEntry index) in this.ScanAsync(candidates: null, cancellationToken).ConfigureAwait(false))
+        await foreach ((WorkflowRunAddress address, WorkflowRunIndexEntry index) in this.ScanAsync(candidates: null, cancellationToken).ConfigureAwait(false))
         {
             // §5.5 environment-scoped signal-resume: a real runner (non-null runnerEnvironment) resumes an awaiting run only when
-            // it is pinned to EXACTLY that environment; an unpinned or differently-pinned run is skipped. A null
-            // runnerEnvironment is the env-agnostic base overload that surfaces every awaiting run regardless of environment.
-            if (!MatchesEnvironment(index.Environment, runnerEnvironment))
+            // it is pinned to EXACTLY that environment; a differently-pinned run is skipped. A null runnerEnvironment is
+            // the env-agnostic base overload that surfaces every awaiting run regardless of environment.
+            if (!MatchesEnvironment(address.Environment, runnerEnvironment))
             {
                 continue;
             }
@@ -382,17 +386,17 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                 && index.AwaitingChannel == channel
                 && (correlationId is null || index.AwaitingCorrelationId is null || index.AwaitingCorrelationId == correlationId))
             {
-                yield return runId;
+                yield return address;
             }
         }
     }
 
     /// <inheritdoc/>
-    public IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
+    public IAsyncEnumerable<WorkflowRunAddress> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, DateTimeOffset now, CancellationToken cancellationToken)
         => this.QueryClaimableAsync(hostedWorkflowIds, null, now, cancellationToken);
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<WorkflowRunId> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    public async IAsyncEnumerable<WorkflowRunAddress> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
         if (hostedWorkflowIds.Count == 0)
@@ -401,16 +405,16 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         }
 
         var hosted = new HashSet<string>(hostedWorkflowIds);
-        await foreach ((WorkflowRunId runId, WorkflowRunIndexEntry entry) in this.ScanAsync(candidates: null, cancellationToken).ConfigureAwait(false))
+        await foreach ((WorkflowRunAddress address, WorkflowRunIndexEntry entry) in this.ScanAsync(candidates: null, cancellationToken).ConfigureAwait(false))
         {
             if (!hosted.Contains(entry.WorkflowId))
             {
                 continue;
             }
 
-            // §5.5 environment-scoped dispatch: a run pinned to an environment is claimable only by a runner
-            // serving it; an unpinned run or an unscoped dispatcher matches anything.
-            if (!MatchesEnvironment(entry.Environment, runnerEnvironment))
+            // §5.5 environment-scoped dispatch: a run is claimable only by a runner serving the environment its
+            // address pins it to; an unscoped dispatcher matches anything.
+            if (!MatchesEnvironment(address.Environment, runnerEnvironment))
             {
                 continue;
             }
@@ -420,19 +424,19 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
             if (entry.ResumeRequestedAt is not null
                 && (entry.Status == WorkflowRunStatus.Suspended || entry.Status == WorkflowRunStatus.Faulted))
             {
-                yield return runId;
+                yield return address;
                 continue;
             }
 
             if (entry.Status == WorkflowRunStatus.Pending)
             {
-                yield return runId;
+                yield return address;
                 continue;
             }
 
             if (entry.Status == WorkflowRunStatus.Running)
             {
-                NatsKVEntry<byte[]>? leaseEntry = await this.TryGetAsync(this.leases, runId.Value, cancellationToken).ConfigureAwait(false);
+                NatsKVEntry<byte[]>? leaseEntry = await this.TryGetAsync(this.leases, address.RunId.Value, cancellationToken).ConfigureAwait(false);
                 bool live = false;
                 if (leaseEntry is { Value: { } value })
                 {
@@ -442,7 +446,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
 
                 if (!live)
                 {
-                    yield return runId;
+                    yield return address;
                 }
             }
         }
@@ -451,9 +455,10 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
     /// <inheritdoc/>
     public async ValueTask<WorkflowRunPage> QueryAsync(WorkflowQuery query, CancellationToken cancellationToken)
     {
-        // The KV bucket has no server-side ordering, so collect matches, sort by run id, and keyset-page here.
+        // The KV bucket has no server-side ordering, so collect matches, sort by ascending address (environment,
+        // then run id), and keyset-page here.
         // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
-        string? after = null;
+        WorkflowRunAddress? after = null;
         if (query.ContinuationToken.IsNotUndefined())
         {
             using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
@@ -470,16 +475,16 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         }
 
         var listings = new List<WorkflowRunListing>();
-        await foreach ((WorkflowRunId runId, WorkflowRunIndexEntry index) in this.ScanAsync(candidates, cancellationToken).ConfigureAwait(false))
+        await foreach ((WorkflowRunAddress address, WorkflowRunIndexEntry index) in this.ScanAsync(candidates, cancellationToken).ConfigureAwait(false))
         {
-            if (Matches(query, runId.Value, index)
-                && (after is null || string.CompareOrdinal(runId.Value, after) > 0))
+            if (Matches(query, address.RunId.Value, index)
+                && (after is not { } cursor || WorkflowRunAddress.Compare(address, cursor) > 0))
             {
-                listings.Add(new WorkflowRunListing(runId, index));
+                listings.Add(new WorkflowRunListing(address, index));
             }
         }
 
-        listings.Sort(static (a, b) => string.CompareOrdinal(a.Id.Value, b.Id.Value));
+        listings.Sort(static (a, b) => WorkflowRunAddress.Compare(a.Address, b.Address));
         if (listings.Count > query.Limit + 1)
         {
             listings = listings.GetRange(0, query.Limit + 1);
@@ -501,9 +506,9 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         // Bounded scan: count matches with the SAME filter the list applies (so the §14.2 reach cannot drift), stopping
         // one past the cap. A count is order-independent, so no sort or keyset paging.
         int count = 0;
-        await foreach ((WorkflowRunId runId, WorkflowRunIndexEntry index) in this.ScanAsync(candidates, cancellationToken).ConfigureAwait(false))
+        await foreach ((WorkflowRunAddress address, WorkflowRunIndexEntry index) in this.ScanAsync(candidates, cancellationToken).ConfigureAwait(false))
         {
-            if (Matches(query, runId.Value, index) && ++count > cap)
+            if (Matches(query, address.RunId.Value, index) && ++count > cap)
             {
                 return (cap, true);
             }
@@ -555,11 +560,12 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
             : SecurityLabelQueryResolver.ResolveAsync(
                 security.ToPredicate(SecurityLabelQueryEmitter.Instance), this.labelIndex, cancellationToken);
 
-    // Streams the run entries a query should consider. With no candidate set this is the key scan it always
-    // was; with one, the candidate ids are fetched directly, so runs outside the principal's reach are never
-    // read — and a stale label entry resolves to an id whose envelope is gone, which the existing absent-entry
-    // skip discards.
-    private async IAsyncEnumerable<(WorkflowRunId Id, WorkflowRunIndexEntry Index)> ScanAsync(IReadOnlySet<string>? candidates, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    // Streams the run entries a query should consider, each with its full address — the run id from the KV key
+    // and the environment from the envelope header it was saved with (the transitional projection: the bucket is
+    // still keyed by run id alone). With no candidate set this is the key scan it always was; with one, the
+    // candidate ids are fetched directly, so runs outside the principal's reach are never read — and a stale
+    // label entry resolves to an id whose envelope is gone, which the existing absent-entry skip discards.
+    private async IAsyncEnumerable<(WorkflowRunAddress Address, WorkflowRunIndexEntry Index)> ScanAsync(IReadOnlySet<string>? candidates, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         if (candidates is not null)
         {
@@ -568,7 +574,8 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                 NatsKVEntry<byte[]>? candidateEntry = await this.TryGetAsync(this.runs, id, cancellationToken).ConfigureAwait(false);
                 if (candidateEntry is { Value: { } candidateValue })
                 {
-                    yield return (new WorkflowRunId(id), Envelope.DecodeIndex(candidateValue));
+                    (string environment, WorkflowRunIndexEntry index) = Envelope.DecodeIndex(candidateValue);
+                    yield return (new WorkflowRunAddress(environment, new WorkflowRunId(id)), index);
                 }
             }
 
@@ -580,7 +587,8 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
             NatsKVEntry<byte[]>? entry = await this.TryGetAsync(this.runs, key, cancellationToken).ConfigureAwait(false);
             if (entry is { Value: { } value })
             {
-                yield return (new WorkflowRunId(key), Envelope.DecodeIndex(value));
+                (string environment, WorkflowRunIndexEntry index) = Envelope.DecodeIndex(value);
+                yield return (new WorkflowRunAddress(environment, new WorkflowRunId(key)), index);
             }
         }
     }
@@ -615,19 +623,18 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         }
     }
 
-    // §5.5: an unscoped dispatcher (null runnerEnvironment) or an unpinned run (null entry environment) matches
-    // anything; otherwise the run's pinned environment must equal the runner's.
-    // §5.5: a real runner (non-null runnerEnvironment) claims a run only when pinned to EXACTLY its environment (an
-    // unpinned or differently-pinned run is never claimed); a null runnerEnvironment is the env-agnostic base overload
-    // (list all claimable regardless of environment), never a runner.
-    private static bool MatchesEnvironment(string? runEnvironment, string? runnerEnvironment)
-        => runnerEnvironment is null || (runEnvironment is not null && string.Equals(runEnvironment, runnerEnvironment, StringComparison.Ordinal));
+    // §5.5: a real runner (non-null runnerEnvironment) matches a run only when it is pinned to EXACTLY its
+    // environment — the environment comes from the run's ADDRESS (ADR 0065 decision 9), so it is never absent. A
+    // null runnerEnvironment is the env-agnostic base overload (list everything regardless of environment), never
+    // a runner.
+    private static bool MatchesEnvironment(string runEnvironment, string? runnerEnvironment)
+        => runnerEnvironment is null || string.Equals(runEnvironment, runnerEnvironment, StringComparison.Ordinal);
 
     private static class Envelope
     {
         private const int HeaderBufferSize = 512;
 
-        public static byte[] Encode(in WorkflowRunIndexEntry index, ReadOnlySpan<byte> checkpoint)
+        public static byte[] Encode(string environment, in WorkflowRunIndexEntry index, ReadOnlySpan<byte> checkpoint)
         {
             // Serialize the index header through the pooled writer cache (not a fresh ArrayBufferWriter) — this is the
             // run-state write hotpath. The owned `result` (length-prefixed header + checkpoint) is the form the KV
@@ -666,10 +673,10 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                     writer.WriteString("correlationId", runCorrelationId);
                 }
 
-                if (index.Environment is { } environment)
-                {
-                    writer.WriteString("environment", environment);
-                }
+                // The run's environment is half its primary key (ADR 0065 decision 9): while the bucket is still
+                // keyed by run id alone it is persisted in the header from the address — never absent — so the
+                // scan can project the full address back out.
+                writer.WriteString("environment", environment);
 
                 if (index.ResumeRequestedAt is { } resume)
                 {
@@ -710,25 +717,26 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
             return value.AsSpan(4 + headerLength).ToArray();
         }
 
-        public static WorkflowRunIndexEntry DecodeIndex(byte[] value)
+        public static (string Environment, WorkflowRunIndexEntry Index) DecodeIndex(byte[] value)
         {
             int headerLength = BinaryPrimitives.ReadInt32LittleEndian(value);
             using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(value.AsMemory(4, headerLength));
             JsonElement root = document.RootElement;
-            return new WorkflowRunIndexEntry(
-                root.GetProperty("workflowId"u8).GetString()!,
-                Enum.Parse<WorkflowRunStatus>(root.GetProperty("status"u8).GetString()!),
-                DateTimeOffset.FromUnixTimeMilliseconds(root.GetProperty("createdAt"u8).GetInt64()),
-                DateTimeOffset.FromUnixTimeMilliseconds(root.GetProperty("updatedAt"u8).GetInt64()),
-                root.TryGetProperty("dueAt"u8, out JsonElement dueAt) ? DateTimeOffset.FromUnixTimeMilliseconds(dueAt.GetInt64()) : null,
-                root.TryGetProperty("awaitingChannel"u8, out JsonElement channel) ? channel.GetString() : null,
-                root.TryGetProperty("awaitingCorrelationId"u8, out JsonElement correlationId) ? correlationId.GetString() : null,
-                root.TryGetProperty("errorType"u8, out JsonElement errorType) ? errorType.GetString() : null,
-                root.TryGetProperty("correlationId"u8, out JsonElement queryCorrelationId) ? queryCorrelationId.GetString() : null,
-                DecodeTags(root),
-                DecodeSecurityTags(root),
-                root.TryGetProperty("environment"u8, out JsonElement environment) ? environment.GetString() : null,
-                root.TryGetProperty("resumeRequestedAt"u8, out JsonElement resumeRequestedAt) ? DateTimeOffset.FromUnixTimeMilliseconds(resumeRequestedAt.GetInt64()) : null);
+            return (
+                root.GetProperty("environment"u8).GetString()!,
+                new WorkflowRunIndexEntry(
+                    root.GetProperty("workflowId"u8).GetString()!,
+                    Enum.Parse<WorkflowRunStatus>(root.GetProperty("status"u8).GetString()!),
+                    DateTimeOffset.FromUnixTimeMilliseconds(root.GetProperty("createdAt"u8).GetInt64()),
+                    DateTimeOffset.FromUnixTimeMilliseconds(root.GetProperty("updatedAt"u8).GetInt64()),
+                    root.TryGetProperty("dueAt"u8, out JsonElement dueAt) ? DateTimeOffset.FromUnixTimeMilliseconds(dueAt.GetInt64()) : null,
+                    root.TryGetProperty("awaitingChannel"u8, out JsonElement channel) ? channel.GetString() : null,
+                    root.TryGetProperty("awaitingCorrelationId"u8, out JsonElement correlationId) ? correlationId.GetString() : null,
+                    root.TryGetProperty("errorType"u8, out JsonElement errorType) ? errorType.GetString() : null,
+                    root.TryGetProperty("correlationId"u8, out JsonElement queryCorrelationId) ? queryCorrelationId.GetString() : null,
+                    DecodeTags(root),
+                    DecodeSecurityTags(root),
+                    root.TryGetProperty("resumeRequestedAt"u8, out JsonElement resumeRequestedAt) ? DateTimeOffset.FromUnixTimeMilliseconds(resumeRequestedAt.GetInt64()) : null));
         }
 
         private static TagSet DecodeTags(JsonElement root)

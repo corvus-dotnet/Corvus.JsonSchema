@@ -71,7 +71,7 @@ public sealed class DraftRunTests
 
         // The run record rides the ordinary machinery: Pending, reserved id, pinned environment, inputs aboard,
         // and row-scoped to its working copy.
-        using WorkflowRun? run = await WorkflowRun.ResumeAsync(store, id);
+        using WorkflowRun? run = await WorkflowRun.ResumeAsync(store, TestAddresses.Dev(id));
         run.ShouldNotBeNull();
         run!.Status.ShouldBe(WorkflowRunStatus.Pending);
         run.WorkflowId.ShouldBe(DraftRuns.RunWorkflowId);

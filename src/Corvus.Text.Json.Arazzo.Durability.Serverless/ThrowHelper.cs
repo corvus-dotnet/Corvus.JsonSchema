@@ -31,6 +31,20 @@ internal static class ThrowHelper
     public static void ThrowMalformedRunId(string paramName)
         => throw new ArgumentException(SR.MalformedRunId, paramName);
 
+    /// <summary>Throws when the invocation is missing the required <c>environment</c> (ADR 0065 decision 9).</summary>
+    /// <param name="paramName">The offending parameter's name.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowMissingEnvironment(string paramName)
+        => throw new ArgumentException(SR.MissingEnvironment, paramName);
+
+    /// <summary>Throws when the invocation's <c>environment</c> is outside the environment-name grammar (ADR 0065 decision 9).</summary>
+    /// <param name="paramName">The offending parameter's name.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowMalformedEnvironment(string paramName)
+        => throw new ArgumentException(SR.MalformedEnvironment, paramName);
+
     /// <summary>Creates the exception for an invocation missing a valid absolute <c>checkpointUrl</c>, for the caller to throw.</summary>
     /// <param name="paramName">The offending parameter's name.</param>
     /// <returns>The exception to throw.</returns>

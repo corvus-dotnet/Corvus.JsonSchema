@@ -33,7 +33,7 @@ internal static class RunnerRunAdvance
             // The run loads and advances through the client's checkpoint store, so the executor is unaware it is not
             // talking to a database. The server re-read the run under the lease before offering it, so a null here
             // means the row went away underneath us rather than that the run was unsuitable.
-            using WorkflowRun? run = await WorkflowRun.ResumeAsync(client.Checkpoints, claim.RunId, cancellationToken: cancellationToken).ConfigureAwait(false);
+            using WorkflowRun? run = await WorkflowRun.ResumeAsync(client.Checkpoints, claim.Address, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (run is null)
             {
                 return false;
@@ -59,7 +59,7 @@ internal static class RunnerRunAdvance
             // releasing matters most: a token passed through here would skip the release on every run in flight,
             // stranding each until its lease lapsed. Releasing a run this client no longer holds does nothing, so this
             // is safe on every path.
-            await client.ReleaseAsync(claim.RunId, CancellationToken.None).ConfigureAwait(false);
+            await client.ReleaseAsync(claim.Address, CancellationToken.None).ConfigureAwait(false);
         }
     }
 }

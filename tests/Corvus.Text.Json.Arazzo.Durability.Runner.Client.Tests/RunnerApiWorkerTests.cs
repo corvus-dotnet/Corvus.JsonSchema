@@ -48,7 +48,7 @@ public sealed class RunnerApiWorkerTests
         (await worker.ResumeDueTimersAsync([Version], Advance, default)).ShouldBe(0);
 
         // Still suspended and still waiting, rather than advanced early.
-        WorkflowCheckpoint? stored = await fixture.Store.LoadAsync(new WorkflowRunId(Run1), default);
+        WorkflowCheckpoint? stored = await fixture.Store.LoadAsync(new WorkflowRunAddress(Fixture.Production, new WorkflowRunId(Run1)), default);
         WorkflowCheckpointSerializer.ProjectIndex(stored!.Value.Utf8).Status.ShouldBe(WorkflowRunStatus.Suspended);
     }
 
@@ -191,7 +191,7 @@ public sealed class RunnerApiWorkerTests
     private static async ValueTask<WorkflowRunResultKind> CompleteAsync(Fixture fixture, WorkflowRun run, CancellationToken cancellationToken)
     {
         byte[] advanced = Fixture.Checkpoint(run.Id.Value, WorkflowRunStatus.Completed, sequence: 2);
-        await fixture.Client.Checkpoints.SaveAsync(run.Id, advanced, WorkflowCheckpointSerializer.ProjectIndex(advanced), WorkflowEtag.None, cancellationToken);
+        await fixture.Client.Checkpoints.SaveAsync(run.Address, advanced, WorkflowCheckpointSerializer.ProjectIndex(advanced), WorkflowEtag.None, cancellationToken);
         return WorkflowRunResultKind.Completed;
     }
 }
