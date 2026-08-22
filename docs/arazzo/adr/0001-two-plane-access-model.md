@@ -33,8 +33,10 @@ implements the two planes as separate mechanisms.
 - **Reach is grant bindings and rules over row tags.** `PersistentRowSecurityPolicy.Resolve(principal)`
   produces an `AccessContext` carrying an independent `SecurityFilter?` per verb
   (`AccessContext.cs`, `PersistentRowSecurityPolicy.cs`). A list pushes the filter into the store as an
-  indexed predicate (`SecurityFilter.ToSqlPredicate`); a single-row action gates through
-  `AccessContext.Admits(verb, tags)`.
+  indexed predicate (`SecurityFilter.ToSqlPredicate`); a single-row action on a management (non-run) store
+  gates through `AccessContext.Admits(verb, tags)`. A single-run action instead resolves the bare run id
+  through the same reach-filtered index query the runs listing uses (ADR 0065 decision 9), so the run's
+  get and list paths cannot drift.
 - **The two planes are separately switchable.** `ControlPlaneSecurityMode`
   (`ControlPlane.Server/ControlPlaneSecurityMode.cs`) has `Scoped` (both on), `ScopesOnly`,
   `RowSecurityOnly`, and `Open`. A deployment can run one plane, both, or neither, which only makes sense

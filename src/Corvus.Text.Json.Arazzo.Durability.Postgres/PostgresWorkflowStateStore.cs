@@ -368,8 +368,7 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         await using NpgsqlCommand select = connection.CreateCommand();
 
         // §5.5 environment-scoped timer-resume: a real runner (non-null @runner_environment) resumes a due run only when
-        // pinned to EXACTLY its environment — the equality excludes an unpinned run (environment IS NULL, since NULL =
-        // value is never true) and a differently-pinned run, mirroring the dispatch scope so a run never crosses the
+        // pinned to EXACTLY its environment — the equality excludes a differently-pinned run, mirroring the dispatch scope so a run never crosses the
         // credential boundary. A null @runner_environment is the env-agnostic base overload (an in-process host resuming every due run).
         select.CommandText =
             "SELECT environment, run_id FROM workflow_runs WHERE status = @status AND due_at IS NOT NULL AND due_at <= @before"
@@ -397,7 +396,7 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         await using NpgsqlCommand select = connection.CreateCommand();
 
         // §5.5 environment-scoped message delivery: a real runner (non-null @runner_environment) delivers to an awaiting
-        // run only when pinned to EXACTLY its environment (the equality excludes an unpinned run); a null
+        // run only when pinned to EXACTLY its environment (the equality excludes a differently-pinned run); a null
         // @runner_environment is the env-agnostic base overload that delivers to every awaiting run.
         select.CommandText =
             """
@@ -441,8 +440,7 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         await using NpgsqlCommand select = connection.CreateCommand();
 
         // §5.5 environment-scoped dispatch: a real runner (non-null @runner_environment) claims a run only when pinned to
-        // EXACTLY its environment — the equality excludes an unpinned run (environment IS NULL, since NULL = value is never
-        // true) and a differently-pinned run. A null @runner_environment is the env-agnostic base overload (list all
+        // EXACTLY its environment — the equality excludes a differently-pinned run. A null @runner_environment is the env-agnostic base overload (list all
         // claimable), never a runner — the WorkflowDispatcher rejects an unscoped runner, so dispatch is always strict.
         // §18: a paused (or faulted) run the control plane marked resume-claimable (resume_requested_at IS NOT NULL) also
         // surfaces here, so a separate runner can claim and advance it; the marker is cleared on its first checkpoint.

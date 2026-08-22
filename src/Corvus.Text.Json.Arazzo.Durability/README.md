@@ -7,8 +7,8 @@ A code-generated *durable* executor only ever constructs the genuine products (e
 `outputs` and the workflow `outputs`), so a checkpoint is almost free: the run serialises JSON
 that already exists. This package provides the seam and the reference store that make that work:
 
-- `IWorkflowStateStore` — the pluggable, backend-agnostic checkpoint store (key/value by run id,
-  optimistic concurrency via an ETag, and a single-owner lease).
+- `IWorkflowStateStore` — the pluggable, backend-agnostic checkpoint store (key/value by the run's
+  `(environment, runId)` address, optimistic concurrency via an ETag, and a single-owner lease).
 - `WorkflowRun` — the per-run `IWorkflowRun` implementation the generated durable executor touches;
   it owns checkpoint serialization and the store write.
 - `WorkflowCheckpointSerializer` — turns the run's products into the checkpoint document and back.

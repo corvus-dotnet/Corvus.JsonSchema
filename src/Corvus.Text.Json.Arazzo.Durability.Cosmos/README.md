@@ -8,8 +8,9 @@ concurrency, plus an advisory single-owner lease) and `IWorkflowWaitIndex` (due-
 wakeups and the operator visibility query) from `Corvus.Text.Json.Arazzo.Durability`:
 
 - each run is a **document** in the `workflow_runs` container holding the opaque checkpoint (a base64 byte
-  array) and the projected index fields, with the run id as both the document id and the partition key, so
-  every checkpoint operation is a single-partition point operation;
+  array) and the projected index fields, with the environment as the partition key and the run id as the
+  document id (ADR 0065 decision 9), so the container's `(partition key, id)` uniqueness is the composite
+  `(environment, runId)` run address and every checkpoint operation is a single-partition point operation;
 - optimistic concurrency uses the document's native **`_etag`** (a conditional `If-Match` replace);
 - the single-owner lease is a document in a `workflow_leases` container, guarded by the same ETag mechanism.
 

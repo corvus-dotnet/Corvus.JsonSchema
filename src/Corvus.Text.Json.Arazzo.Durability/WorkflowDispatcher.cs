@@ -46,7 +46,7 @@ public sealed class WorkflowDispatcher
         ArgumentNullException.ThrowIfNull(owner);
 
         // A runner MUST declare the single environment it serves (design §5.5): dispatch is constrained to runs pinned
-        // to exactly this environment, so a runner never claims another environment's run (nor an unpinned one). An
+        // to exactly this environment, so a runner never claims another environment's run (every run is pinned to one). An
         // unscoped runner is rejected here rather than silently claiming nothing.
         ArgumentException.ThrowIfNullOrEmpty(runnerEnvironment);
         this.store = store;
@@ -75,7 +75,7 @@ public sealed class WorkflowDispatcher
 
         // The runner is environment-pinned (enforced at construction), so dispatch is constrained to runs pinned to
         // exactly its environment — including the §18 draft runs, which are always environment-pinned. A runner never
-        // claims another environment's run, nor an unpinned one, so the §5.5 credential boundary cannot be crossed.
+        // claims another environment's run (every run is pinned to one), so the §5.5 credential boundary cannot be crossed.
 
         // §5.5 authorization gate: a runner not currently authorized to serve its environment claims nothing — it stays
         // registered + heartbeating (visible, reclaimable) but takes no new or orphaned work until authorized.

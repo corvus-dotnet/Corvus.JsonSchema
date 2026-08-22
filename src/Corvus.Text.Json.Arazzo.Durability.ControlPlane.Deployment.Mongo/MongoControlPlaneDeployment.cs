@@ -63,8 +63,9 @@ public static class MongoControlPlaneDeployment
         ArgumentException.ThrowIfNullOrEmpty(connectionString);
 
         // MongoDB creates collections lazily on first write, so only the stores that need explicit index setup are
-        // prepared here; the rest (RunnerRegistry, EnvironmentRunnerAuthorizationStore, DraftRunStore,
-        // DraftRunTraceStore, SecurityPolicyStore, AccessRequestStore, AvailabilityRequestStore) auto-create.
+        // prepared here; the rest (RunnerRegistry, ScheduleRegistry, EnvironmentRunnerAuthorizationStore,
+        // DraftRunStore, DraftRunTraceStore, SecurityPolicyStore, AccessRequestStore, AvailabilityRequestStore)
+        // auto-create.
         await MongoWorkflowStateStore.PrepareAsync(connectionString, databaseName, cancellationToken).ConfigureAwait(false);
         await MongoWorkflowCatalogStore.PrepareAsync(connectionString, databaseName, cancellationToken).ConfigureAwait(false);
         await MongoSourceCredentialStore.PrepareAsync(connectionString, databaseName, cancellationToken).ConfigureAwait(false);

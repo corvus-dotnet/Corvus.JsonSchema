@@ -27,7 +27,7 @@ public interface IWorkflowLeaseAdministration
     /// (and the owner's next optimistic-concurrency write for that run conflicts). Idempotent — an owner holding no
     /// live leases in scope expires none.
     /// </summary>
-    /// <param name="owner">The lease owner whose leases to expire (a runner id — the same value passed to <see cref="IWorkflowStateStore.AcquireLeaseAsync"/>).</param>
+    /// <param name="owner">The lease owner whose leases to expire (the bound machine principal — the same value passed to <see cref="IWorkflowStateStore.AcquireLeaseAsync"/>, never the client-supplied runner id; see H5).</param>
     /// <param name="environment">The environment whose leases to expire — revocation withdraws an environment, and
     /// a runner that keeps other environments keeps its leases there (design §5.5, ADR 0065 decision 9); pass
     /// <see langword="null"/> to fence the owner across every environment (a fully-revoked or compromised runner).</param>

@@ -25,16 +25,25 @@ not need durability pays nothing for it.
 Persistence is behind two seams ([ADR 0021](../adr/0021-state-store-abstraction.md)):
 
 - **`IWorkflowStateStore`** is the core store: it saves and loads a run's checkpoint and administers the per-run
-  lease that guarantees a single executor advances a run at a time.
+  lease that guarantees a single executor advances a run at a time. Every run-addressed operation is keyed by the
+  `WorkflowRunAddress`, the `(environment, runId)` composite that is the run's primary key at every ingress and
+  in every backend (ADR 0065 decision 9). Save/load live on the base `IWorkflowCheckpointStore` that this
+  interface extends; administrative lease expiry lives on the separate `IWorkflowLeaseAdministration` (implemented
+  by every backend).
 
   ```csharp
-  public interface IWorkflowStateStore
+  public interface IWorkflowCheckpointStore
   {
-      ValueTask<WorkflowEtag> SaveAsync(/* run id, checkpoint, expected etag */ CancellationToken ct);
-      ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunId id, CancellationToken ct);
-      ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunId id, string owner, TimeSpan ttl, CancellationToken ct);
+      ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken ct);
+      ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken ct);
+  }
+
+  public interface IWorkflowStateStore : IWorkflowCheckpointStore
+  {
+      ValueTask<WorkflowLease?> AcquireLeaseAsync(WorkflowRunAddress address, string owner, TimeSpan ttl, CancellationToken ct);
+      ValueTask<WorkflowLease?> TryExtendLeaseAsync(WorkflowLease lease, TimeSpan extension, CancellationToken ct);
       ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken ct);
-      ValueTask DeleteAsync(WorkflowRunId id, CancellationToken ct);
+      ValueTask DeleteAsync(WorkflowRunAddress address, CancellationToken ct);
   }
   ```
 
@@ -60,9 +69,10 @@ a control-plane resume, an orphan reclaim after a crash, and a timer or message 
 To back a new datastore, implement `IWorkflowStateStore` (and, for control-plane visibility, `IWorkflowWaitIndex`
 and its dispatch query) over that datastore, following the platform conventions
 ([platform-conventions guide](platform-conventions.md)): the checkpoint persists bytes-native (no
-record-to-document string round-trip), lists are keyset-paged, and a bounded count answers the total. Persist the
-checkpoint as its generated CTJ document with an in-document etag for the optimistic-concurrency compare, and
-implement the lease as a compare-and-swap on an owner and expiry so exactly one executor holds it. A shared
+record-to-document string round-trip), lists are keyset-paged by the composite `(environment, runId)` address,
+and a bounded count answers the total. Persist the checkpoint as opaque bytes keyed by the address at an etag for
+the optimistic-concurrency compare (a backend never parses the checkpoint), and implement the lease as a
+compare-and-swap on an owner and expiry so exactly one executor holds it. A shared
 conformance suite runs against every backend, so a new backend is correct when it passes the same suite the
 in-memory reference and the shipped backends (Postgres, SQL Server, MySQL, Sqlite, Redis, Mongo, Cosmos, NATS
 JetStream, Azure Storage) pass.

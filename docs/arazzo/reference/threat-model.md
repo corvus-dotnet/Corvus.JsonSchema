@@ -42,8 +42,8 @@ source before inclusion.
 
 Keep that verification step. One reviewer reported that two telemetry counters were declared but
 never incremented, which would have made any dashboard built on them read a flat line as "no
-cancellations". Both are in fact incremented (`WorkflowRun.cs:438, 463, 477`;
-`SecuredWorkflowManagement.cs:535`), so the item was dropped rather than recorded.
+cancellations". Both are in fact incremented (`WorkflowRun.WorkflowsSuspended.Add`;
+`SecuredWorkflowManagement.WorkflowsCancelled.Add`), so the item was dropped rather than recorded.
 
 ### 1.3 What obliges an update
 
@@ -201,7 +201,7 @@ checkable rather than a by-product of what a review happened to look at.
 | Identity spoofing via request-derived dimensions | **Absent**. No cross-check between ambient and token-derived tenant | Tenant becomes a function of the URL, and the self-elevation guard becomes context-local | H21 |
 | Existence disclosure and enumeration | **Partial**. Non-disclosing 404 by design ([ADR 0004](../adr/0004-fail-closed-non-disclosing-enforcement.md)) | Denials are unaudited, so probing is quiet by design *and* by omission | H11 |
 | Resource exhaustion of the shared plane | **Partial**. Bounded counts, [keyset pagination](UBIQUITOUSLANGUAGE.md#keyset-pagination), standing capacity limits | No rate limiting on any browser-facing or governance endpoint, and capacity counts are reach-scoped so deployment-global in two postures | H41 |
-| Object reference forgery | **Holds**. The 32-hex [run-id](UBIQUITOUSLANGUAGE.md#run-id) grammar at every ingress, deterministic ids derived under the [run-derivation key](UBIQUITOUSLANGUAGE.md#run-derivation-key), and the composite [run address](UBIQUITOUSLANGUAGE.md#run-address) as the primary key in every backend | A guessed or disclosed id resolves only within the caller's reach, and a collision is evaluated only within the caller's environment, so neither branch is an existence oracle over another tenant's runs | H18 |
+| Object reference forgery | **Holds** for runs. The 32-hex [run-id](UBIQUITOUSLANGUAGE.md#run-id) grammar at every ingress, deterministic ids derived under the [run-derivation key](UBIQUITOUSLANGUAGE.md#run-derivation-key), and the composite [run address](UBIQUITOUSLANGUAGE.md#run-address) as the primary key in every backend | A guessed or disclosed run id resolves only within the caller's reach, and a run-id collision is evaluated only within the caller's environment, so neither branch is an existence oracle over another tenant's runs. The [schedule](UBIQUITOUSLANGUAGE.md#schedule) surface is the deliberate exception: schedule ids are a deployment-global operator namespace (the schedules routes carry no environment), so `create` returns a distinguishable `409` when an id is already registered in any environment. That is a name-taken signal over a shared global namespace, not disclosure of another tenant's run, and is accepted as AR-18 | H18 |
 
 ### TB-3 Browser to served UI
 
@@ -238,7 +238,7 @@ checkable rather than a by-product of what a review happened to look at.
 | Checkpoint replay or stale write | **Partial**. Single-row CAS, 409 on supersession, monotonic accepted sequence | Header and body sequence are never compared, so the rule validates a number the client wrote | H40 |
 | Superseded or displaced holder writing | **Partial**. The [lease epoch](UBIQUITOUSLANGUAGE.md#lease-epoch) is minted per run by the store, persisted with the lease record, and compared on renewal and on both checkpoint operations, so a presented epoch that is not the current grant's authorises nothing | Sound within one store generation only. The epoch is not yet paired with a [store incarnation](UBIQUITOUSLANGUAGE.md#store-incarnation), so a restore takes every run's counter back and re-issues epochs already spent, and rollback by the control plane itself stays undetectable until the tenant anchor exists | H8 |
 | Rollback or substitution by the control plane (AD-4) | **Designed**. Tenant anchor, phase B | Accepted for the phase-A window, booked as AR-9 | |
-| Revocation of a compromised runner | **Partial**. The [revocation fence](UBIQUITOUSLANGUAGE.md#runner-revocation-fence) expires leases by the bound machine principal, and renewal and both checkpoint operations re-resolve bindings | Bounded by the resolver's cache window, and by nothing on a replica that has not refreshed its policy. The in-flight half is also backend-conditional: expiring leases needs the optional `IWorkflowLeaseAdministration`, which only the in-memory, Postgres and SQLite stores implement, so on the other seven backends revoking stops future dispatch and orphan reclaim but leaves the revoked holder's current leases to run to TTL. Booked as AR-16, which scoped it to phase B; it binds now | H5, H22 |
+| Revocation of a compromised runner | **Holds**. The [revocation fence](UBIQUITOUSLANGUAGE.md#runner-revocation-fence) expires leases by the bound machine principal, and renewal and both checkpoint operations re-resolve bindings | Bounded by the resolver's cache window, and by nothing on a replica that has not refreshed its policy. Every backend now implements `IWorkflowLeaseAdministration`, so the in-flight half holds on all of them and AR-16's fence half is discharged; the residual is the replica-refresh window (H22) | H22 |
 | Cross-tenant denial of service | **Partial**. Per-tenant and per-runner token buckets, test-before-spend, client-side `Retry-After` clamp | Buckets collapse to one counter without owner-group tags, a wholesale cache clear forgives every tenant's deficit | H41 |
 | Observability of the seam | **Absent**. Zero logs, spans or counters in the entire runner API | Every threat in this table executes silently | H11 |
 
@@ -317,7 +317,7 @@ recording what does not, because a model built only from holes mis-ranks the fix
 | Wildcard binding cannot confer unrestricted reach | Holds | `PersistentRowSecurityPolicy.cs:126, 362-366` |
 | Run identity (environment, workflow id, security tags) is not runner-mutable once established, enforced above the store so every backend inherits it | Holds | `WorkflowCheckpointCoordinator.SaveAsync` |
 | Machine principal from the token only, lease ownership derived server-side | Holds | `RunnerPrincipalAccessor.cs:47-62`, `MachinePrincipal.cs:52-65` |
-| Revocation expires the holder's leases by bound principal, and renewal and both checkpoint operations re-resolve bindings | Partial. The control plane asks correctly, on every backend; whether the store can expire is an optional store capability three of ten implement | `ArazzoControlPlaneRunnerAuthorizationsHandler.cs` fence, `RunnerRunCoordinator.StillBoundAsync`, `IWorkflowLeaseAdministration` |
+| Revocation expires the holder's leases by bound principal, and renewal and both checkpoint operations re-resolve bindings | Holds. The control plane asks correctly on every backend, and every store now implements the expiry capability | `ArazzoControlPlaneRunnerAuthorizationsHandler.cs` fence, `RunnerRunCoordinator.BoundToAsync`, `IWorkflowLeaseAdministration` |
 | Registration requires pre-authorization or an enrolment token, re-checked under the store fence | Holds | `ArazzoControlPlaneRunnerAuthorizationsHandler.cs:277-297, 359-366` |
 | Catalog artifacts authorized by path, never bare content hash, and "not yours" answers as "not there" | Holds | `RunnerCatalogCoordinator.cs:134-147, 226-239` |
 | Client-side `Retry-After` clamp, 10s single, 30s total, 4 attempts | Holds | `RunnerQuotaHoldOptions.cs:79-110` |
@@ -441,7 +441,7 @@ detection, CON containment, REC recovery.
 | UO-8 denial of service | H14, H41 | NONE | PART | WEAK | WEAK | **One.** Runner quotas, designed for a different threat, shape but never terminate the loop. Closing H6 removed the parse-time amplifier; what remains is a run with no step budget and no wall clock, which no quota terminates |
 | UO-9 integrity loss | anchor is phase B | WEAK | NONE | NONE | NONE | **Zero until phase B, accepted.** Closing H8 raised prevention off the floor — the epoch is now the run's own, persisted and compared, so phase B no longer inherits a counter it could not order by. Nothing else moved: the control plane still holds every copy of the run, so it can roll one back and no layer here would see it |
 | UO-10 undetected breach | H11 | n/a | NONE | n/a | NONE | **Zero on reads and the whole runner API.** Mutation audit is good but change-blind, tenant-less and non-durable |
-| UO-11 revocation fails | H22 | PART | PART | PART | NONE | **Two on three backends, one on seven.** The fence expires the holder's leases and renewal re-authorizes, so a revoked runner is stopped within the binding cache window. The first of those two layers is an optional store capability (`IWorkflowLeaseAdministration`, in-memory/Postgres/SQLite only), so on every other backend renewal is the sole barrier and work already in flight runs to lease TTL. H22 is what remains on all ten: a replica that never refreshes its policy keeps honouring the deleted binding |
+| UO-11 revocation fails | H22 | PART | PART | PART | NONE | **Two layers on every backend.** The fence expires the holder's leases and renewal re-authorizes, so a revoked runner is stopped within the binding cache window. Both layers now hold on all backends: every store implements `IWorkflowLeaseAdministration`, so in-flight leases are expired everywhere, and renewal re-authorizes on top. H22 is what remains on all of them: a replica that never refreshes its policy keeps honouring the deleted binding |
 
 ### Why the holes line up
 
@@ -475,8 +475,9 @@ residues, which is unusually good practice and the reason this register can be a
 | AR-13 | The tenant anchor is on the checkpoint hot path and is a tenant-side availability dependency | Phase B onward |
 | AR-14 | Availability inverts relative to [ADR 0023](../adr/0023-two-process-store-as-queue.md). The control plane is on the hot path of every checkpoint of every tenant | Standing |
 | AR-15 | SSRF fencing is delegated to deployment egress controls (ADR 0052), a deliberate decision that leaves the platform unable to express or verify the control | Until decided |
-| AR-16 | Not every backend can host a sealed environment. Expiring leases by principal and atomic row-plus-index CAS become conformance requirements. The first half is **not** phase-conditioned and was mis-scoped here: only the in-memory, Postgres and SQLite stores implement `IWorkflowLeaseAdministration`, so the revocation fence has no in-flight effect on the other seven backends today, sealed environments or not. The store-conformance suite reports this as a skip per backend, which is by design and is the only place it currently shows | Phase B for the sealed-environment gate, standing for the fence |
+| AR-16 | Not every backend can host a sealed environment. Expiring leases by principal and atomic row-plus-index CAS become conformance requirements. The fence half is now **discharged**: every backend implements `IWorkflowLeaseAdministration`, so the revocation fence has in-flight effect everywhere and the store-conformance suite runs the three lease-administration oracles green on all ten (no skips). The atomic row-plus-index CAS remains a phase-B sealed-environment requirement | Phase B for the sealed-environment gate; fence half discharged |
 | AR-17 | Phase A leaves the control plane the sole custodian of tenant plaintext, compensated by a write-time tenancy invariant. H1 used to bypass that invariant; with it closed the compensation is as strong in practice as in design | Phase B |
+| AR-18 | The [schedule](UBIQUITOUSLANGUAGE.md#schedule) `create` surface distinguishes an id already registered in any environment (a `409`) from a free one (a `201`), a name-taken signal over the deliberately deployment-global schedule-id namespace. Accepted because schedule ids are a shared operator namespace (the schedules routes carry no environment), not run-confidential data; get/delete/run-now remain non-disclosing. Revisit only if schedule ids are ever re-scoped per environment | Standing |
 
 ### Assumptions about the deployment
 
@@ -611,12 +612,14 @@ Ordered by risk removed per unit of work, and by dependency. Detail, acceptance 
 backlog live in the audit result.
 
 **Close divergence before building the next layer on it.** Phase B builds freshness and integrity on
-top of the lease token, the store reach predicate, the run-id key and the audit primitive. The lease
-token is now sound: its epoch is the run's, persisted and compared, so the anchor has an ordering key to
-be built on. The other three still diverge. Sealing payloads behind a marker interface that certifies
-pushdown by default, or keying a tombstone by a run id every backend stores without its environment,
-carries each divergence into the layer meant to close it, where it is considerably more expensive to
-find.
+top of the lease token, the store reach predicate, the run-id key and the audit primitive. Three of
+those four are now sound: the lease token's epoch is the run's, persisted and compared, so the anchor
+has an ordering key to be built on; the store reach predicate is enforced per backend and proven on the
+wire (H12 closed); and the run key is the composite `(environment, runId)` in every backend, so a
+tombstone keyed by the run's own address carries its environment with it (H18 closed). The audit
+primitive is the one that still diverges, and building read audit, tenant attribution and a durable sink
+on top of the change-blind mutation logger carries that divergence into the layer meant to close it,
+where it is considerably more expensive to find.
 
 | # | Action | Closes | Status |
 |---|--------|--------|--------|

@@ -1673,8 +1673,9 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
     }
 
     /// <summary>Deletes a §18 debug run and purges its metadata trace and captured draft (design §18 R5c): a
-    /// dual-store delete keyed by run id — the trace store, the draft-run capture, and the durable run — so a run's
-    /// artifacts die with it. Reach-checked against the parent working copy (§14.2); a run not belonging to it is 404.</summary>
+    /// delete across the trace store, the draft-run capture (both keyed by run id), and the durable run (keyed by its
+    /// <c>(environment, runId)</c> address) — so a run's artifacts die with it. Reach-checked against the parent
+    /// working copy (§14.2); a run not belonging to it is 404.</summary>
     /// <param name="parameters">The request parameters.</param>
     /// <param name="workspace">The response workspace.</param>
     /// <param name="cancellationToken">A cancellation token.</param>

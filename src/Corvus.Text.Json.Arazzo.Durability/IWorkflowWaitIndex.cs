@@ -27,8 +27,8 @@ public interface IWorkflowWaitIndex
     /// <summary>
     /// The environment-scoped overload (design §5.5): as <see cref="QueryDueAsync(DateTimeOffset, CancellationToken)"/>,
     /// but additionally constrains due runs to those pinned to <strong>exactly</strong> <paramref name="runnerEnvironment"/>.
-    /// A real runner (non-null <paramref name="runnerEnvironment"/>) never resumes a run pinned to a different environment,
-    /// nor an unpinned one — a run started against environment <em>E</em> is only ever resumed by a runner serving <em>E</em>,
+    /// A real runner (non-null <paramref name="runnerEnvironment"/>) never resumes a run pinned to a different environment
+    /// (every run is pinned to exactly one) — a run started against environment <em>E</em> is only ever resumed by a runner serving <em>E</em>,
     /// exactly as dispatch is scoped (see <see cref="IWorkflowDispatchIndex.QueryClaimableAsync(IReadOnlyCollection{string}, string?, DateTimeOffset, CancellationToken)"/>).
     /// A <see langword="null"/> <paramref name="runnerEnvironment"/> is the env-agnostic base overload: an in-process host
     /// that owns the whole store resumes every due run regardless of environment (deliberately unscoped).
@@ -53,7 +53,7 @@ public interface IWorkflowWaitIndex
     /// The environment-scoped overload (design §5.5): as <see cref="QueryAwaitingAsync(string, string?, CancellationToken)"/>,
     /// but additionally constrains awaiting runs to those pinned to <strong>exactly</strong> <paramref name="runnerEnvironment"/>.
     /// A message consumer for environment <em>E</em> (non-null <paramref name="runnerEnvironment"/>) never resumes a run
-    /// pinned to a different environment, nor an unpinned one, even when two environments have runs awaiting the same channel
+    /// pinned to a different environment (every run is pinned to exactly one), even when two environments have runs awaiting the same channel
     /// name — the message-delivery credential boundary, exactly as timer-resume and dispatch are scoped. A <see langword="null"/>
     /// <paramref name="runnerEnvironment"/> is the env-agnostic base overload (an in-process host delivering to every awaiting run).
     /// </summary>

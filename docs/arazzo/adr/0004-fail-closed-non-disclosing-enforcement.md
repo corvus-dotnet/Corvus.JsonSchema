@@ -14,7 +14,7 @@ comparison against a value that was never ranked.
 
 A second choice sits alongside it. When reach denies, does the caller learn that the row exists but is
 out of their reach (a disclosing `403`), or does the row simply not appear (a non-disclosing `404`)? For
-row-level policy, disclosure is itself a leak: knowing that run `r-9f2` exists, even without reading it, tells
+row-level policy, disclosure is itself a leak: knowing that run `0123456789abcdef0123456789abcdef` exists, even without reading it, tells
 a caller something about another tenant.
 
 ### Grounded architectural facts
@@ -52,8 +52,13 @@ Reach enforcement is fail-closed and non-disclosing.
 - Callers cannot probe for the existence of rows outside their reach by watching for `403` versus `404`. Both
   out-of-reach and nonexistent read as `404`.
 - The list and single-row paths must agree. A list omits out-of-reach rows via the pushed-down predicate
-  (`SecurityFilter.ToSqlPredicate`); a single-row read gates via `AccessContext.Admits` and returns `404` on
-  a miss. Neither path may leak the row.
+  (`SecurityFilter.ToSqlPredicate`); a single-row read gates on the same predicate and returns `404` on a
+  miss. Neither path may leak the row. For the management (non-run) stores the single-row gate is
+  `AccessContext.Admits`. For runs, ADR 0065 decision 9's composite key made this stronger: rather than an
+  in-process `Admits` check over a separately-loaded row (which had drifted from the list, so a run hidden by
+  the list was disclosed by get), `SecuredWorkflowManagement` resolves every bare run id through one
+  reach-filtered index query, the same predicate the runs listing pushes down, so the two paths cannot
+  diverge by construction.
 - The system and operator cases are the explicit, named exceptions. A null reach (operator, or
   `AccessContext.System`) short-circuits to allow, and an unscoped deployment runs as `System`. These are the
   only ways enforcement admits without a matching rule, and they are named, not accidental.

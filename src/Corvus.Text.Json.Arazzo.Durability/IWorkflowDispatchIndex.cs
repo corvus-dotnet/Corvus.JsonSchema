@@ -37,7 +37,7 @@ public interface IWorkflowDispatchIndex
     /// <param name="runnerEnvironment">The single environment a runner serves — a run is claimable only when pinned to exactly it; <see langword="null"/> is env-agnostic (the base overload, not a runner).</param>
     /// <param name="now">The current instant, used to decide whether a <see cref="WorkflowRunStatus.Running"/> run's lease has expired.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The addresses of the claimable runs pinned to (or unpinned relative to) the runner's environment.</returns>
+    /// <returns>The addresses of the claimable runs pinned to the runner's environment (every run is pinned to exactly one environment, so there is no unpinned case).</returns>
     /// <remarks>The default implementation ignores <paramref name="runnerEnvironment"/> and delegates to the unscoped
     /// overload (the pre-pinning behaviour); a backend overrides it with a native environment-filtered query.</remarks>
     IAsyncEnumerable<WorkflowRunAddress> QueryClaimableAsync(IReadOnlyCollection<string> hostedWorkflowIds, string? runnerEnvironment, DateTimeOffset now, CancellationToken cancellationToken)

@@ -74,11 +74,14 @@ public sealed class WorkflowRunDerivation
     }
 
     /// <summary>
-    /// Derives the address of a schedule's scheduler run (#896) from its <paramref name="scheduleId"/> alone,
+    /// Derives the run id of a schedule's scheduler run (#896) from its <paramref name="scheduleId"/> alone,
     /// matching the schedules surface's contract that a schedule id is globally unique across the deployment. The
-    /// keyed MAC still makes the address impossible to pre-compute without the key, and the domain label keeps it
-    /// out of the idempotent-start id space; re-creating a schedule id in a different environment collides on the
-    /// run and is refused rather than silently adopting the other environment's schedule.
+    /// keyed MAC still makes the id impossible to pre-compute without the key, and the domain label keeps it out
+    /// of the idempotent-start id space. Under the composite <c>(environment, runId)</c> run key (ADR 0065
+    /// decision 9) two environments can hold the same run id, so this derived id no longer enforces schedule-id
+    /// uniqueness on its own; the deployment-global schedule registry (<see cref="Schedules.IScheduleRegistry"/>)
+    /// is the sole guardian of that, and the derived id is simply where the scheduler run lives once the registry
+    /// has admitted the schedule.
     /// </summary>
     /// <param name="scheduleId">The schedule's stable, globally-unique identity.</param>
     /// <returns>The derived run id, inside the run-id grammar.</returns>

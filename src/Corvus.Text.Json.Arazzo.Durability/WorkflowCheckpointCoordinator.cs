@@ -20,9 +20,11 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// </para>
 /// <list type="number">
 /// <item><description>
-/// A per-run monotonic write-sequence: a save whose sequence is not greater than the last applied is dropped as a
-/// benign no-op (a superseded or duplicate arrival). The terminal checkpoint always carries the highest sequence, so
-/// it is never dropped here.
+/// A per-run monotonic write-sequence: the slot accepts exactly the next sequence (last applied + 1). Any other
+/// proposal is refused as Superseded and told the sequence that would be accepted — both a stale or duplicate
+/// arrival below the next, and a gap above it (accepting a gap would leave a hole neither side could later tell
+/// from a lost write). A delayed arrival lands once its turn comes. A terminal checkpoint is no exception: it is
+/// accepted only when its own sequence is the next one, and a gap before it is refused like any other.
 /// </description></item>
 /// <item><description>
 /// Per-run serialization plus etag threading: each run's saves run one at a time behind a gate, threading the store's

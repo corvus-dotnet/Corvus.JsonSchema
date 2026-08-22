@@ -352,8 +352,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     public async IAsyncEnumerable<WorkflowRunAddress> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         // §5.5 environment-scoped timer-resume: a real runner (non-null @runnerEnvironment) resumes a due run only when
-        // pinned to EXACTLY its environment — the equality excludes an unpinned run (Environment IS NULL, since NULL =
-        // value is never true) and a differently-pinned run, mirroring the dispatch scope so a run never crosses the
+        // pinned to EXACTLY its environment — the equality excludes a differently-pinned run, mirroring the dispatch scope so a run never crosses the
         // credential boundary. A null @runnerEnvironment is the env-agnostic base overload (an in-process host resuming every due run).
         List<WorkflowRunAddress> due = await this.QueryAddressesAsync(
             "SELECT Environment, RunId FROM WorkflowRuns WHERE Status = @status AND DueAt IS NOT NULL AND DueAt <= @before AND (@runnerEnvironment IS NULL OR Environment = @runnerEnvironment);",
@@ -382,7 +381,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         ArgumentNullException.ThrowIfNull(channel);
 
         // §5.5 environment-scoped message delivery: a real runner (non-null @runnerEnvironment) delivers to an awaiting
-        // run only when pinned to EXACTLY its environment (the equality excludes an unpinned run); a null
+        // run only when pinned to EXACTLY its environment (the equality excludes a differently-pinned run); a null
         // @runnerEnvironment is the env-agnostic base overload that delivers to every awaiting run.
         List<WorkflowRunAddress> awaiting = await this.QueryAddressesAsync(
             """
@@ -637,7 +636,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         }
 
         // §5.5 environment-scoped dispatch: a real runner (non-null @runnerEnvironment) claims a run only when pinned to
-        // EXACTLY its environment — the equality excludes an unpinned run (Environment IS NULL, since NULL = value is
+        // EXACTLY its environment — the equality excludes a differently-pinned run (Environment IS NULL, since NULL = value is
         // never true) and a differently-pinned run. A null @runnerEnvironment is the env-agnostic base overload (list all
         // claimable), never a runner — the WorkflowDispatcher rejects an unscoped runner, so dispatch is always strict.
         // §18: a paused (or faulted) run the control plane marked resume-claimable (ResumeRequestedAt IS NOT NULL) also

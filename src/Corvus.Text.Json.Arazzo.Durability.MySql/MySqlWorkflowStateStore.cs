@@ -390,7 +390,7 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
 
         // §5.5 environment-scoped timer-resume: a due run pinned to an environment is resumed only by a runner serving it.
         // A real runner (non-null @runner_environment) resumes a run only when pinned to EXACTLY its environment (the
-        // equality excludes an unpinned run); a null @runner_environment is the env-agnostic base overload, never a runner.
+        // equality excludes a differently-pinned run); a null @runner_environment is the env-agnostic base overload, never a runner.
         select.CommandText = "SELECT environment, run_id FROM workflow_runs WHERE status = @status AND due_at IS NOT NULL AND due_at <= @before AND (@runner_environment IS NULL OR environment = @runner_environment);";
         select.Parameters.AddWithValue("@status", SuspendedStatus);
         select.Parameters.AddWithValue("@before", before.ToUnixTimeMilliseconds());
@@ -427,7 +427,7 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
 
         // §5.5 environment-scoped dispatch: a run pinned to an environment is claimable only by a runner serving it; an
         // A real runner (non-null @runner_environment) claims a run only when pinned to EXACTLY its environment (the
-        // equality excludes an unpinned run); a null @runner_environment is the env-agnostic base overload, never a runner.
+        // equality excludes a differently-pinned run); a null @runner_environment is the env-agnostic base overload, never a runner.
         // §18: a paused (or faulted) run the control plane marked resume-claimable (resume_requested_at IS NOT NULL) also
         // surfaces here, so a separate runner can claim and advance it; the marker is cleared on its first checkpoint.
         select.CommandText =
@@ -470,7 +470,7 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         await using MySqlCommand select = connection.CreateCommand();
 
         // §5.5 environment-scoped event-resume. A real runner (non-null @runner_environment) resumes an awaiting run
-        // only when it is pinned to EXACTLY its environment (the equality excludes an unpinned run). A null
+        // only when it is pinned to EXACTLY its environment (the equality excludes a differently-pinned run). A null
         // @runner_environment is the env-agnostic base overload, never a runner.
         select.CommandText =
             """

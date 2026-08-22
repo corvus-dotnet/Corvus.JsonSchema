@@ -130,8 +130,9 @@ The steps map to code as follows. Authentication is the host's scheme. The entit
 `ControlPlaneEntitlementClaimsTransformer`. The capability check is the declared-scope authorization
 convention (`ControlPlaneAuthorization`). Reach resolution is `ControlPlaneAccess.Current()` calling
 `PersistentRowSecurityPolicy.Resolve`, producing an `AccessContext` with a `SecurityFilter?` per verb. A list
-pushes the filter into the store (`SecurityFilter.ToSqlPredicate`); a single row gates through
-`AccessContext.Admits`.
+pushes the filter into the store (`SecurityFilter.ToSqlPredicate`); a single row on a management (non-run) store
+gates through `AccessContext.Admits`, while a single run resolves its bare id through the same reach-filtered
+index query the runs listing uses (ADR 0065 decision 9), so a run's get and list paths cannot drift.
 
 Reach fails closed at every gate: an empty rule set admits nothing, an untagged row is invisible to a scoped
 principal, an unranked ordered comparison denies, and a policy that has not yet loaded denies everything
