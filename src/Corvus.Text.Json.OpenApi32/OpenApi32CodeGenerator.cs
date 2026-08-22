@@ -8292,6 +8292,19 @@ public sealed class OpenApi32CodeGenerator
                     w.WriteLine($"ParsedJsonDocument<{bodyTypeName}>? bodyDoc = null;");
                 }
 
+                // Multipart bodies with binary parts use the owned deserializer so the
+                // captured part slices stay valid for the duration of the handler call.
+                bool usesOwnedBody = hasBody && !isRawStreamBody
+                    && ((IsMultipartRequestBody(op.RequestBody!.Value)
+                            && !IsMultipartMixedRequestBody(op.RequestBody!.Value)
+                            && op.RequestBody!.Value.BinaryProperties.Length > 0)
+                        || (IsMultipartMixedRequestBody(op.RequestBody!.Value)
+                            && HasMixedBinaryParts(op.RequestBody!.Value)));
+                if (usesOwnedBody)
+                {
+                    w.WriteLine($"OwnedMultipartBody<{bodyTypeName}>? __bodyOwner = null;");
+                }
+
                 w.WriteLine("try");
                 w.OpenBrace();
 
@@ -8356,7 +8369,8 @@ public sealed class OpenApi32CodeGenerator
                     {
                         foreach (BinaryPropertyInfo binaryPart in op.RequestBody!.Value.BinaryProperties)
                         {
-                            w.WriteLine($"byte[]? __binary_{binaryPart.PropertyName} = null;");
+                            w.WriteLine($"int __binary_{binaryPart.PropertyName}_offset = -1;");
+                            w.WriteLine($"int __binary_{binaryPart.PropertyName}_length = 0;");
                         }
                     }
 
@@ -8368,14 +8382,15 @@ public sealed class OpenApi32CodeGenerator
                             {
                                 if (hoistPrefixParts[i].IsBinary)
                                 {
-                                    w.WriteLine($"byte[]? __mixedBinary_{i} = null;");
+                                    w.WriteLine($"int __mixedBinary_{i}_offset = -1;");
+                                    w.WriteLine($"int __mixedBinary_{i}_length = 0;");
                                 }
                             }
                         }
 
                         if (op.RequestBody!.Value.ItemPart is { IsBinary: true })
                         {
-                            w.WriteLine("System.Collections.Generic.List<ReadOnlyMemory<byte>> __mixedBinaryItems = [];");
+                            w.WriteLine("System.Collections.Generic.List<(int Offset, int Length)> __mixedBinaryItemOffsets = [];");
                         }
                     }
 
@@ -8412,14 +8427,14 @@ public sealed class OpenApi32CodeGenerator
                         w.OpenBrace();
                         if (hasBinaryParts)
                         {
-                            w.WriteLine($"bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, binaryPartCallback: part =>");
+                            w.WriteLine($"__bodyOwner = await MultipartFormDataSerializer.DeserializeOwnedAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, binaryPartCallback: part =>");
                             w.OpenBrace();
                             bool firstPart = true;
                             foreach (BinaryPropertyInfo binaryPart in multipartBinaryParts)
                             {
                                 string keyword = firstPart ? "if" : "else if";
                                 firstPart = false;
-                                w.WriteLine($"{keyword} (part.Name.SequenceEqual(\"{binaryPart.PropertyName}\"u8)) {{ __binary_{binaryPart.PropertyName} = part.Data.ToArray(); }}");
+                                w.WriteLine($"{keyword} (part.Name.SequenceEqual(\"{binaryPart.PropertyName}\"u8)) {{ __binary_{binaryPart.PropertyName}_offset = part.BodyOffset; __binary_{binaryPart.PropertyName}_length = part.Data.Length; }}");
                             }
 
                             w.CloseBraceNoNewline().Write(", maxBodyLength: serverOptions.MaxBufferedRequestBodyLength, cancellationToken: context.RequestAborted).ConfigureAwait(false);");
@@ -8448,7 +8463,7 @@ public sealed class OpenApi32CodeGenerator
                         w.OpenBrace();
                         if (hasMixedBinary)
                         {
-                            w.WriteLine($"bodyDoc = await MultipartMixedSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, binaryPartCallback: part =>");
+                            w.WriteLine($"__bodyOwner = await MultipartMixedSerializer.DeserializeOwnedAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, binaryPartCallback: part =>");
                             w.OpenBrace();
                             bool firstClause = true;
                             int mixedPrefixCount = mixedPrefixParts?.Length ?? 0;
@@ -8460,7 +8475,7 @@ public sealed class OpenApi32CodeGenerator
                                     {
                                         string keyword = firstClause ? "if" : "else if";
                                         firstClause = false;
-                                        w.WriteLine($"{keyword} (part.Index == {i}) {{ __mixedBinary_{i} = part.Data.ToArray(); }}");
+                                        w.WriteLine($"{keyword} (part.Index == {i}) {{ __mixedBinary_{i}_offset = part.BodyOffset; __mixedBinary_{i}_length = part.Data.Length; }}");
                                     }
                                 }
                             }
@@ -8468,7 +8483,7 @@ public sealed class OpenApi32CodeGenerator
                             if (mixedItemsBinary)
                             {
                                 string keyword = firstClause ? "if" : "else if";
-                                w.WriteLine($"{keyword} (part.Index >= {mixedPrefixCount}) {{ __mixedBinaryItems.Add(part.Data.ToArray()); }}");
+                                w.WriteLine($"{keyword} (part.Index >= {mixedPrefixCount}) {{ __mixedBinaryItemOffsets.Add((part.BodyOffset, part.Data.Length)); }}");
                             }
 
                             w.CloseBraceNoNewline().Write(", maxBodyLength: serverOptions.MaxBufferedRequestBodyLength, cancellationToken: context.RequestAborted).ConfigureAwait(false);");
@@ -8530,24 +8545,28 @@ public sealed class OpenApi32CodeGenerator
                         }
                         else if (bodyOptional)
                         {
-                            w.WriteLine("Body = bodyDoc is null ? default : bodyDoc.RootElement,");
+                            w.WriteLine(usesOwnedBody
+                                ? "Body = __bodyOwner is null ? default : __bodyOwner.Value.Document.RootElement,"
+                                : "Body = bodyDoc is null ? default : bodyDoc.RootElement,");
                         }
                         else
                         {
-                            w.WriteLine("Body = bodyDoc!.RootElement,");
+                            w.WriteLine(usesOwnedBody
+                                ? "Body = __bodyOwner!.Value.Document.RootElement,"
+                                : "Body = bodyDoc!.RootElement,");
                         }
 
-                        // Bind captured binary parts for multipart/form-data bodies.
+                        // Bind captured binary parts for multipart/form-data bodies as slices of the owned body bytes.
                         if (IsMultipartRequestBody(op.RequestBody!.Value) && !IsMultipartMixedRequestBody(op.RequestBody!.Value))
                         {
                             foreach (BinaryPropertyInfo binaryPart in op.RequestBody!.Value.BinaryProperties)
                             {
                                 string propName = CodeEmitHelpers.ToPascalCase(binaryPart.PropertyName);
-                                w.WriteLine($"{propName} = __binary_{binaryPart.PropertyName} ?? ReadOnlyMemory<byte>.Empty,");
+                                w.WriteLine($"{propName} = __binary_{binaryPart.PropertyName}_offset >= 0 ? __bodyOwner!.Value.BodyBytes.Slice(__binary_{binaryPart.PropertyName}_offset, __binary_{binaryPart.PropertyName}_length) : ReadOnlyMemory<byte>.Empty,");
                             }
                         }
 
-                        // Bind captured binary parts for multipart/mixed bodies.
+                        // Bind captured binary parts for multipart/mixed bodies as slices of the owned body bytes.
                         if (!isRawStreamBody && IsMultipartMixedRequestBody(op.RequestBody!.Value))
                         {
                             if (op.RequestBody!.Value.PrefixParts is { } bindPrefixParts)
@@ -8556,14 +8575,14 @@ public sealed class OpenApi32CodeGenerator
                                 {
                                     if (bindPrefixParts[i].IsBinary)
                                     {
-                                        w.WriteLine($"Part{i} = __mixedBinary_{i} ?? ReadOnlyMemory<byte>.Empty,");
+                                        w.WriteLine($"Part{i} = __mixedBinary_{i}_offset >= 0 ? __bodyOwner!.Value.BodyBytes.Slice(__mixedBinary_{i}_offset, __mixedBinary_{i}_length) : ReadOnlyMemory<byte>.Empty,");
                                     }
                                 }
                             }
 
                             if (op.RequestBody!.Value.ItemPart is { IsBinary: true })
                             {
-                                w.WriteLine("Items = __mixedBinaryItems,");
+                                w.WriteLine("Items = MultipartBinaryParts.Slice(__bodyOwner!.Value.BodyBytes, __mixedBinaryItemOffsets),");
                             }
                         }
                     }
@@ -8677,6 +8696,11 @@ public sealed class OpenApi32CodeGenerator
                 if (hasBody && !isRawStreamBody)
                 {
                     w.WriteLine("bodyDoc?.Dispose();");
+                }
+
+                if (usesOwnedBody)
+                {
+                    w.WriteLine("__bodyOwner?.Dispose();");
                 }
 
                 w.CloseBrace();

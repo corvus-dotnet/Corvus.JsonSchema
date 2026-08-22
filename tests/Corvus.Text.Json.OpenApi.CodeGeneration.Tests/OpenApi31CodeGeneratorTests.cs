@@ -8403,7 +8403,7 @@ public class OpenApi31CodeGeneratorTests
         IReadOnlyList<GeneratedFile> files = gen.GenerateServer(spec);
         string registration = GetFile(files, "ApiEndpointRegistration.cs").Content;
 
-        int localIndex = registration.IndexOf("byte[]? __binary_file = null;", StringComparison.Ordinal);
+        int localIndex = registration.IndexOf("int __binary_file_offset = -1;", StringComparison.Ordinal);
         int gateIndex = registration.IndexOf("(context.Request.ContentLength ?? 0) > 0", StringComparison.Ordinal);
         Assert.IsTrue(localIndex >= 0, "expected a capture local for the binary part");
         Assert.IsTrue(gateIndex >= 0, "expected the optional-body gate");
@@ -9060,7 +9060,7 @@ public class OpenApi31CodeGeneratorTests
             registration.Content.Contains("part.Name.SequenceEqual(\"package\"u8)", StringComparison.Ordinal),
             "Callback should match the 'package' part by name");
         Assert.IsTrue(
-            registration.Content.Contains("Package = __binary_package ?? ReadOnlyMemory<byte>.Empty,", StringComparison.Ordinal),
+            registration.Content.Contains("Package = __binary_package_offset >= 0 ? __bodyOwner!.Value.BodyBytes.Slice(__binary_package_offset, __binary_package_length) : ReadOnlyMemory<byte>.Empty,", StringComparison.Ordinal),
             "Params construction should bind the captured binary bytes");
     }
 

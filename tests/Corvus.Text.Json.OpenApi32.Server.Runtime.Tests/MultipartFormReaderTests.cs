@@ -584,6 +584,87 @@ public class MultipartFormReaderTests
     }
 
     [TestMethod]
+    public async Task DeserializeOwnedAsync_BinaryPartSlicesRemainValidAfterReturn()
+    {
+        const string body = "--b\r\n" +
+            "Content-Disposition: form-data; name=\"doc\"; filename=\"x.bin\"\r\n" +
+            "Content-Type: application/octet-stream\r\n" +
+            "\r\n" +
+            "DATA\r\n" +
+            "--b\r\n" +
+            "Content-Disposition: form-data; name=\"label\"\r\n" +
+            "\r\n" +
+            "test\r\n" +
+            "--b--\r\n";
+
+        byte[] bodyBytes = Encoding.UTF8.GetBytes(body);
+        using MemoryStream stream = new(bodyBytes);
+
+        int offset = -1;
+        int length = 0;
+        using OwnedMultipartBody<JsonElement> owned = await MultipartFormDataSerializer.DeserializeOwnedAsync<JsonElement>(
+            stream,
+            "multipart/form-data; boundary=b",
+            binaryPartCallback: part =>
+            {
+                offset = part.BodyOffset;
+                length = part.Data.Length;
+            });
+
+        Assert.IsTrue(offset >= 0, "the callback must receive the part's offset within the body");
+        CollectionAssert.AreEqual("DATA"u8.ToArray(), owned.BodyBytes.Slice(offset, length).ToArray());
+        Assert.AreEqual("test", owned.Document.RootElement.GetProperty("label"u8).GetString());
+    }
+
+    [TestMethod]
+    public async Task DeserializeOwnedAsync_Mixed_BinaryPartSlicesRemainValidAfterReturn()
+    {
+        const string body = "--b\r\n" +
+            "Content-Type: application/json\r\n" +
+            "\r\n" +
+            "{\"v\":1}\r\n" +
+            "--b\r\n" +
+            "Content-Type: application/octet-stream\r\n" +
+            "\r\n" +
+            "BLOB\r\n" +
+            "--b--\r\n";
+
+        byte[] bodyBytes = Encoding.UTF8.GetBytes(body);
+        using MemoryStream stream = new(bodyBytes);
+
+        int offset = -1;
+        int length = 0;
+        int index = -1;
+        using OwnedMultipartBody<JsonElement> owned = await MultipartMixedSerializer.DeserializeOwnedAsync<JsonElement>(
+            stream,
+            "multipart/mixed; boundary=b",
+            binaryPartCallback: part =>
+            {
+                index = part.Index;
+                offset = part.BodyOffset;
+                length = part.Data.Length;
+            });
+
+        Assert.AreEqual(1, index);
+        Assert.IsTrue(offset >= 0, "the callback must receive the part's offset within the body");
+        CollectionAssert.AreEqual("BLOB"u8.ToArray(), owned.BodyBytes.Slice(offset, length).ToArray());
+        Assert.AreEqual(JsonValueKind.Array, owned.Document.RootElement.ValueKind);
+    }
+
+    [TestMethod]
+    public void MultipartBinaryParts_Slice_MaterializesRecordedSlicesInOrder()
+    {
+        byte[] body = "0123456789"u8.ToArray();
+        List<(int Offset, int Length)> offsets = [(1, 3), (6, 2)];
+
+        IReadOnlyList<ReadOnlyMemory<byte>> slices = MultipartBinaryParts.Slice(body, offsets);
+
+        Assert.AreEqual(2, slices.Count);
+        CollectionAssert.AreEqual("123"u8.ToArray(), slices[0].ToArray());
+        CollectionAssert.AreEqual("67"u8.ToArray(), slices[1].ToArray());
+    }
+
+    [TestMethod]
     public void TryReadNextPart_DirectUsage_IteratesParts()
     {
         const string body = "--b\r\n" +

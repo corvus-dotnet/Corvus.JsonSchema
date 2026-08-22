@@ -64,11 +64,13 @@ public ref struct MultipartFormReader
     /// <param name="FileName">The filename, if present.</param>
     /// <param name="ContentType">The Content-Type of the part.</param>
     /// <param name="Data">The raw bytes of the part body.</param>
+    /// <param name="BodyOffset">The offset of <paramref name="Data"/> within the whole multipart body, or -1 when unknown.</param>
     public readonly ref struct BinaryPart(
         ReadOnlySpan<byte> Name,
         ReadOnlySpan<byte> FileName,
         ReadOnlySpan<byte> ContentType,
-        ReadOnlySpan<byte> Data)
+        ReadOnlySpan<byte> Data,
+        int BodyOffset = -1)
     {
         /// <summary>Gets the form field name.</summary>
         public ReadOnlySpan<byte> Name { get; } = Name;
@@ -81,6 +83,15 @@ public ref struct MultipartFormReader
 
         /// <summary>Gets the raw bytes of the part body.</summary>
         public ReadOnlySpan<byte> Data { get; } = Data;
+
+        /// <summary>
+        /// Gets the offset of <see cref="Data"/> within the whole multipart body,
+        /// or -1 when unknown. With an owned body (see
+        /// <see cref="MultipartFormDataSerializer.DeserializeOwnedAsync{T}(System.IO.Stream, string?, BinaryPartHandler?, long, System.Threading.CancellationToken)"/>)
+        /// this lets a callback record the part's position and slice the retained
+        /// body bytes later instead of copying.
+        /// </summary>
+        public int BodyOffset { get; } = BodyOffset;
     }
 
     /// <summary>
@@ -177,7 +188,8 @@ public ref struct MultipartFormReader
             bool isBinary = IsBinaryContentType(contentType, fileName);
             if (isBinary)
             {
-                binaryPartCallback?.Invoke(new BinaryPart(name, fileName, contentType, body));
+                multipartBody.Overlaps(body, out int bodyOffset);
+                binaryPartCallback?.Invoke(new BinaryPart(name, fileName, contentType, body, bodyOffset));
                 continue;
             }
 

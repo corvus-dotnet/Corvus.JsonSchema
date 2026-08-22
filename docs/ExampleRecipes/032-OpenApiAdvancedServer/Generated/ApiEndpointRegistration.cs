@@ -477,6 +477,7 @@ public static class ApiEndpointRegistration
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<Petstore.Extended.Server.Models.PostPetsByPetIdPhotosBody>? bodyDoc = null;
+            OwnedMultipartBody<Petstore.Extended.Server.Models.PostPetsByPetIdPhotosBody>? __bodyOwner = null;
             try
             {
                 Petstore.Extended.Server.Models.JsonString PetIdValue = default;
@@ -524,7 +525,8 @@ public static class ApiEndpointRegistration
                 }
 
 
-                byte[]? __binary_file = null;
+                int __binary_file_offset = -1;
+                int __binary_file_length = 0;
                 if (context.Request.ContentLength is long __contentLength && __contentLength > serverOptions.MaxBufferedRequestBodyLength)
                 {
                     context.Response.StatusCode = 413;
@@ -535,9 +537,9 @@ public static class ApiEndpointRegistration
 
                 try
                 {
-                    bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<Petstore.Extended.Server.Models.PostPetsByPetIdPhotosBody>(context.Request.Body, context.Request.ContentType, binaryPartCallback: part =>
+                    __bodyOwner = await MultipartFormDataSerializer.DeserializeOwnedAsync<Petstore.Extended.Server.Models.PostPetsByPetIdPhotosBody>(context.Request.Body, context.Request.ContentType, binaryPartCallback: part =>
                     {
-                        if (part.Name.SequenceEqual("file"u8)) { __binary_file = part.Data.ToArray(); }
+                        if (part.Name.SequenceEqual("file"u8)) { __binary_file_offset = part.BodyOffset; __binary_file_length = part.Data.Length; }
                     }, maxBodyLength: serverOptions.MaxBufferedRequestBodyLength, cancellationToken: context.RequestAborted).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
@@ -563,8 +565,8 @@ public static class ApiEndpointRegistration
                 {
                     PetId = PetIdValue,
                     SessionToken = SessionTokenValue,
-                    Body = bodyDoc!.RootElement,
-                    File = __binary_file ?? ReadOnlyMemory<byte>.Empty,
+                    Body = __bodyOwner!.Value.Document.RootElement,
+                    File = __binary_file_offset >= 0 ? __bodyOwner!.Value.BodyBytes.Slice(__binary_file_offset, __binary_file_length) : ReadOnlyMemory<byte>.Empty,
                 }
                 ;
 
@@ -600,6 +602,7 @@ public static class ApiEndpointRegistration
             {
                 workspace.Dispose();
                 bodyDoc?.Dispose();
+                __bodyOwner?.Dispose();
             }
         }
         );

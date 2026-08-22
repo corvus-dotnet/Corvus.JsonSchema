@@ -61,11 +61,13 @@ public ref struct MultipartMixedReader
     /// <param name="FileName">The filename, if present in Content-Disposition.</param>
     /// <param name="ContentType">The Content-Type of the part.</param>
     /// <param name="Data">The raw bytes of the part body.</param>
+    /// <param name="BodyOffset">The offset of <paramref name="Data"/> within the whole multipart body, or -1 when unknown.</param>
     public readonly ref struct BinaryPart(
         int Index,
         ReadOnlySpan<byte> FileName,
         ReadOnlySpan<byte> ContentType,
-        ReadOnlySpan<byte> Data)
+        ReadOnlySpan<byte> Data,
+        int BodyOffset = -1)
     {
         /// <summary>Gets the zero-based position of the part.</summary>
         public int Index { get; } = Index;
@@ -78,6 +80,15 @@ public ref struct MultipartMixedReader
 
         /// <summary>Gets the raw bytes of the part body.</summary>
         public ReadOnlySpan<byte> Data { get; } = Data;
+
+        /// <summary>
+        /// Gets the offset of <see cref="Data"/> within the whole multipart body,
+        /// or -1 when unknown. With an owned body (see
+        /// <see cref="MultipartMixedSerializer.DeserializeOwnedAsync{T}(System.IO.Stream, string?, BinaryPartHandler?, long, System.Threading.CancellationToken)"/>)
+        /// this lets a callback record the part's position and slice the retained
+        /// body bytes later instead of copying.
+        /// </summary>
+        public int BodyOffset { get; } = BodyOffset;
     }
 
     /// <summary>
@@ -165,7 +176,8 @@ public ref struct MultipartMixedReader
             bool isBinary = IsBinaryContentType(contentType, fileName);
             if (isBinary)
             {
-                binaryPartCallback?.Invoke(new BinaryPart(index, fileName, contentType, body));
+                multipartBody.Overlaps(body, out int bodyOffset);
+                binaryPartCallback?.Invoke(new BinaryPart(index, fileName, contentType, body, bodyOffset));
                 index++;
                 continue;
             }

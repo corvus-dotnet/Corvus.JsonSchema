@@ -6142,6 +6142,16 @@ public sealed class OpenApi30CodeGenerator
                     w.WriteLine($"ParsedJsonDocument<{bodyTypeName}>? bodyDoc = null;");
                 }
 
+                // Multipart bodies with binary parts use the owned deserializer so the
+                // captured part slices stay valid for the duration of the handler call.
+                bool usesOwnedBody = hasBody && !isRawStreamBody
+                    && IsMultipartRequestBody(op.RequestBody!.Value)
+                    && op.RequestBody!.Value.BinaryProperties.Length > 0;
+                if (usesOwnedBody)
+                {
+                    w.WriteLine($"OwnedMultipartBody<{bodyTypeName}>? __bodyOwner = null;");
+                }
+
                 w.WriteLine("try");
                 w.OpenBrace();
 
@@ -6206,7 +6216,8 @@ public sealed class OpenApi30CodeGenerator
                     {
                         foreach (BinaryPropertyInfo binaryPart in op.RequestBody!.Value.BinaryProperties)
                         {
-                            w.WriteLine($"byte[]? __binary_{binaryPart.PropertyName} = null;");
+                            w.WriteLine($"int __binary_{binaryPart.PropertyName}_offset = -1;");
+                            w.WriteLine($"int __binary_{binaryPart.PropertyName}_length = 0;");
                         }
                     }
 
@@ -6241,14 +6252,14 @@ public sealed class OpenApi30CodeGenerator
                         w.OpenBrace();
                         if (binaryParts.Length > 0)
                         {
-                            w.WriteLine($"bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, binaryPartCallback: part =>");
+                            w.WriteLine($"__bodyOwner = await MultipartFormDataSerializer.DeserializeOwnedAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, binaryPartCallback: part =>");
                             w.OpenBrace();
                             bool first = true;
                             foreach (BinaryPropertyInfo binaryPart in binaryParts)
                             {
                                 string keyword = first ? "if" : "else if";
                                 first = false;
-                                w.WriteLine($"{keyword} (part.Name.SequenceEqual(\"{binaryPart.PropertyName}\"u8)) {{ __binary_{binaryPart.PropertyName} = part.Data.ToArray(); }}");
+                                w.WriteLine($"{keyword} (part.Name.SequenceEqual(\"{binaryPart.PropertyName}\"u8)) {{ __binary_{binaryPart.PropertyName}_offset = part.BodyOffset; __binary_{binaryPart.PropertyName}_length = part.Data.Length; }}");
                             }
 
                             w.CloseBraceNoNewline().Write(", maxBodyLength: serverOptions.MaxBufferedRequestBodyLength, cancellationToken: context.RequestAborted).ConfigureAwait(false);");
@@ -6305,19 +6316,23 @@ public sealed class OpenApi30CodeGenerator
                         }
                         else if (bodyOptional)
                         {
-                            w.WriteLine("Body = bodyDoc is null ? default : bodyDoc.RootElement,");
+                            w.WriteLine(usesOwnedBody
+                                ? "Body = __bodyOwner is null ? default : __bodyOwner.Value.Document.RootElement,"
+                                : "Body = bodyDoc is null ? default : bodyDoc.RootElement,");
                         }
                         else
                         {
-                            w.WriteLine("Body = bodyDoc!.RootElement,");
+                            w.WriteLine(usesOwnedBody
+                                ? "Body = __bodyOwner!.Value.Document.RootElement,"
+                                : "Body = bodyDoc!.RootElement,");
                         }
 
-                        // Bind any multipart binary parts captured by the deserializer callback.
+                        // Bind any multipart binary parts as slices of the owned body bytes.
                         if (!isRawStreamBody && IsMultipartRequestBody(op.RequestBody!.Value))
                         {
                             foreach (BinaryPropertyInfo binaryPart in op.RequestBody!.Value.BinaryProperties)
                             {
-                                w.WriteLine($"{CodeEmitHelpers.ToPascalCase(binaryPart.PropertyName)} = __binary_{binaryPart.PropertyName} ?? ReadOnlyMemory<byte>.Empty,");
+                                w.WriteLine($"{CodeEmitHelpers.ToPascalCase(binaryPart.PropertyName)} = __binary_{binaryPart.PropertyName}_offset >= 0 ? __bodyOwner!.Value.BodyBytes.Slice(__binary_{binaryPart.PropertyName}_offset, __binary_{binaryPart.PropertyName}_length) : ReadOnlyMemory<byte>.Empty,");
                             }
                         }
                     }
@@ -6401,6 +6416,11 @@ public sealed class OpenApi30CodeGenerator
                 if (hasBody && !isRawStreamBody)
                 {
                     w.WriteLine("bodyDoc?.Dispose();");
+                }
+
+                if (usesOwnedBody)
+                {
+                    w.WriteLine("__bodyOwner?.Dispose();");
                 }
 
                 w.CloseBrace();

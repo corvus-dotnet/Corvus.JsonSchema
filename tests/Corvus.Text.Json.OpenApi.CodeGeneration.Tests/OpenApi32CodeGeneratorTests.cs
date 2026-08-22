@@ -1199,7 +1199,7 @@ public class OpenApi32CodeGeneratorTests
         IReadOnlyList<GeneratedFile> files = gen.GenerateServer(spec);
         string registration = GetFile(files, "ApiEndpointRegistration.cs").Content;
 
-        int localIndex = registration.IndexOf("byte[]? __binary_file = null;", StringComparison.Ordinal);
+        int localIndex = registration.IndexOf("int __binary_file_offset = -1;", StringComparison.Ordinal);
         int gateIndex = registration.IndexOf("(context.Request.ContentLength ?? 0) > 0", StringComparison.Ordinal);
         Assert.IsTrue(localIndex >= 0, "expected a capture local for the binary part");
         Assert.IsTrue(gateIndex >= 0, "expected the optional-body gate");
@@ -1217,20 +1217,22 @@ public class OpenApi32CodeGeneratorTests
 
         string registration = files.First(f => f.FileName == "ApiEndpointRegistration.cs").Content;
 
-        // uploadDocMixed: the binary prefix part is captured by its wire index and bound.
+        // uploadDocMixed: the binary prefix part is captured by its wire index and bound
+        // as a slice of the owned body bytes.
         Assert.IsTrue(
-            registration.Contains("if (part.Index == 1) { __mixedBinary_1 = part.Data.ToArray(); }", StringComparison.Ordinal),
+            registration.Contains("if (part.Index == 1) { __mixedBinary_1_offset = part.BodyOffset; __mixedBinary_1_length = part.Data.Length; }", StringComparison.Ordinal),
             "expected a positional capture for the binary prefix part");
         Assert.IsTrue(
-            registration.Contains("Part1 = __mixedBinary_1 ?? ReadOnlyMemory<byte>.Empty,", StringComparison.Ordinal),
+            registration.Contains("Part1 = __mixedBinary_1_offset >= 0 ? __bodyOwner!.Value.BodyBytes.Slice(__mixedBinary_1_offset, __mixedBinary_1_length) : ReadOnlyMemory<byte>.Empty,", StringComparison.Ordinal),
             "expected the captured prefix part bound into Params");
 
-        // uploadBinaryBatch: repeating binary items are collected in wire order and bound.
+        // uploadBinaryBatch: repeating binary items are collected in wire order and bound
+        // as slices of the owned body bytes.
         Assert.IsTrue(
-            registration.Contains("__mixedBinaryItems.Add(part.Data.ToArray());", StringComparison.Ordinal),
+            registration.Contains("__mixedBinaryItemOffsets.Add((part.BodyOffset, part.Data.Length));", StringComparison.Ordinal),
             "expected repeating binary items to be collected");
         Assert.IsTrue(
-            registration.Contains("Items = __mixedBinaryItems,", StringComparison.Ordinal),
+            registration.Contains("Items = MultipartBinaryParts.Slice(__bodyOwner!.Value.BodyBytes, __mixedBinaryItemOffsets),", StringComparison.Ordinal),
             "expected the collected items bound into Params");
 
         // Binary parts are excluded from the JSON projection, so positional schema
@@ -3169,7 +3171,7 @@ public class OpenApi32CodeGeneratorTests
             registration.Content.Contains("part.Name.SequenceEqual(\"package\"u8)"),
             "Expected the callback to match the 'package' part by name");
         Assert.IsTrue(
-            registration.Content.Contains("Package = __binary_package ?? ReadOnlyMemory<byte>.Empty,"),
+            registration.Content.Contains("Package = __binary_package_offset >= 0 ? __bodyOwner!.Value.BodyBytes.Slice(__binary_package_offset, __binary_package_length) : ReadOnlyMemory<byte>.Empty,"),
             "Expected the captured binary part to be bound onto the Params object");
     }
 

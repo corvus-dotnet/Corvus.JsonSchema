@@ -209,7 +209,7 @@ public class OpenApi20CodeGeneratorCovspecTests
     {
         // The uploads operation deserializes its synthesized form body from multipart.
         string registration = generatedServerFiles.First(f => f.FileName == "ApiEndpointRegistration.cs").Content;
-        StringAssert.Contains(registration, "MultipartFormDataSerializer.DeserializeAsync");
+        StringAssert.Contains(registration, "MultipartFormDataSerializer.DeserializeOwnedAsync");
     }
 
     [TestMethod]
@@ -219,8 +219,8 @@ public class OpenApi20CodeGeneratorCovspecTests
         // captures its bytes via the deserializer callback and the Params struct exposes them.
         string registration = generatedServerFiles.First(f => f.FileName == "ApiEndpointRegistration.cs").Content;
         StringAssert.Contains(registration, "binaryPartCallback: part =>");
-        StringAssert.Contains(registration, "__binary_archive");
-        StringAssert.Contains(registration, "Archive = __binary_archive ?? ReadOnlyMemory<byte>.Empty,");
+        StringAssert.Contains(registration, "__binary_archive_offset = part.BodyOffset; __binary_archive_length = part.Data.Length;");
+        StringAssert.Contains(registration, "Archive = __binary_archive_offset >= 0 ? __bodyOwner!.Value.BodyBytes.Slice(__binary_archive_offset, __binary_archive_length) : ReadOnlyMemory<byte>.Empty,");
 
         string paramsFile = generatedServerFiles.First(f => f.FileName == "UploadBundleParams.cs").Content;
         StringAssert.Contains(paramsFile, "public ReadOnlyMemory<byte> Archive { get; init; }");
