@@ -63,6 +63,7 @@ public static class RedisControlPlaneDeployment
         await RedisWorkflowStateStore.PrepareAsync(configuration, cancellationToken).ConfigureAwait(false);
         await RedisWorkflowCatalogStore.PrepareAsync(configuration, cancellationToken).ConfigureAwait(false);
         await RedisRunnerRegistry.PrepareAsync(configuration, cancellationToken).ConfigureAwait(false);
+        await RedisScheduleRegistry.PrepareAsync(configuration, cancellationToken).ConfigureAwait(false);
         await RedisEnvironmentRunnerAuthorizationStore.PrepareAsync(configuration, cancellationToken).ConfigureAwait(false);
         await RedisSourceCredentialStore.PrepareAsync(configuration, cancellationToken).ConfigureAwait(false);
 
