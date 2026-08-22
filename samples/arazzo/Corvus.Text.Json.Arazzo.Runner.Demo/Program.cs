@@ -129,11 +129,13 @@ NatsMessageTransport messageTransport = await NatsMessageTransport.CreateAsync(n
 // SAME client map drives both binders below: the Vault-credentialed production binder (the runner resolves each
 // source's secret as its own read-only Vault identity and applies it — the service ignores the unused header) and the
 // standalone fallback. (kyc-notifications is an AsyncAPI channel source, bound through the channel-transport cache, not here.)
+// Each source client never auto-follows redirects (P1-4/TB-10): CreateSourceHttpClient installs the redirect-hardening
+// handler so the per-run credential the transport attaches is never carried across a cross-origin redirect.
 var sourceClients = new Dictionary<string, HttpClient>(StringComparer.Ordinal)
 {
-    ["onboarding"] = new HttpClient { BaseAddress = new Uri(onboardingBaseUrl) },
-    ["ledger"] = new HttpClient { BaseAddress = new Uri(ledgerBaseUrl) },
-    ["kyc"] = new HttpClient { BaseAddress = new Uri(kycBaseUrl) },
+    ["onboarding"] = SourceCredentialTransports.CreateSourceHttpClient(new Uri(onboardingBaseUrl)),
+    ["ledger"] = SourceCredentialTransports.CreateSourceHttpClient(new Uri(ledgerBaseUrl)),
+    ["kyc"] = SourceCredentialTransports.CreateSourceHttpClient(new Uri(kycBaseUrl)),
 };
 
 // Secure introduction (design §13.5.1): the runner holds NO pre-minted token. It reads the single-use, short-TTL

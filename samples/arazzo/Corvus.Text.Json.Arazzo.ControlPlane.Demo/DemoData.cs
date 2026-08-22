@@ -9,6 +9,7 @@ using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Schedules;
 using Corvus.Text.Json.Arazzo.Execution;
+using Corvus.Text.Json.Arazzo.SourceCredentials.Http;
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.HttpTransport;
@@ -142,12 +143,15 @@ public static class DemoData
         var ledgerUri = new Uri(ledgerBaseUrl);
         var kycUri = new Uri(kycBaseUrl);
         var clients = new ConcurrentDictionary<string, HttpClient>(StringComparer.Ordinal);
+        // Source clients never auto-follow redirects (P1-4/TB-10): CreateSourceHttpClient installs the redirect-hardening
+        // handler so a per-run credential is never carried across a cross-origin redirect. The /svc fallback (a defensive
+        // branch the demo no longer uses) simply disables auto-redirect on its handler for the same reason.
         HttpClient ClientFor(string source) => clients.GetOrAdd(source, s => s switch
         {
-            "onboarding" => new HttpClient { BaseAddress = onboardingUri },
-            "ledger" => new HttpClient { BaseAddress = ledgerUri },
-            "kyc" => new HttpClient { BaseAddress = kycUri },
-            _ => new HttpClient(new SvcPrefixHandler($"/svc/{s}") { InnerHandler = new HttpClientHandler() }) { BaseAddress = new Uri(baseUrlProvider()) },
+            "onboarding" => SourceCredentialTransports.CreateSourceHttpClient(onboardingUri),
+            "ledger" => SourceCredentialTransports.CreateSourceHttpClient(ledgerUri),
+            "kyc" => SourceCredentialTransports.CreateSourceHttpClient(kycUri),
+            _ => new HttpClient(new SvcPrefixHandler($"/svc/{s}") { InnerHandler = new HttpClientHandler { AllowAutoRedirect = false } }) { BaseAddress = new Uri(baseUrlProvider()) },
         });
 
         // A workflow with an AsyncAPI send step (e.g. the async workflow's requestKycReview) publishes through the

@@ -130,12 +130,18 @@ public static class SourceCredentialTransports
     /// <param name="sourceName">The Arazzo source description name.</param>
     /// <param name="environment">The deployment environment.</param>
     /// <param name="baseAddress">The source's base URL to set on the client, or <see langword="null"/> to leave it unset.</param>
+    /// <param name="allowInsecureHttp">Permit a same-origin redirect to an <c>http</c> URL (default: <c>https</c> only).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The host-owned client; disposing it disposes the handler and (for mTLS) the client certificate.</returns>
-    /// <remarks>An mTLS binding is connection-scoped, never usage-scoped (it authenticates the deployment, not a run), so
+    /// <remarks>
+    /// <para>An mTLS binding is connection-scoped, never usage-scoped (it authenticates the deployment, not a run), so
     /// the binding is resolved for shared usage (<see cref="SecurityTagSet.Empty"/>); the control plane refuses to create
-    /// a usage-scoped mTLS binding, so there is exactly one shared certificate per (source, environment).</remarks>
-    public static async ValueTask<HttpClient> CreateSourceHttpClientAsync(ISourceCredentialStore store, SourceCredentialProviderFactory factory, string sourceName, string environment, Uri? baseAddress = null, CancellationToken cancellationToken = default)
+    /// a usage-scoped mTLS binding, so there is exactly one shared certificate per (source, environment).</para>
+    /// <para>The client never auto-follows redirects (P1-4/TB-10): its handler sets <c>AllowAutoRedirect=false</c> and a
+    /// <see cref="RedirectHardeningHandler"/> follows same-origin redirects only, refusing a cross-origin one so the
+    /// per-request credential header and the mTLS client certificate never reach another origin.</para>
+    /// </remarks>
+    public static async ValueTask<HttpClient> CreateSourceHttpClientAsync(ISourceCredentialStore store, SourceCredentialProviderFactory factory, string sourceName, string environment, Uri? baseAddress = null, bool allowInsecureHttp = false, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(factory);
@@ -154,12 +160,13 @@ public static class SourceCredentialTransports
         HttpClient client;
         if (clientCertificate is not null)
         {
-            var sslHandler = new SocketsHttpHandler { SslOptions = { ClientCertificates = new X509CertificateCollection { clientCertificate } } };
-            client = new HttpClient(new ClientCertificateOwningHandler(sslHandler, clientCertificate), disposeHandler: true);
+            var sslHandler = new SocketsHttpHandler { AllowAutoRedirect = false, SslOptions = { ClientCertificates = new X509CertificateCollection { clientCertificate } } };
+            var redirectHandler = new RedirectHardeningHandler(sslHandler, allowInsecureHttp);
+            client = new HttpClient(new ClientCertificateOwningHandler(redirectHandler, clientCertificate), disposeHandler: true);
         }
         else
         {
-            client = new HttpClient();
+            client = new HttpClient(new RedirectHardeningHandler(new SocketsHttpHandler { AllowAutoRedirect = false }, allowInsecureHttp), disposeHandler: true);
         }
 
         if (baseAddress is not null)
@@ -170,10 +177,30 @@ public static class SourceCredentialTransports
         return client;
     }
 
-    // Owns the lifetime of the mTLS client certificate alongside the handler: SocketsHttpHandler does not dispose the
-    // certificate it presents, so disposing the client (which disposes this delegating handler and its inner handler)
-    // also disposes the certificate, scrubbing its private key.
-    private sealed class ClientCertificateOwningHandler(SocketsHttpHandler inner, X509Certificate2 certificate) : DelegatingHandler(inner)
+    /// <summary>Builds a plain (non-mTLS) host-owned run-path source client whose handler never auto-follows redirects
+    /// (P1-4/TB-10). Hosts that construct their own per-source clients (rather than resolving an mTLS certificate via
+    /// <see cref="CreateSourceHttpClientAsync"/>) MUST use this instead of a bare <see cref="HttpClient"/>: the per-run
+    /// credential header the transport attaches would otherwise be carried across a cross-origin redirect. A
+    /// <see cref="RedirectHardeningHandler"/> follows same-origin redirects only and refuses cross-origin ones.</summary>
+    /// <param name="baseAddress">The source's base URL to set on the client, or <see langword="null"/> to leave it unset.</param>
+    /// <param name="allowInsecureHttp">Permit a same-origin redirect to an <c>http</c> URL (default: <c>https</c> only).</param>
+    /// <returns>The host-owned client; disposing it disposes the handler.</returns>
+    public static HttpClient CreateSourceHttpClient(Uri? baseAddress = null, bool allowInsecureHttp = false)
+    {
+        var client = new HttpClient(new RedirectHardeningHandler(new SocketsHttpHandler { AllowAutoRedirect = false }, allowInsecureHttp), disposeHandler: true);
+        if (baseAddress is not null)
+        {
+            client.BaseAddress = baseAddress;
+        }
+
+        return client;
+    }
+
+    // Owns the lifetime of the mTLS client certificate alongside the handler chain: SocketsHttpHandler does not dispose
+    // the certificate it presents, so disposing the client (which disposes this delegating handler and, transitively,
+    // the RedirectHardeningHandler and the SocketsHttpHandler it wraps) also disposes the certificate, scrubbing its
+    // private key.
+    private sealed class ClientCertificateOwningHandler(HttpMessageHandler inner, X509Certificate2 certificate) : DelegatingHandler(inner)
     {
         protected override void Dispose(bool disposing)
         {

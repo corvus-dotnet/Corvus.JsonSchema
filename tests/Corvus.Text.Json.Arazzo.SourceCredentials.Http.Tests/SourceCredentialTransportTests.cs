@@ -214,7 +214,7 @@ public sealed class SourceCredentialTransportTests
         await store.AddAsync(Mtls("petstore", "production", "petstore-cert"), "alice", default);
 
         using HttpClient client = await SourceCredentialTransports.CreateSourceHttpClientAsync(
-            store, factory, "petstore", "production", new Uri("https://petstore.example/"), default);
+            store, factory, "petstore", "production", new Uri("https://petstore.example/"));
 
         client.BaseAddress!.ToString().ShouldBe("https://petstore.example/");
         resolver.Issued.ShouldNotBeEmpty("the mTLS certificate is resolved for the handler at client construction");
@@ -230,12 +230,74 @@ public sealed class SourceCredentialTransportTests
         await store.AddAsync(ApiKey("petstore", "production", "petstore-production"), "alice", default);
 
         using HttpClient client = await SourceCredentialTransports.CreateSourceHttpClientAsync(
-            store, factory, "petstore", "production", new Uri("https://petstore.example/"), default);
+            store, factory, "petstore", "production", new Uri("https://petstore.example/"));
 
         client.BaseAddress!.ToString().ShouldBe("https://petstore.example/");
 
         // A non-mTLS source resolves no certificate at client construction (its secret is applied per request instead).
         resolver.Issued.ShouldBeEmpty();
+    }
+
+    [TestMethod]
+    public async Task A_run_path_credential_is_not_carried_across_a_cross_origin_redirect()
+    {
+        // TB-10/P1-4: the source's own host 302-redirects to another origin. On a naive auto-redirect the runtime keeps
+        // the custom X-Api-Key header across the boundary; the hardened client must refuse the cross-origin hop so the
+        // credential never leaves the source's origin.
+        Fixture f = NewFixture();
+        await f.Store.AddAsync(ApiKey("petstore", "production", "petstore-production"), "alice", default);
+
+        var stub = new ScriptedRedirectHandler(uri =>
+            uri.Host == "petstore.example" ? (302, new Uri("https://attacker.example/x")) : (200, null));
+        using var client = new HttpClient(new RedirectHardeningHandler(stub)) { BaseAddress = new Uri("https://petstore.example/") };
+
+        IApiTransport transport = SourceCredentialTransports.CreateApiTransportFactory(client, "petstore", "production", f.Cache).CreateTransport();
+        await transport.SendAsync<FakeRequest, FakeResponse>(default, default);
+
+        // The attacker host was never contacted, so the credential never left the source's origin.
+        stub.Requests.ShouldHaveSingleItem();
+        stub.Requests[0].Uri.Host.ShouldBe("petstore.example");
+        stub.Requests[0].ApiKey.ShouldBe("key-v1");
+        stub.Requests.Any(r => r.Uri.Host == "attacker.example").ShouldBeFalse();
+        f.Cache.Dispose();
+    }
+
+    [TestMethod]
+    public async Task A_same_origin_redirect_is_followed_and_keeps_the_credential()
+    {
+        Fixture f = NewFixture();
+        await f.Store.AddAsync(ApiKey("petstore", "production", "petstore-production"), "alice", default);
+
+        int calls = 0;
+        var stub = new ScriptedRedirectHandler(_ =>
+            System.Threading.Interlocked.Increment(ref calls) == 1 ? (302, new Uri("https://petstore.example/moved")) : (200, null));
+        using var client = new HttpClient(new RedirectHardeningHandler(stub)) { BaseAddress = new Uri("https://petstore.example/") };
+
+        IApiTransport transport = SourceCredentialTransports.CreateApiTransportFactory(client, "petstore", "production", f.Cache).CreateTransport();
+        await transport.SendAsync<FakeRequest, FakeResponse>(default, default);
+
+        // The same-origin redirect is followed and the credential is preserved (it never crosses an origin).
+        stub.Requests.Count.ShouldBe(2);
+        stub.Requests[1].Uri.ToString().ShouldBe("https://petstore.example/moved");
+        stub.Requests[1].ApiKey.ShouldBe("key-v1");
+        f.Cache.Dispose();
+    }
+
+    [TestMethod]
+    public async Task Same_origin_redirects_are_capped()
+    {
+        Fixture f = NewFixture();
+        await f.Store.AddAsync(ApiKey("petstore", "production", "petstore-production"), "alice", default);
+
+        var stub = new ScriptedRedirectHandler(_ => (302, new Uri("https://petstore.example/loop")));
+        using var client = new HttpClient(new RedirectHardeningHandler(stub)) { BaseAddress = new Uri("https://petstore.example/") };
+
+        IApiTransport transport = SourceCredentialTransports.CreateApiTransportFactory(client, "petstore", "production", f.Cache).CreateTransport();
+        await transport.SendAsync<FakeRequest, FakeResponse>(default, default);
+
+        // One initial request plus the bounded number of same-origin follows, then the last 3xx is returned.
+        stub.Requests.Count.ShouldBe(1 + RedirectHardeningHandler.MaxRedirects);
+        f.Cache.Dispose();
     }
 
     private static SourceCredentialDefinition Mtls(string sourceName, string environment, string certEnvVar) => new(
@@ -348,6 +410,26 @@ public sealed class SourceCredentialTransportTests
         {
             this.LastRequestUri = request.RequestUri;
             return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent("{}") });
+        }
+    }
+
+    // A scripted inner handler: maps a request URI to a status (and optional redirect Location) and records every
+    // request it actually receives, with the credential headers it carried — so a leak across an origin is observable.
+    private sealed class ScriptedRedirectHandler(Func<Uri, (int Status, Uri? Location)> script) : HttpMessageHandler
+    {
+        public List<(Uri Uri, string? ApiKey, string? Authorization)> Requests { get; } = [];
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            this.Requests.Add((request.RequestUri!, Header(request, "X-Api-Key"), request.Headers.Authorization?.ToString()));
+            (int status, Uri? location) = script(request.RequestUri!);
+            var response = new HttpResponseMessage((System.Net.HttpStatusCode)status) { Content = new StringContent("{}") };
+            if (location is not null)
+            {
+                response.Headers.Location = location;
+            }
+
+            return Task.FromResult(response);
         }
     }
 
