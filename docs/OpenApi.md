@@ -521,9 +521,25 @@ The generated middleware validates all inputs before your handler runs:
 | Parameter fails schema validation | 400 Problem Details |
 | Request body fails JSON parse | 400 Problem Details |
 | Request body fails schema validation | 400 Problem Details |
+| Buffered request body over the size limit | 413 Problem Details |
 | Response body fails validation | 500 Internal Server Error |
 
 You never write validation code. Your handler only receives valid, typed data.
+
+### Request Body Size Limits
+
+The body paths that buffer the whole request before the handler runs (`multipart/form-data`, `multipart/mixed` and `application/x-www-form-urlencoded`) enforce a size limit, 128 MiB by default. Configure it at registration time with `ApiServerOptions`:
+
+```csharp
+app.MapApiEndpoints(
+    petsHandler,
+    configureEndpoint: null,
+    serverOptions: new ApiServerOptions { MaxBufferedRequestBodyLength = 32 * 1024 * 1024 });
+```
+
+A request whose declared `Content-Length` exceeds the limit is rejected with 413 Payload Too Large before any of the body is read; a chunked request is rejected as soon as the buffered bytes pass the limit. A cancelled request is no longer reported as a 400 parse failure — cancellation propagates to the host as usual.
+
+Raw stream bodies and JSON bodies are not buffered by this layer and are not affected by the limit; cap those with the web server's request size limit (for example Kestrel's `MaxRequestBodySize`).
 
 ## Customizing Generated Endpoints
 

@@ -348,12 +348,17 @@ public static class MultipartFormDataSerializer
     /// Optional callback invoked for each binary part. If <see langword="null"/>,
     /// binary parts are silently skipped.
     /// </param>
+    /// <param name="maxBodyLength">
+    /// The maximum number of bytes the body may contain. A body over the limit throws
+    /// a <see cref="RequestBodyTooLargeException"/>.
+    /// </param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A parsed JSON document backed by pooled memory. The caller must dispose it.</returns>
     public static async ValueTask<ParsedJsonDocument<T>> DeserializeAsync<T>(
         Stream stream,
         ReadOnlyMemory<byte> contentType,
         MultipartFormReader.BinaryPartHandler? binaryPartCallback = null,
+        long maxBodyLength = long.MaxValue,
         CancellationToken cancellationToken = default)
         where T : struct, IJsonElement<T>
     {
@@ -367,7 +372,7 @@ public static class MultipartFormDataSerializer
         boundarySpan.CopyTo(boundaryBuffer);
         ReadOnlyMemory<byte> boundaryMemory = boundaryBuffer.AsMemory(0, boundarySpan.Length);
 
-        return await DeserializeWithRentedBoundaryAsync<T>(stream, boundaryBuffer, boundaryMemory, binaryPartCallback, cancellationToken)
+        return await DeserializeWithRentedBoundaryAsync<T>(stream, boundaryBuffer, boundaryMemory, binaryPartCallback, maxBodyLength, cancellationToken)
             .ConfigureAwait(false);
     }
 
@@ -383,12 +388,17 @@ public static class MultipartFormDataSerializer
     /// Optional callback invoked for each binary part. If <see langword="null"/>,
     /// binary parts are silently skipped.
     /// </param>
+    /// <param name="maxBodyLength">
+    /// The maximum number of bytes the body may contain. A body over the limit throws
+    /// a <see cref="RequestBodyTooLargeException"/>.
+    /// </param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A parsed JSON document backed by pooled memory. The caller must dispose it.</returns>
     public static ValueTask<ParsedJsonDocument<T>> DeserializeAsync<T>(
         Stream stream,
         string? contentType,
         MultipartFormReader.BinaryPartHandler? binaryPartCallback = null,
+        long maxBodyLength = long.MaxValue,
         CancellationToken cancellationToken = default)
         where T : struct, IJsonElement<T>
     {
@@ -419,7 +429,7 @@ public static class MultipartFormDataSerializer
             FormFieldReader.Return(ctBuffer);
             ctBuffer = null!;
 
-            return DeserializeWithRentedBoundaryAsync<T>(stream, boundaryBuffer, boundaryMemory, binaryPartCallback, cancellationToken);
+            return DeserializeWithRentedBoundaryAsync<T>(stream, boundaryBuffer, boundaryMemory, binaryPartCallback, maxBodyLength, cancellationToken);
         }
         finally
         {
@@ -435,12 +445,13 @@ public static class MultipartFormDataSerializer
         byte[] boundaryBuffer,
         ReadOnlyMemory<byte> boundaryMemory,
         MultipartFormReader.BinaryPartHandler? binaryPartCallback,
+        long maxBodyLength,
         CancellationToken cancellationToken)
         where T : struct, IJsonElement<T>
     {
         try
         {
-            (byte[] buffer, int length) = await FormFieldReader.RentBodyAsync(stream, cancellationToken)
+            (byte[] buffer, int length) = await FormFieldReader.RentBodyAsync(stream, maxBodyLength, cancellationToken)
                 .ConfigureAwait(false);
 
             try

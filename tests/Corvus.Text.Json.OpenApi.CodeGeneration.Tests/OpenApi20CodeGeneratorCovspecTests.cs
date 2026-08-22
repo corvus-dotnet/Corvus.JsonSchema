@@ -213,6 +213,18 @@ public class OpenApi20CodeGeneratorCovspecTests
     }
 
     [TestMethod]
+    public void ServerThreadsBodyLimitsAndFailureMapping()
+    {
+        string registration = generatedServerFiles.First(f => f.FileName == "ApiEndpointRegistration.cs").Content;
+
+        StringAssert.Contains(registration, "ApiServerOptions? serverOptions = null");
+        StringAssert.Contains(registration, "maxBodyLength: serverOptions.MaxBufferedRequestBodyLength");
+        StringAssert.Contains(registration, "catch (OperationCanceledException)");
+        StringAssert.Contains(registration, "catch (RequestBodyTooLargeException)");
+        StringAssert.Contains(registration, "Payload Too Large");
+    }
+
+    [TestMethod]
     public void HeaderObjectsPrepareWithoutSchemas()
     {
         SchemaReference[] refs = OpenApi20CodeGenerator.CollectSchemaPointers(covspecRoot, out _);

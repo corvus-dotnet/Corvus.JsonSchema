@@ -200,4 +200,16 @@ public static class ThrowHelper
     {
         throw new InvalidOperationException(SR.MultipartBoundaryNotFound);
     }
+
+    /// <summary>
+    /// Throws a <see cref="RequestBodyTooLargeException"/> indicating that the
+    /// request body exceeded the configured maximum buffered size.
+    /// </summary>
+    /// <param name="maxBodyLength">The configured maximum body length in bytes.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowRequestBodyTooLarge(long maxBodyLength)
+    {
+        throw new RequestBodyTooLargeException(SR.Format(SR.RequestBodyTooLarge, maxBodyLength), maxBodyLength);
+    }
 }

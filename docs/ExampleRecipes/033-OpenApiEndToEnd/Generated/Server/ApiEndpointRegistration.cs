@@ -29,10 +29,11 @@ public static class ApiEndpointRegistration
     /// <param name="photosHandler">The handler for ApiPhotos operations.</param>
     /// <param name="chatHandler">The handler for ApiChat operations.</param>
     /// <param name="adoptionHandler">The handler for ApiAdoption operations.</param>
+    /// <param name="serverOptions">Optional registration-time server options (request body limits, etc.). When <see langword="null"/>, defaults are used.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiPetsHandler petsHandler, IApiPhotosHandler photosHandler, IApiChatHandler chatHandler, IApiAdoptionHandler adoptionHandler)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiPetsHandler petsHandler, IApiPhotosHandler photosHandler, IApiChatHandler chatHandler, IApiAdoptionHandler adoptionHandler, ApiServerOptions? serverOptions = null)
     {
-        return MapApiEndpoints(app, petsHandler, photosHandler, chatHandler, adoptionHandler, configureEndpoint: null);
+        return MapApiEndpoints(app, petsHandler, photosHandler, chatHandler, adoptionHandler, configureEndpoint: null, serverOptions: serverOptions);
     }
 
     /// <summary>
@@ -44,9 +45,11 @@ public static class ApiEndpointRegistration
     /// <param name="chatHandler">The handler for ApiChat operations.</param>
     /// <param name="adoptionHandler">The handler for ApiAdoption operations.</param>
     /// <param name="configureEndpoint">An optional callback invoked once per generated endpoint, after the route is mapped, to apply per-endpoint conventions (authorization, naming, tags, output caching, rate limiting, etc.). May be <see langword="null"/>.</param>
+    /// <param name="serverOptions">Optional registration-time server options (request body limits, etc.). When <see langword="null"/>, defaults are used.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiPetsHandler petsHandler, IApiPhotosHandler photosHandler, IApiChatHandler chatHandler, IApiAdoptionHandler adoptionHandler, ConfigureEndpoint? configureEndpoint)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiPetsHandler petsHandler, IApiPhotosHandler photosHandler, IApiChatHandler chatHandler, IApiAdoptionHandler adoptionHandler, ConfigureEndpoint? configureEndpoint, ApiServerOptions? serverOptions = null)
     {
+        serverOptions ??= new ApiServerOptions();
 
         IEndpointConventionBuilder __ListPetsEndpoint = app.MapGet("/pets", async (HttpContext context) =>
         {
@@ -227,6 +230,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<Petstore.EndToEnd.Server.Models.NewPet>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
@@ -518,12 +525,31 @@ public static class ApiEndpointRegistration
 
 
                 byte[]? __binary_file = null;
+                if (context.Request.ContentLength is long __contentLength && __contentLength > serverOptions.MaxBufferedRequestBodyLength)
+                {
+                    context.Response.StatusCode = 413;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Payload Too Large\",\"status\":413,\"detail\":\"The request body exceeded the configured maximum buffered size.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
                 try
                 {
                     bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<Petstore.EndToEnd.Server.Models.PostPetsByPetIdPhotosBody>(context.Request.Body, context.Request.ContentType, binaryPartCallback: part =>
                     {
                         if (part.Name.SequenceEqual("file"u8)) { __binary_file = part.Data.ToArray(); }
-                    }, cancellationToken: context.RequestAborted).ConfigureAwait(false);
+                    }, maxBodyLength: serverOptions.MaxBufferedRequestBodyLength, cancellationToken: context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (RequestBodyTooLargeException)
+                {
+                    context.Response.StatusCode = 413;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Payload Too Large\",\"status\":413,\"detail\":\"The request body exceeded the configured maximum buffered size.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
                 }
                 catch
                 {
@@ -726,6 +752,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
@@ -935,9 +965,28 @@ public static class ApiEndpointRegistration
             ParsedJsonDocument<Petstore.EndToEnd.Server.Models.PostAdoptionApplyBody>? bodyDoc = null;
             try
             {
+                if (context.Request.ContentLength is long __contentLength && __contentLength > serverOptions.MaxBufferedRequestBodyLength)
+                {
+                    context.Response.StatusCode = 413;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Payload Too Large\",\"status\":413,\"detail\":\"The request body exceeded the configured maximum buffered size.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
                 try
                 {
-                    bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<Petstore.EndToEnd.Server.Models.PostAdoptionApplyBody>(context.Request.Body, context.RequestAborted).ConfigureAwait(false);
+                    bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<Petstore.EndToEnd.Server.Models.PostAdoptionApplyBody>(context.Request.Body, null, maxBodyLength: serverOptions.MaxBufferedRequestBodyLength, cancellationToken: context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (RequestBodyTooLargeException)
+                {
+                    context.Response.StatusCode = 413;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Payload Too Large\",\"status\":413,\"detail\":\"The request body exceeded the configured maximum buffered size.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
                 }
                 catch
                 {

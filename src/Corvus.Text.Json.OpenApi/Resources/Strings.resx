@@ -104,5 +104,8 @@
   <data name="MultipartBoundaryNotFound" xml:space="preserve">
     <value>The multipart boundary could not be extracted from the Content-Type header.</value>
   </data>
+  <data name="RequestBodyTooLarge" xml:space="preserve">
+    <value>The request body exceeded the configured maximum buffered size of {0} bytes.</value>
+  </data>
 
 </root>

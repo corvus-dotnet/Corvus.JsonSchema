@@ -180,12 +180,17 @@ public static class MultipartMixedSerializer
     /// Optional callback invoked for each binary part. If <see langword="null"/>,
     /// binary parts are silently skipped.
     /// </param>
+    /// <param name="maxBodyLength">
+    /// The maximum number of bytes the body may contain. A body over the limit throws
+    /// a <see cref="RequestBodyTooLargeException"/>.
+    /// </param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A parsed JSON document backed by pooled memory. The caller must dispose it.</returns>
     public static ValueTask<ParsedJsonDocument<T>> DeserializeAsync<T>(
         Stream stream,
         string? contentType,
         MultipartMixedReader.BinaryPartHandler? binaryPartCallback = null,
+        long maxBodyLength = long.MaxValue,
         CancellationToken cancellationToken = default)
         where T : struct, IJsonElement<T>
     {
@@ -214,7 +219,7 @@ public static class MultipartMixedSerializer
             FormFieldReader.Return(ctBuffer);
             ctBuffer = null!;
 
-            return DeserializeWithRentedBoundaryAsync<T>(stream, boundaryBuffer, boundaryMemory, binaryPartCallback, cancellationToken);
+            return DeserializeWithRentedBoundaryAsync<T>(stream, boundaryBuffer, boundaryMemory, binaryPartCallback, maxBodyLength, cancellationToken);
         }
         finally
         {
@@ -241,12 +246,13 @@ public static class MultipartMixedSerializer
         byte[] boundaryBuffer,
         ReadOnlyMemory<byte> boundaryMemory,
         MultipartMixedReader.BinaryPartHandler? binaryPartCallback,
+        long maxBodyLength,
         CancellationToken cancellationToken)
         where T : struct, IJsonElement<T>
     {
         try
         {
-            (byte[] buffer, int length) = await FormFieldReader.RentBodyAsync(stream, cancellationToken)
+            (byte[] buffer, int length) = await FormFieldReader.RentBodyAsync(stream, maxBodyLength, cancellationToken)
                 .ConfigureAwait(false);
 
             try

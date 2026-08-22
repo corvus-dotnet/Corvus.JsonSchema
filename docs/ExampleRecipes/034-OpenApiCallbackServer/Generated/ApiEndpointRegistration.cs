@@ -28,10 +28,11 @@ public static class ApiEndpointRegistration
     /// <param name="webhooksHandler">The handler for ApiWebhooks operations.</param>
     /// <param name="callbacksHandler">The handler for ApiCallbacks operations.</param>
     /// <param name="OnEventCallbackRoute">The route template to register for this callback endpoint.</param>
+    /// <param name="serverOptions">Optional registration-time server options (request body limits, etc.). When <see langword="null"/>, defaults are used.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiWebhooksHandler webhooksHandler, IApiCallbacksHandler callbacksHandler, string OnEventCallbackRoute)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiWebhooksHandler webhooksHandler, IApiCallbacksHandler callbacksHandler, string OnEventCallbackRoute, ApiServerOptions? serverOptions = null)
     {
-        return MapApiEndpoints(app, webhooksHandler, callbacksHandler, OnEventCallbackRoute, configureEndpoint: null);
+        return MapApiEndpoints(app, webhooksHandler, callbacksHandler, OnEventCallbackRoute, configureEndpoint: null, serverOptions: serverOptions);
     }
 
     /// <summary>
@@ -42,9 +43,11 @@ public static class ApiEndpointRegistration
     /// <param name="callbacksHandler">The handler for ApiCallbacks operations.</param>
     /// <param name="OnEventCallbackRoute">The route template to register for this callback endpoint.</param>
     /// <param name="configureEndpoint">An optional callback invoked once per generated endpoint, after the route is mapped, to apply per-endpoint conventions (authorization, naming, tags, output caching, rate limiting, etc.). May be <see langword="null"/>.</param>
+    /// <param name="serverOptions">Optional registration-time server options (request body limits, etc.). When <see langword="null"/>, defaults are used.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiWebhooksHandler webhooksHandler, IApiCallbacksHandler callbacksHandler, string OnEventCallbackRoute, ConfigureEndpoint? configureEndpoint)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiWebhooksHandler webhooksHandler, IApiCallbacksHandler callbacksHandler, string OnEventCallbackRoute, ConfigureEndpoint? configureEndpoint, ApiServerOptions? serverOptions = null)
     {
+        serverOptions ??= new ApiServerOptions();
 
         IEndpointConventionBuilder __SystemAlertWebhookEndpoint = app.MapPost("systemAlert", async (HttpContext context) =>
         {
@@ -55,6 +58,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<EventSubscription.CallbackServer.Models.Schema>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
@@ -134,6 +141,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<EventSubscription.CallbackServer.Models.Schema1>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {

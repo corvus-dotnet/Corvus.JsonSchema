@@ -4751,6 +4751,7 @@ public sealed class OpenApi20CodeGenerator
                 w.WriteLine("/// <param name=\"configureEndpoint\">An optional callback invoked once per generated endpoint, after the route is mapped, to apply per-endpoint conventions (authorization, naming, tags, output caching, rate limiting, etc.). May be <see langword=\"null\"/>.</param>");
             }
 
+            w.WriteLine("/// <param name=\"serverOptions\">Optional registration-time server options (request body limits, etc.). When <see langword=\"null\"/>, defaults are used.</param>");
             w.WriteLine("/// <returns>The endpoint route builder for chaining.</returns>");
         }
 
@@ -4768,7 +4769,7 @@ public sealed class OpenApi20CodeGenerator
             w.Write($", string {routeParamName}");
         }
 
-        w.WriteLine(")");
+        w.WriteLine(", ApiServerOptions? serverOptions = null)");
         w.OpenBrace();
         w.Write($"return Map{prefix}Endpoints(app");
         foreach (string hpn in handlerParamNames)
@@ -4781,7 +4782,7 @@ public sealed class OpenApi20CodeGenerator
             w.Write($", {routeParamName}");
         }
 
-        w.WriteLine(", configureEndpoint: null);");
+        w.WriteLine(", configureEndpoint: null, serverOptions: serverOptions);");
         w.CloseBrace();
         w.WriteLine();
 
@@ -4799,8 +4800,9 @@ public sealed class OpenApi20CodeGenerator
         }
 
         w.Write(", ConfigureEndpoint? configureEndpoint");
-        w.WriteLine(")");
+        w.WriteLine(", ApiServerOptions? serverOptions = null)");
         w.OpenBrace();
+        w.WriteLine("serverOptions ??= new ApiServerOptions();");
 
         // Emit a MapXxx call for each operation. Track registered operations to avoid
         // duplicates when the same operation appears under multiple tags.
@@ -4926,31 +4928,25 @@ public sealed class OpenApi20CodeGenerator
                     {
                         IReadOnlyDictionary<string, EncodingInfo>? formEncodings =
                             GetRequestBodyEncodings(op.RequestBody!.Value, CodeEmitHelpers.IsFormUrlEncodedMediaType);
-                        string encodingsArg = formEncodings is { Count: > 0 } ? $"{op.MethodName}FormEncodings, " : string.Empty;
+                        string encodingsArg = formEncodings is { Count: > 0 } ? $"{op.MethodName}FormEncodings, " : "null, ";
 
+                        EmitBufferedBodyContentLengthPrecheck(w);
                         w.WriteLine("try");
                         w.OpenBrace();
-                        w.WriteLine($"bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, {encodingsArg}context.RequestAborted).ConfigureAwait(false);");
+                        w.WriteLine($"bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, {encodingsArg}maxBodyLength: serverOptions.MaxBufferedRequestBodyLength, cancellationToken: context.RequestAborted).ConfigureAwait(false);");
                         w.CloseBrace();
-                        w.WriteLine("catch");
-                        w.OpenBrace();
-                        EmitProblemDetailsResponse(w, 400, "Bad Request", "The request body could not be parsed.");
-                        w.WriteLine("return;");
-                        w.CloseBrace();
+                        EmitBodyParseFailureCatches(w, includeTooLarge: true);
                         w.WriteLine();
                         EmitRequestBodySchemaValidation(w, bodyTypeName);
                     }
                     else if (IsMultipartRequestBody(op.RequestBody!.Value))
                     {
+                        EmitBufferedBodyContentLengthPrecheck(w);
                         w.WriteLine("try");
                         w.OpenBrace();
-                        w.WriteLine($"bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);");
+                        w.WriteLine($"bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, maxBodyLength: serverOptions.MaxBufferedRequestBodyLength, cancellationToken: context.RequestAborted).ConfigureAwait(false);");
                         w.CloseBrace();
-                        w.WriteLine("catch");
-                        w.OpenBrace();
-                        EmitProblemDetailsResponse(w, 400, "Bad Request", "The request body could not be parsed.");
-                        w.WriteLine("return;");
-                        w.CloseBrace();
+                        EmitBodyParseFailureCatches(w, includeTooLarge: true);
 
                         // Note: schema validation is skipped for multipart/form-data bodies because
                         // binary file fields (format: binary) are serialized as JSON strings whose
@@ -4962,11 +4958,7 @@ public sealed class OpenApi20CodeGenerator
                         w.OpenBrace();
                         w.WriteLine($"bodyDoc = await ParsedJsonDocument<{bodyTypeName}>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);");
                         w.CloseBrace();
-                        w.WriteLine("catch");
-                        w.OpenBrace();
-                        EmitProblemDetailsResponse(w, 400, "Bad Request", "The request body could not be parsed.");
-                        w.WriteLine("return;");
-                        w.CloseBrace();
+                        EmitBodyParseFailureCatches(w, includeTooLarge: false);
                         w.WriteLine();
                         EmitRequestBodySchemaValidation(w, bodyTypeName);
                     }
@@ -5453,6 +5445,46 @@ public sealed class OpenApi20CodeGenerator
         w.WriteLine($"context.Response.StatusCode = {statusCode};");
         w.WriteLine("context.Response.ContentType = \"application/problem+json\";");
         w.WriteLine($"await context.Response.WriteAsync(\"{{\u005C\"type\u005C\":\u005C\"about:blank\u005C\",\u005C\"title\u005C\":\u005C\"{title}\u005C\",\u005C\"status\u005C\":{statusCode},\u005C\"detail\u005C\":\u005C\"{detail}\u005C\"}}\", context.RequestAborted).ConfigureAwait(false);");
+    }
+
+    /// <summary>
+    /// Emits a fast 413 rejection when the declared Content-Length already exceeds the
+    /// configured buffered-body limit, before any of the body is read.
+    /// </summary>
+    private static void EmitBufferedBodyContentLengthPrecheck(IndentedWriter w)
+    {
+        w.WriteLine("if (context.Request.ContentLength is long __contentLength && __contentLength > serverOptions.MaxBufferedRequestBodyLength)");
+        w.OpenBrace();
+        EmitProblemDetailsResponse(w, 413, "Payload Too Large", "The request body exceeded the configured maximum buffered size.");
+        w.WriteLine("return;");
+        w.CloseBrace();
+        w.WriteLine();
+    }
+
+    /// <summary>
+    /// Emits the catch blocks for a body-parse try: cancellation is rethrown, an over-limit
+    /// body maps to 413 (buffered bodies only), and anything else maps to a 400 parse failure.
+    /// </summary>
+    private static void EmitBodyParseFailureCatches(IndentedWriter w, bool includeTooLarge)
+    {
+        w.WriteLine("catch (OperationCanceledException)");
+        w.OpenBrace();
+        w.WriteLine("throw;");
+        w.CloseBrace();
+        if (includeTooLarge)
+        {
+            w.WriteLine("catch (RequestBodyTooLargeException)");
+            w.OpenBrace();
+            EmitProblemDetailsResponse(w, 413, "Payload Too Large", "The request body exceeded the configured maximum buffered size.");
+            w.WriteLine("return;");
+            w.CloseBrace();
+        }
+
+        w.WriteLine("catch");
+        w.OpenBrace();
+        EmitProblemDetailsResponse(w, 400, "Bad Request", "The request body could not be parsed.");
+        w.WriteLine("return;");
+        w.CloseBrace();
     }
 
     /// <summary>

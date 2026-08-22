@@ -7278,6 +7278,29 @@ public class OpenApi30CodeGeneratorTests
     }
 
     [TestMethod]
+    public void GenerateServer_EndpointRegistration_ThreadsBodyLimitsAndFailureMapping()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateServerCoverageSpec();
+        GeneratedFile registration = files.First(f => f.FileName == "ApiEndpointRegistration.cs");
+
+        Assert.IsTrue(
+            registration.Content.Contains("ApiServerOptions? serverOptions = null", StringComparison.Ordinal),
+            "Expected MapApiEndpoints to accept registration-time server options");
+        Assert.IsTrue(
+            registration.Content.Contains("maxBodyLength: serverOptions.MaxBufferedRequestBodyLength", StringComparison.Ordinal),
+            "Expected the buffered body deserializers to receive the configured cap");
+        Assert.IsTrue(
+            registration.Content.Contains("catch (OperationCanceledException)", StringComparison.Ordinal),
+            "Expected cancellation to be rethrown rather than reported as a parse failure");
+        Assert.IsTrue(
+            registration.Content.Contains("catch (RequestBodyTooLargeException)", StringComparison.Ordinal),
+            "Expected an oversized body to be mapped to its own response");
+        Assert.IsTrue(
+            registration.Content.Contains("Payload Too Large", StringComparison.Ordinal),
+            "Expected a 413 problem response for oversized bodies");
+    }
+
+    [TestMethod]
     public void GenerateServer_EndpointRegistration_IncludesAllOperations()
     {
         IReadOnlyList<GeneratedFile> files = GenerateServerCoverageSpec();
@@ -7298,7 +7321,7 @@ public class OpenApi30CodeGeneratorTests
             registration.Content.Contains("configureEndpoint: null", StringComparison.Ordinal),
             "Expected the original overload to delegate with a null callback");
         Assert.IsTrue(
-            registration.Content.Contains(", ConfigureEndpoint? configureEndpoint)", StringComparison.Ordinal),
+            registration.Content.Contains(", ConfigureEndpoint? configureEndpoint, ApiServerOptions? serverOptions = null)", StringComparison.Ordinal),
             "Expected a new MapApiEndpoints overload accepting a ConfigureEndpoint callback");
     }
 

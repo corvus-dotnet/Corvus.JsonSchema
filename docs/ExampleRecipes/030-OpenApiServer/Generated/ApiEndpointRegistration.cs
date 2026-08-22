@@ -26,10 +26,11 @@ public static class ApiEndpointRegistration
     /// </summary>
     /// <param name="app">The endpoint route builder.</param>
     /// <param name="petsHandler">The handler for ApiPets operations.</param>
+    /// <param name="serverOptions">Optional registration-time server options (request body limits, etc.). When <see langword="null"/>, defaults are used.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiPetsHandler petsHandler)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiPetsHandler petsHandler, ApiServerOptions? serverOptions = null)
     {
-        return MapApiEndpoints(app, petsHandler, configureEndpoint: null);
+        return MapApiEndpoints(app, petsHandler, configureEndpoint: null, serverOptions: serverOptions);
     }
 
     /// <summary>
@@ -38,9 +39,11 @@ public static class ApiEndpointRegistration
     /// <param name="app">The endpoint route builder.</param>
     /// <param name="petsHandler">The handler for ApiPets operations.</param>
     /// <param name="configureEndpoint">An optional callback invoked once per generated endpoint, after the route is mapped, to apply per-endpoint conventions (authorization, naming, tags, output caching, rate limiting, etc.). May be <see langword="null"/>.</param>
+    /// <param name="serverOptions">Optional registration-time server options (request body limits, etc.). When <see langword="null"/>, defaults are used.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiPetsHandler petsHandler, ConfigureEndpoint? configureEndpoint)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiPetsHandler petsHandler, ConfigureEndpoint? configureEndpoint, ApiServerOptions? serverOptions = null)
     {
+        serverOptions ??= new ApiServerOptions();
 
         IEndpointConventionBuilder __ListPetsEndpoint = app.MapGet("/pets", async (HttpContext context) =>
         {
@@ -127,6 +130,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<Petstore.Server.Models.NewPet>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
