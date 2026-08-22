@@ -210,6 +210,25 @@ public sealed class RunnerApiEndToEndTests
     }
 
     [TestMethod]
+    public async Task A_save_whose_body_sequence_differs_from_the_header_is_refused()
+    {
+        // H40 / ADR 0065 decision 6: the accept rule runs off the header while the coordinator re-seeds the
+        // persisted sequence from the stored body, so the two must be the same number. A body claiming 5 under an
+        // accepted header of 2 is a malformed save, refused before the store is touched.
+        await using Host host = await Host.StartAsync();
+        await host.SeedAsync(Run1, WorkflowRunStatus.Pending);
+        string lease = await host.ClaimLeaseAsync(Runner);
+
+        using HttpResponseMessage saved = await host.SaveCheckpointAsync(Runner, Run1, lease, Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 5), 2);
+
+        saved.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        // The stored row is untouched: still the seeded checkpoint at sequence 1.
+        using HttpResponseMessage loaded = await host.LoadCheckpointAsync(Runner, Run1, lease);
+        SequenceOf(loaded).ShouldBe(1);
+    }
+
+    [TestMethod]
     public async Task A_checkpoint_over_the_deployments_cap_is_refused()
     {
         // The cap bounds what one request can make the server rent, so a body over it is refused rather than buffered.

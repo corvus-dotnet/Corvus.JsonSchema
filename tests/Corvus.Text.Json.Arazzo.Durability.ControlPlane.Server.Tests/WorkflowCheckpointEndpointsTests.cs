@@ -117,6 +117,49 @@ public sealed class WorkflowCheckpointEndpointsTests
     }
 
     [TestMethod]
+    public async Task Post_whose_body_sequence_differs_from_the_header_is_rejected()
+    {
+        // H40 / ADR 0065 decision 6: the accept rule runs off the header while the coordinator re-seeds the
+        // persisted sequence from the stored body, so header and body must be the same number or the two diverge.
+        // A body claiming 5 under an accepted header of 1 is a malformed save, refused before anything is stored.
+        await using Host host = await Host.StartAsync();
+
+        HttpResponseMessage response = await host.PostCheckpointAsync(Run.Value, RealCheckpoint(WorkflowRunStatus.Running, sequence: 5), sequence: 1);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await host.Store.LoadAsync(Address, default)).ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task Post_whose_body_omits_the_sequence_is_rejected()
+    {
+        // A body with no sequence at all would re-seed the persisted sequence to zero on the next open, so the
+        // header 1 is accepted forever: unlimited in-place rewrite. The ingress requires the body to carry the
+        // sequence.
+        await using Host host = await Host.StartAsync();
+
+        HttpResponseMessage response = await host.PostCheckpointAsync(Run.Value, RealCheckpointWithoutSequence(), sequence: 1);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await host.Store.LoadAsync(Address, default)).ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task Post_whose_body_sequence_is_long_max_value_is_rejected_and_not_stored()
+    {
+        // The overflow brick: a body carrying long.MaxValue would, once stored, re-seed the persisted sequence so
+        // the next accepted value overflows to a negative number no positive header can ever match, refusing every
+        // future save including recovery. It cannot be stored, because its body sequence does not equal the
+        // accepted header.
+        await using Host host = await Host.StartAsync();
+
+        HttpResponseMessage response = await host.PostCheckpointAsync(Run.Value, RealCheckpoint(WorkflowRunStatus.Running, sequence: long.MaxValue), sequence: 1);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await host.Store.LoadAsync(Address, default)).ShouldBeNull();
+    }
+
+    [TestMethod]
     public async Task Post_without_a_sequence_header_is_400()
     {
         await using Host host = await Host.StartAsync();
@@ -208,6 +251,19 @@ public sealed class WorkflowCheckpointEndpointsTests
             outputs: default,
             environment: Env,
             updatedAt: new DateTimeOffset(2026, 3, 4, 5, 10, 0, TimeSpan.Zero));
+    }
+
+    // A real checkpoint with its "sequence" property removed, for the omission repro. Asserts the strip actually
+    // happened and that the result no longer carries a sequence, so the test fails loudly if the serialized shape
+    // changes rather than silently exercising nothing.
+    private static byte[] RealCheckpointWithoutSequence()
+    {
+        string json = System.Text.Encoding.UTF8.GetString(RealCheckpoint(WorkflowRunStatus.Running, sequence: 1));
+        string stripped = json.Replace("\"sequence\":1,", string.Empty, StringComparison.Ordinal);
+        stripped.ShouldNotBe(json);
+        byte[] bytes = System.Text.Encoding.UTF8.GetBytes(stripped);
+        WorkflowCheckpointSerializer.TryReadSequence(bytes, out _).ShouldBeFalse();
+        return bytes;
     }
 
     private static WorkflowRunIndexEntry ProjectIndex(byte[] checkpoint) => WorkflowCheckpointSerializer.ProjectIndex(checkpoint);

@@ -123,6 +123,19 @@ public static class WorkflowCheckpointEndpoints
                     return;
                 }
 
+                // ADR 0065 decision 6 (H40): the accept rule the coordinator applies runs off this header, while its
+                // re-seed after a slot eviction or restart reads the persisted sequence from the stored body. Those
+                // two must be the same number, or a body claiming one sequence under an accepted header of another
+                // diverges the store: a body omitting the sequence re-seeds to zero (accepting header 1 forever, an
+                // in-place rewrite), and a body carrying long.MaxValue re-seeds to an overflowed negative that no
+                // positive header can match (bricking the run). The body must carry the sequence and it must equal
+                // the header.
+                if (!WorkflowCheckpointSerializer.TryReadSequence(checkpointUtf8, out long bodySequence) || bodySequence != sequence)
+                {
+                    await WriteProblemAsync(context, StatusCodes.Status400BadRequest, "The checkpoint body's sequence is missing or does not match the request header.").ConfigureAwait(false);
+                    return;
+                }
+
                 CheckpointSaveResult result = await coordinator.SaveAsync(address, checkpointUtf8, index, claimedEnvironment, sequence, context.RequestAborted).ConfigureAwait(false);
                 context.Response.Headers[WriteSequenceHeader] = result.AcceptedSequence.ToString(CultureInfo.InvariantCulture);
                 if (result.Outcome == CheckpointSaveOutcome.Applied)

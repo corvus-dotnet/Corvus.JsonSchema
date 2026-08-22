@@ -149,6 +149,17 @@ public sealed class ArazzoRunnerCheckpointsHandler : IApiCheckpointsHandler
                 return SaveCheckpointResult.BadRequest(RunnerProblems.MalformedCheckpoint(), workspace);
             }
 
+            // ADR 0065 decision 6 (H40): the accept rule the coordinator applies runs off this header, while its
+            // re-seed after a slot eviction or restart reads the persisted sequence from the stored body. Those two
+            // must be the same number, or a body claiming one sequence under an accepted header of another diverges
+            // the store: a body omitting the sequence re-seeds to zero (accepting header 1 forever, an in-place
+            // rewrite), and a body carrying long.MaxValue re-seeds to an overflowed negative that no positive header
+            // can match (bricking the run). The body must carry the sequence and it must equal the header.
+            if (!WorkflowCheckpointSerializer.TryReadSequence(checkpointUtf8, out long bodySequence) || bodySequence != sequence)
+            {
+                return SaveCheckpointResult.BadRequest(RunnerProblems.MalformedCheckpoint(), workspace);
+            }
+
             CheckpointSaveResult result = await this.checkpoints.SaveAsync(new WorkflowRunAddress(environment, id), checkpointUtf8, index, claimedEnvironment, sequence, cancellationToken).ConfigureAwait(false);
             return result.Outcome switch
             {
