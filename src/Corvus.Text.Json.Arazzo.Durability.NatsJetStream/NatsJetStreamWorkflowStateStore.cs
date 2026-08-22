@@ -24,7 +24,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.NatsJetStream;
 /// Wait/visibility queries scan the bucket's keys and filter on the index header. Create instances with
 /// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> after provisioning with <see cref="PrepareAsync(string, CancellationToken)"/>.
 /// </remarks>
-public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter, IAsyncDisposable
+public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, IWorkflowLeaseAdministration, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
     private const string RunsBucket = "arazzo_runs";
@@ -323,6 +323,55 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                 await this.leases.UpdateAsync(CompositeId(lease.Address), released, entry.Value.Revision, cancellationToken: cancellationToken).ConfigureAwait(false);
             }
         }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<int> ExpireLeasesForOwnerAsync(string owner, string? environment, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(owner);
+
+        // The control-plane revocation fence (§5.5): expire every live lease this owner holds in place, so an
+        // authorized peer reclaims its in-flight runs at the next poll rather than after the TTL. The scope is
+        // the environment being withdrawn (ADR 0065 decision 9), the delimited key's own environment half (the
+        // KV wildcard is token-based so the prefix is matched here); a null environment fences the owner
+        // everywhere. Each candidate is expired by a revision-conditional update preserving owner/token/epoch,
+        // so a lease re-granted between the read and the update belongs to its new grant and is skipped; the
+        // count is the leases actually fenced.
+        long nowMs = this.timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
+        string? prefix = environment is null ? null : environment + "/";
+        int fenced = 0;
+        await foreach (string key in this.leases.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            if (prefix is not null && !key.StartsWith(prefix, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            NatsKVEntry<byte[]>? entry = await this.TryGetAsync(this.leases, key, cancellationToken).ConfigureAwait(false);
+            if (entry is not { Value: { } value })
+            {
+                continue;
+            }
+
+            (string currentOwner, string currentToken, long expiresAt, long epoch) = LeaseCodec.Decode(value);
+            if (currentOwner != owner || expiresAt <= nowMs)
+            {
+                continue;
+            }
+
+            byte[] expired = LeaseCodec.Encode(currentOwner, currentToken, nowMs, epoch);
+            try
+            {
+                await this.leases.UpdateAsync(key, expired, entry.Value.Revision, cancellationToken: cancellationToken).ConfigureAwait(false);
+                fenced++;
+            }
+            catch (NatsKVException)
+            {
+                // Re-granted or released between the read and the update; the new grant owns the entry.
+            }
+        }
+
+        return fenced;
     }
 
     /// <inheritdoc/>

@@ -27,7 +27,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 /// <see cref="PrepareAsync(string, CancellationToken)"/>, then open the store with
 /// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/>.
 /// </remarks>
-public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter
+public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, IWorkflowLeaseAdministration, ISupportsRowSecurityFilter
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
     private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
@@ -365,6 +365,43 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
                 // The lease was already released or superseded.
             }
         }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<int> ExpireLeasesForOwnerAsync(string owner, string? environment, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(owner);
+
+        // The control-plane revocation fence (§5.5): expire every live lease this owner holds in place, so an
+        // authorized peer reclaims its in-flight runs at the next poll rather than after the TTL. The scope is
+        // the environment being withdrawn (ADR 0065 decision 9), the lease entity's own PartitionKey, so a
+        // scoped fence is a server-side partition equality; a null environment fences the owner everywhere.
+        // Each candidate is expired by an ETag-conditional update preserving owner/token/epoch (expire in
+        // place, like release), so a lease re-granted between the query and the update belongs to its new
+        // grant and is skipped; the count is the leases actually fenced.
+        long nowMs = this.timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
+        string filter = TableClient.CreateQueryFilter($"Owner eq {owner} and ExpiresAt gt {nowMs}");
+        if (environment is not null)
+        {
+            filter = TableClient.CreateQueryFilter($"PartitionKey eq {environment}") + " and " + filter;
+        }
+
+        int fenced = 0;
+        await foreach (TableEntity lease in this.leases.QueryAsync<TableEntity>(filter, cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            lease["ExpiresAt"] = nowMs;
+            try
+            {
+                await this.leases.UpdateEntityAsync(lease, lease.ETag, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+                fenced++;
+            }
+            catch (RequestFailedException ex) when (ex.Status is 404 or 412)
+            {
+                // Re-granted or released between the query and the update; the new grant owns the entity.
+            }
+        }
+
+        return fenced;
     }
 
     /// <inheritdoc/>

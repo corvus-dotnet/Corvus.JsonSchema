@@ -20,7 +20,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.MySql;
 /// Each operation opens a pooled connection, so the store is naturally concurrent. Create instances with
 /// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> after provisioning with <see cref="PrepareAsync(string, CancellationToken)"/>.
 /// </remarks>
-public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter, IAsyncDisposable
+public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, IWorkflowLeaseAdministration, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
     private const string PendingStatus = nameof(WorkflowRunStatus.Pending);
@@ -340,6 +340,26 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         release.Parameters.AddWithValue("@token", lease.Token);
         release.Parameters.AddWithValue("@now", this.timeProvider.GetUtcNow().ToUnixTimeMilliseconds());
         await release.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<int> ExpireLeasesForOwnerAsync(string owner, string? environment, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(owner);
+
+        // The control-plane revocation fence (§5.5): expire every live lease this owner holds in place, so an authorized peer
+        // reclaims its in-flight runs at the next poll (expires_at <= now makes the row re-acquirable) rather than after the
+        // TTL. The affected count is the number of live leases fenced (UseAffectedRows reports changed rows, and every
+        // fenced row changes). The scope is the environment being withdrawn (ADR 0065 decision 9): a runner keeping
+        // other environments keeps its leases there; a null environment fences the owner everywhere.
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using MySqlCommand expire = connection.CreateCommand();
+        expire.CommandText = "UPDATE workflow_leases SET expires_at = @now WHERE owner = @owner AND expires_at > @now AND (@environment IS NULL OR environment = @environment);";
+        expire.Parameters.AddWithValue("@owner", owner);
+        expire.Parameters.AddWithValue("@environment", (object?)environment ?? DBNull.Value);
+        expire.Parameters.AddWithValue("@now", now.ToUnixTimeMilliseconds());
+        return await expire.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
