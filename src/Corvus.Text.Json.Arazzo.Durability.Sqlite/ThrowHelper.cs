@@ -88,4 +88,11 @@ internal static class ThrowHelper
     [StackTraceHidden]
     public static void ThrowWorkflowDeploymentNotDeployingForLeaseRenewal(string id)
         => throw new WorkflowDeploymentStateException(id, SR.Format(SR.WorkflowDeploymentNotDeployingForLeaseRenewal, id));
+
+    /// <summary>Throws when a schedule id is already registered to a different registration.</summary>
+    /// <param name="scheduleId">The conflicting schedule id.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowScheduleRegistrationConflict(string scheduleId)
+        => throw new Schedules.ScheduleRegistrationConflictException(SR.Format(SR.ScheduleRegistrationConflict, scheduleId));
 }

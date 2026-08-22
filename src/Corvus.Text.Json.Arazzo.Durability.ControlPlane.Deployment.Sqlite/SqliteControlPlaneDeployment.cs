@@ -63,6 +63,7 @@ public static class SqliteControlPlaneDeployment
         await SqliteWorkflowStateStore.PrepareAsync(connectionString, cancellationToken).ConfigureAwait(false);
         await SqliteWorkflowCatalogStore.PrepareAsync(connectionString, cancellationToken).ConfigureAwait(false);
         await SqliteRunnerRegistry.PrepareAsync(connectionString, cancellationToken).ConfigureAwait(false);
+        await SqliteScheduleRegistry.PrepareAsync(connectionString, cancellationToken).ConfigureAwait(false);
         await SqliteEnvironmentRunnerAuthorizationStore.PrepareAsync(connectionString, cancellationToken).ConfigureAwait(false);
         await SqliteSourceCredentialStore.PrepareAsync(connectionString, cancellationToken).ConfigureAwait(false);
 
