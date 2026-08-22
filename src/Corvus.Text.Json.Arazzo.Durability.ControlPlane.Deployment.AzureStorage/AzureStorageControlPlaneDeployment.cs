@@ -63,6 +63,7 @@ public static class AzureStorageControlPlaneDeployment
         await AzureStorageWorkflowStateStore.PrepareAsync(connectionString, cancellationToken).ConfigureAwait(false);
         await AzureStorageWorkflowCatalogStore.PrepareAsync(connectionString, cancellationToken).ConfigureAwait(false);
         await AzureStorageRunnerRegistry.PrepareAsync(connectionString, cancellationToken).ConfigureAwait(false);
+        await AzureStorageScheduleRegistry.PrepareAsync(connectionString, cancellationToken).ConfigureAwait(false);
         await AzureStorageEnvironmentRunnerAuthorizationStore.PrepareAsync(connectionString, cancellationToken).ConfigureAwait(false);
         await AzureStorageSourceCredentialStore.PrepareAsync(connectionString, cancellationToken).ConfigureAwait(false);
 
