@@ -310,6 +310,34 @@ internal sealed class MockItemsHandler : IApiItemsHandler
 
     public ValueTask<UploadAttachmentEncodedResult> HandleUploadAttachmentEncodedAsync(UploadAttachmentEncodedParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
         => new(UploadAttachmentEncodedResult.Created(MockDefaultHandler.ReturnInvalidResponse ? ItemEntity.ParseValue("""{}"""u8) : DefaultItem, workspace));
+
+    public static byte[]? CapturedMixedDoc { get; set; }
+
+    public static string? CapturedMixedMeta { get; set; }
+
+    public static List<byte[]>? CapturedBatchItems { get; set; }
+
+    public ValueTask<UploadDocMixedResult> HandleUploadDocMixedAsync(UploadDocMixedParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        CapturedMixedDoc = parameters.Part1.ToArray();
+        CapturedMixedMeta = parameters.Body.ToString();
+        return new(UploadDocMixedResult.NoContent());
+    }
+
+    public ValueTask<UploadBinaryBatchResult> HandleUploadBinaryBatchAsync(UploadBinaryBatchParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        List<byte[]> items = [];
+        if (parameters.Items is not null)
+        {
+            foreach (ReadOnlyMemory<byte> item in parameters.Items)
+            {
+                items.Add(item.ToArray());
+            }
+        }
+
+        CapturedBatchItems = items;
+        return new(UploadBinaryBatchResult.NoContent());
+    }
 }
 
 /// <summary>

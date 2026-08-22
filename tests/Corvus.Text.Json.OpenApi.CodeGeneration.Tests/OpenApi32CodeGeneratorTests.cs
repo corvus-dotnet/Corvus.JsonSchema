@@ -1209,6 +1209,52 @@ public class OpenApi32CodeGeneratorTests
     }
 
     [TestMethod]
+    public void GenerateServer_MultipartMixed_CapturesBinaryPartsAndSkipsPositionalValidation()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+        OpenApi32CodeGenerator generator = new("CovTest.Server", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(covspecRoot);
+
+        string registration = files.First(f => f.FileName == "ApiEndpointRegistration.cs").Content;
+
+        // uploadDocMixed: the binary prefix part is captured by its wire index and bound.
+        Assert.IsTrue(
+            registration.Contains("if (part.Index == 1) { __mixedBinary_1 = part.Data.ToArray(); }", StringComparison.Ordinal),
+            "expected a positional capture for the binary prefix part");
+        Assert.IsTrue(
+            registration.Contains("Part1 = __mixedBinary_1 ?? ReadOnlyMemory<byte>.Empty,", StringComparison.Ordinal),
+            "expected the captured prefix part bound into Params");
+
+        // uploadBinaryBatch: repeating binary items are collected in wire order and bound.
+        Assert.IsTrue(
+            registration.Contains("__mixedBinaryItems.Add(part.Data.ToArray());", StringComparison.Ordinal),
+            "expected repeating binary items to be collected");
+        Assert.IsTrue(
+            registration.Contains("Items = __mixedBinaryItems,", StringComparison.Ordinal),
+            "expected the collected items bound into Params");
+
+        // Binary parts are excluded from the JSON projection, so positional schema
+        // validation must be skipped for mixed bodies that carry them. Slice the
+        // uploadDocMixed endpoint from its route registration to its handler call.
+        int start = registration.IndexOf("\"/docs/upload-mixed\"", StringComparison.Ordinal);
+        int end = start >= 0 ? registration.IndexOf("HandleUploadDocMixedAsync", start, StringComparison.Ordinal) : -1;
+        Assert.IsTrue(end > start && start >= 0, "expected the mixed endpoint to invoke its handler after the capture");
+        Assert.IsFalse(
+            registration[start..end].Contains("EvaluateSchema", StringComparison.Ordinal),
+            "expected positional schema validation to be skipped for a mixed body with binary parts");
+
+        string prefixParams = files.First(f => f.FileName == "UploadDocMixedParams.cs").Content;
+        Assert.IsTrue(
+            prefixParams.Contains("public ReadOnlyMemory<byte> Part1 { get; init; }", StringComparison.Ordinal),
+            "expected a positional binary part property on the Params struct");
+
+        string batchParams = files.First(f => f.FileName == "UploadBinaryBatchParams.cs").Content;
+        Assert.IsTrue(
+            batchParams.Contains("IReadOnlyList<ReadOnlyMemory<byte>> Items { get; init; }", StringComparison.Ordinal),
+            "expected a repeating binary items property on the Params struct");
+    }
+
+    [TestMethod]
     public void GenerateServer_EndpointRegistration_IncludesAllOperations()
     {
         Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();

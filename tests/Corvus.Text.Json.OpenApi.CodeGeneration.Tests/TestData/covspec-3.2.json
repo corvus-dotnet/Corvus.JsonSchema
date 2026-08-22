@@ -2053,6 +2053,66 @@
           }
         }
       }
+    },
+    "/docs/upload-mixed": {
+      "post": {
+        "operationId": "uploadDocMixed",
+        "tags": ["Items"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/mixed": {
+              "schema": {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "title": {"type": "string"}
+                    },
+                    "required": ["title"]
+                  },
+                  {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                ]
+              },
+              "prefixEncoding": [
+                {"contentType": "application/json"},
+                {"contentType": "application/octet-stream"}
+              ]
+            }
+          }
+        },
+        "responses": {
+          "204": {"description": "Accepted"}
+        }
+      }
+    },
+    "/docs/batch-binary": {
+      "post": {
+        "operationId": "uploadBinaryBatch",
+        "tags": ["Items"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/mixed": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "itemEncoding": {"contentType": "application/octet-stream"}
+            }
+          }
+        },
+        "responses": {
+          "204": {"description": "Accepted"}
+        }
+      }
     }
   },
   "components": {

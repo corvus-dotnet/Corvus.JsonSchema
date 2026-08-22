@@ -704,6 +704,48 @@ public class GeneratedServerEndToEndTests
     }
 
     [TestMethod]
+    public async Task UploadDocMixed_BinaryPrefixPartReachesHandler()
+    {
+        MockItemsHandler.CapturedMixedDoc = null;
+        MockItemsHandler.CapturedMixedMeta = null;
+
+        using MultipartContent content = new("mixed", "mixed-boundary");
+        content.Add(new StringContent("""{"title":"Report"}""", Encoding.UTF8, "application/json"));
+        ByteArrayContent doc = new([0x0A, 0x0B, 0x0C]);
+        doc.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+        content.Add(doc);
+
+        HttpResponseMessage response = await client!.PostAsync("/docs/upload-mixed", content);
+
+        Assert.AreEqual(HttpStatusCode.NoContent, response.StatusCode);
+        CollectionAssert.AreEqual(new byte[] { 0x0A, 0x0B, 0x0C }, MockItemsHandler.CapturedMixedDoc, "the binary prefix part's bytes must reach the handler");
+        Assert.AreEqual("""[{"title":"Report"}]""", MockItemsHandler.CapturedMixedMeta, "the JSON prefix part must remain in the typed body");
+    }
+
+    [TestMethod]
+    public async Task UploadBinaryBatch_AllItemsReachHandlerInWireOrder()
+    {
+        MockItemsHandler.CapturedBatchItems = null;
+
+        using MultipartContent content = new("mixed", "batch-boundary");
+        foreach (byte[] payload in (byte[][])[[0x01], [0x02, 0x02], [0x03, 0x03, 0x03]])
+        {
+            ByteArrayContent item = new(payload);
+            item.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+            content.Add(item);
+        }
+
+        HttpResponseMessage response = await client!.PostAsync("/docs/batch-binary", content);
+
+        Assert.AreEqual(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.IsNotNull(MockItemsHandler.CapturedBatchItems);
+        Assert.AreEqual(3, MockItemsHandler.CapturedBatchItems.Count);
+        CollectionAssert.AreEqual(new byte[] { 0x01 }, MockItemsHandler.CapturedBatchItems[0]);
+        CollectionAssert.AreEqual(new byte[] { 0x02, 0x02 }, MockItemsHandler.CapturedBatchItems[1]);
+        CollectionAssert.AreEqual(new byte[] { 0x03, 0x03, 0x03 }, MockItemsHandler.CapturedBatchItems[2]);
+    }
+
+    [TestMethod]
     public async Task UploadAttachment_Multipart_ReturnsCreated()
     {
         MultipartFormDataContent content = new();

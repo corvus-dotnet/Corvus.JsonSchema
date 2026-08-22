@@ -3178,6 +3178,31 @@ public sealed class OpenApi32CodeGenerator
     }
 
     /// <summary>
+    /// Returns <see langword="true"/> if the multipart/mixed request body carries at least
+    /// one binary part (a binary prefix part or binary repeating items).
+    /// </summary>
+    private static bool HasMixedBinaryParts(RequestBodyInfo requestBody)
+    {
+        if (requestBody.ItemPart is { IsBinary: true })
+        {
+            return true;
+        }
+
+        if (requestBody.PrefixParts is { } prefixParts)
+        {
+            foreach (MixedPartInfo part in prefixParts)
+            {
+                if (part.IsBinary)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Detects <c>multipart/mixed</c> content with <c>prefixEncoding</c> or <c>itemEncoding</c>.
     /// </summary>
     private static void DetectMultipartMixedParts(
@@ -7187,6 +7212,35 @@ public sealed class OpenApi32CodeGenerator
                     w.WriteLine($"public ReadOnlyMemory<byte> {propName} {{ get; init; }}");
                 }
             }
+
+            // For multipart/mixed bodies, expose each binary prefix part positionally and the
+            // repeating binary items as a list (mirrors the client sending BinaryPartData parts).
+            if (IsMultipartMixedRequestBody(rb))
+            {
+                if (rb.PrefixParts is { } mixedPrefixParts)
+                {
+                    for (int i = 0; i < mixedPrefixParts.Length; i++)
+                    {
+                        if (mixedPrefixParts[i].IsBinary)
+                        {
+                            w.WriteLine();
+                            w.WriteLine("/// <summary>");
+                            w.WriteLine($"/// Gets the binary content of mixed part {i}. Binary parts are excluded from <see cref=\"Body\"/>.");
+                            w.WriteLine("/// </summary>");
+                            w.WriteLine($"public ReadOnlyMemory<byte> Part{i} {{ get; init; }}");
+                        }
+                    }
+                }
+
+                if (rb.ItemPart is { IsBinary: true })
+                {
+                    w.WriteLine();
+                    w.WriteLine("/// <summary>");
+                    w.WriteLine("/// Gets the binary content of the repeating mixed items, in wire order. Binary parts are excluded from <see cref=\"Body\"/>.");
+                    w.WriteLine("/// </summary>");
+                    w.WriteLine("public System.Collections.Generic.IReadOnlyList<ReadOnlyMemory<byte>> Items { get; init; }");
+                }
+            }
         }
 
         w.CloseBrace();
@@ -8306,6 +8360,25 @@ public sealed class OpenApi32CodeGenerator
                         }
                     }
 
+                    if (!isRawStreamBody && IsMultipartMixedRequestBody(op.RequestBody!.Value))
+                    {
+                        if (op.RequestBody!.Value.PrefixParts is { } hoistPrefixParts)
+                        {
+                            for (int i = 0; i < hoistPrefixParts.Length; i++)
+                            {
+                                if (hoistPrefixParts[i].IsBinary)
+                                {
+                                    w.WriteLine($"byte[]? __mixedBinary_{i} = null;");
+                                }
+                            }
+                        }
+
+                        if (op.RequestBody!.Value.ItemPart is { IsBinary: true })
+                        {
+                            w.WriteLine("System.Collections.Generic.List<ReadOnlyMemory<byte>> __mixedBinaryItems = [];");
+                        }
+                    }
+
                     if (bodyOptional)
                     {
                         w.WriteLine("// An optional request body is read only when the request actually carries one;");
@@ -8366,14 +8439,57 @@ public sealed class OpenApi32CodeGenerator
                     }
                     else if (IsMultipartMixedRequestBody(op.RequestBody!.Value))
                     {
+                        MixedPartInfo[]? mixedPrefixParts = op.RequestBody!.Value.PrefixParts;
+                        bool mixedItemsBinary = op.RequestBody!.Value.ItemPart is { IsBinary: true };
+                        bool hasMixedBinary = HasMixedBinaryParts(op.RequestBody!.Value);
+
                         EmitBufferedBodyContentLengthPrecheck(w);
                         w.WriteLine("try");
                         w.OpenBrace();
-                        w.WriteLine($"bodyDoc = await MultipartMixedSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, maxBodyLength: serverOptions.MaxBufferedRequestBodyLength, cancellationToken: context.RequestAborted).ConfigureAwait(false);");
+                        if (hasMixedBinary)
+                        {
+                            w.WriteLine($"bodyDoc = await MultipartMixedSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, binaryPartCallback: part =>");
+                            w.OpenBrace();
+                            bool firstClause = true;
+                            int mixedPrefixCount = mixedPrefixParts?.Length ?? 0;
+                            if (mixedPrefixParts is not null)
+                            {
+                                for (int i = 0; i < mixedPrefixParts.Length; i++)
+                                {
+                                    if (mixedPrefixParts[i].IsBinary)
+                                    {
+                                        string keyword = firstClause ? "if" : "else if";
+                                        firstClause = false;
+                                        w.WriteLine($"{keyword} (part.Index == {i}) {{ __mixedBinary_{i} = part.Data.ToArray(); }}");
+                                    }
+                                }
+                            }
+
+                            if (mixedItemsBinary)
+                            {
+                                string keyword = firstClause ? "if" : "else if";
+                                w.WriteLine($"{keyword} (part.Index >= {mixedPrefixCount}) {{ __mixedBinaryItems.Add(part.Data.ToArray()); }}");
+                            }
+
+                            w.CloseBraceNoNewline().Write(", maxBodyLength: serverOptions.MaxBufferedRequestBodyLength, cancellationToken: context.RequestAborted).ConfigureAwait(false);");
+                            w.WriteLine();
+                        }
+                        else
+                        {
+                            w.WriteLine($"bodyDoc = await MultipartMixedSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, maxBodyLength: serverOptions.MaxBufferedRequestBodyLength, cancellationToken: context.RequestAborted).ConfigureAwait(false);");
+                        }
+
                         w.CloseBrace();
                         EmitBodyParseFailureCatches(w, includeTooLarge: true);
-                        w.WriteLine();
-                        EmitRequestBodySchemaValidation(w, bodyTypeName);
+                        if (!hasMixedBinary)
+                        {
+                            w.WriteLine();
+                            EmitRequestBodySchemaValidation(w, bodyTypeName);
+                        }
+
+                        // Note: when binary parts are present, schema validation is skipped because
+                        // binary parts are excluded from the JSON projection, so positional
+                        // validation against the array schema would misalign.
                     }
                     else
                     {
@@ -8428,6 +8544,26 @@ public sealed class OpenApi32CodeGenerator
                             {
                                 string propName = CodeEmitHelpers.ToPascalCase(binaryPart.PropertyName);
                                 w.WriteLine($"{propName} = __binary_{binaryPart.PropertyName} ?? ReadOnlyMemory<byte>.Empty,");
+                            }
+                        }
+
+                        // Bind captured binary parts for multipart/mixed bodies.
+                        if (!isRawStreamBody && IsMultipartMixedRequestBody(op.RequestBody!.Value))
+                        {
+                            if (op.RequestBody!.Value.PrefixParts is { } bindPrefixParts)
+                            {
+                                for (int i = 0; i < bindPrefixParts.Length; i++)
+                                {
+                                    if (bindPrefixParts[i].IsBinary)
+                                    {
+                                        w.WriteLine($"Part{i} = __mixedBinary_{i} ?? ReadOnlyMemory<byte>.Empty,");
+                                    }
+                                }
+                            }
+
+                            if (op.RequestBody!.Value.ItemPart is { IsBinary: true })
+                            {
+                                w.WriteLine("Items = __mixedBinaryItems,");
                             }
                         }
                     }
