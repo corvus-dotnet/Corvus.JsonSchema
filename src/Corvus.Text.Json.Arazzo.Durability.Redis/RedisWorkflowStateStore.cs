@@ -227,13 +227,17 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     {
         cancellationToken.ThrowIfCancellationRequested();
 
+        // The composite {environment}/{runId} is formed once and reused for the index-set member (ARGV[1]) and the
+        // run hash key, rather than concatenated twice per save on the run-state write hotpath.
+        string composite = CompositeId(address);
+
         // The opaque checkpoint binds straight to a RedisValue from its ReadOnlyMemory (RedisValue carries the exact
         // length) — no per-save GC array on the run-state hot path. It is written into the run hash's 'checkpoint'
-        // field. ARGV[1] is the composite {environment}/{runId} member every index set carries; the 'environment'
-        // hash field is kept alongside it so the persisted row states both key halves explicitly.
+        // field. ARGV[1] is the composite member every index set carries; the 'environment' hash field is kept
+        // alongside it so the persisted row states both key halves explicitly.
         RedisValue[] argv =
         [
-            CompositeId(address),
+            composite,
             expected.IsNone ? string.Empty : expected.Value!,
             checkpoint,
             index.Status.ToString(),
@@ -251,7 +255,7 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             index.ResumeRequestedAt is { } resume ? resume.ToUnixTimeMilliseconds() : string.Empty,
         ];
 
-        RedisResult result = await this.database.ScriptEvaluateAsync(SaveScript, [RunKey(address), AllKey, DueKey], argv).ConfigureAwait(false);
+        RedisResult result = await this.database.ScriptEvaluateAsync(SaveScript, [RunKeyPrefix + composite, AllKey, DueKey], argv).ConfigureAwait(false);
         long version = (long)result;
         if (version < 0)
         {
@@ -536,7 +540,7 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         {
             cancellationToken.ThrowIfCancellationRequested();
             WorkflowRunAddress address = ParseComposite(composite);
-            HashEntry[] entries = await this.database.HashGetAllAsync(RunKey(address)).ConfigureAwait(false);
+            HashEntry[] entries = await this.database.HashGetAllAsync(RunKeyPrefix + composite).ConfigureAwait(false);
             if (entries.Length == 0)
             {
                 continue;
@@ -614,7 +618,7 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         {
             cancellationToken.ThrowIfCancellationRequested();
             WorkflowRunAddress address = ParseComposite(member);
-            HashEntry[] entries = await this.database.HashGetAllAsync(RunKey(address)).ConfigureAwait(false);
+            HashEntry[] entries = await this.database.HashGetAllAsync(RunKeyPrefix + member).ConfigureAwait(false);
             if (entries.Length == 0)
             {
                 continue;
@@ -721,6 +725,15 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     private static WorkflowRunAddress ParseComposite(string composite)
     {
         int separator = composite.IndexOf('/', StringComparison.Ordinal);
+
+        // Every value reaching here is a key or index-set member this store wrote via CompositeId, so the
+        // delimiter is always present; the guard is defense-in-depth so a corrupted member fails loudly rather
+        // than throwing an opaque range error deep in a scan.
+        if (separator <= 0)
+        {
+            throw new FormatException($"Malformed composite run key '{composite}': expected '{{environment}}/{{runId}}'.");
+        }
+
         return new WorkflowRunAddress(composite[..separator], new WorkflowRunId(composite[(separator + 1)..]));
     }
 

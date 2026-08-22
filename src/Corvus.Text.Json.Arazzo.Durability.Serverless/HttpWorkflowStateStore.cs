@@ -18,8 +18,9 @@ namespace Corvus.Text.Json.Arazzo.Durability.Serverless;
 /// <para>
 /// Saves are <em>fire-and-forget</em>: the POST is issued but not awaited, so per-step checkpointing adds no
 /// network round-trip to the run's critical path. Each carries a per-run monotonic write-sequence, so the runner
-/// drops any out-of-order or stale arrival and the single stored checkpoint only ever moves forward. A lost or
-/// late interim checkpoint is a safe replay (runs are idempotent), so it is tolerated.
+/// drops any out-of-order, stale or duplicate arrival and the single stored checkpoint only ever moves forward. A
+/// send that fails in transport is retried under the same sequence rather than skipped, so the forward-only slot
+/// is never left with a gap the store would refuse.
 /// </para>
 /// <para>
 /// The terminal checkpoint must still be durable before the run's outcome is reported, so this store implements
@@ -149,12 +150,6 @@ public sealed class HttpWorkflowStateStore : IWorkflowCheckpointStore, IWorkflow
     private static string CheckpointPath(in WorkflowRunAddress address)
         => $"environments/{Uri.EscapeDataString(address.Environment)}/runs/{Uri.EscapeDataString(address.RunId.Value)}/checkpoint";
 
-    private static long ReadSequence(HttpHeaders headers)
-        => headers.TryGetValues(WriteSequenceHeader, out IEnumerable<string>? values)
-            && long.TryParse(values.FirstOrDefault(), NumberStyles.Integer, CultureInfo.InvariantCulture, out long seq)
-            ? seq
-            : 0;
-
     // Runs this save once the run's previous one has finished, so at most one is ever in flight for a run. The previous
     // task never faults (a failed send is a false, not an exception), but it is awaited defensively so one broken link
     // cannot stall the rest of the chain.
@@ -202,10 +197,6 @@ public sealed class HttpWorkflowStateStore : IWorkflowCheckpointStore, IWorkflow
                 return true;
             }
 
-            // A refusal carries the sequence the server will accept next (ADR 0065 decision 6). Adopt it, so the next
-            // save proposes that value. Without this the run is stranded by the first send that never lands: the local
-            // counter has advanced past what the store persisted, the server accepts only persisted plus one, and every
-            // subsequent save is refused for the same reason as the last.
             // A 409 means the store will not take this sequence, and resending the identical bytes cannot change that:
             // the run has to author the next checkpoint. Renumbering here instead would desynchronise the header from
             // the sequence inside the document, which a sealed environment's MAC covers and a header never is.

@@ -540,7 +540,14 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         if (anyRunning)
         {
             held = new HashSet<(string Environment, string Id)>();
-            string leaseFilter = TableClient.CreateQueryFilter($"ExpiresAt gt {now.ToUnixTimeMilliseconds()}");
+
+            // A real runner's candidates are all in its own environment (the candidate query is partition-scoped
+            // above), so the held-lease check only needs that partition. Scoping the lease query to it keeps this a
+            // single-partition scan instead of a cross-partition scan of every environment's leases; a null
+            // runnerEnvironment (the env-agnostic base overload) queries all partitions, as it must.
+            string leaseFilter = runnerEnvironment is null
+                ? TableClient.CreateQueryFilter($"ExpiresAt gt {now.ToUnixTimeMilliseconds()}")
+                : TableClient.CreateQueryFilter($"PartitionKey eq {runnerEnvironment} and ExpiresAt gt {now.ToUnixTimeMilliseconds()}");
             await foreach (TableEntity lease in this.leases.QueryAsync<TableEntity>(leaseFilter, cancellationToken: cancellationToken).ConfigureAwait(false))
             {
                 held.Add((lease.PartitionKey, lease.RowKey));
@@ -692,6 +699,15 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
                 // (the environment-name grammar admits none) into the index row's own two key halves. Every
                 // value is bound through CreateQueryFilter, so neither half can be read as OData syntax.
                 int separator = chunk[i].IndexOf(':', StringComparison.Ordinal);
+
+                // The candidates are label-table row keys this store wrote as {environment}:{runId}, so the colon
+                // is always present; the guard is defense-in-depth so a corrupted row key fails loudly rather than
+                // throwing an opaque range error while building the query.
+                if (separator <= 0)
+                {
+                    throw new FormatException($"Malformed composite label row key '{chunk[i]}': expected '{{environment}}:{{runId}}'.");
+                }
+
                 string candidateEnvironment = chunk[i][..separator];
                 string candidateId = chunk[i][(separator + 1)..];
                 disjunction.Append('(').Append(TableClient.CreateQueryFilter($"PartitionKey eq {candidateEnvironment} and RowKey eq {candidateId}")).Append(')');
@@ -788,7 +804,6 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
         {
             ["Status"] = index.Status.ToString(),
             ["WorkflowId"] = index.WorkflowId,
-            ["Environment"] = address.Environment,
             ["CreatedAt"] = index.CreatedAt.ToUnixTimeMilliseconds(),
             ["UpdatedAt"] = index.UpdatedAt.ToUnixTimeMilliseconds(),
         };

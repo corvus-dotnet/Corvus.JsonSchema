@@ -153,7 +153,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     {
         if (expected.IsNone)
         {
-            BsonDocument document = BuildDocument(address, checkpoint, index, version: 1);
+            BsonDocument document = BuildDocument(RunKey(address), address.Environment, checkpoint, index, version: 1);
             try
             {
                 await this.runs.InsertOneAsync(document, options: null, cancellationToken).ConfigureAwait(false);
@@ -167,9 +167,13 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         }
 
         long expectedVersion = long.Parse(expected.Value!, CultureInfo.InvariantCulture);
-        BsonDocument replacement = BuildDocument(address, checkpoint, index, expectedVersion + 1);
+
+        // Build the compound _id once and share it between the replacement document and the concurrency filter
+        // rather than constructing it twice per update-save (the run-state write hotpath).
+        BsonDocument runKey = RunKey(address);
+        BsonDocument replacement = BuildDocument(runKey, address.Environment, checkpoint, index, expectedVersion + 1);
         FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.And(
-            Builders<BsonDocument>.Filter.Eq("_id", RunKey(address)),
+            Builders<BsonDocument>.Filter.Eq("_id", runKey),
             Builders<BsonDocument>.Filter.Eq("version", expectedVersion));
         ReplaceOneResult result = await this.runs.ReplaceOneAsync(filter, replacement, options: (ReplaceOptions?)null, cancellationToken).ConfigureAwait(false);
         if (result.MatchedCount == 0)
@@ -328,7 +332,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             Builders<BsonDocument>.Filter.Lte("dueAt", before.ToUnixTimeMilliseconds()));
 
         // §5.5 environment-scoped timer-resume: a real runner (non-null runnerEnvironment) resumes a due timer only when
-        // the run is pinned to EXACTLY its environment. Filter.Eq excludes an unpinned run (absent/null environment) and
+        // the run is pinned to EXACTLY its environment. Filter.Eq excludes a differently-pinned run and
         // a differently-pinned run. A null runnerEnvironment is the env-agnostic base overload (no environment filter).
         if (runnerEnvironment is not null)
         {
@@ -365,7 +369,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         }
 
         // §5.5 environment-scoped event-resume. A real runner (non-null runnerEnvironment) resumes an awaiting run only
-        // when the run is pinned to EXACTLY its environment. b.Eq excludes an unpinned run (absent/null environment) and
+        // when the run is pinned to EXACTLY its environment. b.Eq excludes a differently-pinned run and
         // a differently-pinned run. A null runnerEnvironment is the env-agnostic base overload (no environment filter).
         if (runnerEnvironment is not null)
         {
@@ -409,7 +413,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             b.In("workflowId", hostedWorkflowIds));
 
         // §5.5 environment-scoped dispatch: a real runner (non-null runnerEnvironment) claims a run only when pinned to
-        // EXACTLY its environment — b.Eq excludes an unpinned run (absent/null environment) and a differently-pinned run.
+        // EXACTLY its environment — b.Eq excludes a differently-pinned run.
         // A null runnerEnvironment is the env-agnostic base overload (no environment filter), never a runner — the
         // WorkflowDispatcher rejects an unscoped runner, so dispatch is always strict.
         if (runnerEnvironment is not null)
@@ -443,7 +447,15 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         var heldAddresses = new HashSet<(string Environment, string Id)>();
         if (anyRunning)
         {
+            // A real runner's candidates are all in its own environment, so scope the held-lease query to the
+            // compound _id's own environment half rather than reading every environment's live leases; a null
+            // runnerEnvironment (the env-agnostic base overload) reads all of them, as it must.
             FilterDefinition<BsonDocument> leaseFilter = Builders<BsonDocument>.Filter.Gt("expiresAt", now.ToUnixTimeMilliseconds());
+            if (runnerEnvironment is not null)
+            {
+                leaseFilter = Builders<BsonDocument>.Filter.And(leaseFilter, Builders<BsonDocument>.Filter.Eq("_id.e", runnerEnvironment));
+            }
+
             using IAsyncCursor<BsonDocument> leaseCursor = await this.leases.Find(leaseFilter).Project(IdOnly).ToCursorAsync(cancellationToken).ConfigureAwait(false);
             while (await leaseCursor.MoveNextAsync(cancellationToken).ConfigureAwait(false))
             {
@@ -645,11 +657,11 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         return new WorkflowRunAddress(key["e"].AsString, new WorkflowRunId(key["r"].AsString));
     }
 
-    private static BsonDocument BuildDocument(in WorkflowRunAddress address, byte[] checkpoint, in WorkflowRunIndexEntry index, long version)
+    private static BsonDocument BuildDocument(BsonDocument runKey, string environment, byte[] checkpoint, in WorkflowRunIndexEntry index, long version)
     {
         var document = new BsonDocument
         {
-            ["_id"] = RunKey(address),
+            ["_id"] = runKey,
             ["checkpoint"] = new BsonBinaryData(checkpoint),
             ["version"] = version,
             ["status"] = index.Status.ToString(),
@@ -669,7 +681,7 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         // §5.5 run→environment pinning: the environment is half the compound _id, and it is ALSO kept as a
         // top-level field so the environment-scoped dispatch/timer/message filters and their indexes stay
         // flat-field predicates.
-        document["environment"] = address.Environment;
+        document["environment"] = environment;
 
         return document;
     }

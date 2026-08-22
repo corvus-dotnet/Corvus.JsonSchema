@@ -150,7 +150,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         in WorkflowRunIndexEntry index,
         WorkflowEtag expected,
         CancellationToken cancellationToken)
-        => this.SaveCoreAsync(address, Envelope.Encode(address.Environment, index, checkpointUtf8.Span), index.SecurityTags, expected, cancellationToken);
+        => this.SaveCoreAsync(address, Envelope.Encode(index, checkpointUtf8.Span), index.SecurityTags, expected, cancellationToken);
 
     private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunAddress address, byte[] value, SecurityTagSet securityTags, WorkflowEtag expected, CancellationToken cancellationToken)
     {
@@ -615,8 +615,8 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
     // key itself (the label-bucket candidates carry the same composite row ids). With no candidate set this is
     // the key scan it always was; with one, the candidate composites are fetched directly, so runs outside the
     // principal's reach are never read — and a stale label entry resolves to a composite whose envelope is gone,
-    // which the existing absent-entry skip discards. The envelope header still carries the environment as the
-    // body's own copy; the address is answered from the key.
+    // which the existing absent-entry skip discards. The address is answered entirely from the composite key; the
+    // envelope header carries no environment copy.
     private async IAsyncEnumerable<(WorkflowRunAddress Address, WorkflowRunIndexEntry Index)> ScanAsync(IReadOnlySet<string>? candidates, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         if (candidates is not null)
@@ -626,7 +626,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                 NatsKVEntry<byte[]>? candidateEntry = await this.TryGetAsync(this.runs, composite, cancellationToken).ConfigureAwait(false);
                 if (candidateEntry is { Value: { } candidateValue })
                 {
-                    (_, WorkflowRunIndexEntry index) = Envelope.DecodeIndex(candidateValue);
+                    WorkflowRunIndexEntry index = Envelope.DecodeIndex(candidateValue);
                     yield return (ParseComposite(composite), index);
                 }
             }
@@ -639,7 +639,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
             NatsKVEntry<byte[]>? entry = await this.TryGetAsync(this.runs, key, cancellationToken).ConfigureAwait(false);
             if (entry is { Value: { } value })
             {
-                (_, WorkflowRunIndexEntry index) = Envelope.DecodeIndex(value);
+                WorkflowRunIndexEntry index = Envelope.DecodeIndex(value);
                 yield return (ParseComposite(key), index);
             }
         }
@@ -684,6 +684,15 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
     private static WorkflowRunAddress ParseComposite(string composite)
     {
         int separator = composite.IndexOf('/', StringComparison.Ordinal);
+
+        // Every value reaching here is a KV key or label-bucket row id this store wrote via CompositeId, so the
+        // delimiter is always present; the guard is defense-in-depth so a corrupted key fails loudly rather than
+        // throwing an opaque range error deep in a scan.
+        if (separator <= 0)
+        {
+            throw new FormatException($"Malformed composite run key '{composite}': expected '{{environment}}/{{runId}}'.");
+        }
+
         return new WorkflowRunAddress(composite[..separator], new WorkflowRunId(composite[(separator + 1)..]));
     }
 
@@ -698,7 +707,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
     {
         private const int HeaderBufferSize = 512;
 
-        public static byte[] Encode(string environment, in WorkflowRunIndexEntry index, ReadOnlySpan<byte> checkpoint)
+        public static byte[] Encode(in WorkflowRunIndexEntry index, ReadOnlySpan<byte> checkpoint)
         {
             // Serialize the index header through the pooled writer cache (not a fresh ArrayBufferWriter) — this is the
             // run-state write hotpath. The owned `result` (length-prefixed header + checkpoint) is the form the KV
@@ -737,11 +746,9 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                     writer.WriteString("correlationId", runCorrelationId);
                 }
 
-                // The run's environment is half its primary key (ADR 0065 decision 9): while the bucket is still
-                // keyed by run id alone it is persisted in the header from the address — never absent — so the
-                // scan can project the full address back out.
-                writer.WriteString("environment", environment);
-
+                // The run's environment is not written into the header: it is the first token of the composite KV
+                // key {environment}/{runId} (ADR 0065 decision 9), so every scan projects the full address back out
+                // of the key itself and the header need not carry a copy.
                 if (index.ResumeRequestedAt is { } resume)
                 {
                     writer.WriteNumber("resumeRequestedAt", resume.ToUnixTimeMilliseconds());
@@ -781,26 +788,24 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
             return value.AsSpan(4 + headerLength).ToArray();
         }
 
-        public static (string Environment, WorkflowRunIndexEntry Index) DecodeIndex(byte[] value)
+        public static WorkflowRunIndexEntry DecodeIndex(byte[] value)
         {
             int headerLength = BinaryPrimitives.ReadInt32LittleEndian(value);
             using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(value.AsMemory(4, headerLength));
             JsonElement root = document.RootElement;
-            return (
-                root.GetProperty("environment"u8).GetString()!,
-                new WorkflowRunIndexEntry(
-                    root.GetProperty("workflowId"u8).GetString()!,
-                    Enum.Parse<WorkflowRunStatus>(root.GetProperty("status"u8).GetString()!),
-                    DateTimeOffset.FromUnixTimeMilliseconds(root.GetProperty("createdAt"u8).GetInt64()),
-                    DateTimeOffset.FromUnixTimeMilliseconds(root.GetProperty("updatedAt"u8).GetInt64()),
-                    root.TryGetProperty("dueAt"u8, out JsonElement dueAt) ? DateTimeOffset.FromUnixTimeMilliseconds(dueAt.GetInt64()) : null,
-                    root.TryGetProperty("awaitingChannel"u8, out JsonElement channel) ? channel.GetString() : null,
-                    root.TryGetProperty("awaitingCorrelationId"u8, out JsonElement correlationId) ? correlationId.GetString() : null,
-                    root.TryGetProperty("errorType"u8, out JsonElement errorType) ? errorType.GetString() : null,
-                    root.TryGetProperty("correlationId"u8, out JsonElement queryCorrelationId) ? queryCorrelationId.GetString() : null,
-                    DecodeTags(root),
-                    DecodeSecurityTags(root),
-                    root.TryGetProperty("resumeRequestedAt"u8, out JsonElement resumeRequestedAt) ? DateTimeOffset.FromUnixTimeMilliseconds(resumeRequestedAt.GetInt64()) : null));
+            return new WorkflowRunIndexEntry(
+                root.GetProperty("workflowId"u8).GetString()!,
+                Enum.Parse<WorkflowRunStatus>(root.GetProperty("status"u8).GetString()!),
+                DateTimeOffset.FromUnixTimeMilliseconds(root.GetProperty("createdAt"u8).GetInt64()),
+                DateTimeOffset.FromUnixTimeMilliseconds(root.GetProperty("updatedAt"u8).GetInt64()),
+                root.TryGetProperty("dueAt"u8, out JsonElement dueAt) ? DateTimeOffset.FromUnixTimeMilliseconds(dueAt.GetInt64()) : null,
+                root.TryGetProperty("awaitingChannel"u8, out JsonElement channel) ? channel.GetString() : null,
+                root.TryGetProperty("awaitingCorrelationId"u8, out JsonElement correlationId) ? correlationId.GetString() : null,
+                root.TryGetProperty("errorType"u8, out JsonElement errorType) ? errorType.GetString() : null,
+                root.TryGetProperty("correlationId"u8, out JsonElement queryCorrelationId) ? queryCorrelationId.GetString() : null,
+                DecodeTags(root),
+                DecodeSecurityTags(root),
+                root.TryGetProperty("resumeRequestedAt"u8, out JsonElement resumeRequestedAt) ? DateTimeOffset.FromUnixTimeMilliseconds(resumeRequestedAt.GetInt64()) : null);
         }
 
         private static TagSet DecodeTags(JsonElement root)

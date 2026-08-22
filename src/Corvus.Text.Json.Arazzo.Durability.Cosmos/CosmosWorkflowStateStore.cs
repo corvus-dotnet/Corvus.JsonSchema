@@ -426,7 +426,7 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     public async IAsyncEnumerable<WorkflowRunAddress> QueryDueAsync(DateTimeOffset before, string? runnerEnvironment, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         // §5.5 environment-scoped timer-resume: a real runner (non-null @runnerEnvironment) resumes a due suspended run
-        // only when pinned to EXACTLY its environment — `c.environment = @runnerEnvironment` excludes an unpinned run
+        // only when pinned to EXACTLY its environment — `c.environment = @runnerEnvironment` excludes a differently-pinned run
         // (undefined = value → false) and a differently-pinned run. A null @runnerEnvironment is the env-agnostic base
         // overload (list all due): NOT IS_DEFINED / IS_NULL short-circuit to true, so it filters by due timer only,
         // never a runner. The environment is projected back so every answer is a full run address.
@@ -455,7 +455,7 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         // Filter by channel server-side; the null-correlation rule is applied client-side because a document
         // awaiting any correlation omits the property entirely.
         // §5.5 environment-scoped event-resume. A real runner (non-null @runnerEnvironment) resumes an awaiting run
-        // only when pinned to EXACTLY its environment. `c.environment = @runnerEnvironment` excludes an unpinned run
+        // only when pinned to EXACTLY its environment. `c.environment = @runnerEnvironment` excludes a differently-pinned run
         // (undefined = value yields false) and a differently-pinned run. A null @runnerEnvironment is the env-agnostic
         // base overload (list all awaiting). NOT IS_DEFINED / IS_NULL short-circuit to true, so it filters by channel
         // only, never a runner. The environment is projected back so every answer is a full run address.
@@ -497,7 +497,7 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         // §18: a paused (or faulted) run the control plane marked resume-claimable (c.resumeRequestedAt defined) also
         // surfaces here, so a separate runner can claim and advance it; the marker is cleared on its first checkpoint.
         // §5.5 environment-scoped dispatch: a real runner (non-null @runnerEnvironment) claims a run only when pinned to
-        // EXACTLY its environment — `c.environment = @runnerEnvironment` excludes an unpinned run (undefined = value →
+        // EXACTLY its environment — `c.environment = @runnerEnvironment` excludes a differently-pinned run (undefined = value →
         // false) and a differently-pinned run. A null @runnerEnvironment is the env-agnostic base overload (list all
         // claimable): NOT IS_DEFINED / IS_NULL short-circuit to true, so it filters by hosted id only, never a runner.
         var candidateQuery = new QueryDefinition(
@@ -534,8 +534,16 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         var heldAddresses = new HashSet<(string Environment, string Id)>();
         if (anyRunning)
         {
-            var leaseQuery = new QueryDefinition("SELECT c.id, c.environment FROM c WHERE c.expiresAt > @now")
-                .WithParameter("@now", now.ToUnixTimeMilliseconds());
+            // A real runner's candidates are all in its own environment, so scope the lease query to that
+            // environment — the partition key — which routes it to a single partition instead of fanning out
+            // across every environment's leases and paying request units for them. A null runnerEnvironment (the
+            // env-agnostic base overload) queries all partitions, as it must.
+            var leaseQuery = runnerEnvironment is null
+                ? new QueryDefinition("SELECT c.id, c.environment FROM c WHERE c.expiresAt > @now")
+                    .WithParameter("@now", now.ToUnixTimeMilliseconds())
+                : new QueryDefinition("SELECT c.id, c.environment FROM c WHERE c.environment = @environment AND c.expiresAt > @now")
+                    .WithParameter("@environment", runnerEnvironment)
+                    .WithParameter("@now", now.ToUnixTimeMilliseconds());
             await foreach (ReadOnlyMemory<byte> element in QueryElementsAsync(this.leases, leaseQuery, cancellationToken).ConfigureAwait(false))
             {
                 if (CosmosJson.GetString(element, IdProperty) is { } leaseId
