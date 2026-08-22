@@ -201,7 +201,7 @@ checkable rather than a by-product of what a review happened to look at.
 | Identity spoofing via request-derived dimensions | **Absent**. No cross-check between ambient and token-derived tenant | Tenant becomes a function of the URL, and the self-elevation guard becomes context-local | H21 |
 | Existence disclosure and enumeration | **Partial**. Non-disclosing 404 by design ([ADR 0004](../adr/0004-fail-closed-non-disclosing-enforcement.md)) | Denials are unaudited, so probing is quiet by design *and* by omission | H11 |
 | Resource exhaustion of the shared plane | **Partial**. Bounded counts, [keyset pagination](UBIQUITOUSLANGUAGE.md#keyset-pagination), standing capacity limits | No rate limiting on any browser-facing or governance endpoint, and capacity counts are reach-scoped so deployment-global in two postures | H41 |
-| Object reference forgery | **Partial**. Random ids on the primary path, ownership checks on debug runs | The idempotent id is an unkeyed hash omitting owner group and environment | H18 |
+| Object reference forgery | **Holds**. The 32-hex [run-id](UBIQUITOUSLANGUAGE.md#run-id) grammar at every ingress, deterministic ids derived under the [run-derivation key](UBIQUITOUSLANGUAGE.md#run-derivation-key), and the composite [run address](UBIQUITOUSLANGUAGE.md#run-address) as the primary key in every backend | A guessed or disclosed id resolves only within the caller's reach, and a collision is evaluated only within the caller's environment, so neither branch is an existence oracle over another tenant's runs | H18 |
 
 ### TB-3 Browser to served UI
 
@@ -224,7 +224,7 @@ checkable rather than a by-product of what a review happened to look at.
 | Cross-tenant read via a missing predicate | **Holds**. Deny-by-default filter, one AST walk, and the pushdown answered explicitly per store with mandatory reach oracles and per-backend wire proofs ([ADR 0067](../adr/0067-reach-enforced-by-the-store-proven-on-the-wire.md)); every store on every backend applies reach server-side or narrows through a §14.4 label index | Point reads keep a bounded in-memory reach decision over a key's few candidates, by design; a wrong predicate is caught by the mandatory oracles, not by any layer beneath the application | H12 |
 | Disclosure at rest to a passive operator (AD-5) | **Designed**. Envelope encryption under tenant key custody, phase B | Interim protector is opt-in and silent when unset. Envelope metadata and the tenant label are cleartext with a dedicated index | H7 |
 | Privilege abuse beneath the application | **Absent**. No row-level security, no per-tenant credential, the runtime account owns the schema with DDL rights | Nothing catches a wrong predicate, and a leaked connection string is total | |
-| Continuation-cursor tampering | **Holds**. The cursor supplies position only, the reach predicate is re-derived per request | The cursor discloses a raw run id to anyone who sees it | |
+| Continuation-cursor tampering | **Holds**. The cursor supplies position only, the reach predicate is re-derived per request | The cursor discloses a raw [run address](UBIQUITOUSLANGUAGE.md#run-address) (environment name and run id) to anyone who sees it | |
 | Unbounded result materialisation | **Holds** for reads. Keyset pagination and [bounded counts](UBIQUITOUSLANGUAGE.md#keyset-pagination), server-bounded or candidate-bounded everywhere reach applies (ADR 0067) | Per-admission capacity counting still issues a bounded count per run start, and the counters collapse cross-tenant (H41's open half) | H41 |
 
 ### TB-5 Runner to runner API, the mutual-distrust seam
@@ -516,7 +516,7 @@ fix is in code. **GAP** means no ADR covers it, so a decision comes first.
 | H15 | High | GAP | No egress control on three backends, and the default isolation model has no boundary at all | TB-6, TB-7 | Open |
 | H16 | High | GAP | Build container is root, unconfined and network-live, with an unpinned restore | TB-8 | Open |
 | H17 | High | GAP | No security headers, session cookie not `Secure`, logout does not revoke | TB-3 | Open |
-| H18 | High | DIV | Run id key and grammar do not match ADR 0065 §9, and the idempotent id is unkeyed | TB-2, TB-4 | Open |
+| H18 | High | DIV | Run id key and grammar do not match ADR 0065 §9, and the idempotent id is unkeyed | TB-2, TB-4 | **Closed** |
 | H19 | High | DIV | Anonymous Azure invoke, and SSRF-with-reflection behind a read scope | TB-6, TB-2 | Open |
 | H40 | High | DIV | Sequence validation compares against a number the client wrote | TB-5 | Open |
 | H41 | High | DIV | Quota and capacity counters collapse cross-tenant | TB-2, TB-5 | Open |
@@ -632,7 +632,7 @@ find.
 | 10 | Validate `baseUrl` and secret references on write, disable auto-redirect on every run-path client | H4 | Open |
 | 11 | Add read audit with tenant and canonical subject, instrument the runner API, give the audit a durable append-only sink | H11, UO-10 | Open |
 | 12 | Extend the self-elevation guard to read reach and scopes, build an access context on `security:*`, check the rule expression, add the own-request check | H10 | Open |
-| 13 | Composite environment and run-id key with the 32-hex grammar, key the idempotent derivation | H18 | Open |
+| 13 | Composite environment and run-id key with the 32-hex grammar, key the idempotent derivation | H18 | **Done.** The 32-hex grammar is validated at every ingress, deterministic ids are derived under the [run-derivation key](UBIQUITOUSLANGUAGE.md#run-derivation-key) with a distinguishable collision, the schedule registry owns schedule-id uniqueness, and every backend keys runs, leases and security tags by the composite [run address](UBIQUITOUSLANGUAGE.md#run-address), with the composite-address conformance oracles and per-backend flip evidence pinning it |
 | 14 | Add a per-run step budget and wall clock, enforce sub-workflow depth in production | H14 | Open |
 | 15 | Authenticate both sidecar surfaces and scope the guest read to the invoking sandbox | H9 | Open |
 | 16 | Fix the process layer, Dependabot path, SAST, dependency scanning, lock files, `SECURITY.md`, ADR implementation status | Process controls | Open |
