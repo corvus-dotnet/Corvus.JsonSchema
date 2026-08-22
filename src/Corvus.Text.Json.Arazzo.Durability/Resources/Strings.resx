@@ -439,6 +439,15 @@
   <data name="InvalidSecretRefInBinding" xml:space="preserve">
     <value>Secret reference '{0}' is not a valid SecretRef (scheme://locator[#version]); secret material must never be stored inline.</value>
   </data>
+  <data name="HostLocalSecretRefNotPermitted" xml:space="preserve">
+    <value>Secret reference '{0}' names a host-local scheme (env:// or file://); a credential authored through this API may reference only a managed secret store (keyvault://, vault://, awssm://).</value>
+  </data>
+  <data name="BaseUrlNotAbsolute" xml:space="preserve">
+    <value>The 'baseUrl' config value '{0}' is not a well-formed absolute URL.</value>
+  </data>
+  <data name="BaseUrlSchemeNotPermitted" xml:space="preserve">
+    <value>The 'baseUrl' scheme '{0}' is not permitted; use https.</value>
+  </data>
   <data name="MtlsRequiresCertificate" xml:space="preserve">
     <value>An mTLS credential binding requires a 'certificate' secret reference.</value>
   </data>

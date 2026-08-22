@@ -604,6 +604,21 @@ internal static class ThrowHelper
 
     [DoesNotReturn]
     [StackTraceHidden]
+    public static void ThrowHostLocalSecretRefNotPermitted(string referenceName)
+        => throw new ArgumentException(SR.Format(SR.HostLocalSecretRefNotPermitted, referenceName), "draft");
+
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowBaseUrlNotAbsolute(string value)
+        => throw new ArgumentException(SR.Format(SR.BaseUrlNotAbsolute, value), "draft");
+
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowBaseUrlSchemeNotPermitted(string scheme)
+        => throw new ArgumentException(SR.Format(SR.BaseUrlSchemeNotPermitted, scheme), "draft");
+
+    [DoesNotReturn]
+    [StackTraceHidden]
     public static void ThrowMtlsRequiresCertificate()
         => throw new ArgumentException(SR.MtlsRequiresCertificate, "draft");
 

@@ -149,7 +149,7 @@ public sealed partial class CliIntegrationTests
             host,
             "credentials", "create", source, "production",
             "--auth-kind", "apiKey",
-            "--ref", "value=env://" + source.ToUpperInvariant(),
+            "--ref", "value=keyvault://" + source,
             "--expires-at", expiresAt.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
         exit.ShouldBe(0);
     }

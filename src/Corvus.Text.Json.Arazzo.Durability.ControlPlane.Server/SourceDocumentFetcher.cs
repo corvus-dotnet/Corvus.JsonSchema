@@ -107,6 +107,11 @@ public sealed class SourceDocumentFetcher
     /// <summary>Gets the payload cap in bytes.</summary>
     public int MaxDocumentBytes { get; }
 
+    /// <summary>Gets a value indicating whether this deployment permits <c>http</c> (rather than <c>https</c> only) for
+    /// source URLs. The credentials write path reads this to apply the same scheme policy to a binding's <c>baseUrl</c>
+    /// override that the fetch path applies to source documents, without a separate configuration flag.</summary>
+    public bool AllowsInsecureHttp => this.allowInsecureHttp;
+
     /// <summary>Fetches, parses, and detects the document.</summary>
     /// <param name="url">The document URL.</param>
     /// <param name="reach">The caller's row-access grant (gates the credential reference lookup).</param>

@@ -52,6 +52,27 @@ public sealed class SecretRefTests
     }
 
     [TestMethod]
+    [DataRow("env://PETSTORE_KEY")]
+    [DataRow("env:PETSTORE_KEY")]
+    [DataRow("file:///run/secrets/token")]
+    [DataRow("file://db/password")]
+    public void Recognises_host_local_schemes(string reference)
+    {
+        SecretRef.IsHostLocalScheme(System.Text.Encoding.UTF8.GetBytes(reference)).ShouldBeTrue();
+    }
+
+    [TestMethod]
+    [DataRow("keyvault://my-secret")]
+    [DataRow("awssm://prod/petstore/apikey")]
+    [DataRow("vault://kv/data/petstore#client")]
+    [DataRow("no-scheme")]
+    [DataRow("")]
+    public void Managed_and_malformed_schemes_are_not_host_local(string reference)
+    {
+        SecretRef.IsHostLocalScheme(System.Text.Encoding.UTF8.GetBytes(reference)).ShouldBeFalse();
+    }
+
+    [TestMethod]
     public void Equality_is_by_raw_value()
     {
         SecretRef a = SecretRef.Parse("keyvault://secret#1");

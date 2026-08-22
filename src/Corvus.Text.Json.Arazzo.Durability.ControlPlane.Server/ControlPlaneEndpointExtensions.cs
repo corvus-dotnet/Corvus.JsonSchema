@@ -183,7 +183,11 @@ public static class ControlPlaneEndpointExtensions
 
         // The source-credential management API persists references + metadata only — it never touches secret material.
         ISourceCredentialStore credentialStore = sourceCredentialStore ?? new InMemorySourceCredentialStore();
-        var credentialsHandler = new ArazzoControlPlaneCredentialsHandler(credentialStore, access, auditLogger: auditLogger, sources: srcStore);
+
+        // The binding baseUrl scheme policy mirrors the deployment's source-fetch posture: where the fetcher permits
+        // insecure http for source documents, an http baseUrl override is likewise allowed; otherwise https only. Read
+        // from the provided fetcher so there is no separate credentials-specific configuration flag.
+        var credentialsHandler = new ArazzoControlPlaneCredentialsHandler(credentialStore, access, auditLogger: auditLogger, sources: srcStore, allowInsecureHttp: sourceFetcher?.AllowsInsecureHttp ?? false);
 
         // The environment administration service (§7.7) is shared by the environments/availability handlers below and
         // by the access-overview aggregation (administered environments), so it is constructed ahead of both.

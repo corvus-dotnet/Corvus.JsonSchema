@@ -44,6 +44,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     private readonly TimeSpan expiringWindow;
     private readonly ILogger? auditLogger;
     private readonly Sources.ISourceStore? sources;
+    private readonly bool allowInsecureHttp;
 
     /// <summary>Initializes a new, unscoped instance (every request runs with <see cref="AccessContext.System"/> — no
     /// row security).</summary>
@@ -51,8 +52,9 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     /// <param name="actor">The audit actor recorded on writes (a deployment may resolve this from the principal).</param>
     /// <param name="sources">The sources registry, used to classify a binding's source (an AsyncAPI source takes the
     /// channel-credential rules, ADR 0051); when <see langword="null"/> the source-type rules are not enforced.</param>
-    public ArazzoControlPlaneCredentialsHandler(ISourceCredentialStore store, string actor = "control-plane", Sources.ISourceStore? sources = null)
-        : this(store, new ControlPlaneAccess(), actor, sources: sources)
+    /// <param name="allowInsecureHttp">Permit an <c>http</c> <c>baseUrl</c> override on a written binding (default: <c>https</c> only, mirroring the source-fetch scheme policy).</param>
+    public ArazzoControlPlaneCredentialsHandler(ISourceCredentialStore store, string actor = "control-plane", Sources.ISourceStore? sources = null, bool allowInsecureHttp = false)
+        : this(store, new ControlPlaneAccess(), actor, sources: sources, allowInsecureHttp: allowInsecureHttp)
     {
     }
 
@@ -68,7 +70,8 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     /// <param name="auditLogger">The logger for the §850 credential-custody audit (who created/rotated/deleted which binding); the audit span rides the always-registered <see cref="ArazzoTelemetry.ActivitySource"/> regardless.</param>
     /// <param name="sources">The sources registry, used to classify a binding's source (an AsyncAPI source takes the
     /// channel-credential rules, ADR 0051); when <see langword="null"/> the source-type rules are not enforced.</param>
-    internal ArazzoControlPlaneCredentialsHandler(ISourceCredentialStore store, ControlPlaneAccess access, string actor = "control-plane", TimeProvider? timeProvider = null, TimeSpan? expiringWindow = null, ILogger? auditLogger = null, Sources.ISourceStore? sources = null)
+    /// <param name="allowInsecureHttp">Permit an <c>http</c> <c>baseUrl</c> override on a written binding (default: <c>https</c> only, mirroring the source-fetch scheme policy).</param>
+    internal ArazzoControlPlaneCredentialsHandler(ISourceCredentialStore store, ControlPlaneAccess access, string actor = "control-plane", TimeProvider? timeProvider = null, TimeSpan? expiringWindow = null, ILogger? auditLogger = null, Sources.ISourceStore? sources = null, bool allowInsecureHttp = false)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(access);
@@ -80,6 +83,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         this.expiringWindow = expiringWindow ?? DefaultExpiringWindow;
         this.auditLogger = auditLogger;
         this.sources = sources;
+        this.allowInsecureHttp = allowInsecureHttp;
     }
 
     // The §850 audit subject: the authenticated principal who made the change, falling back to the deployment-configured
@@ -249,6 +253,12 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
                 usageKind: hasUsageGrantee ? (JsonElement)body.UsageGrantee.Kind : default,
                 usageLabel: hasUsageGrantee ? (JsonElement)body.UsageGrantee.Label : default);
 
+            // P1-4/TB-7: a binding authored through this API may reference only managed secret stores (never a
+            // host-local env:// or file:// the runner would resolve against its own host) and its baseUrl override must be
+            // https. Enforced here on the tenant path only, not in the store-boundary ValidateDraft (a programmatic or
+            // system binding may legitimately use env/file delivery, design §13).
+            SourceCredentialBinding.ValidateTenantWritePolicy(draft.RootElement, this.allowInsecureHttp);
+
             // Guard against privilege escalation: a principal may not create a binding it could not itself manage. The
             // binding's management tags are read back from the draft as a non-owning view (the draft is the only
             // materialization — no separate SecurityTagSet) and checked against the caller's write reach.
@@ -376,6 +386,11 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
                 rotatedAt: (JsonElement)body.RotatedAt,
                 managementTags: managementTags,
                 usageTags: default);
+
+            // P1-4/TB-7: the same tenant-write policy as create — a rotation cannot move the binding onto a host-local
+            // secret scheme, and an updated baseUrl override must remain https. Only the config actually supplied on the
+            // update is validated; omitted fields the store carries forward were validated at their own write.
+            SourceCredentialBinding.ValidateTenantWritePolicy(draft.RootElement, this.allowInsecureHttp);
             ParsedJsonDocument<SourceCredentialBinding>? updated = await this.store.UpdateAsync(sourceName, environment, draft.RootElement, WorkflowEtag.None, this.actor, this.access.Current(), cancellationToken).ConfigureAwait(false);
             if (updated is not { } b)
             {

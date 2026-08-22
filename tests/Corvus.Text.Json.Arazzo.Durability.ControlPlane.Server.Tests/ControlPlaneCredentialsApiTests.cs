@@ -94,6 +94,101 @@ public sealed class ControlPlaneCredentialsApiTests
     }
 
     [TestMethod]
+    public async Task A_host_local_env_secret_ref_is_refused_on_the_tenant_write_path()
+    {
+        // TB-7/P1-4: a credentials:write holder must not be able to point a binding at the runner host's own
+        // environment variables (env://). The runner would resolve the host's secrets, which the writer cannot read.
+        // The tenant write path admits managed secret stores (keyvault/vault/awssm) only.
+        await using Scoped host = await StartAsync();
+
+        HttpResponseMessage response = await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/credentials",
+            """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"env://HOST_SECRET"}]}""",
+            Write);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [TestMethod]
+    public async Task A_host_local_file_secret_ref_is_refused_on_the_tenant_write_path()
+    {
+        // The runner host's mounted files (file://) are equally off-limits to a tenant author, for the same reason.
+        await using Scoped host = await StartAsync();
+
+        HttpResponseMessage response = await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/credentials",
+            """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"file:///etc/arazzo/host.key"}]}""",
+            Write);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [TestMethod]
+    public async Task Rotating_onto_a_host_local_secret_ref_is_refused_on_update()
+    {
+        // The update path enforces the same policy: a managed binding cannot be rotated onto a host-local reference.
+        await using Scoped host = await StartAsync();
+
+        (await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/credentials",
+            """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://petstore-key"}]}""",
+            Write)).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        (await host.SendJsonAsync(
+            HttpMethod.Put,
+            "/credentials/petstore/production",
+            """{"authKind":"apiKey","secretRefs":[{"name":"value","ref":"env://HOST_SECRET"}]}""",
+            Write)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [TestMethod]
+    public async Task An_insecure_base_url_override_is_refused_on_the_tenant_write_path()
+    {
+        // TB-7/P1-4: the run transport treats baseUrl as the destination (resolvedBaseUrlOverride wins), so a non-https
+        // override would strip TLS from every request the run makes to the source. The write path requires absolute https.
+        await using Scoped host = await StartAsync();
+
+        HttpResponseMessage response = await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/credentials",
+            """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://petstore-key"}],"config":[{"key":"baseUrl","value":"http://insecure.example/api"}]}""",
+            Write);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [TestMethod]
+    public async Task A_malformed_base_url_override_is_refused_on_the_tenant_write_path()
+    {
+        await using Scoped host = await StartAsync();
+
+        HttpResponseMessage response = await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/credentials",
+            """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://petstore-key"}],"config":[{"key":"baseUrl","value":"not-an-absolute-url"}]}""",
+            Write);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [TestMethod]
+    public async Task An_https_base_url_override_is_accepted()
+    {
+        await using Scoped host = await StartAsync();
+
+        HttpResponseMessage response = await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/credentials",
+            """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://petstore-key"}],"config":[{"key":"baseUrl","value":"https://petstore.example/api"}]}""",
+            Write);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Created);
+    }
+
+    [TestMethod]
     public async Task An_mtls_binding_is_created_with_certificate_references_and_is_always_shared()
     {
         await using Scoped host = await StartAsync();
@@ -146,7 +241,7 @@ public sealed class ControlPlaneCredentialsApiTests
     public async Task Creating_a_duplicate_binding_conflicts()
     {
         await using Scoped host = await StartAsync();
-        const string body = """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"env://PETSTORE"}]}""";
+        const string body = """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://petstore"}]}""";
         (await host.SendJsonAsync(HttpMethod.Post, "/credentials", body, Write)).StatusCode.ShouldBe(HttpStatusCode.Created);
         (await host.SendJsonAsync(HttpMethod.Post, "/credentials", body, Write)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
@@ -156,7 +251,7 @@ public sealed class ControlPlaneCredentialsApiTests
     {
         await using Scoped host = await StartAsync();
         (await host.SendAsync(HttpMethod.Get, "/credentials/nope/production", Read)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
-        (await host.SendJsonAsync(HttpMethod.Put, "/credentials/nope/production", """{"authKind":"bearer","secretRefs":[{"name":"value","ref":"env://X"}]}""", Write))
+        (await host.SendJsonAsync(HttpMethod.Put, "/credentials/nope/production", """{"authKind":"bearer","secretRefs":[{"name":"value","ref":"keyvault://x"}]}""", Write))
             .StatusCode.ShouldBe(HttpStatusCode.NotFound);
         (await host.SendAsync(HttpMethod.Delete, "/credentials/nope/production", Write)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
@@ -170,7 +265,7 @@ public sealed class ControlPlaneCredentialsApiTests
         (await host.SendAsync(HttpMethod.Get, "/credentials", null)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
 
         // A read scope cannot write → 403.
-        (await host.SendJsonAsync(HttpMethod.Post, "/credentials", """{"sourceName":"a","environment":"b","authKind":"apiKey","secretRefs":[{"name":"value","ref":"env://A"}]}""", Read))
+        (await host.SendJsonAsync(HttpMethod.Post, "/credentials", """{"sourceName":"a","environment":"b","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://a"}]}""", Read))
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
         // A write scope cannot read in this fixture (distinct scopes) → 403 on the read endpoint.
@@ -228,7 +323,7 @@ public sealed class ControlPlaneCredentialsApiTests
 
         DateTimeOffset expiresAt = DateTimeOffset.UtcNow.AddDays(30);
         DateTimeOffset rotatedAt = DateTimeOffset.UtcNow.AddDays(-2);
-        string body = $$"""{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"env://PETSTORE"}],"expiresAt":"{{expiresAt:O}}","rotatedAt":"{{rotatedAt:O}}"}""";
+        string body = $$"""{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://petstore"}],"expiresAt":"{{expiresAt:O}}","rotatedAt":"{{rotatedAt:O}}"}""";
 
         using (Stj.JsonDocument doc = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/credentials", body, Write)))
         {
@@ -252,7 +347,7 @@ public sealed class ControlPlaneCredentialsApiTests
 
         async Task<string?> StatusForExpiryAsync(string source, DateTimeOffset expiresAt)
         {
-            string body = $$"""{"sourceName":"{{source}}","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"env://X"}],"expiresAt":"{{expiresAt:O}}"}""";
+            string body = $$"""{"sourceName":"{{source}}","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://x"}],"expiresAt":"{{expiresAt:O}}"}""";
             using Stj.JsonDocument doc = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/credentials", body, Write));
             return doc.RootElement.GetProperty("credentialStatus").GetString();
         }
@@ -271,7 +366,7 @@ public sealed class ControlPlaneCredentialsApiTests
         using Stj.JsonDocument doc = await ReadJsonAsync(await host.SendJsonAsync(
             HttpMethod.Post,
             "/credentials",
-            """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"env://PETSTORE"}]}""",
+            """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://petstore"}]}""",
             Write));
 
         doc.RootElement.GetProperty("credentialStatus").GetString().ShouldBe("valid");
@@ -283,13 +378,13 @@ public sealed class ControlPlaneCredentialsApiTests
     {
         await using Scoped host = await StartAsync();
 
-        string expired = $$"""{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"env://PETSTORE"}],"expiresAt":"{{DateTimeOffset.UtcNow.AddDays(-1):O}}"}""";
+        string expired = $$"""{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://petstore"}],"expiresAt":"{{DateTimeOffset.UtcNow.AddDays(-1):O}}"}""";
         using (Stj.JsonDocument created = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/credentials", expired, Write)))
         {
             created.RootElement.GetProperty("credentialStatus").GetString().ShouldBe("expired");
         }
 
-        string rotated = $$"""{"authKind":"apiKey","secretRefs":[{"name":"value","ref":"env://PETSTORE#2"}],"expiresAt":"{{DateTimeOffset.UtcNow.AddDays(30):O}}"}""";
+        string rotated = $$"""{"authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://petstore#2"}],"expiresAt":"{{DateTimeOffset.UtcNow.AddDays(30):O}}"}""";
         using (Stj.JsonDocument updated = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Put, "/credentials/petstore/production", rotated, Write)))
         {
             updated.RootElement.GetProperty("credentialStatus").GetString().ShouldBe("valid");
@@ -303,7 +398,7 @@ public sealed class ControlPlaneCredentialsApiTests
         using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
         await using Scoped host = await StartAsync();
 
-        (await host.SendJsonAsync(HttpMethod.Post, "/credentials", """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"env://PETSTORE"}]}""", Write)).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendJsonAsync(HttpMethod.Post, "/credentials", """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://petstore"}]}""", Write)).StatusCode.ShouldBe(HttpStatusCode.Created);
 
         Activity span = audit.ForTarget("petstore@production");
         span.OperationName.ShouldBe("credential.create");
@@ -321,8 +416,8 @@ public sealed class ControlPlaneCredentialsApiTests
         using RotationCounter rotations = RotationCounter.Capture();
         await using Scoped host = await StartAsync();
 
-        (await host.SendJsonAsync(HttpMethod.Post, "/credentials", """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"env://PETSTORE"}]}""", Write)).StatusCode.ShouldBe(HttpStatusCode.Created);
-        (await host.SendJsonAsync(HttpMethod.Put, "/credentials/petstore/production", """{"authKind":"apiKey","secretRefs":[{"name":"value","ref":"env://PETSTORE#2"}]}""", Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendJsonAsync(HttpMethod.Post, "/credentials", """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://petstore"}]}""", Write)).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendJsonAsync(HttpMethod.Put, "/credentials/petstore/production", """{"authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://petstore#2"}]}""", Write)).StatusCode.ShouldBe(HttpStatusCode.OK);
 
         audit.ForTarget("petstore@production", "credential.update").GetTagItem(ArazzoTelemetry.OutcomeTag).ShouldBe("rotated");
         rotations.Total.ShouldBeGreaterThanOrEqualTo(1);
@@ -333,7 +428,7 @@ public sealed class ControlPlaneCredentialsApiTests
     {
         using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
         await using Scoped host = await StartAsync();
-        (await host.SendJsonAsync(HttpMethod.Post, "/credentials", """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"env://PETSTORE"}]}""", Write)).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendJsonAsync(HttpMethod.Post, "/credentials", """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://petstore"}]}""", Write)).StatusCode.ShouldBe(HttpStatusCode.Created);
 
         (await host.SendAsync(HttpMethod.Delete, "/credentials/petstore/production", Write)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
 

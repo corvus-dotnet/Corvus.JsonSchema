@@ -655,6 +655,44 @@ public readonly partial struct SourceCredentialBinding
         }
     }
 
+    /// <summary>Applies the tenant-authored write policy (P1-4/TB-7) on top of <see cref="ValidateDraft"/>: a binding
+    /// authored through the credentials API may reference only managed secret stores — never a host-local
+    /// <c>env://</c> or <c>file://</c> reference, which the runner would dereference against its own host (material the
+    /// binding author cannot read) — and any <c>baseUrl</c> override must be an absolute <c>https</c> URL (or
+    /// <c>http</c> only where the deployment permits insecure transport, mirroring the source-fetch scheme policy),
+    /// because the run transport treats <c>baseUrl</c> as the request destination. Throws
+    /// <see cref="ArgumentException"/> on a violation so the control-plane handler returns 400. This is deliberately
+    /// NOT part of <see cref="ValidateDraft"/> (which every store enforces): a programmatic or system binding may
+    /// legitimately use env/file secret delivery (design §13), so only the tenant API path applies it.</summary>
+    /// <param name="draft">The draft to validate.</param>
+    /// <param name="allowInsecureHttp">Permit an <c>http</c> baseUrl (default posture is <c>https</c> only).</param>
+    public static void ValidateTenantWritePolicy(in SourceCredentialBinding draft, bool allowInsecureHttp)
+    {
+        if (draft.SecretRefs.IsNotUndefined())
+        {
+            foreach (SecretReference reference in draft.SecretRefs.EnumerateArray())
+            {
+                using UnescapedUtf8JsonString referenceValue = reference.Ref.GetUtf8String();
+                if (SecretRef.IsHostLocalScheme(referenceValue.Span))
+                {
+                    ThrowHelper.ThrowHostLocalSecretRefNotPermitted((string)reference.Name);
+                }
+            }
+        }
+
+        if (draft.TryGetConfigValue("baseUrl", out string? baseUrl))
+        {
+            if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out Uri? uri))
+            {
+                ThrowHelper.ThrowBaseUrlNotAbsolute(baseUrl!);
+            }
+            else if (uri.Scheme != Uri.UriSchemeHttps && !(allowInsecureHttp && uri.Scheme == Uri.UriSchemeHttp))
+            {
+                ThrowHelper.ThrowBaseUrlSchemeNotPermitted(uri.Scheme);
+            }
+        }
+    }
+
     // A create draft must carry the immutable identity (sourceName, environment); an update draft omits it (the store
     // carries it forward from the stored binding).
     private static void RequireIdentity(in SourceCredentialBinding draft)

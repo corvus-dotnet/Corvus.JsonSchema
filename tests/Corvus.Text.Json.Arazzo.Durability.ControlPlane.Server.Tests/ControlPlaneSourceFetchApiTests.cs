@@ -146,7 +146,7 @@ public sealed class ControlPlaneSourceFetchApiTests
             // The credential is scoped to its declared baseUrl host; register it there.
             (await host.SendJsonAsync(
                 HttpMethod.Post, "/credentials",
-                """{"sourceName":"petstore","environment":"production","authKind":"bearer","secretRefs":[{"name":"value","ref":"env://ARAZZO_FETCH_TEST_TOKEN"}],"config":[{"key":"baseUrl","value":"https://specs.example"}]}""",
+                """{"sourceName":"petstore","environment":"production","authKind":"bearer","secretRefs":[{"name":"value","ref":"keyvault://arazzo-fetch-test-token"}],"config":[{"key":"baseUrl","value":"https://specs.example"}]}""",
                 "credentials:write")).StatusCode.ShouldBe(HttpStatusCode.Created);
 
             // A fetch from the credential's OWN host carries the bearer.
@@ -169,7 +169,7 @@ public sealed class ControlPlaneSourceFetchApiTests
             // A binding with no baseUrl cannot be scoped, so it cannot fetch at all.
             (await host.SendJsonAsync(
                 HttpMethod.Post, "/credentials",
-                """{"sourceName":"nobase","environment":"production","authKind":"bearer","secretRefs":[{"name":"value","ref":"env://ARAZZO_FETCH_TEST_TOKEN"}]}""",
+                """{"sourceName":"nobase","environment":"production","authKind":"bearer","secretRefs":[{"name":"value","ref":"keyvault://arazzo-fetch-test-token"}]}""",
                 "credentials:write")).StatusCode.ShouldBe(HttpStatusCode.Created);
             (await host.SendJsonAsync(
                 HttpMethod.Post, "/sources/fetch",
@@ -238,7 +238,7 @@ public sealed class ControlPlaneSourceFetchApiTests
         {
             var stub = new StubHttpHandler();
             configureStub(stub);
-            var providerFactory = new SourceCredentialProviderFactory(new SecretResolverBuilder().AddEnvironment().Build());
+            var providerFactory = new SourceCredentialProviderFactory(new SecretResolverBuilder().Add(new FakeManagedSecretResolver()).Build());
             fetcher = new SourceDocumentFetcher(new HttpClient(stub), credentialStore, providerFactory, maxDocumentBytes: 32 * 1024);
         }
 
@@ -260,6 +260,16 @@ public sealed class ControlPlaneSourceFetchApiTests
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient());
+    }
+
+    // A stand-in for a managed secret store (keyvault://): the tenant credentials API admits only managed schemes
+    // (P1-4/TB-7), so the fetch test resolves through one. It returns the test-controlled token the env var carries.
+    private sealed class FakeManagedSecretResolver : ISecretResolver
+    {
+        public bool CanResolve(SecretScheme scheme) => scheme == SecretScheme.KeyVault;
+
+        public ValueTask<SecretMaterial> ResolveAsync(SecretRef reference, CancellationToken cancellationToken)
+            => new(SecretMaterial.FromString(System.Environment.GetEnvironmentVariable("ARAZZO_FETCH_TEST_TOKEN")!));
     }
 
     /// <summary>A canned outbound endpoint: URL → (status, content type, body) or a redirect, recording every

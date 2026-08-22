@@ -148,6 +148,26 @@ public readonly struct SecretRef : IEquatable<SecretRef>
         return hash > 0 && hash < remainder.Length - 1;
     }
 
+    /// <summary>Determines whether <paramref name="utf8"/> names a host-local secret scheme (<c>env://</c> or
+    /// <c>file://</c>) — one the runner's resolver dereferences against its own host's environment or filesystem rather
+    /// than a managed secret store. The tenant credentials-write path refuses these (P1-4/TB-7): an author who cannot
+    /// read a secret must not be able to point the runner at the host's own material. Reads the value's UTF-8 with no
+    /// allocation; a value with no scheme separator returns <see langword="false"/> (it is rejected earlier by
+    /// <see cref="IsWellFormed"/> as malformed).</summary>
+    /// <param name="utf8">The candidate reference as UTF-8 (<c>scheme://locator[#version]</c>).</param>
+    /// <returns><see langword="true"/> if the scheme is <c>env</c> or <c>file</c>.</returns>
+    public static bool IsHostLocalScheme(ReadOnlySpan<byte> utf8)
+    {
+        int colon = utf8.IndexOf((byte)':');
+        if (colon <= 0)
+        {
+            return false;
+        }
+
+        ReadOnlySpan<byte> scheme = utf8[..colon];
+        return scheme.SequenceEqual("env"u8) || scheme.SequenceEqual("file"u8);
+    }
+
     /// <inheritdoc/>
     public bool Equals(SecretRef other) => string.Equals(this.Raw, other.Raw, StringComparison.Ordinal);
 
