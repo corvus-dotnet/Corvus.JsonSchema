@@ -443,6 +443,12 @@ item you cannot see directly in the code.
 - **Impact:** an operator authors a grant against a stale or observed-only identity believing the directory answered.
 - **Acceptance criteria:** fail closed on the default path, or return a partial-result indicator the UI surfaces; log the swallowed exception.
 
+### P1-16 · FUNCTIONAL · `TB-4` · Tag visibility filter over-matches on the relational backends
+- **Where:** `PostgresWorkflowStateStore.cs:578`, `SqlServerWorkflowStateStore.cs:532`, `MySqlWorkflowStateStore.cs:596`, `SqliteWorkflowStateStore.cs:530`. Surfaced 2026-08-22 by the antagonistic review of the H18 piece-3 close-out, not part of the original 2026-08-07 audit; introduced by commit `88c5e89e2dc` (a visibility-UI feature), so it predates the composite-key campaign.
+- **Divergence:** the four relational backends store a run's tags as a `\u001F`-delimited column and match a queried tag with `tags LIKE '%<tag>%'`, unanchored on the delimiters, so querying tag `prod` also returns a run tagged `production` or `reprod`. The document and KV backends match exact membership (Cosmos `ARRAY_CONTAINS`, Mongo `$all`, Redis/NATS/in-memory `AllContainedIn`), so the same query returns different result sets depending on the backend.
+- **Impact:** a functional correctness and cross-backend-consistency defect, **not** a confidentiality leak. The tag filter is over ordinary (non-security) tags and runs entirely within the caller's already-enforced §14.2 reach (`query.Security` is a separate, exact predicate the reach oracles cover). A tag-filtered list or count is simply wider than the caller asked for, and a deployment's results depend on which backend it runs.
+- **Acceptance criteria:** match a queried tag as an exact delimited member on all four relational backends (anchor the `LIKE` to the `\u001F` boundaries, or store with leading and trailing sentinel delimiters), so the result set equals the document and KV backends'; a repro-first test asserting `prod` does not match `production`, added to the shared store-conformance suite so it runs on every backend; grep the siblings (list and count share `BuildVisibilityFilter`) before closing.
+
 ---
 
 ## 5. SEQ, designed and not yet built
@@ -634,7 +640,7 @@ current model shares the property in weaker form. **Decide:** a reseed hook on r
 3. **P1-4, P1-5, P1-6, P1-9.** Credential steering, the authorization guard, audit attribution, quota isolation.
 4. **GAP-5, GAP-6, GAP-7, GAP-8.** Decide, then build. GAP-5 has third-party abuse consequences and should not wait.
 5. **PROC-1 to PROC-7.** About a day, and PROC-1 means no dependency updates reach the repository at all today.
-6. **P1-10 to P1-15**, then **SEQ-1 to SEQ-8** in the ADR's own sequencing.
+6. **P1-10 to P1-16** (P1-16 is a functional consistency bug, not a security divergence, so it can be taken any time correctness work is scheduled), then **SEQ-1 to SEQ-8** in the ADR's own sequencing.
 7. **GAP-1, GAP-2, GAP-3.** Browser and API hardening, gated on the ADR 0041 decision.
 8. **P3** as capacity allows.
 
