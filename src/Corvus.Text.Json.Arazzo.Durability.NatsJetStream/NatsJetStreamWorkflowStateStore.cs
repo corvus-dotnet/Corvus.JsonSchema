@@ -13,18 +13,17 @@ namespace Corvus.Text.Json.Arazzo.Durability.NatsJetStream;
 
 /// <summary>
 /// A NATS JetStream key/value-backed <see cref="IWorkflowStateStore"/> and <see cref="IWorkflowWaitIndex"/>.
-/// Each run's value is an envelope (the projected index header plus the opaque checkpoint); the KV entry's
-/// native revision is the optimistic-concurrency token, and the single-owner lease lives in a second bucket
-/// guarded by the same compare-and-set on revision.
+/// Runs and leases are keyed by the delimited composite <c>{environment}/{runId}</c> (ADR 0065 decision 9):
+/// <c>/</c> is in the KV key charset and is not a token separator, the environment-name grammar admits no
+/// <c>/</c> so the first slash unambiguously splits the two halves, and the same run id in two environments
+/// names two distinct entries. Each run's value is an envelope (the projected index header plus the opaque
+/// checkpoint); the KV entry's native revision is the optimistic-concurrency token, and the single-owner lease
+/// lives in a second bucket keyed by the same composite, guarded by the same compare-and-set on revision.
 /// </summary>
 /// <remarks>
 /// Wait/visibility queries scan the bucket's keys and filter on the index header. Create instances with
 /// <see cref="ConnectAsync(string, TimeProvider?, CancellationToken)"/> after provisioning with <see cref="PrepareAsync(string, CancellationToken)"/>.
 /// </remarks>
-// TRANSITIONAL (ADR 0065 decision 9): the seam addresses runs by (environment, runId), but this backend still keys
-// its entries by run id alone — the composite-key conversion is this backend's own commit, and the composite-address
-// conformance oracles pin the gap until it lands. The environment is written from the address and projected
-// back into every answered address.
 public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWorkflowWaitIndex, IWorkflowDispatchIndex, ISupportsRowSecurityFilter, IAsyncDisposable
 {
     private const string SuspendedStatus = nameof(WorkflowRunStatus.Suspended);
@@ -163,10 +162,11 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         // token, transferring a handful of keys and never the checkpoint. That reverse lookup also makes the diff
         // self-healing — entries a crashed or conflicted save stranded are swept by the next successful one. A
         // run's security tags are fixed at creation, so the common checkpoint path finds both differences empty.
-        HashSet<string> desired = NatsSecurityLabels.EntryKeysFor(securityTags, address.RunId.Value);
+        string composite = CompositeId(address);
+        HashSet<string> desired = NatsSecurityLabels.EntryKeysFor(securityTags, composite);
         HashSet<string> previous = expected.IsNone
             ? []
-            : await this.ReadLabelEntryKeysAsync(address.RunId.Value, cancellationToken).ConfigureAwait(false);
+            : await this.ReadLabelEntryKeysAsync(composite, cancellationToken).ConfigureAwait(false);
 
         foreach (string entryKey in desired)
         {
@@ -180,8 +180,8 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         try
         {
             revision = expected.IsNone
-                ? await this.runs.CreateAsync(address.RunId.Value, value, cancellationToken: cancellationToken).ConfigureAwait(false)
-                : await this.runs.UpdateAsync(address.RunId.Value, value, ulong.Parse(expected.Value!, CultureInfo.InvariantCulture), cancellationToken: cancellationToken).ConfigureAwait(false);
+                ? await this.runs.CreateAsync(composite, value, cancellationToken: cancellationToken).ConfigureAwait(false)
+                : await this.runs.UpdateAsync(composite, value, ulong.Parse(expected.Value!, CultureInfo.InvariantCulture), cancellationToken: cancellationToken).ConfigureAwait(false);
         }
         catch (NatsKVException)
         {
@@ -215,7 +215,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
     /// <inheritdoc/>
     public async ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
     {
-        NatsKVEntry<byte[]>? entry = await this.TryGetAsync(this.runs, address.RunId.Value, cancellationToken).ConfigureAwait(false);
+        NatsKVEntry<byte[]>? entry = await this.TryGetAsync(this.runs, CompositeId(address), cancellationToken).ConfigureAwait(false);
         if (entry is not { Value: { } value })
         {
             return null;
@@ -237,12 +237,13 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         // The epoch is advanced from the stored entry rather than supplied, so it counts this run's grants across every
         // instance and every restart (ADR 0065 §6). The entry's own revision is what makes read-then-advance atomic: a
         // concurrent grant moves it, and the conditional update below is refused rather than reusing the epoch it read.
-        NatsKVEntry<byte[]>? entry = await this.TryGetAsync(this.leases, address.RunId.Value, cancellationToken).ConfigureAwait(false);
+        string leaseKey = CompositeId(address);
+        NatsKVEntry<byte[]>? entry = await this.TryGetAsync(this.leases, leaseKey, cancellationToken).ConfigureAwait(false);
         try
         {
             if (entry is not { Value: { } current })
             {
-                await this.leases.CreateAsync(address.RunId.Value, LeaseCodec.Encode(owner, token, expiresAt.ToUnixTimeMilliseconds(), 1), cancellationToken: cancellationToken).ConfigureAwait(false);
+                await this.leases.CreateAsync(leaseKey, LeaseCodec.Encode(owner, token, expiresAt.ToUnixTimeMilliseconds(), 1), cancellationToken: cancellationToken).ConfigureAwait(false);
                 return new WorkflowLease(address, owner, token, expiresAt, 1);
             }
 
@@ -254,7 +255,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
 
             long granted = currentEpoch + 1;
             byte[] value = LeaseCodec.Encode(owner, token, expiresAt.ToUnixTimeMilliseconds(), granted);
-            await this.leases.UpdateAsync(address.RunId.Value, value, entry.Value.Revision, cancellationToken: cancellationToken).ConfigureAwait(false);
+            await this.leases.UpdateAsync(leaseKey, value, entry.Value.Revision, cancellationToken: cancellationToken).ConfigureAwait(false);
             return new WorkflowLease(address, owner, token, expiresAt, granted);
         }
         catch (NatsKVException)
@@ -270,7 +271,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         ArgumentOutOfRangeException.ThrowIfLessThan(extension, TimeSpan.Zero);
 
         DateTimeOffset now = this.timeProvider.GetUtcNow();
-        NatsKVEntry<byte[]>? entry = await this.TryGetAsync(this.leases, lease.RunId.Value, cancellationToken).ConfigureAwait(false);
+        NatsKVEntry<byte[]>? entry = await this.TryGetAsync(this.leases, CompositeId(lease.Address), cancellationToken).ConfigureAwait(false);
         if (entry is not { Value: { } current })
         {
             return null;
@@ -295,7 +296,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         byte[] value = LeaseCodec.Encode(lease.Owner, lease.Token, extendedTo.ToUnixTimeMilliseconds(), currentEpoch);
         try
         {
-            await this.leases.UpdateAsync(lease.RunId.Value, value, entry.Value.Revision, cancellationToken: cancellationToken).ConfigureAwait(false);
+            await this.leases.UpdateAsync(CompositeId(lease.Address), value, entry.Value.Revision, cancellationToken: cancellationToken).ConfigureAwait(false);
             return new WorkflowLease(lease.Address, lease.Owner, lease.Token, extendedTo, currentEpoch);
         }
         catch (NatsKVException)
@@ -308,7 +309,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
     /// <inheritdoc/>
     public async ValueTask ReleaseLeaseAsync(WorkflowLease lease, CancellationToken cancellationToken)
     {
-        NatsKVEntry<byte[]>? entry = await this.TryGetAsync(this.leases, lease.RunId.Value, cancellationToken).ConfigureAwait(false);
+        NatsKVEntry<byte[]>? entry = await this.TryGetAsync(this.leases, CompositeId(lease.Address), cancellationToken).ConfigureAwait(false);
         if (entry is { Value: { } current })
         {
             (string owner, string token, _, long epoch) = LeaseCodec.Decode(current);
@@ -319,7 +320,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
                 // entry is re-acquirable at once: every reader tests expiresAt > now. DeleteAsync still purges it with
                 // the run.
                 byte[] released = LeaseCodec.Encode(owner, token, this.timeProvider.GetUtcNow().ToUnixTimeMilliseconds(), epoch);
-                await this.leases.UpdateAsync(lease.RunId.Value, released, entry.Value.Revision, cancellationToken: cancellationToken).ConfigureAwait(false);
+                await this.leases.UpdateAsync(CompositeId(lease.Address), released, entry.Value.Revision, cancellationToken: cancellationToken).ConfigureAwait(false);
             }
         }
     }
@@ -330,10 +331,11 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         // Read the run's label entries while it still exists, then drop the run before its entries — the §14.4
         // ordering: an interrupted delete leaves a stale entry, harmless when nothing loads behind it, whereas
         // dropping entries first would strand a still-visible run.
-        HashSet<string> entryKeys = await this.ReadLabelEntryKeysAsync(address.RunId.Value, cancellationToken).ConfigureAwait(false);
+        string composite = CompositeId(address);
+        HashSet<string> entryKeys = await this.ReadLabelEntryKeysAsync(composite, cancellationToken).ConfigureAwait(false);
 
-        await this.PurgeAsync(this.runs, address.RunId.Value, cancellationToken).ConfigureAwait(false);
-        await this.PurgeAsync(this.leases, address.RunId.Value, cancellationToken).ConfigureAwait(false);
+        await this.PurgeAsync(this.runs, composite, cancellationToken).ConfigureAwait(false);
+        await this.PurgeAsync(this.leases, composite, cancellationToken).ConfigureAwait(false);
 
         foreach (string entryKey in entryKeys)
         {
@@ -436,7 +438,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
 
             if (entry.Status == WorkflowRunStatus.Running)
             {
-                NatsKVEntry<byte[]>? leaseEntry = await this.TryGetAsync(this.leases, address.RunId.Value, cancellationToken).ConfigureAwait(false);
+                NatsKVEntry<byte[]>? leaseEntry = await this.TryGetAsync(this.leases, CompositeId(address), cancellationToken).ConfigureAwait(false);
                 bool live = false;
                 if (leaseEntry is { Value: { } value })
                 {
@@ -560,22 +562,23 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
             : SecurityLabelQueryResolver.ResolveAsync(
                 security.ToPredicate(SecurityLabelQueryEmitter.Instance), this.labelIndex, cancellationToken);
 
-    // Streams the run entries a query should consider, each with its full address — the run id from the KV key
-    // and the environment from the envelope header it was saved with (the transitional projection: the bucket is
-    // still keyed by run id alone). With no candidate set this is the key scan it always was; with one, the
-    // candidate ids are fetched directly, so runs outside the principal's reach are never read — and a stale
-    // label entry resolves to an id whose envelope is gone, which the existing absent-entry skip discards.
+    // Streams the run entries a query should consider, each with its full address parsed from the composite KV
+    // key itself (the label-bucket candidates carry the same composite row ids). With no candidate set this is
+    // the key scan it always was; with one, the candidate composites are fetched directly, so runs outside the
+    // principal's reach are never read — and a stale label entry resolves to a composite whose envelope is gone,
+    // which the existing absent-entry skip discards. The envelope header still carries the environment as the
+    // body's own copy; the address is answered from the key.
     private async IAsyncEnumerable<(WorkflowRunAddress Address, WorkflowRunIndexEntry Index)> ScanAsync(IReadOnlySet<string>? candidates, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         if (candidates is not null)
         {
-            foreach (string id in candidates)
+            foreach (string composite in candidates)
             {
-                NatsKVEntry<byte[]>? candidateEntry = await this.TryGetAsync(this.runs, id, cancellationToken).ConfigureAwait(false);
+                NatsKVEntry<byte[]>? candidateEntry = await this.TryGetAsync(this.runs, composite, cancellationToken).ConfigureAwait(false);
                 if (candidateEntry is { Value: { } candidateValue })
                 {
-                    (string environment, WorkflowRunIndexEntry index) = Envelope.DecodeIndex(candidateValue);
-                    yield return (new WorkflowRunAddress(environment, new WorkflowRunId(id)), index);
+                    (_, WorkflowRunIndexEntry index) = Envelope.DecodeIndex(candidateValue);
+                    yield return (ParseComposite(composite), index);
                 }
             }
 
@@ -587,8 +590,8 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
             NatsKVEntry<byte[]>? entry = await this.TryGetAsync(this.runs, key, cancellationToken).ConfigureAwait(false);
             if (entry is { Value: { } value })
             {
-                (string environment, WorkflowRunIndexEntry index) = Envelope.DecodeIndex(value);
-                yield return (new WorkflowRunAddress(environment, new WorkflowRunId(key)), index);
+                (_, WorkflowRunIndexEntry index) = Envelope.DecodeIndex(value);
+                yield return (ParseComposite(key), index);
             }
         }
     }
@@ -621,6 +624,18 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         catch (NatsKVKeyDeletedException)
         {
         }
+    }
+
+    // The delimited composite {environment}/{runId} used as the single-token KV key in the runs and leases
+    // buckets and as the label bucket's row id (ADR 0065 decision 9): '/' is in the NATS KV key charset and is
+    // not a token separator, and the environment-name grammar admits no '/', so the first slash unambiguously
+    // splits the two halves however loose the run id is.
+    private static string CompositeId(in WorkflowRunAddress address) => address.Environment + "/" + address.RunId.Value;
+
+    private static WorkflowRunAddress ParseComposite(string composite)
+    {
+        int separator = composite.IndexOf('/', StringComparison.Ordinal);
+        return new WorkflowRunAddress(composite[..separator], new WorkflowRunId(composite[(separator + 1)..]));
     }
 
     // §5.5: a real runner (non-null runnerEnvironment) matches a run only when it is pinned to EXACTLY its

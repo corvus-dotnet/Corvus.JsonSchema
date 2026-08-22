@@ -63,6 +63,7 @@ public static class NatsJetStreamControlPlaneDeployment
         await NatsJetStreamWorkflowStateStore.PrepareAsync(url, cancellationToken).ConfigureAwait(false);
         await NatsJetStreamWorkflowCatalogStore.PrepareAsync(url, cancellationToken).ConfigureAwait(false);
         await NatsJetStreamRunnerRegistry.PrepareAsync(url, cancellationToken).ConfigureAwait(false);
+        await NatsJetStreamScheduleRegistry.PrepareAsync(url, cancellationToken).ConfigureAwait(false);
         await NatsJetStreamEnvironmentRunnerAuthorizationStore.PrepareAsync(url, cancellationToken).ConfigureAwait(false);
         await NatsJetStreamSourceCredentialStore.PrepareAsync(url, cancellationToken).ConfigureAwait(false);
 
