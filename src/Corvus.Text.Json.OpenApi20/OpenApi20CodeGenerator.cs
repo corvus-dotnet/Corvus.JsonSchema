@@ -4273,6 +4273,20 @@ public sealed class OpenApi20CodeGenerator
             w.WriteLine($"/// {CodeEmitHelpers.EscapeXml(bodyDesc)}");
             w.WriteLine("/// </summary>");
             w.WriteLine($"public {bodyTypeName} Body {{ get; init; }}");
+
+            // For multipart form bodies with type:file parameters, expose each file part
+            // as a separate ReadOnlyMemory<byte> property so the handler can read the raw bytes.
+            if (IsMultipartRequestBody(rb))
+            {
+                foreach (BinaryPropertyInfo binaryProp in rb.BinaryProperties)
+                {
+                    w.WriteLine();
+                    w.WriteLine("/// <summary>");
+                    w.WriteLine($"/// Gets the binary content of the '{binaryProp.PropertyName}' part.");
+                    w.WriteLine("/// </summary>");
+                    w.WriteLine($"public ReadOnlyMemory<byte> {CodeEmitHelpers.ToPascalCase(binaryProp.PropertyName)} {{ get; init; }}");
+                }
+            }
         }
 
         w.CloseBrace();
@@ -4941,10 +4955,38 @@ public sealed class OpenApi20CodeGenerator
                     }
                     else if (IsMultipartRequestBody(op.RequestBody!.Value))
                     {
+                        BinaryPropertyInfo[] binaryParts = op.RequestBody!.Value.BinaryProperties;
+                        if (binaryParts.Length > 0)
+                        {
+                            foreach (BinaryPropertyInfo binaryPart in binaryParts)
+                            {
+                                w.WriteLine($"byte[]? __binary_{binaryPart.PropertyName} = null;");
+                            }
+                        }
+
                         EmitBufferedBodyContentLengthPrecheck(w);
                         w.WriteLine("try");
                         w.OpenBrace();
-                        w.WriteLine($"bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, maxBodyLength: serverOptions.MaxBufferedRequestBodyLength, cancellationToken: context.RequestAborted).ConfigureAwait(false);");
+                        if (binaryParts.Length > 0)
+                        {
+                            w.WriteLine($"bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, binaryPartCallback: part =>");
+                            w.OpenBrace();
+                            bool first = true;
+                            foreach (BinaryPropertyInfo binaryPart in binaryParts)
+                            {
+                                string keyword = first ? "if" : "else if";
+                                first = false;
+                                w.WriteLine($"{keyword} (part.Name.SequenceEqual(\"{binaryPart.PropertyName}\"u8)) {{ __binary_{binaryPart.PropertyName} = part.Data.ToArray(); }}");
+                            }
+
+                            w.CloseBraceNoNewline().Write(", maxBodyLength: serverOptions.MaxBufferedRequestBodyLength, cancellationToken: context.RequestAborted).ConfigureAwait(false);");
+                            w.WriteLine();
+                        }
+                        else
+                        {
+                            w.WriteLine($"bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, maxBodyLength: serverOptions.MaxBufferedRequestBodyLength, cancellationToken: context.RequestAborted).ConfigureAwait(false);");
+                        }
+
                         w.CloseBrace();
                         EmitBodyParseFailureCatches(w, includeTooLarge: true);
 
@@ -4987,6 +5029,15 @@ public sealed class OpenApi20CodeGenerator
                         else
                         {
                             w.WriteLine("Body = bodyDoc!.RootElement,");
+                        }
+
+                        // Bind any multipart file parts captured by the deserializer callback.
+                        if (!isRawStreamBody && IsMultipartRequestBody(op.RequestBody!.Value))
+                        {
+                            foreach (BinaryPropertyInfo binaryPart in op.RequestBody!.Value.BinaryProperties)
+                            {
+                                w.WriteLine($"{CodeEmitHelpers.ToPascalCase(binaryPart.PropertyName)} = __binary_{binaryPart.PropertyName} ?? ReadOnlyMemory<byte>.Empty,");
+                            }
                         }
                     }
 

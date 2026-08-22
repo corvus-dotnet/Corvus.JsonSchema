@@ -213,6 +213,20 @@ public class OpenApi20CodeGeneratorCovspecTests
     }
 
     [TestMethod]
+    public void ServerCapturesFileParameterBytes()
+    {
+        // A Swagger 2.0 `type: file` formData parameter must reach the handler: the endpoint
+        // captures its bytes via the deserializer callback and the Params struct exposes them.
+        string registration = generatedServerFiles.First(f => f.FileName == "ApiEndpointRegistration.cs").Content;
+        StringAssert.Contains(registration, "binaryPartCallback: part =>");
+        StringAssert.Contains(registration, "__binary_archive");
+        StringAssert.Contains(registration, "Archive = __binary_archive ?? ReadOnlyMemory<byte>.Empty,");
+
+        string paramsFile = generatedServerFiles.First(f => f.FileName == "UploadBundleParams.cs").Content;
+        StringAssert.Contains(paramsFile, "public ReadOnlyMemory<byte> Archive { get; init; }");
+    }
+
+    [TestMethod]
     public void ServerThreadsBodyLimitsAndFailureMapping()
     {
         string registration = generatedServerFiles.First(f => f.FileName == "ApiEndpointRegistration.cs").Content;

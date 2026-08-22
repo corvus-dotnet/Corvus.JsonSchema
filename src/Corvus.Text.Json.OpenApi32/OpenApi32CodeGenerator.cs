@@ -8296,6 +8296,16 @@ public sealed class OpenApi32CodeGenerator
                         w.WriteLine();
                     }
 
+                    // Multipart binary-part capture locals are referenced by the Params binding
+                    // below, which sits outside the optional-body gate, so declare them here.
+                    if (!isRawStreamBody && IsMultipartRequestBody(op.RequestBody!.Value))
+                    {
+                        foreach (BinaryPropertyInfo binaryPart in op.RequestBody!.Value.BinaryProperties)
+                        {
+                            w.WriteLine($"byte[]? __binary_{binaryPart.PropertyName} = null;");
+                        }
+                    }
+
                     if (bodyOptional)
                     {
                         w.WriteLine("// An optional request body is read only when the request actually carries one;");
@@ -8323,16 +8333,6 @@ public sealed class OpenApi32CodeGenerator
                     {
                         BinaryPropertyInfo[] multipartBinaryParts = op.RequestBody!.Value.BinaryProperties;
                         bool hasBinaryParts = multipartBinaryParts.Length > 0;
-
-                        if (hasBinaryParts)
-                        {
-                            // Capture each format:binary part's bytes via the deserializer callback
-                            // (mirrors the client sending BinaryPartData for the same parts).
-                            foreach (BinaryPropertyInfo binaryPart in multipartBinaryParts)
-                            {
-                                w.WriteLine($"byte[]? __binary_{binaryPart.PropertyName} = null;");
-                            }
-                        }
 
                         EmitBufferedBodyContentLengthPrecheck(w);
                         w.WriteLine("try");

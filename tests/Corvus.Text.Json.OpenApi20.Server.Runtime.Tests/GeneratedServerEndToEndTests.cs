@@ -90,6 +90,7 @@ public class GeneratedServerEndToEndTests
     public async Task UploadBundle_MultipartWithBinaryAndFieldsParses()
     {
         MockUploadsHandler.CapturedNotes = null;
+        MockUploadsHandler.CapturedArchive = null;
 
         using MultipartFormDataContent content = [];
         content.Add(new ByteArrayContent([0x01, 0x02, 0x03]), "archive", "bundle.bin");
@@ -99,6 +100,7 @@ public class GeneratedServerEndToEndTests
 
         Assert.AreEqual(HttpStatusCode.NoContent, response.StatusCode);
         Assert.AreEqual("hello world", MockUploadsHandler.CapturedNotes, $"parsed body: {MockUploadsHandler.CapturedBodyJson}");
+        CollectionAssert.AreEqual(new byte[] { 0x01, 0x02, 0x03 }, MockUploadsHandler.CapturedArchive, "the file part's bytes must reach the handler");
     }
 
     [TestMethod]

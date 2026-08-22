@@ -44,8 +44,11 @@ internal sealed class MockUploadsHandler : IApiUploadsHandler
 
     public static string? CapturedBodyJson { get; set; }
 
+    public static byte[]? CapturedArchive { get; set; }
+
     public ValueTask<UploadBundleResult> HandleUploadBundleAsync(UploadBundleParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
+        CapturedArchive = parameters.Archive.ToArray();
         CapturedBodyJson = parameters.Body.IsNotUndefined() ? parameters.Body.ToString() : "(undefined)";
 
         if (parameters.Body.IsNotUndefined()

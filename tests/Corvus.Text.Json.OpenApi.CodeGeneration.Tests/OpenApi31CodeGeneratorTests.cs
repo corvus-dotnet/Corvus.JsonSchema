@@ -8363,6 +8363,56 @@ public class OpenApi31CodeGeneratorTests
     }
 
     [TestMethod]
+    public void GenerateServer_OptionalMultipartWithBinaryPart_DeclaresCaptureLocalsOutsideOptionalGate()
+    {
+        JsonElement spec = ParseSpec("""
+        {
+          "openapi": "3.1.0",
+          "info": {"title": "t", "version": "1"},
+          "paths": {
+            "/upload": {
+              "post": {
+                "operationId": "uploadThing",
+                "requestBody": {
+                  "required": false,
+                  "content": {
+                    "multipart/form-data": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "file": {"type": "string", "format": "binary"},
+                          "note": {"type": "string"}
+                        }
+                      }
+                    }
+                  }
+                },
+                "responses": {"204": {"description": "ok"}}
+              }
+            }
+          }
+        }
+        """);
+
+        Dictionary<string, string> map = new()
+        {
+            ["#/paths/~1upload/post/requestBody/content/multipart~1form-data/schema"] = "Petstore.Server.UploadBody",
+        };
+
+        OpenApi31CodeGenerator gen = new("Petstore.Server", map);
+        IReadOnlyList<GeneratedFile> files = gen.GenerateServer(spec);
+        string registration = GetFile(files, "ApiEndpointRegistration.cs").Content;
+
+        int localIndex = registration.IndexOf("byte[]? __binary_file = null;", StringComparison.Ordinal);
+        int gateIndex = registration.IndexOf("(context.Request.ContentLength ?? 0) > 0", StringComparison.Ordinal);
+        Assert.IsTrue(localIndex >= 0, "expected a capture local for the binary part");
+        Assert.IsTrue(gateIndex >= 0, "expected the optional-body gate");
+        Assert.IsTrue(
+            localIndex < gateIndex,
+            "the capture local must be declared before the optional-body gate so the Params binding outside the gate can reference it");
+    }
+
+    [TestMethod]
     public void GenerateServer_EndpointRegistration_IncludesAllOperations()
     {
         IReadOnlyList<GeneratedFile> files = GenerateServerCoverageSpec();
