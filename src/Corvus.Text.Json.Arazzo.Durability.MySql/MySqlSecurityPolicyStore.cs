@@ -97,7 +97,9 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         {
             ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory;
             await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+            await using MySqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
             await using MySqlCommand insert = connection.CreateCommand();
+            insert.Transaction = transaction;
             insert.CommandText = "INSERT INTO SecurityRules (Name, Expression, Etag, Document) VALUES (@name, @expression, @etag, @doc);";
             insert.Parameters.AddWithValue("@name", name);
             insert.Parameters.AddWithValue("@expression", draft.ExpressionValue);
@@ -112,7 +114,10 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
                 ThrowHelper.ThrowSecurityRuleAlreadyExists(name);
             }
 
-            await BumpGenerationAsync(connection, cancellationToken).ConfigureAwait(false);
+            // Mirror the management tags into the queryable side table so the reach can be pushed into list/count.
+            await SyncTagsAsync(connection, transaction, "SecurityRuleSecurityTags", "Name", name, draft.ManagementTagsValue, cancellationToken).ConfigureAwait(false);
+            await BumpGenerationAsync(connection, cancellationToken, transaction).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return doc;
         }
         catch
@@ -207,6 +212,73 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
+    public async ValueTask<SecurityRulePage> ListRulesAsync(int limit, JsonString pageToken, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : SecurityRulePage.DefaultPageSize;
+        string? after = DecodeRuleCursor(pageToken);
+        string? like = BuildLike(q);
+
+        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using MySqlCommand select = connection.CreateCommand();
+        var sql = new StringBuilder("SELECT Document FROM SecurityRules");
+        var conditions = new List<string>(3);
+        if (after is not null)
+        {
+            conditions.Add("Name > @after");
+            select.Parameters.AddWithValue("@after", after);
+        }
+
+        if (like is not null)
+        {
+            conditions.Add("(Name COLLATE utf8mb4_0900_ai_ci LIKE @q ESCAPE '\\\\' OR Expression LIKE @q ESCAPE '\\\\')");
+            select.Parameters.AddWithValue("@q", like);
+        }
+
+        // Push the §14.2 read reach into the query as a correlated EXISTS over the rules' tags side table.
+        AppendReachPredicate(conditions, select, context, "SecurityRuleSecurityTags", "Name", "SecurityRules");
+        if (conditions.Count > 0)
+        {
+            sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
+        }
+
+        sql.Append(" ORDER BY Name LIMIT @limit;");
+        select.Parameters.AddWithValue("@limit", pageSize + 1);
+        select.CommandText = sql.ToString();
+
+        var page = new PooledDocumentList<SecurityRuleDocument>(pageSize);
+        try
+        {
+            bool hasMore = false;
+            await using (MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+            {
+                while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    if (page.Count == pageSize)
+                    {
+                        hasMore = true;
+                        break;
+                    }
+
+                    page.Add(ParsedJsonDocument<SecurityRuleDocument>.Parse(reader.GetFieldValue<byte[]>(0).AsMemory()));
+                }
+            }
+
+            if (!hasMore)
+            {
+                return SecurityRulePage.Create(page);
+            }
+
+            using UnescapedUtf8JsonString lastName = page[page.Count - 1].Name.GetUtf8String();
+            return SecurityRulePage.Create(page, lastName.Span);
+        }
+        catch
+        {
+            page.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
@@ -246,7 +318,7 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
 
     /// <inheritdoc/>
     public ValueTask<bool> DeleteRuleAsync(string name, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
-        => this.DeleteAsync("SecurityRules", "Name", "rule", name, expectedEtag, cancellationToken);
+        => this.DeleteAsync("SecurityRules", "Name", "rule", name, "SecurityRuleSecurityTags", expectedEtag, cancellationToken);
 
     /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>> AddBindingAsync(SecurityBindingDocument draft, string actor, CancellationToken cancellationToken)
@@ -261,7 +333,9 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         {
             ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory;
             await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+            await using MySqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
             await using MySqlCommand insert = connection.CreateCommand();
+            insert.Transaction = transaction;
             insert.CommandText = "INSERT INTO SecurityBindings (Id, SortOrder, ClaimType, ClaimValue, Description, Etag, Document) VALUES (@id, @order, @claimType, @claimValue, @description, @etag, @doc);";
             insert.Parameters.AddWithValue("@id", id);
             insert.Parameters.AddWithValue("@order", draft.OrderValue);
@@ -271,7 +345,11 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
             insert.Parameters.AddWithValue("@etag", etag.Value!);
             insert.Parameters.AddWithValue("@doc", utf8);
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            await BumpGenerationAsync(connection, cancellationToken).ConfigureAwait(false);
+
+            // Mirror the management tags into the queryable side table so the reach can be pushed into list/count.
+            await SyncTagsAsync(connection, transaction, "SecurityBindingSecurityTags", "Id", id, draft.ManagementTagsValue, cancellationToken).ConfigureAwait(false);
+            await BumpGenerationAsync(connection, cancellationToken, transaction).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return doc;
         }
         catch
@@ -409,6 +487,75 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
+    public async ValueTask<SecurityBindingPage> ListBindingsAsync(int limit, JsonString pageToken, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : SecurityBindingPage.DefaultPageSize;
+        bool hasCursor = DecodeBindingCursor(pageToken, out int cursorOrder, out string? cursorId);
+        string? like = BuildLike(q);
+
+        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using MySqlCommand select = connection.CreateCommand();
+        var sql = new StringBuilder("SELECT Document FROM SecurityBindings");
+        var conditions = new List<string>(3);
+        if (hasCursor)
+        {
+            conditions.Add("(SortOrder > @order OR (SortOrder = @order AND Id > @id))");
+            select.Parameters.AddWithValue("@order", cursorOrder);
+            select.Parameters.AddWithValue("@id", cursorId!);
+        }
+
+        if (like is not null)
+        {
+            conditions.Add("(ClaimType LIKE @q ESCAPE '\\\\' OR ClaimValue LIKE @q ESCAPE '\\\\' OR Description LIKE @q ESCAPE '\\\\')");
+            select.Parameters.AddWithValue("@q", like);
+        }
+
+        // Push the §14.2 read reach into the query as a correlated EXISTS over the bindings' tags side table.
+        AppendReachPredicate(conditions, select, context, "SecurityBindingSecurityTags", "Id", "SecurityBindings");
+        if (conditions.Count > 0)
+        {
+            sql.Append(" WHERE ").Append(string.Join(" AND ", conditions));
+        }
+
+        sql.Append(" ORDER BY SortOrder, Id LIMIT @limit;");
+        select.Parameters.AddWithValue("@limit", pageSize + 1);
+        select.CommandText = sql.ToString();
+
+        var page = new PooledDocumentList<SecurityBindingDocument>(pageSize);
+        try
+        {
+            bool hasMore = false;
+            await using (MySqlDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+            {
+                while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    if (page.Count == pageSize)
+                    {
+                        hasMore = true;
+                        break;
+                    }
+
+                    page.Add(ParsedJsonDocument<SecurityBindingDocument>.Parse(reader.GetFieldValue<byte[]>(0).AsMemory()));
+                }
+            }
+
+            if (!hasMore)
+            {
+                return SecurityBindingPage.Create(page);
+            }
+
+            SecurityBindingDocument last = page[page.Count - 1];
+            using UnescapedUtf8JsonString lastId = last.Id.GetUtf8String();
+            return SecurityBindingPage.Create(page, last.OrderValue, lastId.Span);
+        }
+        catch
+        {
+            page.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
@@ -451,7 +598,7 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
 
     /// <inheritdoc/>
     public ValueTask<bool> DeleteBindingAsync(string id, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
-        => this.DeleteAsync("SecurityBindings", "Id", "binding", id, expectedEtag, cancellationToken);
+        => this.DeleteAsync("SecurityBindings", "Id", "binding", id, "SecurityBindingSecurityTags", expectedEtag, cancellationToken);
 
     /// <inheritdoc/>
     public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
@@ -558,6 +705,36 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountRulesAsync(int cap, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        int bound = cap > 0 ? cap : SecurityRulePage.DefaultPageSize;
+        string? like = BuildLike(q);
+
+        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using MySqlCommand count = connection.CreateCommand();
+        var conditions = new List<string>(2);
+        if (like is not null)
+        {
+            conditions.Add("(Name COLLATE utf8mb4_0900_ai_ci LIKE @q ESCAPE '\\\\' OR Expression LIKE @q ESCAPE '\\\\')");
+            count.Parameters.AddWithValue("@q", like);
+        }
+
+        // Same reach predicate as the reach-filtered list so the footer count cannot drift.
+        AppendReachPredicate(conditions, count, context, "SecurityRuleSecurityTags", "Name", "SecurityRules");
+        var inner = new StringBuilder("SELECT 1 FROM SecurityRules");
+        if (conditions.Count > 0)
+        {
+            inner.Append(" WHERE ").Append(string.Join(" AND ", conditions));
+        }
+
+        inner.Append(" LIMIT @cap");
+        count.Parameters.AddWithValue("@cap", bound + 1);
+        count.CommandText = "SELECT COUNT(*) FROM (" + inner + ") AS bounded;";
+        long total = (long)(await count.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))!;
+        return total > bound ? (bound, true) : ((int)total, false);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<(int Count, bool Capped)> CountBindingsAsync(int cap, JsonString q, CancellationToken cancellationToken)
     {
         int bound = cap > 0 ? cap : SecurityBindingPage.DefaultPageSize;
@@ -570,6 +747,36 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         {
             inner.Append(" WHERE (ClaimType LIKE @q ESCAPE '\\\\' OR ClaimValue LIKE @q ESCAPE '\\\\' OR Description LIKE @q ESCAPE '\\\\')");
             count.Parameters.AddWithValue("@q", like);
+        }
+
+        inner.Append(" LIMIT @cap");
+        count.Parameters.AddWithValue("@cap", bound + 1);
+        count.CommandText = "SELECT COUNT(*) FROM (" + inner + ") AS bounded;";
+        long total = (long)(await count.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))!;
+        return total > bound ? (bound, true) : ((int)total, false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountBindingsAsync(int cap, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        int bound = cap > 0 ? cap : SecurityBindingPage.DefaultPageSize;
+        string? like = BuildLike(q);
+
+        await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using MySqlCommand count = connection.CreateCommand();
+        var conditions = new List<string>(2);
+        if (like is not null)
+        {
+            conditions.Add("(ClaimType LIKE @q ESCAPE '\\\\' OR ClaimValue LIKE @q ESCAPE '\\\\' OR Description LIKE @q ESCAPE '\\\\')");
+            count.Parameters.AddWithValue("@q", like);
+        }
+
+        // Same reach predicate as the reach-filtered list so the footer count cannot drift.
+        AppendReachPredicate(conditions, count, context, "SecurityBindingSecurityTags", "Id", "SecurityBindings");
+        var inner = new StringBuilder("SELECT 1 FROM SecurityBindings");
+        if (conditions.Count > 0)
+        {
+            inner.Append(" WHERE ").Append(string.Join(" AND ", conditions));
         }
 
         inner.Append(" LIMIT @cap");
@@ -624,17 +831,67 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         return list;
     }
 
-    private static async ValueTask BumpGenerationAsync(MySqlConnection connection, CancellationToken cancellationToken)
+    private static async ValueTask BumpGenerationAsync(MySqlConnection connection, CancellationToken cancellationToken, MySqlTransaction? transaction = null)
     {
         await using MySqlCommand bump = connection.CreateCommand();
+        bump.Transaction = transaction;
         bump.CommandText = "UPDATE SecurityPolicyMeta SET Generation = Generation + 1 WHERE Id = 0;";
         await bump.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    // Mirrors a rule's/binding's MANAGEMENT tags (one row per key/value) into the queryable side table, keyed by the
+    // owner key (rule Name / binding Id), so the §14.2 read reach can be pushed into the list/count query as a correlated
+    // EXISTS. Tags are immutable, so this runs only on create; a row with no management tags mirrors nothing and is
+    // admitted only under full read reach (fail-closed).
+    private static async ValueTask SyncTagsAsync(MySqlConnection connection, MySqlTransaction transaction, string tagTable, string keyColumn, string keyValue, SecurityTagSet managementTags, CancellationToken cancellationToken)
+    {
+        if (managementTags.IsEmpty)
+        {
+            return;
+        }
+
+        foreach (SecurityTag tag in managementTags.ToList())
+        {
+            await using MySqlCommand insert = connection.CreateCommand();
+            insert.Transaction = transaction;
+            insert.CommandText = $"INSERT INTO {tagTable} ({keyColumn}, TagKey, TagValue) VALUES (@k, @key, @value);";
+            insert.Parameters.AddWithValue("@k", keyValue);
+            insert.Parameters.AddWithValue("@key", tag.Key);
+            insert.Parameters.AddWithValue("@value", tag.Value);
+            await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    // Appends the §14.2 read-reach predicate: a correlated EXISTS over the owner's security-tags side table mirroring the
+    // caller's reach (the same rules context.Admits evaluates). A null reach (full read) adds nothing; an untagged,
+    // system-owned row is admitted only by that full reach. Shared by the list and count so they cannot drift.
+    private static void AppendReachPredicate(List<string> conditions, MySqlCommand command, AccessContext context, string tagTable, string keyColumn, string parentTable)
+    {
+        if (context.Reach(AccessVerb.Read) is not { } reach)
+        {
+            return;
+        }
+
+        int securityParam = 0;
+        var emitter = new SqlSecurityRuleEmitter(
+            tagTable,
+            [keyColumn],
+            "TagKey",
+            "TagValue",
+            parentTable,
+            value =>
+            {
+                string p = "sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
+                command.Parameters.AddWithValue("@" + p, value);
+                return "@" + p;
+            });
+        conditions.Add("(" + reach.ToSqlPredicate(emitter) + ")");
     }
 
     private ValueTask<MySqlConnection> OpenAsync(CancellationToken cancellationToken)
         => this.dataSource.OpenConnectionAsync(cancellationToken);
 
-    private async ValueTask<bool> DeleteAsync(string table, string column, string kind, string key, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
+    private async ValueTask<bool> DeleteAsync(string table, string column, string kind, string key, string tagTable, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(key);
         await using MySqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
@@ -648,11 +905,23 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         }
 
         SecurityPolicySerialization.EnsureEtag(kind, key, expectedEtag, new WorkflowEtag(current));
+
+        // Delete the row and its mirrored security tags atomically so the reach side table cannot outlive the row.
+        await using MySqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await using MySqlCommand delete = connection.CreateCommand();
+        delete.Transaction = transaction;
         delete.CommandText = $"DELETE FROM {table} WHERE {column} = @k;";
         delete.Parameters.AddWithValue("@k", key);
         await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        await BumpGenerationAsync(connection, cancellationToken).ConfigureAwait(false);
+
+        await using MySqlCommand deleteTags = connection.CreateCommand();
+        deleteTags.Transaction = transaction;
+        deleteTags.CommandText = $"DELETE FROM {tagTable} WHERE {column} = @k;";
+        deleteTags.Parameters.AddWithValue("@k", key);
+        await deleteTags.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+
+        await BumpGenerationAsync(connection, cancellationToken, transaction).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return true;
     }
 
@@ -673,6 +942,20 @@ public sealed class MySqlSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
             Etag VARCHAR(255) NOT NULL,
             Document LONGBLOB NOT NULL,
             INDEX IX_SecurityBindings_Order (SortOrder, Id)
+        );
+        CREATE TABLE IF NOT EXISTS SecurityRuleSecurityTags (
+            Name VARCHAR(255) COLLATE utf8mb4_bin NOT NULL,
+            TagKey VARCHAR(200) COLLATE utf8mb4_bin NOT NULL,
+            TagValue VARCHAR(200) COLLATE utf8mb4_bin NOT NULL,
+            INDEX IX_SecurityRuleSecurityTags_Owner (Name),
+            INDEX IX_SecurityRuleSecurityTags_KV (TagKey, TagValue)
+        );
+        CREATE TABLE IF NOT EXISTS SecurityBindingSecurityTags (
+            Id VARCHAR(255) COLLATE utf8mb4_bin NOT NULL,
+            TagKey VARCHAR(200) COLLATE utf8mb4_bin NOT NULL,
+            TagValue VARCHAR(200) COLLATE utf8mb4_bin NOT NULL,
+            INDEX IX_SecurityBindingSecurityTags_Owner (Id),
+            INDEX IX_SecurityBindingSecurityTags_KV (TagKey, TagValue)
         );
         CREATE TABLE IF NOT EXISTS SecurityPolicyMeta (
             Id INT NOT NULL PRIMARY KEY,
