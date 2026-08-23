@@ -78,7 +78,9 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         {
             WorkflowEtag etag = NewEtag();
             byte[] json = SecurityPolicySerialization.SerializeNewRule(name, draft, actor, this.timeProvider.GetUtcNow(), etag);
+            using SqliteTransaction transaction = (SqliteTransaction)await this.connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
             using SqliteCommand insert = this.connection.CreateCommand();
+            insert.Transaction = transaction;
             insert.CommandText = "INSERT INTO SecurityRules (Name, Expression, Etag, Document) VALUES (@name, @expression, @etag, @doc);";
             insert.Parameters.AddWithValue("@name", name);
             insert.Parameters.AddWithValue("@expression", draft.ExpressionValue);
@@ -93,7 +95,10 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
                 ThrowHelper.ThrowSecurityRuleAlreadyExists(name);
             }
 
-            await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
+            // Mirror the management tags into the queryable side table so the reach can be pushed into list/count.
+            await this.SyncTagsAsync(transaction, "SecurityRuleSecurityTags", "Name", name, draft.ManagementTagsValue, cancellationToken).ConfigureAwait(false);
+            await this.BumpGenerationAsync(cancellationToken, transaction).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return PersistedJson.ToPooledDocument<SecurityRuleDocument>(json);
         }
         finally
@@ -200,6 +205,76 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
+    public async ValueTask<SecurityRulePage> ListRulesAsync(int limit, JsonString pageToken, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : SecurityRulePage.DefaultPageSize;
+        string? after = DecodeRuleCursor(pageToken);
+        string? like = BuildLike(q);
+
+        await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            using SqliteCommand select = this.connection.CreateCommand();
+
+            // Push the §14.2 read reach into the query as a correlated EXISTS over the rules' tags side table; appended only
+            // when the caller's reach is not full (a null reach adds nothing, so an unscoped caller reads everything).
+            var sql = new StringBuilder(
+                """
+                SELECT Document FROM SecurityRules
+                WHERE (@after IS NULL OR Name > @after)
+                  AND (@q IS NULL OR Name LIKE @q ESCAPE '\' OR Expression LIKE @q ESCAPE '\')
+                """);
+            string? reach = BuildReachPredicate(select, context, "SecurityRuleSecurityTags", "Name", "SecurityRules");
+            if (reach is not null)
+            {
+                sql.Append(" AND ").Append(reach);
+            }
+
+            sql.Append(" ORDER BY Name LIMIT @limit;");
+            select.CommandText = sql.ToString();
+            select.Parameters.AddWithValue("@after", (object?)after ?? DBNull.Value);
+            select.Parameters.AddWithValue("@q", (object?)like ?? DBNull.Value);
+            select.Parameters.AddWithValue("@limit", pageSize + 1);
+
+            var page = new PooledDocumentList<SecurityRuleDocument>(pageSize);
+            try
+            {
+                bool hasMore = false;
+                using (SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                    {
+                        if (page.Count == pageSize)
+                        {
+                            hasMore = true;
+                            break;
+                        }
+
+                        page.Add(ParsedJsonDocument<SecurityRuleDocument>.Parse(reader.GetFieldValue<byte[]>(0).AsMemory()));
+                    }
+                }
+
+                if (!hasMore)
+                {
+                    return SecurityRulePage.Create(page);
+                }
+
+                using UnescapedUtf8JsonString lastName = page[page.Count - 1].Name.GetUtf8String();
+                return SecurityRulePage.Create(page, lastName.Span);
+            }
+            catch
+            {
+                page.Dispose();
+                throw;
+            }
+        }
+        finally
+        {
+            this.gate.Release();
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
@@ -234,7 +309,7 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
 
     /// <inheritdoc/>
     public ValueTask<bool> DeleteRuleAsync(string name, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
-        => this.DeleteAsync("SecurityRules", "Name", "rule", name, expectedEtag, cancellationToken);
+        => this.DeleteAsync("SecurityRules", "Name", "rule", name, "SecurityRuleSecurityTags", expectedEtag, cancellationToken);
 
     /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>> AddBindingAsync(SecurityBindingDocument draft, string actor, CancellationToken cancellationToken)
@@ -246,7 +321,9 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
             string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
             WorkflowEtag etag = NewEtag();
             byte[] json = SecurityPolicySerialization.SerializeNewBinding(id, draft, actor, this.timeProvider.GetUtcNow(), etag);
+            using SqliteTransaction transaction = (SqliteTransaction)await this.connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
             using SqliteCommand insert = this.connection.CreateCommand();
+            insert.Transaction = transaction;
             insert.CommandText = "INSERT INTO SecurityBindings (Id, SortOrder, ClaimType, ClaimValue, Description, Etag, Document) VALUES (@id, @order, @claimType, @claimValue, @description, @etag, @doc);";
             insert.Parameters.AddWithValue("@id", id);
             insert.Parameters.AddWithValue("@order", draft.OrderValue);
@@ -256,7 +333,11 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
             insert.Parameters.AddWithValue("@etag", etag.Value!);
             insert.Parameters.AddWithValue("@doc", json);
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
+
+            // Mirror the management tags into the queryable side table so the reach can be pushed into list/count.
+            await this.SyncTagsAsync(transaction, "SecurityBindingSecurityTags", "Id", id, draft.ManagementTagsValue, cancellationToken).ConfigureAwait(false);
+            await this.BumpGenerationAsync(cancellationToken, transaction).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return PersistedJson.ToPooledDocument<SecurityBindingDocument>(json);
         }
         finally
@@ -366,6 +447,78 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
+    public async ValueTask<SecurityBindingPage> ListBindingsAsync(int limit, JsonString pageToken, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : SecurityBindingPage.DefaultPageSize;
+        bool hasCursor = DecodeBindingCursor(pageToken, out int cursorOrder, out string? cursorId);
+        string? like = BuildLike(q);
+
+        await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            using SqliteCommand select = this.connection.CreateCommand();
+
+            // Push the §14.2 read reach into the query as a correlated EXISTS over the bindings' tags side table.
+            var sql = new StringBuilder(
+                """
+                SELECT Document FROM SecurityBindings
+                WHERE (@hasCursor = 0 OR SortOrder > @order OR (SortOrder = @order AND Id > @id))
+                  AND (@q IS NULL OR ClaimType LIKE @q ESCAPE '\' OR ClaimValue LIKE @q ESCAPE '\' OR Description LIKE @q ESCAPE '\')
+                """);
+            string? reach = BuildReachPredicate(select, context, "SecurityBindingSecurityTags", "Id", "SecurityBindings");
+            if (reach is not null)
+            {
+                sql.Append(" AND ").Append(reach);
+            }
+
+            sql.Append(" ORDER BY SortOrder, Id LIMIT @limit;");
+            select.CommandText = sql.ToString();
+            select.Parameters.AddWithValue("@hasCursor", hasCursor ? 1 : 0);
+            select.Parameters.AddWithValue("@order", cursorOrder);
+            select.Parameters.AddWithValue("@id", (object?)cursorId ?? DBNull.Value);
+            select.Parameters.AddWithValue("@q", (object?)like ?? DBNull.Value);
+            select.Parameters.AddWithValue("@limit", pageSize + 1);
+
+            var page = new PooledDocumentList<SecurityBindingDocument>(pageSize);
+            try
+            {
+                bool hasMore = false;
+                using (SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                    {
+                        if (page.Count == pageSize)
+                        {
+                            hasMore = true;
+                            break;
+                        }
+
+                        page.Add(ParsedJsonDocument<SecurityBindingDocument>.Parse(reader.GetFieldValue<byte[]>(0).AsMemory()));
+                    }
+                }
+
+                if (!hasMore)
+                {
+                    return SecurityBindingPage.Create(page);
+                }
+
+                SecurityBindingDocument last = page[page.Count - 1];
+                using UnescapedUtf8JsonString lastId = last.Id.GetUtf8String();
+                return SecurityBindingPage.Create(page, last.OrderValue, lastId.Span);
+            }
+            catch
+            {
+                page.Dispose();
+                throw;
+            }
+        }
+        finally
+        {
+            this.gate.Release();
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsForSubjectAsync(JsonString claimType, JsonString claimValue, CancellationToken cancellationToken)
     {
         // The subject reifies to a managed value only at the ADO parameter boundary (the DB-param leaf).
@@ -442,6 +595,42 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountRulesAsync(int cap, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        int bound = cap > 0 ? cap : SecurityRulePage.DefaultPageSize;
+        string? like = BuildLike(q);
+
+        await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            using SqliteCommand count = this.connection.CreateCommand();
+
+            // Same reach predicate as the reach-filtered list so the footer count cannot drift.
+            var inner = new StringBuilder(
+                """
+                SELECT 1 FROM SecurityRules
+                WHERE (@q IS NULL OR Name LIKE @q ESCAPE '\' OR Expression LIKE @q ESCAPE '\')
+                """);
+            string? reach = BuildReachPredicate(count, context, "SecurityRuleSecurityTags", "Name", "SecurityRules");
+            if (reach is not null)
+            {
+                inner.Append(" AND ").Append(reach);
+            }
+
+            inner.Append(" LIMIT @cap");
+            count.CommandText = "SELECT COUNT(*) FROM (" + inner + ");";
+            count.Parameters.AddWithValue("@q", (object?)like ?? DBNull.Value);
+            count.Parameters.AddWithValue("@cap", bound + 1);
+            long total = (long)(await count.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))!;
+            return total > bound ? (bound, true) : ((int)total, false);
+        }
+        finally
+        {
+            this.gate.Release();
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<(int Count, bool Capped)> CountBindingsAsync(int cap, JsonString q, CancellationToken cancellationToken)
     {
         int bound = cap > 0 ? cap : SecurityBindingPage.DefaultPageSize;
@@ -458,6 +647,42 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
                     WHERE (@q IS NULL OR ClaimType LIKE @q ESCAPE '\' OR ClaimValue LIKE @q ESCAPE '\' OR Description LIKE @q ESCAPE '\')
                     LIMIT @cap);
                 """;
+            count.Parameters.AddWithValue("@q", (object?)like ?? DBNull.Value);
+            count.Parameters.AddWithValue("@cap", bound + 1);
+            long total = (long)(await count.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))!;
+            return total > bound ? (bound, true) : ((int)total, false);
+        }
+        finally
+        {
+            this.gate.Release();
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountBindingsAsync(int cap, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        int bound = cap > 0 ? cap : SecurityBindingPage.DefaultPageSize;
+        string? like = BuildLike(q);
+
+        await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            using SqliteCommand count = this.connection.CreateCommand();
+
+            // Same reach predicate as the reach-filtered list so the footer count cannot drift.
+            var inner = new StringBuilder(
+                """
+                SELECT 1 FROM SecurityBindings
+                WHERE (@q IS NULL OR ClaimType LIKE @q ESCAPE '\' OR ClaimValue LIKE @q ESCAPE '\' OR Description LIKE @q ESCAPE '\')
+                """);
+            string? reach = BuildReachPredicate(count, context, "SecurityBindingSecurityTags", "Id", "SecurityBindings");
+            if (reach is not null)
+            {
+                inner.Append(" AND ").Append(reach);
+            }
+
+            inner.Append(" LIMIT @cap");
+            count.CommandText = "SELECT COUNT(*) FROM (" + inner + ");";
             count.Parameters.AddWithValue("@q", (object?)like ?? DBNull.Value);
             count.Parameters.AddWithValue("@cap", bound + 1);
             long total = (long)(await count.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))!;
@@ -507,7 +732,7 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
 
     /// <inheritdoc/>
     public ValueTask<bool> DeleteBindingAsync(string id, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
-        => this.DeleteAsync("SecurityBindings", "Id", "binding", id, expectedEtag, cancellationToken);
+        => this.DeleteAsync("SecurityBindings", "Id", "binding", id, "SecurityBindingSecurityTags", expectedEtag, cancellationToken);
 
     /// <inheritdoc/>
     public async ValueTask<SecurityPolicySnapshot> LoadSnapshotAsync(CancellationToken cancellationToken)
@@ -634,7 +859,7 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         return list;
     }
 
-    private async ValueTask<bool> DeleteAsync(string table, string column, string kind, string key, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
+    private async ValueTask<bool> DeleteAsync(string table, string column, string kind, string key, string tagTable, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(key);
         await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -650,11 +875,23 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
             }
 
             SecurityPolicySerialization.EnsureEtag(kind, key, expectedEtag, new WorkflowEtag(current));
+
+            // Delete the row and its mirrored security tags atomically so the reach side table cannot outlive the row.
+            using SqliteTransaction transaction = (SqliteTransaction)await this.connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
             using SqliteCommand delete = this.connection.CreateCommand();
+            delete.Transaction = transaction;
             delete.CommandText = $"DELETE FROM {table} WHERE {column} = @k;";
             delete.Parameters.AddWithValue("@k", key);
             await delete.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
+
+            using SqliteCommand deleteTags = this.connection.CreateCommand();
+            deleteTags.Transaction = transaction;
+            deleteTags.CommandText = $"DELETE FROM {tagTable} WHERE {column} = @k;";
+            deleteTags.Parameters.AddWithValue("@k", key);
+            await deleteTags.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+
+            await this.BumpGenerationAsync(cancellationToken, transaction).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return true;
         }
         finally
@@ -663,11 +900,62 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         }
     }
 
-    private async ValueTask BumpGenerationAsync(CancellationToken cancellationToken)
+    private async ValueTask BumpGenerationAsync(CancellationToken cancellationToken, SqliteTransaction? transaction = null)
     {
         using SqliteCommand bump = this.connection.CreateCommand();
+        bump.Transaction = transaction;
         bump.CommandText = "UPDATE SecurityPolicyMeta SET Generation = Generation + 1 WHERE Id = 0;";
         await bump.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    // Mirrors a rule's/binding's MANAGEMENT tags (one row per key/value) into the queryable side table, keyed by the
+    // owner key (rule Name / binding Id), so the §14.2 read reach can be pushed into the list/count query as a correlated
+    // EXISTS. Tags are immutable, so this runs only on create; a row with no management tags mirrors nothing and is
+    // admitted only under full read reach (fail-closed).
+    private async ValueTask SyncTagsAsync(SqliteTransaction transaction, string tagTable, string keyColumn, string keyValue, SecurityTagSet managementTags, CancellationToken cancellationToken)
+    {
+        if (managementTags.IsEmpty)
+        {
+            return;
+        }
+
+        foreach (SecurityTag tag in managementTags.ToList())
+        {
+            using SqliteCommand insert = this.connection.CreateCommand();
+            insert.Transaction = transaction;
+            insert.CommandText = $"INSERT INTO {tagTable} ({keyColumn}, TagKey, TagValue) VALUES (@k, @key, @value);";
+            insert.Parameters.AddWithValue("@k", keyValue);
+            insert.Parameters.AddWithValue("@key", tag.Key);
+            insert.Parameters.AddWithValue("@value", tag.Value);
+            await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    // Builds the §14.2 read-reach predicate: a correlated EXISTS over the owner's security-tags side table mirroring the
+    // caller's reach (the same rules context.Admits evaluates), and binds its @sec parameters on the command. Returns null
+    // for a full reach (null), so the caller appends nothing; an untagged, system-owned row is admitted only by that full
+    // reach. Shared by the list and count so they cannot drift.
+    private static string? BuildReachPredicate(SqliteCommand command, AccessContext context, string tagTable, string keyColumn, string parentTable)
+    {
+        if (context.Reach(AccessVerb.Read) is not { } reach)
+        {
+            return null;
+        }
+
+        int securityParam = 0;
+        var emitter = new SqlSecurityRuleEmitter(
+            tagTable,
+            [keyColumn],
+            "TagKey",
+            "TagValue",
+            parentTable,
+            value =>
+            {
+                string p = "sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
+                command.Parameters.AddWithValue("@" + p, value);
+                return "@" + p;
+            });
+        return "(" + reach.ToSqlPredicate(emitter) + ")";
     }
 
     private const string SchemaSql =
@@ -688,6 +976,20 @@ public sealed class SqliteSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
             Document BLOB NOT NULL
         );
         CREATE INDEX IF NOT EXISTS IX_SecurityBindings_Order ON SecurityBindings (SortOrder, Id);
+        CREATE TABLE IF NOT EXISTS SecurityRuleSecurityTags (
+            Name TEXT NOT NULL,
+            TagKey TEXT NOT NULL,
+            TagValue TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS IX_SecurityRuleSecurityTags_Owner ON SecurityRuleSecurityTags (Name);
+        CREATE INDEX IF NOT EXISTS IX_SecurityRuleSecurityTags_KV ON SecurityRuleSecurityTags (TagKey, TagValue);
+        CREATE TABLE IF NOT EXISTS SecurityBindingSecurityTags (
+            Id TEXT NOT NULL,
+            TagKey TEXT NOT NULL,
+            TagValue TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS IX_SecurityBindingSecurityTags_Owner ON SecurityBindingSecurityTags (Id);
+        CREATE INDEX IF NOT EXISTS IX_SecurityBindingSecurityTags_KV ON SecurityBindingSecurityTags (TagKey, TagValue);
         CREATE TABLE IF NOT EXISTS SecurityPolicyMeta (
             Id INTEGER NOT NULL PRIMARY KEY,
             Generation INTEGER NOT NULL
