@@ -21,7 +21,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage.Tests;
 [TestCategory("docker")]
 public sealed class AzureStorageSecurityPolicyStoreConformanceTests : SecurityPolicyStoreConformance
 {
-    private static readonly string[] PolicyTables = ["arazzoSecurityRules", "arazzoSecurityBindings", "arazzoSecurityMeta"];
+    private static readonly string[] PolicyTables = ["arazzoSecurityRules", "arazzoSecurityBindings", "arazzoSecurityMeta", "arazzoSecurityRuleLabels", "arazzoSecurityBindingLabels"];
     private static AzuriteContainer container = null!;
 
     [ClassInitialize]

@@ -24,6 +24,11 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
     private const string RulesTable = "arazzoSecurityRules";
     private const string BindingsTable = "arazzoSecurityBindings";
     private const string MetaTable = "arazzoSecurityMeta";
+
+    // Separate §14.4 label tables for rules and bindings, because rule names and binding ids are independent id spaces
+    // that could otherwise collide within a shared label partition.
+    private const string RuleLabelsTable = "arazzoSecurityRuleLabels";
+    private const string BindingLabelsTable = "arazzoSecurityBindingLabels";
     private const string RulePartition = "rule";
     private const string BindingPartition = "binding";
     private const string MetaPartition = "meta";
@@ -59,13 +64,21 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
     private readonly TableClient rules;
     private readonly TableClient bindings;
     private readonly TableClient meta;
+    private readonly TableClient ruleLabels;
+    private readonly TableClient bindingLabels;
+    private readonly AzureStorageSecurityLabelIndex ruleLabelIndex;
+    private readonly AzureStorageSecurityLabelIndex bindingLabelIndex;
     private readonly TimeProvider timeProvider;
 
-    private AzureStorageSecurityPolicyStore(TableClient rules, TableClient bindings, TableClient meta, TimeProvider timeProvider)
+    private AzureStorageSecurityPolicyStore(TableClient rules, TableClient bindings, TableClient meta, TableClient ruleLabels, TableClient bindingLabels, TimeProvider timeProvider)
     {
         this.rules = rules;
         this.bindings = bindings;
         this.meta = meta;
+        this.ruleLabels = ruleLabels;
+        this.bindingLabels = bindingLabels;
+        this.ruleLabelIndex = new AzureStorageSecurityLabelIndex(ruleLabels);
+        this.bindingLabelIndex = new AzureStorageSecurityLabelIndex(bindingLabels);
         this.timeProvider = timeProvider;
     }
 
@@ -89,6 +102,8 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
         await tableService.GetTableClient(RulesTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
         await tableService.GetTableClient(BindingsTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
         await tableService.GetTableClient(MetaTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
+        await tableService.GetTableClient(RuleLabelsTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
+        await tableService.GetTableClient(BindingLabelsTable).CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Opens the store for operation against already-provisioned tables.</summary>
@@ -115,6 +130,8 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
             tableService.GetTableClient(RulesTable),
             tableService.GetTableClient(BindingsTable),
             tableService.GetTableClient(MetaTable),
+            tableService.GetTableClient(RuleLabelsTable),
+            tableService.GetTableClient(BindingLabelsTable),
             timeProvider ?? TimeProvider.System));
     }
 
@@ -135,6 +152,10 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
             ThrowHelper.ThrowSecurityRuleAlreadyExists(name);
         }
 
+        // Mirror the management tags into the rule label table (RowKey = the row's encoded name) so the §14.2 reach resolves
+        // to candidate rows server-side. Tags are immutable, so there is no re-point on update; an untagged, system-owned row
+        // occupies no label partition and is admitted only under full read reach (fail-closed).
+        await this.AddLabelsAsync(this.ruleLabels, Enc(name), draft.ManagementTagsValue, cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<SecurityRuleDocument>(json);
     }
@@ -150,6 +171,17 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
     /// <inheritdoc/>
     public ValueTask<PooledDocumentList<SecurityRuleDocument>> ListRulesAsync(CancellationToken cancellationToken)
         => this.ReadRulesAsync(cancellationToken);
+
+    /// <inheritdoc/>
+    public async ValueTask<SecurityRulePage> ListRulesAsync(int limit, JsonString pageToken, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        // Resolve the caller's read reach to candidate rows via the label index and load ONLY those (rather than the whole
+        // partition) — the native reach benefit for a backend without server-side ordering. The narrowed, reach-admitted set
+        // is then sorted, keyset-paged and q-filtered in memory by the shared pager (Table storage has no server-side order).
+        IReadOnlySet<string>? candidates = await this.ResolveReachCandidatesAsync(this.ruleLabelIndex, context.Reach(AccessVerb.Read), cancellationToken).ConfigureAwait(false);
+        using PooledDocumentList<SecurityRuleDocument> reachable = await this.LoadReachableRulesAsync(candidates, context, cancellationToken).ConfigureAwait(false);
+        return SecurityRulePaging.PageInMemory(reachable, limit, pageToken, q);
+    }
 
     /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
@@ -173,10 +205,14 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
 
     /// <inheritdoc/>
     public ValueTask<bool> DeleteRuleAsync(string name, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
-        => this.DeleteAsync(this.rules, RulePartition, "rule", name, expectedEtag, static doc =>
+        => this.DeleteAsync(this.rules, RulePartition, "rule", name, this.ruleLabels, expectedEtag, static doc =>
         {
             using ParsedJsonDocument<SecurityRuleDocument> parsed = ParsedJsonDocument<SecurityRuleDocument>.Parse(doc.AsMemory());
             return parsed.RootElement.EtagValue;
+        }, static doc =>
+        {
+            using ParsedJsonDocument<SecurityRuleDocument> parsed = ParsedJsonDocument<SecurityRuleDocument>.Parse(doc.AsMemory());
+            return parsed.RootElement.ManagementTagsValue;
         }, cancellationToken);
 
     /// <inheritdoc/>
@@ -188,6 +224,9 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
         byte[] json = SecurityPolicySerialization.SerializeNewBinding(id, draft, actor, this.timeProvider.GetUtcNow(), etag);
         var entity = new TableEntity(BindingPartition, Enc(id)) { ["Doc"] = json };
         await this.bindings.AddEntityAsync(entity, cancellationToken).ConfigureAwait(false);
+
+        // Mirror the management tags into the binding label table (RowKey = the row's encoded id).
+        await this.AddLabelsAsync(this.bindingLabels, Enc(id), draft.ManagementTagsValue, cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<SecurityBindingDocument>(json);
     }
@@ -203,6 +242,15 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
     /// <inheritdoc/>
     public ValueTask<PooledDocumentList<SecurityBindingDocument>> ListBindingsAsync(CancellationToken cancellationToken)
         => this.ReadBindingsAsync(cancellationToken);
+
+    /// <inheritdoc/>
+    public async ValueTask<SecurityBindingPage> ListBindingsAsync(int limit, JsonString pageToken, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        // Resolve the caller's read reach to candidate rows via the label index and load ONLY those, then keyset-page in memory.
+        IReadOnlySet<string>? candidates = await this.ResolveReachCandidatesAsync(this.bindingLabelIndex, context.Reach(AccessVerb.Read), cancellationToken).ConfigureAwait(false);
+        using PooledDocumentList<SecurityBindingDocument> reachable = await this.LoadReachableBindingsAsync(candidates, context, cancellationToken).ConfigureAwait(false);
+        return SecurityBindingPaging.PageInMemory(reachable, limit, pageToken, q);
+    }
 
     /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
@@ -226,10 +274,14 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
 
     /// <inheritdoc/>
     public ValueTask<bool> DeleteBindingAsync(string id, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
-        => this.DeleteAsync(this.bindings, BindingPartition, "binding", id, expectedEtag, static doc =>
+        => this.DeleteAsync(this.bindings, BindingPartition, "binding", id, this.bindingLabels, expectedEtag, static doc =>
         {
             using ParsedJsonDocument<SecurityBindingDocument> parsed = ParsedJsonDocument<SecurityBindingDocument>.Parse(doc.AsMemory());
             return parsed.RootElement.EtagValue;
+        }, static doc =>
+        {
+            using ParsedJsonDocument<SecurityBindingDocument> parsed = ParsedJsonDocument<SecurityBindingDocument>.Parse(doc.AsMemory());
+            return parsed.RootElement.ManagementTagsValue;
         }, cancellationToken);
 
     /// <inheritdoc/>
@@ -283,6 +335,89 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
         return list;
     }
 
+    private async ValueTask<PooledDocumentList<SecurityRuleDocument>> LoadReachableRulesAsync(IReadOnlySet<string>? candidates, AccessContext context, CancellationToken cancellationToken)
+    {
+        // Full read reach (Admits(null, *) = true): the whole partition, already sorted by name.
+        if (candidates is null)
+        {
+            return await this.ReadRulesAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        // Reach-narrowed: point-read only the candidate rows, then apply the exact §14.2 reach (the label plan
+        // over-approximates). An empty candidate set reads nothing.
+        var list = new PooledDocumentList<SecurityRuleDocument>();
+        try
+        {
+            foreach (string encRowKey in candidates)
+            {
+                byte[]? doc = await DocumentAsync(this.rules, RulePartition, encRowKey, cancellationToken).ConfigureAwait(false);
+                if (doc is null)
+                {
+                    continue; // candidate but row gone — skip (a stale label is harmless)
+                }
+
+                ParsedJsonDocument<SecurityRuleDocument> document = ParsedJsonDocument<SecurityRuleDocument>.Parse(doc.AsMemory());
+                if (context.Admits(AccessVerb.Read, document.RootElement.ManagementTagsValue))
+                {
+                    list.Add(document);
+                }
+                else
+                {
+                    document.Dispose();
+                }
+            }
+
+            list.Sort(ByRuleName);
+            return list;
+        }
+        catch
+        {
+            list.Dispose();
+            throw;
+        }
+    }
+
+    private async ValueTask<PooledDocumentList<SecurityBindingDocument>> LoadReachableBindingsAsync(IReadOnlySet<string>? candidates, AccessContext context, CancellationToken cancellationToken)
+    {
+        // Full read reach: the whole partition, already sorted by (order, id).
+        if (candidates is null)
+        {
+            return await this.ReadBindingsAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        // Reach-narrowed: point-read only the candidate rows, then apply the exact §14.2 reach.
+        var list = new PooledDocumentList<SecurityBindingDocument>();
+        try
+        {
+            foreach (string encRowKey in candidates)
+            {
+                byte[]? doc = await DocumentAsync(this.bindings, BindingPartition, encRowKey, cancellationToken).ConfigureAwait(false);
+                if (doc is null)
+                {
+                    continue;
+                }
+
+                ParsedJsonDocument<SecurityBindingDocument> document = ParsedJsonDocument<SecurityBindingDocument>.Parse(doc.AsMemory());
+                if (context.Admits(AccessVerb.Read, document.RootElement.ManagementTagsValue))
+                {
+                    list.Add(document);
+                }
+                else
+                {
+                    document.Dispose();
+                }
+            }
+
+            list.Sort(ByBindingOrder);
+            return list;
+        }
+        catch
+        {
+            list.Dispose();
+            throw;
+        }
+    }
+
     private async ValueTask BumpGenerationAsync(CancellationToken cancellationToken)
     {
         NullableResponse<TableEntity> metaEntity = await this.meta.GetEntityIfExistsAsync<TableEntity>(MetaPartition, GenerationRowKey, cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -291,7 +426,7 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
         await this.meta.UpsertEntityAsync(entity, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
     }
 
-    private async ValueTask<bool> DeleteAsync(TableClient table, string partition, string kind, string key, WorkflowEtag expectedEtag, Func<byte[], WorkflowEtag> etagOf, CancellationToken cancellationToken)
+    private async ValueTask<bool> DeleteAsync(TableClient table, string partition, string kind, string key, TableClient labels, WorkflowEtag expectedEtag, Func<byte[], WorkflowEtag> etagOf, Func<byte[], SecurityTagSet> tagsOf, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(key);
         byte[]? doc = await DocumentAsync(table, partition, Enc(key), cancellationToken).ConfigureAwait(false);
@@ -302,7 +437,38 @@ public sealed class AzureStorageSecurityPolicyStore : ISecurityPolicyStore
 
         SecurityPolicySerialization.EnsureEtag(kind, key, expectedEtag, etagOf(doc));
         await table.DeleteEntityAsync(partition, Enc(key), ETag.All, cancellationToken).ConfigureAwait(false);
+
+        // Tear down the row's label entries after the row is gone (a stale label is harmless by the §14.4 contract, a missing
+        // one would hide a peer's row).
+        await this.RemoveLabelsAsync(labels, Enc(key), tagsOf(doc), cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
         return true;
     }
+
+    // Upserts a row's label entries — one partition per tag token (two per tag), RowKey the row's encoded key. An untagged
+    // row writes nothing. Idempotent: the same (token, rowKey) upsert repeats harmlessly.
+    private async ValueTask AddLabelsAsync(TableClient labels, string encRowKey, SecurityTagSet managementTags, CancellationToken cancellationToken)
+    {
+        foreach (string token in AzureStorageSecurityLabelIndex.TokensFor(managementTags))
+        {
+            await labels.UpsertEntityAsync(new TableEntity(token, encRowKey), TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    // Deletes a row's label entries. DeleteEntityAsync tolerates a missing entry (404), so a concurrent teardown is safe.
+    private async ValueTask RemoveLabelsAsync(TableClient labels, string encRowKey, SecurityTagSet managementTags, CancellationToken cancellationToken)
+    {
+        foreach (string token in AzureStorageSecurityLabelIndex.TokensFor(managementTags))
+        {
+            await labels.DeleteEntityAsync(token, encRowKey, ETag.All, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    // Resolves the caller's read reach to candidate row keys (the encoded rule name / binding id) via the label index
+    // (§14.4). Null = no narrowing (full read); empty = nothing admitted; otherwise a superset re-checked exactly with
+    // context.Admits by the caller.
+    private ValueTask<IReadOnlySet<string>?> ResolveReachCandidatesAsync(AzureStorageSecurityLabelIndex index, SecurityFilter? security, CancellationToken cancellationToken)
+        => security is null
+            ? new ValueTask<IReadOnlySet<string>?>((IReadOnlySet<string>?)null)
+            : SecurityLabelQueryResolver.ResolveAsync(security.ToPredicate(SecurityLabelQueryEmitter.Instance), index, cancellationToken);
 }

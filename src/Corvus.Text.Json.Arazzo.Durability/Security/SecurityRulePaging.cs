@@ -16,7 +16,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Security;
 /// backend is optimised. It is <b>bytes-native</b>: the keyset order and cursor compare on the persisted UTF-8 (no name
 /// string), and the optional <c>q</c> filter transcodes only to a pooled UTF-16 scratch for the case-insensitive match.
 /// </summary>
-internal static class SecurityRulePaging
+public static class SecurityRulePaging
 {
     /// <summary>The page size used when a caller passes a non-positive limit (the public store-contract default).</summary>
     internal const int DefaultPageSize = SecurityRulePage.DefaultPageSize;
@@ -32,7 +32,7 @@ internal static class SecurityRulePaging
     /// <param name="q">An optional case-insensitive substring filter over name/expression, or undefined for no filter.</param>
     /// <returns>One keyset page, owning its pooled documents (and token buffer when more remain).</returns>
     /// <exception cref="FormatException"><paramref name="pageToken"/> is not a valid continuation token.</exception>
-    internal static SecurityRulePage PageInMemory(PooledDocumentList<SecurityRuleDocument> all, int limit, JsonString pageToken, JsonString q)
+    public static SecurityRulePage PageInMemory(PooledDocumentList<SecurityRuleDocument> all, int limit, JsonString pageToken, JsonString q)
     {
         int pageSize = limit > 0 ? limit : DefaultPageSize;
 
