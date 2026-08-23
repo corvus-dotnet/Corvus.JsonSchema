@@ -87,6 +87,16 @@ public class GeneratedServerEndToEndTests
     }
 
     [TestMethod]
+    public async Task GetWidgetThumbnail_FileResponse_WritesRawBytes()
+    {
+        HttpResponseMessage response = await Client.GetAsync("/widgets/widget-1/thumbnail");
+
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual("application/octet-stream", response.Content.Headers.ContentType?.MediaType);
+        CollectionAssert.AreEqual("widget-thumbnail"u8.ToArray(), await response.Content.ReadAsByteArrayAsync());
+    }
+
+    [TestMethod]
     public async Task UploadBundle_MultipartWithBinaryAndFieldsParses()
     {
         MockUploadsHandler.CapturedNotes = null;

@@ -2054,6 +2054,21 @@
         }
       }
     },
+    "/monitoring/log": {
+      "get": {
+        "operationId": "getMonitoringLog",
+        "responses": {
+          "200": {
+            "description": "The raw activity log",
+            "content": {
+              "text/plain": {
+                "schema": {"type": "string"}
+              }
+            }
+          }
+        }
+      }
+    },
     "/docs/upload-mixed": {
       "post": {
         "operationId": "uploadDocMixed",

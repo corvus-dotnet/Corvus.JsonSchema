@@ -704,6 +704,34 @@ public class GeneratedServerEndToEndTests
     }
 
     [TestMethod]
+    public async Task GetMonitoringLog_ReturnsTextPlain()
+    {
+        HttpResponseMessage response = await client!.GetAsync("/monitoring/log");
+
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual("text/plain", response.Content.Headers.ContentType?.MediaType);
+        Assert.AreEqual("line1\nline2", await response.Content.ReadAsStringAsync());
+    }
+
+    [TestMethod]
+    public async Task ExportData_DefaultStatusBinaryBody_WritesRawBytes()
+    {
+        MockDefaultHandler.ReturnExportDefaultBinary = true;
+        try
+        {
+            HttpResponseMessage response = await client!.GetAsync("/export");
+
+            Assert.AreEqual(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+            Assert.AreEqual("application/octet-stream", response.Content.Headers.ContentType?.MediaType);
+            CollectionAssert.AreEqual("export-error-blob"u8.ToArray(), await response.Content.ReadAsByteArrayAsync());
+        }
+        finally
+        {
+            MockDefaultHandler.ReturnExportDefaultBinary = false;
+        }
+    }
+
+    [TestMethod]
     public async Task UploadDocMixed_BinaryPrefixPartReachesHandler()
     {
         MockItemsHandler.CapturedMixedDoc = null;

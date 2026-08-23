@@ -4294,6 +4294,85 @@ public sealed class OpenApi20CodeGenerator
         return new GeneratedFile($"{structName}.cs", w.ToString());
     }
 
+    /// <summary>
+    /// Returns <see langword="true"/> if the response's content is classified as
+    /// <see cref="ContentCategory.OctetStream"/> (raw binary), which for Swagger 2.0
+    /// covers <c>type: file</c> responses and non-JSON, non-text produces.
+    /// </summary>
+    private static bool IsOctetStreamResponse(ResponseInfo resp)
+    {
+        foreach (ContentInfo content in resp.Content)
+        {
+            if (CodeEmitHelpers.ClassifyMediaType(content.MediaType) == ContentCategory.OctetStream)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the response's content is text/plain with no JSON
+    /// alternative, in which case the server result carries the text through the binary
+    /// writer machinery with a text content type.
+    /// </summary>
+    private static bool IsTextOnlyResponse(ResponseInfo resp)
+    {
+        bool hasText = false;
+        foreach (ContentInfo content in resp.Content)
+        {
+            // Streaming responses (SSE, NDJSON) classify into the text/binary buckets by
+            // media type but are handled by the streaming machinery, never the binary writer.
+            if (content.MediaType.StartsWith("text/event-stream", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(content.MediaType, "application/x-ndjson", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            ContentCategory category = CodeEmitHelpers.ClassifyMediaType(content.MediaType);
+            if (category == ContentCategory.Json)
+            {
+                return false;
+            }
+
+            if (category == ContentCategory.TextPlain)
+            {
+                hasText = true;
+            }
+        }
+
+        return hasText;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the response is a 2xx or default response carrying a raw
+    /// binary (octet-stream) or text-only body, in which case the server result offers binary
+    /// factories and the endpoint writes the body through the binary writer.
+    /// </summary>
+    private static bool IsBinaryStyleResponse(ResponseInfo resp)
+    {
+        bool eligible = resp.StatusCode == "default"
+            || (resp.StatusCode.Length == 3 && resp.StatusCode[0] == '2');
+        return eligible && (IsOctetStreamResponse(resp) || IsTextOnlyResponse(resp));
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if any of the operation's responses is binary-style.
+    /// </summary>
+    private static bool HasBinaryStyleResponse(OperationInfo op)
+    {
+        foreach (ResponseInfo resp in op.Responses)
+        {
+            if (IsBinaryStyleResponse(resp))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private GeneratedFile EmitServerOperationResult(OperationInfo op)
     {
         string structName = $"{op.MethodName}Result";
@@ -4327,6 +4406,10 @@ public sealed class OpenApi20CodeGenerator
 
         bool hasHeaders = allHeaders.Count > 0;
 
+        // Detect a 2xx or default binary-style (octet-stream or text-only) response: the server
+        // must be able to write raw bytes.
+        bool hasBinaryResponse = HasBinaryStyleResponse(op);
+
         w.WriteLine("/// <summary>");
         w.WriteLine($"/// Result type for the {op.MethodName} operation.");
         w.WriteLine("/// </summary>");
@@ -4342,6 +4425,11 @@ public sealed class OpenApi20CodeGenerator
                 w.Write($", {typeName} {fieldName} = default");
             }
 
+            if (hasBinaryResponse)
+            {
+                w.Write(", bool hasBinaryBody = false, Func<Stream, CancellationToken, ValueTask>? binaryWriter = null");
+            }
+
             w.WriteLine(")");
             w.OpenBrace();
             w.WriteLine("this.StatusCode = statusCode;");
@@ -4352,16 +4440,40 @@ public sealed class OpenApi20CodeGenerator
                 w.WriteLine($"this.{propertyName} = {fieldName};");
             }
 
+            if (hasBinaryResponse)
+            {
+                w.WriteLine("this.HasBinaryBody = hasBinaryBody;");
+                w.WriteLine("this.binaryWriter = binaryWriter;");
+            }
+
             w.CloseBrace();
         }
         else
         {
-            w.WriteLine($"private {structName}(int statusCode, JsonElement body = default, string? contentType = null)");
+            w.Write($"private {structName}(int statusCode, JsonElement body = default, string? contentType = null");
+            if (hasBinaryResponse)
+            {
+                w.Write(", bool hasBinaryBody = false, Func<Stream, CancellationToken, ValueTask>? binaryWriter = null");
+            }
+
+            w.WriteLine(")");
             w.OpenBrace();
             w.WriteLine("this.StatusCode = statusCode;");
             w.WriteLine("this.Body = body;");
             w.WriteLine("this.ContentType = contentType;");
+            if (hasBinaryResponse)
+            {
+                w.WriteLine("this.HasBinaryBody = hasBinaryBody;");
+                w.WriteLine("this.binaryWriter = binaryWriter;");
+            }
+
             w.CloseBrace();
+        }
+
+        if (hasBinaryResponse)
+        {
+            w.WriteLine();
+            w.WriteLine("private readonly Func<Stream, CancellationToken, ValueTask>? binaryWriter;");
         }
 
         w.WriteLine();
@@ -4373,6 +4485,19 @@ public sealed class OpenApi20CodeGenerator
         w.WriteLine();
         w.WriteLine("/// <summary>Gets the content type for the response body.</summary>");
         w.WriteLine("public string? ContentType { get; }");
+
+        if (hasBinaryResponse)
+        {
+            w.WriteLine();
+            w.WriteLine("/// <summary>Gets a value indicating whether this result has a raw binary response body.</summary>");
+            w.WriteLine("public bool HasBinaryBody { get; }");
+            w.WriteLine();
+            w.WriteLine("/// <summary>Writes the raw binary response body to the given stream.</summary>");
+            w.WriteLine("/// <param name=\"stream\">The response stream.</param>");
+            w.WriteLine("/// <param name=\"cancellationToken\">A cancellation token.</param>");
+            w.WriteLine("/// <returns>A task that completes when the body has been written.</returns>");
+            w.WriteLine("public ValueTask WriteBinaryBodyAsync(Stream stream, CancellationToken cancellationToken) => this.binaryWriter is { } writer ? writer(stream, cancellationToken) : ValueTask.CompletedTask;");
+        }
 
         // Header properties
         foreach (var (header, typeName, _, propertyName) in allHeaders)
@@ -4389,6 +4514,68 @@ public sealed class OpenApi20CodeGenerator
         {
             string factoryName = CodeEmitHelpers.StatusCodeToName(resp.StatusCode);
             string? typeName = this.ResolveResponseTypeName(resp);
+
+            // For a binary-style (octet-stream, type: file, or text-only) 2xx or default response,
+            // emit factories that take raw bytes or a write callback so the handler can return
+            // binary or text content. A response that also declares JSON content falls through
+            // so the JSON factory is emitted alongside.
+            if (IsBinaryStyleResponse(resp))
+            {
+                bool isDefaultResp = resp.StatusCode == "default";
+                bool isTextOnlyResp = IsTextOnlyResponse(resp);
+                string statusParam = isDefaultResp ? "int statusCode, " : string.Empty;
+                string statusArg = isDefaultResp ? "statusCode" : resp.StatusCode;
+                string statusDoc = isDefaultResp ? "the given status" : $"status {resp.StatusCode}";
+                string defaultContentType = isTextOnlyResp ? "text/plain; charset=utf-8" : "application/octet-stream";
+                string ctorPrefix = $"{statusArg}, default, contentType, hasBinaryBody: true, binaryWriter: ";
+
+                void EmitStatusParamDoc()
+                {
+                    if (isDefaultResp)
+                    {
+                        w.WriteLine("/// <param name=\"statusCode\">The HTTP status code.</param>");
+                    }
+                }
+
+                w.WriteLine();
+                w.WriteLine("/// <summary>");
+                w.WriteLine($"/// Creates a {factoryName} result with a buffered raw binary body.");
+                w.WriteLine("/// </summary>");
+                EmitStatusParamDoc();
+                w.WriteLine("/// <param name=\"body\">The raw binary response body.</param>");
+                w.WriteLine("/// <param name=\"contentType\">The content type for the response body.</param>");
+                w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with {statusDoc}.</returns>");
+                w.WriteLine($"public static {structName} {factoryName}({statusParam}ReadOnlyMemory<byte> body, string? contentType = \"{defaultContentType}\") => new({ctorPrefix}(stream, cancellationToken) => stream.WriteAsync(body, cancellationToken));");
+                w.WriteLine();
+                w.WriteLine("/// <summary>");
+                w.WriteLine($"/// Creates a {factoryName} result that streams a raw binary body.");
+                w.WriteLine("/// </summary>");
+                EmitStatusParamDoc();
+                w.WriteLine("/// <param name=\"writeBody\">A callback that writes the raw binary response body to the response stream.</param>");
+                w.WriteLine("/// <param name=\"contentType\">The content type for the response body.</param>");
+                w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with {statusDoc}.</returns>");
+                w.WriteLine($"public static {structName} {factoryName}({statusParam}Func<Stream, CancellationToken, ValueTask> writeBody, string? contentType = \"{defaultContentType}\") => new({ctorPrefix}writeBody);");
+
+                if (isTextOnlyResp)
+                {
+                    // String convenience overload — encodes the text as UTF-8 when the body is
+                    // written. The UTF-8 bytes overload above is the allocation-conscious path.
+                    w.WriteLine();
+                    w.WriteLine("/// <summary>");
+                    w.WriteLine($"/// Creates a {factoryName} result from a text body, encoded as UTF-8 when written.");
+                    w.WriteLine("/// </summary>");
+                    EmitStatusParamDoc();
+                    w.WriteLine("/// <param name=\"body\">The text response body.</param>");
+                    w.WriteLine("/// <param name=\"contentType\">The content type for the response body.</param>");
+                    w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with {statusDoc}.</returns>");
+                    w.WriteLine($"public static {structName} {factoryName}({statusParam}string body, string? contentType = \"{defaultContentType}\") => new({ctorPrefix}(stream, cancellationToken) => stream.WriteAsync(System.Text.Encoding.UTF8.GetBytes(body), cancellationToken));");
+                }
+
+                if (typeName is null)
+                {
+                    continue;
+                }
+            }
 
             List<(HeaderInfo Header, string TypeName, string FieldName, string PropertyName)> respHeaders = [];
             foreach (HeaderInfo header in resp.Headers)
@@ -5092,7 +5279,21 @@ public sealed class OpenApi20CodeGenerator
                     w.WriteLine();
                 }
 
-                w.WriteLine("if (!result.Body.IsUndefined())");
+                // For operations with a binary-style response, write raw bytes directly.
+                if (HasBinaryStyleResponse(op))
+                {
+                    w.WriteLine("if (result.HasBinaryBody)");
+                    w.OpenBrace();
+                    w.WriteLine("context.Response.ContentType = result.ContentType ?? \"application/octet-stream\";");
+                    w.WriteLine("await result.WriteBinaryBodyAsync(context.Response.Body, context.RequestAborted).ConfigureAwait(false);");
+                    w.CloseBrace();
+                    w.WriteLine("else if (!result.Body.IsUndefined())");
+                }
+                else
+                {
+                    w.WriteLine("if (!result.Body.IsUndefined())");
+                }
+
                 w.OpenBrace();
                 w.WriteLine("context.Response.ContentType = result.ContentType ?? \"application/json\";");
                 w.WriteLine("Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);");

@@ -3496,15 +3496,40 @@ public sealed class OpenApi32CodeGenerator
     }
 
     /// <summary>
-    /// Returns <see langword="true"/> if any 2xx success response of the operation is classified as a
-    /// raw <c>application/octet-stream</c> body, in which case the server result/endpoint emit a binary
-    /// response path mirroring the client's <see cref="System.IO.Stream"/> accessor.
+    /// Returns <see langword="true"/> if the response's content is text/plain with no JSON
+    /// alternative, in which case the server result carries the text through the binary
+    /// writer machinery with a text content type.
     /// </summary>
-    private static bool HasOctetStreamSuccessResponse(OperationInfo op)
+    private static bool IsTextOnlyResponse(ResponseInfo resp)
+    {
+        // Streaming responses (SSE, NDJSON) classify into the text/binary buckets by media
+        // type but are handled by the streaming machinery, never the binary writer.
+        foreach (ContentInfo content in resp.Content)
+        {
+            if (content.MediaType.StartsWith("text/event-stream", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(content.MediaType, "application/x-ndjson", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+        }
+
+        ContentCategory[] categories = GetDistinctContentCategories(resp);
+        return Array.IndexOf(categories, ContentCategory.TextPlain) >= 0
+            && Array.IndexOf(categories, ContentCategory.Json) < 0;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if any 2xx or default response of the operation carries a
+    /// raw binary (octet-stream) or text-only body, in which case the server result/endpoint emit
+    /// the binary response path mirroring the client's <see cref="System.IO.Stream"/> accessor.
+    /// </summary>
+    private static bool HasBinaryStyleResponse(OperationInfo op)
     {
         foreach (ResponseInfo resp in op.Responses)
         {
-            if (resp.StatusCode.Length > 0 && resp.StatusCode[0] == '2' && IsOctetStreamResponse(resp))
+            bool eligible = resp.StatusCode == "default"
+                || (resp.StatusCode.Length > 0 && resp.StatusCode[0] == '2');
+            if (eligible && (IsOctetStreamResponse(resp) || IsTextOnlyResponse(resp)))
             {
                 return true;
             }
@@ -7282,7 +7307,7 @@ public sealed class OpenApi32CodeGenerator
 
         bool hasHeaders = allHeaders.Count > 0;
         bool hasStreamingResponses = op.Responses.Any(r => GetStreamingContent(r).Count > 0);
-        bool hasBinaryResponse = HasOctetStreamSuccessResponse(op);
+        bool hasBinaryResponse = HasBinaryStyleResponse(op);
         string streamTypeName = $"{op.MethodName}Stream";
         string streamWriterDelegateName = $"{op.MethodName}StreamWriter";
         string streamWriterInvokerName = $"{op.MethodName}StreamWriterInvoker";
@@ -7724,9 +7749,13 @@ public sealed class OpenApi32CodeGenerator
             return;
         }
 
-        // For a 2xx success response classified as application/octet-stream, emit a factory that takes
-        // raw bytes (mirrors the client exposing a response Stream for the same response).
-        if (!isDefault && statusCode.Length > 0 && statusCode[0] == '2' && IsOctetStreamResponse(response))
+        // For a 2xx or default response carrying a raw binary (octet-stream) or text-only body,
+        // emit factories that take raw bytes or a write callback (mirrors the client exposing a
+        // response Stream for the same response). When the response also carries JSON content
+        // (e.g. a default response declaring both), the JSON factory is emitted as well.
+        bool binaryEligible = isDefault || (statusCode.Length > 0 && statusCode[0] == '2');
+        bool isTextOnly = IsTextOnlyResponse(response);
+        if (binaryEligible && (IsOctetStreamResponse(response) || isTextOnly))
         {
             this.EmitServerBinaryResultFactory(
                 w,
@@ -7734,8 +7763,15 @@ public sealed class OpenApi32CodeGenerator
                 factoryName,
                 respHeaders,
                 statusCode,
-                structHasHeaders);
-            return;
+                structHasHeaders,
+                isDefault,
+                isTextOnly);
+            if (bodyTypeName is null)
+            {
+                return;
+            }
+
+            w.WriteLine();
         }
 
         // Parameters
@@ -7891,9 +7927,18 @@ public sealed class OpenApi32CodeGenerator
         string factoryName,
         List<(HeaderInfo Header, string TypeName, string FieldName, string PropertyName)> respHeaders,
         string statusCode,
-        bool structHasHeaders)
+        bool structHasHeaders,
+        bool isDefault = false,
+        bool isTextOnly = false)
     {
         bool hasRespHeaders = respHeaders.Count > 0;
+
+        // Default responses carry the caller's status code as the first parameter; declared
+        // statuses bake the literal into the constructor call.
+        string statusParam = isDefault ? "int statusCode, " : string.Empty;
+        string statusArg = isDefault ? "statusCode" : statusCode;
+        string statusDoc = isDefault ? "the given status" : $"status {statusCode}";
+        string defaultContentType = isTextOnly ? "text/plain; charset=utf-8" : "application/octet-stream";
 
         // Build the trailing constructor arguments (headers + binary flags) shared by both overloads.
         // The writer expression varies between overloads, so it is appended by each call.
@@ -7945,21 +7990,50 @@ public sealed class OpenApi32CodeGenerator
         string optionalHeaderParams = OptionalHeaderParams();
 
         // Buffered overload — copies the supplied bytes to the response stream when invoked.
+        if (isDefault)
+        {
+            w.WriteLine("/// <param name=\"statusCode\">The HTTP status code.</param>");
+        }
+
         w.WriteLine("/// <param name=\"body\">The raw binary response body.</param>");
         w.WriteLine("/// <param name=\"contentType\">The content type for the response body.</param>");
         EmitHeaderDocs();
-        w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with status {statusCode}.</returns>");
-        w.WriteLine($"public static {structName} {factoryName}(ReadOnlyMemory<byte> body{requiredParams}, string? contentType = \"application/octet-stream\"{optionalHeaderParams}) => new({statusCode}, default, contentType{headerCtorArgs}, hasBinaryBody: true, binaryWriter: (stream, cancellationToken) => stream.WriteAsync(body, cancellationToken));");
+        w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with {statusDoc}.</returns>");
+        w.WriteLine($"public static {structName} {factoryName}({statusParam}ReadOnlyMemory<byte> body{requiredParams}, string? contentType = \"{defaultContentType}\"{optionalHeaderParams}) => new({statusArg}, default, contentType{headerCtorArgs}, hasBinaryBody: true, binaryWriter: (stream, cancellationToken) => stream.WriteAsync(body, cancellationToken));");
 
         w.WriteLine();
 
         // Streaming overload — invokes the supplied callback to write the body directly.
-        w.WriteLine($"/// <summary>Creates a {statusCode} {factoryName} result whose body is streamed directly to the response.</summary>");
+        w.WriteLine($"/// <summary>Creates a {factoryName} result whose body is streamed directly to the response.</summary>");
+        if (isDefault)
+        {
+            w.WriteLine("/// <param name=\"statusCode\">The HTTP status code.</param>");
+        }
+
         w.WriteLine("/// <param name=\"writeBody\">A callback that writes the response body to the supplied stream.</param>");
         w.WriteLine("/// <param name=\"contentType\">The content type for the response body.</param>");
         EmitHeaderDocs();
-        w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with status {statusCode}.</returns>");
-        w.WriteLine($"public static {structName} {factoryName}(Func<Stream, CancellationToken, ValueTask> writeBody{requiredParams}, string? contentType = \"application/octet-stream\"{optionalHeaderParams}) => new({statusCode}, default, contentType{headerCtorArgs}, hasBinaryBody: true, binaryWriter: writeBody);");
+        w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with {statusDoc}.</returns>");
+        w.WriteLine($"public static {structName} {factoryName}({statusParam}Func<Stream, CancellationToken, ValueTask> writeBody{requiredParams}, string? contentType = \"{defaultContentType}\"{optionalHeaderParams}) => new({statusArg}, default, contentType{headerCtorArgs}, hasBinaryBody: true, binaryWriter: writeBody);");
+
+        if (isTextOnly)
+        {
+            w.WriteLine();
+
+            // String convenience overload — encodes the text as UTF-8 when the body is written.
+            // The UTF-8 bytes overload above is the allocation-conscious path.
+            w.WriteLine($"/// <summary>Creates a {factoryName} result from a text body, encoded as UTF-8 when written.</summary>");
+            if (isDefault)
+            {
+                w.WriteLine("/// <param name=\"statusCode\">The HTTP status code.</param>");
+            }
+
+            w.WriteLine("/// <param name=\"body\">The text response body.</param>");
+            w.WriteLine("/// <param name=\"contentType\">The content type for the response body.</param>");
+            EmitHeaderDocs();
+            w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with {statusDoc}.</returns>");
+            w.WriteLine($"public static {structName} {factoryName}({statusParam}string body{requiredParams}, string? contentType = \"{defaultContentType}\"{optionalHeaderParams}) => new({statusArg}, default, contentType{headerCtorArgs}, hasBinaryBody: true, binaryWriter: (stream, cancellationToken) => stream.WriteAsync(System.Text.Encoding.UTF8.GetBytes(body), cancellationToken));");
+        }
     }
 
     private void EmitServerStreamingResultFactories(
@@ -8625,7 +8699,7 @@ public sealed class OpenApi32CodeGenerator
                     w.WriteLine();
                 }
 
-                bool opHasBinaryResponse = HasOctetStreamSuccessResponse(op);
+                bool opHasBinaryResponse = HasBinaryStyleResponse(op);
                 if (opHasStreamingResponses)
                 {
                     w.WriteLine("if (result.HasStreamingBody)");

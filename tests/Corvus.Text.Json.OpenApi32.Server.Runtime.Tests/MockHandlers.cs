@@ -91,8 +91,15 @@ internal sealed class MockDefaultHandler : IApiDefaultHandler
     public ValueTask<GetStyledQuirkyResult> HandleGetStyledQuirkyAsync(GetStyledQuirkyParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
         => new(GetStyledQuirkyResult.Ok(ReturnInvalidResponse ? ItemEntity.ParseValue("""{}"""u8) : DefaultItem, workspace));
 
+    public static bool ReturnExportDefaultBinary { get; set; }
+
     public ValueTask<ExportDataResult> HandleExportDataAsync(ExportDataParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
-        => new(ExportDataResult.Ok("export-data"u8.ToArray(), workspace, eTag: "\"export-1\"", xExportSequence: 7));
+        => new(ReturnExportDefaultBinary
+            ? ExportDataResult.Default(503, "export-error-blob"u8.ToArray())
+            : ExportDataResult.Ok("export-data"u8.ToArray(), workspace, eTag: "\"export-1\"", xExportSequence: 7));
+
+    public ValueTask<GetMonitoringLogResult> HandleGetMonitoringLogAsync(GetMonitoringLogParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+        => new(GetMonitoringLogResult.Ok("line1\nline2"));
 
     public ValueTask<GetEmptyServersResult> HandleGetEmptyServersAsync(GetEmptyServersParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {

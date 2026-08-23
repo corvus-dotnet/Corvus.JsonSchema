@@ -213,6 +213,20 @@ public class OpenApi20CodeGeneratorCovspecTests
     }
 
     [TestMethod]
+    public void ServerEmitsBinaryFactoriesForFileResponses()
+    {
+        // renderWidget's 200 is a type: file response produced as octet-stream: the server
+        // result must accept raw bytes or a write callback instead of a body-less Ok().
+        string result = generatedServerFiles.First(f => f.FileName == "RenderWidgetResult.cs").Content;
+        StringAssert.Contains(result, "(ReadOnlyMemory<byte> body");
+        StringAssert.Contains(result, "(Func<Stream, CancellationToken, ValueTask> writeBody");
+        StringAssert.Contains(result, "WriteBinaryBodyAsync");
+
+        string registration = generatedServerFiles.First(f => f.FileName == "ApiEndpointRegistration.cs").Content;
+        StringAssert.Contains(registration, "result.HasBinaryBody");
+    }
+
+    [TestMethod]
     public void ServerCapturesFileParameterBytes()
     {
         // A Swagger 2.0 `type: file` formData parameter must reach the handler: the endpoint

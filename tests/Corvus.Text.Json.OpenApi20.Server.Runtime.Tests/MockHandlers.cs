@@ -35,7 +35,10 @@ internal sealed class MockWidgetsHandler : IApiWidgetsHandler
         => new(CreateWidgetResult.Created(parameters.Body, workspace));
 
     public ValueTask<RenderWidgetResult> HandleRenderWidgetAsync(RenderWidgetParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
-        => new(RenderWidgetResult.Ok());
+        => new(RenderWidgetResult.Ok("rendered-widget"u8.ToArray()));
+
+    public ValueTask<GetWidgetThumbnailResult> HandleGetWidgetThumbnailAsync(GetWidgetThumbnailParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+        => new(GetWidgetThumbnailResult.Ok("widget-thumbnail"u8.ToArray()));
 }
 
 internal sealed class MockUploadsHandler : IApiUploadsHandler

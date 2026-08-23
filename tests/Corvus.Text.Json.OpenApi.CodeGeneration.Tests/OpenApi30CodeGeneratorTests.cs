@@ -7351,6 +7351,65 @@ public class OpenApi30CodeGeneratorTests
     }
 
     [TestMethod]
+    public void GenerateServer_BinaryStyleResponses_GetFactoriesForDefaultAndTextOnly()
+    {
+        JsonElement spec = ParseSpec("""
+        {
+          "openapi": "3.0.3",
+          "info": {"title": "t", "version": "1"},
+          "paths": {
+            "/log": {
+              "get": {
+                "operationId": "getLog",
+                "responses": {
+                  "200": {
+                    "description": "text log",
+                    "content": {"text/plain": {"schema": {"type": "string"}}}
+                  }
+                }
+              }
+            },
+            "/export": {
+              "get": {
+                "operationId": "exportBlob",
+                "responses": {
+                  "default": {
+                    "description": "blob or error",
+                    "content": {
+                      "application/octet-stream": {"schema": {"type": "string", "format": "binary"}}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """);
+
+        OpenApi30CodeGenerator gen = new("Petstore.Server", new Dictionary<string, string>(StringComparer.Ordinal));
+        IReadOnlyList<GeneratedFile> files = gen.GenerateServer(spec);
+
+        string logResult = GetFile(files, "GetLogResult.cs").Content;
+        Assert.IsTrue(
+            logResult.Contains("text/plain; charset=utf-8", StringComparison.Ordinal),
+            "expected the text content type default");
+        Assert.IsTrue(
+            logResult.Contains("(string body", StringComparison.Ordinal),
+            "expected a string convenience overload");
+        Assert.IsTrue(
+            logResult.Contains("(ReadOnlyMemory<byte> body", StringComparison.Ordinal),
+            "expected a UTF-8 bytes overload");
+
+        string exportResult = GetFile(files, "ExportBlobResult.cs").Content;
+        Assert.IsTrue(
+            exportResult.Contains("(int statusCode, ReadOnlyMemory<byte> body", StringComparison.Ordinal),
+            "expected a buffered binary overload on the default factory");
+        Assert.IsTrue(
+            exportResult.Contains("(int statusCode, Func<Stream, CancellationToken, ValueTask> writeBody", StringComparison.Ordinal),
+            "expected a streaming binary overload on the default factory");
+    }
+
+    [TestMethod]
     public void GenerateServer_EndpointRegistration_IncludesAllOperations()
     {
         IReadOnlyList<GeneratedFile> files = GenerateServerCoverageSpec();

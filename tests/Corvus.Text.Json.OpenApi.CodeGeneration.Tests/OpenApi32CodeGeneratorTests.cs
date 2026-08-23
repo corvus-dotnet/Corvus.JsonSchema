@@ -1209,6 +1209,49 @@ public class OpenApi32CodeGeneratorTests
     }
 
     [TestMethod]
+    public void GenerateServer_DefaultStatusOctetStreamResponse_GetsBinaryFactoryOverloads()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+        OpenApi32CodeGenerator generator = new("CovTest.Server", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(covspecRoot);
+
+        // exportData's default response carries both application/json and
+        // application/octet-stream: the result must offer binary overloads alongside
+        // the JSON default factory, each taking the caller's status code.
+        string result = files.First(f => f.FileName == "ExportDataResult.cs").Content;
+        Assert.IsTrue(
+            result.Contains("(int statusCode, ReadOnlyMemory<byte> body", StringComparison.Ordinal),
+            "expected a buffered binary overload on the default factory");
+        Assert.IsTrue(
+            result.Contains("(int statusCode, Func<Stream, CancellationToken, ValueTask> writeBody", StringComparison.Ordinal),
+            "expected a streaming binary overload on the default factory");
+        Assert.IsTrue(
+            result.Contains(".Source body", StringComparison.Ordinal),
+            "expected the JSON default factory to survive alongside the binary overloads");
+    }
+
+    [TestMethod]
+    public void GenerateServer_TextOnlyResponse_GetsTextFactory()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+        OpenApi32CodeGenerator generator = new("CovTest.Server", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(covspecRoot);
+
+        // getMonitoringLog's only response is text/plain: instead of a body-less Ok()
+        // the result must accept text content, defaulting the content type accordingly.
+        string result = files.First(f => f.FileName == "GetMonitoringLogResult.cs").Content;
+        Assert.IsTrue(
+            result.Contains("text/plain; charset=utf-8", StringComparison.Ordinal),
+            "expected the text content type default");
+        Assert.IsTrue(
+            result.Contains("(string body", StringComparison.Ordinal),
+            "expected a string convenience overload");
+        Assert.IsTrue(
+            result.Contains("(ReadOnlyMemory<byte> body", StringComparison.Ordinal),
+            "expected a UTF-8 bytes overload");
+    }
+
+    [TestMethod]
     public void GenerateServer_MultipartMixed_CapturesBinaryPartsAndSkipsPositionalValidation()
     {
         Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
