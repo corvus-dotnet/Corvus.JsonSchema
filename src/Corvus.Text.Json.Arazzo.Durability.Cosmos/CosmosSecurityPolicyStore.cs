@@ -140,6 +140,7 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
             static (Utf8JsonWriter writer, in (string Name, SecurityRuleDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
                 => SecurityRuleDocument.WriteNew(writer, c.Name, c.Draft, c.Actor, c.At, c.Tag),
             mirrorOrder: null,
+            managementTags: draft.ManagementTagsValue,
             out ParsedJsonDocument<SecurityRuleDocument> document);
         try
         {
@@ -245,6 +246,81 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
+    public async ValueTask<SecurityRulePage> ListRulesAsync(int limit, global::Corvus.Text.Json.Arazzo.Durability.JsonString pageToken, global::Corvus.Text.Json.Arazzo.Durability.JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : SecurityRulePage.DefaultPageSize;
+        string? after = DecodeRuleCursor(pageToken);
+        string? qText = q.IsNotUndefined() ? (string)q : null;
+
+        var conditions = new List<string>(3);
+        var parameters = new List<(string Name, string Value)>();
+        if (after is not null)
+        {
+            conditions.Add("c.id > @after");
+        }
+
+        if (qText is not null)
+        {
+            conditions.Add("(CONTAINS(c.id, @q, true) OR CONTAINS(c.doc.expression, @q, true))");
+        }
+
+        // Push the §14.2 read reach into the query as an EXISTS over the envelope's securityTags mirror.
+        AppendReachCondition(conditions, parameters, context);
+
+        var sql = new StringBuilder("SELECT c.doc FROM c WHERE c.pk = @pk");
+        foreach (string condition in conditions)
+        {
+            sql.Append(" AND ").Append(condition);
+        }
+
+        sql.Append(" ORDER BY c.id");
+        var definition = new QueryDefinition(sql.ToString()).WithParameter("@pk", RulePartition);
+        if (after is not null)
+        {
+            definition = definition.WithParameter("@after", after);
+        }
+
+        if (qText is not null)
+        {
+            definition = definition.WithParameter("@q", qText);
+        }
+
+        foreach ((string name, string value) in parameters)
+        {
+            definition = definition.WithParameter(name, value);
+        }
+
+        var page = new PooledDocumentList<SecurityRuleDocument>(pageSize);
+        try
+        {
+            bool hasMore = false;
+            await foreach (ReadOnlyMemory<byte> doc in this.QueryDocumentsAsync(definition, RulePartition, cancellationToken).ConfigureAwait(false))
+            {
+                if (page.Count == pageSize)
+                {
+                    hasMore = true;
+                    break;
+                }
+
+                page.Add(PersistedJson.ToPooledDocument<SecurityRuleDocument>(doc.Span));
+            }
+
+            if (!hasMore)
+            {
+                return SecurityRulePage.Create(page);
+            }
+
+            using UnescapedUtf8JsonString lastName = page[page.Count - 1].Name.GetUtf8String();
+            return SecurityRulePage.Create(page, lastName.Span);
+        }
+        catch
+        {
+            page.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<(int Count, bool Capped)> CountRulesAsync(int cap, global::Corvus.Text.Json.Arazzo.Durability.JsonString q, CancellationToken cancellationToken)
     {
         int bound = cap > 0 ? cap : SecurityRulePage.DefaultPageSize;
@@ -278,6 +354,50 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountRulesAsync(int cap, global::Corvus.Text.Json.Arazzo.Durability.JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        int bound = cap > 0 ? cap : SecurityRulePage.DefaultPageSize;
+        string? qText = q.IsNotUndefined() ? (string)q : null;
+
+        var conditions = new List<string>(2);
+        var parameters = new List<(string Name, string Value)>();
+        if (qText is not null)
+        {
+            conditions.Add("(CONTAINS(c.id, @q, true) OR CONTAINS(c.doc.expression, @q, true))");
+        }
+
+        // Same reach predicate as the reach-filtered list so the footer count cannot drift.
+        AppendReachCondition(conditions, parameters, context);
+
+        var sql = new StringBuilder("SELECT c.id AS doc FROM c WHERE c.pk = @pk");
+        foreach (string condition in conditions)
+        {
+            sql.Append(" AND ").Append(condition);
+        }
+
+        sql.Append(" ORDER BY c.id OFFSET 0 LIMIT @lim");
+        var definition = new QueryDefinition(sql.ToString()).WithParameter("@pk", RulePartition).WithParameter("@lim", bound + 1);
+        if (qText is not null)
+        {
+            definition = definition.WithParameter("@q", qText);
+        }
+
+        foreach ((string name, string value) in parameters)
+        {
+            definition = definition.WithParameter(name, value);
+        }
+
+        int total = 0;
+        await foreach (ReadOnlyMemory<byte> element in this.QueryDocumentsAsync(definition, RulePartition, cancellationToken).ConfigureAwait(false))
+        {
+            _ = element;
+            total++;
+        }
+
+        return total > bound ? (bound, true) : (total, false);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<(int Count, bool Capped)> CountBindingsAsync(int cap, global::Corvus.Text.Json.Arazzo.Durability.JsonString q, CancellationToken cancellationToken)
     {
         int bound = cap > 0 ? cap : SecurityBindingPage.DefaultPageSize;
@@ -302,6 +422,50 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         await foreach (ReadOnlyMemory<byte> element in this.QueryDocumentsAsync(definition, BindingPartition, cancellationToken).ConfigureAwait(false))
         {
             _ = element; // id-only projection — only its presence counts toward the bounded total
+            total++;
+        }
+
+        return total > bound ? (bound, true) : (total, false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountBindingsAsync(int cap, global::Corvus.Text.Json.Arazzo.Durability.JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        int bound = cap > 0 ? cap : SecurityBindingPage.DefaultPageSize;
+        string? qText = q.IsNotUndefined() ? (string)q : null;
+
+        var conditions = new List<string>(2);
+        var parameters = new List<(string Name, string Value)>();
+        if (qText is not null)
+        {
+            conditions.Add("(CONTAINS(c.doc.claimType, @q, true) OR CONTAINS(c.doc.claimValue, @q, true) OR CONTAINS(c.doc.description, @q, true))");
+        }
+
+        // Same reach predicate as the reach-filtered list so the footer count cannot drift.
+        AppendReachCondition(conditions, parameters, context);
+
+        var sql = new StringBuilder("SELECT c.id AS doc FROM c WHERE c.pk = @pk");
+        foreach (string condition in conditions)
+        {
+            sql.Append(" AND ").Append(condition);
+        }
+
+        sql.Append(" ORDER BY c[\"order\"], c.id OFFSET 0 LIMIT @lim");
+        var definition = new QueryDefinition(sql.ToString()).WithParameter("@pk", BindingPartition).WithParameter("@lim", bound + 1);
+        if (qText is not null)
+        {
+            definition = definition.WithParameter("@q", qText);
+        }
+
+        foreach ((string name, string value) in parameters)
+        {
+            definition = definition.WithParameter(name, value);
+        }
+
+        int total = 0;
+        await foreach (ReadOnlyMemory<byte> element in this.QueryDocumentsAsync(definition, BindingPartition, cancellationToken).ConfigureAwait(false))
+        {
+            _ = element;
             total++;
         }
 
@@ -341,6 +505,7 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
                 static (Utf8JsonWriter writer, in (SecurityRuleDocument Cur, SecurityRuleDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
                     => c.Cur.WriteUpdated(writer, c.Draft, c.Actor, c.At, c.Tag),
                 mirrorOrder: null,
+                managementTags: current.RootElement.ManagementTagsValue,
                 out document);
         }
 
@@ -377,6 +542,7 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
             static (Utf8JsonWriter writer, in (string Id, SecurityBindingDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
                 => SecurityBindingDocument.WriteNew(writer, c.Id, c.Draft, c.Actor, c.At, c.Tag),
             mirrorOrder: draft.OrderValue,
+            managementTags: draft.ManagementTagsValue,
             out ParsedJsonDocument<SecurityBindingDocument> document);
         try
         {
@@ -510,6 +676,82 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
     }
 
     /// <inheritdoc/>
+    public async ValueTask<SecurityBindingPage> ListBindingsAsync(int limit, global::Corvus.Text.Json.Arazzo.Durability.JsonString pageToken, global::Corvus.Text.Json.Arazzo.Durability.JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : SecurityBindingPage.DefaultPageSize;
+        bool hasCursor = DecodeBindingCursor(pageToken, out int cursorOrder, out string? cursorId);
+        string? qText = q.IsNotUndefined() ? (string)q : null;
+
+        var conditions = new List<string>(3);
+        var parameters = new List<(string Name, string Value)>();
+        if (hasCursor)
+        {
+            conditions.Add("(c[\"order\"] > @order OR (c[\"order\"] = @order AND c.id > @id))");
+        }
+
+        if (qText is not null)
+        {
+            conditions.Add("(CONTAINS(c.doc.claimType, @q, true) OR CONTAINS(c.doc.claimValue, @q, true) OR CONTAINS(c.doc.description, @q, true))");
+        }
+
+        // Push the §14.2 read reach into the query as an EXISTS over the envelope's securityTags mirror.
+        AppendReachCondition(conditions, parameters, context);
+
+        var sql = new StringBuilder("SELECT c.doc FROM c WHERE c.pk = @pk");
+        foreach (string condition in conditions)
+        {
+            sql.Append(" AND ").Append(condition);
+        }
+
+        sql.Append(" ORDER BY c[\"order\"], c.id");
+        var definition = new QueryDefinition(sql.ToString()).WithParameter("@pk", BindingPartition);
+        if (hasCursor)
+        {
+            definition = definition.WithParameter("@order", cursorOrder).WithParameter("@id", cursorId);
+        }
+
+        if (qText is not null)
+        {
+            definition = definition.WithParameter("@q", qText);
+        }
+
+        foreach ((string name, string value) in parameters)
+        {
+            definition = definition.WithParameter(name, value);
+        }
+
+        var page = new PooledDocumentList<SecurityBindingDocument>(pageSize);
+        try
+        {
+            bool hasMore = false;
+            await foreach (ReadOnlyMemory<byte> doc in this.QueryDocumentsAsync(definition, BindingPartition, cancellationToken).ConfigureAwait(false))
+            {
+                if (page.Count == pageSize)
+                {
+                    hasMore = true;
+                    break;
+                }
+
+                page.Add(PersistedJson.ToPooledDocument<SecurityBindingDocument>(doc.Span));
+            }
+
+            if (!hasMore)
+            {
+                return SecurityBindingPage.Create(page);
+            }
+
+            SecurityBindingDocument last = page[page.Count - 1];
+            using UnescapedUtf8JsonString lastId = last.Id.GetUtf8String();
+            return SecurityBindingPage.Create(page, last.OrderValue, lastId.Span);
+        }
+        catch
+        {
+            page.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
@@ -542,6 +784,7 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
                 static (Utf8JsonWriter writer, in (SecurityBindingDocument Cur, SecurityBindingDocument Draft, string Actor, DateTimeOffset At, WorkflowEtag Tag) c)
                     => c.Cur.WriteUpdated(writer, c.Draft, c.Actor, c.At, c.Tag),
                 mirrorOrder: draft.OrderValue,
+                managementTags: current.RootElement.ManagementTagsValue,
                 out document);
         }
 
@@ -649,6 +892,7 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         in TContext context,
         PersistedJson.WriteCallback<TContext> writeDocument,
         int? mirrorOrder,
+        in SecurityTagSet managementTags,
         out ParsedJsonDocument<T> document)
         where T : struct, IJsonElement<T>
     {
@@ -657,8 +901,8 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
         try
         {
             return CosmosJson.WriteToStream(
-                (Id: id, Partition: partition, Doc: docJson, MirrorOrder: mirrorOrder),
-                static (Utf8JsonWriter writer, in (string Id, string Partition, CosmosJson.RentedJson Doc, int? MirrorOrder) c) =>
+                (Id: id, Partition: partition, Doc: docJson, MirrorOrder: mirrorOrder, SecurityTags: managementTags),
+                static (Utf8JsonWriter writer, in (string Id, string Partition, CosmosJson.RentedJson Doc, int? MirrorOrder, SecurityTagSet SecurityTags) c) =>
                 {
                     writer.WriteStartObject();
                     writer.WriteString("id"u8, c.Id);
@@ -672,6 +916,22 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
                         writer.WriteNumber("order"u8, order);
                     }
 
+                    // securityTags mirrors the document's CURRENT management tags queryably (each {k, v}) so the §14.2 read
+                    // reach can be pushed into list/count as an EXISTS over c.securityTags (CosmosSecurityRuleEmitter). Tags
+                    // are immutable, but the whole item is replaced on update, so the mirror is written on every write. An
+                    // untagged, system-owned row writes an empty array and is admitted only under full read reach.
+                    writer.WritePropertyName("securityTags"u8);
+                    writer.WriteStartArray();
+                    foreach (SecurityTag tag in c.SecurityTags)
+                    {
+                        writer.WriteStartObject();
+                        writer.WriteString("k"u8, tag.Key);
+                        writer.WriteString("v"u8, tag.Value);
+                        writer.WriteEndObject();
+                    }
+
+                    writer.WriteEndArray();
+
                     // The policy document is JSON — embed it verbatim as a nested value, not base64 (which would be a
                     // spurious encode here + decode on read). It is valid JSON we produced, so skip validation.
                     writer.WritePropertyName("doc"u8);
@@ -684,6 +944,27 @@ public sealed class CosmosSecurityPolicyStore : ISecurityPolicyStore, IAsyncDisp
             document.Dispose();
             throw;
         }
+    }
+
+    // Appends the §14.2 read-reach predicate: an EXISTS over the envelope's securityTags mirror (the same rules
+    // context.Admits evaluates, translated by CosmosSecurityRuleEmitter). A null reach (unrestricted / full read) adds
+    // nothing, so an unscoped caller sees everything; an untagged, system-owned row is admitted only by that full reach.
+    // Shared by the list and count so they cannot drift.
+    private static void AppendReachCondition(List<string> conditions, List<(string Name, string Value)> parameters, AccessContext context)
+    {
+        if (context.Reach(AccessVerb.Read) is not { } reach)
+        {
+            return;
+        }
+
+        int securityParam = 0;
+        var emitter = new CosmosSecurityRuleEmitter("c.securityTags", "k", "v", value =>
+        {
+            string name = "@sec" + securityParam++.ToString(CultureInfo.InvariantCulture);
+            parameters.Add((name, value));
+            return name;
+        });
+        conditions.Add(reach.ToSqlPredicate(emitter));
     }
 
     private static async ValueTask ProvisionAsync(CosmosClient client, string databaseName, CancellationToken cancellationToken)
