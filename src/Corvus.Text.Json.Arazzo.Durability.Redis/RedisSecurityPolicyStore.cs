@@ -129,6 +129,10 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
                 ThrowHelper.ThrowSecurityRuleAlreadyExists(name);
             }
 
+            // Mirror the management tags into the label sets (the member is the rule name) so the §14.2 reach resolves to
+            // candidate names server-side. Tags are immutable, so there is no re-point on update; an untagged, system-owned
+            // row occupies no label set and is admitted only under full read reach (fail-closed).
+            await this.AddLabelsAsync(RedisSecurityLabels.SecurityRuleLabelPrefix, name, draft.ManagementTagsValue).ConfigureAwait(false);
             await this.database.SetAddAsync(RuleIndexKey, name).ConfigureAwait(false);
             await this.BumpGenerationAsync().ConfigureAwait(false);
             return doc;
@@ -228,6 +232,92 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
+    public async ValueTask<SecurityRulePage> ListRulesAsync(int limit, JsonString pageToken, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        int pageSize = limit > 0 ? limit : SecurityRulePage.DefaultPageSize;
+        string? after = DecodeRuleCursor(pageToken);
+        string? qText = q.IsNotUndefined() ? (string)q : null;
+
+        // Resolve the caller's read reach to candidate rule names via the label sets (server-side). Null = no narrowing
+        // (scan the index); empty = nothing admitted; otherwise a superset of the admitted names, each re-checked exactly
+        // with context.Admits below (the label plan is a sound over-approximation).
+        IReadOnlySet<string>? candidates = await RedisSecurityLabels.ResolveReachCandidatesAsync(this.database, RedisSecurityLabels.SecurityRuleLabelPrefix, context.Reach(AccessVerb.Read)).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
+        {
+            return SecurityRulePage.Create(new PooledDocumentList<SecurityRuleDocument>(0));
+        }
+
+        List<string> names;
+        if (candidates is not null)
+        {
+            names = [.. candidates];
+        }
+        else
+        {
+            RedisValue[] members = await this.database.SetMembersAsync(RuleIndexKey).ConfigureAwait(false);
+            names = new List<string>(members.Length);
+            foreach (RedisValue m in members)
+            {
+                names.Add((string)m!);
+            }
+        }
+
+        names.Sort(StringComparer.Ordinal);
+
+        var page = new PooledDocumentList<SecurityRuleDocument>(pageSize);
+        try
+        {
+            bool hasMore = false;
+            foreach (string name in names)
+            {
+                if (after is not null && string.CompareOrdinal(name, after) <= 0)
+                {
+                    continue; // at or before the cursor — already returned in an earlier page
+                }
+
+                using Lease<byte>? lease = await this.database.StringGetLeaseAsync(RulePrefix + name).ConfigureAwait(false);
+                if (lease is not { Length: > 0 })
+                {
+                    continue; // candidate but doc gone — skip (a stale label is harmless)
+                }
+
+                ParsedJsonDocument<SecurityRuleDocument> document = PersistedJson.ToPooledDocument<SecurityRuleDocument>(lease.Span);
+
+                // The label plan over-approximates, so apply the exact §14.2 reach to the loaded row (an untagged, system-owned
+                // row is admitted only under full read reach).
+                if (!context.Admits(AccessVerb.Read, document.RootElement.ManagementTagsValue) || (qText is not null && !RuleMatches(document.RootElement, qText)))
+                {
+                    document.Dispose();
+                    continue;
+                }
+
+                if (page.Count == pageSize)
+                {
+                    hasMore = true;
+                    document.Dispose();
+                    break;
+                }
+
+                page.Add(document);
+            }
+
+            if (!hasMore)
+            {
+                return SecurityRulePage.Create(page);
+            }
+
+            using UnescapedUtf8JsonString lastName = page[page.Count - 1].Name.GetUtf8String();
+            return SecurityRulePage.Create(page, lastName.Span);
+        }
+        catch
+        {
+            page.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
@@ -263,7 +353,7 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
 
     /// <inheritdoc/>
     public ValueTask<bool> DeleteRuleAsync(string name, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
-        => this.DeleteAsync(RulePrefix, RuleIndexKey, "rule", name, expectedEtag, SecurityPolicySerialization.RuleEtagOf);
+        => this.DeleteAsync(RulePrefix, RuleIndexKey, RedisSecurityLabels.SecurityRuleLabelPrefix, "rule", name, expectedEtag, SecurityPolicySerialization.RuleEtagOf);
 
     /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>> AddBindingAsync(SecurityBindingDocument draft, string actor, CancellationToken cancellationToken)
@@ -279,6 +369,10 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         {
             ReadOnlyMemory<byte> utf8 = JsonMarshal.GetRawUtf8Value(doc.RootElement).Memory;
             await this.database.StringSetAsync(BindingPrefix + id, utf8).ConfigureAwait(false);
+
+            // Mirror the management tags into the label sets (the member is the binding id) so the §14.2 reach resolves to
+            // candidate ids server-side. Tags are immutable, so there is no re-point on update.
+            await this.AddLabelsAsync(RedisSecurityLabels.SecurityBindingLabelPrefix, id, draft.ManagementTagsValue).ConfigureAwait(false);
             await this.database.SetAddAsync(BindingIndexKey, id).ConfigureAwait(false);
             await this.database.SortedSetAddAsync(BindingOrderIndexKey, BindingMember(draft.OrderValue, id), 0).ConfigureAwait(false);
             await this.BumpGenerationAsync().ConfigureAwait(false);
@@ -377,6 +471,86 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
+    public async ValueTask<SecurityBindingPage> ListBindingsAsync(int limit, JsonString pageToken, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        int pageSize = limit > 0 ? limit : SecurityBindingPage.DefaultPageSize;
+        bool hasCursor = DecodeBindingCursor(pageToken, out int cursorOrder, out string? cursorId);
+        string? qText = q.IsNotUndefined() ? (string)q : null;
+
+        // Resolve the caller's read reach to candidate binding ids via the label sets (server-side). Null = no narrowing;
+        // empty = nothing admitted; otherwise a superset re-checked exactly with context.Admits below.
+        IReadOnlySet<string>? candidates = await RedisSecurityLabels.ResolveReachCandidatesAsync(this.database, RedisSecurityLabels.SecurityBindingLabelPrefix, context.Reach(AccessVerb.Read)).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
+        {
+            return SecurityBindingPage.Create(new PooledDocumentList<SecurityBindingDocument>(0));
+        }
+
+        // The order index gives the (order, id) sequence; the candidate set (when present) narrows which of those ids are read.
+        string? cursorMember = hasCursor ? BindingMember(cursorOrder, cursorId!) : null;
+        RedisValue[] entries = await this.database.SortedSetRangeByValueAsync(BindingOrderIndexKey).ConfigureAwait(false);
+
+        var page = new PooledDocumentList<SecurityBindingDocument>(pageSize);
+        try
+        {
+            bool hasMore = false;
+            foreach (RedisValue value in entries)
+            {
+                string member = (string)value!;
+                if (cursorMember is not null && string.CompareOrdinal(member, cursorMember) <= 0)
+                {
+                    continue; // at or before the cursor — already returned in an earlier page
+                }
+
+                int sep = member.IndexOf(MemberSeparator);
+                string id = sep < 0 ? member : member[(sep + 1)..];
+                if (candidates?.Contains(id) == false)
+                {
+                    continue; // outside the reach candidates
+                }
+
+                using Lease<byte>? lease = await this.database.StringGetLeaseAsync(BindingPrefix + id).ConfigureAwait(false);
+                if (lease is not { Length: > 0 })
+                {
+                    continue; // indexed but doc gone — skip
+                }
+
+                ParsedJsonDocument<SecurityBindingDocument> document = PersistedJson.ToPooledDocument<SecurityBindingDocument>(lease.Span);
+
+                // The label plan over-approximates, so apply the exact §14.2 reach to the loaded row.
+                if (!context.Admits(AccessVerb.Read, document.RootElement.ManagementTagsValue) || (qText is not null && !BindingMatches(document.RootElement, qText)))
+                {
+                    document.Dispose();
+                    continue;
+                }
+
+                if (page.Count == pageSize)
+                {
+                    hasMore = true;
+                    document.Dispose();
+                    break;
+                }
+
+                page.Add(document);
+            }
+
+            if (!hasMore)
+            {
+                return SecurityBindingPage.Create(page);
+            }
+
+            SecurityBindingDocument last = page[page.Count - 1];
+            using UnescapedUtf8JsonString lastId = last.Id.GetUtf8String();
+            return SecurityBindingPage.Create(page, last.OrderValue, lastId.Span);
+        }
+        catch
+        {
+            page.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
@@ -433,14 +607,22 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         var raw = (byte[])value!;
         SecurityPolicySerialization.EnsureEtag("binding", id, expectedEtag, SecurityPolicySerialization.BindingEtagOf(raw));
 
-        // Remove the order-index member too (its order comes from the stored document).
+        // Remove the order-index member too (its order comes from the stored document), and capture the label-set keys the
+        // row's tags occupy so they can be torn down after the row is gone (a stale label is harmless, a missing one is not).
+        HashSet<string> labelKeys;
         using (ParsedJsonDocument<SecurityBindingDocument> current = ParsedJsonDocument<SecurityBindingDocument>.Parse(raw.AsMemory()))
         {
             await this.database.SortedSetRemoveAsync(BindingOrderIndexKey, BindingMember(current.RootElement.OrderValue, id)).ConfigureAwait(false);
+            labelKeys = RedisSecurityLabels.SetKeysFor(RedisSecurityLabels.SecurityBindingLabelPrefix, current.RootElement.ManagementTagsValue);
         }
 
         await this.database.KeyDeleteAsync(BindingPrefix + id).ConfigureAwait(false);
         await this.database.SetRemoveAsync(BindingIndexKey, id).ConfigureAwait(false);
+        foreach (string setKey in labelKeys)
+        {
+            await this.database.SetRemoveAsync(setKey, id).ConfigureAwait(false);
+        }
+
         await this.BumpGenerationAsync().ConfigureAwait(false);
         return true;
     }
@@ -507,6 +689,62 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountRulesAsync(int cap, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        int bound = cap > 0 ? cap : SecurityRulePage.DefaultPageSize;
+        string? qText = q.IsNotUndefined() ? (string)q : null;
+
+        IReadOnlySet<string>? candidates = await RedisSecurityLabels.ResolveReachCandidatesAsync(this.database, RedisSecurityLabels.SecurityRuleLabelPrefix, context.Reach(AccessVerb.Read)).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
+        {
+            return (0, false);
+        }
+
+        IEnumerable<string> names;
+        if (candidates is not null)
+        {
+            names = candidates;
+        }
+        else
+        {
+            RedisValue[] members = await this.database.SetMembersAsync(RuleIndexKey).ConfigureAwait(false);
+            if (qText is null)
+            {
+                // Full reach + no q: the index members ARE the rules (Admits(null, *) = true), so count them directly, bounded.
+                return members.Length > bound ? (bound, true) : (members.Length, false);
+            }
+
+            var list = new List<string>(members.Length);
+            foreach (RedisValue m in members)
+            {
+                list.Add((string)m!);
+            }
+
+            names = list;
+        }
+
+        // Same reach + q predicate as the reach-filtered list so the footer count cannot drift, bounded at cap+1.
+        int n = 0;
+        foreach (string name in names)
+        {
+            using Lease<byte>? lease = await this.database.StringGetLeaseAsync(RulePrefix + name).ConfigureAwait(false);
+            if (lease is not { Length: > 0 })
+            {
+                continue;
+            }
+
+            using ParsedJsonDocument<SecurityRuleDocument> document = PersistedJson.ToPooledDocument<SecurityRuleDocument>(lease.Span);
+            if (context.Admits(AccessVerb.Read, document.RootElement.ManagementTagsValue) && (qText is null || RuleMatches(document.RootElement, qText)) && ++n > bound)
+            {
+                return (bound, true);
+            }
+        }
+
+        return (n, false);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<(int Count, bool Capped)> CountBindingsAsync(int cap, JsonString q, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -534,6 +772,54 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
 
             using ParsedJsonDocument<SecurityBindingDocument> document = PersistedJson.ToPooledDocument<SecurityBindingDocument>(lease.Span);
             if (BindingMatches(document.RootElement, qText) && ++n > bound)
+            {
+                return (bound, true);
+            }
+        }
+
+        return (n, false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountBindingsAsync(int cap, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        int bound = cap > 0 ? cap : SecurityBindingPage.DefaultPageSize;
+        string? qText = q.IsNotUndefined() ? (string)q : null;
+
+        IReadOnlySet<string>? candidates = await RedisSecurityLabels.ResolveReachCandidatesAsync(this.database, RedisSecurityLabels.SecurityBindingLabelPrefix, context.Reach(AccessVerb.Read)).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
+        {
+            return (0, false);
+        }
+
+        RedisValue[] entries = await this.database.SortedSetRangeByValueAsync(BindingOrderIndexKey).ConfigureAwait(false);
+        if (candidates is null && qText is null)
+        {
+            // Full reach + no q: the order-index entries ARE the bindings (Admits(null, *) = true), count them directly, bounded.
+            return entries.Length > bound ? (bound, true) : (entries.Length, false);
+        }
+
+        // Same reach + q predicate as the reach-filtered list so the footer count cannot drift, bounded at cap+1.
+        int n = 0;
+        foreach (RedisValue value in entries)
+        {
+            string member = (string)value!;
+            int sep = member.IndexOf(MemberSeparator);
+            string id = sep < 0 ? member : member[(sep + 1)..];
+            if (candidates?.Contains(id) == false)
+            {
+                continue;
+            }
+
+            using Lease<byte>? lease = await this.database.StringGetLeaseAsync(BindingPrefix + id).ConfigureAwait(false);
+            if (lease is not { Length: > 0 })
+            {
+                continue;
+            }
+
+            using ParsedJsonDocument<SecurityBindingDocument> document = PersistedJson.ToPooledDocument<SecurityBindingDocument>(lease.Span);
+            if (context.Admits(AccessVerb.Read, document.RootElement.ManagementTagsValue) && (qText is null || BindingMatches(document.RootElement, qText)) && ++n > bound)
             {
                 return (bound, true);
             }
@@ -652,7 +938,7 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     private async ValueTask BumpGenerationAsync()
         => await this.database.StringIncrementAsync(GenerationKey).ConfigureAwait(false);
 
-    private async ValueTask<bool> DeleteAsync(string prefix, string indexKey, string kind, string key, WorkflowEtag expectedEtag, Func<byte[], WorkflowEtag> etagOf)
+    private async ValueTask<bool> DeleteAsync(string prefix, string indexKey, string labelPrefix, string kind, string key, WorkflowEtag expectedEtag, Func<byte[], WorkflowEtag> etagOf)
     {
         ArgumentNullException.ThrowIfNull(key);
         RedisValue value = await this.database.StringGetAsync(prefix + key).ConfigureAwait(false);
@@ -661,10 +947,35 @@ public sealed class RedisSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
             return false;
         }
 
-        SecurityPolicySerialization.EnsureEtag(kind, key, expectedEtag, etagOf((byte[])value!));
+        var raw = (byte[])value!;
+        SecurityPolicySerialization.EnsureEtag(kind, key, expectedEtag, etagOf(raw));
+
+        // Capture the label-set keys the rule's tags occupy so they can be torn down after the row is gone (a stale label
+        // is harmless per the §14.4 contract, a missing one would hide a peer's row).
+        HashSet<string> labelKeys;
+        using (ParsedJsonDocument<SecurityRuleDocument> current = ParsedJsonDocument<SecurityRuleDocument>.Parse(raw.AsMemory()))
+        {
+            labelKeys = RedisSecurityLabels.SetKeysFor(labelPrefix, current.RootElement.ManagementTagsValue);
+        }
+
         await this.database.KeyDeleteAsync(prefix + key).ConfigureAwait(false);
         await this.database.SetRemoveAsync(indexKey, key).ConfigureAwait(false);
+        foreach (string setKey in labelKeys)
+        {
+            await this.database.SetRemoveAsync(setKey, key).ConfigureAwait(false);
+        }
+
         await this.BumpGenerationAsync().ConfigureAwait(false);
         return true;
+    }
+
+    // Adds the row id (rule name / binding id) to each label set its management tags occupy (two per tag). An untagged,
+    // system-owned row occupies no label set, so it is never a reach candidate and is admitted only under full read reach.
+    private async ValueTask AddLabelsAsync(string labelPrefix, string member, SecurityTagSet managementTags)
+    {
+        foreach (string setKey in RedisSecurityLabels.SetKeysFor(labelPrefix, managementTags))
+        {
+            await this.database.SetAddAsync(setKey, member).ConfigureAwait(false);
+        }
     }
 }

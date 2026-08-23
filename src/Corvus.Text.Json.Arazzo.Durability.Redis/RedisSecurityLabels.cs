@@ -53,6 +53,13 @@ internal static class RedisSecurityLabels
     /// <summary>The label-set key prefix for the workspace-workflow store's working-copy ids.</summary>
     internal const string WorkspaceWorkflowLabelPrefix = "arazzo:wc:label:";
 
+    /// <summary>The label-set key prefix for the security-policy rule store's row ids (the rule name). Kept separate from
+    /// the binding prefix because rule names and binding ids are independent id spaces that could otherwise collide.</summary>
+    internal const string SecurityRuleLabelPrefix = "arazzo:secrule:label:";
+
+    /// <summary>The label-set key prefix for the security-policy binding store's row ids (the binding id).</summary>
+    internal const string SecurityBindingLabelPrefix = "arazzo:secbinding:label:";
+
     // Interprets the compiled plan program over a stack of Lua tables, entirely server-side. ARGV is the
     // postfix token stream: 'S' <set key> pushes a label set's members; 'U' <n> / 'I' <n> pop n sets and push
     // their union / intersection. Read-only — no temp keys to clean up, safe on a replica — and the whole
