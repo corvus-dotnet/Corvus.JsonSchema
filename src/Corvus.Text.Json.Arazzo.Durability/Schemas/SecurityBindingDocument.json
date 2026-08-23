@@ -70,10 +70,32 @@
     "etag": {
       "type": "string",
       "description": "The optimistic-concurrency token."
+    },
+    "managementTags": {
+      "type": "array",
+      "description": "The security tags (KVP labels) scoping who may MANAGE this binding (§14.2) — e.g. tenant=acme. Immutable: set at create (the deployment stamps the creator's internal tenant tag; shared infrastructure bindings are stamped by the system so they are deployment-global and visible to all), carried forward unchanged on update. Management reads/writes are reach-filtered by these via the caller's AccessContext. Distinct from the binding's own claim selector (who it grants TO). Absent on an unscoped (deployment-global) binding.",
+      "items": { "$ref": "#/$defs/SecurityTagInfo" }
     }
   },
   "additionalProperties": false,
   "$defs": {
+    "SecurityTagInfo": {
+      "title": "SecurityTagInfo",
+      "type": "object",
+      "description": "A security label (KVP) scoping the binding for management-row authorization (§14.2).",
+      "required": ["key", "value"],
+      "properties": {
+        "key": {
+          "type": "string",
+          "description": "The label key (e.g. tenant)."
+        },
+        "value": {
+          "type": "string",
+          "description": "The label value (e.g. acme)."
+        }
+      },
+      "additionalProperties": false
+    },
     "AdditionalClause": {
       "title": "AdditionalClause",
       "type": "object",

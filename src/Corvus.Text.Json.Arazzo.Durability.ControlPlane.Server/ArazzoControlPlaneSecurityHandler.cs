@@ -91,6 +91,35 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     // deployment-configured audit actor when no principal is resolvable (the guard-disabled unscoped posture).
     private string AuditActor() => PrincipalDisplayName.Resolve(this.access?.CurrentPrincipal) ?? this.actor;
 
+    // The caller's row reach for the security policy (§14.2/P1-5): the API read/write paths are reach-filtered by the
+    // caller's AccessContext over each rule's/binding's management tags. With no row-security policy configured
+    // (Open/ScopesOnly) the access binding yields AccessContext.System, so every rule/binding is admitted — the reach
+    // plane only restricts once a deployment configures tenant-scoped reach (the default bootstrap read-all shell grants
+    // full read to every authenticated principal, so filtering bites only after an operator replaces it).
+    private AccessContext CurrentContext() => this.access?.Current() ?? AccessContext.System;
+
+    // The management tags the deployment stamps on a rule/binding this caller authors (§14.2): the caller's internal
+    // tenant tag(s), so the row is owned by — and reach-visible to — the creator's tenant. Empty in the unscoped/Open
+    // posture (no principal), which is a deployment-global (system-owned) row.
+    private SecurityTagSet AuthoredManagementTags()
+        => this.access is { } access ? SecurityTagSet.FromTags(access.InternalTags()) : SecurityTagSet.Empty;
+
+    // Write-reach gate (§14.2/P1-5): true when the named rule exists AND its management tags are within the caller's
+    // write reach. A rule outside reach is reported to the caller as absent (non-disclosing), so update/delete on it
+    // return 404 exactly as for a missing rule — a caller cannot even confirm the existence of another tenant's rule.
+    private async ValueTask<bool> CanManageRuleAsync(string name, CancellationToken cancellationToken)
+    {
+        using ParsedJsonDocument<SecurityRuleDocument>? existing = await this.store.GetRuleAsync(name, cancellationToken).ConfigureAwait(false);
+        return existing is { } e && this.CurrentContext().Admits(AccessVerb.Write, e.RootElement.ManagementTagsValue);
+    }
+
+    // Write-reach gate for a binding (§14.2/P1-5): as CanManageRuleAsync, over the binding's management tags.
+    private async ValueTask<bool> CanManageBindingAsync(string id, CancellationToken cancellationToken)
+    {
+        using ParsedJsonDocument<SecurityBindingDocument>? existing = await this.store.GetBindingAsync(id, cancellationToken).ConfigureAwait(false);
+        return existing is { } e && this.CurrentContext().Admits(AccessVerb.Write, e.RootElement.ManagementTagsValue);
+    }
+
     /// <inheritdoc/>
     public async ValueTask<SearchSecurityRulesResult> HandleSearchSecurityRulesAsync(SearchSecurityRulesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
@@ -101,7 +130,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 0;
         JsonString q = JsonString.From(parameters.Q);
         JsonString pageToken = JsonString.From(parameters.PageToken);
-        using SecurityRulePage page = await this.store.ListRulesAsync(limit, pageToken, q, cancellationToken).ConfigureAwait(false);
+        using SecurityRulePage page = await this.store.ListRulesAsync(limit, pageToken, q, this.CurrentContext(), cancellationToken).ConfigureAwait(false);
 
         // Each summary is a whole-document SecurityRuleSummary.From wrap (the congruent projection the single-document
         // sites use), so it references its pooled document; the body is validated/serialized after this handler returns,
@@ -121,19 +150,21 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     /// <inheritdoc/>
     public async ValueTask<CountSecurityRulesResult> HandleCountSecurityRulesAsync(CountSecurityRulesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        // Same q filter as HandleSearchSecurityRulesAsync, minus paging — the store returns only a bounded total (§14.2
-        // footer), never rows. Access is gated by the security:read capability scope, not row reach, so no AccessContext.
+        // Same q filter and reach as HandleSearchSecurityRulesAsync, minus paging — the store returns only a bounded total
+        // (§14.2 footer), never rows. Reach-filtered by the caller's AccessContext so the footer counts only the rules the
+        // caller may read (P1-5).
         JsonString q = JsonString.From(parameters.Q);
-        (int count, bool capped) = await this.store.CountRulesAsync(CountCap, q, cancellationToken).ConfigureAwait(false);
+        (int count, bool capped) = await this.store.CountRulesAsync(CountCap, q, this.CurrentContext(), cancellationToken).ConfigureAwait(false);
         return CountSecurityRulesResult.Ok(Models.CountResult.Build(capped: capped, count: count), workspace);
     }
 
     /// <inheritdoc/>
     public async ValueTask<CountSecurityBindingsResult> HandleCountSecurityBindingsAsync(CountSecurityBindingsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        // Same q filter as HandleSearchSecurityBindingsAsync, minus paging; capability-scoped, no row reach.
+        // Same q filter and reach as HandleSearchSecurityBindingsAsync, minus paging; reach-filtered by the caller's
+        // AccessContext so the footer counts only the bindings the caller may read (P1-5).
         JsonString q = JsonString.From(parameters.Q);
-        (int count, bool capped) = await this.store.CountBindingsAsync(CountCap, q, cancellationToken).ConfigureAwait(false);
+        (int count, bool capped) = await this.store.CountBindingsAsync(CountCap, q, this.CurrentContext(), cancellationToken).ConfigureAwait(false);
         return CountSecurityBindingsResult.Ok(Models.CountResult.Build(capped: capped, count: count), workspace);
     }
 
@@ -164,7 +195,12 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
 
         try
         {
-            ParsedJsonDocument<SecurityRuleDocument> created = await this.store.AddRuleAsync(name, SecurityRuleDocument.From(body), this.actor, cancellationToken).ConfigureAwait(false);
+            // Stamp the creator's tenant tag as the rule's management scope (§14.2/P1-5), so it is reach-visible to and
+            // manageable by the creator's tenant rather than deployment-globally. An unscoped/Open caller stamps none
+            // (a system-owned, deployment-global rule).
+            string? description = body.Description.IsNotUndefined() ? (string)body.Description : null;
+            using ParsedJsonDocument<SecurityRuleDocument> draft = SecurityRuleDocument.Draft(expression, description, this.AuthoredManagementTags());
+            ParsedJsonDocument<SecurityRuleDocument> created = await this.store.AddRuleAsync(name, draft.RootElement, this.actor, cancellationToken).ConfigureAwait(false);
 
             // The summary is a zero-copy view over the rule document (a congruent projection — identical property
             // names/types/required set), so hand the pooled document to the workspace (it disposes it after the
@@ -186,7 +222,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     public async ValueTask<GetSecurityRuleResult> HandleGetSecurityRuleAsync(GetSecurityRuleParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string name = (string)parameters.RuleName;
-        ParsedJsonDocument<SecurityRuleDocument>? rule = await this.store.GetRuleAsync(name, cancellationToken).ConfigureAwait(false);
+        ParsedJsonDocument<SecurityRuleDocument>? rule = await this.store.GetRuleAsync(name, this.CurrentContext(), cancellationToken).ConfigureAwait(false);
         if (rule is not { } r)
         {
             return GetSecurityRuleResult.NotFound(NotFoundProblem("rule", name), workspace);
@@ -209,6 +245,12 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             return UpdateSecurityRuleResult.BadRequest(problem, workspace);
         }
 
+        // A caller may update a rule only within its write reach; one outside reach is reported as absent (non-disclosing).
+        if (!await this.CanManageRuleAsync(name, cancellationToken).ConfigureAwait(false))
+        {
+            return UpdateSecurityRuleResult.NotFound(NotFoundProblem("rule", name), workspace);
+        }
+
         ParsedJsonDocument<SecurityRuleDocument>? updated = await this.store.UpdateRuleAsync(name, SecurityRuleDocument.From(body), WorkflowEtag.None, this.actor, cancellationToken).ConfigureAwait(false);
         if (updated is not { } r)
         {
@@ -227,6 +269,13 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     public async ValueTask<DeleteSecurityRuleResult> HandleDeleteSecurityRuleAsync(DeleteSecurityRuleParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string name = (string)parameters.RuleName;
+
+        // A caller may delete a rule only within its write reach; one outside reach is reported as absent (non-disclosing).
+        if (!await this.CanManageRuleAsync(name, cancellationToken).ConfigureAwait(false))
+        {
+            return DeleteSecurityRuleResult.NotFound(NotFoundProblem("rule", name), workspace);
+        }
+
         bool deleted = await this.store.DeleteRuleAsync(name, WorkflowEtag.None, cancellationToken).ConfigureAwait(false);
         if (!deleted)
         {
@@ -248,7 +297,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : 0;
         JsonString q = JsonString.From(parameters.Q);
         JsonString pageToken = JsonString.From(parameters.PageToken);
-        using SecurityBindingPage page = await this.store.ListBindingsAsync(limit, pageToken, q, cancellationToken).ConfigureAwait(false);
+        using SecurityBindingPage page = await this.store.ListBindingsAsync(limit, pageToken, q, this.CurrentContext(), cancellationToken).ConfigureAwait(false);
 
         // Each summary references its pooled binding document (the per-field From() projection is a zero-copy element
         // wrap), and the body is validated/serialized after this handler returns — so hand the documents to the
@@ -282,10 +331,13 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             return CreateSecurityBindingResult.Forbidden(problem, workspace);
         }
 
-        // The draft is a free, zero-copy element view over the request body (the store reads it synchronously) — no pooled
-        // document to dispose. The summary references the returned pooled binding document (per-field From() wrap), so hand
-        // that to the workspace; ownership transfers before RefreshAsync so a refresh failure cannot leak it.
-        ParsedJsonDocument<SecurityBindingDocument> created = await this.store.AddBindingAsync(draft, this.actor, cancellationToken).ConfigureAwait(false);
+        // Stamp the creator's tenant tag as the binding's management scope (§14.2/P1-5), so it is reach-visible to and
+        // manageable by the creator's tenant rather than deployment-globally (an unscoped/Open caller stamps none). The
+        // stamped draft is a pooled document (a copy of the body plus the tags); the summary references the returned
+        // pooled binding document (per-field From() wrap), handed to the workspace before RefreshAsync so a refresh
+        // failure cannot leak it.
+        using ParsedJsonDocument<SecurityBindingDocument> stamped = StampedBindingDraft(parameters.Body, this.AuthoredManagementTags());
+        ParsedJsonDocument<SecurityBindingDocument> created = await this.store.AddBindingAsync(stamped.RootElement, this.actor, cancellationToken).ConfigureAwait(false);
         GovernanceAudit.Mutation(this.auditLogger, "security-binding.create", this.AuditActor(), BindingKind, (string)created.RootElement.Id, "created");
         workspace.TakeOwnership(created);
         await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
@@ -296,7 +348,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     public async ValueTask<GetSecurityBindingResult> HandleGetSecurityBindingAsync(GetSecurityBindingParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string id = (string)parameters.BindingId;
-        ParsedJsonDocument<SecurityBindingDocument>? binding = await this.store.GetBindingAsync(id, cancellationToken).ConfigureAwait(false);
+        ParsedJsonDocument<SecurityBindingDocument>? binding = await this.store.GetBindingAsync(id, this.CurrentContext(), cancellationToken).ConfigureAwait(false);
         if (binding is not { } b)
         {
             return GetSecurityBindingResult.NotFound(NotFoundProblem("binding", id), workspace);
@@ -323,6 +375,13 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             return UpdateSecurityBindingResult.Forbidden(problem, workspace);
         }
 
+        // A caller may update a binding only within its write reach; one outside reach is reported as absent
+        // (non-disclosing). The existing binding's management tags are carried forward immutably by the store's update.
+        if (!await this.CanManageBindingAsync(id, cancellationToken).ConfigureAwait(false))
+        {
+            return UpdateSecurityBindingResult.NotFound(NotFoundProblem("binding", id), workspace);
+        }
+
         // The draft is a free, zero-copy element view over the request body (the store reads it synchronously) — no pooled
         // document to dispose.
         ParsedJsonDocument<SecurityBindingDocument>? updated = await this.store.UpdateBindingAsync(id, draft, WorkflowEtag.None, this.actor, cancellationToken).ConfigureAwait(false);
@@ -343,6 +402,13 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     public async ValueTask<DeleteSecurityBindingResult> HandleDeleteSecurityBindingAsync(DeleteSecurityBindingParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string id = (string)parameters.BindingId;
+
+        // A caller may delete a binding only within its write reach; one outside reach is reported as absent (non-disclosing).
+        if (!await this.CanManageBindingAsync(id, cancellationToken).ConfigureAwait(false))
+        {
+            return DeleteSecurityBindingResult.NotFound(NotFoundProblem("binding", id), workspace);
+        }
+
         bool deleted = await this.store.DeleteBindingAsync(id, WorkflowEtag.None, cancellationToken).ConfigureAwait(false);
         if (!deleted)
         {
@@ -720,6 +786,39 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
 
         draft = SecurityBindingDocument.From(body);
         return true;
+    }
+
+    // Produces a pooled binding draft = the request body's operator content copied verbatim plus the deployment-stamped
+    // management tags (§14.2/P1-5), which the store persists (CreateNew carries managementTags forward). Any
+    // managementTags a caller tried to smuggle into the body is dropped — the tenant scope is the deployment's to stamp,
+    // never the caller's. Empty tags copy the body unchanged (a deployment-global, system-owned binding).
+    private static ParsedJsonDocument<SecurityBindingDocument> StampedBindingDraft(Models.SecurityBindingWrite body, SecurityTagSet managementTags)
+    {
+        var state = (Body: (JsonElement)body, Tags: managementTags);
+        return PersistedJson.ToPooledDocument<SecurityBindingDocument, (JsonElement Body, SecurityTagSet Tags)>(
+            in state,
+            static (Utf8JsonWriter writer, in (JsonElement Body, SecurityTagSet Tags) s) =>
+            {
+                writer.WriteStartObject();
+                foreach (JsonProperty<JsonElement> property in s.Body.EnumerateObject())
+                {
+                    if (property.Name == "managementTags")
+                    {
+                        continue; // never carry a caller-supplied management scope
+                    }
+
+                    writer.WritePropertyName(property.Name);
+                    property.Value.WriteTo(writer);
+                }
+
+                if (!s.Tags.IsEmpty)
+                {
+                    writer.WritePropertyName("managementTags"u8);
+                    s.Tags.WriteTo(writer);
+                }
+
+                writer.WriteEndObject();
+            });
     }
 
     // The self-elevation guard (§16.5.3, defense in depth): a caller may not author a binding that grants ITSELF elevated

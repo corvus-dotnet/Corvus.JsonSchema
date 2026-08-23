@@ -379,6 +379,57 @@ public sealed class ControlPlaneSecurityApiTests
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
+    [TestMethod]
+    public async Task Security_rules_are_reach_partitioned_so_a_tenant_cannot_read_another_tenants_policy()
+    {
+        // P1-5(b): the security policy is reach-partitioned by management tags. With a tenant-scoped read reach
+        // configured, a tenant sees only its own rules via the API — the UO-3 cross-tenant read the audit exposed is
+        // closed. The handler stamps the creator's tenant tag on create and reach-filters every read.
+        var policyStore = new InMemorySecurityPolicyStore();
+
+        // Seed the deployment reach: every caller's read reach is its own tenant's rows. The seeded rule/binding are
+        // system-owned (no management tags) — infrastructure, not a tenant's to enumerate.
+        using (ParsedJsonDocument<SecurityRuleDocument> iso = SecurityRuleDocument.Draft("sys:tenant == $claim.tenant"))
+        {
+            using (await policyStore.AddRuleAsync("tenant-isolation", iso.RootElement, "system", default))
+            {
+            }
+        }
+
+        using (ParsedJsonDocument<SecurityBindingDocument> readOwn = SecurityBindingDocument.Draft(
+            "*", null,
+            read: SecurityBindingDocument.VerbGrantInfo.Rules("tenant-isolation"),
+            write: SecurityBindingDocument.VerbGrantInfo.None,
+            purge: SecurityBindingDocument.VerbGrantInfo.None))
+        {
+            using (await policyStore.AddBindingAsync(readOwn.RootElement, "system", default))
+            {
+            }
+        }
+
+        await using Scoped host = await StartSecuredAsync(policyStore);
+
+        // acme and globex each author a rule; the handler stamps each with its creator's tenant tag.
+        (await host.SendJsonAsync(HttpMethod.Post, "/security/rules", """{"name":"acme-secret","expression":"true"}""", Write, "tenant=acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.SendJsonAsync(HttpMethod.Post, "/security/rules", """{"name":"globex-secret","expression":"true"}""", Write, "tenant=globex")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        // globex lists rules → sees its own, never acme's (cross-tenant read isolation).
+        using (Stj.JsonDocument list = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/security/rules", Read, "tenant=globex")))
+        {
+            List<string?> names = list.RootElement.GetProperty("rules").EnumerateArray().Select(r => r.GetProperty("name").GetString()).ToList();
+            names.ShouldContain("globex-secret");
+            names.ShouldNotContain("acme-secret");
+        }
+
+        // globex GET acme's rule → 404 (non-disclosing); acme GET its own → 200.
+        (await host.SendAsync(HttpMethod.Get, "/security/rules/acme-secret", Read, "tenant=globex")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await host.SendAsync(HttpMethod.Get, "/security/rules/acme-secret", Read, "tenant=acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // globex cannot update or delete acme's rule either (write-reach gate, non-disclosing 404).
+        (await host.SendJsonAsync(HttpMethod.Put, "/security/rules/acme-secret", """{"expression":"false"}""", Write, "tenant=globex")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await host.SendAsync(HttpMethod.Delete, "/security/rules/acme-secret", Write, "tenant=globex")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
     private static async Task<Scoped> StartSecuredAsync(ISecurityPolicyStore policyStore)
     {
         var store = new InMemoryWorkflowStateStore();
@@ -438,6 +489,13 @@ public sealed class ControlPlaneSecurityApiTests
     {
         public Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, string? scope)
             => this.SendCoreAsync(new HttpRequestMessage(method, path), scope);
+
+        public Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, string? scope, string callerClaims)
+        {
+            var request = new HttpRequestMessage(method, path);
+            request.Headers.Add(ScopeAuthHandler.ClaimsHeader, callerClaims);
+            return this.SendCoreAsync(request, scope);
+        }
 
         public Task<HttpResponseMessage> SendJsonAsync(HttpMethod method, string path, string body, string? scope)
             => this.SendCoreAsync(new HttpRequestMessage(method, path) { Content = new StringContent(body, Encoding.UTF8, "application/json") }, scope);

@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Security;
@@ -39,6 +40,35 @@ public interface ISecurityPolicyStore
     /// <returns>The rule as a pooled document the caller must dispose, or <see langword="null"/>.</returns>
     ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> GetRuleAsync(string name, CancellationToken cancellationToken);
 
+    /// <summary>Gets a rule by name if the caller's <paramref name="context"/> admits it for READ (§14.2), else
+    /// <see langword="null"/> — a rule outside the caller's read reach is indistinguishable from an absent one
+    /// (non-disclosing). The API read path; the no-context <see cref="GetRuleAsync(string, CancellationToken)"/> is the
+    /// unfiltered primitive for system/compile callers (e.g. the approval service's idempotent rule creation). The
+    /// default reads the rule then checks reach; a backend may override with a native reach-scoped read.</summary>
+    /// <param name="name">The rule name.</param>
+    /// <param name="context">The caller's access context; its read reach gates visibility.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The rule as a pooled document the caller must dispose, or <see langword="null"/> if absent or out of reach.</returns>
+    async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> GetRuleAsync(string name, AccessContext context, CancellationToken cancellationToken)
+    {
+        ParsedJsonDocument<SecurityRuleDocument>? rule = await this.GetRuleAsync(name, cancellationToken).ConfigureAwait(false);
+        if (rule is null)
+        {
+            return null;
+        }
+
+        SecurityTagSet tags = rule.RootElement.ManagementTags.IsNotUndefined()
+            ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(rule.RootElement.ManagementTags).Memory)
+            : SecurityTagSet.Empty;
+        if (context.Admits(AccessVerb.Read, tags))
+        {
+            return rule;
+        }
+
+        rule.Dispose();
+        return null;
+    }
+
     /// <summary>Lists all rules. The full read used by snapshot/compile paths and by the default keyset pager; the
     /// paged <see cref="ListRulesAsync(int, JsonString, string?, CancellationToken)"/> is the API list seam.</summary>
     /// <param name="cancellationToken">A cancellation token.</param>
@@ -62,6 +92,26 @@ public interface ISecurityPolicyStore
         return SecurityRulePaging.PageInMemory(all, limit, pageToken, q);
     }
 
+    /// <summary>Lists rules as a keyset page filtered to the caller's READ reach (§14.2): the API list seam. Same paging
+    /// as <see cref="ListRulesAsync(int, JsonString, JsonString, CancellationToken)"/> but a rule is included only when
+    /// the caller's <paramref name="context"/> admits its management tags for read (a system-owned rule with no
+    /// management tags is admitted only under full read reach, fail-closed). The default reach-filters the full read in
+    /// memory then pages; a backend overrides it with a native reach-scoped keyset query so neither the full read nor
+    /// this copy happens.</summary>
+    /// <param name="limit">The maximum rules to return (a non-positive value uses the store's default page size).</param>
+    /// <param name="pageToken">The opaque token from a previous page, or undefined for the first page.</param>
+    /// <param name="q">An optional case-insensitive substring filter over the rule name and expression; undefined for no filter.</param>
+    /// <param name="context">The caller's access context; its read reach gates each rule.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>One reach-filtered keyset page, as a disposable the caller must dispose.</returns>
+    /// <exception cref="FormatException"><paramref name="pageToken"/> is not a valid continuation token.</exception>
+    async ValueTask<SecurityRulePage> ListRulesAsync(int limit, JsonString pageToken, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        using PooledDocumentList<SecurityRuleDocument> all = await this.ListRulesAsync(cancellationToken).ConfigureAwait(false);
+        using PooledDocumentList<SecurityRuleDocument> reachable = SecurityRulePaging.FilterByReach(all, context);
+        return SecurityRulePaging.PageInMemory(reachable, limit, pageToken, q);
+    }
+
     /// <summary>Counts the rules matching <paramref name="q"/> (design §14.2), bounded by <paramref name="cap"/>: the total
     /// behind the rules list's footer, without returning any rule rows.</summary>
     /// <param name="cap">The inclusive upper bound on the reported count; once <paramref name="cap"/> matching rules have been seen the count saturates and <c>Capped</c> is <see langword="true"/> (a non-positive value uses the store's default page size as the cap).</param>
@@ -75,6 +125,23 @@ public interface ISecurityPolicyStore
     {
         int bound = cap > 0 ? cap : SecurityRulePage.DefaultPageSize;
         using SecurityRulePage page = await this.ListRulesAsync(bound + 1, default, q, cancellationToken).ConfigureAwait(false);
+        int n = page.Rules.Count;
+        return n > bound ? (bound, true) : (n, false);
+    }
+
+    /// <summary>Counts the rules matching <paramref name="q"/> that the caller's <paramref name="context"/> admits for
+    /// read (§14.2), bounded by <paramref name="cap"/> — the reach-filtered total behind the rules list's footer. The
+    /// default counts a single bounded page over the reach-filtered list; a backend overrides it with a native bounded
+    /// reach-scoped <c>COUNT</c>.</summary>
+    /// <param name="cap">The inclusive upper bound on the reported count (a non-positive value uses the store's default page size).</param>
+    /// <param name="q">An optional case-insensitive substring filter over the rule name and expression; undefined counts every reach-admitted rule.</param>
+    /// <param name="context">The caller's access context; its read reach gates which rules are counted.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The bounded reach-filtered count and whether it was capped.</returns>
+    async ValueTask<(int Count, bool Capped)> CountRulesAsync(int cap, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        int bound = cap > 0 ? cap : SecurityRulePage.DefaultPageSize;
+        using SecurityRulePage page = await this.ListRulesAsync(bound + 1, default, q, context, cancellationToken).ConfigureAwait(false);
         int n = page.Rules.Count;
         return n > bound ? (bound, true) : (n, false);
     }
@@ -110,6 +177,35 @@ public interface ISecurityPolicyStore
     /// <returns>The binding as a pooled document the caller must dispose, or <see langword="null"/>.</returns>
     ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> GetBindingAsync(string id, CancellationToken cancellationToken);
 
+    /// <summary>Gets a binding by id if the caller's <paramref name="context"/> admits it for READ (§14.2), else
+    /// <see langword="null"/> — a binding outside the caller's read reach is indistinguishable from an absent one
+    /// (non-disclosing). The API read path; the no-context <see cref="GetBindingAsync(string, CancellationToken)"/> is the
+    /// unfiltered primitive for system/compile callers. The default reads the binding then checks reach; a backend may
+    /// override with a native reach-scoped read.</summary>
+    /// <param name="id">The binding id.</param>
+    /// <param name="context">The caller's access context; its read reach gates visibility.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The binding as a pooled document the caller must dispose, or <see langword="null"/> if absent or out of reach.</returns>
+    async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> GetBindingAsync(string id, AccessContext context, CancellationToken cancellationToken)
+    {
+        ParsedJsonDocument<SecurityBindingDocument>? binding = await this.GetBindingAsync(id, cancellationToken).ConfigureAwait(false);
+        if (binding is null)
+        {
+            return null;
+        }
+
+        SecurityTagSet tags = binding.RootElement.ManagementTags.IsNotUndefined()
+            ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(binding.RootElement.ManagementTags).Memory)
+            : SecurityTagSet.Empty;
+        if (context.Admits(AccessVerb.Read, tags))
+        {
+            return binding;
+        }
+
+        binding.Dispose();
+        return null;
+    }
+
     /// <summary>Lists all bindings (ascending by <see cref="SecurityBindingDocument.OrderValue"/> then id). The full read
     /// used by snapshot/compile paths and by the default keyset pager; the paged
     /// <see cref="ListBindingsAsync(int, JsonString, string?, CancellationToken)"/> is the API list seam.</summary>
@@ -134,6 +230,25 @@ public interface ISecurityPolicyStore
         return SecurityBindingPaging.PageInMemory(all, limit, pageToken, q);
     }
 
+    /// <summary>Lists bindings as a keyset page filtered to the caller's READ reach (§14.2): the API list seam. Same
+    /// paging as <see cref="ListBindingsAsync(int, JsonString, JsonString, CancellationToken)"/> but a binding is
+    /// included only when the caller's <paramref name="context"/> admits its management tags for read (a system-owned
+    /// binding with no management tags is admitted only under full read reach, fail-closed). The default reach-filters the
+    /// full read in memory then pages; a backend overrides it with a native reach-scoped keyset query.</summary>
+    /// <param name="limit">The maximum bindings to return (a non-positive value uses the store's default page size).</param>
+    /// <param name="pageToken">The opaque token from a previous page, or undefined for the first page.</param>
+    /// <param name="q">An optional case-insensitive substring filter over the binding claim type/value/description; undefined for no filter.</param>
+    /// <param name="context">The caller's access context; its read reach gates each binding.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>One reach-filtered keyset page, as a disposable the caller must dispose.</returns>
+    /// <exception cref="FormatException"><paramref name="pageToken"/> is not a valid continuation token.</exception>
+    async ValueTask<SecurityBindingPage> ListBindingsAsync(int limit, JsonString pageToken, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        using PooledDocumentList<SecurityBindingDocument> all = await this.ListBindingsAsync(cancellationToken).ConfigureAwait(false);
+        using PooledDocumentList<SecurityBindingDocument> reachable = SecurityBindingPaging.FilterByReach(all, context);
+        return SecurityBindingPaging.PageInMemory(reachable, limit, pageToken, q);
+    }
+
     /// <summary>Counts the bindings matching <paramref name="q"/> (design §14.2), bounded by <paramref name="cap"/>: the total
     /// behind the bindings list's footer, without returning any binding rows.</summary>
     /// <param name="cap">The inclusive upper bound on the reported count; once <paramref name="cap"/> matching bindings have been seen the count saturates and <c>Capped</c> is <see langword="true"/> (a non-positive value uses the store's default page size as the cap).</param>
@@ -147,6 +262,23 @@ public interface ISecurityPolicyStore
     {
         int bound = cap > 0 ? cap : SecurityBindingPage.DefaultPageSize;
         using SecurityBindingPage page = await this.ListBindingsAsync(bound + 1, default, q, cancellationToken).ConfigureAwait(false);
+        int n = page.Bindings.Count;
+        return n > bound ? (bound, true) : (n, false);
+    }
+
+    /// <summary>Counts the bindings matching <paramref name="q"/> that the caller's <paramref name="context"/> admits for
+    /// read (§14.2), bounded by <paramref name="cap"/> — the reach-filtered total behind the bindings list's footer. The
+    /// default counts a single bounded page over the reach-filtered list; a backend overrides it with a native bounded
+    /// reach-scoped <c>COUNT</c>.</summary>
+    /// <param name="cap">The inclusive upper bound on the reported count (a non-positive value uses the store's default page size).</param>
+    /// <param name="q">An optional case-insensitive substring filter over the binding claim type/value/description; undefined counts every reach-admitted binding.</param>
+    /// <param name="context">The caller's access context; its read reach gates which bindings are counted.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The bounded reach-filtered count and whether it was capped.</returns>
+    async ValueTask<(int Count, bool Capped)> CountBindingsAsync(int cap, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        int bound = cap > 0 ? cap : SecurityBindingPage.DefaultPageSize;
+        using SecurityBindingPage page = await this.ListBindingsAsync(bound + 1, default, q, context, cancellationToken).ConfigureAwait(false);
         int n = page.Bindings.Count;
         return n > bound ? (bound, true) : (n, false);
     }

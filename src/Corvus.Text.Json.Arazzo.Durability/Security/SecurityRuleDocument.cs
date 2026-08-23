@@ -47,6 +47,10 @@ public readonly partial struct SecurityRuleDocument
     /// <summary>Gets the optimistic-concurrency token.</summary>
     public WorkflowEtag EtagValue => new((string)this.Etag);
 
+    /// <summary>Gets the management tags (§14.2) scoping who may manage this rule — a copy. Empty for a deployment-global
+    /// (system-owned / unscoped) rule. Management reads/writes are reach-filtered by these via the caller's AccessContext.</summary>
+    public SecurityTagSet ManagementTagsValue => SecurityTagSet.CopyFrom(this.ManagementTags);
+
     /// <summary>Realises a new rule into a workspace and writes its JSON to the caller's (pooled) writer in one pass —
     /// a store serializes the result to its driver bytes via <see cref="PersistedJson.ToArray"/> and returns a pooled
     /// document over those bytes.</summary>
@@ -90,23 +94,41 @@ public readonly partial struct SecurityRuleDocument
     /// </summary>
     /// <param name="expression">The rule text in the security-rule grammar.</param>
     /// <param name="description">An optional human description (omitted when <see langword="null"/>).</param>
+    /// <param name="managementTags">The management tags (§14.2) scoping who may manage this rule — the deployment stamps
+    /// the creator's tenant tag here; empty (the default) is a deployment-global (system-owned) rule referenceable by any
+    /// grant and visible under full read reach.</param>
     /// <returns>A pooled, disposable draft document carrying only the supplied content — <c>using</c> it and pass its
     /// <see cref="ParsedJsonDocument{T}.RootElement"/> to the store, which reads it synchronously before the draft is disposed.</returns>
-    public static ParsedJsonDocument<SecurityRuleDocument> Draft(string expression, string? description = null)
+    public static ParsedJsonDocument<SecurityRuleDocument> Draft(string expression, string? description = null, in SecurityTagSet managementTags = default)
     {
         ArgumentNullException.ThrowIfNull(expression);
 
-        // The generated Create() writes the document text and its parse metadata in one pass — no serialize-then-reparse
-        // round trip. The draft carries only the operator content: a default Source is omitted from the document, so the
-        // server-stamped fields (name/createdBy/createdAt/etag) stay absent for BuildNew to add.
-        return Create(
-            createdAt: default,
-            createdBy: default,
-            etag: default,
-            expression: expression,
-            name: default,
-            description: description is { } d ? (JsonString.Source)d : default);
+        // The draft carries only the operator content plus the resolved management tags; the server-stamped fields
+        // (name/createdBy/createdAt/etag) stay absent for BuildNew/CreateNew to add. The management tags are written
+        // bytes-native from the SecurityTagSet (no per-tag string), mirroring Environment/SourceCredentialBinding drafts.
+        var state = new DraftState(expression, description, managementTags);
+        return PersistedJson.ToPooledDocument<SecurityRuleDocument, DraftState>(
+            in state,
+            static (Utf8JsonWriter writer, in DraftState c) =>
+            {
+                writer.WriteStartObject();
+                writer.WriteString("expression"u8, c.Expression);
+                if (c.Description is { } description)
+                {
+                    writer.WriteString("description"u8, description);
+                }
+
+                if (!c.ManagementTags.IsEmpty)
+                {
+                    writer.WritePropertyName("managementTags"u8);
+                    c.ManagementTags.WriteTo(writer);
+                }
+
+                writer.WriteEndObject();
+            });
     }
+
+    private readonly record struct DraftState(string Expression, string? Description, SecurityTagSet ManagementTags);
 
     /// <summary>Realises a brand-new rule as a self-contained pooled document in one pass — the
     /// <see cref="ParsedJsonDocument{T}"/>-producing counterpart of <see cref="WriteNew"/> for drivers that consume the
@@ -124,11 +146,12 @@ public readonly partial struct SecurityRuleDocument
             etag: etag.Value ?? string.Empty,
             expression: draft.Expression,
             name: name,
-            description: draft.Description.IsNotUndefined() ? (JsonString.Source)draft.Description : default);
+            description: draft.Description.IsNotUndefined() ? (JsonString.Source)draft.Description : default,
+            managementTags: draft.ManagementTags.IsNotUndefined() ? (SecurityTagInfoArray.Source)draft.ManagementTags : default);
 
-    // Realises a new rule into the pooled workspace arena: the draft's operator content is carried bytes-to-bytes (its
-    // JSON values flow straight into the builder); name and the server-stamped audit/concurrency fields are added here.
-    // The field mapping mirrors CreateNew above; keep the two in step.
+    // Realises a new rule into the pooled workspace arena: the draft's operator content (including its management tags,
+    // carried forward immutably) flows bytes-to-bytes into the builder; name and the server-stamped audit/concurrency
+    // fields are added here. The field mapping mirrors CreateNew above; keep the two in step.
     private static JsonDocumentBuilder<Mutable> BuildNew(JsonWorkspace workspace, string name, in SecurityRuleDocument draft, string actor, DateTimeOffset createdAt, WorkflowEtag etag)
         => CreateBuilder(
             workspace,
@@ -137,7 +160,8 @@ public readonly partial struct SecurityRuleDocument
             etag: etag.Value ?? string.Empty,
             expression: draft.Expression,
             name: name,
-            description: draft.Description.IsNotUndefined() ? (JsonString.Source)draft.Description : default);
+            description: draft.Description.IsNotUndefined() ? (JsonString.Source)draft.Description : default,
+            managementTags: draft.ManagementTags.IsNotUndefined() ? (SecurityTagInfoArray.Source)draft.ManagementTags : default);
 
     // Realises a mutable builder over this document and modifies only the fields an update touches, carrying the draft's
     // content bytes-to-bytes; name and the created-* metadata are carried through unchanged (no field-by-field rebuild).

@@ -53,6 +53,11 @@ public readonly partial struct SecurityBindingDocument
     /// <summary>Gets the optimistic-concurrency token.</summary>
     public WorkflowEtag EtagValue => new((string)this.Etag);
 
+    /// <summary>Gets the management tags (§14.2) scoping who may manage this binding — a copy. Empty for a
+    /// deployment-global (system-owned / unscoped) binding. Distinct from the binding's claim selector (who it grants TO):
+    /// management reads/writes are reach-filtered by these via the caller's AccessContext.</summary>
+    public SecurityTagSet ManagementTagsValue => SecurityTagSet.CopyFrom(this.ManagementTags);
+
     /// <summary>Gets when this grant expires (design §16.5.2), or <see langword="null"/> for a standing grant.</summary>
     public DateTimeOffset? ExpiresAtValue => this.ExpiresAt.IsNotUndefined() ? ((NodaTime.OffsetDateTime)this.ExpiresAt).ToDateTimeOffset() : null;
 
@@ -137,6 +142,7 @@ public readonly partial struct SecurityBindingDocument
     /// <param name="expiresAt">When the grant expires (design §16.5.2); <see langword="null"/> is a standing grant.</param>
     /// <param name="eligibleOnly">When <see langword="true"/>, an eligibility assignment (design §16.5.3/§16.5.4), not an active grant.</param>
     /// <param name="additionalClauses">Extra identity-dimension clauses ANDed with the primary claimType/claimValue clause to form a tag-set selector (design §16.5.4); <see langword="null"/>/empty is a legacy single-clause binding.</param>
+    /// <param name="managementTags">The management tags (§14.2) scoping who may manage this binding — the deployment stamps the creator's tenant tag here; empty (the default) is a deployment-global (system-owned) binding. Distinct from the claim selector (who it grants TO).</param>
     /// <returns>A pooled, disposable draft document the caller must dispose once the store has read it.</returns>
     public static ParsedJsonDocument<SecurityBindingDocument> Draft(
         string claimType,
@@ -149,10 +155,11 @@ public readonly partial struct SecurityBindingDocument
         IReadOnlyList<string>? scopes = null,
         DateTimeOffset? expiresAt = null,
         bool eligibleOnly = false,
-        IReadOnlyList<(string Dimension, string? Value)>? additionalClauses = null)
+        IReadOnlyList<(string Dimension, string? Value)>? additionalClauses = null,
+        SecurityTagSet managementTags = default)
     {
         ArgumentNullException.ThrowIfNull(claimType);
-        var state = new DraftState(claimType, claimValue, read, write, purge, order, description, scopes, expiresAt, eligibleOnly, additionalClauses);
+        var state = new DraftState(claimType, claimValue, read, write, purge, order, description, scopes, expiresAt, eligibleOnly, additionalClauses, managementTags);
         return PersistedJson.ToPooledDocument<SecurityBindingDocument, DraftState>(
             in state,
             static (Utf8JsonWriter writer, in DraftState c) =>
@@ -215,6 +222,12 @@ public readonly partial struct SecurityBindingDocument
                     writer.WriteBoolean("eligibleOnly"u8, true);
                 }
 
+                if (!c.ManagementTags.IsEmpty)
+                {
+                    writer.WritePropertyName("managementTags"u8);
+                    c.ManagementTags.WriteTo(writer);
+                }
+
                 writer.WriteEndObject();
             });
     }
@@ -248,7 +261,8 @@ public readonly partial struct SecurityBindingDocument
             expiresAt: draft.ExpiresAt.IsNotUndefined() ? (JsonDateTime.Source)draft.ExpiresAt : default,
             eligibleOnly: draft.EligibleOnly.IsNotUndefined() ? (JsonBoolean.Source)draft.EligibleOnly : default,
             additionalClauses: draft.AdditionalClauses.IsNotUndefined() ? (AdditionalClauseArray.Source)draft.AdditionalClauses : default,
-            scopes: draft.Scopes.IsNotUndefined() ? (JsonStringArray.Source)draft.Scopes : default);
+            scopes: draft.Scopes.IsNotUndefined() ? (JsonStringArray.Source)draft.Scopes : default,
+            managementTags: draft.ManagementTags.IsNotUndefined() ? (SecurityTagInfoArray.Source)draft.ManagementTags : default);
     }
 
     // Realises a new binding into the pooled workspace arena: the draft's operator content is carried bytes-to-bytes (its
@@ -280,7 +294,8 @@ public readonly partial struct SecurityBindingDocument
             expiresAt: draft.ExpiresAt.IsNotUndefined() ? (JsonDateTime.Source)draft.ExpiresAt : default,
             eligibleOnly: draft.EligibleOnly.IsNotUndefined() ? (JsonBoolean.Source)draft.EligibleOnly : default,
             additionalClauses: draft.AdditionalClauses.IsNotUndefined() ? (AdditionalClauseArray.Source)draft.AdditionalClauses : default,
-            scopes: draft.Scopes.IsNotUndefined() ? (JsonStringArray.Source)draft.Scopes : default);
+            scopes: draft.Scopes.IsNotUndefined() ? (JsonStringArray.Source)draft.Scopes : default,
+            managementTags: draft.ManagementTags.IsNotUndefined() ? (SecurityTagInfoArray.Source)draft.ManagementTags : default);
     }
 
     // Realises a mutable builder over this document and modifies only the fields an update touches, carrying the draft's
@@ -369,9 +384,12 @@ public readonly partial struct SecurityBindingDocument
         IReadOnlyList<string>? scopes,
         DateTimeOffset? expiresAt,
         bool eligibleOnly,
-        IReadOnlyList<(string Dimension, string? Value)>? additionalClauses)
+        IReadOnlyList<(string Dimension, string? Value)>? additionalClauses,
+        SecurityTagSet managementTags)
     {
         public string ClaimType { get; } = claimType;
+
+        public SecurityTagSet ManagementTags { get; } = managementTags;
 
         public string? ClaimValue { get; } = claimValue;
 

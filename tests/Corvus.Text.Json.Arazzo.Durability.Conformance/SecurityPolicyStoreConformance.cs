@@ -37,6 +37,14 @@ public abstract class SecurityPolicyStoreConformance
         return names;
     }
 
+    // A single-tag management scope stamped on a rule/binding (the creator's tenant tag), for the reach oracles.
+    private static SecurityTagSet Tags(string key, string value) => SecurityTagSet.FromTags([new SecurityTag(key, value)]);
+
+    // A tenant-scoped read/write/purge reach: the caller's reach admits exactly the rows tagged {key}={value}, the same
+    // shape the persistent policy resolves for a tenant principal.
+    private static AccessContext ScopeBy(string key, string value) => AccessContext.Uniform(
+        new SecurityFilter([SecurityRule.Compile($"{key} == $claim.{key}")], new Dictionary<string, IReadOnlyList<string>> { [key] = [value] }));
+
     /// <summary>Creates a fresh, empty store backed by the implementation under test.</summary>
     /// <param name="timeProvider">The time source the store must use for audit timestamps.</param>
     /// <returns>The store.</returns>
@@ -80,6 +88,74 @@ public abstract class SecurityPolicyStoreConformance
         }
 
         (await store.GetRuleAsync("missing", default)).ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task Rules_are_reach_filtered_by_management_tags_on_the_api_read_path()
+    {
+        // P1-5(b): the security policy is reach-partitioned by management tags. A rule stamped with a tenant's tag is
+        // visible only within that tenant's read reach; a system-owned rule (no tags) is visible only under full read
+        // reach (fail-closed). The COMPILE-path full read stays unfiltered (the engine needs the whole policy).
+        ISecurityPolicyStore store = await this.NewStoreAsync();
+        using (ParsedJsonDocument<SecurityRuleDocument> a = SecurityRuleDocument.Draft("tenant == 'acme'", "acme", Tags("tenant", "acme")))
+        using (await store.AddRuleAsync("acme-rule", a.RootElement, "alice", default))
+        using (ParsedJsonDocument<SecurityRuleDocument> g = SecurityRuleDocument.Draft("tenant == 'globex'", "globex", Tags("tenant", "globex")))
+        using (await store.AddRuleAsync("globex-rule", g.RootElement, "bob", default))
+        using (await AddRuleDraftAsync(store, "shared-rule", "true", "system-owned", "system"))
+        {
+            AccessContext acme = ScopeBy("tenant", "acme");
+
+            // acme's read reach sees only its own rule — not globex's, not the system-owned shared rule (fail-closed).
+            using (SecurityRulePage page = await store.ListRulesAsync(50, default, default, acme, default))
+            {
+                page.Rules.Select(r => r.NameValue).ShouldBe(["acme-rule"]);
+            }
+
+            (await store.GetRuleAsync("globex-rule", acme, default)).ShouldBeNull(); // out of reach = non-disclosing
+            (await store.GetRuleAsync("shared-rule", acme, default)).ShouldBeNull(); // system-owned, fail-closed
+            using (ParsedJsonDocument<SecurityRuleDocument>? own = await store.GetRuleAsync("acme-rule", acme, default))
+            {
+                own.ShouldNotBeNull();
+            }
+
+            (await store.CountRulesAsync(100, default, acme, default)).Count.ShouldBe(1);
+
+            // Full reach (System) and the unfiltered compile-path read both see every rule.
+            using (SecurityRulePage all = await store.ListRulesAsync(50, default, default, AccessContext.System, default))
+            {
+                all.Rules.Select(r => r.NameValue).OrderBy(n => n, StringComparer.Ordinal).ShouldBe(["acme-rule", "globex-rule", "shared-rule"]);
+            }
+
+            using (PooledDocumentList<SecurityRuleDocument> compile = await store.ListRulesAsync(default))
+            {
+                compile.Count.ShouldBe(3);
+            }
+        }
+    }
+
+    [TestMethod]
+    public async Task Bindings_are_reach_filtered_by_management_tags_on_the_api_read_path()
+    {
+        // P1-5(b): as rules, bindings are reach-partitioned by management tags (distinct from the binding's own claim
+        // selector). A tenant sees only its own bindings via the API read path.
+        ISecurityPolicyStore store = await this.NewStoreAsync();
+        using (await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "acme-admin", VerbGrant.Full, VerbGrant.None, VerbGrant.None, order: 1, managementTags: Tags("tenant", "acme")), "alice", default))
+        using (await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "globex-admin", VerbGrant.Full, VerbGrant.None, VerbGrant.None, order: 2, managementTags: Tags("tenant", "globex")), "bob", default))
+        using (await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "shared", VerbGrant.Full, VerbGrant.None, VerbGrant.None, order: 3), "system", default))
+        {
+            AccessContext acme = ScopeBy("tenant", "acme");
+            using (SecurityBindingPage page = await store.ListBindingsAsync(50, default, default, acme, default))
+            {
+                page.Bindings.Select(b => (string)b.ClaimValue).ShouldBe(["acme-admin"]);
+            }
+
+            (await store.CountBindingsAsync(100, default, acme, default)).Count.ShouldBe(1);
+
+            using (SecurityBindingPage all = await store.ListBindingsAsync(50, default, default, AccessContext.System, default))
+            {
+                all.Bindings.Count.ShouldBe(3);
+            }
+        }
     }
 
     [TestMethod]

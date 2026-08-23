@@ -200,6 +200,43 @@ internal static class SecurityBindingPaging
         }
     }
 
+    /// <summary>Filters <paramref name="all"/> (a full read) to the bindings the caller's <paramref name="context"/>
+    /// admits for READ (§14.2): a binding is admitted when its management tags satisfy the caller's read reach — a
+    /// binding with no management tags (system-owned / deployment-global) is admitted only under full read reach,
+    /// fail-closed. Each admitted binding is re-parsed into the returned (owned) list so the caller may dispose
+    /// <paramref name="all"/>; the (order, id) order is preserved. The correct-everywhere fallback the default
+    /// context-aware read uses over a store's native full read.</summary>
+    /// <param name="all">The store's full binding read (the caller disposes it).</param>
+    /// <param name="context">The caller's access context; its read reach gates each binding.</param>
+    /// <returns>The reach-admitted bindings, owning their pooled documents.</returns>
+    internal static PooledDocumentList<SecurityBindingDocument> FilterByReach(PooledDocumentList<SecurityBindingDocument> all, AccessContext context)
+    {
+        var matches = new PooledDocumentList<SecurityBindingDocument>(0);
+        try
+        {
+            for (int i = 0; i < all.Count; i++)
+            {
+                SecurityBindingDocument binding = all[i];
+                SecurityTagSet tags = binding.ManagementTags.IsNotUndefined()
+                    ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(binding.ManagementTags).Memory)
+                    : SecurityTagSet.Empty;
+                if (!context.Admits(AccessVerb.Read, tags))
+                {
+                    continue;
+                }
+
+                matches.Add(PersistedJson.ToPooledDocument<SecurityBindingDocument>(JsonMarshal.GetRawUtf8Value(binding).Memory.Span));
+            }
+
+            return matches;
+        }
+        catch
+        {
+            matches.Dispose();
+            throw;
+        }
+    }
+
     // True when (binding.order, binding.id) sorts strictly after the cursor in the (order asc, id ordinal asc) order.
     private static bool After(SecurityBindingDocument binding, int cursorOrder, ReadOnlySpan<byte> cursorId)
     {

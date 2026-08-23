@@ -157,4 +157,41 @@ internal static class SecurityRulePaging
         using UnescapedUtf8JsonString expression = rule.Expression.GetUtf8String();
         return SecurityPagingText.ContainsIgnoreCase(expression.Span, qChars, ref fieldBuffer);
     }
+
+    /// <summary>Filters <paramref name="all"/> (a full read) to the rules the caller's <paramref name="context"/> admits
+    /// for READ (§14.2): a rule is admitted when its management tags satisfy the caller's read reach — a rule with no
+    /// management tags (system-owned / deployment-global) is admitted only under full read reach, fail-closed. Each
+    /// admitted rule is re-parsed into the returned (owned) list so the caller may dispose <paramref name="all"/>; order
+    /// is preserved. The correct-everywhere fallback the default context-aware read uses over a store's native full read;
+    /// a native backend query applies the same predicate server-side and never pays this copy.</summary>
+    /// <param name="all">The store's full rule read (the caller disposes it).</param>
+    /// <param name="context">The caller's access context; its read reach gates each rule.</param>
+    /// <returns>The reach-admitted rules, owning their pooled documents.</returns>
+    internal static PooledDocumentList<SecurityRuleDocument> FilterByReach(PooledDocumentList<SecurityRuleDocument> all, AccessContext context)
+    {
+        var matches = new PooledDocumentList<SecurityRuleDocument>(0);
+        try
+        {
+            for (int i = 0; i < all.Count; i++)
+            {
+                SecurityRuleDocument rule = all[i];
+                SecurityTagSet tags = rule.ManagementTags.IsNotUndefined()
+                    ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(rule.ManagementTags).Memory)
+                    : SecurityTagSet.Empty;
+                if (!context.Admits(AccessVerb.Read, tags))
+                {
+                    continue;
+                }
+
+                matches.Add(PersistedJson.ToPooledDocument<SecurityRuleDocument>(JsonMarshal.GetRawUtf8Value(rule).Memory.Span));
+            }
+
+            return matches;
+        }
+        catch
+        {
+            matches.Dispose();
+            throw;
+        }
+    }
 }
