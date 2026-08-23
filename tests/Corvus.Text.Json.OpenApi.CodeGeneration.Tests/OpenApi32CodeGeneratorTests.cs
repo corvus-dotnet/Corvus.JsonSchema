@@ -3369,6 +3369,109 @@ public class OpenApi32CodeGeneratorTests
             "Expected the endpoint to stream the body directly to the response stream");
     }
 
+    [TestMethod]
+    public void GenerateServer_StreamingBinaryParts_EmitsDriverAndHandles()
+    {
+        // With StreamServerBinaryParts, a multipart/form-data endpoint binds binary parts as
+        // wire-order BinaryPartHandle values fed by a MultipartStreamingDriver instead of
+        // buffering the whole body; the default generator keeps the buffered callback path.
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Streaming Upload", "version": "1.0" },
+              "paths": {
+                "/upload": {
+                  "post": {
+                    "operationId": "uploadDocument",
+                    "requestBody": {
+                      "required": true,
+                      "content": {
+                        "multipart/form-data": {
+                          "schema": {
+                            "type": "object",
+                            "properties": {
+                              "caption": { "type": "string" },
+                              "file": { "type": "string", "format": "binary" },
+                              "thumb": { "type": "string", "format": "binary" }
+                            },
+                            "required": ["caption", "file"]
+                          }
+                        }
+                      }
+                    },
+                    "responses": {
+                      "201": {
+                        "description": "created",
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "caption": { "type": "string" } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int i = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"MpStream.Type{i}";
+            i++;
+        }
+
+        OpenApi32CodeGenerator streamingGen = new("MpStream", map) { StreamServerBinaryParts = true };
+        IReadOnlyList<GeneratedFile> streamingFiles = streamingGen.GenerateServer(spec);
+
+        GeneratedFile paramsFile = streamingFiles.First(f => f.FileName == "UploadDocumentParams.cs");
+        Assert.IsTrue(
+            paramsFile.Content.Contains("public BinaryPartHandle File { get; init; }"),
+            "Expected a BinaryPartHandle property for the required binary part");
+        Assert.IsTrue(
+            paramsFile.Content.Contains("public BinaryPartHandle Thumb { get; init; }"),
+            "Expected a BinaryPartHandle property for the optional binary part");
+        Assert.IsFalse(
+            paramsFile.Content.Contains("ReadOnlyMemory<byte> File"),
+            "Did not expect a buffered binary property in streaming mode");
+
+        GeneratedFile registration = streamingFiles.First(f => f.FileName == "ApiEndpointRegistration.cs");
+        Assert.IsTrue(
+            registration.Content.Contains("__streamingDriver = await MultipartStreamingDriver.BeginAsync(context.Request.Body, context.Request.ContentType, serverOptions, context.RequestAborted).ConfigureAwait(false);"),
+            "Expected the endpoint to begin a MultipartStreamingDriver over the request body");
+        Assert.IsTrue(
+            registration.Content.Contains("File = __streamingDriver!.GetHandle(\"file\", required: true),"),
+            "Expected the required binary part bound via GetHandle(required: true)");
+        Assert.IsTrue(
+            registration.Content.Contains("Thumb = __streamingDriver!.GetHandle(\"thumb\", required: false),"),
+            "Expected the optional binary part bound via GetHandle(required: false)");
+        Assert.IsTrue(
+            registration.Content.Contains("catch (MultipartOrderingException)"),
+            "Expected an ordering-violation catch producing a 400");
+        Assert.IsTrue(
+            registration.Content.Contains("catch (RequiredBinaryPartMissingException)"),
+            "Expected a required-part-missing catch producing a 400");
+        Assert.IsTrue(
+            registration.Content.Contains("await __streamingDriver.DisposeAsync().ConfigureAwait(false);"),
+            "Expected the driver disposed in the finally block");
+        Assert.IsFalse(
+            registration.Content.Contains("binaryPartCallback"),
+            "Did not expect the buffered binaryPartCallback path in streaming mode");
+
+        OpenApi32CodeGenerator bufferedGen = new("MpStream", map);
+        IReadOnlyList<GeneratedFile> bufferedFiles = bufferedGen.GenerateServer(spec);
+        GeneratedFile bufferedRegistration = bufferedFiles.First(f => f.FileName == "ApiEndpointRegistration.cs");
+        Assert.IsFalse(
+            bufferedRegistration.Content.Contains("MultipartStreamingDriver"),
+            "The default generator must keep the buffered path");
+        Assert.IsTrue(
+            bufferedRegistration.Content.Contains("binaryPartCallback"),
+            "The default generator must keep the buffered binaryPartCallback path");
+    }
+
     private const string ParamRefSpecJson = """
         {
           "openapi": "3.2.0",

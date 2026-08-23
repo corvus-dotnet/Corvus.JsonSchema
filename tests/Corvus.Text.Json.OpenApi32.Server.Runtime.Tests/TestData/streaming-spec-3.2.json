@@ -1,0 +1,47 @@
+{
+  "openapi": "3.2.0",
+  "info": {
+    "title": "Streaming Test API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/upload": {
+      "post": {
+        "operationId": "uploadDocument",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "caption": {"type": "string"},
+                  "file": {"type": "string", "format": "binary"},
+                  "thumb": {"type": "string", "format": "binary"}
+                },
+                "required": ["caption", "file"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "caption": {"type": "string"},
+                    "fileLength": {"type": "integer"},
+                    "thumbLength": {"type": "integer"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

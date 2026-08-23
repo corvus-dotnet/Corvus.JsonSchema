@@ -30,4 +30,19 @@ public sealed class ApiServerOptions
     /// </para>
     /// </remarks>
     public long MaxBufferedRequestBodyLength { get; init; } = DefaultMaxBufferedRequestBodyLength;
+
+    /// <summary>
+    /// Gets the ordering policy for binary parts on streaming multipart endpoints
+    /// (servers generated with <c>--serverBinaryParts stream</c>). Buffered endpoints
+    /// ignore this setting.
+    /// </summary>
+    public MultipartBinaryOrdering MultipartBinaryOrdering { get; init; } = MultipartBinaryOrdering.RequireBinaryLast;
+
+    /// <summary>
+    /// Gets the maximum total bytes of non-binary (text and JSON) parts a streaming
+    /// multipart endpoint accumulates for the typed body. Bodies over the limit are
+    /// rejected with 413. Binary parts are unlimited; they stream. Buffered endpoints
+    /// ignore this setting.
+    /// </summary>
+    public long MaxNonBinaryPartsLength { get; init; } = 1_048_576;
 }

@@ -212,4 +212,38 @@ public static class ThrowHelper
     {
         throw new RequestBodyTooLargeException(SR.Format(SR.RequestBodyTooLarge, maxBodyLength), maxBodyLength);
     }
+
+    /// <summary>
+    /// Throws a <see cref="MultipartOrderingException"/> indicating that a non-binary
+    /// part arrived after a binary part under the RequireBinaryLast policy.
+    /// </summary>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowMultipartOrderingViolation()
+    {
+        throw new MultipartOrderingException(SR.MultipartOrderingViolation);
+    }
+
+    /// <summary>
+    /// Throws a <see cref="RequiredBinaryPartMissingException"/> for the named part.
+    /// </summary>
+    /// <param name="partName">The missing part's name.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowRequiredBinaryPartMissing(string partName)
+    {
+        throw new RequiredBinaryPartMissingException(SR.Format(SR.RequiredBinaryPartMissing, partName), partName);
+    }
+
+    /// <summary>
+    /// Throws an <see cref="InvalidOperationException"/> indicating that the named
+    /// binary part has already been passed in wire order.
+    /// </summary>
+    /// <param name="partName">The part's name.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowBinaryPartAlreadyPassed(string partName)
+    {
+        throw new InvalidOperationException(SR.Format(SR.BinaryPartAlreadyPassed, partName));
+    }
 }

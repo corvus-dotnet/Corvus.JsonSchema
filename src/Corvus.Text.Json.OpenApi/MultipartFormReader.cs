@@ -432,7 +432,7 @@ public ref struct MultipartFormReader
         return -1;
     }
 
-    private static bool IsJsonContentType(ReadOnlySpan<byte> contentType)
+    internal static bool IsJsonContentType(ReadOnlySpan<byte> contentType)
     {
         if (contentType.IsEmpty)
         {

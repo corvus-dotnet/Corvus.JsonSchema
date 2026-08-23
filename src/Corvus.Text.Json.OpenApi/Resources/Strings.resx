@@ -107,5 +107,14 @@
   <data name="RequestBodyTooLarge" xml:space="preserve">
     <value>The request body exceeded the configured maximum buffered size of {0} bytes.</value>
   </data>
+  <data name="MultipartOrderingViolation" xml:space="preserve">
+    <value>A non-binary multipart part arrived after a binary part. Streaming endpoints with the RequireBinaryLast policy need binary parts after all non-binary parts.</value>
+  </data>
+  <data name="RequiredBinaryPartMissing" xml:space="preserve">
+    <value>The required binary part '{0}' was not present in the multipart body.</value>
+  </data>
+  <data name="BinaryPartAlreadyPassed" xml:space="preserve">
+    <value>The binary part '{0}' has already been passed in wire order and can no longer be opened.</value>
+  </data>
 
 </root>

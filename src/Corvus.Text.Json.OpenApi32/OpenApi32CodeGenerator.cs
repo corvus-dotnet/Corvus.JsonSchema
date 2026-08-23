@@ -78,6 +78,13 @@ public sealed class OpenApi32CodeGenerator
         this.contextSourceBodyPointers = contextSourceBodyPointers ?? new HashSet<string>(StringComparer.Ordinal);
     }
 
+    /// <summary>
+    /// Gets a value indicating whether generated server endpoints stream multipart
+    /// binary parts to the handler (<c>--serverBinaryParts stream</c>) instead of
+    /// buffering the whole body. Buffered mode remains the default.
+    /// </summary>
+    public bool StreamServerBinaryParts { get; init; }
+
     // ── Walk-phase reference (typed model objects, no strings extracted) ──
     private readonly record struct OperationRef(
         JsonProperty<OpenApiDocument.PathItem> PathProp,
@@ -137,7 +144,8 @@ public sealed class OpenApi32CodeGenerator
     private readonly record struct BinaryPropertyInfo(
         string PropertyName,
         string ParameterName,
-        string? ContentType);
+        string? ContentType,
+        bool IsRequired = false);
 
     private readonly record struct MixedPartInfo(
         string SchemaPointer,
@@ -2167,6 +2175,20 @@ public sealed class OpenApi32CodeGenerator
             // Read per-property encoding overrides (may specify contentType for binary fields).
             IReadOnlyDictionary<string, EncodingInfo>? encodings = ReadEncodings(mediaType);
 
+            // The schema's required array marks parts a streaming endpoint treats as mandatory.
+            HashSet<string> requiredNames = new(StringComparer.Ordinal);
+            if (schema.TryGetProperty("required"u8, out JsonElement requiredEl)
+                && requiredEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement item in requiredEl.EnumerateArray())
+                {
+                    if (item.ValueKind == JsonValueKind.String && item.GetString() is { } requiredName)
+                    {
+                        requiredNames.Add(requiredName);
+                    }
+                }
+            }
+
             List<BinaryPropertyInfo> result = [];
 
             foreach (JsonProperty<JsonElement> prop in properties.EnumerateObject())
@@ -2187,7 +2209,7 @@ public sealed class OpenApi32CodeGenerator
                         contentType = enc.ContentType;
                     }
 
-                    result.Add(new BinaryPropertyInfo(propName, paramName, contentType));
+                    result.Add(new BinaryPropertyInfo(propName, paramName, contentType, requiredNames.Contains(propName)));
                 }
             }
 
@@ -7227,18 +7249,29 @@ public sealed class OpenApi32CodeGenerator
             w.WriteLine("/// </summary>");
             w.WriteLine($"public {bodyTypeName} Body {{ get; init; }}");
 
-            // For multipart/form-data bodies with format:binary parts, expose each binary part's
-            // raw bytes (mirrors the client sending BinaryPartData for the same parts).
+            // For multipart/form-data bodies with format:binary parts, expose each binary part:
+            // a wire-order streaming handle in streaming mode, raw bytes otherwise (mirrors the
+            // client sending BinaryPartData for the same parts).
             if (IsMultipartRequestBody(rb) && !IsMultipartMixedRequestBody(rb))
             {
+                bool streaming = this.StreamServerBinaryParts && rb.BinaryProperties.Length > 0;
                 foreach (BinaryPropertyInfo binaryProp in rb.BinaryProperties)
                 {
                     string propName = CodeEmitHelpers.ToPascalCase(binaryProp.PropertyName);
                     w.WriteLine();
                     w.WriteLine("/// <summary>");
-                    w.WriteLine($"/// Gets the binary content of the '{binaryProp.PropertyName}' part.");
-                    w.WriteLine("/// </summary>");
-                    w.WriteLine($"public ReadOnlyMemory<byte> {propName} {{ get; init; }}");
+                    if (streaming)
+                    {
+                        w.WriteLine($"/// Gets the streaming handle for the '{binaryProp.PropertyName}' part. Open it to consume the part's bytes from the wire; consume handles in wire order before returning.");
+                        w.WriteLine("/// </summary>");
+                        w.WriteLine($"public BinaryPartHandle {propName} {{ get; init; }}");
+                    }
+                    else
+                    {
+                        w.WriteLine($"/// Gets the binary content of the '{binaryProp.PropertyName}' part.");
+                        w.WriteLine("/// </summary>");
+                        w.WriteLine($"public ReadOnlyMemory<byte> {propName} {{ get; init; }}");
+                    }
                 }
             }
 
@@ -8370,9 +8403,17 @@ public sealed class OpenApi32CodeGenerator
                     w.WriteLine($"ParsedJsonDocument<{bodyTypeName}>? bodyDoc = null;");
                 }
 
+                // In streaming mode, multipart form-data bodies with binary parts hand
+                // the handler wire-order part handles instead of buffered bytes.
+                bool usesStreamingBody = this.StreamServerBinaryParts
+                    && hasBody && !isRawStreamBody
+                    && IsMultipartRequestBody(op.RequestBody!.Value)
+                    && !IsMultipartMixedRequestBody(op.RequestBody!.Value)
+                    && op.RequestBody!.Value.BinaryProperties.Length > 0;
+
                 // Multipart bodies with binary parts use the owned deserializer so the
                 // captured part slices stay valid for the duration of the handler call.
-                bool usesOwnedBody = hasBody && !isRawStreamBody
+                bool usesOwnedBody = !usesStreamingBody && hasBody && !isRawStreamBody
                     && ((IsMultipartRequestBody(op.RequestBody!.Value)
                             && !IsMultipartMixedRequestBody(op.RequestBody!.Value)
                             && op.RequestBody!.Value.BinaryProperties.Length > 0)
@@ -8381,6 +8422,11 @@ public sealed class OpenApi32CodeGenerator
                 if (usesOwnedBody)
                 {
                     w.WriteLine($"OwnedMultipartBody<{bodyTypeName}>? __bodyOwner = null;");
+                }
+
+                if (usesStreamingBody)
+                {
+                    w.WriteLine("MultipartStreamingDriver? __streamingDriver = null;");
                 }
 
                 w.WriteLine("try");
@@ -8443,7 +8489,7 @@ public sealed class OpenApi32CodeGenerator
 
                     // Multipart binary-part capture locals are referenced by the Params binding
                     // below, which sits outside the optional-body gate, so declare them here.
-                    if (!isRawStreamBody && IsMultipartRequestBody(op.RequestBody!.Value))
+                    if (!usesStreamingBody && !isRawStreamBody && IsMultipartRequestBody(op.RequestBody!.Value))
                     {
                         foreach (BinaryPropertyInfo binaryPart in op.RequestBody!.Value.BinaryProperties)
                         {
@@ -8500,6 +8546,19 @@ public sealed class OpenApi32CodeGenerator
                         BinaryPropertyInfo[] multipartBinaryParts = op.RequestBody!.Value.BinaryProperties;
                         bool hasBinaryParts = multipartBinaryParts.Length > 0;
 
+                        if (usesStreamingBody)
+                        {
+                            // No Content-Length precheck: large bodies are the point.
+                            // The non-binary parts are capped by MaxNonBinaryPartsLength.
+                            w.WriteLine("try");
+                            w.OpenBrace();
+                            w.WriteLine("__streamingDriver = await MultipartStreamingDriver.BeginAsync(context.Request.Body, context.Request.ContentType, serverOptions, context.RequestAborted).ConfigureAwait(false);");
+                            w.WriteLine($"bodyDoc = ParsedJsonDocument<{bodyTypeName}>.Parse(__streamingDriver.ProjectionUtf8Json);");
+                            w.CloseBrace();
+                            EmitBodyParseFailureCatches(w, includeTooLarge: true);
+                        }
+                        else
+                        {
                         EmitBufferedBodyContentLengthPrecheck(w);
                         w.WriteLine("try");
                         w.OpenBrace();
@@ -8525,6 +8584,7 @@ public sealed class OpenApi32CodeGenerator
 
                         w.CloseBrace();
                         EmitBodyParseFailureCatches(w, includeTooLarge: true);
+                        }
 
                         // Note: schema validation is skipped for multipart/form-data bodies because
                         // binary file fields (format: binary) are serialized as JSON strings whose
@@ -8634,13 +8694,23 @@ public sealed class OpenApi32CodeGenerator
                                 : "Body = bodyDoc!.RootElement,");
                         }
 
-                        // Bind captured binary parts for multipart/form-data bodies as slices of the owned body bytes.
+                        // Bind captured binary parts for multipart/form-data bodies: wire-order
+                        // handles in streaming mode, slices of the owned body bytes otherwise.
                         if (IsMultipartRequestBody(op.RequestBody!.Value) && !IsMultipartMixedRequestBody(op.RequestBody!.Value))
                         {
                             foreach (BinaryPropertyInfo binaryPart in op.RequestBody!.Value.BinaryProperties)
                             {
                                 string propName = CodeEmitHelpers.ToPascalCase(binaryPart.PropertyName);
-                                w.WriteLine($"{propName} = __binary_{binaryPart.PropertyName}_offset >= 0 ? __bodyOwner!.Value.BodyBytes.Slice(__binary_{binaryPart.PropertyName}_offset, __binary_{binaryPart.PropertyName}_length) : ReadOnlyMemory<byte>.Empty,");
+                                if (usesStreamingBody)
+                                {
+                                    string nameLiteral = CodeEmitHelpers.FormatStringLiteral(binaryPart.PropertyName);
+                                    string requiredLiteral = binaryPart.IsRequired ? "true" : "false";
+                                    w.WriteLine($"{propName} = __streamingDriver!.GetHandle({nameLiteral}, required: {requiredLiteral}),");
+                                }
+                                else
+                                {
+                                    w.WriteLine($"{propName} = __binary_{binaryPart.PropertyName}_offset >= 0 ? __bodyOwner!.Value.BodyBytes.Slice(__binary_{binaryPart.PropertyName}_offset, __binary_{binaryPart.PropertyName}_length) : ReadOnlyMemory<byte>.Empty,");
+                                }
                             }
                         }
 
@@ -8768,6 +8838,20 @@ public sealed class OpenApi32CodeGenerator
 
                 // Finally: dispose workspace (releases param documents) and body document
                 w.CloseBrace();
+                if (usesStreamingBody)
+                {
+                    // These originate from handle opening inside the handler, before any
+                    // response bytes are written, so a 400 can still be produced.
+                    w.WriteLine("catch (MultipartOrderingException)");
+                    w.OpenBrace();
+                    EmitProblemDetailsResponse(w, 400, "Bad Request", "Binary parts must come after all non-binary parts for this endpoint.");
+                    w.CloseBrace();
+                    w.WriteLine("catch (RequiredBinaryPartMissingException)");
+                    w.OpenBrace();
+                    EmitProblemDetailsResponse(w, 400, "Bad Request", "A required binary part was missing from the multipart body.");
+                    w.CloseBrace();
+                }
+
                 w.WriteLine("finally");
                 w.OpenBrace();
                 w.WriteLine("workspace.Dispose();");
@@ -8779,6 +8863,14 @@ public sealed class OpenApi32CodeGenerator
                 if (usesOwnedBody)
                 {
                     w.WriteLine("__bodyOwner?.Dispose();");
+                }
+
+                if (usesStreamingBody)
+                {
+                    w.WriteLine("if (__streamingDriver is not null)");
+                    w.OpenBrace();
+                    w.WriteLine("await __streamingDriver.DisposeAsync().ConfigureAwait(false);");
+                    w.CloseBrace();
                 }
 
                 w.CloseBrace();

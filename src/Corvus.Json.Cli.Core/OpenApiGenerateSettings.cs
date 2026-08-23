@@ -34,6 +34,10 @@ internal sealed class OpenApiGenerateSettings : OpenApiSettings
     [Description("The original URL of the API description. When set, the spec is fetched from this URL and stored locally. The URL is recorded in the lock file for update-style re-fetch.")]
     public string? SpecUrl { get; init; }
 
+    [CommandOption("--serverBinaryParts")]
+    [Description("How generated server endpoints receive multipart binary parts: 'buffer' (default) binds each part's bytes; 'stream' hands the handler wire-order streaming handles. 'stream' is supported for OpenAPI 3.2 specs.")]
+    public string? ServerBinaryParts { get; init; }
+
     [CommandOption("--ignoreEmptyFormUrlEncodedBody")]
     [Description("Treat form-urlencoded request bodies whose schema defines no properties as if the body were absent. Useful for real-world APIs (e.g. Stripe) that emit empty body definitions.")]
     public bool IgnoreEmptyFormUrlEncodedBody { get; init; }
