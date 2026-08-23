@@ -277,7 +277,7 @@ public ref struct MultipartFormReader
     /// <param name="part">The binary part data.</param>
     public delegate void BinaryPartHandler(BinaryPart part);
 
-    private static void ParseHeaders(
+    internal static void ParseHeaders(
         ReadOnlySpan<byte> headers,
         out ReadOnlySpan<byte> name,
         out ReadOnlySpan<byte> fileName,
@@ -449,7 +449,7 @@ public ref struct MultipartFormReader
         return contentType.EndsWith("+json"u8);
     }
 
-    private static bool IsBinaryContentType(ReadOnlySpan<byte> contentType, ReadOnlySpan<byte> fileName)
+    internal static bool IsBinaryContentType(ReadOnlySpan<byte> contentType, ReadOnlySpan<byte> fileName)
     {
         // If a filename is present, it's a file upload → binary.
         if (!fileName.IsEmpty)
