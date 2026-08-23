@@ -3942,7 +3942,17 @@ public sealed class OpenApi20CodeGenerator
         foreach (BinaryPropertyInfo prop in binaryProperties)
         {
             string propNameLiteral = CodeEmitHelpers.FormatStringLiteral(prop.PropertyName);
-            w.WriteLine($"[{propNameLiteral}] = {prop.ParameterName},");
+            if (prop.ContentType is { } specContentType)
+            {
+                // The spec declares a content type for this part: substitute it when the
+                // caller left BinaryPartData.ContentType unset.
+                string contentTypeLiteral = CodeEmitHelpers.FormatStringLiteral(specContentType);
+                w.WriteLine($"[{propNameLiteral}] = {prop.ParameterName}.ContentType is null ? {prop.ParameterName} with {{ ContentType = {contentTypeLiteral} }} : {prop.ParameterName},");
+            }
+            else
+            {
+                w.WriteLine($"[{propNameLiteral}] = {prop.ParameterName},");
+            }
         }
 
         w.PopIndent();

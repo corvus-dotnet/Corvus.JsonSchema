@@ -89,7 +89,7 @@ public static class MultipartMixedSerializer
         BinaryPartData binaryPart,
         CancellationToken cancellationToken = default)
     {
-        WriteBoundaryLine(output, guid, binaryPart.ContentType);
+        WriteBoundaryLine(output, guid, binaryPart.ContentType ?? "application/octet-stream");
 
         if (binaryPart.FileName is not null)
         {

@@ -207,14 +207,16 @@ public static class MultipartFormDataSerializer
 
         using StreamWriter writer = new(output, Utf8NoBom, bufferSize: 256, leaveOpen: true);
 
+        // Non-binary parts are written first: the streaming server contract requires
+        // binary parts after all non-binary parts on the wire, so a Corvus client can
+        // always talk to a streaming Corvus server without reordering.
         foreach (JsonProperty<JsonElement> property in JsonElement.From(value).EnumerateObject())
         {
             string name = property.Name;
 
-            // Check if this property is a binary part.
-            if (binaryParts is not null && binaryParts.TryGetValue(name, out BinaryPartData binaryPart))
+            // Binary parts are deferred to the second pass below.
+            if (binaryParts?.ContainsKey(name) == true)
             {
-                await WriteBinaryPartAsync(writer, output, boundary, name, binaryPart, cancellationToken).ConfigureAwait(false);
                 continue;
             }
 
@@ -284,14 +286,19 @@ public static class MultipartFormDataSerializer
             writer.Write("\r\n");
         }
 
-        // Write any binary parts that don't correspond to JSON properties
-        // (e.g. the JSON body used a placeholder or omitted the field).
+        // Second pass: binary parts declared in the JSON body, in body order, then any
+        // standalone binary parts that don't correspond to JSON properties (e.g. the
+        // JSON body used a placeholder or omitted the field).
         if (binaryParts is not null)
         {
             HashSet<string> seen = [];
             foreach (JsonProperty<JsonElement> property in JsonElement.From(value).EnumerateObject())
             {
-                seen.Add(property.Name);
+                string name = property.Name;
+                if (binaryParts.TryGetValue(name, out BinaryPartData declaredPart) && seen.Add(name))
+                {
+                    await WriteBinaryPartAsync(writer, output, boundary, name, declaredPart, cancellationToken).ConfigureAwait(false);
+                }
             }
 
             foreach (KeyValuePair<string, BinaryPartData> kvp in binaryParts)
@@ -661,7 +668,7 @@ public static class MultipartFormDataSerializer
 
         writer.Write("\r\n");
         writer.Write("Content-Type: ");
-        writer.Write(binaryPart.ContentType);
+        writer.Write(binaryPart.ContentType ?? "application/octet-stream");
         writer.Write("\r\n\r\n");
 
         // Flush text writer before writing raw bytes via async callback.

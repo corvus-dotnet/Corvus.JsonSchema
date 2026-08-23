@@ -1209,6 +1209,57 @@ public class OpenApi32CodeGeneratorTests
     }
 
     [TestMethod]
+    public void Generate_BinaryPartWithDeclaredContentType_SubstitutesSpecDefault()
+    {
+        JsonElement spec = ParseSpec("""
+        {
+          "openapi": "3.2.0",
+          "info": {"title": "t", "version": "1"},
+          "paths": {
+            "/photos": {
+              "post": {
+                "operationId": "uploadPhoto",
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "multipart/form-data": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "photo": {"type": "string", "format": "binary"},
+                          "caption": {"type": "string"}
+                        }
+                      },
+                      "encoding": {
+                        "photo": {"contentType": "image/png"}
+                      }
+                    }
+                  }
+                },
+                "responses": {"204": {"description": "ok"}}
+              }
+            }
+          }
+        }
+        """);
+
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1photos/post/requestBody/content/multipart~1form-data/schema"] = "Petstore.Client.PhotoBody",
+        };
+
+        OpenApi32CodeGenerator gen = new("Petstore.Client", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(spec);
+
+        GeneratedFile client = files.First(f => f.FileName.EndsWith("Client.cs", StringComparison.Ordinal)
+            && !f.FileName.StartsWith("IApi", StringComparison.Ordinal));
+
+        Assert.IsTrue(
+            client.Content.Contains("photo.ContentType is null ? photo with { ContentType = \"image/png\" } : photo", StringComparison.Ordinal),
+            "expected the spec-declared encoding contentType substituted when the caller leaves ContentType unset");
+    }
+
+    [TestMethod]
     public void Generate_TextPlainResponse_DefersBufferingAndEmitsAsyncAccessors()
     {
         Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();

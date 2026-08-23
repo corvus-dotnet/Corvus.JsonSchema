@@ -14,6 +14,56 @@ public class MultipartFormDataSerializerTests
 {
     private const string Boundary = "test-boundary";
 
+    // ── Part ordering ─────────────────────────────────────────────────────
+    [TestMethod]
+    public async Task SerializeAsync_BinaryPartsAreWrittenAfterAllNonBinaryParts()
+    {
+        // The streaming server contract requires binary parts last on the wire, so the
+        // client emits them last regardless of their position in the body object.
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(
+            """{"file":"placeholder","caption":"first","tag":"second"}""");
+
+        Dictionary<string, BinaryPartData> binaryParts = new(StringComparer.Ordinal)
+        {
+            ["file"] = new BinaryPartData(
+                WriteContentAsync: (stream, ct) => { stream.Write("FILEBYTES"u8); return default; },
+                FileName: "f.bin"),
+        };
+
+        using MemoryStream output = new();
+        await MultipartFormDataSerializer.SerializeAsync(
+            doc.RootElement, output, Boundary, null, binaryParts);
+
+        string wire = Encoding.UTF8.GetString(output.ToArray());
+        int captionIndex = wire.IndexOf("name=\"caption\"", StringComparison.Ordinal);
+        int tagIndex = wire.IndexOf("name=\"tag\"", StringComparison.Ordinal);
+        int fileIndex = wire.IndexOf("name=\"file\"", StringComparison.Ordinal);
+
+        Assert.IsTrue(captionIndex >= 0 && tagIndex >= 0 && fileIndex >= 0, wire);
+        Assert.IsTrue(fileIndex > captionIndex, "binary parts must be written after non-binary parts");
+        Assert.IsTrue(fileIndex > tagIndex, "binary parts must be written after non-binary parts");
+    }
+
+    [TestMethod]
+    public async Task SerializeAsync_NullBinaryContentType_FallsBackToOctetStream()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{}""");
+
+        Dictionary<string, BinaryPartData> binaryParts = new(StringComparer.Ordinal)
+        {
+            ["file"] = new BinaryPartData(
+                WriteContentAsync: (stream, ct) => { stream.Write("X"u8); return default; }),
+        };
+
+        using MemoryStream output = new();
+        await MultipartFormDataSerializer.SerializeAsync(
+            doc.RootElement, output, Boundary, null, binaryParts);
+
+        string wire = Encoding.UTF8.GetString(output.ToArray());
+        StringAssert.Contains(wire, "Content-Type: application/octet-stream");
+    }
+
     // ── Basic serialization ───────────────────────────────────────────────
     [TestMethod]
     public void Serialize_StringProperty()

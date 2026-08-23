@@ -20,8 +20,9 @@ namespace Corvus.Text.Json.OpenApi;
 /// </para>
 /// </param>
 /// <param name="ContentType">
-/// The MIME type for the part (e.g. <c>"application/octet-stream"</c>,
-/// <c>"image/png"</c>).
+/// The MIME type for the part (e.g. <c>"image/png"</c>). When <see langword="null"/>,
+/// the generated client substitutes the spec-declared <c>encoding.contentType</c> for
+/// the part if there is one; otherwise <c>application/octet-stream</c> goes on the wire.
 /// </param>
 /// <param name="FileName">
 /// An optional filename for the <c>Content-Disposition</c> header.
@@ -29,5 +30,5 @@ namespace Corvus.Text.Json.OpenApi;
 /// </param>
 public readonly record struct BinaryPartData(
     Func<Stream, CancellationToken, ValueTask> WriteContentAsync,
-    string ContentType = "application/octet-stream",
+    string? ContentType = null,
     string? FileName = null);
