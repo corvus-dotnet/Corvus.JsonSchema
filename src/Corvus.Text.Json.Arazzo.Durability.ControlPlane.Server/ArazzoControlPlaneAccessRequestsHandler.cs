@@ -277,10 +277,18 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
     {
         string id = (string)parameters.RequestId;
 
-        // No own-request or §15-administrator check: the caller is the approval workflow's §13 system credential (gated by
-        // the narrow accessRequests:grant capability), not the approver in person. The approval DECISION was made inside
-        // the workflow; this only enacts the ceiling-bounded grant it authorized (design §16.5.1). The platform ceiling in
-        // the approval service still applies unconditionally (run access only, bound to the requester, workflow-scoped).
+        // No §15-administrator check: the caller is the approval workflow's §13 system credential (gated by the narrow
+        // accessRequests:grant capability), not the approver in person; the approval DECISION was made inside the workflow
+        // and this only enacts the ceiling-bounded grant it authorized (design §16.5.1). But the independent-decision bar
+        // still applies (P1-5): the system credential is never the requester, so refusing a caller who IS the requester is
+        // defence in depth — a leaked accessRequests:grant capability cannot self-grant — above the platform ceiling (run
+        // access only, bound to the requester, workflow-scoped) that also applies unconditionally.
+        if (await this.IsOwnRequestAsync(id, cancellationToken).ConfigureAwait(false))
+        {
+            GovernanceAudit.Mutation(this.auditLogger, "access-request.grant", this.CallerActor(), TargetKind, id, "refused-own-request");
+            return GrantAccessRequestResult.Forbidden(OwnRequestProblem(), workspace);
+        }
+
         try
         {
             ParsedJsonDocument<AccessRequest>? result = await this.approval.GrantRequestAsync(id, this.CallerActor(), NoteReason(parameters.Body), cancellationToken).ConfigureAwait(false);
@@ -305,10 +313,18 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
         string id = (string)parameters.RequestId;
         string outcome = (string)parameters.Body.Outcome;
 
-        // The single system-credentialed enactment path: no own-request or §15-administrator check (the caller is the
-        // approval workflow's §13 system credential, gated by the narrow accessRequests:grant capability). The decision
-        // was made inside the workflow; this enacts it — grant (approved/eligible) or mark terminal (rejected/withdrawn).
-        // The platform ceiling on a grant still applies unconditionally.
+        // The single system-credentialed enactment path: no §15-administrator check (the caller is the approval workflow's
+        // §13 system credential, gated by the narrow accessRequests:grant capability). The decision was made inside the
+        // workflow; this enacts it — grant (approved/eligible) or mark terminal (rejected/withdrawn). The independent-
+        // decision bar still applies (P1-5): the system credential is never the requester, so refusing a caller who IS the
+        // requester is defence in depth against a leaked accessRequests:grant capability, above the unconditional platform
+        // ceiling on a grant.
+        if (await this.IsOwnRequestAsync(id, cancellationToken).ConfigureAwait(false))
+        {
+            GovernanceAudit.Mutation(this.auditLogger, "access-request.settle", this.CallerActor(), TargetKind, id, "refused-own-request");
+            return SettleAccessRequestResult.Forbidden(OwnRequestProblem(), workspace);
+        }
+
         try
         {
             ParsedJsonDocument<AccessRequest>? result = await this.approval.SettleRequestAsync(id, outcome, this.CallerActor(), SettlementReason(parameters.Body), cancellationToken).ConfigureAwait(false);
@@ -336,9 +352,17 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
     {
         string id = (string)parameters.RequestId;
 
-        // The sibling of HandleGrantAccessRequestAsync, writing standing eligibility (design §16.5.3): no own-request or
-        // §15-administrator check (the caller is the approval workflow's §13 system credential); the decision was made
-        // inside the workflow. The platform ceiling still applies (run access only, bound to the requester, workflow-scoped).
+        // The sibling of HandleGrantAccessRequestAsync, writing standing eligibility (design §16.5.3): no §15-administrator
+        // check (the caller is the approval workflow's §13 system credential); the decision was made inside the workflow.
+        // The independent-decision bar still applies (P1-5): refusing a caller who IS the requester is defence in depth
+        // against a leaked accessRequests:grant capability, above the platform ceiling (run access only, bound to the
+        // requester, workflow-scoped) that also applies.
+        if (await this.IsOwnRequestAsync(id, cancellationToken).ConfigureAwait(false))
+        {
+            GovernanceAudit.Mutation(this.auditLogger, "access-request.grant-eligible", this.CallerActor(), TargetKind, id, "refused-own-request");
+            return GrantAccessRequestAsEligibleResult.Forbidden(OwnRequestProblem(), workspace);
+        }
+
         try
         {
             ParsedJsonDocument<AccessRequest>? result = await this.approval.GrantRequestAsEligibleAsync(id, this.CallerActor(), NoteReason(parameters.Body), cancellationToken).ConfigureAwait(false);

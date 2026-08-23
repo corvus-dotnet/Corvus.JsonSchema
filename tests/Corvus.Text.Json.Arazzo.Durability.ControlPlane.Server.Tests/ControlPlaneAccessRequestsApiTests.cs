@@ -31,6 +31,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Tests;
 public sealed class ControlPlaneAccessRequestsApiTests
 {
     private const string Auth = "any"; // any scope value authenticates; these operations require no specific scope.
+    private const string GrantScope = "accessRequests:grant"; // the narrow capability the system-credentialed enactment paths require.
 
     [TestMethod]
     public async Task A_request_is_submitted_queued_and_approved_by_the_administrator()
@@ -246,6 +247,13 @@ public sealed class ControlPlaneAccessRequestsApiTests
 
         (await host.SendAsync(HttpMethod.Post, $"/accessRequests/{id}/approveAsEligible", Auth, "alice")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await host.SendAsync(HttpMethod.Post, $"/accessRequests/{id}/deny", Auth, "alice")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        // The system-credentialed enactment paths (accessRequests:grant) apply the same independent-decision bar (P1-5):
+        // a requester who holds that scope may not grant, grant-as-eligible, or settle their OWN request, so a leaked
+        // capability cannot self-grant. The system credential is never the requester, so legitimate enactment is unaffected.
+        (await host.SendAsync(HttpMethod.Post, $"/accessRequests/{id}/grant", GrantScope, "alice")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await host.SendAsync(HttpMethod.Post, $"/accessRequests/{id}/grantAsEligible", GrantScope, "alice")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await host.SendJsonAsync(HttpMethod.Post, $"/accessRequests/{id}/settle", """{"outcome":"approved"}""", GrantScope, "alice")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
         // The refused decisions changed nothing: the request is still pending, and the requester's own exit —
         // withdraw — still works.
