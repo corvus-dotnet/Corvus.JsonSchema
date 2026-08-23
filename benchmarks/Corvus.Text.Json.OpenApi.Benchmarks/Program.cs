@@ -35,4 +35,5 @@ BenchmarkRunner.Run(
         typeof(ValidationModeBenchmarks),
         typeof(MultipartServerDeserializeBenchmarks),
     ],
-    config);
+    config,
+    args);
