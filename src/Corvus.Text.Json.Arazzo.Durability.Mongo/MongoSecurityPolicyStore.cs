@@ -24,6 +24,10 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
 {
     private const string MetaId = "meta";
 
+    // The §14.2 reach predicate translated to a Mongo filter over the securityTags mirror ({ k, v } array elements). The
+    // emitter is immutable and stateless, so one shared instance serves every reach-filtered list/count.
+    private static readonly MongoSecurityRuleEmitter SecurityEmitter = new("securityTags", "k", "v");
+
     // Singleton comparers (created once) for the client-side snapshot ordering, since the queries do not order: rules by
     // their name and bindings by Order then id.
     private static readonly IComparer<ParsedJsonDocument<SecurityRuleDocument>> ByRuleName =
@@ -104,8 +108,9 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         WorkflowEtag etag = NewEtag();
         byte[] json = SecurityPolicySerialization.SerializeNewRule(name, draft, actor, this.timeProvider.GetUtcNow(), etag);
 
-        // Mirror the q-searched expression top-level (the name is _id) so q runs server-side; _id is the keyset.
-        var document = new BsonDocument { ["_id"] = name, ["expression"] = draft.ExpressionValue, ["doc"] = new BsonBinaryData(json) };
+        // Mirror the q-searched expression top-level (the name is _id) so q runs server-side; _id is the keyset. securityTags
+        // mirrors the management tags ({ k, v } array, BsonNull when empty) so the §14.2 reach can be pushed into list/count.
+        var document = new BsonDocument { ["_id"] = name, ["expression"] = draft.ExpressionValue, ["securityTags"] = MongoSecurityTags.ToBson(draft.ManagementTagsValue), ["doc"] = new BsonBinaryData(json) };
         try
         {
             await this.rules.InsertOneAsync(document, options: null, cancellationToken).ConfigureAwait(false);
@@ -185,6 +190,64 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
+    public async ValueTask<SecurityRulePage> ListRulesAsync(int limit, JsonString pageToken, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : SecurityRulePage.DefaultPageSize;
+        string? after = DecodeRuleCursor(pageToken);
+
+        var b = Builders<BsonDocument>.Filter;
+        FilterDefinition<BsonDocument> filter = b.Empty;
+        if (after is not null)
+        {
+            filter &= b.Gt("_id", after);
+        }
+
+        if (q.IsNotUndefined())
+        {
+            var rx = new BsonRegularExpression(Regex.Escape((string)q), "i");
+            filter &= b.Or(b.Regex("_id", rx), b.Regex("expression", rx));
+        }
+
+        // Push the §14.2 read reach into the query over the securityTags mirror (the same predicate context.Admits
+        // evaluates); a null reach (full read) adds nothing.
+        if (context.Reach(AccessVerb.Read) is { } reach)
+        {
+            filter &= reach.ToPredicate(SecurityEmitter);
+        }
+
+        var page = new PooledDocumentList<SecurityRuleDocument>(pageSize);
+        try
+        {
+            List<BsonDocument> documents = await this.rules
+                .Find(filter)
+                .Sort(Builders<BsonDocument>.Sort.Ascending("_id"))
+                .Limit(pageSize + 1)
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            bool hasMore = documents.Count > pageSize;
+            int take = hasMore ? pageSize : documents.Count;
+            for (int i = 0; i < take; i++)
+            {
+                page.Add(ParsedJsonDocument<SecurityRuleDocument>.Parse(documents[i]["doc"].AsBsonBinaryData.Bytes.AsMemory()));
+            }
+
+            if (!hasMore)
+            {
+                return SecurityRulePage.Create(page);
+            }
+
+            using UnescapedUtf8JsonString lastName = page[page.Count - 1].Name.GetUtf8String();
+            return SecurityRulePage.Create(page, lastName.Span);
+        }
+        catch
+        {
+            page.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
@@ -198,7 +261,10 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         WorkflowEtag etag = NewEtag();
         using ParsedJsonDocument<SecurityRuleDocument> current = ParsedJsonDocument<SecurityRuleDocument>.Parse(doc.AsMemory());
         byte[] json = SecurityPolicySerialization.SerializeUpdatedRule(current.RootElement, "rule", name, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), etag);
-        var replacement = new BsonDocument { ["_id"] = name, ["expression"] = draft.ExpressionValue, ["doc"] = new BsonBinaryData(json) };
+
+        // Management tags are immutable, so the mirror carries the CURRENT tags forward (SerializeUpdatedRule preserves
+        // them), never the draft's, which the update payload does not carry.
+        var replacement = new BsonDocument { ["_id"] = name, ["expression"] = draft.ExpressionValue, ["securityTags"] = MongoSecurityTags.ToBson(current.RootElement.ManagementTagsValue), ["doc"] = new BsonBinaryData(json) };
         await this.rules.ReplaceOneAsync(Builders<BsonDocument>.Filter.Eq("_id", name), replacement, cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<SecurityRuleDocument>(json);
@@ -215,7 +281,7 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
         WorkflowEtag etag = NewEtag();
         byte[] json = SecurityPolicySerialization.SerializeNewBinding(id, draft, actor, this.timeProvider.GetUtcNow(), etag);
-        BsonDocument document = BindingDocument(id, draft, json);
+        BsonDocument document = BindingDocument(id, draft, json, draft.ManagementTagsValue);
         await this.bindings.InsertOneAsync(document, options: null, cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<SecurityBindingDocument>(json);
@@ -346,6 +412,29 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountRulesAsync(int cap, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        int bound = cap > 0 ? cap : SecurityRulePage.DefaultPageSize;
+
+        var b = Builders<BsonDocument>.Filter;
+        FilterDefinition<BsonDocument> filter = b.Empty;
+        if (q.IsNotUndefined())
+        {
+            var rx = new BsonRegularExpression(Regex.Escape((string)q), "i");
+            filter &= b.Or(b.Regex("_id", rx), b.Regex("expression", rx));
+        }
+
+        // Same reach predicate as the reach-filtered list so the footer count cannot drift.
+        if (context.Reach(AccessVerb.Read) is { } reach)
+        {
+            filter &= reach.ToPredicate(SecurityEmitter);
+        }
+
+        long total = await this.rules.CountDocumentsAsync(filter, new CountOptions { Limit = bound + 1 }, cancellationToken).ConfigureAwait(false);
+        return total > bound ? (bound, true) : ((int)total, false);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<(int Count, bool Capped)> CountBindingsAsync(int cap, JsonString q, CancellationToken cancellationToken)
     {
         int bound = cap > 0 ? cap : SecurityBindingPage.DefaultPageSize;
@@ -356,6 +445,89 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         {
             var rx = new BsonRegularExpression(Regex.Escape((string)q), "i");
             filter = b.Or(b.Regex("claimType", rx), b.Regex("claimValue", rx), b.Regex("description", rx));
+        }
+
+        long total = await this.bindings.CountDocumentsAsync(filter, new CountOptions { Limit = bound + 1 }, cancellationToken).ConfigureAwait(false);
+        return total > bound ? (bound, true) : ((int)total, false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<SecurityBindingPage> ListBindingsAsync(int limit, JsonString pageToken, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : SecurityBindingPage.DefaultPageSize;
+        bool hasCursor = DecodeBindingCursor(pageToken, out int cursorOrder, out string? cursorId);
+
+        var b = Builders<BsonDocument>.Filter;
+        FilterDefinition<BsonDocument> filter = b.Empty;
+        if (hasCursor)
+        {
+            filter &= b.Or(
+                b.Gt("order", cursorOrder),
+                b.And(b.Eq("order", cursorOrder), b.Gt("_id", cursorId)));
+        }
+
+        if (q.IsNotUndefined())
+        {
+            var rx = new BsonRegularExpression(Regex.Escape((string)q), "i");
+            filter &= b.Or(b.Regex("claimType", rx), b.Regex("claimValue", rx), b.Regex("description", rx));
+        }
+
+        // Push the §14.2 read reach into the query over the securityTags mirror; a null reach (full read) adds nothing.
+        if (context.Reach(AccessVerb.Read) is { } reach)
+        {
+            filter &= reach.ToPredicate(SecurityEmitter);
+        }
+
+        var page = new PooledDocumentList<SecurityBindingDocument>(pageSize);
+        try
+        {
+            List<BsonDocument> documents = await this.bindings
+                .Find(filter)
+                .Sort(Builders<BsonDocument>.Sort.Ascending("order").Ascending("_id"))
+                .Limit(pageSize + 1)
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            bool hasMore = documents.Count > pageSize;
+            int take = hasMore ? pageSize : documents.Count;
+            for (int i = 0; i < take; i++)
+            {
+                page.Add(ParsedJsonDocument<SecurityBindingDocument>.Parse(documents[i]["doc"].AsBsonBinaryData.Bytes.AsMemory()));
+            }
+
+            if (!hasMore)
+            {
+                return SecurityBindingPage.Create(page);
+            }
+
+            SecurityBindingDocument last = page[page.Count - 1];
+            using UnescapedUtf8JsonString lastId = last.Id.GetUtf8String();
+            return SecurityBindingPage.Create(page, last.OrderValue, lastId.Span);
+        }
+        catch
+        {
+            page.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountBindingsAsync(int cap, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        int bound = cap > 0 ? cap : SecurityBindingPage.DefaultPageSize;
+
+        var b = Builders<BsonDocument>.Filter;
+        FilterDefinition<BsonDocument> filter = b.Empty;
+        if (q.IsNotUndefined())
+        {
+            var rx = new BsonRegularExpression(Regex.Escape((string)q), "i");
+            filter &= b.Or(b.Regex("claimType", rx), b.Regex("claimValue", rx), b.Regex("description", rx));
+        }
+
+        // Same reach predicate as the reach-filtered list so the footer count cannot drift.
+        if (context.Reach(AccessVerb.Read) is { } reach)
+        {
+            filter &= reach.ToPredicate(SecurityEmitter);
         }
 
         long total = await this.bindings.CountDocumentsAsync(filter, new CountOptions { Limit = bound + 1 }, cancellationToken).ConfigureAwait(false);
@@ -376,7 +548,7 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
         WorkflowEtag etag = NewEtag();
         using ParsedJsonDocument<SecurityBindingDocument> current = ParsedJsonDocument<SecurityBindingDocument>.Parse(doc.AsMemory());
         byte[] json = SecurityPolicySerialization.SerializeUpdatedBinding(current.RootElement, "binding", id, expectedEtag, draft, actor, this.timeProvider.GetUtcNow(), etag);
-        BsonDocument replacement = BindingDocument(id, draft, json);
+        BsonDocument replacement = BindingDocument(id, draft, json, current.RootElement.ManagementTagsValue);
         await this.bindings.ReplaceOneAsync(Builders<BsonDocument>.Filter.Eq("_id", id), replacement, cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<SecurityBindingDocument>(json);
@@ -410,14 +582,17 @@ public sealed class MongoSecurityPolicyStore : ISecurityPolicyStore, IAsyncDispo
     private static WorkflowEtag NewEtag() => new(Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture));
 
     // The stored binding document: _id + the canonical doc, plus the mirrored keyset/q fields (order, claimType, and the
-    // optional claimValue/description when present) so the keyset and q run server-side.
-    private static BsonDocument BindingDocument(string id, SecurityBindingDocument draft, byte[] json)
+    // optional claimValue/description when present) so the keyset and q run server-side, and securityTags ({ k, v } array,
+    // BsonNull when empty) so the §14.2 reach can be pushed into list/count. The tags are passed explicitly because they are
+    // immutable: a create mirrors the draft's, an update carries the current document's forward (not the draft's).
+    private static BsonDocument BindingDocument(string id, SecurityBindingDocument draft, byte[] json, in SecurityTagSet managementTags)
     {
         var document = new BsonDocument
         {
             ["_id"] = id,
             ["order"] = draft.OrderValue,
             ["claimType"] = draft.ClaimTypeValue,
+            ["securityTags"] = MongoSecurityTags.ToBson(managementTags),
             ["doc"] = new BsonBinaryData(json),
         };
         if (draft.ClaimValue.IsNotUndefined())
