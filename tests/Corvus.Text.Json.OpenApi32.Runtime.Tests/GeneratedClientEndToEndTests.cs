@@ -6825,6 +6825,46 @@ public class GeneratedClientEndToEndTests
     }
 
     [TestMethod]
+    public async Task EchoText_GetOkTextAsync_BuffersOnFirstCallAndCaches()
+    {
+        const string expected = "async text body";
+        byte[] textBytes = Encoding.UTF8.GetBytes(expected);
+        using var harness = new TestHarness(HttpStatusCode.OK, textBytes, "text/plain");
+
+        await using EchoTextResponse response = await harness.Transport
+            .SendAsync<EchoTextRequest, EchoTextResponse>(
+                default(EchoTextRequest),
+                new MemoryStream(textBytes),
+                "text/plain",
+                CancellationToken.None);
+
+        Assert.IsNotNull(response.OkTextStream, "the live stream must be available before buffering");
+        Assert.AreEqual(expected, await response.GetOkTextAsync());
+        Assert.IsNull(response.OkTextStream, "buffering must consume the live stream");
+        Assert.AreEqual(expected, await response.GetOkTextAsync());
+        Assert.AreEqual(expected, response.OkText);
+    }
+
+    [TestMethod]
+    public async Task EchoText_OkTextStream_ExposesRawBodyWithoutBuffering()
+    {
+        const string expected = "streamed text body";
+        byte[] textBytes = Encoding.UTF8.GetBytes(expected);
+        using var harness = new TestHarness(HttpStatusCode.OK, textBytes, "text/plain");
+
+        await using EchoTextResponse response = await harness.Transport
+            .SendAsync<EchoTextRequest, EchoTextResponse>(
+                default(EchoTextRequest),
+                new MemoryStream(textBytes),
+                "text/plain",
+                CancellationToken.None);
+
+        using MemoryStream drained = new();
+        await response.OkTextStream!.CopyToAsync(drained);
+        CollectionAssert.AreEqual(textBytes, drained.ToArray());
+    }
+
+    [TestMethod]
     public async Task EchoText_RequestBodyIsSentAsTextPlain()
     {
         byte[] textBytes = Encoding.UTF8.GetBytes("test input");

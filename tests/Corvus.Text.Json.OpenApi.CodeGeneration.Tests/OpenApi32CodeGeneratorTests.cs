@@ -1209,6 +1209,29 @@ public class OpenApi32CodeGeneratorTests
     }
 
     [TestMethod]
+    public void Generate_TextPlainResponse_DefersBufferingAndEmitsAsyncAccessors()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+        OpenApi32CodeGenerator generator = new("CovTest.Client", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(covspecRoot);
+
+        GeneratedFile response = files.First(f => f.FileName == "GetItemResponse.cs");
+
+        Assert.IsTrue(
+            response.Content.Contains("TextBody = new TextResponseBody(contentStream);", StringComparison.Ordinal),
+            "expected the text body to defer to the live stream");
+        Assert.IsTrue(
+            response.Content.Contains("GetOkTextAsync", StringComparison.Ordinal),
+            "expected an async buffering accessor");
+        Assert.IsTrue(
+            response.Content.Contains("TextStream =>", StringComparison.Ordinal),
+            "expected a live stream accessor");
+        Assert.IsFalse(
+            response.Content.Contains("ReadStreamToRentedBuffer(contentStream", StringComparison.Ordinal),
+            "expected no eager synchronous buffering in CreateAsync");
+    }
+
+    [TestMethod]
     public void GenerateServer_DefaultStatusOctetStreamResponse_GetsBinaryFactoryOverloads()
     {
         Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();

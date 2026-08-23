@@ -5407,8 +5407,8 @@ public class OpenApi30CodeGeneratorTests
         GeneratedFile resp = GetFile(files, "EchoTextResponse.cs");
 
         Assert.IsTrue(
-            resp.Content.Contains("ArrayPool<byte>.Shared.Return", StringComparison.Ordinal),
-            "Text response DisposeAsync should return rented buffer to ArrayPool");
+            resp.Content.Contains("TextBody?.ReturnBuffer();", StringComparison.Ordinal),
+            "Text response DisposeAsync should return the body's rented buffer");
     }
 
     [TestMethod]
@@ -5417,9 +5417,12 @@ public class OpenApi30CodeGeneratorTests
         IReadOnlyList<GeneratedFile> files = GenerateTextPlainSpec();
         GeneratedFile resp = GetFile(files, "EchoTextResponse.cs");
 
-        Assert.IsTrue(
+        Assert.IsFalse(
             resp.Content.Contains("ReadStreamToRentedBuffer", StringComparison.Ordinal),
-            "Text response should contain the ReadStreamToRentedBuffer helper method");
+            "Text buffering lives in TextResponseBody now; no emitted helper expected");
+        Assert.IsTrue(
+            resp.Content.Contains("new TextResponseBody(contentStream)", StringComparison.Ordinal),
+            "Text response should retain the live stream in a TextResponseBody");
     }
 
     [TestMethod]
@@ -5429,14 +5432,8 @@ public class OpenApi30CodeGeneratorTests
         GeneratedFile resp = GetFile(files, "EchoTextResponse.cs");
 
         Assert.IsTrue(
-            resp.Content.Contains("okTextBuffer", StringComparison.Ordinal),
-            "Text response should have a buffer backing field");
-        Assert.IsTrue(
-            resp.Content.Contains("okTextLength", StringComparison.Ordinal),
-            "Text response should have a length backing field");
-        Assert.IsTrue(
-            resp.Content.Contains("okTextCached", StringComparison.Ordinal),
-            "Text response should have a cached string backing field");
+            resp.Content.Contains("private TextResponseBody? okTextBody;", StringComparison.Ordinal),
+            "Text response should have a TextResponseBody backing field");
     }
 
     [TestMethod]
@@ -5515,14 +5512,17 @@ public class OpenApi30CodeGeneratorTests
     }
 
     [TestMethod]
-    public void TextResponse_CreateAsync_CallsReadStreamToRentedBuffer()
+    public void TextResponse_CreateAsync_DefersToLiveStream()
     {
         IReadOnlyList<GeneratedFile> files = GenerateTextPlainSpec();
         GeneratedFile resp = GetFile(files, "EchoTextResponse.cs");
 
         Assert.IsTrue(
+            resp.Content.Contains("TextBody = new TextResponseBody(contentStream);", StringComparison.Ordinal),
+            "CreateAsync should retain the live stream for text/plain responses");
+        Assert.IsFalse(
             resp.Content.Contains("ReadStreamToRentedBuffer(contentStream", StringComparison.Ordinal),
-            "CreateAsync should call ReadStreamToRentedBuffer for text/plain responses");
+            "CreateAsync should not buffer the text body eagerly");
     }
 
     // --- Accept header tests ---
@@ -5758,8 +5758,8 @@ public class OpenApi30CodeGeneratorTests
         GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
 
         Assert.IsTrue(
-            resp.Content.Contains("private byte[]? okTextBuffer;", StringComparison.Ordinal),
-            "Response struct should have okTextBuffer field for text/plain");
+            resp.Content.Contains("private TextResponseBody? okTextBody;", StringComparison.Ordinal),
+            "Response struct should have a TextResponseBody field for text/plain");
         Assert.IsTrue(
             resp.Content.Contains("public string? OkText", StringComparison.Ordinal),
             "Response struct should have OkText property for text/plain");
@@ -5811,8 +5811,8 @@ public class OpenApi30CodeGeneratorTests
         GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
 
         Assert.IsTrue(
-            resp.Content.Contains("this.okTextBuffer is not null", StringComparison.Ordinal),
-            "MatchResult should detect text content by checking okTextBuffer");
+            resp.Content.Contains("this.okTextBody is not null", StringComparison.Ordinal),
+            "MatchResult should detect text content by checking okTextBody");
         Assert.IsTrue(
             resp.Content.Contains("matchOkString(this.OkText", StringComparison.Ordinal),
             "MatchResult should call matchOkString when text buffer is populated");
@@ -5839,8 +5839,8 @@ public class OpenApi30CodeGeneratorTests
         GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
 
         Assert.IsTrue(
-            resp.Content.Contains("ArrayPool<byte>.Shared.Return(this.okTextBuffer)", StringComparison.Ordinal),
-            "DisposeAsync should return the text buffer to the pool");
+            resp.Content.Contains("this.okTextBody?.ReturnBuffer();", StringComparison.Ordinal),
+            "DisposeAsync should return the text body's buffer to the pool");
     }
 
     // ── Response Validate() codegen tests ────────────────────────────────

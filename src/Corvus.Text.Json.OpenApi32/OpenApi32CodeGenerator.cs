@@ -4392,12 +4392,6 @@ public sealed class OpenApi32CodeGenerator
         w.CloseBrace();
         w.CloseBrace();
 
-        // Emit the helper method for reading streams into rented buffers.
-        if (hasTextBody)
-        {
-            CodeEmitHelpers.EmitReadStreamToRentedBufferHelper(w);
-        }
-
         // Emit link accessor struct and property when the operation has links.
         if (hasLinks)
         {

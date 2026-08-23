@@ -261,6 +261,10 @@ JsonInteger totalCount = response.XTotalCountHeader;
 JsonString nextPage = response.XNextHeader;
 ```
 
+### Text Responses
+
+A `text/plain` response body is not read from the network until you consume it, and first consumption wins. `GetOkTextAsync()` buffers the body asynchronously on first call and returns the cached string afterwards; it is the accessor to prefer. `OkTextStream` exposes the live response stream for callers that want the raw bytes as they arrive (for example a text stream carrying its own protocol); reading it directly consumes the body, and it returns `null` once another accessor has buffered. The synchronous `OkText` and `OkUtf8Bytes` properties remain and buffer with a blocking read on first access, so existing code keeps working unchanged.
+
 ## Request Bodies
 
 ### Building a Body Without Closures

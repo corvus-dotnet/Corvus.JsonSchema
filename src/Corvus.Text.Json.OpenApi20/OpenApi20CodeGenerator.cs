@@ -2841,12 +2841,6 @@ public sealed class OpenApi20CodeGenerator
         w.CloseBrace();
         w.CloseBrace();
 
-        // Emit the helper method for reading streams into rented buffers.
-        if (hasTextBody)
-        {
-            CodeEmitHelpers.EmitReadStreamToRentedBufferHelper(w);
-        }
-
         w.CloseBrace();
 
         return new GeneratedFile($"{structName}.cs", w.ToString());
