@@ -571,16 +571,15 @@ public class MultipartFormReaderTests
 
         byte[] bodyBytes = Encoding.UTF8.GetBytes(body);
         using MemoryStream stream = new(bodyBytes);
-        ReadOnlyMemory<byte> contentType = Encoding.UTF8.GetBytes("multipart/form-data; boundary=b");
 
         string? binaryName = null;
-        using ParsedJsonDocument<JsonElement> doc = await MultipartFormDataSerializer.DeserializeAsync<JsonElement>(
+        using OwnedMultipartBody<JsonElement> owned = await MultipartFormDataSerializer.DeserializeOwnedAsync<JsonElement>(
             stream,
-            contentType,
+            "multipart/form-data; boundary=b",
             binaryPartCallback: (part) => binaryName = Encoding.UTF8.GetString(part.Name));
 
         Assert.AreEqual("doc", binaryName);
-        Assert.AreEqual("test", doc.RootElement.GetProperty("label"u8).GetString());
+        Assert.AreEqual("test", owned.Document.RootElement.GetProperty("label"u8).GetString());
     }
 
     [TestMethod]

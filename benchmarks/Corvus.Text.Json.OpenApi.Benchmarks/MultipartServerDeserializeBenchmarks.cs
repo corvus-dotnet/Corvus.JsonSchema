@@ -46,7 +46,8 @@ public class MultipartServerDeserializeBenchmarks
     }
 
     /// <summary>
-    /// The pre-change path: deserialize and copy the binary part with ToArray.
+    /// The copy semantics of the pre-owned generated endpoints: every binary part is
+    /// copied out of the body buffer with ToArray.
     /// </summary>
     /// <returns>The captured part length, to defeat dead-code elimination.</returns>
     [Benchmark(Baseline = true)]
@@ -54,12 +55,12 @@ public class MultipartServerDeserializeBenchmarks
     {
         using MemoryStream stream = new(this.body);
         byte[]? captured = null;
-        using ParsedJsonDocument<JsonElement> doc = await MultipartFormDataSerializer.DeserializeAsync<JsonElement>(
+        using OwnedMultipartBody<JsonElement> owned = await MultipartFormDataSerializer.DeserializeOwnedAsync<JsonElement>(
             stream,
             $"multipart/form-data; boundary={Boundary}",
             binaryPartCallback: part => captured = part.Data.ToArray());
         ReadOnlyMemory<byte> bound = captured ?? ReadOnlyMemory<byte>.Empty;
-        return bound.Length + doc.RootElement.GetProperty("category"u8).GetString()!.Length;
+        return bound.Length + owned.Document.RootElement.GetProperty("category"u8).GetString()!.Length;
     }
 
     /// <summary>

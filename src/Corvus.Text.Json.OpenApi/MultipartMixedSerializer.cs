@@ -176,10 +176,6 @@ public static class MultipartMixedSerializer
     /// <typeparam name="T">The JSON element type to parse into.</typeparam>
     /// <param name="stream">The request body stream.</param>
     /// <param name="contentType">The Content-Type header string (e.g., <c>multipart/mixed; boundary=abc</c>).</param>
-    /// <param name="binaryPartCallback">
-    /// Optional callback invoked for each binary part. If <see langword="null"/>,
-    /// binary parts are silently skipped.
-    /// </param>
     /// <param name="maxBodyLength">
     /// The maximum number of bytes the body may contain. A body over the limit throws
     /// a <see cref="RequestBodyTooLargeException"/>.
@@ -189,9 +185,44 @@ public static class MultipartMixedSerializer
     public static ValueTask<ParsedJsonDocument<T>> DeserializeAsync<T>(
         Stream stream,
         string? contentType,
-        MultipartMixedReader.BinaryPartHandler? binaryPartCallback = null,
         long maxBodyLength = long.MaxValue,
         CancellationToken cancellationToken = default)
+        where T : struct, IJsonElement<T>
+        => DeserializeCoreAsync<T>(stream, contentType, null, maxBodyLength, cancellationToken);
+
+    /// <summary>
+    /// Deserializes a <c>multipart/mixed</c> body from a stream into a
+    /// <see cref="ParsedJsonDocument{T}"/>, invoking a callback for each binary part.
+    /// </summary>
+    /// <typeparam name="T">The JSON element type to parse into.</typeparam>
+    /// <param name="stream">The request body stream.</param>
+    /// <param name="contentType">The Content-Type header string (e.g., <c>multipart/mixed; boundary=abc</c>).</param>
+    /// <param name="binaryPartCallback">
+    /// Callback invoked for each binary part. The part's bytes are only valid inside
+    /// the callback, so a caller can do nothing with them except copy.
+    /// </param>
+    /// <param name="maxBodyLength">
+    /// The maximum number of bytes the body may contain. A body over the limit throws
+    /// a <see cref="RequestBodyTooLargeException"/>.
+    /// </param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A parsed JSON document backed by pooled memory. The caller must dispose it.</returns>
+    [Obsolete("Use DeserializeOwnedAsync: it retains the body bytes so binary parts can be sliced without copying. This overload will be removed in a future release.")]
+    public static ValueTask<ParsedJsonDocument<T>> DeserializeAsync<T>(
+        Stream stream,
+        string? contentType,
+        MultipartMixedReader.BinaryPartHandler? binaryPartCallback,
+        long maxBodyLength = long.MaxValue,
+        CancellationToken cancellationToken = default)
+        where T : struct, IJsonElement<T>
+        => DeserializeCoreAsync<T>(stream, contentType, binaryPartCallback, maxBodyLength, cancellationToken);
+
+    private static ValueTask<ParsedJsonDocument<T>> DeserializeCoreAsync<T>(
+        Stream stream,
+        string? contentType,
+        MultipartMixedReader.BinaryPartHandler? binaryPartCallback,
+        long maxBodyLength,
+        CancellationToken cancellationToken)
         where T : struct, IJsonElement<T>
     {
         int byteCount = contentType is not null
