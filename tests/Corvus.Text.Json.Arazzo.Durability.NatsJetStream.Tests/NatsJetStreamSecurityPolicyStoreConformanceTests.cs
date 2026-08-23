@@ -52,7 +52,7 @@ public sealed class NatsJetStreamSecurityPolicyStoreConformanceTests : SecurityP
         var kv = new NatsKVContext(new NatsJSContext(connection));
         await NatsKvTestReset.ResetAndProvisionAsync(
             kv,
-            ["arazzo_security"],
+            ["arazzo_security", "arazzo_security_rule_labels", "arazzo_security_binding_labels"],
             () => NatsJetStreamSecurityPolicyStore.PrepareAsync(connection));
         return await NatsJetStreamSecurityPolicyStore.ConnectAsync(connection, timeProvider);
     }

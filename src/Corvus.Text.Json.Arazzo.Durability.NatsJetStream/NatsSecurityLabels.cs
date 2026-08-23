@@ -53,6 +53,13 @@ internal static class NatsSecurityLabels
     /// <summary>The label bucket for the workspace-workflow store's row ids (the store's KV keys).</summary>
     internal const string WorkspaceWorkflowLabelBucket = "arazzo_workspace_workflow_labels";
 
+    /// <summary>The label bucket for the security-policy rule store's row ids (the rule name). Kept separate from the
+    /// binding bucket because rule names and binding ids are independent id spaces that could otherwise collide.</summary>
+    internal const string SecurityRuleLabelBucket = "arazzo_security_rule_labels";
+
+    /// <summary>The label bucket for the security-policy binding store's row ids (the binding id).</summary>
+    internal const string SecurityBindingLabelBucket = "arazzo_security_binding_labels";
+
     /// <summary>The entry key for a (key, value) label on a row.</summary>
     /// <param name="key">The tag key.</param>
     /// <param name="value">The tag value.</param>

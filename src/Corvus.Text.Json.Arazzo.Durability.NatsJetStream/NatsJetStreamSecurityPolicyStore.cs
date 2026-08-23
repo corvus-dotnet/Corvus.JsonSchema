@@ -37,6 +37,9 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
 
     private static readonly byte[] IndexMarker = "1"u8.ToArray();
 
+    // The value of a security-label entry: the key IS the label, so the value carries nothing.
+    private static readonly byte[] EmptyLabelValue = [];
+
     // Singleton comparers (created once) for the client-side snapshot ordering, since the KV key listing is unordered:
     // rules by their name and bindings by Order then id.
     private static readonly IComparer<ParsedJsonDocument<SecurityRuleDocument>> ByRuleName =
@@ -66,12 +69,20 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
 
     private readonly NatsConnection? ownedConnection;
     private readonly INatsKVStore store;
+    private readonly INatsKVStore ruleLabels;
+    private readonly INatsKVStore bindingLabels;
+    private readonly NatsSecurityLabelIndex ruleLabelIndex;
+    private readonly NatsSecurityLabelIndex bindingLabelIndex;
     private readonly TimeProvider timeProvider;
 
-    private NatsJetStreamSecurityPolicyStore(NatsConnection? ownedConnection, INatsKVStore store, TimeProvider timeProvider)
+    private NatsJetStreamSecurityPolicyStore(NatsConnection? ownedConnection, INatsKVStore store, INatsKVStore ruleLabels, INatsKVStore bindingLabels, TimeProvider timeProvider)
     {
         this.ownedConnection = ownedConnection;
         this.store = store;
+        this.ruleLabels = ruleLabels;
+        this.bindingLabels = bindingLabels;
+        this.ruleLabelIndex = new NatsSecurityLabelIndex(ruleLabels);
+        this.bindingLabelIndex = new NatsSecurityLabelIndex(bindingLabels);
         this.timeProvider = timeProvider;
     }
 
@@ -85,6 +96,8 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
         await using var connection = new NatsConnection(NatsOpts.Default with { Url = url });
         var kv = new NatsKVContext(new NatsJSContext(connection));
         await kv.CreateStoreAsync(new NatsKVConfig(Bucket), cancellationToken).ConfigureAwait(false);
+        await kv.CreateStoreAsync(new NatsKVConfig(NatsSecurityLabels.SecurityRuleLabelBucket), cancellationToken).ConfigureAwait(false);
+        await kv.CreateStoreAsync(new NatsKVConfig(NatsSecurityLabels.SecurityBindingLabelBucket), cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Provisions the policy KV bucket over a caller-supplied connection.</summary>
@@ -96,6 +109,8 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
         ArgumentNullException.ThrowIfNull(connection);
         var kv = new NatsKVContext(new NatsJSContext(connection));
         await kv.CreateStoreAsync(new NatsKVConfig(Bucket), cancellationToken).ConfigureAwait(false);
+        await kv.CreateStoreAsync(new NatsKVConfig(NatsSecurityLabels.SecurityRuleLabelBucket), cancellationToken).ConfigureAwait(false);
+        await kv.CreateStoreAsync(new NatsKVConfig(NatsSecurityLabels.SecurityBindingLabelBucket), cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Opens the store for operation, binding to its already-provisioned KV bucket.</summary>
@@ -111,7 +126,9 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
         {
             var kv = new NatsKVContext(new NatsJSContext(connection));
             INatsKVStore store = await kv.GetStoreAsync(Bucket, cancellationToken).ConfigureAwait(false);
-            return new NatsJetStreamSecurityPolicyStore(connection, store, timeProvider ?? TimeProvider.System);
+            INatsKVStore ruleLabels = await kv.GetStoreAsync(NatsSecurityLabels.SecurityRuleLabelBucket, cancellationToken).ConfigureAwait(false);
+            INatsKVStore bindingLabels = await kv.GetStoreAsync(NatsSecurityLabels.SecurityBindingLabelBucket, cancellationToken).ConfigureAwait(false);
+            return new NatsJetStreamSecurityPolicyStore(connection, store, ruleLabels, bindingLabels, timeProvider ?? TimeProvider.System);
         }
         catch
         {
@@ -130,7 +147,9 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
         ArgumentNullException.ThrowIfNull(connection);
         var kv = new NatsKVContext(new NatsJSContext(connection));
         INatsKVStore store = await kv.GetStoreAsync(Bucket, cancellationToken).ConfigureAwait(false);
-        return new NatsJetStreamSecurityPolicyStore(ownedConnection: null, store, timeProvider ?? TimeProvider.System);
+        INatsKVStore ruleLabels = await kv.GetStoreAsync(NatsSecurityLabels.SecurityRuleLabelBucket, cancellationToken).ConfigureAwait(false);
+        INatsKVStore bindingLabels = await kv.GetStoreAsync(NatsSecurityLabels.SecurityBindingLabelBucket, cancellationToken).ConfigureAwait(false);
+        return new NatsJetStreamSecurityPolicyStore(ownedConnection: null, store, ruleLabels, bindingLabels, timeProvider ?? TimeProvider.System);
     }
 
     /// <inheritdoc/>
@@ -145,6 +164,15 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
 
         WorkflowEtag etag = NewEtag();
         byte[] json = SecurityPolicySerialization.SerializeNewRule(name, draft, actor, this.timeProvider.GetUtcNow(), etag);
+
+        // Mirror the management tags into the rule label bucket (the row id = the rule name) BEFORE the row is written, so a
+        // reach lookup never misses a committed row. Tags are immutable, so there is no re-point on update; an untagged,
+        // system-owned row occupies no label entry and is admitted only under full read reach (fail-closed).
+        foreach (string entryKey in NatsSecurityLabels.EntryKeysFor(draft.ManagementTagsValue, name))
+        {
+            await this.ruleLabels.PutAsync(entryKey, EmptyLabelValue, cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+
         await this.store.PutAsync(RulePrefix + Enc(name), json, cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
         return PersistedJson.ToPooledDocument<SecurityRuleDocument>(json);
@@ -232,6 +260,92 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
     }
 
     /// <inheritdoc/>
+    public async ValueTask<SecurityRulePage> ListRulesAsync(int limit, JsonString pageToken, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : SecurityRulePage.DefaultPageSize;
+        string? after = DecodeRuleCursor(pageToken);
+        string? qText = q.IsNotUndefined() ? (string)q : null;
+
+        // Resolve the caller's read reach to candidate rule names via the label index (server-side). Null = no narrowing
+        // (scan the keys); empty = nothing admitted; otherwise a superset re-checked exactly with context.Admits below.
+        IReadOnlySet<string>? candidates = await this.ResolveReachCandidatesAsync(this.ruleLabelIndex, context.Reach(AccessVerb.Read), cancellationToken).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
+        {
+            return SecurityRulePage.Create(new PooledDocumentList<SecurityRuleDocument>(0));
+        }
+
+        List<string> names;
+        if (candidates is not null)
+        {
+            names = [.. candidates];
+        }
+        else
+        {
+            names = [];
+            await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
+            {
+                if (key.StartsWith(RulePrefix, StringComparison.Ordinal))
+                {
+                    names.Add(Dec(key[RulePrefix.Length..]));
+                }
+            }
+        }
+
+        names.Sort(StringComparer.Ordinal);
+
+        var page = new PooledDocumentList<SecurityRuleDocument>(pageSize);
+        try
+        {
+            bool hasMore = false;
+            foreach (string name in names)
+            {
+                if (after is not null && string.CompareOrdinal(name, after) <= 0)
+                {
+                    continue; // at or before the cursor — already returned in an earlier page
+                }
+
+                NatsKVEntry<byte[]>? entry = await this.TryGetAsync(RulePrefix + Enc(name), cancellationToken).ConfigureAwait(false);
+                if (entry is not { Value: { } bytes })
+                {
+                    continue; // candidate but record gone — skip (a stale label is harmless)
+                }
+
+                ParsedJsonDocument<SecurityRuleDocument> document = ParsedJsonDocument<SecurityRuleDocument>.Parse(bytes.AsMemory());
+
+                // The label plan over-approximates, so apply the exact §14.2 reach to the loaded row (an untagged, system-owned
+                // row is admitted only under full read reach).
+                if (!context.Admits(AccessVerb.Read, document.RootElement.ManagementTagsValue) || (qText is not null && !RuleMatches(document.RootElement, qText)))
+                {
+                    document.Dispose();
+                    continue;
+                }
+
+                if (page.Count == pageSize)
+                {
+                    hasMore = true;
+                    document.Dispose();
+                    break;
+                }
+
+                page.Add(document);
+            }
+
+            if (!hasMore)
+            {
+                return SecurityRulePage.Create(page);
+            }
+
+            using UnescapedUtf8JsonString lastName = page[page.Count - 1].Name.GetUtf8String();
+            return SecurityRulePage.Create(page, lastName.Span);
+        }
+        catch
+        {
+            page.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityRuleDocument>?> UpdateRuleAsync(string name, SecurityRuleDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(name);
@@ -252,7 +366,7 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
 
     /// <inheritdoc/>
     public ValueTask<bool> DeleteRuleAsync(string name, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
-        => this.DeleteAsync(RulePrefix, "rule", name, expectedEtag, SecurityPolicySerialization.RuleEtagOf, cancellationToken);
+        => this.DeleteAsync(RulePrefix, "rule", name, this.ruleLabels, expectedEtag, SecurityPolicySerialization.RuleEtagOf, cancellationToken);
 
     /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>> AddBindingAsync(SecurityBindingDocument draft, string actor, CancellationToken cancellationToken)
@@ -261,6 +375,13 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
         string id = "bnd-" + Guid.NewGuid().ToString("n", CultureInfo.InvariantCulture);
         WorkflowEtag etag = NewEtag();
         byte[] json = SecurityPolicySerialization.SerializeNewBinding(id, draft, actor, this.timeProvider.GetUtcNow(), etag);
+
+        // Mirror the management tags into the binding label bucket (the row id = the binding id) BEFORE the row is written.
+        foreach (string entryKey in NatsSecurityLabels.EntryKeysFor(draft.ManagementTagsValue, id))
+        {
+            await this.bindingLabels.PutAsync(entryKey, EmptyLabelValue, cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+
         await this.store.PutAsync(BindingPrefix + Enc(id), json, cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.store.PutAsync(BindingIndexKey(draft.OrderValue, id), IndexMarker, cancellationToken: cancellationToken).ConfigureAwait(false);
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
@@ -370,6 +491,108 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
     }
 
     /// <inheritdoc/>
+    public async ValueTask<SecurityBindingPage> ListBindingsAsync(int limit, JsonString pageToken, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        int pageSize = limit > 0 ? limit : SecurityBindingPage.DefaultPageSize;
+        bool hasCursor = DecodeBindingCursor(pageToken, out int cursorOrder, out string? cursorId);
+        string? qText = q.IsNotUndefined() ? (string)q : null;
+        string? cursorOrderKey = hasCursor ? OrderKey(cursorOrder) : null;
+
+        // Resolve the caller's read reach to candidate binding ids via the label index; null = no narrowing, empty = nothing.
+        IReadOnlySet<string>? candidates = await this.ResolveReachCandidatesAsync(this.bindingLabelIndex, context.Reach(AccessVerb.Read), cancellationToken).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
+        {
+            return SecurityBindingPage.Create(new PooledDocumentList<SecurityBindingDocument>(0));
+        }
+
+        // The order-index markers give the (order, id) sequence; the candidate set (when present) narrows which ids are read.
+        var entries = new List<(string OrderKey, string Id)>();
+        await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            if (!key.StartsWith(BindingOrderIndexPrefix, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            string rest = key[BindingOrderIndexPrefix.Length..];
+            int dot = rest.IndexOf('.');
+            if (dot < 0)
+            {
+                continue;
+            }
+
+            entries.Add((rest[..dot], Dec(rest[(dot + 1)..])));
+        }
+
+        entries.Sort(static (a, b) =>
+        {
+            int byOrder = string.CompareOrdinal(a.OrderKey, b.OrderKey);
+            return byOrder != 0 ? byOrder : string.CompareOrdinal(a.Id, b.Id);
+        });
+
+        var page = new PooledDocumentList<SecurityBindingDocument>(pageSize);
+        try
+        {
+            bool hasMore = false;
+            foreach ((string orderKey, string id) in entries)
+            {
+                if (candidates?.Contains(id) == false)
+                {
+                    continue; // outside the reach candidates
+                }
+
+                if (hasCursor)
+                {
+                    int byOrder = string.CompareOrdinal(orderKey, cursorOrderKey);
+                    bool afterCursor = byOrder > 0 || (byOrder == 0 && string.CompareOrdinal(id, cursorId) > 0);
+                    if (!afterCursor)
+                    {
+                        continue; // at or before the cursor — already returned in an earlier page
+                    }
+                }
+
+                NatsKVEntry<byte[]>? entry = await this.TryGetAsync(BindingPrefix + Enc(id), cancellationToken).ConfigureAwait(false);
+                if (entry is not { Value: { } bytes })
+                {
+                    continue; // indexed but record gone — skip
+                }
+
+                ParsedJsonDocument<SecurityBindingDocument> document = ParsedJsonDocument<SecurityBindingDocument>.Parse(bytes.AsMemory());
+
+                // The label plan over-approximates, so apply the exact §14.2 reach to the loaded row.
+                if (!context.Admits(AccessVerb.Read, document.RootElement.ManagementTagsValue) || (qText is not null && !BindingMatches(document.RootElement, qText)))
+                {
+                    document.Dispose();
+                    continue;
+                }
+
+                if (page.Count == pageSize)
+                {
+                    hasMore = true;
+                    document.Dispose();
+                    break;
+                }
+
+                page.Add(document);
+            }
+
+            if (!hasMore)
+            {
+                return SecurityBindingPage.Create(page);
+            }
+
+            SecurityBindingDocument last = page[page.Count - 1];
+            using UnescapedUtf8JsonString lastId = last.Id.GetUtf8String();
+            return SecurityBindingPage.Create(page, last.OrderValue, lastId.Span);
+        }
+        catch
+        {
+            page.Dispose();
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ParsedJsonDocument<SecurityBindingDocument>?> UpdateBindingAsync(string id, SecurityBindingDocument draft, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(id);
@@ -410,13 +633,21 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
 
         SecurityPolicySerialization.EnsureEtag("binding", id, expectedEtag, SecurityPolicySerialization.BindingEtagOf(bytes));
 
-        // Remove the order-index marker too (its order comes from the stored document).
+        // Remove the order-index marker too (its order comes from the stored document), and capture the row's label entry
+        // keys so they can be torn down after the row is gone.
+        HashSet<string> entryKeys;
         using (ParsedJsonDocument<SecurityBindingDocument> current = ParsedJsonDocument<SecurityBindingDocument>.Parse(bytes.AsMemory()))
         {
             await this.DeleteKeyAsync(BindingIndexKey(current.RootElement.OrderValue, id), cancellationToken).ConfigureAwait(false);
+            entryKeys = NatsSecurityLabels.EntryKeysFor(current.RootElement.ManagementTagsValue, id);
         }
 
         await this.store.DeleteAsync(BindingPrefix + Enc(id), cancellationToken: cancellationToken).ConfigureAwait(false);
+        foreach (string entryKey in entryKeys)
+        {
+            await PurgeLabelAsync(this.bindingLabels, entryKey, cancellationToken).ConfigureAwait(false);
+        }
+
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
         return true;
     }
@@ -498,6 +729,74 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
     }
 
     /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountRulesAsync(int cap, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        int bound = cap > 0 ? cap : SecurityRulePage.DefaultPageSize;
+        string? qText = q.IsNotUndefined() ? (string)q : null;
+
+        IReadOnlySet<string>? candidates = await this.ResolveReachCandidatesAsync(this.ruleLabelIndex, context.Reach(AccessVerb.Read), cancellationToken).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
+        {
+            return (0, false);
+        }
+
+        int n = 0;
+        if (candidates is not null)
+        {
+            // Reach-narrowed: count only the candidates that pass the exact §14.2 reach (and q), bounded at cap+1.
+            foreach (string name in candidates)
+            {
+                NatsKVEntry<byte[]>? entry = await this.TryGetAsync(RulePrefix + Enc(name), cancellationToken).ConfigureAwait(false);
+                if (entry is not { Value: { } bytes })
+                {
+                    continue;
+                }
+
+                using ParsedJsonDocument<SecurityRuleDocument> document = ParsedJsonDocument<SecurityRuleDocument>.Parse(bytes.AsMemory());
+                if (context.Admits(AccessVerb.Read, document.RootElement.ManagementTagsValue) && (qText is null || RuleMatches(document.RootElement, qText)) && ++n > bound)
+                {
+                    return (bound, true);
+                }
+            }
+
+            return (n, false);
+        }
+
+        // Full read reach (Admits(null, *) = true): count the rule keys directly, applying q only when present.
+        await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            if (!key.StartsWith(RulePrefix, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (qText is null)
+            {
+                if (++n > bound)
+                {
+                    return (bound, true);
+                }
+
+                continue;
+            }
+
+            NatsKVEntry<byte[]>? entry = await this.TryGetAsync(key, cancellationToken).ConfigureAwait(false);
+            if (entry is not { Value: { } bytes })
+            {
+                continue;
+            }
+
+            using ParsedJsonDocument<SecurityRuleDocument> document = ParsedJsonDocument<SecurityRuleDocument>.Parse(bytes.AsMemory());
+            if (RuleMatches(document.RootElement, qText) && ++n > bound)
+            {
+                return (bound, true);
+            }
+        }
+
+        return (n, false);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<(int Count, bool Capped)> CountBindingsAsync(int cap, JsonString q, CancellationToken cancellationToken)
     {
         int bound = cap > 0 ? cap : SecurityBindingPage.DefaultPageSize;
@@ -538,6 +837,67 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
 
             using ParsedJsonDocument<SecurityBindingDocument> document = ParsedJsonDocument<SecurityBindingDocument>.Parse(bytes.AsMemory());
             if (BindingMatches(document.RootElement, qText) && ++n > bound)
+            {
+                return (bound, true);
+            }
+        }
+
+        return (n, false);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<(int Count, bool Capped)> CountBindingsAsync(int cap, JsonString q, AccessContext context, CancellationToken cancellationToken)
+    {
+        int bound = cap > 0 ? cap : SecurityBindingPage.DefaultPageSize;
+        string? qText = q.IsNotUndefined() ? (string)q : null;
+
+        IReadOnlySet<string>? candidates = await this.ResolveReachCandidatesAsync(this.bindingLabelIndex, context.Reach(AccessVerb.Read), cancellationToken).ConfigureAwait(false);
+        if (candidates is { Count: 0 })
+        {
+            return (0, false);
+        }
+
+        int n = 0;
+        await foreach (string key in this.store.GetKeysAsync(cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            if (!key.StartsWith(BindingOrderIndexPrefix, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            string rest = key[BindingOrderIndexPrefix.Length..];
+            int dot = rest.IndexOf('.');
+            if (dot < 0)
+            {
+                continue;
+            }
+
+            string encId = rest[(dot + 1)..];
+            string id = Dec(encId);
+            if (candidates?.Contains(id) == false)
+            {
+                continue; // outside the reach candidates
+            }
+
+            if (candidates is null && qText is null)
+            {
+                // Full reach + no q: the marker keys ARE the bindings (Admits(null, *) = true), count them directly, bounded.
+                if (++n > bound)
+                {
+                    return (bound, true);
+                }
+
+                continue;
+            }
+
+            NatsKVEntry<byte[]>? entry = await this.TryGetAsync(BindingPrefix + encId, cancellationToken).ConfigureAwait(false);
+            if (entry is not { Value: { } bytes })
+            {
+                continue;
+            }
+
+            using ParsedJsonDocument<SecurityBindingDocument> document = ParsedJsonDocument<SecurityBindingDocument>.Parse(bytes.AsMemory());
+            if (context.Admits(AccessVerb.Read, document.RootElement.ManagementTagsValue) && (qText is null || BindingMatches(document.RootElement, qText)) && ++n > bound)
             {
                 return (bound, true);
             }
@@ -696,7 +1056,7 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
         }
     }
 
-    private async ValueTask<bool> DeleteAsync(string prefix, string kind, string key, WorkflowEtag expectedEtag, Func<byte[], WorkflowEtag> etagOf, CancellationToken cancellationToken)
+    private async ValueTask<bool> DeleteAsync(string prefix, string kind, string key, INatsKVStore labels, WorkflowEtag expectedEtag, Func<byte[], WorkflowEtag> etagOf, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(key);
         NatsKVEntry<byte[]>? entry = await this.TryGetAsync(prefix + Enc(key), cancellationToken).ConfigureAwait(false);
@@ -706,8 +1066,44 @@ public sealed class NatsJetStreamSecurityPolicyStore : ISecurityPolicyStore, IAs
         }
 
         SecurityPolicySerialization.EnsureEtag(kind, key, expectedEtag, etagOf(bytes));
+
+        // Capture the rule's label entry keys so they can be torn down after the row is gone (a stale label is harmless by
+        // the §14.4 contract, a missing one would hide a peer's row).
+        HashSet<string> entryKeys;
+        using (ParsedJsonDocument<SecurityRuleDocument> current = ParsedJsonDocument<SecurityRuleDocument>.Parse(bytes.AsMemory()))
+        {
+            entryKeys = NatsSecurityLabels.EntryKeysFor(current.RootElement.ManagementTagsValue, key);
+        }
+
         await this.store.DeleteAsync(prefix + Enc(key), cancellationToken: cancellationToken).ConfigureAwait(false);
+        foreach (string entryKey in entryKeys)
+        {
+            await PurgeLabelAsync(labels, entryKey, cancellationToken).ConfigureAwait(false);
+        }
+
         await this.BumpGenerationAsync(cancellationToken).ConfigureAwait(false);
         return true;
     }
+
+    // Purges a security-label entry, tolerating a concurrent teardown (the key already gone).
+    private static async ValueTask PurgeLabelAsync(INatsKVStore labels, string entryKey, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await labels.PurgeAsync(entryKey, cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch (NatsKVKeyNotFoundException)
+        {
+        }
+        catch (NatsKVKeyDeletedException)
+        {
+        }
+    }
+
+    // Resolves the caller's read reach to candidate row ids via the label index (§14.4). Null = no narrowing (full scan);
+    // empty = nothing admitted; otherwise a superset re-checked exactly with context.Admits by the caller.
+    private ValueTask<IReadOnlySet<string>?> ResolveReachCandidatesAsync(NatsSecurityLabelIndex index, SecurityFilter? security, CancellationToken cancellationToken)
+        => security is null
+            ? new ValueTask<IReadOnlySet<string>?>((IReadOnlySet<string>?)null)
+            : SecurityLabelQueryResolver.ResolveAsync(security.ToPredicate(SecurityLabelQueryEmitter.Instance), index, cancellationToken);
 }
