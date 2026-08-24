@@ -260,6 +260,17 @@ public static class ThrowHelper
     }
 
     /// <summary>
+    /// Throws an <see cref="InvalidOperationException"/> indicating that a multipart
+    /// response body has already been read.
+    /// </summary>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowMultipartResponseAlreadyRead()
+    {
+        throw new InvalidOperationException(SR.MultipartResponseAlreadyRead);
+    }
+
+    /// <summary>
     /// Throws an <see cref="InvalidOperationException"/> indicating that a retried
     /// send cannot re-send a non-seekable request body stream that a previous
     /// attempt already consumed.

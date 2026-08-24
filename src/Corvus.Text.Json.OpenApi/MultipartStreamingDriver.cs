@@ -48,6 +48,8 @@ public sealed class MultipartStreamingDriver : IAsyncDisposable
     private const int PendingNone = -2;
     private const int PendingUndeclared = -1;
 
+    private static readonly ApiServerOptions DefaultReceiveOptions = new();
+
     private readonly StreamingMultipartReader reader;
     private readonly PooledBufferWriter projection;
     private readonly byte[] boundaryBuffer;
@@ -176,6 +178,35 @@ public sealed class MultipartStreamingDriver : IAsyncDisposable
             throw;
         }
     }
+
+    /// <summary>
+    /// Begins driving a streaming multipart body received by a client: reads the
+    /// non-binary parts into the JSON projection, stopping at the first binary part.
+    /// Parts are consumed live in wire order (the same contract as
+    /// <see cref="MultipartBinaryOrdering.RequireBinaryLast"/>).
+    /// </summary>
+    /// <param name="body">The response content stream. The driver does not dispose it.</param>
+    /// <param name="contentType">The response Content-Type header (carries the boundary).</param>
+    /// <param name="binaryPartNames">The binary part names declared by the response's schema.</param>
+    /// <param name="maxNonBinaryPartsLength">The maximum total bytes of non-binary parts accumulated for the typed body.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The driver, positioned with the typed-body projection complete.</returns>
+    /// <exception cref="RequestBodyTooLargeException">The non-binary parts exceeded <paramref name="maxNonBinaryPartsLength"/>.</exception>
+    /// <exception cref="InvalidDataException">The body is not well-formed multipart content.</exception>
+    public static ValueTask<MultipartStreamingDriver> BeginAsync(
+        Stream body,
+        string? contentType,
+        string[] binaryPartNames,
+        long maxNonBinaryPartsLength,
+        CancellationToken cancellationToken = default)
+        => BeginAsync(
+            body,
+            contentType,
+            binaryPartNames,
+            maxNonBinaryPartsLength == ApiServerOptions.DefaultMaxNonBinaryPartsLength
+                ? DefaultReceiveOptions
+                : new ApiServerOptions { MaxNonBinaryPartsLength = maxNonBinaryPartsLength },
+            cancellationToken);
 
     /// <summary>
     /// Begins driving a streaming <c>multipart/mixed</c> body: reads the non-binary

@@ -3679,6 +3679,79 @@ public class OpenApi32CodeGeneratorTests
             "Expected the endpoint to stream the multipart body to the response");
     }
 
+    [TestMethod]
+    public void GenerateClient_MultipartResponse_EmitsStreamingAccessor()
+    {
+        // A 2xx multipart/form-data response with binary parts gets a streaming-only
+        // client surface: the response holds the live body in a MultipartResponseBody
+        // box, and the accessor hands back the typed body plus wire-order handles.
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Multipart Receive", "version": "1.0" },
+              "paths": {
+                "/report": {
+                  "get": {
+                    "operationId": "getReport",
+                    "responses": {
+                      "200": {
+                        "description": "ok",
+                        "content": {
+                          "multipart/form-data": {
+                            "schema": {
+                              "type": "object",
+                              "properties": {
+                                "meta": { "type": "object", "properties": { "title": { "type": "string" } } },
+                                "file": { "type": "string", "format": "binary" }
+                              },
+                              "required": ["file"]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int i = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"MpRecv.Type{i}";
+            i++;
+        }
+
+        OpenApi32CodeGenerator gen = new("MpRecv", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(spec);
+
+        GeneratedFile responseFile = files.First(f => f.FileName == "GetReportResponse.cs");
+        Assert.IsTrue(
+            responseFile.Content.Contains("public MultipartResponseBody? OkMultipartBody { get; private set; }"),
+            "Expected the response to hold the multipart body in a box");
+        Assert.IsTrue(
+            responseFile.Content.Contains("response.OkMultipartBody = new MultipartResponseBody(contentStream, responseHeaders);"),
+            "Expected CreateAsync to store the live body with the headers carrying the boundary");
+        Assert.IsTrue(
+            responseFile.Content.Contains("public async ValueTask<GetReportOkMultipart> GetOkMultipartAsync(long maxNonBinaryPartsLength = ApiServerOptions.DefaultMaxNonBinaryPartsLength, CancellationToken cancellationToken = default)"),
+            "Expected the streaming accessor");
+        Assert.IsTrue(
+            responseFile.Content.Contains("File = driver.GetHandle(\"file\", required: true),"),
+            "Expected the required binary part bound as a required handle");
+        Assert.IsTrue(
+            responseFile.Content.Contains("public readonly struct GetReportOkMultipart"),
+            "Expected the per-response multipart view struct");
+        Assert.IsTrue(
+            responseFile.Content.Contains("public BinaryPartHandle File { get; init; }"),
+            "Expected a handle property on the view struct");
+        Assert.IsTrue(
+            responseFile.Content.Contains("if (this.OkMultipartBody is { } okMultipartBody)"),
+            "Expected the response to dispose the multipart box");
+    }
+
     private const string ParamRefSpecJson = """
         {
           "openapi": "3.2.0",

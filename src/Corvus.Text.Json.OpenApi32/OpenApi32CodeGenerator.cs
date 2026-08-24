@@ -4356,6 +4356,19 @@ public sealed class OpenApi32CodeGenerator
 
                     CodeEmitHelpers.EmitTextPlainProperties(w, accessorName);
                 }
+                else if (cat == ContentCategory.Multipart)
+                {
+                    if (isStreaming || !IsMultipartResponseWithBinaryParts(resp))
+                    {
+                        continue;
+                    }
+
+                    w.WriteLine();
+                    w.WriteLine("/// <summary>");
+                    w.WriteLine($"/// Gets the holder for the {resp.StatusCode} multipart response body. Read it with <see cref=\"Get{accessorName}MultipartAsync\"/>; it streams and can be read once.");
+                    w.WriteLine("/// </summary>");
+                    w.WriteLine($"public MultipartResponseBody? {accessorName}MultipartBody {{ get; private set; }}");
+                }
                 else if (cat == ContentCategory.Json)
                 {
                     if (isStreaming)
@@ -4449,6 +4462,8 @@ public sealed class OpenApi32CodeGenerator
             }
         }
 
+        this.EmitMultipartResponseAccessors(w, op);
+
         this.EmitMatchResult(w, structName, op.Responses, includeContext: false);
         this.EmitMatchResult(w, structName, op.Responses, includeContext: true);
 
@@ -4491,6 +4506,21 @@ public sealed class OpenApi32CodeGenerator
             }
         }
 
+        foreach (ResponseInfo resp in op.Responses)
+        {
+            if (resp.Content.Any(c => c.ItemSchemaPointer is not null) || !IsMultipartResponseWithBinaryParts(resp))
+            {
+                continue;
+            }
+
+            string accessorName = CodeEmitHelpers.StatusCodeToName(resp.StatusCode);
+            string camelName = CodeEmitHelpers.ToCamelCase(accessorName);
+            w.WriteLine($"if (this.{accessorName}MultipartBody is {{ }} {camelName}MultipartBody)");
+            w.OpenBrace();
+            w.WriteLine($"await {camelName}MultipartBody.DisposeAsync().ConfigureAwait(false);");
+            w.CloseBrace();
+        }
+
         w.WriteLine("if (this.owner is not null)");
         w.OpenBrace();
         w.WriteLine("await this.owner.DisposeAsync().ConfigureAwait(false);");
@@ -4505,7 +4535,112 @@ public sealed class OpenApi32CodeGenerator
 
         w.CloseBrace();
 
+        this.EmitMultipartViewStructs(w, op);
+
         return new GeneratedFile($"{structName}.cs", w.ToString());
+    }
+
+    /// <summary>
+    /// Emits the streaming accessor for each 2xx multipart/form-data response with
+    /// binary parts: it begins the driver over the held body, parses the typed body
+    /// from the non-binary parts, and hands back wire-order part handles.
+    /// </summary>
+    private void EmitMultipartResponseAccessors(IndentedWriter w, OperationInfo op)
+    {
+        foreach (ResponseInfo resp in op.Responses)
+        {
+            if (resp.StatusCode == "default"
+                || resp.Content.Any(c => c.ItemSchemaPointer is not null)
+                || !IsMultipartResponseWithBinaryParts(resp)
+                || this.ResolveMultipartResponseTypeName(resp) is not { } bodyTypeName)
+            {
+                continue;
+            }
+
+            string accessorName = CodeEmitHelpers.StatusCodeToName(resp.StatusCode);
+            string viewName = $"{op.MethodName}{accessorName}Multipart";
+
+            w.WriteLine();
+            string namesLiteral = string.Join(", ", resp.BinaryParts.Select(p => CodeEmitHelpers.FormatStringLiteral(p.PropertyName)));
+            w.WriteLine($"private static readonly string[] {accessorName}MultipartPartNames = [{namesLiteral}];");
+            w.WriteLine();
+            w.WriteLine("/// <summary>");
+            w.WriteLine($"/// Reads the {resp.StatusCode} multipart response body. The typed body parses from");
+            w.WriteLine("/// the non-binary parts, and each binary part arrives as a handle that streams its");
+            w.WriteLine("/// bytes from the live response, in wire order. The body can be read once; handles");
+            w.WriteLine("/// are valid until the response is disposed.");
+            w.WriteLine("/// </summary>");
+            w.WriteLine("/// <param name=\"maxNonBinaryPartsLength\">The maximum total bytes of non-binary parts accumulated for the typed body.</param>");
+            w.WriteLine("/// <param name=\"cancellationToken\">A cancellation token.</param>");
+            w.WriteLine("/// <returns>The typed body and the binary part handles.</returns>");
+            w.WriteLine($"public async ValueTask<{viewName}> Get{accessorName}MultipartAsync(long maxNonBinaryPartsLength = ApiServerOptions.DefaultMaxNonBinaryPartsLength, CancellationToken cancellationToken = default)");
+            w.OpenBrace();
+            w.WriteLine($"if (this.{accessorName}MultipartBody is not {{ }} multipartBody)");
+            w.OpenBrace();
+            w.WriteLine($"throw new InvalidOperationException(\"The response does not carry a {resp.StatusCode} multipart body.\");");
+            w.CloseBrace();
+            w.WriteLine();
+            w.WriteLine($"MultipartStreamingDriver driver = await multipartBody.BeginAsync({accessorName}MultipartPartNames, maxNonBinaryPartsLength, cancellationToken).ConfigureAwait(false);");
+            w.WriteLine($"ParsedJsonDocument<{bodyTypeName}> bodyDocument = ParsedJsonDocument<{bodyTypeName}>.Parse(driver.ProjectionUtf8Json);");
+            w.WriteLine("multipartBody.TakeBodyDocument(bodyDocument);");
+            w.WriteLine("return new()");
+            w.OpenBrace();
+            w.WriteLine("Body = bodyDocument.RootElement,");
+            foreach (BinaryPropertyInfo part in resp.BinaryParts)
+            {
+                string propName = CodeEmitHelpers.ToPascalCase(part.PropertyName);
+                string nameLiteral = CodeEmitHelpers.FormatStringLiteral(part.PropertyName);
+                string requiredLiteral = part.IsRequired ? "true" : "false";
+                w.WriteLine($"{propName} = driver.GetHandle({nameLiteral}, required: {requiredLiteral}),");
+            }
+
+            w.CloseBraceNoNewline().Write(";");
+            w.WriteLine();
+            w.CloseBrace();
+        }
+    }
+
+    /// <summary>
+    /// Emits the per-response view struct returned by the multipart accessor: the
+    /// typed body plus a wire-order handle per binary part.
+    /// </summary>
+    private void EmitMultipartViewStructs(IndentedWriter w, OperationInfo op)
+    {
+        foreach (ResponseInfo resp in op.Responses)
+        {
+            if (resp.StatusCode == "default"
+                || resp.Content.Any(c => c.ItemSchemaPointer is not null)
+                || !IsMultipartResponseWithBinaryParts(resp)
+                || this.ResolveMultipartResponseTypeName(resp) is not { } bodyTypeName)
+            {
+                continue;
+            }
+
+            string accessorName = CodeEmitHelpers.StatusCodeToName(resp.StatusCode);
+            string viewName = $"{op.MethodName}{accessorName}Multipart";
+
+            w.WriteLine();
+            w.WriteLine("/// <summary>");
+            w.WriteLine($"/// The {resp.StatusCode} multipart body of the {op.MethodName} operation: the typed body");
+            w.WriteLine("/// plus a streaming handle per binary part. Open handles in wire order and consume");
+            w.WriteLine("/// each before opening the next; they are valid until the response is disposed.");
+            w.WriteLine("/// </summary>");
+            w.WriteLine($"public readonly struct {viewName}");
+            w.OpenBrace();
+            w.WriteLine("/// <summary>Gets the typed body parsed from the non-binary parts.</summary>");
+            w.WriteLine($"public {bodyTypeName} Body {{ get; init; }}");
+            foreach (BinaryPropertyInfo part in resp.BinaryParts)
+            {
+                string propName = CodeEmitHelpers.ToPascalCase(part.PropertyName);
+                w.WriteLine();
+                w.WriteLine("/// <summary>");
+                w.WriteLine($"/// Gets the streaming handle for the '{part.PropertyName}' part. Open it to consume the part's bytes from the wire, in wire order.");
+                w.WriteLine("/// </summary>");
+                w.WriteLine($"public BinaryPartHandle {propName} {{ get; init; }}");
+            }
+
+            w.CloseBrace();
+        }
     }
 
     private void EmitLinksAccessor(
@@ -4999,6 +5134,15 @@ public sealed class OpenApi32CodeGenerator
                 break;
             case ContentCategory.OctetStream:
                 CodeEmitHelpers.EmitStreamResponseBody(w, accessorName);
+                break;
+            case ContentCategory.Multipart:
+                if (IsMultipartResponseWithBinaryParts(resp))
+                {
+                    // The body streams: hold it (with the headers that carry the
+                    // boundary) until the accessor reads it.
+                    w.WriteLine($"response.{accessorName}MultipartBody = new MultipartResponseBody(contentStream, responseHeaders);");
+                }
+
                 break;
             case ContentCategory.Json:
                 string? typeName = this.ResolveResponseTypeName(resp);

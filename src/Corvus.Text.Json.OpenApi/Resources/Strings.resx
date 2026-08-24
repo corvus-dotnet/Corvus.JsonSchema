@@ -119,6 +119,9 @@
   <data name="UnknownBinaryPart" xml:space="preserve">
     <value>The binary part '{0}' is not declared for this endpoint.</value>
   </data>
+  <data name="MultipartResponseAlreadyRead" xml:space="preserve">
+    <value>The multipart response body has already been read; it streams from the live response and can be consumed only once.</value>
+  </data>
   <data name="NonSeekableBodyConsumed" xml:space="preserve">
     <value>The request body stream is not seekable and was already consumed by a previous send attempt, so the retried request cannot re-send it. Provide a seekable stream, or use the write-callback overload, which is invoked once per attempt.</value>
   </data>

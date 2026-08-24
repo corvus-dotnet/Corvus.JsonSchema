@@ -3459,6 +3459,54 @@ public class GeneratedClientEndToEndTests
     }
 
     [TestMethod]
+    public async Task Client_GetDocReport_ReadsMultipartResponseStreaming()
+    {
+        const string boundary = "cli-mp";
+        const string bodyText =
+            $"--{boundary}\r\nContent-Disposition: form-data; name=\"meta\"\r\nContent-Type: application/json\r\n\r\n{{\"title\":\"Report\"}}\r\n" +
+            $"--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; filename=\"r.pdf\"\r\nContent-Type: application/pdf\r\n\r\nPDFDATA\r\n" +
+            $"--{boundary}\r\nContent-Disposition: form-data; name=\"thumb\"\r\nContent-Type: image/png\r\n\r\nTHUMB\r\n" +
+            $"--{boundary}--\r\n";
+        using var harness = new TestHarness(HttpStatusCode.OK, Encoding.UTF8.GetBytes(bodyText), $"multipart/form-data; boundary={boundary}");
+        var client = new ApiItemsClient(harness.Transport);
+
+        await using GetDocReportResponse response = await client.GetDocReportAsync();
+
+        Assert.AreEqual(200, response.StatusCode);
+        GetDocReportOkMultipart multipart = await response.GetOkMultipartAsync();
+        StringAssert.Contains(multipart.Body.ToString(), "Report");
+
+        Stream? file = await multipart.File.OpenStreamAsync();
+        Assert.IsNotNull(file);
+        using MemoryStream fileMs = new();
+        await file.CopyToAsync(fileMs);
+        CollectionAssert.AreEqual("PDFDATA"u8.ToArray(), fileMs.ToArray());
+
+        Stream? thumb = await multipart.Thumb.OpenStreamAsync();
+        Assert.IsNotNull(thumb);
+        using MemoryStream thumbMs = new();
+        await thumb.CopyToAsync(thumbMs);
+        CollectionAssert.AreEqual("THUMB"u8.ToArray(), thumbMs.ToArray());
+    }
+
+    [TestMethod]
+    public async Task Client_GetDocReport_MultipartBody_ReadableOnlyOnce()
+    {
+        const string boundary = "cli-mp2";
+        const string bodyText =
+            $"--{boundary}\r\nContent-Disposition: form-data; name=\"meta\"\r\nContent-Type: application/json\r\n\r\n{{}}\r\n" +
+            $"--{boundary}--\r\n";
+        using var harness = new TestHarness(HttpStatusCode.OK, Encoding.UTF8.GetBytes(bodyText), $"multipart/form-data; boundary={boundary}");
+        var client = new ApiItemsClient(harness.Transport);
+
+        await using GetDocReportResponse response = await client.GetDocReportAsync();
+        _ = await response.GetOkMultipartAsync();
+
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+            async () => await response.GetOkMultipartAsync());
+    }
+
+    [TestMethod]
     public async Task Client_ApiFilesClient_UploadFileAsync_WriteCallback()
     {
         using var harness = new TestHarness(HttpStatusCode.Created, """{"id":"f-456"}""");
@@ -5969,7 +6017,9 @@ public class GeneratedClientEndToEndTests
             if (this.binaryResponseBody is not null)
             {
                 content = new ByteArrayContent(this.binaryResponseBody);
-                content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(this.binaryContentType!);
+
+                // Parse rather than construct: media types with parameters (multipart boundaries) are valid here.
+                content.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(this.binaryContentType!);
             }
             else if (string.IsNullOrEmpty(this.responseBody))
             {

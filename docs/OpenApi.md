@@ -578,6 +578,25 @@ return GetDocReportResult.Ok(
 
 The generated endpoint puts a fresh boundary on the Content-Type header and streams the body: the typed body's non-binary fields first, then the binary parts, so the output is directly consumable by a streaming receiver. A part's `ContentType` left unset falls back to the spec-declared `encoding.contentType`, then to `application/octet-stream`. Write callbacks run against the live response stream, which disallows synchronous IO; use `WriteAsync`/`CopyToAsync`, never synchronous writes. The typed body is not schema-validated for multipart results, since the binary properties it declares are carried outside it.
 
+### Multipart Responses (Client)
+
+Receiving the same response on the client is streaming only. The response holds the live body until you read it, once, through the generated accessor, which parses the typed body from the non-binary parts and hands each binary part back as a handle over the wire:
+
+```csharp
+await using GetDocReportResponse response = await client.GetDocReportAsync();
+
+GetDocReportOkMultipart report = await response.GetOkMultipartAsync();
+Console.WriteLine((string)report.Body.Meta.Title);
+
+Stream? file = await report.File.OpenStreamAsync();
+if (file is not null)
+{
+    await file.CopyToAsync(destination);
+}
+```
+
+The same handle contract as streaming server uploads applies: open each handle at most once, in wire order, and consume its stream before opening the next; a `required` part that is absent throws when opened, an absent optional part opens as `null`. Handles are valid until the response is disposed. The typed body's non-binary parts are capped by the accessor's `maxNonBinaryPartsLength` parameter (1 MiB by default). Corvus-generated servers emit binary parts last, so their responses always stream cleanly through this surface.
+
 ### File Download
 
 Use `MatchResult<ValueTask>` to handle stream responses asynchronously:

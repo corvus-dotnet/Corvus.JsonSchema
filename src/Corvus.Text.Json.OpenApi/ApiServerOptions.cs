@@ -39,12 +39,17 @@ public sealed class ApiServerOptions
     public MultipartBinaryOrdering MultipartBinaryOrdering { get; init; } = MultipartBinaryOrdering.RequireBinaryLast;
 
     /// <summary>
+    /// The default value of <see cref="MaxNonBinaryPartsLength"/>: 1 MiB.
+    /// </summary>
+    public const long DefaultMaxNonBinaryPartsLength = 1_048_576;
+
+    /// <summary>
     /// Gets the maximum total bytes of non-binary (text and JSON) parts a streaming
     /// multipart endpoint accumulates for the typed body. Bodies over the limit are
     /// rejected with 413. Binary parts are unlimited; they stream. Buffered endpoints
     /// ignore this setting.
     /// </summary>
-    public long MaxNonBinaryPartsLength { get; init; } = 1_048_576;
+    public long MaxNonBinaryPartsLength { get; init; } = DefaultMaxNonBinaryPartsLength;
 
     /// <summary>
     /// The default value of <see cref="SpoolMemoryThresholdBytes"/>: 64 KiB.
