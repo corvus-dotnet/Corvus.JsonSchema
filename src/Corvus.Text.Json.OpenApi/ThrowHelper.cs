@@ -258,4 +258,16 @@ public static class ThrowHelper
     {
         throw new InvalidOperationException(SR.Format(SR.UnknownBinaryPart, partName));
     }
+
+    /// <summary>
+    /// Throws an <see cref="InvalidOperationException"/> indicating that a retried
+    /// send cannot re-send a non-seekable request body stream that a previous
+    /// attempt already consumed.
+    /// </summary>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowNonSeekableBodyConsumed()
+    {
+        throw new InvalidOperationException(SR.NonSeekableBodyConsumed);
+    }
 }

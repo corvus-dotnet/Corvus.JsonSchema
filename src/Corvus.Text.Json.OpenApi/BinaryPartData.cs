@@ -18,6 +18,10 @@ namespace Corvus.Text.Json.OpenApi;
 /// For async sources (e.g. Azure Blob Storage), use
 /// <c>(s, ct) => blob.DownloadToAsync(s, ct)</c>.
 /// </para>
+/// <para>
+/// Under a retrying transport the callback may be invoked once per send attempt, so
+/// it must be re-invocable: each invocation must write the same content.
+/// </para>
 /// </param>
 /// <param name="ContentType">
 /// The MIME type for the part (e.g. <c>"image/png"</c>). When <see langword="null"/>,

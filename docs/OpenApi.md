@@ -1223,6 +1223,15 @@ Every operation passes through the pipeline and is otherwise unchanged, so the g
 
 Choose the strategies with the API in mind: retrying a non-idempotent operation can duplicate work, and the pipeline cannot tell which is which.
 
+### Retries and Request Bodies
+
+A retried attempt has to re-send the request body, and the transport makes that safe for every body kind:
+
+- JSON bodies re-serialize from the typed element on every attempt.
+- Write callbacks (form, multipart, and the raw-stream write-callback overload, including `BinaryPartData.WriteContentAsync`) are invoked once per attempt. They must be re-invocable: each invocation must write the same content.
+- A seekable `Stream` body is rewound to the position it had when the call was made before each attempt, so a failed attempt's partial read never truncates the retry.
+- A non-seekable `Stream` body cannot be replayed. It retries only while still unconsumed (for example when the connection was refused before anything was sent); once an attempt has read from it, a retry fails with a descriptive `InvalidOperationException` rather than silently sending a truncated body. Prefer a seekable stream or the write-callback overload when the operation should retry.
+
 ## Webhooks and Callbacks
 
 OpenAPI specifications can define **webhooks** (top-level, spec-wide notifications) and **callbacks** (per-operation, triggered by runtime expressions). The Corvus code generator supports both with dedicated commands that produce the same output structure as regular client/server generation.
