@@ -29,7 +29,7 @@ public static class StandardContent
 
         if (base64Decode)
         {
-            jsonElement.TryGetValue(DecodeUnescapeAndParseJsonDocument, default(object?), out parseResult);
+            jsonElement.TryGetValue(DecodeAndParseJsonDocument, default(object?), out parseResult);
         }
         else
         {
@@ -39,7 +39,7 @@ public static class StandardContent
         result = parseResult.Document;
         return parseResult.Status;
 
-        static bool DecodeUnescapeAndParseJsonDocument(ReadOnlySpan<byte> base64Source, in object? state, out (JsonDocument? Document, EncodedContentMediaTypeParseStatus Status) result)
+        static bool DecodeAndParseJsonDocument(ReadOnlySpan<byte> base64Source, in object? state, out (JsonDocument? Document, EncodedContentMediaTypeParseStatus Status) result)
         {
             int length = base64Source.Length;
             byte[]? buffer = null;
@@ -55,7 +55,15 @@ public static class StandardContent
                     return false;
                 }
 
-                return UnescapeAndParseJsonDocument(utf8Source[..written], default, out result);
+                // The decoded bytes ARE the content (per contentMediaType), so parse
+                // them directly. They must NOT be run through the JSON-string
+                // unescaper: that helper is a port of the reader's internal unescape
+                // and assumes already-validated JSON-string input, so arbitrary
+                // decoded bytes containing a malformed escape (a trailing backslash, a
+                // truncated \u, or an unpaired surrogate) make it read past the buffer
+                // or throw, and a valid decoded document containing a legitimate
+                // backslash escape would be mangled into invalid JSON.
+                return ParseJsonDocument(utf8Source[..written], out result);
             }
             finally
             {
@@ -86,6 +94,7 @@ public static class StandardContent
                 {
                     JsonReaderHelper.Unescape(utf8Source, utf8Unescaped, idx, out int written);
                     unescapedResult = utf8Unescaped[..written];
+                    return ParseJsonDocument(unescapedResult, out result);
                 }
                 finally
                 {
@@ -95,17 +104,18 @@ public static class StandardContent
                     }
                 }
             }
-            else
-            {
-                unescapedResult = utf8Source;
-            }
 
-            if (unescapedResult.Length > 0)
+            return ParseJsonDocument(utf8Source, out result);
+        }
+
+        static bool ParseJsonDocument(ReadOnlySpan<byte> utf8Json, out (JsonDocument? Document, EncodedContentMediaTypeParseStatus Status) result)
+        {
+            if (utf8Json.Length > 0)
             {
-                var reader2 = new Utf8JsonReader(unescapedResult);
+                var reader = new Utf8JsonReader(utf8Json);
                 try
                 {
-                    if (JsonDocument.TryParseValue(ref reader2, out JsonDocument? resultDocument))
+                    if (JsonDocument.TryParseValue(ref reader, out JsonDocument? resultDocument))
                     {
                         result = (resultDocument, EncodedContentMediaTypeParseStatus.Success);
                         return true;
