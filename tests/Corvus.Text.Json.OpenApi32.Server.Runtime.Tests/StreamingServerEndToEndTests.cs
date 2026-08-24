@@ -125,6 +125,59 @@ public class StreamingServerEndToEndTests
     }
 
     [TestMethod]
+    public async Task MixedDoc_TailShapedBody_StreamsBinaryPart()
+    {
+        byte[] payload = new byte[20_000];
+        Random.Shared.NextBytes(payload);
+
+        using MultipartContent content = new("mixed");
+        content.Add(System.Net.Http.Json.JsonContent.Create(new { title = "doc" }));
+        ByteArrayContent binary = new(payload);
+        binary.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+        content.Add(binary);
+
+        HttpResponseMessage response = await client!.PostAsync("/mixed-doc", content);
+
+        Assert.AreEqual(HttpStatusCode.Created, response.StatusCode);
+        Assert.AreEqual(
+            """{"title":"doc","payloadLength":20000}""",
+            await response.Content.ReadAsStringAsync());
+    }
+
+    [TestMethod]
+    public async Task MixedDoc_AbsentBinaryPart_BindsAsEmpty()
+    {
+        using MultipartContent content = new("mixed");
+        content.Add(System.Net.Http.Json.JsonContent.Create(new { title = "solo" }));
+
+        HttpResponseMessage response = await client!.PostAsync("/mixed-doc", content);
+
+        Assert.AreEqual(HttpStatusCode.Created, response.StatusCode);
+        Assert.AreEqual(
+            """{"title":"solo","payloadLength":0}""",
+            await response.Content.ReadAsStringAsync());
+    }
+
+    [TestMethod]
+    public async Task MixedBatch_SequenceConsumesEveryItem()
+    {
+        using MultipartContent content = new("mixed");
+        foreach (int size in (int[])[10, 20_000, 5])
+        {
+            ByteArrayContent item = new(new byte[size]);
+            item.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+            content.Add(item);
+        }
+
+        HttpResponseMessage response = await client!.PostAsync("/mixed-batch", content);
+
+        Assert.AreEqual(HttpStatusCode.Created, response.StatusCode);
+        Assert.AreEqual(
+            """{"itemCount":3,"totalLength":20015}""",
+            await response.Content.ReadAsStringAsync());
+    }
+
+    [TestMethod]
     public async Task Upload_TextAfterBinary_Returns400()
     {
         using MultipartFormDataContent content = [];
@@ -159,6 +212,33 @@ internal sealed class StreamingMockHandler : IApiDefaultHandler
         return UploadDocumentResult.Created(body, workspace);
     }
 
+    public async ValueTask<UploadMixedDocResult> HandleUploadMixedDocAsync(UploadMixedDocParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        long payloadLength = await CountAsync(parameters.Part1, cancellationToken);
+
+        using System.Text.Json.JsonDocument meta = System.Text.Json.JsonDocument.Parse(parameters.Body.ToString());
+        string title = meta.RootElement[0].GetProperty("title").GetString() ?? string.Empty;
+
+        CanonTests32.StreamingServer.Models.PostMixedDocCreated body = CanonTests32.StreamingServer.Models.PostMixedDocCreated.ParseValue(Encoding.UTF8.GetBytes(
+            $$"""{"title":"{{title}}","payloadLength":{{payloadLength}}}"""));
+        return UploadMixedDocResult.Created(body, workspace);
+    }
+
+    public async ValueTask<UploadMixedBatchResult> HandleUploadMixedBatchAsync(UploadMixedBatchParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        int itemCount = 0;
+        long totalLength = 0;
+        while (await parameters.Items.MoveNextAsync(cancellationToken) is { } stream)
+        {
+            itemCount++;
+            totalLength += await CountStreamAsync(stream, cancellationToken);
+        }
+
+        CanonTests32.StreamingServer.Models.PostMixedBatchCreated body = CanonTests32.StreamingServer.Models.PostMixedBatchCreated.ParseValue(Encoding.UTF8.GetBytes(
+            $$"""{"itemCount":{{itemCount}},"totalLength":{{totalLength}}}"""));
+        return UploadMixedBatchResult.Created(body, workspace);
+    }
+
     private static async ValueTask<long> CountAsync(BinaryPartHandle handle, CancellationToken cancellationToken)
     {
         Stream? stream = await handle.OpenStreamAsync(cancellationToken);
@@ -167,6 +247,11 @@ internal sealed class StreamingMockHandler : IApiDefaultHandler
             return 0;
         }
 
+        return await CountStreamAsync(stream, cancellationToken);
+    }
+
+    private static async ValueTask<long> CountStreamAsync(Stream stream, CancellationToken cancellationToken)
+    {
         long total = 0;
         byte[] scratch = new byte[8192];
         int read;

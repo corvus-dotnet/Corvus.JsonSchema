@@ -31,6 +31,13 @@ namespace Corvus.Text.Json.OpenApi;
 /// spooled.
 /// </para>
 /// <para>
+/// <c>multipart/mixed</c> bodies (see <see cref="BeginMixedAsync"/>) are positional:
+/// the wire order is the schema order, so they always stream live in wire order
+/// regardless of the configured ordering policy. Binary parts bind by wire index via
+/// <see cref="GetMixedHandle"/>, and a repeating binary tail is consumed through
+/// <see cref="GetItemSequence"/>.
+/// </para>
+/// <para>
 /// The generated endpoint disposes the driver in its <c>finally</c>, which releases
 /// the spools; the request stream itself is owned by the host. Part streams are valid
 /// only for the duration of the handler call.
@@ -54,6 +61,8 @@ public sealed class MultipartStreamingDriver : IAsyncDisposable
     private bool finished;
     private long remainingSpoolBudget;
     private long maxSpooledBodyLength;
+    private int wireIndex = -1;
+    private bool hasPendingMixedPart;
 
     private MultipartStreamingDriver(
         StreamingMultipartReader reader,
@@ -169,6 +178,78 @@ public sealed class MultipartStreamingDriver : IAsyncDisposable
     }
 
     /// <summary>
+    /// Begins driving a streaming <c>multipart/mixed</c> body: reads the non-binary
+    /// parts into a JSON array projection (positions compact, matching the buffered
+    /// deserializer), stopping at the first binary part. Mixed bodies are positional,
+    /// so they always stream live in wire order; the ordering policy in
+    /// <paramref name="options"/> does not apply.
+    /// </summary>
+    /// <param name="body">The request body stream. The driver does not dispose it.</param>
+    /// <param name="contentType">The request Content-Type header (carries the boundary).</param>
+    /// <param name="options">The registration-time server options.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The driver, positioned with the typed-body projection complete.</returns>
+    /// <exception cref="RequestBodyTooLargeException">The non-binary parts exceeded <see cref="ApiServerOptions.MaxNonBinaryPartsLength"/>.</exception>
+    /// <exception cref="InvalidDataException">The body is not well-formed multipart content.</exception>
+    public static async ValueTask<MultipartStreamingDriver> BeginMixedAsync(
+        Stream body,
+        string? contentType,
+        ApiServerOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        int byteCount = contentType is not null
+            ? System.Text.Encoding.UTF8.GetByteCount(contentType)
+            : 0;
+        byte[] ctBuffer = FormFieldReader.Rent(Math.Max(byteCount, 1));
+        StreamingMultipartReader reader;
+        try
+        {
+            if (contentType is not null)
+            {
+                System.Text.Encoding.UTF8.GetBytes(contentType, 0, contentType.Length, ctBuffer, 0);
+            }
+
+            if (!MultipartFormReader.TryExtractBoundary(ctBuffer.AsSpan(0, byteCount), out ReadOnlySpan<byte> boundarySpan))
+            {
+                ThrowHelper.ThrowMultipartBoundaryNotFound();
+            }
+
+            reader = new StreamingMultipartReader(body, boundarySpan);
+        }
+        catch
+        {
+            FormFieldReader.Return(ctBuffer);
+            throw;
+        }
+
+        PooledBufferWriter? projection = null;
+        MultipartStreamingDriver driver;
+        try
+        {
+            projection = new PooledBufferWriter(4096);
+            driver = new(reader, projection, ctBuffer, [], spooling: false);
+        }
+        catch
+        {
+            projection?.Dispose();
+            await reader.DisposeAsync().ConfigureAwait(false);
+            FormFieldReader.Return(ctBuffer);
+            throw;
+        }
+
+        try
+        {
+            await driver.BuildMixedProjectionAsync(options.MaxNonBinaryPartsLength, cancellationToken).ConfigureAwait(false);
+            return driver;
+        }
+        catch
+        {
+            await driver.DisposeAsync().ConfigureAwait(false);
+            throw;
+        }
+    }
+
+    /// <summary>
     /// Creates a handle for the named binary part.
     /// </summary>
     /// <param name="partName">The part's form field name; must be one of the declared binary part names.</param>
@@ -176,6 +257,23 @@ public sealed class MultipartStreamingDriver : IAsyncDisposable
     /// missing required part throws <see cref="RequiredBinaryPartMissingException"/>.</param>
     /// <returns>The handle.</returns>
     public BinaryPartHandle GetHandle(string partName, bool required) => new(this, partName, required);
+
+    /// <summary>
+    /// Creates a handle for the binary <c>multipart/mixed</c> part at the given wire
+    /// index. Opening a missing part (the body ended before that index) yields
+    /// <see langword="null"/>, matching the buffered path's empty binding.
+    /// </summary>
+    /// <param name="wireIndex">The part's zero-based position in the multipart message.</param>
+    /// <returns>The handle.</returns>
+    public BinaryPartHandle GetMixedHandle(int wireIndex) => new(this, wireIndex);
+
+    /// <summary>
+    /// Creates the sequence over the repeating binary items that follow the prefix
+    /// parts of a <c>multipart/mixed</c> body.
+    /// </summary>
+    /// <param name="startIndex">The wire index at which the repeating items begin (the prefix part count).</param>
+    /// <returns>The sequence.</returns>
+    public BinaryPartSequence GetItemSequence(int startIndex) => new(this, startIndex);
 
     /// <inheritdoc/>
     public async ValueTask DisposeAsync()
@@ -248,6 +346,81 @@ public sealed class MultipartStreamingDriver : IAsyncDisposable
             }
 
             this.pendingPartIndex = PendingNone;
+        }
+    }
+
+    internal async ValueTask<Stream?> OpenMixedPartAsync(int targetWireIndex, CancellationToken cancellationToken)
+    {
+        if (this.wireIndex > targetWireIndex || (this.wireIndex == targetWireIndex && !this.hasPendingMixedPart))
+        {
+            ThrowHelper.ThrowBinaryPartAlreadyPassed($"#{targetWireIndex}");
+        }
+
+        while (true)
+        {
+            if (!this.hasPendingMixedPart)
+            {
+                if (this.finished || !await this.reader.MoveNextPartAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    // The body ended before this part: bind as absent, matching the
+                    // buffered path's empty binding for missing mixed parts.
+                    this.finished = true;
+                    return null;
+                }
+
+                this.wireIndex++;
+                if (!this.reader.CurrentIsBinary)
+                {
+                    // Mixed bodies stream in wire order, so every part after the
+                    // typed body's non-binary prefix must be binary.
+                    ThrowHelper.ThrowMultipartOrderingViolation();
+                }
+
+                this.hasPendingMixedPart = true;
+            }
+
+            if (this.wireIndex == targetWireIndex)
+            {
+                this.hasPendingMixedPart = false;
+                return this.reader.CurrentBodyStream;
+            }
+
+            // A different part is next on the wire: it is passed over permanently
+            // (the next MoveNext drains it).
+            this.hasPendingMixedPart = false;
+        }
+    }
+
+    internal async ValueTask<Stream?> OpenNextItemAsync(int startIndex, CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            if (this.hasPendingMixedPart)
+            {
+                this.hasPendingMixedPart = false;
+                if (this.wireIndex >= startIndex)
+                {
+                    return this.reader.CurrentBodyStream;
+                }
+
+                // A prefix part left unconsumed before the items: passed over
+                // permanently (the next MoveNext drains it).
+                continue;
+            }
+
+            if (this.finished || !await this.reader.MoveNextPartAsync(cancellationToken).ConfigureAwait(false))
+            {
+                this.finished = true;
+                return null;
+            }
+
+            this.wireIndex++;
+            if (!this.reader.CurrentIsBinary)
+            {
+                ThrowHelper.ThrowMultipartOrderingViolation();
+            }
+
+            this.hasPendingMixedPart = true;
         }
     }
 
@@ -390,32 +563,8 @@ public sealed class MultipartStreamingDriver : IAsyncDisposable
             return (budget, scratch);
         }
 
-        // Read the part body into scratch, bounded by the remaining budget.
-        int length = 0;
-        Stream partBody = this.reader.CurrentBodyStream;
-        while (true)
-        {
-            if (length == scratch.Length)
-            {
-                byte[] larger = FormFieldReader.Rent(scratch.Length * 2);
-                scratch.AsSpan(0, length).CopyTo(larger);
-                FormFieldReader.Return(scratch);
-                scratch = larger;
-            }
-
-            int read = await partBody.ReadAsync(scratch.AsMemory(length, scratch.Length - length), cancellationToken).ConfigureAwait(false);
-            if (read == 0)
-            {
-                break;
-            }
-
-            length += read;
-            budget -= read;
-            if (budget < 0)
-            {
-                ThrowHelper.ThrowRequestBodyTooLarge(maxNonBinaryBytes);
-            }
-        }
+        int length;
+        (length, budget, scratch) = await this.ReadCurrentPartAsync(budget, maxNonBinaryBytes, scratch, cancellationToken).ConfigureAwait(false);
 
         writer.WritePropertyName(this.reader.CurrentName);
         ReadOnlySpan<byte> value = scratch.AsSpan(0, length);
@@ -436,6 +585,97 @@ public sealed class MultipartStreamingDriver : IAsyncDisposable
         }
 
         return (budget, scratch);
+    }
+
+    private async ValueTask BuildMixedProjectionAsync(long maxNonBinaryBytes, CancellationToken cancellationToken)
+    {
+        using Utf8JsonWriter writer = new(this.projection);
+        writer.WriteStartArray();
+
+        long budget = maxNonBinaryBytes;
+        byte[]? scratch = null;
+        try
+        {
+            while (await this.reader.MoveNextPartAsync(cancellationToken).ConfigureAwait(false))
+            {
+                this.wireIndex++;
+                if (this.reader.CurrentIsBinary)
+                {
+                    // The typed body is complete; the binary tail is consumed via
+                    // handles and the item sequence.
+                    this.hasPendingMixedPart = true;
+                    break;
+                }
+
+                int length;
+                scratch ??= FormFieldReader.Rent(4096);
+                (length, budget, scratch) = await this.ReadCurrentPartAsync(budget, maxNonBinaryBytes, scratch, cancellationToken).ConfigureAwait(false);
+
+                // Value semantics match MultipartMixedReader.DeserializeToJson: JSON
+                // or untyped parts project raw, other text parts as JSON strings.
+                ReadOnlySpan<byte> value = scratch.AsSpan(0, length);
+                if (MultipartFormReader.IsJsonContentType(this.reader.CurrentContentType) || this.reader.CurrentContentType.IsEmpty)
+                {
+                    if (value.IsEmpty)
+                    {
+                        writer.WriteNullValue();
+                    }
+                    else
+                    {
+                        writer.WriteRawValue(value);
+                    }
+                }
+                else
+                {
+                    writer.WriteStringValue(value);
+                }
+            }
+
+            writer.WriteEndArray();
+            writer.Flush();
+        }
+        finally
+        {
+            if (scratch is not null)
+            {
+                FormFieldReader.Return(scratch);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Reads the reader's current part body into the scratch buffer, growing it as
+    /// needed and charging the non-binary budget. Returns the part length, the
+    /// remaining budget, and the (possibly regrown) scratch buffer, which the caller
+    /// owns.
+    /// </summary>
+    private async ValueTask<(int Length, long Budget, byte[] Scratch)> ReadCurrentPartAsync(long budget, long maxNonBinaryBytes, byte[] scratch, CancellationToken cancellationToken)
+    {
+        int length = 0;
+        Stream partBody = this.reader.CurrentBodyStream;
+        while (true)
+        {
+            if (length == scratch.Length)
+            {
+                byte[] larger = FormFieldReader.Rent(scratch.Length * 2);
+                scratch.AsSpan(0, length).CopyTo(larger);
+                FormFieldReader.Return(scratch);
+                scratch = larger;
+            }
+
+            int read = await partBody.ReadAsync(scratch.AsMemory(length, scratch.Length - length), cancellationToken).ConfigureAwait(false);
+            if (read == 0)
+            {
+                return (length, budget, scratch);
+            }
+
+            length += read;
+            budget -= read;
+            if (budget < 0)
+            {
+                ThrowHelper.ThrowRequestBodyTooLarge(maxNonBinaryBytes);
+            }
+        }
     }
 
     /// <summary>

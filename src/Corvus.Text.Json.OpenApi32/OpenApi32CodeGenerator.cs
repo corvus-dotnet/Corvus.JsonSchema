@@ -3225,6 +3225,44 @@ public sealed class OpenApi32CodeGenerator
     }
 
     /// <summary>
+    /// Returns <see langword="true"/> when the mixed body's binary parts all trail its
+    /// non-binary parts in schema position. Mixed bodies are positional (the wire order
+    /// is the schema order), so this is the shape live streaming requires; other shapes
+    /// keep the buffered path.
+    /// </summary>
+    private static bool MixedBinaryPartsAreTailShaped(RequestBodyInfo requestBody)
+    {
+        bool seenBinary = false;
+        if (requestBody.PrefixParts is { } prefixParts)
+        {
+            foreach (MixedPartInfo part in prefixParts)
+            {
+                if (part.IsBinary)
+                {
+                    seenBinary = true;
+                }
+                else if (seenBinary)
+                {
+                    return false;
+                }
+            }
+        }
+
+        // Non-binary repeating items after binary prefix parts also interleave.
+        return requestBody.ItemPart is not { IsBinary: false } || !seenBinary;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> when the operation's <c>multipart/mixed</c> body
+    /// streams its binary parts as wire-order handles instead of buffered bytes.
+    /// </summary>
+    private bool UsesStreamingMixedBody(RequestBodyInfo requestBody)
+        => this.StreamServerBinaryParts
+            && IsMultipartMixedRequestBody(requestBody)
+            && HasMixedBinaryParts(requestBody)
+            && MixedBinaryPartsAreTailShaped(requestBody);
+
+    /// <summary>
     /// Detects <c>multipart/mixed</c> content with <c>prefixEncoding</c> or <c>itemEncoding</c>.
     /// </summary>
     private static void DetectMultipartMixedParts(
@@ -7279,6 +7317,7 @@ public sealed class OpenApi32CodeGenerator
             // repeating binary items as a list (mirrors the client sending BinaryPartData parts).
             if (IsMultipartMixedRequestBody(rb))
             {
+                bool mixedStreaming = this.UsesStreamingMixedBody(rb);
                 if (rb.PrefixParts is { } mixedPrefixParts)
                 {
                     for (int i = 0; i < mixedPrefixParts.Length; i++)
@@ -7287,9 +7326,18 @@ public sealed class OpenApi32CodeGenerator
                         {
                             w.WriteLine();
                             w.WriteLine("/// <summary>");
-                            w.WriteLine($"/// Gets the binary content of mixed part {i}. Binary parts are excluded from <see cref=\"Body\"/>.");
-                            w.WriteLine("/// </summary>");
-                            w.WriteLine($"public ReadOnlyMemory<byte> Part{i} {{ get; init; }}");
+                            if (mixedStreaming)
+                            {
+                                w.WriteLine($"/// Gets the streaming handle for mixed part {i}. Open it to consume the part's bytes from the wire, in wire order; binary parts are excluded from <see cref=\"Body\"/>.");
+                                w.WriteLine("/// </summary>");
+                                w.WriteLine($"public BinaryPartHandle Part{i} {{ get; init; }}");
+                            }
+                            else
+                            {
+                                w.WriteLine($"/// Gets the binary content of mixed part {i}. Binary parts are excluded from <see cref=\"Body\"/>.");
+                                w.WriteLine("/// </summary>");
+                                w.WriteLine($"public ReadOnlyMemory<byte> Part{i} {{ get; init; }}");
+                            }
                         }
                     }
                 }
@@ -7298,9 +7346,18 @@ public sealed class OpenApi32CodeGenerator
                 {
                     w.WriteLine();
                     w.WriteLine("/// <summary>");
-                    w.WriteLine("/// Gets the binary content of the repeating mixed items, in wire order. Binary parts are excluded from <see cref=\"Body\"/>.");
-                    w.WriteLine("/// </summary>");
-                    w.WriteLine("public System.Collections.Generic.IReadOnlyList<ReadOnlyMemory<byte>> Items { get; init; }");
+                    if (mixedStreaming)
+                    {
+                        w.WriteLine("/// Gets the streaming sequence over the repeating mixed items. Move through it to consume each item's bytes from the wire; binary parts are excluded from <see cref=\"Body\"/>.");
+                        w.WriteLine("/// </summary>");
+                        w.WriteLine("public BinaryPartSequence Items { get; init; }");
+                    }
+                    else
+                    {
+                        w.WriteLine("/// Gets the binary content of the repeating mixed items, in wire order. Binary parts are excluded from <see cref=\"Body\"/>.");
+                        w.WriteLine("/// </summary>");
+                        w.WriteLine("public System.Collections.Generic.IReadOnlyList<ReadOnlyMemory<byte>> Items { get; init; }");
+                    }
                 }
             }
         }
@@ -8368,6 +8425,10 @@ public sealed class OpenApi32CodeGenerator
                     && !IsMultipartMixedRequestBody(op.RequestBody!.Value)
                     && op.RequestBody!.Value.BinaryProperties.Length > 0;
 
+                // Mixed bodies are positional, so tail-shaped schemas stream live in
+                // wire order under either ordering policy.
+                bool usesStreamingMixed = hasBody && this.UsesStreamingMixedBody(op.RequestBody!.Value);
+
                 w.WriteLine();
 
                 // The schema-declared binary part names, shared by every request the
@@ -8422,7 +8483,7 @@ public sealed class OpenApi32CodeGenerator
 
                 // Multipart bodies with binary parts use the owned deserializer so the
                 // captured part slices stay valid for the duration of the handler call.
-                bool usesOwnedBody = !usesStreamingBody && hasBody && !isRawStreamBody
+                bool usesOwnedBody = !usesStreamingBody && !usesStreamingMixed && hasBody && !isRawStreamBody
                     && ((IsMultipartRequestBody(op.RequestBody!.Value)
                             && !IsMultipartMixedRequestBody(op.RequestBody!.Value)
                             && op.RequestBody!.Value.BinaryProperties.Length > 0)
@@ -8433,7 +8494,7 @@ public sealed class OpenApi32CodeGenerator
                     w.WriteLine($"OwnedMultipartBody<{bodyTypeName}>? __bodyOwner = null;");
                 }
 
-                if (usesStreamingBody)
+                if (usesStreamingBody || usesStreamingMixed)
                 {
                     w.WriteLine("MultipartStreamingDriver? __streamingDriver = null;");
                 }
@@ -8507,7 +8568,7 @@ public sealed class OpenApi32CodeGenerator
                         }
                     }
 
-                    if (!isRawStreamBody && IsMultipartMixedRequestBody(op.RequestBody!.Value))
+                    if (!usesStreamingMixed && !isRawStreamBody && IsMultipartMixedRequestBody(op.RequestBody!.Value))
                     {
                         if (op.RequestBody!.Value.PrefixParts is { } hoistPrefixParts)
                         {
@@ -8605,6 +8666,24 @@ public sealed class OpenApi32CodeGenerator
                         bool mixedItemsBinary = op.RequestBody!.Value.ItemPart is { IsBinary: true };
                         bool hasMixedBinary = HasMixedBinaryParts(op.RequestBody!.Value);
 
+                        if (usesStreamingMixed)
+                        {
+                            // No Content-Length precheck: large bodies are the point.
+                            // The non-binary parts are capped by MaxNonBinaryPartsLength.
+                            w.WriteLine("try");
+                            w.OpenBrace();
+                            w.WriteLine("__streamingDriver = await MultipartStreamingDriver.BeginMixedAsync(context.Request.Body, context.Request.ContentType, serverOptions, context.RequestAborted).ConfigureAwait(false);");
+                            w.WriteLine($"bodyDoc = ParsedJsonDocument<{bodyTypeName}>.Parse(__streamingDriver.ProjectionUtf8Json);");
+                            w.CloseBrace();
+                            EmitBodyParseFailureCatches(w, includeTooLarge: true);
+
+                            // Schema validation is skipped, as on the buffered path:
+                            // binary parts are excluded from the JSON projection, so
+                            // positional validation against the array schema would
+                            // misalign.
+                        }
+                        else
+                        {
                         EmitBufferedBodyContentLengthPrecheck(w);
                         w.WriteLine("try");
                         w.OpenBrace();
@@ -8652,6 +8731,7 @@ public sealed class OpenApi32CodeGenerator
                         // Note: when binary parts are present, schema validation is skipped because
                         // binary parts are excluded from the JSON projection, so positional
                         // validation against the array schema would misalign.
+                        }
                     }
                     else
                     {
@@ -8714,7 +8794,11 @@ public sealed class OpenApi32CodeGenerator
                                 {
                                     string nameLiteral = CodeEmitHelpers.FormatStringLiteral(binaryPart.PropertyName);
                                     string requiredLiteral = binaryPart.IsRequired ? "true" : "false";
-                                    w.WriteLine($"{propName} = __streamingDriver!.GetHandle({nameLiteral}, required: {requiredLiteral}),");
+
+                                    // An absent optional body has no driver; default handles open as null.
+                                    w.WriteLine(bodyOptional
+                                        ? $"{propName} = __streamingDriver is null ? default : __streamingDriver.GetHandle({nameLiteral}, required: {requiredLiteral}),"
+                                        : $"{propName} = __streamingDriver!.GetHandle({nameLiteral}, required: {requiredLiteral}),");
                                 }
                                 else
                                 {
@@ -8726,20 +8810,31 @@ public sealed class OpenApi32CodeGenerator
                         // Bind captured binary parts for multipart/mixed bodies as slices of the owned body bytes.
                         if (!isRawStreamBody && IsMultipartMixedRequestBody(op.RequestBody!.Value))
                         {
+                            int mixedBindPrefixCount = op.RequestBody!.Value.PrefixParts?.Length ?? 0;
                             if (op.RequestBody!.Value.PrefixParts is { } bindPrefixParts)
                             {
                                 for (int i = 0; i < bindPrefixParts.Length; i++)
                                 {
                                     if (bindPrefixParts[i].IsBinary)
                                     {
-                                        w.WriteLine($"Part{i} = __mixedBinary_{i}_offset >= 0 ? __bodyOwner!.Value.BodyBytes.Slice(__mixedBinary_{i}_offset, __mixedBinary_{i}_length) : ReadOnlyMemory<byte>.Empty,");
+                                        w.WriteLine((usesStreamingMixed, bodyOptional) switch
+                                        {
+                                            (true, true) => $"Part{i} = __streamingDriver is null ? default : __streamingDriver.GetMixedHandle({i}),",
+                                            (true, false) => $"Part{i} = __streamingDriver!.GetMixedHandle({i}),",
+                                            _ => $"Part{i} = __mixedBinary_{i}_offset >= 0 ? __bodyOwner!.Value.BodyBytes.Slice(__mixedBinary_{i}_offset, __mixedBinary_{i}_length) : ReadOnlyMemory<byte>.Empty,",
+                                        });
                                     }
                                 }
                             }
 
                             if (op.RequestBody!.Value.ItemPart is { IsBinary: true })
                             {
-                                w.WriteLine("Items = MultipartBinaryParts.Slice(__bodyOwner!.Value.BodyBytes, __mixedBinaryItemOffsets),");
+                                w.WriteLine((usesStreamingMixed, bodyOptional) switch
+                                {
+                                    (true, true) => $"Items = __streamingDriver is null ? default : __streamingDriver.GetItemSequence({mixedBindPrefixCount}),",
+                                    (true, false) => $"Items = __streamingDriver!.GetItemSequence({mixedBindPrefixCount}),",
+                                    _ => "Items = MultipartBinaryParts.Slice(__bodyOwner!.Value.BodyBytes, __mixedBinaryItemOffsets),",
+                                });
                             }
                         }
                     }
@@ -8847,7 +8942,7 @@ public sealed class OpenApi32CodeGenerator
 
                 // Finally: dispose workspace (releases param documents) and body document
                 w.CloseBrace();
-                if (usesStreamingBody)
+                if (usesStreamingBody || usesStreamingMixed)
                 {
                     // These originate from handle opening inside the handler, before any
                     // response bytes are written, so a 400 can still be produced.
@@ -8874,7 +8969,7 @@ public sealed class OpenApi32CodeGenerator
                     w.WriteLine("__bodyOwner?.Dispose();");
                 }
 
-                if (usesStreamingBody)
+                if (usesStreamingBody || usesStreamingMixed)
                 {
                     w.WriteLine("if (__streamingDriver is not null)");
                     w.OpenBrace();

@@ -186,6 +186,22 @@ public class MultipartStreamingDriverTests
     }
 
     [TestMethod]
+    public async Task Driver_JsonPartWithCharsetParameter_ProjectsAsRawJson()
+    {
+        // "application/json; charset=utf-8" must classify as JSON, not binary
+        // (media type parameters are stripped, matching MultipartMixedReader).
+        byte[] body = BuildBody(
+            ("Content-Disposition: form-data; name=\"meta\"\r\nContent-Type: application/json; charset=utf-8", """{"a":1}"""u8.ToArray()),
+            FilePart("file", "F"u8.ToArray()));
+
+        using MemoryStream source = new(body);
+        await using MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, ["file"], Options);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(driver.ProjectionUtf8Json);
+        Assert.AreEqual(1, doc.RootElement.GetProperty("meta"u8).GetProperty("a"u8).GetInt32());
+    }
+
+    [TestMethod]
     public async Task Driver_UndeclaredHandleName_Throws()
     {
         byte[] body = BuildBody(FilePart("file", "F"u8.ToArray()));

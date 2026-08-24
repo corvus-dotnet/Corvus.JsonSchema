@@ -3475,6 +3475,130 @@ public class OpenApi32CodeGeneratorTests
             "The default generator must keep the buffered binaryPartCallback path");
     }
 
+    [TestMethod]
+    public void GenerateServer_StreamingMixed_EmitsHandlesAndSequence()
+    {
+        // With StreamServerBinaryParts, a tail-shaped multipart/mixed body streams:
+        // binary prefix parts bind as wire-index handles and repeating binary items
+        // as a BinaryPartSequence. An interleaved schema (binary before non-binary)
+        // cannot stream positionally and keeps the buffered path.
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Streaming Mixed", "version": "1.0" },
+              "paths": {
+                "/doc": {
+                  "post": {
+                    "operationId": "uploadDoc",
+                    "requestBody": {
+                      "required": true,
+                      "content": {
+                        "multipart/mixed": {
+                          "schema": {
+                            "type": "array",
+                            "prefixItems": [
+                              { "type": "object", "properties": { "title": { "type": "string" } } },
+                              { "type": "string", "format": "binary" }
+                            ]
+                          },
+                          "prefixEncoding": [
+                            { "contentType": "application/json" },
+                            { "contentType": "application/octet-stream" }
+                          ]
+                        }
+                      }
+                    },
+                    "responses": { "204": { "description": "ok" } }
+                  }
+                },
+                "/batch": {
+                  "post": {
+                    "operationId": "uploadBatch",
+                    "requestBody": {
+                      "required": true,
+                      "content": {
+                        "multipart/mixed": {
+                          "schema": {
+                            "type": "array",
+                            "items": { "type": "string", "format": "binary" }
+                          },
+                          "itemEncoding": { "contentType": "application/octet-stream" }
+                        }
+                      }
+                    },
+                    "responses": { "204": { "description": "ok" } }
+                  }
+                },
+                "/interleaved": {
+                  "post": {
+                    "operationId": "uploadInterleaved",
+                    "requestBody": {
+                      "required": true,
+                      "content": {
+                        "multipart/mixed": {
+                          "schema": {
+                            "type": "array",
+                            "prefixItems": [
+                              { "type": "string", "format": "binary" },
+                              { "type": "object", "properties": { "note": { "type": "string" } } }
+                            ]
+                          },
+                          "prefixEncoding": [
+                            { "contentType": "application/octet-stream" },
+                            { "contentType": "application/json" }
+                          ]
+                        }
+                      }
+                    },
+                    "responses": { "204": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int i = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"MxStream.Type{i}";
+            i++;
+        }
+
+        OpenApi32CodeGenerator gen = new("MxStream", map) { StreamServerBinaryParts = true };
+        IReadOnlyList<GeneratedFile> files = gen.GenerateServer(spec);
+
+        GeneratedFile docParams = files.First(f => f.FileName == "UploadDocParams.cs");
+        Assert.IsTrue(
+            docParams.Content.Contains("public BinaryPartHandle Part1 { get; init; }"),
+            "Expected a wire-index handle for the binary prefix part");
+
+        GeneratedFile batchParams = files.First(f => f.FileName == "UploadBatchParams.cs");
+        Assert.IsTrue(
+            batchParams.Content.Contains("public BinaryPartSequence Items { get; init; }"),
+            "Expected a BinaryPartSequence for the repeating binary items");
+
+        GeneratedFile registration = files.First(f => f.FileName == "ApiEndpointRegistration.cs");
+        Assert.IsTrue(
+            registration.Content.Contains("__streamingDriver = await MultipartStreamingDriver.BeginMixedAsync(context.Request.Body, context.Request.ContentType, serverOptions, context.RequestAborted).ConfigureAwait(false);"),
+            "Expected mixed endpoints to begin a mixed streaming driver");
+        Assert.IsTrue(
+            registration.Content.Contains("Part1 = __streamingDriver!.GetMixedHandle(1),"),
+            "Expected the binary prefix part bound by wire index");
+        Assert.IsTrue(
+            registration.Content.Contains("Items = __streamingDriver!.GetItemSequence(0),"),
+            "Expected the item sequence bound at the prefix count");
+
+        GeneratedFile interleavedParams = files.First(f => f.FileName == "UploadInterleavedParams.cs");
+        Assert.IsTrue(
+            interleavedParams.Content.Contains("public ReadOnlyMemory<byte> Part0 { get; init; }"),
+            "An interleaved mixed schema must keep the buffered binding");
+        Assert.IsTrue(
+            registration.Content.Contains("binaryPartCallback"),
+            "An interleaved mixed schema must keep the buffered deserializer path");
+    }
+
     private const string ParamRefSpecJson = """
         {
           "openapi": "3.2.0",

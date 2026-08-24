@@ -29,16 +29,27 @@ public readonly struct BinaryPartHandle
     private readonly MultipartStreamingDriver? driver;
     private readonly string? partName;
     private readonly bool required;
+    private readonly int mixedWireIndex;
 
     internal BinaryPartHandle(MultipartStreamingDriver driver, string partName, bool required)
     {
         this.driver = driver;
         this.partName = partName;
         this.required = required;
+        this.mixedWireIndex = -1;
+    }
+
+    internal BinaryPartHandle(MultipartStreamingDriver driver, int mixedWireIndex)
+    {
+        this.driver = driver;
+        this.partName = null;
+        this.required = false;
+        this.mixedWireIndex = mixedWireIndex;
     }
 
     /// <summary>
-    /// Gets the part's form field name.
+    /// Gets the part's form field name, or <see langword="null"/> for a positional
+    /// <c>multipart/mixed</c> part.
     /// </summary>
     public string? PartName => this.partName;
 
@@ -54,7 +65,14 @@ public readonly struct BinaryPartHandle
     /// <exception cref="MultipartOrderingException">A non-binary part arrived after a binary part under RequireBinaryLast.</exception>
     /// <exception cref="InvalidOperationException">The part has already been passed in wire order.</exception>
     public ValueTask<Stream?> OpenStreamAsync(CancellationToken cancellationToken = default)
-        => this.driver is { } d && this.partName is { } name
+    {
+        if (this.driver is not { } d)
+        {
+            return ValueTask.FromResult<Stream?>(null);
+        }
+
+        return this.partName is { } name
             ? d.OpenPartAsync(name, this.required, cancellationToken)
-            : ValueTask.FromResult<Stream?>(null);
+            : d.OpenMixedPartAsync(this.mixedWireIndex, cancellationToken);
+    }
 }

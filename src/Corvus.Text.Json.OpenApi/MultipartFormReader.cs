@@ -320,9 +320,17 @@ public ref struct MultipartFormReader
             {
                 contentType = line[ContentTypePrefix.Length..].TrimStart((byte)' ');
 
-                // Trim trailing whitespace/semicolons.
+                // Strip media type parameters ("; charset=utf-8"), matching
+                // MultipartMixedReader: classification works on the bare media type.
+                int semiIdx = contentType.IndexOf((byte)';');
+                if (semiIdx >= 0)
+                {
+                    contentType = contentType[..semiIdx];
+                }
+
+                // Trim trailing whitespace.
                 while (contentType.Length > 0 &&
-                       contentType[^1] is (byte)' ' or (byte)'\t' or (byte)';')
+                       contentType[^1] is (byte)' ' or (byte)'\t')
                 {
                     contentType = contentType[..^1];
                 }

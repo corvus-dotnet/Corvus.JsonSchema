@@ -5,6 +5,84 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/mixed-doc": {
+      "post": {
+        "operationId": "uploadMixedDoc",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/mixed": {
+              "schema": {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "title": {"type": "string"}
+                    },
+                    "required": ["title"]
+                  },
+                  {"type": "string", "format": "binary"}
+                ]
+              },
+              "prefixEncoding": [
+                {"contentType": "application/json"},
+                {"contentType": "application/octet-stream"}
+              ]
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "title": {"type": "string"},
+                    "payloadLength": {"type": "integer"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mixed-batch": {
+      "post": {
+        "operationId": "uploadMixedBatch",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/mixed": {
+              "schema": {
+                "type": "array",
+                "items": {"type": "string", "format": "binary"}
+              },
+              "itemEncoding": {"contentType": "application/octet-stream"}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "itemCount": {"type": "integer"},
+                    "totalLength": {"type": "integer"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/upload": {
       "post": {
         "operationId": "uploadDocument",
