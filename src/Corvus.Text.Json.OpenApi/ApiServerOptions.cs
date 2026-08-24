@@ -45,4 +45,35 @@ public sealed class ApiServerOptions
     /// ignore this setting.
     /// </summary>
     public long MaxNonBinaryPartsLength { get; init; } = 1_048_576;
+
+    /// <summary>
+    /// The default value of <see cref="SpoolMemoryThresholdBytes"/>: 64 KiB.
+    /// </summary>
+    public const int DefaultSpoolMemoryThresholdBytes = 65_536;
+
+    /// <summary>
+    /// Gets the size at or below which a binary part spooled under
+    /// <see cref="MultipartBinaryOrdering.SpoolOutOfOrder"/> is held in pooled memory.
+    /// Larger parts spool to a temporary file that is deleted when the request
+    /// completes. Ignored under <see cref="MultipartBinaryOrdering.RequireBinaryLast"/>
+    /// and by buffered endpoints.
+    /// </summary>
+    public int SpoolMemoryThresholdBytes { get; init; } = DefaultSpoolMemoryThresholdBytes;
+
+    /// <summary>
+    /// Gets the directory in which binary part spool files are created under
+    /// <see cref="MultipartBinaryOrdering.SpoolOutOfOrder"/>, or <see langword="null"/>
+    /// to use the system temporary directory.
+    /// </summary>
+    public string? SpoolDirectory { get; init; }
+
+    /// <summary>
+    /// Gets the maximum total bytes of binary parts spooled per request under
+    /// <see cref="MultipartBinaryOrdering.SpoolOutOfOrder"/>. Requests over the limit
+    /// are rejected with 413. The default is unbounded: large uploads are the point of
+    /// spooling, and the web server's request size limit (for example Kestrel's
+    /// <c>MaxRequestBodySize</c>) governs; tighten this to bound spool disk usage
+    /// independently of that limit.
+    /// </summary>
+    public long MaxSpooledBodyLength { get; init; } = long.MaxValue;
 }

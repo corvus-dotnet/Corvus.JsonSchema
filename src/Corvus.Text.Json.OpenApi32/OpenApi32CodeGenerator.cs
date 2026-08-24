@@ -8360,7 +8360,24 @@ public sealed class OpenApi32CodeGenerator
                 bool hasBody = op.RequestBody is not null;
                 bool opHasStreamingResponses = op.Responses.Any(r => GetStreamingContent(r).Count > 0);
 
+                // In streaming mode, multipart form-data bodies with binary parts hand
+                // the handler wire-order part handles instead of buffered bytes.
+                bool usesStreamingBody = this.StreamServerBinaryParts
+                    && hasBody && !IsRawStreamRequestBody(op.RequestBody!.Value)
+                    && IsMultipartRequestBody(op.RequestBody!.Value)
+                    && !IsMultipartMixedRequestBody(op.RequestBody!.Value)
+                    && op.RequestBody!.Value.BinaryProperties.Length > 0;
+
                 w.WriteLine();
+
+                // The schema-declared binary part names, shared by every request the
+                // endpoint serves: only declared parts are bound (and, under the
+                // SpoolOutOfOrder policy, spooled), so undeclared parts cost nothing.
+                if (usesStreamingBody)
+                {
+                    string nameLiterals = string.Join(", ", op.RequestBody!.Value.BinaryProperties.Select(p => CodeEmitHelpers.FormatStringLiteral(p.PropertyName)));
+                    w.WriteLine($"string[] __{op.MethodName}BinaryParts = new[] {{ {nameLiterals} }};");
+                }
 
                 // Determine the route string: use the parameter if this is a runtime expression path,
                 // otherwise emit the literal route.
@@ -8402,14 +8419,6 @@ public sealed class OpenApi32CodeGenerator
                 {
                     w.WriteLine($"ParsedJsonDocument<{bodyTypeName}>? bodyDoc = null;");
                 }
-
-                // In streaming mode, multipart form-data bodies with binary parts hand
-                // the handler wire-order part handles instead of buffered bytes.
-                bool usesStreamingBody = this.StreamServerBinaryParts
-                    && hasBody && !isRawStreamBody
-                    && IsMultipartRequestBody(op.RequestBody!.Value)
-                    && !IsMultipartMixedRequestBody(op.RequestBody!.Value)
-                    && op.RequestBody!.Value.BinaryProperties.Length > 0;
 
                 // Multipart bodies with binary parts use the owned deserializer so the
                 // captured part slices stay valid for the duration of the handler call.
@@ -8552,7 +8561,7 @@ public sealed class OpenApi32CodeGenerator
                             // The non-binary parts are capped by MaxNonBinaryPartsLength.
                             w.WriteLine("try");
                             w.OpenBrace();
-                            w.WriteLine("__streamingDriver = await MultipartStreamingDriver.BeginAsync(context.Request.Body, context.Request.ContentType, serverOptions, context.RequestAborted).ConfigureAwait(false);");
+                            w.WriteLine($"__streamingDriver = await MultipartStreamingDriver.BeginAsync(context.Request.Body, context.Request.ContentType, __{op.MethodName}BinaryParts, serverOptions, context.RequestAborted).ConfigureAwait(false);");
                             w.WriteLine($"bodyDoc = ParsedJsonDocument<{bodyTypeName}>.Parse(__streamingDriver.ProjectionUtf8Json);");
                             w.CloseBrace();
                             EmitBodyParseFailureCatches(w, includeTooLarge: true);

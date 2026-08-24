@@ -6,15 +6,22 @@ namespace Corvus.Text.Json.OpenApi;
 
 /// <summary>
 /// A handle to one binary part of a streaming multipart request, carried on a
-/// generated Params struct. Opening the handle advances the wire to that part and
-/// returns its content as a forward-only stream that is never buffered.
+/// generated Params struct. Opening the handle returns the part's content as a
+/// stream; each handle can be opened at most once.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Binary parts are consumed in wire order: opening a handle drains any earlier
-/// unconsumed binary parts permanently, and opening a part that has already been
-/// passed throws. The stream is valid until another handle is opened or the request
-/// completes; consume it before the handler returns.
+/// Under <see cref="MultipartBinaryOrdering.RequireBinaryLast"/> the stream reads
+/// live off the wire and parts are consumed in wire order: opening a handle drains
+/// any earlier unconsumed binary parts permanently, and opening a part that has
+/// already been passed throws. Under
+/// <see cref="MultipartBinaryOrdering.SpoolOutOfOrder"/> the stream reads from the
+/// part's spool and handles may be opened in any order.
+/// </para>
+/// <para>
+/// The stream is valid only for the duration of the handler call (and, under
+/// RequireBinaryLast, only until another handle is opened); consume it before the
+/// handler returns.
 /// </para>
 /// </remarks>
 public readonly struct BinaryPartHandle

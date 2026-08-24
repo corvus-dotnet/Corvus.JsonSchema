@@ -3440,7 +3440,10 @@ public class OpenApi32CodeGeneratorTests
 
         GeneratedFile registration = streamingFiles.First(f => f.FileName == "ApiEndpointRegistration.cs");
         Assert.IsTrue(
-            registration.Content.Contains("__streamingDriver = await MultipartStreamingDriver.BeginAsync(context.Request.Body, context.Request.ContentType, serverOptions, context.RequestAborted).ConfigureAwait(false);"),
+            registration.Content.Contains("string[] __UploadDocumentBinaryParts = new[] { \"file\", \"thumb\" };"),
+            "Expected the schema-declared binary part names emitted once per endpoint");
+        Assert.IsTrue(
+            registration.Content.Contains("__streamingDriver = await MultipartStreamingDriver.BeginAsync(context.Request.Body, context.Request.ContentType, __UploadDocumentBinaryParts, serverOptions, context.RequestAborted).ConfigureAwait(false);"),
             "Expected the endpoint to begin a MultipartStreamingDriver over the request body");
         Assert.IsTrue(
             registration.Content.Contains("File = __streamingDriver!.GetHandle(\"file\", required: true),"),

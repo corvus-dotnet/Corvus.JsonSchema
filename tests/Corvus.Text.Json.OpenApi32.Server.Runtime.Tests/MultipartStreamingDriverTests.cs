@@ -58,7 +58,7 @@ public class MultipartStreamingDriverTests
             FilePart("file", fileBytes));
 
         using MemoryStream source = new(body);
-        await using MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, Options);
+        await using MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, ["file"], Options);
 
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(driver.ProjectionUtf8Json);
         Assert.AreEqual("hello", doc.RootElement.GetProperty("caption"u8).GetString());
@@ -81,7 +81,7 @@ public class MultipartStreamingDriverTests
             FilePart("b", second));
 
         using MemoryStream source = new(body);
-        await using MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, Options);
+        await using MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, ["a", "b"], Options);
 
         CollectionAssert.AreEqual(first, await ReadAllAsync((await driver.GetHandle("a", true).OpenStreamAsync())!));
         CollectionAssert.AreEqual(second, await ReadAllAsync((await driver.GetHandle("b", true).OpenStreamAsync())!));
@@ -95,7 +95,7 @@ public class MultipartStreamingDriverTests
             FilePart("b", "BBB"u8.ToArray()));
 
         using MemoryStream source = new(body);
-        await using MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, Options);
+        await using MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, ["a", "b"], Options);
 
         // Open b first: a is skipped and drained.
         CollectionAssert.AreEqual("BBB"u8.ToArray(), await ReadAllAsync((await driver.GetHandle("b", true).OpenStreamAsync())!));
@@ -114,7 +114,7 @@ public class MultipartStreamingDriverTests
             FilePart("wanted", "W"u8.ToArray()));
 
         using MemoryStream source = new(body);
-        await using MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, Options);
+        await using MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, ["skipme", "wanted"], Options);
 
         Stream? first = await driver.GetHandle("skipme", true).OpenStreamAsync();
         Assert.IsNotNull(first);
@@ -129,7 +129,7 @@ public class MultipartStreamingDriverTests
         byte[] body = BuildBody(TextPart("only", "text"));
 
         using MemoryStream source = new(body);
-        await using MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, Options);
+        await using MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, ["file"], Options);
 
         Assert.IsNull(await driver.GetHandle("file", required: false).OpenStreamAsync());
     }
@@ -140,7 +140,7 @@ public class MultipartStreamingDriverTests
         byte[] body = BuildBody(TextPart("only", "text"));
 
         using MemoryStream source = new(body);
-        await using MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, Options);
+        await using MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, ["file"], Options);
 
         await Assert.ThrowsExactlyAsync<RequiredBinaryPartMissingException>(
             async () => await driver.GetHandle("file", required: true).OpenStreamAsync());
@@ -154,7 +154,7 @@ public class MultipartStreamingDriverTests
             TextPart("late", "text"));
 
         using MemoryStream source = new(body);
-        await using MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, Options);
+        await using MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, ["file", "other"], Options);
 
         // Consume the binary part; the trailing text part is the violation.
         Stream? stream = await driver.GetHandle("file", true).OpenStreamAsync();
@@ -175,7 +175,7 @@ public class MultipartStreamingDriverTests
         ApiServerOptions tight = new() { MaxNonBinaryPartsLength = 1024 };
 
         await Assert.ThrowsExactlyAsync<RequestBodyTooLargeException>(
-            async () => await MultipartStreamingDriver.BeginAsync(source, ContentType, tight));
+            async () => await MultipartStreamingDriver.BeginAsync(source, ContentType, ["file"], tight));
     }
 
     [TestMethod]
@@ -183,5 +183,290 @@ public class MultipartStreamingDriverTests
     {
         BinaryPartHandle handle = default;
         Assert.IsNull(await handle.OpenStreamAsync());
+    }
+
+    [TestMethod]
+    public async Task Driver_UndeclaredHandleName_Throws()
+    {
+        byte[] body = BuildBody(FilePart("file", "F"u8.ToArray()));
+
+        using MemoryStream source = new(body);
+        await using MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, ["file"], Options);
+
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+            async () => await driver.GetHandle("undeclared", required: false).OpenStreamAsync());
+    }
+
+    private static string CreateSpoolDirectory()
+    {
+        string dir = Path.Combine(Path.GetTempPath(), "corvus-spool-tests-" + Path.GetRandomFileName());
+        Directory.CreateDirectory(dir);
+        return dir;
+    }
+
+    private static ApiServerOptions SpoolOptions(string dir, int threshold = ApiServerOptions.DefaultSpoolMemoryThresholdBytes, long maxSpooled = long.MaxValue) => new()
+    {
+        MultipartBinaryOrdering = MultipartBinaryOrdering.SpoolOutOfOrder,
+        SpoolDirectory = dir,
+        SpoolMemoryThresholdBytes = threshold,
+        MaxSpooledBodyLength = maxSpooled,
+    };
+
+    [TestMethod]
+    public async Task Spool_BrowserOrder_ProjectsTextArrivingAfterBinary()
+    {
+        string dir = CreateSpoolDirectory();
+        try
+        {
+            byte[] fileBytes = new byte[5000];
+            Random.Shared.NextBytes(fileBytes);
+            byte[] body = BuildBody(
+                FilePart("file", fileBytes),
+                TextPart("caption", "after the file"));
+
+            using MemoryStream source = new(body);
+            await using MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, ["file"], SpoolOptions(dir));
+
+            using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(driver.ProjectionUtf8Json);
+            Assert.AreEqual("after the file", doc.RootElement.GetProperty("caption"u8).GetString());
+
+            CollectionAssert.AreEqual(fileBytes, await ReadAllAsync((await driver.GetHandle("file", true).OpenStreamAsync())!));
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [TestMethod]
+    public async Task Spool_HandlesOpenInAnyOrder()
+    {
+        string dir = CreateSpoolDirectory();
+        try
+        {
+            byte[] body = BuildBody(
+                FilePart("a", "AAA"u8.ToArray()),
+                FilePart("b", "BBB"u8.ToArray()));
+
+            using MemoryStream source = new(body);
+            await using MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, ["a", "b"], SpoolOptions(dir));
+
+            // Reverse wire order: allowed under the spool policy.
+            CollectionAssert.AreEqual("BBB"u8.ToArray(), await ReadAllAsync((await driver.GetHandle("b", true).OpenStreamAsync())!));
+            CollectionAssert.AreEqual("AAA"u8.ToArray(), await ReadAllAsync((await driver.GetHandle("a", true).OpenStreamAsync())!));
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [TestMethod]
+    public async Task Spool_SmallPart_StaysInPooledMemory()
+    {
+        string dir = CreateSpoolDirectory();
+        try
+        {
+            byte[] body = BuildBody(FilePart("file", "small"u8.ToArray()));
+
+            using MemoryStream source = new(body);
+            await using MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, ["file"], SpoolOptions(dir, threshold: 1024));
+
+            Assert.AreEqual(0, Directory.GetFiles(dir).Length, "a part under the threshold must not create a spool file");
+            Stream? stream = await driver.GetHandle("file", true).OpenStreamAsync();
+            Assert.IsInstanceOfType<MemoryStream>(stream);
+            CollectionAssert.AreEqual("small"u8.ToArray(), await ReadAllAsync(stream!));
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [TestMethod]
+    public async Task Spool_LargePart_UsesTempFile_DeletedOnDispose()
+    {
+        string dir = CreateSpoolDirectory();
+        byte[] fileBytes = new byte[8000];
+        Random.Shared.NextBytes(fileBytes);
+        try
+        {
+            byte[] body = BuildBody(FilePart("file", fileBytes));
+
+            using MemoryStream source = new(body);
+            MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, ["file"], SpoolOptions(dir, threshold: 1024));
+            await using (driver)
+            {
+                Assert.AreEqual(1, Directory.GetFiles(dir).Length, "a part over the threshold must spool to a file");
+                Stream? stream = await driver.GetHandle("file", true).OpenStreamAsync();
+                Assert.IsInstanceOfType<FileStream>(stream);
+                CollectionAssert.AreEqual(fileBytes, await ReadAllAsync(stream!));
+            }
+
+            Assert.AreEqual(0, Directory.GetFiles(dir).Length, "spool files must be deleted when the driver is disposed");
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [TestMethod]
+    public async Task Spool_UnopenedFileSpool_DeletedOnDispose()
+    {
+        string dir = CreateSpoolDirectory();
+        try
+        {
+            byte[] body = BuildBody(FilePart("file", new byte[8000]));
+
+            using MemoryStream source = new(body);
+            MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, ["file"], SpoolOptions(dir, threshold: 1024));
+            Assert.AreEqual(1, Directory.GetFiles(dir).Length);
+
+            // The handler never opens the handle; disposal must still clean up.
+            await driver.DisposeAsync();
+            Assert.AreEqual(0, Directory.GetFiles(dir).Length);
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [TestMethod]
+    public async Task Spool_OpenTwice_Throws()
+    {
+        string dir = CreateSpoolDirectory();
+        try
+        {
+            byte[] body = BuildBody(FilePart("file", "F"u8.ToArray()));
+
+            using MemoryStream source = new(body);
+            await using MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, ["file"], SpoolOptions(dir));
+
+            _ = await driver.GetHandle("file", true).OpenStreamAsync();
+            await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+                async () => await driver.GetHandle("file", true).OpenStreamAsync());
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [TestMethod]
+    public async Task Spool_RequiredAbsent_Throws_OptionalAbsent_Null()
+    {
+        string dir = CreateSpoolDirectory();
+        try
+        {
+            byte[] body = BuildBody(TextPart("only", "text"));
+
+            using MemoryStream source = new(body);
+            await using MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, ["file", "thumb"], SpoolOptions(dir));
+
+            Assert.IsNull(await driver.GetHandle("thumb", required: false).OpenStreamAsync());
+            await Assert.ThrowsExactlyAsync<RequiredBinaryPartMissingException>(
+                async () => await driver.GetHandle("file", required: true).OpenStreamAsync());
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [TestMethod]
+    public async Task Spool_UndeclaredBinaryPart_DrainedWithoutSpooling()
+    {
+        string dir = CreateSpoolDirectory();
+        try
+        {
+            byte[] body = BuildBody(
+                FilePart("attacker", new byte[8000]),
+                TextPart("caption", "c"),
+                FilePart("file", "F"u8.ToArray()));
+
+            using MemoryStream source = new(body);
+            await using MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, ["file"], SpoolOptions(dir, threshold: 1024));
+
+            Assert.AreEqual(0, Directory.GetFiles(dir).Length, "undeclared binary parts must not be spooled");
+            using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(driver.ProjectionUtf8Json);
+            Assert.AreEqual("c", doc.RootElement.GetProperty("caption"u8).GetString());
+            CollectionAssert.AreEqual("F"u8.ToArray(), await ReadAllAsync((await driver.GetHandle("file", true).OpenStreamAsync())!));
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [TestMethod]
+    public async Task Spool_DuplicatePartName_FirstOccurrenceWins()
+    {
+        string dir = CreateSpoolDirectory();
+        try
+        {
+            byte[] body = BuildBody(
+                FilePart("file", "FIRST"u8.ToArray()),
+                FilePart("file", "SECOND"u8.ToArray()));
+
+            using MemoryStream source = new(body);
+            await using MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, ["file"], SpoolOptions(dir));
+
+            CollectionAssert.AreEqual("FIRST"u8.ToArray(), await ReadAllAsync((await driver.GetHandle("file", true).OpenStreamAsync())!));
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [TestMethod]
+    public async Task Spool_MaxSpooledBodyLengthExceeded_Throws_AndCleansUp()
+    {
+        string dir = CreateSpoolDirectory();
+        try
+        {
+            byte[] body = BuildBody(
+                FilePart("file", new byte[8000]),
+                TextPart("caption", "c"));
+
+            using MemoryStream source = new(body);
+            await Assert.ThrowsExactlyAsync<RequestBodyTooLargeException>(
+                async () => await MultipartStreamingDriver.BeginAsync(source, ContentType, ["file"], SpoolOptions(dir, threshold: 1024, maxSpooled: 4096)));
+
+            Assert.AreEqual(0, Directory.GetFiles(dir).Length, "a failed begin must remove any partial spool files");
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [TestMethod]
+    public async Task Spool_NonBinaryBudget_StillEnforced()
+    {
+        string dir = CreateSpoolDirectory();
+        try
+        {
+            byte[] body = BuildBody(
+                FilePart("file", "F"u8.ToArray()),
+                TextPart("huge", new string('x', 5000)));
+
+            using MemoryStream source = new(body);
+            ApiServerOptions tight = new()
+            {
+                MultipartBinaryOrdering = MultipartBinaryOrdering.SpoolOutOfOrder,
+                SpoolDirectory = dir,
+                MaxNonBinaryPartsLength = 1024,
+            };
+
+            await Assert.ThrowsExactlyAsync<RequestBodyTooLargeException>(
+                async () => await MultipartStreamingDriver.BeginAsync(source, ContentType, ["file"], tight));
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
     }
 }

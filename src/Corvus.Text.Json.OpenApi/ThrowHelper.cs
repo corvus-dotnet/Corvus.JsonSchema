@@ -246,4 +246,16 @@ public static class ThrowHelper
     {
         throw new InvalidOperationException(SR.Format(SR.BinaryPartAlreadyPassed, partName));
     }
+
+    /// <summary>
+    /// Throws an <see cref="InvalidOperationException"/> indicating that the named
+    /// binary part is not among the endpoint's declared binary parts.
+    /// </summary>
+    /// <param name="partName">The part's name.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowUnknownBinaryPart(string partName)
+    {
+        throw new InvalidOperationException(SR.Format(SR.UnknownBinaryPart, partName));
+    }
 }

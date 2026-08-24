@@ -116,5 +116,8 @@
   <data name="BinaryPartAlreadyPassed" xml:space="preserve">
     <value>The binary part '{0}' has already been passed in wire order and can no longer be opened.</value>
   </data>
+  <data name="UnknownBinaryPart" xml:space="preserve">
+    <value>The binary part '{0}' is not declared for this endpoint.</value>
+  </data>
 
 </root>
