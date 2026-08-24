@@ -158,7 +158,8 @@ public sealed class OpenApi32CodeGenerator
         string? Description,
         ContentInfo[] Content,
         HeaderInfo[] Headers,
-        LinkInfo[] Links);
+        LinkInfo[] Links,
+        BinaryPropertyInfo[] BinaryParts);
 
     private readonly record struct ContentInfo(
         string MediaType,
@@ -2268,7 +2269,7 @@ public sealed class OpenApi32CodeGenerator
 
                 LinkInfo[] links = PrepareLinks(response.Links, referenceResolver, statusCode);
 
-                result.Add(new ResponseInfo(statusCode, responseSummary, responseDescription, content, headers, links));
+                result.Add(new ResponseInfo(statusCode, responseSummary, responseDescription, content, headers, links, DetectBinaryProperties(response.ContentValue)));
             }
         }
 
@@ -3448,6 +3449,21 @@ public sealed class OpenApi32CodeGenerator
         return null;
     }
 
+    // The multipart/form-data response body's schema type: the typed body whose non-binary
+    // fields the multipart serializer writes alongside the BinaryPartData parts.
+    private string? ResolveMultipartResponseTypeName(ResponseInfo resp)
+    {
+        foreach (ContentInfo content in resp.Content)
+        {
+            if (CodeEmitHelpers.IsMultipartMediaType(content.MediaType))
+            {
+                return this.ResolveSchemaTypeName(content.SchemaPointer);
+            }
+        }
+
+        return null;
+    }
+
     // The JSON response body's schema pointer (the key into contextSourceBodyPointers) — used to decide whether the body
     // type carries a Source<TContext>, and so whether a closure-free Ok<TContext> overload can be emitted for it.
     private string? ResolveResponseBodySchemaPointer(ResponseInfo resp)
@@ -3590,6 +3606,35 @@ public sealed class OpenApi32CodeGenerator
             bool eligible = resp.StatusCode == "default"
                 || (resp.StatusCode.Length > 0 && resp.StatusCode[0] == '2');
             if (eligible && (IsOctetStreamResponse(resp) || IsTextOnlyResponse(resp)))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the response declares <c>multipart/form-data</c>
+    /// content with at least one <c>format: binary</c> property, in which case the server
+    /// result carries a typed body plus <see cref="BinaryPartData"/> parts and the endpoint
+    /// writes them with the multipart serializer.
+    /// </summary>
+    private static bool IsMultipartResponseWithBinaryParts(ResponseInfo resp)
+        => resp.BinaryParts.Length > 0
+            && Array.IndexOf(GetDistinctContentCategories(resp), ContentCategory.Multipart) >= 0;
+
+    /// <summary>
+    /// Returns <see langword="true"/> if any 2xx or default response of the operation carries
+    /// a <c>multipart/form-data</c> body with binary parts.
+    /// </summary>
+    private static bool HasMultipartResponse(OperationInfo op)
+    {
+        foreach (ResponseInfo resp in op.Responses)
+        {
+            bool eligible = resp.StatusCode == "default"
+                || (resp.StatusCode.Length > 0 && resp.StatusCode[0] == '2');
+            if (eligible && IsMultipartResponseWithBinaryParts(resp))
             {
                 return true;
             }
@@ -7434,6 +7479,7 @@ public sealed class OpenApi32CodeGenerator
         bool hasHeaders = allHeaders.Count > 0;
         bool hasStreamingResponses = op.Responses.Any(r => GetStreamingContent(r).Count > 0);
         bool hasBinaryResponse = HasBinaryStyleResponse(op);
+        bool hasMultipartResponse = HasMultipartResponse(op);
         string streamTypeName = $"{op.MethodName}Stream";
         string streamWriterDelegateName = $"{op.MethodName}StreamWriter";
         string streamWriterInvokerName = $"{op.MethodName}StreamWriterInvoker";
@@ -7463,6 +7509,11 @@ public sealed class OpenApi32CodeGenerator
                 w.Write(", bool hasBinaryBody = false, Func<Stream, CancellationToken, ValueTask>? binaryWriter = null");
             }
 
+            if (hasMultipartResponse)
+            {
+                w.Write(", bool hasMultipartBody = false, IReadOnlyDictionary<string, BinaryPartData>? multipartParts = null");
+            }
+
             w.WriteLine(")");
             w.OpenBrace();
             w.WriteLine("this.StatusCode = statusCode;");
@@ -7485,6 +7536,12 @@ public sealed class OpenApi32CodeGenerator
                 w.WriteLine("this.binaryWriter = binaryWriter;");
             }
 
+            if (hasMultipartResponse)
+            {
+                w.WriteLine("this.HasMultipartBody = hasMultipartBody;");
+                w.WriteLine("this.multipartParts = multipartParts;");
+            }
+
             w.CloseBrace();
         }
         else
@@ -7498,6 +7555,11 @@ public sealed class OpenApi32CodeGenerator
             if (hasBinaryResponse)
             {
                 w.Write(", bool hasBinaryBody = false, Func<Stream, CancellationToken, ValueTask>? binaryWriter = null");
+            }
+
+            if (hasMultipartResponse)
+            {
+                w.Write(", bool hasMultipartBody = false, IReadOnlyDictionary<string, BinaryPartData>? multipartParts = null");
             }
 
             w.WriteLine(")");
@@ -7517,6 +7579,12 @@ public sealed class OpenApi32CodeGenerator
                 w.WriteLine("this.binaryWriter = binaryWriter;");
             }
 
+            if (hasMultipartResponse)
+            {
+                w.WriteLine("this.HasMultipartBody = hasMultipartBody;");
+                w.WriteLine("this.multipartParts = multipartParts;");
+            }
+
             w.CloseBrace();
         }
 
@@ -7534,6 +7602,12 @@ public sealed class OpenApi32CodeGenerator
             w.WriteLine();
         }
 
+        if (hasMultipartResponse)
+        {
+            w.WriteLine("private readonly IReadOnlyDictionary<string, BinaryPartData>? multipartParts;");
+            w.WriteLine();
+        }
+
         w.WriteLine("/// <summary>Gets the HTTP status code.</summary>");
         w.WriteLine("public int StatusCode { get; }");
         w.WriteLine();
@@ -7548,6 +7622,13 @@ public sealed class OpenApi32CodeGenerator
             w.WriteLine();
             w.WriteLine("/// <summary>Gets a value indicating whether this result has a raw binary (octet-stream) response body.</summary>");
             w.WriteLine("public bool HasBinaryBody { get; }");
+        }
+
+        if (hasMultipartResponse)
+        {
+            w.WriteLine();
+            w.WriteLine("/// <summary>Gets a value indicating whether this result has a multipart/form-data response body with binary parts.</summary>");
+            w.WriteLine("public bool HasMultipartBody { get; }");
         }
 
         if (hasStreamingResponses)
@@ -7615,6 +7696,13 @@ public sealed class OpenApi32CodeGenerator
         w.WriteLine("public bool ValidateBody()");
         w.OpenBrace();
         w.WriteLine("if (this.Body.IsUndefined()) return true;");
+        if (hasMultipartResponse)
+        {
+            // Binary parts are not represented in the typed body, so validating a
+            // schema that declares (possibly required) binary properties would
+            // misalign; mirrors the buffered multipart request decision.
+            w.WriteLine("if (this.HasMultipartBody) return true;");
+        }
 
         // Emit switch arms for each response that has a typed body
         bool hasAnyTypedResponse = false;
@@ -7700,6 +7788,27 @@ public sealed class OpenApi32CodeGenerator
             w.WriteLine("/// <param name=\"cancellationToken\">The cancellation token.</param>");
             w.WriteLine("/// <returns>A value task that completes when the body has been written.</returns>");
             w.WriteLine("public ValueTask WriteBinaryBodyAsync(Stream stream, CancellationToken cancellationToken) => this.binaryWriter is { } writer ? writer(stream, cancellationToken) : ValueTask.CompletedTask;");
+        }
+
+        if (hasMultipartResponse)
+        {
+            w.WriteLine();
+            w.WriteLine("/// <summary>");
+            w.WriteLine("/// Writes the multipart/form-data response body to the specified stream: the");
+            w.WriteLine("/// typed body's non-binary fields first, then the binary parts.");
+            w.WriteLine("/// </summary>");
+            w.WriteLine("/// <param name=\"stream\">The response stream.</param>");
+            w.WriteLine("/// <param name=\"boundary\">The multipart boundary (must match the Content-Type header).</param>");
+            w.WriteLine("/// <param name=\"cancellationToken\">The cancellation token.</param>");
+            w.WriteLine("/// <returns>A value task that completes when the body has been written.</returns>");
+            w.WriteLine("public ValueTask WriteMultipartBodyAsync(Stream stream, string boundary, CancellationToken cancellationToken)");
+            w.PushIndent();
+            w.WriteLine("=> this.multipartParts is { } parts");
+            w.PushIndent();
+            w.WriteLine("? MultipartFormDataSerializer.SerializeAsync(this.Body, stream, boundary, null, parts, cancellationToken)");
+            w.WriteLine(": ValueTask.CompletedTask;");
+            w.PopIndent();
+            w.PopIndent();
         }
 
         if (hasStreamingResponses)
@@ -7898,6 +8007,16 @@ public sealed class OpenApi32CodeGenerator
             }
 
             w.WriteLine();
+        }
+
+        // A 2xx or default multipart/form-data response with binary parts: the factory
+        // takes the typed body plus BinaryPartData per binary part, mirroring the
+        // client sending the same shape.
+        if (binaryEligible && IsMultipartResponseWithBinaryParts(response)
+            && (bodyTypeName ?? this.ResolveMultipartResponseTypeName(response)) is { } multipartBodyTypeName)
+        {
+            this.EmitServerMultipartResultFactory(w, structName, factoryName, multipartBodyTypeName, response, respHeaders, statusCode, structHasHeaders, isDefault);
+            return;
         }
 
         // Parameters
@@ -8910,6 +9029,8 @@ public sealed class OpenApi32CodeGenerator
                 }
 
                 bool opHasBinaryResponse = HasBinaryStyleResponse(op);
+                bool opHasMultipartResponse = HasMultipartResponse(op);
+                string chainKeyword = "if";
                 if (opHasStreamingResponses)
                 {
                     w.WriteLine("if (result.HasStreamingBody)");
@@ -8934,27 +9055,24 @@ public sealed class OpenApi32CodeGenerator
                     w.WriteLine();
                     w.WriteLine("await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);");
                     w.CloseBrace();
-                    if (opHasBinaryResponse)
-                    {
-                        w.WriteLine("else if (result.HasBinaryBody)");
-                        EmitBinaryResponseWriteBlock(w);
-                        w.WriteLine("else if (!result.Body.IsUndefined())");
-                    }
-                    else
-                    {
-                        w.WriteLine("else if (!result.Body.IsUndefined())");
-                    }
+                    chainKeyword = "else if";
                 }
-                else if (opHasBinaryResponse)
+
+                if (opHasBinaryResponse)
                 {
-                    w.WriteLine("if (result.HasBinaryBody)");
+                    w.WriteLine($"{chainKeyword} (result.HasBinaryBody)");
                     EmitBinaryResponseWriteBlock(w);
-                    w.WriteLine("else if (!result.Body.IsUndefined())");
+                    chainKeyword = "else if";
                 }
-                else
+
+                if (opHasMultipartResponse)
                 {
-                    w.WriteLine("if (!result.Body.IsUndefined())");
+                    w.WriteLine($"{chainKeyword} (result.HasMultipartBody)");
+                    EmitMultipartResponseWriteBlock(w);
+                    chainKeyword = "else if";
                 }
+
+                w.WriteLine($"{chainKeyword} (!result.Body.IsUndefined())");
 
                 w.OpenBrace();
                 w.WriteLine("context.Response.ContentType = result.ContentType ?? \"application/json\";");
@@ -9659,6 +9777,97 @@ public sealed class OpenApi32CodeGenerator
     /// Emits an RFC 9457 Problem Details JSON response with the given status, title, and detail.
     /// </summary>
     /// <summary>
+    /// Emits the result factory for a multipart/form-data response with binary parts:
+    /// the typed body plus one <see cref="BinaryPartData"/> parameter per binary part,
+    /// stored for the endpoint to serialize with the multipart serializer.
+    /// </summary>
+    private void EmitServerMultipartResultFactory(
+        IndentedWriter w,
+        string structName,
+        string factoryName,
+        string bodyTypeName,
+        ResponseInfo response,
+        List<(HeaderInfo Header, string TypeName, string FieldName, string PropertyName)> respHeaders,
+        string statusCode,
+        bool structHasHeaders,
+        bool isDefault)
+    {
+        BinaryPropertyInfo[] binaryParts = response.BinaryParts;
+
+        StringBuilder paramList = new();
+        if (isDefault)
+        {
+            paramList.Append("int statusCode, ");
+        }
+
+        paramList.Append($"{bodyTypeName}.Source body, JsonWorkspace workspace");
+        foreach (BinaryPropertyInfo part in binaryParts)
+        {
+            paramList.Append($", BinaryPartData {part.ParameterName}");
+        }
+
+        foreach (var (_, typeName, fieldName, _) in respHeaders)
+        {
+            paramList.Append($", {typeName}.Source {fieldName} = default");
+        }
+
+        if (isDefault)
+        {
+            w.WriteLine("/// <param name=\"statusCode\">The HTTP status code.</param>");
+        }
+
+        w.WriteLine("/// <param name=\"body\">The response body's non-binary fields.</param>");
+        w.WriteLine("/// <param name=\"workspace\">The workspace for building the response value.</param>");
+        foreach (BinaryPropertyInfo part in binaryParts)
+        {
+            w.WriteLine($"/// <param name=\"{part.ParameterName}\">Binary data for the '{part.PropertyName}' part.</param>");
+        }
+
+        foreach (var (header, _, fieldName, _) in respHeaders)
+        {
+            w.WriteLine($"/// <param name=\"{fieldName}\">The value for the <c>{header.HeaderName}</c> response header.</param>");
+        }
+
+        w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with status {statusCode}.</returns>");
+
+        string statusExpr = isDefault ? "statusCode" : statusCode;
+        w.WriteLine($"public static {structName} {factoryName}({paramList})");
+        w.OpenBrace();
+        w.WriteLine("Dictionary<string, BinaryPartData> __parts = new(StringComparer.Ordinal)");
+        w.WriteLine("{");
+        w.PushIndent();
+        foreach (BinaryPropertyInfo part in binaryParts)
+        {
+            string propNameLiteral = CodeEmitHelpers.FormatStringLiteral(part.PropertyName);
+            if (part.ContentType is { } specContentType)
+            {
+                string contentTypeLiteral = CodeEmitHelpers.FormatStringLiteral(specContentType);
+                w.WriteLine($"[{propNameLiteral}] = {part.ParameterName}.ContentType is null ? {part.ParameterName} with {{ ContentType = {contentTypeLiteral} }} : {part.ParameterName},");
+            }
+            else
+            {
+                w.WriteLine($"[{propNameLiteral}] = {part.ParameterName},");
+            }
+        }
+
+        w.PopIndent();
+        w.WriteLine("};");
+        StringBuilder ctorArgs = new();
+        ctorArgs.Append($"{statusExpr}, {bodyTypeName}.CreateBuilder(workspace, body, 30).RootElement, \"multipart/form-data\"");
+        if (structHasHeaders)
+        {
+            foreach (var (_, typeName, fieldName, _) in respHeaders)
+            {
+                ctorArgs.Append($", {fieldName}: {fieldName}.IsUndefined ? default : {typeName}.CreateBuilder(workspace, {fieldName}, 30).RootElement");
+            }
+        }
+
+        ctorArgs.Append(", hasMultipartBody: true, multipartParts: __parts");
+        w.WriteLine($"return new({ctorArgs});");
+        w.CloseBrace();
+    }
+
+    /// <summary>
     /// Emits the response-writing block for a raw binary (octet-stream) result body, writing the
     /// bytes directly to the response stream (mirrors the client reading a response stream).
     /// </summary>
@@ -9667,6 +9876,20 @@ public sealed class OpenApi32CodeGenerator
         w.OpenBrace();
         w.WriteLine("context.Response.ContentType = result.ContentType ?? \"application/octet-stream\";");
         w.WriteLine("await result.WriteBinaryBodyAsync(context.Response.Body, context.RequestAborted).ConfigureAwait(false);");
+        w.CloseBrace();
+    }
+
+    /// <summary>
+    /// Emits the response-writing block for a multipart/form-data result body: a fresh
+    /// boundary goes on the Content-Type header and the multipart serializer streams
+    /// the typed body's fields and the binary parts to the response.
+    /// </summary>
+    private static void EmitMultipartResponseWriteBlock(IndentedWriter w)
+    {
+        w.OpenBrace();
+        w.WriteLine("string __boundary = MultipartFormDataSerializer.GenerateBoundary();");
+        w.WriteLine("context.Response.ContentType = \"multipart/form-data; boundary=\" + __boundary;");
+        w.WriteLine("await result.WriteMultipartBodyAsync(context.Response.Body, __boundary, context.RequestAborted).ConfigureAwait(false);");
         w.CloseBrace();
     }
 

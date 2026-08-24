@@ -205,7 +205,11 @@ public static class MultipartFormDataSerializer
             ThrowHelper.ThrowFormBodyMustBeObject();
         }
 
-        using StreamWriter writer = new(output, Utf8NoBom, bufferSize: 256, leaveOpen: true);
+        // Text runs buffer in memory and spill to the output with async writes only:
+        // server response streams disallow synchronous IO, and StreamWriter's own
+        // flushing is synchronous.
+        using MemoryStream textBuffer = new();
+        using StreamWriter writer = new(textBuffer, Utf8NoBom, bufferSize: 256, leaveOpen: true);
 
         // Non-binary parts are written first: the streaming server contract requires
         // binary parts after all non-binary parts on the wire, so a Corvus client can
@@ -297,7 +301,7 @@ public static class MultipartFormDataSerializer
                 string name = property.Name;
                 if (binaryParts.TryGetValue(name, out BinaryPartData declaredPart) && seen.Add(name))
                 {
-                    await WriteBinaryPartAsync(writer, output, boundary, name, declaredPart, cancellationToken).ConfigureAwait(false);
+                    await WriteBinaryPartAsync(writer, textBuffer, output, boundary, name, declaredPart, cancellationToken).ConfigureAwait(false);
                 }
             }
 
@@ -305,7 +309,7 @@ public static class MultipartFormDataSerializer
             {
                 if (!seen.Contains(kvp.Key))
                 {
-                    await WriteBinaryPartAsync(writer, output, boundary, kvp.Key, kvp.Value, cancellationToken).ConfigureAwait(false);
+                    await WriteBinaryPartAsync(writer, textBuffer, output, boundary, kvp.Key, kvp.Value, cancellationToken).ConfigureAwait(false);
                 }
             }
         }
@@ -314,6 +318,17 @@ public static class MultipartFormDataSerializer
         writer.Write("--");
         writer.Write(boundary);
         writer.Write("--\r\n");
+        writer.Flush();
+        await FlushTextAsync(textBuffer, output, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async ValueTask FlushTextAsync(MemoryStream textBuffer, Stream output, CancellationToken cancellationToken)
+    {
+        if (textBuffer.Length > 0)
+        {
+            await output.WriteAsync(textBuffer.GetBuffer().AsMemory(0, (int)textBuffer.Length), cancellationToken).ConfigureAwait(false);
+            textBuffer.SetLength(0);
+        }
     }
 
     /// <summary>
@@ -645,6 +660,7 @@ public static class MultipartFormDataSerializer
 
     private static async ValueTask WriteBinaryPartAsync(
         StreamWriter writer,
+        MemoryStream textBuffer,
         Stream output,
         string boundary,
         string name,
@@ -671,8 +687,9 @@ public static class MultipartFormDataSerializer
         writer.Write(binaryPart.ContentType ?? "application/octet-stream");
         writer.Write("\r\n\r\n");
 
-        // Flush text writer before writing raw bytes via async callback.
+        // Spill the buffered text before writing raw bytes via the async callback.
         writer.Flush();
+        await FlushTextAsync(textBuffer, output, cancellationToken).ConfigureAwait(false);
         await binaryPart.WriteContentAsync(output, cancellationToken).ConfigureAwait(false);
 
         writer.Write("\r\n");

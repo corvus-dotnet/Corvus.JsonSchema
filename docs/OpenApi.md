@@ -564,6 +564,20 @@ form.addEventListener("submit", async (event) => {
 
 Alternatively, register the endpoints with `SpoolOutOfOrder` and submit the form unchanged.
 
+### Multipart Responses (Server)
+
+An operation whose 2xx (or default) response declares `multipart/form-data` content with `format: binary` properties gets a result factory taking the typed body plus a `BinaryPartData` per binary part, mirroring what the client sends for the same shape:
+
+```csharp
+return GetDocReportResult.Ok(
+    meta,
+    workspace,
+    file: new BinaryPartData(async (s, ct) => await report.CopyToAsync(s, ct), FileName: "report.pdf"),
+    thumb: new BinaryPartData(async (s, ct) => await thumb.CopyToAsync(s, ct), ContentType: "image/png"));
+```
+
+The generated endpoint puts a fresh boundary on the Content-Type header and streams the body: the typed body's non-binary fields first, then the binary parts, so the output is directly consumable by a streaming receiver. A part's `ContentType` left unset falls back to the spec-declared `encoding.contentType`, then to `application/octet-stream`. Write callbacks run against the live response stream, which disallows synchronous IO; use `WriteAsync`/`CopyToAsync`, never synchronous writes. The typed body is not schema-validated for multipart results, since the binary properties it declares are carried outside it.
+
 ### File Download
 
 Use `MatchResult<ValueTask>` to handle stream responses asynchronously:

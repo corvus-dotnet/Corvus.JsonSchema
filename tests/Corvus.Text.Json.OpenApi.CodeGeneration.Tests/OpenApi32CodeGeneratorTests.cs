@@ -3599,6 +3599,86 @@ public class OpenApi32CodeGeneratorTests
             "An interleaved mixed schema must keep the buffered deserializer path");
     }
 
+    [TestMethod]
+    public void GenerateServer_MultipartResponse_EmitsMultipartFactoryAndWriter()
+    {
+        // A 2xx multipart/form-data response with binary parts gets a factory taking
+        // the typed body plus BinaryPartData per part, and the endpoint serializes
+        // them with a fresh boundary via the multipart serializer.
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Multipart Response", "version": "1.0" },
+              "paths": {
+                "/report": {
+                  "get": {
+                    "operationId": "getReport",
+                    "responses": {
+                      "200": {
+                        "description": "ok",
+                        "content": {
+                          "multipart/form-data": {
+                            "schema": {
+                              "type": "object",
+                              "properties": {
+                                "meta": { "type": "object", "properties": { "title": { "type": "string" } } },
+                                "file": { "type": "string", "format": "binary" }
+                              }
+                            },
+                            "encoding": {
+                              "file": { "contentType": "application/pdf" }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int i = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"MpResp.Type{i}";
+            i++;
+        }
+
+        OpenApi32CodeGenerator gen = new("MpResp", map);
+        IReadOnlyList<GeneratedFile> files = gen.GenerateServer(spec);
+
+        GeneratedFile resultFile = files.First(f => f.FileName == "GetReportResult.cs");
+        Assert.IsTrue(
+            resultFile.Content.Contains("public bool HasMultipartBody { get; }"),
+            "Expected a HasMultipartBody flag on the Result struct");
+        Assert.IsTrue(
+            resultFile.Content.Contains("BinaryPartData file"),
+            "Expected a BinaryPartData parameter for the binary part on the Ok factory");
+        Assert.IsTrue(
+            resultFile.Content.Contains("with { ContentType = \"application/pdf\" }"),
+            "Expected the spec-declared encoding contentType substituted for unset parts");
+        Assert.IsTrue(
+            resultFile.Content.Contains("public ValueTask WriteMultipartBodyAsync(Stream stream, string boundary, CancellationToken cancellationToken)"),
+            "Expected a WriteMultipartBodyAsync method on the Result struct");
+        Assert.IsTrue(
+            resultFile.Content.Contains("if (this.HasMultipartBody) return true;"),
+            "Expected multipart bodies excluded from response body validation");
+
+        GeneratedFile registration = files.First(f => f.FileName == "ApiEndpointRegistration.cs");
+        Assert.IsTrue(
+            registration.Content.Contains("if (result.HasMultipartBody)"),
+            "Expected a HasMultipartBody branch in the endpoint response-writing block");
+        Assert.IsTrue(
+            registration.Content.Contains("string __boundary = MultipartFormDataSerializer.GenerateBoundary();"),
+            "Expected a fresh boundary per response");
+        Assert.IsTrue(
+            registration.Content.Contains("await result.WriteMultipartBodyAsync(context.Response.Body, __boundary, context.RequestAborted).ConfigureAwait(false);"),
+            "Expected the endpoint to stream the multipart body to the response");
+    }
+
     private const string ParamRefSpecJson = """
         {
           "openapi": "3.2.0",

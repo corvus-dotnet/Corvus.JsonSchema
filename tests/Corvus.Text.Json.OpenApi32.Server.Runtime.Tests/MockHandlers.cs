@@ -5,6 +5,7 @@
 using CanonTests32.Server;
 using CanonTests32.Server.Models;
 using Corvus.Text.Json;
+using Corvus.Text.Json.OpenApi;
 
 namespace Corvus.Text.Json.OpenApi32.Server.Runtime.Tests;
 
@@ -323,6 +324,16 @@ internal sealed class MockItemsHandler : IApiItemsHandler
     public static string? CapturedMixedMeta { get; set; }
 
     public static List<byte[]>? CapturedBatchItems { get; set; }
+
+    public ValueTask<GetDocReportResult> HandleGetDocReportAsync(GetDocReportParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        GetDocsReportOk meta = GetDocsReportOk.ParseValue("""{"meta":{"title":"Report"}}"""u8);
+        return new(GetDocReportResult.Ok(
+            meta,
+            workspace,
+            file: new BinaryPartData(async (s, ct) => await s.WriteAsync("PDFDATA"u8.ToArray(), ct), FileName: "r.pdf"),
+            thumb: new BinaryPartData(async (s, ct) => await s.WriteAsync("THUMB"u8.ToArray(), ct), ContentType: "image/png")));
+    }
 
     public ValueTask<UploadDocMixedResult> HandleUploadDocMixedAsync(UploadDocMixedParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {

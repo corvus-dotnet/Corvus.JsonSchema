@@ -7,6 +7,7 @@ using System.Net;
 using System.Text;
 using CanonTests32.Server;
 using CanonTests32.Server.Models;
+using Corvus.Text.Json.OpenApi;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Routing;
@@ -64,6 +65,44 @@ public class GeneratedServerEndToEndTests
         }
 
         host?.Dispose();
+    }
+
+    [TestMethod]
+    public async Task GetDocReport_ReturnsMultipartBody_TextFirstBinaryLast()
+    {
+        HttpResponseMessage response = await client!.GetAsync("/docs/report");
+
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        string? contentType = response.Content.Headers.ContentType?.ToString();
+        Assert.IsNotNull(contentType);
+        StringAssert.StartsWith(contentType, "multipart/form-data; boundary=");
+        string boundary = contentType!["multipart/form-data; boundary=".Length..];
+
+        using Stream bodyStream = await response.Content.ReadAsStreamAsync();
+        await using StreamingMultipartReader reader = new(bodyStream, Encoding.UTF8.GetBytes(boundary));
+
+        Assert.IsTrue(await reader.MoveNextPartAsync(), "expected the meta part");
+        Assert.IsTrue(reader.CurrentName.SequenceEqual("meta"u8));
+        Assert.IsFalse(reader.CurrentIsBinary, "the JSON field must precede the binary parts");
+        using MemoryStream metaMs = new();
+        await reader.CurrentBodyStream.CopyToAsync(metaMs);
+        StringAssert.Contains(Encoding.UTF8.GetString(metaMs.ToArray()), "\"title\"");
+
+        Assert.IsTrue(await reader.MoveNextPartAsync(), "expected the file part");
+        Assert.IsTrue(reader.CurrentName.SequenceEqual("file"u8));
+        Assert.IsTrue(reader.CurrentContentType.SequenceEqual("application/pdf"u8), "the spec-declared encoding contentType must substitute");
+        using MemoryStream fileMs = new();
+        await reader.CurrentBodyStream.CopyToAsync(fileMs);
+        CollectionAssert.AreEqual("PDFDATA"u8.ToArray(), fileMs.ToArray());
+
+        Assert.IsTrue(await reader.MoveNextPartAsync(), "expected the thumb part");
+        Assert.IsTrue(reader.CurrentName.SequenceEqual("thumb"u8));
+        Assert.IsTrue(reader.CurrentContentType.SequenceEqual("image/png"u8));
+        using MemoryStream thumbMs = new();
+        await reader.CurrentBodyStream.CopyToAsync(thumbMs);
+        CollectionAssert.AreEqual("THUMB"u8.ToArray(), thumbMs.ToArray());
+
+        Assert.IsFalse(await reader.MoveNextPartAsync(), "no further parts expected");
     }
 
     [TestMethod]
