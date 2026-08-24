@@ -261,4 +261,66 @@ public class OpenApi20CodeGeneratorCovspecTests
         string response = FileContent("ListWidgetsResponse.cs");
         StringAssert.Contains(response, "X-Total-Count");
     }
+
+    [TestMethod]
+    public void GenerateClient_RawStreamBody_EmitsWriteCallbackOverload()
+    {
+        // A raw-stream request body gets both a Stream overload and a write-callback
+        // overload, mirroring BinaryPartData's push model for multipart parts.
+        using ParsedJsonDocument<JsonElement> specDoc = ParsedJsonDocument<JsonElement>.Parse("""
+            {
+              "swagger": "2.0",
+              "info": { "title": "RawCb", "version": "1.0" },
+              "paths": {
+                "/blob": {
+                  "post": {
+                    "operationId": "uploadBlob",
+                    "consumes": ["application/octet-stream"],
+                    "parameters": [
+                      { "in": "body", "name": "data", "required": true, "schema": { "type": "string", "format": "binary" } }
+                    ],
+                    "responses": {
+                      "201": {
+                        "description": "created",
+                        "schema": { "type": "object", "properties": { "id": { "type": "string" } } }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+        JsonElement spec = specDoc.RootElement.Clone();
+
+        SchemaReference[] refs = [.. OpenApi20CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int mapIndex = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"RawCb20.Type{mapIndex}";
+            mapIndex++;
+        }
+
+        OpenApi20CodeGenerator gen = new("RawCb20", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(spec);
+
+        GeneratedFile clientFile = files.First(f => !f.FileName.StartsWith("I") && f.FileName.EndsWith("Client.cs"));
+        Assert.IsTrue(
+            clientFile.Content.Contains("UploadBlobAsync(Stream body,"),
+            "Expected the Stream overload to remain");
+        Assert.IsTrue(
+            clientFile.Content.Contains("UploadBlobAsync(Func<Stream, CancellationToken, ValueTask> body,"),
+            "Expected the write-callback overload");
+        Assert.IsTrue(
+            clientFile.Content.Contains("SendWithStreamBodyAsyncCore<UploadBlobRequest"),
+            "Expected the Stream overload to dispatch to the stream-body core");
+        Assert.IsTrue(
+            clientFile.Content.Contains("SendWithBodyWriterAsyncCore<UploadBlobRequest"),
+            "Expected the write-callback overload to dispatch to the body-writer core");
+
+        GeneratedFile interfaceFile = files.First(f => f.FileName.StartsWith("I") && f.FileName.EndsWith("Client.cs"));
+        Assert.IsTrue(
+            interfaceFile.Content.Contains("UploadBlobAsync(Func<Stream, CancellationToken, ValueTask> body,"),
+            "Expected the write-callback overload on the client interface");
+    }
 }

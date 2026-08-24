@@ -467,6 +467,13 @@ file: new BinaryPartData(
 
 The generated client always writes binary parts after all non-binary parts, which RFC 7578 permits. This keeps client output compatible with servers generated in streaming mode (see below).
 
+Raw `application/octet-stream` request bodies get the same push model: alongside the `Stream` overload, the client offers a write-callback overload, so a source that can only write into a stream needs no intermediate pipe:
+
+```csharp
+await using UploadFileResponse response = await filesClient.UploadFileAsync(
+    (stream, ct) => blob.DownloadToAsync(stream, ct));
+```
+
 On the server, each `format: binary` part (or Swagger 2.0 `type: file` parameter) arrives on the Params struct as a `ReadOnlyMemory<byte>` property; `multipart/mixed` binary parts arrive as positional `Part{n}` properties and repeating binary items as an `IReadOnlyList<ReadOnlyMemory<byte>>`. These are slices over pooled memory with the same lifetime as `Body`: they are valid for the duration of the handler call and must not be retained after it returns. Copy the bytes (or forward them) before returning if they need to outlive the request.
 
 ### Streaming File Uploads (Server)

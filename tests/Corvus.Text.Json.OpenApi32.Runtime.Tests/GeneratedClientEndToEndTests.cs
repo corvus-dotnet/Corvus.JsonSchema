@@ -3459,6 +3459,24 @@ public class GeneratedClientEndToEndTests
     }
 
     [TestMethod]
+    public async Task Client_ApiFilesClient_UploadFileAsync_WriteCallback()
+    {
+        using var harness = new TestHarness(HttpStatusCode.Created, """{"id":"f-456"}""");
+        var client = new ApiFilesClient(harness.Transport);
+        byte[] fileContent = [0xCA, 0xFE, 0xF0, 0x0D];
+
+        // The write-callback overload pushes the body instead of handing over a Stream.
+        await using UploadFileResponse response = await client.UploadFileAsync(
+            async (stream, ct) => await stream.WriteAsync(fileContent, ct));
+
+        Assert.AreEqual(201, response.StatusCode);
+        Assert.AreEqual("application/octet-stream", harness.CapturedRequestContentType);
+        CollectionAssert.AreEqual(fileContent, harness.CapturedRequestBody);
+        Assert.IsTrue(response.TryGetCreated(out var createdViaCallback));
+        Assert.AreEqual("f-456", (string)createdViaCallback.Id);
+    }
+
+    [TestMethod]
     public async Task Client_ApiFilesClient_DownloadMixedAsync()
     {
         byte[] binaryData = [0xAA, 0xBB, 0xCC];

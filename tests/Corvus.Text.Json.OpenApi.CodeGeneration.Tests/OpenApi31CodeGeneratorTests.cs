@@ -9276,4 +9276,74 @@ public class OpenApi31CodeGeneratorTests
             requestFile.Content.Contains("\"filter%5B\"u8"),
             "Expected deepObject bracketed keys (filter[...]) for the object param");
     }
+
+    [TestMethod]
+    public void GenerateClient_RawStreamBody_EmitsWriteCallbackOverload()
+    {
+        // A raw-stream request body gets both a Stream overload and a write-callback
+        // overload, mirroring BinaryPartData's push model for multipart parts.
+        using ParsedJsonDocument<JsonElement> specDoc = ParsedJsonDocument<JsonElement>.Parse("""
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "RawCb", "version": "1.0" },
+              "paths": {
+                "/blob": {
+                  "post": {
+                    "operationId": "uploadBlob",
+                    "requestBody": {
+                      "required": true,
+                      "content": {
+                        "application/octet-stream": {
+                          "schema": { "type": "string", "format": "binary" }
+                        }
+                      }
+                    },
+                    "responses": {
+                      "201": {
+                        "description": "created",
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "id": { "type": "string" } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+        JsonElement spec = specDoc.RootElement.Clone();
+
+        SchemaReference[] refs = [.. OpenApi31CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int mapIndex = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"RawCb31.Type{mapIndex}";
+            mapIndex++;
+        }
+
+        OpenApi31CodeGenerator gen = new("RawCb31", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(spec);
+
+        GeneratedFile clientFile = files.First(f => !f.FileName.StartsWith("I") && f.FileName.EndsWith("Client.cs"));
+        Assert.IsTrue(
+            clientFile.Content.Contains("UploadBlobAsync(Stream body,"),
+            "Expected the Stream overload to remain");
+        Assert.IsTrue(
+            clientFile.Content.Contains("UploadBlobAsync(Func<Stream, CancellationToken, ValueTask> body,"),
+            "Expected the write-callback overload");
+        Assert.IsTrue(
+            clientFile.Content.Contains("SendWithStreamBodyAsyncCore<UploadBlobRequest"),
+            "Expected the Stream overload to dispatch to the stream-body core");
+        Assert.IsTrue(
+            clientFile.Content.Contains("SendWithBodyWriterAsyncCore<UploadBlobRequest"),
+            "Expected the write-callback overload to dispatch to the body-writer core");
+
+        GeneratedFile interfaceFile = files.First(f => f.FileName.StartsWith("I") && f.FileName.EndsWith("Client.cs"));
+        Assert.IsTrue(
+            interfaceFile.Content.Contains("UploadBlobAsync(Func<Stream, CancellationToken, ValueTask> body,"),
+            "Expected the write-callback overload on the client interface");
+    }
 }

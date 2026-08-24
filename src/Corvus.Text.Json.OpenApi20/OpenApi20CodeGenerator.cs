@@ -3478,6 +3478,12 @@ public sealed class OpenApi20CodeGenerator
 
             this.EmitInterfaceMethodSignature(w, operations[i]);
 
+            if (HasRawStreamBody(operations[i]))
+            {
+                w.WriteLine();
+                this.EmitInterfaceMethodSignature(w, operations[i], rawStreamAsWriter: true);
+            }
+
             if (this.HasContextThreadedBody(operations[i]))
             {
                 w.WriteLine();
@@ -3504,7 +3510,10 @@ public sealed class OpenApi20CodeGenerator
         w.WriteLine();
     }
 
-    private void EmitInterfaceMethodSignature(IndentedWriter w, OperationInfo op, bool contextThreaded = false)
+    private static bool HasRawStreamBody(OperationInfo op)
+        => op.RequestBody is { } rb && IsRawStreamRequestBody(rb);
+
+    private void EmitInterfaceMethodSignature(IndentedWriter w, OperationInfo op, bool contextThreaded = false, bool rawStreamAsWriter = false)
     {
         string responseName = $"{op.MethodName}Response";
 
@@ -3515,7 +3524,7 @@ public sealed class OpenApi20CodeGenerator
             w.WriteLine("[Obsolete(\"This operation is deprecated.\")]");
         }
 
-        List<string> paramParts = this.BuildParameterList(op, contextThreaded);
+        List<string> paramParts = this.BuildParameterList(op, contextThreaded, rawStreamAsWriter);
         string generic = contextThreaded ? "<TContext>" : string.Empty;
         w.WriteLine(
             $"ValueTask<{responseName}> {op.MethodName}Async{generic}({string.Join(", ", paramParts)})" +
@@ -3577,6 +3586,14 @@ public sealed class OpenApi20CodeGenerator
             w.WriteLine();
             this.EmitClientMethod(w, operations[i], encodingFieldNames);
 
+            // A raw-stream body also gets a write-callback overload, mirroring the
+            // push model BinaryPartData already offers for multipart parts.
+            if (HasRawStreamBody(operations[i]))
+            {
+                w.WriteLine();
+                this.EmitClientMethod(w, operations[i], encodingFieldNames, rawStreamAsWriter: true);
+            }
+
             // A body whose type carries a Source<TContext> also gets the closure-free, single-materialisation form.
             if (this.HasContextThreadedBody(operations[i]))
             {
@@ -3605,6 +3622,9 @@ public sealed class OpenApi20CodeGenerator
             if (isRawStream)
             {
                 needsSendWithStreamBody = true;
+
+                // The write-callback overload rides the body-writer core.
+                needsSendWithBodyWriter = true;
             }
             else if (isFormUrlEncoded || isMultipart)
             {
@@ -3628,7 +3648,7 @@ public sealed class OpenApi20CodeGenerator
         return new GeneratedFile($"{clientName}Client.cs", w.ToString());
     }
 
-    private void EmitClientMethod(IndentedWriter w, OperationInfo op, Dictionary<string, string> encodingFieldNames, bool contextThreaded = false)
+    private void EmitClientMethod(IndentedWriter w, OperationInfo op, Dictionary<string, string> encodingFieldNames, bool contextThreaded = false, bool rawStreamAsWriter = false)
     {
         string requestName = $"{op.MethodName}Request";
         string responseName = $"{op.MethodName}Response";
@@ -3640,7 +3660,7 @@ public sealed class OpenApi20CodeGenerator
             w.WriteLine("[Obsolete(\"This operation is deprecated.\")]");
         }
 
-        List<string> paramParts = this.BuildParameterList(op, contextThreaded);
+        List<string> paramParts = this.BuildParameterList(op, contextThreaded, rawStreamAsWriter);
 
         w.WriteLine(
             $"public ValueTask<{responseName}> {op.MethodName}Async{(contextThreaded ? "<TContext>" : string.Empty)}(" +
@@ -3756,8 +3776,9 @@ public sealed class OpenApi20CodeGenerator
             string streamContentType = op.RequestBody!.Value.Content
                 .First(c => CodeEmitHelpers.IsRawStreamMediaType(c.MediaType)).MediaType;
 
+            string streamSendCore = rawStreamAsWriter ? "SendWithBodyWriterAsyncCore" : "SendWithStreamBodyAsyncCore";
             w.WriteLine(
-                $"return SendWithStreamBodyAsyncCore<{requestName}, " +
+                $"return {streamSendCore}<{requestName}, " +
                 $"{responseName}>(workspace, request, body, " +
                 $"{CodeEmitHelpers.FormatStringLiteral(streamContentType)}, responseValidationMode, cancellationToken);");
         }
@@ -3993,7 +4014,7 @@ public sealed class OpenApi20CodeGenerator
         w.WriteLine("/// <param name=\"responseValidationMode\">The validation mode applied to the response body.</param>");
     }
 
-    private List<string> BuildParameterList(OperationInfo op, bool contextThreaded = false)
+    private List<string> BuildParameterList(OperationInfo op, bool contextThreaded = false, bool rawStreamAsWriter = false)
     {
         List<string> paramParts = [];
 
@@ -4014,8 +4035,17 @@ public sealed class OpenApi20CodeGenerator
 
             if (IsRawStreamRequestBody(op.RequestBody.Value))
             {
-                string suffix = bodyRequired ? string.Empty : " = default";
-                paramParts.Add($"Stream body{suffix}");
+                if (rawStreamAsWriter)
+                {
+                    // The write-callback overload requires the body even when the spec
+                    // marks it optional; omission is served by the Stream overload.
+                    paramParts.Add("Func<Stream, CancellationToken, ValueTask> body");
+                }
+                else
+                {
+                    string suffix = bodyRequired ? string.Empty : " = default";
+                    paramParts.Add($"Stream body{suffix}");
+                }
             }
             else
             {
