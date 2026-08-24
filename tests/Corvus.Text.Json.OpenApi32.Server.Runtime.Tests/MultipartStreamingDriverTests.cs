@@ -179,6 +179,28 @@ public class MultipartStreamingDriverTests
     }
 
     [TestMethod]
+    public async Task Driver_ManyEmptyBodiedNamedParts_EnforceProjectionCap()
+    {
+        // Empty part bodies charge zero against a body-bytes-only budget, but their
+        // names still accumulate in the projection. The cap must bound the projection
+        // itself, not just the sum of body bytes.
+        (string, byte[])[] parts = new (string, byte[])[2001];
+        for (int i = 0; i < 2000; i++)
+        {
+            parts[i] = ($"Content-Disposition: form-data; name=\"field{i:D6}\"", []);
+        }
+
+        parts[2000] = FilePart("file", "F"u8.ToArray());
+        byte[] body = BuildBody(parts);
+
+        using MemoryStream source = new(body);
+        ApiServerOptions tight = new() { MaxNonBinaryPartsLength = 1024 };
+
+        await Assert.ThrowsExactlyAsync<RequestBodyTooLargeException>(
+            async () => await MultipartStreamingDriver.BeginAsync(source, ContentType, ["file"], tight));
+    }
+
+    [TestMethod]
     public async Task Driver_DefaultHandle_OpensAsNull()
     {
         BinaryPartHandle handle = default;
@@ -320,6 +342,36 @@ public class MultipartStreamingDriverTests
             }
 
             Assert.AreEqual(0, Directory.GetFiles(dir).Length, "spool files must be deleted when the driver is disposed");
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [TestMethod]
+    public async Task Spool_FileSpool_IsNotReadableByGroupOrOther()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("Unix file mode is not meaningful on Windows.");
+            return;
+        }
+
+        string dir = CreateSpoolDirectory();
+        try
+        {
+            byte[] body = BuildBody(FilePart("file", new byte[8000]));
+
+            using MemoryStream source = new(body);
+            MultipartStreamingDriver driver = await MultipartStreamingDriver.BeginAsync(source, ContentType, ["file"], SpoolOptions(dir, threshold: 1024));
+            await using (driver)
+            {
+                string spoolFile = Directory.GetFiles(dir).Single();
+                UnixFileMode mode = File.GetUnixFileMode(spoolFile);
+                UnixFileMode exposed = mode & (UnixFileMode.GroupRead | UnixFileMode.GroupWrite | UnixFileMode.OtherRead | UnixFileMode.OtherWrite);
+                Assert.AreEqual(UnixFileMode.None, exposed, $"spool file must not be readable or writable by group or other, but was {mode}");
+            }
         }
         finally
         {

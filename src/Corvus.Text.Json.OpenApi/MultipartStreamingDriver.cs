@@ -458,7 +458,26 @@ public sealed class MultipartStreamingDriver : IAsyncDisposable
     private static FileStream CreateSpoolFile(string? directory)
     {
         string path = Path.Combine(directory ?? Path.GetTempPath(), Path.GetRandomFileName());
-        return new FileStream(path, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None, 4096, FileOptions.DeleteOnClose | FileOptions.Asynchronous);
+
+        // Spooled parts hold user upload content in a directory that may be shared
+        // (the system temp directory by default), so create the file readable and
+        // writable only by the owner. Windows temp directories are already per-user
+        // ACL'd, and UnixCreateMode is unsupported there.
+        FileStreamOptions streamOptions = new()
+        {
+            Mode = FileMode.CreateNew,
+            Access = FileAccess.ReadWrite,
+            Share = FileShare.None,
+            Options = FileOptions.DeleteOnClose | FileOptions.Asynchronous,
+            BufferSize = 4096,
+        };
+
+        if (!OperatingSystem.IsWindows())
+        {
+            streamOptions.UnixCreateMode = UnixFileMode.UserRead | UnixFileMode.UserWrite;
+        }
+
+        return new FileStream(path, streamOptions);
     }
 
     private Stream? OpenSpooledPart(int index, string partName, bool required)
@@ -524,6 +543,7 @@ public sealed class MultipartStreamingDriver : IAsyncDisposable
 
                 scratch ??= FormFieldReader.Rent(4096);
                 (budget, scratch) = await this.ProjectTextPartAsync(writer, budget, maxNonBinaryBytes, scratch, cancellationToken).ConfigureAwait(false);
+                ThrowIfProjectionExceedsBudget(writer, maxNonBinaryBytes);
             }
 
             writer.WriteEndObject();
@@ -566,6 +586,7 @@ public sealed class MultipartStreamingDriver : IAsyncDisposable
 
                 scratch ??= FormFieldReader.Rent(4096);
                 (budget, scratch) = await this.ProjectTextPartAsync(writer, budget, options.MaxNonBinaryPartsLength, scratch, cancellationToken).ConfigureAwait(false);
+                ThrowIfProjectionExceedsBudget(writer, options.MaxNonBinaryPartsLength);
             }
 
             this.finished = true;
@@ -660,6 +681,8 @@ public sealed class MultipartStreamingDriver : IAsyncDisposable
                 {
                     writer.WriteStringValue(value);
                 }
+
+                ThrowIfProjectionExceedsBudget(writer, maxNonBinaryBytes);
             }
 
             writer.WriteEndArray();
@@ -680,6 +703,21 @@ public sealed class MultipartStreamingDriver : IAsyncDisposable
     /// remaining budget, and the (possibly regrown) scratch buffer, which the caller
     /// owns.
     /// </summary>
+    /// <summary>
+    /// Bounds the projection buffer directly against the non-binary budget. The
+    /// per-read body charge only counts part body bytes; property names and JSON
+    /// structure also grow the projection, so a body of many empty-bodied named parts
+    /// would otherwise blow past the cap. The writer's committed plus pending bytes are
+    /// the exact projection size so far.
+    /// </summary>
+    private static void ThrowIfProjectionExceedsBudget(Utf8JsonWriter writer, long maxNonBinaryBytes)
+    {
+        if (writer.BytesCommitted + writer.BytesPending > maxNonBinaryBytes)
+        {
+            ThrowHelper.ThrowRequestBodyTooLarge(maxNonBinaryBytes);
+        }
+    }
+
     private async ValueTask<(int Length, long Budget, byte[] Scratch)> ReadCurrentPartAsync(long budget, long maxNonBinaryBytes, byte[] scratch, CancellationToken cancellationToken)
     {
         int length = 0;
