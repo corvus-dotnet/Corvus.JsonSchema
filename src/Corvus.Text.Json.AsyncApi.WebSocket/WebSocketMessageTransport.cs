@@ -328,13 +328,9 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
             this.receiveCts.Dispose();
         }
 
-        if (this.webSocket.State == WebSocketState.Open)
-        {
-            await this.webSocket.CloseAsync(
-                WebSocketCloseStatus.NormalClosure,
-                "Disposing",
-                CancellationToken.None).ConfigureAwait(false);
-        }
+        // Best-effort close: disposing must not throw or hang because the peer already
+        // went away during a concurrent teardown. See Internal.WebSocketClose.
+        await Internal.WebSocketClose.CloseBestEffortAsync(this.webSocket).ConfigureAwait(false);
 
         this.webSocket.Dispose();
     }
