@@ -351,6 +351,16 @@ internal static partial class CodeGeneratorExtensions
             return generator;
         }
 
+        JsonValueKind defaultValueKind = typeDeclaration.DefaultValue().ValueKind;
+
+        // A default value is materialized with ParseValue, which is obsolete for general
+        // use because it allocates without pooling, but is exactly right here: a static
+        // default lives for the lifetime of the process, so a standalone (non-pooled)
+        // allocation is what we want, not a pooled document that would have to be
+        // disposed. Suppress the obsolete diagnostic so consumers whose own projects do
+        // not already suppress CS0618 do not see a warning from generated code.
+        bool hasParseValueInitializer = defaultValueKind is not JsonValueKind.Undefined;
+
         generator
             .ReserveName("DefaultInstance")
             .AppendSeparatorLine()
@@ -359,12 +369,19 @@ internal static partial class CodeGeneratorExtensions
             /// <summary>
             /// Gets the default instance.
             /// </summary>
-            """)
+            """);
+
+        if (hasParseValueInitializer)
+        {
+            generator.AppendLineIndent("#pragma warning disable CS0618 // Type or member is obsolete");
+        }
+
+        generator
             .AppendIndent("public static ")
             .Append(typeDeclaration.DotnetTypeName())
             .Append(" DefaultInstance { get; }");
 
-        return typeDeclaration.DefaultValue().ValueKind switch
+        _ = defaultValueKind switch
         {
             JsonValueKind.Undefined => generator.AppendLine(),
             JsonValueKind.Null => generator
@@ -378,6 +395,13 @@ internal static partial class CodeGeneratorExtensions
                     .Append(SymbolDisplay.FormatLiteral(typeDeclaration.DefaultValue().GetRawText(), true))
                     .AppendLine("u8);"),
         };
+
+        if (hasParseValueInitializer)
+        {
+            generator.AppendLineIndent("#pragma warning restore CS0618");
+        }
+
+        return generator;
     }
 
     /// <summary>
