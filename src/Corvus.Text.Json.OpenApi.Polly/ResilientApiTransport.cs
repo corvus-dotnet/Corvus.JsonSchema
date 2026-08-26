@@ -34,6 +34,16 @@ namespace Corvus.Text.Json.OpenApi.Polly;
 /// Each operation passes its state explicitly to <see cref="ResiliencePipeline.ExecuteAsync{TResult, TState}(Func{TState, CancellationToken, ValueTask{TResult}}, TState, CancellationToken)"/>
 /// with a static callback, so no per-call closure is allocated.
 /// </para>
+/// <para>
+/// Retried attempts re-send the request body. JSON element bodies re-serialize on
+/// every attempt, and write callbacks are invoked once per attempt, so both must be
+/// re-invocable (a callback must write the same content each time it runs). A
+/// seekable <see cref="Stream"/> body is rewound to its entry position before each
+/// attempt. A non-seekable stream body can only be retried while it is still
+/// unconsumed (for example after a connection was refused); once an attempt has read
+/// from it, a retry fails with <see cref="InvalidOperationException"/> rather than
+/// silently sending a truncated body.
+/// </para>
 /// </remarks>
 public sealed class ResilientApiTransport : IApiTransport
 {
@@ -85,10 +95,40 @@ public sealed class ResilientApiTransport : IApiTransport
         CancellationToken cancellationToken = default)
         where TRequest : struct, IApiRequest<TRequest>
         where TResponse : struct, IApiResponse<TResponse>
-        => this.pipeline.ExecuteAsync(
-            static (state, token) => state.inner.SendAsync<TRequest, TResponse>(in state.request, state.body, state.contentType, token),
-            (inner: this.inner, request, body, contentType),
+    {
+        if (body.CanSeek)
+        {
+            // Rewind to the entry position before every attempt, so a retry
+            // re-sends the bytes a failed attempt already consumed.
+            long position = body.Position;
+            return this.pipeline.ExecuteAsync(
+                static (state, token) =>
+                {
+                    if (state.body.Position != state.position)
+                    {
+                        state.body.Seek(state.position, SeekOrigin.Begin);
+                    }
+
+                    return state.inner.SendAsync<TRequest, TResponse>(in state.request, state.body, state.contentType, token);
+                },
+                (inner: this.inner, request, body, contentType, position),
+                cancellationToken);
+        }
+
+        // A non-seekable body cannot be replayed. Track consumption so an attempt
+        // that never read the body (connection refused, breaker open, rate-limited)
+        // can still retry, while one that consumed bytes fails with a clear error
+        // instead of silently sending a truncated body.
+        ConsumptionTrackingStream tracking = new(body);
+        return this.pipeline.ExecuteAsync(
+            static (state, token) =>
+            {
+                state.tracking.ThrowIfConsumed();
+                return state.inner.SendAsync<TRequest, TResponse>(in state.request, state.tracking, state.contentType, token);
+            },
+            (inner: this.inner, request, tracking, contentType),
             cancellationToken);
+    }
 
     /// <inheritdoc/>
     public ValueTask<TResponse> SendAsync<TRequest, TResponse>(
@@ -105,4 +145,81 @@ public sealed class ResilientApiTransport : IApiTransport
 
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => this.inner.DisposeAsync();
+
+    /// <summary>
+    /// A forward-only wrapper over a non-seekable request body that records whether
+    /// any bytes have been read, so a retry can distinguish an untouched body (safe
+    /// to send) from a partially consumed one (must fail). Disposal does not dispose
+    /// the wrapped stream; its lifetime belongs to the caller.
+    /// </summary>
+    private sealed class ConsumptionTrackingStream : Stream
+    {
+        private readonly Stream inner;
+        private long bytesRead;
+
+        public ConsumptionTrackingStream(Stream inner)
+        {
+            this.inner = inner;
+        }
+
+        public override bool CanRead => this.inner.CanRead;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => false;
+
+        public override long Length => this.inner.Length;
+
+        public override long Position
+        {
+            get => this.inner.Position;
+            set => throw new NotSupportedException();
+        }
+
+        public void ThrowIfConsumed()
+        {
+            if (this.bytesRead > 0)
+            {
+                ThrowHelper.ThrowNonSeekableBodyConsumed();
+            }
+        }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            int read = this.inner.Read(buffer, offset, count);
+            this.bytesRead += read;
+            return read;
+        }
+
+        public override int Read(Span<byte> buffer)
+        {
+            int read = this.inner.Read(buffer);
+            this.bytesRead += read;
+            return read;
+        }
+
+        public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        {
+            int read = await this.inner.ReadAsync(buffer.AsMemory(offset, count), cancellationToken).ConfigureAwait(false);
+            this.bytesRead += read;
+            return read;
+        }
+
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            int read = await this.inner.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
+            this.bytesRead += read;
+            return read;
+        }
+
+        public override void Flush()
+        {
+        }
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+        public override void SetLength(long value) => throw new NotSupportedException();
+
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
 }

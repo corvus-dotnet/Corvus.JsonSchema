@@ -5,6 +5,7 @@
 using CanonTests32.Server;
 using CanonTests32.Server.Models;
 using Corvus.Text.Json;
+using Corvus.Text.Json.OpenApi;
 
 namespace Corvus.Text.Json.OpenApi32.Server.Runtime.Tests;
 
@@ -91,8 +92,15 @@ internal sealed class MockDefaultHandler : IApiDefaultHandler
     public ValueTask<GetStyledQuirkyResult> HandleGetStyledQuirkyAsync(GetStyledQuirkyParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
         => new(GetStyledQuirkyResult.Ok(ReturnInvalidResponse ? ItemEntity.ParseValue("""{}"""u8) : DefaultItem, workspace));
 
+    public static bool ReturnExportDefaultBinary { get; set; }
+
     public ValueTask<ExportDataResult> HandleExportDataAsync(ExportDataParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
-        => new(ExportDataResult.Ok("export-data"u8.ToArray(), workspace, eTag: "\"export-1\"", xExportSequence: 7));
+        => new(ReturnExportDefaultBinary
+            ? ExportDataResult.Default(503, "export-error-blob"u8.ToArray())
+            : ExportDataResult.Ok("export-data"u8.ToArray(), workspace, eTag: "\"export-1\"", xExportSequence: 7));
+
+    public ValueTask<GetMonitoringLogResult> HandleGetMonitoringLogAsync(GetMonitoringLogParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+        => new(GetMonitoringLogResult.Ok("line1\nline2"));
 
     public ValueTask<GetEmptyServersResult> HandleGetEmptyServersAsync(GetEmptyServersParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
@@ -310,6 +318,44 @@ internal sealed class MockItemsHandler : IApiItemsHandler
 
     public ValueTask<UploadAttachmentEncodedResult> HandleUploadAttachmentEncodedAsync(UploadAttachmentEncodedParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
         => new(UploadAttachmentEncodedResult.Created(MockDefaultHandler.ReturnInvalidResponse ? ItemEntity.ParseValue("""{}"""u8) : DefaultItem, workspace));
+
+    public static byte[]? CapturedMixedDoc { get; set; }
+
+    public static string? CapturedMixedMeta { get; set; }
+
+    public static List<byte[]>? CapturedBatchItems { get; set; }
+
+    public ValueTask<GetDocReportResult> HandleGetDocReportAsync(GetDocReportParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        GetDocsReportOk meta = GetDocsReportOk.ParseValue("""{"meta":{"title":"Report"}}"""u8);
+        return new(GetDocReportResult.Ok(
+            meta,
+            workspace,
+            file: new BinaryPartData(async (s, ct) => await s.WriteAsync("PDFDATA"u8.ToArray(), ct), FileName: "r.pdf"),
+            thumb: new BinaryPartData(async (s, ct) => await s.WriteAsync("THUMB"u8.ToArray(), ct), ContentType: "image/png")));
+    }
+
+    public ValueTask<UploadDocMixedResult> HandleUploadDocMixedAsync(UploadDocMixedParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        CapturedMixedDoc = parameters.Part1.ToArray();
+        CapturedMixedMeta = parameters.Body.ToString();
+        return new(UploadDocMixedResult.NoContent());
+    }
+
+    public ValueTask<UploadBinaryBatchResult> HandleUploadBinaryBatchAsync(UploadBinaryBatchParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        List<byte[]> items = [];
+        if (parameters.Items is not null)
+        {
+            foreach (ReadOnlyMemory<byte> item in parameters.Items)
+            {
+                items.Add(item.ToArray());
+            }
+        }
+
+        CapturedBatchItems = items;
+        return new(UploadBinaryBatchResult.NoContent());
+    }
 }
 
 /// <summary>

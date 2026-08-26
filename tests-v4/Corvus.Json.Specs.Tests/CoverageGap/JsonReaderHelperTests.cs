@@ -129,6 +129,50 @@ public class JsonReaderHelperTests
     }
 
     // =====================
+    // Issue #940: validating base64 content must never throw for a well-formed
+    // base64 string. Decoded bytes that look like a malformed JSON-string escape
+    // (a trailing backslash, a truncated \u near the end, or an unpaired surrogate)
+    // previously reached the JSON-string unescaper, which assumes validated input
+    // and read past the buffer or threw. They must now report UnableToParseToMediaType.
+    // =====================
+    [TestMethod]
+    [DataRow("\\u", DisplayName = "\\u with fewer than four trailing bytes")]
+    [DataRow("\\", DisplayName = "final byte is a backslash")]
+    [DataRow("\\uDBCB", DisplayName = "unpaired high surrogate")]
+    [DataRow("\\uDC00", DisplayName = "unpaired low surrogate")]
+    [DataRow("prefix\\u12", DisplayName = "truncated \\u after valid prefix")]
+    public void ParseEscapedJsonContent_JsonElement_Base64_MalformedEscapeInDecodedBytes_DoesNotThrow(string decoded)
+    {
+        string base64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(decoded));
+        using var doc = JsonDocument.Parse($"\"{base64}\"");
+
+        var status = StandardContent.ParseEscapedJsonContentInJsonString(doc.RootElement, true, out JsonDocument? result);
+
+        Assert.AreEqual(EncodedContentMediaTypeParseStatus.UnableToParseToMediaType, status);
+        Assert.IsNull(result);
+        result?.Dispose();
+    }
+
+    [TestMethod]
+    [DataRow("{\"a\":\"b\\\\c\"}", DisplayName = "JSON with an escaped backslash in a string")]
+    [DataRow("{\"a\":\"b\\nc\"}", DisplayName = "JSON with an escaped newline in a string")]
+    [DataRow("{\"a\":\"\\u0041\"}", DisplayName = "JSON with an escaped unicode char in a string")]
+    public void ParseEscapedJsonContent_JsonElement_Base64_ValidJsonContainingEscapes_Succeeds(string decoded)
+    {
+        // The decoded bytes are a valid JSON document that happens to contain a JSON
+        // string escape. They must parse as-is, not be run through the unescaper (which
+        // would corrupt them into invalid JSON).
+        string base64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(decoded));
+        using var doc = JsonDocument.Parse($"\"{base64}\"");
+
+        var status = StandardContent.ParseEscapedJsonContentInJsonString(doc.RootElement, true, out JsonDocument? result);
+
+        Assert.AreEqual(EncodedContentMediaTypeParseStatus.Success, status);
+        Assert.IsNotNull(result);
+        result.Dispose();
+    }
+
+    // =====================
     // Unescape(ReadOnlySpan<byte>, Span<char>)
     // Exercises: byte→char unescape with and without escapes
     // =====================

@@ -484,7 +484,7 @@ public ref struct FormFieldReader
     /// Returns a previously rented byte buffer to the shared pool.
     /// </summary>
     /// <param name="buffer">The buffer previously obtained from <see cref="Rent"/> or
-    /// <see cref="RentBodyAsync"/>.</param>
+    /// <see cref="RentBodyAsync(Stream, long, CancellationToken)"/>.</param>
     public static void Return(byte[] buffer) => ArrayPool<byte>.Shared.Return(buffer);
 
     /// <summary>
@@ -497,8 +497,33 @@ public ref struct FormFieldReader
     /// A tuple of the rented byte array and the number of valid bytes.
     /// The caller MUST call <see cref="Return"/> with the buffer when finished.
     /// </returns>
+    public static ValueTask<(byte[] Buffer, int Length)> RentBodyAsync(
+        Stream stream,
+        CancellationToken cancellationToken = default)
+        => RentBodyAsync(stream, long.MaxValue, cancellationToken);
+
+    /// <summary>
+    /// Reads the entire body from a stream into a rented byte array, enforcing a
+    /// maximum body size. The caller must return the array via <see cref="Return"/>
+    /// when done.
+    /// </summary>
+    /// <param name="stream">The request body stream.</param>
+    /// <param name="maxBodyLength">
+    /// The maximum number of bytes the body may contain. A body that grows past this
+    /// limit throws a <see cref="RequestBodyTooLargeException"/>; a body exactly at
+    /// the limit is accepted.
+    /// </param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>
+    /// A tuple of the rented byte array and the number of valid bytes.
+    /// The caller MUST call <see cref="Return"/> with the buffer when finished.
+    /// </returns>
+    /// <exception cref="RequestBodyTooLargeException">
+    /// The body exceeded <paramref name="maxBodyLength"/> bytes.
+    /// </exception>
     public static async ValueTask<(byte[] Buffer, int Length)> RentBodyAsync(
         Stream stream,
+        long maxBodyLength,
         CancellationToken cancellationToken = default)
     {
         const int InitialSize = 4096;
@@ -511,7 +536,16 @@ public ref struct FormFieldReader
             {
                 if (offset == buffer.Length)
                 {
-                    byte[] newBuffer = Rent(buffer.Length * 2);
+                    // Grow no further than one byte past the cap: that byte is enough
+                    // to detect an over-limit body without renting double a cap-sized
+                    // buffer for a body we are about to reject.
+                    long grownSize = Math.Min((long)buffer.Length * 2, int.MaxValue);
+                    if (maxBodyLength < int.MaxValue - 1)
+                    {
+                        grownSize = Math.Min(grownSize, maxBodyLength + 1);
+                    }
+
+                    byte[] newBuffer = Rent((int)grownSize);
                     buffer.AsSpan(0, offset).CopyTo(newBuffer);
                     Return(buffer);
                     buffer = newBuffer;
@@ -527,6 +561,10 @@ public ref struct FormFieldReader
                 }
 
                 offset += read;
+                if (offset > maxBodyLength)
+                {
+                    ThrowHelper.ThrowRequestBodyTooLarge(maxBodyLength);
+                }
             }
 
             return (buffer, offset);

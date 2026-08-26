@@ -50,7 +50,7 @@ public readonly struct DownloadPhotoResult
     /// <returns>A <see cref="DownloadPhotoResult"/> with status 200.</returns>
     public static DownloadPhotoResult Ok(ReadOnlyMemory<byte> body, string? contentType = "application/octet-stream") => new(200, default, contentType, hasBinaryBody: true, binaryWriter: (stream, cancellationToken) => stream.WriteAsync(body, cancellationToken));
 
-    /// <summary>Creates a 200 Ok result whose body is streamed directly to the response.</summary>
+    /// <summary>Creates a Ok result whose body is streamed directly to the response.</summary>
     /// <param name="writeBody">A callback that writes the response body to the supplied stream.</param>
     /// <param name="contentType">The content type for the response body.</param>
     /// <returns>A <see cref="DownloadPhotoResult"/> with status 200.</returns>

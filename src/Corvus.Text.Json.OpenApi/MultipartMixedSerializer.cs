@@ -89,7 +89,7 @@ public static class MultipartMixedSerializer
         BinaryPartData binaryPart,
         CancellationToken cancellationToken = default)
     {
-        WriteBoundaryLine(output, guid, binaryPart.ContentType);
+        WriteBoundaryLine(output, guid, binaryPart.ContentType ?? "application/octet-stream");
 
         if (binaryPart.FileName is not null)
         {
@@ -176,16 +176,127 @@ public static class MultipartMixedSerializer
     /// <typeparam name="T">The JSON element type to parse into.</typeparam>
     /// <param name="stream">The request body stream.</param>
     /// <param name="contentType">The Content-Type header string (e.g., <c>multipart/mixed; boundary=abc</c>).</param>
-    /// <param name="binaryPartCallback">
-    /// Optional callback invoked for each binary part. If <see langword="null"/>,
-    /// binary parts are silently skipped.
+    /// <param name="maxBodyLength">
+    /// The maximum number of bytes the body may contain. A body over the limit throws
+    /// a <see cref="RequestBodyTooLargeException"/>.
     /// </param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A parsed JSON document backed by pooled memory. The caller must dispose it.</returns>
     public static ValueTask<ParsedJsonDocument<T>> DeserializeAsync<T>(
         Stream stream,
         string? contentType,
+        long maxBodyLength = long.MaxValue,
+        CancellationToken cancellationToken = default)
+        where T : struct, IJsonElement<T>
+        => DeserializeCoreAsync<T>(stream, contentType, null, maxBodyLength, cancellationToken);
+
+    /// <summary>
+    /// Deserializes a <c>multipart/mixed</c> body from a stream into a
+    /// <see cref="ParsedJsonDocument{T}"/>, invoking a callback for each binary part.
+    /// </summary>
+    /// <typeparam name="T">The JSON element type to parse into.</typeparam>
+    /// <param name="stream">The request body stream.</param>
+    /// <param name="contentType">The Content-Type header string (e.g., <c>multipart/mixed; boundary=abc</c>).</param>
+    /// <param name="binaryPartCallback">
+    /// Callback invoked for each binary part. The part's bytes are only valid inside
+    /// the callback, so a caller can do nothing with them except copy.
+    /// </param>
+    /// <param name="maxBodyLength">
+    /// The maximum number of bytes the body may contain. A body over the limit throws
+    /// a <see cref="RequestBodyTooLargeException"/>.
+    /// </param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A parsed JSON document backed by pooled memory. The caller must dispose it.</returns>
+    [Obsolete("Use DeserializeOwnedAsync: it retains the body bytes so binary parts can be sliced without copying. This overload will be removed in a future release.")]
+    public static ValueTask<ParsedJsonDocument<T>> DeserializeAsync<T>(
+        Stream stream,
+        string? contentType,
+        MultipartMixedReader.BinaryPartHandler? binaryPartCallback,
+        long maxBodyLength = long.MaxValue,
+        CancellationToken cancellationToken = default)
+        where T : struct, IJsonElement<T>
+        => DeserializeCoreAsync<T>(stream, contentType, binaryPartCallback, maxBodyLength, cancellationToken);
+
+    private static ValueTask<ParsedJsonDocument<T>> DeserializeCoreAsync<T>(
+        Stream stream,
+        string? contentType,
+        MultipartMixedReader.BinaryPartHandler? binaryPartCallback,
+        long maxBodyLength,
+        CancellationToken cancellationToken)
+        where T : struct, IJsonElement<T>
+    {
+        int byteCount = contentType is not null
+            ? Encoding.UTF8.GetByteCount(contentType)
+            : 0;
+
+        byte[] ctBuffer = FormFieldReader.Rent(Math.Max(byteCount, 1));
+        try
+        {
+            if (contentType is not null)
+            {
+                Encoding.UTF8.GetBytes(contentType, 0, contentType.Length, ctBuffer, 0);
+            }
+
+            if (!MultipartFormReader.TryExtractBoundary(ctBuffer.AsSpan(0, byteCount), out ReadOnlySpan<byte> boundarySpan))
+            {
+                ThrowHelper.ThrowMultipartBoundaryNotFound();
+            }
+
+            // Copy boundary to a rented array that survives the async state machine.
+            byte[] boundaryBuffer = FormFieldReader.Rent(boundarySpan.Length);
+            boundarySpan.CopyTo(boundaryBuffer);
+            ReadOnlyMemory<byte> boundaryMemory = boundaryBuffer.AsMemory(0, boundarySpan.Length);
+
+            FormFieldReader.Return(ctBuffer);
+            ctBuffer = null!;
+
+            return DeserializeWithRentedBoundaryAsync<T>(stream, boundaryBuffer, boundaryMemory, binaryPartCallback, maxBodyLength, cancellationToken);
+        }
+        finally
+        {
+            if (ctBuffer is not null)
+            {
+                FormFieldReader.Return(ctBuffer);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Builds the <c>Content-Type</c> header value for the multipart message
+    /// including the boundary parameter.
+    /// </summary>
+    /// <param name="guid">A <see cref="Guid"/> that uniquely identifies this multipart message.</param>
+    /// <returns>A string suitable for the HTTP <c>Content-Type</c> header.</returns>
+    public static string GetContentType(Guid guid)
+    {
+        return $"multipart/mixed; boundary=----CorvusBoundary{guid:N}";
+    }
+
+    /// <summary>
+    /// Deserializes a <c>multipart/mixed</c> body from a stream into an
+    /// <see cref="OwnedMultipartBody{T}"/> that retains the raw body bytes, so a
+    /// binary part callback can record positions (via <see cref="MultipartMixedReader.BinaryPart.BodyOffset"/>
+    /// and the part length) and slice the retained bytes instead of copying each part.
+    /// </summary>
+    /// <typeparam name="T">The JSON element type to parse into.</typeparam>
+    /// <param name="stream">The request body stream.</param>
+    /// <param name="contentType">The Content-Type header string (e.g., <c>multipart/mixed; boundary=abc</c>).</param>
+    /// <param name="binaryPartCallback">
+    /// Optional callback invoked for each binary part. If <see langword="null"/>,
+    /// binary parts are silently skipped.
+    /// </param>
+    /// <param name="maxBodyLength">
+    /// The maximum number of bytes the body may contain. A body over the limit throws
+    /// a <see cref="RequestBodyTooLargeException"/>.
+    /// </param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>An owned body holding the parsed JSON projection and the raw body bytes.
+    /// The caller must dispose it exactly once.</returns>
+    public static ValueTask<OwnedMultipartBody<T>> DeserializeOwnedAsync<T>(
+        Stream stream,
+        string? contentType,
         MultipartMixedReader.BinaryPartHandler? binaryPartCallback = null,
+        long maxBodyLength = long.MaxValue,
         CancellationToken cancellationToken = default)
         where T : struct, IJsonElement<T>
     {
@@ -214,7 +325,7 @@ public static class MultipartMixedSerializer
             FormFieldReader.Return(ctBuffer);
             ctBuffer = null!;
 
-            return DeserializeWithRentedBoundaryAsync<T>(stream, boundaryBuffer, boundaryMemory, binaryPartCallback, cancellationToken);
+            return DeserializeOwnedWithRentedBoundaryAsync<T>(stream, boundaryBuffer, boundaryMemory, binaryPartCallback, maxBodyLength, cancellationToken);
         }
         finally
         {
@@ -225,15 +336,40 @@ public static class MultipartMixedSerializer
         }
     }
 
-    /// <summary>
-    /// Builds the <c>Content-Type</c> header value for the multipart message
-    /// including the boundary parameter.
-    /// </summary>
-    /// <param name="guid">A <see cref="Guid"/> that uniquely identifies this multipart message.</param>
-    /// <returns>A string suitable for the HTTP <c>Content-Type</c> header.</returns>
-    public static string GetContentType(Guid guid)
+    private static async ValueTask<OwnedMultipartBody<T>> DeserializeOwnedWithRentedBoundaryAsync<T>(
+        Stream stream,
+        byte[] boundaryBuffer,
+        ReadOnlyMemory<byte> boundaryMemory,
+        MultipartMixedReader.BinaryPartHandler? binaryPartCallback,
+        long maxBodyLength,
+        CancellationToken cancellationToken)
+        where T : struct, IJsonElement<T>
     {
-        return $"multipart/mixed; boundary=----CorvusBoundary{guid:N}";
+        try
+        {
+            (byte[] buffer, int length) = await FormFieldReader.RentBodyAsync(stream, maxBodyLength, cancellationToken)
+                .ConfigureAwait(false);
+
+            try
+            {
+                ParsedJsonDocument<T> document = Deserialize<T>(
+                    buffer.AsMemory(0, length),
+                    boundaryMemory.Span,
+                    binaryPartCallback);
+
+                // Ownership of the body buffer transfers to the returned owner.
+                return new OwnedMultipartBody<T>(document, buffer, length);
+            }
+            catch
+            {
+                FormFieldReader.Return(buffer);
+                throw;
+            }
+        }
+        finally
+        {
+            FormFieldReader.Return(boundaryBuffer);
+        }
     }
 
     private static async ValueTask<ParsedJsonDocument<T>> DeserializeWithRentedBoundaryAsync<T>(
@@ -241,12 +377,13 @@ public static class MultipartMixedSerializer
         byte[] boundaryBuffer,
         ReadOnlyMemory<byte> boundaryMemory,
         MultipartMixedReader.BinaryPartHandler? binaryPartCallback,
+        long maxBodyLength,
         CancellationToken cancellationToken)
         where T : struct, IJsonElement<T>
     {
         try
         {
-            (byte[] buffer, int length) = await FormFieldReader.RentBodyAsync(stream, cancellationToken)
+            (byte[] buffer, int length) = await FormFieldReader.RentBodyAsync(stream, maxBodyLength, cancellationToken)
                 .ConfigureAwait(false);
 
             try

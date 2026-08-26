@@ -7,6 +7,7 @@ using System.Net;
 using System.Text;
 using CanonTests32.Server;
 using CanonTests32.Server.Models;
+using Corvus.Text.Json.OpenApi;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Routing;
@@ -64,6 +65,44 @@ public class GeneratedServerEndToEndTests
         }
 
         host?.Dispose();
+    }
+
+    [TestMethod]
+    public async Task GetDocReport_ReturnsMultipartBody_TextFirstBinaryLast()
+    {
+        HttpResponseMessage response = await client!.GetAsync("/docs/report");
+
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        string? contentType = response.Content.Headers.ContentType?.ToString();
+        Assert.IsNotNull(contentType);
+        StringAssert.StartsWith(contentType, "multipart/form-data; boundary=");
+        string boundary = contentType!["multipart/form-data; boundary=".Length..];
+
+        using Stream bodyStream = await response.Content.ReadAsStreamAsync();
+        await using StreamingMultipartReader reader = new(bodyStream, Encoding.UTF8.GetBytes(boundary));
+
+        Assert.IsTrue(await reader.MoveNextPartAsync(), "expected the meta part");
+        Assert.IsTrue(reader.CurrentName.SequenceEqual("meta"u8));
+        Assert.IsFalse(reader.CurrentIsBinary, "the JSON field must precede the binary parts");
+        using MemoryStream metaMs = new();
+        await reader.CurrentBodyStream.CopyToAsync(metaMs);
+        StringAssert.Contains(Encoding.UTF8.GetString(metaMs.ToArray()), "\"title\"");
+
+        Assert.IsTrue(await reader.MoveNextPartAsync(), "expected the file part");
+        Assert.IsTrue(reader.CurrentName.SequenceEqual("file"u8));
+        Assert.IsTrue(reader.CurrentContentType.SequenceEqual("application/pdf"u8), "the spec-declared encoding contentType must substitute");
+        using MemoryStream fileMs = new();
+        await reader.CurrentBodyStream.CopyToAsync(fileMs);
+        CollectionAssert.AreEqual("PDFDATA"u8.ToArray(), fileMs.ToArray());
+
+        Assert.IsTrue(await reader.MoveNextPartAsync(), "expected the thumb part");
+        Assert.IsTrue(reader.CurrentName.SequenceEqual("thumb"u8));
+        Assert.IsTrue(reader.CurrentContentType.SequenceEqual("image/png"u8));
+        using MemoryStream thumbMs = new();
+        await reader.CurrentBodyStream.CopyToAsync(thumbMs);
+        CollectionAssert.AreEqual("THUMB"u8.ToArray(), thumbMs.ToArray());
+
+        Assert.IsFalse(await reader.MoveNextPartAsync(), "no further parts expected");
     }
 
     [TestMethod]
@@ -701,6 +740,76 @@ public class GeneratedServerEndToEndTests
 
         HttpResponseMessage response = await client!.PostAsync("/items/item-5/upload", content);
         Assert.AreEqual(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task GetMonitoringLog_ReturnsTextPlain()
+    {
+        HttpResponseMessage response = await client!.GetAsync("/monitoring/log");
+
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual("text/plain", response.Content.Headers.ContentType?.MediaType);
+        Assert.AreEqual("line1\nline2", await response.Content.ReadAsStringAsync());
+    }
+
+    [TestMethod]
+    public async Task ExportData_DefaultStatusBinaryBody_WritesRawBytes()
+    {
+        MockDefaultHandler.ReturnExportDefaultBinary = true;
+        try
+        {
+            HttpResponseMessage response = await client!.GetAsync("/export");
+
+            Assert.AreEqual(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+            Assert.AreEqual("application/octet-stream", response.Content.Headers.ContentType?.MediaType);
+            CollectionAssert.AreEqual("export-error-blob"u8.ToArray(), await response.Content.ReadAsByteArrayAsync());
+        }
+        finally
+        {
+            MockDefaultHandler.ReturnExportDefaultBinary = false;
+        }
+    }
+
+    [TestMethod]
+    public async Task UploadDocMixed_BinaryPrefixPartReachesHandler()
+    {
+        MockItemsHandler.CapturedMixedDoc = null;
+        MockItemsHandler.CapturedMixedMeta = null;
+
+        using MultipartContent content = new("mixed", "mixed-boundary");
+        content.Add(new StringContent("""{"title":"Report"}""", Encoding.UTF8, "application/json"));
+        ByteArrayContent doc = new([0x0A, 0x0B, 0x0C]);
+        doc.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+        content.Add(doc);
+
+        HttpResponseMessage response = await client!.PostAsync("/docs/upload-mixed", content);
+
+        Assert.AreEqual(HttpStatusCode.NoContent, response.StatusCode);
+        CollectionAssert.AreEqual(new byte[] { 0x0A, 0x0B, 0x0C }, MockItemsHandler.CapturedMixedDoc, "the binary prefix part's bytes must reach the handler");
+        Assert.AreEqual("""[{"title":"Report"}]""", MockItemsHandler.CapturedMixedMeta, "the JSON prefix part must remain in the typed body");
+    }
+
+    [TestMethod]
+    public async Task UploadBinaryBatch_AllItemsReachHandlerInWireOrder()
+    {
+        MockItemsHandler.CapturedBatchItems = null;
+
+        using MultipartContent content = new("mixed", "batch-boundary");
+        foreach (byte[] payload in (byte[][])[[0x01], [0x02, 0x02], [0x03, 0x03, 0x03]])
+        {
+            ByteArrayContent item = new(payload);
+            item.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+            content.Add(item);
+        }
+
+        HttpResponseMessage response = await client!.PostAsync("/docs/batch-binary", content);
+
+        Assert.AreEqual(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.IsNotNull(MockItemsHandler.CapturedBatchItems);
+        Assert.AreEqual(3, MockItemsHandler.CapturedBatchItems.Count);
+        CollectionAssert.AreEqual(new byte[] { 0x01 }, MockItemsHandler.CapturedBatchItems[0]);
+        CollectionAssert.AreEqual(new byte[] { 0x02, 0x02 }, MockItemsHandler.CapturedBatchItems[1]);
+        CollectionAssert.AreEqual(new byte[] { 0x03, 0x03, 0x03 }, MockItemsHandler.CapturedBatchItems[2]);
     }
 
     [TestMethod]

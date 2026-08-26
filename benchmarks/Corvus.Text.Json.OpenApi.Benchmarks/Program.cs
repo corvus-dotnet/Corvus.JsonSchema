@@ -33,5 +33,7 @@ BenchmarkRunner.Run(
         typeof(PutFormEncodedBenchmarks),
         typeof(ResponseHeaderBenchmarks),
         typeof(ValidationModeBenchmarks),
+        typeof(MultipartServerDeserializeBenchmarks),
     ],
-    config);
+    config,
+    args);

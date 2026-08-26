@@ -2273,17 +2273,16 @@ public static class CodeEmitHelpers
     }
 
     /// <summary>
-    /// Emits the text/plain response body handling in CreateAsync.
-    /// Reads the stream into a rented buffer from ArrayPool.
+    /// Emits the text/plain response body handling in CreateAsync. The live content
+    /// stream is retained and only buffered on first access, so no network read
+    /// happens until the caller consumes the body.
     /// </summary>
     public static void EmitTextPlainResponseBody(
         IndentedWriter w,
         string accessorName)
     {
         string camelName = ToCamelCase(accessorName);
-        w.WriteLine(
-            $"response.{camelName}TextBuffer = ReadStreamToRentedBuffer(contentStream, out int {camelName}TextLen);");
-        w.WriteLine($"response.{camelName}TextLength = {camelName}TextLen;");
+        w.WriteLine($"response.{camelName}TextBody = new TextResponseBody(contentStream);");
     }
 
     /// <summary>
@@ -2294,14 +2293,14 @@ public static class CodeEmitHelpers
         string accessorName)
     {
         string camelName = ToCamelCase(accessorName);
-        w.WriteLine($"private byte[]? {camelName}TextBuffer;");
-        w.WriteLine($"private int {camelName}TextLength;");
-        w.WriteLine($"private string? {camelName}TextCached;");
+        w.WriteLine($"private TextResponseBody? {camelName}TextBody;");
     }
 
     /// <summary>
-    /// Emits the lazy <c>Text</c> property and zero-alloc <c>Utf8Bytes</c> property
-    /// for a text/plain response.
+    /// Emits the text/plain response members: the live stream accessor, the async
+    /// buffering accessor, and the lazily buffering <c>Text</c> and <c>Utf8Bytes</c>
+    /// properties. First consumption wins: reading the stream directly makes the
+    /// buffered accessors see an empty body, and buffering consumes the stream.
     /// </summary>
     public static void EmitTextPlainProperties(
         IndentedWriter w,
@@ -2311,29 +2310,34 @@ public static class CodeEmitHelpers
 
         w.WriteLine();
         w.WriteLine("/// <summary>");
-        w.WriteLine($"/// Gets the text/plain response body as a string. The string is");
-        w.WriteLine("/// realized lazily on first access.");
+        w.WriteLine("/// Gets the live text/plain response stream, or <see langword=\"null\"/> once the");
+        w.WriteLine("/// body has been buffered by another accessor. Reading it directly consumes the");
+        w.WriteLine("/// body; the buffered accessors then see an empty body.");
         w.WriteLine("/// </summary>");
-        w.WriteLine($"public string? {accessorName}Text");
-        w.OpenBrace();
-        w.WriteLine("get");
-        w.OpenBrace();
-        w.WriteLine($"if (this.{camelName}TextBuffer is null) {{ return null; }}");
-        w.WriteLine();
-        w.WriteLine(
-            $"return this.{camelName}TextCached ??= System.Text.Encoding.UTF8.GetString(" +
-            $"this.{camelName}TextBuffer, 0, this.{camelName}TextLength);");
-        w.CloseBrace();
-        w.CloseBrace();
+        w.WriteLine($"public Stream? {accessorName}TextStream => this.{camelName}TextBody?.Stream;");
 
         w.WriteLine();
         w.WriteLine("/// <summary>");
-        w.WriteLine("/// Gets the raw UTF-8 bytes of the text/plain response body.");
+        w.WriteLine("/// Gets the text/plain response body as a string, buffering it asynchronously");
+        w.WriteLine("/// on first call. Subsequent calls return the cached value.");
         w.WriteLine("/// </summary>");
-        w.WriteLine(
-            $"public ReadOnlySpan<byte> {accessorName}Utf8Bytes => this.{camelName}TextBuffer is not null" +
-            $" ? new ReadOnlySpan<byte>(this.{camelName}TextBuffer, 0, this.{camelName}TextLength)" +
-            " : ReadOnlySpan<byte>.Empty;");
+        w.WriteLine("/// <param name=\"cancellationToken\">A cancellation token.</param>");
+        w.WriteLine("/// <returns>The response text, or <see langword=\"null\"/> if there is no text body.</returns>");
+        w.WriteLine($"public ValueTask<string?> Get{accessorName}TextAsync(CancellationToken cancellationToken = default) => this.{camelName}TextBody is {{ }} body ? body.GetTextAsync(cancellationToken) : ValueTask.FromResult<string?>(null);");
+
+        w.WriteLine();
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Gets the text/plain response body as a string, buffering it with a synchronous");
+        w.WriteLine($"/// read on first access. Prefer <see cref=\"Get{accessorName}TextAsync\"/>.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine($"public string? {accessorName}Text => this.{camelName}TextBody?.Text;");
+
+        w.WriteLine();
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Gets the raw UTF-8 bytes of the text/plain response body, buffering it with a");
+        w.WriteLine($"/// synchronous read on first access. Prefer <see cref=\"Get{accessorName}TextAsync\"/>.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine($"public ReadOnlySpan<byte> {accessorName}Utf8Bytes => this.{camelName}TextBody is {{ }} textBody ? textBody.Utf8Bytes : ReadOnlySpan<byte>.Empty;");
     }
 
     /// <summary>
@@ -2344,60 +2348,7 @@ public static class CodeEmitHelpers
         string accessorName)
     {
         string camelName = ToCamelCase(accessorName);
-        w.WriteLine($"if (this.{camelName}TextBuffer is not null)");
-        w.OpenBrace();
-        w.WriteLine($"System.Buffers.ArrayPool<byte>.Shared.Return(this.{camelName}TextBuffer);");
-        w.CloseBrace();
-    }
-
-    /// <summary>
-    /// Emits the private static <c>ReadStreamToRentedBuffer</c> helper method.
-    /// </summary>
-    public static void EmitReadStreamToRentedBufferHelper(IndentedWriter w)
-    {
-        w.WriteLine();
-        w.WriteLine(
-            "private static byte[] ReadStreamToRentedBuffer(Stream stream, out int bytesRead)");
-        w.OpenBrace();
-
-        // Seekable path: known length, single rent.
-        w.WriteLine("if (stream.CanSeek)");
-        w.OpenBrace();
-        w.WriteLine("int length = (int)stream.Length;");
-        w.WriteLine("byte[] buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(length);");
-        w.WriteLine("bytesRead = 0;");
-        w.WriteLine("while (bytesRead < length)");
-        w.OpenBrace();
-        w.WriteLine("int n = stream.Read(buffer, bytesRead, length - bytesRead);");
-        w.WriteLine("if (n == 0) { break; }");
-        w.WriteLine("bytesRead += n;");
-        w.CloseBrace();
-        w.WriteLine();
-        w.WriteLine("return buffer;");
-        w.CloseBrace();
-        w.WriteLine();
-
-        // Non-seekable fallback: grow by doubling.
-        w.WriteLine("byte[] buf = System.Buffers.ArrayPool<byte>.Shared.Rent(4096);");
-        w.WriteLine("bytesRead = 0;");
-        w.WriteLine("int read;");
-        w.WriteLine(
-            "while ((read = stream.Read(buf, bytesRead, buf.Length - bytesRead)) > 0)");
-        w.OpenBrace();
-        w.WriteLine("bytesRead += read;");
-        w.WriteLine("if (bytesRead == buf.Length)");
-        w.OpenBrace();
-        w.WriteLine(
-            "byte[] larger = System.Buffers.ArrayPool<byte>.Shared.Rent(buf.Length * 2);");
-        w.WriteLine("System.Array.Copy(buf, larger, bytesRead);");
-        w.WriteLine("System.Buffers.ArrayPool<byte>.Shared.Return(buf);");
-        w.WriteLine("buf = larger;");
-        w.CloseBrace();
-        w.CloseBrace();
-        w.WriteLine();
-        w.WriteLine("return buf;");
-
-        w.CloseBrace();
+        w.WriteLine($"this.{camelName}TextBody?.ReturnBuffer();");
     }
 
     /// <summary>
@@ -2657,7 +2608,7 @@ public static class CodeEmitHelpers
 
         return category switch
         {
-            ContentCategory.TextPlain => $"this.{camelName}TextBuffer is not null",
+            ContentCategory.TextPlain => $"this.{camelName}TextBody is not null",
             ContentCategory.OctetStream => $"this.{accessorName}Stream is not null",
             _ => null, // JSON is the fallback — no condition needed.
         };

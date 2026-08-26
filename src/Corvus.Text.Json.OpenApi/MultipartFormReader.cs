@@ -64,11 +64,13 @@ public ref struct MultipartFormReader
     /// <param name="FileName">The filename, if present.</param>
     /// <param name="ContentType">The Content-Type of the part.</param>
     /// <param name="Data">The raw bytes of the part body.</param>
+    /// <param name="BodyOffset">The offset of <paramref name="Data"/> within the whole multipart body, or -1 when unknown.</param>
     public readonly ref struct BinaryPart(
         ReadOnlySpan<byte> Name,
         ReadOnlySpan<byte> FileName,
         ReadOnlySpan<byte> ContentType,
-        ReadOnlySpan<byte> Data)
+        ReadOnlySpan<byte> Data,
+        int BodyOffset = -1)
     {
         /// <summary>Gets the form field name.</summary>
         public ReadOnlySpan<byte> Name { get; } = Name;
@@ -81,6 +83,15 @@ public ref struct MultipartFormReader
 
         /// <summary>Gets the raw bytes of the part body.</summary>
         public ReadOnlySpan<byte> Data { get; } = Data;
+
+        /// <summary>
+        /// Gets the offset of <see cref="Data"/> within the whole multipart body,
+        /// or -1 when unknown. With an owned body (see
+        /// <see cref="MultipartFormDataSerializer.DeserializeOwnedAsync{T}(System.IO.Stream, string?, BinaryPartHandler?, long, System.Threading.CancellationToken)"/>)
+        /// this lets a callback record the part's position and slice the retained
+        /// body bytes later instead of copying.
+        /// </summary>
+        public int BodyOffset { get; } = BodyOffset;
     }
 
     /// <summary>
@@ -177,7 +188,8 @@ public ref struct MultipartFormReader
             bool isBinary = IsBinaryContentType(contentType, fileName);
             if (isBinary)
             {
-                binaryPartCallback?.Invoke(new BinaryPart(name, fileName, contentType, body));
+                multipartBody.Overlaps(body, out int bodyOffset);
+                binaryPartCallback?.Invoke(new BinaryPart(name, fileName, contentType, body, bodyOffset));
                 continue;
             }
 
@@ -265,7 +277,7 @@ public ref struct MultipartFormReader
     /// <param name="part">The binary part data.</param>
     public delegate void BinaryPartHandler(BinaryPart part);
 
-    private static void ParseHeaders(
+    internal static void ParseHeaders(
         ReadOnlySpan<byte> headers,
         out ReadOnlySpan<byte> name,
         out ReadOnlySpan<byte> fileName,
@@ -308,9 +320,17 @@ public ref struct MultipartFormReader
             {
                 contentType = line[ContentTypePrefix.Length..].TrimStart((byte)' ');
 
-                // Trim trailing whitespace/semicolons.
+                // Strip media type parameters ("; charset=utf-8"), matching
+                // MultipartMixedReader: classification works on the bare media type.
+                int semiIdx = contentType.IndexOf((byte)';');
+                if (semiIdx >= 0)
+                {
+                    contentType = contentType[..semiIdx];
+                }
+
+                // Trim trailing whitespace.
                 while (contentType.Length > 0 &&
-                       contentType[^1] is (byte)' ' or (byte)'\t' or (byte)';')
+                       contentType[^1] is (byte)' ' or (byte)'\t')
                 {
                     contentType = contentType[..^1];
                 }
@@ -420,7 +440,7 @@ public ref struct MultipartFormReader
         return -1;
     }
 
-    private static bool IsJsonContentType(ReadOnlySpan<byte> contentType)
+    internal static bool IsJsonContentType(ReadOnlySpan<byte> contentType)
     {
         if (contentType.IsEmpty)
         {
@@ -437,7 +457,7 @@ public ref struct MultipartFormReader
         return contentType.EndsWith("+json"u8);
     }
 
-    private static bool IsBinaryContentType(ReadOnlySpan<byte> contentType, ReadOnlySpan<byte> fileName)
+    internal static bool IsBinaryContentType(ReadOnlySpan<byte> contentType, ReadOnlySpan<byte> fileName)
     {
         // If a filename is present, it's a file upload → binary.
         if (!fileName.IsEmpty)

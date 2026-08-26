@@ -35,7 +35,10 @@ internal sealed class MockWidgetsHandler : IApiWidgetsHandler
         => new(CreateWidgetResult.Created(parameters.Body, workspace));
 
     public ValueTask<RenderWidgetResult> HandleRenderWidgetAsync(RenderWidgetParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
-        => new(RenderWidgetResult.Ok());
+        => new(RenderWidgetResult.Ok("rendered-widget"u8.ToArray()));
+
+    public ValueTask<GetWidgetThumbnailResult> HandleGetWidgetThumbnailAsync(GetWidgetThumbnailParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+        => new(GetWidgetThumbnailResult.Ok("widget-thumbnail"u8.ToArray()));
 }
 
 internal sealed class MockUploadsHandler : IApiUploadsHandler
@@ -44,8 +47,11 @@ internal sealed class MockUploadsHandler : IApiUploadsHandler
 
     public static string? CapturedBodyJson { get; set; }
 
+    public static byte[]? CapturedArchive { get; set; }
+
     public ValueTask<UploadBundleResult> HandleUploadBundleAsync(UploadBundleParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
+        CapturedArchive = parameters.Archive.ToArray();
         CapturedBodyJson = parameters.Body.IsNotUndefined() ? parameters.Body.ToString() : "(undefined)";
 
         if (parameters.Body.IsNotUndefined()

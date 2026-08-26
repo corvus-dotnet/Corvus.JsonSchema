@@ -200,4 +200,85 @@ public static class ThrowHelper
     {
         throw new InvalidOperationException(SR.MultipartBoundaryNotFound);
     }
+
+    /// <summary>
+    /// Throws a <see cref="RequestBodyTooLargeException"/> indicating that the
+    /// request body exceeded the configured maximum buffered size.
+    /// </summary>
+    /// <param name="maxBodyLength">The configured maximum body length in bytes.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowRequestBodyTooLarge(long maxBodyLength)
+    {
+        throw new RequestBodyTooLargeException(SR.Format(SR.RequestBodyTooLarge, maxBodyLength), maxBodyLength);
+    }
+
+    /// <summary>
+    /// Throws a <see cref="MultipartOrderingException"/> indicating that a non-binary
+    /// part arrived after a binary part under the RequireBinaryLast policy.
+    /// </summary>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowMultipartOrderingViolation()
+    {
+        throw new MultipartOrderingException(SR.MultipartOrderingViolation);
+    }
+
+    /// <summary>
+    /// Throws a <see cref="RequiredBinaryPartMissingException"/> for the named part.
+    /// </summary>
+    /// <param name="partName">The missing part's name.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowRequiredBinaryPartMissing(string partName)
+    {
+        throw new RequiredBinaryPartMissingException(SR.Format(SR.RequiredBinaryPartMissing, partName), partName);
+    }
+
+    /// <summary>
+    /// Throws an <see cref="InvalidOperationException"/> indicating that the named
+    /// binary part has already been passed in wire order.
+    /// </summary>
+    /// <param name="partName">The part's name.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowBinaryPartAlreadyPassed(string partName)
+    {
+        throw new InvalidOperationException(SR.Format(SR.BinaryPartAlreadyPassed, partName));
+    }
+
+    /// <summary>
+    /// Throws an <see cref="InvalidOperationException"/> indicating that the named
+    /// binary part is not among the endpoint's declared binary parts.
+    /// </summary>
+    /// <param name="partName">The part's name.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowUnknownBinaryPart(string partName)
+    {
+        throw new InvalidOperationException(SR.Format(SR.UnknownBinaryPart, partName));
+    }
+
+    /// <summary>
+    /// Throws an <see cref="InvalidOperationException"/> indicating that a multipart
+    /// response body has already been read.
+    /// </summary>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowMultipartResponseAlreadyRead()
+    {
+        throw new InvalidOperationException(SR.MultipartResponseAlreadyRead);
+    }
+
+    /// <summary>
+    /// Throws an <see cref="InvalidOperationException"/> indicating that a retried
+    /// send cannot re-send a non-seekable request body stream that a previous
+    /// attempt already consumed.
+    /// </summary>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowNonSeekableBodyConsumed()
+    {
+        throw new InvalidOperationException(SR.NonSeekableBodyConsumed);
+    }
 }

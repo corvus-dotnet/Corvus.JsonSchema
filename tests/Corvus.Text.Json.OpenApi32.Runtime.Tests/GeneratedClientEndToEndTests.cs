@@ -3459,6 +3459,72 @@ public class GeneratedClientEndToEndTests
     }
 
     [TestMethod]
+    public async Task Client_GetDocReport_ReadsMultipartResponseStreaming()
+    {
+        const string boundary = "cli-mp";
+        const string bodyText =
+            $"--{boundary}\r\nContent-Disposition: form-data; name=\"meta\"\r\nContent-Type: application/json\r\n\r\n{{\"title\":\"Report\"}}\r\n" +
+            $"--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; filename=\"r.pdf\"\r\nContent-Type: application/pdf\r\n\r\nPDFDATA\r\n" +
+            $"--{boundary}\r\nContent-Disposition: form-data; name=\"thumb\"\r\nContent-Type: image/png\r\n\r\nTHUMB\r\n" +
+            $"--{boundary}--\r\n";
+        using var harness = new TestHarness(HttpStatusCode.OK, Encoding.UTF8.GetBytes(bodyText), $"multipart/form-data; boundary={boundary}");
+        var client = new ApiItemsClient(harness.Transport);
+
+        await using GetDocReportResponse response = await client.GetDocReportAsync();
+
+        Assert.AreEqual(200, response.StatusCode);
+        GetDocReportOkMultipart multipart = await response.GetOkMultipartAsync();
+        StringAssert.Contains(multipart.Body.ToString(), "Report");
+
+        Stream? file = await multipart.File.OpenStreamAsync();
+        Assert.IsNotNull(file);
+        using MemoryStream fileMs = new();
+        await file.CopyToAsync(fileMs);
+        CollectionAssert.AreEqual("PDFDATA"u8.ToArray(), fileMs.ToArray());
+
+        Stream? thumb = await multipart.Thumb.OpenStreamAsync();
+        Assert.IsNotNull(thumb);
+        using MemoryStream thumbMs = new();
+        await thumb.CopyToAsync(thumbMs);
+        CollectionAssert.AreEqual("THUMB"u8.ToArray(), thumbMs.ToArray());
+    }
+
+    [TestMethod]
+    public async Task Client_GetDocReport_MultipartBody_ReadableOnlyOnce()
+    {
+        const string boundary = "cli-mp2";
+        const string bodyText =
+            $"--{boundary}\r\nContent-Disposition: form-data; name=\"meta\"\r\nContent-Type: application/json\r\n\r\n{{}}\r\n" +
+            $"--{boundary}--\r\n";
+        using var harness = new TestHarness(HttpStatusCode.OK, Encoding.UTF8.GetBytes(bodyText), $"multipart/form-data; boundary={boundary}");
+        var client = new ApiItemsClient(harness.Transport);
+
+        await using GetDocReportResponse response = await client.GetDocReportAsync();
+        _ = await response.GetOkMultipartAsync();
+
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+            async () => await response.GetOkMultipartAsync());
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFilesClient_UploadFileAsync_WriteCallback()
+    {
+        using var harness = new TestHarness(HttpStatusCode.Created, """{"id":"f-456"}""");
+        var client = new ApiFilesClient(harness.Transport);
+        byte[] fileContent = [0xCA, 0xFE, 0xF0, 0x0D];
+
+        // The write-callback overload pushes the body instead of handing over a Stream.
+        await using UploadFileResponse response = await client.UploadFileAsync(
+            async (stream, ct) => await stream.WriteAsync(fileContent, ct));
+
+        Assert.AreEqual(201, response.StatusCode);
+        Assert.AreEqual("application/octet-stream", harness.CapturedRequestContentType);
+        CollectionAssert.AreEqual(fileContent, harness.CapturedRequestBody);
+        Assert.IsTrue(response.TryGetCreated(out var createdViaCallback));
+        Assert.AreEqual("f-456", (string)createdViaCallback.Id);
+    }
+
+    [TestMethod]
     public async Task Client_ApiFilesClient_DownloadMixedAsync()
     {
         byte[] binaryData = [0xAA, 0xBB, 0xCC];
@@ -5951,7 +6017,9 @@ public class GeneratedClientEndToEndTests
             if (this.binaryResponseBody is not null)
             {
                 content = new ByteArrayContent(this.binaryResponseBody);
-                content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(this.binaryContentType!);
+
+                // Parse rather than construct: media types with parameters (multipart boundaries) are valid here.
+                content.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(this.binaryContentType!);
             }
             else if (string.IsNullOrEmpty(this.responseBody))
             {
@@ -6822,6 +6890,46 @@ public class GeneratedClientEndToEndTests
         ReadOnlySpan<byte> utf8 = response.OkUtf8Bytes;
         Assert.AreEqual(textBytes.Length, utf8.Length);
         Assert.IsTrue(utf8.SequenceEqual(textBytes));
+    }
+
+    [TestMethod]
+    public async Task EchoText_GetOkTextAsync_BuffersOnFirstCallAndCaches()
+    {
+        const string expected = "async text body";
+        byte[] textBytes = Encoding.UTF8.GetBytes(expected);
+        using var harness = new TestHarness(HttpStatusCode.OK, textBytes, "text/plain");
+
+        await using EchoTextResponse response = await harness.Transport
+            .SendAsync<EchoTextRequest, EchoTextResponse>(
+                default(EchoTextRequest),
+                new MemoryStream(textBytes),
+                "text/plain",
+                CancellationToken.None);
+
+        Assert.IsNotNull(response.OkTextStream, "the live stream must be available before buffering");
+        Assert.AreEqual(expected, await response.GetOkTextAsync());
+        Assert.IsNull(response.OkTextStream, "buffering must consume the live stream");
+        Assert.AreEqual(expected, await response.GetOkTextAsync());
+        Assert.AreEqual(expected, response.OkText);
+    }
+
+    [TestMethod]
+    public async Task EchoText_OkTextStream_ExposesRawBodyWithoutBuffering()
+    {
+        const string expected = "streamed text body";
+        byte[] textBytes = Encoding.UTF8.GetBytes(expected);
+        using var harness = new TestHarness(HttpStatusCode.OK, textBytes, "text/plain");
+
+        await using EchoTextResponse response = await harness.Transport
+            .SendAsync<EchoTextRequest, EchoTextResponse>(
+                default(EchoTextRequest),
+                new MemoryStream(textBytes),
+                "text/plain",
+                CancellationToken.None);
+
+        using MemoryStream drained = new();
+        await response.OkTextStream!.CopyToAsync(drained);
+        CollectionAssert.AreEqual(textBytes, drained.ToArray());
     }
 
     [TestMethod]

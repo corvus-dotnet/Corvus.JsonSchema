@@ -405,6 +405,79 @@ public class SerializerEdgeCaseTests
                 throwingStream, default));
     }
 
+    // ── Buffered request body size caps ───────────────────────────────────
+    [TestMethod]
+    public async Task FormUrlEncodedSerializer_BodyOverMaxLength_Throws()
+    {
+        byte[] bodyBytes = Encoding.UTF8.GetBytes("key=" + new string('v', 100));
+        using MemoryStream stream = new(bodyBytes);
+
+        RequestBodyTooLargeException ex = await Assert.ThrowsExactlyAsync<RequestBodyTooLargeException>(
+            async () => await FormUrlEncodedSerializer.DeserializeAsync<JsonElement>(
+                stream, null, maxBodyLength: 64));
+
+        Assert.AreEqual(64, ex.MaxBodyLength);
+    }
+
+    [TestMethod]
+    public async Task FormUrlEncodedSerializer_BodyExactlyAtMaxLength_Succeeds()
+    {
+        byte[] bodyBytes = Encoding.UTF8.GetBytes("key=value");
+        using MemoryStream stream = new(bodyBytes);
+
+        using ParsedJsonDocument<JsonElement> result =
+            await FormUrlEncodedSerializer.DeserializeAsync<JsonElement>(
+                stream, null, maxBodyLength: bodyBytes.Length);
+
+        Assert.AreEqual("value", result.RootElement.GetProperty("key"u8).GetString());
+    }
+
+    [TestMethod]
+    public async Task FormUrlEncodedSerializer_BodyOverMaxLength_AcrossBufferGrowth_Throws()
+    {
+        // The body exceeds both the 4096-byte initial RentBodyAsync buffer and the
+        // cap, so the cap must also trip on the buffer-growth path.
+        byte[] bodyBytes = Encoding.UTF8.GetBytes("key=" + new string('v', 9000));
+        using MemoryStream stream = new(bodyBytes);
+
+        await Assert.ThrowsExactlyAsync<RequestBodyTooLargeException>(
+            async () => await FormUrlEncodedSerializer.DeserializeAsync<JsonElement>(
+                stream, null, maxBodyLength: 8192));
+    }
+
+    [TestMethod]
+    public async Task MultipartFormData_DeserializeAsync_BodyOverMaxLength_Throws()
+    {
+        const string body = "--b\r\n" +
+            "Content-Disposition: form-data; name=\"k\"\r\n" +
+            "\r\n" +
+            "0123456789012345678901234567890123456789\r\n" +
+            "--b--\r\n";
+        byte[] bodyBytes = Encoding.UTF8.GetBytes(body);
+        using MemoryStream stream = new(bodyBytes);
+        ReadOnlyMemory<byte> contentType = "multipart/form-data; boundary=b"u8.ToArray();
+
+        await Assert.ThrowsExactlyAsync<RequestBodyTooLargeException>(
+            async () => await MultipartFormDataSerializer.DeserializeAsync<JsonElement>(
+                stream, contentType, maxBodyLength: 32));
+    }
+
+    [TestMethod]
+    public async Task MultipartMixed_DeserializeAsync_BodyOverMaxLength_Throws()
+    {
+        const string body = "--b\r\n" +
+            "Content-Type: application/json\r\n" +
+            "\r\n" +
+            "{\"v\":1}\r\n" +
+            "--b--\r\n";
+        byte[] bodyBytes = Encoding.UTF8.GetBytes(body);
+        using MemoryStream stream = new(bodyBytes);
+
+        await Assert.ThrowsExactlyAsync<RequestBodyTooLargeException>(
+            async () => await MultipartMixedSerializer.DeserializeAsync<JsonElement>(
+                stream, "multipart/mixed; boundary=b", maxBodyLength: 16));
+    }
+
     [TestMethod]
     public void FormUrlEncodedQueryStringWriter_UndefinedPropertySkipped()
     {
