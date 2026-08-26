@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Corvus.Json;
 using Corvus.Json.CodeGeneration;
 using Corvus.Text.Json.CodeGeneration;
@@ -1514,6 +1515,146 @@ public class InProcessGenerationTests
                 string.Join(", ", fieldDeclarations.GroupBy(x => x).Where(g => g.Count() > 1).Select(g => g.Key)));
         }
     }
+
+    [TestMethod]
+    public async Task GenerateCode_ObjectDefault_DefaultInstanceIsWrappedInObsoleteSuppression()
+    {
+        // Regression test for issue #944. An object or array valued "default" materialises
+        // DefaultInstance by calling the generated type's own ParseValue, which is emitted with
+        // [Obsolete]. The initializer must sit inside a CS0618 suppression, or consumers whose
+        // projects do not carry a NoWarn for CS0618 see the warning in generated code.
+        string schemaContent = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "object",
+              "properties": {
+                "options": {
+                  "type": "object",
+                  "properties": {
+                    "name": { "type": "string" }
+                  },
+                  "default": {}
+                }
+              }
+            }
+            """;
+
+        IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcessFromContent(schemaContent);
+        string allCode = NormalizeWhitespace(string.Join("\n", files.Select(f => f.FileContent)));
+
+        Assert.IsTrue(
+            Regex.IsMatch(allCode, @"#pragma warning disable CS0618[^#]*DefaultInstance \{ get; \} = \w+\.ParseValue\([^;]*; #pragma warning restore CS0618"),
+            "Expected the DefaultInstance ParseValue initializer to be wrapped in a CS0618 suppression.");
+    }
+
+    [TestMethod]
+    public async Task GenerateCode_ArrayDefault_DefaultInstanceIsWrappedInObsoleteSuppression()
+    {
+        // Regression test for issue #944, array-valued default.
+        string schemaContent = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "object",
+              "properties": {
+                "tags": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "default": []
+                }
+              }
+            }
+            """;
+
+        IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcessFromContent(schemaContent);
+        string allCode = NormalizeWhitespace(string.Join("\n", files.Select(f => f.FileContent)));
+
+        Assert.IsTrue(
+            Regex.IsMatch(allCode, @"#pragma warning disable CS0618[^#]*DefaultInstance \{ get; \} = \w+\.ParseValue\([^;]*; #pragma warning restore CS0618"),
+            "Expected the DefaultInstance ParseValue initializer to be wrapped in a CS0618 suppression.");
+    }
+
+    [TestMethod]
+    public async Task GenerateCode_StringDefault_DefaultInstanceUsesNonObsoleteConstant()
+    {
+        // A scalar default uses a ParsedJsonDocument constant, which is not obsolete, so no
+        // suppression is required around it.
+        string schemaContent = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "default": "anonymous"
+                }
+              }
+            }
+            """;
+
+        IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcessFromContent(schemaContent);
+        string allCode = NormalizeWhitespace(string.Join("\n", files.Select(f => f.FileContent)));
+
+        Assert.IsTrue(
+            Regex.IsMatch(allCode, @"DefaultInstance \{ get; \} = ParsedJsonDocument<\w+>\.StringConstant\("),
+            "Expected the scalar DefaultInstance initializer to use ParsedJsonDocument.StringConstant.");
+        Assert.IsFalse(
+            Regex.IsMatch(allCode, @"#pragma warning disable CS0618[^#]*DefaultInstance"),
+            "Expected no CS0618 suppression around a scalar DefaultInstance initializer.");
+    }
+
+    [TestMethod]
+    public async Task GenerateCode_ObjectConst_ValidationConstantIsWrappedInObsoleteSuppression()
+    {
+        // Regression test for issue #944. Object-valued validation constants (const, enum)
+        // are materialised via the generated type's own obsolete ParseValue and must sit
+        // inside a CS0618 suppression.
+        string schemaContent = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "object",
+              "properties": {
+                "fixed": {
+                  "type": "object",
+                  "const": { "kind": "alpha" }
+                }
+              }
+            }
+            """;
+
+        IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcessFromContent(schemaContent);
+        string allCode = NormalizeWhitespace(string.Join("\n", files.Select(f => f.FileContent)));
+
+        Assert.IsTrue(
+            Regex.IsMatch(allCode, @"#pragma warning disable CS0618[^#]*public static readonly \w+ \w+ = \w+\.ParseValue\([^;]*; #pragma warning restore CS0618"),
+            "Expected the object validation constant to be wrapped in a CS0618 suppression.");
+    }
+
+    [TestMethod]
+    public async Task GenerateCode_ArrayEnum_ValidationConstantsAreWrappedInObsoleteSuppression()
+    {
+        // Regression test for issue #944, array-valued enum constants.
+        string schemaContent = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "object",
+              "properties": {
+                "pair": {
+                  "type": "array",
+                  "enum": [[1, 2], [3, 4]]
+                }
+              }
+            }
+            """;
+
+        IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcessFromContent(schemaContent);
+        string allCode = NormalizeWhitespace(string.Join("\n", files.Select(f => f.FileContent)));
+
+        Assert.IsTrue(
+            Regex.IsMatch(allCode, @"#pragma warning disable CS0618[^#]*public static readonly \w+ \w+ = \w+\.ParseValue\([^;]*; #pragma warning restore CS0618"),
+            "Expected the array validation constants to be wrapped in a CS0618 suppression.");
+    }
+
+    private static string NormalizeWhitespace(string code) => Regex.Replace(code, @"\s+", " ");
 
     private static async Task<IReadOnlyCollection<GeneratedCodeFile>> GenerateInProcessFromContent(
         string schemaContent)
