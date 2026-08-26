@@ -1,5 +1,13 @@
 # Version History
 
+## V5.4.3
+
+V5.4.3 completes the CS0618 suppression in generated code that V5.4.2 attempted. There are no new features and no breaking changes.
+
+### Bug fixes
+
+- **Generated code no longer warns CS0618 from the V5 source generator.** The V5.4.2 fix wrapped the `DefaultInstance` initializer in a CS0618 suppression in the V4 code generator only, so projects using `Corvus.Text.Json.SourceGenerator` still saw the warning. The V5 generator emits through its own layer, which had three places that call the generated type's obsolete `ParseValue` without a suppression: the `DefaultInstance` initializer for a schema whose `default` is an object or an array, and the static validation constants for object-valued and array-valued `const` and `enum` keywords. All three now wrap the emitted member in a localized CS0618 suppression, so a consumer project without a `NoWarn` for CS0618, including warnings-as-errors builds, compiles generated code cleanly. See [#944](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/944).
+
 ## V5.4.2
 
 V5.4.2 lets generated OpenAPI server stubs stream large multipart uploads, and multipart responses, without loading them into memory, giving the server the property the generated client already had. Streaming is opt-in and the buffered path stays the default indefinitely, so existing generated code is unaffected. The release also hardens the buffered path, adds retry safety for streamed request bodies, fixes two security defects found reviewing the streaming surface, and rolls in an unrelated base64 content validation fix. There are no breaking changes.

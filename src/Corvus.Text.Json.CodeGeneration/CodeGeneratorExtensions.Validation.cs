@@ -952,17 +952,24 @@ internal static partial class CodeGenerationExtensions
 
         string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
 
+        // The constant is materialised by calling the generated type's own ParseValue, which
+        // is emitted with [Obsolete] to steer consumers towards pooled parsing. This use is
+        // intentional (a process-lifetime static cannot use a pooled parse, and the
+        // ParsedJsonDocument constants only represent scalar values), so suppress the
+        // obsolete diagnostic in the generated code.
         generator
             .AppendLineIndent("/// <summary>")
             .AppendLineIndent("/// A constant for the <c>", keyword.Keyword, "</c> keyword.")
             .AppendLineIndent("/// </summary>")
+            .AppendLineIndent("#pragma warning disable CS0618 // Type or member is obsolete")
             .AppendIndent("public static readonly ", typeDeclaration.DotnetTypeName(), " ")
             .Append(memberName)
             .Append(" = ")
             .Append(typeDeclaration.DotnetTypeName())
             .Append(".ParseValue(")
             .AppendSerializedArrayStringLiteral(value)
-            .AppendLine(");");
+            .AppendLine(");")
+            .AppendLineIndent("#pragma warning restore CS0618");
 
         return generator;
     }
@@ -978,17 +985,24 @@ internal static partial class CodeGenerationExtensions
 
         string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
 
+        // The constant is materialised by calling the generated type's own ParseValue, which
+        // is emitted with [Obsolete] to steer consumers towards pooled parsing. This use is
+        // intentional (a process-lifetime static cannot use a pooled parse, and the
+        // ParsedJsonDocument constants only represent scalar values), so suppress the
+        // obsolete diagnostic in the generated code.
         generator
             .AppendLineIndent("/// <summary>")
             .AppendLineIndent("/// A constant for the <c>", keyword.Keyword, "</c> keyword.")
             .AppendLineIndent("/// </summary>")
+            .AppendLineIndent("#pragma warning disable CS0618 // Type or member is obsolete")
             .AppendIndent("public static readonly ", typeDeclaration.DotnetTypeName(), " ")
             .Append(memberName)
             .Append(" = ")
             .Append(typeDeclaration.DotnetTypeName())
             .Append(".ParseValue(")
             .AppendSerializedObjectStringLiteral(value)
-            .AppendLine(");");
+            .AppendLine(");")
+            .AppendLineIndent("#pragma warning restore CS0618");
 
         return generator;
     }
