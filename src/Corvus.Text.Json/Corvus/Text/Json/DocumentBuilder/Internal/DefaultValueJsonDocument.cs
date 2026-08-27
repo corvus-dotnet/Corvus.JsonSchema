@@ -446,6 +446,14 @@ public sealed class DefaultValueJsonDocument(IJsonDocument inner) : IMutableJson
     /// <inheritdoc />
     public bool TryGetLine(int lineNumber, [NotNullWhen(true)] out string? line) => this.inner.TryGetLine(lineNumber, out line);
 
+    /// <inheritdoc />
+    public bool TryGetJsonPointer(int index, Span<byte> utf8Destination, out int bytesWritten, out int bytesRequired)
+        => this.inner.TryGetJsonPointer(index, utf8Destination, out bytesWritten, out bytesRequired);
+
+    /// <inheritdoc />
+    public bool TryGetJsonPointer(int index, Span<char> destination, out int charsWritten, out int charsRequired)
+        => this.inner.TryGetJsonPointer(index, destination, out charsWritten, out charsRequired);
+
     /// <summary>
     /// Does nothing: this facade does not own the wrapped document, so it must not dispose it.
     /// </summary>

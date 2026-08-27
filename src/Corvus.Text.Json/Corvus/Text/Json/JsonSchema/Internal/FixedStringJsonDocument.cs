@@ -755,6 +755,24 @@ public sealed class FixedStringJsonDocument<T> : IJsonDocument
         return false;
     }
 
+    bool IJsonDocument.TryGetJsonPointer(int index, Span<byte> utf8Destination, out int bytesWritten, out int bytesRequired)
+    {
+        // Single-value document: the element is always the root, whose pointer is the empty string.
+        Debug.Assert(index == 0);
+        bytesWritten = 0;
+        bytesRequired = 0;
+        return true;
+    }
+
+    bool IJsonDocument.TryGetJsonPointer(int index, Span<char> destination, out int charsWritten, out int charsRequired)
+    {
+        // Single-value document: the element is always the root, whose pointer is the empty string.
+        Debug.Assert(index == 0);
+        charsWritten = 0;
+        charsRequired = 0;
+        return true;
+    }
+
     public bool TryFormat(int index, Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? formatProvider)
     {
         Debug.Assert(index == 0);

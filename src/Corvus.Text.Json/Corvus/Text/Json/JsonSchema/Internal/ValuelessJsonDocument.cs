@@ -589,6 +589,24 @@ public sealed class ValuelessJsonDocument<T> : IJsonDocument
         return false;
     }
 
+    bool IJsonDocument.TryGetJsonPointer(int index, Span<byte> utf8Destination, out int bytesWritten, out int bytesRequired)
+    {
+        // Single-value document: the element is always the root, whose pointer is the empty string.
+        Debug.Assert(index == 0);
+        bytesWritten = 0;
+        bytesRequired = 0;
+        return true;
+    }
+
+    bool IJsonDocument.TryGetJsonPointer(int index, Span<char> destination, out int charsWritten, out int charsRequired)
+    {
+        // Single-value document: the element is always the root, whose pointer is the empty string.
+        Debug.Assert(index == 0);
+        charsWritten = 0;
+        charsRequired = 0;
+        return true;
+    }
+
     /// <summary>Tries to format the value into a character span.</summary>
     /// <param name="index">The element index (always 0).</param>
     /// <param name="destination">The destination span.</param>

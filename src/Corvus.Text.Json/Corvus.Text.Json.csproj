@@ -227,10 +227,12 @@
     <Compile Include="Corvus\Text\Json\Document\ParsedJsonDocument.cs" />
     <Compile Include="Corvus\Text\Json\Document\ParsedJsonDocument.Parse.cs" />
     <Compile Include="Corvus\Text\Json\Document\ParsedJsonDocument.SourceLocation.cs" />
+    <Compile Include="Corvus\Text\Json\Document\ParsedJsonDocument.JsonPointer.cs" />
     <Compile Include="Corvus\Text\Json\Document\Internal\JsonDocument.StackRow.cs" />
     <Compile Include="Corvus\Text\Json\Document\Internal\JsonDocument.StackRowStack.cs" />
     <Compile Include="Corvus\Text\Json\Document\ParsedJsonDocument.TryGetProperty.cs" />
     <Compile Include="Corvus\Text\Json\Document\Internal\JsonDocument.cs" />
+    <Compile Include="Corvus\Text\Json\Document\Internal\JsonDocument.JsonPointer.cs" />
     <Compile Include="Corvus\Text\Json\Document\Internal\MetadataDb.cs" />
     <Compile Include="Corvus\Text\Json\Document\Internal\DbRow.cs" />
     <Compile Include="Corvus\Text\Json\Document\JsonDocumentOptions.cs" />
@@ -248,6 +250,7 @@
     <Compile Include="Corvus\Text\Json\Document\JsonElement.cs" />
     <Compile Include="Corvus\Text\Json\Document\JsonElement.Parse.cs" />
     <Compile Include="Corvus\Text\Json\Document\JsonElement.SourceLocation.cs" />
+    <Compile Include="Corvus\Text\Json\Document\JsonElement.JsonPointer.cs" />
     <Compile Include="Corvus\Text\Json\Document\JsonProperty.cs" />
     <Compile Include="Corvus\Text\Json\Document\JsonValueKind.cs" />
     <Compile Include="Corvus\Text\Json\Internal\JsonElementHelpers.DateTime.cs" />
