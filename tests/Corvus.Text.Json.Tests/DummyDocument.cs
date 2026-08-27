@@ -319,4 +319,10 @@ internal class DummyDocument : IJsonDocument
 
     bool IJsonDocument.TryGetLine(int lineNumber, [NotNullWhen(true)] out string? line)
     { line = null; return false; }
+
+    bool IJsonDocument.TryGetJsonPointer(int index, Span<byte> utf8Destination, out int bytesWritten, out int bytesRequired)
+    { bytesWritten = 0; bytesRequired = 0; return true; }
+
+    bool IJsonDocument.TryGetJsonPointer(int index, Span<char> destination, out int charsWritten, out int charsRequired)
+    { charsWritten = 0; charsRequired = 0; return true; }
 }

@@ -93,6 +93,8 @@ internal static partial class CodeGeneratorExtensions
                         .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
                         .AppendLineIndent("public static explicit operator decimal(", typeName, " value) => value._parent.TryGetValue(value._idx, out decimal result) ? result : throw new FormatException();");
                 }
+
+                AppendRemainingNumericConversionOperators(generator, typeName, seenConversionOperators);
             }
 
             // Emit explicit operators for formats discovered in composition sub-types (a subschema's
@@ -210,6 +212,8 @@ internal static partial class CodeGeneratorExtensions
                         .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
                         .AppendLineIndent("public static explicit operator decimal(", typeName, " value) => value._parent.TryGetValue(value._idx, out decimal result) ? result : throw new FormatException();");
                 }
+
+                AppendRemainingNumericConversionOperators(generator, typeName, seenConversionOperators);
             }
 
             if ((coreTypes & CoreTypes.Boolean) != 0)
@@ -316,6 +320,55 @@ internal static partial class CodeGeneratorExtensions
                         formats.Add(format);
                     }
                 }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Appends explicit conversion operators for every numeric CLR type not already covered by a
+    /// format-specific or core conversion, so that a direct cast to any numeric type binds a
+    /// user-defined operator (issue #937). Routing such casts through the implicit conversion to
+    /// <c>long</c> both trips IDE0221 and silently truncates out-of-range values; a direct operator
+    /// range-checks via <c>TryGetValue</c> and throws <see cref="FormatException"/> instead.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeName">The name of the type for which to emit the operators.</param>
+    /// <param name="seenConversionOperators">The set of conversion operators that have already been generated.</param>
+    private static void AppendRemainingNumericConversionOperators(CodeGenerator generator, string typeName, HashSet<string> seenConversionOperators)
+    {
+        AppendNumericConversionOperator(generator, typeName, seenConversionOperators, "sbyte", "sbyte");
+        AppendNumericConversionOperator(generator, typeName, seenConversionOperators, "byte", "byte");
+        AppendNumericConversionOperator(generator, typeName, seenConversionOperators, "short", "short");
+        AppendNumericConversionOperator(generator, typeName, seenConversionOperators, "ushort", "ushort");
+        AppendNumericConversionOperator(generator, typeName, seenConversionOperators, "int", "int");
+        AppendNumericConversionOperator(generator, typeName, seenConversionOperators, "uint", "uint");
+        AppendNumericConversionOperator(generator, typeName, seenConversionOperators, "ulong", "ulong");
+        AppendNumericConversionOperator(generator, typeName, seenConversionOperators, "float", "float");
+        AppendNumericConversionOperator(generator, typeName, seenConversionOperators, "Int128", "Int128", netOnly: true);
+        AppendNumericConversionOperator(generator, typeName, seenConversionOperators, "UInt128", "UInt128", netOnly: true);
+        AppendNumericConversionOperator(generator, typeName, seenConversionOperators, "Half", "Half", netOnly: true);
+
+        static void AppendNumericConversionOperator(CodeGenerator generator, string typeName, HashSet<string> seenConversionOperators, string key, string clrTypeName, bool netOnly = false)
+        {
+            if (generator.IsCancellationRequested || !seenConversionOperators.Add(key))
+            {
+                return;
+            }
+
+            generator.AppendSeparatorLine();
+
+            if (netOnly)
+            {
+                generator.AppendLine("#if NET");
+            }
+
+            generator
+                .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
+                .AppendLineIndent("public static explicit operator ", clrTypeName, "(", typeName, " value) => value._parent.TryGetValue(value._idx, out ", clrTypeName, " result) ? result : throw new FormatException();");
+
+            if (netOnly)
+            {
+                generator.AppendLine("#endif");
             }
         }
     }

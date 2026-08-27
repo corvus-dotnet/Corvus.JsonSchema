@@ -332,6 +332,8 @@
     <Compile Include="JsonElementNumericBoundaryTests.cs" />
     <Compile Include="JsonElementParseTests.cs" />
     <Compile Include="JsonPointerExtensionTests.cs" />
+    <Compile Include="JsonElementGetJsonPointerTests.cs" />
+    <Compile Include="NumericCastOperatorTests.cs" />
     <Compile Include="JsonElementWriteTests.cs" />
     <Compile Include="JsonEncodedTextTests.cs" />
     <Compile Include="JsonGuidTestData.cs" />

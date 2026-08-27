@@ -1,5 +1,19 @@
 # Version History
 
+## V5.5.0
+
+V5.5.0 adds retrieval of an element's location as an RFC 6901 JSON Pointer, and completes the numeric conversion surface of generated types with direct casts to every numeric CLR type. The new cast operators change the failure mode of lossy numeric casts, which is a breaking change.
+
+### New features
+
+- **Retrieve an element's location as a JSON Pointer.** `JsonElement` (and every generated type, via `IJsonElement<T>` extension methods) can now report its location relative to its document root as an [RFC 6901](https://datatracker.ietf.org/doc/html/rfc6901) JSON Pointer. The zero-allocation `TryGetJsonPointer` overloads write UTF-8 bytes or UTF-16 characters into a caller-supplied buffer and return the written length; the `GetJsonPointer()` convenience method returns a string. The pointer is derived on demand by walking the document's metadata database from the element back to its ancestors, so parsing carries no extra bookkeeping. Property names are unescaped and then pointer-escaped (`~` as `~0`, `/` as `~1`), and the root element produces the empty pointer. This makes it straightforward to turn JSONPath query results into JSON Patch targets. See [#942](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/942).
+
+- **Direct casts from generated numeric types to every numeric CLR type.** Generated numeric types now emit explicit conversion operators for `sbyte`, `byte`, `short`, `ushort`, `int`, `uint`, `ulong`, and `float` (plus `Int128`, `UInt128`, and `Half` on .NET), alongside the existing implicit `long`, `double`, and format-specific conversions. A cast such as `(ushort)value` previously routed through the implicit conversion to `long`, which tripped the IDE0221 analyzer; some casts, such as `(ulong)` on a plain integer type, were ambiguous and did not compile, and the .NET-only numeric types could not be cast to at all. Every numeric cast now binds a user-defined operator directly. See [#937](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/937).
+
+### Breaking changes
+
+- **Lossy numeric casts now throw `FormatException` instead of silently truncating.** Because casts to narrower types previously converted through `long`, an out-of-range value was silently wrapped: `(byte)` applied to a value of 300 produced 44. The new direct operators are range-checked, so an out-of-range or non-integral value now throws `FormatException`, matching the V4 behavior. Code that relied on silent truncation should cast to `(long)` explicitly and narrow with standard numeric casts. See [#937](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/937).
+
 ## V5.4.3
 
 V5.4.3 completes the CS0618 suppression in generated code that V5.4.2 attempted. There are no new features and no breaking changes.

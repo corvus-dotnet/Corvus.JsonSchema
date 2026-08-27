@@ -79,6 +79,45 @@ public readonly partial struct JsonInt64
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static explicit operator decimal(JsonInt64 value) => value._parent.TryGetValue(value._idx, out decimal result) ? result : throw new FormatException();
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static explicit operator sbyte(JsonInt64 value) => value._parent.TryGetValue(value._idx, out sbyte result) ? result : throw new FormatException();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static explicit operator byte(JsonInt64 value) => value._parent.TryGetValue(value._idx, out byte result) ? result : throw new FormatException();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static explicit operator short(JsonInt64 value) => value._parent.TryGetValue(value._idx, out short result) ? result : throw new FormatException();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static explicit operator ushort(JsonInt64 value) => value._parent.TryGetValue(value._idx, out ushort result) ? result : throw new FormatException();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static explicit operator int(JsonInt64 value) => value._parent.TryGetValue(value._idx, out int result) ? result : throw new FormatException();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static explicit operator uint(JsonInt64 value) => value._parent.TryGetValue(value._idx, out uint result) ? result : throw new FormatException();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static explicit operator ulong(JsonInt64 value) => value._parent.TryGetValue(value._idx, out ulong result) ? result : throw new FormatException();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static explicit operator float(JsonInt64 value) => value._parent.TryGetValue(value._idx, out float result) ? result : throw new FormatException();
+
+#if NET
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static explicit operator Int128(JsonInt64 value) => value._parent.TryGetValue(value._idx, out Int128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static explicit operator UInt128(JsonInt64 value) => value._parent.TryGetValue(value._idx, out UInt128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static explicit operator Half(JsonInt64 value) => value._parent.TryGetValue(value._idx, out Half result) ? result : throw new FormatException();
+#endif
+
     /// <summary>
     /// Operator ==.
     /// </summary>

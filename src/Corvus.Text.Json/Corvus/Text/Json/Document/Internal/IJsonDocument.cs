@@ -707,6 +707,28 @@ public interface IJsonDocument : IDisposable
         where TValue : struct, IJsonElement<TValue>;
 
     /// <summary>
+    /// Tries to write the JSON Pointer (RFC 6901) of the element at the specified index,
+    /// relative to the document root, as UTF-8 bytes.
+    /// </summary>
+    /// <param name="index">The index of the element.</param>
+    /// <param name="utf8Destination">The destination for the UTF-8 pointer text.</param>
+    /// <param name="bytesWritten">The number of bytes written on success; 0 on failure.</param>
+    /// <param name="bytesRequired">The total number of bytes the pointer requires, whether or not it fit in the destination.</param>
+    /// <returns><see langword="true"/> if the pointer was written; <see langword="false"/> if the destination was too small.</returns>
+    bool TryGetJsonPointer(int index, Span<byte> utf8Destination, out int bytesWritten, out int bytesRequired);
+
+    /// <summary>
+    /// Tries to write the JSON Pointer (RFC 6901) of the element at the specified index,
+    /// relative to the document root, as UTF-16 characters.
+    /// </summary>
+    /// <param name="index">The index of the element.</param>
+    /// <param name="destination">The destination for the pointer text.</param>
+    /// <param name="charsWritten">The number of characters written on success; 0 on failure.</param>
+    /// <param name="charsRequired">The total number of characters the pointer requires, whether or not it fit in the destination.</param>
+    /// <returns><see langword="true"/> if the pointer was written; <see langword="false"/> if the destination was too small.</returns>
+    bool TryGetJsonPointer(int index, Span<char> destination, out int charsWritten, out int charsRequired);
+
+    /// <summary>
     /// Formats the value to the provided destination span according to the specified format and format provider.
     /// </summary>
     /// <param name="index">The index of the element.</param>
