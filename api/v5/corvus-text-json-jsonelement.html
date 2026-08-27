@@ -98,7 +98,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/68617b47ad47aa32242fdd24a3435adf50cbb969/src/Corvus.Text.Json/Corvus/Text/Json/Document/JsonElement.cs#L24">JsonElement.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/88739f514122177bb6f1f2b5190f55b537e5c65a/src/Corvus.Text.Json/Corvus/Text/Json/Document/JsonElement.cs#L24">JsonElement.cs</a></p>
 <p>Represents a specific JSON value within a <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsondocument.html"><code>JsonDocument</code></a>.</p>
 <pre><code class="language-csharp">public readonly struct JsonElement : IJsonElement&lt;JsonElement&gt;, IJsonElement, IFormattable, ISpanFormattable, IUtf8SpanFormattable
 </code></pre>
@@ -256,6 +256,10 @@
 <td>Gets the current JSON number as a <a href="https://learn.microsoft.com/dotnet/api/system.int64"><code>Int64</code></a>.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.getjsonpointer.html#getjsonpointer">GetJsonPointer()</a></td>
+<td>Gets the JSON Pointer (RFC 6901) of this element, relative to the root of its backing document, as a string.</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.getlocaldate.html#getlocaldate">GetLocalDate()</a></td>
 <td>Gets the value of the element as a <a href="https://www.nodatime.org/3.3.x/api/NodaTime.LocalDate.html"><code>LocalDate</code></a>.</td>
 </tr>
@@ -394,6 +398,10 @@
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.trygetint64.html#trygetint64-long">TryGetInt64(long)</a></td>
 <td>Attempts to represent the current JSON number as a <a href="https://learn.microsoft.com/dotnet/api/system.int64"><code>Int64</code></a>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.trygetjsonpointer.html">TryGetJsonPointer</a></td>
+<td>Tries to write the JSON Pointer (RFC 6901) of this element, relative to the root of its backing document, as UTF-8 bytes.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelement.trygetline.html">TryGetLine</a></td>

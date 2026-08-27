@@ -98,7 +98,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/68617b47ad47aa32242fdd24a3435adf50cbb969/src/Corvus.Text.Json/Corvus/Text/Json/Document/JsonElementExtensions.cs#L18">JsonElementExtensions.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/88739f514122177bb6f1f2b5190f55b537e5c65a/src/Corvus.Text.Json/Corvus/Text/Json/Document/JsonElementExtensions.cs#L18">JsonElementExtensions.cs</a></p>
 <p>Extension methods for <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-ijsonelement.html"><code>IJsonElement</code></a>.</p>
 <pre><code class="language-csharp">public static class JsonElementExtensions
 </code></pre>
@@ -113,6 +113,10 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelementextensions.getjsonpointer.html#getjsonpointer-t">GetJsonPointer(T)</a> <code>static</code></td>
+<td>Gets the JSON Pointer (RFC 6901) of this element, relative to the root of its backing document, as a string.</td>
+</tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelementextensions.isnotnull.html#isnotnull-t">IsNotNull(T)</a> <code>static</code></td>
 <td>Gets a value indicating whether this value is not null.</td>
@@ -136,6 +140,10 @@
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelementextensions.isundefined.html#isundefined-t">IsUndefined(T)</a> <code>static</code></td>
 <td>Gets a value indicating whether this value is undefined.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelementextensions.trygetjsonpointer.html">TryGetJsonPointer</a> <code>static</code></td>
+<td>Tries to write the JSON Pointer (RFC 6901) of this element, relative to the root of its backing document, as UTF-8 bytes.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonelementextensions.tryresolvepointer.html">TryResolvePointer</a> <code>static</code></td>
