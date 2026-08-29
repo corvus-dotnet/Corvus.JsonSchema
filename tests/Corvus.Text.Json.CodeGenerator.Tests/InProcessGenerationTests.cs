@@ -582,7 +582,7 @@ public class InProcessGenerationTests
     }
 
     [TestMethod]
-    public async Task GenerateCode_BothMode_ProducesMoreOrEqualFiles()
+    public async Task GenerateCode_BothMode_ProducesEvaluatorInAdditionToTypes()
     {
         string schemaPath = Path.Combine(SchemasDir, "numeric-and-format.json");
         IReadOnlyCollection<GeneratedCodeFile> filesTypeOnly = await GenerateInProcess(
@@ -593,10 +593,14 @@ public class InProcessGenerationTests
             schemaPath,
             CodeGenerationMode.Both);
 
-        // Both mode should produce at least as many files as type-only
+        // Both mode must produce the typed surface plus the standalone evaluator; a
+        // non-strict comparison here previously hid the evaluator being silently dropped.
         Assert.IsTrue(
-            filesBoth.Count >= filesTypeOnly.Count,
-            $"Expected Both ({filesBoth.Count}) >= TypeGeneration ({filesTypeOnly.Count})");
+            filesBoth.Count > filesTypeOnly.Count,
+            $"Expected Both ({filesBoth.Count}) > TypeGeneration ({filesTypeOnly.Count})");
+        Assert.IsTrue(
+            filesBoth.Any(f => f.FileName.EndsWith(".Evaluator.cs", StringComparison.Ordinal)),
+            $"Both mode must produce a standalone evaluator file. Files: {string.Join(", ", filesBoth.Select(f => f.FileName))}");
     }
 
     [TestMethod]
@@ -1203,6 +1207,12 @@ public class InProcessGenerationTests
             codeGenerationMode: mode);
 
         var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+
+        // The standalone evaluator generator requires the unreduced root types.
+        if (mode != CodeGenerationMode.TypeGeneration)
+        {
+            languageProvider.SetEvaluatorRootTypes(rootType);
+        }
 
         return typeBuilder.GenerateCodeUsing(
             languageProvider,
