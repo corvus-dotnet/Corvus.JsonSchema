@@ -205,6 +205,14 @@ public static class GenerationDriverV5
 
         ProgressTask currentTask = context.AddTask("Generating code for schema.");
         var languageProvider = CodeGeneration.CSharpLanguageProvider.DefaultWithOptions(options);
+
+        // The standalone evaluator generator requires the unreduced root types; the
+        // generation pipeline replaces reducible candidates with their reduced targets.
+        if (codeGenerationMode != CodeGenerationMode.TypeGeneration)
+        {
+            languageProvider.SetEvaluatorRootTypes([.. typesToGenerate]);
+        }
+
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =
             typeBuilder.GenerateCodeUsing(
                 languageProvider,

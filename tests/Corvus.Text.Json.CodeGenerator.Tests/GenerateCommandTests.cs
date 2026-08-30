@@ -352,6 +352,41 @@ public class GenerateCommandTests : IDisposable
         Assert.IsFalse(ReadAllGeneratedCode(disabledDir).Contains("MatchDateTime"), "--formatMode disable must produce annotation-only output.");
     }
 
+    [TestMethod]
+    public async Task Generate_CodeGenerationModeBoth_ProducesTypesAndEvaluator()
+    {
+        string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "simple-object.json");
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync(
+            $"jsonschema \"{schema}\" --rootNamespace TestGenerated --outputPath \"{_outputDir}\" --codeGenerationMode Both");
+
+        Assert.AreEqual(0, result.ExitCode, result.StandardError);
+
+        string[] files = Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories);
+        Assert.IsTrue(
+            files.Any(f => !Path.GetFileName(f).EndsWith(".Evaluator.cs", StringComparison.Ordinal)),
+            $"Both mode must produce the typed surface. Files: {string.Join(", ", files.Select(Path.GetFileName))}");
+        Assert.IsTrue(
+            files.Any(f => Path.GetFileName(f).EndsWith(".Evaluator.cs", StringComparison.Ordinal)),
+            $"Both mode must produce a standalone evaluator (*.Evaluator.cs). Files: {string.Join(", ", files.Select(Path.GetFileName))}");
+    }
+
+    [TestMethod]
+    public async Task Generate_CodeGenerationModeSchemaEvaluationOnly_ProducesEvaluator()
+    {
+        string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "simple-object.json");
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync(
+            $"jsonschema \"{schema}\" --rootNamespace TestGenerated --outputPath \"{_outputDir}\" --codeGenerationMode SchemaEvaluationOnly");
+
+        Assert.AreEqual(0, result.ExitCode, result.StandardError);
+
+        string[] files = Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories);
+        Assert.IsTrue(
+            files.Any(f => Path.GetFileName(f).EndsWith(".Evaluator.cs", StringComparison.Ordinal)),
+            $"SchemaEvaluationOnly mode must produce a standalone evaluator (*.Evaluator.cs). Files: {string.Join(", ", files.Select(Path.GetFileName))}");
+    }
+
     private static string ReadAllGeneratedCode(string directory) =>
         string.Concat(Directory.GetFiles(directory, "*.cs", SearchOption.AllDirectories).Select(File.ReadAllText));
 }

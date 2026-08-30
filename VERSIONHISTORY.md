@@ -1,5 +1,17 @@
 # Version History
 
+## V5.5.1
+
+V5.5.1 fixes two defects in the standalone schema evaluator surface, one of which can make a generated evaluator validate incorrectly in both directions. There are no new features and no breaking changes.
+
+### Bug fixes
+
+- **The standalone evaluator compiles a distinct regex for every distinct `pattern`.** The V5 standalone evaluator named its compiled `Regex` fields for the `pattern` keyword after the keyword itself, so every distinct full-regex `pattern` in a document shared one field name, and a document-wide deduplication set meant only the first pattern's regex was ever compiled. Every other pattern site then matched against that first regex while reporting its own pattern text in diagnostics, producing both false rejections (a valid instance rejected) and false acceptances (an invalid instance accepted). A second, related collision affected `patternProperties`, whose fields were already named by sanitized pattern text. Distinct patterns that sanitize to the same identifier (for example `^[a-b]+$` and `^[a.b]+$`) also shared one compiled regex. Regex fields are now allocated through a per-document registry keyed by the raw pattern text and uniquified when sanitized identifiers collide, so every distinct pattern gets its own compiled regex, and a pattern site that cannot find its regex fails generation loudly instead of silently reusing the wrong one. The typed generated-model output was not affected, because its regex fields are scoped per generated type. See [#947](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/947).
+
+- **`patternProperties` subschemas are bound to the right patterns regardless of culture.** The shared keyword layer paired each `patternProperties` pattern with its subschema by positionally zipping two sorted lists, one sorted ordinally and one with the culture-sensitive default comparer. The orders diverge whenever linguistic and ordinal comparison disagree for a pattern pair, for example `^B$` and `^a$` on every runtime, or `^[a-b]+$` and `^[a.b]+$` on .NET Framework, and each pattern was then validated against the other pattern's subschema. Both the typed generated models and the standalone evaluator consumed the cross-wired pairing. Both lists are now sorted ordinally. See [#947](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/947).
+
+- **The CLI emits the standalone evaluator for `--codeGenerationMode Both` and `SchemaEvaluationOnly`.** The V5 CLI accepted both modes but never emitted an evaluator. `Both` produced the typed surface only, and `SchemaEvaluationOnly` produced no output at all, in each case exiting 0 with no diagnostic. Evaluator emission requires the unreduced root types to be registered on the language provider, which the Roslyn source generator did (so `EmitEvaluator = true` worked there) but the CLI generation driver did not. The driver now registers the root types whenever an evaluator-producing mode is selected, covering both the `jsonschema` command and the driver-config path, and end-to-end CLI tests cover both modes. See [#926](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/926).
+
 ## V5.5.0
 
 V5.5.0 adds retrieval of an element's location as an RFC 6901 JSON Pointer, and completes the numeric conversion surface of generated types with direct casts to every numeric CLR type. The new cast operators change the failure mode of lossy numeric casts, which is a breaking change.

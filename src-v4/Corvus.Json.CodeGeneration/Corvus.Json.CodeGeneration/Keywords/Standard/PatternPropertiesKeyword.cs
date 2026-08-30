@@ -72,11 +72,12 @@ public sealed class PatternPropertiesKeyword
     /// <inheritdoc/>
     public bool TryGetValidationRegularExpressions(TypeDeclaration typeDeclaration, [NotNullWhen(true)] out IReadOnlyList<string>? regexes)
     {
-        // You, like me, may have been wondering how the TryGetValidationRegularExpressions()  and the SubschemaTypeDeclarations()
-        // manage to magicaly produce collections that are ordered in the same way.
-        // Well, that's easy! The SubschemaTypeDeclarations() method is using the same ordering as the TryGetValidationRegularExpressions()
-        // because the keyword path for the subschema is terminated with the property name, and that property name *is* the regular
-        // expresion used here. So they sort the same.
+        // Callers pair this list positionally with GetSubschemaTypeDeclarations(), so both must
+        // sort identically. That holds because the subschema key is the keyword path terminated
+        // with the property name, that property name *is* the regular expression used here, and
+        // BOTH sorts are ordinal. A culture-sensitive sort on either side breaks the pairing:
+        // linguistic comparison orders punctuation and case differently from ordinal (and
+        // differently between ICU and NLS), cross-binding patterns to the wrong subschemas.
         List<string>? regexBuilder;
 
         if (typeDeclaration.TryGetKeyword(this, out JsonElement regexMap) &&
@@ -100,7 +101,7 @@ public sealed class PatternPropertiesKeyword
     /// <inheritdoc/>
     public IReadOnlyCollection<TypeDeclaration> GetSubschemaTypeDeclarations(TypeDeclaration typeDeclaration)
     {
-        return typeDeclaration.SubschemaTypeDeclarations.Where(t => t.Key.StartsWith(KeywordPath)).OrderBy(k => k.Key).Select(t => t.Value).ToList();
+        return typeDeclaration.SubschemaTypeDeclarations.Where(t => t.Key.StartsWith(KeywordPath)).OrderBy(k => k.Key, StringComparer.Ordinal).Select(t => t.Value).ToList();
     }
 
     /// <inheritdoc/>
