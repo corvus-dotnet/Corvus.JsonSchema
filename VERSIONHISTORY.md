@@ -1,5 +1,15 @@
 # Version History
 
+## V5.5.2
+
+V5.5.2 fixes a defect in the typed generated models that can make validation fail in both directions when a property name is declared in more than one composed schema scope. There are no new features and no breaking changes.
+
+### Bug fixes
+
+- **A property declared in both a schema's `properties` and its `$ref` or `allOf` target validates in every scope.** When a generated type hoists a composed `$ref` or `allOf` branch's property validation into its own object enumeration (which happens when the composition contributes four or more properties), the property-name lookup mapped each name to a single dispatch site, with local and hoisted entries indexed independently and no deduplication by name. A name declared both locally and in a hoisted branch, or in two hoisted branches, therefore reached only one of its validation sites, and whichever site lost the lookup was silently skipped: its `required` tracking never saw the property, so a present property was reported as "Required property not present" (the false rejection reported in the issue), and its property subschema was never evaluated, so an instance violating, for example, a `const` on the shared name was accepted. The lookup and every switch that consumes it are now built from a single dispatch plan with one entry per distinct property name, whose case executes the local match and every hoisted branch body. Compositions below the hoisting threshold and the standalone evaluator were not affected, and emitted code is unchanged for schemas with no shared names. See [#949](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/949).
+
+- **A type hoisting branches from both `$ref` and `allOf` compiles and dispatches correctly.** Branch-scoped identifiers in the hoisted validation code were derived from the branch's position within its own keyword alone, so a type composing hoistable branches from two keywords (for example a `$ref` sibling of an `allOf`) emitted colliding fields and locals that failed to compile, and the shared property-name lookup's indices did not line up with each keyword group's own dispatch switch. Identifiers are now disambiguated across keyword groups, and each group's switch carries its entries' indices from the shared plan. See [#949](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/949).
+
 ## V5.5.1
 
 V5.5.1 fixes two defects in the standalone schema evaluator surface, one of which can make a generated evaluator validate incorrectly in both directions. There are no new features and no breaking changes.
