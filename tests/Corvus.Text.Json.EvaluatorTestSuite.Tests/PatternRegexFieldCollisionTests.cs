@@ -122,6 +122,37 @@ public class PatternRegexFieldCollisionTests
         AssertEvaluates(evaluator, "\"a+c\"", expected: false, "\"a+c\" does not match ^[ab]-[cd]$, so it must be invalid.");
     }
 
+    /// <summary>
+    /// The pattern list is sorted ordinally but the subschema list was sorted with the
+    /// culture-sensitive default comparer, and the two are paired positionally. The two
+    /// orders disagree for this pair on every runtime ("^B$" sorts before "^a$" ordinally
+    /// and after it linguistically), so each pattern was bound to the other pattern's
+    /// subschema. The punctuation pair in the test above diverges the same way, but only
+    /// on .NET Framework's NLS comparer.
+    /// </summary>
+    private const string PatternPropertiesCultureOrderingSchema =
+        """
+        {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "type": "object",
+            "patternProperties": {
+                "^B$": { "type": "integer" },
+                "^a$": { "type": "string" }
+            }
+        }
+        """;
+
+    [TestMethod]
+    public async Task PatternPropertiesWithCultureDivergentOrdering_BindTheRightSubschemas()
+    {
+        CompiledEvaluator evaluator = await GenerateAsync(PatternPropertiesCultureOrderingSchema, "issue947PatternPropertiesOrdering.json");
+
+        AssertEvaluates(evaluator, /*lang=json*/ """{"a": "hello"}""", expected: true, "\"a\" matches only ^a$, and the value is a string, so it must be valid.");
+        AssertEvaluates(evaluator, /*lang=json*/ """{"a": 5}""", expected: false, "\"a\" matches only ^a$, and the value is not a string, so it must be invalid.");
+        AssertEvaluates(evaluator, /*lang=json*/ """{"B": 7}""", expected: true, "\"B\" matches only ^B$, and the value is an integer, so it must be valid.");
+        AssertEvaluates(evaluator, /*lang=json*/ """{"B": "hello"}""", expected: false, "\"B\" matches only ^B$, and the value is not an integer, so it must be invalid.");
+    }
+
     [TestMethod]
     public async Task PatternPropertiesWithCollidingSafeIdentifiers_AreCompiledSeparately()
     {
@@ -134,7 +165,7 @@ public class PatternRegexFieldCollisionTests
     private static void AssertEvaluates(CompiledEvaluator evaluator, string instanceJson, bool expected, string message)
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse(instanceJson);
-        Assert.AreEqual(expected, evaluator.Evaluate(doc.RootElement), message);
+        Assert.AreEqual(expected, evaluator.Evaluate(doc.RootElement), $"{message} Generated code:{System.Environment.NewLine}{evaluator.GeneratedCode}");
     }
 
     private static int CountOccurrences(string text, string value)
