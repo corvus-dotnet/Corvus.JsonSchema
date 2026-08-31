@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Patch\Corvus.Text.Json.Patch.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.Yaml\Corvus.Text.Json.Yaml.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
   </ItemGroup>
   <ItemGroup>

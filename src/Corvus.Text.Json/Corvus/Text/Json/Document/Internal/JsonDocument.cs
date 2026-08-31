@@ -1965,6 +1965,45 @@ public abstract partial class JsonDocument
     }
 
     /// <summary>
+    /// Appends a copy of the element's metadb rows to the given database, for a value that is
+    /// being captured from this document and later spliced back into this same document.
+    /// </summary>
+    /// <param name="index">The starting metadb byte index of the element.</param>
+    /// <param name="db">The database to append the rows to.</param>
+    /// <remarks>
+    /// <para>
+    /// A cross-document capture (<see cref="IJsonDocument.AppendElementToMetadataDb"/>) records
+    /// simple values as external-reference rows addressed by ROW INDEX into the source document.
+    /// When the source document is also the destination, any subsequent row-table surgery
+    /// (remove, insert) shifts those indices and the captured reference resolves to the wrong
+    /// row — or to itself, producing an unbounded read cycle. See issue #954.
+    /// </para>
+    /// <para>
+    /// This method instead copies the row run verbatim: row locations are byte offsets into
+    /// this document's backing buffers (original text, value backing), which are append-only
+    /// and therefore stable across row-table surgery. The single transformation applied is to
+    /// an end-object row carrying a property-map index, which is restored to its plain length:
+    /// the map's entries hold absolute row positions that will not survive the splice.
+    /// </para>
+    /// </remarks>
+    internal void AppendSameDocumentElementRows(int index, ref MetadataDb db)
+    {
+        int byteSize = GetDbSizeUnsafe(index, true);
+        for (int i = index; i < index + byteSize; i += DbRow.Size)
+        {
+            DbRow row = _parsedData.Get(i);
+            if (!row.FromExternalDocument && row.TokenType == JsonTokenType.EndObject && row.RawSizeOrLength < 0)
+            {
+                db.Append(new DbRow(JsonTokenType.EndObject, row.LocationOrIndex, GetLengthOfEndToken(row.SizeOrLengthOrPropertyMapIndex), row.NumberOfRows, hasComplexChildren: false));
+            }
+            else
+            {
+                db.Append(in row);
+            }
+        }
+    }
+
+    /// <summary>
     /// Copies the metadb segment and only the referenced value backing from this document
     /// into a target document for a freeze operation, compacting the value backing into a
     /// raw-JSON region followed by a DynamicValue region.
