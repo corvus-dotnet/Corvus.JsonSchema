@@ -807,90 +807,40 @@ public static class JsonPatchExtensions
 
                 ReadOnlySpan<byte> fromSegment = fromSegBuf.Slice(0, fromSegLen);
 
-                // Resolve dest parent and last segment.
-                Span<byte> destSegBuf = stackalloc byte[StackallocByteThreshold];
-                if (!TryResolveParent(ref target, pathUtf8, out JsonElement.Mutable destParent, destSegBuf, out int destSegLen))
+                // RFC 6902 evaluates the destination path against the document AFTER the removal,
+                // but the move primitives below resolve the destination before removing. Removing
+                // an array element renumbers its following siblings, so a destination pointer that
+                // descends through the source's parent array at a later index must be rewritten to
+                // its pre-removal index. (The final segment is exempt: a same-array destination
+                // index is applied by the primitives after the removal.)
+                if (fromParent.ValueKind == JsonValueKind.Array &&
+                    TryGetDestinationAncestorAdjustment(fromUtf8, fromSegment, pathUtf8, out int adjSegStart, out int adjSegLength, out int adjustedIndex))
                 {
-                    return false;
+                    // The rewrite replaces the segment's decimal index k with k + 1, which has at
+                    // most one digit more than k, so the adjusted path grows by at most one byte.
+                    int maxAdjustedLength = pathUtf8.Length + 1;
+                    byte[]? rentedAdjustedPath = null;
+                    Span<byte> adjustedPath = maxAdjustedLength <= StackallocByteThreshold
+                        ? stackalloc byte[StackallocByteThreshold]
+                        : (rentedAdjustedPath = ArrayPool<byte>.Shared.Rent(maxAdjustedLength));
+                    try
+                    {
+                        pathUtf8.Slice(0, adjSegStart).CopyTo(adjustedPath);
+                        Utf8Formatter.TryFormat(adjustedIndex, adjustedPath.Slice(adjSegStart), out int digitsWritten);
+                        ReadOnlySpan<byte> pathSuffix = pathUtf8.Slice(adjSegStart + adjSegLength);
+                        pathSuffix.CopyTo(adjustedPath.Slice(adjSegStart + digitsWritten));
+                        return TryApplyMoveToDestination(ref target, adjustedPath.Slice(0, adjSegStart + digitsWritten + pathSuffix.Length), in fromParent, fromSegment);
+                    }
+                    finally
+                    {
+                        if (rentedAdjustedPath is not null)
+                        {
+                            ArrayPool<byte>.Shared.Return(rentedAdjustedPath);
+                        }
+                    }
                 }
 
-                ReadOnlySpan<byte> destSegment = destSegBuf.Slice(0, destSegLen);
-
-                // Dispatch based on source and destination container types.
-                if (fromParent.ValueKind == JsonValueKind.Array)
-                {
-                    if (!TryParseArrayIndex(fromSegment, out int fromIndex))
-                    {
-                        return false;
-                    }
-
-                    if (fromIndex < 0 || fromIndex >= fromParent.GetArrayLength())
-                    {
-                        return false;
-                    }
-
-                    if (destParent.ValueKind == JsonValueKind.Array)
-                    {
-                        if (IsAppendToken(destSegment))
-                        {
-                            GetMutableDoc(in fromParent).MoveItemToArrayEnd(GetDocIndex(in fromParent), fromIndex, GetDocIndex(in destParent));
-                            return true;
-                        }
-
-                        if (!TryParseArrayIndex(destSegment, out int destIndex))
-                        {
-                            return false;
-                        }
-
-                        if (destIndex < 0 || destIndex > destParent.GetArrayLength())
-                        {
-                            return false;
-                        }
-
-                        GetMutableDoc(in fromParent).MoveItemToArray(GetDocIndex(in fromParent), fromIndex, GetDocIndex(in destParent), destIndex);
-                        return true;
-                    }
-
-                    if (destParent.ValueKind == JsonValueKind.Object)
-                    {
-                        GetMutableDoc(in fromParent).MoveItemToProperty(GetDocIndex(in fromParent), fromIndex, GetDocIndex(in destParent), destSegment);
-                        return true;
-                    }
-
-                    return false;
-                }
-
-                if (fromParent.ValueKind == JsonValueKind.Object)
-                {
-                    if (destParent.ValueKind == JsonValueKind.Array)
-                    {
-                        if (IsAppendToken(destSegment))
-                        {
-                            return GetMutableDoc(in fromParent).MovePropertyToArrayEnd(GetDocIndex(in fromParent), fromSegment, GetDocIndex(in destParent));
-                        }
-
-                        if (!TryParseArrayIndex(destSegment, out int destIndex))
-                        {
-                            return false;
-                        }
-
-                        if (destIndex < 0 || destIndex > destParent.GetArrayLength())
-                        {
-                            return false;
-                        }
-
-                        return GetMutableDoc(in fromParent).MovePropertyToArray(GetDocIndex(in fromParent), fromSegment, GetDocIndex(in destParent), destIndex);
-                    }
-
-                    if (destParent.ValueKind == JsonValueKind.Object)
-                    {
-                        return GetMutableDoc(in fromParent).MovePropertyToProperty(GetDocIndex(in fromParent), fromSegment, GetDocIndex(in destParent), destSegment);
-                    }
-
-                    return false;
-                }
-
-                return false;
+                return TryApplyMoveToDestination(ref target, pathUtf8, in fromParent, fromSegment);
             }
             finally
             {
@@ -901,6 +851,144 @@ public static class JsonPatchExtensions
         {
             utf8From.Dispose();
         }
+    }
+
+    /// <summary>
+    /// Determines whether the destination pointer descends through the source value's parent
+    /// array at a later index, which must be rewritten to its pre-removal value because the
+    /// move primitives resolve the destination before performing the removal.
+    /// </summary>
+    private static bool TryGetDestinationAncestorAdjustment(
+        ReadOnlySpan<byte> fromUtf8,
+        ReadOnlySpan<byte> fromSegment,
+        ReadOnlySpan<byte> pathUtf8,
+        out int segmentStart,
+        out int segmentLength,
+        out int adjustedIndex)
+    {
+        segmentStart = 0;
+        segmentLength = 0;
+        adjustedIndex = 0;
+
+        if (!TryParseArrayIndex(fromSegment, out int fromIndex))
+        {
+            return false;
+        }
+
+        int fromParentLength = fromUtf8.LastIndexOf((byte)'/');
+        if (pathUtf8.Length <= fromParentLength + 1 ||
+            !pathUtf8.Slice(0, fromParentLength).SequenceEqual(fromUtf8.Slice(0, fromParentLength)) ||
+            pathUtf8[fromParentLength] != (byte)'/')
+        {
+            return false;
+        }
+
+        segmentStart = fromParentLength + 1;
+        int nextSlash = pathUtf8.Slice(segmentStart).IndexOf((byte)'/');
+        if (nextSlash < 0)
+        {
+            // The destination's final segment indexes the source array directly; the
+            // primitives apply it after the removal, so no rewrite is needed.
+            return false;
+        }
+
+        segmentLength = nextSlash;
+        if (!TryParseArrayIndex(pathUtf8.Slice(segmentStart, segmentLength), out int destAncestorIndex) ||
+            destAncestorIndex <= fromIndex)
+        {
+            return false;
+        }
+
+        adjustedIndex = destAncestorIndex + 1;
+        return true;
+    }
+
+    private static bool TryApplyMoveToDestination(ref JsonElement.Mutable target, ReadOnlySpan<byte> pathUtf8, in JsonElement.Mutable fromParent, ReadOnlySpan<byte> fromSegment)
+    {
+        // Resolve dest parent and last segment.
+        Span<byte> destSegBuf = stackalloc byte[StackallocByteThreshold];
+        if (!TryResolveParent(ref target, pathUtf8, out JsonElement.Mutable destParent, destSegBuf, out int destSegLen))
+        {
+            return false;
+        }
+
+        ReadOnlySpan<byte> destSegment = destSegBuf.Slice(0, destSegLen);
+
+        // Dispatch based on source and destination container types.
+        if (fromParent.ValueKind == JsonValueKind.Array)
+        {
+            if (!TryParseArrayIndex(fromSegment, out int fromIndex))
+            {
+                return false;
+            }
+
+            if (fromIndex < 0 || fromIndex >= fromParent.GetArrayLength())
+            {
+                return false;
+            }
+
+            if (destParent.ValueKind == JsonValueKind.Array)
+            {
+                if (IsAppendToken(destSegment))
+                {
+                    GetMutableDoc(in fromParent).MoveItemToArrayEnd(GetDocIndex(in fromParent), fromIndex, GetDocIndex(in destParent));
+                    return true;
+                }
+
+                if (!TryParseArrayIndex(destSegment, out int destIndex))
+                {
+                    return false;
+                }
+
+                if (destIndex < 0 || destIndex > destParent.GetArrayLength())
+                {
+                    return false;
+                }
+
+                GetMutableDoc(in fromParent).MoveItemToArray(GetDocIndex(in fromParent), fromIndex, GetDocIndex(in destParent), destIndex);
+                return true;
+            }
+
+            if (destParent.ValueKind == JsonValueKind.Object)
+            {
+                GetMutableDoc(in fromParent).MoveItemToProperty(GetDocIndex(in fromParent), fromIndex, GetDocIndex(in destParent), destSegment);
+                return true;
+            }
+
+            return false;
+        }
+
+        if (fromParent.ValueKind == JsonValueKind.Object)
+        {
+            if (destParent.ValueKind == JsonValueKind.Array)
+            {
+                if (IsAppendToken(destSegment))
+                {
+                    return GetMutableDoc(in fromParent).MovePropertyToArrayEnd(GetDocIndex(in fromParent), fromSegment, GetDocIndex(in destParent));
+                }
+
+                if (!TryParseArrayIndex(destSegment, out int destIndex))
+                {
+                    return false;
+                }
+
+                if (destIndex < 0 || destIndex > destParent.GetArrayLength())
+                {
+                    return false;
+                }
+
+                return GetMutableDoc(in fromParent).MovePropertyToArray(GetDocIndex(in fromParent), fromSegment, GetDocIndex(in destParent), destIndex);
+            }
+
+            if (destParent.ValueKind == JsonValueKind.Object)
+            {
+                return GetMutableDoc(in fromParent).MovePropertyToProperty(GetDocIndex(in fromParent), fromSegment, GetDocIndex(in destParent), destSegment);
+            }
+
+            return false;
+        }
+
+        return false;
     }
 
     private static bool TryApplyCopy(ref JsonElement.Mutable target, in JsonPatchDocument.CopyOperation op)

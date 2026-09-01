@@ -92,6 +92,14 @@ public ref struct ComplexValueBuilder
         {
             callbacks.AppendExternalElement(sourceDocument, sourceIndex, ref _parsedData);
         }
+        else if (ReferenceEquals(sourceDocument, _parentDocument) && sourceDocument is JsonDocument sameDocument)
+        {
+            // Capturing an element from the document this builder will be spliced back into:
+            // a cross-document capture would record row-index references into that document,
+            // which the splice's own row-table surgery invalidates (issue #954). Copy the row
+            // run by content instead; its byte-offset locations survive the surgery.
+            sameDocument.AppendSameDocumentElementRows(sourceIndex, ref _parsedData);
+        }
         else
         {
             sourceDocument.AppendElementToMetadataDb(sourceIndex, _parentDocument.Workspace, ref _parsedData);
