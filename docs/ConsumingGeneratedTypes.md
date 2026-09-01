@@ -50,8 +50,8 @@ are all boolean generates a nested `[Flags]` enum, each with implicit conversion
 `TryGetKnownValue` / `TryGetFlags` for external input, because the implicit conversions throw on data the
 schema would reject. Do not persist the enums' integer values; they follow schema ordering rules that can
 change when the schema evolves. See recipes
-[014-StringEnumerations](./ExampleRecipes/014-StringEnumerations/) and
-[043-FlagsEnums](./ExampleRecipes/043-FlagsEnums/).
+[014-StringEnumerations](../ExampleRecipes/014-StringEnumerations/) and
+[043-FlagsEnums](../ExampleRecipes/043-FlagsEnums/).
 
 ## An absent optional object property throws on nested access
 
