@@ -139,6 +139,111 @@ public readonly partial struct ActivityEvent
             public static ReadOnlySpan<byte> AdoptionInquiryUtf8 => Constants.Enum5;
         }
 
+        /// <summary>
+        /// A native enum for the well-known values of this type.
+        /// </summary>
+        /// <remarks>
+        /// Member ordinals follow the schema declaration order. Inserting or reordering values
+        /// in the schema renumbers the ordinals, so do not persist their integer values.
+        /// </remarks>
+        public enum KnownValues
+        {
+            /// <summary>
+            /// Corresponds to the JSON string "feeding".
+            /// </summary>
+            Feeding = 0,
+            /// <summary>
+            /// Corresponds to the JSON string "walk".
+            /// </summary>
+            Walk = 1,
+            /// <summary>
+            /// Corresponds to the JSON string "vet_visit".
+            /// </summary>
+            VetVisit = 2,
+            /// <summary>
+            /// Corresponds to the JSON string "photo_added".
+            /// </summary>
+            PhotoAdded = 3,
+            /// <summary>
+            /// Corresponds to the JSON string "adoption_inquiry".
+            /// </summary>
+            AdoptionInquiry = 4,
+        }
+
+        /// <summary>
+        /// Converts a <see cref="KnownValues"/> to an instance of this type.
+        /// </summary>
+        /// <param name="value">The well-known value from which to convert.</param>
+        /// <exception cref="InvalidOperationException">The value was not a defined member of the <see cref="KnownValues"/> enumeration.</exception>
+        public static implicit operator TypeEntity(KnownValues value)
+        {
+            return value switch
+            {
+                KnownValues.Feeding => Constants.EnumJson1,
+                KnownValues.Walk => Constants.EnumJson2,
+                KnownValues.VetVisit => Constants.EnumJson3,
+                KnownValues.PhotoAdded => Constants.EnumJson4,
+                KnownValues.AdoptionInquiry => Constants.EnumJson5,
+                _ => throw new InvalidOperationException(),
+            };
+        }
+
+        /// <summary>
+        /// Converts the value to its <see cref="KnownValues"/> equivalent.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+        public static implicit operator KnownValues(TypeEntity value)
+        {
+            if (value.TryGetKnownValue(out KnownValues result))
+            {
+                return result;
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+        /// </summary>
+        /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+        /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+        public bool TryGetKnownValue(out KnownValues result)
+        {
+            if (this.ValueEquals(Constants.Enum1))
+            {
+                result = KnownValues.Feeding;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum2))
+            {
+                result = KnownValues.Walk;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum3))
+            {
+                result = KnownValues.VetVisit;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum4))
+            {
+                result = KnownValues.PhotoAdded;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum5))
+            {
+                result = KnownValues.AdoptionInquiry;
+                return true;
+            }
+
+            result = default;
+            return false;
+        }
+
         public static partial class JsonSchema
         {
             private static EnumStringSet BuildEnumStringSet()
