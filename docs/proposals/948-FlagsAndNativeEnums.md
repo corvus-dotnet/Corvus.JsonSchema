@@ -38,10 +38,12 @@ grafting a flags API onto the JSON struct types.
    conformance results are unaffected. The TypeScript provider is also unaffected;
    its design pins enums as literal unions, and all naming work here stays in the
    C# layer (`CSharpMemberName`), not the shared `MemberName` machinery.
-6. **Ordinal and bit stability is documented, not enforced.** Enum ordinals and flag
-   bits follow schema declaration order; inserting a value mid-array renumbers them.
-   The wire format (strings, property names) is unaffected. Anyone persisting the raw
-   integer values is warned in the docs.
+6. **Ordinal and bit stability is documented, not enforced.** String-enum ordinals
+   follow schema declaration order; inserting a value mid-array renumbers them. Flag
+   bits follow the alphabetical order of the JSON property names (the model does not
+   preserve property declaration order), so reordering properties is stable but adding
+   or renaming one can reassign bits. The wire format (strings, property names) is
+   unaffected. Anyone persisting the raw integer values is warned in the docs.
 
 ## Feature A: pure string enum
 
@@ -138,12 +140,18 @@ The `.Mutable` variant mirrors the struct-to-enum operator and `TryGetFlags`.
   leaves it clear; extra properties are ignored; a present property with a
   non-boolean value counts as clear (schema validity is `EvaluateSchema()`'s job).
   A non-object value (including `Undefined` and `Null`) throws from the implicit
-  operator; `TryGetFlags` returns `false`.
-- `Flags` to `Source`: every declared property is written explicitly `true`/`false`.
-  Emit-all keeps the output deterministic and valid even when properties are
-  `required`.
+  operator; `TryGetFlags` returns `false`. The read goes through the value's
+  `JsonElement` conversion, because the generated `TryGetProperty` surface is not
+  emitted for `additionalProperties: false` objects.
+- `Flags` to `Source`: delegates to the property-parameter `Build(...)` overload,
+  writing every declared property explicitly `true`/`false`. Emit-all keeps the
+  output deterministic and valid even when properties are `required`. The operator
+  is therefore gated on that overload existing (`EmitsCreateParamsBuild`); a
+  `buildParametersThreshold` low enough to suppress it also suppresses the operator.
 - `None` is always emitted first as `0`. A schema property that mangles to `None`
   gets a suffixed member via the scope machinery.
+- Bits are assigned in the alphabetical JSON-name order of `PropertyDeclarations`
+  (declaration order is not preserved by the model); see decision 6.
 
 ### Usage after the change
 

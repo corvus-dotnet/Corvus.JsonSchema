@@ -42,6 +42,17 @@ section of [Performance Techniques](./PerformanceTechniques.md)).
 A `oneOf` schema generates a union. Read it with the generated `Match<TResult>(...)` (or the `IsX` / `AsX`
 accessors) rather than inspecting `ValueKind` by hand, so the compiler checks that you handled every case.
 
+### Native enums: `KnownValues` and `Flags`
+
+A pure string enum generates a nested native C# enum (`KnownValues`) and an object whose declared properties
+are all boolean generates a nested `[Flags]` enum, each with implicit conversions in both directions and a
+`Source` conversion for builders. Prefer these over hand-rolled mapping code; use the non-throwing
+`TryGetKnownValue` / `TryGetFlags` for external input, because the implicit conversions throw on data the
+schema would reject. Do not persist the enums' integer values; they follow schema ordering rules that can
+change when the schema evolves. See recipes
+[014-StringEnumerations](./ExampleRecipes/014-StringEnumerations/) and
+[043-FlagsEnums](./ExampleRecipes/043-FlagsEnums/).
+
 ## An absent optional object property throws on nested access
 
 An absent optional **object** property returns a default value whose parent is null, so navigating into it throws

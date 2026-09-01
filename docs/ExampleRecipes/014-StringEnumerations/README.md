@@ -73,6 +73,37 @@ Console.WriteLine(DescribeColor(blue));   // Output: The color of sky and ocean
 
 The compiler ensures you handle all possible enum values. If you add a new value to the schema and regenerate the code, any incomplete pattern matching will be caught at compile time.
 
+### The native C# enum (`KnownValues`)
+
+A pure string enum (two or more values, all strings) additionally generates a nested native C# enum, with one member per value and ordinals in schema order. Implicit conversions bridge both directions, so you can use ordinary C# `switch` expressions:
+
+```csharp
+Color.KnownValues known = red;
+string temperature = known switch
+{
+    Color.KnownValues.Red => "warm",
+    Color.KnownValues.Green or Color.KnownValues.Blue => "cool",
+    _ => "unknown",
+};
+
+// Converting back gives the pre-parsed constant, allocation free
+Color fromEnum = Color.KnownValues.Blue;
+```
+
+Builders accept the enum directly through its `Source` conversion, so `builder.AddItem(Color.KnownValues.Red)` and `Create(color: Color.KnownValues.Red)` both work.
+
+Converting a value that is not one of the well-known strings throws `InvalidOperationException`, because parsing does not validate. For external input, use the non-throwing form:
+
+```csharp
+using var parsedColor = ParsedJsonDocument<Color>.Parse("\"green\"");
+if (parsedColor.RootElement.TryGetKnownValue(out Color.KnownValues parsedKnown))
+{
+    Console.WriteLine($"Parsed: {parsedKnown}");
+}
+```
+
+Ordinals follow the schema declaration order. Inserting or reordering values in the schema renumbers them, so do not persist the integer values; the JSON wire format is unaffected. Emission is on by default and controlled by the `nativeEnums` option (see [Recipe 043](../043-FlagsEnums/) for the flags half and the off switch).
+
 ### Pattern matching with a context parameter
 
 When you need to pass state into your match functions, use the context parameter overload. This lets you use `static` lambdas (avoiding closure allocations) while still threading external state through to each handler:
@@ -141,6 +172,7 @@ dotnet run
 - [012-PatternMatching](../012-PatternMatching/) - Discriminated unions with `oneOf`
 - [013-PolymorphismWithDiscriminators](../013-PolymorphismWithDiscriminators/) - Using `const` for discrimination
 - [015-NumericEnumerations](../015-NumericEnumerations/) - Enumerations with numeric values and documentation
+- [043-FlagsEnums](../043-FlagsEnums/) - Native `[Flags]` enums from objects of boolean properties
 
 ## Frequently Asked Questions
 

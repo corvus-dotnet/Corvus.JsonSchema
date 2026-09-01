@@ -1,0 +1,10 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+        "betaFeatures": { "type": "boolean", "default": false },
+        "darkMode": { "type": "boolean", "default": false },
+        "telemetry": { "type": "boolean", "default": false }
+    },
+    "additionalProperties": false
+}
