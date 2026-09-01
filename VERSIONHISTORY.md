@@ -1,5 +1,17 @@
 # Version History
 
+## V5.5.4
+
+V5.5.4 adds native C# enums to the generated type surface: a pure string enum gains a nested `KnownValues` enum, and an object whose declared properties are all boolean gains a nested `[Flags]` enum, each with implicit conversions in both directions and direct builder support. Emission is on by default and controlled by a new `nativeEnums` option. There are no breaking changes.
+
+### New features
+
+- **Pure string enums generate a nested native C# `KnownValues` enum.** A schema whose constants are two or more strings (the `enum` keyword) now additionally generates a nested `public enum KnownValues`, with one member per value, named consistently with the existing `EnumValues` properties, and ordinals in schema declaration order. Converting from the enum returns the pre-parsed constant, allocation free, so ordinary C# `switch` expressions, comparisons, and assignments all work; converting a value to the enum throws `InvalidOperationException` for a value outside the enumeration (parsing does not validate), and the non-throwing `TryGetKnownValue` is generated on both the immutable and `Mutable` variants for external input. The builder `Source` also accepts the enum directly, so `Create(color: Color.KnownValues.Red)` and `builder.AddItem(Color.KnownValues.Red)` work without ceremony. Ordinals follow the schema's declaration order, so inserting or reordering values renumbers them; the JSON wire format is unaffected, but the integer values should not be persisted. See [#948](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/948).
+
+- **Objects of boolean properties generate a nested native C# `[Flags]` enum.** An object that declares between two and thirty-one properties, every one of them boolean and none constant-valued, with no `patternProperties` and `additionalProperties` absent or `false`, is detected as a flags shape and additionally generates a nested `[Flags] public enum Flags`, with `None = 0` and one bit per property assigned in alphabetical order of the JSON property names. Converting a value to the flags sets a bit for each property that is present with the value `true`; a property that is absent or `false` leaves its bit clear, extra properties are ignored, and a non-object value throws `InvalidOperationException`, with the non-throwing `TryGetFlags` generated on both variants. Converting flags to the builder `Source` writes every declared property explicitly with `true` or `false`, so the output is deterministic and satisfies any `required` properties, and native `|`, `&`, `~`, and `HasFlag` replace hand-rolled option handling. Bits follow alphabetical property-name order, so adding or renaming a property can reassign them; persist the JSON, not the integer values. See [#948](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/948).
+
+- **A `nativeEnums` option controls the emission.** Both features are on by default and purely additive. The generator config and the `corvusjson` CLI accept `nativeEnums` / `--nativeEnums`, and the source generator reads the `CorvusTextJsonNativeEnums` MSBuild property, with the values `None`, `StringEnums`, `FlagsObjects`, and `All` (the default) selecting which of the two native enum surfaces are emitted. See [#948](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/948).
+
 ## V5.5.3
 
 V5.5.3 fixes document corruption in the mutable builder's JSON Patch `move` and `copy` operations, and corrects `move` destination resolution to match RFC 6902. There are no new features and no breaking changes.

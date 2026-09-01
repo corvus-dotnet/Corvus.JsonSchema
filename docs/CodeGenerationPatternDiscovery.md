@@ -526,6 +526,25 @@ if (constants is not null)
 }
 ```
 
+### Native enum detection (string enums and flags objects)
+
+Two V5 predicates (in `src/Corvus.Text.Json.CodeGeneration/TypeDeclarationExtensions.cs`) detect shapes that additionally emit a native C# enum. Both are gated by the `nativeEnums` option (`EmitNativeStringEnums()` / `EmitNativeFlagsEnums()` metadata, default on).
+
+```csharp
+// Pure string enum: two or more constants, all JsonValueKind.String.
+// Emits a nested `KnownValues` enum plus conversions.
+bool isNativeStringEnum = typeDeclaration.HasNativeStringEnum();
+
+// Flags object: object core type only, 2..31 declared properties, every one of
+// them boolean and not constant-valued, no patternProperties, and
+// additionalProperties absent or false. Emits a nested `[Flags]` enum plus
+// conversions; bits follow the alphabetical JSON-name order of
+// PropertyDeclarations.
+bool isNativeFlagsEnum = typeDeclaration.HasNativeFlagsEnum();
+```
+
+The member lists are allocated once through the name-scope machinery and memoized on the `TypeDeclaration` (see `CodeGeneratorExtensions.NativeEnums.cs`), so the enum declaration, the conversions in the core and Mutable partials, and the `Source` operators all agree on member names. The flags `Source` operator additionally requires the property-parameter `Build(...)` overload (it delegates to it), so it is gated on `EmitsCreateParamsBuild`.
+
 ---
 
 ## Type Reduction

@@ -861,6 +861,8 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider
     /// <param name="excludeNonNullDefaulted">If true (and <paramref name="optionalAsNullable"/> is true), then optional properties that declare a non-null <c>default</c> are generated as non-nullable types.</param>
     /// <param name="buildParametersThreshold">The maximum estimated number of captured value slots an object type's <c>Build(...)</c> property-parameter overload may hold before it is omitted (and callers fall back to the delegate/context <c>Build</c> form). See <see cref="DefaultBuildParametersThreshold"/>.</param>
     /// <param name="formatModeOverrides">Per-format assertion mode overrides, keyed by format name (e.g. <c>date-time</c>). An override takes precedence over both the vocabulary's format-assertion behaviour and <paramref name="alwaysAssertFormat"/>.</param>
+    /// <param name="emitNativeStringEnums">If true (the default), a pure string-enum schema additionally generates a nested native C# enum with conversions.</param>
+    /// <param name="emitNativeFlagsEnums">If true (the default), an object schema whose declared properties are all boolean additionally generates a nested native C# <c>[Flags]</c> enum with conversions.</param>
     public class Options(
         string defaultNamespace,
         NamedType[]? namedTypes = null,
@@ -877,7 +879,9 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider
         CodeGenerationMode codeGenerationMode = CodeGenerationMode.TypeGeneration,
         bool excludeNonNullDefaulted = false,
         int buildParametersThreshold = 32,
-        IReadOnlyDictionary<string, FormatAssertionMode>? formatModeOverrides = null)
+        IReadOnlyDictionary<string, FormatAssertionMode>? formatModeOverrides = null,
+        bool emitNativeStringEnums = true,
+        bool emitNativeFlagsEnums = true)
     {
         /// <summary>
         /// The default value for <see cref="BuildParametersThreshold"/>.
@@ -949,6 +953,18 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider
         /// See <see cref="DefaultBuildParametersThreshold"/> for the meaning of the estimate.
         /// </remarks>
         internal int BuildParametersThreshold { get; } = buildParametersThreshold;
+
+        /// <summary>
+        /// Gets a value indicating whether a pure string-enum schema additionally generates
+        /// a nested native C# enum with conversions.
+        /// </summary>
+        internal bool EmitNativeStringEnums { get; } = emitNativeStringEnums;
+
+        /// <summary>
+        /// Gets a value indicating whether an object schema whose declared properties are all
+        /// boolean additionally generates a nested native C# <c>[Flags]</c> enum with conversions.
+        /// </summary>
+        internal bool EmitNativeFlagsEnums { get; } = emitNativeFlagsEnums;
 
         /// <summary>
         /// Gets the file extension (including the leading '.').

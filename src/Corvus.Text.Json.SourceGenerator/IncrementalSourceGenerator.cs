@@ -137,6 +137,22 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             excludeNonNullDefaulted = optionalAsNullableName == "NullOrUndefinedExceptNonNullDefaulted";
         }
 
+        bool emitNativeStringEnums = true;
+        bool emitNativeFlagsEnums = true;
+
+        if (source.GlobalOptions.TryGetValue("build_property.CorvusTextJsonNativeEnums", out string? nativeEnumsName))
+        {
+            (emitNativeStringEnums, emitNativeFlagsEnums) = nativeEnumsName switch
+            {
+                "None" => (false, false),
+                "StringEnums" => (true, false),
+                "FlagsObjects" => (false, true),
+                "All" => (true, true),
+                "" => (true, true),
+                _ => throw new InvalidOperationException($"Invalid build property value for 'CorvusTextJsonNativeEnums': '{nativeEnumsName}'. Try 'None', 'StringEnums', 'FlagsObjects' or 'All'."),
+            };
+        }
+
         bool addExplicitUsings = true;
 
         if (source.GlobalOptions.TryGetValue("build_property.CorvusTextJsonAddExplicitUsings", out string? addExplicitUsingsName))
@@ -232,7 +248,9 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             addExplicitUsings,
             useImplicitOperatorString,
             buildParametersThreshold,
-            formatModeOverrides);
+            formatModeOverrides,
+            emitNativeStringEnums,
+            emitNativeFlagsEnums);
     }
 
     private static void EmitGeneratorAttribute(IncrementalGeneratorInitializationContext initializationContext)
@@ -298,7 +316,9 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         bool addExplicitUsings,
         bool useImplicitOperatorString,
         int buildParametersThreshold,
-        IReadOnlyDictionary<string, FormatAssertionMode>? formatModeOverrides) : IGlobalOptions
+        IReadOnlyDictionary<string, FormatAssertionMode>? formatModeOverrides,
+        bool emitNativeStringEnums,
+        bool emitNativeFlagsEnums) : IGlobalOptions
     {
         private readonly List<CSharpLanguageProvider.NamedType> _namedTypes = [];
 
@@ -323,6 +343,10 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         public int BuildParametersThreshold { get; } = buildParametersThreshold;
 
         public IReadOnlyDictionary<string, FormatAssertionMode>? FormatModeOverrides { get; } = formatModeOverrides;
+
+        public bool EmitNativeStringEnums { get; } = emitNativeStringEnums;
+
+        public bool EmitNativeFlagsEnums { get; } = emitNativeFlagsEnums;
 
         public bool EmitEvaluator { get; set; }
 
@@ -366,7 +390,9 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
                 codeGenerationMode: EmitEvaluator ? CodeGenerationMode.Both : CodeGenerationMode.TypeGeneration,
                 excludeNonNullDefaulted: ExcludeNonNullDefaulted,
                 buildParametersThreshold: BuildParametersThreshold,
-                formatModeOverrides: FormatModeOverrides);
+                formatModeOverrides: FormatModeOverrides,
+                emitNativeStringEnums: EmitNativeStringEnums,
+                emitNativeFlagsEnums: EmitNativeFlagsEnums);
 
             return options;
         }

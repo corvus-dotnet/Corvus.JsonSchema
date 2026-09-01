@@ -61,6 +61,7 @@ The command is `corvusjson jsonschema` (registered in `CliAppFactory.cs`).
 - `--assertFormat` — whether format validation asserts globally (default: true). Takes a value: `--assertFormat false` gives annotation-only output where the vocabulary treats `format` as an annotation (e.g. 2020-12)
 - `--formatMode` — format assertion mode overrides as comma-separated entries (`mode` ∈ `assert`/`disable`/`warning`). `format=mode` targets one format (e.g. `date-time=disable,time=warning`); a bare `mode` (equivalently `*=mode`) sets the default for **all** formats across every draft — `--formatMode disable` is the way to get annotation-only output for draft-04/06/07 (whose vocabulary asserts `format`, so `--assertFormat false` alone doesn't). Repeatable; a per-format override beats the `*` default, `--assertFormat`, and the vocabulary. `warning` (string formats only) validates but always succeeds, emitting a `WARNING` annotation on mismatch
 - `--codeGenerationMode` — `TypeGeneration`, `SchemaEvaluationOnly`, or `Both`
+- `--nativeEnums` — native C# enum emission (V5 engine only, default `All`): `StringEnums` emits a nested `KnownValues` enum for pure string-enum schemas; `FlagsObjects` emits a nested `[Flags]` enum for objects whose declared properties are all boolean; `All` emits both; `None` emits neither
 
 > **IMPORTANT:** Never invent option names. Verify against `GenerateCommand.cs`.
 
@@ -79,6 +80,7 @@ All read from the source generator (`IncrementalSourceGenerator.cs` lines 111-19
 | `CorvusTextJsonAddExplicitUsings` | Add explicit using directives | true |
 | `CorvusTextJsonUseImplicitOperatorString` | Generate implicit string conversion operators | true |
 | `CorvusTextJsonUseOptionalNameHeuristics` | Enable optional naming heuristics | true |
+| `CorvusTextJsonNativeEnums` | Native C# enum emission: `None`, `StringEnums`, `FlagsObjects`, `All` | All |
 | `CorvusTextJsonAlwaysAssertFormat` | Assert format validation | true |
 | `CorvusTextJsonFormatMode` | Per-format mode overrides as `;`/`,`-separated `format=mode` pairs (`assert`/`disable`/`warning`) | — |
 | `CorvusTextJsonDefaultAccessibility` | `Public` or `Internal` | Public |

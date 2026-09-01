@@ -45,6 +45,7 @@
     <Compile Include="CodeGeneratorExtensions.Conversions.cs" />
     <Compile Include="CodeGeneratorExtensions.Documentation.cs" />
     <Compile Include="CodeGeneratorExtensions.MemberNames.cs" />
+    <Compile Include="CodeGeneratorExtensions.NativeEnums.cs" />
     <Compile Include="CodeGeneratorExtensions.cs" />
     <Compile Include="ConditionalCodeSpecification.cs" />
     <Compile Include="CSharpLanguageProvider.cs" />
