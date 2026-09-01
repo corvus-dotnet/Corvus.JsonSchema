@@ -816,7 +816,9 @@ public static class JsonPatchExtensions
                 if (fromParent.ValueKind == JsonValueKind.Array &&
                     TryGetDestinationAncestorAdjustment(fromUtf8, fromSegment, pathUtf8, out int adjSegStart, out int adjSegLength, out int adjustedIndex))
                 {
-                    int maxAdjustedLength = pathUtf8.Length + 11;
+                    // The rewrite replaces the segment's decimal index k with k + 1, which has at
+                    // most one digit more than k, so the adjusted path grows by at most one byte.
+                    int maxAdjustedLength = pathUtf8.Length + 1;
                     byte[]? rentedAdjustedPath = null;
                     Span<byte> adjustedPath = maxAdjustedLength <= StackallocByteThreshold
                         ? stackalloc byte[StackallocByteThreshold]

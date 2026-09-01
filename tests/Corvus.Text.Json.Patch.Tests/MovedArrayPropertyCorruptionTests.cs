@@ -64,6 +64,19 @@ public class MovedArrayPropertyCorruptionTests
     }
 
     /// <summary>
+    /// The destination-segment rewrite replaces index k with k + 1; crossing a digit
+    /// boundary (9 becomes 10) grows the pointer by one byte, the maximum possible.
+    /// </summary>
+    [TestMethod]
+    public void MoveArrayItem_DestinationSegmentGainsADigit_ResolvesAfterRemoval()
+    {
+        AssertPatchProducesReadableRoot(
+            /*lang=json*/ """["v",0,1,2,3,4,5,6,7,8,{"b":9}]""",
+            /*lang=json*/ """[{"op":"move","from":"/0","path":"/9/x"}]""",
+            /*lang=json*/ """[0,1,2,3,4,5,6,7,8,{"b":9,"x":"v"}]""");
+    }
+
+    /// <summary>
     /// The same rename, applied to a builder that PARSED the document directly rather
     /// than importing it from a ParsedJsonDocument.
     /// </summary>
