@@ -1,0 +1,102 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+        "flag01": {
+            "type": "boolean"
+        },
+        "flag02": {
+            "type": "boolean"
+        },
+        "flag03": {
+            "type": "boolean"
+        },
+        "flag04": {
+            "type": "boolean"
+        },
+        "flag05": {
+            "type": "boolean"
+        },
+        "flag06": {
+            "type": "boolean"
+        },
+        "flag07": {
+            "type": "boolean"
+        },
+        "flag08": {
+            "type": "boolean"
+        },
+        "flag09": {
+            "type": "boolean"
+        },
+        "flag10": {
+            "type": "boolean"
+        },
+        "flag11": {
+            "type": "boolean"
+        },
+        "flag12": {
+            "type": "boolean"
+        },
+        "flag13": {
+            "type": "boolean"
+        },
+        "flag14": {
+            "type": "boolean"
+        },
+        "flag15": {
+            "type": "boolean"
+        },
+        "flag16": {
+            "type": "boolean"
+        },
+        "flag17": {
+            "type": "boolean"
+        },
+        "flag18": {
+            "type": "boolean"
+        },
+        "flag19": {
+            "type": "boolean"
+        },
+        "flag20": {
+            "type": "boolean"
+        },
+        "flag21": {
+            "type": "boolean"
+        },
+        "flag22": {
+            "type": "boolean"
+        },
+        "flag23": {
+            "type": "boolean"
+        },
+        "flag24": {
+            "type": "boolean"
+        },
+        "flag25": {
+            "type": "boolean"
+        },
+        "flag26": {
+            "type": "boolean"
+        },
+        "flag27": {
+            "type": "boolean"
+        },
+        "flag28": {
+            "type": "boolean"
+        },
+        "flag29": {
+            "type": "boolean"
+        },
+        "flag30": {
+            "type": "boolean"
+        },
+        "flag31": {
+            "type": "boolean"
+        },
+        "flag32": {
+            "type": "boolean"
+        }
+    }
+}

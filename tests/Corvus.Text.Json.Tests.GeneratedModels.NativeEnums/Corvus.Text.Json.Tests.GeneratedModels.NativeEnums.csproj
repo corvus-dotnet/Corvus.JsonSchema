@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net9.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>Preview</LangVersion>
+    <NoWarn>$(NoWarn);CS8500;CS8969;CS8618;IDE0065;IDE0290;IDE0079;IDE0130;IDE1006;IDE0130</NoWarn>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="native-enum-color-2020-12.json" />
+    <AdditionalFiles Include="native-enum-case-collision-2020-12.json" />
+    <AdditionalFiles Include="native-enum-single-2020-12.json" />
+    <AdditionalFiles Include="native-enum-mixed-2020-12.json" />
+    <AdditionalFiles Include="native-enum-object-2020-12.json" />
+    <AdditionalFiles Include="flags-options-2020-12.json" />
+    <AdditionalFiles Include="flags-parent-2020-12.json" />
+    <AdditionalFiles Include="flags-with-required-2020-12.json" />
+    <AdditionalFiles Include="flags-none-collision-2020-12.json" />
+    <AdditionalFiles Include="not-flags-mixed-2020-12.json" />
+    <AdditionalFiles Include="not-flags-single-2020-12.json" />
+    <AdditionalFiles Include="not-flags-pattern-2020-12.json" />
+    <AdditionalFiles Include="not-flags-open-2020-12.json" />
+    <AdditionalFiles Include="not-flags-const-2020-12.json" />
+    <AdditionalFiles Include="not-flags-too-many-2020-12.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.SourceGenerator\Corvus.Text.Json.SourceGenerator.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+  </ItemGroup>
+
+</Project>

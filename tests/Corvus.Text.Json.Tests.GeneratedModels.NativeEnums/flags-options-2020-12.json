@@ -1,0 +1,10 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+        "option1": { "type": "boolean", "default": false },
+        "option2": { "type": "boolean", "default": false },
+        "some-other-option": { "type": "boolean" }
+    },
+    "additionalProperties": false
+}

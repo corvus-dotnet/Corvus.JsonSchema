@@ -59,6 +59,7 @@ public sealed class MutableCorePartial : ICodeFileBuilder
                         .PushBuilderClassNameAndScope()
                         .PushSourceClassNameAndScope()
                         .PushConstantsClassNameAndScope()
+                        .PushKnownValuesEnumNameAndScope()
                         .PushMutableClassNameAndScope()
 
                         // Begin the mutable part of the declaration
@@ -112,10 +113,12 @@ public sealed class MutableCorePartial : ICodeFileBuilder
                             .AppendIJsonElementExplicitImplementation()
                             .AppendMutableCloneAndFreezeMethods(typeDeclaration)
                             .AppendMatchMethods(typeDeclaration, forMutable: true)
+                            .AppendKnownValuesConversions(typeDeclaration, forMutable: true)
                             .AppendTryGetAsCompositionTypeMethods(typeDeclaration, forMutable: true)
                         .EndClassStructOrEnumDeclaration()
                         .AppendSourceAndBuilder(typeDeclaration)
                         .PopMutableClassNameAndScope()
+                        .PopKnownValuesEnumNameAndScope()
                         .PopConstantsClassNameAndScope()
                         .PopSourceClassNameAndScope()
                         .PopBuilderClassNameAndScope()

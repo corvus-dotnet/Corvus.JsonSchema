@@ -4641,6 +4641,14 @@ internal static partial class CodeGeneratorExtensions
             }
         }
 
+        if (typeDeclaration.HasNativeStringEnum())
+        {
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
+                .AppendLineIndent("public static implicit operator ", generator.SourceClassName(), "(", generator.KnownValuesEnumName(), " value) => (", typeDeclaration.DotnetTypeName(), ")value;");
+        }
+
         // Implicit conversion from ReadOnlySpan<T> for numeric array types
         HashSet<string> seenArrayConversions = new(StringComparer.Ordinal);
         generator.AppendNumericArrayImplicitOperator(typeDeclaration, seenArrayConversions);

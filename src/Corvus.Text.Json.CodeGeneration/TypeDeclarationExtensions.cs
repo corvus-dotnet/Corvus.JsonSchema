@@ -11,6 +11,7 @@ using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Text.Json;
 using Corvus.Json.CodeGeneration;
 using Corvus.Json.CodeGeneration.Keywords;
 
@@ -640,6 +641,43 @@ public static class TypeDeclarationExtensions
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this type declaration generates a nested native C# enum
+    /// for its well-known string values.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the type is a pure string enum (two or more constants,
+    /// all strings) and native string enum emission is enabled.</returns>
+    public static bool HasNativeStringEnum(this TypeDeclaration typeDeclaration)
+    {
+        if (!typeDeclaration.EmitNativeStringEnums())
+        {
+            return false;
+        }
+
+        if (typeDeclaration.AnyOfConstantValues() is not IReadOnlyDictionary<IAnyOfConstantValidationKeyword, JsonElement[]> anyOfConstants ||
+            anyOfConstants.Count == 0)
+        {
+            return false;
+        }
+
+        int count = 0;
+        foreach (KeyValuePair<IAnyOfConstantValidationKeyword, JsonElement[]> kvp in anyOfConstants)
+        {
+            foreach (JsonElement value in kvp.Value)
+            {
+                if (value.ValueKind != JsonValueKind.String)
+                {
+                    return false;
+                }
+
+                count++;
+            }
+        }
+
+        return count >= 2;
     }
 
     /// <summary>

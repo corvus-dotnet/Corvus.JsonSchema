@@ -1,0 +1,9 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+        "enabled": { "type": "boolean" },
+        "verbose": { "type": "boolean" }
+    },
+    "required": [ "enabled" ]
+}
