@@ -681,6 +681,63 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
+    /// Gets a value indicating whether this type declaration generates a nested native C#
+    /// <c>[Flags]</c> enum over its boolean properties.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the type is an object whose declared properties are all
+    /// boolean (two to thirty-one of them, none constant-valued, with no pattern properties and
+    /// additional properties absent or <c>false</c>) and native flags enum emission is enabled.</returns>
+    public static bool HasNativeFlagsEnum(this TypeDeclaration typeDeclaration)
+    {
+        if (!typeDeclaration.EmitNativeFlagsEnums())
+        {
+            return false;
+        }
+
+        if (typeDeclaration.ImpliedCoreTypesOrAny() != CoreTypes.Object ||
+            !typeDeclaration.HasPropertyDeclarations)
+        {
+            return false;
+        }
+
+        IReadOnlyList<PropertyDeclaration> properties = typeDeclaration.PropertyDeclarations;
+        if (properties.Count < 2 || properties.Count > 31)
+        {
+            return false;
+        }
+
+        if (typeDeclaration.HasLocalPatternProperties())
+        {
+            return false;
+        }
+
+        if (HasOpenFallbackPropertyType(typeDeclaration.FallbackObjectPropertyType()) ||
+            HasOpenFallbackPropertyType(typeDeclaration.LocalEvaluatedPropertyType()) ||
+            HasOpenFallbackPropertyType(typeDeclaration.LocalAndAppliedEvaluatedPropertyType()))
+        {
+            return false;
+        }
+
+        foreach (PropertyDeclaration property in properties)
+        {
+            TypeDeclaration reduced = property.ReducedPropertyType;
+            if (reduced.ImpliedCoreTypesOrAny() != CoreTypes.Boolean ||
+                reduced.SingleConstantValue().ValueKind != JsonValueKind.Undefined)
+            {
+                return false;
+            }
+        }
+
+        return true;
+
+        static bool HasOpenFallbackPropertyType(FallbackObjectPropertyType? fallbackType)
+        {
+            return fallbackType?.ReducedType.IsBuiltInJsonNotAnyType() == false;
+        }
+    }
+
+    /// <summary>
     /// Gets the maximum estimated number of captured value slots an object type's
     /// <c>Build(...)</c> property-parameter overload may hold before it is omitted.
     /// </summary>

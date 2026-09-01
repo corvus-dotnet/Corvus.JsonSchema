@@ -296,6 +296,7 @@
     <Compile Include="EnumStringSetValidationTests.cs" />
     <Compile Include="CaseInsensitiveEnumTests.cs" />
     <Compile Include="NativeEnumTests.cs" />
+    <Compile Include="NativeFlagsEnumTests.cs" />
     <Compile Include="RefTupleTests.cs" />
     <Compile Include="ReservedPropertyNameTests.cs" />
     <Compile Include="StringMaxLengthEnumTests.cs" />
