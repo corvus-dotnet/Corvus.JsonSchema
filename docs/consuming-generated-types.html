@@ -299,6 +299,9 @@
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api20-client.html">Open Api20Client</a>
                             </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/flags-enums.html">Flags Enums from Boolean Objects</a>
+                            </li>
                 </ul>
             </div>
         </div>
@@ -335,6 +338,15 @@ section of <a href="/Corvus.JsonSchema/docs/performance-techniques.html">Perform
 <h3 id="discriminated-unions-match">Discriminated unions: <code>Match</code></h3>
 <p>A <code>oneOf</code> schema generates a union. Read it with the generated <code>Match&lt;TResult&gt;(...)</code> (or the <code>IsX</code> / <code>AsX</code>
 accessors) rather than inspecting <code>ValueKind</code> by hand, so the compiler checks that you handled every case.</p>
+<h3 id="native-enums-knownvalues-and-flags">Native enums: <code>KnownValues</code> and <code>Flags</code></h3>
+<p>A pure string enum generates a nested native C# enum (<code>KnownValues</code>) and an object whose declared properties
+are all boolean generates a nested <code>[Flags]</code> enum, each with implicit conversions in both directions and a
+<code>Source</code> conversion for builders. Prefer these over hand-rolled mapping code; use the non-throwing
+<code>TryGetKnownValue</code> / <code>TryGetFlags</code> for external input, because the implicit conversions throw on data the
+schema would reject. Do not persist the enums' integer values; they follow schema ordering rules that can
+change when the schema evolves. See recipes
+<a href="/Corvus.JsonSchema/examples/string-enumerations.html">014-StringEnumerations</a> and
+<a href="/Corvus.JsonSchema/examples/flags-enums.html">043-FlagsEnums</a>.</p>
 <h2 id="an-absent-optional-object-property-throws-on-nested-access">An absent optional object property throws on nested access</h2>
 <p>An absent optional <strong>object</strong> property returns a default value whose parent is null, so navigating into it throws
 a <code>NullReferenceException</code>. Gate nested access on the value's kind, which covers both the absent case and an

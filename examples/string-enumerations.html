@@ -307,6 +307,9 @@
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api20-client.html">Open Api20Client</a>
                             </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/flags-enums.html">Flags Enums from Boolean Objects</a>
+                            </li>
                 </ul>
             </div>
         </div>
@@ -378,6 +381,28 @@ Console.WriteLine(DescribeColor(green));  // Output: The color of nature and gro
 Console.WriteLine(DescribeColor(blue));   // Output: The color of sky and ocean
 </code></pre>
 <p>The compiler ensures you handle all possible enum values. If you add a new value to the schema and regenerate the code, any incomplete pattern matching will be caught at compile time.</p>
+<h3 id="the-native-c-enum-knownvalues">The native C# enum (<code>KnownValues</code>)</h3>
+<p>A pure string enum (two or more values, all strings) additionally generates a nested native C# enum, with one member per value and ordinals in schema order. Implicit conversions bridge both directions, so you can use ordinary C# <code>switch</code> expressions:</p>
+<pre><code class="language-csharp">Color.KnownValues known = red;
+string temperature = known switch
+{
+    Color.KnownValues.Red =&gt; &quot;warm&quot;,
+    Color.KnownValues.Green or Color.KnownValues.Blue =&gt; &quot;cool&quot;,
+    _ =&gt; &quot;unknown&quot;,
+};
+
+// Converting back gives the pre-parsed constant, allocation free
+Color fromEnum = Color.KnownValues.Blue;
+</code></pre>
+<p>Builders accept the enum directly through its <code>Source</code> conversion, so <code>builder.AddItem(Color.KnownValues.Red)</code> and <code>Create(color: Color.KnownValues.Red)</code> both work.</p>
+<p>Converting a value that is not one of the well-known strings throws <code>InvalidOperationException</code>, because parsing does not validate. For external input, use the non-throwing form:</p>
+<pre><code class="language-csharp">using var parsedColor = ParsedJsonDocument&lt;Color&gt;.Parse(&quot;\&quot;green\&quot;&quot;);
+if (parsedColor.RootElement.TryGetKnownValue(out Color.KnownValues parsedKnown))
+{
+    Console.WriteLine($&quot;Parsed: {parsedKnown}&quot;);
+}
+</code></pre>
+<p>Ordinals follow the schema declaration order. Inserting or reordering values in the schema renumbers them, so do not persist the integer values; the JSON wire format is unaffected. Emission is on by default and controlled by the <code>nativeEnums</code> option (see <a href="/Corvus.JsonSchema/examples/flags-enums.html">Recipe 043</a> for the flags half and the off switch).</p>
 <h3 id="pattern-matching-with-a-context-parameter">Pattern matching with a context parameter</h3>
 <p>When you need to pass state into your match functions, use the context parameter overload. This lets you use <code>static</code> lambdas (avoiding closure allocations) while still threading external state through to each handler:</p>
 <pre><code class="language-csharp">string ConvertToRgb(in Color color, double brightness)
@@ -435,6 +460,7 @@ dotnet run
 <li><a href="/Corvus.JsonSchema/examples/pattern-matching.html">012-PatternMatching</a> - Discriminated unions with <code>oneOf</code></li>
 <li><a href="/Corvus.JsonSchema/examples/polymorphism-with-discriminators.html">013-PolymorphismWithDiscriminators</a> - Using <code>const</code> for discrimination</li>
 <li><a href="/Corvus.JsonSchema/examples/numeric-enumerations.html">015-NumericEnumerations</a> - Enumerations with numeric values and documentation</li>
+<li><a href="/Corvus.JsonSchema/examples/flags-enums.html">043-FlagsEnums</a> - Native <code>[Flags]</code> enums from objects of boolean properties</li>
 </ul>
 <h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
 <h3 id="q-what-happens-if-i-parse-a-value-not-in-the-enum">Q: What happens if I parse a value not in the enum?</h3>

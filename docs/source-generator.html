@@ -299,6 +299,9 @@
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/examples/open-api20-client.html">Open Api20Client</a>
                             </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/examples/flags-enums.html">Flags Enums from Boolean Objects</a>
+                            </li>
                 </ul>
             </div>
         </div>
@@ -475,6 +478,11 @@ public readonly partial struct PhoneNumber;
 <td><code>CorvusTextJsonUseOptionalNameHeuristics</code></td>
 <td><code>true</code></td>
 <td>When <code>true</code>, applies naming heuristics to infer idiomatic C# names from JSON Schema property names and definitions.</td>
+</tr>
+<tr>
+<td><code>CorvusTextJsonNativeEnums</code></td>
+<td><code>All</code></td>
+<td>Controls emission of native C# enums on generated types. <code>StringEnums</code> emits a nested <code>KnownValues</code> enum (with conversions) for pure string-enum schemas; <code>FlagsObjects</code> emits a nested <code>[Flags]</code> enum (with conversions) for objects whose declared properties are all boolean; <code>All</code> emits both; <code>None</code> emits neither.</td>
 </tr>
 <tr>
 <td><code>CorvusTextJsonDisabledNamingHeuristics</code></td>
