@@ -135,7 +135,7 @@ public class MovedArrayPropertyCorruptionTests
         AssertMatchesReference(ReporterDocumentJson, ReporterPatchJson, serialized);
     }
 
-    private static void AssertMatchesReference(string docJson, string patchJson, string actualJson)
+    private static void AssertMatchesReference(string docJson, string patchJson, string actualJson, bool normalizeNumbers = false)
     {
         System.Text.Json.Nodes.JsonNode? reference = System.Text.Json.Nodes.JsonNode.Parse(docJson);
         foreach (System.Text.Json.Nodes.JsonNode? op in System.Text.Json.Nodes.JsonNode.Parse(patchJson)!.AsArray())
@@ -145,9 +145,52 @@ public class MovedArrayPropertyCorruptionTests
                 $"Reference implementation must accept operation {op.ToJsonString()}.");
         }
 
+        System.Text.Json.Nodes.JsonNode? actual = System.Text.Json.Nodes.JsonNode.Parse(actualJson);
+        if (normalizeNumbers)
+        {
+            reference = NormalizeNumbers(reference);
+            actual = NormalizeNumbers(actual);
+        }
+
         string expected = reference?.ToJsonString() ?? "null";
-        string actualCanonical = System.Text.Json.Nodes.JsonNode.Parse(actualJson)?.ToJsonString() ?? "null";
+        string actualCanonical = actual?.ToJsonString() ?? "null";
         Assert.AreEqual(expected, actualCanonical, "The patched document must match the reference implementation.");
+    }
+
+    /// <summary>
+    /// Rewrites every number through the framework's own numeric formatting, so documents that
+    /// took different textual routes to the same values compare equal. The YAML conversion
+    /// formats non-integer scalars from <see cref="double"/>, and .NET Framework produces a
+    /// different (longer, equally round-trippable) representation than .NET's shortest form,
+    /// so the YAML-sourced document's number text differs per framework from the JSON source.
+    /// </summary>
+    private static System.Text.Json.Nodes.JsonNode? NormalizeNumbers(System.Text.Json.Nodes.JsonNode? node)
+    {
+        switch (node)
+        {
+            case System.Text.Json.Nodes.JsonObject obj:
+                var normalizedObject = new System.Text.Json.Nodes.JsonObject();
+                foreach (KeyValuePair<string, System.Text.Json.Nodes.JsonNode?> property in obj)
+                {
+                    normalizedObject[property.Key] = NormalizeNumbers(property.Value);
+                }
+
+                return normalizedObject;
+            case System.Text.Json.Nodes.JsonArray array:
+                var normalizedArray = new System.Text.Json.Nodes.JsonArray();
+                foreach (System.Text.Json.Nodes.JsonNode? item in array)
+                {
+                    normalizedArray.Add(NormalizeNumbers(item));
+                }
+
+                return normalizedArray;
+            case System.Text.Json.Nodes.JsonValue value when value.TryGetValue(out long integer):
+                return System.Text.Json.Nodes.JsonValue.Create(integer);
+            case System.Text.Json.Nodes.JsonValue value when value.TryGetValue(out double number):
+                return System.Text.Json.Nodes.JsonValue.Create(number);
+            default:
+                return node is null ? null : System.Text.Json.Nodes.JsonNode.Parse(node.ToJsonString());
+        }
     }
 
     /// <summary>
@@ -196,8 +239,11 @@ public class MovedArrayPropertyCorruptionTests
         bool result = JsonPatchExtensions.TryValidateAndApplyPatch(ref root, in patchDoc);
         Assert.IsTrue(result, "Patch application should succeed.");
 
+        // The YAML conversion reformats non-integer numbers from double, and the two
+        // frameworks produce different (numerically identical) textual forms, so the
+        // comparison normalizes number text on both sides.
         string serialized = builder.RootElement.ToString();
-        AssertMatchesReference(ReporterDocumentJson, ReporterPatchJson, serialized);
+        AssertMatchesReference(ReporterDocumentJson, ReporterPatchJson, serialized, normalizeNumbers: true);
     }
 
     /// <summary>
