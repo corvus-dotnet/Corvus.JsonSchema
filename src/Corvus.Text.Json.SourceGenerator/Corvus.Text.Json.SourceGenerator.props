@@ -10,5 +10,6 @@
     <CompilerVisibleProperty Include="CorvusTextJsonAddExplicitUsings" />
     <CompilerVisibleProperty Include="CorvusTextJsonUseImplicitOperatorString" />
     <CompilerVisibleProperty Include="CorvusTextJsonBuildParametersThreshold" />
+    <CompilerVisibleProperty Include="CorvusTextJsonNativeEnums" />
   </ItemGroup>
 </Project>

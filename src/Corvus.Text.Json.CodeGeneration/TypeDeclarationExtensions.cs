@@ -69,6 +69,8 @@ public static class TypeDeclarationExtensions
     private const string FullyQualifiedDotnetTypeNameKey = "CSharp_LanguageProvider_FullyQualifiedDotnetTypeName";
     private const string OptionalAsNullableKey = "CSharp_LanguageProvider_OptionalAsNullable";
     private const string ExcludeNonNullDefaultedKey = "CSharp_LanguageProvider_ExcludeNonNullDefaulted";
+    private const string EmitNativeStringEnumsKey = "CSharp_LanguageProvider_EmitNativeStringEnums";
+    private const string EmitNativeFlagsEnumsKey = "CSharp_LanguageProvider_EmitNativeFlagsEnums";
     private const string BuildParametersThresholdKey = "CSharp_LanguageProvider_BuildParametersThreshold";
     private const string ParentKey = "CSharp_LanguageProvider_Parent";
     private const string PreferredDotnetNumericTypeNameKey = "CSharp_LanguageProvider_PreferredDotnetNumericTypeName";
@@ -607,6 +609,40 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
+    /// Gets a value indicating whether a pure string-enum schema additionally generates
+    /// a nested native C# enum with conversions.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the nested native enum should be generated.</returns>
+    public static bool EmitNativeStringEnums(this TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.TryGetMetadata(EmitNativeStringEnumsKey, out bool? emitNativeStringEnums) &&
+            emitNativeStringEnums is bool value)
+        {
+            return value;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether an object schema whose declared properties are all
+    /// boolean additionally generates a nested native C# <c>[Flags]</c> enum with conversions.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the nested native <c>[Flags]</c> enum should be generated.</returns>
+    public static bool EmitNativeFlagsEnums(this TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.TryGetMetadata(EmitNativeFlagsEnumsKey, out bool? emitNativeFlagsEnums) &&
+            emitNativeFlagsEnums is bool value)
+        {
+            return value;
+        }
+
+        return true;
+    }
+
+    /// <summary>
     /// Gets the maximum estimated number of captured value slots an object type's
     /// <c>Build(...)</c> property-parameter overload may hold before it is omitted.
     /// </summary>
@@ -694,6 +730,8 @@ public static class TypeDeclarationExtensions
         typeDeclaration.SetMetadata(FormatModeOverridesKey, options.FormatModeOverrides);
         typeDeclaration.SetMetadata(OptionalAsNullableKey, options.OptionalAsNullable);
         typeDeclaration.SetMetadata(ExcludeNonNullDefaultedKey, options.ExcludeNonNullDefaulted);
+        typeDeclaration.SetMetadata(EmitNativeStringEnumsKey, options.EmitNativeStringEnums);
+        typeDeclaration.SetMetadata(EmitNativeFlagsEnumsKey, options.EmitNativeFlagsEnums);
         typeDeclaration.SetMetadata(BuildParametersThresholdKey, options.BuildParametersThreshold);
         typeDeclaration.SetMetadata(UseImplicitOperatorStringKey, options.UseImplicitOperatorString);
         typeDeclaration.SetMetadata(AddExplicitUsingsKey, options.AddExplicitUsings);

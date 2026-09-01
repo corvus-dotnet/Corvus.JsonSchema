@@ -82,6 +82,10 @@
         "buildParametersThreshold": {
             "type": "integer",
             "description": "The maximum estimated number of captured value slots an object type's property-parameter Build(...) overload may hold before it is omitted (and callers fall back to the delegate/context Build form). Defaults to 32 when unset."
+        },
+        "nativeEnums": {
+            "$ref": "#/$defs/nativeEnums",
+            "description": "Controls emission of native C# enums on generated types (V5 engine only). StringEnums emits a nested enum for pure string-enum schemas; FlagsObjects emits a nested [Flags] enum for objects whose declared properties are all boolean; All (the default) emits both; None emits neither."
         }
     },
     "$defs": {
@@ -147,6 +151,11 @@
             "type": "string",
             "enum": [ "None", "NullOrUndefined", "NullOrUndefinedExceptNonNullDefaulted" ],
             "default":  "None"
+        },
+        "nativeEnums": {
+            "type": "string",
+            "enum": [ "None", "StringEnums", "FlagsObjects", "All" ],
+            "default": "All"
         },
         "useSchema": {
             "type": "string",

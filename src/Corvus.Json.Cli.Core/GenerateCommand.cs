@@ -96,6 +96,11 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [DefaultValue(OptionalAsNullable.None)]
         public OptionalAsNullable OptionalAsNullable { get; init; }
 
+        [CommandOption("--nativeEnums")]
+        [Description("Controls emission of native C# enums on generated types (V5 engine only). StringEnums emits a nested enum for pure string-enum schemas; FlagsObjects emits a nested [Flags] enum for objects whose declared properties are all boolean; All (the default) emits both; None emits neither.")]
+        [DefaultValue(NativeEnums.All)]
+        public NativeEnums NativeEnums { get; init; }
+
         [CommandOption("--useImplicitOperatorString")]
         [Description("If true, conversion operators to string are implicit, rather than explicit.")]
         [DefaultValue(false)]
@@ -158,6 +163,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             disabledNamingHeuristics: settings.DisableNamingHeuristic is string[] disabledItems ? JsonArray.FromRange(disabledItems) : default(GeneratorConfig.DisabledNamingHeuristicsEntityArray?),
             disableOptionalNameHeuristics: settings.DisableOptionalNamingHeuristics,
             optionalAsNullable: settings.OptionalAsNullable.ToString(),
+            nativeEnums: settings.NativeEnums.ToString(),
             outputMapFile: settings.OutputMapFile.AsNullableJsonString(),
             outputPath: settings.OutputPath.AsNullableJsonString(),
             useSchema: settings.UseSchema != SchemaVariant.NotSpecified ? (GeneratorConfig.UseSchema)settings.UseSchema.ToString() : default(GeneratorConfig.UseSchema?),
