@@ -81,6 +81,9 @@
   <data name="WorkflowIdNotPermitted" xml:space="preserve">
     <value>The workflow id '{0}' is not a permitted access-request target.</value>
   </data>
+  <data name="WorkflowReachRuleNotIntact" xml:space="preserve">
+    <value>The per-workflow reach rule '{0}' is missing or is not the workflow's own; the grant is refused.</value>
+  </data>
   <data name="NoGrantableScopesApproval" xml:space="preserve">
     <value>None of the requested scopes is grantable (an approval may grant only run access).</value>
   </data>

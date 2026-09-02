@@ -92,7 +92,9 @@ This is the safety-critical rule of the Grants surface. The decision (split by b
 server-side self-elevation guard) is [ADR 0014](../adr/0014-direct-grant-versus-request-only.md): a standing
 group or policy binding (a group or role claim, typically read reach) is authored **directly** by an
 administrator, while per-person elevation (write or purge reach scoped to a `sub`) stays **request then approve**
-only. The rationale is separation of duties, the audit chain, and no ambient privilege.
+only. The rationale is separation of duties, the audit chain, and no ambient privilege. The server-side guard
+refuses any binding that confers reach or a capability scope on the author themselves, so an administrator
+authors standing policy for groups they are not a member of, and anything for their own goes through a request.
 
 The residual detail this guide owns is the **picker-to-claim mapping under multiple semi-trusted identity
 providers**, which is why the split above is not just policy but a correctness requirement:

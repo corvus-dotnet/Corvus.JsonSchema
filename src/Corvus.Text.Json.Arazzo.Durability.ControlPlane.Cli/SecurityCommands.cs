@@ -167,7 +167,7 @@ internal sealed class SecurityRuleCreateCommand : AsyncCommand<SecurityRuleCreat
                 b.Create(expression: settings.Expression, name: settings.Name, description: description);
             });
             await using CreateSecurityRuleResponse response = await client.CreateSecurityRuleAsync(body, cancellationToken);
-            return response.MatchResult(rule => Output.Print(rule.ToString()), Output.Problem, Output.Problem, Output.Unexpected);
+            return response.MatchResult(rule => Output.Print(rule.ToString()), Output.Problem, Output.Problem, Output.Problem, Output.Unexpected);
         }
     }
 }
@@ -186,7 +186,7 @@ internal sealed class SecurityRuleUpdateCommand : AsyncCommand<SecurityRuleUpdat
                 b.Create(expression: settings.Expression, description: description);
             });
             await using UpdateSecurityRuleResponse response = await client.UpdateSecurityRuleAsync(settings.RuleName, body, cancellationToken);
-            return response.MatchResult(rule => Output.Print(rule.ToString()), Output.Problem, Output.Problem, Output.Unexpected);
+            return response.MatchResult(rule => Output.Print(rule.ToString()), Output.Problem, Output.Problem, Output.Problem, Output.Unexpected);
         }
     }
 }

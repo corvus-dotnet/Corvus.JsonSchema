@@ -23,7 +23,9 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// deployment allowlist (run access only — <c>runs:read</c>/<c>runs:write</c>); the subject is fixed to the requester
 /// (no third party), the reach is fixed to the target workflow (<c>sys:workflow == '&lt;id&gt;'</c>, never system
 /// reach), and the expiry is capped at the deployment max TTL. Security, purge, administration, and escalation are
-/// never grantable this way.</para>
+/// never grantable this way. The per-workflow reach rule (<see cref="WorkflowReachRule"/>) lives in a reserved name
+/// namespace the authoring API refuses, and an existing rule is reused only when its expression is exactly the
+/// workflow's, so the name can never be squatted to widen the ceiling (ADR 0010).</para>
 /// <para><b>Time-bound + revocable.</b> The grant is a time-boxed active binding (§16.5.2); a §15 admin may revoke it
 /// early — the binding is deleted (access stops at the next resolution, fail-safe) before the request is marked
 /// revoked.</para>
@@ -523,21 +525,22 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         return binding.RootElement.IdValue;
     }
 
-    // Ensures the per-workflow reach rule (sys:workflow == '<id>') exists, idempotently, and returns its name.
+    // Ensures the per-workflow reach rule (sys:workflow == '<id>') exists, idempotently, and returns its name. An existing
+    // rule is reused only when its expression is exactly the workflow's (ADR 0010): the name is a deployment-global key,
+    // and a wider expression under it would become every later grant's reach. The authoring API refuses the namespace;
+    // this check covers a rule written any other way, refusing the grant (nothing written, the request stays pending)
+    // rather than silently repairing what is evidence of tampering.
     private async ValueTask<string> EnsureWorkflowRuleAsync(string baseWorkflowId, string actor, CancellationToken cancellationToken)
     {
         string ruleName = WorkflowRuleName(baseWorkflowId);
-        using (ParsedJsonDocument<SecurityRuleDocument>? existing = await this.policy.GetRuleAsync(ruleName, cancellationToken).ConfigureAwait(false))
+        if (await this.HasWorkflowRuleAsync(ruleName, baseWorkflowId, cancellationToken).ConfigureAwait(false))
         {
-            if (existing is not null)
-            {
-                return ruleName;
-            }
+            return ruleName;
         }
 
         try
         {
-            using ParsedJsonDocument<SecurityRuleDocument> ruleDraft = SecurityRuleDocument.Draft(WorkflowIdentity.WorkflowTagKey + " == '" + baseWorkflowId + "'", "Run access to workflow " + baseWorkflowId + ".");
+            using ParsedJsonDocument<SecurityRuleDocument> ruleDraft = SecurityRuleDocument.Draft(WorkflowReachRule.ExpressionFor(baseWorkflowId), "Run access to workflow " + baseWorkflowId + ".");
             using (await this.policy.AddRuleAsync(
                 ruleName,
                 ruleDraft.RootElement,
@@ -548,10 +551,33 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         }
         catch (InvalidOperationException)
         {
-            // Raced with a concurrent grant for the same workflow; the rule now exists.
+            // Raced with a concurrent grant for the same workflow; the rule now exists and is verified like any other
+            // existing rule (fail closed if it is gone again or is not the workflow's own).
+            if (!await this.HasWorkflowRuleAsync(ruleName, baseWorkflowId, cancellationToken).ConfigureAwait(false))
+            {
+                throw ServerThrowHelper.GetWorkflowReachRuleNotIntactException(ruleName);
+            }
         }
 
         return ruleName;
+    }
+
+    // Whether the per-workflow reach rule exists, verified to be exactly the workflow's own. An existing rule with any
+    // other expression refuses the grant rather than answering false (which would try to add over it).
+    private async ValueTask<bool> HasWorkflowRuleAsync(string ruleName, string baseWorkflowId, CancellationToken cancellationToken)
+    {
+        using ParsedJsonDocument<SecurityRuleDocument>? existing = await this.policy.GetRuleAsync(ruleName, cancellationToken).ConfigureAwait(false);
+        if (existing is not { } e)
+        {
+            return false;
+        }
+
+        if (!WorkflowReachRule.IsExpressionFor(e.RootElement, baseWorkflowId))
+        {
+            ServerThrowHelper.ThrowWorkflowReachRuleNotIntact(ruleName);
+        }
+
+        return true;
     }
 
     private async ValueTask RevokeBindingAsync(string bindingId, CancellationToken cancellationToken)
@@ -671,7 +697,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         return true;
     }
 
-    private static string WorkflowRuleName(string baseWorkflowId) => "workflow-access:" + baseWorkflowId;
+    private static string WorkflowRuleName(string baseWorkflowId) => WorkflowReachRule.NameFor(baseWorkflowId);
 
     private ValueTask RefreshAsync(CancellationToken cancellationToken) => this.rowSecurity?.RefreshAsync(cancellationToken) ?? default;
 }

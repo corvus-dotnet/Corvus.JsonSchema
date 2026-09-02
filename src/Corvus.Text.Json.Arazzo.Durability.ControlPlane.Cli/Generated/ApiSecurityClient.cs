@@ -210,7 +210,7 @@ public sealed class ApiSecurityClient : IApiSecurityClient
     /// Create a security rule
     /// </summary>
     /// <remarks>
-    /// Creates a named rule; the expression is validated against the security-rule grammar.
+    /// Creates a named rule; the expression is validated against the security-rule grammar. The `workflow-access:` name prefix is reserved to the access-request ceiling (the approval service writes the per-workflow reach rule under it), so a rule under that prefix is refused with 403.
     /// </remarks>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
@@ -244,7 +244,7 @@ public sealed class ApiSecurityClient : IApiSecurityClient
     /// Create a security rule
     /// </summary>
     /// <remarks>
-    /// Creates a named rule; the expression is validated against the security-rule grammar.
+    /// Creates a named rule; the expression is validated against the security-rule grammar. The `workflow-access:` name prefix is reserved to the access-request ceiling (the approval service writes the per-workflow reach rule under it), so a rule under that prefix is refused with 403.
     /// </remarks>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
@@ -299,7 +299,7 @@ public sealed class ApiSecurityClient : IApiSecurityClient
     /// Update a security rule
     /// </summary>
     /// <remarks>
-    /// Replaces the rule's content; the expression is validated against the security-rule grammar.
+    /// Replaces the rule's content; the expression is validated against the security-rule grammar. A rule under the reserved `workflow-access:` prefix is the access-request ceiling's and is refused with 403.
     /// </remarks>
     /// <param name="ruleName">The ruleName parameter.</param>
     /// <param name="body">The request body..</param>
@@ -335,7 +335,7 @@ public sealed class ApiSecurityClient : IApiSecurityClient
     /// Update a security rule
     /// </summary>
     /// <remarks>
-    /// Replaces the rule's content; the expression is validated against the security-rule grammar.
+    /// Replaces the rule's content; the expression is validated against the security-rule grammar. A rule under the reserved `workflow-access:` prefix is the access-request ceiling's and is refused with 403.
     /// </remarks>
     /// <param name="ruleName">The ruleName parameter.</param>
     /// <param name="body">The request body..</param>

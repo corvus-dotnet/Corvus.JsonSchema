@@ -69,6 +69,19 @@ internal static class ServerThrowHelper
     public static void ThrowWorkflowIdNotPermitted(string baseWorkflowId)
         => throw new AccessRequestStateException(baseWorkflowId, SR.Format(SR.WorkflowIdNotPermitted, baseWorkflowId));
 
+    /// <summary>Throws when the per-workflow reach rule exists but is not the workflow's own (its expression differs), so the grant is refused (ADR 0010).</summary>
+    /// <param name="ruleName">The rule name.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowWorkflowReachRuleNotIntact(string ruleName)
+        => throw new AccessRequestStateException(ruleName, SR.Format(SR.WorkflowReachRuleNotIntact, ruleName));
+
+    /// <summary>Creates the exception for a per-workflow reach rule that is missing or not the workflow's own after a conflicting add, for the caller to throw.</summary>
+    /// <param name="ruleName">The rule name.</param>
+    /// <returns>The exception to throw.</returns>
+    public static AccessRequestStateException GetWorkflowReachRuleNotIntactException(string ruleName)
+        => new(ruleName, SR.Format(SR.WorkflowReachRuleNotIntact, ruleName));
+
     /// <summary>Throws when none of the requested scopes is grantable on the approval path.</summary>
     /// <param name="requestId">The access-request id.</param>
     [DoesNotReturn]

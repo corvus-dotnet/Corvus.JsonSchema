@@ -1325,7 +1325,7 @@
           "security"
         ],
         "summary": "Create a security rule",
-        "description": "Creates a named rule; the expression is validated against the security-rule grammar.",
+        "description": "Creates a named rule; the expression is validated against the security-rule grammar. The `workflow-access:` name prefix is reserved to the access-request ceiling (the approval service writes the per-workflow reach rule under it), so a rule under that prefix is refused with 403.",
         "requestBody": {
           "required": true,
           "content": {
@@ -1349,6 +1349,9 @@
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           },
           "409": {
             "$ref": "#/components/responses/Conflict"
@@ -1426,7 +1429,7 @@
           "security"
         ],
         "summary": "Update a security rule",
-        "description": "Replaces the rule's content; the expression is validated against the security-rule grammar.",
+        "description": "Replaces the rule's content; the expression is validated against the security-rule grammar. A rule under the reserved `workflow-access:` prefix is the access-request ceiling's and is refused with 403.",
         "parameters": [
           {
             "name": "ruleName",
@@ -1461,6 +1464,9 @@
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           },
           "404": {
             "$ref": "#/components/responses/NotFound"

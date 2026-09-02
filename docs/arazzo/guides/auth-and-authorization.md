@@ -222,12 +222,16 @@ Capability and reach can be authored directly (a `security:write` grant) or reac
 authoring path is split by binding type ([ADR 0014](../adr/0014-direct-grant-versus-request-only.md)): standing
 group or policy bindings may be granted directly, while granting one named person elevated access goes through
 the request-and-approve flow, so it always involves a second party. A server-side self-elevation guard refuses
-any binding, direct or requested, that would grant the caller itself elevated write or purge reach.
+any binding, direct or requested, that would confer anything on the caller themselves: read, write or purge
+reach, or a capability scope (ADR 0014). An author writes standing policy for groups they are not a member
+of, and anything for their own goes through a request.
 
 An access request grants a ceiling-bounded, subject-pinned slice of access
 ([ADR 0010](../adr/0010-access-requests-ceiling-bounded.md)): at most the requested scopes intersected with a
 run-access allowlist, fixed to the requester, pinned to the target workflow, and capped at the deployment
-maximum TTL. Security, purge, administration, and escalation are out of reach of the request path.
+maximum TTL. Security, purge, administration, and escalation are out of reach of the request path. The
+per-workflow reach rule the ceiling pins to lives in the reserved `workflow-access:` namespace, which the
+authoring API refuses, and its expression is checked before the service reuses it (ADR 0010).
 
 ```mermaid
 stateDiagram-v2

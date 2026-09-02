@@ -346,7 +346,7 @@ public sealed class ControlPlaneSecurityApiTests
         => Stj.JsonDocument.Parse(JsonMarshal.GetRawUtf8Value(result.Body).Memory);
 
     [TestMethod]
-    public async Task The_self_elevation_guard_rejects_a_caller_granting_itself_write_or_purge()
+    public async Task The_self_elevation_guard_rejects_a_caller_granting_itself_any_reach_or_scope()
     {
         var policyStore = new InMemorySecurityPolicyStore();
         await using Scoped host = await StartSecuredAsync(policyStore);
@@ -360,23 +360,64 @@ public sealed class ControlPlaneSecurityApiTests
         (await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", """{"claimType":"team","claimValue":"payments","write":{"ruleNames":["reach-payments"]}}""", Write, caller))
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
-        // Read-only reach for the caller's own team is allowed (direct group/role policy authoring).
-        HttpResponseMessage readOnly = await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", """{"claimType":"team","claimValue":"payments","read":{"unrestricted":true}}""", Write, caller);
-        readOnly.StatusCode.ShouldBe(HttpStatusCode.Created);
+        // P1-5(a): READ reach is elevation too. The security policy is reach-partitioned by tenant (P1-5(b)), so a read
+        // grant to a set the caller is in widens the caller's own read reach — cross-tenant read in one call.
+        (await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", """{"claimType":"team","claimValue":"payments","read":{"unrestricted":true}}""", Write, caller))
+            .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", """{"claimType":"team","claimValue":"payments","read":{"ruleNames":["reach-payments"]}}""", Write, caller))
+            .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
-        // Granting write to a team the caller is NOT in is not self-elevation (a policy decision, allowed).
-        (await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", """{"claimType":"team","claimValue":"billing","write":{"unrestricted":true}}""", Write, caller))
+        // P1-5(a): a capability SCOPE the IdP never issued is elevation, even with no reach at all.
+        (await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", """{"claimType":"team","claimValue":"payments","scopes":["security:write"]}""", Write, caller))
+            .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        // An eligibility assignment for the caller's own set is the same elevation with a one-request detour (the
+        // self-elevation strategy honours stored eligibility), so it is refused the same way.
+        (await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", """{"claimType":"team","claimValue":"payments","read":{"ruleNames":["reach-payments"]},"scopes":["runs:read"],"eligibleOnly":true}""", Write, caller))
+            .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        // The wildcard primary contains every authenticated caller, the author included.
+        (await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", """{"claimType":"*","read":{"unrestricted":true}}""", Write, caller))
+            .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        // A binding that confers nothing is not elevation, whoever it selects.
+        (await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", """{"claimType":"team","claimValue":"payments","description":"placeholder"}""", Write, caller))
             .StatusCode.ShouldBe(HttpStatusCode.Created);
 
-        // The guard runs on UPDATE too: editing the caller's own read-only binding up to write is self-elevation → 403.
+        // Granting to a team the caller is NOT in is not self-elevation (a policy decision, allowed) — reach and scopes alike.
+        HttpResponseMessage billing = await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", """{"claimType":"team","claimValue":"billing","read":{"unrestricted":true},"write":{"unrestricted":true},"scopes":["runs:read"]}""", Write, caller);
+        billing.StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        // The guard runs on UPDATE too: re-pointing the billing binding at the caller's own team is self-elevation → 403.
         string bindingId;
-        using (Stj.JsonDocument doc = await ReadJsonAsync(readOnly))
+        using (Stj.JsonDocument doc = await ReadJsonAsync(billing))
         {
             bindingId = doc.RootElement.GetProperty("id").GetString()!;
         }
 
-        (await host.SendJsonAsync(HttpMethod.Put, $"/security/bindings/{bindingId}", """{"claimType":"team","claimValue":"payments","write":{"unrestricted":true}}""", Write, caller))
+        (await host.SendJsonAsync(HttpMethod.Put, $"/security/bindings/{bindingId}", """{"claimType":"team","claimValue":"payments","read":{"unrestricted":true}}""", Write, caller))
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [TestMethod]
+    public async Task The_per_workflow_reach_rule_namespace_is_reserved_to_the_platform_ceiling()
+    {
+        // P1-5(c): the platform ceiling pins a grant's reach to the rule named workflow-access:<id>. Were a
+        // security:write holder able to author a rule under that name ahead of the first approval, every later grant on
+        // the workflow would reference the squatted rule and carry whatever reach it says. The namespace is reserved:
+        // the API refuses to create or update a rule under it (403, audited), so only the approval service writes one.
+        using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
+        var policyStore = new InMemorySecurityPolicyStore();
+        await using Scoped host = await StartSecuredAsync(policyStore);
+
+        (await host.SendJsonAsync(HttpMethod.Post, "/security/rules", """{"name":"workflow-access:nightly-reconcile","expression":"true"}""", Write, "team=payments")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await host.SendJsonAsync(HttpMethod.Put, "/security/rules/workflow-access:nightly-reconcile", """{"expression":"true"}""", Write, "team=payments")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        // Nothing was written, and both refusals are audited as the control firing.
+        using ParsedJsonDocument<SecurityRuleDocument>? squatted = await policyStore.GetRuleAsync("workflow-access:nightly-reconcile", default);
+        squatted.ShouldBeNull();
+        audit.Spans.ShouldContain(s => s.OperationName == "security-rule.create" && (string?)s.GetTagItem(ArazzoTelemetry.OutcomeTag) == "refused-reserved-name");
+        audit.Spans.ShouldContain(s => s.OperationName == "security-rule.update" && (string?)s.GetTagItem(ArazzoTelemetry.OutcomeTag) == "refused-reserved-name");
     }
 
     [TestMethod]

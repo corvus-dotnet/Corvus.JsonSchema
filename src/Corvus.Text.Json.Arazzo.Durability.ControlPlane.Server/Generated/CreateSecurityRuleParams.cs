@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// <summary>
 /// Parameters for the CreateSecurityRule operation (POST /security/rules).
 /// </summary>
-/// <remarks>Creates a named rule; the expression is validated against the security-rule grammar.</remarks>
+/// <remarks>Creates a named rule; the expression is validated against the security-rule grammar. The `workflow-access:` name prefix is reserved to the access-request ceiling (the approval service writes the per-workflow reach rule under it), so a rule under that prefix is refused with 403.</remarks>
 public readonly struct CreateSecurityRuleParams
 {
 

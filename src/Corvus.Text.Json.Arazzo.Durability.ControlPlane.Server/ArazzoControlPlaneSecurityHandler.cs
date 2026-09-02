@@ -187,6 +187,15 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     {
         Models.SecurityRuleCreate body = parameters.Body;
         string name = (string)body.Name;
+        if (WorkflowReachRule.IsReservedName(name))
+        {
+            // The per-workflow reach rule's namespace is the platform ceiling's (ADR 0010): a rule squatted under it ahead
+            // of the first approval would become every later grant's reach. Refused before any other check (the namespace
+            // is documented, so the refusal discloses nothing) and audited as the control firing.
+            GovernanceAudit.Mutation(this.auditLogger, "security-rule.create", this.AuditActor(), RuleKind, name, "refused-reserved-name");
+            return CreateSecurityRuleResult.Forbidden(ReservedRuleNameProblem(name), workspace);
+        }
+
         string expression = (string)body.Expression;
         if (IsInvalidRule(expression, out Models.ProblemDetails.Source problem))
         {
@@ -238,6 +247,14 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
     public async ValueTask<UpdateSecurityRuleResult> HandleUpdateSecurityRuleAsync(UpdateSecurityRuleParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string name = (string)parameters.RuleName;
+        if (WorkflowReachRule.IsReservedName(name))
+        {
+            // As on create: the reach rule's expression is the ceiling's to define, so widening it is refused even within
+            // write reach (delete stays under the ordinary reach gate; a grant naming a missing rule contributes nothing).
+            GovernanceAudit.Mutation(this.auditLogger, "security-rule.update", this.AuditActor(), RuleKind, name, "refused-reserved-name");
+            return UpdateSecurityRuleResult.Forbidden(ReservedRuleNameProblem(name), workspace);
+        }
+
         Models.SecurityRuleUpdate body = parameters.Body;
         string expression = (string)body.Expression;
         if (IsInvalidRule(expression, out Models.ProblemDetails.Source problem))
@@ -821,10 +838,12 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             });
     }
 
-    // The self-elevation guard (§16.5.3, defense in depth): a caller may not author a binding that grants ITSELF elevated
-    // (write/purge) reach — that escalation must go through the access-request → approve flow (separation of duties). A
-    // binding the caller matches that grants only read is allowed (direct group/role policy authoring). With no caller
-    // (the unscoped/Open posture, where there is no row reach to elevate) the guard is inert.
+    // The self-elevation guard (ADR 0014, defense in depth): a caller may not author a binding that confers ANYTHING on
+    // itself, read, write or purge reach, or a capability scope. Read reach is a tenant boundary (the security policy is
+    // reach-partitioned, P1-5), a scope is capability the IdP never issued, and an eligibleOnly binding is the same
+    // elevation with a one-request detour (the self-elevation strategy honours stored eligibility). All of it goes
+    // through the access-request then approve flow (separation of duties). A binding that confers nothing is not
+    // elevation. With no caller (the unscoped/Open posture, where there is no identity to elevate) the guard is inert.
     private bool SelfElevates(SecurityBindingDocument draft, out Models.ProblemDetails.Source problem)
     {
         problem = default;
@@ -833,7 +852,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             return false;
         }
 
-        if (!GrantsElevatedReach(draft.Write) && !GrantsElevatedReach(draft.Purge))
+        if (!ConfersAnything(draft))
         {
             return false;
         }
@@ -847,14 +866,20 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             "self-elevation",
             "Self-elevation not permitted",
             403,
-            "You may not create a binding that grants write or purge reach to a claim you hold. Request elevated access through the access-request flow instead.");
+            "You may not author a binding that grants reach or a capability scope to a claim you hold. Request access through the access-request flow instead.");
         return true;
     }
 
+    // Whether the binding confers anything at all: reach for any verb, or a capability scope. The scopes array is gated
+    // on ValueKind == Array (an absent optional array on a body-view draft is undefined; an empty one confers nothing).
+    private static bool ConfersAnything(SecurityBindingDocument draft)
+        => GrantsReach(draft.Read) || GrantsReach(draft.Write) || GrantsReach(draft.Purge)
+            || (draft.Scopes.ValueKind == JsonValueKind.Array && draft.Scopes.GetArrayLength() > 0);
+
     // Whether a verb grant confers reach (unrestricted or rule-bounded). Gated on ValueKind == Object so an absent verb
-    // grant — a default VerbGrantInfo with a null parent, which IsNotUndefined() does NOT catch — never NREs its nested
+    // grant, a default VerbGrantInfo with a null parent, which IsNotUndefined() does NOT catch, never NREs its nested
     // RuleNames accessor (the absent-optional-complex-property trap).
-    private static bool GrantsElevatedReach(SecurityBindingDocument.VerbGrantInfo grant)
+    private static bool GrantsReach(SecurityBindingDocument.VerbGrantInfo grant)
         => grant.ValueKind == JsonValueKind.Object && !grant.IsEmptyValue;
 
     // Whether the caller holds the binding's full selector by MEMBERSHIP over the caller's canonical sys: identity
@@ -1248,6 +1273,9 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
 
     private static Models.ProblemDetails.Source NotFoundProblem(string kind, string id)
         => Problem($"{kind}-not-found", $"{char.ToUpperInvariant(kind[0])}{kind[1..]} not found", 404, $"No security {kind} '{id}' exists.");
+
+    private static Models.ProblemDetails.Source ReservedRuleNameProblem(string name)
+        => Problem("reserved-rule-name", "Reserved rule name", 403, $"The '{WorkflowReachRule.NamePrefix}' rule-name prefix is reserved to access-request approvals (the platform ceiling); '{name}' cannot be authored.");
 
     private static Models.ProblemDetails.Source Problem(string type, string title, int status, string detail)
         => Models.ProblemDetails.Build(

@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// <summary>
 /// Parameters for the UpdateSecurityRule operation (PUT /security/rules/{ruleName}).
 /// </summary>
-/// <remarks>Replaces the rule's content; the expression is validated against the security-rule grammar.</remarks>
+/// <remarks>Replaces the rule's content; the expression is validated against the security-rule grammar. A rule under the reserved `workflow-access:` prefix is the access-request ceiling's and is refused with 403.</remarks>
 public readonly struct UpdateSecurityRuleParams
 {
 

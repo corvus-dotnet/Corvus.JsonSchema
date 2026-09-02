@@ -341,6 +341,33 @@ public sealed class AccessRequestApprovalServiceTests
     }
 
     [TestMethod]
+    public async Task A_squatted_per_workflow_reach_rule_never_widens_a_grant()
+    {
+        // P1-5(c): the platform ceiling pins an approval's reach to the rule named workflow-access:<id>. The name alone is not
+        // the ceiling — a rule squatted under that name ahead of the first approval (here straight into the store; the
+        // API refuses the namespace) with a wider expression would otherwise be adopted as the workflow's reach, and
+        // every grant on the workflow would carry it. The service checks the existing rule's expression is exactly the
+        // workflow's, and refuses the grant when it is not: nothing is written and the request stays pending.
+        Harness h = await Harness.CreateAsync();
+        using (ParsedJsonDocument<SecurityRuleDocument> squatted = SecurityRuleDocument.Draft("true", "squatted ahead of the first approval"))
+        {
+            using (await h.Policy.AddRuleAsync("workflow-access:nightly-reconcile", squatted.RootElement, "mallory", default))
+            {
+            }
+        }
+
+        string id = await h.SubmitPendingAsync(["runs:write"]);
+        await Should.ThrowAsync<AccessRequestStateException>(async () => await h.Service.ApproveAsync(id, Boss, "boss", null, default));
+
+        using ParsedJsonDocument<AccessRequest>? still = await h.Requests.GetAsync(id, default);
+        still!.RootElement.StatusValue.ShouldBe("Pending");
+        PersistentRowSecurityPolicy policy = await h.RefreshedPolicyAsync();
+        ClaimsPrincipal alice = Principal(("sub", "alice"));
+        policy.ResolveGrantedScopes(alice).ShouldBeEmpty();
+        policy.Resolve(alice).Admits(AccessVerb.Write, SecurityTagSet.FromTags([new("sys:workflow", "other-flow")])).ShouldBeFalse();
+    }
+
+    [TestMethod]
     public async Task Approving_as_eligible_writes_durable_eligibility_that_confers_nothing_active()
     {
         Harness h = await Harness.CreateAsync();
