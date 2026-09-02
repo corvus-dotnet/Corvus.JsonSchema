@@ -275,17 +275,6 @@
           "System.ValueTuple": "4.6.2"
         }
       },
-      "Microsoft.Extensions.Logging.Abstractions": {
-        "type": "Transitive",
-        "resolved": "10.0.7",
-        "contentHash": "tIEcQ2gvERrH2KiCjdsVcHGhXt9lIsuDStfOIeZWr7/fP8IXhGiYfx0/80PNI7WPO2IYuFtlZLSlnTS8+/Mchw==",
-        "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.7",
-          "System.Buffers": "4.6.1",
-          "System.Diagnostics.DiagnosticSource": "10.0.7",
-          "System.Memory": "4.6.3"
-        }
-      },
       "Microsoft.Extensions.Options": {
         "type": "Transitive",
         "resolved": "10.0.7",
@@ -639,6 +628,18 @@
           "Microsoft.Extensions.Options": "10.0.7"
         }
       },
+      "Microsoft.Extensions.Logging.Abstractions": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.7, )",
+        "resolved": "10.0.7",
+        "contentHash": "tIEcQ2gvERrH2KiCjdsVcHGhXt9lIsuDStfOIeZWr7/fP8IXhGiYfx0/80PNI7WPO2IYuFtlZLSlnTS8+/Mchw==",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.7",
+          "System.Buffers": "4.6.1",
+          "System.Diagnostics.DiagnosticSource": "10.0.7",
+          "System.Memory": "4.6.3"
+        }
+      },
       "Microsoft.Extensions.ObjectPool": {
         "type": "CentralTransitive",
         "requested": "[10.0.7, )",
@@ -943,14 +944,6 @@
           "Microsoft.Extensions.Options": "10.0.7"
         }
       },
-      "Microsoft.Extensions.Logging.Abstractions": {
-        "type": "Transitive",
-        "resolved": "10.0.7",
-        "contentHash": "tIEcQ2gvERrH2KiCjdsVcHGhXt9lIsuDStfOIeZWr7/fP8IXhGiYfx0/80PNI7WPO2IYuFtlZLSlnTS8+/Mchw==",
-        "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.7"
-        }
-      },
       "Microsoft.Extensions.Options": {
         "type": "Transitive",
         "resolved": "10.0.7",
@@ -1172,6 +1165,15 @@
           "Microsoft.Extensions.Logging": "10.0.7",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.7",
           "Microsoft.Extensions.Options": "10.0.7"
+        }
+      },
+      "Microsoft.Extensions.Logging.Abstractions": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.7, )",
+        "resolved": "10.0.7",
+        "contentHash": "tIEcQ2gvERrH2KiCjdsVcHGhXt9lIsuDStfOIeZWr7/fP8IXhGiYfx0/80PNI7WPO2IYuFtlZLSlnTS8+/Mchw==",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.7"
         }
       },
       "Microsoft.Extensions.ObjectPool": {
