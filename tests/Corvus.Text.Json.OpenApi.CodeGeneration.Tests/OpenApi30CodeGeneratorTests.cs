@@ -5407,8 +5407,8 @@ public class OpenApi30CodeGeneratorTests
         GeneratedFile resp = GetFile(files, "EchoTextResponse.cs");
 
         Assert.IsTrue(
-            resp.Content.Contains("ArrayPool<byte>.Shared.Return", StringComparison.Ordinal),
-            "Text response DisposeAsync should return rented buffer to ArrayPool");
+            resp.Content.Contains("TextBody?.ReturnBuffer();", StringComparison.Ordinal),
+            "Text response DisposeAsync should return the body's rented buffer");
     }
 
     [TestMethod]
@@ -5417,9 +5417,12 @@ public class OpenApi30CodeGeneratorTests
         IReadOnlyList<GeneratedFile> files = GenerateTextPlainSpec();
         GeneratedFile resp = GetFile(files, "EchoTextResponse.cs");
 
-        Assert.IsTrue(
+        Assert.IsFalse(
             resp.Content.Contains("ReadStreamToRentedBuffer", StringComparison.Ordinal),
-            "Text response should contain the ReadStreamToRentedBuffer helper method");
+            "Text buffering lives in TextResponseBody now; no emitted helper expected");
+        Assert.IsTrue(
+            resp.Content.Contains("new TextResponseBody(contentStream)", StringComparison.Ordinal),
+            "Text response should retain the live stream in a TextResponseBody");
     }
 
     [TestMethod]
@@ -5429,14 +5432,8 @@ public class OpenApi30CodeGeneratorTests
         GeneratedFile resp = GetFile(files, "EchoTextResponse.cs");
 
         Assert.IsTrue(
-            resp.Content.Contains("okTextBuffer", StringComparison.Ordinal),
-            "Text response should have a buffer backing field");
-        Assert.IsTrue(
-            resp.Content.Contains("okTextLength", StringComparison.Ordinal),
-            "Text response should have a length backing field");
-        Assert.IsTrue(
-            resp.Content.Contains("okTextCached", StringComparison.Ordinal),
-            "Text response should have a cached string backing field");
+            resp.Content.Contains("private TextResponseBody? okTextBody;", StringComparison.Ordinal),
+            "Text response should have a TextResponseBody backing field");
     }
 
     [TestMethod]
@@ -5515,14 +5512,17 @@ public class OpenApi30CodeGeneratorTests
     }
 
     [TestMethod]
-    public void TextResponse_CreateAsync_CallsReadStreamToRentedBuffer()
+    public void TextResponse_CreateAsync_DefersToLiveStream()
     {
         IReadOnlyList<GeneratedFile> files = GenerateTextPlainSpec();
         GeneratedFile resp = GetFile(files, "EchoTextResponse.cs");
 
         Assert.IsTrue(
+            resp.Content.Contains("TextBody = new TextResponseBody(contentStream);", StringComparison.Ordinal),
+            "CreateAsync should retain the live stream for text/plain responses");
+        Assert.IsFalse(
             resp.Content.Contains("ReadStreamToRentedBuffer(contentStream", StringComparison.Ordinal),
-            "CreateAsync should call ReadStreamToRentedBuffer for text/plain responses");
+            "CreateAsync should not buffer the text body eagerly");
     }
 
     // --- Accept header tests ---
@@ -5758,8 +5758,8 @@ public class OpenApi30CodeGeneratorTests
         GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
 
         Assert.IsTrue(
-            resp.Content.Contains("private byte[]? okTextBuffer;", StringComparison.Ordinal),
-            "Response struct should have okTextBuffer field for text/plain");
+            resp.Content.Contains("private TextResponseBody? okTextBody;", StringComparison.Ordinal),
+            "Response struct should have a TextResponseBody field for text/plain");
         Assert.IsTrue(
             resp.Content.Contains("public string? OkText", StringComparison.Ordinal),
             "Response struct should have OkText property for text/plain");
@@ -5811,8 +5811,8 @@ public class OpenApi30CodeGeneratorTests
         GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
 
         Assert.IsTrue(
-            resp.Content.Contains("this.okTextBuffer is not null", StringComparison.Ordinal),
-            "MatchResult should detect text content by checking okTextBuffer");
+            resp.Content.Contains("this.okTextBody is not null", StringComparison.Ordinal),
+            "MatchResult should detect text content by checking okTextBody");
         Assert.IsTrue(
             resp.Content.Contains("matchOkString(this.OkText", StringComparison.Ordinal),
             "MatchResult should call matchOkString when text buffer is populated");
@@ -5839,8 +5839,8 @@ public class OpenApi30CodeGeneratorTests
         GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
 
         Assert.IsTrue(
-            resp.Content.Contains("ArrayPool<byte>.Shared.Return(this.okTextBuffer)", StringComparison.Ordinal),
-            "DisposeAsync should return the text buffer to the pool");
+            resp.Content.Contains("this.okTextBody?.ReturnBuffer();", StringComparison.Ordinal),
+            "DisposeAsync should return the text body's buffer to the pool");
     }
 
     // ── Response Validate() codegen tests ────────────────────────────────
@@ -7278,6 +7278,138 @@ public class OpenApi30CodeGeneratorTests
     }
 
     [TestMethod]
+    public void GenerateServer_EndpointRegistration_ThreadsBodyLimitsAndFailureMapping()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateServerCoverageSpec();
+        GeneratedFile registration = files.First(f => f.FileName == "ApiEndpointRegistration.cs");
+
+        Assert.IsTrue(
+            registration.Content.Contains("ApiServerOptions? serverOptions = null", StringComparison.Ordinal),
+            "Expected MapApiEndpoints to accept registration-time server options");
+        Assert.IsTrue(
+            registration.Content.Contains("maxBodyLength: serverOptions.MaxBufferedRequestBodyLength", StringComparison.Ordinal),
+            "Expected the buffered body deserializers to receive the configured cap");
+        Assert.IsTrue(
+            registration.Content.Contains("catch (OperationCanceledException)", StringComparison.Ordinal),
+            "Expected cancellation to be rethrown rather than reported as a parse failure");
+        Assert.IsTrue(
+            registration.Content.Contains("catch (RequestBodyTooLargeException)", StringComparison.Ordinal),
+            "Expected an oversized body to be mapped to its own response");
+        Assert.IsTrue(
+            registration.Content.Contains("Payload Too Large", StringComparison.Ordinal),
+            "Expected a 413 problem response for oversized bodies");
+    }
+
+    [TestMethod]
+    public void GenerateServer_OptionalMultipartWithBinaryPart_DeclaresCaptureLocalsOutsideOptionalGate()
+    {
+        JsonElement spec = ParseSpec("""
+        {
+          "openapi": "3.0.3",
+          "info": {"title": "t", "version": "1"},
+          "paths": {
+            "/upload": {
+              "post": {
+                "operationId": "uploadThing",
+                "requestBody": {
+                  "required": false,
+                  "content": {
+                    "multipart/form-data": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "file": {"type": "string", "format": "binary"},
+                          "note": {"type": "string"}
+                        }
+                      }
+                    }
+                  }
+                },
+                "responses": {"204": {"description": "ok"}}
+              }
+            }
+          }
+        }
+        """);
+
+        Dictionary<string, string> map = new()
+        {
+            ["#/paths/~1upload/post/requestBody/content/multipart~1form-data/schema"] = "Petstore.Server.UploadBody",
+        };
+
+        OpenApi30CodeGenerator gen = new("Petstore.Server", map);
+        IReadOnlyList<GeneratedFile> files = gen.GenerateServer(spec);
+        string registration = GetFile(files, "ApiEndpointRegistration.cs").Content;
+
+        int localIndex = registration.IndexOf("int __binary_file_offset = -1;", StringComparison.Ordinal);
+        int gateIndex = registration.IndexOf("(context.Request.ContentLength ?? 0) > 0", StringComparison.Ordinal);
+        Assert.IsTrue(localIndex >= 0, "expected a capture local for the binary part");
+        Assert.IsTrue(gateIndex >= 0, "expected the optional-body gate");
+        Assert.IsTrue(
+            localIndex < gateIndex,
+            "the capture local must be declared before the optional-body gate so the Params binding outside the gate can reference it");
+    }
+
+    [TestMethod]
+    public void GenerateServer_BinaryStyleResponses_GetFactoriesForDefaultAndTextOnly()
+    {
+        JsonElement spec = ParseSpec("""
+        {
+          "openapi": "3.0.3",
+          "info": {"title": "t", "version": "1"},
+          "paths": {
+            "/log": {
+              "get": {
+                "operationId": "getLog",
+                "responses": {
+                  "200": {
+                    "description": "text log",
+                    "content": {"text/plain": {"schema": {"type": "string"}}}
+                  }
+                }
+              }
+            },
+            "/export": {
+              "get": {
+                "operationId": "exportBlob",
+                "responses": {
+                  "default": {
+                    "description": "blob or error",
+                    "content": {
+                      "application/octet-stream": {"schema": {"type": "string", "format": "binary"}}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """);
+
+        OpenApi30CodeGenerator gen = new("Petstore.Server", new Dictionary<string, string>(StringComparer.Ordinal));
+        IReadOnlyList<GeneratedFile> files = gen.GenerateServer(spec);
+
+        string logResult = GetFile(files, "GetLogResult.cs").Content;
+        Assert.IsTrue(
+            logResult.Contains("text/plain; charset=utf-8", StringComparison.Ordinal),
+            "expected the text content type default");
+        Assert.IsTrue(
+            logResult.Contains("(string body", StringComparison.Ordinal),
+            "expected a string convenience overload");
+        Assert.IsTrue(
+            logResult.Contains("(ReadOnlyMemory<byte> body", StringComparison.Ordinal),
+            "expected a UTF-8 bytes overload");
+
+        string exportResult = GetFile(files, "ExportBlobResult.cs").Content;
+        Assert.IsTrue(
+            exportResult.Contains("(int statusCode, ReadOnlyMemory<byte> body", StringComparison.Ordinal),
+            "expected a buffered binary overload on the default factory");
+        Assert.IsTrue(
+            exportResult.Contains("(int statusCode, Func<Stream, CancellationToken, ValueTask> writeBody", StringComparison.Ordinal),
+            "expected a streaming binary overload on the default factory");
+    }
+
+    [TestMethod]
     public void GenerateServer_EndpointRegistration_IncludesAllOperations()
     {
         IReadOnlyList<GeneratedFile> files = GenerateServerCoverageSpec();
@@ -7298,7 +7430,7 @@ public class OpenApi30CodeGeneratorTests
             registration.Content.Contains("configureEndpoint: null", StringComparison.Ordinal),
             "Expected the original overload to delegate with a null callback");
         Assert.IsTrue(
-            registration.Content.Contains(", ConfigureEndpoint? configureEndpoint)", StringComparison.Ordinal),
+            registration.Content.Contains(", ConfigureEndpoint? configureEndpoint, ApiServerOptions? serverOptions = null)", StringComparison.Ordinal),
             "Expected a new MapApiEndpoints overload accepting a ConfigureEndpoint callback");
     }
 
@@ -7807,7 +7939,7 @@ public class OpenApi30CodeGeneratorTests
             registration.Content.Contains("part.Name.SequenceEqual(\"package\"u8)", StringComparison.Ordinal),
             "Callback should match the 'package' part by name");
         Assert.IsTrue(
-            registration.Content.Contains("Package = __binary_package ?? ReadOnlyMemory<byte>.Empty,", StringComparison.Ordinal),
+            registration.Content.Contains("Package = __binary_package_offset >= 0 ? __bodyOwner!.Value.BodyBytes.Slice(__binary_package_offset, __binary_package_length) : ReadOnlyMemory<byte>.Empty,", StringComparison.Ordinal),
             "Params construction should bind the captured binary bytes");
     }
 
@@ -7963,5 +8095,75 @@ public class OpenApi30CodeGeneratorTests
         Assert.IsTrue(
             requestFile.Content.Contains("\"filter%5B\"u8"),
             "Expected deepObject bracketed keys (filter[...]) for the object param");
+    }
+
+    [TestMethod]
+    public void GenerateClient_RawStreamBody_EmitsWriteCallbackOverload()
+    {
+        // A raw-stream request body gets both a Stream overload and a write-callback
+        // overload, mirroring BinaryPartData's push model for multipart parts.
+        using ParsedJsonDocument<JsonElement> specDoc = ParsedJsonDocument<JsonElement>.Parse("""
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "RawCb", "version": "1.0" },
+              "paths": {
+                "/blob": {
+                  "post": {
+                    "operationId": "uploadBlob",
+                    "requestBody": {
+                      "required": true,
+                      "content": {
+                        "application/octet-stream": {
+                          "schema": { "type": "string", "format": "binary" }
+                        }
+                      }
+                    },
+                    "responses": {
+                      "201": {
+                        "description": "created",
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "id": { "type": "string" } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+        JsonElement spec = specDoc.RootElement.Clone();
+
+        SchemaReference[] refs = [.. OpenApi30CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int mapIndex = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"RawCb30.Type{mapIndex}";
+            mapIndex++;
+        }
+
+        OpenApi30CodeGenerator gen = new("RawCb30", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(spec);
+
+        GeneratedFile clientFile = files.First(f => !f.FileName.StartsWith("I") && f.FileName.EndsWith("Client.cs"));
+        Assert.IsTrue(
+            clientFile.Content.Contains("UploadBlobAsync(Stream body,"),
+            "Expected the Stream overload to remain");
+        Assert.IsTrue(
+            clientFile.Content.Contains("UploadBlobAsync(Func<Stream, CancellationToken, ValueTask> body,"),
+            "Expected the write-callback overload");
+        Assert.IsTrue(
+            clientFile.Content.Contains("SendWithStreamBodyAsyncCore<UploadBlobRequest"),
+            "Expected the Stream overload to dispatch to the stream-body core");
+        Assert.IsTrue(
+            clientFile.Content.Contains("SendWithBodyWriterAsyncCore<UploadBlobRequest"),
+            "Expected the write-callback overload to dispatch to the body-writer core");
+
+        GeneratedFile interfaceFile = files.First(f => f.FileName.StartsWith("I") && f.FileName.EndsWith("Client.cs"));
+        Assert.IsTrue(
+            interfaceFile.Content.Contains("UploadBlobAsync(Func<Stream, CancellationToken, ValueTask> body,"),
+            "Expected the write-callback overload on the client interface");
     }
 }

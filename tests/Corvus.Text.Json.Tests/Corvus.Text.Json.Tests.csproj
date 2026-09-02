@@ -295,6 +295,8 @@
     <Compile Include="DebuggerTests.cs" />
     <Compile Include="EnumStringSetValidationTests.cs" />
     <Compile Include="CaseInsensitiveEnumTests.cs" />
+    <Compile Include="NativeEnumTests.cs" />
+    <Compile Include="NativeFlagsEnumTests.cs" />
     <Compile Include="RefTupleTests.cs" />
     <Compile Include="ReservedPropertyNameTests.cs" />
     <Compile Include="StringMaxLengthEnumTests.cs" />
@@ -332,6 +334,8 @@
     <Compile Include="JsonElementNumericBoundaryTests.cs" />
     <Compile Include="JsonElementParseTests.cs" />
     <Compile Include="JsonPointerExtensionTests.cs" />
+    <Compile Include="JsonElementGetJsonPointerTests.cs" />
+    <Compile Include="NumericCastOperatorTests.cs" />
     <Compile Include="JsonElementWriteTests.cs" />
     <Compile Include="JsonEncodedTextTests.cs" />
     <Compile Include="JsonGuidTestData.cs" />
@@ -393,6 +397,8 @@
     <ProjectReference Include="..\..\Common\tests\TestUtilities\TestUtilities.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Tests.GeneratedModels\Corvus.Text.Json.Tests.GeneratedModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Tests.GeneratedModels.NativeEnums\Corvus.Text.Json.Tests.GeneratedModels.NativeEnums.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Tests.GeneratedModels.NativeEnums.Disabled\Corvus.Text.Json.Tests.GeneratedModels.NativeEnums.Disabled.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Tests.GeneratedModels.OptionalAsNullable\Corvus.Text.Json.Tests.GeneratedModels.OptionalAsNullable.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Tests.GeneratedModels.NullOrUndefinedExceptNonNullDefaulted\Corvus.Text.Json.Tests.GeneratedModels.NullOrUndefinedExceptNonNullDefaulted.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Tests.GeneratedModels.V4NonNullDefaulted\Corvus.Text.Json.Tests.GeneratedModels.V4NonNullDefaulted.csproj" />

@@ -2841,12 +2841,6 @@ public sealed class OpenApi20CodeGenerator
         w.CloseBrace();
         w.CloseBrace();
 
-        // Emit the helper method for reading streams into rented buffers.
-        if (hasTextBody)
-        {
-            CodeEmitHelpers.EmitReadStreamToRentedBufferHelper(w);
-        }
-
         w.CloseBrace();
 
         return new GeneratedFile($"{structName}.cs", w.ToString());
@@ -3484,6 +3478,12 @@ public sealed class OpenApi20CodeGenerator
 
             this.EmitInterfaceMethodSignature(w, operations[i]);
 
+            if (HasRawStreamBody(operations[i]))
+            {
+                w.WriteLine();
+                this.EmitInterfaceMethodSignature(w, operations[i], rawStreamAsWriter: true);
+            }
+
             if (this.HasContextThreadedBody(operations[i]))
             {
                 w.WriteLine();
@@ -3510,7 +3510,10 @@ public sealed class OpenApi20CodeGenerator
         w.WriteLine();
     }
 
-    private void EmitInterfaceMethodSignature(IndentedWriter w, OperationInfo op, bool contextThreaded = false)
+    private static bool HasRawStreamBody(OperationInfo op)
+        => op.RequestBody is { } rb && IsRawStreamRequestBody(rb);
+
+    private void EmitInterfaceMethodSignature(IndentedWriter w, OperationInfo op, bool contextThreaded = false, bool rawStreamAsWriter = false)
     {
         string responseName = $"{op.MethodName}Response";
 
@@ -3521,7 +3524,7 @@ public sealed class OpenApi20CodeGenerator
             w.WriteLine("[Obsolete(\"This operation is deprecated.\")]");
         }
 
-        List<string> paramParts = this.BuildParameterList(op, contextThreaded);
+        List<string> paramParts = this.BuildParameterList(op, contextThreaded, rawStreamAsWriter);
         string generic = contextThreaded ? "<TContext>" : string.Empty;
         w.WriteLine(
             $"ValueTask<{responseName}> {op.MethodName}Async{generic}({string.Join(", ", paramParts)})" +
@@ -3583,6 +3586,14 @@ public sealed class OpenApi20CodeGenerator
             w.WriteLine();
             this.EmitClientMethod(w, operations[i], encodingFieldNames);
 
+            // A raw-stream body also gets a write-callback overload, mirroring the
+            // push model BinaryPartData already offers for multipart parts.
+            if (HasRawStreamBody(operations[i]))
+            {
+                w.WriteLine();
+                this.EmitClientMethod(w, operations[i], encodingFieldNames, rawStreamAsWriter: true);
+            }
+
             // A body whose type carries a Source<TContext> also gets the closure-free, single-materialisation form.
             if (this.HasContextThreadedBody(operations[i]))
             {
@@ -3611,6 +3622,9 @@ public sealed class OpenApi20CodeGenerator
             if (isRawStream)
             {
                 needsSendWithStreamBody = true;
+
+                // The write-callback overload rides the body-writer core.
+                needsSendWithBodyWriter = true;
             }
             else if (isFormUrlEncoded || isMultipart)
             {
@@ -3634,7 +3648,7 @@ public sealed class OpenApi20CodeGenerator
         return new GeneratedFile($"{clientName}Client.cs", w.ToString());
     }
 
-    private void EmitClientMethod(IndentedWriter w, OperationInfo op, Dictionary<string, string> encodingFieldNames, bool contextThreaded = false)
+    private void EmitClientMethod(IndentedWriter w, OperationInfo op, Dictionary<string, string> encodingFieldNames, bool contextThreaded = false, bool rawStreamAsWriter = false)
     {
         string requestName = $"{op.MethodName}Request";
         string responseName = $"{op.MethodName}Response";
@@ -3646,7 +3660,7 @@ public sealed class OpenApi20CodeGenerator
             w.WriteLine("[Obsolete(\"This operation is deprecated.\")]");
         }
 
-        List<string> paramParts = this.BuildParameterList(op, contextThreaded);
+        List<string> paramParts = this.BuildParameterList(op, contextThreaded, rawStreamAsWriter);
 
         w.WriteLine(
             $"public ValueTask<{responseName}> {op.MethodName}Async{(contextThreaded ? "<TContext>" : string.Empty)}(" +
@@ -3762,8 +3776,9 @@ public sealed class OpenApi20CodeGenerator
             string streamContentType = op.RequestBody!.Value.Content
                 .First(c => CodeEmitHelpers.IsRawStreamMediaType(c.MediaType)).MediaType;
 
+            string streamSendCore = rawStreamAsWriter ? "SendWithBodyWriterAsyncCore" : "SendWithStreamBodyAsyncCore";
             w.WriteLine(
-                $"return SendWithStreamBodyAsyncCore<{requestName}, " +
+                $"return {streamSendCore}<{requestName}, " +
                 $"{responseName}>(workspace, request, body, " +
                 $"{CodeEmitHelpers.FormatStringLiteral(streamContentType)}, responseValidationMode, cancellationToken);");
         }
@@ -3948,7 +3963,17 @@ public sealed class OpenApi20CodeGenerator
         foreach (BinaryPropertyInfo prop in binaryProperties)
         {
             string propNameLiteral = CodeEmitHelpers.FormatStringLiteral(prop.PropertyName);
-            w.WriteLine($"[{propNameLiteral}] = {prop.ParameterName},");
+            if (prop.ContentType is { } specContentType)
+            {
+                // The spec declares a content type for this part: substitute it when the
+                // caller left BinaryPartData.ContentType unset.
+                string contentTypeLiteral = CodeEmitHelpers.FormatStringLiteral(specContentType);
+                w.WriteLine($"[{propNameLiteral}] = {prop.ParameterName}.ContentType is null ? {prop.ParameterName} with {{ ContentType = {contentTypeLiteral} }} : {prop.ParameterName},");
+            }
+            else
+            {
+                w.WriteLine($"[{propNameLiteral}] = {prop.ParameterName},");
+            }
         }
 
         w.PopIndent();
@@ -3989,7 +4014,7 @@ public sealed class OpenApi20CodeGenerator
         w.WriteLine("/// <param name=\"responseValidationMode\">The validation mode applied to the response body.</param>");
     }
 
-    private List<string> BuildParameterList(OperationInfo op, bool contextThreaded = false)
+    private List<string> BuildParameterList(OperationInfo op, bool contextThreaded = false, bool rawStreamAsWriter = false)
     {
         List<string> paramParts = [];
 
@@ -4010,8 +4035,17 @@ public sealed class OpenApi20CodeGenerator
 
             if (IsRawStreamRequestBody(op.RequestBody.Value))
             {
-                string suffix = bodyRequired ? string.Empty : " = default";
-                paramParts.Add($"Stream body{suffix}");
+                if (rawStreamAsWriter)
+                {
+                    // The write-callback overload requires the body even when the spec
+                    // marks it optional; omission is served by the Stream overload.
+                    paramParts.Add("Func<Stream, CancellationToken, ValueTask> body");
+                }
+                else
+                {
+                    string suffix = bodyRequired ? string.Empty : " = default";
+                    paramParts.Add($"Stream body{suffix}");
+                }
             }
             else
             {
@@ -4273,11 +4307,104 @@ public sealed class OpenApi20CodeGenerator
             w.WriteLine($"/// {CodeEmitHelpers.EscapeXml(bodyDesc)}");
             w.WriteLine("/// </summary>");
             w.WriteLine($"public {bodyTypeName} Body {{ get; init; }}");
+
+            // For multipart form bodies with type:file parameters, expose each file part
+            // as a separate ReadOnlyMemory<byte> property so the handler can read the raw bytes.
+            if (IsMultipartRequestBody(rb))
+            {
+                foreach (BinaryPropertyInfo binaryProp in rb.BinaryProperties)
+                {
+                    w.WriteLine();
+                    w.WriteLine("/// <summary>");
+                    w.WriteLine($"/// Gets the binary content of the '{binaryProp.PropertyName}' part.");
+                    w.WriteLine("/// </summary>");
+                    w.WriteLine($"public ReadOnlyMemory<byte> {CodeEmitHelpers.ToPascalCase(binaryProp.PropertyName)} {{ get; init; }}");
+                }
+            }
         }
 
         w.CloseBrace();
 
         return new GeneratedFile($"{structName}.cs", w.ToString());
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the response's content is classified as
+    /// <see cref="ContentCategory.OctetStream"/> (raw binary), which for Swagger 2.0
+    /// covers <c>type: file</c> responses and non-JSON, non-text produces.
+    /// </summary>
+    private static bool IsOctetStreamResponse(ResponseInfo resp)
+    {
+        foreach (ContentInfo content in resp.Content)
+        {
+            if (CodeEmitHelpers.ClassifyMediaType(content.MediaType) == ContentCategory.OctetStream)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the response's content is text/plain with no JSON
+    /// alternative, in which case the server result carries the text through the binary
+    /// writer machinery with a text content type.
+    /// </summary>
+    private static bool IsTextOnlyResponse(ResponseInfo resp)
+    {
+        bool hasText = false;
+        foreach (ContentInfo content in resp.Content)
+        {
+            // Streaming responses (SSE, NDJSON) classify into the text/binary buckets by
+            // media type but are handled by the streaming machinery, never the binary writer.
+            if (content.MediaType.StartsWith("text/event-stream", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(content.MediaType, "application/x-ndjson", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            ContentCategory category = CodeEmitHelpers.ClassifyMediaType(content.MediaType);
+            if (category == ContentCategory.Json)
+            {
+                return false;
+            }
+
+            if (category == ContentCategory.TextPlain)
+            {
+                hasText = true;
+            }
+        }
+
+        return hasText;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the response is a 2xx or default response carrying a raw
+    /// binary (octet-stream) or text-only body, in which case the server result offers binary
+    /// factories and the endpoint writes the body through the binary writer.
+    /// </summary>
+    private static bool IsBinaryStyleResponse(ResponseInfo resp)
+    {
+        bool eligible = resp.StatusCode == "default"
+            || (resp.StatusCode.Length == 3 && resp.StatusCode[0] == '2');
+        return eligible && (IsOctetStreamResponse(resp) || IsTextOnlyResponse(resp));
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if any of the operation's responses is binary-style.
+    /// </summary>
+    private static bool HasBinaryStyleResponse(OperationInfo op)
+    {
+        foreach (ResponseInfo resp in op.Responses)
+        {
+            if (IsBinaryStyleResponse(resp))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private GeneratedFile EmitServerOperationResult(OperationInfo op)
@@ -4313,6 +4440,10 @@ public sealed class OpenApi20CodeGenerator
 
         bool hasHeaders = allHeaders.Count > 0;
 
+        // Detect a 2xx or default binary-style (octet-stream or text-only) response: the server
+        // must be able to write raw bytes.
+        bool hasBinaryResponse = HasBinaryStyleResponse(op);
+
         w.WriteLine("/// <summary>");
         w.WriteLine($"/// Result type for the {op.MethodName} operation.");
         w.WriteLine("/// </summary>");
@@ -4328,6 +4459,11 @@ public sealed class OpenApi20CodeGenerator
                 w.Write($", {typeName} {fieldName} = default");
             }
 
+            if (hasBinaryResponse)
+            {
+                w.Write(", bool hasBinaryBody = false, Func<Stream, CancellationToken, ValueTask>? binaryWriter = null");
+            }
+
             w.WriteLine(")");
             w.OpenBrace();
             w.WriteLine("this.StatusCode = statusCode;");
@@ -4338,16 +4474,40 @@ public sealed class OpenApi20CodeGenerator
                 w.WriteLine($"this.{propertyName} = {fieldName};");
             }
 
+            if (hasBinaryResponse)
+            {
+                w.WriteLine("this.HasBinaryBody = hasBinaryBody;");
+                w.WriteLine("this.binaryWriter = binaryWriter;");
+            }
+
             w.CloseBrace();
         }
         else
         {
-            w.WriteLine($"private {structName}(int statusCode, JsonElement body = default, string? contentType = null)");
+            w.Write($"private {structName}(int statusCode, JsonElement body = default, string? contentType = null");
+            if (hasBinaryResponse)
+            {
+                w.Write(", bool hasBinaryBody = false, Func<Stream, CancellationToken, ValueTask>? binaryWriter = null");
+            }
+
+            w.WriteLine(")");
             w.OpenBrace();
             w.WriteLine("this.StatusCode = statusCode;");
             w.WriteLine("this.Body = body;");
             w.WriteLine("this.ContentType = contentType;");
+            if (hasBinaryResponse)
+            {
+                w.WriteLine("this.HasBinaryBody = hasBinaryBody;");
+                w.WriteLine("this.binaryWriter = binaryWriter;");
+            }
+
             w.CloseBrace();
+        }
+
+        if (hasBinaryResponse)
+        {
+            w.WriteLine();
+            w.WriteLine("private readonly Func<Stream, CancellationToken, ValueTask>? binaryWriter;");
         }
 
         w.WriteLine();
@@ -4359,6 +4519,19 @@ public sealed class OpenApi20CodeGenerator
         w.WriteLine();
         w.WriteLine("/// <summary>Gets the content type for the response body.</summary>");
         w.WriteLine("public string? ContentType { get; }");
+
+        if (hasBinaryResponse)
+        {
+            w.WriteLine();
+            w.WriteLine("/// <summary>Gets a value indicating whether this result has a raw binary response body.</summary>");
+            w.WriteLine("public bool HasBinaryBody { get; }");
+            w.WriteLine();
+            w.WriteLine("/// <summary>Writes the raw binary response body to the given stream.</summary>");
+            w.WriteLine("/// <param name=\"stream\">The response stream.</param>");
+            w.WriteLine("/// <param name=\"cancellationToken\">A cancellation token.</param>");
+            w.WriteLine("/// <returns>A task that completes when the body has been written.</returns>");
+            w.WriteLine("public ValueTask WriteBinaryBodyAsync(Stream stream, CancellationToken cancellationToken) => this.binaryWriter is { } writer ? writer(stream, cancellationToken) : ValueTask.CompletedTask;");
+        }
 
         // Header properties
         foreach (var (header, typeName, _, propertyName) in allHeaders)
@@ -4375,6 +4548,68 @@ public sealed class OpenApi20CodeGenerator
         {
             string factoryName = CodeEmitHelpers.StatusCodeToName(resp.StatusCode);
             string? typeName = this.ResolveResponseTypeName(resp);
+
+            // For a binary-style (octet-stream, type: file, or text-only) 2xx or default response,
+            // emit factories that take raw bytes or a write callback so the handler can return
+            // binary or text content. A response that also declares JSON content falls through
+            // so the JSON factory is emitted alongside.
+            if (IsBinaryStyleResponse(resp))
+            {
+                bool isDefaultResp = resp.StatusCode == "default";
+                bool isTextOnlyResp = IsTextOnlyResponse(resp);
+                string statusParam = isDefaultResp ? "int statusCode, " : string.Empty;
+                string statusArg = isDefaultResp ? "statusCode" : resp.StatusCode;
+                string statusDoc = isDefaultResp ? "the given status" : $"status {resp.StatusCode}";
+                string defaultContentType = isTextOnlyResp ? "text/plain; charset=utf-8" : "application/octet-stream";
+                string ctorPrefix = $"{statusArg}, default, contentType, hasBinaryBody: true, binaryWriter: ";
+
+                void EmitStatusParamDoc()
+                {
+                    if (isDefaultResp)
+                    {
+                        w.WriteLine("/// <param name=\"statusCode\">The HTTP status code.</param>");
+                    }
+                }
+
+                w.WriteLine();
+                w.WriteLine("/// <summary>");
+                w.WriteLine($"/// Creates a {factoryName} result with a buffered raw binary body.");
+                w.WriteLine("/// </summary>");
+                EmitStatusParamDoc();
+                w.WriteLine("/// <param name=\"body\">The raw binary response body.</param>");
+                w.WriteLine("/// <param name=\"contentType\">The content type for the response body.</param>");
+                w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with {statusDoc}.</returns>");
+                w.WriteLine($"public static {structName} {factoryName}({statusParam}ReadOnlyMemory<byte> body, string? contentType = \"{defaultContentType}\") => new({ctorPrefix}(stream, cancellationToken) => stream.WriteAsync(body, cancellationToken));");
+                w.WriteLine();
+                w.WriteLine("/// <summary>");
+                w.WriteLine($"/// Creates a {factoryName} result that streams a raw binary body.");
+                w.WriteLine("/// </summary>");
+                EmitStatusParamDoc();
+                w.WriteLine("/// <param name=\"writeBody\">A callback that writes the raw binary response body to the response stream.</param>");
+                w.WriteLine("/// <param name=\"contentType\">The content type for the response body.</param>");
+                w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with {statusDoc}.</returns>");
+                w.WriteLine($"public static {structName} {factoryName}({statusParam}Func<Stream, CancellationToken, ValueTask> writeBody, string? contentType = \"{defaultContentType}\") => new({ctorPrefix}writeBody);");
+
+                if (isTextOnlyResp)
+                {
+                    // String convenience overload — encodes the text as UTF-8 when the body is
+                    // written. The UTF-8 bytes overload above is the allocation-conscious path.
+                    w.WriteLine();
+                    w.WriteLine("/// <summary>");
+                    w.WriteLine($"/// Creates a {factoryName} result from a text body, encoded as UTF-8 when written.");
+                    w.WriteLine("/// </summary>");
+                    EmitStatusParamDoc();
+                    w.WriteLine("/// <param name=\"body\">The text response body.</param>");
+                    w.WriteLine("/// <param name=\"contentType\">The content type for the response body.</param>");
+                    w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with {statusDoc}.</returns>");
+                    w.WriteLine($"public static {structName} {factoryName}({statusParam}string body, string? contentType = \"{defaultContentType}\") => new({ctorPrefix}(stream, cancellationToken) => stream.WriteAsync(System.Text.Encoding.UTF8.GetBytes(body), cancellationToken));");
+                }
+
+                if (typeName is null)
+                {
+                    continue;
+                }
+            }
 
             List<(HeaderInfo Header, string TypeName, string FieldName, string PropertyName)> respHeaders = [];
             foreach (HeaderInfo header in resp.Headers)
@@ -4751,6 +4986,7 @@ public sealed class OpenApi20CodeGenerator
                 w.WriteLine("/// <param name=\"configureEndpoint\">An optional callback invoked once per generated endpoint, after the route is mapped, to apply per-endpoint conventions (authorization, naming, tags, output caching, rate limiting, etc.). May be <see langword=\"null\"/>.</param>");
             }
 
+            w.WriteLine("/// <param name=\"serverOptions\">Optional registration-time server options (request body limits, etc.). When <see langword=\"null\"/>, defaults are used.</param>");
             w.WriteLine("/// <returns>The endpoint route builder for chaining.</returns>");
         }
 
@@ -4768,7 +5004,7 @@ public sealed class OpenApi20CodeGenerator
             w.Write($", string {routeParamName}");
         }
 
-        w.WriteLine(")");
+        w.WriteLine(", ApiServerOptions? serverOptions = null)");
         w.OpenBrace();
         w.Write($"return Map{prefix}Endpoints(app");
         foreach (string hpn in handlerParamNames)
@@ -4781,7 +5017,7 @@ public sealed class OpenApi20CodeGenerator
             w.Write($", {routeParamName}");
         }
 
-        w.WriteLine(", configureEndpoint: null);");
+        w.WriteLine(", configureEndpoint: null, serverOptions: serverOptions);");
         w.CloseBrace();
         w.WriteLine();
 
@@ -4799,8 +5035,9 @@ public sealed class OpenApi20CodeGenerator
         }
 
         w.Write(", ConfigureEndpoint? configureEndpoint");
-        w.WriteLine(")");
+        w.WriteLine(", ApiServerOptions? serverOptions = null)");
         w.OpenBrace();
+        w.WriteLine("serverOptions ??= new ApiServerOptions();");
 
         // Emit a MapXxx call for each operation. Track registered operations to avoid
         // duplicates when the same operation appears under multiple tags.
@@ -4858,6 +5095,16 @@ public sealed class OpenApi20CodeGenerator
                 if (hasBody && !isRawStreamBody)
                 {
                     w.WriteLine($"ParsedJsonDocument<{bodyTypeName}>? bodyDoc = null;");
+                }
+
+                // Multipart bodies with file parts use the owned deserializer so the
+                // captured part slices stay valid for the duration of the handler call.
+                bool usesOwnedBody = hasBody && !isRawStreamBody
+                    && IsMultipartRequestBody(op.RequestBody!.Value)
+                    && op.RequestBody!.Value.BinaryProperties.Length > 0;
+                if (usesOwnedBody)
+                {
+                    w.WriteLine($"OwnedMultipartBody<{bodyTypeName}>? __bodyOwner = null;");
                 }
 
                 w.WriteLine("try");
@@ -4926,31 +5173,54 @@ public sealed class OpenApi20CodeGenerator
                     {
                         IReadOnlyDictionary<string, EncodingInfo>? formEncodings =
                             GetRequestBodyEncodings(op.RequestBody!.Value, CodeEmitHelpers.IsFormUrlEncodedMediaType);
-                        string encodingsArg = formEncodings is { Count: > 0 } ? $"{op.MethodName}FormEncodings, " : string.Empty;
+                        string encodingsArg = formEncodings is { Count: > 0 } ? $"{op.MethodName}FormEncodings, " : "null, ";
 
+                        EmitBufferedBodyContentLengthPrecheck(w);
                         w.WriteLine("try");
                         w.OpenBrace();
-                        w.WriteLine($"bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, {encodingsArg}context.RequestAborted).ConfigureAwait(false);");
+                        w.WriteLine($"bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, {encodingsArg}maxBodyLength: serverOptions.MaxBufferedRequestBodyLength, cancellationToken: context.RequestAborted).ConfigureAwait(false);");
                         w.CloseBrace();
-                        w.WriteLine("catch");
-                        w.OpenBrace();
-                        EmitProblemDetailsResponse(w, 400, "Bad Request", "The request body could not be parsed.");
-                        w.WriteLine("return;");
-                        w.CloseBrace();
+                        EmitBodyParseFailureCatches(w, includeTooLarge: true);
                         w.WriteLine();
                         EmitRequestBodySchemaValidation(w, bodyTypeName);
                     }
                     else if (IsMultipartRequestBody(op.RequestBody!.Value))
                     {
+                        BinaryPropertyInfo[] binaryParts = op.RequestBody!.Value.BinaryProperties;
+                        if (binaryParts.Length > 0)
+                        {
+                            foreach (BinaryPropertyInfo binaryPart in binaryParts)
+                            {
+                                w.WriteLine($"int __binary_{binaryPart.PropertyName}_offset = -1;");
+                                w.WriteLine($"int __binary_{binaryPart.PropertyName}_length = 0;");
+                            }
+                        }
+
+                        EmitBufferedBodyContentLengthPrecheck(w);
                         w.WriteLine("try");
                         w.OpenBrace();
-                        w.WriteLine($"bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);");
+                        if (binaryParts.Length > 0)
+                        {
+                            w.WriteLine($"__bodyOwner = await MultipartFormDataSerializer.DeserializeOwnedAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, binaryPartCallback: part =>");
+                            w.OpenBrace();
+                            bool first = true;
+                            foreach (BinaryPropertyInfo binaryPart in binaryParts)
+                            {
+                                string keyword = first ? "if" : "else if";
+                                first = false;
+                                w.WriteLine($"{keyword} (part.Name.SequenceEqual(\"{binaryPart.PropertyName}\"u8)) {{ __binary_{binaryPart.PropertyName}_offset = part.BodyOffset; __binary_{binaryPart.PropertyName}_length = part.Data.Length; }}");
+                            }
+
+                            w.CloseBraceNoNewline().Write(", maxBodyLength: serverOptions.MaxBufferedRequestBodyLength, cancellationToken: context.RequestAborted).ConfigureAwait(false);");
+                            w.WriteLine();
+                        }
+                        else
+                        {
+                            w.WriteLine($"bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, maxBodyLength: serverOptions.MaxBufferedRequestBodyLength, cancellationToken: context.RequestAborted).ConfigureAwait(false);");
+                        }
+
                         w.CloseBrace();
-                        w.WriteLine("catch");
-                        w.OpenBrace();
-                        EmitProblemDetailsResponse(w, 400, "Bad Request", "The request body could not be parsed.");
-                        w.WriteLine("return;");
-                        w.CloseBrace();
+                        EmitBodyParseFailureCatches(w, includeTooLarge: true);
 
                         // Note: schema validation is skipped for multipart/form-data bodies because
                         // binary file fields (format: binary) are serialized as JSON strings whose
@@ -4962,11 +5232,7 @@ public sealed class OpenApi20CodeGenerator
                         w.OpenBrace();
                         w.WriteLine($"bodyDoc = await ParsedJsonDocument<{bodyTypeName}>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);");
                         w.CloseBrace();
-                        w.WriteLine("catch");
-                        w.OpenBrace();
-                        EmitProblemDetailsResponse(w, 400, "Bad Request", "The request body could not be parsed.");
-                        w.WriteLine("return;");
-                        w.CloseBrace();
+                        EmitBodyParseFailureCatches(w, includeTooLarge: false);
                         w.WriteLine();
                         EmitRequestBodySchemaValidation(w, bodyTypeName);
                     }
@@ -4994,7 +5260,18 @@ public sealed class OpenApi20CodeGenerator
                         }
                         else
                         {
-                            w.WriteLine("Body = bodyDoc!.RootElement,");
+                            w.WriteLine(usesOwnedBody
+                                ? "Body = __bodyOwner!.Value.Document.RootElement,"
+                                : "Body = bodyDoc!.RootElement,");
+                        }
+
+                        // Bind any multipart file parts as slices of the owned body bytes.
+                        if (!isRawStreamBody && IsMultipartRequestBody(op.RequestBody!.Value))
+                        {
+                            foreach (BinaryPropertyInfo binaryPart in op.RequestBody!.Value.BinaryProperties)
+                            {
+                                w.WriteLine($"{CodeEmitHelpers.ToPascalCase(binaryPart.PropertyName)} = __binary_{binaryPart.PropertyName}_offset >= 0 ? __bodyOwner!.Value.BodyBytes.Slice(__binary_{binaryPart.PropertyName}_offset, __binary_{binaryPart.PropertyName}_length) : ReadOnlyMemory<byte>.Empty,");
+                            }
                         }
                     }
 
@@ -5036,7 +5313,21 @@ public sealed class OpenApi20CodeGenerator
                     w.WriteLine();
                 }
 
-                w.WriteLine("if (!result.Body.IsUndefined())");
+                // For operations with a binary-style response, write raw bytes directly.
+                if (HasBinaryStyleResponse(op))
+                {
+                    w.WriteLine("if (result.HasBinaryBody)");
+                    w.OpenBrace();
+                    w.WriteLine("context.Response.ContentType = result.ContentType ?? \"application/octet-stream\";");
+                    w.WriteLine("await result.WriteBinaryBodyAsync(context.Response.Body, context.RequestAborted).ConfigureAwait(false);");
+                    w.CloseBrace();
+                    w.WriteLine("else if (!result.Body.IsUndefined())");
+                }
+                else
+                {
+                    w.WriteLine("if (!result.Body.IsUndefined())");
+                }
+
                 w.OpenBrace();
                 w.WriteLine("context.Response.ContentType = result.ContentType ?? \"application/json\";");
                 w.WriteLine("Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);");
@@ -5061,6 +5352,11 @@ public sealed class OpenApi20CodeGenerator
                 if (hasBody && !isRawStreamBody)
                 {
                     w.WriteLine("bodyDoc?.Dispose();");
+                }
+
+                if (usesOwnedBody)
+                {
+                    w.WriteLine("__bodyOwner?.Dispose();");
                 }
 
                 w.CloseBrace();
@@ -5453,6 +5749,46 @@ public sealed class OpenApi20CodeGenerator
         w.WriteLine($"context.Response.StatusCode = {statusCode};");
         w.WriteLine("context.Response.ContentType = \"application/problem+json\";");
         w.WriteLine($"await context.Response.WriteAsync(\"{{\u005C\"type\u005C\":\u005C\"about:blank\u005C\",\u005C\"title\u005C\":\u005C\"{title}\u005C\",\u005C\"status\u005C\":{statusCode},\u005C\"detail\u005C\":\u005C\"{detail}\u005C\"}}\", context.RequestAborted).ConfigureAwait(false);");
+    }
+
+    /// <summary>
+    /// Emits a fast 413 rejection when the declared Content-Length already exceeds the
+    /// configured buffered-body limit, before any of the body is read.
+    /// </summary>
+    private static void EmitBufferedBodyContentLengthPrecheck(IndentedWriter w)
+    {
+        w.WriteLine("if (context.Request.ContentLength is long __contentLength && __contentLength > serverOptions.MaxBufferedRequestBodyLength)");
+        w.OpenBrace();
+        EmitProblemDetailsResponse(w, 413, "Payload Too Large", "The request body exceeded the configured maximum buffered size.");
+        w.WriteLine("return;");
+        w.CloseBrace();
+        w.WriteLine();
+    }
+
+    /// <summary>
+    /// Emits the catch blocks for a body-parse try: cancellation is rethrown, an over-limit
+    /// body maps to 413 (buffered bodies only), and anything else maps to a 400 parse failure.
+    /// </summary>
+    private static void EmitBodyParseFailureCatches(IndentedWriter w, bool includeTooLarge)
+    {
+        w.WriteLine("catch (OperationCanceledException)");
+        w.OpenBrace();
+        w.WriteLine("throw;");
+        w.CloseBrace();
+        if (includeTooLarge)
+        {
+            w.WriteLine("catch (RequestBodyTooLargeException)");
+            w.OpenBrace();
+            EmitProblemDetailsResponse(w, 413, "Payload Too Large", "The request body exceeded the configured maximum buffered size.");
+            w.WriteLine("return;");
+            w.CloseBrace();
+        }
+
+        w.WriteLine("catch");
+        w.OpenBrace();
+        EmitProblemDetailsResponse(w, 400, "Bad Request", "The request body could not be parsed.");
+        w.WriteLine("return;");
+        w.CloseBrace();
     }
 
     /// <summary>

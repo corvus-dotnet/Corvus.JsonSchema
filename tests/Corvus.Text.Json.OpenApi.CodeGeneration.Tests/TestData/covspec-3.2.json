@@ -2053,6 +2053,144 @@
           }
         }
       }
+    },
+    "/monitoring/log": {
+      "get": {
+        "operationId": "getMonitoringLog",
+        "responses": {
+          "200": {
+            "description": "The raw activity log",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/docs/upload-mixed": {
+      "post": {
+        "operationId": "uploadDocMixed",
+        "tags": [
+          "Items"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/mixed": {
+              "schema": {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "title": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "title"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                ]
+              },
+              "prefixEncoding": [
+                {
+                  "contentType": "application/json"
+                },
+                {
+                  "contentType": "application/octet-stream"
+                }
+              ]
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Accepted"
+          }
+        }
+      }
+    },
+    "/docs/batch-binary": {
+      "post": {
+        "operationId": "uploadBinaryBatch",
+        "tags": [
+          "Items"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/mixed": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "itemEncoding": {
+                "contentType": "application/octet-stream"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Accepted"
+          }
+        }
+      }
+    },
+    "/docs/report": {
+      "get": {
+        "operationId": "getDocReport",
+        "tags": [
+          "Items"
+        ],
+        "responses": {
+          "200": {
+            "description": "Report with attachments",
+            "content": {
+              "multipart/form-data": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "title": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "file": {
+                      "type": "string",
+                      "format": "binary"
+                    },
+                    "thumb": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                },
+                "encoding": {
+                  "file": {
+                    "contentType": "application/pdf"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {

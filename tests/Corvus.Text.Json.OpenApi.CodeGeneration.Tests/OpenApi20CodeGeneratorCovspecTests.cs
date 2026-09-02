@@ -209,7 +209,47 @@ public class OpenApi20CodeGeneratorCovspecTests
     {
         // The uploads operation deserializes its synthesized form body from multipart.
         string registration = generatedServerFiles.First(f => f.FileName == "ApiEndpointRegistration.cs").Content;
-        StringAssert.Contains(registration, "MultipartFormDataSerializer.DeserializeAsync");
+        StringAssert.Contains(registration, "MultipartFormDataSerializer.DeserializeOwnedAsync");
+    }
+
+    [TestMethod]
+    public void ServerEmitsBinaryFactoriesForFileResponses()
+    {
+        // renderWidget's 200 is a type: file response produced as octet-stream: the server
+        // result must accept raw bytes or a write callback instead of a body-less Ok().
+        string result = generatedServerFiles.First(f => f.FileName == "RenderWidgetResult.cs").Content;
+        StringAssert.Contains(result, "(ReadOnlyMemory<byte> body");
+        StringAssert.Contains(result, "(Func<Stream, CancellationToken, ValueTask> writeBody");
+        StringAssert.Contains(result, "WriteBinaryBodyAsync");
+
+        string registration = generatedServerFiles.First(f => f.FileName == "ApiEndpointRegistration.cs").Content;
+        StringAssert.Contains(registration, "result.HasBinaryBody");
+    }
+
+    [TestMethod]
+    public void ServerCapturesFileParameterBytes()
+    {
+        // A Swagger 2.0 `type: file` formData parameter must reach the handler: the endpoint
+        // captures its bytes via the deserializer callback and the Params struct exposes them.
+        string registration = generatedServerFiles.First(f => f.FileName == "ApiEndpointRegistration.cs").Content;
+        StringAssert.Contains(registration, "binaryPartCallback: part =>");
+        StringAssert.Contains(registration, "__binary_archive_offset = part.BodyOffset; __binary_archive_length = part.Data.Length;");
+        StringAssert.Contains(registration, "Archive = __binary_archive_offset >= 0 ? __bodyOwner!.Value.BodyBytes.Slice(__binary_archive_offset, __binary_archive_length) : ReadOnlyMemory<byte>.Empty,");
+
+        string paramsFile = generatedServerFiles.First(f => f.FileName == "UploadBundleParams.cs").Content;
+        StringAssert.Contains(paramsFile, "public ReadOnlyMemory<byte> Archive { get; init; }");
+    }
+
+    [TestMethod]
+    public void ServerThreadsBodyLimitsAndFailureMapping()
+    {
+        string registration = generatedServerFiles.First(f => f.FileName == "ApiEndpointRegistration.cs").Content;
+
+        StringAssert.Contains(registration, "ApiServerOptions? serverOptions = null");
+        StringAssert.Contains(registration, "maxBodyLength: serverOptions.MaxBufferedRequestBodyLength");
+        StringAssert.Contains(registration, "catch (OperationCanceledException)");
+        StringAssert.Contains(registration, "catch (RequestBodyTooLargeException)");
+        StringAssert.Contains(registration, "Payload Too Large");
     }
 
     [TestMethod]
@@ -220,5 +260,67 @@ public class OpenApi20CodeGeneratorCovspecTests
 
         string response = FileContent("ListWidgetsResponse.cs");
         StringAssert.Contains(response, "X-Total-Count");
+    }
+
+    [TestMethod]
+    public void GenerateClient_RawStreamBody_EmitsWriteCallbackOverload()
+    {
+        // A raw-stream request body gets both a Stream overload and a write-callback
+        // overload, mirroring BinaryPartData's push model for multipart parts.
+        using ParsedJsonDocument<JsonElement> specDoc = ParsedJsonDocument<JsonElement>.Parse("""
+            {
+              "swagger": "2.0",
+              "info": { "title": "RawCb", "version": "1.0" },
+              "paths": {
+                "/blob": {
+                  "post": {
+                    "operationId": "uploadBlob",
+                    "consumes": ["application/octet-stream"],
+                    "parameters": [
+                      { "in": "body", "name": "data", "required": true, "schema": { "type": "string", "format": "binary" } }
+                    ],
+                    "responses": {
+                      "201": {
+                        "description": "created",
+                        "schema": { "type": "object", "properties": { "id": { "type": "string" } } }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+        JsonElement spec = specDoc.RootElement.Clone();
+
+        SchemaReference[] refs = [.. OpenApi20CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int mapIndex = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"RawCb20.Type{mapIndex}";
+            mapIndex++;
+        }
+
+        OpenApi20CodeGenerator gen = new("RawCb20", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(spec);
+
+        GeneratedFile clientFile = files.First(f => !f.FileName.StartsWith("I") && f.FileName.EndsWith("Client.cs"));
+        Assert.IsTrue(
+            clientFile.Content.Contains("UploadBlobAsync(Stream body,"),
+            "Expected the Stream overload to remain");
+        Assert.IsTrue(
+            clientFile.Content.Contains("UploadBlobAsync(Func<Stream, CancellationToken, ValueTask> body,"),
+            "Expected the write-callback overload");
+        Assert.IsTrue(
+            clientFile.Content.Contains("SendWithStreamBodyAsyncCore<UploadBlobRequest"),
+            "Expected the Stream overload to dispatch to the stream-body core");
+        Assert.IsTrue(
+            clientFile.Content.Contains("SendWithBodyWriterAsyncCore<UploadBlobRequest"),
+            "Expected the write-callback overload to dispatch to the body-writer core");
+
+        GeneratedFile interfaceFile = files.First(f => f.FileName.StartsWith("I") && f.FileName.EndsWith("Client.cs"));
+        Assert.IsTrue(
+            interfaceFile.Content.Contains("UploadBlobAsync(Func<Stream, CancellationToken, ValueTask> body,"),
+            "Expected the write-callback overload on the client interface");
     }
 }

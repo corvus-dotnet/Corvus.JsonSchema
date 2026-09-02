@@ -68,6 +68,18 @@ namespace Resources
         /// <summary>The EnumValues class scope has not been created.</summary>
         public static string @EnumValuesClassScopeNotCreated => GetResourceString("EnumValuesClassScopeNotCreated", @"The EnumValues class scope has not been created.");
 
+        /// <summary>The KnownValues enum name has not been created.</summary>
+        public static string @KnownValuesEnumNameNotCreated => GetResourceString("KnownValuesEnumNameNotCreated", @"The KnownValues enum name has not been created.");
+
+        /// <summary>The KnownValues enum scope has not been created.</summary>
+        public static string @KnownValuesEnumScopeNotCreated => GetResourceString("KnownValuesEnumScopeNotCreated", @"The KnownValues enum scope has not been created.");
+
+        /// <summary>The Flags enum name has not been created.</summary>
+        public static string @FlagsEnumNameNotCreated => GetResourceString("FlagsEnumNameNotCreated", @"The Flags enum name has not been created.");
+
+        /// <summary>The Flags enum scope has not been created.</summary>
+        public static string @FlagsEnumScopeNotCreated => GetResourceString("FlagsEnumScopeNotCreated", @"The Flags enum scope has not been created.");
+
         /// <summary>Expected numeric type name.</summary>
         public static string @ExpectedNumericTypeName => GetResourceString("ExpectedNumericTypeName", @"Expected numeric type name.");
 

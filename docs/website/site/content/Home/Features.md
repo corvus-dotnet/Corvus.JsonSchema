@@ -30,7 +30,7 @@ Type-safe `Match()` for `oneOf`/`anyOf` discriminated unions with exhaustive del
 
 ## 🔧 JSON Operations
 
-[JSON Patch (RFC 6902)](https://datatracker.ietf.org/doc/html/rfc6902) with a fluent `PatchBuilder`, [JSON Merge Patch (RFC 7396)](https://datatracker.ietf.org/doc/html/rfc7396) for simple document merging, JSON diff for computing patches between documents, and [JSON Canonicalization (RFC 8785)](https://datatracker.ietf.org/doc/html/rfc8785) for deterministic serialization. All operations work with the zero-allocation mutable document infrastructure.
+[JSON Patch (RFC 6902)](https://datatracker.ietf.org/doc/html/rfc6902) with a fluent `PatchBuilder`, [JSON Merge Patch (RFC 7396)](https://datatracker.ietf.org/doc/html/rfc7396) for simple document merging, JSON diff for computing patches between documents, and [JSON Canonicalization (RFC 8785)](https://datatracker.ietf.org/doc/html/rfc8785) for deterministic serialization. All operations work with the zero-allocation mutable document infrastructure. Elements can also report their own location. `GetJsonPointer()` and the zero-allocation `TryGetJsonPointer()` span overloads derive the [JSON Pointer (RFC 6901)](https://datatracker.ietf.org/doc/html/rfc6901) of any element relative to its document root, which makes it easy to turn query results into patch targets.
 
 ## 🔍 Query Languages
 

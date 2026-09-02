@@ -1346,6 +1346,17 @@ internal static partial class CodeGeneratorExtensions
             return generator;
         }
 
+        JsonValueKind defaultValueKind = typeDeclaration.DefaultValue().ValueKind;
+
+        // An object or array default is materialised by calling the generated type's own
+        // ParseValue, which is emitted with [Obsolete] to steer consumers towards pooled
+        // parsing. This use is intentional. A process-lifetime static cannot use the pooled
+        // ParsedJsonDocument<T>.Parse() (the holder would never be disposed), and the
+        // ParsedJsonDocument constants only represent scalar values. Suppress the obsolete
+        // diagnostic so consumers whose own projects do not already suppress CS0618 do not
+        // see a warning from generated code.
+        bool hasParseValueInitializer = defaultValueKind is JsonValueKind.Object or JsonValueKind.Array;
+
         generator
             .ReserveName("DefaultInstance")
             .AppendSeparatorLine()
@@ -1354,12 +1365,19 @@ internal static partial class CodeGeneratorExtensions
         /// <summary>
         /// Gets the default instance.
         /// </summary>
-        """)
+        """);
+
+        if (hasParseValueInitializer)
+        {
+            generator.AppendLineIndent("#pragma warning disable CS0618 // Type or member is obsolete");
+        }
+
+        generator
             .AppendIndent("public static ")
             .Append(typeDeclaration.DotnetTypeName())
             .Append(" DefaultInstance { get; }");
 
-        return typeDeclaration.DefaultValue().ValueKind switch
+        _ = defaultValueKind switch
         {
             JsonValueKind.Undefined => generator.AppendLine(),
             JsonValueKind.Null => generator
@@ -1389,6 +1407,13 @@ internal static partial class CodeGeneratorExtensions
                     .Append(SymbolDisplay.FormatLiteral(typeDeclaration.DefaultValue().GetRawText(), true))
                     .AppendLine("u8);"),
         };
+
+        if (hasParseValueInitializer)
+        {
+            generator.AppendLineIndent("#pragma warning restore CS0618");
+        }
+
+        return generator;
     }
 
     /// <summary>

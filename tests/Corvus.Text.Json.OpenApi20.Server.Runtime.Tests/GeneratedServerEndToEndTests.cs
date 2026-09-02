@@ -87,9 +87,20 @@ public class GeneratedServerEndToEndTests
     }
 
     [TestMethod]
+    public async Task GetWidgetThumbnail_FileResponse_WritesRawBytes()
+    {
+        HttpResponseMessage response = await Client.GetAsync("/widgets/widget-1/thumbnail");
+
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual("application/octet-stream", response.Content.Headers.ContentType?.MediaType);
+        CollectionAssert.AreEqual("widget-thumbnail"u8.ToArray(), await response.Content.ReadAsByteArrayAsync());
+    }
+
+    [TestMethod]
     public async Task UploadBundle_MultipartWithBinaryAndFieldsParses()
     {
         MockUploadsHandler.CapturedNotes = null;
+        MockUploadsHandler.CapturedArchive = null;
 
         using MultipartFormDataContent content = [];
         content.Add(new ByteArrayContent([0x01, 0x02, 0x03]), "archive", "bundle.bin");
@@ -99,6 +110,7 @@ public class GeneratedServerEndToEndTests
 
         Assert.AreEqual(HttpStatusCode.NoContent, response.StatusCode);
         Assert.AreEqual("hello world", MockUploadsHandler.CapturedNotes, $"parsed body: {MockUploadsHandler.CapturedBodyJson}");
+        CollectionAssert.AreEqual(new byte[] { 0x01, 0x02, 0x03 }, MockUploadsHandler.CapturedArchive, "the file part's bytes must reach the handler");
     }
 
     [TestMethod]

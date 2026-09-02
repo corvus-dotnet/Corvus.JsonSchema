@@ -117,6 +117,22 @@
         }
       }
     },
+    "/widgets/{widgetId}/thumbnail": {
+      "get": {
+        "operationId": "getWidgetThumbnail",
+        "tags": ["widgets"],
+        "produces": ["application/octet-stream"],
+        "parameters": [
+          { "name": "widgetId", "in": "path", "required": true, "type": "string" }
+        ],
+        "responses": {
+          "200": {
+            "description": "the widget thumbnail image",
+            "schema": { "type": "file" }
+          }
+        }
+      }
+    },
     "/legacy": {
       "post": {
         "parameters": [

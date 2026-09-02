@@ -11,6 +11,7 @@ using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Text.Json;
 using Corvus.Json.CodeGeneration;
 using Corvus.Json.CodeGeneration.Keywords;
 
@@ -69,6 +70,8 @@ public static class TypeDeclarationExtensions
     private const string FullyQualifiedDotnetTypeNameKey = "CSharp_LanguageProvider_FullyQualifiedDotnetTypeName";
     private const string OptionalAsNullableKey = "CSharp_LanguageProvider_OptionalAsNullable";
     private const string ExcludeNonNullDefaultedKey = "CSharp_LanguageProvider_ExcludeNonNullDefaulted";
+    private const string EmitNativeStringEnumsKey = "CSharp_LanguageProvider_EmitNativeStringEnums";
+    private const string EmitNativeFlagsEnumsKey = "CSharp_LanguageProvider_EmitNativeFlagsEnums";
     private const string BuildParametersThresholdKey = "CSharp_LanguageProvider_BuildParametersThreshold";
     private const string ParentKey = "CSharp_LanguageProvider_Parent";
     private const string PreferredDotnetNumericTypeNameKey = "CSharp_LanguageProvider_PreferredDotnetNumericTypeName";
@@ -607,6 +610,134 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
+    /// Gets a value indicating whether a pure string-enum schema additionally generates
+    /// a nested native C# enum with conversions.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the nested native enum should be generated.</returns>
+    public static bool EmitNativeStringEnums(this TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.TryGetMetadata(EmitNativeStringEnumsKey, out bool? emitNativeStringEnums) &&
+            emitNativeStringEnums is bool value)
+        {
+            return value;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether an object schema whose declared properties are all
+    /// boolean additionally generates a nested native C# <c>[Flags]</c> enum with conversions.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the nested native <c>[Flags]</c> enum should be generated.</returns>
+    public static bool EmitNativeFlagsEnums(this TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.TryGetMetadata(EmitNativeFlagsEnumsKey, out bool? emitNativeFlagsEnums) &&
+            emitNativeFlagsEnums is bool value)
+        {
+            return value;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this type declaration generates a nested native C# enum
+    /// for its well-known string values.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the type is a pure string enum (two or more constants,
+    /// all strings) and native string enum emission is enabled.</returns>
+    public static bool HasNativeStringEnum(this TypeDeclaration typeDeclaration)
+    {
+        if (!typeDeclaration.EmitNativeStringEnums())
+        {
+            return false;
+        }
+
+        if (typeDeclaration.AnyOfConstantValues() is not IReadOnlyDictionary<IAnyOfConstantValidationKeyword, JsonElement[]> anyOfConstants ||
+            anyOfConstants.Count == 0)
+        {
+            return false;
+        }
+
+        int count = 0;
+        foreach (KeyValuePair<IAnyOfConstantValidationKeyword, JsonElement[]> kvp in anyOfConstants)
+        {
+            foreach (JsonElement value in kvp.Value)
+            {
+                if (value.ValueKind != JsonValueKind.String)
+                {
+                    return false;
+                }
+
+                count++;
+            }
+        }
+
+        return count >= 2;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this type declaration generates a nested native C#
+    /// <c>[Flags]</c> enum over its boolean properties.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the type is an object whose declared properties are all
+    /// boolean (two to thirty-one of them, none constant-valued, with no pattern properties and
+    /// additional properties absent or <c>false</c>) and native flags enum emission is enabled.</returns>
+    public static bool HasNativeFlagsEnum(this TypeDeclaration typeDeclaration)
+    {
+        if (!typeDeclaration.EmitNativeFlagsEnums())
+        {
+            return false;
+        }
+
+        if (typeDeclaration.ImpliedCoreTypesOrAny() != CoreTypes.Object ||
+            !typeDeclaration.HasPropertyDeclarations)
+        {
+            return false;
+        }
+
+        IReadOnlyList<PropertyDeclaration> properties = typeDeclaration.PropertyDeclarations;
+        if (properties.Count < 2 || properties.Count > 31)
+        {
+            return false;
+        }
+
+        if (typeDeclaration.HasLocalPatternProperties())
+        {
+            return false;
+        }
+
+        if (HasOpenFallbackPropertyType(typeDeclaration.FallbackObjectPropertyType()) ||
+            HasOpenFallbackPropertyType(typeDeclaration.LocalEvaluatedPropertyType()) ||
+            HasOpenFallbackPropertyType(typeDeclaration.LocalAndAppliedEvaluatedPropertyType()))
+        {
+            return false;
+        }
+
+        foreach (PropertyDeclaration property in properties)
+        {
+            TypeDeclaration reduced = property.ReducedPropertyType;
+            if (reduced.ImpliedCoreTypesOrAny() != CoreTypes.Boolean ||
+                reduced.SingleConstantValue().ValueKind != JsonValueKind.Undefined)
+            {
+                return false;
+            }
+        }
+
+        return true;
+
+        static bool HasOpenFallbackPropertyType(FallbackObjectPropertyType? fallbackType)
+        {
+            return fallbackType?.ReducedType.IsBuiltInJsonNotAnyType() == false;
+        }
+    }
+
+    /// <summary>
     /// Gets the maximum estimated number of captured value slots an object type's
     /// <c>Build(...)</c> property-parameter overload may hold before it is omitted.
     /// </summary>
@@ -694,6 +825,8 @@ public static class TypeDeclarationExtensions
         typeDeclaration.SetMetadata(FormatModeOverridesKey, options.FormatModeOverrides);
         typeDeclaration.SetMetadata(OptionalAsNullableKey, options.OptionalAsNullable);
         typeDeclaration.SetMetadata(ExcludeNonNullDefaultedKey, options.ExcludeNonNullDefaulted);
+        typeDeclaration.SetMetadata(EmitNativeStringEnumsKey, options.EmitNativeStringEnums);
+        typeDeclaration.SetMetadata(EmitNativeFlagsEnumsKey, options.EmitNativeFlagsEnums);
         typeDeclaration.SetMetadata(BuildParametersThresholdKey, options.BuildParametersThreshold);
         typeDeclaration.SetMetadata(UseImplicitOperatorStringKey, options.UseImplicitOperatorString);
         typeDeclaration.SetMetadata(AddExplicitUsingsKey, options.AddExplicitUsings);

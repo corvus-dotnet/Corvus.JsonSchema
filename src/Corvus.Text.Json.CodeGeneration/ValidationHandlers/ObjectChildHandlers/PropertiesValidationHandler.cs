@@ -83,7 +83,7 @@ public class PropertiesValidationHandler : IChildObjectPropertyValidationHandler
             return generator;
         }
 
-        List<(string, string)> propertyAndMethodNames = [];
+        List<(string PropertyName, string MethodName, string JsonPropertyName)> propertyAndMethodNames = [];
 
         string propertyValidatorDelegateName = generator.GetOrEmitNamedTypeInRootNamespace("PropertiesValidationHandler_NamedPropertyValidator", BuildValidatorDelegateKey(typeDeclaration, children), (generator, globalName) =>
         {
@@ -99,7 +99,7 @@ public class PropertiesValidationHandler : IChildObjectPropertyValidationHandler
 
             string methodName = generator.GetUniqueStaticReadOnlyPropertyNameInScope("Match", suffix: propertyName);
 
-            propertyAndMethodNames.Add((propertyName, methodName));
+            propertyAndMethodNames.Add((propertyName, methodName, property.JsonPropertyName));
 
             bool requiresAddLocalEvaluatedProperty = children.Any(c => c.WillEmitCodeFor(typeDeclaration) && c.EvaluatesProperty(property));
 
@@ -118,18 +118,20 @@ public class PropertiesValidationHandler : IChildObjectPropertyValidationHandler
 
         if (shouldBuildUnifiedMap)
         {
-            // Build a unified map containing both local and hoisted property names
+            // Build a unified map containing both local and hoisted property names, merged by
+            // JSON property name so a name declared in both scopes dispatches to a single case
+            // that runs every site.
             List<HoistedAllOfPropertyValidationHandler.UnifiedMapLocalEntry> localEntries = [];
-            int index = 0;
-            foreach ((string propertyName, string methodName) in propertyAndMethodNames)
+            foreach ((string propertyName, string methodName, string jsonPropertyName) in propertyAndMethodNames)
             {
-                localEntries.Add(new HoistedAllOfPropertyValidationHandler.UnifiedMapLocalEntry(index, methodName, propertyName));
-                index++;
+                localEntries.Add(new HoistedAllOfPropertyValidationHandler.UnifiedMapLocalEntry(methodName, propertyName, jsonPropertyName));
             }
 
-            HoistedAllOfPropertyValidationHandler.EmitPropertyIndexMap(generator, hoistedBranches!, localEntries);
+            HoistedAllOfPropertyValidationHandler.UnifiedMapInfo unifiedMap =
+                HoistedAllOfPropertyValidationHandler.BuildDispatchPlan(hoistedBranches!, localEntries);
 
-            var unifiedMap = new HoistedAllOfPropertyValidationHandler.UnifiedMapInfo(localEntries);
+            HoistedAllOfPropertyValidationHandler.EmitPropertyIndexMap(generator, unifiedMap, "TryGetUnifiedPropertyIndex");
+
             typeDeclaration.SetMetadata(HoistedAllOfPropertyValidationHandler.UnifiedMapMetadataKey, unifiedMap);
         }
         else
@@ -302,7 +304,7 @@ file static class PropertiesValidationHandlerExtensions
         return generator;
     }
 
-    public static CodeGenerator BuildPropertyValidatorMap(this CodeGenerator generator, TypeDeclaration typeDeclaration, List<INamedPropertyChildHandler> children, List<(string propertyName, string methodName)> propertyAndMethodNames, string propertyValidatorDelegateName)
+    public static CodeGenerator BuildPropertyValidatorMap(this CodeGenerator generator, TypeDeclaration typeDeclaration, List<INamedPropertyChildHandler> children, List<(string PropertyName, string MethodName, string JsonPropertyName)> propertyAndMethodNames, string propertyValidatorDelegateName)
     {
         string jsonPropertyNamesClassName = generator.JsonPropertyNamesClassName();
 
@@ -320,7 +322,7 @@ file static class PropertiesValidationHandlerExtensions
                     .AppendLineIndent("return new PropertySchemaMatchers<", propertyValidatorDelegateName, ">([")
                     .PushIndent();
 
-            foreach ((string propertyName, string methodName) in propertyAndMethodNames)
+            foreach ((string propertyName, string methodName, string _) in propertyAndMethodNames)
             {
                 generator
                         .AppendLineIndent("(static () => ", jsonPropertyNamesClassName, ".", propertyName, "Utf8, ", methodName, "),");
@@ -359,7 +361,7 @@ file static class PropertiesValidationHandlerExtensions
                 .AppendLineIndent("{")
                 .PushIndent();
 
-            foreach ((string propertyName, string methodName) in propertyAndMethodNames)
+            foreach ((string propertyName, string methodName, string _) in propertyAndMethodNames)
             {
                 generator
                         .AppendSeparatorLine()

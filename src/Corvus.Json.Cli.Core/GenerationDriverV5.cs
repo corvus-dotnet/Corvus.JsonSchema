@@ -205,6 +205,14 @@ public static class GenerationDriverV5
 
         ProgressTask currentTask = context.AddTask("Generating code for schema.");
         var languageProvider = CodeGeneration.CSharpLanguageProvider.DefaultWithOptions(options);
+
+        // The standalone evaluator generator requires the unreduced root types; the
+        // generation pipeline replaces reducible candidates with their reduced targets.
+        if (codeGenerationMode != CodeGenerationMode.TypeGeneration)
+        {
+            languageProvider.SetEvaluatorRootTypes([.. typesToGenerate]);
+        }
+
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =
             typeBuilder.GenerateCodeUsing(
                 languageProvider,
@@ -236,6 +244,10 @@ public static class GenerationDriverV5
         bool excludeNonNullDefaulted = optionalAsNullableMode.Equals(GeneratorConfig.OptionalAsNullable.EnumValues.NullOrUndefinedExceptNonNullDefaulted);
         bool optionalAsNullable = excludeNonNullDefaulted || optionalAsNullableMode.Equals(GeneratorConfig.OptionalAsNullable.EnumValues.NullOrUndefined);
 
+        GeneratorConfig.NativeEnums nativeEnumsMode = generatorConfig.NativeEnumsValue ?? GeneratorConfig.NativeEnums.DefaultInstance;
+        bool emitNativeStringEnums = nativeEnumsMode.Equals(GeneratorConfig.NativeEnums.EnumValues.All) || nativeEnumsMode.Equals(GeneratorConfig.NativeEnums.EnumValues.StringEnums);
+        bool emitNativeFlagsEnums = nativeEnumsMode.Equals(GeneratorConfig.NativeEnums.EnumValues.All) || nativeEnumsMode.Equals(GeneratorConfig.NativeEnums.EnumValues.FlagsObjects);
+
         return new CodeGeneration.CSharpLanguageProvider.Options(
             (string)generatorConfig.RootNamespace,
             namedTypes: namedTypes.Select(n => new CodeGeneration.CSharpLanguageProvider.NamedType(new((string)n.Reference), (string)n.DotnetTypeName, n.DotnetNamespace?.GetString(), GetAccessibility(n) ?? defaultAccessibility)).ToArray(),
@@ -253,7 +265,9 @@ public static class GenerationDriverV5
             buildParametersThreshold: generatorConfig.BuildParametersThreshold is Corvus.Json.JsonInteger buildParametersThreshold && !buildParametersThreshold.IsUndefined()
                 ? (int)buildParametersThreshold
                 : CodeGeneration.CSharpLanguageProvider.Options.DefaultBuildParametersThreshold,
-            formatModeOverrides: GetFormatModeOverrides(generatorConfig));
+            formatModeOverrides: GetFormatModeOverrides(generatorConfig),
+            emitNativeStringEnums: emitNativeStringEnums,
+            emitNativeFlagsEnums: emitNativeFlagsEnums);
     }
 
     private static IReadOnlyDictionary<string, FormatAssertionMode>? GetFormatModeOverrides(in GeneratorConfig generatorConfig)

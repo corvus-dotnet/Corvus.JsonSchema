@@ -15,7 +15,8 @@
     <!-- Exclude Generated/ from default compile globs; the IncludeGeneratedOpenApiTypes target
          adds them after the generation target runs. This avoids duplicates on incremental builds
          and ensures the files are picked up even when Generated/ doesn't exist at evaluation time. -->
-    <DefaultItemExcludes>$(DefaultItemExcludes);$(GeneratedCodeOutputPath)\**</DefaultItemExcludes>
+    <StreamingGeneratedCodeOutputPath>Generated-Streaming</StreamingGeneratedCodeOutputPath>
+    <DefaultItemExcludes>$(DefaultItemExcludes);$(GeneratedCodeOutputPath)\**;$(StreamingGeneratedCodeOutputPath)\**</DefaultItemExcludes>
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
@@ -38,7 +39,9 @@
        is already compiled. Generation itself takes <1s; no incremental skip needed. -->
   <Target Name="GenerateOpenApiTypes" Condition="'$(TargetFramework)' != 'net481'" BeforeTargets="BeforeCompile;CoreCompile">
     <RemoveDir Directories="$(GeneratedCodeOutputPath)" />
+    <RemoveDir Directories="$(StreamingGeneratedCodeOutputPath)" />
     <Exec Command="dotnet run --project &quot;$(MSBuildThisFileDirectory)..\..\src\Corvus.Json.CodeGenerator\Corvus.Json.CodeGenerator.csproj&quot; -f net10.0 -c $(Configuration) --no-build -- openapi-server &quot;$(MSBuildThisFileDirectory)$(OpenApiSpecFile)&quot; --rootNamespace CanonTests32.Server --outputPath &quot;$(GeneratedCodeOutputPath)&quot;" />
+    <Exec Command="dotnet run --project &quot;$(MSBuildThisFileDirectory)..\..\src\Corvus.Json.CodeGenerator\Corvus.Json.CodeGenerator.csproj&quot; -f net10.0 -c $(Configuration) --no-build -- openapi-server &quot;$(MSBuildThisFileDirectory)TestData\streaming-spec-3.2.json&quot; --rootNamespace CanonTests32.StreamingServer --serverBinaryParts stream --outputPath &quot;$(StreamingGeneratedCodeOutputPath)&quot;" />
   </Target>
 
   <!-- Include the generated files after generation. Runs after GenerateOpenApiTypes, picking up
@@ -46,6 +49,7 @@
   <Target Name="IncludeGeneratedOpenApiTypes" Condition="'$(TargetFramework)' != 'net481'" AfterTargets="GenerateOpenApiTypes" BeforeTargets="CoreCompile">
     <ItemGroup>
       <Compile Include="$(GeneratedCodeOutputPath)\**\*.cs" />
+      <Compile Include="$(StreamingGeneratedCodeOutputPath)\**\*.cs" />
     </ItemGroup>
   </Target>
 </Project>

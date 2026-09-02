@@ -196,7 +196,7 @@ public static class FormUrlEncodedSerializer
         Stream stream,
         CancellationToken cancellationToken = default)
         where T : struct, IJsonElement<T>
-        => await DeserializeAsync<T>(stream, null, cancellationToken).ConfigureAwait(false);
+        => await DeserializeAsync<T>(stream, null, cancellationToken: cancellationToken).ConfigureAwait(false);
 
     /// <summary>
     /// Deserializes a <c>application/x-www-form-urlencoded</c> body from a stream into a
@@ -206,15 +206,20 @@ public static class FormUrlEncodedSerializer
     /// <typeparam name="T">The JSON element type to parse into.</typeparam>
     /// <param name="stream">The request body stream.</param>
     /// <param name="encodings">Optional per-property encoding overrides.</param>
+    /// <param name="maxBodyLength">
+    /// The maximum number of bytes the body may contain. A body over the limit throws
+    /// a <see cref="RequestBodyTooLargeException"/>.
+    /// </param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A parsed JSON document backed by pooled memory. The caller must dispose it.</returns>
     public static async ValueTask<ParsedJsonDocument<T>> DeserializeAsync<T>(
         Stream stream,
         Dictionary<string, PropertyEncoding>? encodings,
+        long maxBodyLength = long.MaxValue,
         CancellationToken cancellationToken = default)
         where T : struct, IJsonElement<T>
     {
-        (byte[] buffer, int length) = await FormFieldReader.RentBodyAsync(stream, cancellationToken)
+        (byte[] buffer, int length) = await FormFieldReader.RentBodyAsync(stream, maxBodyLength, cancellationToken)
             .ConfigureAwait(false);
 
         try

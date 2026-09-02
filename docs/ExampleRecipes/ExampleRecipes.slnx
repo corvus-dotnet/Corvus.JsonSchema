@@ -128,4 +128,7 @@
   <Folder Name="/042-OpenApi20Client/">
     <Project Path="042-OpenApi20Client\OpenApi20Client.csproj" />
   </Folder>
+  <Folder Name="/043-FlagsEnums/">
+    <Project Path="043-FlagsEnums\FlagsEnums.csproj" />
+  </Folder>
 </Solution>

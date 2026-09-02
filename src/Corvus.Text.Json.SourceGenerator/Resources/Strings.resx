@@ -117,6 +117,18 @@
   <data name="EnumValuesClassScopeNotCreated" xml:space="preserve">
     <value>The EnumValues class scope has not been created.</value>
   </data>
+  <data name="KnownValuesEnumNameNotCreated" xml:space="preserve">
+    <value>The KnownValues enum name has not been created.</value>
+  </data>
+  <data name="KnownValuesEnumScopeNotCreated" xml:space="preserve">
+    <value>The KnownValues enum scope has not been created.</value>
+  </data>
+  <data name="FlagsEnumNameNotCreated" xml:space="preserve">
+    <value>The Flags enum name has not been created.</value>
+  </data>
+  <data name="FlagsEnumScopeNotCreated" xml:space="preserve">
+    <value>The Flags enum scope has not been created.</value>
+  </data>
 
   <!-- Type/metadata errors -->
   <data name="ExpectedNumericTypeName" xml:space="preserve">

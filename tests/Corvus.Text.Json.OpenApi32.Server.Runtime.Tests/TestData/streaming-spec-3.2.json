@@ -1,0 +1,125 @@
+{
+  "openapi": "3.2.0",
+  "info": {
+    "title": "Streaming Test API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/mixed-doc": {
+      "post": {
+        "operationId": "uploadMixedDoc",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/mixed": {
+              "schema": {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "title": {"type": "string"}
+                    },
+                    "required": ["title"]
+                  },
+                  {"type": "string", "format": "binary"}
+                ]
+              },
+              "prefixEncoding": [
+                {"contentType": "application/json"},
+                {"contentType": "application/octet-stream"}
+              ]
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "title": {"type": "string"},
+                    "payloadLength": {"type": "integer"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mixed-batch": {
+      "post": {
+        "operationId": "uploadMixedBatch",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/mixed": {
+              "schema": {
+                "type": "array",
+                "items": {"type": "string", "format": "binary"}
+              },
+              "itemEncoding": {"contentType": "application/octet-stream"}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "itemCount": {"type": "integer"},
+                    "totalLength": {"type": "integer"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/upload": {
+      "post": {
+        "operationId": "uploadDocument",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "caption": {"type": "string"},
+                  "file": {"type": "string", "format": "binary"},
+                  "thumb": {"type": "string", "format": "binary"}
+                },
+                "required": ["caption", "file"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "caption": {"type": "string"},
+                    "fileLength": {"type": "integer"},
+                    "thumbLength": {"type": "integer"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -294,7 +294,7 @@ public sealed class HttpClientTransport : IApiTransport
                 (int)httpResponse.StatusCode,
                 contentStream,
                 contentType,
-                new HttpResponseHeadersAdapter(httpResponse.Headers),
+                new HttpResponseHeadersAdapter(httpResponse.Headers, httpResponse.Content.Headers),
                 new HttpResponseOwner(httpResponse),
                 this,
                 cancellationToken).ConfigureAwait(false);
@@ -465,10 +465,14 @@ public sealed class HttpClientTransport : IApiTransport
     }
 
     /// <summary>
-    /// Adapts <see cref="HttpResponseHeaders"/> to <see cref="IResponseHeaders"/>.
+    /// Adapts <see cref="HttpResponseHeaders"/> to <see cref="IResponseHeaders"/>. Content
+    /// headers (Content-Type, Content-Length, ...) are consulted too: HttpClient splits
+    /// them off the message, but on the wire they are one header namespace, and consumers
+    /// like the multipart accessor need the full Content-Type with its boundary.
     /// </summary>
     private sealed class HttpResponseHeadersAdapter(
-        HttpResponseHeaders headers) : IResponseHeaders
+        HttpResponseHeaders headers,
+        HttpContentHeaders? contentHeaders = null) : IResponseHeaders
     {
         public bool TryGetValue(string headerName, out string? value)
         {
@@ -477,6 +481,12 @@ public sealed class HttpClientTransport : IApiTransport
                 // Per RFC 9110 §5.3, multiple values for the same header
                 // are semantically equivalent to a single comma-separated value.
                 value = string.Join(", ", values);
+                return true;
+            }
+
+            if (contentHeaders is not null && contentHeaders.TryGetValues(headerName, out IEnumerable<string>? contentValues))
+            {
+                value = string.Join(", ", contentValues);
                 return true;
             }
 

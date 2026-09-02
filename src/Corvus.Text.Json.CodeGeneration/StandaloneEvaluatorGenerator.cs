@@ -496,14 +496,13 @@ internal static partial class StandaloneEvaluatorGenerator
 
     private static void EmitPatternRegexFields(GenerationContext ctx, Dictionary<string, SubschemaInfo> subschemas)
     {
-        var emittedPatterns = new HashSet<string>();
         foreach (SubschemaInfo info in subschemas.Values)
         {
-            EmitPatternRegexFieldsForType(ctx, info.TypeDeclaration, emittedPatterns);
+            EmitPatternRegexFieldsForType(ctx, info.TypeDeclaration);
         }
     }
 
-    private static void EmitPatternRegexFieldsForType(GenerationContext ctx, TypeDeclaration typeDeclaration, HashSet<string> emittedPatterns)
+    private static void EmitPatternRegexFieldsForType(GenerationContext ctx, TypeDeclaration typeDeclaration)
     {
         if (typeDeclaration.PatternProperties() is { } patternPropsDict)
         {
@@ -517,12 +516,7 @@ internal static partial class StandaloneEvaluatorGenerator
                         continue;
                     }
 
-                    string fieldName = $"PatternRegex_{MakeSafeIdentifier(patternProp.Pattern)}";
-                    if (emittedPatterns.Add(fieldName))
-                    {
-                        string quotedPattern = SymbolDisplay.FormatLiteral(EcmaRegexTranslator.TranslateOrFallback(patternProp.Pattern), true);
-                        ctx.AppendLine($"private static readonly System.Text.RegularExpressions.Regex {fieldName} = new({quotedPattern}, System.Text.RegularExpressions.RegexOptions.Compiled);");
-                    }
+                    EmitPatternRegexField(ctx, patternProp.Pattern);
                 }
             }
         }
@@ -538,14 +532,41 @@ internal static partial class StandaloneEvaluatorGenerator
                     continue;
                 }
 
-                string fieldName = "PatternRegex_" + MakeSafeIdentifier(keyword.Keyword);
-                if (emittedPatterns.Add(fieldName))
-                {
-                    string quotedPattern = SymbolDisplay.FormatLiteral(EcmaRegexTranslator.TranslateOrFallback(expressions[0]), true);
-                    ctx.AppendLine($"private static readonly System.Text.RegularExpressions.Regex {fieldName} = new({quotedPattern}, System.Text.RegularExpressions.RegexOptions.Compiled);");
-                }
+                EmitPatternRegexField(ctx, expressions[0]);
             }
         }
+    }
+
+    private static void EmitPatternRegexField(GenerationContext ctx, string pattern)
+    {
+        if (ctx.PatternRegexFields.ContainsKey(pattern))
+        {
+            return;
+        }
+
+        // Distinct pattern texts can sanitize to the same identifier, so uniquify with a
+        // numeric suffix rather than sharing a field between different regexes.
+        string baseName = $"PatternRegex_{MakeSafeIdentifier(pattern)}";
+        string fieldName = baseName;
+        int suffix = 2;
+        while (ctx.PatternRegexFields.ContainsValue(fieldName))
+        {
+            fieldName = $"{baseName}_{suffix++}";
+        }
+
+        ctx.PatternRegexFields.Add(pattern, fieldName);
+        string quotedPattern = SymbolDisplay.FormatLiteral(EcmaRegexTranslator.TranslateOrFallback(pattern), true);
+        ctx.AppendLine($"private static readonly System.Text.RegularExpressions.Regex {fieldName} = new({quotedPattern}, System.Text.RegularExpressions.RegexOptions.Compiled);");
+    }
+
+    private static string GetPatternRegexField(GenerationContext ctx, string pattern)
+    {
+        if (!ctx.PatternRegexFields.TryGetValue(pattern, out string? fieldName))
+        {
+            throw new System.InvalidOperationException($"No compiled regex field was emitted for pattern '{pattern}'.");
+        }
+
+        return fieldName;
     }
 
     /// <summary>
@@ -1650,7 +1671,7 @@ internal static partial class StandaloneEvaluatorGenerator
 
                     default:
                     {
-                        string fieldName = "PatternRegex_" + MakeSafeIdentifier(keyword.Keyword);
+                        string fieldName = GetPatternRegexField(ctx, rawPattern);
                         ctx.AppendLine($"JsonSchemaEvaluation.MatchRegularExpression(unescapedString.Span, {fieldName}, {regex}, {FormatUtf8Literal(keyword.Keyword)}, ref context);");
                         break;
                     }
@@ -2356,7 +2377,7 @@ internal static partial class StandaloneEvaluatorGenerator
                     }
                     else
                     {
-                        string condition = BuildPatternPropertyCondition(patternProp, category);
+                        string condition = BuildPatternPropertyCondition(ctx, patternProp, category);
                         ctx.AppendLine($"if ({condition})");
                         ctx.AppendLine("{");
                         ctx.PushIndent();
@@ -4150,14 +4171,14 @@ internal static partial class StandaloneEvaluatorGenerator
         return sb.ToString().TrimEnd('_');
     }
 
-    private static string BuildPatternPropertyCondition(PatternPropertyDeclaration patternProp, RegexPatternCategory category)
+    private static string BuildPatternPropertyCondition(GenerationContext ctx, PatternPropertyDeclaration patternProp, RegexPatternCategory category)
     {
         return category switch
         {
             RegexPatternCategory.NonEmpty => "unescapedPropertyName.Span.Length > 0",
             RegexPatternCategory.Prefix => $"unescapedPropertyName.Span.StartsWith({SymbolDisplay.FormatLiteral(CodeGenerationExtensions.ExtractRegexPrefix(patternProp.Pattern), true)}u8)",
             RegexPatternCategory.Range => $"JsonSchemaEvaluation.MatchRangeRegularExpression(unescapedPropertyName.Span, {CodeGenerationExtensions.ExtractRegexRange(patternProp.Pattern).Min}, {CodeGenerationExtensions.ExtractRegexRange(patternProp.Pattern).Max})",
-            _ => $"JsonSchemaEvaluation.MatchRegularExpression(unescapedPropertyName.Span, PatternRegex_{MakeSafeIdentifier(patternProp.Pattern)})",
+            _ => $"JsonSchemaEvaluation.MatchRegularExpression(unescapedPropertyName.Span, {GetPatternRegexField(ctx, patternProp.Pattern)})",
         };
     }
 
@@ -4570,6 +4591,11 @@ internal static partial class StandaloneEvaluatorGenerator
         /// Gets the deferred constant document fields. Maps raw JSON text to field name.
         /// </summary>
         public Dictionary<string, string> DeferredConstantFields { get; } = [];
+
+        /// <summary>
+        /// Gets the compiled full-regex pattern fields. Maps raw pattern text to the emitted field name.
+        /// </summary>
+        public Dictionary<string, string> PatternRegexFields { get; } = [];
 
         /// <summary>
         /// Gets the deferred EnumStringSet fields. Maps a unique key to (fieldName, builderName, list of string values).

@@ -101,6 +101,89 @@ public readonly partial struct GetPetsFilter
             public static ReadOnlySpan<byte> PendingUtf8 => Constants.Enum3;
         }
 
+        /// <summary>
+        /// A native enum for the well-known values of this type.
+        /// </summary>
+        /// <remarks>
+        /// Member ordinals follow the schema declaration order. Inserting or reordering values
+        /// in the schema renumbers the ordinals, so do not persist their integer values.
+        /// </remarks>
+        public enum KnownValues
+        {
+            /// <summary>
+            /// Corresponds to the JSON string "available".
+            /// </summary>
+            Available = 0,
+            /// <summary>
+            /// Corresponds to the JSON string "adopted".
+            /// </summary>
+            Adopted = 1,
+            /// <summary>
+            /// Corresponds to the JSON string "pending".
+            /// </summary>
+            Pending = 2,
+        }
+
+        /// <summary>
+        /// Converts a <see cref="KnownValues"/> to an instance of this type.
+        /// </summary>
+        /// <param name="value">The well-known value from which to convert.</param>
+        /// <exception cref="InvalidOperationException">The value was not a defined member of the <see cref="KnownValues"/> enumeration.</exception>
+        public static implicit operator StatusEntity(KnownValues value)
+        {
+            return value switch
+            {
+                KnownValues.Available => Constants.EnumJson1,
+                KnownValues.Adopted => Constants.EnumJson2,
+                KnownValues.Pending => Constants.EnumJson3,
+                _ => throw new InvalidOperationException(),
+            };
+        }
+
+        /// <summary>
+        /// Converts the value to its <see cref="KnownValues"/> equivalent.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+        public static implicit operator KnownValues(StatusEntity value)
+        {
+            if (value.TryGetKnownValue(out KnownValues result))
+            {
+                return result;
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+        /// </summary>
+        /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+        /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+        public bool TryGetKnownValue(out KnownValues result)
+        {
+            if (this.ValueEquals(Constants.Enum1))
+            {
+                result = KnownValues.Available;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum2))
+            {
+                result = KnownValues.Adopted;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum3))
+            {
+                result = KnownValues.Pending;
+                return true;
+            }
+
+            result = default;
+            return false;
+        }
+
         public static partial class JsonSchema
         {
             /// <summary>

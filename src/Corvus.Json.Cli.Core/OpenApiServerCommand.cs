@@ -79,6 +79,27 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
         // Detect or use specified version
         string specVersion = OpenApiCommandHelpers.DetectSpecVersion(specRoot, settings.SpecVersion);
 
+        // Resolve the multipart binary parts mode.
+        bool streamBinaryParts = false;
+        if (settings.ServerBinaryParts is { } binaryPartsMode)
+        {
+            if (string.Equals(binaryPartsMode, "stream", StringComparison.OrdinalIgnoreCase))
+            {
+                streamBinaryParts = true;
+            }
+            else if (!string.Equals(binaryPartsMode, "buffer", StringComparison.OrdinalIgnoreCase))
+            {
+                AnsiConsole.MarkupLine("[red]Error:[/] --serverBinaryParts must be 'buffer' or 'stream'.");
+                return 1;
+            }
+        }
+
+        if (streamBinaryParts && specVersion is not "3.2")
+        {
+            AnsiConsole.MarkupLine("[yellow]Warning:[/] --serverBinaryParts stream is only supported for OpenAPI 3.2 specs; buffered mode is used.");
+            streamBinaryParts = false;
+        }
+
         // Build filter from --include-path / --exclude-path / --filter
         OperationFilter? filter = OpenApiCommandHelpers.BuildFilter(settings);
 
@@ -142,7 +163,10 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
                 schemaTypeMap ?? new Dictionary<string, string>(),
                 settings.ClientName,
                 settings.IgnoreEmptyFormUrlEncodedBody,
-                contextBodies);
+                contextBodies)
+            {
+                StreamServerBinaryParts = streamBinaryParts,
+            };
             files = generator.GenerateServer(specRoot, filter, referenceResolver);
         }
         else if (specVersion is "3.1" or not "3.0")

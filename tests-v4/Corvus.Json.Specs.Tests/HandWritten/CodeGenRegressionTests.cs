@@ -23,6 +23,41 @@ namespace Corvus.Json.Specs.Tests.HandWritten;
 public class CodeGenRegressionTests
 {
     [TestMethod]
+    public async Task DefaultInstance_FromSchemaDefault_IsWrappedInObsoleteSuppression()
+    {
+        // Issue #939: a type with a schema `default` gets a DefaultInstance materialized
+        // via ParseValue, which is [Obsolete]. That self-call produced CS0618 in
+        // consumer projects that do not suppress it (build-breaking under
+        // warnings-as-errors). ParseValue is the right tool for a long-lived static, so
+        // the generator now wraps the initializer in a CS0618 suppression.
+        using var driver = DriverFactory.CreateDraft202012Driver();
+        IReadOnlyCollection<GeneratedCodeFile> code = await driver.GenerateCodeForVirtualFile(
+            """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "object",
+              "properties": { "name": { "type": "string" } },
+              "default": { "name": "example" }
+            }
+            """,
+            "defaultInstance.json",
+            "DefaultInstanceTest",
+            "DefaultedObject",
+            validateFormat: false,
+            optionalAsNullable: false,
+            useImplicitOperatorString: false);
+
+        string generatedCode = string.Concat(code.Select(f => f.FileContent));
+        string normalized = Regex.Replace(generatedCode, @"\s+", " ");
+
+        // The DefaultInstance initializer (a self-call to the obsolete ParseValue) must
+        // be immediately preceded by the CS0618 suppression and followed by a restore.
+        StringAssert.Matches(
+            normalized,
+            new Regex(@"#pragma warning disable CS0618[^#]*?public static \S+ DefaultInstance \{ get; \} = \S+\.ParseValue\([^#]*?#pragma warning restore CS0618"));
+    }
+
+    [TestMethod]
     public async Task UnableToFindProperty_CodeGenDoesNotThrow()
     {
         // Repro: A large schema with nested $refs and additionalProperties

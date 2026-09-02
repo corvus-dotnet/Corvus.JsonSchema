@@ -11,6 +11,32 @@
     }
   ],
   "paths": {
+    "/docs/report": {
+      "get": {
+        "operationId": "getDocReport",
+        "tags": ["items"],
+        "responses": {
+          "200": {
+            "description": "Report with attachments",
+            "content": {
+              "multipart/form-data": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {"type": "object", "properties": {"title": {"type": "string"}}},
+                    "file": {"type": "string", "format": "binary"},
+                    "thumb": {"type": "string", "format": "binary"}
+                  }
+                },
+                "encoding": {
+                  "file": {"contentType": "application/pdf"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/items/{itemId}": {
       "get": {
         "operationId": "getItem",

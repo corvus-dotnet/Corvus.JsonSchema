@@ -4641,6 +4641,45 @@ internal static partial class CodeGeneratorExtensions
             }
         }
 
+        if (typeDeclaration.HasNativeStringEnum())
+        {
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
+                .AppendLineIndent("public static implicit operator ", generator.SourceClassName(), "(", generator.KnownValuesEnumName(), " value) => (", typeDeclaration.DotnetTypeName(), ")value;");
+        }
+
+        if (typeDeclaration.HasNativeFlagsEnum() && EmitsCreateParamsBuild(typeDeclaration))
+        {
+            // Delegate to the property-parameter Build(...) overload, passing one bool per
+            // boolean property in its parameter order; every declared property is written
+            // explicitly so the result is deterministic and satisfies any required properties.
+            IReadOnlyList<CodeGenerationExtensions.FlagsMember> flagsMembers = CodeGenerationExtensions.GetOrBuildFlagsMembers(generator, typeDeclaration);
+            List<(string Type, bool IsOptional, string JsonName)> flagsArgs = CreateParamSourceTypes(generator, typeDeclaration, forContext: false);
+            string flagsEnumName = generator.FlagsEnumName();
+
+            if (flagsArgs.Count == flagsMembers.Count &&
+                flagsArgs.All(a => flagsMembers.Any(m => m.JsonName == a.JsonName)))
+            {
+                generator
+                    .AppendSeparatorLine()
+                    .AppendIndent("public static implicit operator ", generator.SourceClassName(), "(", flagsEnumName, " value) => ", typeDeclaration.DotnetTypeName(), ".Build(");
+
+                for (int i = 0; i < flagsArgs.Count; i++)
+                {
+                    if (i > 0)
+                    {
+                        generator.Append(", ");
+                    }
+
+                    string memberName = flagsMembers.First(m => m.JsonName == flagsArgs[i].JsonName).MemberName;
+                    generator.Append("(value & ").Append(flagsEnumName).Append(".").Append(memberName).Append(") != 0");
+                }
+
+                generator.AppendLine(");");
+            }
+        }
+
         // Implicit conversion from ReadOnlySpan<T> for numeric array types
         HashSet<string> seenArrayConversions = new(StringComparer.Ordinal);
         generator.AppendNumericArrayImplicitOperator(typeDeclaration, seenArrayConversions);

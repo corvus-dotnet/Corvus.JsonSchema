@@ -144,6 +144,8 @@
     <Project Path="tests/Corvus.Text.Json.OpenApi30.Tests/Corvus.Text.Json.OpenApi30.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.OpenApi31.Tests/Corvus.Text.Json.OpenApi31.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Patch.Tests/Corvus.Text.Json.Patch.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Tests.GeneratedModels.NativeEnums.Disabled/Corvus.Text.Json.Tests.GeneratedModels.NativeEnums.Disabled.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Tests.GeneratedModels.NativeEnums/Corvus.Text.Json.Tests.GeneratedModels.NativeEnums.csproj" />
     <Project Path="tests/Corvus.Text.Json.Tests.GeneratedModels.OptionalAsNullable/Corvus.Text.Json.Tests.GeneratedModels.OptionalAsNullable.csproj" />
     <Project Path="tests/Corvus.Text.Json.Tests.GeneratedModels/Corvus.Text.Json.Tests.GeneratedModels.csproj" />
     <Project Path="tests/Corvus.Text.Json.Tests.MigrationModels.V4/Corvus.Text.Json.Tests.MigrationModels.V4.csproj" />

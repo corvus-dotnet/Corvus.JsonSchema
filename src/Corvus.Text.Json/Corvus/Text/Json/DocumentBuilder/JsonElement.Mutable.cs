@@ -4759,7 +4759,7 @@ public readonly partial struct JsonElement
                     _parent.InsertSimpleProperty(_idx, endIndex, 1, propertyName, tokenType, location, sizeOrLength);
                 }
             }
-            else if (source.TryGetSourceDocument(out IJsonDocument sourceDocument, out int sourceIndex))
+            else if (source.TryGetSourceDocument(out IJsonDocument sourceDocument, out int sourceIndex) && !ReferenceEquals(sourceDocument, _parent))
             {
                 // Fast path for JsonElement values: write external reference rows directly.
                 if (_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement value))
@@ -4813,7 +4813,7 @@ public readonly partial struct JsonElement
             {
                 result = _parent.TryReplacePropertyValue(_idx, propertyName, tokenType, location, sizeOrLength);
             }
-            else if (source.TryGetSourceDocument(out IJsonDocument sourceDocument, out int sourceIndex))
+            else if (source.TryGetSourceDocument(out IJsonDocument sourceDocument, out int sourceIndex) && !ReferenceEquals(sourceDocument, _parent))
             {
                 result = _parent.TryReplacePropertyFromDocument(_idx, propertyName, sourceDocument, sourceIndex);
             }
@@ -5577,7 +5577,7 @@ public readonly partial struct JsonElement
                 Mutable element = _parent.GetArrayIndexElement(_idx, itemIndex);
                 _parent.OverwriteSimpleValue(_idx, element._idx, element._idx + element._parent.GetDbSize(element._idx, true), 1, tokenType, location, sizeOrLength);
             }
-            else if (source.TryGetSourceDocument(out IJsonDocument sourceDocument, out int sourceIndex))
+            else if (source.TryGetSourceDocument(out IJsonDocument sourceDocument, out int sourceIndex) && !ReferenceEquals(sourceDocument, _parent))
             {
                 Mutable element = _parent.GetArrayIndexElement(_idx, itemIndex);
                 _parent.OverwriteFromDocument(_idx, element._idx, element._idx + element._parent.GetDbSize(element._idx, true), 1, sourceDocument, sourceIndex);
@@ -5836,7 +5836,7 @@ public readonly partial struct JsonElement
             {
                 _parent.InsertSimpleValue(_idx, targetIndex, 1, tokenType, location, sizeOrLength);
             }
-            else if (source.TryGetSourceDocument(out IJsonDocument sourceDocument, out int sourceIndex))
+            else if (source.TryGetSourceDocument(out IJsonDocument sourceDocument, out int sourceIndex) && !ReferenceEquals(sourceDocument, _parent))
             {
                 _parent.InsertFromDocument(_idx, targetIndex, 1, sourceDocument, sourceIndex);
             }

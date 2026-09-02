@@ -1133,6 +1133,247 @@ public class OpenApi32CodeGeneratorTests
     }
 
     [TestMethod]
+    public void GenerateServer_EndpointRegistration_ThreadsBodyLimitsAndFailureMapping()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+        OpenApi32CodeGenerator generator = new("CovTest.Server", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(covspecRoot);
+
+        GeneratedFile registration = files.First(f => f.FileName == "ApiEndpointRegistration.cs");
+
+        Assert.IsTrue(
+            registration.Content.Contains("ApiServerOptions? serverOptions = null", StringComparison.Ordinal),
+            "Expected MapApiEndpoints to accept registration-time server options");
+        Assert.IsTrue(
+            registration.Content.Contains("maxBodyLength: serverOptions.MaxBufferedRequestBodyLength", StringComparison.Ordinal),
+            "Expected the buffered body deserializers to receive the configured cap");
+        Assert.IsTrue(
+            registration.Content.Contains("catch (OperationCanceledException)", StringComparison.Ordinal),
+            "Expected cancellation to be rethrown rather than reported as a parse failure");
+        Assert.IsTrue(
+            registration.Content.Contains("catch (RequestBodyTooLargeException)", StringComparison.Ordinal),
+            "Expected an oversized body to be mapped to its own response");
+        Assert.IsTrue(
+            registration.Content.Contains("Payload Too Large", StringComparison.Ordinal),
+            "Expected a 413 problem response for oversized bodies");
+    }
+
+    [TestMethod]
+    public void GenerateServer_OptionalMultipartWithBinaryPart_DeclaresCaptureLocalsOutsideOptionalGate()
+    {
+        JsonElement spec = ParseSpec("""
+        {
+          "openapi": "3.2.0",
+          "info": {"title": "t", "version": "1"},
+          "paths": {
+            "/upload": {
+              "post": {
+                "operationId": "uploadThing",
+                "requestBody": {
+                  "required": false,
+                  "content": {
+                    "multipart/form-data": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "file": {"type": "string", "format": "binary"},
+                          "note": {"type": "string"}
+                        }
+                      }
+                    }
+                  }
+                },
+                "responses": {"204": {"description": "ok"}}
+              }
+            }
+          }
+        }
+        """);
+
+        Dictionary<string, string> map = new()
+        {
+            ["#/paths/~1upload/post/requestBody/content/multipart~1form-data/schema"] = "Petstore.Server.UploadBody",
+        };
+
+        OpenApi32CodeGenerator gen = new("Petstore.Server", map);
+        IReadOnlyList<GeneratedFile> files = gen.GenerateServer(spec);
+        string registration = GetFile(files, "ApiEndpointRegistration.cs").Content;
+
+        int localIndex = registration.IndexOf("int __binary_file_offset = -1;", StringComparison.Ordinal);
+        int gateIndex = registration.IndexOf("(context.Request.ContentLength ?? 0) > 0", StringComparison.Ordinal);
+        Assert.IsTrue(localIndex >= 0, "expected a capture local for the binary part");
+        Assert.IsTrue(gateIndex >= 0, "expected the optional-body gate");
+        Assert.IsTrue(
+            localIndex < gateIndex,
+            "the capture local must be declared before the optional-body gate so the Params binding outside the gate can reference it");
+    }
+
+    [TestMethod]
+    public void Generate_BinaryPartWithDeclaredContentType_SubstitutesSpecDefault()
+    {
+        JsonElement spec = ParseSpec("""
+        {
+          "openapi": "3.2.0",
+          "info": {"title": "t", "version": "1"},
+          "paths": {
+            "/photos": {
+              "post": {
+                "operationId": "uploadPhoto",
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "multipart/form-data": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "photo": {"type": "string", "format": "binary"},
+                          "caption": {"type": "string"}
+                        }
+                      },
+                      "encoding": {
+                        "photo": {"contentType": "image/png"}
+                      }
+                    }
+                  }
+                },
+                "responses": {"204": {"description": "ok"}}
+              }
+            }
+          }
+        }
+        """);
+
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1photos/post/requestBody/content/multipart~1form-data/schema"] = "Petstore.Client.PhotoBody",
+        };
+
+        OpenApi32CodeGenerator gen = new("Petstore.Client", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(spec);
+
+        GeneratedFile client = files.First(f => f.FileName.EndsWith("Client.cs", StringComparison.Ordinal)
+            && !f.FileName.StartsWith("IApi", StringComparison.Ordinal));
+
+        Assert.IsTrue(
+            client.Content.Contains("photo.ContentType is null ? photo with { ContentType = \"image/png\" } : photo", StringComparison.Ordinal),
+            "expected the spec-declared encoding contentType substituted when the caller leaves ContentType unset");
+    }
+
+    [TestMethod]
+    public void Generate_TextPlainResponse_DefersBufferingAndEmitsAsyncAccessors()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+        OpenApi32CodeGenerator generator = new("CovTest.Client", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(covspecRoot);
+
+        GeneratedFile response = files.First(f => f.FileName == "GetItemResponse.cs");
+
+        Assert.IsTrue(
+            response.Content.Contains("TextBody = new TextResponseBody(contentStream);", StringComparison.Ordinal),
+            "expected the text body to defer to the live stream");
+        Assert.IsTrue(
+            response.Content.Contains("GetOkTextAsync", StringComparison.Ordinal),
+            "expected an async buffering accessor");
+        Assert.IsTrue(
+            response.Content.Contains("TextStream =>", StringComparison.Ordinal),
+            "expected a live stream accessor");
+        Assert.IsFalse(
+            response.Content.Contains("ReadStreamToRentedBuffer(contentStream", StringComparison.Ordinal),
+            "expected no eager synchronous buffering in CreateAsync");
+    }
+
+    [TestMethod]
+    public void GenerateServer_DefaultStatusOctetStreamResponse_GetsBinaryFactoryOverloads()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+        OpenApi32CodeGenerator generator = new("CovTest.Server", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(covspecRoot);
+
+        // exportData's default response carries both application/json and
+        // application/octet-stream: the result must offer binary overloads alongside
+        // the JSON default factory, each taking the caller's status code.
+        string result = files.First(f => f.FileName == "ExportDataResult.cs").Content;
+        Assert.IsTrue(
+            result.Contains("(int statusCode, ReadOnlyMemory<byte> body", StringComparison.Ordinal),
+            "expected a buffered binary overload on the default factory");
+        Assert.IsTrue(
+            result.Contains("(int statusCode, Func<Stream, CancellationToken, ValueTask> writeBody", StringComparison.Ordinal),
+            "expected a streaming binary overload on the default factory");
+        Assert.IsTrue(
+            result.Contains(".Source body", StringComparison.Ordinal),
+            "expected the JSON default factory to survive alongside the binary overloads");
+    }
+
+    [TestMethod]
+    public void GenerateServer_TextOnlyResponse_GetsTextFactory()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+        OpenApi32CodeGenerator generator = new("CovTest.Server", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(covspecRoot);
+
+        // getMonitoringLog's only response is text/plain: instead of a body-less Ok()
+        // the result must accept text content, defaulting the content type accordingly.
+        string result = files.First(f => f.FileName == "GetMonitoringLogResult.cs").Content;
+        Assert.IsTrue(
+            result.Contains("text/plain; charset=utf-8", StringComparison.Ordinal),
+            "expected the text content type default");
+        Assert.IsTrue(
+            result.Contains("(string body", StringComparison.Ordinal),
+            "expected a string convenience overload");
+        Assert.IsTrue(
+            result.Contains("(ReadOnlyMemory<byte> body", StringComparison.Ordinal),
+            "expected a UTF-8 bytes overload");
+    }
+
+    [TestMethod]
+    public void GenerateServer_MultipartMixed_CapturesBinaryPartsAndSkipsPositionalValidation()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+        OpenApi32CodeGenerator generator = new("CovTest.Server", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(covspecRoot);
+
+        string registration = files.First(f => f.FileName == "ApiEndpointRegistration.cs").Content;
+
+        // uploadDocMixed: the binary prefix part is captured by its wire index and bound
+        // as a slice of the owned body bytes.
+        Assert.IsTrue(
+            registration.Contains("if (part.Index == 1) { __mixedBinary_1_offset = part.BodyOffset; __mixedBinary_1_length = part.Data.Length; }", StringComparison.Ordinal),
+            "expected a positional capture for the binary prefix part");
+        Assert.IsTrue(
+            registration.Contains("Part1 = __mixedBinary_1_offset >= 0 ? __bodyOwner!.Value.BodyBytes.Slice(__mixedBinary_1_offset, __mixedBinary_1_length) : ReadOnlyMemory<byte>.Empty,", StringComparison.Ordinal),
+            "expected the captured prefix part bound into Params");
+
+        // uploadBinaryBatch: repeating binary items are collected in wire order and bound
+        // as slices of the owned body bytes.
+        Assert.IsTrue(
+            registration.Contains("__mixedBinaryItemOffsets.Add((part.BodyOffset, part.Data.Length));", StringComparison.Ordinal),
+            "expected repeating binary items to be collected");
+        Assert.IsTrue(
+            registration.Contains("Items = MultipartBinaryParts.Slice(__bodyOwner!.Value.BodyBytes, __mixedBinaryItemOffsets),", StringComparison.Ordinal),
+            "expected the collected items bound into Params");
+
+        // Binary parts are excluded from the JSON projection, so positional schema
+        // validation must be skipped for mixed bodies that carry them. Slice the
+        // uploadDocMixed endpoint from its route registration to its handler call.
+        int start = registration.IndexOf("\"/docs/upload-mixed\"", StringComparison.Ordinal);
+        int end = start >= 0 ? registration.IndexOf("HandleUploadDocMixedAsync", start, StringComparison.Ordinal) : -1;
+        Assert.IsTrue(end > start && start >= 0, "expected the mixed endpoint to invoke its handler after the capture");
+        Assert.IsFalse(
+            registration[start..end].Contains("EvaluateSchema", StringComparison.Ordinal),
+            "expected positional schema validation to be skipped for a mixed body with binary parts");
+
+        string prefixParams = files.First(f => f.FileName == "UploadDocMixedParams.cs").Content;
+        Assert.IsTrue(
+            prefixParams.Contains("public ReadOnlyMemory<byte> Part1 { get; init; }", StringComparison.Ordinal),
+            "expected a positional binary part property on the Params struct");
+
+        string batchParams = files.First(f => f.FileName == "UploadBinaryBatchParams.cs").Content;
+        Assert.IsTrue(
+            batchParams.Contains("IReadOnlyList<ReadOnlyMemory<byte>> Items { get; init; }", StringComparison.Ordinal),
+            "expected a repeating binary items property on the Params struct");
+    }
+
+    [TestMethod]
     public void GenerateServer_EndpointRegistration_IncludesAllOperations()
     {
         Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
@@ -1176,7 +1417,7 @@ public class OpenApi32CodeGeneratorTests
 
         // The new, additive overload carries the ConfigureEndpoint callback.
         Assert.IsTrue(
-            registration.Content.Contains(", ConfigureEndpoint? configureEndpoint)", StringComparison.Ordinal),
+            registration.Content.Contains(", ConfigureEndpoint? configureEndpoint, ApiServerOptions? serverOptions = null)", StringComparison.Ordinal),
             "Expected a new MapApiEndpoints overload accepting a ConfigureEndpoint callback");
     }
 
@@ -3047,7 +3288,7 @@ public class OpenApi32CodeGeneratorTests
             registration.Content.Contains("part.Name.SequenceEqual(\"package\"u8)"),
             "Expected the callback to match the 'package' part by name");
         Assert.IsTrue(
-            registration.Content.Contains("Package = __binary_package ?? ReadOnlyMemory<byte>.Empty,"),
+            registration.Content.Contains("Package = __binary_package_offset >= 0 ? __bodyOwner!.Value.BodyBytes.Slice(__binary_package_offset, __binary_package_length) : ReadOnlyMemory<byte>.Empty,"),
             "Expected the captured binary part to be bound onto the Params object");
     }
 
@@ -3126,6 +3367,389 @@ public class OpenApi32CodeGeneratorTests
         Assert.IsTrue(
             registration.Content.Contains("await result.WriteBinaryBodyAsync(context.Response.Body, context.RequestAborted)"),
             "Expected the endpoint to stream the body directly to the response stream");
+    }
+
+    [TestMethod]
+    public void GenerateServer_StreamingBinaryParts_EmitsDriverAndHandles()
+    {
+        // With StreamServerBinaryParts, a multipart/form-data endpoint binds binary parts as
+        // wire-order BinaryPartHandle values fed by a MultipartStreamingDriver instead of
+        // buffering the whole body; the default generator keeps the buffered callback path.
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Streaming Upload", "version": "1.0" },
+              "paths": {
+                "/upload": {
+                  "post": {
+                    "operationId": "uploadDocument",
+                    "requestBody": {
+                      "required": true,
+                      "content": {
+                        "multipart/form-data": {
+                          "schema": {
+                            "type": "object",
+                            "properties": {
+                              "caption": { "type": "string" },
+                              "file": { "type": "string", "format": "binary" },
+                              "thumb": { "type": "string", "format": "binary" }
+                            },
+                            "required": ["caption", "file"]
+                          }
+                        }
+                      }
+                    },
+                    "responses": {
+                      "201": {
+                        "description": "created",
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "caption": { "type": "string" } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int i = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"MpStream.Type{i}";
+            i++;
+        }
+
+        OpenApi32CodeGenerator streamingGen = new("MpStream", map) { StreamServerBinaryParts = true };
+        IReadOnlyList<GeneratedFile> streamingFiles = streamingGen.GenerateServer(spec);
+
+        GeneratedFile paramsFile = streamingFiles.First(f => f.FileName == "UploadDocumentParams.cs");
+        Assert.IsTrue(
+            paramsFile.Content.Contains("public BinaryPartHandle File { get; init; }"),
+            "Expected a BinaryPartHandle property for the required binary part");
+        Assert.IsTrue(
+            paramsFile.Content.Contains("public BinaryPartHandle Thumb { get; init; }"),
+            "Expected a BinaryPartHandle property for the optional binary part");
+        Assert.IsFalse(
+            paramsFile.Content.Contains("ReadOnlyMemory<byte> File"),
+            "Did not expect a buffered binary property in streaming mode");
+
+        GeneratedFile registration = streamingFiles.First(f => f.FileName == "ApiEndpointRegistration.cs");
+        Assert.IsTrue(
+            registration.Content.Contains("string[] __UploadDocumentBinaryParts = new[] { \"file\", \"thumb\" };"),
+            "Expected the schema-declared binary part names emitted once per endpoint");
+        Assert.IsTrue(
+            registration.Content.Contains("__streamingDriver = await MultipartStreamingDriver.BeginAsync(context.Request.Body, context.Request.ContentType, __UploadDocumentBinaryParts, serverOptions, context.RequestAborted).ConfigureAwait(false);"),
+            "Expected the endpoint to begin a MultipartStreamingDriver over the request body");
+        Assert.IsTrue(
+            registration.Content.Contains("File = __streamingDriver!.GetHandle(\"file\", required: true),"),
+            "Expected the required binary part bound via GetHandle(required: true)");
+        Assert.IsTrue(
+            registration.Content.Contains("Thumb = __streamingDriver!.GetHandle(\"thumb\", required: false),"),
+            "Expected the optional binary part bound via GetHandle(required: false)");
+        Assert.IsTrue(
+            registration.Content.Contains("catch (MultipartOrderingException)"),
+            "Expected an ordering-violation catch producing a 400");
+        Assert.IsTrue(
+            registration.Content.Contains("catch (RequiredBinaryPartMissingException)"),
+            "Expected a required-part-missing catch producing a 400");
+        Assert.IsTrue(
+            registration.Content.Contains("await __streamingDriver.DisposeAsync().ConfigureAwait(false);"),
+            "Expected the driver disposed in the finally block");
+        Assert.IsFalse(
+            registration.Content.Contains("binaryPartCallback"),
+            "Did not expect the buffered binaryPartCallback path in streaming mode");
+
+        OpenApi32CodeGenerator bufferedGen = new("MpStream", map);
+        IReadOnlyList<GeneratedFile> bufferedFiles = bufferedGen.GenerateServer(spec);
+        GeneratedFile bufferedRegistration = bufferedFiles.First(f => f.FileName == "ApiEndpointRegistration.cs");
+        Assert.IsFalse(
+            bufferedRegistration.Content.Contains("MultipartStreamingDriver"),
+            "The default generator must keep the buffered path");
+        Assert.IsTrue(
+            bufferedRegistration.Content.Contains("binaryPartCallback"),
+            "The default generator must keep the buffered binaryPartCallback path");
+    }
+
+    [TestMethod]
+    public void GenerateServer_StreamingMixed_EmitsHandlesAndSequence()
+    {
+        // With StreamServerBinaryParts, a tail-shaped multipart/mixed body streams:
+        // binary prefix parts bind as wire-index handles and repeating binary items
+        // as a BinaryPartSequence. An interleaved schema (binary before non-binary)
+        // cannot stream positionally and keeps the buffered path.
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Streaming Mixed", "version": "1.0" },
+              "paths": {
+                "/doc": {
+                  "post": {
+                    "operationId": "uploadDoc",
+                    "requestBody": {
+                      "required": true,
+                      "content": {
+                        "multipart/mixed": {
+                          "schema": {
+                            "type": "array",
+                            "prefixItems": [
+                              { "type": "object", "properties": { "title": { "type": "string" } } },
+                              { "type": "string", "format": "binary" }
+                            ]
+                          },
+                          "prefixEncoding": [
+                            { "contentType": "application/json" },
+                            { "contentType": "application/octet-stream" }
+                          ]
+                        }
+                      }
+                    },
+                    "responses": { "204": { "description": "ok" } }
+                  }
+                },
+                "/batch": {
+                  "post": {
+                    "operationId": "uploadBatch",
+                    "requestBody": {
+                      "required": true,
+                      "content": {
+                        "multipart/mixed": {
+                          "schema": {
+                            "type": "array",
+                            "items": { "type": "string", "format": "binary" }
+                          },
+                          "itemEncoding": { "contentType": "application/octet-stream" }
+                        }
+                      }
+                    },
+                    "responses": { "204": { "description": "ok" } }
+                  }
+                },
+                "/interleaved": {
+                  "post": {
+                    "operationId": "uploadInterleaved",
+                    "requestBody": {
+                      "required": true,
+                      "content": {
+                        "multipart/mixed": {
+                          "schema": {
+                            "type": "array",
+                            "prefixItems": [
+                              { "type": "string", "format": "binary" },
+                              { "type": "object", "properties": { "note": { "type": "string" } } }
+                            ]
+                          },
+                          "prefixEncoding": [
+                            { "contentType": "application/octet-stream" },
+                            { "contentType": "application/json" }
+                          ]
+                        }
+                      }
+                    },
+                    "responses": { "204": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int i = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"MxStream.Type{i}";
+            i++;
+        }
+
+        OpenApi32CodeGenerator gen = new("MxStream", map) { StreamServerBinaryParts = true };
+        IReadOnlyList<GeneratedFile> files = gen.GenerateServer(spec);
+
+        GeneratedFile docParams = files.First(f => f.FileName == "UploadDocParams.cs");
+        Assert.IsTrue(
+            docParams.Content.Contains("public BinaryPartHandle Part1 { get; init; }"),
+            "Expected a wire-index handle for the binary prefix part");
+
+        GeneratedFile batchParams = files.First(f => f.FileName == "UploadBatchParams.cs");
+        Assert.IsTrue(
+            batchParams.Content.Contains("public BinaryPartSequence Items { get; init; }"),
+            "Expected a BinaryPartSequence for the repeating binary items");
+
+        GeneratedFile registration = files.First(f => f.FileName == "ApiEndpointRegistration.cs");
+        Assert.IsTrue(
+            registration.Content.Contains("__streamingDriver = await MultipartStreamingDriver.BeginMixedAsync(context.Request.Body, context.Request.ContentType, serverOptions, context.RequestAborted).ConfigureAwait(false);"),
+            "Expected mixed endpoints to begin a mixed streaming driver");
+        Assert.IsTrue(
+            registration.Content.Contains("Part1 = __streamingDriver!.GetMixedHandle(1),"),
+            "Expected the binary prefix part bound by wire index");
+        Assert.IsTrue(
+            registration.Content.Contains("Items = __streamingDriver!.GetItemSequence(0),"),
+            "Expected the item sequence bound at the prefix count");
+
+        GeneratedFile interleavedParams = files.First(f => f.FileName == "UploadInterleavedParams.cs");
+        Assert.IsTrue(
+            interleavedParams.Content.Contains("public ReadOnlyMemory<byte> Part0 { get; init; }"),
+            "An interleaved mixed schema must keep the buffered binding");
+        Assert.IsTrue(
+            registration.Content.Contains("binaryPartCallback"),
+            "An interleaved mixed schema must keep the buffered deserializer path");
+    }
+
+    [TestMethod]
+    public void GenerateServer_MultipartResponse_EmitsMultipartFactoryAndWriter()
+    {
+        // A 2xx multipart/form-data response with binary parts gets a factory taking
+        // the typed body plus BinaryPartData per part, and the endpoint serializes
+        // them with a fresh boundary via the multipart serializer.
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Multipart Response", "version": "1.0" },
+              "paths": {
+                "/report": {
+                  "get": {
+                    "operationId": "getReport",
+                    "responses": {
+                      "200": {
+                        "description": "ok",
+                        "content": {
+                          "multipart/form-data": {
+                            "schema": {
+                              "type": "object",
+                              "properties": {
+                                "meta": { "type": "object", "properties": { "title": { "type": "string" } } },
+                                "file": { "type": "string", "format": "binary" }
+                              }
+                            },
+                            "encoding": {
+                              "file": { "contentType": "application/pdf" }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int i = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"MpResp.Type{i}";
+            i++;
+        }
+
+        OpenApi32CodeGenerator gen = new("MpResp", map);
+        IReadOnlyList<GeneratedFile> files = gen.GenerateServer(spec);
+
+        GeneratedFile resultFile = files.First(f => f.FileName == "GetReportResult.cs");
+        Assert.IsTrue(
+            resultFile.Content.Contains("public bool HasMultipartBody { get; }"),
+            "Expected a HasMultipartBody flag on the Result struct");
+        Assert.IsTrue(
+            resultFile.Content.Contains("BinaryPartData file"),
+            "Expected a BinaryPartData parameter for the binary part on the Ok factory");
+        Assert.IsTrue(
+            resultFile.Content.Contains("with { ContentType = \"application/pdf\" }"),
+            "Expected the spec-declared encoding contentType substituted for unset parts");
+        Assert.IsTrue(
+            resultFile.Content.Contains("public ValueTask WriteMultipartBodyAsync(Stream stream, string boundary, CancellationToken cancellationToken)"),
+            "Expected a WriteMultipartBodyAsync method on the Result struct");
+        Assert.IsTrue(
+            resultFile.Content.Contains("if (this.HasMultipartBody) return true;"),
+            "Expected multipart bodies excluded from response body validation");
+
+        GeneratedFile registration = files.First(f => f.FileName == "ApiEndpointRegistration.cs");
+        Assert.IsTrue(
+            registration.Content.Contains("if (result.HasMultipartBody)"),
+            "Expected a HasMultipartBody branch in the endpoint response-writing block");
+        Assert.IsTrue(
+            registration.Content.Contains("string __boundary = MultipartFormDataSerializer.GenerateBoundary();"),
+            "Expected a fresh boundary per response");
+        Assert.IsTrue(
+            registration.Content.Contains("await result.WriteMultipartBodyAsync(context.Response.Body, __boundary, context.RequestAborted).ConfigureAwait(false);"),
+            "Expected the endpoint to stream the multipart body to the response");
+    }
+
+    [TestMethod]
+    public void GenerateClient_MultipartResponse_EmitsStreamingAccessor()
+    {
+        // A 2xx multipart/form-data response with binary parts gets a streaming-only
+        // client surface: the response holds the live body in a MultipartResponseBody
+        // box, and the accessor hands back the typed body plus wire-order handles.
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Multipart Receive", "version": "1.0" },
+              "paths": {
+                "/report": {
+                  "get": {
+                    "operationId": "getReport",
+                    "responses": {
+                      "200": {
+                        "description": "ok",
+                        "content": {
+                          "multipart/form-data": {
+                            "schema": {
+                              "type": "object",
+                              "properties": {
+                                "meta": { "type": "object", "properties": { "title": { "type": "string" } } },
+                                "file": { "type": "string", "format": "binary" }
+                              },
+                              "required": ["file"]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int i = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"MpRecv.Type{i}";
+            i++;
+        }
+
+        OpenApi32CodeGenerator gen = new("MpRecv", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(spec);
+
+        GeneratedFile responseFile = files.First(f => f.FileName == "GetReportResponse.cs");
+        Assert.IsTrue(
+            responseFile.Content.Contains("public MultipartResponseBody? OkMultipartBody { get; private set; }"),
+            "Expected the response to hold the multipart body in a box");
+        Assert.IsTrue(
+            responseFile.Content.Contains("response.OkMultipartBody = new MultipartResponseBody(contentStream, responseHeaders);"),
+            "Expected CreateAsync to store the live body with the headers carrying the boundary");
+        Assert.IsTrue(
+            responseFile.Content.Contains("public async ValueTask<GetReportOkMultipart> GetOkMultipartAsync(long maxNonBinaryPartsLength = ApiServerOptions.DefaultMaxNonBinaryPartsLength, CancellationToken cancellationToken = default)"),
+            "Expected the streaming accessor");
+        Assert.IsTrue(
+            responseFile.Content.Contains("File = driver.GetHandle(\"file\", required: true),"),
+            "Expected the required binary part bound as a required handle");
+        Assert.IsTrue(
+            responseFile.Content.Contains("public readonly struct GetReportOkMultipart"),
+            "Expected the per-response multipart view struct");
+        Assert.IsTrue(
+            responseFile.Content.Contains("public BinaryPartHandle File { get; init; }"),
+            "Expected a handle property on the view struct");
+        Assert.IsTrue(
+            responseFile.Content.Contains("if (this.OkMultipartBody is { } okMultipartBody)"),
+            "Expected the response to dispose the multipart box");
     }
 
     private const string ParamRefSpecJson = """
@@ -3233,5 +3857,75 @@ public class OpenApi32CodeGeneratorTests
         Assert.IsTrue(
             requestFile.Content.Contains("\"filter%5B\"u8"),
             "Expected deepObject bracketed keys (filter[...]) for the object param");
+    }
+
+    [TestMethod]
+    public void GenerateClient_RawStreamBody_EmitsWriteCallbackOverload()
+    {
+        // A raw-stream request body gets both a Stream overload and a write-callback
+        // overload, mirroring BinaryPartData's push model for multipart parts.
+        using ParsedJsonDocument<JsonElement> specDoc = ParsedJsonDocument<JsonElement>.Parse("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "RawCb", "version": "1.0" },
+              "paths": {
+                "/blob": {
+                  "post": {
+                    "operationId": "uploadBlob",
+                    "requestBody": {
+                      "required": true,
+                      "content": {
+                        "application/octet-stream": {
+                          "schema": { "type": "string", "format": "binary" }
+                        }
+                      }
+                    },
+                    "responses": {
+                      "201": {
+                        "description": "created",
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "id": { "type": "string" } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+        JsonElement spec = specDoc.RootElement.Clone();
+
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int mapIndex = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"RawCb32.Type{mapIndex}";
+            mapIndex++;
+        }
+
+        OpenApi32CodeGenerator gen = new("RawCb32", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(spec);
+
+        GeneratedFile clientFile = files.First(f => !f.FileName.StartsWith("I") && f.FileName.EndsWith("Client.cs"));
+        Assert.IsTrue(
+            clientFile.Content.Contains("UploadBlobAsync(Stream body,"),
+            "Expected the Stream overload to remain");
+        Assert.IsTrue(
+            clientFile.Content.Contains("UploadBlobAsync(Func<Stream, CancellationToken, ValueTask> body,"),
+            "Expected the write-callback overload");
+        Assert.IsTrue(
+            clientFile.Content.Contains("SendWithStreamBodyAsyncCore<UploadBlobRequest"),
+            "Expected the Stream overload to dispatch to the stream-body core");
+        Assert.IsTrue(
+            clientFile.Content.Contains("SendWithBodyWriterAsyncCore<UploadBlobRequest"),
+            "Expected the write-callback overload to dispatch to the body-writer core");
+
+        GeneratedFile interfaceFile = files.First(f => f.FileName.StartsWith("I") && f.FileName.EndsWith("Client.cs"));
+        Assert.IsTrue(
+            interfaceFile.Content.Contains("UploadBlobAsync(Func<Stream, CancellationToken, ValueTask> body,"),
+            "Expected the write-callback overload on the client interface");
     }
 }

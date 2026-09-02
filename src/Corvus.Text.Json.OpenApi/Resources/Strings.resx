@@ -104,5 +104,26 @@
   <data name="MultipartBoundaryNotFound" xml:space="preserve">
     <value>The multipart boundary could not be extracted from the Content-Type header.</value>
   </data>
+  <data name="RequestBodyTooLarge" xml:space="preserve">
+    <value>The request body exceeded the configured maximum buffered size of {0} bytes.</value>
+  </data>
+  <data name="MultipartOrderingViolation" xml:space="preserve">
+    <value>A non-binary multipart part arrived after a binary part. Streaming endpoints with the RequireBinaryLast policy need binary parts after all non-binary parts.</value>
+  </data>
+  <data name="RequiredBinaryPartMissing" xml:space="preserve">
+    <value>The required binary part '{0}' was not present in the multipart body.</value>
+  </data>
+  <data name="BinaryPartAlreadyPassed" xml:space="preserve">
+    <value>The binary part '{0}' has already been passed in wire order and can no longer be opened.</value>
+  </data>
+  <data name="UnknownBinaryPart" xml:space="preserve">
+    <value>The binary part '{0}' is not declared for this endpoint.</value>
+  </data>
+  <data name="MultipartResponseAlreadyRead" xml:space="preserve">
+    <value>The multipart response body has already been read; it streams from the live response and can be consumed only once.</value>
+  </data>
+  <data name="NonSeekableBodyConsumed" xml:space="preserve">
+    <value>The request body stream is not seekable and was already consumed by a previous send attempt, so the retried request cannot re-send it. Provide a seekable stream, or use the write-callback overload, which is invoked once per attempt.</value>
+  </data>
 
 </root>

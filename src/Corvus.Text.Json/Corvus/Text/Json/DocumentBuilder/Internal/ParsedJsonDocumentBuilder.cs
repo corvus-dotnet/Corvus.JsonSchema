@@ -1690,4 +1690,10 @@ public sealed class ParsedJsonDocumentBuilder : JsonDocument, IMutableJsonDocume
 
     /// <inheritdoc />
     bool IJsonDocument.TryGetLine(int lineNumber, [NotNullWhen(true)] out string? line) => throw ConstructionOnly();
+
+    /// <inheritdoc />
+    bool IJsonDocument.TryGetJsonPointer(int index, Span<byte> utf8Destination, out int bytesWritten, out int bytesRequired) => throw ConstructionOnly();
+
+    /// <inheritdoc />
+    bool IJsonDocument.TryGetJsonPointer(int index, Span<char> destination, out int charsWritten, out int charsRequired) => throw ConstructionOnly();
 }

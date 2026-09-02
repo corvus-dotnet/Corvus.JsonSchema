@@ -41,3 +41,25 @@ string ConvertToRgb(in Color color, double brightness)
         matchBlue: static (ctx) => $"RGB(0, 0, {(int)(255 * ctx)})",
         defaultMatch: static (ctx) => "RGB(0, 0, 0)");
 }
+
+// The native C# enum for the well-known values
+Color.KnownValues known = red;
+string temperature = known switch
+{
+    Color.KnownValues.Red => "warm",
+    Color.KnownValues.Green or Color.KnownValues.Blue => "cool",
+    _ => "unknown",
+};
+Console.WriteLine($"{red} is a {temperature} color");
+
+// Converting back gives the pre-parsed constant, allocation free
+Color fromEnum = Color.KnownValues.Blue;
+Console.WriteLine($"From enum: {fromEnum}");
+
+// Parsing external input: use the non-throwing form, because an out-of-enum
+// string parses successfully and only fails at EvaluateSchema()
+using var parsedColor = ParsedJsonDocument<Color>.Parse("\"green\"");
+if (parsedColor.RootElement.TryGetKnownValue(out Color.KnownValues parsedKnown))
+{
+    Console.WriteLine($"Parsed: {parsedKnown}");
+}
