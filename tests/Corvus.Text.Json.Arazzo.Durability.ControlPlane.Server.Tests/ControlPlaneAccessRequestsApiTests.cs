@@ -181,11 +181,21 @@ public sealed class ControlPlaneAccessRequestsApiTests
         }
 
         // alice now self-elevates: a fresh request is auto-approved against the stored eligibility — no human approver.
+        using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
+        string activatedId;
         using (Stj.JsonDocument activated = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/accessRequests", """{"baseWorkflowId":"flow","requestedScopes":["runs:write"]}""", Auth, "alice")))
         {
             activated.RootElement.GetProperty("status").GetString().ShouldBe("Approved");
             activated.RootElement.TryGetProperty("grantedUntil", out _).ShouldBeTrue();
+            activatedId = activated.RootElement.GetProperty("id").GetString()!;
         }
+
+        // P1-6: a self-elevation is distinguished in the audit's outcome vocabulary from an ordinary submit, since the
+        // one call both requested and obtained access.
+        Activity span = audit.ForTarget(activatedId);
+        span.OperationName.ShouldBe("access-request.submit");
+        span.GetTagItem(ArazzoTelemetry.OutcomeTag).ShouldBe("self-elevated");
+        span.GetTagItem(ArazzoTelemetry.ActorTag).ShouldBe("alice");
     }
 
     [TestMethod]

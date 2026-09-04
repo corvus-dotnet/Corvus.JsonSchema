@@ -52,9 +52,11 @@ capped. The default cap is 100.
 Every governed action (grant, revoke, approve, deny, publish, delete) is audited through one payload-safe
 primitive, `GovernanceAudit` ([ADR 0038](../adr/0038-payload-safe-governance-audit.md)). It emits a span named
 for the action plus an audit-grade structured log, carrying only controlled vocabulary and identifiers (the
-action, the actor, the target kind and id, the outcome). It has no parameter that could take a payload or a
-secret, so an action cannot leak its inputs through the audit, and the span is zero-cost when no listener is
-attached. Add a governed action by calling the primitive, not by inventing a new audit shape.
+action, the actor as its canonical subject and tenant, the target kind and id, the outcome, and the environment
+where the action is scoped to one). It has no parameter that could take a payload or a secret, so an action
+cannot leak its inputs through the audit, and the span is zero-cost when no listener is attached. Add a governed
+action by calling the primitive with the access binding's audit subject, not by inventing a new audit shape or a
+new actor derivation.
 
 ## API-first
 

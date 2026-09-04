@@ -83,6 +83,14 @@ public static class ArazzoTelemetry
     /// or <c>runner.revoke</c> — the same value as the audit span's name. Dimensions the governance-decision counter.</summary>
     public const string ActionTag = "corvus.arazzo.action";
 
+    /// <summary>The span/measurement tag carrying the tenant (owner group) the actor of a governance action acts in
+    /// (ADR 0038), read from the actor's own stamped identity. Absent when the deployment stamps no owner group.</summary>
+    public const string TenantTag = "corvus.arazzo.tenant";
+
+    /// <summary>The span/measurement tag carrying the deployment environment a governance action is scoped to (ADR 0038):
+    /// a run start, a schedule run, an environment or runner mutation. Absent for an action that is not environment-scoped.</summary>
+    public const string EnvironmentTag = "corvus.arazzo.environment";
+
     private static readonly string Version =
         typeof(ArazzoTelemetry).Assembly.GetName().Version?.ToString() ?? "1.0.0";
 

@@ -6,6 +6,7 @@ using System.Globalization;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.Extensions.Logging;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
@@ -59,7 +60,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
 
     // The §850 audit subject for a run mutation: the authenticated caller (the operator who decided it), not the fixed
     // lease-owner identity the domain service's execution span carries. Falls back to "system" when unresolved.
-    private string AuditActor() => PrincipalDisplayName.Resolve(this.access.CurrentPrincipal) ?? "system";
+    private AuditSubject AuditActor() => this.access.AuditSubject();
 
     /// <inheritdoc/>
     public async ValueTask<ListRunsResult> HandleListRunsAsync(ListRunsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
@@ -142,7 +143,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
 
         // §860: reading a run's step journal (a sensitive-payload read, §14) is audited — who read which run, at which
         // disclosure tier — so a sensitive read no longer leaves no trace. The caller is the audited subject.
-        string actor = PrincipalDisplayName.Resolve(this.access.CurrentPrincipal) ?? "system";
+        AuditSubject actor = this.access.AuditSubject();
 
         // The journal discloses strictly more than the detail, so resolve the run first (for its version + reach): out of
         // read reach or absent → 404 (non-disclosing), the same gate GetStepJournalAsync applies.

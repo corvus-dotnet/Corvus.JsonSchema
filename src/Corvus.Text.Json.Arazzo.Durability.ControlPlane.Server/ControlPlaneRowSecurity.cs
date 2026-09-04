@@ -303,6 +303,8 @@ internal sealed class ControlPlaneAccess
 
     private readonly IHttpContextAccessor? httpContextAccessor;
     private readonly ControlPlaneRowSecurityPolicy? policy;
+    private readonly string subjectClaimType = MachinePrincipal.DefaultSubjectClaimType;
+    private string? ownerGroupTagKey;
 
     /// <summary>Initializes an unscoped instance: every request resolves to <see cref="AccessContext.System"/>.</summary>
     public ControlPlaneAccess()
@@ -333,22 +335,26 @@ internal sealed class ControlPlaneAccess
     /// filter no longer recognises as internal is a stamp it stops stripping. A policy whose reach is
     /// <see cref="AccessContext.System"/> keeps every one of those members on its normal path.</para>
     /// </remarks>
-    public ControlPlaneAccess(IHttpContextAccessor httpContextAccessor, string? ownerGroupClaimType)
+    public ControlPlaneAccess(IHttpContextAccessor httpContextAccessor, string? ownerGroupClaimType, string subjectClaimType = MachinePrincipal.DefaultSubjectClaimType)
     {
         ArgumentNullException.ThrowIfNull(httpContextAccessor);
+        ArgumentNullException.ThrowIfNull(subjectClaimType);
         this.httpContextAccessor = httpContextAccessor;
         this.policy = string.IsNullOrEmpty(ownerGroupClaimType) ? null : new OwnerClaimPolicy(ownerGroupClaimType);
+        this.subjectClaimType = subjectClaimType;
     }
 
     /// <summary>Initializes a scoped instance backed by a deployment policy.</summary>
     /// <param name="httpContextAccessor">The accessor used to read the current request's principal.</param>
     /// <param name="policy">The deployment's row-security policy.</param>
-    public ControlPlaneAccess(IHttpContextAccessor httpContextAccessor, ControlPlaneRowSecurityPolicy policy)
+    public ControlPlaneAccess(IHttpContextAccessor httpContextAccessor, ControlPlaneRowSecurityPolicy policy, string subjectClaimType = MachinePrincipal.DefaultSubjectClaimType)
     {
         ArgumentNullException.ThrowIfNull(httpContextAccessor);
         ArgumentNullException.ThrowIfNull(policy);
+        ArgumentNullException.ThrowIfNull(subjectClaimType);
         this.httpContextAccessor = httpContextAccessor;
         this.policy = policy;
+        this.subjectClaimType = subjectClaimType;
     }
 
     private ClaimsPrincipal? Principal => this.httpContextAccessor?.HttpContext?.User;
@@ -360,6 +366,33 @@ internal sealed class ControlPlaneAccess
     /// <summary>Resolves the current request's access grant (<see cref="AccessContext.System"/> when unscoped).</summary>
     /// <returns>The caller's access grant.</returns>
     public AccessContext Current() => this.policy is null ? AccessContext.System : this.policy.Resolve(this.Principal);
+
+    /// <summary>Resolves the current request's audit subject (ADR 0038): the principal's canonical subject under the
+    /// deployment's configured subject claim, paired with the owner group read from its own stamped internal tags under
+    /// the owner-group key. <see cref="AuditSubject.Anonymous"/> with no owner group when the request carries no principal
+    /// (the unscoped posture), so every handler records the same identity authorization used, never a display name.</summary>
+    /// <returns>The audit subject.</returns>
+    public AuditSubject AuditSubject()
+    {
+        ClaimsPrincipal? principal = this.Principal;
+        string subject = Security.AuditSubject.ResolveSubject(principal, this.subjectClaimType);
+        string? ownerGroup = null;
+        if (principal is not null)
+        {
+            // The owner-group key is fixed per instance (prefix + dimension), so it is built once, not per request.
+            string ownerGroupKey = this.ownerGroupTagKey ??= this.InternalTagPrefix + OwnerGroupTag.Dimension;
+            foreach (SecurityTag tag in this.InternalTags())
+            {
+                if (string.Equals(tag.Key, ownerGroupKey, StringComparison.Ordinal))
+                {
+                    ownerGroup = tag.Value;
+                    break;
+                }
+            }
+        }
+
+        return new AuditSubject(subject, ownerGroup);
+    }
 
     /// <summary>Returns the internal tags to stamp onto a row the current principal creates — the caller's deployment
     /// identity, which is also what the §7.7/§15 current-administrator gate matches against.</summary>

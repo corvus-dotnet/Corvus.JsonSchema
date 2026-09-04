@@ -92,7 +92,7 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
     }
 
     // The §850 audit subject: the authenticated principal who promoted/demoted, falling back to the configured actor.
-    private string AuditActor() => PrincipalDisplayName.Resolve(this.access.CurrentPrincipal) ?? this.actor;
+    private AuditSubject AuditActor() => this.access.AuditSubject();
 
     // The (baseWorkflowId, version, environment) audit target key for a promotion/demotion (design §850).
     private static string AvailabilityKey(string baseWorkflowId, int versionNumber, string environment) => $"{baseWorkflowId}:{versionNumber}@{environment}";

@@ -120,7 +120,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
             baseWorkflowId, versionNumber, environment, reason, PrincipalDisplayName.Resolve(this.access.CurrentPrincipal));
         ParsedJsonDocument<AvailabilityRequest> created = await this.requests.CreateAsync(draft.RootElement, this.CallerActor(), cancellationToken).ConfigureAwait(false);
         workspace.TakeOwnership(created);
-        GovernanceAudit.Mutation(this.auditLogger, "availability-request.submit", this.CallerActor(), TargetKind, created.RootElement.IdValue, "submitted");
+        GovernanceAudit.Mutation(this.auditLogger, "availability-request.submit", this.AuditActor(), TargetKind, created.RootElement.IdValue, "submitted");
         return SubmitAvailabilityRequestResult.Created(ToView(created.RootElement), workspace);
     }
 
@@ -268,7 +268,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
         // Governance: the caller must be a current administrator of the request's target environment.
         if (await this.AuthorizeEnvironmentAdminAsync(environment, cancellationToken).ConfigureAwait(false) != GovernanceGate.Authorized)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "availability-request.approve", this.CallerActor(), TargetKind, id, "refused-not-administrator");
+            GovernanceAudit.Mutation(this.auditLogger, "availability-request.approve", this.AuditActor(), TargetKind, id, "refused-not-administrator");
             return ApproveAvailabilityRequestResult.Forbidden(NotAdministratorProblem(environment), workspace);
         }
 
@@ -276,7 +276,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
         // must come from a second pair of hands. The requester's own exit is withdraw.
         if (isRequester)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "availability-request.approve", this.CallerActor(), TargetKind, id, "refused-own-request");
+            GovernanceAudit.Mutation(this.auditLogger, "availability-request.approve", this.AuditActor(), TargetKind, id, "refused-own-request");
             return ApproveAvailabilityRequestResult.Forbidden(OwnRequestProblem(), workspace);
         }
 
@@ -322,7 +322,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
                 return ApproveAvailabilityRequestResult.NotFound(NotFoundProblem(id), workspace);
             }
 
-            GovernanceAudit.Mutation(this.auditLogger, "availability-request.approve", this.CallerActor(), TargetKind, id, "approved");
+            GovernanceAudit.Mutation(this.auditLogger, "availability-request.approve", this.AuditActor(), TargetKind, id, "approved");
             workspace.TakeOwnership(decided);
             return ApproveAvailabilityRequestResult.Ok(ToView(decided.RootElement), workspace);
         }
@@ -356,7 +356,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
 
         if (await this.AuthorizeEnvironmentAdminAsync(environment, cancellationToken).ConfigureAwait(false) != GovernanceGate.Authorized)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "availability-request.deny", this.CallerActor(), TargetKind, id, "refused-not-administrator");
+            GovernanceAudit.Mutation(this.auditLogger, "availability-request.deny", this.AuditActor(), TargetKind, id, "refused-not-administrator");
             return DenyAvailabilityRequestResult.Forbidden(NotAdministratorProblem(environment), workspace);
         }
 
@@ -364,7 +364,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
         // decidedBy always names an independent administrator.
         if (isRequester)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "availability-request.deny", this.CallerActor(), TargetKind, id, "refused-own-request");
+            GovernanceAudit.Mutation(this.auditLogger, "availability-request.deny", this.AuditActor(), TargetKind, id, "refused-own-request");
             return DenyAvailabilityRequestResult.Forbidden(OwnRequestProblem(), workspace);
         }
 
@@ -381,7 +381,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
                 return DenyAvailabilityRequestResult.NotFound(NotFoundProblem(id), workspace);
             }
 
-            GovernanceAudit.Mutation(this.auditLogger, "availability-request.deny", this.CallerActor(), TargetKind, id, "denied");
+            GovernanceAudit.Mutation(this.auditLogger, "availability-request.deny", this.AuditActor(), TargetKind, id, "denied");
             workspace.TakeOwnership(decided);
             return DenyAvailabilityRequestResult.Ok(ToView(decided.RootElement), workspace);
         }
@@ -414,7 +414,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
         // Only the requester may withdraw their own request (refused 403, distinct from a wrong-state conflict).
         if (!isRequester)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "availability-request.withdraw", this.CallerActor(), TargetKind, id, "refused-not-requester");
+            GovernanceAudit.Mutation(this.auditLogger, "availability-request.withdraw", this.AuditActor(), TargetKind, id, "refused-not-requester");
             return WithdrawAvailabilityRequestResult.Forbidden(NotRequesterProblem(), workspace);
         }
 
@@ -432,7 +432,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
             }
 
             workspace.TakeOwnership(decided);
-            GovernanceAudit.Mutation(this.auditLogger, "availability-request.withdraw", this.CallerActor(), TargetKind, id, "withdrawn");
+            GovernanceAudit.Mutation(this.auditLogger, "availability-request.withdraw", this.AuditActor(), TargetKind, id, "withdrawn");
             return WithdrawAvailabilityRequestResult.Ok(ToView(decided.RootElement), workspace);
         }
         catch (AvailabilityRequestConflictException)
@@ -549,9 +549,9 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
 
     // The audit actor recorded on a request (createdBy / decidedBy) and the "mine" filter key: the principal's configured
     // subject claim, falling back to the authentication name, then "anonymous".
-    private string CallerActor() => this.SubjectOf(this.access.CurrentPrincipal) ?? this.access.CurrentPrincipal?.Identity?.Name ?? "anonymous";
+    private string CallerActor() => AuditSubject.ResolveSubject(this.access.CurrentPrincipal, this.subjectClaimType);
 
-    private string? SubjectOf(ClaimsPrincipal? principal) => principal?.FindFirst(this.subjectClaimType)?.Value;
+    private AuditSubject AuditActor() => this.access.AuditSubject();
 
     private bool IsRequester(AvailabilityRequest request)
         => request.CreatedByEquals(this.CallerActor());

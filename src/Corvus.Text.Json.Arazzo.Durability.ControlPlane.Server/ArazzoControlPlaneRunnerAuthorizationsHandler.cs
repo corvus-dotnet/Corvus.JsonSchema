@@ -163,7 +163,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
 
         if (gate != GovernanceGate.Authorized)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "runner.authorize", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), "refused-not-administrator");
+            GovernanceAudit.Mutation(this.auditLogger, "runner.authorize", this.AuditActor(), TargetKind, RunnerKey(environment, runnerId), "refused-not-administrator");
             return AuthorizeRunnerResult.Forbidden(NotAdministratorProblem(environment), workspace);
         }
 
@@ -182,7 +182,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
             // see how the deployment names its runners. Naming the principal makes the decision specific.
             if (ExpectedPrincipal(parameters.Body) is not { } expectedPrincipal)
             {
-                GovernanceAudit.Mutation(this.auditLogger, "runner.authorize", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), "refused-unnamed-pre-authorization");
+                GovernanceAudit.Mutation(this.auditLogger, "runner.authorize", this.AuditActor(), TargetKind, RunnerKey(environment, runnerId), "refused-unnamed-pre-authorization");
                 return AuthorizeRunnerResult.BadRequest(UnnamedPreAuthorizationProblem(environment, runnerId), workspace);
             }
 
@@ -191,7 +191,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
             if (this.capacity is { } preAuthCapacity
                 && await preAuthCapacity.TryAdmitAsync(Capacity.ControlPlaneCapacityKind.RegisteredRunners, environment, AccessContext.System, cancellationToken).ConfigureAwait(false) is { } atCapacity)
             {
-                GovernanceAudit.Mutation(this.auditLogger, "runner.authorize", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), "refused-capacity");
+                GovernanceAudit.Mutation(this.auditLogger, "runner.authorize", this.AuditActor(), TargetKind, RunnerKey(environment, runnerId), "refused-capacity");
                 return AuthorizeRunnerResult.TooManyRequests(CapacityProblem(atCapacity), workspace, RetryAfter());
             }
 
@@ -212,7 +212,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
                 && !registration.ProvidesIsolation(requiredIsolation))
             {
                 fetched.Dispose();
-                GovernanceAudit.Mutation(this.auditLogger, "runner.authorize", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), "refused-insufficient-isolation");
+                GovernanceAudit.Mutation(this.auditLogger, "runner.authorize", this.AuditActor(), TargetKind, RunnerKey(environment, runnerId), "refused-insufficient-isolation");
                 return AuthorizeRunnerResult.Conflict(InsufficientIsolationProblem(environment, requiredIsolation, registration.IsolationModelValue), workspace);
             }
         }
@@ -238,7 +238,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
                 return AuthorizeRunnerResult.NotFound(RunnerNotFoundProblem(environment, runnerId), workspace);
             }
 
-            GovernanceAudit.Mutation(this.auditLogger, "runner.authorize", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), authorizeOutcome);
+            GovernanceAudit.Mutation(this.auditLogger, "runner.authorize", this.AuditActor(), TargetKind, RunnerKey(environment, runnerId), authorizeOutcome);
             workspace.TakeOwnership(decided);
             return AuthorizeRunnerResult.Ok(ToView(decided.RootElement), workspace);
         }
@@ -400,7 +400,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
 
         if (gate != GovernanceGate.Authorized)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "runner.quarantine", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), "refused-not-administrator");
+            GovernanceAudit.Mutation(this.auditLogger, "runner.quarantine", this.AuditActor(), TargetKind, RunnerKey(environment, runnerId), "refused-not-administrator");
             return QuarantineRunnerResult.Forbidden(NotAdministratorProblem(environment), workspace);
         }
 
@@ -438,7 +438,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
                 return QuarantineRunnerResult.NotFound(RunnerNotFoundProblem(environment, runnerId), workspace);
             }
 
-            GovernanceAudit.Mutation(this.auditLogger, "runner.quarantine", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), "quarantined");
+            GovernanceAudit.Mutation(this.auditLogger, "runner.quarantine", this.AuditActor(), TargetKind, RunnerKey(environment, runnerId), "quarantined");
             workspace.TakeOwnership(decided);
             return QuarantineRunnerResult.Ok(ToView(decided.RootElement), workspace);
         }
@@ -462,7 +462,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
 
         if (gate != GovernanceGate.Authorized)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "runner.withdrawPreAuthorization", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), "refused-not-administrator");
+            GovernanceAudit.Mutation(this.auditLogger, "runner.withdrawPreAuthorization", this.AuditActor(), TargetKind, RunnerKey(environment, runnerId), "refused-not-administrator");
             return WithdrawRunnerPreAuthorizationResult.Forbidden(NotAdministratorProblem(environment), workspace);
         }
 
@@ -474,7 +474,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
         if (await this.runners.GetAsync(runnerId, cancellationToken).ConfigureAwait(false) is { } registration
             && registration.EnvironmentEquals(environment))
         {
-            GovernanceAudit.Mutation(this.auditLogger, "runner.withdrawPreAuthorization", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), "refused-runner-registered");
+            GovernanceAudit.Mutation(this.auditLogger, "runner.withdrawPreAuthorization", this.AuditActor(), TargetKind, RunnerKey(environment, runnerId), "refused-runner-registered");
             return WithdrawRunnerPreAuthorizationResult.Conflict(RunnerRegisteredProblem(environment, runnerId), workspace);
         }
 
@@ -501,7 +501,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
             return WithdrawRunnerPreAuthorizationResult.Conflict(ConcurrentDecisionProblem(environment, runnerId), workspace);
         }
 
-        GovernanceAudit.Mutation(this.auditLogger, "runner.withdrawPreAuthorization", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), "withdrawn");
+        GovernanceAudit.Mutation(this.auditLogger, "runner.withdrawPreAuthorization", this.AuditActor(), TargetKind, RunnerKey(environment, runnerId), "withdrawn");
         return WithdrawRunnerPreAuthorizationResult.NoContent();
     }
 
@@ -519,7 +519,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
 
         if (gate != GovernanceGate.Authorized)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "runner.revoke", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), "refused-not-administrator");
+            GovernanceAudit.Mutation(this.auditLogger, "runner.revoke", this.AuditActor(), TargetKind, RunnerKey(environment, runnerId), "refused-not-administrator");
             return RevokeRunnerResult.Forbidden(NotAdministratorProblem(environment), workspace);
         }
 
@@ -555,7 +555,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
         await this.FenceRevokedRunnerAsync(decided.RootElement, cancellationToken).ConfigureAwait(false);
 
         // Revoke is a containment action — the most audit-worthy event on this surface — recorded once the removal is durable and fenced.
-        GovernanceAudit.Mutation(this.auditLogger, "runner.revoke", this.CallerActor(), TargetKind, RunnerKey(environment, runnerId), "revoked");
+        GovernanceAudit.Mutation(this.auditLogger, "runner.revoke", this.AuditActor(), TargetKind, RunnerKey(environment, runnerId), "revoked");
         workspace.TakeOwnership(decided);
         return RevokeRunnerResult.Ok(ToView(decided.RootElement), workspace);
     }
@@ -810,9 +810,9 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
 
     // The audit actor recorded on a decision (decidedBy): the principal's configured subject claim, falling back to the
     // authentication name, then "anonymous".
-    private string CallerActor() => this.SubjectOf(this.access.CurrentPrincipal) ?? this.access.CurrentPrincipal?.Identity?.Name ?? "anonymous";
+    private string CallerActor() => AuditSubject.ResolveSubject(this.access.CurrentPrincipal, this.subjectClaimType);
 
-    private string? SubjectOf(ClaimsPrincipal? principal) => principal?.FindFirst(this.subjectClaimType)?.Value;
+    private AuditSubject AuditActor() => this.access.AuditSubject();
 
     // The trusted machine principal bound to a runner's authorization at registration (design §16.4), derived from the
     // verified token and never from the request body. It goes through the shared resolver because the runner API resolves

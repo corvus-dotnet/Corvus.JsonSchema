@@ -88,7 +88,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
 
     // The §850 audit subject: the authenticated principal who made the change, falling back to the deployment-configured
     // audit actor when no principal is resolvable (the same identity the store stamps as createdBy/lastUpdatedBy).
-    private string AuditActor() => PrincipalDisplayName.Resolve(this.access.CurrentPrincipal) ?? this.actor;
+    private AuditSubject AuditActor() => this.access.AuditSubject();
 
     /// <inheritdoc/>
     public async ValueTask<ListCredentialsResult> HandleListCredentialsAsync(ListCredentialsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)

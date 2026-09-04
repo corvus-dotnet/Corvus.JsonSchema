@@ -202,7 +202,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
     }
 
     // The §850 audit subject for a debug-run event: the authenticated developer, falling back to the configured actor.
-    private string AuditActor() => PrincipalDisplayName.Resolve(this.access.CurrentPrincipal) ?? this.actor;
+    private AuditSubject AuditActor() => this.access.AuditSubject();
 
     /// <inheritdoc/>
     public async ValueTask<ListWorkspaceWorkflowsResult> HandleListWorkspaceWorkflowsAsync(ListWorkspaceWorkflowsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)

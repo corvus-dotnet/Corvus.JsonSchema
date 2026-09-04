@@ -89,7 +89,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
 
     // The §850 audit subject: the authenticated principal who authored the change, falling back to the
     // deployment-configured audit actor when no principal is resolvable (the guard-disabled unscoped posture).
-    private string AuditActor() => PrincipalDisplayName.Resolve(this.access?.CurrentPrincipal) ?? this.actor;
+    private AuditSubject AuditActor() => this.access?.AuditSubject() ?? new AuditSubject(AuditSubject.Anonymous, null);
 
     // The caller's row reach for the security policy (§14.2/P1-5): the API read/write paths are reach-filtered by the
     // caller's AccessContext over each rule's/binding's management tags. With no row-security policy configured

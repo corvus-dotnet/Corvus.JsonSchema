@@ -2,7 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics;
 using System.Linq;
+using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Durability.Availability;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
@@ -22,6 +24,44 @@ public sealed class DefaultDeploymentBootstrapTests
 {
     private const string OptionsJson =
         """{"genesisAdminGroup":"arazzo-admins","genesisScopes":["catalog:read","catalog:write"],"identityClaimType":"groups"}""";
+
+    [TestMethod]
+    public async Task Bootstrap_audits_the_grants_it_seeds()
+    {
+        // P1-6: the genesis grant and the read-all shell are governance actions, so each binding and rule the bootstrap
+        // seeds leaves a governance-audit span attributed to the bootstrap actor; the deployment's founding grants are on
+        // the trail like any other.
+        var spans = new List<Activity>();
+        using var listener = new ActivityListener
+        {
+            ShouldListenTo = source => source.Name == ArazzoTelemetry.ActivitySourceName,
+            Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
+            ActivityStopped = activity =>
+            {
+                lock (spans)
+                {
+                    spans.Add(activity);
+                }
+            },
+        };
+        ActivitySource.AddActivityListener(listener);
+
+        var store = new InMemorySecurityPolicyStore();
+        using ParsedJsonDocument<DeploymentBootstrapOptions> optionsDoc = ParsedJsonDocument<DeploymentBootstrapOptions>.Parse(OptionsJson);
+        await new DefaultDeploymentBootstrap().BootstrapSecurityAsync(store, optionsDoc.RootElement);
+
+        List<Activity> bindings;
+        int rules;
+        lock (spans)
+        {
+            bindings = spans.Where(s => s.OperationName == "security-binding.create").ToList();
+            rules = spans.Count(s => s.OperationName == "security-rule.create");
+        }
+
+        bindings.Count.ShouldBe(2);
+        bindings.ShouldAllBe(s => (string?)s.GetTagItem(ArazzoTelemetry.ActorTag) == "bootstrap" && (string?)s.GetTagItem(ArazzoTelemetry.OutcomeTag) == "created");
+        rules.ShouldBeGreaterThan(0);
+    }
 
     [TestMethod]
     public async Task Bootstrap_seeds_the_shell_and_genesis_bindings_once()

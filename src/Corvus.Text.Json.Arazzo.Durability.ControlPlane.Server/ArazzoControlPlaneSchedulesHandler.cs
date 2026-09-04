@@ -7,6 +7,7 @@ using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Availability;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.Extensions.Logging;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
@@ -82,7 +83,7 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
         this.auditLogger = auditLogger;
     }
 
-    private string AuditActor() => PrincipalDisplayName.Resolve(this.access.CurrentPrincipal) ?? "control-plane";
+    private AuditSubject AuditActor() => this.access.AuditSubject();
 
     /// <inheritdoc/>
     public async ValueTask<ListSchedulesResult> HandleListSchedulesAsync(ListSchedulesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)

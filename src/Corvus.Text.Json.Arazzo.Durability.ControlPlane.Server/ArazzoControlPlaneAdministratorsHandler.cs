@@ -68,7 +68,7 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
 
     // The §850 audit subject: the authenticated principal who changed the administrator set (the human-facing name;
     // the unforgeable governance identity is the sys: tag set from CallerIdentity), or "control-plane" when unresolved.
-    private string AuditActor() => PrincipalDisplayName.Resolve(this.access.CurrentPrincipal) ?? "control-plane";
+    private AuditSubject AuditActor() => this.access.AuditSubject();
 
     /// <inheritdoc/>
     public async ValueTask<ListAdministratorsResult> HandleListAdministratorsAsync(ListAdministratorsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)

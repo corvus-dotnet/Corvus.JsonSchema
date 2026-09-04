@@ -90,7 +90,7 @@ public sealed class WorkflowBackedAccessRequestApprovalService : IAccessRequestA
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<AccessRequest>> SubmitAsync(AccessRequest draft, string actor, ClaimsPrincipal? principal, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<AccessRequest>> SubmitAsync(AccessRequest draft, AuditSubject actor, ClaimsPrincipal? principal, CancellationToken cancellationToken)
     {
         // The built-in creates the request and auto-approves it when the requester is eligible to self-elevate; only a
         // request left pending needs a human decision, so only then is an approval run started.
@@ -104,11 +104,11 @@ public sealed class WorkflowBackedAccessRequestApprovalService : IAccessRequestA
     }
 
     /// <inheritdoc/>
-    public ValueTask<ParsedJsonDocument<AccessRequest>?> ApproveAsync(string requestId, SecurityTagSet approverIdentity, string actor, string? reason, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<AccessRequest>?> ApproveAsync(string requestId, SecurityTagSet approverIdentity, AuditSubject actor, string? reason, CancellationToken cancellationToken)
         => this.DecideByPublishingAsync(requestId, approverIdentity, actor, reason, OutcomeApproved, cancellationToken);
 
     /// <inheritdoc/>
-    public ValueTask<ParsedJsonDocument<AccessRequest>?> ApproveAsEligibleAsync(string requestId, SecurityTagSet approverIdentity, string actor, string? reason, TimeSpan? eligibilityWindow, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<AccessRequest>?> ApproveAsEligibleAsync(string requestId, SecurityTagSet approverIdentity, AuditSubject actor, string? reason, TimeSpan? eligibilityWindow, CancellationToken cancellationToken)
         => this.DecideByPublishingAsync(requestId, approverIdentity, actor, reason, OutcomeEligible, cancellationToken);
 
     /// <inheritdoc/>
@@ -116,11 +116,11 @@ public sealed class WorkflowBackedAccessRequestApprovalService : IAccessRequestA
     // outcome, and the access-approval run enacts the denial through settleAccessRequest. The request is returned still
     // pending and reaches Denied when the run completes, so every approver decision flows through the one run instead of
     // deny short-circuiting it with a synchronous mark.
-    public ValueTask<ParsedJsonDocument<AccessRequest>?> DenyAsync(string requestId, SecurityTagSet approverIdentity, string actor, string? reason, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<AccessRequest>?> DenyAsync(string requestId, SecurityTagSet approverIdentity, AuditSubject actor, string? reason, CancellationToken cancellationToken)
         => this.DecideByPublishingAsync(requestId, approverIdentity, actor, reason, OutcomeRejected, cancellationToken);
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<AccessRequest>?> WithdrawAsync(string requestId, string subjectClaimType, string subjectClaimValue, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<AccessRequest>?> WithdrawAsync(string requestId, string subjectClaimType, string subjectClaimValue, AuditSubject actor, CancellationToken cancellationToken)
     {
         // The built-in marks the request Withdrawn (only the requester may); then the run is resumed so its withdrawn
         // path runs, so a requester's withdrawal closes the approval run exactly like an approver's decision.
@@ -135,32 +135,32 @@ public sealed class WorkflowBackedAccessRequestApprovalService : IAccessRequestA
 
     /// <inheritdoc/>
     // Revocation acts on an already-decided grant or eligibility assignment, so there is no suspended run to resume.
-    public ValueTask<ParsedJsonDocument<AccessRequest>?> RevokeAsync(string requestId, SecurityTagSet approverIdentity, string actor, string? reason, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<AccessRequest>?> RevokeAsync(string requestId, SecurityTagSet approverIdentity, AuditSubject actor, string? reason, CancellationToken cancellationToken)
         => this.inner.RevokeAsync(requestId, approverIdentity, actor, reason, cancellationToken);
 
     /// <inheritdoc/>
     // The approval workflow calls these (grantAccessRequest / grantAccessRequestAsEligible) to enact the decision; they
     // delegate to the built-in, which writes the ceiling-bounded grant with no administrator check.
-    public ValueTask<ParsedJsonDocument<AccessRequest>?> GrantRequestAsync(string requestId, string actor, string? reason, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<AccessRequest>?> GrantRequestAsync(string requestId, AuditSubject actor, string? reason, CancellationToken cancellationToken)
         => this.inner.GrantRequestAsync(requestId, actor, reason, cancellationToken);
 
     /// <inheritdoc/>
-    public ValueTask<ParsedJsonDocument<AccessRequest>?> GrantRequestAsEligibleAsync(string requestId, string actor, string? reason, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<AccessRequest>?> GrantRequestAsEligibleAsync(string requestId, AuditSubject actor, string? reason, CancellationToken cancellationToken)
         => this.inner.GrantRequestAsEligibleAsync(requestId, actor, reason, cancellationToken);
 
     /// <inheritdoc/>
     // The single enactment the approval workflow calls: delegates to the built-in, which grants (approved/eligible) or
     // marks the request terminal (rejected/withdrawn) under the platform ceiling with no administrator check.
-    public ValueTask<ParsedJsonDocument<AccessRequest>?> SettleRequestAsync(string requestId, string outcome, string actor, string? reason, CancellationToken cancellationToken)
+    public ValueTask<ParsedJsonDocument<AccessRequest>?> SettleRequestAsync(string requestId, string outcome, AuditSubject actor, string? reason, CancellationToken cancellationToken)
         => this.inner.SettleRequestAsync(requestId, outcome, actor, reason, cancellationToken);
 
     // Authenticates the approver as a §15 administrator, publishes the decision outcome, and returns the request as it
     // now stands (still pending; it reaches its terminal state when the workflow enacts the grant). Used by approve and
     // approveAsEligible, which differ only in the outcome the workflow branches on.
-    private async ValueTask<ParsedJsonDocument<AccessRequest>?> DecideByPublishingAsync(string requestId, SecurityTagSet approverIdentity, string actor, string? reason, string outcome, CancellationToken cancellationToken)
+    private async ValueTask<ParsedJsonDocument<AccessRequest>?> DecideByPublishingAsync(string requestId, SecurityTagSet approverIdentity, AuditSubject actor, string? reason, string outcome, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(requestId);
-        ArgumentNullException.ThrowIfNull(actor);
+        ArgumentNullException.ThrowIfNull(actor.Subject);
         ParsedJsonDocument<AccessRequest>? fetched = await this.requests.GetAsync(requestId, cancellationToken).ConfigureAwait(false);
         if (fetched is null)
         {

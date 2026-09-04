@@ -165,8 +165,8 @@ public static class ControlPlaneEndpointExtensions
         ControlPlaneAccess access = securityMode == ControlPlaneSecurityMode.Open
             ? new ControlPlaneAccess()
             : effectivePolicy is null
-                ? new ControlPlaneAccess(endpoints.ServiceProvider.GetRequiredService<IHttpContextAccessor>(), ownerGroupClaimType)
-                : new ControlPlaneAccess(endpoints.ServiceProvider.GetRequiredService<IHttpContextAccessor>(), effectivePolicy);
+                ? new ControlPlaneAccess(endpoints.ServiceProvider.GetRequiredService<IHttpContextAccessor>(), ownerGroupClaimType, accessRequestSubjectClaimType)
+                : new ControlPlaneAccess(endpoints.ServiceProvider.GetRequiredService<IHttpContextAccessor>(), effectivePolicy, accessRequestSubjectClaimType);
 
         // The governance/read-access audit (§850/§860) logs under a dedicated "Corvus.Arazzo.Audit" category so a
         // deployment can route/retain it independently; the audit spans ride the always-registered Corvus.Arazzo
@@ -221,7 +221,7 @@ public static class ControlPlaneEndpointExtensions
         // when eligible); an approval writes a single capped, time-boxed grant to the security-policy store (refreshed
         // in-process when the deployment's policy is the persistent one).
         IAccessRequestStore requestStore = accessRequestStore ?? new InMemoryAccessRequestStore();
-        var builtInApproval = new AccessRequestApprovalService(requestStore, policyStore, catalog, options: accessRequestApprovalOptions, rowSecurity: effectivePolicy as PersistentRowSecurityPolicy, selfElevationEligibility: selfElevationEligibility);
+        var builtInApproval = new AccessRequestApprovalService(requestStore, policyStore, catalog, options: accessRequestApprovalOptions, rowSecurity: effectivePolicy as PersistentRowSecurityPolicy, selfElevationEligibility: selfElevationEligibility, auditLogger: auditLogger);
 
         // Design §16.5.1: when the deployment opts into the workflow-backed strategy, submitting a request starts the
         // bootstrapped access-approval workflow and the approve/reject/withdraw touchpoints publish the decision onto the

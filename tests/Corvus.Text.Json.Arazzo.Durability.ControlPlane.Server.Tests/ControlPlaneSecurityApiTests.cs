@@ -421,6 +421,22 @@ public sealed class ControlPlaneSecurityApiTests
     }
 
     [TestMethod]
+    public async Task The_audit_actor_is_the_canonical_subject_and_the_record_carries_the_tenant()
+    {
+        // P1-6: the audited actor is the principal's canonical subject (the claim the grants key on), never the OIDC
+        // display name, and every record carries the actor's tenant (owner group) as a first-class dimension.
+        using GovernanceAuditSpans audit = GovernanceAuditSpans.Capture();
+        var policyStore = new InMemorySecurityPolicyStore();
+        await using Scoped host = await StartSecuredAsync(policyStore);
+
+        (await host.SendJsonAsync(HttpMethod.Post, "/security/rules", """{"name":"attributed","expression":"true"}""", Write, "sub=alice,name=Alice Example,tenant=acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        Activity span = audit.Spans.Single(s => s.OperationName == "security-rule.create" && (string?)s.GetTagItem(ArazzoTelemetry.TargetIdTag) == "attributed");
+        span.GetTagItem(ArazzoTelemetry.ActorTag).ShouldBe("alice");
+        span.GetTagItem("corvus.arazzo.tenant").ShouldBe("acme");
+    }
+
+    [TestMethod]
     public async Task Security_rules_are_reach_partitioned_so_a_tenant_cannot_read_another_tenants_policy()
     {
         // P1-5(b): the security policy is reach-partitioned by management tags. With a tenant-scoped read reach

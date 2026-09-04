@@ -368,6 +368,32 @@ public sealed class AccessRequestApprovalServiceTests
     }
 
     [TestMethod]
+    public async Task The_policy_writes_of_an_approval_and_a_revoke_are_audited()
+    {
+        // P1-6: the service writes the per-workflow reach rule and the grant binding on approval, and deletes the binding
+        // on revoke. Each is a governance action on the security policy, audited with the deciding actor exactly as an
+        // API-authored rule or binding is, so a grant never appears on the policy without a trail.
+        Harness h = await Harness.CreateAsync();
+        string id = await h.SubmitPendingAsync(["runs:write"]);
+        using GovernanceAuditProbe audit = GovernanceAuditProbe.Capture();
+        string bindingId;
+        using (ParsedJsonDocument<AccessRequest>? approved = await h.Service.ApproveAsync(id, Boss, "boss", null, default))
+        {
+            bindingId = approved!.RootElement.GrantedBindingIdOrNull!;
+        }
+
+        audit.Events("workflow-access:nightly-reconcile").ShouldBe([("security-rule.create", "created")]);
+        audit.Events(bindingId).ShouldBe([("security-binding.create", "granted")]);
+        audit.ForTarget(bindingId).ShouldAllBe(s => (string?)s.GetTagItem(ArazzoTelemetry.ActorTag) == "boss");
+
+        using (await h.Service.RevokeAsync(id, Boss, "boss", null, default))
+        {
+        }
+
+        audit.Events(bindingId).ShouldBe([("security-binding.create", "granted"), ("security-binding.delete", "revoked")]);
+    }
+
+    [TestMethod]
     public async Task Approving_as_eligible_writes_durable_eligibility_that_confers_nothing_active()
     {
         Harness h = await Harness.CreateAsync();

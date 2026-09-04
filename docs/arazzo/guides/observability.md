@@ -65,20 +65,25 @@ Run execution emits per-step spans and the checkpoint measurement above. Reading
 sensitive read) emits a `workflow.journal.read` span recording who read which run's journal and the disclosure
 tier reached, `full`, `redacted`, or `refused` ([ADR 0013](../adr/0013-step-output-disclosure-tier.md)). Spans and
 tags use the `corvus.arazzo.*` naming: `run_id`, `workflow_id`, `actor`, `resume_mode`, `outcome`, `status`,
-`correlation_id`, `target_kind`, `target_id`, `action`, and `journal_disclosure`.
+`correlation_id`, `target_kind`, `target_id`, `action`, `tenant`, `environment`, and `journal_disclosure`.
 
 ## The governance-audit primitive
 
 Every governed action (a grant, a revoke, an approval, a denial, a publish, a delete, a promotion, an
 administrator transfer) is audited through one payload-safe primitive, `GovernanceAudit.Mutation`
 ([ADR 0038](../adr/0038-payload-safe-governance-audit.md)). It emits a span named for the action plus an
-audit-grade structured log naming the actor, the target kind and id, and the outcome, and it feeds the
-`corvus.arazzo.governance.decisions` counter. Its parameters are only controlled vocabulary and identifiers, never
-a workflow payload or a secret, so an action cannot leak its inputs through the audit. A refused action is audited
-too (its outcome carries the refusal), because a security control firing is exactly what an audit wants to record.
-The audited actor is the authenticated principal. Log the actor, target, and outcome as structured fields rather
-than interpolated into the message, so a log pipeline can index them and correlate them with the trace by the
-ambient `TraceId`. Never log a message payload or a credential.
+audit-grade structured log naming the actor, the actor's tenant, the target kind and id, the outcome and, for an
+environment-scoped action, the environment, and it feeds the `corvus.arazzo.governance.decisions` counter,
+dimensioned by action, outcome, tenant and environment. Its parameters are only controlled vocabulary and
+identifiers, never a workflow payload or a secret, so an action cannot leak its inputs through the audit. A refused
+action is audited too (its outcome carries the refusal), because a security control firing is exactly what an audit
+wants to record. The audited actor is the principal's canonical subject (the claim a grant keys on, `sub` by
+default; a client-credentials token that names no subject is recorded by its client id; a request with no principal
+records `anonymous`), never its display name, so a record joins to the grant or request it concerns. Run start,
+the bootstrap's founding grants and the approval service's policy writes are on the trail, and a self-elevation
+audits as `self-elevated`. Log the actor, tenant, target, and outcome as structured fields rather than
+interpolated into the message, so a log pipeline can index them and correlate them with the trace by the ambient
+`TraceId`. Never log a message payload or a credential.
 
 ## Resilience
 

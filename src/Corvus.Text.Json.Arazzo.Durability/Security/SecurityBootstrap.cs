@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Microsoft.Extensions.Logging;
+
 namespace Corvus.Text.Json.Arazzo.Durability.Security;
 
 /// <summary>
@@ -34,7 +36,7 @@ public static class SecurityBootstrap
     /// <param name="actor">The audit actor recorded as the rules' creator (e.g. <c>"bootstrap"</c>).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The names of the rules that were created (empty if all already existed).</returns>
-    public static async ValueTask<IReadOnlyList<string>> SeedAsync(ISecurityPolicyStore store, string actor = "bootstrap", CancellationToken cancellationToken = default)
+    public static async ValueTask<IReadOnlyList<string>> SeedAsync(ISecurityPolicyStore store, string actor = "bootstrap", ILogger? auditLogger = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(store);
         var seeded = new List<string>();
@@ -54,6 +56,7 @@ public static class SecurityBootstrap
                 using ParsedJsonDocument<SecurityRuleDocument> draft = SecurityRuleDocument.Draft(expression, description);
                 (await store.AddRuleAsync(name, draft.RootElement, actor, cancellationToken).ConfigureAwait(false)).Dispose();
                 seeded.Add(name);
+                GovernanceAudit.Mutation(auditLogger, "security-rule.create", actor, "security-rule", name, "created");
             }
             catch (InvalidOperationException)
             {

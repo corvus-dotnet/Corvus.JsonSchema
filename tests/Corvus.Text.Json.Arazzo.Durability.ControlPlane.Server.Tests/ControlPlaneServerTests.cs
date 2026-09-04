@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics;
 using System.Net;
 using System.Text;
 using Corvus.Text.Json.Arazzo;
@@ -719,6 +720,46 @@ public sealed class ControlPlaneServerTests
         missing.StatusCode.ShouldBe(HttpStatusCode.NotFound);
 
         await app.StopAsync();
+    }
+
+    [TestMethod]
+    public async Task StartCatalogWorkflowRun_is_audited_with_an_actor_and_the_environment()
+    {
+        // P1-6: starting a run is a governed action. It is audited with an actor (the unauthenticated Open posture
+        // records anonymous, truthfully) and with the environment the run is pinned to as a first-class dimension.
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock, runDerivation: TestDerivation);
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
+        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open);
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+        await runnerRegistry.RegisterAsync(Runner("flow", 1), default);
+
+        using GovernanceAuditProbe audit = GovernanceAuditProbe.Capture();
+        HttpResponseMessage accepted = await client.PostAsync(
+            "/catalog/flow/versions/1/runs?environment=production",
+            new StringContent("""{ "petId": 5 }""", Encoding.UTF8, "application/json"));
+        accepted.StatusCode.ShouldBe(HttpStatusCode.Accepted);
+        string runId;
+        using (Stj.JsonDocument doc = await ReadJsonAsync(accepted))
+        {
+            runId = doc.RootElement.GetProperty("runId").GetString()!;
+        }
+
+        audit.Events(runId).ShouldBe([("run.start", "started")]);
+        Activity span = audit.ForTarget(runId).Single();
+        span.GetTagItem(ArazzoTelemetry.ActorTag).ShouldBe("anonymous");
+        span.GetTagItem(ArazzoTelemetry.TargetKindTag).ShouldBe("run");
+        span.GetTagItem("corvus.arazzo.environment").ShouldBe("production");
+        await app.DisposeAsync();
     }
 
     [TestMethod]

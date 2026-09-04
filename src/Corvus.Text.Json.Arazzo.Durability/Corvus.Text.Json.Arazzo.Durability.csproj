@@ -40,6 +40,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Cronos" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
     <PackageReference Include="Microsoft.CodeAnalysis.ResxSourceGenerator">
       <PrivateAssets>all</PrivateAssets>

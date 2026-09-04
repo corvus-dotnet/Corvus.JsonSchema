@@ -8,6 +8,7 @@ using Corvus.Text.Json.Arazzo.Durability.Availability;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using Microsoft.Extensions.Logging;
 using VerbGrant = Corvus.Text.Json.Arazzo.Durability.Security.SecurityBindingDocument.VerbGrantInfo;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap;
@@ -19,13 +20,29 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap;
 /// </summary>
 public sealed class DefaultDeploymentBootstrap : IDeploymentBootstrap
 {
+    private const string BootstrapActor = "bootstrap";
+    private readonly ILogger? auditLogger;
+
+    /// <summary>Initializes a new instance of the <see cref="DefaultDeploymentBootstrap"/> class.</summary>
+    public DefaultDeploymentBootstrap()
+        : this(null)
+    {
+    }
+
+    /// <summary>Initializes a new instance of the <see cref="DefaultDeploymentBootstrap"/> class with an audit logger.</summary>
+    /// <param name="auditLogger">The governance-audit logger the seeded grants are recorded to (the audit span is emitted regardless).</param>
+    public DefaultDeploymentBootstrap(ILogger? auditLogger)
+    {
+        this.auditLogger = auditLogger;
+    }
+
     /// <inheritdoc/>
     public async ValueTask BootstrapSecurityAsync(ISecurityPolicyStore securityStore, DeploymentBootstrapOptions options, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(securityStore);
 
         // (1) The editable bootstrap rules (§14.2) — idempotent (only missing rule names are added).
-        await SecurityBootstrap.SeedAsync(securityStore, "bootstrap", cancellationToken).ConfigureAwait(false);
+        await SecurityBootstrap.SeedAsync(securityStore, BootstrapActor, this.auditLogger, cancellationToken).ConfigureAwait(false);
 
         // Bindings carry a store-assigned id (no natural key like a rule name), so this bootstrap must dedupe by the
         // binding SUBJECT (claim type + value) to stay idempotent: a deployment runs it on every startup, and appending
@@ -55,7 +72,11 @@ public sealed class DefaultDeploymentBootstrap : IDeploymentBootstrap
             using ParsedJsonDocument<SecurityBindingDocument> readAll = SecurityBindingDocument.Draft(
                 "*", null, read: VerbGrant.Full, write: VerbGrant.None, purge: VerbGrant.None,
                 description: "Authenticated principals may read the whole control plane.");
-            (await securityStore.AddBindingAsync(readAll.RootElement, "bootstrap", cancellationToken).ConfigureAwait(false)).Dispose();
+            using (ParsedJsonDocument<SecurityBindingDocument> created = await securityStore.AddBindingAsync(readAll.RootElement, BootstrapActor, cancellationToken).ConfigureAwait(false))
+            {
+                // The founding grants are governance actions (ADR 0038): on the trail like any binding an operator authors.
+                GovernanceAudit.Mutation(this.auditLogger, "security-binding.create", BootstrapActor, "security-binding", created.RootElement.IdValue, "created");
+            }
         }
 
         // (3) The genesis administrator (§16.2 tier 3): the configured group claim → all capability scopes plus
@@ -71,7 +92,10 @@ public sealed class DefaultDeploymentBootstrap : IDeploymentBootstrap
                 scopes: ReadScopes(options),
                 description: $"Genesis administrator: the '{genesisGroup}' {claimType} value holds all capability scopes plus unrestricted reach — the deployment's founding grant.",
                 additionalClauses: ReadAdditionalClauses(options));
-            (await securityStore.AddBindingAsync(admin.RootElement, "bootstrap", cancellationToken).ConfigureAwait(false)).Dispose();
+            using (ParsedJsonDocument<SecurityBindingDocument> created = await securityStore.AddBindingAsync(admin.RootElement, BootstrapActor, cancellationToken).ConfigureAwait(false))
+            {
+                GovernanceAudit.Mutation(this.auditLogger, "security-binding.create", BootstrapActor, "security-binding", created.RootElement.IdValue, "created");
+            }
         }
     }
 

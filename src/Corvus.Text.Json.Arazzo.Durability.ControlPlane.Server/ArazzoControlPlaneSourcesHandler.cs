@@ -96,7 +96,7 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
     }
 
     // The §850 audit subject for a source mutation: the authenticated caller, falling back to the configured actor.
-    private string AuditActor() => PrincipalDisplayName.Resolve(this.access.CurrentPrincipal) ?? this.actor;
+    private AuditSubject AuditActor() => this.access.AuditSubject();
 
     /// <inheritdoc/>
     public async ValueTask<ListSourcesResult> HandleListSourcesAsync(ListSourcesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)

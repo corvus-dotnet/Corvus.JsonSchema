@@ -4,6 +4,7 @@
 
 using System.Diagnostics;
 using Corvus.Text.Json.Arazzo;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.Extensions.Logging;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
@@ -38,7 +39,7 @@ internal static class SensitiveReadAudit
     /// <param name="runId">The run whose journal was read.</param>
     /// <param name="workflowId">The run's versioned workflow id (empty when the run was not resolved, e.g. a refused read).</param>
     /// <param name="disclosure">The disclosure tier the read reached.</param>
-    public static void JournalRead(ILogger? logger, string actor, string runId, string workflowId, JournalDisclosure disclosure)
+    public static void JournalRead(ILogger? logger, in AuditSubject actor, string runId, string workflowId, JournalDisclosure disclosure)
     {
         string tier = disclosure switch
         {
@@ -49,7 +50,12 @@ internal static class SensitiveReadAudit
 
         using (Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity("workflow.journal.read"))
         {
-            activity?.SetTag(ArazzoTelemetry.ActorTag, actor);
+            activity?.SetTag(ArazzoTelemetry.ActorTag, actor.Subject);
+            if (actor.OwnerGroup is { } tenant)
+            {
+                activity?.SetTag(ArazzoTelemetry.TenantTag, tenant);
+            }
+
             activity?.SetTag(ArazzoTelemetry.RunIdTag, runId);
             if (!string.IsNullOrEmpty(workflowId))
             {
@@ -61,7 +67,7 @@ internal static class SensitiveReadAudit
 
         logger?.LogInformation(
             "Audit: {Actor} read the step journal of run {RunId} ({WorkflowId}); disclosure {JournalDisclosure}.",
-            actor,
+            actor.Subject,
             runId,
             string.IsNullOrEmpty(workflowId) ? "unknown" : workflowId,
             tier);

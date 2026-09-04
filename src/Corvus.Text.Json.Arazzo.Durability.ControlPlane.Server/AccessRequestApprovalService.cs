@@ -5,6 +5,7 @@
 using System.Security.Claims;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using Microsoft.Extensions.Logging;
 using VerbGrant = Corvus.Text.Json.Arazzo.Durability.Security.SecurityBindingDocument.VerbGrantInfo;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
@@ -35,6 +36,8 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
 {
     private const string SelfElevationReason = "self-elevation (eligible)";
+    private const string RuleKind = "security-rule";
+    private const string BindingKind = "security-binding";
 
     private readonly IAccessRequestStore requests;
     private readonly ISecurityPolicyStore policy;
@@ -43,6 +46,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     private readonly AccessRequestApprovalOptions options;
     private readonly PersistentRowSecurityPolicy? rowSecurity;
     private readonly Func<ClaimsPrincipal, AccessRequest, bool>? selfElevationEligibility;
+    private readonly ILogger? auditLogger;
 
     /// <summary>Initializes a new instance of the <see cref="AccessRequestApprovalService"/> class.</summary>
     /// <param name="requests">The access-request store.</param>
@@ -59,7 +63,8 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         TimeProvider? timeProvider = null,
         AccessRequestApprovalOptions? options = null,
         PersistentRowSecurityPolicy? rowSecurity = null,
-        Func<ClaimsPrincipal, AccessRequest, bool>? selfElevationEligibility = null)
+        Func<ClaimsPrincipal, AccessRequest, bool>? selfElevationEligibility = null,
+        ILogger? auditLogger = null)
     {
         ArgumentNullException.ThrowIfNull(requests);
         ArgumentNullException.ThrowIfNull(policy);
@@ -71,6 +76,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         this.options = options ?? new AccessRequestApprovalOptions();
         this.rowSecurity = rowSecurity;
         this.selfElevationEligibility = selfElevationEligibility;
+        this.auditLogger = auditLogger;
     }
 
     /// <summary>
@@ -85,9 +91,9 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     /// <param name="principal">The requester's authenticated principal, tested against the deployment's self-elevation predicate; <see langword="null"/> resolves claims-eligibility to false.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The created request — pending, or already approved when self-elevated.</returns>
-    public async ValueTask<ParsedJsonDocument<AccessRequest>> SubmitAsync(AccessRequest draft, string actor, ClaimsPrincipal? principal, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<AccessRequest>> SubmitAsync(AccessRequest draft, AuditSubject actor, ClaimsPrincipal? principal, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(actor);
+        ArgumentNullException.ThrowIfNull(actor.Subject);
         ValidateWorkflowId(draft.BaseWorkflowIdValue);
 
         ParsedJsonDocument<AccessRequest> created = await this.requests.CreateAsync(draft, actor, cancellationToken).ConfigureAwait(false);
@@ -107,7 +113,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         try
         {
             AccessRequest request = created.RootElement;
-            return await this.GrantAndDecideAsync(request, request.EtagValue, actor, SelfElevationReason, cancellationToken).ConfigureAwait(false)
+            return await this.GrantAndDecideAsync(request, request.EtagValue, actor, SelfElevationReason, selfElevation: true, cancellationToken).ConfigureAwait(false)
                 ?? throw ServerThrowHelper.GetSelfElevationIncompleteException(created.RootElement.IdValue);
         }
         finally
@@ -125,10 +131,10 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     /// <returns>The approved request, or <see langword="null"/> if no request with that id exists.</returns>
     /// <exception cref="WorkflowAdministrationException">The approver is not an administrator of the target workflow.</exception>
     /// <exception cref="AccessRequestStateException">The request is not pending, or none of its scopes is grantable.</exception>
-    public async ValueTask<ParsedJsonDocument<AccessRequest>?> ApproveAsync(string requestId, SecurityTagSet approverIdentity, string actor, string? reason, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<AccessRequest>?> ApproveAsync(string requestId, SecurityTagSet approverIdentity, AuditSubject actor, string? reason, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(requestId);
-        ArgumentNullException.ThrowIfNull(actor);
+        ArgumentNullException.ThrowIfNull(actor.Subject);
         using ParsedJsonDocument<AccessRequest>? fetched = await this.requests.GetAsync(requestId, cancellationToken).ConfigureAwait(false);
         if (fetched is null)
         {
@@ -138,7 +144,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         AccessRequest request = fetched.RootElement;
         RequireStatus(request, AccessRequestStatus.Pending);
         await this.EnsureAdministratorAsync(request.BaseWorkflowIdValue, approverIdentity, cancellationToken).ConfigureAwait(false);
-        return await this.GrantAndDecideAsync(request, request.EtagValue, actor, reason, cancellationToken).ConfigureAwait(false);
+        return await this.GrantAndDecideAsync(request, request.EtagValue, actor, reason, selfElevation: false, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Grants a pending request under the platform ceiling <em>without</em> a §15-administrator check — the
@@ -150,10 +156,10 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The granted (approved) request, or <see langword="null"/> if no request with that id exists.</returns>
     /// <exception cref="AccessRequestStateException">The request is not pending, or none of its scopes is grantable.</exception>
-    public async ValueTask<ParsedJsonDocument<AccessRequest>?> GrantRequestAsync(string requestId, string actor, string? reason, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<AccessRequest>?> GrantRequestAsync(string requestId, AuditSubject actor, string? reason, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(requestId);
-        ArgumentNullException.ThrowIfNull(actor);
+        ArgumentNullException.ThrowIfNull(actor.Subject);
         using ParsedJsonDocument<AccessRequest>? fetched = await this.requests.GetAsync(requestId, cancellationToken).ConfigureAwait(false);
         if (fetched is null)
         {
@@ -169,7 +175,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         // only; subject fixed to the requester; reach fixed to the workflow; TTL capped) applies unconditionally, so the
         // worst case if the narrow accessRequests:grant capability ever leaked is an auto-grant of run access to the
         // requester of an existing pending request — never an arbitrary binding.
-        return await this.GrantAndDecideAsync(request, request.EtagValue, actor, reason, cancellationToken).ConfigureAwait(false);
+        return await this.GrantAndDecideAsync(request, request.EtagValue, actor, reason, selfElevation: false, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Approves a pending request as <em>durable eligibility</em> (§16.5.3): writes an eligibility assignment
@@ -184,10 +190,10 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     /// <returns>The request marked <see cref="AccessRequestStatus.Eligible"/>, or <see langword="null"/> if no request with that id exists.</returns>
     /// <exception cref="WorkflowAdministrationException">The approver is not an administrator of the target workflow.</exception>
     /// <exception cref="AccessRequestStateException">The request is not pending, or none of its scopes is grantable.</exception>
-    public async ValueTask<ParsedJsonDocument<AccessRequest>?> ApproveAsEligibleAsync(string requestId, SecurityTagSet approverIdentity, string actor, string? reason, TimeSpan? eligibilityWindow, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<AccessRequest>?> ApproveAsEligibleAsync(string requestId, SecurityTagSet approverIdentity, AuditSubject actor, string? reason, TimeSpan? eligibilityWindow, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(requestId);
-        ArgumentNullException.ThrowIfNull(actor);
+        ArgumentNullException.ThrowIfNull(actor.Subject);
         using ParsedJsonDocument<AccessRequest>? fetched = await this.requests.GetAsync(requestId, cancellationToken).ConfigureAwait(false);
         if (fetched is null)
         {
@@ -212,10 +218,10 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The request marked <see cref="AccessRequestStatus.Eligible"/>, or <see langword="null"/> if no request with that id exists.</returns>
     /// <exception cref="AccessRequestStateException">The request is not pending, or none of its scopes is grantable.</exception>
-    public async ValueTask<ParsedJsonDocument<AccessRequest>?> GrantRequestAsEligibleAsync(string requestId, string actor, string? reason, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<AccessRequest>?> GrantRequestAsEligibleAsync(string requestId, AuditSubject actor, string? reason, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(requestId);
-        ArgumentNullException.ThrowIfNull(actor);
+        ArgumentNullException.ThrowIfNull(actor.Subject);
         using ParsedJsonDocument<AccessRequest>? fetched = await this.requests.GetAsync(requestId, cancellationToken).ConfigureAwait(false);
         if (fetched is null)
         {
@@ -234,7 +240,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     // The shared body of ApproveAsEligibleAsync (admin-checked) and GrantRequestAsEligibleAsync (system-credentialed).
     // Race-safe: the binding is written first, then the decision claims the request under its etag; a lost decision or a
     // vanished request compensates the just-written eligibility away.
-    private async ValueTask<ParsedJsonDocument<AccessRequest>?> GrantEligibilityAndDecideAsync(AccessRequest request, string actor, string? reason, TimeSpan? eligibilityWindow, CancellationToken cancellationToken)
+    private async ValueTask<ParsedJsonDocument<AccessRequest>?> GrantEligibilityAndDecideAsync(AccessRequest request, AuditSubject actor, string? reason, TimeSpan? eligibilityWindow, CancellationToken cancellationToken)
     {
         List<string> granted = this.CapScopes(request);
         if (granted.Count == 0)
@@ -243,7 +249,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         }
 
         DateTimeOffset? expiresAt = eligibilityWindow is { } window ? this.timeProvider.GetUtcNow().Add(window) : null;
-        string bindingId = await this.WriteBindingAsync(request, granted, actor, eligibleOnly: true, expiresAt: expiresAt, cancellationToken).ConfigureAwait(false);
+        string bindingId = await this.WriteBindingAsync(request, granted, actor, eligibleOnly: true, "eligible", expiresAt: expiresAt, cancellationToken).ConfigureAwait(false);
         try
         {
             // The eligibility assignment confers nothing active (the resolver ignores eligibleOnly bindings), so there is
@@ -257,14 +263,14 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
 
             if (decided is null)
             {
-                await this.RevokeBindingAsync(bindingId, cancellationToken).ConfigureAwait(false);
+                await this.RevokeBindingAsync(bindingId, actor, "rolled-back", cancellationToken).ConfigureAwait(false);
             }
 
             return decided;
         }
         catch (AccessRequestConflictException)
         {
-            await this.RevokeBindingAsync(bindingId, cancellationToken).ConfigureAwait(false);
+            await this.RevokeBindingAsync(bindingId, actor, "rolled-back", cancellationToken).ConfigureAwait(false);
             throw;
         }
     }
@@ -278,10 +284,10 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     /// <returns>The denied request, or <see langword="null"/> if absent.</returns>
     /// <exception cref="WorkflowAdministrationException">The decider is not an administrator of the target workflow.</exception>
     /// <exception cref="AccessRequestStateException">The request is not pending.</exception>
-    public async ValueTask<ParsedJsonDocument<AccessRequest>?> DenyAsync(string requestId, SecurityTagSet approverIdentity, string actor, string? reason, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<AccessRequest>?> DenyAsync(string requestId, SecurityTagSet approverIdentity, AuditSubject actor, string? reason, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(requestId);
-        ArgumentNullException.ThrowIfNull(actor);
+        ArgumentNullException.ThrowIfNull(actor.Subject);
         using ParsedJsonDocument<AccessRequest>? fetched = await this.requests.GetAsync(requestId, cancellationToken).ConfigureAwait(false);
         if (fetched is null)
         {
@@ -302,10 +308,10 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The withdrawn request, or <see langword="null"/> if absent.</returns>
     /// <exception cref="AccessRequestStateException">The request is not pending, or the caller is not the requester.</exception>
-    public async ValueTask<ParsedJsonDocument<AccessRequest>?> WithdrawAsync(string requestId, string subjectClaimType, string subjectClaimValue, string actor, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<AccessRequest>?> WithdrawAsync(string requestId, string subjectClaimType, string subjectClaimValue, AuditSubject actor, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(requestId);
-        ArgumentNullException.ThrowIfNull(actor);
+        ArgumentNullException.ThrowIfNull(actor.Subject);
         using ParsedJsonDocument<AccessRequest>? fetched = await this.requests.GetAsync(requestId, cancellationToken).ConfigureAwait(false);
         if (fetched is null)
         {
@@ -324,11 +330,11 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<AccessRequest>?> SettleRequestAsync(string requestId, string outcome, string actor, string? reason, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<AccessRequest>?> SettleRequestAsync(string requestId, string outcome, AuditSubject actor, string? reason, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(requestId);
         ArgumentNullException.ThrowIfNull(outcome);
-        ArgumentNullException.ThrowIfNull(actor);
+        ArgumentNullException.ThrowIfNull(actor.Subject);
         return outcome switch
         {
             "approved" => await this.GrantRequestAsync(requestId, actor, reason, cancellationToken).ConfigureAwait(false),
@@ -341,7 +347,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
 
     // Marks a pending request Denied under the system-credentialed enactment path, WITHOUT the §15 administrator check
     // DenyAsync applies — the approver's decision was already authorised when it was published into the approval run.
-    private async ValueTask<ParsedJsonDocument<AccessRequest>?> EnactDenialAsync(string requestId, string actor, string? reason, CancellationToken cancellationToken)
+    private async ValueTask<ParsedJsonDocument<AccessRequest>?> EnactDenialAsync(string requestId, AuditSubject actor, string? reason, CancellationToken cancellationToken)
     {
         using ParsedJsonDocument<AccessRequest>? fetched = await this.requests.GetAsync(requestId, cancellationToken).ConfigureAwait(false);
         if (fetched is null)
@@ -356,7 +362,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
 
     // Marks a pending request Withdrawn under the system-credentialed enactment path, WITHOUT the requester-identity check
     // WithdrawAsync applies — the requester's withdrawal was already authorised when it was published into the run.
-    private async ValueTask<ParsedJsonDocument<AccessRequest>?> EnactWithdrawalAsync(string requestId, string actor, CancellationToken cancellationToken)
+    private async ValueTask<ParsedJsonDocument<AccessRequest>?> EnactWithdrawalAsync(string requestId, AuditSubject actor, CancellationToken cancellationToken)
     {
         using ParsedJsonDocument<AccessRequest>? fetched = await this.requests.GetAsync(requestId, cancellationToken).ConfigureAwait(false);
         if (fetched is null)
@@ -380,10 +386,10 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     /// <returns>The revoked request, or <see langword="null"/> if absent.</returns>
     /// <exception cref="WorkflowAdministrationException">The revoker is not an administrator of the target workflow.</exception>
     /// <exception cref="AccessRequestStateException">The request is not an approved grant or an eligibility assignment.</exception>
-    public async ValueTask<ParsedJsonDocument<AccessRequest>?> RevokeAsync(string requestId, SecurityTagSet approverIdentity, string actor, string? reason, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<AccessRequest>?> RevokeAsync(string requestId, SecurityTagSet approverIdentity, AuditSubject actor, string? reason, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(requestId);
-        ArgumentNullException.ThrowIfNull(actor);
+        ArgumentNullException.ThrowIfNull(actor.Subject);
         using ParsedJsonDocument<AccessRequest>? fetched = await this.requests.GetAsync(requestId, cancellationToken).ConfigureAwait(false);
         if (fetched is null)
         {
@@ -398,7 +404,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         // be activated), then record the revocation.
         if (request.GrantedBindingIdOrNull is { } bindingId)
         {
-            await this.RevokeBindingAsync(bindingId, cancellationToken).ConfigureAwait(false);
+            await this.RevokeBindingAsync(bindingId, actor, "revoked", cancellationToken).ConfigureAwait(false);
         }
 
         return await this.requests.DecideAsync(
@@ -446,7 +452,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     // Writes the time-boxed entitlement (a per-workflow reach rule + a per-requester binding) and decides the request
     // Approved. Race-safe: the binding is written first, then the decision claims the request under its etag — if the
     // decision is lost (e.g. two administrators) or the request has vanished, the just-written grant is compensated away.
-    private async ValueTask<ParsedJsonDocument<AccessRequest>?> GrantAndDecideAsync(AccessRequest request, WorkflowEtag etag, string actor, string? decisionReason, CancellationToken cancellationToken)
+    private async ValueTask<ParsedJsonDocument<AccessRequest>?> GrantAndDecideAsync(AccessRequest request, WorkflowEtag etag, AuditSubject actor, string? decisionReason, bool selfElevation, CancellationToken cancellationToken)
     {
         List<string> granted = this.CapScopes(request);
         if (granted.Count == 0)
@@ -454,7 +460,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
             ServerThrowHelper.ThrowNoGrantableScopesApproval(request.IdValue);
         }
 
-        (string bindingId, DateTimeOffset expiresAt) = await this.WriteGrantAsync(request, granted, actor, cancellationToken).ConfigureAwait(false);
+        (string bindingId, DateTimeOffset expiresAt) = await this.WriteGrantAsync(request, granted, actor, selfElevation ? "self-elevated" : "granted", cancellationToken).ConfigureAwait(false);
         try
         {
             ParsedJsonDocument<AccessRequest>? decided = await this.requests.DecideAsync(
@@ -467,7 +473,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
             if (decided is null)
             {
                 // The request vanished between read and decide — drop the orphaned grant.
-                await this.RevokeBindingAsync(bindingId, cancellationToken).ConfigureAwait(false);
+                await this.RevokeBindingAsync(bindingId, actor, "rolled-back", cancellationToken).ConfigureAwait(false);
                 return null;
             }
 
@@ -478,13 +484,13 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         catch (AccessRequestConflictException)
         {
             // Lost the decision race — compensate by removing the grant this attempt wrote.
-            await this.RevokeBindingAsync(bindingId, cancellationToken).ConfigureAwait(false);
+            await this.RevokeBindingAsync(bindingId, actor, "rolled-back", cancellationToken).ConfigureAwait(false);
             throw;
         }
     }
 
     // The active-grant path: time-box the entitlement at min(requested, max TTL) from now, then write it.
-    private async ValueTask<(string BindingId, DateTimeOffset ExpiresAt)> WriteGrantAsync(AccessRequest request, IReadOnlyList<string> granted, string actor, CancellationToken cancellationToken)
+    private async ValueTask<(string BindingId, DateTimeOffset ExpiresAt)> WriteGrantAsync(AccessRequest request, IReadOnlyList<string> granted, AuditSubject actor, string outcome, CancellationToken cancellationToken)
     {
         DateTimeOffset now = this.timeProvider.GetUtcNow();
         long maxSeconds = (long)this.options.MaxTtl.TotalSeconds;
@@ -492,7 +498,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         long seconds = Math.Clamp(requested, 1, maxSeconds);
         DateTimeOffset expiresAt = now.AddSeconds(seconds);
 
-        string bindingId = await this.WriteBindingAsync(request, granted, actor, eligibleOnly: false, expiresAt: expiresAt, cancellationToken).ConfigureAwait(false);
+        string bindingId = await this.WriteBindingAsync(request, granted, actor, eligibleOnly: false, outcome, expiresAt: expiresAt, cancellationToken).ConfigureAwait(false);
         return (bindingId, expiresAt);
     }
 
@@ -502,7 +508,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     // sys:workflow rule; the scope distinguishes run vs catalog visibility at the authorization layer), runs:write →
     // write-reach; purge is never granted. An eligibleOnly binding confers nothing active (the resolver ignores it) — it
     // records the eligibility the self-elevation strategy reads.
-    private async ValueTask<string> WriteBindingAsync(AccessRequest request, IReadOnlyList<string> granted, string actor, bool eligibleOnly, DateTimeOffset? expiresAt, CancellationToken cancellationToken)
+    private async ValueTask<string> WriteBindingAsync(AccessRequest request, IReadOnlyList<string> granted, AuditSubject actor, bool eligibleOnly, string outcome, DateTimeOffset? expiresAt, CancellationToken cancellationToken)
     {
         string baseWorkflowId = request.BaseWorkflowIdValue;
         ValidateWorkflowId(baseWorkflowId);
@@ -522,7 +528,12 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
             eligibleOnly: eligibleOnly);
 
         using ParsedJsonDocument<SecurityBindingDocument> binding = await this.policy.AddBindingAsync(draft.RootElement, actor, cancellationToken).ConfigureAwait(false);
-        return binding.RootElement.IdValue;
+        string bindingId = binding.RootElement.IdValue;
+
+        // The policy write is a governance action in its own right (ADR 0038): the grant appears on the security policy
+        // with the same trail an API-authored binding leaves, attributed to the deciding actor.
+        GovernanceAudit.Mutation(this.auditLogger, "security-binding.create", actor, BindingKind, bindingId, outcome);
+        return bindingId;
     }
 
     // Ensures the per-workflow reach rule (sys:workflow == '<id>') exists, idempotently, and returns its name. An existing
@@ -530,7 +541,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     // and a wider expression under it would become every later grant's reach. The authoring API refuses the namespace;
     // this check covers a rule written any other way, refusing the grant (nothing written, the request stays pending)
     // rather than silently repairing what is evidence of tampering.
-    private async ValueTask<string> EnsureWorkflowRuleAsync(string baseWorkflowId, string actor, CancellationToken cancellationToken)
+    private async ValueTask<string> EnsureWorkflowRuleAsync(string baseWorkflowId, AuditSubject actor, CancellationToken cancellationToken)
     {
         string ruleName = WorkflowRuleName(baseWorkflowId);
         if (await this.HasWorkflowRuleAsync(ruleName, baseWorkflowId, cancellationToken).ConfigureAwait(false))
@@ -548,6 +559,8 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
                 cancellationToken).ConfigureAwait(false))
             {
             }
+
+            GovernanceAudit.Mutation(this.auditLogger, "security-rule.create", actor, RuleKind, ruleName, "created");
         }
         catch (InvalidOperationException)
         {
@@ -580,9 +593,12 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         return true;
     }
 
-    private async ValueTask RevokeBindingAsync(string bindingId, CancellationToken cancellationToken)
+    // Deletes a grant binding, audited as the governance action it is: a revoke by an administrator, or the rollback of
+    // a binding this attempt wrote when the decision it belonged to was lost (the request vanished or the decision raced).
+    private async ValueTask RevokeBindingAsync(string bindingId, AuditSubject actor, string outcome, CancellationToken cancellationToken)
     {
         await this.policy.DeleteBindingAsync(bindingId, WorkflowEtag.None, cancellationToken).ConfigureAwait(false);
+        GovernanceAudit.Mutation(this.auditLogger, "security-binding.delete", actor, BindingKind, bindingId, outcome);
         await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
     }
 

@@ -5,6 +5,7 @@
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Publishing;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.Extensions.Logging;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
@@ -34,15 +35,13 @@ public sealed class ArazzoControlPlaneNativeBuildsHandler : IApiNativeBuildsHand
     private readonly INativeBuildJobStore builds;
     private readonly ISecuredWorkflowCatalog catalog;
     private readonly ControlPlaneAccess access;
-    private readonly string actor;
     private readonly ILogger? auditLogger;
 
     /// <summary>Initializes a new, unscoped instance (every request runs with <see cref="AccessContext.System"/>).</summary>
     /// <param name="builds">The native build-job store.</param>
     /// <param name="catalog">The workflow catalog (version existence + reach, gating every operation).</param>
-    /// <param name="actor">The audit actor recorded on enqueue.</param>
-    public ArazzoControlPlaneNativeBuildsHandler(INativeBuildJobStore builds, ISecuredWorkflowCatalog catalog, string actor = "control-plane")
-        : this(builds, catalog, new ControlPlaneAccess(), actor)
+    public ArazzoControlPlaneNativeBuildsHandler(INativeBuildJobStore builds, ISecuredWorkflowCatalog catalog)
+        : this(builds, catalog, new ControlPlaneAccess())
     {
     }
 
@@ -50,18 +49,15 @@ public sealed class ArazzoControlPlaneNativeBuildsHandler : IApiNativeBuildsHand
     /// <param name="builds">The native build-job store.</param>
     /// <param name="catalog">The workflow catalog (version existence + reach, gating every operation).</param>
     /// <param name="access">Resolves the caller's <see cref="AccessContext"/> and deployment identity per request.</param>
-    /// <param name="actor">The audit actor recorded on enqueue.</param>
     /// <param name="auditLogger">The governance audit sink, or <see langword="null"/> to not audit.</param>
-    internal ArazzoControlPlaneNativeBuildsHandler(INativeBuildJobStore builds, ISecuredWorkflowCatalog catalog, ControlPlaneAccess access, string actor = "control-plane", ILogger? auditLogger = null)
+    internal ArazzoControlPlaneNativeBuildsHandler(INativeBuildJobStore builds, ISecuredWorkflowCatalog catalog, ControlPlaneAccess access, ILogger? auditLogger = null)
     {
         ArgumentNullException.ThrowIfNull(builds);
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(access);
-        ArgumentNullException.ThrowIfNull(actor);
         this.builds = builds;
         this.catalog = catalog;
         this.access = access;
-        this.actor = actor;
         this.auditLogger = auditLogger;
     }
 
@@ -115,7 +111,7 @@ public sealed class ArazzoControlPlaneNativeBuildsHandler : IApiNativeBuildsHand
             }
         }
 
-        string enqueuedBy = this.CallerActor();
+        AuditSubject enqueuedBy = this.CallerActor();
         using ParsedJsonDocument<NativeBuildJob> draft = NativeBuildJob.Draft(baseWorkflowId, versionNumber, environment, runtimeIdentifier, buildLabel);
         ParsedJsonDocument<NativeBuildJob> queued = await this.builds.EnqueueAsync(draft.RootElement, enqueuedBy, cancellationToken).ConfigureAwait(false);
         workspace.TakeOwnership(queued);
@@ -214,7 +210,7 @@ public sealed class ArazzoControlPlaneNativeBuildsHandler : IApiNativeBuildsHand
     }
 
     // The §850 audit subject: the authenticated principal who enqueued the build, falling back to the configured actor.
-    private string CallerActor() => PrincipalDisplayName.Resolve(this.access.CurrentPrincipal) ?? this.actor;
+    private AuditSubject CallerActor() => this.access.AuditSubject();
 
     private static Models.ProblemDetails.Source VersionNotFoundProblem(string baseWorkflowId, int versionNumber)
         => Problem("version-not-found", "Workflow version not found", 404, $"No version {versionNumber} of workflow '{baseWorkflowId}' exists, or it is outside your reach.");

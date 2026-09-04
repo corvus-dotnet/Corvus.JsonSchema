@@ -140,7 +140,7 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
 
         if (gate != GovernanceGate.Authorized)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "environment.key.register", this.CallerActor(), TargetKind, KeyKey(environment, keyId), "refused-not-administrator");
+            GovernanceAudit.Mutation(this.auditLogger, "environment.key.register", this.AuditActor(), TargetKind, KeyKey(environment, keyId), "refused-not-administrator");
             return RegisterEnvironmentKeyResult.Forbidden(NotAdministratorProblem(environment), workspace);
         }
 
@@ -159,7 +159,7 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
 
             // The refusal reason is diagnostic, not disclosing: every value here is one the caller supplied, so
             // naming which check failed tells them nothing they did not already know.
-            GovernanceAudit.Mutation(this.auditLogger, "environment.key.register", this.CallerActor(), TargetKind, KeyKey(environment, keyId), $"refused-{possession}");
+            GovernanceAudit.Mutation(this.auditLogger, "environment.key.register", this.AuditActor(), TargetKind, KeyKey(environment, keyId), $"refused-{possession}");
             return RegisterEnvironmentKeyResult.BadRequest(PossessionProblem(environment, keyId, possession), workspace);
         }
 
@@ -211,7 +211,7 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
 
         if (gate != GovernanceGate.Authorized)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "environment.key.retire", this.CallerActor(), TargetKind, KeyKey(environment, keyId), "refused-not-administrator");
+            GovernanceAudit.Mutation(this.auditLogger, "environment.key.retire", this.AuditActor(), TargetKind, KeyKey(environment, keyId), "refused-not-administrator");
             return RetireEnvironmentKeyResult.Forbidden(NotAdministratorProblem(environment), workspace);
         }
 
@@ -239,7 +239,7 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
         if (IsLastActive(stored.RootElement, keyId) && await this.MoreThanOneOwnerGroupAsync(cancellationToken).ConfigureAwait(false))
         {
             stored.Dispose();
-            GovernanceAudit.Mutation(this.auditLogger, "environment.key.retire", this.CallerActor(), TargetKind, KeyKey(environment, keyId), "refused-last-active-generation");
+            GovernanceAudit.Mutation(this.auditLogger, "environment.key.retire", this.AuditActor(), TargetKind, KeyKey(environment, keyId), "refused-last-active-generation");
             return RetireEnvironmentKeyResult.Conflict(LastActiveGenerationProblem(environment, keyId), workspace);
         }
 
@@ -483,10 +483,9 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
 
     // Registering or retiring a key is a governance decision, so the actor recorded is the deciding subject, the same
     // one the runner-authorization decisions record, rather than a display name that may not be present.
-    private string CallerActor()
-        => this.access.CurrentPrincipal?.FindFirst(this.subjectClaimType)?.Value
-        ?? PrincipalDisplayName.Resolve(this.access.CurrentPrincipal)
-        ?? "unknown";
+    private string CallerActor() => AuditSubject.ResolveSubject(this.access.CurrentPrincipal, this.subjectClaimType);
+
+    private AuditSubject AuditActor() => this.access.AuditSubject();
 
     private enum GovernanceGate
     {

@@ -10,6 +10,7 @@ using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Availability;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.Publishing;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Testing;
 using Microsoft.Extensions.Logging;
 using ValidatorSchema = Corvus.Text.Json.Validator.JsonSchema;
@@ -51,6 +52,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
 
     // The audited resource kind for a catalog mutation (design §850, worklist item 7).
     private const string CatalogTargetKind = "catalog-version";
+    private const string RunTargetKind = "run";
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneCatalogHandler"/> class (unscoped: full access).</summary>
     /// <param name="catalog">The catalog client the endpoints delegate to.</param>
@@ -92,7 +94,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     }
 
     // The §850 audit subject for a catalog mutation: the authenticated caller, falling back to "system" when unresolved.
-    private string AuditActor() => PrincipalDisplayName.Resolve(this.access.CurrentPrincipal) ?? "system";
+    private AuditSubject AuditActor() => this.access.AuditSubject();
 
     // The (baseWorkflowId, version) audit target key for a catalog mutation (design §850).
     private static string CatalogKey(string baseWorkflowId, int versionNumber) => $"{baseWorkflowId}:{versionNumber}";
@@ -652,11 +654,14 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         }
 
         WorkflowRunId runId;
+        string outcome = "started";
         if (parameters.IdempotencyKey.IsNotUndefined() && (string)parameters.IdempotencyKey is { Length: > 0 } idempotencyKey)
         {
             try
             {
-                runId = (await this.management.StartIdempotentAsync(workflowId, inputs, idempotencyKey, environment, correlationId: null, tags: default, securityTags: catalogVersion.SecurityTagsValue, cancellationToken: cancellationToken).ConfigureAwait(false)).RunId;
+                IdempotentStartResult idempotent = await this.management.StartIdempotentAsync(workflowId, inputs, idempotencyKey, environment, correlationId: null, tags: default, securityTags: catalogVersion.SecurityTagsValue, cancellationToken: cancellationToken).ConfigureAwait(false);
+                runId = idempotent.RunId;
+                outcome = idempotent.Created ? "started" : "reused";
             }
             catch (WorkflowRunCollisionException)
             {
@@ -671,6 +676,9 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
             runId = await this.management.StartAsync(workflowId, inputs, correlationId: null, tags: default, securityTags: catalogVersion.SecurityTagsValue, environment: environment, cancellationToken).ConfigureAwait(false);
         }
 
+        // Starting a run is a governed action (ADR 0038): audited with the starting actor and the environment the run is
+        // pinned to; an idempotent start that found its run already running audits as reused.
+        GovernanceAudit.Mutation(this.auditLogger, "run.start", this.AuditActor(), RunTargetKind, runId.Value, outcome, environment);
         return StartCatalogWorkflowRunResult.Accepted(
             new Models.WorkflowRunAccepted.Source((ref Models.WorkflowRunAccepted.Builder b) => b.Create(
                 runId: runId.Value,

@@ -46,6 +46,15 @@ internal sealed class GovernanceAuditProbe : IDisposable
         }
     }
 
+    /// <summary>The ordered spans recorded for the given target across its lifecycle, for tag-level assertions.</summary>
+    public IReadOnlyList<Activity> ForTarget(string targetId)
+    {
+        lock (this.spans)
+        {
+            return [.. this.spans.Where(s => (string?)s.GetTagItem(ArazzoTelemetry.TargetIdTag) == targetId)];
+        }
+    }
+
     /// <summary>The ordered (action, outcome) pairs recorded for the given target across its lifecycle.</summary>
     public IReadOnlyList<(string Action, string Outcome)> Events(string targetId)
     {
