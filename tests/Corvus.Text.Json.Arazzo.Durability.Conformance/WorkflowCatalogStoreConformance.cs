@@ -197,11 +197,16 @@ public abstract class WorkflowCatalogStoreConformance
         (await store.AddAsync("alpha", Package("alpha", title: "Alpha Flow"), Meta(tags: ["prod", "billing"]), default)).Dispose();
         (await store.AddAsync("beta", Package("beta", title: "Beta Flow"), Meta(tags: ["prod"]), default)).Dispose();
 
+        // A queried tag is an exact member, the same on every backend (P1-16): none of "production", "reprod" or
+        // "PROD" is "prod", on the list path or the count path.
+        (await store.AddAsync("gamma", Package("gamma", title: "Gamma Flow"), Meta(tags: ["production", "reprod", "PROD"]), default)).Dispose();
+
         await this.QueryCountShouldBe(store, new CatalogQuery(BaseWorkflowId: "alpha"), 1);
         await this.QueryCountShouldBe(store, new CatalogQuery(Tags: TagSet.FromTags(["prod"])), 2);
+        (await store.CountAsync(new CatalogQuery(Tags: TagSet.FromTags(["prod"])), 100, default)).ShouldBe((2, false));
         await this.QueryCountShouldBe(store, new CatalogQuery(Tags: TagSet.FromTags(["prod", "billing"])), 1);
         await this.QueryCountShouldBe(store, new CatalogQuery(Text: "alpha"), 1);
-        await this.QueryCountShouldBe(store, new CatalogQuery(Owner: "team-a@example.com"), 2);
+        await this.QueryCountShouldBe(store, new CatalogQuery(Owner: "team-a@example.com"), 3);
         await this.QueryCountShouldBe(store, new CatalogQuery(Status: CatalogStatus.Obsolete), 0);
     }
 

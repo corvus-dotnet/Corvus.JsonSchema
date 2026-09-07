@@ -609,9 +609,10 @@ public sealed class MySqlWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
             List<string> tags = query.Tags.ToList();
             for (int i = 0; i < tags.Count; i++)
             {
+                // Exact member of the separator-bracketed column, found by a literal search over binary casts, since the column's collation folds case (P1-16).
                 string name = "@tag" + i.ToString(CultureInfo.InvariantCulture);
-                sql.Append("\n              AND Tags LIKE ").Append(name).Append(" ESCAPE '\\\\'");
-                command.Parameters.AddWithValue(name, "%" + EscapeLike(tags[i]) + "%");
+                sql.Append("\n              AND INSTR(CAST(Tags AS BINARY), CAST(").Append(name).Append(" AS BINARY)) > 0");
+                command.Parameters.AddWithValue(name, TagSet.DelimitedMember(tags[i], '\u001F'));
             }
         }
 

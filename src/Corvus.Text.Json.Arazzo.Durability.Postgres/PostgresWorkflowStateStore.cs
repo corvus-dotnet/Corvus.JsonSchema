@@ -571,12 +571,16 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
 
         if (!query.Tags.IsEmpty)
         {
+            // The stored form is separator-bracketed (TagSet.ToDelimitedOrNull), so the needle is the tag bracketed the
+            // same way and found by strpos, a literal, case-sensitive search: a queried tag is an exact member, as the
+            // document and KV backends match it. An unanchored LIKE matched "production" for "prod" (P1-16). No LIKE
+            // metacharacters, so nothing to escape.
             List<string> tags = query.Tags.ToList();
             for (int i = 0; i < tags.Count; i++)
             {
                 string name = "tag" + i.ToString(CultureInfo.InvariantCulture);
-                sql.Append(" AND tags LIKE @").Append(name).Append(" ESCAPE '\\'");
-                command.Parameters.Add(NullableText(name, "%" + EscapeLike(tags[i]) + "%"));
+                sql.Append(" AND strpos(tags, @").Append(name).Append(") > 0");
+                command.Parameters.Add(NullableText(name, TagSet.DelimitedMember(tags[i], '\u001F')));
             }
         }
 
@@ -620,9 +624,6 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         command.Parameters.Add(NullableBigint("resume_requested_at", index.ResumeRequestedAt?.ToUnixTimeMilliseconds()));
         command.Parameters.Add(NullableText("tags", index.Tags.ToDelimitedOrNull('\u001F')));
     }
-
-    private static string EscapeLike(string value)
-        => value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
 
     private static NpgsqlParameter NullableText(string name, string? value)
         => new(name, NpgsqlDbType.Text) { Value = (object?)value ?? DBNull.Value };

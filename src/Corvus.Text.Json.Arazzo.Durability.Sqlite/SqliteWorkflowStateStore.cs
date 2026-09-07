@@ -520,14 +520,17 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
 
         if (!query.Tags.IsEmpty)
         {
-            // The needle (per query, not per row) is materialized to strings only here, at the ADO LIKE-parameter
-            // boundary the driver forces; the row tags themselves are never materialized — the LIKE matches the bytes.
+            // The stored form is separator-bracketed (TagSet.ToDelimitedOrNull), so the needle is the tag bracketed the
+            // same way and found by instr, a literal byte search, since LIKE folds ASCII case: a queried tag is an exact
+            // member, as the document and KV backends match it. An unanchored LIKE matched "production" for "prod"
+            // (P1-16). The needle (per query, not per row) is the one string materialized, at the ADO parameter boundary
+            // the driver forces; the row tags themselves are never materialized.
             List<string> tags = query.Tags.ToList();
             for (int i = 0; i < tags.Count; i++)
             {
                 string name = "@tag" + i.ToString(CultureInfo.InvariantCulture);
-                sql.Append(" AND Tags LIKE ").Append(name).Append(" ESCAPE '\\'");
-                command.Parameters.AddWithValue(name, "%" + EscapeLike(tags[i]) + "%");
+                sql.Append(" AND instr(Tags, ").Append(name).Append(") > 0");
+                command.Parameters.AddWithValue(name, TagSet.DelimitedMember(tags[i], '\u001F'));
             }
         }
 
@@ -609,9 +612,6 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
     }
-
-    private static string EscapeLike(string value)
-        => value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
 
     private static DateTimeOffset FromUnixMilliseconds(long milliseconds) => DateTimeOffset.FromUnixTimeMilliseconds(milliseconds);
 

@@ -464,9 +464,10 @@ public sealed class SqlServerWorkflowCatalogStore : IWorkflowCatalogStore, ISupp
             List<string> tags = query.Tags.ToList();
             for (int i = 0; i < tags.Count; i++)
             {
+                // Exact member of the separator-bracketed column, found by a literal search under a binary collation, since the column's own collation folds case (P1-16).
                 string name = "@tag" + i.ToString(CultureInfo.InvariantCulture);
-                sql.Append("\n              AND Tags LIKE ").Append(name).Append(" ESCAPE '\\'");
-                command.Parameters.Add(NullableText(name, "%" + EscapeLike(tags[i]) + "%"));
+                sql.Append("\n              AND CHARINDEX(").Append(name).Append(", Tags COLLATE Latin1_General_BIN2) > 0");
+                command.Parameters.Add(NullableText(name, TagSet.DelimitedMember(tags[i], '\u001F')));
             }
         }
 

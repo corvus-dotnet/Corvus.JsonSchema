@@ -639,9 +639,10 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
             List<string> tags = query.Tags.ToList();
             for (int i = 0; i < tags.Count; i++)
             {
+                // Exact member of the separator-bracketed column, found by instr, a literal byte search, since LIKE folds ASCII case (P1-16).
                 string name = "@tag" + i.ToString(CultureInfo.InvariantCulture);
-                sql.Append("\n                  AND Tags LIKE ").Append(name).Append(" ESCAPE '\\'");
-                command.Parameters.AddWithValue(name, "%" + EscapeLike(tags[i]) + "%");
+                sql.Append("\n                  AND instr(Tags, ").Append(name).Append(") > 0");
+                command.Parameters.AddWithValue(name, TagSet.DelimitedMember(tags[i], '\u001F'));
             }
         }
 

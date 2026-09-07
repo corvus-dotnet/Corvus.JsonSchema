@@ -331,7 +331,8 @@ public readonly struct TagSet
         => this.json.IsEmpty ? null : Encoding.UTF8.GetString(this.json.Span);
 
     /// <summary>Serializes the set to its separator-delimited decoded form (SQL backends), or <see langword="null"/> when empty.</summary>
-    /// <param name="separator">The delimiter character (bracketing the value so an exact-match LIKE works).</param>
+    /// <param name="separator">The delimiter character. It brackets the value on both sides so a queried tag is found as an
+    /// exact member, see <see cref="DelimitedMember"/>.</param>
     /// <returns>The delimited column value, or <see langword="null"/>.</returns>
     public string? ToDelimitedOrNull(char separator)
     {
@@ -366,6 +367,21 @@ public readonly struct TagSet
         {
             ArrayPool<char>.Shared.Return(buffer);
         }
+    }
+
+    /// <summary>Builds the needle that finds <paramref name="tag"/> as an exact member of a column written by
+    /// <see cref="ToDelimitedOrNull"/>: the tag bracketed by the separator on both sides, so a literal substring search
+    /// matches neither a tag it is a prefix or suffix of nor one that contains it.</summary>
+    /// <param name="tag">The queried tag.</param>
+    /// <param name="separator">The delimiter character the column was written with.</param>
+    /// <returns>The bracketed needle.</returns>
+    /// <remarks>A managed string at the ADO parameter boundary the drivers force, one per queried tag per query. The
+    /// search must be literal and case-sensitive on the backend for the member to be exact; an unanchored LIKE matched
+    /// "production" for "prod", and LIKE's case folding on three of the four relational backends matched "PROD".</remarks>
+    public static string DelimitedMember(string tag, char separator)
+    {
+        ArgumentNullException.ThrowIfNull(tag);
+        return $"{separator}{tag}{separator}";
     }
 
     /// <summary>Materializes the tags to a list of strings. A genuine leaf — interop and test code only; never the read/filter/output paths.</summary>

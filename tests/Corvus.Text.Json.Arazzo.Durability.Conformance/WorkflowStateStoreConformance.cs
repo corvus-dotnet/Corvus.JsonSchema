@@ -853,6 +853,14 @@ public abstract class WorkflowStateStoreConformance
         await store.SaveAsync(A("r-d"), Bytes("x"), Tagged(null, "a_b"), WorkflowEtag.None, default);
         await store.SaveAsync(A("r-e"), Bytes("x"), Tagged(null, "axb"), WorkflowEtag.None, default);
 
+        // A queried tag is an exact member, the same on every backend (P1-16): "prod" matches neither "production" nor
+        // "reprod" (the relational stores' delimiter-unanchored LIKE matched both) nor "PROD" (LIKE folds case on three
+        // of the four), and the count path shares the filter with the list path.
+        await store.SaveAsync(A("r-f"), Bytes("x"), Tagged(null, "prod"), WorkflowEtag.None, default);
+        await store.SaveAsync(A("r-g"), Bytes("x"), Tagged(null, "production"), WorkflowEtag.None, default);
+        await store.SaveAsync(A("r-h"), Bytes("x"), Tagged(null, "reprod"), WorkflowEtag.None, default);
+        await store.SaveAsync(A("r-i"), Bytes("x"), Tagged(null, "PROD"), WorkflowEtag.None, default);
+
         var index = (IWorkflowWaitIndex)store;
 
         // A single tag matches every run carrying it (ascending id order).
@@ -866,6 +874,11 @@ public abstract class WorkflowStateStoreConformance
         // The underscore is a literal, not a single-char wildcard: "a_b" must not match "axb".
         WorkflowRunPage literalUnderscore = await index.QueryAsync(new WorkflowQuery(Tags: TagSet.FromTags(["a_b"])), default);
         literalUnderscore.Runs.ShouldHaveSingleItem().Id.Value.ShouldBe("r-d");
+
+        // Exact delimited membership, list and count alike.
+        WorkflowRunPage exactMember = await index.QueryAsync(new WorkflowQuery(Tags: TagSet.FromTags(["prod"])), default);
+        exactMember.Runs.ShouldHaveSingleItem().Id.Value.ShouldBe("r-f");
+        (await index.CountAsync(new WorkflowQuery(Tags: TagSet.FromTags(["prod"])), 100, default)).ShouldBe((1, false));
 
         // Correlation id is an exact match.
         WorkflowRunPage byCorrelation = await index.QueryAsync(new WorkflowQuery(CorrelationId: "trace-2"), default);

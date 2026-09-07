@@ -589,12 +589,16 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
 
         if (!query.Tags.IsEmpty)
         {
+            // The stored form is separator-bracketed (TagSet.ToDelimitedOrNull), so the needle is the tag bracketed the
+            // same way and found by INSTR over both sides cast to binary, since the column's collation folds case and
+            // accents: a queried tag is an exact member, as the document and KV backends match it. An unanchored LIKE
+            // matched "production" for "prod" (P1-16). No LIKE metacharacters, so nothing to escape.
             List<string> tags = query.Tags.ToList();
             for (int i = 0; i < tags.Count; i++)
             {
                 string name = "@tag" + i.ToString(CultureInfo.InvariantCulture);
-                sql.Append(" AND tags LIKE ").Append(name).Append(" ESCAPE '\\\\'");
-                command.Parameters.AddWithValue(name, "%" + EscapeLike(tags[i]) + "%");
+                sql.Append(" AND INSTR(CAST(tags AS BINARY), CAST(").Append(name).Append(" AS BINARY)) > 0");
+                command.Parameters.AddWithValue(name, TagSet.DelimitedMember(tags[i], '\u001F'));
             }
         }
 
@@ -637,9 +641,6 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         command.Parameters.AddWithValue("@resume_requested_at", (object?)index.ResumeRequestedAt?.ToUnixTimeMilliseconds() ?? DBNull.Value);
         command.Parameters.AddWithValue("@tags", (object?)index.Tags.ToDelimitedOrNull('\u001F') ?? DBNull.Value);
     }
-
-    private static string EscapeLike(string value)
-        => value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
 
     // Reads the presented lease back under the currency predicate, returning it with the stored expiry.
     private static async ValueTask<WorkflowLease?> ReadCurrentLeaseAsync(MySqlConnection connection, WorkflowLease lease, long nowMs, CancellationToken cancellationToken)

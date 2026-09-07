@@ -479,6 +479,16 @@ item you cannot see directly in the code.
 - **Acceptance criteria:** fail closed on the default path, or return a partial-result indicator the UI surfaces; log the swallowed exception.
 
 ### P1-16 · FUNCTIONAL · `TB-4` · Tag visibility filter over-matches on the relational backends
+
+> **Resolved.** The stored column was already separator-bracketed on both ends (the writer's own
+> documentation says it is there so an exact match can be anchored); the run stores' query never used
+> the brackets, and the catalog stores' query did but through `LIKE`, which folds case on three of the
+> four backends. All eight now search for the bracketed needle with a literal, case-sensitive
+> primitive (`instr`, `strpos`, `CHARINDEX` under a binary collation, `INSTR` over binary casts), so
+> `prod` matches neither `production`, `reprod` nor `PROD`, on the list path and the count path, and
+> the LIKE escaping the run stores carried for this predicate is gone. The shared run-store and catalog
+> conformance suites assert it on every backend; the sibling sweep found the catalog filter and the
+> case fold, neither of which the finding named. The finding text is left as measured.
 - **Where:** `PostgresWorkflowStateStore.cs:578`, `SqlServerWorkflowStateStore.cs:532`, `MySqlWorkflowStateStore.cs:596`, `SqliteWorkflowStateStore.cs:530`. Surfaced 2026-08-22 by the antagonistic review of the H18 piece-3 close-out, not part of the original 2026-08-07 audit; introduced by commit `88c5e89e2dc` (a visibility-UI feature), so it predates the composite-key campaign.
 - **Divergence:** the four relational backends store a run's tags as a `\u001F`-delimited column and match a queried tag with `tags LIKE '%<tag>%'`, unanchored on the delimiters, so querying tag `prod` also returns a run tagged `production` or `reprod`. The document and KV backends match exact membership (Cosmos `ARRAY_CONTAINS`, Mongo `$all`, Redis/NATS/in-memory `AllContainedIn`), so the same query returns different result sets depending on the backend.
 - **Impact:** a functional correctness and cross-backend-consistency defect, **not** a confidentiality leak. The tag filter is over ordinary (non-security) tags and runs entirely within the caller's already-enforced §14.2 reach (`query.Security` is a separate, exact predicate the reach oracles cover). A tag-filtered list or count is simply wider than the caller asked for, and a deployment's results depend on which backend it runs.
