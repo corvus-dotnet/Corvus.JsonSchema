@@ -221,6 +221,22 @@ ADR 0059) per (environment, runtime target), the CLI's `runners`/`builds`/`deplo
 them, and the console's catalog detail and runners panel surface deploy state and isolation posture. Broadening
 the backend set (micro-guest, container-per-run) remains in progress.
 
+### Execution budget
+
+Every production run carries an execution budget
+([ADR 0068](../adr/0068-execution-budget-fuel-wall-clock-depth.md)): fuel, the maximum number of step executions
+with retries and revisits counted; a wall clock, the maximum age from creation; the sub-workflow depth cap; and a
+ceiling on a step's declared `retryAfter`. The deployment sets the ceiling, an `ExecutionBudget` handed to
+`SecuredWorkflowManagement` and to `MapArazzoControlPlane` (the default is the journal cap's worth of fuel, a day,
+a depth of eight and an hour). An environment may carry an `executionBudget` override on its record, beside
+`requiredIsolation` and `requireEvidence`, which may only tighten: the environments API refuses a limit wider than
+the ceiling with a 400, and an update that omits the override leaves it unchanged. The effective budget is resolved
+on every start path through the management seam and recorded in the run's checkpoint, so a later change to the
+environment does not move a running run's bound. Fuel is bounded by the per-step journal cap (500), because the
+journal is the counter the checkpoint coordinator verifies against. The coordinator's verification, the runner's
+own enforcement, the per-step transport bounds and the CLI and console surfacing are landing in the pieces that
+follow this one.
+
 ## The trigger surface
 
 A run is started by a **trigger**, which owns the `trigger -> create a Pending run -> execute` path. Triggers are

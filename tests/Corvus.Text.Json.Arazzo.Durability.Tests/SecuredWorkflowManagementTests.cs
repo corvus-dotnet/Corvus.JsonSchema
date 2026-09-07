@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Diagnostics;
+using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Testing;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -36,6 +37,49 @@ public sealed class SecuredWorkflowManagementTests
     {
         var client = new SecuredWorkflowManagement(new InMemoryWorkflowStateStore(), owner: "ops");
         (await client.GetAsync("nope", AccessContext.System, default)).ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task Start_records_the_execution_budget_resolved_from_the_ceiling_and_the_environments_override()
+    {
+        // ADR 0068: the effective budget is the deployment ceiling tightened by the environment's override, resolved at
+        // start and recorded in the run's checkpoint; an environment carrying no override records the ceiling.
+        var environments = new Environments.InMemoryEnvironmentStore();
+        using (ParsedJsonDocument<JsonElement> seed = ParsedJsonDocument<JsonElement>.Parse(
+            Encoding.UTF8.GetBytes("""{"name":"production","executionBudget":{"maxSteps":25,"wallClockSeconds":3600}}""")))
+        using (ParsedJsonDocument<Environments.Environment> draft = Environments.Environment.Draft(
+            seed.RootElement.GetProperty("name"u8), default, default, default, executionBudget: seed.RootElement.GetProperty("executionBudget"u8)))
+        {
+            (await environments.AddAsync(draft.RootElement, "ops", default)).Dispose();
+        }
+
+        using (ParsedJsonDocument<Environments.Environment> plain = Environments.Environment.Draft("staging", null, null, default))
+        {
+            (await environments.AddAsync(plain.RootElement, "ops", default)).Dispose();
+        }
+
+        var ceiling = new ExecutionBudget(200, TimeSpan.FromHours(2), 4, TimeSpan.FromMinutes(10));
+        var management = new SecuredWorkflowManagement(new InMemoryWorkflowStateStore(), "ops", environments: environments, executionBudget: ceiling);
+
+        WorkflowRunId tightened = await management.StartAsync("wf-v1", default, null, default, default, "production", default);
+        using (WorkflowCheckpointState? state = await management.LoadStateAsync(tightened, AccessContext.System, default))
+        {
+            state!.Budget.ShouldBe(new ExecutionBudget(25, TimeSpan.FromHours(1), 4, TimeSpan.FromMinutes(10)));
+        }
+
+        WorkflowRunId atCeiling = await management.StartAsync("wf-v1", default, null, default, default, "staging", default);
+        using (WorkflowCheckpointState? state = await management.LoadStateAsync(atCeiling, AccessContext.System, default))
+        {
+            state!.Budget.ShouldBe(ceiling);
+        }
+
+        // Without an environment registry every run carries the ceiling, and without a configured ceiling, the default.
+        var unregistered = new SecuredWorkflowManagement(new InMemoryWorkflowStateStore(), "ops");
+        WorkflowRunId defaulted = await unregistered.StartAsync("wf-v1", default, null, default, default, "anywhere", default);
+        using (WorkflowCheckpointState? state = await unregistered.LoadStateAsync(defaulted, AccessContext.System, default))
+        {
+            state!.Budget.ShouldBe(ExecutionBudget.Default);
+        }
     }
 
     [TestMethod]

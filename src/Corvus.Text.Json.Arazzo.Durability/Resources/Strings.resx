@@ -554,6 +554,15 @@
   <data name="ScheduleRegistrationConflict" xml:space="preserve">
     <value>Schedule id '{0}' is already registered to a different schedule; schedule ids are globally unique across the deployment.</value>
   </data>
+  <data name="ExecutionBudgetOutOfRange" xml:space="preserve">
+    <value>Execution budget limit '{0}' is {1}; it must be between {2} and {3} inclusive (ADR 0068). Fuel cannot exceed the per-step journal cap, and an environment's override may only tighten the deployment ceiling.</value>
+  </data>
+  <data name="ExecutionBudgetNotAnInteger" xml:space="preserve">
+    <value>Execution budget limit '{0}' must be an integer (ADR 0068).</value>
+  </data>
+  <data name="ExecutionBudgetNotAnObject" xml:space="preserve">
+    <value>The execution budget must be an object naming any of maxSteps, wallClockSeconds, maxSubWorkflowDepth and retryAfterCeilingSeconds (ADR 0068).</value>
+  </data>
   <data name="EnvironmentNameOutsideGrammar" xml:space="preserve">
     <value>Environment name '{0}' is outside the environment-name grammar: 1 to 63 lowercase ASCII letters, digits or hyphens, not beginning or ending with a hyphen. The name is half of every run's composite (environment, runId) store key (ADR 0065 §9).</value>
   </data>

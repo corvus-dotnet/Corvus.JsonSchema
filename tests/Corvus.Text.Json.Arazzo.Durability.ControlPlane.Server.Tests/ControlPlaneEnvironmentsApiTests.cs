@@ -217,6 +217,62 @@ public sealed class ControlPlaneEnvironmentsApiTests
     }
 
     [TestMethod]
+    public async Task The_execution_budget_override_only_tightens_the_deployment_ceiling_and_round_trips()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        // ADR 0068: an override wider than the deployment ceiling (fuel above the journal cap here) is refused before
+        // anything is written.
+        HttpResponseMessage refused = await host.SendJsonAsync(
+            HttpMethod.Post, "/environments", """{"name":"production","executionBudget":{"maxSteps":1000}}""", Write);
+        refused.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await host.SendAsync(HttpMethod.Get, "/environments/production", Read)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        // A tightening override is recorded and read back on the summary.
+        HttpResponseMessage created = await host.SendJsonAsync(
+            HttpMethod.Post, "/environments", """{"name":"production","executionBudget":{"maxSteps":100,"wallClockSeconds":3600}}""", Write);
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(created))
+        {
+            doc.RootElement.GetProperty("executionBudget").GetProperty("maxSteps").GetInt32().ShouldBe(100);
+            doc.RootElement.GetProperty("executionBudget").GetProperty("wallClockSeconds").GetInt32().ShouldBe(3600);
+        }
+
+        // An update that omits it leaves the override unchanged.
+        HttpResponseMessage renamed = await host.SendJsonAsync(HttpMethod.Put, "/environments/production", """{"displayName":"Prod"}""", Write);
+        renamed.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(renamed))
+        {
+            doc.RootElement.GetProperty("executionBudget").GetProperty("maxSteps").GetInt32().ShouldBe(100);
+        }
+
+        // An update that widens it is refused, and the stored override stands.
+        HttpResponseMessage widened = await host.SendJsonAsync(HttpMethod.Put, "/environments/production", """{"executionBudget":{"wallClockSeconds":999999}}""", Write);
+        widened.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/environments/production", Read)))
+        {
+            doc.RootElement.GetProperty("executionBudget").GetProperty("maxSteps").GetInt32().ShouldBe(100);
+        }
+
+        // An update that includes it replaces the override as a whole.
+        HttpResponseMessage replaced = await host.SendJsonAsync(HttpMethod.Put, "/environments/production", """{"executionBudget":{"maxSteps":50}}""", Write);
+        replaced.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(replaced))
+        {
+            doc.RootElement.GetProperty("executionBudget").GetProperty("maxSteps").GetInt32().ShouldBe(50);
+            doc.RootElement.GetProperty("executionBudget").TryGetProperty("wallClockSeconds", out _).ShouldBeFalse();
+        }
+
+        // An environment never asked carries no override at all.
+        HttpResponseMessage staging = await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"staging"}""", Write);
+        staging.StatusCode.ShouldBe(HttpStatusCode.Created);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(staging))
+        {
+            doc.RootElement.TryGetProperty("executionBudget", out _).ShouldBeFalse();
+        }
+    }
+
+    [TestMethod]
     public async Task The_require_evidence_flag_round_trips_and_survives_updates_that_omit_it()
     {
         await using Scoped host = await StartAsync(new TenantPolicy());

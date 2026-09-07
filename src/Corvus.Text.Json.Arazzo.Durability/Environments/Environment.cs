@@ -91,7 +91,8 @@ public readonly partial struct Environment
         in JsonElement requireEvidence = default,
         in JsonElement allowsDraftRuns = default,
         in JsonElement requiredIsolation = default,
-        in JsonElement runtimeIdentifier = default)
+        in JsonElement runtimeIdentifier = default,
+        in JsonElement executionBudget = default)
     {
         if (name.ValueKind is not JsonValueKind.Undefined)
         {
@@ -107,7 +108,7 @@ public readonly partial struct Environment
             }
         }
 
-        DraftElements state = new(name, displayName, description, managementTags, requireEvidence, allowsDraftRuns, requiredIsolation, runtimeIdentifier);
+        DraftElements state = new(name, displayName, description, managementTags, requireEvidence, allowsDraftRuns, requiredIsolation, runtimeIdentifier, executionBudget);
         return PersistedJson.ToPooledDocument<Environment, DraftElements>(
             state,
             static (Utf8JsonWriter writer, in DraftElements s) =>
@@ -120,6 +121,7 @@ public readonly partial struct Environment
                 WriteValueIfPresent(writer, JsonPropertyNames.AllowsDraftRunsUtf8, s.AllowsDraftRuns);
                 WriteValueIfPresent(writer, JsonPropertyNames.RequiredIsolationUtf8, s.RequiredIsolation);
                 WriteValueIfPresent(writer, JsonPropertyNames.RuntimeIdentifierUtf8, s.RuntimeIdentifier);
+                WriteValueIfPresent(writer, JsonPropertyNames.ExecutionBudgetUtf8, s.ExecutionBudget);
                 if (!s.ManagementTags.IsEmpty)
                 {
                     writer.WritePropertyName(JsonPropertyNames.ManagementTagsUtf8);
@@ -205,6 +207,7 @@ public readonly partial struct Environment
             (JsonElement)stored.AllowsDraftRuns,
             (JsonElement)stored.RequiredIsolation,
             (JsonElement)stored.RuntimeIdentifier,
+            (JsonElement)stored.ExecutionBudget,
             (JsonElement)keyGenerations);
 
         return PersistedJson.ToPooledDocument<Environment, KeyGenerationElements>(
@@ -219,6 +222,7 @@ public readonly partial struct Environment
                 WriteValueIfPresent(writer, JsonPropertyNames.AllowsDraftRunsUtf8, s.AllowsDraftRuns);
                 WriteValueIfPresent(writer, JsonPropertyNames.RequiredIsolationUtf8, s.RequiredIsolation);
                 WriteValueIfPresent(writer, JsonPropertyNames.RuntimeIdentifierUtf8, s.RuntimeIdentifier);
+                WriteValueIfPresent(writer, JsonPropertyNames.ExecutionBudgetUtf8, s.ExecutionBudget);
                 WriteValueIfPresent(writer, JsonPropertyNames.ManagementTagsUtf8, s.ManagementTags);
                 WriteValueIfPresent(writer, JsonPropertyNames.KeyGenerationsUtf8, s.KeyGenerations);
                 writer.WriteEndObject();
@@ -267,6 +271,7 @@ public readonly partial struct Environment
                 WriteValueIfPresent(writer, JsonPropertyNames.AllowsDraftRunsUtf8, m.AllowsDraftRuns);
                 WriteValueIfPresent(writer, JsonPropertyNames.RequiredIsolationUtf8, m.RequiredIsolation);
                 WriteValueIfPresent(writer, JsonPropertyNames.RuntimeIdentifierUtf8, m.RuntimeIdentifier);
+                WriteValueIfPresent(writer, JsonPropertyNames.ExecutionBudgetUtf8, m.ExecutionBudget);
                 WriteValueIfPresent(writer, JsonPropertyNames.ManagementTagsUtf8, m.ManagementTags);
 
                 writer.WritePropertyName(JsonPropertyNames.KeyGenerationsUtf8);
@@ -442,6 +447,7 @@ public readonly partial struct Environment
         WriteValueIfPresent(writer, JsonPropertyNames.AllowsDraftRunsUtf8, (JsonElement)draft.AllowsDraftRuns);
         WriteValueIfPresent(writer, JsonPropertyNames.RequiredIsolationUtf8, (JsonElement)draft.RequiredIsolation);
         WriteValueIfPresent(writer, JsonPropertyNames.RuntimeIdentifierUtf8, (JsonElement)draft.RuntimeIdentifier);
+        WriteValueIfPresent(writer, JsonPropertyNames.ExecutionBudgetUtf8, (JsonElement)draft.ExecutionBudget);
         WriteValueIfPresent(writer, JsonPropertyNames.ManagementTagsUtf8, (JsonElement)draft.ManagementTags);
 
         // Platform marker (ADR 0065): create is the ONLY moment it can be set, and only DraftPlatform emits it. Every
@@ -493,6 +499,11 @@ public readonly partial struct Environment
         // Serverless build-target RID (ADR 0055): same replace-or-carry semantics — an update that omits it leaves the
         // environment's target unchanged.
         WriteValuePreferringDraft(writer, JsonPropertyNames.RuntimeIdentifierUtf8, (JsonElement)draft.RuntimeIdentifier, (JsonElement)this.RuntimeIdentifier);
+
+        // Execution-budget override (ADR 0068): replace-or-carry, like the other governed execution properties. An
+        // update that omits it leaves the environment's override unchanged; one that includes it was validated against
+        // the deployment ceiling by the handler.
+        WriteValuePreferringDraft(writer, JsonPropertyNames.ExecutionBudgetUtf8, (JsonElement)draft.ExecutionBudget, (JsonElement)this.ExecutionBudget);
 
         // Reach scope (§14.2): an administrator re-tag supplies managementTags on the draft (already merged with the
         // preserved deployment-internal tags by the handler) → take the draft's; an update that omits them carries the
@@ -566,6 +577,7 @@ public readonly partial struct Environment
             this.AllowsDraftRuns = (JsonElement)stored.AllowsDraftRuns;
             this.RequiredIsolation = (JsonElement)stored.RequiredIsolation;
             this.RuntimeIdentifier = (JsonElement)stored.RuntimeIdentifier;
+            this.ExecutionBudget = (JsonElement)stored.ExecutionBudget;
             this.Existing = stored.KeyGenerations;
             this.KeyId = keyId;
             this.SealPublicKey = sealPublicKey;
@@ -591,6 +603,8 @@ public readonly partial struct Environment
         public JsonElement RequiredIsolation { get; }
 
         public JsonElement RuntimeIdentifier { get; }
+
+        public JsonElement ExecutionBudget { get; }
 
         public EnvironmentKeyGenerationArray Existing { get; }
 
@@ -619,6 +633,7 @@ public readonly partial struct Environment
         JsonElement allowsDraftRuns,
         JsonElement requiredIsolation,
         JsonElement runtimeIdentifier,
+        JsonElement executionBudget,
         JsonElement keyGenerations)
     {
         public JsonElement Name { get; } = name;
@@ -637,6 +652,8 @@ public readonly partial struct Environment
 
         public JsonElement RuntimeIdentifier { get; } = runtimeIdentifier;
 
+        public JsonElement ExecutionBudget { get; } = executionBudget;
+
         public JsonElement KeyGenerations { get; } = keyGenerations;
     }
 
@@ -649,7 +666,8 @@ public readonly partial struct Environment
         JsonElement requireEvidence,
         JsonElement allowsDraftRuns,
         JsonElement requiredIsolation,
-        JsonElement runtimeIdentifier)
+        JsonElement runtimeIdentifier,
+        JsonElement executionBudget)
     {
         public JsonElement Name { get; } = name;
 
@@ -666,5 +684,7 @@ public readonly partial struct Environment
         public JsonElement RequiredIsolation { get; } = requiredIsolation;
 
         public JsonElement RuntimeIdentifier { get; } = runtimeIdentifier;
+
+        public JsonElement ExecutionBudget { get; } = executionBudget;
     }
 }

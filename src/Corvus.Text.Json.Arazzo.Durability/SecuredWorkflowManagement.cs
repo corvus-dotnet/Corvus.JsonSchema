@@ -33,6 +33,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
     private readonly WorkflowRunDerivation? runDerivation;
     private readonly Environments.IEnvironmentStore? environments;
     private readonly byte[] ownerGroupTagKey;
+    private readonly ExecutionBudget budgetCeiling;
 
     /// <summary>Initializes a new instance of the <see cref="SecuredWorkflowManagement"/> class.</summary>
     /// <param name="store">The state store. Visibility queries (<see cref="ListAsync"/>/<see cref="PurgeAsync"/>) and every run-addressed operation (which resolves its bare id through the reach-filtered index query, ADR 0065 §9) require it to also implement <see cref="IWorkflowWaitIndex"/>.</param>
@@ -56,7 +57,8 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         TimeSpan? leaseTtl = null,
         WorkflowRunDerivation? runDerivation = null,
         Environments.IEnvironmentStore? environments = null,
-        string? internalTagPrefix = null)
+        string? internalTagPrefix = null,
+        ExecutionBudget? executionBudget = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(owner);
@@ -71,6 +73,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         this.ownerGroupTagKey = internalTagPrefix is null
             ? Environments.OwnerGroupTag.DefaultKeyUtf8.ToArray()
             : Environments.OwnerGroupTag.KeyFor(internalTagPrefix);
+        this.budgetCeiling = executionBudget ?? ExecutionBudget.Default;
     }
 
     /// <inheritdoc/>
@@ -83,7 +86,8 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         ArgumentException.ThrowIfNullOrEmpty(environment);
 
         var id = new WorkflowRunId(Guid.NewGuid().ToString("n", System.Globalization.CultureInfo.InvariantCulture));
-        using WorkflowRun run = WorkflowRun.CreateNew(this.store, id, workflowId, inputs, environment, this.timeProvider, correlationId, tags, securityTags);
+        ExecutionBudget budget = await this.ResolveBudgetAsync(environment, cancellationToken).ConfigureAwait(false);
+        using WorkflowRun run = WorkflowRun.CreateNew(this.store, id, workflowId, inputs, environment, this.timeProvider, correlationId, tags, securityTags, budget);
         await run.EnqueueAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
@@ -117,7 +121,8 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
 
         try
         {
-            using WorkflowRun run = WorkflowRun.CreateNew(this.store, runId, workflowId, inputs, environment, this.timeProvider, correlationId, tags, securityTags);
+            ExecutionBudget budget = await this.ResolveBudgetAsync(environment, cancellationToken).ConfigureAwait(false);
+            using WorkflowRun run = WorkflowRun.CreateNew(this.store, runId, workflowId, inputs, environment, this.timeProvider, correlationId, tags, securityTags, budget);
             await run.EnqueueAsync(cancellationToken).ConfigureAwait(false);
             return new IdempotentStartResult(runId, Created: true);
         }
@@ -147,6 +152,22 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
     // the wired environment registry with system reach — the caller's reach gates the start itself at the surface,
     // not the derivation's inputs. No registry wired (a deployment without tenancy governance) resolves to no
     // group, consistently, so every start in such a deployment derives the same way.
+    // ADR 0068: the run's effective execution budget, the deployment ceiling tightened by the environment's override.
+    // Resolved once at start and recorded with the run, so a later change to the environment does not move a run's
+    // bound under it; without an environment registry every run carries the ceiling.
+    private async ValueTask<ExecutionBudget> ResolveBudgetAsync(string environment, CancellationToken cancellationToken)
+    {
+        if (this.environments is not { } registry)
+        {
+            return this.budgetCeiling;
+        }
+
+        using ParsedJsonDocument<Environments.Environment>? doc = await registry.GetAsync(environment, AccessContext.System, cancellationToken).ConfigureAwait(false);
+        return doc is { } environmentDoc
+            ? ExecutionBudget.Resolve(this.budgetCeiling, (JsonElement)environmentDoc.RootElement.ExecutionBudget)
+            : this.budgetCeiling;
+    }
+
     private async ValueTask<string?> ResolveOwnerGroupAsync(string environment, CancellationToken cancellationToken)
     {
         if (this.environments is not { } registry)

@@ -279,6 +279,30 @@ public readonly partial struct EnvironmentSummary
     }
 
     /// <summary>
+    /// Gets the (optional) <c>executionBudget</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The execution-budget override for runs pinned to this environment (ADR 0068); absent means the deployment ceiling applies. On update, absent leaves the environment&#39;s override unchanged.
+    /// </para>
+    /// <para>
+    /// An environment&#39;s execution-budget override (ADR 0068). Each limit named here tightens the deployment ceiling for runs pinned to the environment; a limit omitted is the ceiling&#39;s. An override may only tighten: a limit wider than the deployment ceiling is refused (400). The effective budget is resolved into every run at start and recorded with it, so a later change here does not move a running run&#39;s bound.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget ExecutionBudget
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExecutionBudgetUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the (optional) <c>lastUpdatedAt</c> property.
     /// </summary>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime LastUpdatedAt
@@ -893,6 +917,11 @@ public readonly partial struct EnvironmentSummary
         public const string Etag = "etag";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="ExecutionBudget"/>.
+        /// </summary>
+        public const string ExecutionBudget = "executionBudget";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="LastUpdatedAt"/>.
         /// </summary>
         public const string LastUpdatedAt = "lastUpdatedAt";
@@ -956,6 +985,11 @@ public readonly partial struct EnvironmentSummary
         /// Gets the JSON property name for <see cref="Etag"/>.
         /// </summary>
         public static ReadOnlySpan<byte> EtagUtf8 => "etag"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="ExecutionBudget"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ExecutionBudgetUtf8 => "executionBudget"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="LastUpdatedAt"/>.
@@ -1029,6 +1063,11 @@ public readonly partial struct EnvironmentSummary
         public static ReadOnlySpan<byte> Etag => "etag"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="ExecutionBudget"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ExecutionBudget => "executionBudget"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="LastUpdatedAt"/>.
         /// </summary>
         public static ReadOnlySpan<byte> LastUpdatedAt => "lastUpdatedAt"u8;
@@ -1099,6 +1138,11 @@ public readonly partial struct EnvironmentSummary
         /// Gets the pre-baked property name blob for <see cref="Etag"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Etag => [0x65, 0x00, 0x00, 0x00, 0x22, 0x65, 0x74, 0x61, 0x67, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="ExecutionBudget"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ExecutionBudget => [0x15, 0x01, 0x00, 0x00, 0x22, 0x65, 0x78, 0x65, 0x63, 0x75, 0x74, 0x69, 0x6F, 0x6E, 0x42, 0x75, 0x64, 0x67, 0x65, 0x74, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="LastUpdatedAt"/>.

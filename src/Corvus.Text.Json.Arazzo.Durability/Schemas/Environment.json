@@ -34,6 +34,10 @@
       "type": "string",
       "description": "The .NET runtime identifier (RID) the serverless native binary is built for when this environment requires 'Isolated' execution (ADR 0055), e.g. 'linux-x64' (the default when absent). Publishing a version here queues a Native-AOT build for this target, and a run is dispatchable only once that build is ready. Ignored for an 'InProcess' environment. Mutable."
     },
+    "executionBudget": {
+      "$ref": "#/$defs/ExecutionBudgetLimits",
+      "description": "The environment's execution-budget override (ADR 0068): each limit named here tightens the deployment ceiling for runs pinned to this environment, and a limit omitted is the ceiling's. An override may only tighten; the API refuses one wider than the ceiling. Resolved into every run at start and recorded with it, so a later change here does not move a running run's bound."
+    },
     "managementTags": {
       "type": "array",
       "description": "The security tags (KVP labels) scoping who may MANAGE and SEE this environment (§14.2) — e.g. tenant=acme. Immutable: set at create (the deployment stamps the creator's internal tenant tag), carried forward unchanged on update. Management reads/writes are reach-filtered by these via the caller's AccessContext. Absent on an unscoped environment.",
@@ -74,6 +78,18 @@
   },
   "additionalProperties": false,
   "$defs": {
+    "ExecutionBudgetLimits": {
+      "title": "ExecutionBudgetLimits",
+      "type": "object",
+      "description": "An execution-budget override (ADR 0068). Every limit is optional; a named limit tightens the deployment ceiling.",
+      "properties": {
+        "maxSteps": { "type": "integer", "minimum": 1, "description": "Fuel: the maximum number of step executions a run may make, retries and revisits counted. Cannot exceed the deployment ceiling, itself bounded by the per-step journal cap." },
+        "wallClockSeconds": { "type": "integer", "minimum": 1, "description": "The maximum age of a run from creation, in seconds." },
+        "maxSubWorkflowDepth": { "type": "integer", "minimum": 0, "description": "The sub-workflow nesting depth cap." },
+        "retryAfterCeilingSeconds": { "type": "integer", "minimum": 0, "description": "The ceiling a step's declared retryAfter delay is clamped to, in seconds." }
+      },
+      "additionalProperties": false
+    },
     "EnvironmentKeyGeneration": {
       "title": "EnvironmentKeyGeneration",
       "type": "object",

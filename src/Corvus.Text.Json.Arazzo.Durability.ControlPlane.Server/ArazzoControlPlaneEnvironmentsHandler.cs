@@ -52,6 +52,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
     private readonly IRunnerRegistry? runners;
     private readonly IEnvironmentRunnerAuthorizationStore? runnerAuthorizations;
     private readonly ControlPlaneSecurityMode securityMode;
+    private readonly ExecutionBudget budgetCeiling;
 
     // See AnyUnsealedTenantEnvironmentAsync. The owner-group question is one ledger row, but the sealing question is a
     // scan, so it is paged rather than read whole and it runs only on the rare path that introduces an owner group.
@@ -89,7 +90,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
     /// <param name="observed">An optional observed-identity store; a newly added administrator is recorded as a resolvable
     /// grantee for the §16.5.4 typeahead (best-effort).</param>
     /// <param name="actor">The audit actor recorded on writes (a deployment may resolve this from the principal).</param>
-    internal ArazzoControlPlaneEnvironmentsHandler(ControlPlaneSecurityMode securityMode, IEnvironmentStore store, SecuredEnvironmentAdministration administration, ControlPlaneAccess access, IObservedIdentityStore? observed = null, string actor = "control-plane", ILogger? auditLogger = null, IRunnerRegistry? runners = null, IEnvironmentRunnerAuthorizationStore? runnerAuthorizations = null)
+    internal ArazzoControlPlaneEnvironmentsHandler(ControlPlaneSecurityMode securityMode, IEnvironmentStore store, SecuredEnvironmentAdministration administration, ControlPlaneAccess access, IObservedIdentityStore? observed = null, string actor = "control-plane", ILogger? auditLogger = null, IRunnerRegistry? runners = null, IEnvironmentRunnerAuthorizationStore? runnerAuthorizations = null, ExecutionBudget? executionBudgetCeiling = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(administration);
@@ -104,6 +105,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
         this.runners = runners;
         this.runnerAuthorizations = runnerAuthorizations;
         this.securityMode = securityMode;
+        this.budgetCeiling = executionBudgetCeiling ?? ExecutionBudget.Default;
     }
 
     // The §850 audit subject: the authenticated principal who made the change, falling back to the configured actor.
@@ -180,6 +182,13 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
             this.access.ValidateUserTags(userManagement);
             var tagsState = new ManagementTagsState(this.access.InternalTags(), userManagement);
             managementTags = SecurityTagSet.Build(in tagsState, WriteManagementTags);
+
+            // ADR 0068: an execution-budget override may only tighten the deployment ceiling. A wider or malformed one
+            // is refused here, before anything is written.
+            if (body.ExecutionBudget.IsNotUndefined())
+            {
+                ExecutionBudgetOverride.ValidateAuthored((JsonElement)body.ExecutionBudget, this.budgetCeiling);
+            }
         }
         catch (ArgumentException ex)
         {
@@ -225,7 +234,8 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
                 (JsonElement)body.RequireEvidence,
                 (JsonElement)body.AllowsDraftRuns,
                 (JsonElement)body.RequiredIsolation,
-                (JsonElement)body.RuntimeIdentifier);
+                (JsonElement)body.RuntimeIdentifier,
+                (JsonElement)body.ExecutionBudget);
             ParsedJsonDocument<Environment> created = await this.store.AddAsync(draft.RootElement, this.actor, cancellationToken).ConfigureAwait(false);
 
             // Create-grants-admin (§7.7): materialize the administration record with the creator's resolved identity as the
@@ -309,7 +319,21 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
             return UpdateEnvironmentResult.Conflict(InsufficientIsolationRaiseProblem(name, strandedRunner), workspace);
         }
 
-        using ParsedJsonDocument<Environment> draft = Environment.Draft(default, (JsonElement)body.DisplayName, (JsonElement)body.Description, managementTags, (JsonElement)body.RequireEvidence, (JsonElement)body.AllowsDraftRuns, (JsonElement)body.RequiredIsolation, (JsonElement)body.RuntimeIdentifier);
+        // ADR 0068: an execution-budget override may only tighten the deployment ceiling; absent leaves the stored
+        // override unchanged (replace-or-carry, like every other governed execution property).
+        if (body.ExecutionBudget.IsNotUndefined())
+        {
+            try
+            {
+                ExecutionBudgetOverride.ValidateAuthored((JsonElement)body.ExecutionBudget, this.budgetCeiling);
+            }
+            catch (ArgumentException ex)
+            {
+                return UpdateEnvironmentResult.BadRequest(Problem("invalid-environment", "Invalid environment", 400, ex.Message), workspace);
+            }
+        }
+
+        using ParsedJsonDocument<Environment> draft = Environment.Draft(default, (JsonElement)body.DisplayName, (JsonElement)body.Description, managementTags, (JsonElement)body.RequireEvidence, (JsonElement)body.AllowsDraftRuns, (JsonElement)body.RequiredIsolation, (JsonElement)body.RuntimeIdentifier, (JsonElement)body.ExecutionBudget);
         ParsedJsonDocument<Environment>? updated = await this.store.UpdateAsync(name, draft.RootElement, WorkflowEtag.None, this.actor, this.access.Current(), cancellationToken).ConfigureAwait(false);
         if (updated is not { } e)
         {

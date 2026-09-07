@@ -1007,6 +1007,55 @@ public sealed class ControlPlaneServerTests
     }
 
     [TestMethod]
+    public async Task StartCatalogWorkflowRun_records_the_execution_budget_resolved_for_the_environment()
+    {
+        // ADR 0068: the run carries the deployment ceiling tightened by its environment's override, resolved at start on
+        // every start path through management, so a later change to the environment does not move this run's bound.
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
+        var environmentStore = new Corvus.Text.Json.Arazzo.Durability.Environments.InMemoryEnvironmentStore(clock);
+        var availabilityStore = new Corvus.Text.Json.Arazzo.Durability.Availability.InMemoryAvailabilityStore(clock);
+        var ceiling = new ExecutionBudget(200, TimeSpan.FromHours(2), 4, TimeSpan.FromMinutes(10));
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock, runDerivation: TestDerivation, environments: environmentStore, executionBudget: ceiling);
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
+        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
+        using (Corvus.Text.Json.ParsedJsonDocument<Corvus.Text.Json.JsonElement> seed = Corvus.Text.Json.ParsedJsonDocument<Corvus.Text.Json.JsonElement>.Parse(
+            Encoding.UTF8.GetBytes("""{"name":"prod","executionBudget":{"maxSteps":25,"maxSubWorkflowDepth":1}}""")))
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Environments.Environment> draft = Corvus.Text.Json.Arazzo.Durability.Environments.Environment.Draft(
+            seed.RootElement.GetProperty("name"u8), default, default, default, executionBudget: seed.RootElement.GetProperty("executionBudget"u8)))
+        {
+            (await environmentStore.AddAsync(draft.RootElement, "ops", default)).Dispose();
+        }
+
+        (await availabilityStore.MakeAvailableAsync("flow", 1, "prod", "ops", default)).Entry.Dispose();
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open, environmentStore: environmentStore, availabilityStore: availabilityStore, executionBudgetCeiling: ceiling);
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+        await runnerRegistry.RegisterAsync(Runner("flow", 1), default);
+
+        HttpResponseMessage accepted = await StartAsync(client, "flow", "prod");
+        accepted.StatusCode.ShouldBe(HttpStatusCode.Accepted);
+        string runId;
+        using (Stj.JsonDocument doc = await ReadJsonAsync(accepted))
+        {
+            runId = doc.RootElement.GetProperty("runId").GetString()!;
+        }
+
+        using (WorkflowCheckpointState? state = await management.LoadStateAsync(runId, AccessContext.System, default))
+        {
+            state!.Budget.ShouldBe(new ExecutionBudget(25, TimeSpan.FromHours(2), 1, TimeSpan.FromMinutes(10)));
+        }
+
+        await app.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task StartCatalogWorkflowRun_is_idempotent_under_an_Idempotency_Key_header()
     {
         var clock = new MutableClock(T0);

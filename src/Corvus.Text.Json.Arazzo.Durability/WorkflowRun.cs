@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 public sealed class WorkflowRun : IWorkflowRun, IDisposable
 {
     // ADR 0050: the per-step journal is capped so a pathological goto-loop cannot bloat the checkpoint.
-    private const int JournalCap = 500;
+    private const int JournalCap = ExecutionBudget.MaxStepsCeiling;
 
     private readonly IWorkflowCheckpointStore store;
     private readonly TimeProvider timeProvider;
@@ -74,7 +74,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         WorkflowFault? fault,
         WorkflowCheckpointState? resumedState,
         WorkflowPauseConfig? pause = null,
-        DateTimeOffset? resumeRequestedAt = null)
+        DateTimeOffset? resumeRequestedAt = null,
+        ExecutionBudget? budget = null)
     {
         this.store = store;
         this.Id = id;
@@ -105,6 +106,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         this.pause = pause;
         this.pauseStartCursor = cursor;
         this.resumeRequestedAt = resumeRequestedAt;
+        this.Budget = budget;
 
         // ADR 0050: restore the per-step journal from the resumed checkpoint (empty for a fresh run, or a run whose
         // checkpoint predates the journal).
@@ -127,6 +129,10 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
 
     /// <summary>Gets the run's current lifecycle status.</summary>
     public WorkflowRunStatus Status { get; private set; }
+
+    /// <summary>Gets the run's effective execution budget (ADR 0068): resolved by the control plane at start and carried
+    /// through every checkpoint, or <see langword="null"/> on a run created before budgets existed.</summary>
+    public ExecutionBudget? Budget { get; }
 
     /// <summary>Gets the etag of the last persisted checkpoint (<see cref="WorkflowEtag.None"/> before the first save).</summary>
     public WorkflowEtag Etag => this.etag;
@@ -191,7 +197,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         TimeProvider? timeProvider = null,
         string? correlationId = null,
         TagSet tags = default,
-        SecurityTagSet securityTags = default)
+        SecurityTagSet securityTags = default,
+        ExecutionBudget? budget = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(workflowId);
@@ -221,7 +228,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             environment: environment,
             wait: null,
             fault: null,
-            resumedState: null);
+            resumedState: null,
+            budget: budget);
     }
 
     /// <summary>Builds a run from a loaded checkpoint, ready to be re-entered by the executor.</summary>
@@ -265,7 +273,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             fault: state.Fault,
             resumedState: state,
             pause: state.Pause,
-            resumeRequestedAt: state.ResumeRequestedAt);
+            resumeRequestedAt: state.ResumeRequestedAt,
+            budget: state.Budget);
     }
 
     /// <summary>Loads a run's checkpoint from the store and builds a resumed run from it.</summary>
@@ -619,7 +628,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             this.resumeRequestedAt,
             updatedAt,
             this.stepJournal,
-            this.journalTruncated);
+            this.journalTruncated,
+            this.Budget);
 
         WorkflowRunIndexEntry index = WorkflowRunIndexEntry.Project(
             this.WorkflowId,

@@ -223,6 +223,30 @@ public readonly partial struct EnvironmentCreate
     }
 
     /// <summary>
+    /// Gets the (optional) <c>executionBudget</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The execution-budget override for runs pinned to this environment (ADR 0068); absent means the deployment ceiling applies. On update, absent leaves the environment&#39;s override unchanged.
+    /// </para>
+    /// <para>
+    /// An environment&#39;s execution-budget override (ADR 0068). Each limit named here tightens the deployment ceiling for runs pinned to the environment; a limit omitted is the ceiling&#39;s. An override may only tighten: a limit wider than the deployment ceiling is refused (400). The effective budget is resolved into every run at start and recorded with it, so a later change here does not move a running run&#39;s bound.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ExecutionBudget ExecutionBudget
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExecutionBudgetUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ExecutionBudget value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the (optional) <c>managementTags</c> property.
     /// </summary>
     /// <remarks>
@@ -790,6 +814,11 @@ public readonly partial struct EnvironmentCreate
         public const string DisplayName = "displayName";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="ExecutionBudget"/>.
+        /// </summary>
+        public const string ExecutionBudget = "executionBudget";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="ManagementTags"/>.
         /// </summary>
         public const string ManagementTags = "managementTags";
@@ -828,6 +857,11 @@ public readonly partial struct EnvironmentCreate
         /// Gets the JSON property name for <see cref="DisplayName"/>.
         /// </summary>
         public static ReadOnlySpan<byte> DisplayNameUtf8 => "displayName"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="ExecutionBudget"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ExecutionBudgetUtf8 => "executionBudget"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="ManagementTags"/>.
@@ -876,6 +910,11 @@ public readonly partial struct EnvironmentCreate
         public static ReadOnlySpan<byte> DisplayName => "displayName"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="ExecutionBudget"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ExecutionBudget => "executionBudget"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="ManagementTags"/>.
         /// </summary>
         public static ReadOnlySpan<byte> ManagementTags => "managementTags"u8;
@@ -921,6 +960,11 @@ public readonly partial struct EnvironmentCreate
         /// Gets the pre-baked property name blob for <see cref="DisplayName"/>.
         /// </summary>
         public static ReadOnlySpan<byte> DisplayName => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x69, 0x73, 0x70, 0x6C, 0x61, 0x79, 0x4E, 0x61, 0x6D, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="ExecutionBudget"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ExecutionBudget => [0x15, 0x01, 0x00, 0x00, 0x22, 0x65, 0x78, 0x65, 0x63, 0x75, 0x74, 0x69, 0x6F, 0x6E, 0x42, 0x75, 0x64, 0x67, 0x65, 0x74, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="ManagementTags"/>.

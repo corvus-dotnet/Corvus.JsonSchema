@@ -74,7 +74,8 @@ public static class WorkflowCheckpointSerializer
         DateTimeOffset? resumeRequestedAt = null,
         DateTimeOffset? updatedAt = null,
         IReadOnlyList<WorkflowStepJournalEntry>? stepJournal = null,
-        bool journalTruncated = false)
+        bool journalTruncated = false,
+        ExecutionBudget? budget = null)
     {
         ArgumentNullException.ThrowIfNull(workflowId);
         ArgumentNullException.ThrowIfNull(retryCounters);
@@ -190,6 +191,13 @@ public static class WorkflowCheckpointSerializer
                 {
                     writer.WriteBoolean("journalTruncated"u8, true);
                 }
+            }
+
+            // ADR 0068: the run's effective execution budget, resolved at start by the control plane and frozen with the
+            // run's identity by the coordinator. Absent on a checkpoint written before budgets existed.
+            if (budget is { } effectiveBudget)
+            {
+                effectiveBudget.WriteTo(writer);
             }
 
             if (outputs.ValueKind != JsonValueKind.Undefined)
@@ -417,6 +425,10 @@ public static class WorkflowCheckpointSerializer
                 ? DateTimeOffset.FromUnixTimeMilliseconds(resumeRequestedAtElement.GetInt64())
                 : null;
 
+            ExecutionBudget? budget = root.TryGetProperty(ExecutionBudget.JsonPropertyNames.BudgetUtf8, out JsonElement budgetElement) && ExecutionBudget.TryRead(budgetElement, out ExecutionBudget readBudget)
+                ? readBudget
+                : null;
+
             List<WorkflowStepJournalEntry>? journalEntries = null;
             if (root.TryGetProperty("stepJournal"u8, out JsonElement journalElement) && journalElement.ValueKind == JsonValueKind.Array)
             {
@@ -434,7 +446,7 @@ public static class WorkflowCheckpointSerializer
 
             bool journalTruncated = root.TryGetProperty("journalTruncated"u8, out JsonElement journalTruncatedElement) && journalTruncatedElement.GetBoolean();
 
-            return new WorkflowCheckpointState(document, runId, workflowId, status, cursor, sequence, createdAt, retryCounters, correlationTokens, inputs, stepOutputs, outputs, wait, fault, correlationId, tags, securityTags, environment, pause, resumeRequestedAt, updatedAt, journalEntries, journalTruncated);
+            return new WorkflowCheckpointState(document, runId, workflowId, status, cursor, sequence, createdAt, retryCounters, correlationTokens, inputs, stepOutputs, outputs, wait, fault, correlationId, tags, securityTags, environment, pause, resumeRequestedAt, updatedAt, journalEntries, journalTruncated, budget);
         }
         catch
         {

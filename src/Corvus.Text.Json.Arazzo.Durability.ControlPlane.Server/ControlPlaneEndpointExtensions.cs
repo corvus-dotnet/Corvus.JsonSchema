@@ -113,6 +113,7 @@ public static class ControlPlaneEndpointExtensions
         IWorkflowDeploymentStore? workflowDeploymentStore = null, ReadOnlyMemory<byte> runnerEnrolmentSecret = default,
         string? ownerGroupClaimType = "tenant",
         Capacity.ControlPlaneCapacityOptions? capacityOptions = null,
+        ExecutionBudget? executionBudgetCeiling = null,
         ReadOnlyMemory<byte> checkpointSecret = default,
         WorkflowCheckpointCoordinator? checkpoints = null,
         Schedules.IScheduleRegistry? scheduleRegistry = null)
@@ -247,7 +248,7 @@ public static class ControlPlaneEndpointExtensions
         // lifecycle, and the environments handler consults it (with the runner registry) to fence an isolation-floor raise
         // (ADR 0058) — refusing to raise an environment's requiredIsolation while an under-isolated runner stays authorized.
         IEnvironmentRunnerAuthorizationStore runnerAuthStore = environmentRunnerAuthorizationStore ?? new InMemoryEnvironmentRunnerAuthorizationStore();
-        var environmentsHandler = new ArazzoControlPlaneEnvironmentsHandler(securityMode, envStore, environmentAdministration, access, observedStore, auditLogger: auditLogger, runners: runners, runnerAuthorizations: runnerAuthStore);
+        var environmentsHandler = new ArazzoControlPlaneEnvironmentsHandler(securityMode, envStore, environmentAdministration, access, observedStore, auditLogger: auditLogger, runners: runners, runnerAuthorizations: runnerAuthStore, executionBudgetCeiling: executionBudgetCeiling);
 
         // The kit surfaces that key token custody by principal read the authenticated principal through the
         // accessor in the modes whose access binding carries none (ScopesOnly).

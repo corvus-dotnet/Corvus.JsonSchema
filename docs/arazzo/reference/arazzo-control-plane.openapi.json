@@ -8582,6 +8582,16 @@
         },
         "required": ["key", "value"]
       },
+      "ExecutionBudget": {
+        "type": "object",
+        "description": "An environment's execution-budget override (ADR 0068). Each limit named here tightens the deployment ceiling for runs pinned to the environment; a limit omitted is the ceiling's. An override may only tighten: a limit wider than the deployment ceiling is refused (400). The effective budget is resolved into every run at start and recorded with it, so a later change here does not move a running run's bound.",
+        "properties": {
+          "maxSteps": { "type": "integer", "minimum": 1, "description": "Fuel: the maximum number of step executions a run may make, retries and revisits counted. The deployment ceiling is itself bounded by the per-step journal cap (500)." },
+          "wallClockSeconds": { "type": "integer", "minimum": 1, "description": "The maximum age of a run from creation, in seconds." },
+          "maxSubWorkflowDepth": { "type": "integer", "minimum": 0, "description": "The sub-workflow nesting depth cap." },
+          "retryAfterCeilingSeconds": { "type": "integer", "minimum": 0, "description": "The ceiling a step's declared retryAfter delay is clamped to, in seconds." }
+        }
+      },
       "EnvironmentCreate": {
         "type": "object",
         "description": "A deployment environment to create (design §7.7). Creating it grants the calling principal administration of it. The name is the stable identity; managementTags scope who may manage and see it (the deployment additionally stamps the creator's internal tenant tag and rejects a set the creator's reach does not admit).",
@@ -8593,6 +8603,7 @@
           "allowsDraftRuns": { "type": "boolean", "description": "Development-class flag (workflow-designer design \u00a718): when true, working-copy DRAFTS may execute here as debug runs, using this environment's credential bindings. Absent/false \u2014 only published, availability-granted versions run here." },
           "requiredIsolation": { "type": "string", "enum": ["InProcess", "Isolated"], "description": "The minimum run isolation this environment requires (ADR 0058). Isolated admits a trigger only where a live runner in this environment advertises an out-of-process backend that hosts the version; InProcess (the default when absent) also allows the in-process backend. A governed policy an environment administrator sets." },
           "runtimeIdentifier": { "type": "string", "description": "The .NET runtime identifier (RID) the serverless native binary is built for when this environment requires Isolated execution (ADR 0055), e.g. 'linux-x64' (the default when absent). Publishing a version here queues a Native-AOT build for this target, and a run is dispatchable only once that build is ready. Ignored for an InProcess environment." },
+          "executionBudget": { "$ref": "#/components/schemas/ExecutionBudget", "description": "The execution-budget override for runs pinned to this environment (ADR 0068); absent means the deployment ceiling applies. On update, absent leaves the environment's override unchanged." },
           "managementTags": {
             "type": "array",
             "description": "Security tags (§14.2) scoping who may MANAGE and SEE this environment. The reserved internal-tag prefix is not allowed here.",
@@ -8611,6 +8622,7 @@
           "allowsDraftRuns": { "type": "boolean", "description": "Replacement draft-run permission (workflow-designer design \u00a718); absent leaves the environment's setting unchanged." },
           "requiredIsolation": { "type": "string", "enum": ["InProcess", "Isolated"], "description": "The minimum run isolation this environment requires (ADR 0058). Isolated admits a trigger only where a live runner in this environment advertises an out-of-process backend that hosts the version; InProcess (the default when absent) also allows the in-process backend. A governed policy an environment administrator sets." },
           "runtimeIdentifier": { "type": "string", "description": "The .NET runtime identifier (RID) the serverless native binary is built for when this environment requires Isolated execution (ADR 0055), e.g. 'linux-x64' (the default when absent). Publishing a version here queues a Native-AOT build for this target, and a run is dispatchable only once that build is ready. Ignored for an InProcess environment." },
+          "executionBudget": { "$ref": "#/components/schemas/ExecutionBudget", "description": "The execution-budget override for runs pinned to this environment (ADR 0068); absent means the deployment ceiling applies. On update, absent leaves the environment's override unchanged." },
           "managementTags": { "type": "array", "description": "Replacement non-internal security tags (§14.2) scoping who may MANAGE and SEE this environment; absent leaves the tags unchanged. The reserved internal-tag prefix is rejected (400); the deployment's internal tags are preserved.", "items": { "$ref": "#/components/schemas/EnvironmentSecurityTag" } }
         }
       },
@@ -8625,6 +8637,7 @@
           "allowsDraftRuns": { "type": "boolean", "description": "Whether working-copy drafts may execute here as debug runs (workflow-designer design \u00a718). Absent means false." },
           "requiredIsolation": { "type": "string", "enum": ["InProcess", "Isolated"], "description": "The minimum run isolation this environment requires (ADR 0058). Isolated admits a trigger only where a live runner in this environment advertises an out-of-process backend that hosts the version; InProcess (the default when absent) also allows the in-process backend. A governed policy an environment administrator sets." },
           "runtimeIdentifier": { "type": "string", "description": "The .NET runtime identifier (RID) the serverless native binary is built for when this environment requires Isolated execution (ADR 0055), e.g. 'linux-x64' (the default when absent). Publishing a version here queues a Native-AOT build for this target, and a run is dispatchable only once that build is ready. Ignored for an InProcess environment." },
+          "executionBudget": { "$ref": "#/components/schemas/ExecutionBudget", "description": "The execution-budget override for runs pinned to this environment (ADR 0068); absent means the deployment ceiling applies. On update, absent leaves the environment's override unchanged." },
           "managementTags": {
             "type": "array",
             "description": "Security tags scoping who may MANAGE and SEE this environment (§14.2).",

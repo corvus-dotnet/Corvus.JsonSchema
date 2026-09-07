@@ -266,6 +266,15 @@ internal static class ThrowHelper
     public static ArgumentException GetEnvironmentNameOutsideGrammarException(string name, string paramName)
         => new(SR.Format(SR.EnvironmentNameOutsideGrammar, name), paramName);
 
+    public static ArgumentOutOfRangeException GetExecutionBudgetOutOfRangeException(string limit, long value, long minimum, long maximum, string paramName)
+        => new(paramName, value, SR.Format(SR.ExecutionBudgetOutOfRange, limit, value, minimum, maximum));
+
+    public static ArgumentException GetExecutionBudgetNotAnIntegerException(string limit)
+        => new(SR.Format(SR.ExecutionBudgetNotAnInteger, limit), limit);
+
+    public static ArgumentException GetExecutionBudgetNotAnObjectException(string paramName)
+        => new(SR.ExecutionBudgetNotAnObject, paramName);
+
     public static Schedules.ScheduleRegistrationConflictException GetScheduleRegistrationConflictException(string scheduleId)
         => new(SR.Format(SR.ScheduleRegistrationConflict, scheduleId));
 

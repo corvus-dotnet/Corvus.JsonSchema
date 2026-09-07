@@ -156,6 +156,31 @@ public sealed class WorkflowCheckpointSerializerTests
     }
 
     [TestMethod]
+    public void Round_trips_the_execution_budget_and_reads_none_from_a_checkpoint_written_without_one()
+    {
+        using var retryCounters = PooledUtf8Map<int>.Rent(0);
+        using var stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
+        var budget = new ExecutionBudget(120, TimeSpan.FromMinutes(5), 3, TimeSpan.FromSeconds(30));
+
+        byte[] withBudget = WorkflowCheckpointSerializer.Serialize(
+            "run-1", "petWorkflow", WorkflowRunStatus.Running, cursor: 1, sequence: 1, CreatedAt, retryCounters, new Dictionary<string, byte[]>(),
+            inputs: default, stepOutputs, outputs: default, budget: budget);
+        using (WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(withBudget))
+        {
+            state.Budget.ShouldBe(budget);
+        }
+
+        // ADR 0068: a checkpoint written before budgets existed carries none, and reads back as none rather than as a default.
+        byte[] without = WorkflowCheckpointSerializer.Serialize(
+            "run-1", "petWorkflow", WorkflowRunStatus.Running, cursor: 1, sequence: 1, CreatedAt, retryCounters, new Dictionary<string, byte[]>(),
+            inputs: default, stepOutputs, outputs: default);
+        using (WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(without))
+        {
+            state.Budget.ShouldBeNull();
+        }
+    }
+
+    [TestMethod]
     public void Round_trips_the_updated_at_stamp_when_the_writer_provides_one()
     {
         DateTimeOffset updatedAt = CreatedAt.AddMinutes(5);
