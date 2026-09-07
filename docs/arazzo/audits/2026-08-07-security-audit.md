@@ -373,6 +373,15 @@ item you cannot see directly in the code.
 - **Acceptance criteria:** hash and compile the same bytes; additionally recompute the content hash on the in-process IL read path, since `LoaderHostedWorkflowResolver.cs:79` trusts the stored column while the AOT path at `WorkflowAotBuildService.cs:150` does it correctly.
 
 ### P1-4 · DIV · `TB-7`, `TB-10` · Credential `baseUrl` is a constraint on one path and a destination on another
+
+
+> **Resolved** (commits `b84f7503831`, `308ebd26781`). See the threat model's
+> [findings ledger](../reference/threat-model.md#12-findings-ledger) (H4). Two deviations from the
+> criteria as written: the write-path allowlist is applied on the tenant credentials API rather than at
+> the store boundary, because a programmatic or bootstrap binding may deliver a secret from the runner
+> host by design; and the run path refuses a cross-origin redirect outright rather than following it
+> with credentials dropped, because its mTLS certificate cannot be dropped per hop. The finding text is
+> left as measured.
 - **Where:** `HttpClientTransport.cs:346`; `SourceCredentialTransports.cs:157-162`; `SourceDocumentFetcher.cs:169-172, 177-181, 226-231`; `ArazzoControlPlaneCredentialsHandler.cs:372-373`
 - **Divergence:** ADR 0048's stated property is that control-plane compromise yields references, never usable credentials. The fetch path honours it by treating `baseUrl` as a host constraint. The run path treats it as the destination, since `resolvedBaseUrlOverride ?? httpClient.BaseAddress` lets the binding win. Neither `baseUrl` nor `secretRefs` is validated on write.
 - **Impact:** `UO-5`. A `credentials:write` holder who cannot read the secret redirects it and sets `secretRefs` to `env://` or `file:///`, and the runner resolves its own host's secrets.
@@ -380,12 +389,29 @@ item you cannot see directly in the code.
 - **Acceptance criteria:** validate `baseUrl` scheme and host, and the `secretRefs` scheme, against an allowlist on write; set `AllowAutoRedirect = false` on every run-path client and follow redirects manually with the same per-hop origin and scheme checks the fetcher uses.
 
 ### P1-5 · DIV · `TB-2` · Self-elevation guard inspects the wrong verbs, and `security:*` has no reach plane
+
+
+> **Resolved** in four pieces (`2ddfcfffe5f` own-request check on `grant` and `settle`;
+> `bb6b3e19264` and ten per-backend commits, the security policy reach-partitioned with native
+> reach-scoped queries; `111d34e253c` the guard refusing any self-conferral and the per-workflow reach
+> rule reserved and verified by expression). See the
+> [findings ledger](../reference/threat-model.md#12-findings-ledger) (H10). The criterion "validate the
+> rule expression" was met for the access-request ceiling, which was the only place a name stood in for
+> an expression; no general validator was added. The finding text is left as measured.
 - **Where:** `ArazzoControlPlaneSecurityHandler.cs:729-753` (decision at `:737`) and `:95-355`; `PersistentRowSecurityPolicy.cs:178-213, 398-402`; `AccessRequestApprovalService.cs:527-555`; `ArazzoControlPlaneAccessRequestsHandler.cs:303-332`
 - **Divergence:** ADR 0014 claims the guard makes direct authoring safe. It fires only on **write or purge** and never inspects `draft.Read` or `draft.Scopes`. None of the `security:*` handlers construct an `AccessContext`, so `security:read` enumerates every tenant's rules and bindings. ADR 0010's reach ceiling is pinned by **rule name** without checking the expression. `grant` and `settle` carry no own-request check, unlike `approve`.
 - **Impact:** `UO-3`. One call yields unrestricted cross-tenant read plus capability scopes the IdP never issued, audited as ordinary authoring.
 - **Acceptance criteria:** extend the guard to read reach and to `scopes`; construct an `AccessContext` on the security endpoints; validate the rule expression; add the independent-decision check to `grant` and `settle`.
 
 ### P1-6 · DIV · all boundaries · Audit actor is a display name, and there is no tenant dimension
+
+
+> **Resolved** for the attribution half (commit `d02d3c22f4a`). One derivation of the canonical
+> subject, owner group and environment as first-class dimensions on the span, log and counter, run
+> start and the bootstrap seeds and the approval service's writes audited, self-elevation distinguished
+> in the outcome vocabulary. See the [findings ledger](../reference/threat-model.md#12-findings-ledger)
+> (H11, narrowed). The durability half stays with GAP-6, and read audit with GAP-7. The finding text is
+> left as measured.
 - **Where:** `GovernanceAudit.cs:41-65`; `PrincipalDisplayName.cs:14, 18-21`; `AccessRequestApprovalService.cs` (zero audit sites); `DefaultDeploymentBootstrap.cs:58, 74`
 - **Divergence:** ADR 0038 states the audited actor is the authenticated principal. Nine of thirteen handlers record the OIDC name claim, falling back to the literal `system` or `control-plane`, so every service principal collapses into one identity. Three incompatible derivations coexist. The primitive has **no tenant or environment parameter**, and the decisions counter is dimensioned by action and outcome only.
 - **Also unaudited:** run start takes no actor; the bootstrap genesis grant emits nothing; the approval *service* writes bindings with no audit; self-elevation records as an ordinary `access-request.submit`.
@@ -406,6 +432,15 @@ item you cannot see directly in the code.
 - **Acceptance criteria:** require `sequence` in the projection; compare header and body; reject a mismatch; test both the omission and the overflow case.
 
 ### P1-9 · DIV · `TB-2`, `TB-5` · Quota and capacity counters collapse cross-tenant
+
+
+> **Resolved** (commits `20832b5f70d`, `62a3efce132`). All three criteria landed as written, and
+> closing the count exposed a second rule the criteria did not name: a version is made available,
+> scheduled and run only in an environment its own owner group holds, so the population counted is the
+> population charged (ADR 0065). See the
+> [findings ledger](../reference/threat-model.md#12-findings-ledger) (H41). The sibling sweep found
+> that schedule run-now bypasses the operator start's admission entirely, recorded as H45. The finding
+> text is left as measured.
 - **Where:** `RunnerQuotaGate.cs:54-55`; `RunnerAuthorizationBindings.cs:145-155`; `TokenBucketRunnerQuotaGuard.cs:14-20, 31, 132-135`; `StoreControlPlaneCapacityGuard.cs:84, 88-104`; `ControlPlaneRowSecurity.cs:485-489`
 - **Divergence:** ADR 0066 specifies per-tenant quotas. Buckets key on `resolved.Tenant`, read from the environment record's owner-group tag, which is `null` for every runner when environments carry none, putting **every tenant on one counter**. `buckets.Clear()` at 4096 counters forgives every tenant's deficit at once. Capacity counts pass the caller's `AccessContext`, so in `ScopesOnly` and `Open` they count the whole deployment.
 - **Impact:** `UO-8`. One tenant exhausts the shared rate, or trips a deployment-wide cap that refuses starts for everyone. Each admission also costs up to three bounded counts walking up to `limit` rows.

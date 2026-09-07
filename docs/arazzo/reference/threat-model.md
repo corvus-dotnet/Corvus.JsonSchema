@@ -195,12 +195,12 @@ checkable rather than a by-product of what a review happened to look at.
 | Threat | Control | Residual risk | Evidence |
 |--------|---------|---------------|----------|
 | Capability bypass, invoking an operation without the scope | **Holds**. Scopes generated from the OpenAPI contract, enforced per endpoint | An endpoint cannot ship without a declared scope | |
-| Reach bypass, touching a row outside the principal's grant | **Partial**. Deny-by-default, non-disclosing 404, pre-refresh denies, wildcard cannot confer unrestricted [reach](UBIQUITOUSLANGUAGE.md#reach) | The `security:*` handlers construct no access context at all | H10 |
-| Privilege escalation by self-granting | **Partial**. Self-elevation guard, access-request ceiling, independent decision on approve | Guard inspects only write and purge, ceiling pinned by rule name, `grant` and `settle` lack the own-request check | H10 |
+| Reach bypass, touching a row outside the principal's grant | **Holds**. Deny-by-default, non-disclosing 404, pre-refresh denies, wildcard cannot confer unrestricted [reach](UBIQUITOUSLANGUAGE.md#reach), and the security policy itself is reach-partitioned: rules and bindings carry management tags and every backend answers a `security:*` read under the caller's reach natively | Bounded by the replica refresh window (H22) | H10 |
+| Privilege escalation by self-granting | **Holds**. The self-elevation guard refuses any binding that confers read, write or purge reach or any scope on the caller, a wildcard binding with any grant is refused on the API path, the access-request ceiling's rule is verified by expression under a reserved namespace, and `approve`, `grant` and `settle` all carry the independent-decision check | The guard is per binding and does not compare against what the caller already holds: a standing grant of a token-held scope is refused rather than weighed | H10 |
 | Unauthenticated or unscoped surface on the API host | **Holds**. The checkpoint surface requires a run-scoped token, and is not mapped at all without a secret to validate one | The token is a bearer credential, so it is replayable within its lifetime, bounded to the one run it names | H1 |
 | Identity spoofing via request-derived dimensions | **Absent**. No cross-check between ambient and token-derived tenant | Tenant becomes a function of the URL, and the self-elevation guard becomes context-local | H21 |
 | Existence disclosure and enumeration | **Partial**. Non-disclosing 404 by design ([ADR 0004](../adr/0004-fail-closed-non-disclosing-enforcement.md)) | Denials are unaudited, so probing is quiet by design *and* by omission | H11 |
-| Resource exhaustion of the shared plane | **Partial**. Bounded counts, [keyset pagination](UBIQUITOUSLANGUAGE.md#keyset-pagination), standing capacity limits | No rate limiting on any browser-facing or governance endpoint, and capacity counts are reach-scoped so deployment-global in two postures | H41 |
+| Resource exhaustion of the shared plane | **Partial**. Bounded counts, [keyset pagination](UBIQUITOUSLANGUAGE.md#keyset-pagination), standing capacity limits counted by the target environment's owner group in every posture, and a version admitted only into an environment its owner group holds | No rate limiting on any browser-facing or governance endpoint, and the schedule run-now surface starts its target without the start admission at all | H41, H45 |
 | Object reference forgery | **Holds** for runs. The 32-hex [run-id](UBIQUITOUSLANGUAGE.md#run-id) grammar at every ingress, deterministic ids derived under the [run-derivation key](UBIQUITOUSLANGUAGE.md#run-derivation-key), and the composite [run address](UBIQUITOUSLANGUAGE.md#run-address) as the primary key in every backend | A guessed or disclosed run id resolves only within the caller's reach, and a run-id collision is evaluated only within the caller's environment, so neither branch is an existence oracle over another tenant's runs. The [schedule](UBIQUITOUSLANGUAGE.md#schedule) surface is the deliberate exception: schedule ids are a deployment-global operator namespace (the schedules routes carry no environment), so `create` returns a distinguishable `409` when an id is already registered in any environment. That is a name-taken signal over a shared global namespace, not disclosure of another tenant's run, and is accepted as AR-18 | H18 |
 
 ### TB-3 Browser to served UI
@@ -239,7 +239,7 @@ checkable rather than a by-product of what a review happened to look at.
 | Superseded or displaced holder writing | **Partial**. The [lease epoch](UBIQUITOUSLANGUAGE.md#lease-epoch) is minted per run by the store, persisted with the lease record, and compared on renewal and on both checkpoint operations, so a presented epoch that is not the current grant's authorises nothing | Sound within one store generation only. The epoch is not yet paired with a [store incarnation](UBIQUITOUSLANGUAGE.md#store-incarnation), so a restore takes every run's counter back and re-issues epochs already spent, and rollback by the control plane itself stays undetectable until the tenant anchor exists | H8 |
 | Rollback or substitution by the control plane (AD-4) | **Designed**. Tenant anchor, phase B | Accepted for the phase-A window, booked as AR-9 | |
 | Revocation of a compromised runner | **Holds**. The [revocation fence](UBIQUITOUSLANGUAGE.md#runner-revocation-fence) expires leases by the bound machine principal, and renewal and both checkpoint operations re-resolve bindings | Bounded by the resolver's cache window, and by nothing on a replica that has not refreshed its policy. Every backend now implements `IWorkflowLeaseAdministration`, so the in-flight half holds on all of them and AR-16's fence half is discharged; the residual is the replica-refresh window (H22) | H22 |
-| Cross-tenant denial of service | **Partial**. Per-tenant and per-runner token buckets, test-before-spend, client-side `Retry-After` clamp | Buckets collapse to one counter without owner-group tags, a wholesale cache clear forgives every tenant's deficit | H41 |
+| Cross-tenant denial of service | **Holds**. Per-tenant and per-runner token buckets, test-before-spend, client-side `Retry-After` clamp; a principal that cannot be attributed to a tenant is bound to nothing once the [tenancy ledger](UBIQUITOUSLANGUAGE.md#tenancy-ledger) names one, and eviction is per counter and never forgives a deficit | The shipped meter counts per instance, so a multi-instance deployment admits N times each rate until it supplies a shared-state guard ([ADR 0066](../adr/0066-runner-api-rate-and-capacity-limiting.md)); a deployment that stamps no owner group has one tenant by construction (ASU-7) | H41 |
 | Observability of the seam | **Absent**. Zero logs, spans or counters in the entire runner API | Every threat in this table executes silently | H11 |
 
 ### TB-6 Runner and listener to execution guest
@@ -258,8 +258,8 @@ checkable rather than a by-product of what a review happened to look at.
 | Threat | Control | Residual risk | Evidence |
 |--------|---------|---------------|----------|
 | SSRF by step targeting | **Holds**. The executor never names a URL. A step carries a source *name* bound by the host, and there is no per-step server override | None. A deliberate architectural property, and the strongest control at this boundary | |
-| SSRF by credential-binding redirection | **Absent**. `baseUrl` is unvalidated on write and wins over the host address | A credential the caller cannot read is sent to a destination they choose | H4 |
-| Credential leak across a redirect | **Absent** on the run path, **Holds** on the fetch path | Custom API-key headers and TLS client certificates follow a cross-host redirect. The mechanism is documented in-repo and fixed on one of two paths | H4 |
+| SSRF by credential-binding redirection | **Holds** on the tenant API. A binding authored through the credentials handler must name a managed secret store and an absolute https `baseUrl` (http only where the deployment already permits insecure source transport) | A programmatic or bootstrap binding may still use host-local delivery, by design: the deny lives in the handler, not the store | H4 |
+| Credential leak across a redirect | **Holds** on both paths. Run-path clients never auto-follow; a same-origin redirect is followed for a body-less GET or HEAD with the scheme re-checked each hop, and a cross-origin one is returned unfollowed, so no header and no client certificate reaches another origin | None found. The run path is stricter than the fetcher by design, since an mTLS certificate cannot be dropped per hop | H4 |
 | Route escape past a gateway prefix | **Partial**. Percent-encoding by default | `allowReserved` parameters skip it, so `../` escapes with the credential attached | H29 |
 | Egress to internal or metadata addresses | **Absent** on three of four backends, delegated to deployment by [ADR 0052](../adr/0052-source-fetch-authenticates-as-the-user.md) | Assumption ASU-3. The code cannot verify the control exists | H15 |
 | Hostile source steering control flow | **Partial**. Closed expression grammar, JSON-Pointer body descent, uniform 1s regex timeouts | Dynamic criteria interpolate response values into the pattern, so a source rewrites the assertion checking it | H26 |
@@ -293,8 +293,8 @@ checkable rather than a by-product of what a review happened to look at.
 
 | Threat | Control | Residual risk | Evidence |
 |--------|---------|---------------|----------|
-| Secret material held by the control plane | **Holds**. Bindings store a [secretRef](UBIQUITOUSLANGUAGE.md#secretref), there is no secret writer, and writing is a separate identity | The property is inverted in practice because the control plane owns the reference and the destination | H4 |
-| Exfiltration via reference control | **Absent**. No scheme allowlist on secret references, `env://` unrestricted and `file://` unrooted by default | The runner resolves its own host's environment and filesystem on request | H4 |
+| Secret material held by the control plane | **Holds**. Bindings store a [secretRef](UBIQUITOUSLANGUAGE.md#secretref), there is no secret writer, and writing is a separate identity | A tenant-authored reference names a managed store and an https origin, so owning the reference no longer steers the runner at its own host | H4 |
+| Exfiltration via reference control | **Holds** on the tenant API. `env://` and `file://` are refused on every tenant credential write | A programmatic or bootstrap binding may use them by design, so the runner host's environment and filesystem are reachable only through code the deployment itself wrote | H4 |
 | Secret recovery from process memory | **Partial**. Secret material zeroes correctly and documents the hazard | Every consumer reveals it to a string, so a heap dump recovers every bound credential | H35 |
 | Secret leakage through logs and errors | **Holds**. [Governance audit](UBIQUITOUSLANGUAGE.md#governance-audit) has no payload parameter, token exceptions carry status only, telemetry tags are identifiers | [Debug runs](UBIQUITOUSLANGUAGE.md#debug-run) write raw exception text into a readable fault field | H23 |
 | Undetected secret misuse | **Absent**. Every resolver is silent | No record of which principal caused which secret to be read | H11 |
@@ -337,6 +337,13 @@ recording what does not, because a model built only from holes mis-ranks the fix
 | Checkpoint token primitive, HMAC, run-bound, constant-time, canonical expiry | Holds | `CheckpointToken.cs` |
 | Checkpoint surface requires the run-scoped token, and is absent rather than open when no secret is configured | Holds | `WorkflowCheckpointEndpoints.cs:40-45`, `ControlPlaneEndpointExtensions.cs` |
 | One checkpoint coordinator per host, so the single-flight interlock is per run rather than per component | Holds | `RunnerEndpointExtensions.cs`, `WorkflowCheckpointEndpoints.cs` |
+| Self-elevation guard refuses any binding that confers read, write or purge reach or any scope on the caller, wildcard grants refused on the API path, own-request check on approve, grant and settle | Holds | `ArazzoControlPlaneSecurityHandler.cs` (`SelfElevates`, `ConfersAnything`), `ArazzoControlPlaneAccessRequestsHandler.cs` |
+| Security policy reach-partitioned, rules and bindings carry management tags and every backend answers `security:*` reads under the caller's reach natively | Holds | `SecurityLabelQueryResolver.cs`, each backend's security-policy store, the security-policy conformance reach oracles |
+| Per-workflow reach rule under a reserved namespace, reused only when its expression is exactly the workflow's | Holds | `Security/WorkflowReachRule.cs`, `AccessRequestApprovalService.cs` |
+| Tenant credential writes name a managed secret store and an https origin, and run-path clients never follow a cross-origin redirect | Holds | `SourceCredentialBinding.ValidateTenantWritePolicy`, `RedirectHardeningHandler.cs` |
+| Governance audit attributes one canonical subject with owner group and environment on every mutation, including run start, bootstrap seeds and approval-service writes | Holds | `Security/AuditSubject.cs`, `Security/GovernanceAudit.cs` |
+| Quota and capacity counters isolate by owner group, fail closed once the tenancy ledger names one, evict per counter, count by the target environment's owner group | Holds | `RunnerAuthorizationBindings.cs`, `TokenBucketRunnerQuotaGuard.SweepFull`, `ArazzoControlPlaneCatalogHandler.TenantScope` |
+| A version is admitted only into an environment its own owner group holds, at promotion, promotion request, schedule and run start | Holds | `OwnerGroupTag.Agrees`, `TenancyAgreement.cs` |
 | Envelope and payload split, unified MAC, blind indexes, tenant anchor, initiator sealing, re-key sweep | Designed | `Durability/Anchoring/*`, conformance-tested |
 
 ### 7.2 Process
@@ -392,16 +399,16 @@ no-op. Nothing asserts at startup that a sink is attached.
 | Secret resolution, and decryption failure | No | The clearest tamper signal in the design is discarded |
 | Outbound document fetch, by destination | No | An SSRF sweep cannot be answered for after the fact |
 | Signature verification failure, verification disabled at startup | No | A tampered package looks like a disk-full build failure |
-| Run start | No | `StartAsync` takes no actor, so "who started this run" is unanswerable |
-| Bootstrap genesis grant | No | The most privileged binding in the deployment leaves no record |
+| Run start | Yes | `run.start` with the canonical subject, owner group and environment, refusals included. The schedule run-now surface audits `schedule.run-now` against the schedule rather than the run it starts (H45) |
+| Bootstrap genesis grant | Yes | Each seeded binding and rule is audited as the bootstrap actor, and the approval service audits every grant, eligibility and revocation it writes |
 | Runner liveness, heartbeat gap | No | The reaper has no caller, so a dead runner keeps satisfying the hosting gates |
 | Governance mutations, including refusals with distinct outcome codes | Yes | Uniform and genuinely well built |
 | Step-journal read, including refusals, with [disclosure tier](UBIQUITOUSLANGUAGE.md#step-output-disclosure-tier) | Yes | The one audited read surface, and a good model for the rest |
 
 Quality of what *is* recorded:
 
-- **No tenant dimension.** The primitive has no owner-group or environment parameter, and the decisions counter is dimensioned by action and outcome only, so the trail cannot be filtered by tenant.
-- **The actor is often a display name.** Nine of thirteen handlers record the OIDC name claim, collapsing every service principal to the literal string `system`. Three incompatible derivations coexist, so one principal cannot be joined across surfaces. [ADR 0038](../adr/0038-payload-safe-governance-audit.md)'s stated property does not hold.
+- **Tenant and environment are first-class.** The primitive takes the audit subject, which carries the actor's owner group, and an optional environment; it tags both on the span, logs both and dimensions the decisions counter by them, so the trail filters by tenant.
+- **One actor derivation.** Every record carries the canonical subject (the deployment's configured subject claim, then the authorized party or client id of a client-credentials token, then the authentication name, then anonymous), never the display name, so a principal joins across surfaces and [ADR 0038](../adr/0038-payload-safe-governance-audit.md)'s stated property holds.
 - **Change-blind by construction.** Payload-safety and the inability to record *what* changed are the same property from two sides. A credential base URL repointed at an attacker audits as `updated`; a secret-reference swap audits as `rotated` and increments the rotation-health counter. Any fix must be designed against ADR 0038 rather than bolted beside it.
 - **Recording is not detecting.** No threshold, anomaly or alert logic exists in the repository. Everything depends on an external collector, assumption ASU-1.
 - **Log injection.** User-controlled values are interpolated unescaped and unbounded, with zero pattern validators across 1,237 generated models.
@@ -411,17 +418,17 @@ Quality of what *is* recorded:
 | Measure | State | What it actually limits |
 |---------|-------|--------------------------|
 | Runners hold no store credential | Holds | ADR 0065's most successful decision. Dissolves the per-runner database-role problem, but makes the one remaining credential a total-compromise token |
-| Capability scopes per verb and domain, reach orthogonal | Holds | A low-scope session cannot author policy, except via H10 |
+| Capability scopes per verb and domain, reach orthogonal | Holds | A low-scope session cannot author policy |
 | Access-request ceiling and TTL clamp, re-evaluated per resolution | Holds | Time-boxed grants expire even on a stale replica |
 | [Eligibility](UBIQUITOUSLANGUAGE.md#eligibility) confers nothing at rest | Holds | Standing privilege does not accumulate |
 | Immutable content-hashed versions, insert-only ids | Holds | Version overwrite and squatting |
-| Source credentials are references | Partial | Inverted in practice by H4 |
+| Source credentials are references | Holds | A tenant binding names a managed store and an https origin, so the reference cannot steer the runner at its own host (H4 closed) |
 | "The environment is the blast radius" | Partial | Closing H12 removed the cross-tenant list read on every store, management stores included. H1 used to make it the deployment and no longer does |
 | Encryption at rest | Partial | Opt-in and silent when unset. Even enabled it leaves status, workflow id, environment, timings, correlation ids and the tenant label cleartext, with an index on the tag pair |
 | Per-run isolation on serverless | Partial | Per environment and version. Warm containers reuse a process |
 | Revocation | Partial | Fences in-flight leases and re-authorizes on renewal and checkpoint, but does not propagate across replicas |
 | Rate limiting | Partial | Runner API only, nothing on governance or browser-facing endpoints |
-| Per-tenant capacity | Partial | Reach-scoped, so deployment-global in two postures, and buckets collapse without owner-group tags |
+| Per-tenant capacity | Partial | Counted by owner group in every posture and the buckets isolate (H41 closed); the shipped meters count per instance, and schedule run-now bypasses the start admission (H45) |
 | Database-level isolation | Absent | No row-level security, no per-tenant credential, runtime account owns the schema |
 
 ## 10. Layering assessment
@@ -431,16 +438,16 @@ detection, CON containment, REC recovery.
 
 | Outcome | Worst path | PRV | DET | CON | REC | Layers between attacker and outcome |
 |---------|-----------|-----|-----|-----|-----|--------------------------------------|
-| UO-1 cross-tenant read | H10 | NONE | NONE | NONE | WEAK | **Zero.** `security:read` builds no access context, so it enumerates every tenant. Closing H1 removed the checkpoint surface from this path and closing H12 the in-process store reads behind it, but neither raised the score, because H10 reaches the same outcome with nothing in the way |
+| UO-1 cross-tenant read | H21 | PART | NONE | PART | WEAK | **One.** Reach is enforced by the store on every backend (H12) and the security plane is reach-partitioned (H10 closed), so a cross-tenant read now needs the tenant dimension itself to be wrong, which the ambient identity allows (H21). Reads remain unaudited |
 | UO-2 state forgery | H9 | PART | NONE | PART | WEAK | **Two.** The run's identity is now server-checked, so a forged state cannot be re-pointed at another tenant, and the sequence is validated as persisted + 1 against a body the ingress requires and checks against the header (H40 closed). What remains is the unauthenticated sidecar (H9) and the phase-B MAC that binds acceptance to the runner region |
-| UO-3 privilege escalation | H10 | WEAK | WEAK | PART | NONE | **One, aligned.** Four holes on one path: no reach on `security:*`, guard checks wrong verbs, ceiling pinned by a definable name, revocation does not propagate |
+| UO-3 privilege escalation | H22 | PART | WEAK | PART | NONE | **One.** Three of the four aligned holes are closed: the guard refuses any self-conferral, the ceiling is verified by expression under a reserved namespace, and `security:*` is reach-partitioned. What remains is a revocation that does not propagate across replicas (H22) and an ambient tenant dimension the guard trusts (H21) |
 | UO-4 code execution | H3, H16 | PART | WEAK | NONE | WEAK | **One, accidental.** Prevention rests on an incidental property of emitted text, with no sandbox behind it on the default backend |
-| UO-5 credential theft | H4 | NONE | NONE | WEAK | WEAK | **Zero.** No destination validation, no egress control, no resolution audit, secrets in unscrubbable strings. Closing H2 removed the catalog-add route to a mounted secret, not the credential-binding route |
+| UO-5 credential theft | H15 | PART | NONE | WEAK | WEAK | **One.** A tenant binding names a managed store and an https origin, and run-path clients never follow a cross-origin redirect (H4 closed). What remains is egress delegated to the deployment (H15), no resolution audit (H11) and secrets in unscrubbable strings (H35) |
 | UO-6 supply chain | H13, H16 | GOOD | WEAK | PART | PART | **Three.** The strongest chain here. Its weakness is that it signs whatever the generator emitted |
 | UO-7 SSRF | H15, ASU-3 | PART | NONE | NONE | NONE | **Zero at run time, one at catalog-add.** Closing H2 removed the control plane's own `$ref` fetch, which was the one path the platform could fence in code. What remains is a workflow step's outbound call and the source fetch, both delegated to deployment egress controls the code cannot verify exist |
-| UO-8 denial of service | H14, H41 | NONE | PART | WEAK | WEAK | **One.** Runner quotas, designed for a different threat, shape but never terminate the loop. Closing H6 removed the parse-time amplifier; what remains is a run with no step budget and no wall clock, which no quota terminates |
+| UO-8 denial of service | H14, H45 | WEAK | PART | WEAK | WEAK | **One.** Quota and capacity counters isolate by owner group and a version runs only where its owner group holds the environment (H41 closed), so one tenant no longer exhausts another's allowance, except through the schedule run-now surface, which starts without the admission (H45). What remains is a run with no step budget and no wall clock, which no quota terminates |
 | UO-9 integrity loss | anchor is phase B | WEAK | NONE | NONE | NONE | **Zero until phase B, accepted.** Closing H8 raised prevention off the floor — the epoch is now the run's own, persisted and compared, so phase B no longer inherits a counter it could not order by. Nothing else moved: the control plane still holds every copy of the run, so it can roll one back and no layer here would see it |
-| UO-10 undetected breach | H11 | n/a | NONE | n/a | NONE | **Zero on reads and the whole runner API.** Mutation audit is good but change-blind, tenant-less and non-durable |
+| UO-10 undetected breach | H11 | n/a | NONE | n/a | NONE | **Zero on reads and the whole runner API.** Mutation audit is attributed to the canonical subject with owner group and environment, and still change-blind and non-durable |
 | UO-11 revocation fails | H22 | PART | PART | PART | NONE | **Two layers on every backend.** The fence expires the holder's leases and renewal re-authorizes, so a revoked runner is stopped within the binding cache window. Both layers now hold on all backends: every store implements `IWorkflowLeaseAdministration`, so in-flight leases are expired everywhere, and renewal re-authorizes on top. H22 is what remains on all of them: a replica that never refreshes its policy keeps honouring the deleted binding |
 
 ### Why the holes line up
@@ -448,9 +455,9 @@ detection, CON containment, REC recovery.
 Four patterns explain nearly every straight-through path, and each predicts defects not yet found.
 
 1. **Provenance is verified everywhere, authority almost nowhere.** The system checks exhaustively *what* an artifact is, digests, signatures, attestations, content hashes, and rarely checks *who is asking*. Both sidecar surfaces, the anonymous Azure invoke and the unauthenticated sample services all execute cryptographically verified artifacts for an unauthenticated caller. The checkpoint endpoint was the fourth until H1 was closed, and what closed it was giving that surface a credential to check rather than another artifact to verify.
-2. **The mitigation was applied to one of two sibling paths.** Redirects fixed on the fetch path, not the run path. Reach pushdown real on every backend's run, catalog and observed-identity stores (the backends whose query language cannot express the grammar narrow through their label indexes); the management stores were the sibling path, first excused as a per-class documented choice, then converted backend by backend once the Cosmos "cannot push the predicate" comment was shown false, to completion ([ADR 0067](../adr/0067-reach-enforced-by-the-store-proven-on-the-wire.md)). The lease check on the runner API, not its control-plane twin. The empty-identity guard on the explicit path, not the derived one. The disclosure tier on one of three routes to the same data. **This is the most productive pattern to sweep for.**
+2. **The mitigation was applied to one of two sibling paths.** Redirects fixed on the fetch path, not the run path *(closed)*. Reach pushdown real on every backend's run, catalog and observed-identity stores (the backends whose query language cannot express the grammar narrow through their label indexes); the management stores were the sibling path, first excused as a per-class documented choice, then converted backend by backend once the Cosmos "cannot push the predicate" comment was shown false, to completion ([ADR 0067](../adr/0067-reach-enforced-by-the-store-proven-on-the-wire.md)). The lease check on the runner API, not its control-plane twin. The operator start's admission on the catalog surface, not on the schedule's run-now twin (H45, found while closing H41). The empty-identity guard on the explicit path, not the derived one. The disclosure tier on one of three routes to the same data. **This is the most productive pattern to sweep for.**
 3. **A declared control that nothing enforces.** YAML limits declared and never read *(closed)*. The epoch published in the contract and never compared *(closed)*. Sub-workflow depth enforced only in test paths. Pushdown asserted by a default interface implementation *(closed: the default is gone — every store states its answer, the conformance reach oracles cannot be skipped, and the wire tests observe the pushdown itself)*. The heartbeat reaper implemented twelve times and called zero. Dependabot pointed at a directory that does not exist. In every case the artefact of the control exists, which is what stops anyone re-checking, and in several a document asserts it works. Closing two of them showed the pattern has a second half: both were *declared and unsound* rather than merely unenforced, so enforcing what was written would have produced a control that ran and still carried nothing. Check that the declared thing is worth enforcing before enforcing it.
-4. **Detection would have caught all of the above, and is the thinnest layer.** No read audit, no runner-API telemetry, no authentication-failure signal, no egress record, and an audit primitive that is deliberately change-blind. Every finding here is currently unobservable in production.
+4. **Detection would have caught all of the above, and is the thinnest layer.** No read audit, no runner-API telemetry, no authentication-failure signal, no egress record, and an audit primitive that is deliberately change-blind. The mutation audit is now attributed by canonical subject, owner group and environment, which is the record a read audit can be built on; until it is, every finding here remains unobservable in production.
 
 ## 11. Accepted risks and assumptions
 
@@ -489,7 +496,7 @@ residues, which is unusually good practice and the reason this register can be a
 | ASU-4 | TLS terminates in front of the host *and* forwarded headers are configured | The session cookie omits `Secure` and travels in clear |
 | ASU-5 | The sidecar admin surface is bound to loopback and unreachable from tenant networks | Arbitrary code execution in a micro-guest on the runner host |
 | ASU-6 | Cloud identities for runners and deployers are least-privilege | The blast radius of every TB-8 finding widens to the whole subscription or account |
-| ASU-7 | The deployment names a real owner-group claim, so tenants are distinguishable | Every principal lands in one owner group, quota buckets collapse, and the tenancy invariant counts one tenant forever |
+| ASU-7 | The deployment names a real owner-group claim, so tenants are distinguishable | Every principal lands in one owner group, the deployment counter is the aggregate by construction, and the tenancy invariant counts one tenant forever. Once a second owner group is admitted, a principal or environment carrying none fails closed rather than sharing the counter ([ADR 0066](../adr/0066-runner-api-rate-and-capacity-limiting.md)) |
 
 ## 12. Findings ledger
 
@@ -502,12 +509,12 @@ fix is in code. **GAP** means no ADR covers it, so a decision comes first.
 | H1 | Crit | DIV | Checkpoint endpoint has no scope, reach check, lease or audit. The ADR 0062 token primitive is implemented and sound but never passed | TB-2 | **Closed** |
 | H2 | Crit | DIV | `$ref` loader reaches `file://` and `http://` from inside the control-plane process | TB-1 | **Closed** |
 | H3 | Crit | DIV | Unescaped `workflowId` reaches the C# compiler at three sites while every other emitter escapes | TB-1 | **Closed** |
-| H4 | Crit | DIV | Credential `baseUrl` is a host constraint on the fetch path and the destination on the run path, and run-path clients follow redirects with custom headers intact | TB-7, TB-10 | Open |
+| H4 | Crit | DIV | Credential `baseUrl` is a host constraint on the fetch path and the destination on the run path, and run-path clients follow redirects with custom headers intact | TB-7, TB-10 | **Closed** |
 | H5 | Crit | DIV | Revocation fence passes the client-supplied runner id where the owner is the machine principal, so it expires zero leases | TB-5 | **Closed** |
 | H6 | Crit | DIV | YAML alias-expansion limits are declared, documented as a protection, and never read | TB-1 | **Closed** |
 | H8 | Crit | DIV | Lease epoch is fielded and contract-published but never compared, and unsound as minted | TB-5 | **Closed** |
 | H9 | Crit | DIV | Both micro-guest sidecar surfaces are unauthenticated, and the guest surface returns the checkpoint token for a guessable sandbox id | TB-6 | Open |
-| H10 | Crit | DIV | Self-elevation guard inspects only write and purge, and the `security:*` handlers build no access context | TB-2 | Open |
+| H10 | Crit | DIV | Self-elevation guard inspects only write and purge, and the `security:*` handlers build no access context | TB-2 | **Closed** |
 | H11 | Crit | DIV | Runner API emits nothing, and there is no read audit anywhere | All | Open |
 | H39 | Crit | DIV | Checkpoint save is a blind write of the reach-critical index, so a runner moves its own run into another owner group's environment and reach | TB-5 | **Closed** |
 | H7 | High | DIV | Interim checkpoint protector diverges from the design it stands in for, run-id-only AAD, no key id, opt-in and silent | TB-4 | Open |
@@ -520,7 +527,8 @@ fix is in code. **GAP** means no ADR covers it, so a decision comes first.
 | H18 | High | DIV | Run id key and grammar do not match ADR 0065 §9, and the idempotent id is unkeyed | TB-2, TB-4 | **Closed** |
 | H19 | High | DIV | Anonymous Azure invoke, and SSRF-with-reflection behind a read scope | TB-6, TB-2 | Open |
 | H40 | High | DIV | Sequence validation compares against a number the client wrote | TB-5 | **Closed** |
-| H41 | High | DIV | Quota and capacity counters collapse cross-tenant | TB-2, TB-5 | Open |
+| H41 | High | DIV | Quota and capacity counters collapse cross-tenant | TB-2, TB-5 | **Closed** |
+| H45 | High | DIV | Schedule run-now starts its target through management directly, bypassing the operator start's admission: capacity counting, the isolation and deploy-readiness gates, and the run-level audit | TB-2 | Open |
 | H20 | Med | DIV | Empty administrator identity administers everything, and the first mutation persists it | TB-2 | Open |
 | H21 | Med | DIV | Ambient identity makes the tenant a function of the URL | TB-2 | Open |
 | H22 | Med | DIV | Policy refresh has no scheduler, so early revocation does not propagate across replicas | TB-2 | Open |
@@ -600,6 +608,52 @@ it. Release now expires the record in place instead — the state a lapsed lease
 `expiresAt > now`, so a lingering record reads as unheld on all ten backends, which is what made the
 change safe to make uniformly rather than per backend.
 
+**H4, closed on the tenant API and by refusal.** The write-path criterion asked for validation "on
+write"; it is applied on the tenant credentials API, not at the store boundary, because a programmatic
+or bootstrap binding may legitimately deliver a secret from the runner host's own environment (design
+§13). The run-path criterion asked for redirects followed manually with the fetcher's per-hop checks;
+the run path instead refuses a cross-origin redirect outright and follows a same-origin one only for a
+body-less GET or HEAD. A run-path client authenticates with a shared, host-owned client whose mTLS
+certificate cannot be dropped per hop, so following without credentials is not available to it, and a
+cross-origin redirect mid-run is anomalous.
+
+**H10, closed in four pieces, and the third criterion read narrowly.** The own-request check on
+`grant` and `settle` landed first. The security policy was then reach-partitioned: rules and bindings
+carry management tags, and every one of the ten backends answers a `security:*` read under the caller's
+reach natively, extending [ADR 0067](../adr/0067-reach-enforced-by-the-store-proven-on-the-wire.md)'s
+mirror table. The guard now refuses any binding that confers anything on the caller, read, write or
+purge reach or any scope, and a wildcard binding carrying any grant is refused on the API path, so the
+deployment-wide shell grants are the bootstrap's alone to seed. The criterion "validate the rule
+expression" was met for the rule that matters, the access-request ceiling: its namespace is reserved
+and the approval service reuses an existing rule only when the expression is exactly the workflow's.
+No general expression validator was added, because the ceiling was the only place a name stood in for
+an expression.
+
+**H11, narrowed, not closed.** The attribution half is done: one derivation of the canonical subject,
+owner group and environment as first-class dimensions, run start, the bootstrap seeds and the approval
+service's writes all audited, and self-elevation distinguished in the outcome vocabulary. The runner
+API still emits nothing, there is still no read audit, and the sink is still the logger; those are
+remediation row 11's remaining halves, and the read audit is GAP-7's decision.
+
+**H41, closed, and it took a second rule.** The three acceptance criteria landed as written: a
+principal that cannot be attributed to a tenant is bound to nothing once the tenancy ledger names one,
+eviction is per counter and never forgives a deficit, and a start counts under an access context whose
+reach is the target environment's owner group whatever the caller can see. Closing the count exposed
+that the population counted and the population charged could still differ: a run is stamped with its
+version's owner group and the count matches on that stamp, while the counter is named by the
+environment's. An operator with cross-owner reach could make one group's version available in
+another's environment and the two bounds would each miss it. The second rule, recorded in ADR 0065, is
+that a version is made available, scheduled and run only in an environment its own owner group holds,
+refused at every surface with one problem type.
+
+**H45, found while closing H41.** The sibling sweep the audit prescribes found that the schedule
+run-now surface starts its target through management directly rather than through the operator
+start's admission, so capacity counting, the isolation and deploy-readiness gates and the run-level
+audit are all bypassed there. It is the H41 control's sibling path and is ranked with it. The tenancy
+agreement was applied to run-now at once; routing the whole admission through one component is
+remediation row 18.
+
+
 **What was checked and found sound**, so it is not re-litigated: injection is absent across all nine
 store backends, with uniform parameterisation, typed Mongo filters and constant Redis and NATS
 prefixes. A mechanical sweep of all 86 UI components found no HTML-injection XSS. The OAuth broker
@@ -612,14 +666,14 @@ Ordered by risk removed per unit of work, and by dependency. Detail, acceptance 
 backlog live in the audit result.
 
 **Close divergence before building the next layer on it.** Phase B builds freshness and integrity on
-top of the lease token, the store reach predicate, the run-id key and the audit primitive. Three of
-those four are now sound: the lease token's epoch is the run's, persisted and compared, so the anchor
-has an ordering key to be built on; the store reach predicate is enforced per backend and proven on the
-wire (H12 closed); and the run key is the composite `(environment, runId)` in every backend, so a
-tombstone keyed by the run's own address carries its environment with it (H18 closed). The audit
-primitive is the one that still diverges, and building read audit, tenant attribution and a durable sink
-on top of the change-blind mutation logger carries that divergence into the layer meant to close it,
-where it is considerably more expensive to find.
+top of the lease token, the store reach predicate, the run-id key and the audit primitive. All four
+are now sound enough to build on: the lease token's epoch is the run's, persisted and compared, so the
+anchor has an ordering key to be built on; the store reach predicate is enforced per backend and proven
+on the wire (H12 closed); the run key is the composite `(environment, runId)` in every backend, so a
+tombstone keyed by the run's own address carries its environment with it (H18 closed); and the audit
+primitive attributes one canonical subject with owner group and environment (H11 narrowed), so read
+audit and a durable sink are built on an attributed record rather than on a display name. The primitive
+is still change-blind, which is the property GAP-6 has to preserve rather than remove.
 
 | # | Action | Closes | Status |
 |---|--------|--------|--------|
@@ -632,11 +686,12 @@ where it is considerably more expensive to find.
 | 7 | Validate the submitted index against the stored row, and compare header and body sequence | H39, H40 | **Done.** H39's identity check is the coordinator's every-save comparison; H40's sequence check is the ingress requiring the body sequence and matching it to the header |
 | 8 | Persist a per-run epoch, authenticate the lease token, enforce both ADR 0065 §6 rules | H8, blocks the anchor | **Done.** The epoch is authenticated by comparison against the persisted grant rather than by a MAC over the token, see the H8 note in §12 |
 | 9 | Make pushdown provable in the conformance suite, non-compliant backends return false and fail closed | H12 | **Done.** The default implementation is gone, all twenty stores answer explicitly, the reach oracles are mandatory, and each backend's pushdown is flip-verified on its own wire; recorded as [ADR 0067](../adr/0067-reach-enforced-by-the-store-proven-on-the-wire.md). The follow-on conversions then closed the management-store sibling path on every backend |
-| 10 | Validate `baseUrl` and secret references on write, disable auto-redirect on every run-path client | H4 | Open |
-| 11 | Add read audit with tenant and canonical subject, instrument the runner API, give the audit a durable append-only sink | H11, UO-10 | Open |
-| 12 | Extend the self-elevation guard to read reach and scopes, build an access context on `security:*`, check the rule expression, add the own-request check | H10 | Open |
+| 10 | Validate `baseUrl` and secret references on write, disable auto-redirect on every run-path client | H4 | **Done.** On the tenant credentials API, not the store boundary, and the run path refuses a cross-origin redirect rather than following it stripped, see the H4 note in §12 |
+| 11 | Add read audit with tenant and canonical subject, instrument the runner API, give the audit a durable append-only sink | H11, UO-10 | **Partly done.** Canonical subject, owner group and environment on every mutation audit, run start, the bootstrap seeds and the approval service included. Read audit (GAP-7), runner-API instrumentation and the durable sink (GAP-6) remain |
+| 12 | Extend the self-elevation guard to read reach and scopes, build an access context on `security:*`, check the rule expression, add the own-request check | H10 | **Done.** The guard refuses any self-conferral, the security plane is reach-partitioned natively on all ten backends, the ceiling rule's expression is verified under a reserved namespace, and `grant` and `settle` carry the own-request check, see the H10 note in §12 |
 | 13 | Composite environment and run-id key with the 32-hex grammar, key the idempotent derivation | H18 | **Done.** The 32-hex grammar is validated at every ingress, deterministic ids are derived under the [run-derivation key](UBIQUITOUSLANGUAGE.md#run-derivation-key) with a distinguishable collision, the schedule registry owns schedule-id uniqueness, and every backend keys runs, leases and security tags by the composite [run address](UBIQUITOUSLANGUAGE.md#run-address), with the composite-address conformance oracles and per-backend flip evidence pinning it |
 | 14 | Add a per-run step budget and wall clock, enforce sub-workflow depth in production | H14 | Open |
 | 15 | Authenticate both sidecar surfaces and scope the guest read to the invoking sandbox | H9 | Open |
 | 16 | Fix the process layer, Dependabot path, SAST, dependency scanning, lock files, `SECURITY.md`, ADR implementation status | Process controls | Open |
 | 17 | Decide and record the GAP items as ADRs, egress policy, resource governance, audit durability, security headers, rate limiting, draft disclosure tier | GAP class | Open |
+| 18 | Route schedule run-now through the operator start's admission: capacity counting, isolation, deploy-readiness and the run-level audit | H45 | Open |
