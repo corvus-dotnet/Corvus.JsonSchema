@@ -376,22 +376,7 @@ internal sealed class ControlPlaneAccess
     {
         ClaimsPrincipal? principal = this.Principal;
         string subject = Security.AuditSubject.ResolveSubject(principal, this.subjectClaimType);
-        string? ownerGroup = null;
-        if (principal is not null)
-        {
-            // The owner-group key is fixed per instance (prefix + dimension), so it is built once, not per request.
-            string ownerGroupKey = this.ownerGroupTagKey ??= this.InternalTagPrefix + OwnerGroupTag.Dimension;
-            foreach (SecurityTag tag in this.InternalTags())
-            {
-                if (string.Equals(tag.Key, ownerGroupKey, StringComparison.Ordinal))
-                {
-                    ownerGroup = tag.Value;
-                    break;
-                }
-            }
-        }
-
-        return new AuditSubject(subject, ownerGroup);
+        return new AuditSubject(subject, principal is null ? null : this.CallerOwnerGroup());
     }
 
     /// <summary>Returns the internal tags to stamp onto a row the current principal creates — the caller's deployment
@@ -517,10 +502,12 @@ internal sealed class ControlPlaneAccess
     /// </remarks>
     public string? CallerOwnerGroup()
     {
-        ReadOnlySpan<byte> key = this.OwnerGroupTagKeyUtf8;
+        // The owner-group key is fixed per instance (prefix + dimension), so it is built once and compared as a string:
+        // re-encoding every stamped tag's key to UTF-8 per call allocated once per tag on every request that asked.
+        string key = this.ownerGroupTagKey ??= this.InternalTagPrefix + OwnerGroupTag.Dimension;
         foreach (SecurityTag tag in this.InternalTags())
         {
-            if (Encoding.UTF8.GetByteCount(tag.Key) == key.Length && Encoding.UTF8.GetBytes(tag.Key).AsSpan().SequenceEqual(key))
+            if (string.Equals(tag.Key, key, StringComparison.Ordinal))
             {
                 return string.IsNullOrEmpty(tag.Value) ? null : tag.Value;
             }

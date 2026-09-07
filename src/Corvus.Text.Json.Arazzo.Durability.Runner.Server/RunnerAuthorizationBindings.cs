@@ -182,7 +182,26 @@ public sealed class RunnerAuthorizationBindings : IRunnerEnvironmentBindings
             return RunnerBindings.None;
         }
 
+        // A principal bound to tenant environments none of which carries an owner group cannot be charged to any
+        // tenant (ADR 0066). In a deployment that stamps no owner groups that is every principal, and the shared
+        // deployment counter is the aggregate. Once the deployment has admitted an owner group it is tenant-aware, and
+        // charging such a principal to the deployment counter would let every one of them escape the per-tenant bound
+        // together, so it fails closed: bound to nothing, offered no work. The ledger is read only on this path, so the
+        // ordinary resolution costs nothing extra; a platform-only principal never reaches it.
+        if (holdsTenant && owner is null && await this.IsTenantAwareAsync(cancellationToken).ConfigureAwait(false))
+        {
+            return RunnerBindings.None;
+        }
+
         return live is null ? RunnerBindings.None : new RunnerBindings(live, owner);
+    }
+
+    // Whether the deployment has admitted at least one owner group: the tenancy ledger is the census, answered from
+    // one row rather than a scan of every environment.
+    private async ValueTask<bool> IsTenantAwareAsync(CancellationToken cancellationToken)
+    {
+        using ParsedJsonDocument<Environments.TenancyLedger>? ledger = await this.environments.GetTenancyLedgerAsync(cancellationToken).ConfigureAwait(false);
+        return ledger is { } l && l.RootElement.OwnerGroupCount > 0;
     }
 
     private readonly record struct Entry(RunnerBindings Bindings, DateTimeOffset ExpiresAt);

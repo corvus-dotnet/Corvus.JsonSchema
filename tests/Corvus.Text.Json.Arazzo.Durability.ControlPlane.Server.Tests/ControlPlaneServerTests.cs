@@ -763,6 +763,106 @@ public sealed class ControlPlaneServerTests
     }
 
     [TestMethod]
+    public async Task StartCatalogWorkflowRun_counts_capacity_per_owner_group_whatever_the_callers_reach()
+    {
+        // P1-9: the per-tenant run caps are measured against the target environment's owner group, not against whatever
+        // the caller's read reach happens to see. In the Open posture the caller sees the whole deployment; a limit of one
+        // concurrent run per tenant must still refuse acme's second start while admitting zeus's first.
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock, runDerivation: TestDerivation);
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
+        var environmentStore = new Corvus.Text.Json.Arazzo.Durability.Environments.InMemoryEnvironmentStore(clock);
+        var availabilityStore = new Corvus.Text.Json.Arazzo.Durability.Availability.InMemoryAvailabilityStore(clock);
+        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "acme")]), default);
+        await catalog.AddAsync(InputsWorkflowPackage("zflow"), new CatalogOwner("Team", "team@example.com"), default, SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "zeus")]), default);
+        await AddEnvironmentAsync(environmentStore, "acme-prod", "acme");
+        await AddEnvironmentAsync(environmentStore, "zeus-prod", "zeus");
+        (await availabilityStore.MakeAvailableAsync("flow", 1, "acme-prod", "ops", default)).Entry.Dispose();
+        (await availabilityStore.MakeAvailableAsync("zflow", 1, "zeus-prod", "ops", default)).Entry.Dispose();
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        app.MapArazzoControlPlane(
+            management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open,
+            environmentStore: environmentStore, availabilityStore: availabilityStore,
+            capacityOptions: new Capacity.ControlPlaneCapacityOptions { ConcurrentRunsPerTenant = 1 });
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+        await runnerRegistry.RegisterAsync(Runner("flow", 1), default);
+        await runnerRegistry.RegisterAsync(Runner("zflow", 1, runnerId: "r2"), default);
+
+        (await StartAsync(client, "flow", "acme-prod")).StatusCode.ShouldBe(HttpStatusCode.Accepted);
+        (await StartAsync(client, "flow", "acme-prod")).StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+        (await StartAsync(client, "zflow", "zeus-prod")).StatusCode.ShouldBe(HttpStatusCode.Accepted);
+        await app.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task StartCatalogWorkflowRun_refuses_an_unattributable_tenant_environment_in_a_tenant_aware_deployment()
+    {
+        // P1-9: once the deployment has admitted an owner group, a run cannot be charged to the shared deployment counter
+        // by landing in a tenant environment that carries none; that start is refused (fail closed). The platform
+        // environment is shared infrastructure and keeps the deployment counter.
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock, runDerivation: TestDerivation);
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
+        var environmentStore = new Corvus.Text.Json.Arazzo.Durability.Environments.InMemoryEnvironmentStore(clock);
+        var availabilityStore = new Corvus.Text.Json.Arazzo.Durability.Availability.InMemoryAvailabilityStore(clock);
+        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
+        await AddEnvironmentAsync(environmentStore, "orphan", null);
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Environments.Environment> platform =
+            Corvus.Text.Json.Arazzo.Durability.Environments.Environment.DraftPlatform("platform", "Platform", null, default))
+        {
+            (await environmentStore.AddAsync(platform.RootElement, "ops", default)).Dispose();
+        }
+
+        (await environmentStore.TryCommitTenancyLedgerAsync(default, "acme"u8.ToArray(), "ops", default)).ShouldBeTrue();
+        (await availabilityStore.MakeAvailableAsync("flow", 1, "orphan", "ops", default)).Entry.Dispose();
+        (await availabilityStore.MakeAvailableAsync("flow", 1, "platform", "ops", default)).Entry.Dispose();
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        app.MapArazzoControlPlane(
+            management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open,
+            environmentStore: environmentStore, availabilityStore: availabilityStore,
+            capacityOptions: new Capacity.ControlPlaneCapacityOptions { ConcurrentRunsPerTenant = 10 });
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+        await runnerRegistry.RegisterAsync(Runner("flow", 1), default);
+
+        HttpResponseMessage refused = await StartAsync(client, "flow", "orphan");
+        refused.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        using (Stj.JsonDocument problem = await ReadJsonAsync(refused))
+        {
+            problem.RootElement.GetProperty("type").GetString()!.ShouldEndWith("tenancy-unresolvable");
+        }
+
+        (await StartAsync(client, "flow", "platform")).StatusCode.ShouldBe(HttpStatusCode.Accepted);
+        await app.DisposeAsync();
+    }
+
+    private static Task<HttpResponseMessage> StartAsync(HttpClient client, string workflow, string environment)
+        => client.PostAsync(
+            $"/catalog/{workflow}/versions/1/runs?environment={environment}",
+            new StringContent("""{ "petId": 5 }""", Encoding.UTF8, "application/json"));
+
+    private static async Task AddEnvironmentAsync(Corvus.Text.Json.Arazzo.Durability.Environments.IEnvironmentStore store, string name, string? ownerGroup)
+    {
+        SecurityTagSet tags = ownerGroup is null ? default : SecurityTagSet.FromTags([new SecurityTag("sys:tenant", ownerGroup)]);
+        using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Environments.Environment> draft =
+            Corvus.Text.Json.Arazzo.Durability.Environments.Environment.Draft(name, name, null, tags);
+        (await store.AddAsync(draft.RootElement, "ops", default)).Dispose();
+    }
+
+    [TestMethod]
     public async Task StartCatalogWorkflowRun_is_idempotent_under_an_Idempotency_Key_header()
     {
         var clock = new MutableClock(T0);

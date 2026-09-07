@@ -1,7 +1,10 @@
 # ADR 0066. Rate and capacity limiting: two scopes and in-process buckets for rates, store-measured standing magnitudes for capacity
 
 Date: 2026-08-07. Revised the same day: the standing magnitudes (run counts and registered runners) are
-enforced by a separate, store-measured capacity seam rather than by buckets. Status: **Accepted**. Scope:
+enforced by a separate, store-measured capacity seam rather than by buckets. Revised 2026-09-04: counters
+no longer collapse across tenants (P1-9 of the 2026-08-07 security audit): a tenant that cannot be resolved
+fails closed once the deployment is tenant-aware, eviction is per counter, and capacity counts are scoped by
+owner group independently of the caller's reach. Status: **Accepted**. Scope:
 quota and capacity enforcement for ADR 0065 decision 3 (#876). This records how the limits ADR 0065
 requires are actually enforced, what the shipped implementation does **not** deliver, and why a runner is
 allowed to wait a refusal out.
@@ -92,6 +95,15 @@ with the tighter refusing. The tenant is resolved from the same read and the sam
 the principal's reach, so a counter can never be charged on a different schedule from the
 authorization that bounds it.
 
+**A tenant that cannot be resolved fails closed once the deployment is tenant-aware.** The tenancy
+ledger is the deployment's census: a deployment whose ledger has admitted no owner group stamps none,
+has one tenant by construction, and charges every principal to the shared deployment counter. Once an
+owner group has been admitted, a principal bound to tenant environments none of which carries an owner
+group cannot be charged to any tenant, and charging it to the deployment counter would let every such
+principal escape the per-tenant bound together, so it resolves to no bindings at all and is offered no
+work. A principal bound only to the platform environment keeps the deployment counter: the platform
+environment is shared infrastructure, and the system runners live there.
+
 `IRunnerQuotaGuard` is the seam. `TokenBucketRunnerQuotaGuard` is the in-process implementation and
 states its own limitation in its documentation; a deployment that runs several instances and means
 the aggregate literally supplies a guard over shared state.
@@ -113,6 +125,12 @@ Consequential rules, each of which is load-bearing:
 - **Metering is on unless the deployment turns it off**, by passing `NoRunnerQuotaGuard.Instance`. A
   quota a deployment must opt into is one most deployments will not have, and the load it bounds does
   not arrive with notice.
+- **Eviction is per counter, and never forgives a deficit.** When the counter table reaches its cap, the
+  guard sweeps out the buckets that have refilled to full, which carry no state worth keeping. If none
+  has, every counter in the table is in deficit at once, and the table is allowed to exceed its cap
+  rather than clear: the cap is a housekeeping trigger, not a bound, and clearing would hand the whole
+  deployment a fresh allowance on a schedule any caller could trigger by presenting new counters. The
+  table is bounded by the authorized principals and admitted owner groups, which a caller cannot mint.
 - **Read volume is charged after the fact.** A checkpoint read has no size until it has been read, so
   it is metered in two halves: a probe for any remaining allowance before the read, and the bytes
   actually moved charged afterwards through `SpendAsync`, which cannot refuse. The counter carries the
@@ -135,6 +153,16 @@ the standing totals on the control plane, counting the store rather than caching
 magnitude is wrong in the direction that matters, admitting work a tenant no longer has room for for
 as long as the window lasts. Every count is bounded at the limit, so a tenant far above its cap costs
 the same to refuse as one just over it.
+
+- **A count is scoped by owner group, independently of the caller's reach.** The run caps bound a tenant's
+  accumulation, so the population counted is the tenant's, whatever the caller can see: an operator with
+  unrestricted read, and every caller in the `ScopesOnly` and `Open` postures, would otherwise be counted
+  against the whole deployment. A start resolves the target environment's owner group and counts under an
+  access context whose reach is that group (the rule `<prefix>tenant == $claim.tenant`, bound to the group
+  through the claims dictionary rather than a literal woven into the grammar); the platform environment
+  counts under the deployment. A tenant environment that carries no owner group is refused (409
+  `tenancy-unresolvable`, audited) once the deployment is tenant-aware, and counts under the deployment
+  before that, the same rule the runner API applies to its bindings.
 
 - **A capacity refusal is not a rate refusal wearing a different name.** Waiting does not clear it:
   the caller has to release capacity before the request is admitted. The contract therefore documents

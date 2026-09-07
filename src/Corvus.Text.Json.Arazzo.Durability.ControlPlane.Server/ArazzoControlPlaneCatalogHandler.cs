@@ -47,6 +47,8 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     private readonly IAvailabilityStore? availabilityStore;
     private readonly IWorkflowDeploymentStore? deployments;
     private readonly Capacity.IControlPlaneCapacityGuard? capacity;
+    private readonly ConcurrentDictionary<string, AccessContext> tenantScopes = new(StringComparer.Ordinal);
+    private SecurityRule? tenantRule;
     private readonly WorkflowSimulator? simulator;
     private readonly ILogger? auditLogger;
 
@@ -502,6 +504,32 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
 
     /// <inheritdoc/>
     // The capacity refusal, in the same shape the runner API's quota refusals use so one client shape reads both.
+    // An access context whose reach is exactly one owner group's rows, for counting a tenant's population independently
+    // of the caller's reach. Built once per owner group and held, since both the filter and the context are immutable:
+    // the population of owner groups is bounded by the tenancy ledger, which a caller cannot mint into, so the table is
+    // bounded by the deployment's own admissions rather than by request volume. The rule is compiled once per handler
+    // (the internal prefix is fixed per deployment) and the group is bound through the claims dictionary, never woven
+    // into the grammar as a literal.
+    private AccessContext TenantScope(string ownerGroup)
+        => this.tenantScopes.GetOrAdd(
+            ownerGroup,
+            static (group, self) =>
+            {
+                SecurityRule rule = self.tenantRule ??= SecurityRule.Compile(self.access.InternalTagPrefix + OwnerGroupTag.Dimension + " == $claim." + OwnerGroupTag.Dimension);
+                var claims = new Dictionary<string, IReadOnlyList<string>>(1) { [OwnerGroupTag.Dimension] = [group] };
+                var reach = new SecurityFilter([rule], claims);
+                return new AccessContext(reach, reach, reach);
+            },
+            this);
+
+    // Whether the deployment has admitted at least one owner group: the tenancy ledger is the census, one row rather
+    // than a scan of every environment.
+    private static async ValueTask<bool> IsTenantAwareAsync(IEnvironmentStore environments, CancellationToken cancellationToken)
+    {
+        using ParsedJsonDocument<TenancyLedger>? ledger = await environments.GetTenancyLedgerAsync(cancellationToken).ConfigureAwait(false);
+        return ledger is { } l && l.RootElement.OwnerGroupCount > 0;
+    }
+
     private static Models.QuotaProblem.Source CapacityProblem(in Capacity.ControlPlaneCapacityRejection rejection)
         => Models.QuotaProblem.Build(
             counter: rejection.Counter,
@@ -547,6 +575,8 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         // against a hosting runner's advertised model at the gate below; absent an environment registry it stays InProcess.
         RunIsolationModel requiredIsolation = RunIsolationModel.InProcess;
         string requiredRuntimeIdentifier = "linux-x64";
+        bool platformEnvironment = false;
+        string? environmentOwnerGroup = null;
         if (this.environmentStore is { } envStore)
         {
             using var environmentDoc = await envStore.GetAsync(environment, ctx, cancellationToken).ConfigureAwait(false);
@@ -558,6 +588,12 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
 
             requiredIsolation = environmentDoc.RootElement.RequiredIsolationValue;
             requiredRuntimeIdentifier = environmentDoc.RootElement.RuntimeIdentifierValue;
+
+            // The tenancy the run's capacity is charged to (ADR 0066), read off the record already in hand: the platform
+            // environment is shared infrastructure and counts against the deployment; a tenant environment counts
+            // against its owner group.
+            platformEnvironment = TenantEnvironmentSealing.IsPlatform(environmentDoc.RootElement);
+            environmentOwnerGroup = platformEnvironment ? null : OwnerGroupTag.Read(environmentDoc.RootElement, this.access.OwnerGroupTagKeyUtf8);
         }
 
         CatalogVersion catalogVersion = catalogVersionDoc.RootElement;
@@ -638,16 +674,40 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         // deployment's. The owner group is read only to name the counter in the refusal.
         if (this.capacity is { } guard)
         {
-            string counter = this.access.CallerOwnerGroup() ?? Capacity.ControlPlaneCapacityNames.Deployment;
+            // The population counted is the tenant's, whatever the caller's reach can see (ADR 0066): an operator with
+            // unrestricted read, and every caller in the ScopesOnly and Open postures, would otherwise be counted against
+            // the whole deployment. The scope comes from the target environment's owner group, not the caller's.
+            string counter;
+            AccessContext countScope;
+            if (environmentOwnerGroup is { } ownerGroup)
+            {
+                counter = ownerGroup;
+                countScope = this.TenantScope(ownerGroup);
+            }
+            else if (!platformEnvironment && this.environmentStore is { } tenancy && await IsTenantAwareAsync(tenancy, cancellationToken).ConfigureAwait(false))
+            {
+                // A tenant environment carrying no owner group cannot be charged to a tenant. Before the deployment has
+                // admitted any owner group that is every environment and the deployment counter is the aggregate; once
+                // it has, charging such a run to the shared counter would let it escape the per-tenant bound, so the
+                // start fails closed.
+                GovernanceAudit.Mutation(this.auditLogger, "run.start", this.AuditActor(), RunTargetKind, workflowId, "refused-tenancy-unresolvable", environment);
+                return StartCatalogWorkflowRunResult.Conflict(
+                    Problem("tenancy-unresolvable", "Tenant unresolvable", 409, $"Environment '{environment}' carries no owner group in a tenant-aware deployment, so a run there cannot be charged to a tenant."), workspace);
+            }
+            else
+            {
+                counter = Capacity.ControlPlaneCapacityNames.Deployment;
+                countScope = AccessContext.System;
+            }
 
             // Concurrency first: it is the limit a healthy tenant actually meets, and it releases itself, so reporting
             // it in preference to the storage limit points the caller at the one that will clear.
-            if (await guard.TryAdmitAsync(Capacity.ControlPlaneCapacityKind.ConcurrentRuns, counter, ctx, cancellationToken).ConfigureAwait(false) is { } busy)
+            if (await guard.TryAdmitAsync(Capacity.ControlPlaneCapacityKind.ConcurrentRuns, counter, countScope, cancellationToken).ConfigureAwait(false) is { } busy)
             {
                 return StartCatalogWorkflowRunResult.TooManyRequests(CapacityProblem(busy), workspace, CapacityRetryAfter());
             }
 
-            if (await guard.TryAdmitAsync(Capacity.ControlPlaneCapacityKind.StoredRuns, counter, ctx, cancellationToken).ConfigureAwait(false) is { } full)
+            if (await guard.TryAdmitAsync(Capacity.ControlPlaneCapacityKind.StoredRuns, counter, countScope, cancellationToken).ConfigureAwait(false) is { } full)
             {
                 return StartCatalogWorkflowRunResult.TooManyRequests(CapacityProblem(full), workspace, CapacityRetryAfter());
             }

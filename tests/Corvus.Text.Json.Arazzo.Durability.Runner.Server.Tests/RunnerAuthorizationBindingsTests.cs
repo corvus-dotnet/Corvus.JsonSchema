@@ -181,6 +181,31 @@ public sealed class RunnerAuthorizationBindingsTests
     }
 
     [TestMethod]
+    public async Task A_tenant_environment_with_no_owner_group_binds_nothing_in_a_tenant_aware_deployment()
+    {
+        // P1-9: once the deployment has admitted an owner group, a runner whose environments carry none cannot be
+        // charged to any tenant, and charging it to the shared deployment counter would let every such runner escape
+        // the per-tenant quota together. It fails closed: bound to nothing, so it is offered no work.
+        Fixture fixture = await Fixture.StartAsync(tenantAware: true);
+        await fixture.AuthorizeAsync(Production, "runner-1", Machine);
+        RunnerBindings resolved = await fixture.Bindings.ResolveAsync(Machine, default);
+        resolved.Environments.ShouldBeEmpty();
+        resolved.Tenant.ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task A_platform_only_principal_keeps_the_deployment_counter_in_a_tenant_aware_deployment()
+    {
+        // The platform environment is shared infrastructure (the system runners live there), not a tenant, so a
+        // runner bound only to it is charged to the deployment even once the deployment is tenant-aware.
+        Fixture fixture = await Fixture.StartAsync(tenantAware: true);
+        await fixture.AuthorizeAsync(Platform, "runner-1", Machine);
+        RunnerBindings resolved = await fixture.Bindings.ResolveAsync(Machine, default);
+        resolved.Environments.ShouldBe([Platform]);
+        resolved.Tenant.ShouldBeNull();
+    }
+
+    [TestMethod]
     public async Task A_principal_bound_across_two_owner_groups_is_bound_to_nothing()
     {
         // The same argument as the platform/tenant pair: a binding spanning owner groups is a cross-tenant handle, which
@@ -235,7 +260,7 @@ public sealed class RunnerAuthorizationBindingsTests
 
         public RunnerAuthorizationBindings Bindings { get; }
 
-        public static async ValueTask<Fixture> StartAsync(TimeSpan? cacheWindow = null, string? internalTagPrefix = null)
+        public static async ValueTask<Fixture> StartAsync(TimeSpan? cacheWindow = null, string? internalTagPrefix = null, bool tenantAware = false)
         {
             var clock = new TestClock(T0);
             var authorizations = new InMemoryEnvironmentRunnerAuthorizationStore(clock);
@@ -252,6 +277,13 @@ public sealed class RunnerAuthorizationBindingsTests
             await AddAsync(environments, Owned(AcmeOne, "acme"));
             await AddAsync(environments, Owned(AcmeTwo, "acme"));
             await AddAsync(environments, Owned(ZeusOne, "zeus"));
+
+            // A tenant-aware deployment is one whose tenancy ledger has admitted an owner group (the census the
+            // environments API keeps); seeding the store directly bypasses that API, so the ledger is committed here.
+            if (tenantAware)
+            {
+                (await environments.TryCommitTenancyLedgerAsync(default, "acme"u8.ToArray(), "ops", default)).ShouldBeTrue();
+            }
 
             var bindings = new RunnerAuthorizationBindings(authorizations, environments, cacheWindow, timeProvider: clock, internalTagPrefix: internalTagPrefix);
             return new Fixture(authorizations, clock, bindings);

@@ -125,13 +125,15 @@ public sealed class TokenBucketRunnerQuotaGuard : IRunnerQuotaGuard
             return existing;
         }
 
-        // Evict wholesale rather than by age. Every bucket refills at the same rate, so a full table is one whose
-        // entries are mostly full anyway, and tracking per-bucket recency to choose a victim would cost more on the hot
-        // path than it saves. Clearing forgives whatever was outstanding, which errs towards admitting rather than
-        // refusing: a table that overflowed is not evidence about any one caller.
+        // Evict per counter, never wholesale (ADR 0066). A bucket that has refilled to full carries no state, so
+        // sweeping those out forgives nothing; a bucket in deficit is the record that a caller is at its limit, and
+        // clearing it would hand that caller a fresh allowance on a schedule any caller could trigger by presenting new
+        // counters. If nothing is full, every counter in the table is in deficit at once, and the table grows past the
+        // cap rather than clearing: the cap is a housekeeping trigger, not a bound, and the table is bounded by the
+        // authorized principals and admitted owner groups, which a caller cannot mint.
         if (this.buckets.Count >= this.options.MaximumCounters)
         {
-            this.buckets.Clear();
+            this.SweepFull();
         }
 
         // A bucket starts full. Starting empty would refuse the first request to every new counter, which happens on
@@ -147,11 +149,38 @@ public sealed class TokenBucketRunnerQuotaGuard : IRunnerQuotaGuard
     // aggregate. The cost is that two concurrent callers can both pass the same test and both spend, overshooting a
     // limit by up to the concurrency level. That self-corrects on the next request, since the tokens are already gone
     // and the deficit is what the next caller sees.
+    // Removes every bucket that has refilled to full. Buckets refill continuously, so most of an overflowing table is
+    // full at any moment and the sweep reclaims it; one that stays full-of-deficits is a table whose every counter is
+    // simultaneously at its limit, which is itself a signal, and is left to grow.
+    private void SweepFull()
+    {
+        long now = this.timeProvider.GetTimestamp();
+        long frequency = this.timeProvider.TimestampFrequency;
+        foreach (KeyValuePair<(RunnerQuotaKind Kind, RunnerQuotaScope Scope, string? Counter), Bucket> entry in this.buckets)
+        {
+            RunnerQuotaLimit limit = this.options.For(entry.Key.Kind, entry.Key.Scope);
+            if (entry.Value.IsFull(limit, now, frequency))
+            {
+                this.buckets.TryRemove(entry.Key, out _);
+            }
+        }
+    }
+
     private sealed class Bucket(double initialTokens, long createdAt)
     {
         private readonly object gate = new();
         private double tokens = initialTokens;
         private long lastTouched = createdAt;
+
+        // Whether the bucket holds its full burst again, so evicting it forgives nothing.
+        public bool IsFull(in RunnerQuotaLimit limit, long now, long frequency)
+        {
+            lock (this.gate)
+            {
+                this.Refill(limit, now, frequency);
+                return this.tokens >= limit.EffectiveBurst;
+            }
+        }
 
         public double Deficit(in RunnerQuotaLimit limit, long cost, long now, long frequency)
         {

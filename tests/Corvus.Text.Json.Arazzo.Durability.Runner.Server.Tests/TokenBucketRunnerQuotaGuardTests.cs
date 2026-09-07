@@ -262,6 +262,25 @@ public sealed class TokenBucketRunnerQuotaGuardTests
     }
 
     [TestMethod]
+    public async Task An_overflowing_counter_table_does_not_forgive_another_tenants_deficit()
+    {
+        // P1-9: eviction is per counter. A tenant at its limit stays refused while other tenants arrive and the table
+        // overflows; forgiving every deficit at once would hand the whole deployment a fresh allowance on a schedule
+        // any caller could trigger by registering new counters.
+        Fixture fixture = Fixture.With(o =>
+        {
+            o.TenantCheckpoints = new RunnerQuotaLimit(1, 1);
+            o.RunnerCheckpoints = RunnerQuotaLimit.None;
+            o.MaximumCounters = 2;
+        });
+        await fixture.CheckpointAsync(Runner, tenant: "acme");
+        (await fixture.CheckpointAsync(Runner, tenant: "acme")).ShouldNotBeNull();
+        (await fixture.CheckpointAsync(Runner, tenant: "zeus")).ShouldBeNull();
+        (await fixture.CheckpointAsync(Runner, tenant: "omega")).ShouldBeNull();
+        (await fixture.CheckpointAsync(Runner, tenant: "acme")).ShouldNotBeNull();
+    }
+
+    [TestMethod]
     public async Task The_retry_after_covers_the_deficit()
     {
         // A Retry-After that is too short is a spin: the caller comes back, is refused again, and has learned nothing.
