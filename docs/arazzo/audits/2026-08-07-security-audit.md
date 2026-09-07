@@ -557,6 +557,11 @@ declared unsupported by those that cannot; and whether the micro-guest policy be
 This is accepted risk `AR-15` and assumption `ASU-3` in the threat model.
 
 ### GAP-5 · `TB-7` · Execution resource governance
+
+> **Decided.** [ADR 0068](../adr/0068-execution-budget-fuel-wall-clock-depth.md): fuel and wall clock
+> both, plus the depth cap; a deployment ceiling an environment may only tighten, resolved at start;
+> runner-enforced and coordinator-verified on every save; a terminal non-retryable fault per limit; the
+> per-step timeout, response cap and `Retry-After` ceiling on the same record. Implementation open.
 No ADR bounds a run's resource consumption. Confirmed absent: a per-run step budget, a wall clock,
 sub-workflow recursion depth in production (`MaxSubWorkflowDepth = 8` is enforced only in the draft
 recorder and the test tracer, and production returns `null`), a response size cap, a step-call
@@ -567,6 +572,11 @@ fuel-bounded at 256 steps and production is not. **Decide:** the budget model, w
 clock or both, where it is configured, and the fault classification when exceeded.
 
 ### GAP-6 · all boundaries · Audit as evidence
+
+> **Decided.** [ADR 0069](../adr/0069-audit-as-evidence-append-only-chained-signed-sink.md): an
+> append-only sink seam outside the operational store, hash-chained with signed heads anchored through
+> the collector, asserted at startup and failing governance mutations closed in the secured postures,
+> verified by a CLI command; the record is ADR 0038's, unchanged. Implementation open.
 ADR 0038 deliberately scopes the audit primitive to payload-safety and says nothing about durability.
 There is no audit store type in the repository. The audit is an `ILogger` call plus an activity,
 self-documented as best-effort observability rather than a durable store. Three ways it evaporates:
@@ -576,6 +586,10 @@ with retention and tamper-evidence, separated from the operational store, plus a
 that a sink is attached. The codebase already ships an ECDSA signing stack.
 
 ### GAP-7 · `TB-2`, `TB-4` · Read-side audit
+
+> **Decided.** [ADR 0070](../adr/0070-read-side-audit-three-tiers.md): payload disclosures audited,
+> reach refusals audited with the requested id, bulk reads metered. The store half is already closed by
+> ADR 0067. Implementation open.
 `GovernanceAudit` exposes only `Mutation`. No read, list, query or search audit exists, so the
 highest-value event, one tenant's principal reading another's data, produces no record. On the four
 in-process-filtering backends from P1-2 the cross-tenant rows are physically read on every query and
@@ -583,6 +597,11 @@ leave no trace at the store either. **Decide:** which read surfaces are audited 
 granularity. `SensitiveReadAudit` on the step journal is a good model.
 
 ### GAP-8 · `TB-2` · Authentication event telemetry
+
+> **Decided.** [ADR 0071](../adr/0071-authentication-event-telemetry.md): a helper the host attaches to
+> its authentication events, a counter for the rate and a refusal record per failure without token
+> material, the runner API's own refusals audited, required in the secured postures; throttling stays
+> with GAP-3. Implementation open.
 Neither successful nor failed authentication is recorded anywhere, so brute force and credential
 stuffing are undetectable by construction. Authorization denials on read paths are likewise
 unrecorded, which matters more than usual in a deliberately non-disclosing system, since ADR 0004

@@ -49,6 +49,7 @@ The template to follow for a full, fork-bearing ADR is
 | [0015](0015-access-overview-server-aggregated.md) | The access overview is server-aggregated | Accepted |
 | [0016](0016-control-plane-security-mode.md) | `ControlPlaneSecurityMode`: one explicit posture, no insecure default | Accepted |
 | [0067](0067-reach-enforced-by-the-store-proven-on-the-wire.md) | Reach is enforced by the store, mirrored queryably, and proven on the wire | Accepted |
+| [0071](0071-authentication-event-telemetry.md) | Authentication event telemetry: a library helper the host wires, and audited runner-API refusals | Accepted, not yet implemented |
 
 ### Engine and durability
 
@@ -84,6 +85,7 @@ The template to follow for a full, fork-bearing ADR is
 | [0064](0064-microguest-snapshots-after-warmup-init-run-split.md) | The micro-guest snapshots after guest warm-up: init once, restore-and-run per advance | Accepted |
 | [0065](0065-control-plane-owns-store-runners-encrypt-payload.md) | The control plane owns the store and fronts all checkpointing; runners encrypt the checkpoint payload | Accepted |
 | [0066](0066-runner-api-rate-and-capacity-limiting.md) | Rate and capacity limiting: two scopes and in-process buckets for rates, store-measured standing magnitudes for capacity | Accepted |
+| [0068](0068-execution-budget-fuel-wall-clock-depth.md) | Execution budget: fuel, wall clock and depth, set per deployment and per environment, enforced by the runner and verified by the coordinator | Accepted, not yet implemented |
 | [0029](0029-native-heartbeat-partial-update.md) | Native server-side partial update for the hot heartbeat path | Accepted |
 
 ### Catalog
@@ -104,6 +106,8 @@ The template to follow for a full, fork-bearing ADR is
 | [0036](0036-bounded-count-contract.md) | The bounded count contract | Accepted |
 | [0037](0037-bytes-native-seams.md) | Bytes-native seams: no record-to-document string round-trips | Accepted |
 | [0038](0038-payload-safe-governance-audit.md) | A payload-safe governance-audit primitive | Accepted |
+| [0069](0069-audit-as-evidence-append-only-chained-signed-sink.md) | Audit as evidence: an append-only, hash-chained, signed sink outside the operational store | Accepted, not yet implemented |
+| [0070](0070-read-side-audit-three-tiers.md) | Read-side audit in three tiers: disclosures audited, refusals audited, bulk reads metered | Accepted, not yet implemented |
 | [0039](0039-api-first-openapi-source-of-truth.md) | API-first: the OpenAPI surface is the source of truth | Accepted |
 | [0054](0054-run-index-carries-typed-scalar-columns.md) | The run index carries typed scalar columns, not bytes-native values | Accepted |
 

@@ -344,6 +344,10 @@ recording what does not, because a model built only from holes mis-ranks the fix
 | Governance audit attributes one canonical subject with owner group and environment on every mutation, including run start, bootstrap seeds and approval-service writes | Holds | `Security/AuditSubject.cs`, `Security/GovernanceAudit.cs` |
 | Quota and capacity counters isolate by owner group, fail closed once the tenancy ledger names one, evict per counter, count by the target environment's owner group | Holds | `RunnerAuthorizationBindings.cs`, `TokenBucketRunnerQuotaGuard.SweepFull`, `ArazzoControlPlaneCatalogHandler.TenantScope` |
 | A version is admitted only into an environment its own owner group holds, at promotion, promotion request, schedule and run start | Holds | `OwnerGroupTag.Agrees`, `TenancyAgreement.cs` |
+| Execution budget: fuel, wall clock and depth per run, deployment ceiling with a tightening environment override, runner-enforced and coordinator-verified on every save, terminal non-retryable fault | Designed | [ADR 0068](../adr/0068-execution-budget-fuel-wall-clock-depth.md) |
+| Audit sink: append-only, hash-chained, signed heads anchored through the collector, outside the operational store, asserted at startup and failing governance closed in the secured postures | Designed | [ADR 0069](../adr/0069-audit-as-evidence-append-only-chained-signed-sink.md) |
+| Read-side audit in three tiers: payload disclosures audited, reach refusals audited, bulk reads metered | Designed | [ADR 0070](../adr/0070-read-side-audit-three-tiers.md) |
+| Authentication telemetry helper the host registers, runner-API refusals audited, required in the secured postures | Designed | [ADR 0071](../adr/0071-authentication-event-telemetry.md) |
 | Envelope and payload split, unified MAC, blind indexes, tenant anchor, initiator sealing, re-key sweep | Designed | `Durability/Anchoring/*`, conformance-tested |
 
 ### 7.2 Process
@@ -360,7 +364,7 @@ recording what does not, because a model built only from holes mis-ranks the fix
 | Dependency updates | Absent | Present but inert, Dependabot targets a directory that does not exist in this repository |
 | Reproducible restore | Absent | Lock files only on the legacy v4 projects |
 | Vulnerability disclosure policy | Absent | No `SECURITY.md` |
-| Implementation status recorded in ADRs | Absent | A reader credits designed-but-unbuilt barriers. **The root cause of the DIV class** |
+| Implementation status recorded in ADRs | Partial | ADRs 0068 to 0071 open with an implementation line; the earlier records do not carry one, so a reader still credits designed-but-unbuilt barriers there. **The root cause of the DIV class** (PROC-6) |
 | Observability coverage reference | Partial | Claims verification against the handlers, points at an anchor that no longer exists, omits five emitted actions |
 
 ### 7.3 People
@@ -653,6 +657,16 @@ audit are all bypassed there. It is the H41 control's sibling path and is ranked
 agreement was applied to run-now at once; routing the whole admission through one component is
 remediation row 18.
 
+**H14, decided, not closed.** [ADR 0068](../adr/0068-execution-budget-fuel-wall-clock-depth.md)
+records the budget: fuel, wall clock and the depth cap, a deployment ceiling an environment may only
+tighten, enforced by the runner and verified by the coordinator on every save so a runner that ignores it
+cannot persist the run past it, and a terminal non-retryable fault per limit. The row closes when the
+coordinator's check and the runner's enforcement land with their tests. GAP-6, GAP-7 and GAP-8 are
+decided the same day as [ADR 0069](../adr/0069-audit-as-evidence-append-only-chained-signed-sink.md),
+[ADR 0070](../adr/0070-read-side-audit-three-tiers.md) and
+[ADR 0071](../adr/0071-authentication-event-telemetry.md); none has a ledger row of its own, and the
+detection rows they change in §8 move when the code does.
+
 
 **What was checked and found sound**, so it is not re-litigated: injection is absent across all nine
 store backends, with uniform parameterisation, typed Mongo filters and constant Redis and NATS
@@ -690,8 +704,8 @@ is still change-blind, which is the property GAP-6 has to preserve rather than r
 | 11 | Add read audit with tenant and canonical subject, instrument the runner API, give the audit a durable append-only sink | H11, UO-10 | **Partly done.** Canonical subject, owner group and environment on every mutation audit, run start, the bootstrap seeds and the approval service included. Read audit (GAP-7), runner-API instrumentation and the durable sink (GAP-6) remain |
 | 12 | Extend the self-elevation guard to read reach and scopes, build an access context on `security:*`, check the rule expression, add the own-request check | H10 | **Done.** The guard refuses any self-conferral, the security plane is reach-partitioned natively on all ten backends, the ceiling rule's expression is verified under a reserved namespace, and `grant` and `settle` carry the own-request check, see the H10 note in §12 |
 | 13 | Composite environment and run-id key with the 32-hex grammar, key the idempotent derivation | H18 | **Done.** The 32-hex grammar is validated at every ingress, deterministic ids are derived under the [run-derivation key](UBIQUITOUSLANGUAGE.md#run-derivation-key) with a distinguishable collision, the schedule registry owns schedule-id uniqueness, and every backend keys runs, leases and security tags by the composite [run address](UBIQUITOUSLANGUAGE.md#run-address), with the composite-address conformance oracles and per-backend flip evidence pinning it |
-| 14 | Add a per-run step budget and wall clock, enforce sub-workflow depth in production | H14 | Open |
+| 14 | Add a per-run step budget and wall clock, enforce sub-workflow depth in production | H14 | **Decided, open.** [ADR 0068](../adr/0068-execution-budget-fuel-wall-clock-depth.md); implementation is the next code piece |
 | 15 | Authenticate both sidecar surfaces and scope the guest read to the invoking sandbox | H9 | Open |
 | 16 | Fix the process layer, Dependabot path, SAST, dependency scanning, lock files, `SECURITY.md`, ADR implementation status | Process controls | Open |
-| 17 | Decide and record the GAP items as ADRs, egress policy, resource governance, audit durability, security headers, rate limiting, draft disclosure tier | GAP class | Open |
+| 17 | Decide and record the GAP items as ADRs, egress policy, resource governance, audit durability, security headers, rate limiting, draft disclosure tier | GAP class | **Partly done.** Resource governance, audit durability, read audit and authentication telemetry are [ADR 0068](../adr/0068-execution-budget-fuel-wall-clock-depth.md) to [ADR 0071](../adr/0071-authentication-event-telemetry.md); GAP-1 to GAP-4 and GAP-9 onward remain to decide |
 | 18 | Route schedule run-now through the operator start's admission: capacity counting, isolation, deploy-readiness and the run-level audit | H45 | Open |
