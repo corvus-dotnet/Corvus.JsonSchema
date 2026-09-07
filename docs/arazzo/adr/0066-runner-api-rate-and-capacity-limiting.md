@@ -162,7 +162,10 @@ the same to refuse as one just over it.
   through the claims dictionary rather than a literal woven into the grammar); the platform environment
   counts under the deployment. A tenant environment that carries no owner group is refused (409
   `tenancy-unresolvable`, audited) once the deployment is tenant-aware, and counts under the deployment
-  before that, the same rule the runner API applies to its bindings.
+  before that, the same rule the runner API applies to its bindings. The population counted is the population
+  charged because a version's owner group is required to be its environment's at promotion, scheduling and
+  start (ADR 0065): a run is stamped with the version's owner group and the count matches on that stamp, so
+  the rule is what makes the two the same group.
 
 - **A capacity refusal is not a rate refusal wearing a different name.** Waiting does not clear it:
   the caller has to release capacity before the request is admitted. The contract therefore documents

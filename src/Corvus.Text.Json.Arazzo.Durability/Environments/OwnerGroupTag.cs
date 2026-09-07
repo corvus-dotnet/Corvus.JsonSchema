@@ -22,7 +22,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Environments;
 /// <para>
 /// The owner group is written as a management tag rather than a column because reach in this system is expressed in
 /// identity terms throughout (ADR 0016). Reading it is therefore a walk of the tag set rather than a property read, and
-/// the walk's cost is why <see cref="Read"/> is documented for the resolution path and <see cref="IsTenantOwned"/> for
+/// the walk's cost is why <see cref="Read(in Environment, ReadOnlySpan{byte})"/> is documented for the resolution path and <see cref="IsTenantOwned"/> for
 /// the scan.
 /// </para>
 /// </remarks>
@@ -64,8 +64,15 @@ public static class OwnerGroupTag
     /// <remarks>The scan's form of the question. It answers without materializing the value, so a page of environments
     /// can be walked without allocating per row.</remarks>
     public static bool IsTenantOwned(in Environment environment, ReadOnlySpan<byte> ownerGroupKeyUtf8)
+        => IsStamped(environment.ManagementTagsValue, ownerGroupKeyUtf8);
+
+    /// <summary>Whether <paramref name="tags"/> carries a non-empty owner group.</summary>
+    /// <param name="tags">A stamped tag set: an environment's management tags, or a catalog version's security tags.</param>
+    /// <param name="ownerGroupKeyUtf8">The deployment's owner-group tag key.</param>
+    /// <returns><see langword="true"/> if an owner group is stamped and non-empty.</returns>
+    public static bool IsStamped(in SecurityTagSet tags, ReadOnlySpan<byte> ownerGroupKeyUtf8)
     {
-        SecurityTagSet.Utf8Enumerator e = environment.ManagementTagsValue.EnumerateUtf8();
+        SecurityTagSet.Utf8Enumerator e = tags.EnumerateUtf8();
         try
         {
             while (e.MoveNext())
@@ -84,6 +91,42 @@ public static class OwnerGroupTag
         return false;
     }
 
+    /// <summary>Whether a version stamped with <paramref name="versionTags"/> may be made available in, scheduled into, or
+    /// run in <paramref name="environment"/> (ADR 0065): the version's owner group is the environment's, where carrying
+    /// none agrees only with carrying none.</summary>
+    /// <param name="versionTags">The catalog version's security tags, which every run of it is stamped with.</param>
+    /// <param name="environment">The target environment.</param>
+    /// <param name="ownerGroupKeyUtf8">The deployment's owner-group tag key.</param>
+    /// <returns><see langword="true"/> if the two owner groups agree.</returns>
+    /// <remarks>
+    /// <para>A run is stamped with its version's owner group and its capacity is charged to its environment's (ADR 0066),
+    /// so the two agreeing is what makes the population counted the population charged. The platform environment carries
+    /// no owner group, so it admits only versions carrying none: it is shared infrastructure, and a tenant's workflow has no
+    /// business executing there.</para>
+    /// <para>String-free. The environment's value is compared inside the version set while the environment enumerator is
+    /// alive; the inner enumerator owns its own unescape scratch, so the outer span stays valid across the scan.</para>
+    /// </remarks>
+    public static bool Agrees(in SecurityTagSet versionTags, in Environment environment, ReadOnlySpan<byte> ownerGroupKeyUtf8)
+    {
+        SecurityTagSet.Utf8Enumerator e = environment.ManagementTagsValue.EnumerateUtf8();
+        try
+        {
+            while (e.MoveNext())
+            {
+                if (e.CurrentKey.SequenceEqual(ownerGroupKeyUtf8) && !e.CurrentValue.IsEmpty)
+                {
+                    return versionTags.Contains(ownerGroupKeyUtf8, e.CurrentValue);
+                }
+            }
+        }
+        finally
+        {
+            e.Dispose();
+        }
+
+        return !IsStamped(versionTags, ownerGroupKeyUtf8);
+    }
+
     /// <summary>Reads the owner group <paramref name="environment"/> is stamped with.</summary>
     /// <param name="environment">The environment.</param>
     /// <param name="ownerGroupKeyUtf8">The deployment's owner-group tag key.</param>
@@ -95,8 +138,16 @@ public static class OwnerGroupTag
     /// enumerator's pooled unescape scratch, which <c>Dispose</c> returns to the pool.
     /// </remarks>
     public static string? Read(in Environment environment, ReadOnlySpan<byte> ownerGroupKeyUtf8)
+        => Read(environment.ManagementTagsValue, ownerGroupKeyUtf8);
+
+    /// <summary>Reads the owner group <paramref name="tags"/> is stamped with.</summary>
+    /// <param name="tags">A stamped tag set: an environment's management tags, or a catalog version's security tags.</param>
+    /// <param name="ownerGroupKeyUtf8">The deployment's owner-group tag key.</param>
+    /// <returns>The owner group, or <see langword="null"/> when none is stamped.</returns>
+    /// <remarks>Materializes the value, so it belongs on a path that caches its answer or is already refusing.</remarks>
+    public static string? Read(in SecurityTagSet tags, ReadOnlySpan<byte> ownerGroupKeyUtf8)
     {
-        SecurityTagSet.Utf8Enumerator e = environment.ManagementTagsValue.EnumerateUtf8();
+        SecurityTagSet.Utf8Enumerator e = tags.EnumerateUtf8();
         try
         {
             while (e.MoveNext())

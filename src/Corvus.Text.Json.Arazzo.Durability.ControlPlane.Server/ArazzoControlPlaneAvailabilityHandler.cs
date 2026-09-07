@@ -215,6 +215,17 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
             return MakeVersionAvailableResult.Forbidden(NotAdministratorProblem(environment), workspace);
         }
 
+        // The environment record is read once and held for the rest of the operation: the tenancy agreement, the evidence
+        // requirement and the deploy-on-publish isolation all come off it. It was in reach a moment ago at the governance
+        // gate, so an absent record here is a delete that raced, refused the same way.
+        using ParsedJsonDocument<Environment>? environmentDoc = await this.environments.GetAsync(environment, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (environmentDoc is null)
+        {
+            return MakeVersionAvailableResult.NotFound(EnvironmentNotFoundProblem(environment), workspace);
+        }
+
+        Environment target = environmentDoc.RootElement;
+
         // The version must exist and be readable; its sources drive the readiness gate.
         using (ParsedJsonDocument<CatalogVersion>? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, this.access.Current(), cancellationToken).ConfigureAwait(false))
         {
@@ -230,14 +241,28 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
             {
                 return MakeVersionAvailableResult.Conflict(NotReadyProblem(baseWorkflowId, versionNumber, environment, missing), workspace);
             }
+
+            // A version is promoted only into an environment its own owner group holds (ADR 0065): every run of it is
+            // stamped with the version's owner group and charged to the environment's, and the platform environment
+            // admits only versions carrying none. Refused and audited like any other governance refusal.
+            if (!OwnerGroupTag.Agrees(version.RootElement.SecurityTagsValue, target, this.access.OwnerGroupTagKeyUtf8))
+            {
+                GovernanceAudit.Mutation(this.auditLogger, "environment.promote", this.AuditActor(), TargetKind, AvailabilityKey(baseWorkflowId, versionNumber, environment), TenancyAgreement.RefusedOutcome);
+                return MakeVersionAvailableResult.Conflict(
+                    Problem(
+                        TenancyAgreement.ProblemType,
+                        TenancyAgreement.Title,
+                        409,
+                        TenancyAgreement.Detail(baseWorkflowId, versionNumber, version.RootElement.SecurityTagsValue, environment, target, this.access.OwnerGroupTagKeyUtf8)),
+                    workspace);
+            }
         }
 
         // Promotion readiness (workflow-designer design §4.6): readiness = credentials ∧ (suiteGreen ∨
         // ¬requireEvidence). An environment that requires evidence admits only versions whose server-attested
         // suite passed at publish; no evidence, or an empty suite, refuses (409). Default-off — environments
         // without the flag keep the §7.7 behaviour exactly.
-        if (await this.RequiresEvidenceAsync(environment, cancellationToken).ConfigureAwait(false)
-            && !await this.HasGreenEvidenceAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false))
+        if (RequiresEvidence(target) && !await this.HasGreenEvidenceAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false))
         {
             return MakeVersionAvailableResult.Conflict(EvidenceRequiredProblem(baseWorkflowId, versionNumber, environment), workspace);
         }
@@ -255,14 +280,10 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
         // queues its serverless native build for the environment's runtime target, so the dispatch-ready gate can hold a
         // run until the binary is built. A re-promote (already available) does not re-enqueue — an explicit nativeBuilds
         // request drives a rebuild. Skipped entirely when no build store is wired (an in-process-only deployment).
-        if (created && this.builds is { } buildStore)
+        if (created && this.builds is { } buildStore && target.RequiredIsolationValue == RunIsolationModel.Isolated)
         {
-            using ParsedJsonDocument<Environment>? environmentDoc = await this.environments.GetAsync(environment, this.access.Current(), cancellationToken).ConfigureAwait(false);
-            if (environmentDoc is { } isolationEnv && isolationEnv.RootElement.RequiredIsolationValue == RunIsolationModel.Isolated)
-            {
-                using ParsedJsonDocument<NativeBuildJob> buildDraft = NativeBuildJob.Draft(baseWorkflowId, versionNumber, environment, isolationEnv.RootElement.RuntimeIdentifierValue, null);
-                (await buildStore.EnqueueAsync(buildDraft.RootElement, this.actor, cancellationToken).ConfigureAwait(false)).Dispose();
-            }
+            using ParsedJsonDocument<NativeBuildJob> buildDraft = NativeBuildJob.Draft(baseWorkflowId, versionNumber, environment, target.RuntimeIdentifierValue, null);
+            (await buildStore.EnqueueAsync(buildDraft.RootElement, this.actor, cancellationToken).ConfigureAwait(false)).Dispose();
         }
 
         workspace.TakeOwnership(entry);
@@ -344,17 +365,8 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
     }
 
     // Whether the target environment requires green publish evidence for promotion (workflow-designer design §4.6).
-    private async ValueTask<bool> RequiresEvidenceAsync(string environment, CancellationToken cancellationToken)
-    {
-        using ParsedJsonDocument<Environment>? environmentDoc = await this.environments.GetAsync(environment, this.access.Current(), cancellationToken).ConfigureAwait(false);
-        if (environmentDoc is null)
-        {
-            return false;
-        }
-
-        Environment env = environmentDoc.RootElement;
-        return env.RequireEvidence.IsNotUndefined() && (bool)env.RequireEvidence;
-    }
+    private static bool RequiresEvidence(in Environment environment)
+        => environment.RequireEvidence.IsNotUndefined() && (bool)environment.RequireEvidence;
 
     // Whether the version's package carries publish evidence whose attested suite is green (it ran at least one
     // scenario and none failed) — the evidence half of the §4.6 readiness formula.

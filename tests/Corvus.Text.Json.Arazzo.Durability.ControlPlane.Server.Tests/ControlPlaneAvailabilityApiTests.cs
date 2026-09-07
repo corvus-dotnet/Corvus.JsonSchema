@@ -33,6 +33,36 @@ public sealed class ControlPlaneAvailabilityApiTests
     private const string Read = "availability:read";
 
     [TestMethod]
+    public async Task A_version_is_made_available_only_in_an_environment_its_owner_group_holds()
+    {
+        await using Scoped host = await StartAsync();
+
+        // acme provisions 'production' (owner group acme). zeus owns 'checkout'; 'shared' carries no owner group at all.
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "environments:write", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        await host.SeedVersionAsync("checkout", "zeus");
+        await host.SeedUnownedVersionAsync("shared");
+        await host.SeedVersionAsync("billing", "acme");
+
+        // Another owner group's version is refused, and so is one that carries no owner group: a run there would be
+        // stamped with a tenant the environment's owner group never sees in its own count, or with none at all.
+        HttpResponseMessage crossTenant = await host.SendAsync(HttpMethod.Put, "/catalog/checkout/versions/1/availability/production", Write, "acme");
+        crossTenant.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        using (Stj.JsonDocument problem = await ReadJsonAsync(crossTenant))
+        {
+            problem.RootElement.GetProperty("type").GetString()!.ShouldEndWith("tenancy-mismatch");
+        }
+
+        (await host.SendAsync(HttpMethod.Put, "/catalog/shared/versions/1/availability/production", Write, "acme")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        // acme's own version is admitted, and nothing else was written.
+        (await host.SendAsync(HttpMethod.Put, "/catalog/billing/versions/1/availability/production", Write, "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        using (Stj.JsonDocument byEnv = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/environments/production/availability", Read, "acme")))
+        {
+            byEnv.RootElement.GetProperty("availability").EnumerateArray().Select(e => e.GetProperty("baseWorkflowId").GetString()).ShouldBe(["billing"]);
+        }
+    }
+
+    [TestMethod]
     public async Task A_version_is_made_available_listed_and_withdrawn_by_an_environment_administrator()
     {
         await using Scoped host = await StartAsync();
@@ -247,6 +277,10 @@ public sealed class ControlPlaneAvailabilityApiTests
             SecurityTagSet identity = SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", tenant)]);
             await catalog.AddAsync(Package(workflowId, sourceNames), new CatalogOwner("Team", "team@example.com", null, null), default, identity, default);
         }
+
+        // Seeds a source-less version stamped with no owner group at all (an operator's, in a deployment that names one).
+        public async Task SeedUnownedVersionAsync(string workflowId)
+            => await catalog.AddAsync(Package(workflowId, []), new CatalogOwner("Team", "team@example.com", null, null), default, default, default);
 
         // Seeds a source-less version whose package embeds publish evidence (§4.6) — a green or red attested suite.
         public async Task SeedEvidencedVersionAsync(string workflowId, string tenant, bool green)

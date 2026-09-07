@@ -8,6 +8,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
 using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Availability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -70,6 +71,66 @@ public sealed class ControlPlaneAvailabilityRequestsApiTests
         Stj.JsonElement entry = byEnv.RootElement.GetProperty("availability").EnumerateArray().Single();
         entry.GetProperty("baseWorkflowId").GetString().ShouldBe("checkout");
         entry.GetProperty("versionNumber").GetInt32().ShouldBe(1);
+    }
+
+    [TestMethod]
+    public async Task Submitting_a_request_across_owner_groups_is_refused()
+    {
+        await using Scoped host = await StartAsync();
+
+        // acme provisions 'production'; zeus owns 'checkout'. A request that could never be approved is refused at submit
+        // rather than left to sit in acme's inbox (the contract carries 400 on submit, so the refusal rides that).
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        await host.SeedVersionAsync("checkout", "zeus");
+
+        HttpResponseMessage refused = await host.SendJsonAsync(HttpMethod.Post, "/availabilityRequests", """{"baseWorkflowId":"checkout","versionNumber":1,"environment":"production"}""", "zeus");
+        refused.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        using (Stj.JsonDocument problem = await ReadJsonAsync(refused))
+        {
+            problem.RootElement.GetProperty("type").GetString()!.ShouldEndWith("tenancy-mismatch");
+        }
+
+        using (Stj.JsonDocument inbox = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/availabilityRequests?scope=queue", "acme")))
+        {
+            inbox.RootElement.GetProperty("availabilityRequests").EnumerateArray().ShouldBeEmpty();
+        }
+    }
+
+    [TestMethod]
+    public async Task Approving_a_request_seeded_across_owner_groups_is_refused()
+    {
+        // A pending request written straight into the store (the one way a cross-owner-group request can exist, since
+        // submit refuses it) is refused at approval, so the gate holds however the request got there.
+        var requests = new InMemoryAvailabilityRequestStore();
+        await using Scoped host = await StartAsync(requests);
+
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        await host.SeedVersionAsync("checkout", "zeus");
+
+        string id;
+        using (ParsedJsonDocument<AvailabilityRequest> draft = AvailabilityRequest.Draft("checkout", 1, "production", null, "Zeus"))
+        using (ParsedJsonDocument<AvailabilityRequest> pending = await requests.CreateAsync(draft.RootElement, "zeus", default))
+        {
+            id = pending.RootElement.IdValue;
+        }
+
+        HttpResponseMessage refused = await host.SendAsync(HttpMethod.Post, $"/availabilityRequests/{id}/approve", "acme");
+        refused.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        using (Stj.JsonDocument problem = await ReadJsonAsync(refused))
+        {
+            problem.RootElement.GetProperty("type").GetString()!.ShouldEndWith("tenancy-mismatch");
+        }
+
+        // Nothing was promoted, and the request is still pending.
+        using (Stj.JsonDocument byEnv = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/environments/production/availability", "acme")))
+        {
+            byEnv.RootElement.GetProperty("availability").EnumerateArray().ShouldBeEmpty();
+        }
+
+        using (Stj.JsonDocument request = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, $"/availabilityRequests/{id}", "acme")))
+        {
+            request.RootElement.GetProperty("status").GetString().ShouldBe("Pending");
+        }
     }
 
     [TestMethod]
@@ -268,7 +329,7 @@ public sealed class ControlPlaneAvailabilityRequestsApiTests
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
         => Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 
-    private static async Task<Scoped> StartAsync()
+    private static async Task<Scoped> StartAsync(IAvailabilityRequestStore? requests = null)
     {
         var store = new InMemoryWorkflowStateStore();
         var management = new SecuredWorkflowManagement(store, "ops");
@@ -289,7 +350,7 @@ public sealed class ControlPlaneAvailabilityRequestsApiTests
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy());
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), availabilityRequestStore: requests);
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient(), catalog);

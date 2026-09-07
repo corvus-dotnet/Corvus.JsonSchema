@@ -218,7 +218,11 @@ An administrator of an environment either makes a ready version available direct
 request from someone who is not an environment administrator. Promotion is gated on `availability:write`,
 authorized by the target environment's administrator set
 ([ADR 0027](../adr/0027-runner-environment-binding.md)), and a run is pinned to its environment, so it executes
-only on a runner authorized for that environment.
+only on a runner authorized for that environment. Promotion is also gated on tenancy
+([ADR 0065](../adr/0065-control-plane-owns-store-runners-encrypt-payload.md)): a version is made available only in an
+environment whose owner group is the version's own, a version carrying no owner group only in an environment carrying
+none, and a mismatch is refused as `tenancy-mismatch` at promotion, at submit and approval of a promotion request, at
+schedule creation and run-now, and again at run start.
 
 ## UI
 

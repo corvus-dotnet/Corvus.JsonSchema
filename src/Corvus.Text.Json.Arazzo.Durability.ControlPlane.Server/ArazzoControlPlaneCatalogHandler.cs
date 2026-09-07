@@ -594,6 +594,22 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
             // against its owner group.
             platformEnvironment = TenantEnvironmentSealing.IsPlatform(environmentDoc.RootElement);
             environmentOwnerGroup = platformEnvironment ? null : OwnerGroupTag.Read(environmentDoc.RootElement, this.access.OwnerGroupTagKeyUtf8);
+
+            // A version runs only in an environment its own owner group holds (ADR 0065). The promotion gate refuses a
+            // mismatch through the API; this re-check holds against an availability entry written any other way, and it
+            // is what keeps the population counted below the population charged: the run is stamped with the version's
+            // owner group, and the counter is the environment's.
+            if (!OwnerGroupTag.Agrees(catalogVersionDoc.RootElement.SecurityTagsValue, environmentDoc.RootElement, this.access.OwnerGroupTagKeyUtf8))
+            {
+                GovernanceAudit.Mutation(this.auditLogger, "run.start", this.AuditActor(), RunTargetKind, (string)catalogVersionDoc.RootElement.WorkflowId, TenancyAgreement.RefusedOutcome, environment);
+                return StartCatalogWorkflowRunResult.Conflict(
+                    Problem(
+                        TenancyAgreement.ProblemType,
+                        TenancyAgreement.Title,
+                        409,
+                        TenancyAgreement.Detail(baseWorkflowId, versionNumber, catalogVersionDoc.RootElement.SecurityTagsValue, environment, environmentDoc.RootElement, this.access.OwnerGroupTagKeyUtf8)),
+                    workspace);
+            }
         }
 
         CatalogVersion catalogVersion = catalogVersionDoc.RootElement;

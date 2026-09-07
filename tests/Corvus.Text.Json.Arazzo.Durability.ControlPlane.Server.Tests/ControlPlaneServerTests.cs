@@ -863,6 +863,150 @@ public sealed class ControlPlaneServerTests
     }
 
     [TestMethod]
+    public async Task StartCatalogWorkflowRun_refuses_a_version_whose_owner_group_is_not_the_environments()
+    {
+        // An availability entry written straight into the store (the promotion gate refuses one through the API) does not
+        // make a cross-owner-group start admissible: the run would be stamped with acme's tenant and counted against acme,
+        // while the counter charged is the environment's. The platform environment carries no owner group, so it admits
+        // only versions that carry none.
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock, runDerivation: TestDerivation);
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
+        var environmentStore = new Corvus.Text.Json.Arazzo.Durability.Environments.InMemoryEnvironmentStore(clock);
+        var availabilityStore = new Corvus.Text.Json.Arazzo.Durability.Availability.InMemoryAvailabilityStore(clock);
+        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "acme")]), default);
+        await AddEnvironmentAsync(environmentStore, "acme-prod", "acme");
+        await AddEnvironmentAsync(environmentStore, "zeus-prod", "zeus");
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Environments.Environment> platform =
+            Corvus.Text.Json.Arazzo.Durability.Environments.Environment.DraftPlatform("platform", "Platform", null, default))
+        {
+            (await environmentStore.AddAsync(platform.RootElement, "ops", default)).Dispose();
+        }
+
+        (await availabilityStore.MakeAvailableAsync("flow", 1, "acme-prod", "ops", default)).Entry.Dispose();
+        (await availabilityStore.MakeAvailableAsync("flow", 1, "zeus-prod", "ops", default)).Entry.Dispose();
+        (await availabilityStore.MakeAvailableAsync("flow", 1, "platform", "ops", default)).Entry.Dispose();
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open, environmentStore: environmentStore, availabilityStore: availabilityStore);
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+        await runnerRegistry.RegisterAsync(Runner("flow", 1), default);
+
+        HttpResponseMessage crossTenant = await StartAsync(client, "flow", "zeus-prod");
+        crossTenant.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        using (Stj.JsonDocument problem = await ReadJsonAsync(crossTenant))
+        {
+            problem.RootElement.GetProperty("type").GetString()!.ShouldEndWith("tenancy-mismatch");
+        }
+
+        (await StartAsync(client, "flow", "platform")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await StartAsync(client, "flow", "acme-prod")).StatusCode.ShouldBe(HttpStatusCode.Accepted);
+        await app.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task CreateSchedule_refuses_a_target_whose_owner_group_is_not_the_environments()
+    {
+        // The schedule's up-front admission mirrors the operator start's: a target that could never be started in the
+        // environment is refused at create rather than at every occurrence.
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock, runDerivation: TestDerivation);
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
+        var environmentStore = new Corvus.Text.Json.Arazzo.Durability.Environments.InMemoryEnvironmentStore(clock);
+        var availabilityStore = new Corvus.Text.Json.Arazzo.Durability.Availability.InMemoryAvailabilityStore(clock);
+        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "acme")]), default);
+        await AddEnvironmentAsync(environmentStore, "acme-prod", "acme");
+        await AddEnvironmentAsync(environmentStore, "zeus-prod", "zeus");
+        (await availabilityStore.MakeAvailableAsync("flow", 1, "acme-prod", "ops", default)).Entry.Dispose();
+        (await availabilityStore.MakeAvailableAsync("flow", 1, "zeus-prod", "ops", default)).Entry.Dispose();
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        app.MapArazzoControlPlane(
+            management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open,
+            environmentStore: environmentStore, availabilityStore: availabilityStore, scheduleRegistry: new Schedules.InMemoryScheduleRegistry());
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+        await runnerRegistry.RegisterAsync(Runner("flow", 1, environment: "acme-prod", servesSchedules: true), default);
+        await runnerRegistry.RegisterAsync(Runner("flow", 1, runnerId: "r2", environment: "zeus-prod", servesSchedules: true), default);
+
+        const string crossTenant = """{"scheduleId":"nightly","environment":"zeus-prod","targetBaseWorkflowId":"flow","targetVersionNumber":1,"cron":"0 9 * * *"}""";
+        const string own = """{"scheduleId":"nightly","environment":"acme-prod","targetBaseWorkflowId":"flow","targetVersionNumber":1,"cron":"0 9 * * *"}""";
+
+        HttpResponseMessage refused = await client.PostAsync("/schedules", new StringContent(crossTenant, Encoding.UTF8, "application/json"));
+        refused.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        using (Stj.JsonDocument problem = await ReadJsonAsync(refused))
+        {
+            problem.RootElement.GetProperty("type").GetString()!.ShouldEndWith("tenancy-mismatch");
+        }
+
+        (await client.PostAsync("/schedules", new StringContent(own, Encoding.UTF8, "application/json"))).StatusCode.ShouldBe(HttpStatusCode.Created);
+        await app.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task RunScheduleNow_refuses_once_the_environment_has_changed_hands()
+    {
+        // Owner groups are immutable on a live environment, so the one way a schedule's tenancy drifts after create is the
+        // environment being deleted and re-created under another owner group. Run-now re-checks rather than trusting the
+        // create-time admission.
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock, runDerivation: TestDerivation);
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
+        var environmentStore = new Corvus.Text.Json.Arazzo.Durability.Environments.InMemoryEnvironmentStore(clock);
+        var availabilityStore = new Corvus.Text.Json.Arazzo.Durability.Availability.InMemoryAvailabilityStore(clock);
+        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "acme")]), default);
+        await AddEnvironmentAsync(environmentStore, "prod", "acme");
+        (await availabilityStore.MakeAvailableAsync("flow", 1, "prod", "ops", default)).Entry.Dispose();
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        app.MapArazzoControlPlane(
+            management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open,
+            environmentStore: environmentStore, availabilityStore: availabilityStore, scheduleRegistry: new Schedules.InMemoryScheduleRegistry());
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+        await runnerRegistry.RegisterAsync(Runner("flow", 1, environment: "prod", servesSchedules: true), default);
+
+        const string create = """{"scheduleId":"nightly","environment":"prod","targetBaseWorkflowId":"flow","targetVersionNumber":1,"cron":"0 9 * * *"}""";
+        (await client.PostAsync("/schedules", new StringContent(create, Encoding.UTF8, "application/json"))).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await client.PostAsync("/schedules/nightly/run-now", new StringContent(string.Empty))).StatusCode.ShouldBe(HttpStatusCode.Accepted);
+
+        // 'prod' changes hands: deleted and re-created under zeus.
+        WorkflowEtag etag;
+        using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Environments.Environment>? current = await environmentStore.GetAsync("prod", AccessContext.System, default))
+        {
+            etag = current!.RootElement.EtagValue;
+        }
+
+        (await environmentStore.DeleteAsync("prod", etag, AccessContext.System, default)).ShouldBeTrue();
+        await AddEnvironmentAsync(environmentStore, "prod", "zeus");
+
+        HttpResponseMessage refused = await client.PostAsync("/schedules/nightly/run-now", new StringContent(string.Empty));
+        refused.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        using (Stj.JsonDocument problem = await ReadJsonAsync(refused))
+        {
+            problem.RootElement.GetProperty("type").GetString()!.ShouldEndWith("tenancy-mismatch");
+        }
+
+        await app.DisposeAsync();
+    }
+
+    [TestMethod]
     public async Task StartCatalogWorkflowRun_is_idempotent_under_an_Idempotency_Key_header()
     {
         var clock = new MutableClock(T0);

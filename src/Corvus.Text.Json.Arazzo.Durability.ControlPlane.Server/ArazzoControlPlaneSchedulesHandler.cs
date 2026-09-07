@@ -51,7 +51,7 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
     /// <param name="runners">The runner registry consulted for a hosting runner and a scheduling-capable runner in the environment.</param>
     /// <param name="access">Resolves the caller's <see cref="AccessContext"/> per request (§14.2).</param>
     /// <param name="availabilityStore">The availability registry used to validate the target is available in the environment (§7.8); <see langword="null"/> skips it.</param>
-    /// <param name="environmentStore">The environment registry (reserved for future environment validation); currently unused.</param>
+    /// <param name="environmentStore">The environment registry, consulted at create and run-now so a target whose owner group is not the environment's is refused up front (ADR 0065); <see langword="null"/> skips it, as the start path does.</param>
     /// <param name="scheduleRegistry">The deployment-global schedule registry — the uniqueness gate on create and the
     /// scheduleId resolver for get/delete/run-now (the routes carry no environment); <see langword="null"/> means the
     /// schedules surface is not configured and refuses.</param>
@@ -187,6 +187,31 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
         {
             return CreateScheduleResult.Conflict(
                 Problem("not-runnable", "Target not runnable", 409, $"Version {targetVersion} of '{targetBase}' carries no compiled executor; it cannot be scheduled."), workspace);
+        }
+
+        // The target's owner group must be the environment's (ADR 0065), checked here as the start path checks it, so a
+        // schedule that could never fire is refused at create rather than at every occurrence. Skipped when no
+        // environment registry is wired, as the start path skips it. `var` avoids the Environment type-name clash.
+        if (this.environmentStore is { } envStore)
+        {
+            using var environmentDoc = await envStore.GetAsync(environment, ctx, cancellationToken).ConfigureAwait(false);
+            if (environmentDoc is null)
+            {
+                return CreateScheduleResult.NotFound(
+                    Problem("environment-not-found", "Environment not found", 404, $"Environment '{environment}' does not exist or is outside your reach."), workspace);
+            }
+
+            if (!OwnerGroupTag.Agrees(catalogVersion.SecurityTagsValue, environmentDoc.RootElement, this.access.OwnerGroupTagKeyUtf8))
+            {
+                GovernanceAudit.Mutation(this.auditLogger, "schedule.create", this.AuditActor(), TargetKind, scheduleId, TenancyAgreement.RefusedOutcome);
+                return CreateScheduleResult.Conflict(
+                    Problem(
+                        TenancyAgreement.ProblemType,
+                        TenancyAgreement.Title,
+                        409,
+                        TenancyAgreement.Detail(targetBase, targetVersion, catalogVersion.SecurityTagsValue, environment, environmentDoc.RootElement, this.access.OwnerGroupTagKeyUtf8)),
+                    workspace);
+            }
         }
 
         if (this.availabilityStore is { } availStore)
@@ -386,6 +411,30 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
         if (!(bool)catalogVersion.Runnable)
         {
             return RunScheduleNowResult.Conflict(Problem("not-runnable", "Target not runnable", 409, $"Version {targetVersion} of '{targetBase}' carries no compiled executor."), workspace);
+        }
+
+        // Re-checked rather than trusted from create: owner groups are immutable on a live environment, but one deleted
+        // and re-created under another owner group keeps the schedule's name while changing hands (ADR 0065).
+        if (this.environmentStore is { } envStore)
+        {
+            using var environmentDoc = await envStore.GetAsync(environment, ctx, cancellationToken).ConfigureAwait(false);
+            if (environmentDoc is null)
+            {
+                return RunScheduleNowResult.NotFound(
+                    Problem("environment-not-found", "Environment not found", 404, $"Environment '{environment}' does not exist or is outside your reach."), workspace);
+            }
+
+            if (!OwnerGroupTag.Agrees(catalogVersion.SecurityTagsValue, environmentDoc.RootElement, this.access.OwnerGroupTagKeyUtf8))
+            {
+                GovernanceAudit.Mutation(this.auditLogger, "schedule.run-now", this.AuditActor(), TargetKind, scheduleId, TenancyAgreement.RefusedOutcome);
+                return RunScheduleNowResult.Conflict(
+                    Problem(
+                        TenancyAgreement.ProblemType,
+                        TenancyAgreement.Title,
+                        409,
+                        TenancyAgreement.Detail(targetBase, targetVersion, catalogVersion.SecurityTagsValue, environment, environmentDoc.RootElement, this.access.OwnerGroupTagKeyUtf8)),
+                    workspace);
+            }
         }
 
         if (this.availabilityStore is { } availStore)

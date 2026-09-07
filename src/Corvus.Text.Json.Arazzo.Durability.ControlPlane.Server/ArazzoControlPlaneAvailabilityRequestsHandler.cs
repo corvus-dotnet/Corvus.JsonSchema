@@ -95,20 +95,34 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
         string environment = (string)parameters.Body.Environment;
 
         // The target environment must be in reach, and the version must exist/be readable — a request for an unknown
-        // environment or version is rejected (400; the contract has no 404 on submit).
+        // environment or version is rejected (400; the contract has no 404 on submit). The environment record is held
+        // across the version read so the two can be compared.
         using (ParsedJsonDocument<Environment>? environmentDoc = await this.environments.GetAsync(environment, this.access.Current(), cancellationToken).ConfigureAwait(false))
         {
             if (environmentDoc is null)
             {
                 return SubmitAvailabilityRequestResult.BadRequest(UnknownEnvironmentProblem(environment), workspace);
             }
-        }
 
-        using (ParsedJsonDocument<CatalogVersion>? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, this.access.Current(), cancellationToken).ConfigureAwait(false))
-        {
+            using ParsedJsonDocument<CatalogVersion>? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, this.access.Current(), cancellationToken).ConfigureAwait(false);
             if (version is null)
             {
                 return SubmitAvailabilityRequestResult.BadRequest(UnknownVersionProblem(baseWorkflowId, versionNumber), workspace);
+            }
+
+            // A request that could never be approved is refused at submit rather than left in an approver's inbox: the
+            // version's owner group must be the environment's (ADR 0065). The contract carries 400 on submit, so the
+            // refusal rides that, with the same problem type and audit outcome every other surface uses.
+            if (!OwnerGroupTag.Agrees(version.RootElement.SecurityTagsValue, environmentDoc.RootElement, this.access.OwnerGroupTagKeyUtf8))
+            {
+                GovernanceAudit.Mutation(this.auditLogger, "availability-request.submit", this.AuditActor(), TargetKind, $"{baseWorkflowId}:{versionNumber}@{environment}", TenancyAgreement.RefusedOutcome);
+                return SubmitAvailabilityRequestResult.BadRequest(
+                    Problem(
+                        TenancyAgreement.ProblemType,
+                        TenancyAgreement.Title,
+                        400,
+                        TenancyAgreement.Detail(baseWorkflowId, versionNumber, version.RootElement.SecurityTagsValue, environment, environmentDoc.RootElement, this.access.OwnerGroupTagKeyUtf8)),
+                    workspace);
             }
         }
 
@@ -285,6 +299,16 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
             return ApproveAvailabilityRequestResult.Conflict(NotPendingProblem(id, statusValue), workspace);
         }
 
+        // The environment record is read once and held: the tenancy agreement and the evidence requirement both come off
+        // it. It was in reach a moment ago at the governance gate, so an absent record here is a delete that raced.
+        using ParsedJsonDocument<Environment>? environmentDoc = await this.environments.GetAsync(environment, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (environmentDoc is null)
+        {
+            return ApproveAvailabilityRequestResult.Forbidden(NotAdministratorProblem(environment), workspace);
+        }
+
+        Environment target = environmentDoc.RootElement;
+
         // The version must still exist; its sources drive the readiness gate (§7.7) — a missing credential for even one
         // source blocks approval (409), exactly as a direct make-available would.
         using (ParsedJsonDocument<CatalogVersion>? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, this.access.Current(), cancellationToken).ConfigureAwait(false))
@@ -299,13 +323,26 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
             {
                 return ApproveAvailabilityRequestResult.Conflict(NotReadyProblem(baseWorkflowId, versionNumber, environment, missing), workspace);
             }
+
+            // A request written outside the API (submit refuses one) is refused at approval on the same rule a direct
+            // make-available applies (ADR 0065): the version's owner group must be the environment's.
+            if (!OwnerGroupTag.Agrees(version.RootElement.SecurityTagsValue, target, this.access.OwnerGroupTagKeyUtf8))
+            {
+                GovernanceAudit.Mutation(this.auditLogger, "availability-request.approve", this.AuditActor(), TargetKind, id, TenancyAgreement.RefusedOutcome);
+                return ApproveAvailabilityRequestResult.Conflict(
+                    Problem(
+                        TenancyAgreement.ProblemType,
+                        TenancyAgreement.Title,
+                        409,
+                        TenancyAgreement.Detail(baseWorkflowId, versionNumber, version.RootElement.SecurityTagsValue, environment, target, this.access.OwnerGroupTagKeyUtf8)),
+                    workspace);
+            }
         }
 
         // Promotion readiness (workflow-designer design §4.6): an environment that requires evidence admits only
         // versions whose server-attested suite passed at publish — approval hits the same gate as a direct
         // make-available. Default-off: environments without the flag keep the §7.7 behaviour exactly.
-        if (await this.RequiresEvidenceAsync(environment, cancellationToken).ConfigureAwait(false)
-            && !await this.HasGreenEvidenceAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false))
+        if (RequiresEvidence(target) && !await this.HasGreenEvidenceAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false))
         {
             return ApproveAvailabilityRequestResult.Conflict(EvidenceRequiredProblem(baseWorkflowId, versionNumber, environment), workspace);
         }
@@ -501,17 +538,8 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
     }
 
     // Whether the target environment requires green publish evidence for promotion (workflow-designer design §4.6).
-    private async ValueTask<bool> RequiresEvidenceAsync(string environment, CancellationToken cancellationToken)
-    {
-        using ParsedJsonDocument<Environment>? environmentDoc = await this.environments.GetAsync(environment, this.access.Current(), cancellationToken).ConfigureAwait(false);
-        if (environmentDoc is null)
-        {
-            return false;
-        }
-
-        Environment env = environmentDoc.RootElement;
-        return env.RequireEvidence.IsNotUndefined() && (bool)env.RequireEvidence;
-    }
+    private static bool RequiresEvidence(in Environment environment)
+        => environment.RequireEvidence.IsNotUndefined() && (bool)environment.RequireEvidence;
 
     // Whether the version's package carries publish evidence whose attested suite is green (it ran at least one
     // scenario and none failed) — the evidence half of the §4.6 readiness formula.
