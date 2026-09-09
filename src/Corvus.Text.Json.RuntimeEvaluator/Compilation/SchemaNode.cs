@@ -447,6 +447,38 @@ internal readonly struct ConstantValue
 /// <summary>
 /// A compiled subschema.
 /// </summary>
+/// <summary>
+/// Keyword-presence and structural flags of a node packed into one word so that node entry tests a single field.
+/// Computed by the compiler's final pass from the individual fields, which remain the source of truth.
+/// </summary>
+[Flags]
+internal enum NodeFlags : uint
+{
+    None = 0,
+    AlwaysTrue = 1u << 0,
+    AlwaysFalse = 1u << 1,
+    HasType = 1u << 2,
+    HasConst = 1u << 3,
+    HasEnum = 1u << 4,
+    HasNumberKeywords = 1u << 5,
+    HasStringKeywords = 1u << 6,
+    HasObjectKeywords = 1u << 7,
+    HasArrayKeywords = 1u << 8,
+    HasInPlaceApplicators = 1u << 9,
+    HasUnevaluatedProperties = 1u << 10,
+    HasUnevaluatedItems = 1u << 11,
+    HasAnnotations = 1u << 12,
+    TracksProperties = 1u << 13,
+    TracksItems = 1u << 14,
+
+    /// <summary>The node lies on a cycle of in-place applicators, so entering it needs the runaway guard.</summary>
+    InPlaceCycle = 1u << 15,
+    Draft4 = 1u << 16,
+
+    AlwaysBoolean = AlwaysTrue | AlwaysFalse,
+    ValueKeywords = HasType | HasConst | HasEnum,
+}
+
 internal sealed class SchemaNode
 {
     public int Id;
@@ -488,6 +520,12 @@ internal sealed class SchemaNode
     public bool HasObjectKeywords;
     public bool HasArrayKeywords;
     public bool HasInPlaceApplicators;
+
+    /// <summary>Set when the node is part of a cycle of in-place applicators (see <see cref="NodeFlags.InPlaceCycle"/>).</summary>
+    public bool InPlaceCycle;
+
+    /// <summary>The packed flags; see <see cref="NodeFlags"/>.</summary>
+    public NodeFlags Flags;
     public bool HasSeenBits;
 
     // type

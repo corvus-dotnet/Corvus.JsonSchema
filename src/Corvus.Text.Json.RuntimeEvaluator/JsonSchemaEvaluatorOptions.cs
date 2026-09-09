@@ -87,7 +87,9 @@ public sealed class JsonSchemaEvaluatorOptions
     /// <summary>
     /// Gets or sets the maximum nesting of in-place applicators (<c>$ref</c>, <c>allOf</c>, <c>anyOf</c>, <c>oneOf</c>,
     /// <c>not</c>, <c>if</c>/<c>then</c>/<c>else</c>, dependent schemas) before evaluation fails with
-    /// <see cref="JsonSchemaEvaluationException"/>. Instance depth is bounded separately by the parser.
+    /// <see cref="JsonSchemaEvaluationException"/>. Only nodes that the compiler finds on a cycle of in-place
+    /// applicators are counted, so an acyclic chain of any length is never limited. Instance depth is bounded
+    /// separately by the parser.
     /// </summary>
     public int MaxDepth { get; set; } = 128;
 }

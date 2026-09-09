@@ -310,6 +310,8 @@ internal sealed class SchemaCompiler
         this.ComputeDiscriminators();
         this.OrderUnrolledProperties();
         this.ComputeSimpleArrays();
+        this.ComputeInPlaceCycles();
+        this.ComputeFlags();
     }
 
     /// <summary>
@@ -1818,6 +1820,190 @@ internal sealed class SchemaCompiler
     /// Computes the leaf flags. This must run after dynamic references are finalised, because a node whose
     /// only keyword is <c>$dynamicRef</c>/<c>$recursiveRef</c> gains its applicator late.
     /// </summary>
+    /// <summary>
+    /// Marks every node that lies on a cycle of in-place applicators ($ref, $dynamicRef, allOf/anyOf/oneOf, not,
+    /// if/then/else, dependent schemas). Only such nodes can recurse without consuming the instance, so only entering
+    /// them needs the runaway depth guard; every other in-place edge is bounded by the size of the graph.
+    /// Strongly connected components by iterative Tarjan, so deep graphs do not recurse on the CLR stack.
+    /// </summary>
+    private void ComputeInPlaceCycles()
+    {
+        int count = this.nodes.Count;
+        int[][] edges = new int[count][];
+        for (int i = 0; i < count; i++)
+        {
+            this.nodes[i].InPlaceCycle = false;
+            edges[i] = [.. this.nodes[i].InPlaceChildren(includeNot: true)];
+        }
+
+        int[] index = new int[count];
+        index.AsSpan().Fill(-1);
+        int[] low = new int[count];
+        bool[] onStack = new bool[count];
+        var stack = new Stack<int>();
+        var work = new Stack<(int Node, int Edge)>();
+        var members = new List<int>();
+        int next = 0;
+
+        for (int root = 0; root < count; root++)
+        {
+            if (index[root] >= 0)
+            {
+                continue;
+            }
+
+            index[root] = low[root] = next++;
+            stack.Push(root);
+            onStack[root] = true;
+            work.Push((root, 0));
+
+            while (work.Count > 0)
+            {
+                (int v, int e) = work.Pop();
+                if (e < edges[v].Length)
+                {
+                    work.Push((v, e + 1));
+                    int w = edges[v][e];
+                    if (index[w] < 0)
+                    {
+                        index[w] = low[w] = next++;
+                        stack.Push(w);
+                        onStack[w] = true;
+                        work.Push((w, 0));
+                    }
+                    else if (onStack[w])
+                    {
+                        low[v] = Math.Min(low[v], index[w]);
+                    }
+
+                    continue;
+                }
+
+                if (low[v] == index[v])
+                {
+                    members.Clear();
+                    int w;
+                    do
+                    {
+                        w = stack.Pop();
+                        onStack[w] = false;
+                        members.Add(w);
+                    }
+                    while (w != v);
+
+                    if (members.Count > 1 || Array.IndexOf(edges[v], v) >= 0)
+                    {
+                        foreach (int m in members)
+                        {
+                            this.nodes[m].InPlaceCycle = true;
+                        }
+                    }
+                }
+
+                if (work.Count > 0)
+                {
+                    int parent = work.Peek().Node;
+                    low[parent] = Math.Min(low[parent], low[v]);
+                }
+            }
+        }
+    }
+
+    /// <summary>Packs the per-node presence flags into <see cref="SchemaNode.Flags"/>. Runs last.</summary>
+    private void ComputeFlags()
+    {
+        foreach (SchemaNode node in this.nodes)
+        {
+            NodeFlags f = NodeFlags.None;
+            if (node.AlwaysTrue)
+            {
+                f |= NodeFlags.AlwaysTrue;
+            }
+
+            if (node.AlwaysFalse)
+            {
+                f |= NodeFlags.AlwaysFalse;
+            }
+
+            if (node.HasType)
+            {
+                f |= NodeFlags.HasType;
+            }
+
+            if (node.HasConst)
+            {
+                f |= NodeFlags.HasConst;
+            }
+
+            if (node.Enum is not null)
+            {
+                f |= NodeFlags.HasEnum;
+            }
+
+            if (node.HasNumberKeywords)
+            {
+                f |= NodeFlags.HasNumberKeywords;
+            }
+
+            if (node.HasStringKeywords)
+            {
+                f |= NodeFlags.HasStringKeywords;
+            }
+
+            if (node.HasObjectKeywords)
+            {
+                f |= NodeFlags.HasObjectKeywords;
+            }
+
+            if (node.HasArrayKeywords)
+            {
+                f |= NodeFlags.HasArrayKeywords;
+            }
+
+            if (node.HasInPlaceApplicators)
+            {
+                f |= NodeFlags.HasInPlaceApplicators;
+            }
+
+            if (node.UnevaluatedProperties.IsPresent)
+            {
+                f |= NodeFlags.HasUnevaluatedProperties;
+            }
+
+            if (node.UnevaluatedItems.IsPresent)
+            {
+                f |= NodeFlags.HasUnevaluatedItems;
+            }
+
+            if (node.Annotations is not null)
+            {
+                f |= NodeFlags.HasAnnotations;
+            }
+
+            if (node.TracksProperties)
+            {
+                f |= NodeFlags.TracksProperties;
+            }
+
+            if (node.TracksItems)
+            {
+                f |= NodeFlags.TracksItems;
+            }
+
+            if (node.InPlaceCycle)
+            {
+                f |= NodeFlags.InPlaceCycle;
+            }
+
+            if (node.Dialect == JsonSchemaDialect.Draft4)
+            {
+                f |= NodeFlags.Draft4;
+            }
+
+            node.Flags = f;
+        }
+    }
+
     private void ComputeLeafFlags()
     {
         foreach (SchemaNode node in this.nodes)

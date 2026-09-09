@@ -174,4 +174,45 @@ public class KeywordTests
         using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile("""{"allOf": [{"$ref": "#"}]}""");
         Assert.ThrowsExactly<JsonSchemaEvaluationException>(() => evaluator.Evaluate("1"));
     }
+
+    [TestMethod]
+    public void RunawayRecursionThroughDynamicRefIsDetected()
+    {
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile("""{"$dynamicAnchor": "node", "anyOf": [{"type": "string"}, {"$dynamicRef": "#node"}]}""");
+        Assert.IsTrue(evaluator.Evaluate("\"a\""));
+        Assert.ThrowsExactly<JsonSchemaEvaluationException>(() => evaluator.Evaluate("1"));
+    }
+
+    [TestMethod]
+    public void RunawayRecursionThroughDependentSchemaIsDetected()
+    {
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile("""{"dependentSchemas": {"a": {"not": {"$ref": "#"}}}}""");
+        Assert.IsTrue(evaluator.Evaluate("""{"b": 1}"""));
+        Assert.ThrowsExactly<JsonSchemaEvaluationException>(() => evaluator.Evaluate("""{"a": 1}"""));
+    }
+
+    [TestMethod]
+    public void DeepAcyclicInPlaceChainIsNotLimitedByMaxDepth()
+    {
+        // A 300-link chain of $ref/allOf exceeds MaxDepth, but nothing recurses, so no guard applies.
+        var sb = new System.Text.StringBuilder("""{"$ref": "#/$defs/n0", "$defs": {""");
+        for (int i = 0; i < 300; i++)
+        {
+            sb.Append("\"n").Append(i).Append("\": {\"allOf\": [{\"$ref\": \"#/$defs/n").Append(i + 1).Append("\"}]}, ");
+        }
+
+        sb.Append("\"n300\": {\"type\": \"integer\"}}}");
+
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(sb.ToString(), new JsonSchemaEvaluatorOptions { MaxDepth = 16 });
+        Assert.IsTrue(evaluator.Evaluate("1"));
+        Assert.IsFalse(evaluator.Evaluate("\"x\""));
+    }
+
+    [TestMethod]
+    public void RecursionThroughConsumingKeywordsIsNotGuarded()
+    {
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile("""{"type": ["integer", "array"], "items": {"$ref": "#"}}""", new JsonSchemaEvaluatorOptions { MaxDepth = 2 });
+        Assert.IsTrue(evaluator.Evaluate("[[[[[[1]]]]]]"));
+        Assert.IsFalse(evaluator.Evaluate("[[[[[[\"x\"]]]]]]"));
+    }
 }
