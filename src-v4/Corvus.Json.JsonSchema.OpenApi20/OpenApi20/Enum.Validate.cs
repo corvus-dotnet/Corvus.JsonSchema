@@ -35,7 +35,7 @@ public readonly partial struct Enum
                 result = result.UsingStack();
             }
 
-            result = result.PushSchemaLocation("/properties/enum");
+            result = result.PushSchemaLocation("http://json-schema.org/draft-04/schema#/properties/enum");
         }
 
         JsonValueKind valueKind = this.ValueKind;

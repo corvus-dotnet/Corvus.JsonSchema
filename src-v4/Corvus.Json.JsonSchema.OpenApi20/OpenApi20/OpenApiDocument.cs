@@ -74,7 +74,7 @@ public readonly partial struct OpenApiDocument
     /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
-    public static string SchemaLocation { get; } = "";
+    public static string SchemaLocation { get; } = "OpenApi20.json";
 
     /// <summary>
     /// Gets a Null instance.

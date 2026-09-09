@@ -36,7 +36,7 @@ public readonly partial struct OpenApiDocument
                 result = result.UsingStack();
             }
 
-            result = result.PushSchemaLocation("");
+            result = result.PushSchemaLocation("OpenApi20.json");
         }
 
         JsonValueKind valueKind = this.ValueKind;

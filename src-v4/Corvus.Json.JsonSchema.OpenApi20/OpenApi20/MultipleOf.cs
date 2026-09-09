@@ -73,7 +73,7 @@ public readonly partial struct MultipleOf
     /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
-    public static string SchemaLocation { get; } = "/properties/multipleOf";
+    public static string SchemaLocation { get; } = "http://json-schema.org/draft-04/schema#/properties/multipleOf";
 
     /// <summary>
     /// Gets a Null instance.

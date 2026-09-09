@@ -75,7 +75,7 @@ public readonly partial struct PositiveIntegerDefault0
     /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
-    public static string SchemaLocation { get; } = "/definitions/positiveIntegerDefault0";
+    public static string SchemaLocation { get; } = "http://json-schema.org/draft-04/schema#/definitions/positiveIntegerDefault0";
 
     /// <summary>
     /// Gets a Null instance.

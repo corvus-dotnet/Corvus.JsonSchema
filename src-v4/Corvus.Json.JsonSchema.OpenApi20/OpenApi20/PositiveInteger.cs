@@ -73,7 +73,7 @@ public readonly partial struct PositiveInteger
     /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
-    public static string SchemaLocation { get; } = "/definitions/positiveInteger";
+    public static string SchemaLocation { get; } = "http://json-schema.org/draft-04/schema#/definitions/positiveInteger";
 
     /// <summary>
     /// Gets a Null instance.

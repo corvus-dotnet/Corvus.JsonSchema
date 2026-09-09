@@ -97,7 +97,7 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public static string SchemaLocation { get; } = "/definitions/queryParameterSubSchema/properties/allowEmptyValue";
+            public static string SchemaLocation { get; } = "http://swagger.io/v2/schema.json#/definitions/queryParameterSubSchema/properties/allowEmptyValue";
 
             /// <summary>
             /// Gets a Null instance.
@@ -112,8 +112,9 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// Gets the default instance.
             /// </summary>
+            #pragma warning disable CS0618 // Type or member is obsolete
             public static AllowsSendingAParameterByNameOnlyOrWithAnEmptyValue DefaultInstance { get; } = AllowsSendingAParameterByNameOnlyOrWithAnEmptyValue.ParseValue("false"u8);
-
+            #pragma warning restore CS0618
             /// <inheritdoc/>
             public JsonAny AsAny
             {
