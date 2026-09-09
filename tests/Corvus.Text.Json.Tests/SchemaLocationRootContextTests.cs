@@ -241,4 +241,4 @@ public class SchemaLocationRootContextTests
 
         return builder.ToString().TrimEnd('\n');
     }
-}
+}
