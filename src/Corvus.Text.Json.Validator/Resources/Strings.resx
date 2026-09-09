@@ -62,17 +62,5 @@
   <data name="DocumentDoesNotHaveCanonicalUri" xml:space="preserve">
     <value>The document does not have a canonical URI and one was not provided.</value>
   </data>
-  <data name="FromJsonElementReturnedNull" xml:space="preserve">
-    <value>From&lt;JsonElement&gt; returned null.</value>
-  </data>
-  <data name="ParseReturnedNull" xml:space="preserve">
-    <value>Parse returned null.</value>
-  </data>
-  <data name="RootElementReturnedNull" xml:space="preserve">
-    <value>RootElement returned null.</value>
-  </data>
-  <data name="CannotFindParseMethod" xml:space="preserve">
-    <value>Cannot find Parse({0}, JsonDocumentOptions) on {1}.</value>
-  </data>
 
 </root>

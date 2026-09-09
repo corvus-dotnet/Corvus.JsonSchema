@@ -65,6 +65,12 @@ public sealed class JsonSchemaEvaluatorOptions
     public JsonSchemaDocumentResolver? DocumentResolver { get; set; }
 
     /// <summary>
+    /// Gets or sets the resolver consulted for documents that neither <see cref="DocumentResolver"/> nor the
+    /// embedded standard metaschemas provide; intended for file system and network retrieval.
+    /// </summary>
+    public JsonSchemaDocumentResolver? FallbackDocumentResolver { get; set; }
+
+    /// <summary>
     /// Gets or sets the base URI applied to the root schema when it has no <c>$id</c>.
     /// </summary>
     public string? BaseUri { get; set; }

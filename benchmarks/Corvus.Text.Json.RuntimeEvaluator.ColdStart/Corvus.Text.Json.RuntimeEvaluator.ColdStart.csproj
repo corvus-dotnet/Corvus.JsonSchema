@@ -7,7 +7,6 @@
     <LangVersion>Preview</LangVersion>
     <IsPackable>false</IsPackable>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
-    <PreserveCompilationContext>true</PreserveCompilationContext>
     <CorvusBenchmarks>$(MSBuildThisFileDirectory)..\</CorvusBenchmarks>
   </PropertyGroup>
   <ItemGroup>

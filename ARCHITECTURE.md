@@ -64,11 +64,14 @@ The `corvusjson` command-line tool generates C# from JSON Schema files. Used for
 Compiles a schema document into an in-memory node graph at runtime (no code generation, no Roslyn) and
 evaluates any `IJsonElement<T>` against it: zero-allocation flag validation, or full results and annotations
 through `JsonSchemaResultsCollector`. Supports Draft 4 to 2020-12 including `$dynamicRef`/`$recursiveRef`, and
-evaluation rooted at any subschema. Intended to replace the standalone evaluator for validation-only scenarios.
+evaluation rooted at any subschema. It is the engine behind `Corvus.Text.Json.Validator` and the CLI's
+`validate` command.
 
-### Validator (`Corvus.Json.Validator`)
+### Validator (`Corvus.Text.Json.Validator`)
 
-A standalone schema validation tool that uses the standalone evaluator for command-line JSON validation.
+A thin `JsonSchema` facade over the runtime evaluator: loads schemas from text, streams, files or URIs
+(with file, HTTP, additional-file and in-memory document resolution), caches compiled schemas by canonical
+URI, and validates strings, bytes, streams, sequences or parsed elements with optional results collection.
 
 ## The IJsonElement&lt;T&gt; CRTP pattern
 

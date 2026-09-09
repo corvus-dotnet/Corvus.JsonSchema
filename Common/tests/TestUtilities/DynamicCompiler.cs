@@ -20,7 +20,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.Extensions.DependencyModel;
 
-namespace Corvus.Text.Json.Validator;
+namespace TestUtilities;
 
 /// <summary>
 /// Compiles dynamically-generated C# code into an assembly and resolves the root type.

@@ -5,7 +5,6 @@
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <Nullable>disable</Nullable>
     <IsPackable>false</IsPackable>
-    <PreserveCompilationContext>true</PreserveCompilationContext>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Validator\Corvus.Text.Json.Validator.csproj" />

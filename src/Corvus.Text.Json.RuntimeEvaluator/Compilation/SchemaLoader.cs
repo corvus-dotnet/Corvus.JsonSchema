@@ -108,6 +108,20 @@ internal sealed class SchemaLoader
     }
 
     /// <summary>
+    /// Loads the root schema from a URI through the configured resolvers and returns its resource.
+    /// </summary>
+    public SchemaResource LoadRoot(string uri)
+    {
+        string normalized = UriUtilities.Normalize(uri);
+        if (!this.TryLoadDocument(normalized) || !this.documentsByUri.TryGetValue(normalized, out SchemaDocument? doc))
+        {
+            throw new JsonSchemaCompilationException($"Unable to resolve the schema document '{uri}'.");
+        }
+
+        return this.resourceOfElement[(doc.Id, Elements.Index(doc.Document.RootElement))];
+    }
+
+    /// <summary>
     /// Gets the resource that an element belongs to, if it was visited during identification.
     /// </summary>
     public bool TryGetResourceOf(SchemaDocument document, int index, [NotNullWhen(true)] out SchemaResource? resource)
@@ -268,6 +282,12 @@ internal sealed class SchemaLoader
         }
 
         if (Metaschemas.TryGet(absoluteUri, out utf8))
+        {
+            this.AddDocument(absoluteUri, utf8);
+            return true;
+        }
+
+        if (this.options.FallbackDocumentResolver is JsonSchemaDocumentResolver fallback && fallback(absoluteUri, out utf8))
         {
             this.AddDocument(absoluteUri, utf8);
             return true;

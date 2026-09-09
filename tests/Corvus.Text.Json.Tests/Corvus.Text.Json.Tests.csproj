@@ -303,6 +303,7 @@
     <Compile Include="StringMaxLengthEnumTests.cs" />
     <Compile Include="OneOfDiscriminatorValidationTests.cs" />
     <Compile Include="AnyOfDiscriminatorValidationTests.cs" />
+    <Compile Include="CompileToAssemblyBytesTests.cs" />
     <Compile Include="AnyOfPartialDiscriminatorValidationTests.cs" />
     <Compile Include="OneOfNumericDiscriminatorValidationTests.cs" />
     <Compile Include="NoopRegexOptimizationTests.cs" />

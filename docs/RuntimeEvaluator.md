@@ -17,7 +17,7 @@ the existing `JsonSchemaResultsCollector` / `JsonSchemaAnnotationProducer`.
 | `benchmarks/...Benchmarks` | BenchmarkDotNet: the 37 Sourcemeta cases (generated model vs runtime evaluator) and cold start. |
 
 The library links `EcmaRegexTranslator.cs` from `Corvus.Text.Json.CodeGeneration` as shared source and
-embeds the standard metaschemas from `Corvus.Text.Json.Validator/metaschema`.
+embeds the standard metaschemas from its `metaschema` folder.
 
 ## Compilation (cold start)
 
@@ -135,7 +135,8 @@ from the most recent run.
 
 Cold start (`benchmarks/Corvus.Text.Json.RuntimeEvaluator.ColdStart`): compiling a Sourcemeta schema with the
 runtime evaluator takes 0.07 to 4 ms warm (about 80 ms for the very first compile in a process, which JIT-compiles
-the compiler itself), against 1 to 17 seconds per schema for the Roslyn-based `Corvus.Text.Json.Validator`.
+the compiler itself), against 1 to 17 seconds per schema for the Roslyn-based `Corvus.Text.Json.Validator` it
+replaced; the Validator is now a facade over this evaluator (see `docs/Validator.md`).
 
 ## Known gaps and next steps
 

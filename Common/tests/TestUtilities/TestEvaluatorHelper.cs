@@ -10,7 +10,6 @@ using Corvus.Json.CodeGeneration;
 using Corvus.Json.CodeGeneration.DocumentResolvers;
 using Corvus.Text.Json;
 using Corvus.Text.Json.CodeGeneration;
-using Corvus.Text.Json.Validator;
 
 namespace TestUtilities;
 

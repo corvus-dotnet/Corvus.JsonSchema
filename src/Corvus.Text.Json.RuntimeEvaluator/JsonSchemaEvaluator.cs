@@ -78,20 +78,37 @@ public sealed class JsonSchemaEvaluator : IDisposable
     /// <returns>The compiled evaluator rooted at the subschema.</returns>
     public static JsonSchemaEvaluator Compile(ReadOnlyMemory<byte> utf8Schema, string entryPoint, JsonSchemaEvaluatorOptions? options = null)
     {
-        JsonSchemaEvaluatorOptions source = options ?? JsonSchemaEvaluatorOptions.Default;
-        var rooted = new JsonSchemaEvaluatorOptions
-        {
-            DefaultDialect = source.DefaultDialect,
-            AssertFormat = source.AssertFormat,
-            AssertContent = source.AssertContent,
-            CompileRegularExpressions = source.CompileRegularExpressions,
-            RegexMatchTimeout = source.RegexMatchTimeout,
-            DocumentResolver = source.DocumentResolver,
-            BaseUri = source.BaseUri,
-            MaxDepth = source.MaxDepth,
-            EntryPoint = entryPoint,
-        };
+        JsonSchemaEvaluatorOptions rooted = Clone(options ?? JsonSchemaEvaluatorOptions.Default);
+        rooted.EntryPoint = entryPoint;
         return Compile(utf8Schema, rooted);
+    }
+
+    /// <summary>
+    /// Compiles the schema document at a URI, retrieved through <see cref="JsonSchemaEvaluatorOptions.DocumentResolver"/>,
+    /// the embedded standard metaschemas, or <see cref="JsonSchemaEvaluatorOptions.FallbackDocumentResolver"/>.
+    /// </summary>
+    /// <param name="uri">The schema URI. A fragment selects the entry point within the document unless
+    /// <see cref="JsonSchemaEvaluatorOptions.EntryPoint"/> is set.</param>
+    /// <param name="options">The options, or <see langword="null"/> for defaults.</param>
+    /// <returns>The compiled evaluator.</returns>
+    /// <exception cref="JsonSchemaCompilationException">The document could not be resolved or compiled.</exception>
+    public static JsonSchemaEvaluator CompileFromUri(string uri, JsonSchemaEvaluatorOptions? options = null)
+    {
+        JsonSchemaEvaluatorOptions effective = options ?? JsonSchemaEvaluatorOptions.Default;
+        int hash = uri.IndexOf('#');
+        if (hash >= 0)
+        {
+            string fragment = uri.Substring(hash);
+            uri = uri.Substring(0, hash);
+            if (effective.EntryPoint is null && fragment.Length > 1)
+            {
+                effective = Clone(effective);
+                effective.EntryPoint = fragment;
+            }
+        }
+
+        CompiledSchema program = SchemaCompiler.CompileFromUri(uri, effective);
+        return new JsonSchemaEvaluator(program, program.RootNode);
     }
 
     /// <summary>
@@ -163,5 +180,22 @@ public sealed class JsonSchemaEvaluator : IDisposable
     public void Dispose()
     {
         this.program.Dispose();
+    }
+
+    private static JsonSchemaEvaluatorOptions Clone(JsonSchemaEvaluatorOptions source)
+    {
+        return new JsonSchemaEvaluatorOptions
+        {
+            DefaultDialect = source.DefaultDialect,
+            AssertFormat = source.AssertFormat,
+            AssertContent = source.AssertContent,
+            CompileRegularExpressions = source.CompileRegularExpressions,
+            RegexMatchTimeout = source.RegexMatchTimeout,
+            DocumentResolver = source.DocumentResolver,
+            FallbackDocumentResolver = source.FallbackDocumentResolver,
+            BaseUri = source.BaseUri,
+            MaxDepth = source.MaxDepth,
+            EntryPoint = source.EntryPoint,
+        };
     }
 }

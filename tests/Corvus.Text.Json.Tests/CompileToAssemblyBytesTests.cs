@@ -5,8 +5,9 @@
 using System.Reflection;
 using Corvus.Json.CodeGeneration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using TestUtilities;
 
-namespace Corvus.Text.Json.Validator.Tests;
+namespace Corvus.Text.Json.Tests;
 
 /// <summary>
 /// Tests <see cref="DynamicCompiler.CompileToAssemblyBytes"/> — compiling a set of source files into a single

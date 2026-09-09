@@ -16,7 +16,11 @@ internal static class Elements
     public static T Create<T>(IJsonDocument document, int index)
         where T : struct, IJsonElement<T>
     {
+#if NET8_0_OR_GREATER
         return T.CreateInstance(document, index);
+#else
+        return JsonElementHelpers.CreateInstance<T>(document, index);
+#endif
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

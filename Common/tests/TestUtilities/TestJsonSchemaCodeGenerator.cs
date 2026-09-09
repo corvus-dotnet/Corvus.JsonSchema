@@ -14,7 +14,6 @@ using Corvus.Json.CodeGeneration.DocumentResolvers;
 using Corvus.Text.Json;
 using Corvus.Text.Json.CodeGeneration;
 using Corvus.Text.Json.Internal;
-using Corvus.Text.Json.Validator;
 
 namespace TestUtilities;
 
@@ -397,7 +396,7 @@ public class TestJsonSchemaCodeGenerator
 
         string rootTypeName = code.RootType.FullyQualifiedDotnetTypeName()!;
 
-        Type generatedType = Corvus.Text.Json.Validator.DynamicCompiler.CompileGeneratedType(
+        Type generatedType = DynamicCompiler.CompileGeneratedType(
             rootTypeName,
             code.GeneratedFiles,
             hostAssembly);

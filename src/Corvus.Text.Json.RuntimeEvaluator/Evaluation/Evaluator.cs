@@ -74,14 +74,14 @@ internal static class Evaluator
     private static UnescapedUtf8JsonString StringValue<TAccess>(ref EvaluationState state, IJsonDocument doc, int index)
         where TAccess : struct, IDocumentAccess
     {
-        return TAccess.GetString(ref state, doc, index);
+        return default(TAccess).GetString(ref state, doc, index);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static UnescapedUtf8JsonString PropertyName<TAccess>(ref EvaluationState state, IJsonDocument doc, int valueIndex)
         where TAccess : struct, IDocumentAccess
     {
-        return TAccess.GetPropertyName(ref state, doc, valueIndex);
+        return default(TAccess).GetPropertyName(ref state, doc, valueIndex);
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -94,7 +94,7 @@ internal static class Evaluator
     {
         if (node.AlwaysTrue)
         {
-            if (TMode.Collecting)
+            if (default(TMode).Collecting)
             {
                 state.Collector!.EvaluatedBooleanSchema(true, null);
             }
@@ -104,7 +104,7 @@ internal static class Evaluator
 
         if (node.AlwaysFalse)
         {
-            if (TMode.Collecting)
+            if (default(TMode).Collecting)
             {
                 state.Collector!.EvaluatedBooleanSchema(false, null);
             }
@@ -119,12 +119,12 @@ internal static class Evaluator
             pushedScope = true;
         }
 
-        JsonTokenType tokenType = TAccess.TokenType(ref state, doc, index);
+        JsonTokenType tokenType = default(TAccess).TokenType(ref state, doc, index);
 
         bool result;
         if (evaluated.IsEmpty && (tokenType == JsonTokenType.StartObject ? node.TracksProperties : (tokenType == JsonTokenType.StartArray && node.TracksItems)))
         {
-            int count = TAccess.Count(ref state, doc, index, tokenType);
+            int count = default(TAccess).Count(ref state, doc, index, tokenType);
             int words = (count + 63) >> 6;
             if (words <= InlineBitWords)
             {
@@ -170,14 +170,14 @@ internal static class Evaluator
         if (node.HasType)
         {
             bool match = MatchesType<TAccess>(node.Type, tokenType, ref state, doc, index, node.Dialect == JsonSchemaDialect.Draft4);
-            if (TMode.Collecting)
+            if (default(TMode).Collecting)
             {
                 state.Collector!.EvaluatedKeyword(match, match ? null : ExpectedTypeProvider(node.Type), "type"u8);
             }
 
             if (!match)
             {
-                if (!TMode.Collecting)
+                if (!default(TMode).Collecting)
                 {
                     return false;
                 }
@@ -189,14 +189,14 @@ internal static class Evaluator
         if (node.HasConst)
         {
             bool match = MatchesConst<TAccess>(node, ref state, doc, index, tokenType);
-            if (TMode.Collecting)
+            if (default(TMode).Collecting)
             {
                 state.Collector!.EvaluatedKeyword(match, null, "const"u8);
             }
 
             if (!match)
             {
-                if (!TMode.Collecting)
+                if (!default(TMode).Collecting)
                 {
                     return false;
                 }
@@ -208,14 +208,14 @@ internal static class Evaluator
         if (node.Enum is not null)
         {
             bool match = MatchesEnum<TAccess>(node, ref state, doc, index, tokenType);
-            if (TMode.Collecting)
+            if (default(TMode).Collecting)
             {
                 state.Collector!.EvaluatedKeyword(match, match ? JsonSchemaEvaluation.MatchedAtLeastOneConstantValue : JsonSchemaEvaluation.DidNotMatchAtLeastOneConstantValue, "enum"u8);
             }
 
             if (!match)
             {
-                if (!TMode.Collecting)
+                if (!default(TMode).Collecting)
                 {
                     return false;
                 }
@@ -256,7 +256,7 @@ internal static class Evaluator
                 break;
         }
 
-        if (!ok && !TMode.Collecting)
+        if (!ok && !default(TMode).Collecting)
         {
             return false;
         }
@@ -264,7 +264,7 @@ internal static class Evaluator
         if (node.HasInPlaceApplicators)
         {
             ok &= EvalInPlace<TMode, TAccess>(node, doc, index, ref state, evaluated, seq);
-            if (!ok && !TMode.Collecting)
+            if (!ok && !default(TMode).Collecting)
             {
                 return false;
             }
@@ -273,7 +273,7 @@ internal static class Evaluator
         if (tokenType == JsonTokenType.StartObject && node.UnevaluatedProperties.IsPresent)
         {
             ok &= EvalUnevaluatedProperties<TMode, TAccess>(node, doc, index, ref state, evaluated, seq);
-            if (!ok && !TMode.Collecting)
+            if (!ok && !default(TMode).Collecting)
             {
                 return false;
             }
@@ -281,13 +281,13 @@ internal static class Evaluator
         else if (tokenType == JsonTokenType.StartArray && node.UnevaluatedItems.IsPresent)
         {
             ok &= EvalUnevaluatedItems<TMode, TAccess>(node, doc, index, ref state, evaluated, seq);
-            if (!ok && !TMode.Collecting)
+            if (!ok && !default(TMode).Collecting)
             {
                 return false;
             }
         }
 
-        if (TMode.Collecting && node.Annotations is not null)
+        if (default(TMode).Collecting && node.Annotations is not null)
         {
             foreach (AnnotationEntry a in node.Annotations)
             {
@@ -343,7 +343,7 @@ internal static class Evaluator
     private static bool EvalLeafFast<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
         where TAccess : struct, IDocumentAccess
     {
-        JsonTokenType tokenType = TAccess.TokenType(ref state, doc, index);
+        JsonTokenType tokenType = default(TAccess).TokenType(ref state, doc, index);
         if (node.HasType && !MatchesType<TAccess>(node.Type, tokenType, ref state, doc, index, node.Dialect == JsonSchemaDialect.Draft4))
         {
             return false;
@@ -378,14 +378,14 @@ internal static class Evaluator
     private static bool EvalSimpleArrayFast<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
         where TAccess : struct, IDocumentAccess
     {
-        JsonTokenType tokenType = TAccess.TokenType(ref state, doc, index);
+        JsonTokenType tokenType = default(TAccess).TokenType(ref state, doc, index);
         if (tokenType != JsonTokenType.StartArray)
         {
             // Not an array: `type` fails, otherwise the array keywords do not apply.
             return !node.HasType;
         }
 
-        int length = TAccess.Count(ref state, doc, index, JsonTokenType.StartArray);
+        int length = default(TAccess).Count(ref state, doc, index, JsonTokenType.StartArray);
         if ((node.MinItems >= 0 && length < node.MinItems) || (node.MaxItems >= 0 && length > node.MaxItems))
         {
             return false;
@@ -397,14 +397,14 @@ internal static class Evaluator
             return true;
         }
 
-        int end = TAccess.EndIndex(ref state, doc, index);
+        int end = default(TAccess).EndIndex(ref state, doc, index);
         if (items.IsTypeOnly)
         {
             TypeMask mask = items.Type;
             bool lexical = items.Dialect == JsonSchemaDialect.Draft4;
-            for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = TAccess.NextIndex(ref state, doc, valueIndex))
+            for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex))
             {
-                if (!MatchesType<TAccess>(mask, TAccess.TokenType(ref state, doc, valueIndex), ref state, doc, valueIndex, lexical))
+                if (!MatchesType<TAccess>(mask, default(TAccess).TokenType(ref state, doc, valueIndex), ref state, doc, valueIndex, lexical))
                 {
                     return false;
                 }
@@ -413,7 +413,7 @@ internal static class Evaluator
             return true;
         }
 
-        for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = TAccess.NextIndex(ref state, doc, valueIndex))
+        for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex))
         {
             if (!EvalLeafFast<TAccess>(items, doc, valueIndex, ref state))
             {
@@ -427,7 +427,7 @@ internal static class Evaluator
     private static bool IsInteger<TAccess>(ref EvaluationState state, IJsonDocument doc, int index, bool lexicalInteger)
         where TAccess : struct, IDocumentAccess
     {
-        ReadOnlySpan<byte> raw = TAccess.RawValue(ref state, doc, index);
+        ReadOnlySpan<byte> raw = default(TAccess).RawValue(ref state, doc, index);
         if (raw.IndexOfAny((byte)'.', (byte)'e', (byte)'E') < 0)
         {
             return true;
@@ -464,7 +464,7 @@ internal static class Evaluator
                 return false;
             }
 
-            JsonElementHelpers.ParseNumber(TAccess.RawValue(ref state, doc, index), out bool neg, out ReadOnlySpan<byte> integral, out ReadOnlySpan<byte> fractional, out int exponent);
+            JsonElementHelpers.ParseNumber(default(TAccess).RawValue(ref state, doc, index), out bool neg, out ReadOnlySpan<byte> integral, out ReadOnlySpan<byte> fractional, out int exponent);
             return constNumber.CompareTo(neg, integral, fractional, exponent) == 0;
         }
 
@@ -533,10 +533,10 @@ internal static class Evaluator
         where TMode : struct, IEvaluationMode
         where TAccess : struct, IDocumentAccess
     {
-        ReadOnlySpan<byte> raw = TAccess.RawValue(ref state, doc, index);
+        ReadOnlySpan<byte> raw = default(TAccess).RawValue(ref state, doc, index);
 
         // Plain integer literal against plain integer bounds: compare as longs (exact) without normalising.
-        if (!TMode.Collecting && !DisableIntegerFastPath && node.MultipleOf is null && raw.Length <= 18 && raw.IndexOfAny((byte)'.', (byte)'e', (byte)'E') < 0
+        if (!default(TMode).Collecting && !DisableIntegerFastPath && node.MultipleOf is null && raw.Length <= 18 && raw.IndexOfAny((byte)'.', (byte)'e', (byte)'E') < 0
             && System.Buffers.Text.Utf8Parser.TryParse(raw, out long value, out int consumed) && consumed == raw.Length)
         {
             if (node.Minimum is NumberValue lmin)
@@ -609,14 +609,14 @@ internal static class Evaluator
         if (node.Minimum is NumberValue min)
         {
             bool m = min.CompareTo(neg, integral, fractional, exponent) >= 0;
-            if (TMode.Collecting)
+            if (default(TMode).Collecting)
             {
                 state.Collector!.EvaluatedKeyword(m, null, "minimum"u8);
             }
 
             if (!m)
             {
-                if (!TMode.Collecting)
+                if (!default(TMode).Collecting)
                 {
                     return false;
                 }
@@ -628,14 +628,14 @@ internal static class Evaluator
         if (node.Maximum is NumberValue max)
         {
             bool m = max.CompareTo(neg, integral, fractional, exponent) <= 0;
-            if (TMode.Collecting)
+            if (default(TMode).Collecting)
             {
                 state.Collector!.EvaluatedKeyword(m, null, "maximum"u8);
             }
 
             if (!m)
             {
-                if (!TMode.Collecting)
+                if (!default(TMode).Collecting)
                 {
                     return false;
                 }
@@ -647,14 +647,14 @@ internal static class Evaluator
         if (node.ExclusiveMinimum is NumberValue emin)
         {
             bool m = emin.CompareTo(neg, integral, fractional, exponent) > 0;
-            if (TMode.Collecting)
+            if (default(TMode).Collecting)
             {
                 state.Collector!.EvaluatedKeyword(m, null, "exclusiveMinimum"u8);
             }
 
             if (!m)
             {
-                if (!TMode.Collecting)
+                if (!default(TMode).Collecting)
                 {
                     return false;
                 }
@@ -666,14 +666,14 @@ internal static class Evaluator
         if (node.ExclusiveMaximum is NumberValue emax)
         {
             bool m = emax.CompareTo(neg, integral, fractional, exponent) < 0;
-            if (TMode.Collecting)
+            if (default(TMode).Collecting)
             {
                 state.Collector!.EvaluatedKeyword(m, null, "exclusiveMaximum"u8);
             }
 
             if (!m)
             {
-                if (!TMode.Collecting)
+                if (!default(TMode).Collecting)
                 {
                     return false;
                 }
@@ -685,14 +685,14 @@ internal static class Evaluator
         if (node.MultipleOf is DivisorValue divisor)
         {
             bool m = divisor.IsMultiple(integral, fractional, exponent);
-            if (TMode.Collecting)
+            if (default(TMode).Collecting)
             {
                 state.Collector!.EvaluatedKeyword(m, null, "multipleOf"u8);
             }
 
             if (!m)
             {
-                if (!TMode.Collecting)
+                if (!default(TMode).Collecting)
                 {
                     return false;
                 }
@@ -733,14 +733,14 @@ internal static class Evaluator
                     m = runeCount >= node.MinLength;
                 }
 
-                if (TMode.Collecting)
+                if (default(TMode).Collecting)
                 {
                     state.Collector!.EvaluatedKeyword(m, null, "minLength"u8);
                 }
 
                 if (!m)
                 {
-                    if (!TMode.Collecting)
+                    if (!default(TMode).Collecting)
                     {
                         return false;
                     }
@@ -766,14 +766,14 @@ internal static class Evaluator
                     m = runeCount <= node.MaxLength;
                 }
 
-                if (TMode.Collecting)
+                if (default(TMode).Collecting)
                 {
                     state.Collector!.EvaluatedKeyword(m, null, "maxLength"u8);
                 }
 
                 if (!m)
                 {
-                    if (!TMode.Collecting)
+                    if (!default(TMode).Collecting)
                     {
                         return false;
                     }
@@ -786,14 +786,14 @@ internal static class Evaluator
         if (node.Pattern is PatternMatcher pattern)
         {
             bool m = pattern.IsMatch(value);
-            if (TMode.Collecting)
+            if (default(TMode).Collecting)
             {
                 state.Collector!.EvaluatedKeyword(m, null, "pattern"u8);
             }
 
             if (!m)
             {
-                if (!TMode.Collecting)
+                if (!default(TMode).Collecting)
                 {
                     return false;
                 }
@@ -805,14 +805,14 @@ internal static class Evaluator
         if (node.AssertFormat && node.Format != FormatKind.None)
         {
             bool m = MatchesFormat(node.Format, value, ref state);
-            if (TMode.Collecting)
+            if (default(TMode).Collecting)
             {
                 state.Collector!.EvaluatedKeyword(m, null, "format"u8);
             }
 
             if (!m)
             {
-                if (!TMode.Collecting)
+                if (!default(TMode).Collecting)
                 {
                     return false;
                 }
@@ -831,14 +831,14 @@ internal static class Evaluator
                 _ => true,
             };
 
-            if (TMode.Collecting)
+            if (default(TMode).Collecting)
             {
                 state.Collector!.EvaluatedKeyword(m, null, node.Content == ContentKind.Base64 ? "contentEncoding"u8 : "contentMediaType"u8);
             }
 
             if (!m)
             {
-                if (!TMode.Collecting)
+                if (!default(TMode).Collecting)
                 {
                     return false;
                 }
@@ -886,7 +886,7 @@ internal static class Evaluator
         where TMode : struct, IEvaluationMode
         where TAccess : struct, IDocumentAccess
     {
-        if (!TMode.Collecting && evaluated.IsEmpty && node.UnrolledProperties is PropertyEntry[] unrolled)
+        if (!default(TMode).Collecting && evaluated.IsEmpty && node.UnrolledProperties is PropertyEntry[] unrolled)
         {
             return EvalObjectUnrolled<TAccess>(node, unrolled, doc, index, ref state);
         }
@@ -921,7 +921,7 @@ internal static class Evaluator
     {
         if (node.MinProperties >= 0 || node.MaxProperties >= 0)
         {
-            int count = TAccess.Count(ref state, doc, index, JsonTokenType.StartObject);
+            int count = default(TAccess).Count(ref state, doc, index, JsonTokenType.StartObject);
             if ((node.MinProperties >= 0 && count < node.MinProperties) || (node.MaxProperties >= 0 && count > node.MaxProperties))
             {
                 return false;
@@ -961,18 +961,18 @@ internal static class Evaluator
 
         if (node.MinProperties >= 0 || node.MaxProperties >= 0)
         {
-            int count = TAccess.Count(ref state, doc, index, JsonTokenType.StartObject);
+            int count = default(TAccess).Count(ref state, doc, index, JsonTokenType.StartObject);
             if (node.MinProperties >= 0)
             {
                 bool m = count >= node.MinProperties;
-                if (TMode.Collecting)
+                if (default(TMode).Collecting)
                 {
                     state.Collector!.EvaluatedKeyword(m, null, "minProperties"u8);
                 }
 
                 if (!m)
                 {
-                    if (!TMode.Collecting)
+                    if (!default(TMode).Collecting)
                     {
                         return false;
                     }
@@ -984,14 +984,14 @@ internal static class Evaluator
             if (node.MaxProperties >= 0)
             {
                 bool m = count <= node.MaxProperties;
-                if (TMode.Collecting)
+                if (default(TMode).Collecting)
                 {
                     state.Collector!.EvaluatedKeyword(m, null, "maxProperties"u8);
                 }
 
                 if (!m)
                 {
-                    if (!TMode.Collecting)
+                    if (!default(TMode).Collecting)
                     {
                         return false;
                     }
@@ -1011,8 +1011,8 @@ internal static class Evaluator
         {
             // Fast path: additionalProperties: false with no property schemas can short-circuit.
             int propertyIndex = 0;
-            int end = TAccess.EndIndex(ref state, doc, index);
-            for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; valueIndex = TAccess.NextIndex(ref state, doc, valueIndex) + RowSize)
+            int end = default(TAccess).EndIndex(ref state, doc, index);
+            for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex) + RowSize)
             {
                 bool matched = false;
                 using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
@@ -1031,7 +1031,7 @@ internal static class Evaluator
                         MarkEvaluated(evaluated, propertyIndex);
                         if (!EvalProperty<TMode, TAccess>(entry.Schema, doc, valueIndex, ref state, seq))
                         {
-                            if (!TMode.Collecting)
+                            if (!default(TMode).Collecting)
                             {
                                 return false;
                             }
@@ -1052,7 +1052,7 @@ internal static class Evaluator
                             MarkEvaluated(evaluated, propertyIndex);
                             if (!EvalProperty<TMode, TAccess>(pp.Schema, doc, valueIndex, ref state, seq))
                             {
-                                if (!TMode.Collecting)
+                                if (!default(TMode).Collecting)
                                 {
                                     return false;
                                 }
@@ -1068,7 +1068,7 @@ internal static class Evaluator
                     MarkEvaluated(evaluated, propertyIndex);
                     if (!EvalProperty<TMode, TAccess>(node.AdditionalProperties, doc, valueIndex, ref state, seq))
                     {
-                        if (!TMode.Collecting)
+                        if (!default(TMode).Collecting)
                         {
                             return false;
                         }
@@ -1081,7 +1081,7 @@ internal static class Evaluator
                 {
                     if (!EvalPropertyName<TMode, TAccess>(node.PropertyNames, doc, valueIndex, ref state, seq))
                     {
-                        if (!TMode.Collecting)
+                        if (!default(TMode).Collecting)
                         {
                             return false;
                         }
@@ -1096,8 +1096,8 @@ internal static class Evaluator
         else if (node.HasSeenBits)
         {
             // Only presence checks (required / dependencies): enumerate names without descending.
-            int end = TAccess.EndIndex(ref state, doc, index);
-            for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; valueIndex = TAccess.NextIndex(ref state, doc, valueIndex) + RowSize)
+            int end = default(TAccess).EndIndex(ref state, doc, index);
+            for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex) + RowSize)
             {
                 using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
                 if (node.Properties is not null && node.Properties.TryGetValue(name.Span, out PropertyEntry? entry) && entry.SeenBit >= 0)
@@ -1113,14 +1113,14 @@ internal static class Evaluator
             {
                 int bit = required[i];
                 bool present = (seen[bit >> 6] & (1UL << (bit & 63))) != 0;
-                if (TMode.Collecting)
+                if (default(TMode).Collecting)
                 {
                     state.Collector!.EvaluatedKeywordForProperty(present, null, node.RequiredNames![i], "required"u8);
                 }
 
                 if (!present)
                 {
-                    if (!TMode.Collecting)
+                    if (!default(TMode).Collecting)
                     {
                         return false;
                     }
@@ -1146,14 +1146,14 @@ internal static class Evaluator
                 {
                     int rb = requiredBits[r];
                     bool present = (seen[rb >> 6] & (1UL << (rb & 63))) != 0;
-                    if (TMode.Collecting)
+                    if (default(TMode).Collecting)
                     {
                         state.Collector!.EvaluatedKeywordForProperty(present, null, dep.RequiredNames[r], node.Dialect >= JsonSchemaDialect.Draft201909 ? "dependentRequired"u8 : "dependencies"u8);
                     }
 
                     if (!present)
                     {
-                        if (!TMode.Collecting)
+                        if (!default(TMode).Collecting)
                         {
                             return false;
                         }
@@ -1165,14 +1165,14 @@ internal static class Evaluator
                 if (dep.Schema.IsPresent)
                 {
                     bool m = EvalInPlaceChild<TMode, TAccess>(dep.Schema, doc, index, ref state, evaluated, seq);
-                    if (TMode.Collecting)
+                    if (default(TMode).Collecting)
                     {
                         state.Collector!.EvaluatedKeywordForProperty(m, null, dep.Name, node.Dialect >= JsonSchemaDialect.Draft201909 ? "dependentSchemas"u8 : "dependencies"u8);
                     }
 
                     if (!m)
                     {
-                        if (!TMode.Collecting)
+                        if (!default(TMode).Collecting)
                         {
                             return false;
                         }
@@ -1205,8 +1205,8 @@ internal static class Evaluator
         where TMode : struct, IEvaluationMode
         where TAccess : struct, IDocumentAccess
     {
-        SchemaNode target = state.Nodes[TMode.Collecting ? child.Node : child.FastNode];
-        if (!TMode.Collecting)
+        SchemaNode target = state.Nodes[default(TMode).Collecting ? child.Node : child.FastNode];
+        if (!default(TMode).Collecting)
         {
             if (target.AlwaysTrue)
             {
@@ -1242,8 +1242,8 @@ internal static class Evaluator
         where TMode : struct, IEvaluationMode
         where TAccess : struct, IDocumentAccess
     {
-        SchemaNode target = state.Nodes[TMode.Collecting ? child.Node : child.FastNode];
-        if (!TMode.Collecting)
+        SchemaNode target = state.Nodes[default(TMode).Collecting ? child.Node : child.FastNode];
+        if (!default(TMode).Collecting)
         {
             if (target.AlwaysTrue)
             {
@@ -1257,7 +1257,7 @@ internal static class Evaluator
         }
 
         using FixedStringJsonDocument<JsonElement> nameDoc = FixedStringJsonDocument<JsonElement>.Parse(doc.GetPropertyNameRaw(valueIndex, true), doc.ValueIsEscaped(valueIndex, true));
-        if (!TMode.Collecting)
+        if (!default(TMode).Collecting)
         {
             return Eval<FastMode, InterfaceAccess>(target, nameDoc, 0, ref state, default, 0);
         }
@@ -1281,20 +1281,20 @@ internal static class Evaluator
         SchemaNode target = state.Nodes[node.UnevaluatedProperties.Node];
         bool ok = true;
         int propertyIndex = 0;
-        int end = TAccess.EndIndex(ref state, doc, index);
-        for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; valueIndex = TAccess.NextIndex(ref state, doc, valueIndex) + RowSize)
+        int end = default(TAccess).EndIndex(ref state, doc, index);
+        for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex) + RowSize)
         {
             if (evaluated.IsEmpty || !IsEvaluated(evaluated, propertyIndex))
             {
                 MarkEvaluated(evaluated, propertyIndex);
-                if (!TMode.Collecting && target.AlwaysFalse)
+                if (!default(TMode).Collecting && target.AlwaysFalse)
                 {
                     return false;
                 }
 
                 if (!EvalProperty<TMode, TAccess>(node.UnevaluatedProperties, doc, valueIndex, ref state, seq))
                 {
-                    if (!TMode.Collecting)
+                    if (!default(TMode).Collecting)
                     {
                         return false;
                     }
@@ -1306,7 +1306,7 @@ internal static class Evaluator
             propertyIndex++;
         }
 
-        if (TMode.Collecting)
+        if (default(TMode).Collecting)
         {
             state.Collector!.EvaluatedKeyword(ok, null, "unevaluatedProperties"u8);
         }
@@ -1323,19 +1323,19 @@ internal static class Evaluator
         where TAccess : struct, IDocumentAccess
     {
         bool ok = true;
-        int length = TAccess.Count(ref state, doc, index, JsonTokenType.StartArray);
+        int length = default(TAccess).Count(ref state, doc, index, JsonTokenType.StartArray);
 
         if (node.MinItems >= 0)
         {
             bool m = length >= node.MinItems;
-            if (TMode.Collecting)
+            if (default(TMode).Collecting)
             {
                 state.Collector!.EvaluatedKeyword(m, null, "minItems"u8);
             }
 
             if (!m)
             {
-                if (!TMode.Collecting)
+                if (!default(TMode).Collecting)
                 {
                     return false;
                 }
@@ -1347,14 +1347,14 @@ internal static class Evaluator
         if (node.MaxItems >= 0)
         {
             bool m = length <= node.MaxItems;
-            if (TMode.Collecting)
+            if (default(TMode).Collecting)
             {
                 state.Collector!.EvaluatedKeyword(m, null, "maxItems"u8);
             }
 
             if (!m)
             {
-                if (!TMode.Collecting)
+                if (!default(TMode).Collecting)
                 {
                     return false;
                 }
@@ -1374,8 +1374,8 @@ internal static class Evaluator
         }
 
         // In flag mode, `items: false` (or true) needs no descent.
-        SchemaNode? itemsNode = hasItems ? state.Nodes[TMode.Collecting ? node.Items.Node : node.Items.FastNode] : null;
-        if (!TMode.Collecting && itemsNode is not null)
+        SchemaNode? itemsNode = hasItems ? state.Nodes[default(TMode).Collecting ? node.Items.Node : node.Items.FastNode] : null;
+        if (!default(TMode).Collecting && itemsNode is not null)
         {
             if (itemsNode.AlwaysFalse)
             {
@@ -1400,16 +1400,16 @@ internal static class Evaluator
         }
 
         // Flag mode, items only, no tracking: tight loops for type-only / leaf item schemas.
-        if (!TMode.Collecting && prefixItems is null && !hasContains && !unique && evaluated.IsEmpty && itemsNode is not null && (itemsNode.IsTypeOnly || itemsNode.IsLeaf))
+        if (!default(TMode).Collecting && prefixItems is null && !hasContains && !unique && evaluated.IsEmpty && itemsNode is not null && (itemsNode.IsTypeOnly || itemsNode.IsLeaf))
         {
-            int simpleEnd = TAccess.EndIndex(ref state, doc, index);
+            int simpleEnd = default(TAccess).EndIndex(ref state, doc, index);
             if (itemsNode.IsTypeOnly)
             {
                 TypeMask mask = itemsNode.Type;
                 bool lexical = itemsNode.Dialect == JsonSchemaDialect.Draft4;
-                for (int valueIndex = index + RowSize; valueIndex < simpleEnd; valueIndex = TAccess.NextIndex(ref state, doc, valueIndex))
+                for (int valueIndex = index + RowSize; valueIndex < simpleEnd; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex))
                 {
-                    if (!MatchesType<TAccess>(mask, TAccess.TokenType(ref state, doc, valueIndex), ref state, doc, valueIndex, lexical))
+                    if (!MatchesType<TAccess>(mask, default(TAccess).TokenType(ref state, doc, valueIndex), ref state, doc, valueIndex, lexical))
                     {
                         return false;
                     }
@@ -1418,7 +1418,7 @@ internal static class Evaluator
                 return ok;
             }
 
-            for (int valueIndex = index + RowSize; valueIndex < simpleEnd; valueIndex = TAccess.NextIndex(ref state, doc, valueIndex))
+            for (int valueIndex = index + RowSize; valueIndex < simpleEnd; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex))
             {
                 if (!EvalLeafFast<TAccess>(itemsNode, doc, valueIndex, ref state))
                 {
@@ -1442,8 +1442,8 @@ internal static class Evaluator
 
         try
         {
-            int end = TAccess.EndIndex(ref state, doc, index);
-            for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = TAccess.NextIndex(ref state, doc, valueIndex))
+            int end = default(TAccess).EndIndex(ref state, doc, index);
+            for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex))
             {
 
                 if (prefixItems is not null && itemIndex < prefixItems.Length)
@@ -1451,7 +1451,7 @@ internal static class Evaluator
                     MarkEvaluated(evaluated, itemIndex);
                     if (!EvalItem<TMode, TAccess>(prefixItems[itemIndex], doc, valueIndex, itemIndex, ref state, seq))
                     {
-                        if (!TMode.Collecting)
+                        if (!default(TMode).Collecting)
                         {
                             return false;
                         }
@@ -1464,7 +1464,7 @@ internal static class Evaluator
                     MarkEvaluated(evaluated, itemIndex);
                     if (!EvalItem<TMode, TAccess>(node.Items, doc, valueIndex, itemIndex, ref state, seq))
                     {
-                        if (!TMode.Collecting)
+                        if (!default(TMode).Collecting)
                         {
                             return false;
                         }
@@ -1496,7 +1496,7 @@ internal static class Evaluator
                     if (duplicate)
                     {
                         isUnique = false;
-                        if (!TMode.Collecting)
+                        if (!default(TMode).Collecting)
                         {
                             return false;
                         }
@@ -1516,7 +1516,7 @@ internal static class Evaluator
 
         if (unique)
         {
-            if (TMode.Collecting)
+            if (default(TMode).Collecting)
             {
                 state.Collector!.EvaluatedKeyword(isUnique, isUnique ? null : JsonSchemaEvaluation.ExpectedUniqueItems, "uniqueItems"u8);
             }
@@ -1527,14 +1527,14 @@ internal static class Evaluator
         if (hasContains)
         {
             bool m = containsCount >= node.MinContains && (node.MaxContains < 0 || containsCount <= node.MaxContains);
-            if (TMode.Collecting)
+            if (default(TMode).Collecting)
             {
                 state.Collector!.EvaluatedKeyword(m, null, "contains"u8);
             }
 
             if (!m)
             {
-                if (!TMode.Collecting)
+                if (!default(TMode).Collecting)
                 {
                     return false;
                 }
@@ -1554,11 +1554,11 @@ internal static class Evaluator
     private static bool IsDuplicate<TAccess>(ref EvaluationState state, IJsonDocument doc, int valueIndex, scoped ReadOnlySpan<int> previous)
         where TAccess : struct, IDocumentAccess
     {
-        JsonTokenType tokenType = TAccess.TokenType(ref state, doc, valueIndex);
+        JsonTokenType tokenType = default(TAccess).TokenType(ref state, doc, valueIndex);
         for (int i = 0; i < previous.Length; i++)
         {
             int other = previous[i];
-            JsonTokenType otherType = TAccess.TokenType(ref state, doc, other);
+            JsonTokenType otherType = default(TAccess).TokenType(ref state, doc, other);
             if (otherType != tokenType)
             {
                 continue;
@@ -1571,8 +1571,8 @@ internal static class Evaluator
                 case JsonTokenType.Null:
                     return true;
                 case JsonTokenType.String:
-                    if (TAccess.RawValue(ref state, doc, valueIndex).SequenceEqual(TAccess.RawValue(ref state, doc, other))
-                        || (TAccess.IsEscaped(ref state, doc, valueIndex) | TAccess.IsEscaped(ref state, doc, other)) && JsonElementHelpers.DeepEqualsNoParentDocumentCheck(doc, valueIndex, doc, other))
+                    if (default(TAccess).RawValue(ref state, doc, valueIndex).SequenceEqual(default(TAccess).RawValue(ref state, doc, other))
+                        || (default(TAccess).IsEscaped(ref state, doc, valueIndex) | default(TAccess).IsEscaped(ref state, doc, other)) && JsonElementHelpers.DeepEqualsNoParentDocumentCheck(doc, valueIndex, doc, other))
                     {
                         return true;
                     }
@@ -1580,8 +1580,8 @@ internal static class Evaluator
                     break;
                 case JsonTokenType.Number:
                 {
-                    ReadOnlySpan<byte> a = TAccess.RawValue(ref state, doc, valueIndex);
-                    ReadOnlySpan<byte> b = TAccess.RawValue(ref state, doc, other);
+                    ReadOnlySpan<byte> a = default(TAccess).RawValue(ref state, doc, valueIndex);
+                    ReadOnlySpan<byte> b = default(TAccess).RawValue(ref state, doc, other);
                     if (a.SequenceEqual(b))
                     {
                         return true;
@@ -1643,8 +1643,8 @@ internal static class Evaluator
         where TMode : struct, IEvaluationMode
         where TAccess : struct, IDocumentAccess
     {
-        SchemaNode target = state.Nodes[TMode.Collecting ? child.Node : child.FastNode];
-        if (!TMode.Collecting)
+        SchemaNode target = state.Nodes[default(TMode).Collecting ? child.Node : child.FastNode];
+        if (!default(TMode).Collecting)
         {
             if (target.AlwaysTrue)
             {
@@ -1680,8 +1680,8 @@ internal static class Evaluator
         where TMode : struct, IEvaluationMode
         where TAccess : struct, IDocumentAccess
     {
-        SchemaNode target = state.Nodes[TMode.Collecting ? child.Node : child.FastNode];
-        if (!TMode.Collecting)
+        SchemaNode target = state.Nodes[default(TMode).Collecting ? child.Node : child.FastNode];
+        if (!default(TMode).Collecting)
         {
             if (target.AlwaysTrue)
             {
@@ -1728,20 +1728,20 @@ internal static class Evaluator
         SchemaNode target = state.Nodes[node.UnevaluatedItems.Node];
         bool ok = true;
         int itemIndex = 0;
-        int end = TAccess.EndIndex(ref state, doc, index);
-        for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = TAccess.NextIndex(ref state, doc, valueIndex))
+        int end = default(TAccess).EndIndex(ref state, doc, index);
+        for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex))
         {
             if (evaluated.IsEmpty || !IsEvaluated(evaluated, itemIndex))
             {
                 MarkEvaluated(evaluated, itemIndex);
-                if (!TMode.Collecting && target.AlwaysFalse)
+                if (!default(TMode).Collecting && target.AlwaysFalse)
                 {
                     return false;
                 }
 
                 if (!EvalItem<TMode, TAccess>(node.UnevaluatedItems, doc, valueIndex, itemIndex, ref state, seq))
                 {
-                    if (!TMode.Collecting)
+                    if (!default(TMode).Collecting)
                     {
                         return false;
                     }
@@ -1753,7 +1753,7 @@ internal static class Evaluator
             itemIndex++;
         }
 
-        if (TMode.Collecting)
+        if (default(TMode).Collecting)
         {
             state.Collector!.EvaluatedKeyword(ok, null, "unevaluatedItems"u8);
         }
@@ -1773,7 +1773,7 @@ internal static class Evaluator
         where TMode : struct, IEvaluationMode
         where TAccess : struct, IDocumentAccess
     {
-        if (parentBits.IsEmpty || !CanMark<TAccess>(state.Nodes[TMode.Collecting ? child.Node : child.FastNode], ref state, doc, index))
+        if (parentBits.IsEmpty || !CanMark<TAccess>(state.Nodes[default(TMode).Collecting ? child.Node : child.FastNode], ref state, doc, index))
         {
             // Nothing to merge: the child cannot mark properties/items of this instance.
             return EvalInPlaceCore<TMode, TAccess>(child, doc, index, ref state, default, parentSeq, commitOnFailure: true);
@@ -1816,7 +1816,7 @@ internal static class Evaluator
     private static bool CanMark<TAccess>(SchemaNode target, ref EvaluationState state, IJsonDocument doc, int index)
         where TAccess : struct, IDocumentAccess
     {
-        return TAccess.TokenType(ref state, doc, index) == JsonTokenType.StartObject ? target.MarksProperties : target.MarksItems;
+        return default(TAccess).TokenType(ref state, doc, index) == JsonTokenType.StartObject ? target.MarksProperties : target.MarksItems;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1853,8 +1853,8 @@ internal static class Evaluator
         where TMode : struct, IEvaluationMode
         where TAccess : struct, IDocumentAccess
     {
-        SchemaNode target = state.Nodes[TMode.Collecting ? child.Node : child.FastNode];
-        if (!TMode.Collecting)
+        SchemaNode target = state.Nodes[default(TMode).Collecting ? child.Node : child.FastNode];
+        if (!default(TMode).Collecting)
         {
             return Eval<FastMode, TAccess>(target, doc, index, ref state, bits, 0);
         }
@@ -1884,14 +1884,14 @@ internal static class Evaluator
         if (node.Ref.IsPresent)
         {
             bool m = EvalInPlaceChild<TMode, TAccess>(node.Ref, doc, index, ref state, evaluated, seq);
-            if (TMode.Collecting)
+            if (default(TMode).Collecting)
             {
                 state.Collector!.EvaluatedKeyword(m, m ? JsonSchemaEvaluation.MatchedAllSchema : JsonSchemaEvaluation.DidNotMatchAllSchema, node.Ref.Path);
             }
 
             if (!m)
             {
-                if (!TMode.Collecting)
+                if (!default(TMode).Collecting)
                 {
                     return false;
                 }
@@ -1922,14 +1922,14 @@ internal static class Evaluator
 
             var child = new ChildRef(targetNode, dynamicRef.PathSegment);
             bool m = EvalInPlaceChild<TMode, TAccess>(child, doc, index, ref state, evaluated, seq);
-            if (TMode.Collecting)
+            if (default(TMode).Collecting)
             {
                 state.Collector!.EvaluatedKeyword(m, m ? JsonSchemaEvaluation.MatchedAllSchema : JsonSchemaEvaluation.DidNotMatchAllSchema, dynamicRef.PathSegment);
             }
 
             if (!m)
             {
-                if (!TMode.Collecting)
+                if (!default(TMode).Collecting)
                 {
                     return false;
                 }
@@ -1945,7 +1945,7 @@ internal static class Evaluator
             {
                 if (!EvalInPlaceChild<TMode, TAccess>(allOf[i], doc, index, ref state, evaluated, seq))
                 {
-                    if (!TMode.Collecting)
+                    if (!default(TMode).Collecting)
                     {
                         return false;
                     }
@@ -1954,7 +1954,7 @@ internal static class Evaluator
                 }
             }
 
-            if (TMode.Collecting)
+            if (default(TMode).Collecting)
             {
                 state.Collector!.EvaluatedKeyword(all, all ? JsonSchemaEvaluation.MatchedAllSchema : JsonSchemaEvaluation.DidNotMatchAllSchema, "allOf"u8);
             }
@@ -1965,11 +1965,11 @@ internal static class Evaluator
         if (node.AnyOf is ChildRef[] anyOf)
         {
             bool any;
-            if (!TMode.Collecting && node.AnyOfTypeUnion != TypeMask.None)
+            if (!default(TMode).Collecting && node.AnyOfTypeUnion != TypeMask.None)
             {
-                any = MatchesType<TAccess>(node.AnyOfTypeUnion, TAccess.TokenType(ref state, doc, index), ref state, doc, index, node.Dialect == JsonSchemaDialect.Draft4);
+                any = MatchesType<TAccess>(node.AnyOfTypeUnion, default(TAccess).TokenType(ref state, doc, index), ref state, doc, index, node.Dialect == JsonSchemaDialect.Draft4);
             }
-            else if (!TMode.Collecting && node.AnyOfDiscriminator is Discriminator anyDiscriminator && TrySelectBranches<TAccess>(anyDiscriminator, ref state, doc, index, out int[] selected))
+            else if (!default(TMode).Collecting && node.AnyOfDiscriminator is Discriminator anyDiscriminator && TrySelectBranches<TAccess>(anyDiscriminator, ref state, doc, index, out int[] selected))
             {
                 any = EvalAnyOfSelected<TAccess>(anyOf, selected, doc, index, ref state, evaluated);
             }
@@ -1978,14 +1978,14 @@ internal static class Evaluator
                 any = EvalAnyOf<TMode, TAccess>(anyOf, doc, index, ref state, evaluated, seq);
             }
 
-            if (TMode.Collecting)
+            if (default(TMode).Collecting)
             {
                 state.Collector!.EvaluatedKeyword(any, any ? JsonSchemaEvaluation.MatchedAtLeastOneSchema : JsonSchemaEvaluation.DidNotMatchAtLeastOneSchema, "anyOf"u8);
             }
 
             if (!any)
             {
-                if (!TMode.Collecting)
+                if (!default(TMode).Collecting)
                 {
                     return false;
                 }
@@ -1997,11 +1997,11 @@ internal static class Evaluator
         if (node.OneOf is ChildRef[] oneOf)
         {
             int matched;
-            if (!TMode.Collecting && node.OneOfTypeUnion != TypeMask.None)
+            if (!default(TMode).Collecting && node.OneOfTypeUnion != TypeMask.None)
             {
-                matched = MatchesType<TAccess>(node.OneOfTypeUnion, TAccess.TokenType(ref state, doc, index), ref state, doc, index, node.Dialect == JsonSchemaDialect.Draft4) ? 1 : 0;
+                matched = MatchesType<TAccess>(node.OneOfTypeUnion, default(TAccess).TokenType(ref state, doc, index), ref state, doc, index, node.Dialect == JsonSchemaDialect.Draft4) ? 1 : 0;
             }
-            else if (!TMode.Collecting && node.OneOfDiscriminator is Discriminator oneDiscriminator && TrySelectBranches<TAccess>(oneDiscriminator, ref state, doc, index, out int[] selected))
+            else if (!default(TMode).Collecting && node.OneOfDiscriminator is Discriminator oneDiscriminator && TrySelectBranches<TAccess>(oneDiscriminator, ref state, doc, index, out int[] selected))
             {
                 matched = EvalOneOfSelected<TAccess>(oneOf, selected, doc, index, ref state, evaluated);
             }
@@ -2011,14 +2011,14 @@ internal static class Evaluator
             }
 
             bool one = matched == 1;
-            if (TMode.Collecting)
+            if (default(TMode).Collecting)
             {
                 state.Collector!.EvaluatedKeyword(one, matched == 0 ? JsonSchemaEvaluation.MatchedNoSchema : one ? JsonSchemaEvaluation.MatchedExactlyOneSchema : JsonSchemaEvaluation.MatchedMoreThanOneSchema, "oneOf"u8);
             }
 
             if (!one)
             {
-                if (!TMode.Collecting)
+                if (!default(TMode).Collecting)
                 {
                     return false;
                 }
@@ -2031,7 +2031,7 @@ internal static class Evaluator
         {
             SchemaNode target = nodes[node.Not.Node];
             bool inner;
-            if (!TMode.Collecting)
+            if (!default(TMode).Collecting)
             {
                 inner = Eval<FastMode, TAccess>(target, doc, index, ref state, default, 0);
             }
@@ -2048,7 +2048,7 @@ internal static class Evaluator
 
             if (inner)
             {
-                if (!TMode.Collecting)
+                if (!default(TMode).Collecting)
                 {
                     return false;
                 }
@@ -2065,14 +2065,14 @@ internal static class Evaluator
                 if (node.Then.IsPresent)
                 {
                     bool m = EvalInPlaceChild<TMode, TAccess>(node.Then, doc, index, ref state, evaluated, seq);
-                    if (TMode.Collecting)
+                    if (default(TMode).Collecting)
                     {
                         state.Collector!.EvaluatedKeyword(m, m ? JsonSchemaEvaluation.MatchedThen : JsonSchemaEvaluation.DidNotMatchThen, "then"u8);
                     }
 
                     if (!m)
                     {
-                        if (!TMode.Collecting)
+                        if (!default(TMode).Collecting)
                         {
                             return false;
                         }
@@ -2084,14 +2084,14 @@ internal static class Evaluator
             else if (node.Else.IsPresent)
             {
                 bool m = EvalInPlaceChild<TMode, TAccess>(node.Else, doc, index, ref state, evaluated, seq);
-                if (TMode.Collecting)
+                if (default(TMode).Collecting)
                 {
                     state.Collector!.EvaluatedKeyword(m, m ? JsonSchemaEvaluation.MatchedElse : JsonSchemaEvaluation.DidNotMatchElse, "else"u8);
                 }
 
                 if (!m)
                 {
-                    if (!TMode.Collecting)
+                    if (!default(TMode).Collecting)
                     {
                         return false;
                     }
@@ -2108,10 +2108,10 @@ internal static class Evaluator
         where TMode : struct, IEvaluationMode
         where TAccess : struct, IDocumentAccess
     {
-        if (parentBits.IsEmpty || !CanMark<TAccess>(state.Nodes[TMode.Collecting ? child.Node : child.FastNode], ref state, doc, index))
+        if (parentBits.IsEmpty || !CanMark<TAccess>(state.Nodes[default(TMode).Collecting ? child.Node : child.FastNode], ref state, doc, index))
         {
             bool r = EvalInPlaceCore<TMode, TAccess>(child, doc, index, ref state, default, parentSeq, commitOnFailure: false);
-            if (TMode.Collecting)
+            if (default(TMode).Collecting)
             {
                 state.Collector!.EvaluatedKeyword(true, r ? JsonSchemaEvaluation.MatchedIfForThen : JsonSchemaEvaluation.MatchedIfForElse, "if"u8);
             }
@@ -2131,7 +2131,7 @@ internal static class Evaluator
                 Merge(parentBits, scratch);
             }
 
-            if (TMode.Collecting)
+            if (default(TMode).Collecting)
             {
                 state.Collector!.EvaluatedKeyword(true, r ? JsonSchemaEvaluation.MatchedIfForThen : JsonSchemaEvaluation.MatchedIfForElse, "if"u8);
             }
@@ -2153,7 +2153,7 @@ internal static class Evaluator
     private static bool TrySelectBranches<TAccess>(Discriminator discriminator, ref EvaluationState state, IJsonDocument doc, int index, out int[] selected)
         where TAccess : struct, IDocumentAccess
     {
-        if (TAccess.TokenType(ref state, doc, index) != JsonTokenType.StartObject)
+        if (default(TAccess).TokenType(ref state, doc, index) != JsonTokenType.StartObject)
         {
             selected = [];
             return false;
@@ -2167,7 +2167,7 @@ internal static class Evaluator
         }
 
         bool sameDoc = ReferenceEquals(valueDoc, doc);
-        JsonTokenType valueType = sameDoc ? TAccess.TokenType(ref state, doc, valueIndex) : valueDoc.GetJsonTokenType(valueIndex);
+        JsonTokenType valueType = sameDoc ? default(TAccess).TokenType(ref state, doc, valueIndex) : valueDoc.GetJsonTokenType(valueIndex);
         if (valueType != JsonTokenType.String)
         {
             selected = discriminator.NonString;
@@ -2310,7 +2310,7 @@ internal static class Evaluator
                 if (EvalInPlaceCore<TMode, TAccess>(branches[i], doc, index, ref state, default, parentSeq, commitOnFailure: false))
                 {
                     any = true;
-                    if (!TMode.Collecting)
+                    if (!default(TMode).Collecting)
                     {
                         return true;
                     }
@@ -2359,7 +2359,7 @@ internal static class Evaluator
                 if (EvalInPlaceCore<TMode, TAccess>(branches[i], doc, index, ref state, default, parentSeq, commitOnFailure: false))
                 {
                     matched++;
-                    if (!TMode.Collecting && matched > 1)
+                    if (!default(TMode).Collecting && matched > 1)
                     {
                         return matched;
                     }
@@ -2388,7 +2388,7 @@ internal static class Evaluator
                     {
                         scratch.CopyTo(winner);
                     }
-                    else if (!TMode.Collecting)
+                    else if (!default(TMode).Collecting)
                     {
                         return matched;
                     }

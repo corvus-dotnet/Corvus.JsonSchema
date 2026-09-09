@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Json.CodeGeneration;
-using Corvus.Text.Json.Validator;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TestUtilities;
 

@@ -4,7 +4,8 @@ using Corvus.Text.Json;
 using Corvus.Text.Json.RuntimeEvaluator;
 using CorvusValidator = Corvus.Text.Json.Validator.JsonSchema;
 
-// Cold-start comparison: runtime evaluator compilation vs the Roslyn-based Corvus.Text.Json.Validator.
+// Cold-start measurement: compiling a schema with the runtime evaluator directly and through the
+// Corvus.Text.Json.Validator wrapper (which adds URI/cache handling and document resolution).
 // Usage: coldstart [schema-name ...]   (defaults to a representative subset)
 
 string dir = Path.Combine(AppContext.BaseDirectory, "sourcemeta");
@@ -18,8 +19,7 @@ static JsonSchemaDialect DialectOf(string json) => json.Contains("draft-04") ? J
     : json.Contains("2020-12") ? JsonSchemaDialect.Draft202012
     : JsonSchemaDialect.Draft7;
 
-Console.WriteLine($"{"schema",-16} {"bytes",8} {"rt first",10} {"rt warm",10} {"rt alloc",10} {"roslyn first",13} {"roslyn 2nd",11}");
-bool roslynWarm = false;
+Console.WriteLine($"{"schema",-16} {"bytes",8} {"rt first",10} {"rt warm",10} {"rt alloc",10} {"validator 1st",14} {"validator 2nd",14}");
 foreach (string name in names)
 {
     string path = Path.Combine(dir, name + "-schema.json");
@@ -47,25 +47,14 @@ foreach (string name in names)
         warm = Math.Min(warm, Ms(Stopwatch.GetTimestamp() - w0));
     }
 
-    // Roslyn validator: the first schema in the process also pays the metadata-reference discovery cost;
-    // the cache is keyed by URI, so use a fresh canonical URI per call.
-    double roslynFirst = double.NaN;
-    double roslynSecond = double.NaN;
-    try
-    {
-        var vopts = new CorvusValidator.Options(alwaysAssertFormat: false);
-        long r0 = Stopwatch.GetTimestamp();
-        CorvusValidator.FromText(text, $"https://coldstart.example/{name}/1.json", vopts);
-        roslynFirst = Ms(Stopwatch.GetTimestamp() - r0);
-        long r1 = Stopwatch.GetTimestamp();
-        CorvusValidator.FromText(text, $"https://coldstart.example/{name}/2.json", vopts);
-        roslynSecond = Ms(Stopwatch.GetTimestamp() - r1);
-    }
-    catch (Exception ex)
-    {
-        Console.Error.WriteLine($"{name}: roslyn validator failed: {ex.GetType().Name}: {ex.Message.Split('\n')[0]}");
-    }
+    // Validator wrapper: the cache is keyed by URI, so use a fresh canonical URI per call.
+    var vopts = new CorvusValidator.Options(allowFileSystemAndHttpResolution: false, alwaysAssertFormat: false, defaultDialect: DialectOf(text));
+    long r0 = Stopwatch.GetTimestamp();
+    CorvusValidator.FromText(text, $"https://coldstart.example/{name}/1.json", vopts);
+    double validatorFirst = Ms(Stopwatch.GetTimestamp() - r0);
+    long r1 = Stopwatch.GetTimestamp();
+    CorvusValidator.FromText(text, $"https://coldstart.example/{name}/2.json", vopts);
+    double validatorSecond = Ms(Stopwatch.GetTimestamp() - r1);
 
-    Console.WriteLine($"{name,-16} {bytes.Length,8} {first,8:F2}ms {warm,8:F2}ms {alloc / 1024.0,7:F0}KB {roslynFirst,11:F1}ms {roslynSecond,9:F1}ms{(roslynWarm ? string.Empty : "  (first Roslyn use in process)")}");
-    roslynWarm = true;
+    Console.WriteLine($"{name,-16} {bytes.Length,8} {first,8:F2}ms {warm,8:F2}ms {alloc / 1024.0,7:F0}KB {validatorFirst,12:F2}ms {validatorSecond,12:F2}ms");
 }

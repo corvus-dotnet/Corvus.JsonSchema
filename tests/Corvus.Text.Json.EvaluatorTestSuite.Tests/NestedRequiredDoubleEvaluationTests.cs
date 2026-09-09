@@ -435,7 +435,7 @@ public class NestedRequiredDoubleEvaluationTests
 
     private static async Task AssertGeneratedTypeEvaluates(string schemaText, string virtualFilename, string instanceJson, bool expected, string message)
     {
-        Corvus.Text.Json.Validator.DynamicJsonType type = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+        DynamicJsonType type = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
             virtualFilename,
             schemaText,
             "Corvus.Text.Json.EvaluatorTestSuite.Tests.NestedRequiredDoubleEvaluationTypes",
@@ -447,7 +447,7 @@ public class NestedRequiredDoubleEvaluationTests
             addExplicitUsings: true,
             Assembly.GetExecutingAssembly());
 
-        Corvus.Text.Json.Validator.DynamicJsonElement instance = type.ParseInstance(instanceJson);
+        DynamicJsonElement instance = type.ParseInstance(instanceJson);
         Assert.AreEqual(expected, instance.EvaluateSchema(), $"[Generated types] {message}");
 
         using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.CreateUnrented(JsonSchemaResultsLevel.Verbose);

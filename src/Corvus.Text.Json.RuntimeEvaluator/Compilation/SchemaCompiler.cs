@@ -127,6 +127,18 @@ internal sealed class SchemaCompiler
         return new CompiledSchema(compiler.NodesSnapshot(), root, loader, compiler.UsesDynamicScope, options, compiler);
     }
 
+    /// <summary>
+    /// Compiles the schema document at a URI, loaded through the options' resolvers.
+    /// </summary>
+    public static CompiledSchema CompileFromUri(string uri, JsonSchemaEvaluatorOptions options)
+    {
+        var loader = new SchemaLoader(options);
+        SchemaResource rootResource = loader.LoadRoot(uri);
+        var compiler = new SchemaCompiler(loader, options) { rootResource = rootResource };
+        int root = compiler.AddEntryPoint(options.EntryPoint);
+        return new CompiledSchema(compiler.NodesSnapshot(), root, loader, compiler.UsesDynamicScope, options, compiler);
+    }
+
     private SchemaResource rootResource = null!;
 
     /// <summary>Gets a value indicating whether any dynamic reference remains dynamic after finalisation.</summary>
@@ -774,7 +786,7 @@ internal sealed class SchemaCompiler
             }
 
             int[] table = new int[resourceCount];
-            Array.Fill(table, -1);
+            table.AsSpan().Fill(-1);
             foreach ((int resourceId, int nodeId) in pending.Candidates)
             {
                 table[resourceId] = nodeId;

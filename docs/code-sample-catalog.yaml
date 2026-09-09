@@ -1501,20 +1501,19 @@ main-docs:
       - {index: 5, language: csharp, lines: [169, 184], category: compilable, verified: false}
   - path: "docs/Validator.md"
     blocks:
-      - {index: 0, language: bash, lines: [20, 22]}
-      - {index: 1, language: csharp, lines: [28, 36], category: compilable, verified: false}
-      - {index: 2, language: csharp, lines: [44, 46], category: fragment, verified: false}
-      - {index: 3, language: csharp, lines: [52, 67], category: compilable, verified: false}
-      - {index: 4, language: csharp, lines: [71, 73], category: fragment, verified: false}
-      - {index: 5, language: csharp, lines: [77, 80], category: compilable, verified: false}
-      - {index: 6, language: csharp, lines: [86, 91], category: compilable, verified: false}
-      - {index: 7, language: csharp, lines: [97, 111], category: compilable, verified: false}
-      - {index: 8, language: csharp, lines: [119, 135], category: compilable, verified: false}
-      - {index: 9, language: csharp, lines: [152, 165], category: compilable, verified: false}
-      - {index: 10, language: csharp, lines: [181, 194], category: compilable, verified: false}
-      - {index: 11, language: csharp, lines: [202, 208], category: compilable, verified: false}
-      - {index: 12, language: csharp, lines: [212, 214], category: fragment, verified: false}
-      - {index: 13, language: xml, lines: [233, 237]}
+      - {index: 0, language: bash, lines: [21, 23]}
+      - {index: 1, language: csharp, lines: [29, 37], category: compilable, verified: false}
+      - {index: 2, language: csharp, lines: [45, 47], category: fragment, verified: false}
+      - {index: 3, language: csharp, lines: [53, 68], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [72, 74], category: fragment, verified: false}
+      - {index: 5, language: csharp, lines: [78, 81], category: compilable, verified: false}
+      - {index: 6, language: csharp, lines: [87, 95], category: compilable, verified: false}
+      - {index: 7, language: csharp, lines: [101, 115], category: compilable, verified: false}
+      - {index: 8, language: csharp, lines: [123, 139], category: compilable, verified: false}
+      - {index: 9, language: csharp, lines: [155, 168], category: compilable, verified: false}
+      - {index: 10, language: csharp, lines: [184, 197], category: compilable, verified: false}
+      - {index: 11, language: csharp, lines: [205, 211], category: compilable, verified: false}
+      - {index: 12, language: csharp, lines: [215, 217], category: fragment, verified: false}
   - path: "docs/Yaml.md"
     blocks:
       - {index: 0, language: bash, lines: [26, 32]}

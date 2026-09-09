@@ -79,7 +79,7 @@ internal static class UriUtilities
     /// </summary>
     public static bool HasScheme(string reference)
     {
-        if (reference.Length == 0 || !char.IsAsciiLetter(reference[0]))
+        if (reference.Length == 0 || !AsciiChar.IsLetter(reference[0]))
         {
             return false;
         }
@@ -92,7 +92,7 @@ internal static class UriUtilities
                 return true;
             }
 
-            if (!(char.IsAsciiLetterOrDigit(c) || c == '+' || c == '-' || c == '.'))
+            if (!(AsciiChar.IsLetterOrDigit(c) || c == '+' || c == '-' || c == '.'))
             {
                 return false;
             }

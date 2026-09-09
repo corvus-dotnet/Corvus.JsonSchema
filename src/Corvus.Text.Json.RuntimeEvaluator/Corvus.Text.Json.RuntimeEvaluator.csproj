@@ -1,8 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
   <PropertyGroup>
-    <!-- netstandard is not yet supported: the evaluator uses static abstract interface members and Span features. -->
-    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>net9.0;net10.0;netstandard2.0;netstandard2.1</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>preview</LangVersion>
@@ -14,7 +13,8 @@
     <IsPackable>true</IsPackable>
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
     <RootNamespace>Corvus.Text.Json.RuntimeEvaluator</RootNamespace>
-    <MetaschemaPath>..\Corvus.Text.Json.Validator\metaschema\</MetaschemaPath>
+    <MetaschemaPath>metaschema\</MetaschemaPath>
+    <CoreLibSharedDir>..\..\System.Private.CoreLib\src\</CoreLibSharedDir>
   </PropertyGroup>
   <PropertyGroup>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
@@ -22,6 +22,21 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+  </ItemGroup>
+  <!-- Polyfills for netstandard2.0 -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <Compile Include="$(CoreLibSharedDir)System\Runtime\CompilerServices\IsExternalInit.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Diagnostics\CodeAnalysis\NullableAttributes.cs" Link="System\Diagnostics\CodeAnalysis\NullableAttributes.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Index.cs" Link="System\Index.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Range.cs" Link="System\Range.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Numerics\Hashing\HashHelpers.cs" Link="System\Numerics\Hashing\HashHelpers.cs" />
+  </ItemGroup>
+  <!-- IsExternalInit: also needed for netstandard2.1 -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+    <Compile Include="$(CoreLibSharedDir)System\Runtime\CompilerServices\IsExternalInit.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
+    <PackageReference Include="System.Memory" />
   </ItemGroup>
   <ItemGroup>
     <!-- Shared source: the ECMA-262 to .NET regex translator from the code generator. -->

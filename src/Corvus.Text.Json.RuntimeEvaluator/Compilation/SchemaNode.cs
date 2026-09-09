@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
@@ -123,7 +124,7 @@ internal sealed class DivisorValue
             return;
         }
 
-        if (digits.Length <= 19 && ulong.TryParse(System.Text.Encoding.ASCII.GetString(digits), out ulong small))
+        if (digits.Length <= 19 && ulong.TryParse(System.Text.Encoding.ASCII.GetString(digits), NumberStyles.Integer, CultureInfo.InvariantCulture, out ulong small))
         {
             this.Small = small;
         }
@@ -270,7 +271,7 @@ internal sealed class PatternMatcher
         for (int i = 1; i < end; i++)
         {
             char c = pattern[i];
-            if (!(char.IsAsciiLetterOrDigit(c) || c == '_' || c == '/' || c == '@' || c == '-'))
+            if (!(AsciiChar.IsLetterOrDigit(c) || c == '_' || c == '/' || c == '@' || c == '-'))
             {
                 return false;
             }
@@ -297,7 +298,7 @@ internal sealed class PatternMatcher
             return false;
         }
 
-        return int.TryParse(inner.AsSpan(0, comma), out min) && int.TryParse(inner.AsSpan(comma + 1), out max);
+        return int.TryParse(inner.Substring(0, comma), NumberStyles.Integer, CultureInfo.InvariantCulture, out min) && int.TryParse(inner.Substring(comma + 1), NumberStyles.Integer, CultureInfo.InvariantCulture, out max);
     }
 }
 

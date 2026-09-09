@@ -15,19 +15,19 @@ namespace Corvus.Text.Json.RuntimeEvaluator.Evaluation;
 internal interface IEvaluationMode
 {
     /// <summary>Gets a value indicating whether results are collected.</summary>
-    static abstract bool Collecting { get; }
+    bool Collecting { get; }
 }
 
 /// <summary>Flag-only evaluation: fail fast, no results.</summary>
 internal readonly struct FastMode : IEvaluationMode
 {
-    public static bool Collecting => false;
+    public bool Collecting => false;
 }
 
 /// <summary>Exhaustive evaluation reporting to a results collector.</summary>
 internal readonly struct CollectingMode : IEvaluationMode
 {
-    public static bool Collecting => true;
+    public bool Collecting => true;
 }
 
 /// <summary>
@@ -38,61 +38,61 @@ internal readonly struct CollectingMode : IEvaluationMode
 internal interface IDocumentAccess
 {
     /// <summary>Gets the token type of the element.</summary>
-    static abstract JsonTokenType TokenType(ref EvaluationState state, IJsonDocument doc, int index);
+    JsonTokenType TokenType(ref EvaluationState state, IJsonDocument doc, int index);
 
     /// <summary>Gets the property count of an object or the length of an array.</summary>
-    static abstract int Count(ref EvaluationState state, IJsonDocument doc, int index, JsonTokenType tokenType);
+    int Count(ref EvaluationState state, IJsonDocument doc, int index, JsonTokenType tokenType);
 
     /// <summary>Gets the raw text of a simple value (strings without quotes, not unescaped).</summary>
-    static abstract ReadOnlySpan<byte> RawValue(ref EvaluationState state, IJsonDocument doc, int index);
+    ReadOnlySpan<byte> RawValue(ref EvaluationState state, IJsonDocument doc, int index);
 
     /// <summary>Gets the raw text of a simple value as memory.</summary>
-    static abstract ReadOnlyMemory<byte> RawValueMemory(ref EvaluationState state, IJsonDocument doc, int index);
+    ReadOnlyMemory<byte> RawValueMemory(ref EvaluationState state, IJsonDocument doc, int index);
 
     /// <summary>Gets a value indicating whether a string value contains escapes.</summary>
-    static abstract bool IsEscaped(ref EvaluationState state, IJsonDocument doc, int index);
+    bool IsEscaped(ref EvaluationState state, IJsonDocument doc, int index);
 
     /// <summary>Gets the raw property name for a property value index.</summary>
-    static abstract ReadOnlyMemory<byte> PropertyNameRawMemory(ref EvaluationState state, IJsonDocument doc, int valueIndex);
+    ReadOnlyMemory<byte> PropertyNameRawMemory(ref EvaluationState state, IJsonDocument doc, int valueIndex);
 
     /// <summary>Gets a value indicating whether the property name for a value index contains escapes.</summary>
-    static abstract bool PropertyNameIsEscaped(ref EvaluationState state, IJsonDocument doc, int valueIndex);
+    bool PropertyNameIsEscaped(ref EvaluationState state, IJsonDocument doc, int valueIndex);
 
     /// <summary>Gets the index of a container's end row.</summary>
-    static abstract int EndIndex(ref EvaluationState state, IJsonDocument doc, int containerIndex);
+    int EndIndex(ref EvaluationState state, IJsonDocument doc, int containerIndex);
 
     /// <summary>Gets the index of the row after an element (its next sibling, or the parent's end row).</summary>
-    static abstract int NextIndex(ref EvaluationState state, IJsonDocument doc, int index);
+    int NextIndex(ref EvaluationState state, IJsonDocument doc, int index);
 
     /// <summary>Gets the unescaped text of a string value.</summary>
-    static abstract UnescapedUtf8JsonString GetString(ref EvaluationState state, IJsonDocument doc, int index);
+    UnescapedUtf8JsonString GetString(ref EvaluationState state, IJsonDocument doc, int index);
 
     /// <summary>Gets the unescaped property name for a property value index.</summary>
-    static abstract UnescapedUtf8JsonString GetPropertyName(ref EvaluationState state, IJsonDocument doc, int valueIndex);
+    UnescapedUtf8JsonString GetPropertyName(ref EvaluationState state, IJsonDocument doc, int valueIndex);
 }
 
 /// <summary>Direct row access for parsed documents.</summary>
 internal readonly struct RawAccess : IDocumentAccess
 {
-    public static JsonTokenType TokenType(ref EvaluationState state, IJsonDocument doc, int index) => state.Raw.GetTokenType(index);
+    public JsonTokenType TokenType(ref EvaluationState state, IJsonDocument doc, int index) => state.Raw.GetTokenType(index);
 
-    public static int Count(ref EvaluationState state, IJsonDocument doc, int index, JsonTokenType tokenType) => state.Raw.GetSizeOrLength(index);
+    public int Count(ref EvaluationState state, IJsonDocument doc, int index, JsonTokenType tokenType) => state.Raw.GetSizeOrLength(index);
 
-    public static ReadOnlySpan<byte> RawValue(ref EvaluationState state, IJsonDocument doc, int index) => state.Raw.GetRawValue(index);
+    public ReadOnlySpan<byte> RawValue(ref EvaluationState state, IJsonDocument doc, int index) => state.Raw.GetRawValue(index);
 
-    public static ReadOnlyMemory<byte> RawValueMemory(ref EvaluationState state, IJsonDocument doc, int index) => state.Raw.GetRawValueMemory(index);
+    public ReadOnlyMemory<byte> RawValueMemory(ref EvaluationState state, IJsonDocument doc, int index) => state.Raw.GetRawValueMemory(index);
 
-    public static bool IsEscaped(ref EvaluationState state, IJsonDocument doc, int index) => state.Raw.IsEscaped(index);
+    public bool IsEscaped(ref EvaluationState state, IJsonDocument doc, int index) => state.Raw.IsEscaped(index);
 
-    public static ReadOnlyMemory<byte> PropertyNameRawMemory(ref EvaluationState state, IJsonDocument doc, int valueIndex) => state.Raw.GetRawValueMemory(valueIndex - Evaluator.RowSize);
+    public ReadOnlyMemory<byte> PropertyNameRawMemory(ref EvaluationState state, IJsonDocument doc, int valueIndex) => state.Raw.GetRawValueMemory(valueIndex - Evaluator.RowSize);
 
-    public static bool PropertyNameIsEscaped(ref EvaluationState state, IJsonDocument doc, int valueIndex) => state.Raw.PropertyNameIsEscaped(valueIndex);
+    public bool PropertyNameIsEscaped(ref EvaluationState state, IJsonDocument doc, int valueIndex) => state.Raw.PropertyNameIsEscaped(valueIndex);
 
-    public static int EndIndex(ref EvaluationState state, IJsonDocument doc, int containerIndex) => state.Raw.GetEndIndex(containerIndex);
+    public int EndIndex(ref EvaluationState state, IJsonDocument doc, int containerIndex) => state.Raw.GetEndIndex(containerIndex);
 
-    public static int NextIndex(ref EvaluationState state, IJsonDocument doc, int index) => state.Raw.GetNextIndex(index);
+    public int NextIndex(ref EvaluationState state, IJsonDocument doc, int index) => state.Raw.GetNextIndex(index);
 
-    public static UnescapedUtf8JsonString GetString(ref EvaluationState state, IJsonDocument doc, int index)
+    public UnescapedUtf8JsonString GetString(ref EvaluationState state, IJsonDocument doc, int index)
     {
         // Escaped strings are rare: unescape through the document; otherwise wrap the raw text without renting.
         return state.Raw.IsEscaped(index)
@@ -100,7 +100,7 @@ internal readonly struct RawAccess : IDocumentAccess
             : new UnescapedUtf8JsonString(state.Raw.GetRawValueMemory(index));
     }
 
-    public static UnescapedUtf8JsonString GetPropertyName(ref EvaluationState state, IJsonDocument doc, int valueIndex)
+    public UnescapedUtf8JsonString GetPropertyName(ref EvaluationState state, IJsonDocument doc, int valueIndex)
     {
         return state.Raw.PropertyNameIsEscaped(valueIndex)
             ? doc.GetPropertyNameUnescaped(valueIndex)
@@ -111,30 +111,30 @@ internal readonly struct RawAccess : IDocumentAccess
 /// <summary>Access through the <see cref="IJsonDocument"/> interface.</summary>
 internal readonly struct InterfaceAccess : IDocumentAccess
 {
-    public static JsonTokenType TokenType(ref EvaluationState state, IJsonDocument doc, int index) => doc.GetJsonTokenType(index);
+    public JsonTokenType TokenType(ref EvaluationState state, IJsonDocument doc, int index) => doc.GetJsonTokenType(index);
 
-    public static int Count(ref EvaluationState state, IJsonDocument doc, int index, JsonTokenType tokenType)
+    public int Count(ref EvaluationState state, IJsonDocument doc, int index, JsonTokenType tokenType)
     {
         return tokenType == JsonTokenType.StartObject ? doc.GetPropertyCount(index) : doc.GetArrayLength(index);
     }
 
-    public static ReadOnlySpan<byte> RawValue(ref EvaluationState state, IJsonDocument doc, int index) => doc.GetRawSimpleValue(index).Span;
+    public ReadOnlySpan<byte> RawValue(ref EvaluationState state, IJsonDocument doc, int index) => doc.GetRawSimpleValue(index).Span;
 
-    public static ReadOnlyMemory<byte> RawValueMemory(ref EvaluationState state, IJsonDocument doc, int index) => doc.GetRawSimpleValue(index);
+    public ReadOnlyMemory<byte> RawValueMemory(ref EvaluationState state, IJsonDocument doc, int index) => doc.GetRawSimpleValue(index);
 
-    public static bool IsEscaped(ref EvaluationState state, IJsonDocument doc, int index) => doc.ValueIsEscaped(index, isPropertyName: false);
+    public bool IsEscaped(ref EvaluationState state, IJsonDocument doc, int index) => doc.ValueIsEscaped(index, isPropertyName: false);
 
-    public static ReadOnlyMemory<byte> PropertyNameRawMemory(ref EvaluationState state, IJsonDocument doc, int valueIndex) => doc.GetPropertyNameRaw(valueIndex, includeQuotes: false);
+    public ReadOnlyMemory<byte> PropertyNameRawMemory(ref EvaluationState state, IJsonDocument doc, int valueIndex) => doc.GetPropertyNameRaw(valueIndex, includeQuotes: false);
 
-    public static bool PropertyNameIsEscaped(ref EvaluationState state, IJsonDocument doc, int valueIndex) => doc.ValueIsEscaped(valueIndex, isPropertyName: true);
+    public bool PropertyNameIsEscaped(ref EvaluationState state, IJsonDocument doc, int valueIndex) => doc.ValueIsEscaped(valueIndex, isPropertyName: true);
 
-    public static int EndIndex(ref EvaluationState state, IJsonDocument doc, int containerIndex) => containerIndex + doc.GetDbSize(containerIndex, includeEndElement: false);
+    public int EndIndex(ref EvaluationState state, IJsonDocument doc, int containerIndex) => containerIndex + doc.GetDbSize(containerIndex, includeEndElement: false);
 
-    public static int NextIndex(ref EvaluationState state, IJsonDocument doc, int index) => index + doc.GetDbSize(index, includeEndElement: true);
+    public int NextIndex(ref EvaluationState state, IJsonDocument doc, int index) => index + doc.GetDbSize(index, includeEndElement: true);
 
-    public static UnescapedUtf8JsonString GetString(ref EvaluationState state, IJsonDocument doc, int index) => doc.GetUtf8JsonString(index, JsonTokenType.String);
+    public UnescapedUtf8JsonString GetString(ref EvaluationState state, IJsonDocument doc, int index) => doc.GetUtf8JsonString(index, JsonTokenType.String);
 
-    public static UnescapedUtf8JsonString GetPropertyName(ref EvaluationState state, IJsonDocument doc, int valueIndex) => doc.GetPropertyNameUnescaped(valueIndex);
+    public UnescapedUtf8JsonString GetPropertyName(ref EvaluationState state, IJsonDocument doc, int valueIndex) => doc.GetPropertyNameUnescaped(valueIndex);
 }
 
 /// <summary>
@@ -282,6 +282,18 @@ internal static class Providers
 
     public static readonly JsonSchemaMessageProvider<string> Text = static (string text, Span<byte> buffer, out int written) =>
     {
+#if NET8_0_OR_GREATER
         return System.Text.Encoding.UTF8.TryGetBytes(text, buffer, out written);
+#else
+        int required = System.Text.Encoding.UTF8.GetByteCount(text);
+        if (required > buffer.Length)
+        {
+            written = 0;
+            return false;
+        }
+
+        written = System.Text.Encoding.UTF8.GetBytes(text.AsSpan(), buffer);
+        return true;
+#endif
     };
 }

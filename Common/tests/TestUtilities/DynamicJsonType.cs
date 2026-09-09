@@ -9,11 +9,11 @@
 
 using System.Buffers;
 using System.Reflection;
-using System.Text.Json;
 
+using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Validator;
+namespace TestUtilities;
 
 /// <summary>
 /// Represents a dynamically-compiled JSON Schema type and provides methods to parse
@@ -124,7 +124,7 @@ public readonly struct DynamicJsonType
     public DynamicJsonElement FromElement(in JsonElement element)
     {
         object result = this.fromJsonElement.Invoke(null, [element])
-            ?? throw new InvalidOperationException(SR.FromJsonElementReturnedNull);
+            ?? throw new InvalidOperationException("From<JsonElement> returned null.");
         return new DynamicJsonElement(this.Type, (IJsonElement)result);
     }
 
@@ -137,16 +137,16 @@ public readonly struct DynamicJsonType
             [inputType, typeof(JsonDocumentOptions)],
             null)
             ?? throw new InvalidOperationException(
-                SR.Format(SR.CannotFindParseMethod, inputType.Name, documentType.FullName));
+                $"Cannot find Parse({inputType.Name}, JsonDocumentOptions) on {documentType.FullName}.");
     }
 
     private DynamicJsonElement ParseCore(MethodInfo parseMethod, object data, JsonDocumentOptions options)
     {
         object document = parseMethod.Invoke(null, [data, options])
-            ?? throw new InvalidOperationException(SR.ParseReturnedNull);
+            ?? throw new InvalidOperationException("Parse returned null.");
 
         object rootElement = this.rootElementProperty.GetValue(document)
-            ?? throw new InvalidOperationException(SR.RootElementReturnedNull);
+            ?? throw new InvalidOperationException("RootElement returned null.");
 
         return new DynamicJsonElement(this.Type, (IJsonElement)rootElement);
     }

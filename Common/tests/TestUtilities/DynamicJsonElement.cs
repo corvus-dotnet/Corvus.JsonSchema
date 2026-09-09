@@ -7,9 +7,10 @@
 // https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 
+using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Validator;
+namespace TestUtilities;
 
 /// <summary>
 /// A dynamically-compiled JSON element backed by an <see cref="IJsonElement"/>.
