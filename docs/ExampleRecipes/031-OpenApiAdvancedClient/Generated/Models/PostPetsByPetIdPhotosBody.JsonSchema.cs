@@ -114,10 +114,10 @@ public readonly partial struct PostPetsByPetIdPhotosBody
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/paths/~1pets~1{petId}~1photos/post/requestBody/content/multipart~1form-data/schema"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/paths/~1pets~1{petId}~1photos/post/requestBody/content/multipart~1form-data/schema"u8, buffer, out written);
 
         /// <summary>
-        /// Gets the schema location from which this type was generated.
+        /// Gets the schema location from which this type was generated, as a JSON Pointer within <see cref="SchemaDocument"/>.
         /// </summary>
         public const string SchemaLocation = "/paths/~1pets~1{petId}~1photos/post/requestBody/content/multipart~1form-data/schema";
 
@@ -125,6 +125,20 @@ public readonly partial struct PostPetsByPetIdPhotosBody
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
         public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/paths/~1pets~1{petId}~1photos/post/requestBody/content/multipart~1form-data/schema"u8;
+
+        /// <summary>
+        /// Gets the schema document from which this type was generated, relative to the base location for generation.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="SchemaLocation"/> is a JSON Pointer within this document, so <c>SchemaDocument + "#" + SchemaLocation</c>
+        /// is a reference to the schema, even for a schema inside a <c>$id</c> sub-resource.
+        /// </remarks>
+        public const string SchemaDocument = "petstore-extended.json";
+
+        /// <summary>
+        /// Gets the schema document from which this type was generated as a UTF-8 string.
+        /// </summary>
+        public static ReadOnlySpan<byte> SchemaDocumentUtf8 => "petstore-extended.json"u8;
 
         /// <summary>
         /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -212,7 +226,8 @@ public readonly partial struct PostPetsByPetIdPhotosBody
             parentIndex,
             usingEvaluatedItems: false,
             usingEvaluatedProperties: false,
-            resultsCollector: resultsCollector);
+            resultsCollector: resultsCollector,
+            schemaEvaluationPath: SchemaLocationProvider);
 
             try
             {

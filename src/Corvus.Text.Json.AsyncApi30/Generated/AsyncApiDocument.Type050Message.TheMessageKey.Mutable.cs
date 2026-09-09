@@ -67,7 +67,8 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Initializes a new instance of the <see cref="Mutable"/> struct.
                 /// </summary>
-                /// <param name="value">The value from which to construct the instance.</param>
+                /// <param name="parent">The document that contains the element.</param>
+                /// <param name="idx">The index of the element within the document.</param>
                 internal Mutable(IJsonDocument parent, int idx)
                 {
                     Debug.Assert(idx >= 0);
@@ -225,7 +226,7 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Converts the instance to a JsonElement.
                 /// </summary>
-                /// <param name="value">The instance of this type.</param>
+                /// <param name="instance">The instance of this type.</param>
                 /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator JsonElement(Mutable instance)
@@ -236,7 +237,7 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Converts an immutable instance to a mutable instance, if the instance is backed by a mutable document.
                 /// </summary>
-                /// <param name="value">The instance of this type.</param>
+                /// <param name="instance">The instance of this type.</param>
                 /// <returns>A mutable instance.</returns>
                 /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
                 public static explicit operator Mutable(TheMessageKey instance)
@@ -253,7 +254,7 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Converts to an immutable instance of the <see cref="Mutable"/> type.
                 /// </summary>
-                /// <param name="value">The <see cref="Mutable"/> instance.</param>
+                /// <param name="instance">The <see cref="Mutable"/> instance.</param>
                 /// <returns>An immutable instance of a <see cref="TheMessageKey"/>, initialized from the <see cref="Mutable"/> value.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator TheMessageKey(Mutable instance)
@@ -264,7 +265,8 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Gets an instance of the JSON value from another element.
                 /// </summary>
-                /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
+                /// <typeparam name="T">The type of the <see cref="IJsonElement{T}"/> from which to instantiate the instance.</typeparam>
+                /// <param name="instance">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
                 /// <returns>An instance of this type, initialized from the JSON element.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static Mutable From<T>(in T instance)
@@ -578,7 +580,7 @@ public readonly partial struct AsyncApiDocument
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -601,7 +603,7 @@ public readonly partial struct AsyncApiDocument
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -648,7 +650,7 @@ public readonly partial struct AsyncApiDocument
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -848,11 +850,11 @@ public readonly partial struct AsyncApiDocument
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference" />.
+                /// Gets the value as a <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsReference(out Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference result)
+                public bool TryGetAsReference(out Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Mutable result)
                 {
                     if (Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -865,11 +867,11 @@ public readonly partial struct AsyncApiDocument
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Schema" />.
+                /// Gets the value as a <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Schema.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsSchema(out Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Schema result)
+                public bool TryGetAsSchema(out Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Schema.Mutable result)
                 {
                     if (Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Schema.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -889,7 +891,9 @@ public readonly partial struct AsyncApiDocument
                     Unknown,
                     JsonElement,
                     ReferenceBuilder,
+                    ReferenceSource,
                     SchemaBuilder,
+                    SchemaSource,
                     True,
                     False,
                 }
@@ -897,7 +901,9 @@ public readonly partial struct AsyncApiDocument
                 private readonly Kind _kind;
                 private readonly JsonElement _jsonElement;
                 private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Builder.Build? _referenceBuilderInstance;
+                private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Source _referenceSourceInstance;
                 private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Schema.Builder.Build? _schemaBuilderInstance;
+                private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Schema.Source _schemaSourceInstance;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -914,7 +920,11 @@ public readonly partial struct AsyncApiDocument
 
                 public Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Builder.Build value) {_referenceBuilderInstance = value; _kind = Kind.ReferenceBuilder; }
 
+                public Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Source value) { _referenceSourceInstance = value; _kind = Kind.ReferenceSource; }
+
                 public Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Schema.Builder.Build value) {_schemaBuilderInstance = value; _kind = Kind.SchemaBuilder; }
+
+                public Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Schema.Source value) { _schemaSourceInstance = value; _kind = Kind.SchemaSource; }
 
                 public static implicit operator Source(TheMessageKey instance) => new(JsonElement.From(instance));
 
@@ -925,7 +935,13 @@ public readonly partial struct AsyncApiDocument
                 public static implicit operator Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Source value) => new(value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Schema instance) => new(JsonElement.From(instance));
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Schema.Source value) => new(value);
 
                 internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                 {
@@ -945,8 +961,14 @@ public readonly partial struct AsyncApiDocument
                         case Kind.ReferenceBuilder:
                             valueBuilder.AddProperty(utf8Name, _referenceBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.ReferenceSource:
+                            _referenceSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                            break;
                         case Kind.SchemaBuilder:
                             valueBuilder.AddProperty(utf8Name, _schemaBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Schema.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        case Kind.SchemaSource:
+                            _schemaSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -972,8 +994,14 @@ public readonly partial struct AsyncApiDocument
                         case Kind.ReferenceBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _referenceBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.ReferenceSource:
+                            _referenceSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
                         case Kind.SchemaBuilder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _schemaBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Schema.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.SchemaSource:
+                            _schemaSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -999,8 +1027,14 @@ public readonly partial struct AsyncApiDocument
                         case Kind.ReferenceBuilder:
                             valueBuilder.AddProperty(name, _referenceBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.ReferenceSource:
+                            _referenceSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.SchemaBuilder:
                             valueBuilder.AddProperty(name, _schemaBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Schema.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.SchemaSource:
+                            _schemaSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1026,8 +1060,14 @@ public readonly partial struct AsyncApiDocument
                         case Kind.ReferenceBuilder:
                             valueBuilder.AddProperty(name, _referenceBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.ReferenceSource:
+                            _referenceSourceInstance.AddAsProperty(name, ref valueBuilder);
+                            break;
                         case Kind.SchemaBuilder:
                             valueBuilder.AddProperty(name, _schemaBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Schema.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.SchemaSource:
+                            _schemaSourceInstance.AddAsProperty(name, ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1053,8 +1093,14 @@ public readonly partial struct AsyncApiDocument
                         case Kind.ReferenceBuilder:
                             valueBuilder.AddItem(_referenceBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.ReferenceSource:
+                            _referenceSourceInstance.AddAsItem(ref valueBuilder);
+                            break;
                         case Kind.SchemaBuilder:
                             valueBuilder.AddItem(_schemaBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Schema.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.SchemaSource:
+                            _schemaSourceInstance.AddAsItem(ref valueBuilder);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1279,6 +1325,29 @@ public readonly partial struct AsyncApiDocument
             }
 
             /// <summary>
+            /// Creates and initializes a mutable document from a context-threaded value.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context carried by the value.</typeparam>
+            /// <param name="workspace">The JSON workspace.</param>
+            /// <param name="value">The context-threaded value with which to initialize the builder.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>An instance of a mutable document initialized with the given value.</returns>
+            public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
+                JsonWorkspace workspace, scoped in Source<TContext> value, int initialCapacity = 30)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
+            {
+                // Create the document builder without a MetadataDb
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder;
+            }
+
+            /// <summary>
             /// Creates an empty mutable document builder.
             /// </summary>
             /// <param name="workspace">The JSON workspace.</param>
@@ -1398,6 +1467,168 @@ public readonly partial struct AsyncApiDocument
             public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
             {
                 return workspace.CreateBuilder<TheMessageKey, Mutable>(this);
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<TheMessageKey> Create(
+                scoped in Source value, int initialCapacity = 30)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    value.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<TheMessageKey>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates an empty <see cref="ParsedJsonDocument{T}"/>.
+            /// </summary>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+            /// <returns>An empty <see cref="ParsedJsonDocument{T}"/>. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<TheMessageKey> Create(
+                int initialCapacity = 30, int initialValueBufferSize = 8192)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    cvb.StartObject();
+                    cvb.EndObject();
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<TheMessageKey>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<TheMessageKey> Create(
+                scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    var source = new Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Source(value);
+                    source.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<TheMessageKey>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<TheMessageKey> Create<TContext>(
+                scoped in TContext context, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    var source = new Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Source<TContext>(context, value);
+                    source.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<TheMessageKey>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<TheMessageKey> Create(
+                scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Schema.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    var source = new Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Schema.Source(value);
+                    source.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<TheMessageKey>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<TheMessageKey> Create<TContext>(
+                scoped in TContext context, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Schema.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    var source = new Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Schema.Source<TContext>(context, value);
+                    source.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<TheMessageKey>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
             }
         }
     }

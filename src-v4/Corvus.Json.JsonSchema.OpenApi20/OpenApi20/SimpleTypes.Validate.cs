@@ -35,7 +35,7 @@ public readonly partial struct SimpleTypes
                 result = result.UsingStack();
             }
 
-            result = result.PushSchemaLocation("/definitions/simpleTypes");
+            result = result.PushSchemaLocation("http://json-schema.org/draft-04/schema#/definitions/simpleTypes");
         }
 
         result = CorvusValidation.CompositionAnyOfValidationHandler(this, result, level);

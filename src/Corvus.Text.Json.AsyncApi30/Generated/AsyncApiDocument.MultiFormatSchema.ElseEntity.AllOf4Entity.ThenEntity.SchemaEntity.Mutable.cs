@@ -82,7 +82,8 @@ public readonly partial struct AsyncApiDocument
                             /// <summary>
                             /// Initializes a new instance of the <see cref="Mutable"/> struct.
                             /// </summary>
-                            /// <param name="value">The value from which to construct the instance.</param>
+                            /// <param name="parent">The document that contains the element.</param>
+                            /// <param name="idx">The index of the element within the document.</param>
                             internal Mutable(IJsonDocument parent, int idx)
                             {
                                 Debug.Assert(idx >= 0);
@@ -389,7 +390,7 @@ public readonly partial struct AsyncApiDocument
                             /// <summary>
                             /// Converts the instance to a JsonElement.
                             /// </summary>
-                            /// <param name="value">The instance of this type.</param>
+                            /// <param name="instance">The instance of this type.</param>
                             /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
                             [MethodImpl(MethodImplOptions.AggressiveInlining)]
                             public static implicit operator JsonElement(Mutable instance)
@@ -400,7 +401,7 @@ public readonly partial struct AsyncApiDocument
                             /// <summary>
                             /// Converts an immutable instance to a mutable instance, if the instance is backed by a mutable document.
                             /// </summary>
-                            /// <param name="value">The instance of this type.</param>
+                            /// <param name="instance">The instance of this type.</param>
                             /// <returns>A mutable instance.</returns>
                             /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
                             public static explicit operator Mutable(SchemaEntity instance)
@@ -417,7 +418,7 @@ public readonly partial struct AsyncApiDocument
                             /// <summary>
                             /// Converts to an immutable instance of the <see cref="Mutable"/> type.
                             /// </summary>
-                            /// <param name="value">The <see cref="Mutable"/> instance.</param>
+                            /// <param name="instance">The <see cref="Mutable"/> instance.</param>
                             /// <returns>An immutable instance of a <see cref="SchemaEntity"/>, initialized from the <see cref="Mutable"/> value.</returns>
                             [MethodImpl(MethodImplOptions.AggressiveInlining)]
                             public static implicit operator SchemaEntity(Mutable instance)
@@ -428,7 +429,8 @@ public readonly partial struct AsyncApiDocument
                             /// <summary>
                             /// Gets an instance of the JSON value from another element.
                             /// </summary>
-                            /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
+                            /// <typeparam name="T">The type of the <see cref="IJsonElement{T}"/> from which to instantiate the instance.</typeparam>
+                            /// <param name="instance">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
                             /// <returns>An instance of this type, initialized from the JSON element.</returns>
                             [MethodImpl(MethodImplOptions.AggressiveInlining)]
                             public static Mutable From<T>(in T instance)
@@ -864,7 +866,7 @@ public readonly partial struct AsyncApiDocument
                             ///   </para>
                             /// </remarks>
                             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                            public void InsertItem(int itemIndex, in JsonElement.Source value)
+                            public void InsertItem(int itemIndex, scoped in JsonElement.Source value)
                             {
                                 CheckValidInstance();
 
@@ -890,7 +892,7 @@ public readonly partial struct AsyncApiDocument
                             ///   The parent <see cref="JsonDocument"/> has been disposed.
                             /// </exception>
                             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                            public void AddItem(in JsonElement.Source value)
+                            public void AddItem(scoped in JsonElement.Source value)
                             {
                                 InsertItem(GetArrayLength(), in value);
                             }
@@ -1167,7 +1169,7 @@ public readonly partial struct AsyncApiDocument
                             ///   </para>
                             /// </remarks>
                             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                            public void SetProperty(string propertyName, in JsonElement.Source value)
+                            public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                             {
                                 SetProperty(propertyName.AsSpan(), value);
                             }
@@ -1190,7 +1192,7 @@ public readonly partial struct AsyncApiDocument
                             ///     If the property doesn't exist, it will be added to the object.
                             ///   </para>
                             /// </remarks>
-                            public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                             {
                                 CheckValidInstance();
 
@@ -1237,7 +1239,7 @@ public readonly partial struct AsyncApiDocument
                             ///     If the property doesn't exist, it will be added to the object.
                             ///   </para>
                             /// </remarks>
-                            public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                             {
                                 CheckValidInstance();
 
@@ -1437,11 +1439,11 @@ public readonly partial struct AsyncApiDocument
                             }
 
                             /// <summary>
-                            /// Gets the value as a <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference" />.
+                            /// Gets the value as a <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Mutable" />.
                             /// </summary>
                             /// <param name="result">The result of the conversions.</param>
                             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                            public bool TryGetAsReference(out Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference result)
+                            public bool TryGetAsReference(out Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Mutable result)
                             {
                                 if (Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.JsonSchema.Evaluate(_parent, _idx))
                                 {
@@ -1454,11 +1456,11 @@ public readonly partial struct AsyncApiDocument
                             }
 
                             /// <summary>
-                            /// Gets the value as a <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1" />.
+                            /// Gets the value as a <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.Mutable" />.
                             /// </summary>
                             /// <param name="result">The result of the conversions.</param>
                             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                            public bool TryGetAsAvroSchemaV1(out Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1 result)
+                            public bool TryGetAsAvroSchemaV1(out Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.Mutable result)
                             {
                                 if (Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.JsonSchema.Evaluate(_parent, _idx))
                                 {
@@ -1478,12 +1480,19 @@ public readonly partial struct AsyncApiDocument
                                 Unknown,
                                 JsonElement,
                                 AvroArrayBuilder,
+                                AvroArraySource,
                                 AvroEnumBuilder,
+                                AvroEnumSource,
                                 AvroFixedBuilder,
+                                AvroFixedSource,
                                 AvroMapBuilder,
+                                AvroMapSource,
                                 AvroRecordBuilder,
+                                AvroRecordSource,
                                 PrimitiveTypeWithMetadataBuilder,
+                                PrimitiveTypeWithMetadataSource,
                                 ReferenceBuilder,
+                                ReferenceSource,
                                 RawUtf8StringRequiresUnescaping,
                                 RawUtf8StringNotRequiresUnescaping,
                                 Utf8String,
@@ -1497,12 +1506,19 @@ public readonly partial struct AsyncApiDocument
                             private readonly ReadOnlySpan<char> _utf16Backing;
                             private readonly ArrayBuilder.Build? _arrayBuilder;
                             private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroArray.Builder.Build? _avroArrayBuilderInstance;
+                            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroArray.Source _avroArraySourceInstance;
                             private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroEnum.Builder.Build? _avroEnumBuilderInstance;
+                            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroEnum.Source _avroEnumSourceInstance;
                             private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroFixed.Builder.Build? _avroFixedBuilderInstance;
+                            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroFixed.Source _avroFixedSourceInstance;
                             private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroMap.Builder.Build? _avroMapBuilderInstance;
+                            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroMap.Source _avroMapSourceInstance;
                             private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroRecord.Builder.Build? _avroRecordBuilderInstance;
+                            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroRecord.Source _avroRecordSourceInstance;
                             private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.PrimitiveTypeWithMetadata.Builder.Build? _primitiveTypeWithMetadataBuilderInstance;
+                            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.PrimitiveTypeWithMetadata.Source _primitiveTypeWithMetadataSourceInstance;
                             private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Builder.Build? _referenceBuilderInstance;
+                            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Source _referenceSourceInstance;
 
                             /// <summary>
                             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1537,17 +1553,31 @@ public readonly partial struct AsyncApiDocument
 
                             public Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroArray.Builder.Build value) {_avroArrayBuilderInstance = value; _kind = Kind.AvroArrayBuilder; }
 
+                            public Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroArray.Source value) { _avroArraySourceInstance = value; _kind = Kind.AvroArraySource; }
+
                             public Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroEnum.Builder.Build value) {_avroEnumBuilderInstance = value; _kind = Kind.AvroEnumBuilder; }
+
+                            public Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroEnum.Source value) { _avroEnumSourceInstance = value; _kind = Kind.AvroEnumSource; }
 
                             public Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroFixed.Builder.Build value) {_avroFixedBuilderInstance = value; _kind = Kind.AvroFixedBuilder; }
 
+                            public Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroFixed.Source value) { _avroFixedSourceInstance = value; _kind = Kind.AvroFixedSource; }
+
                             public Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroMap.Builder.Build value) {_avroMapBuilderInstance = value; _kind = Kind.AvroMapBuilder; }
+
+                            public Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroMap.Source value) { _avroMapSourceInstance = value; _kind = Kind.AvroMapSource; }
 
                             public Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroRecord.Builder.Build value) {_avroRecordBuilderInstance = value; _kind = Kind.AvroRecordBuilder; }
 
+                            public Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroRecord.Source value) { _avroRecordSourceInstance = value; _kind = Kind.AvroRecordSource; }
+
                             public Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.PrimitiveTypeWithMetadata.Builder.Build value) {_primitiveTypeWithMetadataBuilderInstance = value; _kind = Kind.PrimitiveTypeWithMetadataBuilder; }
 
+                            public Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.PrimitiveTypeWithMetadata.Source value) { _primitiveTypeWithMetadataSourceInstance = value; _kind = Kind.PrimitiveTypeWithMetadataSource; }
+
                             public Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Builder.Build value) {_referenceBuilderInstance = value; _kind = Kind.ReferenceBuilder; }
+
+                            public Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Source value) { _referenceSourceInstance = value; _kind = Kind.ReferenceSource; }
 
                             public static implicit operator Source(SchemaEntity instance) => new(JsonElement.From(instance));
 
@@ -1564,16 +1594,31 @@ public readonly partial struct AsyncApiDocument
                             public static implicit operator Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroArray instance) => new(JsonElement.From(instance));
 
                             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                            public static implicit operator Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroArray.Source value) => new(value);
+
+                            [MethodImpl(MethodImplOptions.AggressiveInlining)]
                             public static implicit operator Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroEnum instance) => new(JsonElement.From(instance));
+
+                            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                            public static implicit operator Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroEnum.Source value) => new(value);
 
                             [MethodImpl(MethodImplOptions.AggressiveInlining)]
                             public static implicit operator Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroFixed instance) => new(JsonElement.From(instance));
 
                             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                            public static implicit operator Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroFixed.Source value) => new(value);
+
+                            [MethodImpl(MethodImplOptions.AggressiveInlining)]
                             public static implicit operator Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroMap instance) => new(JsonElement.From(instance));
 
                             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                            public static implicit operator Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroMap.Source value) => new(value);
+
+                            [MethodImpl(MethodImplOptions.AggressiveInlining)]
                             public static implicit operator Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroRecord instance) => new(JsonElement.From(instance));
+
+                            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                            public static implicit operator Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroRecord.Source value) => new(value);
 
                             [MethodImpl(MethodImplOptions.AggressiveInlining)]
                             public static implicit operator Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.CustomTypeReference instance) => new(JsonElement.From(instance));
@@ -1585,7 +1630,13 @@ public readonly partial struct AsyncApiDocument
                             public static implicit operator Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.PrimitiveTypeWithMetadata instance) => new(JsonElement.From(instance));
 
                             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                            public static implicit operator Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.PrimitiveTypeWithMetadata.Source value) => new(value);
+
+                            [MethodImpl(MethodImplOptions.AggressiveInlining)]
                             public static implicit operator Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference instance) => new(JsonElement.From(instance));
+
+                            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                            public static implicit operator Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Source value) => new(value);
 
                             [MethodImpl(MethodImplOptions.AggressiveInlining)]
                             public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);
@@ -1617,23 +1668,44 @@ public readonly partial struct AsyncApiDocument
                                     case Kind.AvroArrayBuilder:
                                         valueBuilder.AddProperty(utf8Name, _avroArrayBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroArray.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                                         break;
+                                    case Kind.AvroArraySource:
+                                        _avroArraySourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                                        break;
                                     case Kind.AvroEnumBuilder:
                                         valueBuilder.AddProperty(utf8Name, _avroEnumBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroEnum.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                                        break;
+                                    case Kind.AvroEnumSource:
+                                        _avroEnumSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                                         break;
                                     case Kind.AvroFixedBuilder:
                                         valueBuilder.AddProperty(utf8Name, _avroFixedBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroFixed.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                                         break;
+                                    case Kind.AvroFixedSource:
+                                        _avroFixedSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                                        break;
                                     case Kind.AvroMapBuilder:
                                         valueBuilder.AddProperty(utf8Name, _avroMapBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroMap.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                                        break;
+                                    case Kind.AvroMapSource:
+                                        _avroMapSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                                         break;
                                     case Kind.AvroRecordBuilder:
                                         valueBuilder.AddProperty(utf8Name, _avroRecordBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroRecord.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                                         break;
+                                    case Kind.AvroRecordSource:
+                                        _avroRecordSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                                        break;
                                     case Kind.PrimitiveTypeWithMetadataBuilder:
                                         valueBuilder.AddProperty(utf8Name, _primitiveTypeWithMetadataBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.PrimitiveTypeWithMetadata.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                                         break;
+                                    case Kind.PrimitiveTypeWithMetadataSource:
+                                        _primitiveTypeWithMetadataSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                                        break;
                                     case Kind.ReferenceBuilder:
                                         valueBuilder.AddProperty(utf8Name, _referenceBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                                        break;
+                                    case Kind.ReferenceSource:
+                                        _referenceSourceInstance.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");
@@ -1668,23 +1740,44 @@ public readonly partial struct AsyncApiDocument
                                     case Kind.AvroArrayBuilder:
                                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _avroArrayBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroArray.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.AvroArraySource:
+                                        _avroArraySourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                        break;
                                     case Kind.AvroEnumBuilder:
                                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _avroEnumBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroEnum.Builder.BuildValue(b, ref o));
+                                        break;
+                                    case Kind.AvroEnumSource:
+                                        _avroEnumSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                                         break;
                                     case Kind.AvroFixedBuilder:
                                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _avroFixedBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroFixed.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.AvroFixedSource:
+                                        _avroFixedSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                        break;
                                     case Kind.AvroMapBuilder:
                                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _avroMapBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroMap.Builder.BuildValue(b, ref o));
+                                        break;
+                                    case Kind.AvroMapSource:
+                                        _avroMapSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                                         break;
                                     case Kind.AvroRecordBuilder:
                                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _avroRecordBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroRecord.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.AvroRecordSource:
+                                        _avroRecordSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                        break;
                                     case Kind.PrimitiveTypeWithMetadataBuilder:
                                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _primitiveTypeWithMetadataBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.PrimitiveTypeWithMetadata.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.PrimitiveTypeWithMetadataSource:
+                                        _primitiveTypeWithMetadataSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                        break;
                                     case Kind.ReferenceBuilder:
                                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _referenceBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Builder.BuildValue(b, ref o));
+                                        break;
+                                    case Kind.ReferenceSource:
+                                        _referenceSourceInstance.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");
@@ -1719,23 +1812,44 @@ public readonly partial struct AsyncApiDocument
                                     case Kind.AvroArrayBuilder:
                                         valueBuilder.AddProperty(name, _avroArrayBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroArray.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.AvroArraySource:
+                                        _avroArraySourceInstance.AddAsProperty(name, ref valueBuilder);
+                                        break;
                                     case Kind.AvroEnumBuilder:
                                         valueBuilder.AddProperty(name, _avroEnumBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroEnum.Builder.BuildValue(b, ref o));
+                                        break;
+                                    case Kind.AvroEnumSource:
+                                        _avroEnumSourceInstance.AddAsProperty(name, ref valueBuilder);
                                         break;
                                     case Kind.AvroFixedBuilder:
                                         valueBuilder.AddProperty(name, _avroFixedBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroFixed.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.AvroFixedSource:
+                                        _avroFixedSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                        break;
                                     case Kind.AvroMapBuilder:
                                         valueBuilder.AddProperty(name, _avroMapBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroMap.Builder.BuildValue(b, ref o));
+                                        break;
+                                    case Kind.AvroMapSource:
+                                        _avroMapSourceInstance.AddAsProperty(name, ref valueBuilder);
                                         break;
                                     case Kind.AvroRecordBuilder:
                                         valueBuilder.AddProperty(name, _avroRecordBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroRecord.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.AvroRecordSource:
+                                        _avroRecordSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                        break;
                                     case Kind.PrimitiveTypeWithMetadataBuilder:
                                         valueBuilder.AddProperty(name, _primitiveTypeWithMetadataBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.PrimitiveTypeWithMetadata.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.PrimitiveTypeWithMetadataSource:
+                                        _primitiveTypeWithMetadataSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                        break;
                                     case Kind.ReferenceBuilder:
                                         valueBuilder.AddProperty(name, _referenceBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Builder.BuildValue(b, ref o));
+                                        break;
+                                    case Kind.ReferenceSource:
+                                        _referenceSourceInstance.AddAsProperty(name, ref valueBuilder);
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");
@@ -1770,23 +1884,44 @@ public readonly partial struct AsyncApiDocument
                                     case Kind.AvroArrayBuilder:
                                         valueBuilder.AddProperty(name, _avroArrayBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroArray.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.AvroArraySource:
+                                        _avroArraySourceInstance.AddAsProperty(name, ref valueBuilder);
+                                        break;
                                     case Kind.AvroEnumBuilder:
                                         valueBuilder.AddProperty(name, _avroEnumBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroEnum.Builder.BuildValue(b, ref o));
+                                        break;
+                                    case Kind.AvroEnumSource:
+                                        _avroEnumSourceInstance.AddAsProperty(name, ref valueBuilder);
                                         break;
                                     case Kind.AvroFixedBuilder:
                                         valueBuilder.AddProperty(name, _avroFixedBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroFixed.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.AvroFixedSource:
+                                        _avroFixedSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                        break;
                                     case Kind.AvroMapBuilder:
                                         valueBuilder.AddProperty(name, _avroMapBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroMap.Builder.BuildValue(b, ref o));
+                                        break;
+                                    case Kind.AvroMapSource:
+                                        _avroMapSourceInstance.AddAsProperty(name, ref valueBuilder);
                                         break;
                                     case Kind.AvroRecordBuilder:
                                         valueBuilder.AddProperty(name, _avroRecordBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroRecord.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.AvroRecordSource:
+                                        _avroRecordSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                        break;
                                     case Kind.PrimitiveTypeWithMetadataBuilder:
                                         valueBuilder.AddProperty(name, _primitiveTypeWithMetadataBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.PrimitiveTypeWithMetadata.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.PrimitiveTypeWithMetadataSource:
+                                        _primitiveTypeWithMetadataSourceInstance.AddAsProperty(name, ref valueBuilder);
+                                        break;
                                     case Kind.ReferenceBuilder:
                                         valueBuilder.AddProperty(name, _referenceBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Builder.BuildValue(b, ref o));
+                                        break;
+                                    case Kind.ReferenceSource:
+                                        _referenceSourceInstance.AddAsProperty(name, ref valueBuilder);
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");
@@ -1821,23 +1956,44 @@ public readonly partial struct AsyncApiDocument
                                     case Kind.AvroArrayBuilder:
                                         valueBuilder.AddItem(_avroArrayBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroArray.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.AvroArraySource:
+                                        _avroArraySourceInstance.AddAsItem(ref valueBuilder);
+                                        break;
                                     case Kind.AvroEnumBuilder:
                                         valueBuilder.AddItem(_avroEnumBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroEnum.Builder.BuildValue(b, ref o));
+                                        break;
+                                    case Kind.AvroEnumSource:
+                                        _avroEnumSourceInstance.AddAsItem(ref valueBuilder);
                                         break;
                                     case Kind.AvroFixedBuilder:
                                         valueBuilder.AddItem(_avroFixedBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroFixed.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.AvroFixedSource:
+                                        _avroFixedSourceInstance.AddAsItem(ref valueBuilder);
+                                        break;
                                     case Kind.AvroMapBuilder:
                                         valueBuilder.AddItem(_avroMapBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroMap.Builder.BuildValue(b, ref o));
+                                        break;
+                                    case Kind.AvroMapSource:
+                                        _avroMapSourceInstance.AddAsItem(ref valueBuilder);
                                         break;
                                     case Kind.AvroRecordBuilder:
                                         valueBuilder.AddItem(_avroRecordBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroRecord.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.AvroRecordSource:
+                                        _avroRecordSourceInstance.AddAsItem(ref valueBuilder);
+                                        break;
                                     case Kind.PrimitiveTypeWithMetadataBuilder:
                                         valueBuilder.AddItem(_primitiveTypeWithMetadataBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.PrimitiveTypeWithMetadata.Builder.BuildValue(b, ref o));
                                         break;
+                                    case Kind.PrimitiveTypeWithMetadataSource:
+                                        _primitiveTypeWithMetadataSourceInstance.AddAsItem(ref valueBuilder);
+                                        break;
                                     case Kind.ReferenceBuilder:
                                         valueBuilder.AddItem(_referenceBuilderInstance!, static (in b, ref o) => Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Builder.BuildValue(b, ref o));
+                                        break;
+                                    case Kind.ReferenceSource:
+                                        _referenceSourceInstance.AddAsItem(ref valueBuilder);
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");
@@ -2124,6 +2280,17 @@ public readonly partial struct AsyncApiDocument
                                 value.AddAsItem(ref _builder);
                             }
 
+                            /// <summary>
+                            /// Add an item to the array.
+                            /// </summary>
+                            public void AddItem<TContext>(in Corvus.Text.Json.JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                                where TContext : allows ref struct
+#endif
+                            {
+                                value.AddAsItem(ref _builder);
+                            }
+
                             internal static void BuildValue(Build value, ref ComplexValueBuilder o)
                             {
                                 o.StartArray();
@@ -2389,6 +2556,29 @@ public readonly partial struct AsyncApiDocument
                         /// <returns>An instance of a mutable document initialized with the given value.</returns>
                         public static JsonDocumentBuilder<Mutable> CreateBuilder(
                             JsonWorkspace workspace, scoped in Source value, int initialCapacity = 30)
+                        {
+                            // Create the document builder without a MetadataDb
+                            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                            value.AddAsItem(ref cvb);
+                            Debug.Assert(cvb.MemberCount == 1);
+                            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                            return documentBuilder;
+                        }
+
+                        /// <summary>
+                        /// Creates and initializes a mutable document from a context-threaded value.
+                        /// </summary>
+                        /// <typeparam name="TContext">The type of the context carried by the value.</typeparam>
+                        /// <param name="workspace">The JSON workspace.</param>
+                        /// <param name="value">The context-threaded value with which to initialize the builder.</param>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <returns>An instance of a mutable document initialized with the given value.</returns>
+                        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
+                            JsonWorkspace workspace, scoped in Source<TContext> value, int initialCapacity = 30)
+                            #if NET9_0_OR_GREATER
+                            where TContext : allows ref struct
+                            #endif
                         {
                             // Create the document builder without a MetadataDb
                             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
@@ -2772,6 +2962,477 @@ public readonly partial struct AsyncApiDocument
                         public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
                         {
                             return workspace.CreateBuilder<SchemaEntity, Mutable>(this);
+                        }
+
+                        /// <summary>
+                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                        /// </summary>
+                        /// <param name="value">The value with which to initialize the document.</param>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                        public static ParsedJsonDocument<SchemaEntity> Create(
+                            scoped in Source value, int initialCapacity = 30)
+                        {
+                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                            try
+                            {
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                                value.AddAsItem(ref cvb);
+                                Debug.Assert(cvb.MemberCount == 1);
+                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                                return documentBuilder.ToParsedJsonDocument<SchemaEntity>();
+                            }
+                            finally
+                            {
+                                documentBuilder.Dispose();
+                            }
+                        }
+
+                        /// <summary>
+                        /// Creates an empty <see cref="ParsedJsonDocument{T}"/>.
+                        /// </summary>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                        /// <returns>An empty <see cref="ParsedJsonDocument{T}"/>. The caller must dispose it.</returns>
+                        public static ParsedJsonDocument<SchemaEntity> CreateArray(
+                            int initialCapacity = 30, int initialValueBufferSize = 8192)
+                        {
+                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                            try
+                            {
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                                cvb.StartArray();
+                                cvb.EndArray();
+                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                                return documentBuilder.ToParsedJsonDocument<SchemaEntity>();
+                            }
+                            finally
+                            {
+                                documentBuilder.Dispose();
+                            }
+                        }
+
+                        /// <summary>
+                        /// Creates an empty <see cref="ParsedJsonDocument{T}"/>.
+                        /// </summary>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                        /// <returns>An empty <see cref="ParsedJsonDocument{T}"/>. The caller must dispose it.</returns>
+                        public static ParsedJsonDocument<SchemaEntity> CreateObject(
+                            int initialCapacity = 30, int initialValueBufferSize = 8192)
+                        {
+                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                            try
+                            {
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                                cvb.StartObject();
+                                cvb.EndObject();
+                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                                return documentBuilder.ToParsedJsonDocument<SchemaEntity>();
+                            }
+                            finally
+                            {
+                                documentBuilder.Dispose();
+                            }
+                        }
+
+                        /// <summary>
+                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                        /// </summary>
+                        /// <param name="value">The value with which to initialize the document.</param>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                        public static ParsedJsonDocument<SchemaEntity> Create(
+                            scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroArray.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                        {
+                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                            try
+                            {
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                                var source = new Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroArray.Source(value);
+                                source.AddAsItem(ref cvb);
+                                Debug.Assert(cvb.MemberCount == 1);
+                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                                return documentBuilder.ToParsedJsonDocument<SchemaEntity>();
+                            }
+                            finally
+                            {
+                                documentBuilder.Dispose();
+                            }
+                        }
+
+                        /// <summary>
+                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                        /// </summary>
+                        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+                        /// <param name="context">The context to pass to the builder.</param>
+                        /// <param name="value">The value with which to initialize the document.</param>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                        public static ParsedJsonDocument<SchemaEntity> Create<TContext>(
+                            scoped in TContext context, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroArray.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                            #if NET9_0_OR_GREATER
+                            where TContext : allows ref struct
+                            #endif
+                        {
+                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                            try
+                            {
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                                var source = new Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroArray.Source<TContext>(context, value);
+                                source.AddAsItem(ref cvb);
+                                Debug.Assert(cvb.MemberCount == 1);
+                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                                return documentBuilder.ToParsedJsonDocument<SchemaEntity>();
+                            }
+                            finally
+                            {
+                                documentBuilder.Dispose();
+                            }
+                        }
+
+                        /// <summary>
+                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                        /// </summary>
+                        /// <param name="value">The value with which to initialize the document.</param>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                        public static ParsedJsonDocument<SchemaEntity> Create(
+                            scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroEnum.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                        {
+                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                            try
+                            {
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                                var source = new Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroEnum.Source(value);
+                                source.AddAsItem(ref cvb);
+                                Debug.Assert(cvb.MemberCount == 1);
+                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                                return documentBuilder.ToParsedJsonDocument<SchemaEntity>();
+                            }
+                            finally
+                            {
+                                documentBuilder.Dispose();
+                            }
+                        }
+
+                        /// <summary>
+                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                        /// </summary>
+                        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+                        /// <param name="context">The context to pass to the builder.</param>
+                        /// <param name="value">The value with which to initialize the document.</param>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                        public static ParsedJsonDocument<SchemaEntity> Create<TContext>(
+                            scoped in TContext context, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroEnum.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                            #if NET9_0_OR_GREATER
+                            where TContext : allows ref struct
+                            #endif
+                        {
+                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                            try
+                            {
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                                var source = new Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroEnum.Source<TContext>(context, value);
+                                source.AddAsItem(ref cvb);
+                                Debug.Assert(cvb.MemberCount == 1);
+                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                                return documentBuilder.ToParsedJsonDocument<SchemaEntity>();
+                            }
+                            finally
+                            {
+                                documentBuilder.Dispose();
+                            }
+                        }
+
+                        /// <summary>
+                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                        /// </summary>
+                        /// <param name="value">The value with which to initialize the document.</param>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                        public static ParsedJsonDocument<SchemaEntity> Create(
+                            scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroFixed.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                        {
+                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                            try
+                            {
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                                var source = new Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroFixed.Source(value);
+                                source.AddAsItem(ref cvb);
+                                Debug.Assert(cvb.MemberCount == 1);
+                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                                return documentBuilder.ToParsedJsonDocument<SchemaEntity>();
+                            }
+                            finally
+                            {
+                                documentBuilder.Dispose();
+                            }
+                        }
+
+                        /// <summary>
+                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                        /// </summary>
+                        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+                        /// <param name="context">The context to pass to the builder.</param>
+                        /// <param name="value">The value with which to initialize the document.</param>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                        public static ParsedJsonDocument<SchemaEntity> Create<TContext>(
+                            scoped in TContext context, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroFixed.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                            #if NET9_0_OR_GREATER
+                            where TContext : allows ref struct
+                            #endif
+                        {
+                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                            try
+                            {
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                                var source = new Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroFixed.Source<TContext>(context, value);
+                                source.AddAsItem(ref cvb);
+                                Debug.Assert(cvb.MemberCount == 1);
+                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                                return documentBuilder.ToParsedJsonDocument<SchemaEntity>();
+                            }
+                            finally
+                            {
+                                documentBuilder.Dispose();
+                            }
+                        }
+
+                        /// <summary>
+                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                        /// </summary>
+                        /// <param name="value">The value with which to initialize the document.</param>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                        public static ParsedJsonDocument<SchemaEntity> Create(
+                            scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroMap.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                        {
+                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                            try
+                            {
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                                var source = new Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroMap.Source(value);
+                                source.AddAsItem(ref cvb);
+                                Debug.Assert(cvb.MemberCount == 1);
+                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                                return documentBuilder.ToParsedJsonDocument<SchemaEntity>();
+                            }
+                            finally
+                            {
+                                documentBuilder.Dispose();
+                            }
+                        }
+
+                        /// <summary>
+                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                        /// </summary>
+                        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+                        /// <param name="context">The context to pass to the builder.</param>
+                        /// <param name="value">The value with which to initialize the document.</param>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                        public static ParsedJsonDocument<SchemaEntity> Create<TContext>(
+                            scoped in TContext context, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroMap.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                            #if NET9_0_OR_GREATER
+                            where TContext : allows ref struct
+                            #endif
+                        {
+                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                            try
+                            {
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                                var source = new Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroMap.Source<TContext>(context, value);
+                                source.AddAsItem(ref cvb);
+                                Debug.Assert(cvb.MemberCount == 1);
+                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                                return documentBuilder.ToParsedJsonDocument<SchemaEntity>();
+                            }
+                            finally
+                            {
+                                documentBuilder.Dispose();
+                            }
+                        }
+
+                        /// <summary>
+                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                        /// </summary>
+                        /// <param name="value">The value with which to initialize the document.</param>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                        public static ParsedJsonDocument<SchemaEntity> Create(
+                            scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroRecord.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                        {
+                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                            try
+                            {
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                                var source = new Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroRecord.Source(value);
+                                source.AddAsItem(ref cvb);
+                                Debug.Assert(cvb.MemberCount == 1);
+                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                                return documentBuilder.ToParsedJsonDocument<SchemaEntity>();
+                            }
+                            finally
+                            {
+                                documentBuilder.Dispose();
+                            }
+                        }
+
+                        /// <summary>
+                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                        /// </summary>
+                        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+                        /// <param name="context">The context to pass to the builder.</param>
+                        /// <param name="value">The value with which to initialize the document.</param>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                        public static ParsedJsonDocument<SchemaEntity> Create<TContext>(
+                            scoped in TContext context, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroRecord.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                            #if NET9_0_OR_GREATER
+                            where TContext : allows ref struct
+                            #endif
+                        {
+                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                            try
+                            {
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                                var source = new Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.AvroRecord.Source<TContext>(context, value);
+                                source.AddAsItem(ref cvb);
+                                Debug.Assert(cvb.MemberCount == 1);
+                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                                return documentBuilder.ToParsedJsonDocument<SchemaEntity>();
+                            }
+                            finally
+                            {
+                                documentBuilder.Dispose();
+                            }
+                        }
+
+                        /// <summary>
+                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                        /// </summary>
+                        /// <param name="value">The value with which to initialize the document.</param>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                        public static ParsedJsonDocument<SchemaEntity> Create(
+                            scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.PrimitiveTypeWithMetadata.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                        {
+                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                            try
+                            {
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                                var source = new Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.PrimitiveTypeWithMetadata.Source(value);
+                                source.AddAsItem(ref cvb);
+                                Debug.Assert(cvb.MemberCount == 1);
+                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                                return documentBuilder.ToParsedJsonDocument<SchemaEntity>();
+                            }
+                            finally
+                            {
+                                documentBuilder.Dispose();
+                            }
+                        }
+
+                        /// <summary>
+                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                        /// </summary>
+                        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+                        /// <param name="context">The context to pass to the builder.</param>
+                        /// <param name="value">The value with which to initialize the document.</param>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                        public static ParsedJsonDocument<SchemaEntity> Create<TContext>(
+                            scoped in TContext context, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.PrimitiveTypeWithMetadata.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                            #if NET9_0_OR_GREATER
+                            where TContext : allows ref struct
+                            #endif
+                        {
+                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                            try
+                            {
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                                var source = new Corvus.Text.Json.AsyncApi30.AsyncApiDocument.AvroSchemaV1.PrimitiveTypeWithMetadata.Source<TContext>(context, value);
+                                source.AddAsItem(ref cvb);
+                                Debug.Assert(cvb.MemberCount == 1);
+                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                                return documentBuilder.ToParsedJsonDocument<SchemaEntity>();
+                            }
+                            finally
+                            {
+                                documentBuilder.Dispose();
+                            }
+                        }
+
+                        /// <summary>
+                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                        /// </summary>
+                        /// <param name="value">The value with which to initialize the document.</param>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                        public static ParsedJsonDocument<SchemaEntity> Create(
+                            scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                        {
+                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                            try
+                            {
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                                var source = new Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Source(value);
+                                source.AddAsItem(ref cvb);
+                                Debug.Assert(cvb.MemberCount == 1);
+                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                                return documentBuilder.ToParsedJsonDocument<SchemaEntity>();
+                            }
+                            finally
+                            {
+                                documentBuilder.Dispose();
+                            }
+                        }
+
+                        /// <summary>
+                        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                        /// </summary>
+                        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+                        /// <param name="context">The context to pass to the builder.</param>
+                        /// <param name="value">The value with which to initialize the document.</param>
+                        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                        public static ParsedJsonDocument<SchemaEntity> Create<TContext>(
+                            scoped in TContext context, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                            #if NET9_0_OR_GREATER
+                            where TContext : allows ref struct
+                            #endif
+                        {
+                            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                            try
+                            {
+                                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                                var source = new Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Reference.Source<TContext>(context, value);
+                                source.AddAsItem(ref cvb);
+                                Debug.Assert(cvb.MemberCount == 1);
+                                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                                return documentBuilder.ToParsedJsonDocument<SchemaEntity>();
+                            }
+                            finally
+                            {
+                                documentBuilder.Dispose();
+                            }
                         }
                     }
                 }

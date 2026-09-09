@@ -62,7 +62,8 @@ public readonly partial struct AsyncApiDocument
             /// <summary>
             /// Initializes a new instance of the <see cref="Mutable"/> struct.
             /// </summary>
-            /// <param name="value">The value from which to construct the instance.</param>
+            /// <param name="parent">The document that contains the element.</param>
+            /// <param name="idx">The index of the element within the document.</param>
             internal Mutable(IJsonDocument parent, int idx)
             {
                 Debug.Assert(idx >= 0);
@@ -132,7 +133,7 @@ public readonly partial struct AsyncApiDocument
             /// <summary>
             /// Converts the instance to a JsonElement.
             /// </summary>
-            /// <param name="value">The instance of this type.</param>
+            /// <param name="instance">The instance of this type.</param>
             /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator JsonElement(Mutable instance)
@@ -143,7 +144,7 @@ public readonly partial struct AsyncApiDocument
             /// <summary>
             /// Converts an immutable instance to a mutable instance, if the instance is backed by a mutable document.
             /// </summary>
-            /// <param name="value">The instance of this type.</param>
+            /// <param name="instance">The instance of this type.</param>
             /// <returns>A mutable instance.</returns>
             /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
             public static explicit operator Mutable(ChannelItem instance)
@@ -160,7 +161,7 @@ public readonly partial struct AsyncApiDocument
             /// <summary>
             /// Converts to an immutable instance of the <see cref="Mutable"/> type.
             /// </summary>
-            /// <param name="value">The <see cref="Mutable"/> instance.</param>
+            /// <param name="instance">The <see cref="Mutable"/> instance.</param>
             /// <returns>An immutable instance of a <see cref="ChannelItem"/>, initialized from the <see cref="Mutable"/> value.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator ChannelItem(Mutable instance)
@@ -171,7 +172,8 @@ public readonly partial struct AsyncApiDocument
             /// <summary>
             /// Gets an instance of the JSON value from another element.
             /// </summary>
-            /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
+            /// <typeparam name="T">The type of the <see cref="IJsonElement{T}"/> from which to instantiate the instance.</typeparam>
+            /// <param name="instance">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
             /// <returns>An instance of this type, initialized from the JSON element.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static Mutable From<T>(in T instance)
@@ -273,7 +275,7 @@ public readonly partial struct AsyncApiDocument
                         return value;
                     }
 
-                    return default;
+                    return Corvus.Text.Json.AsyncApi26.AsyncApiDocument.ChannelItem.DeprecatedEntity.Mutable.DefaultInstance;
                 }
             }
 
@@ -425,7 +427,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>$ref</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRef(in Corvus.Text.Json.AsyncApi26.JsonUriReference.Source value)
+            public void SetRef(scoped in Corvus.Text.Json.AsyncApi26.JsonUriReference.Source value)
             {
                 CheckValidInstance();
 
@@ -470,7 +472,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>bindings</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetBindings(in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.BindingsObject.Source value)
+            public void SetBindings(scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.BindingsObject.Source value)
             {
                 CheckValidInstance();
 
@@ -551,7 +553,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>deprecated</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDeprecated(in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.ChannelItem.DeprecatedEntity.Source value)
+            public void SetDeprecated(scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.ChannelItem.DeprecatedEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -596,7 +598,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>description</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetDescription(in Corvus.Text.Json.AsyncApi26.JsonString.Source value)
+            public void SetDescription(scoped in Corvus.Text.Json.AsyncApi26.JsonString.Source value)
             {
                 CheckValidInstance();
 
@@ -641,7 +643,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>parameters</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetParametersValue(in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Parameters.Source value)
+            public void SetParametersValue(scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Parameters.Source value)
             {
                 CheckValidInstance();
 
@@ -722,7 +724,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>publish</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetPublish(in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Operation.Source value)
+            public void SetPublish(scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Operation.Source value)
             {
                 CheckValidInstance();
 
@@ -803,7 +805,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>servers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetServers(in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.ChannelItem.JsonStringArray.Source value)
+            public void SetServers(scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.ChannelItem.JsonStringArray.Source value)
             {
                 CheckValidInstance();
 
@@ -884,7 +886,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>subscribe</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSubscribe(in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Operation.Source value)
+            public void SetSubscribe(scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Operation.Source value)
             {
                 CheckValidInstance();
 
@@ -1066,7 +1068,7 @@ public readonly partial struct AsyncApiDocument
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.SpecificationExtension.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.SpecificationExtension.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -1089,7 +1091,7 @@ public readonly partial struct AsyncApiDocument
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.SpecificationExtension.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.SpecificationExtension.Source value)
             {
                 CheckValidInstance();
 
@@ -1136,7 +1138,7 @@ public readonly partial struct AsyncApiDocument
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.SpecificationExtension.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.SpecificationExtension.Source value)
             {
                 CheckValidInstance();
 
@@ -1637,6 +1639,19 @@ public readonly partial struct AsyncApiDocument
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<byte> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
             {
                 value.AddAsProperty(propertyName, ref _builder);
@@ -1647,7 +1662,33 @@ public readonly partial struct AsyncApiDocument
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<char> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(string propertyName, in JsonElement.Source value)
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(string propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
             {
                 value.AddAsProperty(propertyName, ref _builder);
             }
@@ -1679,6 +1720,18 @@ public readonly partial struct AsyncApiDocument
         /// <summary>
         /// Build an instance of the value.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// To build this value without allocating a closure, use the <c>Build&lt;TContext&gt;</c>
+        /// overload with a <c>static</c> callback, capturing your source data in the context.
+        /// </para>
+        /// <para>
+        /// A <c>Build(...)</c> overload taking the individual property values directly is
+        /// intentionally not generated for this type, because its estimated captured-argument
+        /// footprint exceeds the configured build-parameters threshold. The threshold is
+        /// configurable via <c>CSharpLanguageProvider.Options.BuildParametersThreshold</c>.
+        /// </para>
+        /// </remarks>
         /// <param name="buildValue">The callback that builds the value.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>The source from which to build the value.</returns>
@@ -1691,6 +1744,18 @@ public readonly partial struct AsyncApiDocument
         /// <summary>
         /// Build an instance of the value.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// To build this value without allocating a closure, use the <c>Build&lt;TContext&gt;</c>
+        /// overload with a <c>static</c> callback, capturing your source data in the context.
+        /// </para>
+        /// <para>
+        /// A <c>Build(...)</c> overload taking the individual property values directly is
+        /// intentionally not generated for this type, because its estimated captured-argument
+        /// footprint exceeds the configured build-parameters threshold. The threshold is
+        /// configurable via <c>CSharpLanguageProvider.Options.BuildParametersThreshold</c>.
+        /// </para>
+        /// </remarks>
         /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="buildValue">The callback that builds the value.</param>
@@ -1714,6 +1779,29 @@ public readonly partial struct AsyncApiDocument
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
             JsonWorkspace workspace, scoped in Source value, int initialCapacity = 30)
+        {
+            // Create the document builder without a MetadataDb
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            value.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder;
+        }
+
+        /// <summary>
+        /// Creates and initializes a mutable document from a context-threaded value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context carried by the value.</typeparam>
+        /// <param name="workspace">The JSON workspace.</param>
+        /// <param name="value">The context-threaded value with which to initialize the builder.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>An instance of a mutable document initialized with the given value.</returns>
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
+            JsonWorkspace workspace, scoped in Source<TContext> value, int initialCapacity = 30)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
         {
             // Create the document builder without a MetadataDb
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
@@ -1838,6 +1926,158 @@ public readonly partial struct AsyncApiDocument
         public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
         {
             return workspace.CreateBuilder<ChannelItem, Mutable>(this);
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ChannelItem> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ChannelItem>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ChannelItem> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ChannelItem>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ChannelItem> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ChannelItem>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="refValue">The value of the property.</param>
+        /// <param name="bindings">The value of the property.</param>
+        /// <param name="deprecated">The value of the property.</param>
+        /// <param name="description">The value of the property.</param>
+        /// <param name="parameters">The value of the property.</param>
+        /// <param name="publish">The value of the property.</param>
+        /// <param name="servers">The value of the property.</param>
+        /// <param name="subscribe">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ChannelItem> Create(in Corvus.Text.Json.AsyncApi26.JsonUriReference.Source refValue = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.BindingsObject.Source bindings = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.ChannelItem.DeprecatedEntity.Source deprecated = default, in Corvus.Text.Json.AsyncApi26.JsonString.Source description = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Parameters.Source parameters = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Operation.Source publish = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.ChannelItem.JsonStringArray.Source servers = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Operation.Source subscribe = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(refValue, bindings, deprecated, description, parameters, publish, servers, subscribe);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ChannelItem>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The value of the property.</param>
+        /// <param name="refValue">The value of the property.</param>
+        /// <param name="bindings">The value of the property.</param>
+        /// <param name="deprecated">The value of the property.</param>
+        /// <param name="description">The value of the property.</param>
+        /// <param name="parameters">The value of the property.</param>
+        /// <param name="publish">The value of the property.</param>
+        /// <param name="servers">The value of the property.</param>
+        /// <param name="subscribe">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<ChannelItem> Create<TContext>(in TContext context, in Corvus.Text.Json.AsyncApi26.JsonUriReference.Source refValue = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.BindingsObject.Source<TContext> bindings = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.ChannelItem.DeprecatedEntity.Source deprecated = default, in Corvus.Text.Json.AsyncApi26.JsonString.Source description = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Parameters.Source<TContext> parameters = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Operation.Source<TContext> publish = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.ChannelItem.JsonStringArray.Source<TContext> servers = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Operation.Source<TContext> subscribe = default, int initialCapacity = 30)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(context, refValue, bindings, deprecated, description, parameters, publish, servers, subscribe);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<ChannelItem>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
         }
     }
 }

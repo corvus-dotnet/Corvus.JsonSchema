@@ -67,7 +67,8 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Initializes a new instance of the <see cref="Mutable"/> struct.
                 /// </summary>
-                /// <param name="value">The value from which to construct the instance.</param>
+                /// <param name="parent">The document that contains the element.</param>
+                /// <param name="idx">The index of the element within the document.</param>
                 internal Mutable(IJsonDocument parent, int idx)
                 {
                     Debug.Assert(idx >= 0);
@@ -173,7 +174,7 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Converts the instance to a JsonElement.
                 /// </summary>
-                /// <param name="value">The instance of this type.</param>
+                /// <param name="instance">The instance of this type.</param>
                 /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator JsonElement(Mutable instance)
@@ -184,7 +185,7 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Converts an immutable instance to a mutable instance, if the instance is backed by a mutable document.
                 /// </summary>
-                /// <param name="value">The instance of this type.</param>
+                /// <param name="instance">The instance of this type.</param>
                 /// <returns>A mutable instance.</returns>
                 /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
                 public static explicit operator Mutable(JmsEntity instance)
@@ -201,7 +202,7 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Converts to an immutable instance of the <see cref="Mutable"/> type.
                 /// </summary>
-                /// <param name="value">The <see cref="Mutable"/> instance.</param>
+                /// <param name="instance">The <see cref="Mutable"/> instance.</param>
                 /// <returns>An immutable instance of a <see cref="JmsEntity"/>, initialized from the <see cref="Mutable"/> value.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator JmsEntity(Mutable instance)
@@ -212,7 +213,8 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Gets an instance of the JSON value from another element.
                 /// </summary>
-                /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
+                /// <typeparam name="T">The type of the <see cref="IJsonElement{T}"/> from which to instantiate the instance.</typeparam>
+                /// <param name="instance">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
                 /// <returns>An instance of this type, initialized from the JSON element.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static Mutable From<T>(in T instance)
@@ -442,7 +444,7 @@ public readonly partial struct AsyncApiDocument
                 /// Set the <c>bindingVersion</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetBindingVersion(in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.ServerBindingsObject.JmsEntity.BindingVersionEntity.Source value)
+                public void SetBindingVersion(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.ServerBindingsObject.JmsEntity.BindingVersionEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -487,7 +489,7 @@ public readonly partial struct AsyncApiDocument
                 /// Set the <c>clientID</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetClientId(in Corvus.Text.Json.AsyncApi30.JsonString.Source value)
+                public void SetClientId(scoped in Corvus.Text.Json.AsyncApi30.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -532,7 +534,7 @@ public readonly partial struct AsyncApiDocument
                 /// Set the <c>jmsConnectionFactory</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetJmsConnectionFactory(in Corvus.Text.Json.AsyncApi30.JsonString.Source value)
+                public void SetJmsConnectionFactory(scoped in Corvus.Text.Json.AsyncApi30.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -577,7 +579,7 @@ public readonly partial struct AsyncApiDocument
                 /// Set the <c>properties</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetProperties(in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Type001Server.PropertyArray.Source value)
+                public void SetProperties(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Type001Server.PropertyArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -795,7 +797,7 @@ public readonly partial struct AsyncApiDocument
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -818,7 +820,7 @@ public readonly partial struct AsyncApiDocument
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -865,7 +867,7 @@ public readonly partial struct AsyncApiDocument
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -1065,11 +1067,11 @@ public readonly partial struct AsyncApiDocument
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.ServerBindingsObject.JmsEntity.IfNoBindingVersionSpecifiedUseTheLatestBinding" />.
+                /// Gets the value as a <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.ServerBindingsObject.JmsEntity.IfNoBindingVersionSpecifiedUseTheLatestBinding.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsIfNoBindingVersionSpecifiedUseTheLatestBinding(out Corvus.Text.Json.AsyncApi30.AsyncApiDocument.ServerBindingsObject.JmsEntity.IfNoBindingVersionSpecifiedUseTheLatestBinding result)
+                public bool TryGetAsIfNoBindingVersionSpecifiedUseTheLatestBinding(out Corvus.Text.Json.AsyncApi30.AsyncApiDocument.ServerBindingsObject.JmsEntity.IfNoBindingVersionSpecifiedUseTheLatestBinding.Mutable result)
                 {
                     if (Corvus.Text.Json.AsyncApi30.AsyncApiDocument.ServerBindingsObject.JmsEntity.IfNoBindingVersionSpecifiedUseTheLatestBinding.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -1082,11 +1084,11 @@ public readonly partial struct AsyncApiDocument
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.ServerBindingsObject.JmsEntity.AllOf1Entity" />.
+                /// Gets the value as a <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.ServerBindingsObject.JmsEntity.AllOf1Entity.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsAllOf1Entity(out Corvus.Text.Json.AsyncApi30.AsyncApiDocument.ServerBindingsObject.JmsEntity.AllOf1Entity result)
+                public bool TryGetAsAllOf1Entity(out Corvus.Text.Json.AsyncApi30.AsyncApiDocument.ServerBindingsObject.JmsEntity.AllOf1Entity.Mutable result)
                 {
                     if (Corvus.Text.Json.AsyncApi30.AsyncApiDocument.ServerBindingsObject.JmsEntity.AllOf1Entity.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -1105,12 +1107,17 @@ public readonly partial struct AsyncApiDocument
                 {
                     Unknown,
                     JsonElement,
+                    Create,
                     Builder,
                 }
 
                 private readonly Kind _kind;
                 private readonly JsonElement _jsonElement;
                 private readonly Builder.Build? _objectBuilder;
+                private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.ServerBindingsObject.JmsEntity.BindingVersionEntity.Source _createArg1;
+                private readonly Corvus.Text.Json.AsyncApi30.JsonString.Source _createArg2;
+                private readonly Corvus.Text.Json.AsyncApi30.JsonString.Source _createArg3;
+                private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Type001Server.PropertyArray.Source _createArg4;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1124,6 +1131,15 @@ public readonly partial struct AsyncApiDocument
                 }
 
                 internal Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.ServerBindingsObject.JmsEntity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+                internal Source(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.ServerBindingsObject.JmsEntity.BindingVersionEntity.Source arg1, scoped in Corvus.Text.Json.AsyncApi30.JsonString.Source arg2, scoped in Corvus.Text.Json.AsyncApi30.JsonString.Source arg3, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Type001Server.PropertyArray.Source arg4)
+                {
+                    _createArg1 = arg1;
+                    _createArg2 = arg2;
+                    _createArg3 = arg3;
+                    _createArg4 = arg4;
+                    _kind = Kind.Create;
+                }
 
                 public static implicit operator Source(JmsEntity instance) => new(JsonElement.From(instance));
 
@@ -1139,6 +1155,13 @@ public readonly partial struct AsyncApiDocument
                         case Kind.Builder:
                             valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1157,6 +1180,13 @@ public readonly partial struct AsyncApiDocument
                         case Kind.Builder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1175,6 +1205,13 @@ public readonly partial struct AsyncApiDocument
                         case Kind.Builder:
                             valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1193,6 +1230,13 @@ public readonly partial struct AsyncApiDocument
                         case Kind.Builder:
                             valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1211,6 +1255,13 @@ public readonly partial struct AsyncApiDocument
                         case Kind.Builder:
                             valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                                valueBuilder.EndItem(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1228,12 +1279,17 @@ public readonly partial struct AsyncApiDocument
                     Unknown,
                     Source,
                     Builder,
+                    Create,
                 }
 
                 private readonly Kind _kind;
                 TContext _context;
                 Source _source;
                 private readonly Builder.Build<TContext>? _objectBuilder;
+                private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.ServerBindingsObject.JmsEntity.BindingVersionEntity.Source _createArg1;
+                private readonly Corvus.Text.Json.AsyncApi30.JsonString.Source _createArg2;
+                private readonly Corvus.Text.Json.AsyncApi30.JsonString.Source _createArg3;
+                private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Type001Server.PropertyArray.Source<TContext> _createArg4;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1245,6 +1301,16 @@ public readonly partial struct AsyncApiDocument
                 public static implicit operator Source<TContext>(Source source) => new (source);
 
                 internal Source(scoped in TContext context, Corvus.Text.Json.AsyncApi30.AsyncApiDocument.ServerBindingsObject.JmsEntity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+                internal Source(scoped in TContext context, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.ServerBindingsObject.JmsEntity.BindingVersionEntity.Source arg1, scoped in Corvus.Text.Json.AsyncApi30.JsonString.Source arg2, scoped in Corvus.Text.Json.AsyncApi30.JsonString.Source arg3, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Type001Server.PropertyArray.Source<TContext> arg4)
+                {
+                    _context = context;
+                    _createArg1 = arg1;
+                    _createArg2 = arg2;
+                    _createArg3 = arg3;
+                    _createArg4 = arg4;
+                    _kind = Kind.Create;
+                }
 
                 internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                 {
@@ -1258,6 +1324,13 @@ public readonly partial struct AsyncApiDocument
                         case Kind.Builder:
                             valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                                Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1276,6 +1349,13 @@ public readonly partial struct AsyncApiDocument
                         case Kind.Builder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                                Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1294,6 +1374,13 @@ public readonly partial struct AsyncApiDocument
                         case Kind.Builder:
                             valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                                Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1312,6 +1399,13 @@ public readonly partial struct AsyncApiDocument
                         case Kind.Builder:
                             valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                                Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1330,6 +1424,13 @@ public readonly partial struct AsyncApiDocument
                         case Kind.Builder:
                             valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                                Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                                valueBuilder.EndItem(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1434,6 +1535,19 @@ public readonly partial struct AsyncApiDocument
                 /// </summary>
                 /// <param name="propertyName">The name of the property to add.</param>
                 /// <param name="value">The value of the property to add.</param>
+                public void AddProperty<TContext>(ReadOnlySpan<byte> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                    where TContext : allows ref struct
+#endif
+                {
+                    value.AddAsProperty(propertyName, ref _builder);
+                }
+
+                /// <summary>
+                /// Add a property to the object.
+                /// </summary>
+                /// <param name="propertyName">The name of the property to add.</param>
+                /// <param name="value">The value of the property to add.</param>
                 public void AddProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
                 {
                     value.AddAsProperty(propertyName, ref _builder);
@@ -1444,7 +1558,33 @@ public readonly partial struct AsyncApiDocument
                 /// </summary>
                 /// <param name="propertyName">The name of the property to add.</param>
                 /// <param name="value">The value of the property to add.</param>
+                public void AddProperty<TContext>(ReadOnlySpan<char> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                    where TContext : allows ref struct
+#endif
+                {
+                    value.AddAsProperty(propertyName, ref _builder);
+                }
+
+                /// <summary>
+                /// Add a property to the object.
+                /// </summary>
+                /// <param name="propertyName">The name of the property to add.</param>
+                /// <param name="value">The value of the property to add.</param>
                 public void AddProperty(string propertyName, in JsonElement.Source value)
+                {
+                    value.AddAsProperty(propertyName, ref _builder);
+                }
+
+                /// <summary>
+                /// Add a property to the object.
+                /// </summary>
+                /// <param name="propertyName">The name of the property to add.</param>
+                /// <param name="value">The value of the property to add.</param>
+                public void AddProperty<TContext>(string propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                    where TContext : allows ref struct
+#endif
                 {
                     value.AddAsProperty(propertyName, ref _builder);
                 }
@@ -1469,6 +1609,41 @@ public readonly partial struct AsyncApiDocument
                     Builder ovb = new(o);
                     value(context, ref ovb);
                     o = ovb._builder;
+                    o.EndObject();
+                }
+
+                /// <summary>
+                /// Builds the object value directly from its captured property values into the given complex value builder.
+                /// </summary>
+                /// <param name="arg1">The value of the property.</param>
+                /// <param name="arg2">The value of the property.</param>
+                /// <param name="arg3">The value of the property.</param>
+                /// <param name="arg4">The value of the property.</param>
+                /// <param name="o">The complex value builder into which to write the object.</param>
+                internal static void BuildCreateValue(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.ServerBindingsObject.JmsEntity.BindingVersionEntity.Source arg1, scoped in Corvus.Text.Json.AsyncApi30.JsonString.Source arg2, scoped in Corvus.Text.Json.AsyncApi30.JsonString.Source arg3, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Type001Server.PropertyArray.Source arg4, ref ComplexValueBuilder o)
+                {
+                    o.StartObject();
+                    Create(ref o, arg1, arg2, arg3, arg4);
+                    o.EndObject();
+                }
+
+                /// <summary>
+                /// Builds the object value directly from its captured property values into the given complex value builder.
+                /// </summary>
+                /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+                /// <param name="context">The context to pass to the builder.</param>
+                /// <param name="arg1">The value of the property.</param>
+                /// <param name="arg2">The value of the property.</param>
+                /// <param name="arg3">The value of the property.</param>
+                /// <param name="arg4">The value of the property.</param>
+                /// <param name="o">The complex value builder into which to write the object.</param>
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.ServerBindingsObject.JmsEntity.BindingVersionEntity.Source arg1, scoped in Corvus.Text.Json.AsyncApi30.JsonString.Source arg2, scoped in Corvus.Text.Json.AsyncApi30.JsonString.Source arg3, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Type001Server.PropertyArray.Source<TContext> arg4, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+                    where TContext : allows ref struct
+#endif
+                {
+                    o.StartObject();
+                    Create(context, ref o, arg1, arg2, arg3, arg4);
                     o.EndObject();
                 }
             }
@@ -1503,6 +1678,37 @@ public readonly partial struct AsyncApiDocument
             }
 
             /// <summary>
+            /// Build an instance of the value directly from its property values.
+            /// </summary>
+            /// <param name="bindingVersion">The value of the <c>"bindingVersion"</c> property.</param>
+            /// <param name="clientId">The value of the <c>"clientID"</c> property.</param>
+            /// <param name="jmsConnectionFactory">The value of the <c>"jmsConnectionFactory"</c> property.</param>
+            /// <param name="properties">The value of the <c>"properties"</c> property.</param>
+            /// <returns>The source from which to build the value.</returns>
+            public static Source Build(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.ServerBindingsObject.JmsEntity.BindingVersionEntity.Source bindingVersion = default, scoped in Corvus.Text.Json.AsyncApi30.JsonString.Source clientId = default, scoped in Corvus.Text.Json.AsyncApi30.JsonString.Source jmsConnectionFactory = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Type001Server.PropertyArray.Source properties = default)
+            {
+                return new Source(bindingVersion, clientId, jmsConnectionFactory, properties);
+            }
+
+            /// <summary>
+            /// Build an instance of the value directly from its property values.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="bindingVersion">The value of the <c>"bindingVersion"</c> property.</param>
+            /// <param name="clientId">The value of the <c>"clientID"</c> property.</param>
+            /// <param name="jmsConnectionFactory">The value of the <c>"jmsConnectionFactory"</c> property.</param>
+            /// <param name="properties">The value of the <c>"properties"</c> property.</param>
+            /// <returns>The source from which to build the value.</returns>
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.ServerBindingsObject.JmsEntity.BindingVersionEntity.Source bindingVersion = default, scoped in Corvus.Text.Json.AsyncApi30.JsonString.Source clientId = default, scoped in Corvus.Text.Json.AsyncApi30.JsonString.Source jmsConnectionFactory = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Type001Server.PropertyArray.Source<TContext> properties = default)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
+            {
+                return new Source<TContext>(context, bindingVersion, clientId, jmsConnectionFactory, properties);
+            }
+
+            /// <summary>
             /// Creates and initializes a mutable document from a value.
             /// </summary>
             /// <param name="workspace">The JSON workspace.</param>
@@ -1511,6 +1717,29 @@ public readonly partial struct AsyncApiDocument
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
                 JsonWorkspace workspace, scoped in Source value, int initialCapacity = 30)
+            {
+                // Create the document builder without a MetadataDb
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder;
+            }
+
+            /// <summary>
+            /// Creates and initializes a mutable document from a context-threaded value.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context carried by the value.</typeparam>
+            /// <param name="workspace">The JSON workspace.</param>
+            /// <param name="value">The context-threaded value with which to initialize the builder.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>An instance of a mutable document initialized with the given value.</returns>
+            public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
+                JsonWorkspace workspace, scoped in Source<TContext> value, int initialCapacity = 30)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
             {
                 // Create the document builder without a MetadataDb
                 JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
@@ -1627,6 +1856,150 @@ public readonly partial struct AsyncApiDocument
             public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
             {
                 return workspace.CreateBuilder<JmsEntity, Mutable>(this);
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<JmsEntity> Create(
+                scoped in Source value, int initialCapacity = 30)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    value.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<JmsEntity>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<JmsEntity> Create(
+                scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    var source = new Source(value);
+                    source.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<JmsEntity>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<JmsEntity> Create<TContext>(
+                scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    var source = new Source<TContext>(context, value);
+                    source.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<JmsEntity>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+            /// </summary>
+            /// <param name="bindingVersion">The value of the property.</param>
+            /// <param name="clientId">The value of the property.</param>
+            /// <param name="jmsConnectionFactory">The value of the property.</param>
+            /// <param name="properties">The value of the property.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<JmsEntity> Create(in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.ServerBindingsObject.JmsEntity.BindingVersionEntity.Source bindingVersion = default, in Corvus.Text.Json.AsyncApi30.JsonString.Source clientId = default, in Corvus.Text.Json.AsyncApi30.JsonString.Source jmsConnectionFactory = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Type001Server.PropertyArray.Source properties = default, int initialCapacity = 30)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    cvb.StartObject();
+                    Builder ovb = new(cvb);
+                    ovb.Create(bindingVersion, clientId, jmsConnectionFactory, properties);
+                    cvb = ovb._builder;
+                    cvb.EndObject();
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<JmsEntity>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The value of the property.</param>
+            /// <param name="bindingVersion">The value of the property.</param>
+            /// <param name="clientId">The value of the property.</param>
+            /// <param name="jmsConnectionFactory">The value of the property.</param>
+            /// <param name="properties">The value of the property.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<JmsEntity> Create<TContext>(in TContext context, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.ServerBindingsObject.JmsEntity.BindingVersionEntity.Source bindingVersion = default, in Corvus.Text.Json.AsyncApi30.JsonString.Source clientId = default, in Corvus.Text.Json.AsyncApi30.JsonString.Source jmsConnectionFactory = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Type001Server.PropertyArray.Source<TContext> properties = default, int initialCapacity = 30)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    cvb.StartObject();
+                    Builder ovb = new(cvb);
+                    ovb.Create(context, bindingVersion, clientId, jmsConnectionFactory, properties);
+                    cvb = ovb._builder;
+                    cvb.EndObject();
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<JmsEntity>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
             }
         }
     }

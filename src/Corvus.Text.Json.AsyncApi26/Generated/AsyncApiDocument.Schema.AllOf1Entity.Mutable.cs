@@ -67,7 +67,8 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Initializes a new instance of the <see cref="Mutable"/> struct.
                 /// </summary>
-                /// <param name="value">The value from which to construct the instance.</param>
+                /// <param name="parent">The document that contains the element.</param>
+                /// <param name="idx">The index of the element within the document.</param>
                 internal Mutable(IJsonDocument parent, int idx)
                 {
                     Debug.Assert(idx >= 0);
@@ -137,7 +138,7 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Converts the instance to a JsonElement.
                 /// </summary>
-                /// <param name="value">The instance of this type.</param>
+                /// <param name="instance">The instance of this type.</param>
                 /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator JsonElement(Mutable instance)
@@ -148,7 +149,7 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Converts an immutable instance to a mutable instance, if the instance is backed by a mutable document.
                 /// </summary>
-                /// <param name="value">The instance of this type.</param>
+                /// <param name="instance">The instance of this type.</param>
                 /// <returns>A mutable instance.</returns>
                 /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
                 public static explicit operator Mutable(AllOf1Entity instance)
@@ -165,7 +166,7 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Converts to an immutable instance of the <see cref="Mutable"/> type.
                 /// </summary>
-                /// <param name="value">The <see cref="Mutable"/> instance.</param>
+                /// <param name="instance">The <see cref="Mutable"/> instance.</param>
                 /// <returns>An immutable instance of a <see cref="AllOf1Entity"/>, initialized from the <see cref="Mutable"/> value.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator AllOf1Entity(Mutable instance)
@@ -176,7 +177,8 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Gets an instance of the JSON value from another element.
                 /// </summary>
-                /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
+                /// <typeparam name="T">The type of the <see cref="IJsonElement{T}"/> from which to instantiate the instance.</typeparam>
+                /// <param name="instance">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
                 /// <returns>An instance of this type, initialized from the JSON element.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static Mutable From<T>(in T instance)
@@ -296,7 +298,7 @@ public readonly partial struct AsyncApiDocument
                             return value;
                         }
 
-                        return default;
+                        return Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.AdditionalPropertiesEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -370,7 +372,7 @@ public readonly partial struct AsyncApiDocument
                             return value;
                         }
 
-                        return default;
+                        return Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.DeprecatedEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -431,7 +433,7 @@ public readonly partial struct AsyncApiDocument
                             return value;
                         }
 
-                        return default;
+                        return Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.ItemsEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -484,7 +486,7 @@ public readonly partial struct AsyncApiDocument
                             return value;
                         }
 
-                        return default;
+                        return Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PatternPropertiesEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -500,7 +502,7 @@ public readonly partial struct AsyncApiDocument
                             return value;
                         }
 
-                        return default;
+                        return Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PropertiesEntity.Mutable.DefaultInstance;
                     }
                 }
 
@@ -568,7 +570,7 @@ public readonly partial struct AsyncApiDocument
                 /// Set the <c>additionalProperties</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAdditionalProperties(in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.AdditionalPropertiesEntity.Source value)
+                public void SetAdditionalProperties(scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.AdditionalPropertiesEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -649,7 +651,7 @@ public readonly partial struct AsyncApiDocument
                 /// Set the <c>allOf</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAllOf(in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.SchemaArray.Source value)
+                public void SetAllOf(scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.SchemaArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -730,7 +732,7 @@ public readonly partial struct AsyncApiDocument
                 /// Set the <c>anyOf</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAnyOf(in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.AnyOfSArray.Source value)
+                public void SetAnyOf(scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.AnyOfSArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -811,7 +813,7 @@ public readonly partial struct AsyncApiDocument
                 /// Set the <c>contains</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetContains(in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source value)
+                public void SetContains(scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source value)
                 {
                     CheckValidInstance();
 
@@ -892,7 +894,7 @@ public readonly partial struct AsyncApiDocument
                 /// Set the <c>deprecated</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDeprecated(in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.DeprecatedEntity.Source value)
+                public void SetDeprecated(scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.DeprecatedEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -937,7 +939,7 @@ public readonly partial struct AsyncApiDocument
                 /// Set the <c>discriminator</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetDiscriminator(in Corvus.Text.Json.AsyncApi26.JsonString.Source value)
+                public void SetDiscriminator(scoped in Corvus.Text.Json.AsyncApi26.JsonString.Source value)
                 {
                     CheckValidInstance();
 
@@ -982,7 +984,7 @@ public readonly partial struct AsyncApiDocument
                 /// Set the <c>externalDocs</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetExternalDocsValue(in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.ExternalDocs.Source value)
+                public void SetExternalDocsValue(scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.ExternalDocs.Source value)
                 {
                     CheckValidInstance();
 
@@ -1063,7 +1065,7 @@ public readonly partial struct AsyncApiDocument
                 /// Set the <c>items</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetItems(in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.ItemsEntity.Source value)
+                public void SetItems(scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.ItemsEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -1144,7 +1146,7 @@ public readonly partial struct AsyncApiDocument
                 /// Set the <c>not</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetNot(in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source value)
+                public void SetNot(scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source value)
                 {
                     CheckValidInstance();
 
@@ -1225,7 +1227,7 @@ public readonly partial struct AsyncApiDocument
                 /// Set the <c>oneOf</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetOneOf(in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.OneOfSArray.Source value)
+                public void SetOneOf(scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.OneOfSArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -1306,7 +1308,7 @@ public readonly partial struct AsyncApiDocument
                 /// Set the <c>patternProperties</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPatternProperties(in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PatternPropertiesEntity.Source value)
+                public void SetPatternProperties(scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PatternPropertiesEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -1387,7 +1389,7 @@ public readonly partial struct AsyncApiDocument
                 /// Set the <c>properties</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetProperties(in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PropertiesEntity.Source value)
+                public void SetProperties(scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PropertiesEntity.Source value)
                 {
                     CheckValidInstance();
 
@@ -1468,7 +1470,7 @@ public readonly partial struct AsyncApiDocument
                 /// Set the <c>propertyNames</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetPropertyNames(in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source value)
+                public void SetPropertyNames(scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source value)
                 {
                     CheckValidInstance();
 
@@ -1650,7 +1652,7 @@ public readonly partial struct AsyncApiDocument
                 ///   </para>
                 /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void SetProperty(string propertyName, in JsonElement.Source value)
+                public void SetProperty(string propertyName, scoped in JsonElement.Source value)
                 {
                     SetProperty(propertyName.AsSpan(), value);
                 }
@@ -1673,7 +1675,7 @@ public readonly partial struct AsyncApiDocument
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<char> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -1720,7 +1722,7 @@ public readonly partial struct AsyncApiDocument
                 ///     If the property doesn't exist, it will be added to the object.
                 ///   </para>
                 /// </remarks>
-                public void SetProperty(ReadOnlySpan<byte> propertyName, in JsonElement.Source value)
+                public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in JsonElement.Source value)
                 {
                     CheckValidInstance();
 
@@ -1868,12 +1870,26 @@ public readonly partial struct AsyncApiDocument
                 {
                     Unknown,
                     JsonElement,
+                    Create,
                     Builder,
                 }
 
                 private readonly Kind _kind;
                 private readonly JsonElement _jsonElement;
                 private readonly Builder.Build? _objectBuilder;
+                private readonly Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.AdditionalPropertiesEntity.Source _createArg1;
+                private readonly Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.SchemaArray.Source _createArg2;
+                private readonly Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.AnyOfSArray.Source _createArg3;
+                private readonly Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source _createArg4;
+                private readonly Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.DeprecatedEntity.Source _createArg5;
+                private readonly Corvus.Text.Json.AsyncApi26.JsonString.Source _createArg6;
+                private readonly Corvus.Text.Json.AsyncApi26.AsyncApiDocument.ExternalDocs.Source _createArg7;
+                private readonly Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.ItemsEntity.Source _createArg8;
+                private readonly Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source _createArg9;
+                private readonly Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.OneOfSArray.Source _createArg10;
+                private readonly Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PatternPropertiesEntity.Source _createArg11;
+                private readonly Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PropertiesEntity.Source _createArg12;
+                private readonly Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source _createArg13;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -1887,6 +1903,24 @@ public readonly partial struct AsyncApiDocument
                 }
 
                 internal Source(Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+                internal Source(scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.AdditionalPropertiesEntity.Source arg1, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.SchemaArray.Source arg2, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.AnyOfSArray.Source arg3, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source arg4, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.DeprecatedEntity.Source arg5, scoped in Corvus.Text.Json.AsyncApi26.JsonString.Source arg6, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.ExternalDocs.Source arg7, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.ItemsEntity.Source arg8, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source arg9, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.OneOfSArray.Source arg10, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PatternPropertiesEntity.Source arg11, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PropertiesEntity.Source arg12, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source arg13)
+                {
+                    _createArg1 = arg1;
+                    _createArg2 = arg2;
+                    _createArg3 = arg3;
+                    _createArg4 = arg4;
+                    _createArg5 = arg5;
+                    _createArg6 = arg6;
+                    _createArg7 = arg7;
+                    _createArg8 = arg8;
+                    _createArg9 = arg9;
+                    _createArg10 = arg10;
+                    _createArg11 = arg11;
+                    _createArg12 = arg12;
+                    _createArg13 = arg13;
+                    _kind = Kind.Create;
+                }
 
                 public static implicit operator Source(AllOf1Entity instance) => new(JsonElement.From(instance));
 
@@ -1902,6 +1936,13 @@ public readonly partial struct AsyncApiDocument
                         case Kind.Builder:
                             valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1920,6 +1961,13 @@ public readonly partial struct AsyncApiDocument
                         case Kind.Builder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1938,6 +1986,13 @@ public readonly partial struct AsyncApiDocument
                         case Kind.Builder:
                             valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1956,6 +2011,13 @@ public readonly partial struct AsyncApiDocument
                         case Kind.Builder:
                             valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1974,6 +2036,13 @@ public readonly partial struct AsyncApiDocument
                         case Kind.Builder:
                             valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                                Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                                valueBuilder.EndItem(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -1991,12 +2060,26 @@ public readonly partial struct AsyncApiDocument
                     Unknown,
                     Source,
                     Builder,
+                    Create,
                 }
 
                 private readonly Kind _kind;
                 TContext _context;
                 Source _source;
                 private readonly Builder.Build<TContext>? _objectBuilder;
+                private readonly Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.AdditionalPropertiesEntity.Source<TContext> _createArg1;
+                private readonly Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.SchemaArray.Source<TContext> _createArg2;
+                private readonly Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.AnyOfSArray.Source<TContext> _createArg3;
+                private readonly Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source<TContext> _createArg4;
+                private readonly Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.DeprecatedEntity.Source _createArg5;
+                private readonly Corvus.Text.Json.AsyncApi26.JsonString.Source _createArg6;
+                private readonly Corvus.Text.Json.AsyncApi26.AsyncApiDocument.ExternalDocs.Source<TContext> _createArg7;
+                private readonly Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.ItemsEntity.Source<TContext> _createArg8;
+                private readonly Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source<TContext> _createArg9;
+                private readonly Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.OneOfSArray.Source<TContext> _createArg10;
+                private readonly Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PatternPropertiesEntity.Source<TContext> _createArg11;
+                private readonly Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PropertiesEntity.Source<TContext> _createArg12;
+                private readonly Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source<TContext> _createArg13;
 
                 /// <summary>
                 /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -2008,6 +2091,25 @@ public readonly partial struct AsyncApiDocument
                 public static implicit operator Source<TContext>(Source source) => new (source);
 
                 internal Source(scoped in TContext context, Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+                internal Source(scoped in TContext context, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.AdditionalPropertiesEntity.Source<TContext> arg1, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.SchemaArray.Source<TContext> arg2, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.AnyOfSArray.Source<TContext> arg3, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source<TContext> arg4, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.DeprecatedEntity.Source arg5, scoped in Corvus.Text.Json.AsyncApi26.JsonString.Source arg6, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.ExternalDocs.Source<TContext> arg7, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.ItemsEntity.Source<TContext> arg8, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source<TContext> arg9, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.OneOfSArray.Source<TContext> arg10, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PatternPropertiesEntity.Source<TContext> arg11, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PropertiesEntity.Source<TContext> arg12, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source<TContext> arg13)
+                {
+                    _context = context;
+                    _createArg1 = arg1;
+                    _createArg2 = arg2;
+                    _createArg3 = arg3;
+                    _createArg4 = arg4;
+                    _createArg5 = arg5;
+                    _createArg6 = arg6;
+                    _createArg7 = arg7;
+                    _createArg8 = arg8;
+                    _createArg9 = arg9;
+                    _createArg10 = arg10;
+                    _createArg11 = arg11;
+                    _createArg12 = arg12;
+                    _createArg13 = arg13;
+                    _kind = Kind.Create;
+                }
 
                 internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                 {
@@ -2021,6 +2123,13 @@ public readonly partial struct AsyncApiDocument
                         case Kind.Builder:
                             valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                                Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -2039,6 +2148,13 @@ public readonly partial struct AsyncApiDocument
                         case Kind.Builder:
                             valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                                Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -2057,6 +2173,13 @@ public readonly partial struct AsyncApiDocument
                         case Kind.Builder:
                             valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                                Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -2075,6 +2198,13 @@ public readonly partial struct AsyncApiDocument
                         case Kind.Builder:
                             valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                                Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                                valueBuilder.EndProperty(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -2093,6 +2223,13 @@ public readonly partial struct AsyncApiDocument
                         case Kind.Builder:
                             valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                             break;
+                        case Kind.Create:
+                            {
+                                ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                                Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, ref valueBuilder);
+                                valueBuilder.EndItem(handle);
+                                break;
+                            }
                         default:
                             Debug.Fail("Unexpected Kind");
                             break;
@@ -2251,6 +2388,19 @@ public readonly partial struct AsyncApiDocument
                 /// </summary>
                 /// <param name="propertyName">The name of the property to add.</param>
                 /// <param name="value">The value of the property to add.</param>
+                public void AddProperty<TContext>(ReadOnlySpan<byte> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                    where TContext : allows ref struct
+#endif
+                {
+                    value.AddAsProperty(propertyName, ref _builder);
+                }
+
+                /// <summary>
+                /// Add a property to the object.
+                /// </summary>
+                /// <param name="propertyName">The name of the property to add.</param>
+                /// <param name="value">The value of the property to add.</param>
                 public void AddProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
                 {
                     value.AddAsProperty(propertyName, ref _builder);
@@ -2261,7 +2411,33 @@ public readonly partial struct AsyncApiDocument
                 /// </summary>
                 /// <param name="propertyName">The name of the property to add.</param>
                 /// <param name="value">The value of the property to add.</param>
+                public void AddProperty<TContext>(ReadOnlySpan<char> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                    where TContext : allows ref struct
+#endif
+                {
+                    value.AddAsProperty(propertyName, ref _builder);
+                }
+
+                /// <summary>
+                /// Add a property to the object.
+                /// </summary>
+                /// <param name="propertyName">The name of the property to add.</param>
+                /// <param name="value">The value of the property to add.</param>
                 public void AddProperty(string propertyName, in JsonElement.Source value)
+                {
+                    value.AddAsProperty(propertyName, ref _builder);
+                }
+
+                /// <summary>
+                /// Add a property to the object.
+                /// </summary>
+                /// <param name="propertyName">The name of the property to add.</param>
+                /// <param name="value">The value of the property to add.</param>
+                public void AddProperty<TContext>(string propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                    where TContext : allows ref struct
+#endif
                 {
                     value.AddAsProperty(propertyName, ref _builder);
                 }
@@ -2286,6 +2462,59 @@ public readonly partial struct AsyncApiDocument
                     Builder ovb = new(o);
                     value(context, ref ovb);
                     o = ovb._builder;
+                    o.EndObject();
+                }
+
+                /// <summary>
+                /// Builds the object value directly from its captured property values into the given complex value builder.
+                /// </summary>
+                /// <param name="arg1">The value of the property.</param>
+                /// <param name="arg2">The value of the property.</param>
+                /// <param name="arg3">The value of the property.</param>
+                /// <param name="arg4">The value of the property.</param>
+                /// <param name="arg5">The value of the property.</param>
+                /// <param name="arg6">The value of the property.</param>
+                /// <param name="arg7">The value of the property.</param>
+                /// <param name="arg8">The value of the property.</param>
+                /// <param name="arg9">The value of the property.</param>
+                /// <param name="arg10">The value of the property.</param>
+                /// <param name="arg11">The value of the property.</param>
+                /// <param name="arg12">The value of the property.</param>
+                /// <param name="arg13">The value of the property.</param>
+                /// <param name="o">The complex value builder into which to write the object.</param>
+                internal static void BuildCreateValue(scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.AdditionalPropertiesEntity.Source arg1, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.SchemaArray.Source arg2, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.AnyOfSArray.Source arg3, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source arg4, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.DeprecatedEntity.Source arg5, scoped in Corvus.Text.Json.AsyncApi26.JsonString.Source arg6, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.ExternalDocs.Source arg7, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.ItemsEntity.Source arg8, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source arg9, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.OneOfSArray.Source arg10, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PatternPropertiesEntity.Source arg11, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PropertiesEntity.Source arg12, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source arg13, ref ComplexValueBuilder o)
+                {
+                    o.StartObject();
+                    Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
+                    o.EndObject();
+                }
+
+                /// <summary>
+                /// Builds the object value directly from its captured property values into the given complex value builder.
+                /// </summary>
+                /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+                /// <param name="context">The context to pass to the builder.</param>
+                /// <param name="arg1">The value of the property.</param>
+                /// <param name="arg2">The value of the property.</param>
+                /// <param name="arg3">The value of the property.</param>
+                /// <param name="arg4">The value of the property.</param>
+                /// <param name="arg5">The value of the property.</param>
+                /// <param name="arg6">The value of the property.</param>
+                /// <param name="arg7">The value of the property.</param>
+                /// <param name="arg8">The value of the property.</param>
+                /// <param name="arg9">The value of the property.</param>
+                /// <param name="arg10">The value of the property.</param>
+                /// <param name="arg11">The value of the property.</param>
+                /// <param name="arg12">The value of the property.</param>
+                /// <param name="arg13">The value of the property.</param>
+                /// <param name="o">The complex value builder into which to write the object.</param>
+                internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.AdditionalPropertiesEntity.Source<TContext> arg1, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.SchemaArray.Source<TContext> arg2, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.AnyOfSArray.Source<TContext> arg3, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source<TContext> arg4, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.DeprecatedEntity.Source arg5, scoped in Corvus.Text.Json.AsyncApi26.JsonString.Source arg6, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.ExternalDocs.Source<TContext> arg7, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.ItemsEntity.Source<TContext> arg8, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source<TContext> arg9, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.OneOfSArray.Source<TContext> arg10, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PatternPropertiesEntity.Source<TContext> arg11, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PropertiesEntity.Source<TContext> arg12, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source<TContext> arg13, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+                    where TContext : allows ref struct
+#endif
+                {
+                    o.StartObject();
+                    Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13);
                     o.EndObject();
                 }
             }
@@ -2320,6 +2549,55 @@ public readonly partial struct AsyncApiDocument
             }
 
             /// <summary>
+            /// Build an instance of the value directly from its property values.
+            /// </summary>
+            /// <param name="additionalProperties">The value of the <c>"additionalProperties"</c> property.</param>
+            /// <param name="allOf">The value of the <c>"allOf"</c> property.</param>
+            /// <param name="anyOf">The value of the <c>"anyOf"</c> property.</param>
+            /// <param name="contains">The value of the <c>"contains"</c> property.</param>
+            /// <param name="deprecated">The value of the <c>"deprecated"</c> property.</param>
+            /// <param name="discriminator">The value of the <c>"discriminator"</c> property.</param>
+            /// <param name="externalDocs">The value of the <c>"externalDocs"</c> property.</param>
+            /// <param name="items">The value of the <c>"items"</c> property.</param>
+            /// <param name="not">The value of the <c>"not"</c> property.</param>
+            /// <param name="oneOf">The value of the <c>"oneOf"</c> property.</param>
+            /// <param name="patternProperties">The value of the <c>"patternProperties"</c> property.</param>
+            /// <param name="properties">The value of the <c>"properties"</c> property.</param>
+            /// <param name="propertyNames">The value of the <c>"propertyNames"</c> property.</param>
+            /// <returns>The source from which to build the value.</returns>
+            public static Source Build(scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.AdditionalPropertiesEntity.Source additionalProperties = default, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.SchemaArray.Source allOf = default, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.AnyOfSArray.Source anyOf = default, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source contains = default, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.DeprecatedEntity.Source deprecated = default, scoped in Corvus.Text.Json.AsyncApi26.JsonString.Source discriminator = default, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.ExternalDocs.Source externalDocs = default, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.ItemsEntity.Source items = default, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source not = default, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.OneOfSArray.Source oneOf = default, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PatternPropertiesEntity.Source patternProperties = default, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PropertiesEntity.Source properties = default, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source propertyNames = default)
+            {
+                return new Source(additionalProperties, allOf, anyOf, contains, deprecated, discriminator, externalDocs, items, not, oneOf, patternProperties, properties, propertyNames);
+            }
+
+            /// <summary>
+            /// Build an instance of the value directly from its property values.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="additionalProperties">The value of the <c>"additionalProperties"</c> property.</param>
+            /// <param name="allOf">The value of the <c>"allOf"</c> property.</param>
+            /// <param name="anyOf">The value of the <c>"anyOf"</c> property.</param>
+            /// <param name="contains">The value of the <c>"contains"</c> property.</param>
+            /// <param name="deprecated">The value of the <c>"deprecated"</c> property.</param>
+            /// <param name="discriminator">The value of the <c>"discriminator"</c> property.</param>
+            /// <param name="externalDocs">The value of the <c>"externalDocs"</c> property.</param>
+            /// <param name="items">The value of the <c>"items"</c> property.</param>
+            /// <param name="not">The value of the <c>"not"</c> property.</param>
+            /// <param name="oneOf">The value of the <c>"oneOf"</c> property.</param>
+            /// <param name="patternProperties">The value of the <c>"patternProperties"</c> property.</param>
+            /// <param name="properties">The value of the <c>"properties"</c> property.</param>
+            /// <param name="propertyNames">The value of the <c>"propertyNames"</c> property.</param>
+            /// <returns>The source from which to build the value.</returns>
+            public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.AdditionalPropertiesEntity.Source<TContext> additionalProperties = default, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.SchemaArray.Source<TContext> allOf = default, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.AnyOfSArray.Source<TContext> anyOf = default, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source<TContext> contains = default, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.DeprecatedEntity.Source deprecated = default, scoped in Corvus.Text.Json.AsyncApi26.JsonString.Source discriminator = default, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.ExternalDocs.Source<TContext> externalDocs = default, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.ItemsEntity.Source<TContext> items = default, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source<TContext> not = default, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.OneOfSArray.Source<TContext> oneOf = default, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PatternPropertiesEntity.Source<TContext> patternProperties = default, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PropertiesEntity.Source<TContext> properties = default, scoped in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source<TContext> propertyNames = default)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
+            {
+                return new Source<TContext>(context, additionalProperties, allOf, anyOf, contains, deprecated, discriminator, externalDocs, items, not, oneOf, patternProperties, properties, propertyNames);
+            }
+
+            /// <summary>
             /// Creates and initializes a mutable document from a value.
             /// </summary>
             /// <param name="workspace">The JSON workspace.</param>
@@ -2328,6 +2606,29 @@ public readonly partial struct AsyncApiDocument
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
                 JsonWorkspace workspace, scoped in Source value, int initialCapacity = 30)
+            {
+                // Create the document builder without a MetadataDb
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder;
+            }
+
+            /// <summary>
+            /// Creates and initializes a mutable document from a context-threaded value.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context carried by the value.</typeparam>
+            /// <param name="workspace">The JSON workspace.</param>
+            /// <param name="value">The context-threaded value with which to initialize the builder.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>An instance of a mutable document initialized with the given value.</returns>
+            public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
+                JsonWorkspace workspace, scoped in Source<TContext> value, int initialCapacity = 30)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
             {
                 // Create the document builder without a MetadataDb
                 JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
@@ -2462,6 +2763,168 @@ public readonly partial struct AsyncApiDocument
             public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
             {
                 return workspace.CreateBuilder<AllOf1Entity, Mutable>(this);
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<AllOf1Entity> Create(
+                scoped in Source value, int initialCapacity = 30)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    value.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<AllOf1Entity>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<AllOf1Entity> Create(
+                scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    var source = new Source(value);
+                    source.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<AllOf1Entity>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<AllOf1Entity> Create<TContext>(
+                scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    var source = new Source<TContext>(context, value);
+                    source.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<AllOf1Entity>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+            /// </summary>
+            /// <param name="additionalProperties">The value of the property.</param>
+            /// <param name="allOf">The value of the property.</param>
+            /// <param name="anyOf">The value of the property.</param>
+            /// <param name="contains">The value of the property.</param>
+            /// <param name="deprecated">The value of the property.</param>
+            /// <param name="discriminator">The value of the property.</param>
+            /// <param name="externalDocs">The value of the property.</param>
+            /// <param name="items">The value of the property.</param>
+            /// <param name="not">The value of the property.</param>
+            /// <param name="oneOf">The value of the property.</param>
+            /// <param name="patternProperties">The value of the property.</param>
+            /// <param name="properties">The value of the property.</param>
+            /// <param name="propertyNames">The value of the property.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<AllOf1Entity> Create(in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.AdditionalPropertiesEntity.Source additionalProperties = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.SchemaArray.Source allOf = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.AnyOfSArray.Source anyOf = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source contains = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.DeprecatedEntity.Source deprecated = default, in Corvus.Text.Json.AsyncApi26.JsonString.Source discriminator = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.ExternalDocs.Source externalDocs = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.ItemsEntity.Source items = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source not = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.OneOfSArray.Source oneOf = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PatternPropertiesEntity.Source patternProperties = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PropertiesEntity.Source properties = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source propertyNames = default, int initialCapacity = 30)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    cvb.StartObject();
+                    Builder ovb = new(cvb);
+                    ovb.Create(additionalProperties, allOf, anyOf, contains, deprecated, discriminator, externalDocs, items, not, oneOf, patternProperties, properties, propertyNames);
+                    cvb = ovb._builder;
+                    cvb.EndObject();
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<AllOf1Entity>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The value of the property.</param>
+            /// <param name="additionalProperties">The value of the property.</param>
+            /// <param name="allOf">The value of the property.</param>
+            /// <param name="anyOf">The value of the property.</param>
+            /// <param name="contains">The value of the property.</param>
+            /// <param name="deprecated">The value of the property.</param>
+            /// <param name="discriminator">The value of the property.</param>
+            /// <param name="externalDocs">The value of the property.</param>
+            /// <param name="items">The value of the property.</param>
+            /// <param name="not">The value of the property.</param>
+            /// <param name="oneOf">The value of the property.</param>
+            /// <param name="patternProperties">The value of the property.</param>
+            /// <param name="properties">The value of the property.</param>
+            /// <param name="propertyNames">The value of the property.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<AllOf1Entity> Create<TContext>(in TContext context, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.AdditionalPropertiesEntity.Source<TContext> additionalProperties = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.SchemaArray.Source<TContext> allOf = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.AnyOfSArray.Source<TContext> anyOf = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source<TContext> contains = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.DeprecatedEntity.Source deprecated = default, in Corvus.Text.Json.AsyncApi26.JsonString.Source discriminator = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.ExternalDocs.Source<TContext> externalDocs = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.ItemsEntity.Source<TContext> items = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source<TContext> not = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.OneOfSArray.Source<TContext> oneOf = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PatternPropertiesEntity.Source<TContext> patternProperties = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.AllOf1Entity.PropertiesEntity.Source<TContext> properties = default, in Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Schema.Source<TContext> propertyNames = default, int initialCapacity = 30)
+                #if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+                #endif
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    cvb.StartObject();
+                    Builder ovb = new(cvb);
+                    ovb.Create(context, additionalProperties, allOf, anyOf, contains, deprecated, discriminator, externalDocs, items, not, oneOf, patternProperties, properties, propertyNames);
+                    cvb = ovb._builder;
+                    cvb.EndObject();
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<AllOf1Entity>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
             }
         }
     }

@@ -89,7 +89,7 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public static string SchemaLocation { get; } = "/definitions/collectionFormat";
+        public static string SchemaLocation { get; } = "http://swagger.io/v2/schema.json#/definitions/collectionFormat";
 
         /// <summary>
         /// Gets a Null instance.
@@ -104,8 +104,9 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Gets the default instance.
         /// </summary>
+        #pragma warning disable CS0618 // Type or member is obsolete
         public static CollectionFormat DefaultInstance { get; } = CollectionFormat.ParseValue("\"csv\""u8);
-
+        #pragma warning restore CS0618
         /// <inheritdoc/>
         public JsonAny AsAny
         {

@@ -72,6 +72,24 @@ public class LocatedSchema
     public string RootDocumentPointer { get; internal set; } = string.Empty;
 
     /// <summary>
+    /// Gets the URI of the root document that <see cref="RootDocumentPointer"/> is relative to.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// For schemas within a sub-resource (one that changes the base URI via <c>$id</c>),
+    /// <see cref="Location"/>.<see cref="JsonReference.Uri"/> is the sub-resource's URI. This
+    /// property provides the URI of the document that contains the sub-resource, so that
+    /// <see cref="RootDocumentUri"/> and <see cref="RootDocumentPointer"/> together locate the
+    /// schema in the document from which it was generated.
+    /// </para>
+    /// <para>
+    /// For schemas that are not within a sub-resource, this is equivalent to the URI
+    /// of <see cref="Location"/>.
+    /// </para>
+    /// </remarks>
+    public string RootDocumentUri { get; internal set; } = string.Empty;
+
+    /// <summary>
     /// Gets the <see cref="IAnchorKeyword"/> associated with this located schema,
     /// if any.
     /// </summary>
@@ -107,6 +125,7 @@ public class LocatedSchema
         return new LocatedSchema(location, this.Schema, this.anchors, this.Vocabulary)
         {
             RootDocumentPointer = this.RootDocumentPointer,
+            RootDocumentUri = this.RootDocumentUri,
         };
     }
 

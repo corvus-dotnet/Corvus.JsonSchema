@@ -61,7 +61,7 @@ public readonly partial struct OpenApiDocument
                         result = result.UsingStack();
                     }
 
-                    result = result.PushSchemaLocation("/definitions/schema/properties/additionalProperties");
+                    result = result.PushSchemaLocation("http://swagger.io/v2/schema.json#/definitions/schema/properties/additionalProperties");
                 }
 
                 result = CorvusValidation.CompositionAnyOfValidationHandler(this, result, level);

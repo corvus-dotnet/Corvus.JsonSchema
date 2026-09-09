@@ -61,7 +61,7 @@ public readonly partial struct AsyncApiDocument
             /// </para>
             /// </remarks>
             [DebuggerDisplay("{DebuggerDisplay,nq}")]
-            public readonly partial struct NameEntity
+            public readonly partial struct TheNameOfTheQueueItMustNotExceed255CharactersLong
             {
                 public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -82,7 +82,8 @@ public readonly partial struct AsyncApiDocument
                     /// <summary>
                     /// Initializes a new instance of the <see cref="Mutable"/> struct.
                     /// </summary>
-                    /// <param name="value">The value from which to construct the instance.</param>
+                    /// <param name="parent">The document that contains the element.</param>
+                    /// <param name="idx">The index of the element within the document.</param>
                     internal Mutable(IJsonDocument parent, int idx)
                     {
                         Debug.Assert(idx >= 0);
@@ -155,7 +156,7 @@ public readonly partial struct AsyncApiDocument
                     /// <summary>
                     /// Converts the instance to a JsonElement.
                     /// </summary>
-                    /// <param name="value">The instance of this type.</param>
+                    /// <param name="instance">The instance of this type.</param>
                     /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static implicit operator JsonElement(Mutable instance)
@@ -166,10 +167,10 @@ public readonly partial struct AsyncApiDocument
                     /// <summary>
                     /// Converts an immutable instance to a mutable instance, if the instance is backed by a mutable document.
                     /// </summary>
-                    /// <param name="value">The instance of this type.</param>
+                    /// <param name="instance">The instance of this type.</param>
                     /// <returns>A mutable instance.</returns>
                     /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-                    public static explicit operator Mutable(NameEntity instance)
+                    public static explicit operator Mutable(TheNameOfTheQueueItMustNotExceed255CharactersLong instance)
                     {
                         if (instance._parent is not IMutableJsonDocument doc)
                         {
@@ -183,10 +184,10 @@ public readonly partial struct AsyncApiDocument
                     /// <summary>
                     /// Converts to an immutable instance of the <see cref="Mutable"/> type.
                     /// </summary>
-                    /// <param name="value">The <see cref="Mutable"/> instance.</param>
-                    /// <returns>An immutable instance of a <see cref="NameEntity"/>, initialized from the <see cref="Mutable"/> value.</returns>
+                    /// <param name="instance">The <see cref="Mutable"/> instance.</param>
+                    /// <returns>An immutable instance of a <see cref="TheNameOfTheQueueItMustNotExceed255CharactersLong"/>, initialized from the <see cref="Mutable"/> value.</returns>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    public static implicit operator NameEntity(Mutable instance)
+                    public static implicit operator TheNameOfTheQueueItMustNotExceed255CharactersLong(Mutable instance)
                     {
                         return new(instance._parent, instance._idx);
                     }
@@ -194,7 +195,8 @@ public readonly partial struct AsyncApiDocument
                     /// <summary>
                     /// Gets an instance of the JSON value from another element.
                     /// </summary>
-                    /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
+                    /// <typeparam name="T">The type of the <see cref="IJsonElement{T}"/> from which to instantiate the instance.</typeparam>
+                    /// <param name="instance">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
                     /// <returns>An instance of this type, initialized from the JSON element.</returns>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static Mutable From<T>(in T instance)
@@ -219,7 +221,7 @@ public readonly partial struct AsyncApiDocument
                     public override bool Equals(object? obj)
                     {
                         return
-                            (obj is IJsonElement value && Equals(new NameEntity(value.ParentDocument, value.ParentDocumentIndex))) ||
+                            (obj is IJsonElement value && Equals(new TheNameOfTheQueueItMustNotExceed255CharactersLong(value.ParentDocument, value.ParentDocumentIndex))) ||
                             (obj is null && this.IsNull());
                     }
 
@@ -369,7 +371,7 @@ public readonly partial struct AsyncApiDocument
 #endif
 
                     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-                    private string DebuggerDisplay => $"NameEntity.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+                    private string DebuggerDisplay => $"TheNameOfTheQueueItMustNotExceed255CharactersLong.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
 
                     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
                     IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -384,11 +386,11 @@ public readonly partial struct AsyncApiDocument
                     JsonValueKind IJsonElement.ValueKind => ValueKind;
 
                     /// <summary>
-                    /// Gets a <see cref="NameEntity"/> which can be safely stored beyond the lifetime of the
+                    /// Gets a <see cref="TheNameOfTheQueueItMustNotExceed255CharactersLong"/> which can be safely stored beyond the lifetime of the
                     /// original document.
                     /// </summary>
                     /// <returns>
-                    /// A <see cref="NameEntity"/> which can be safely stored beyond the lifetime of the
+                    /// A <see cref="TheNameOfTheQueueItMustNotExceed255CharactersLong"/> which can be safely stored beyond the lifetime of the
                     /// original document.
                     /// </returns>
                     /// <remarks>
@@ -397,10 +399,10 @@ public readonly partial struct AsyncApiDocument
                     /// document. The result is independent of the workspace.
                     /// </para>
                     /// </remarks>
-                    public readonly NameEntity Clone()
+                    public readonly TheNameOfTheQueueItMustNotExceed255CharactersLong Clone()
                     {
                         CheckValidInstance();
-                        return _parent.CloneElement<NameEntity>(_idx);
+                        return _parent.CloneElement<TheNameOfTheQueueItMustNotExceed255CharactersLong>(_idx);
                     }
 
                     /// <summary>
@@ -408,7 +410,7 @@ public readonly partial struct AsyncApiDocument
                     /// document builder registered in the same workspace.
                     /// </summary>
                     /// <returns>
-                    /// An immutable <see cref="NameEntity"/> that lives for the lifetime of its
+                    /// An immutable <see cref="TheNameOfTheQueueItMustNotExceed255CharactersLong"/> that lives for the lifetime of its
                     /// workspace and its associated documents.
                     /// </returns>
                     /// <remarks>
@@ -419,10 +421,10 @@ public readonly partial struct AsyncApiDocument
                     /// immutable but is only valid for the lifetime of the workspace.
                     /// </para>
                     /// </remarks>
-                    public readonly NameEntity Freeze()
+                    public readonly TheNameOfTheQueueItMustNotExceed255CharactersLong Freeze()
                     {
                         CheckValidInstance();
-                        return _parent.FreezeElement<NameEntity>(_idx);
+                        return _parent.FreezeElement<TheNameOfTheQueueItMustNotExceed255CharactersLong>(_idx);
                     }
                 }
 
@@ -472,7 +474,7 @@ public readonly partial struct AsyncApiDocument
                         _kind = requiresUnescaping ? Kind.RawUtf8StringRequiresUnescaping : Kind.RawUtf8StringNotRequiresUnescaping;
                     }
 
-                    public static implicit operator Source(NameEntity instance) => new(JsonElement.From(instance));
+                    public static implicit operator Source(TheNameOfTheQueueItMustNotExceed255CharactersLong instance) => new(JsonElement.From(instance));
 
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static implicit operator Source(ReadOnlySpan<byte> value) => new (value);
@@ -648,7 +650,31 @@ public readonly partial struct AsyncApiDocument
                 /// <returns>An instance of a mutable document initialized with this instance.</returns>
                 public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
                 {
-                    return workspace.CreateBuilder<NameEntity, Mutable>(this);
+                    return workspace.CreateBuilder<TheNameOfTheQueueItMustNotExceed255CharactersLong, Mutable>(this);
+                }
+
+                /// <summary>
+                /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                /// </summary>
+                /// <param name="value">The value with which to initialize the document.</param>
+                /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                public static ParsedJsonDocument<TheNameOfTheQueueItMustNotExceed255CharactersLong> Create(
+                    scoped in Source value, int initialCapacity = 1)
+                {
+                    ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                    try
+                    {
+                        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                        value.AddAsItem(ref cvb);
+                        Debug.Assert(cvb.MemberCount == 1);
+                        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                        return documentBuilder.ToParsedJsonDocument<TheNameOfTheQueueItMustNotExceed255CharactersLong>();
+                    }
+                    finally
+                    {
+                        documentBuilder.Dispose();
+                    }
                 }
             }
         }

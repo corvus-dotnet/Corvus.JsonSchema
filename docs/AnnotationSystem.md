@@ -181,7 +181,8 @@ public readonly ref struct Annotation
     // Convenience methods to get string representations:
     public string GetInstanceLocationText();
     public string GetKeywordText();
-    public string GetSchemaLocationText();
+    public string GetSchemaLocationText();          // JSON Pointer, e.g. "/$defs/foo"
+    public string GetSchemaLocationFragmentText();  // URI fragment, e.g. "#/$defs/foo"
     public string GetValueText();
 }
 ```

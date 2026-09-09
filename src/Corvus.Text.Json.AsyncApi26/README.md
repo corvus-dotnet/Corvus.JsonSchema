@@ -25,3 +25,14 @@ In AsyncAPI 2.x, operations are embedded in channels as `publish`/`subscribe`:
 - `channels` → map of channel items, each with optional `publish` and `subscribe` operations
 - `servers` → map of server objects
 - `components` → reusable schemas, messages, security schemes, etc.
+
+## Regenerating
+
+Build the CLI in Release, then run from the repository root:
+
+```powershell
+dotnet build src/Corvus.Json.Cli -f net10.0 -c Release
+dotnet src/Corvus.Json.Cli/bin/Release/net10.0/Corvus.Json.Cli.dll jsonschema AsyncApi-Spec-Schemas/2.6.0.json --rootNamespace Corvus.Text.Json.AsyncApi26 --outputRootTypeName AsyncApiDocument --outputPath src/Corvus.Text.Json.AsyncApi26/Generated
+```
+
+Delete the contents of `Generated/` first so that files the generator no longer produces are removed.

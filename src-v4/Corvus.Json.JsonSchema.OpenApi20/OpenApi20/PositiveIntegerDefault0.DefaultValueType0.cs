@@ -89,7 +89,7 @@ public readonly partial struct PositiveIntegerDefault0
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public static string SchemaLocation { get; } = "/definitions/positiveIntegerDefault0/allOf/1";
+        public static string SchemaLocation { get; } = "http://json-schema.org/draft-04/schema#/definitions/positiveIntegerDefault0/allOf/1";
 
         /// <summary>
         /// Gets a Null instance.
@@ -104,8 +104,9 @@ public readonly partial struct PositiveIntegerDefault0
         /// <summary>
         /// Gets the default instance.
         /// </summary>
+        #pragma warning disable CS0618 // Type or member is obsolete
         public static DefaultValueType0 DefaultInstance { get; } = DefaultValueType0.ParseValue("0"u8);
-
+        #pragma warning restore CS0618
         /// <inheritdoc/>
         public JsonAny AsAny
         {

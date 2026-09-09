@@ -76,7 +76,7 @@ public readonly partial struct AsyncApiDocument
                 private static readonly JsonSchemaPathProvider EffectSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/effect"u8, buffer, out written);
                 private static readonly JsonSchemaPathProvider PrincipalSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/principal"u8, buffer, out written);
 
-                private static void MatchAction(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchAction(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext =
@@ -98,7 +98,7 @@ public readonly partial struct AsyncApiDocument
                     requiredBitBuffer[RequiredOffsetForAction] |= RequiredBitForAction;
                 }
 
-                private static void MatchEffect(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchEffect(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext1 =
@@ -120,18 +120,18 @@ public readonly partial struct AsyncApiDocument
                     requiredBitBuffer[RequiredOffsetForEffect] |= RequiredBitForEffect;
                 }
 
-                private static void MatchPrincipal(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchPrincipal(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext2 =
-                        Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.PrincipalEntity.JsonSchema.PushChildContextUnescaped(
+                        Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonSchema.PushChildContextUnescaped(
                             parentDocument,
                             parentDocumentIndex,
                             ref context,
                             JsonPropertyNames.PrincipalUtf8,
                             evaluationPath: PrincipalSchemaEvaluationPath);
 
-                    Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.PrincipalEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+                    Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
                     context.CommitChildContext(childContext2.IsMatch, ref childContext2);
 
                     if (!context.HasCollector && !context.IsMatch)
@@ -172,10 +172,10 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Gets a provider for the schema location from which this type was generated.
                 /// </summary>
-                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/http:~1~1asyncapi.com~1bindings~1sqs~10.2.0~1operation.json/definitions/statement"u8, buffer, out written);
+                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/definitions/http:~1~1asyncapi.com~1bindings~1sqs~10.2.0~1operation.json/definitions/statement"u8, buffer, out written);
 
                 /// <summary>
-                /// Gets the schema location from which this type was generated.
+                /// Gets the schema location from which this type was generated, as a JSON Pointer within <see cref="SchemaDocument"/>.
                 /// </summary>
                 public const string SchemaLocation = "/definitions/http:~1~1asyncapi.com~1bindings~1sqs~10.2.0~1operation.json/definitions/statement";
 
@@ -183,6 +183,20 @@ public readonly partial struct AsyncApiDocument
                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                 /// </summary>
                 public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/http:~1~1asyncapi.com~1bindings~1sqs~10.2.0~1operation.json/definitions/statement"u8;
+
+                /// <summary>
+                /// Gets the schema document from which this type was generated, relative to the base location for generation.
+                /// </summary>
+                /// <remarks>
+                /// <see cref="SchemaLocation"/> is a JSON Pointer within this document, so <c>SchemaDocument + "#" + SchemaLocation</c>
+                /// is a reference to the schema, even for a schema inside a <c>$id</c> sub-resource.
+                /// </remarks>
+                public const string SchemaDocument = "AsyncApi30.json";
+
+                /// <summary>
+                /// Gets the schema document from which this type was generated as a UTF-8 string.
+                /// </summary>
+                public static ReadOnlySpan<byte> SchemaDocumentUtf8 => "AsyncApi30.json"u8;
 
                 /// <summary>
                 /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -226,7 +240,7 @@ public readonly partial struct AsyncApiDocument
 
                             if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Text.Json.AsyncApi30.PropertiesValidationHandler_NamedPropertyValidator? validator))
                             {
-                                validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
+                                validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
 
                                 if (!context.HasCollector && !context.IsMatch)
                                 {
@@ -312,7 +326,8 @@ public readonly partial struct AsyncApiDocument
                     parentIndex,
                     usingEvaluatedItems: false,
                     usingEvaluatedProperties: false,
-                    resultsCollector: resultsCollector);
+                    resultsCollector: resultsCollector,
+                    schemaEvaluationPath: SchemaLocationProvider);
 
                     try
                     {

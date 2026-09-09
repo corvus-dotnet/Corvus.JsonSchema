@@ -83,7 +83,7 @@ public readonly partial struct ExclusiveMaximum
     /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
-    public static string SchemaLocation { get; } = "/properties/exclusiveMaximum";
+    public static string SchemaLocation { get; } = "http://json-schema.org/draft-04/schema#/properties/exclusiveMaximum";
 
     /// <summary>
     /// Gets a Null instance.
@@ -98,8 +98,9 @@ public readonly partial struct ExclusiveMaximum
     /// <summary>
     /// Gets the default instance.
     /// </summary>
+    #pragma warning disable CS0618 // Type or member is obsolete
     public static ExclusiveMaximum DefaultInstance { get; } = ExclusiveMaximum.ParseValue("false"u8);
-
+    #pragma warning restore CS0618
     /// <inheritdoc/>
     public JsonAny AsAny
     {

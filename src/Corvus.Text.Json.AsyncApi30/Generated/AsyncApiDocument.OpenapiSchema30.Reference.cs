@@ -60,7 +60,8 @@ public readonly partial struct AsyncApiDocument
             /// <summary>
             /// Initializes a new instance of the <see cref="Reference"/> struct.
             /// </summary>
-            /// <param name="value">The value from which to construct the instance.</param>
+            /// <param name="parent">The document that contains the element.</param>
+            /// <param name="idx">The index of the element within the document.</param>
             internal Reference(IJsonDocument parent, int idx)
             {
                 Debug.Assert(idx >= 0);
@@ -194,6 +195,104 @@ public readonly partial struct AsyncApiDocument
             }
 
             /// <summary>
+            /// Determines if a property name matches '^\$ref$'
+            /// for the pattern property producing the type
+            /// <see cref="Corvus.Text.Json.AsyncApi30.JsonUriReference"/>.
+            /// </summary>
+            /// <param name="propertyName">The unescaped UTF-8 property name.</param>
+            /// <returns><see langword="true"/> if the property name matches the pattern, otherwise <see langword="false"/>.</returns>
+            public static bool MatchesPatternJsonUriReference(ReadOnlySpan<byte> propertyName)
+            {
+                return JsonSchemaEvaluation.MatchRegularExpression(propertyName, JsonSchema.PatternProperties);
+            }
+
+            /// <summary>
+            /// Gets an instance of the type
+            /// <see cref="Corvus.Text.Json.AsyncApi30.JsonUriReference"/>
+            /// if the property name matches '^\$ref$'.
+            /// </summary>
+            /// <param name="propertyName">The unescaped UTF-8 property name.</param>
+            /// <param name="value">The property value.</param>
+            /// <param name="result">The typed property value, if the name matches.</param>
+            /// <returns><see langword="true"/> if the property name matches the pattern, otherwise <see langword="false"/>.</returns>
+            public static bool TryAsPatternJsonUriReference(ReadOnlySpan<byte> propertyName, in JsonElement value, out Corvus.Text.Json.AsyncApi30.JsonUriReference result)
+            {
+                if (MatchesPatternJsonUriReference(propertyName))
+                {
+                    result = Corvus.Text.Json.AsyncApi30.JsonUriReference.From(value);
+                    return true;
+                }
+
+                result = default;
+                return false;
+            }
+
+            /// <summary>
+            /// Visits properties matched by generated pattern property helpers.
+            /// </summary>
+            /// <typeparam name="TState">The visitor state type.</typeparam>
+            public interface IPatternPropertyVisitor<TState>
+            {
+                /// <summary>
+                /// Visits a property matching '^\$ref$'.
+                /// </summary>
+                bool VisitPatternJsonUriReference(ReadOnlySpan<byte> name, in Corvus.Text.Json.AsyncApi30.JsonUriReference value, ref TState state);
+
+                /// <summary>
+                /// Visits a property that did not match any generated pattern property.
+                /// </summary>
+                bool VisitUnmatched(ReadOnlySpan<byte> name, in JsonElement value, ref TState state);
+            }
+
+            /// <summary>
+            /// Matches each property against the generated pattern properties and dispatches to a visitor.
+            /// </summary>
+            /// <typeparam name="TState">The visitor state type.</typeparam>
+            /// <typeparam name="TVisitor">The visitor type.</typeparam>
+            /// <param name="state">The visitor state.</param>
+            /// <param name="visitor">The visitor to call for each matched or unmatched property.</param>
+            /// <param name="shortCircuit">If <see langword="true"/>, only the first matching pattern is visited for each property.</param>
+            /// <returns><see langword="true"/> if every visitor call returned <see langword="true"/>, otherwise <see langword="false"/>.</returns>
+            public bool MatchPatternProperties<TState, TVisitor>(ref TState state, TVisitor visitor, bool shortCircuit = false)
+                where TVisitor : IPatternPropertyVisitor<TState>
+            {
+                CheckValidInstance();
+
+                foreach (var property in EnumerateObject())
+                {
+                    using UnescapedUtf8JsonString unescapedPropertyName = property.Utf8NameSpan;
+                    ReadOnlySpan<byte> propertyName = unescapedPropertyName.Span;
+                    bool matched = false;
+
+                    if (MatchesPatternJsonUriReference(propertyName))
+                    {
+                        matched = true;
+                        Corvus.Text.Json.AsyncApi30.JsonUriReference typedValue = Corvus.Text.Json.AsyncApi30.JsonUriReference.From(property.Value);
+                        if (!visitor.VisitPatternJsonUriReference(propertyName, in typedValue, ref state))
+                        {
+                            return false;
+                        }
+
+                        if (shortCircuit)
+                        {
+                            continue;
+                        }
+                    }
+
+                    if (!matched)
+                    {
+                        JsonElement unmatchedValue = JsonElement.From(property.Value);
+                        if (!visitor.VisitUnmatched(propertyName, in unmatchedValue, ref state))
+                        {
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
+            }
+
+            /// <summary>
             /// Gets the number of properties in the object.
             /// </summary>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
@@ -274,7 +373,7 @@ public readonly partial struct AsyncApiDocument
             /// <summary>
             /// Converts the instance to a JsonElement.
             /// </summary>
-            /// <param name="value">The instance of this type.</param>
+            /// <param name="instance">The instance of this type.</param>
             /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator JsonElement(Reference instance)
@@ -285,7 +384,7 @@ public readonly partial struct AsyncApiDocument
             /// <summary>
             /// Converts the instance from a JsonElement.
             /// </summary>
-            /// <param name="value">The instance of this type as a JsonElement.</param>
+            /// <param name="instance">The instance of this type as a JsonElement.</param>
             /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Reference(JsonElement instance)
@@ -296,7 +395,8 @@ public readonly partial struct AsyncApiDocument
             /// <summary>
             /// Gets an instance of the JSON value from another element.
             /// </summary>
-            /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
+            /// <typeparam name="T">The type of the <see cref="IJsonElement{T}"/> from which to instantiate the instance.</typeparam>
+            /// <param name="instance">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
             /// <returns>An instance of this type, initialized from the JSON element.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static Reference From<T>(in T instance)
@@ -322,10 +422,13 @@ public readonly partial struct AsyncApiDocument
             /// <exception cref="JsonException">
             ///   A value could not be read from the span.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static Reference ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<Reference>(utf8Json, options);
+                #pragma warning restore CS0618
             }
 
             /// <summary>
@@ -345,10 +448,13 @@ public readonly partial struct AsyncApiDocument
             /// <exception cref="JsonException">
             ///   A value could not be read from the span.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static Reference ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<Reference>(json, options);
+                #pragma warning restore CS0618
             }
 
             /// <summary>
@@ -368,10 +474,13 @@ public readonly partial struct AsyncApiDocument
             /// <exception cref="JsonException">
             ///   A value could not be read from the text.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static Reference ParseValue(string json, JsonDocumentOptions options = default)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<Reference>(json, options);
+                #pragma warning restore CS0618
             }
 
             /// <summary>
@@ -409,16 +518,19 @@ public readonly partial struct AsyncApiDocument
             /// <exception cref="JsonException">
             ///   A value could not be read from the reader.
             /// </exception>
+            [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
             public static Reference ParseValue(ref Utf8JsonReader reader)
             {
+                #pragma warning disable CS0618 // Type or member is obsolete
                 return JsonElementHelpers.ParseValue<Reference>(ref reader);
+                #pragma warning restore CS0618
             }
 
             /// <summary>
             ///   Attempts to parse one JSON value (including objects or arrays) from the provided reader.
             /// </summary>
             /// <param name="reader">The reader to read.</param>
-            /// <param name="element">Receives the parsed element.</param>
+            /// <param name="result">Receives the parsed element.</param>
             /// <returns>
             ///   <see langword="true"/> if a value was read and parsed into a JsonElement;
             ///   <see langword="false"/> if the reader ran out of data while parsing.

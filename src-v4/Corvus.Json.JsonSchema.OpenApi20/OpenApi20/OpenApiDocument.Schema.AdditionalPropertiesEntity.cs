@@ -116,7 +116,7 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public static string SchemaLocation { get; } = "/definitions/schema/properties/additionalProperties";
+            public static string SchemaLocation { get; } = "http://swagger.io/v2/schema.json#/definitions/schema/properties/additionalProperties";
 
             /// <summary>
             /// Gets a Null instance.
@@ -131,8 +131,9 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// Gets the default instance.
             /// </summary>
+            #pragma warning disable CS0618 // Type or member is obsolete
             public static AdditionalPropertiesEntity DefaultInstance { get; } = AdditionalPropertiesEntity.ParseValue("{}"u8);
-
+            #pragma warning restore CS0618
             /// <inheritdoc/>
             public JsonAny AsAny
             {
@@ -957,6 +958,40 @@ public readonly partial struct OpenApiDocument
                 }
 
                 return defaultMatch(this);
+            }
+
+            /// <summary>
+            /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+            /// </summary>
+            /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+            /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+            /// <param name="matchSchema">Match a <see cref="Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.Schema"/>.</param>
+            /// <param name="matchJsonBoolean">Match a <see cref="Corvus.Json.JsonBoolean"/>.</param>
+            /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+            /// <returns>The accumulator returned by the last match function called.</returns>
+            public TAccumulator MatchEvery<TAccumulator>(
+                TAccumulator accumulator,
+                Matcher<Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.Schema, TAccumulator, TAccumulator> matchSchema,
+                Matcher<Corvus.Json.JsonBoolean, TAccumulator, TAccumulator> matchJsonBoolean,
+                Matcher<Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.Schema.AdditionalPropertiesEntity, TAccumulator, TAccumulator> defaultMatch)
+            {
+                bool matched = false;
+
+                Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.Schema matchSchemaValue = this.As<Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.Schema>();
+                if (matchSchemaValue.IsValid())
+                {
+                    matched = true;
+                    accumulator = matchSchema(matchSchemaValue, accumulator);
+                }
+
+                Corvus.Json.JsonBoolean matchJsonBooleanValue = this.As<Corvus.Json.JsonBoolean>();
+                if (matchJsonBooleanValue.IsValid())
+                {
+                    matched = true;
+                    accumulator = matchJsonBoolean(matchJsonBooleanValue, accumulator);
+                }
+
+                return matched ? accumulator : defaultMatch(this, accumulator);
             }
 
             /// <summary>

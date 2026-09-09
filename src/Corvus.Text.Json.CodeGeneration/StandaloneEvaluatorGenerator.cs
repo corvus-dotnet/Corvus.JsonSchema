@@ -469,6 +469,13 @@ internal static partial class StandaloneEvaluatorGenerator
         {
             if (kvp.Value.MethodName == "EvaluateRoot")
             {
+                // The root schema has no evaluation path segment of its own, but its schema location is
+                // still pushed when the root context begins, so that root-level results report the
+                // root-document pointer of the schema (e.g. "/$defs/foo") exactly as a child context
+                // does when the same schema is reached through a property or a $ref.
+                string rootSchemaPath = GetSchemaLocationFragment(kvp.Value.TypeDeclaration);
+                kvp.Value.SchemaPathFieldName = "RootSchemaPath";
+                ctx.AppendLine($"private static readonly JsonSchemaPathProvider RootSchemaPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage({FormatUtf8Literal(rootSchemaPath)}, buffer, out written);");
                 continue;
             }
 
@@ -834,7 +841,8 @@ internal static partial class StandaloneEvaluatorGenerator
         ctx.AppendLine("instance.ParentDocumentIndex,");
         ctx.AppendLine($"usingEvaluatedItems: {BoolLiteral(useEvaluatedItems)},");
         ctx.AppendLine($"usingEvaluatedProperties: {BoolLiteral(useEvaluatedProperties)},");
-        ctx.AppendLine("resultsCollector: resultsCollector);");
+        ctx.AppendLine("resultsCollector: resultsCollector,");
+        ctx.AppendLine("schemaEvaluationPath: RootSchemaPath);");
         ctx.PopIndent();
         ctx.AppendLine();
 

@@ -39,16 +39,16 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// The pattern matching '^/'
         /// for the pattern property producing the type
-        /// <see cref="Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.PathItem"/>.
+        /// <see cref="Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.VendorExtension"/>.
         /// </summary>
-        public static Regex PatternPropertyPathItem => CorvusValidation.PatternProperties1;
+        public static Regex PatternPropertyVendorExtension => CorvusValidation.PatternProperties1;
 
         /// <summary>
         /// The pattern matching '^x-'
         /// for the pattern property producing the type
-        /// <see cref="Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.VendorExtension"/>.
+        /// <see cref="Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.PathItem"/>.
         /// </summary>
-        public static Regex PatternPropertyVendorExtension => CorvusValidation.PatternProperties2;
+        public static Regex PatternPropertyPathItem => CorvusValidation.PatternProperties2;
 
         /// <summary>
         /// Conversion from <see cref="ImmutableList{JsonObjectProperty}"/>.
@@ -910,48 +910,48 @@ Paths IJsonObject<Paths>.SetProperty<TValue>(in JsonPropertyName name, TValue va
         /// <summary>
         /// Determines if a property name matches '^/'
         /// for the pattern property producing the type
-        /// <see cref="Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.PathItem"/>.
-        /// </summary>
-        public static bool MatchesPatternPathItem(in JsonObjectProperty property) => property.Name.IsMatch(CorvusValidation.PatternProperties1);
-
-        /// <summary>
-        /// Gets an instance of the type
-        /// <see cref="Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.PathItem"/>
-        /// if the property name matches '^/'.
-        /// </summary>
-        public static bool TryAsPatternPathItem(in JsonObjectProperty property, out Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.PathItem result)
-        {
-            if (property.Name.IsMatch(CorvusValidation.PatternProperties1))
-            {
-                result = property.Value.As<Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.PathItem>();
-                return result.IsValid();
-            }
-
-            result = Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.PathItem.Undefined;
-            return false;
-        }
-
-        /// <summary>
-        /// Determines if a property name matches '^x-'
-        /// for the pattern property producing the type
         /// <see cref="Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.VendorExtension"/>.
         /// </summary>
-        public static bool MatchesPatternVendorExtension(in JsonObjectProperty property) => property.Name.IsMatch(CorvusValidation.PatternProperties2);
+        public static bool MatchesPatternVendorExtension(in JsonObjectProperty property) => property.Name.IsMatch(CorvusValidation.PatternProperties1);
 
         /// <summary>
         /// Gets an instance of the type
         /// <see cref="Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.VendorExtension"/>
-        /// if the property name matches '^x-'.
+        /// if the property name matches '^/'.
         /// </summary>
         public static bool TryAsPatternVendorExtension(in JsonObjectProperty property, out Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.VendorExtension result)
         {
-            if (property.Name.IsMatch(CorvusValidation.PatternProperties2))
+            if (property.Name.IsMatch(CorvusValidation.PatternProperties1))
             {
                 result = property.Value.As<Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.VendorExtension>();
                 return result.IsValid();
             }
 
             result = Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.VendorExtension.Undefined;
+            return false;
+        }
+
+        /// <summary>
+        /// Determines if a property name matches '^x-'
+        /// for the pattern property producing the type
+        /// <see cref="Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.PathItem"/>.
+        /// </summary>
+        public static bool MatchesPatternPathItem(in JsonObjectProperty property) => property.Name.IsMatch(CorvusValidation.PatternProperties2);
+
+        /// <summary>
+        /// Gets an instance of the type
+        /// <see cref="Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.PathItem"/>
+        /// if the property name matches '^x-'.
+        /// </summary>
+        public static bool TryAsPatternPathItem(in JsonObjectProperty property, out Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.PathItem result)
+        {
+            if (property.Name.IsMatch(CorvusValidation.PatternProperties2))
+            {
+                result = property.Value.As<Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.PathItem>();
+                return result.IsValid();
+            }
+
+            result = Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.PathItem.Undefined;
             return false;
         }
 
@@ -964,12 +964,12 @@ Paths IJsonObject<Paths>.SetProperty<TValue>(in JsonPropertyName name, TValue va
             /// <summary>
             /// Visits a property matching '^/'.
             /// </summary>
-            bool VisitPatternPathItem(in JsonPropertyName name, in Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.PathItem value, ref TState state);
+            bool VisitPatternVendorExtension(in JsonPropertyName name, in Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.VendorExtension value, ref TState state);
 
             /// <summary>
             /// Visits a property matching '^x-'.
             /// </summary>
-            bool VisitPatternVendorExtension(in JsonPropertyName name, in Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.VendorExtension value, ref TState state);
+            bool VisitPatternPathItem(in JsonPropertyName name, in Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.PathItem value, ref TState state);
 
             /// <summary>
             /// Visits a property that did not match any generated pattern property.
@@ -994,11 +994,11 @@ Paths IJsonObject<Paths>.SetProperty<TValue>(in JsonPropertyName name, TValue va
                 JsonPropertyName propertyName = property.Name;
                 bool matched = false;
 
-                if (MatchesPatternPathItem(in property))
+                if (MatchesPatternVendorExtension(in property))
                 {
                     matched = true;
-                    Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.PathItem typedValue = property.Value.As<Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.PathItem>();
-                    if (!visitor.VisitPatternPathItem(in propertyName, in typedValue, ref state))
+                    Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.VendorExtension typedValue = property.Value.As<Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.VendorExtension>();
+                    if (!visitor.VisitPatternVendorExtension(in propertyName, in typedValue, ref state))
                     {
                         return false;
                     }
@@ -1009,11 +1009,11 @@ Paths IJsonObject<Paths>.SetProperty<TValue>(in JsonPropertyName name, TValue va
                     }
                 }
 
-                if (MatchesPatternVendorExtension(in property))
+                if (MatchesPatternPathItem(in property))
                 {
                     matched = true;
-                    Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.VendorExtension typedValue = property.Value.As<Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.VendorExtension>();
-                    if (!visitor.VisitPatternVendorExtension(in propertyName, in typedValue, ref state))
+                    Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.PathItem typedValue = property.Value.As<Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.PathItem>();
+                    if (!visitor.VisitPatternPathItem(in propertyName, in typedValue, ref state))
                     {
                         return false;
                     }

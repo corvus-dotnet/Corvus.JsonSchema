@@ -37,10 +37,10 @@ public readonly partial struct AsyncApiDocument
     /// </summary>
     /// <remarks>
     /// <para>
-    /// This object contains information about the channel representation in SNS.
+    /// This object contains information about the channel representation in SQS.
     /// </para>
     /// </remarks>
-    public readonly partial struct Sns010Channel
+    public readonly partial struct Sqs020Channel
     {
         /// <summary>
         /// Generated from JSON Schema.
@@ -56,25 +56,39 @@ public readonly partial struct AsyncApiDocument
             /// </para>
             /// </remarks>
             [DebuggerDisplay("{DebuggerDisplay,nq}")]
-            public readonly partial struct PrincipalEntity
-                : IJsonElement<PrincipalEntity>
+            public readonly partial struct TheAwsAccountOrResourceArnThatThisStatementAppliesTo
+                : IJsonElement<TheAwsAccountOrResourceArnThatThisStatementAppliesTo>
             {
                 public static partial class JsonSchema
                 {
                     /// <summary>
                     /// Gets a provider for the schema location from which this type was generated.
                     /// </summary>
-                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/http:~1~1asyncapi.com~1bindings~1sns~10.1.0~1channel.json/definitions/statement/properties/principal"u8, buffer, out written);
+                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/definitions/http:~1~1asyncapi.com~1bindings~1sqs~10.2.0~1channel.json/definitions/statement/properties/principal"u8, buffer, out written);
 
                     /// <summary>
-                    /// Gets the schema location from which this type was generated.
+                    /// Gets the schema location from which this type was generated, as a JSON Pointer within <see cref="SchemaDocument"/>.
                     /// </summary>
-                    public const string SchemaLocation = "/definitions/http:~1~1asyncapi.com~1bindings~1sns~10.1.0~1channel.json/definitions/statement/properties/principal";
+                    public const string SchemaLocation = "/definitions/http:~1~1asyncapi.com~1bindings~1sqs~10.2.0~1channel.json/definitions/statement/properties/principal";
 
                     /// <summary>
                     /// Gets the schema location from which this type was generated as a UTF-8 string.
                     /// </summary>
-                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/http:~1~1asyncapi.com~1bindings~1sns~10.1.0~1channel.json/definitions/statement/properties/principal"u8;
+                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/http:~1~1asyncapi.com~1bindings~1sqs~10.2.0~1channel.json/definitions/statement/properties/principal"u8;
+
+                    /// <summary>
+                    /// Gets the schema document from which this type was generated, relative to the base location for generation.
+                    /// </summary>
+                    /// <remarks>
+                    /// <see cref="SchemaLocation"/> is a JSON Pointer within this document, so <c>SchemaDocument + "#" + SchemaLocation</c>
+                    /// is a reference to the schema, even for a schema inside a <c>$id</c> sub-resource.
+                    /// </remarks>
+                    public const string SchemaDocument = "AsyncApi30.json";
+
+                    /// <summary>
+                    /// Gets the schema document from which this type was generated as a UTF-8 string.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> SchemaDocumentUtf8 => "AsyncApi30.json"u8;
                     private static readonly JsonSchemaPathProvider OneOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/0"u8, buffer, out written);
                     private static readonly JsonSchemaPathProvider OneOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/1"u8, buffer, out written);
 
@@ -119,8 +133,8 @@ public readonly partial struct AsyncApiDocument
                         }
 
                         JsonSchemaContext oneOfContext1 =
-                            Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: OneOf1SchemaEvaluationPath);
-                        Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray.JsonSchema.Evaluate(parentDocument, parentIndex, ref oneOfContext1);
+                            Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Channel.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: OneOf1SchemaEvaluationPath);
+                        Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Channel.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray.JsonSchema.Evaluate(parentDocument, parentIndex, ref oneOfContext1);
 
                         if (oneOfContext1.IsMatch)
                         {
@@ -149,7 +163,8 @@ public readonly partial struct AsyncApiDocument
                         parentIndex,
                         usingEvaluatedItems: false,
                         usingEvaluatedProperties: false,
-                        resultsCollector: resultsCollector);
+                        resultsCollector: resultsCollector,
+                        schemaEvaluationPath: SchemaLocationProvider);
 
                         try
                         {

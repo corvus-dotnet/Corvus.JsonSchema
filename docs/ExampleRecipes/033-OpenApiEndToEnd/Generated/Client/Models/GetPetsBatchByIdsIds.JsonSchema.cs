@@ -32,10 +32,10 @@ public readonly partial struct GetPetsBatchByIdsIds
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/paths/~1pets~1batch~1{ids}/get/parameters/0/schema"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/paths/~1pets~1batch~1{ids}/get/parameters/0/schema"u8, buffer, out written);
 
         /// <summary>
-        /// Gets the schema location from which this type was generated.
+        /// Gets the schema location from which this type was generated, as a JSON Pointer within <see cref="SchemaDocument"/>.
         /// </summary>
         public const string SchemaLocation = "/paths/~1pets~1batch~1{ids}/get/parameters/0/schema";
 
@@ -43,6 +43,20 @@ public readonly partial struct GetPetsBatchByIdsIds
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
         public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/paths/~1pets~1batch~1{ids}/get/parameters/0/schema"u8;
+
+        /// <summary>
+        /// Gets the schema document from which this type was generated, relative to the base location for generation.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="SchemaLocation"/> is a JSON Pointer within this document, so <c>SchemaDocument + "#" + SchemaLocation</c>
+        /// is a reference to the schema, even for a schema inside a <c>$id</c> sub-resource.
+        /// </remarks>
+        public const string SchemaDocument = "petstore-extended.json";
+
+        /// <summary>
+        /// Gets the schema document from which this type was generated as a UTF-8 string.
+        /// </summary>
+        public static ReadOnlySpan<byte> SchemaDocumentUtf8 => "petstore-extended.json"u8;
 
         /// <summary>
         /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -118,7 +132,8 @@ public readonly partial struct GetPetsBatchByIdsIds
             parentIndex,
             usingEvaluatedItems: false,
             usingEvaluatedProperties: false,
-            resultsCollector: resultsCollector);
+            resultsCollector: resultsCollector,
+            schemaEvaluationPath: SchemaLocationProvider);
 
             try
             {
