@@ -86,7 +86,8 @@ public readonly partial struct JsonDateTime
             parentIndex,
             usingEvaluatedItems: false,
             usingEvaluatedProperties: false,
-            resultsCollector: resultsCollector);
+            resultsCollector: resultsCollector,
+            schemaEvaluationPath: SchemaLocationProvider);
 
             try
             {

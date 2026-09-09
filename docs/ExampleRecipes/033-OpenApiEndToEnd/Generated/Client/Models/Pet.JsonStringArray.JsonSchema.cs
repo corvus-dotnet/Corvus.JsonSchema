@@ -38,7 +38,7 @@ public readonly partial struct Pet
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/schemas/Pet/properties/photoIds"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/components/schemas/Pet/properties/photoIds"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
@@ -124,7 +124,8 @@ public readonly partial struct Pet
                 parentIndex,
                 usingEvaluatedItems: false,
                 usingEvaluatedProperties: false,
-                resultsCollector: resultsCollector);
+                resultsCollector: resultsCollector,
+                schemaEvaluationPath: SchemaLocationProvider);
 
                 try
                 {

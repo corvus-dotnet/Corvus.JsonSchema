@@ -231,7 +231,7 @@ public readonly partial struct PostAdoptionApplyAccepted
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/paths/~1adoption~1apply/post/responses/202/content/application~1json/schema/properties/status"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/paths/~1adoption~1apply/post/responses/202/content/application~1json/schema/properties/status"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
@@ -304,7 +304,8 @@ enumAfterFailure:;
                 parentIndex,
                 usingEvaluatedItems: false,
                 usingEvaluatedProperties: false,
-                resultsCollector: resultsCollector);
+                resultsCollector: resultsCollector,
+                schemaEvaluationPath: SchemaLocationProvider);
 
                 try
                 {

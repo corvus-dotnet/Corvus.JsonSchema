@@ -83,7 +83,8 @@ public readonly partial struct JsonInteger
             parentIndex,
             usingEvaluatedItems: false,
             usingEvaluatedProperties: false,
-            resultsCollector: resultsCollector);
+            resultsCollector: resultsCollector,
+            schemaEvaluationPath: SchemaLocationProvider);
 
             try
             {

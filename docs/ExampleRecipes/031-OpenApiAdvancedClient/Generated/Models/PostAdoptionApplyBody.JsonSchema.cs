@@ -221,7 +221,7 @@ public readonly partial struct PostAdoptionApplyBody
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/paths/~1adoption~1apply/post/requestBody/content/application~1x-www-form-urlencoded/schema"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/paths/~1adoption~1apply/post/requestBody/content/application~1x-www-form-urlencoded/schema"u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
@@ -352,7 +352,8 @@ public readonly partial struct PostAdoptionApplyBody
             parentIndex,
             usingEvaluatedItems: false,
             usingEvaluatedProperties: false,
-            resultsCollector: resultsCollector);
+            resultsCollector: resultsCollector,
+            schemaEvaluationPath: SchemaLocationProvider);
 
             try
             {

@@ -97,7 +97,7 @@ public readonly partial struct UpdatePetWithFormFormBody
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/schemas/UpdatePetWithFormFormBody"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/schemas/UpdatePetWithFormFormBody"u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
@@ -195,7 +195,8 @@ public readonly partial struct UpdatePetWithFormFormBody
             parentIndex,
             usingEvaluatedItems: false,
             usingEvaluatedProperties: false,
-            resultsCollector: resultsCollector);
+            resultsCollector: resultsCollector,
+            schemaEvaluationPath: SchemaLocationProvider);
 
             try
             {

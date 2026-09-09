@@ -163,6 +163,7 @@ public class TestEvaluatorHelper
     /// <param name="validateFormat">Whether to assert format globally (maps to <c>alwaysAssertFormat</c>).</param>
     /// <param name="formatModeOverrides">The per-format assertion mode overrides, keyed by format name.</param>
     /// <param name="hostAssembly">The host assembly with preserved compilation context.</param>
+    /// <param name="rebaseAsRoot">If true, the schema at <paramref name="virtualFilename"/> (including any fragment) is rebased as the root of its document.</param>
     /// <returns>A <see cref="CompiledEvaluator"/> for the schema.</returns>
     public static async ValueTask<CompiledEvaluator> GenerateEvaluatorForVirtualFileAsync(
         string virtualFilename,
@@ -172,7 +173,8 @@ public class TestEvaluatorHelper
         IVocabulary defaultVocabulary,
         bool validateFormat,
         IReadOnlyDictionary<string, FormatAssertionMode>? formatModeOverrides,
-        Assembly hostAssembly)
+        Assembly hostAssembly,
+        bool rebaseAsRoot = true)
     {
         var helper = new TestEvaluatorHelper(
             remotesBaseDirectory,
@@ -180,7 +182,7 @@ public class TestEvaluatorHelper
             validateFormat: validateFormat,
             formatModeOverrides: formatModeOverrides);
 
-        return await helper.GenerateAndCompileAsync(virtualFilename, schemaText, TestJsonSchemaCodeGenerator.ToPascalCase(defaultNamespace), hostAssembly);
+        return await helper.GenerateAndCompileAsync(virtualFilename, schemaText, TestJsonSchemaCodeGenerator.ToPascalCase(defaultNamespace), hostAssembly, rebaseAsRoot);
     }
 
     private void RegisterVocabularies()
@@ -193,8 +195,16 @@ public class TestEvaluatorHelper
         Corvus.Json.CodeGeneration.OpenApi30.VocabularyAnalyser.RegisterAnalyser(_vocabularyRegistry);
     }
 
-    private async ValueTask<CompiledEvaluator> GenerateAndCompileAsync(string virtualFileName, string jsonSchema, string defaultNamespace, Assembly hostAssembly)
+    private async ValueTask<CompiledEvaluator> GenerateAndCompileAsync(string virtualFileName, string jsonSchema, string defaultNamespace, Assembly hostAssembly, bool rebaseAsRoot = true)
     {
+        string fragment = string.Empty;
+        int hashIndex = virtualFileName.IndexOf('#');
+        if (hashIndex >= 0)
+        {
+            fragment = virtualFileName[hashIndex..];
+            virtualFileName = virtualFileName[..hashIndex];
+        }
+
         string path = Path.Combine(_remotesBaseDirectory!, virtualFileName);
         if (SchemaReferenceNormalization.TryNormalizeSchemaReference(path, out string? normalizedPath))
         {
@@ -212,7 +222,7 @@ public class TestEvaluatorHelper
 
         CSharpLanguageProvider languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
 
-        TypeDeclaration rootType = await _jsonSchemaTypeBuilder.AddTypeDeclarationsAsync(new JsonReference(path), _defaultVocabulary, true);
+        TypeDeclaration rootType = await _jsonSchemaTypeBuilder.AddTypeDeclarationsAsync(new JsonReference(path + fragment), _defaultVocabulary, rebaseAsRoot);
 
         // Store the original (unreduced) root type before the pipeline reduces it.
         // The pipeline's GetCandidateTypesToGenerate replaces annotation-only schemas

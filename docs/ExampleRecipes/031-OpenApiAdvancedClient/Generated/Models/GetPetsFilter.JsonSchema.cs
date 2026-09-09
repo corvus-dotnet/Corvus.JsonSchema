@@ -116,7 +116,7 @@ public readonly partial struct GetPetsFilter
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/paths/~1pets/get/parameters/2/schema"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/paths/~1pets/get/parameters/2/schema"u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
@@ -190,7 +190,8 @@ public readonly partial struct GetPetsFilter
             parentIndex,
             usingEvaluatedItems: false,
             usingEvaluatedProperties: false,
-            resultsCollector: resultsCollector);
+            resultsCollector: resultsCollector,
+            schemaEvaluationPath: SchemaLocationProvider);
 
             try
             {

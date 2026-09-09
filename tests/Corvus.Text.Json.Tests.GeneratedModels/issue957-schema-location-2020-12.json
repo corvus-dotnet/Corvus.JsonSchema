@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "fooId": {
+      "title": "Foo identifier",
+      "type": "integer",
+      "minimum": 0
+    },
+    "holder": {
+      "type": "object",
+      "properties": {
+        "fooId": { "$ref": "#/$defs/fooId" }
+      }
+    }
+  }
+}

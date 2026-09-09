@@ -1307,7 +1307,7 @@ internal static partial class CodeGeneratorExtensions
         {
             generator
                 .AppendLineIndent(
-                    "public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath(",
+                    "public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage(",
                     SymbolDisplay.FormatLiteral(schemaLocation, true), "u8, buffer, out written);");
         }
 

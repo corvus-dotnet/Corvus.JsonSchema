@@ -67,6 +67,7 @@
     <Compile Include="InlineEvaluatedBufferOverflowTests.cs" />
     <Compile Include="PropertySchemaMatchersHashCollisionTests.cs" />
     <Compile Include="SchemaLocationEncodingTests.cs" />
+    <Compile Include="SchemaLocationRootContextTests.cs" />
     <Compile Include="JsonStringUnescaperTests.cs" />
     <Compile Include="JsonMarshalRefreshUnsafeTests.cs" />
     <Compile Include="MigrationEquivalenceTests\AllOfConversionEquivalenceTests.cs" />

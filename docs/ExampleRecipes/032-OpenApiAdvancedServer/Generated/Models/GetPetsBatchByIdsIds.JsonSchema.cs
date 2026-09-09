@@ -32,7 +32,7 @@ public readonly partial struct GetPetsBatchByIdsIds
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/paths/~1pets~1batch~1{ids}/get/parameters/0/schema"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/paths/~1pets~1batch~1{ids}/get/parameters/0/schema"u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
@@ -118,7 +118,8 @@ public readonly partial struct GetPetsBatchByIdsIds
             parentIndex,
             usingEvaluatedItems: false,
             usingEvaluatedProperties: false,
-            resultsCollector: resultsCollector);
+            resultsCollector: resultsCollector,
+            schemaEvaluationPath: SchemaLocationProvider);
 
             try
             {
