@@ -225,6 +225,7 @@
     <Compile Include="Corvus\Text\Json\Document\ObjectEnumerator{T}.cs" />
     <Compile Include="Corvus\Text\Json\Document\Internal\ObjectEnumerator.cs" />
     <Compile Include="Corvus\Text\Json\Document\ParsedJsonDocument.cs" />
+    <Compile Include="Corvus\Text\Json\Document\RawDocumentAccess.cs" />
     <Compile Include="Corvus\Text\Json\Document\ParsedJsonDocument.Parse.cs" />
     <Compile Include="Corvus\Text\Json\Document\ParsedJsonDocument.SourceLocation.cs" />
     <Compile Include="Corvus\Text\Json\Document\ParsedJsonDocument.JsonPointer.cs" />

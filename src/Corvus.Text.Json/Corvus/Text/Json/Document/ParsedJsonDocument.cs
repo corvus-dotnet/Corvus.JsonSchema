@@ -355,6 +355,15 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
         return GetRawSimpleValueUnsafe(ref _parsedData, index, includeQuotes);
     }
 
+    /// <inheritdoc/>
+    [CLSCompliant(false)]
+    public override bool TryGetRawAccess(out RawDocumentAccess access)
+    {
+        CheckNotDisposed();
+        access = new RawDocumentAccess(_parsedData.RawData, _utf8Json);
+        return true;
+    }
+
     /// <summary>
     /// Gets the raw simple value from the document without bounds checking.
     /// </summary>

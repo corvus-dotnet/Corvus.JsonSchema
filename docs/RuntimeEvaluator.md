@@ -95,6 +95,8 @@ suite through a verbose collector and `JsonSchemaAnnotationProducer`.
 | Process-wide regex cache | `PatternMatcher.RegexCache` | Identical patterns compile once per process (regexes are immutable); helps cold start with compiled regexes. |
 | Cheapest-first unrolled order | `SchemaCompiler.OrderUnrolledProperties` | Required before optional, leaves before applicators. The unroll heuristic itself is "all required, or at most two entries": a looser rule regressed jasmine/cypress. |
 
+| Direct document access | `RawDocumentAccess` (Corvus.Text.Json), `IDocumentAccess`/`RawAccess`/`InterfaceAccess` | The evaluator is generic over an access type as well as the evaluation mode. For parsed documents (`JsonDocument.TryGetRawAccess`) it reads metadata rows and text directly: token type, size, sibling stepping and raw values are a couple of loads each, with no per-call disposal check, and the object/array loops step siblings by row arithmetic instead of enumerators. Every other document type uses the `IJsonDocument` interface path (`propertyNames` always does, for its fixed string document). Strings and names that contain escapes still unescape through the document. |
+
 Experiment switches (environment variables, read once): `CORVUS_RT_NO_UNROLL`, `CORVUS_RT_NO_ELIDE`,
 `CORVUS_RT_NO_DISCRIMINATOR`, `CORVUS_RT_NO_LEAF`, `CORVUS_RT_NO_ORDER`, `CORVUS_RT_NO_INTFAST`,
 `CORVUS_RT_REGEX_INTERPRETED`.
@@ -144,8 +146,10 @@ the compiler itself), against 1 to 17 seconds per schema for the Roslyn-based `C
 * Regexes are compiled to IL by default (decision 2026-09-09: evaluation throughput over cold start);
   `CompileRegularExpressions = false` (or `CORVUS_RT_REGEX_INTERPRETED=1` for experiments) restores interpreted
   regexes for faster compilation.
-* Remaining per-node overhead is interpretive dispatch in `EvalCore`/`Eval` (a CPU profile of the strict-tree case
-  is 90% in the evaluator's own frames). The next structural step would be precomputed per-node evaluation plans
+* The document layer no longer dominates profiles of property-heavy cases (raw access took cmake-presets, draft-04
+  and openapi from 0.76 to 0.79 down to 0.68 to 0.81 on a loaded machine, and the object micro case from 0.50 to
+  0.26). Remaining per-node overhead is interpretive dispatch in `EvalCore`/`Eval` (a CPU profile of the strict-tree
+  case is 90% in the evaluator's own frames). The next structural step would be precomputed per-node evaluation plans
   (a small set of fused instruction kinds selected at compile time, closer to Blaze's instruction model) instead of
   the flag-by-flag keyword dispatch. Perfect-hash string sets for large enums remain untried.
 * The public `Corvus.Text.Json` helpers used here (`JsonSchemaEvaluation.Match*`, `JsonElementHelpers.*`) take a

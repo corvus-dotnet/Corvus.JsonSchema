@@ -1,4 +1,4 @@
-# Results (2026-09-09, corrected baseline)
+# Results (2026-09-09, with direct document access)
 
 Machine shared with other work; measured with the interleaved min-of-N harness (`dotnet run -c Release -- quick 40`).
 
@@ -22,62 +22,64 @@ verbose collector, and full passes over all 37 corpora. The only allocation tick
 
 ## Sourcemeta corpus, flag mode (ratio = runtime evaluator / generated model, lower is better)
 
+Quiet machine, Release `Corvus.Text.Json` verified by hash, raw document access (`RawDocumentAccess`) in use.
+
 | case | generated | runtime | ratio |
 |---|---|---|---|
-| ansible-meta | 2.26 ms | 677.47 us | 0.30 |
-| aws-cdk | 480.65 us | 100.05 us | 0.21 |
-| babelrc | 1.03 ms | 550.15 us | 0.53 |
-| clang-format | 1.01 ms | 331.44 us | 0.33 |
-| cmake-presets | 39.57 ms | 31.13 ms | 0.79 |
-| code-climate | 1.88 ms | 480.82 us | 0.26 |
-| cql2 | 1.01 ms | 243.06 us | 0.24 |
-| cspell | 9.76 ms | 1.74 ms | 0.18 |
-| cypress | 1.22 ms | 424.39 us | 0.35 |
-| deno | 3.05 ms | 902.46 us | 0.30 |
-| dependabot | 4.08 ms | 1.05 ms | 0.26 |
-| draft-04 | 17.80 ms | 13.53 ms | 0.76 |
-| fabric-mod | 3.97 ms | 1.36 ms | 0.34 |
-| geojson | 56.22 ms | 33.30 ms | 0.59 |
-| gitpod-configuration | 1.56 ms | 477.15 us | 0.31 |
-| helm-chart-lock | 3.38 ms | 1.51 ms | 0.45 |
-| importmap | 1.58 ms | 218.59 us | 0.14 |
-| jasmine | 793.96 us | 309.89 us | 0.39 |
-| jsconfig | 2.93 ms | 1.26 ms | 0.43 |
-| jshintrc | 4.32 ms | 1.66 ms | 0.38 |
-| krakend | 1.41 ms | 530.03 us | 0.38 |
-| lazygit | 1.28 ms | 293.14 us | 0.23 |
-| lerna | 1.40 ms | 243.79 us | 0.17 |
-| nest-cli | 2.66 ms | 448.21 us | 0.17 |
-| omnisharp | 3.18 ms | 778.16 us | 0.24 |
-| openapi | 30.05 ms | 23.78 ms | 0.79 |
-| pre-commit-hooks | 2.12 ms | 943.92 us | 0.45 |
-| pulumi | 3.05 ms | 1.41 ms | 0.46 |
-| semantic-release | 1.30 ms | 398.24 us | 0.31 |
-| stale | 1.73 ms | 439.53 us | 0.25 |
-| stylecop | 3.48 ms | 629.46 us | 0.18 |
-| tmuxinator | 918.91 us | 227.55 us | 0.25 |
-| ui5 | 6.38 ms | 2.05 ms | 0.32 |
-| ui5-manifest | 24.66 ms | 6.39 ms | 0.26 |
-| unreal-engine-uproject | 13.30 ms | 7.17 ms | 0.54 |
-| vercel | 2.70 ms | 486.88 us | 0.18 |
-| yamllint | 340.46 us | 72.47 us | 0.21 |
+| ansible-meta | 945.46 us | 250.12 us | 0.26 |
+| aws-cdk | 229.59 us | 44.30 us | 0.19 |
+| babelrc | 376.18 us | 191.90 us | 0.51 |
+| clang-format | 218.81 us | 146.97 us | 0.67 |
+| cmake-presets | 10.17 ms | 8.40 ms | 0.83 |
+| code-climate | 847.29 us | 208.54 us | 0.25 |
+| cql2 | 468.72 us | 116.39 us | 0.25 |
+| cspell | 5.64 ms | 1.19 ms | 0.21 |
+| cypress | 583.61 us | 214.21 us | 0.37 |
+| deno | 1.65 ms | 556.32 us | 0.34 |
+| dependabot | 1.90 ms | 437.25 us | 0.23 |
+| draft-04 | 8.64 ms | 6.85 ms | 0.79 |
+| fabric-mod | 2.51 ms | 694.71 us | 0.28 |
+| geojson | 28.41 ms | 11.77 ms | 0.41 |
+| gitpod-configuration | 1.16 ms | 207.06 us | 0.18 |
+| helm-chart-lock | 2.51 ms | 658.43 us | 0.26 |
+| importmap | 746.76 us | 96.54 us | 0.13 |
+| jasmine | 383.67 us | 134.38 us | 0.35 |
+| jsconfig | 1.34 ms | 596.69 us | 0.44 |
+| jshintrc | 2.05 ms | 766.41 us | 0.37 |
+| krakend | 643.40 us | 234.63 us | 0.36 |
+| lazygit | 553.80 us | 132.81 us | 0.24 |
+| lerna | 596.28 us | 105.29 us | 0.18 |
+| nest-cli | 1.32 ms | 199.06 us | 0.15 |
+| omnisharp | 1.55 ms | 387.67 us | 0.25 |
+| openapi | 12.23 ms | 9.05 ms | 0.74 |
+| pre-commit-hooks | 1.52 ms | 408.55 us | 0.27 |
+| pulumi | 2.02 ms | 600.35 us | 0.30 |
+| semantic-release | 617.59 us | 181.19 us | 0.29 |
+| stale | 811.75 us | 189.38 us | 0.23 |
+| stylecop | 1.59 ms | 272.23 us | 0.17 |
+| tmuxinator | 442.86 us | 101.78 us | 0.23 |
+| ui5 | 3.04 ms | 1.13 ms | 0.37 |
+| ui5-manifest | 12.78 ms | 3.18 ms | 0.25 |
+| unreal-engine-uproject | 6.37 ms | 3.64 ms | 0.57 |
+| vercel | 1.21 ms | 208.78 us | 0.17 |
+| yamllint | 165.47 us | 38.92 us | 0.24 |
 
-geometric mean ratio (runtime / generated): 0.32 over 37 cases
+geometric mean ratio (runtime / generated): 0.30 over 37 cases
 
 ## Keyword-group micro benchmarks (one evaluation; typed model / generated standalone evaluator / runtime evaluator)
 
 | category | typed | standalone | runtime | runtime/typed | runtime/standalone |
 |---|---|---|---|---|---|
-| Object | 596 ns | 881 ns | 301 ns | 0.50 | 0.34 |
-| Array | 1.15 us | 1.44 us | 1.10 us | 0.96 | 0.76 |
-| String | 571 ns | 437 ns | 314 ns | 0.55 | 0.72 |
-| Unevaluated | 871 ns | 991 ns | 648 ns | 0.74 | 0.65 |
-| DynamicRef | 706 ns | 1.03 us | 1.51 us | 2.14 | 1.47 |
-| OneOf | 177 ns | 1.05 us | 95 ns | 0.53 | 0.09 |
-| Verbose | 5.53 us | 5.31 us | 3.86 us | 0.70 | 0.73 |
+| Object | 310 ns | 596 ns | 124 ns | 0.40 | 0.21 |
+| Array | 639 ns | 640 ns | 481 ns | 0.75 | 0.75 |
+| String | 113 ns | 108 ns | 166 ns | 1.47 | 1.53 |
+| Unevaluated | 427 ns | 873 ns | 272 ns | 0.64 | 0.31 |
+| DynamicRef | 333 ns | 541 ns | 682 ns | 2.05 | 1.26 |
+| OneOf | 85 ns | 553 ns | 50 ns | 0.59 | 0.09 |
+| Verbose | 2.42 us | 2.38 us | 1.79 us | 0.74 | 0.75 |
 
-The `DynamicRef` micro case fluctuates between 0.8 and 2.1 across runs on this loaded machine; it remains the
-shape with the most interpretive overhead (see DESIGN.md, "Known gaps").
+The `String` micro case is regex-bound (the typed model uses a source-generated regex, the evaluator a compiled
+one) and `DynamicRef` fluctuates between 0.8 and 2 across runs; both are in "Known gaps" in RuntimeEvaluator.md.
 
 ## Cold start (Release Corvus build, compiled regexes, machine very heavily loaded: absolute times inflated on both sides)
 

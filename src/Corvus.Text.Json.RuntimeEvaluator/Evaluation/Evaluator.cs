@@ -17,6 +17,9 @@ internal static class Evaluator
 {
     private const int InlineBitWords = 4; // 256 properties/items before renting
 
+    /// <summary>The size of a metadata row; the layout shared by every Corvus document (see ObjectEnumerator/ArrayEnumerator).</summary>
+    internal const int RowSize = 12;
+
     // Keyword names handed to the shared Corvus helpers on flag-mode paths. Static arrays rather than u8 literals so
     // that tier-0 JIT code (whose static-span accesses go through an allocating helper) stays allocation-free too.
     private static readonly byte[] FormatKeyword = "format"u8.ToArray();
@@ -42,13 +45,18 @@ internal static class Evaluator
         try
         {
             SchemaNode root = nodes[rootNode];
+            bool raw = document is JsonDocument jsonDocument && jsonDocument.TryGetRawAccess(out state.Raw);
             if (collector is null)
             {
-                return Eval<FastMode>(root, document, index, ref state, default, 0);
+                return raw
+                    ? Eval<FastMode, RawAccess>(root, document, index, ref state, default, 0)
+                    : Eval<FastMode, InterfaceAccess>(root, document, index, ref state, default, 0);
             }
 
             int seq = collector.BeginChildContext(0);
-            bool ok = Eval<CollectingMode>(root, document, index, ref state, default, seq);
+            bool ok = raw
+                ? Eval<CollectingMode, RawAccess>(root, document, index, ref state, default, seq)
+                : Eval<CollectingMode, InterfaceAccess>(root, document, index, ref state, default, seq);
             collector.CommitChildContext(seq, parentIsMatch: false, childIsMatch: ok, JsonSchemaEvaluation.EvaluatedSubschema);
             return ok;
         }
@@ -59,11 +67,30 @@ internal static class Evaluator
     }
 
     // ---------------------------------------------------------------------------------------------
+    // Document access helpers
+    // ---------------------------------------------------------------------------------------------
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static UnescapedUtf8JsonString StringValue<TAccess>(ref EvaluationState state, IJsonDocument doc, int index)
+        where TAccess : struct, IDocumentAccess
+    {
+        return TAccess.GetString(ref state, doc, index);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static UnescapedUtf8JsonString PropertyName<TAccess>(ref EvaluationState state, IJsonDocument doc, int valueIndex)
+        where TAccess : struct, IDocumentAccess
+    {
+        return TAccess.GetPropertyName(ref state, doc, valueIndex);
+    }
+
+    // ---------------------------------------------------------------------------------------------
     // Node evaluation
     // ---------------------------------------------------------------------------------------------
 
-    private static bool Eval<TMode>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> evaluated, int seq)
+    private static bool Eval<TMode, TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> evaluated, int seq)
         where TMode : struct, IEvaluationMode
+        where TAccess : struct, IDocumentAccess
     {
         if (node.AlwaysTrue)
         {
@@ -85,11 +112,6 @@ internal static class Evaluator
             return false;
         }
 
-        if (++state.Depth > state.MaxDepth)
-        {
-            throw new JsonSchemaEvaluationException("Maximum evaluation depth exceeded; the schema recurses through in-place applicators without consuming the instance.");
-        }
-
         bool pushedScope = false;
         if (state.UsesDynamicScope && (state.ScopeDepth == 0 || state.Scope[state.ScopeDepth - 1] != node.ResourceId))
         {
@@ -97,19 +119,19 @@ internal static class Evaluator
             pushedScope = true;
         }
 
-        JsonTokenType tokenType = doc.GetJsonTokenType(index);
+        JsonTokenType tokenType = TAccess.TokenType(ref state, doc, index);
 
         bool result;
         if (evaluated.IsEmpty && (tokenType == JsonTokenType.StartObject ? node.TracksProperties : (tokenType == JsonTokenType.StartArray && node.TracksItems)))
         {
-            int count = tokenType == JsonTokenType.StartObject ? doc.GetPropertyCount(index) : doc.GetArrayLength(index);
+            int count = TAccess.Count(ref state, doc, index, tokenType);
             int words = (count + 63) >> 6;
             if (words <= InlineBitWords)
             {
                 Span<ulong> local = stackalloc ulong[InlineBitWords];
                 local = local[..words];
                 local.Clear();
-                result = EvalCore<TMode>(node, doc, index, tokenType, ref state, local, seq);
+                result = EvalCore<TMode, TAccess>(node, doc, index, tokenType, ref state, local, seq);
             }
             else
             {
@@ -118,7 +140,7 @@ internal static class Evaluator
                 bits.Clear();
                 try
                 {
-                    result = EvalCore<TMode>(node, doc, index, tokenType, ref state, bits, seq);
+                    result = EvalCore<TMode, TAccess>(node, doc, index, tokenType, ref state, bits, seq);
                 }
                 finally
                 {
@@ -128,7 +150,7 @@ internal static class Evaluator
         }
         else
         {
-            result = EvalCore<TMode>(node, doc, index, tokenType, ref state, evaluated, seq);
+            result = EvalCore<TMode, TAccess>(node, doc, index, tokenType, ref state, evaluated, seq);
         }
 
         if (pushedScope)
@@ -136,18 +158,18 @@ internal static class Evaluator
             state.ScopeDepth--;
         }
 
-        state.Depth--;
         return result;
     }
 
-    private static bool EvalCore<TMode>(SchemaNode node, IJsonDocument doc, int index, JsonTokenType tokenType, ref EvaluationState state, scoped Span<ulong> evaluated, int seq)
+    private static bool EvalCore<TMode, TAccess>(SchemaNode node, IJsonDocument doc, int index, JsonTokenType tokenType, ref EvaluationState state, scoped Span<ulong> evaluated, int seq)
         where TMode : struct, IEvaluationMode
+        where TAccess : struct, IDocumentAccess
     {
         bool ok = true;
 
         if (node.HasType)
         {
-            bool match = MatchesType(node.Type, tokenType, doc, index, node.Dialect == JsonSchemaDialect.Draft4);
+            bool match = MatchesType<TAccess>(node.Type, tokenType, ref state, doc, index, node.Dialect == JsonSchemaDialect.Draft4);
             if (TMode.Collecting)
             {
                 state.Collector!.EvaluatedKeyword(match, match ? null : ExpectedTypeProvider(node.Type), "type"u8);
@@ -166,7 +188,7 @@ internal static class Evaluator
 
         if (node.HasConst)
         {
-            bool match = MatchesConst(node, doc, index, tokenType);
+            bool match = MatchesConst<TAccess>(node, ref state, doc, index, tokenType);
             if (TMode.Collecting)
             {
                 state.Collector!.EvaluatedKeyword(match, null, "const"u8);
@@ -185,7 +207,7 @@ internal static class Evaluator
 
         if (node.Enum is not null)
         {
-            bool match = MatchesEnum(node, doc, index, tokenType);
+            bool match = MatchesEnum<TAccess>(node, ref state, doc, index, tokenType);
             if (TMode.Collecting)
             {
                 state.Collector!.EvaluatedKeyword(match, match ? JsonSchemaEvaluation.MatchedAtLeastOneConstantValue : JsonSchemaEvaluation.DidNotMatchAtLeastOneConstantValue, "enum"u8);
@@ -207,28 +229,28 @@ internal static class Evaluator
             case JsonTokenType.Number:
                 if (node.HasNumberKeywords)
                 {
-                    ok &= EvalNumber<TMode>(node, doc, index, ref state);
+                    ok &= EvalNumber<TMode, TAccess>(node, doc, index, ref state);
                 }
 
                 break;
             case JsonTokenType.String:
                 if (node.HasStringKeywords)
                 {
-                    ok &= EvalString<TMode>(node, doc, index, ref state);
+                    ok &= EvalString<TMode, TAccess>(node, doc, index, ref state);
                 }
 
                 break;
             case JsonTokenType.StartObject:
                 if (node.HasObjectKeywords)
                 {
-                    ok &= EvalObject<TMode>(node, doc, index, ref state, evaluated, seq);
+                    ok &= EvalObject<TMode, TAccess>(node, doc, index, ref state, evaluated, seq);
                 }
 
                 break;
             case JsonTokenType.StartArray:
                 if (node.HasArrayKeywords)
                 {
-                    ok &= EvalArray<TMode>(node, doc, index, ref state, evaluated, seq);
+                    ok &= EvalArray<TMode, TAccess>(node, doc, index, ref state, evaluated, seq);
                 }
 
                 break;
@@ -241,7 +263,7 @@ internal static class Evaluator
 
         if (node.HasInPlaceApplicators)
         {
-            ok &= EvalInPlace<TMode>(node, doc, index, ref state, evaluated, seq);
+            ok &= EvalInPlace<TMode, TAccess>(node, doc, index, ref state, evaluated, seq);
             if (!ok && !TMode.Collecting)
             {
                 return false;
@@ -250,7 +272,7 @@ internal static class Evaluator
 
         if (tokenType == JsonTokenType.StartObject && node.UnevaluatedProperties.IsPresent)
         {
-            ok &= EvalUnevaluatedProperties<TMode>(node, doc, index, ref state, evaluated, seq);
+            ok &= EvalUnevaluatedProperties<TMode, TAccess>(node, doc, index, ref state, evaluated, seq);
             if (!ok && !TMode.Collecting)
             {
                 return false;
@@ -258,7 +280,7 @@ internal static class Evaluator
         }
         else if (tokenType == JsonTokenType.StartArray && node.UnevaluatedItems.IsPresent)
         {
-            ok &= EvalUnevaluatedItems<TMode>(node, doc, index, ref state, evaluated, seq);
+            ok &= EvalUnevaluatedItems<TMode, TAccess>(node, doc, index, ref state, evaluated, seq);
             if (!ok && !TMode.Collecting)
             {
                 return false;
@@ -286,7 +308,8 @@ internal static class Evaluator
     // ---------------------------------------------------------------------------------------------
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool MatchesType(TypeMask mask, JsonTokenType tokenType, IJsonDocument doc, int index, bool lexicalInteger)
+    private static bool MatchesType<TAccess>(TypeMask mask, JsonTokenType tokenType, ref EvaluationState state, IJsonDocument doc, int index, bool lexicalInteger)
+        where TAccess : struct, IDocumentAccess
     {
         switch (tokenType)
         {
@@ -302,7 +325,7 @@ internal static class Evaluator
                     return true;
                 }
 
-                return (mask & TypeMask.Integer) != 0 && IsInteger(doc, index, lexicalInteger);
+                return (mask & TypeMask.Integer) != 0 && IsInteger<TAccess>(ref state, doc, index, lexicalInteger);
             case JsonTokenType.True:
             case JsonTokenType.False:
                 return (mask & TypeMask.Boolean) != 0;
@@ -317,32 +340,33 @@ internal static class Evaluator
     /// Flag-mode evaluation of a leaf node (type/const/enum/number/string keywords only) without the
     /// depth, dynamic-scope and evaluated-bit bookkeeping of <see cref="Eval{TMode}"/>.
     /// </summary>
-    private static bool EvalLeafFast(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
+    private static bool EvalLeafFast<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
+        where TAccess : struct, IDocumentAccess
     {
-        JsonTokenType tokenType = doc.GetJsonTokenType(index);
-        if (node.HasType && !MatchesType(node.Type, tokenType, doc, index, node.Dialect == JsonSchemaDialect.Draft4))
+        JsonTokenType tokenType = TAccess.TokenType(ref state, doc, index);
+        if (node.HasType && !MatchesType<TAccess>(node.Type, tokenType, ref state, doc, index, node.Dialect == JsonSchemaDialect.Draft4))
         {
             return false;
         }
 
-        if (node.HasConst && !MatchesConst(node, doc, index, tokenType))
+        if (node.HasConst && !MatchesConst<TAccess>(node, ref state, doc, index, tokenType))
         {
             return false;
         }
 
-        if (node.Enum is not null && !MatchesEnum(node, doc, index, tokenType))
+        if (node.Enum is not null && !MatchesEnum<TAccess>(node, ref state, doc, index, tokenType))
         {
             return false;
         }
 
         if (tokenType == JsonTokenType.Number)
         {
-            return !node.HasNumberKeywords || EvalNumber<FastMode>(node, doc, index, ref state);
+            return !node.HasNumberKeywords || EvalNumber<FastMode, TAccess>(node, doc, index, ref state);
         }
 
         if (tokenType == JsonTokenType.String)
         {
-            return !node.HasStringKeywords || EvalString<FastMode>(node, doc, index, ref state);
+            return !node.HasStringKeywords || EvalString<FastMode, TAccess>(node, doc, index, ref state);
         }
 
         return true;
@@ -351,16 +375,17 @@ internal static class Evaluator
     /// <summary>
     /// Fused flag-mode evaluation of an array whose items are leaves: size bounds plus one tight loop.
     /// </summary>
-    private static bool EvalSimpleArrayFast(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
+    private static bool EvalSimpleArrayFast<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
+        where TAccess : struct, IDocumentAccess
     {
-        JsonTokenType tokenType = doc.GetJsonTokenType(index);
+        JsonTokenType tokenType = TAccess.TokenType(ref state, doc, index);
         if (tokenType != JsonTokenType.StartArray)
         {
             // Not an array: `type` fails, otherwise the array keywords do not apply.
             return !node.HasType;
         }
 
-        int length = doc.GetArrayLength(index);
+        int length = TAccess.Count(ref state, doc, index, JsonTokenType.StartArray);
         if ((node.MinItems >= 0 && length < node.MinItems) || (node.MaxItems >= 0 && length > node.MaxItems))
         {
             return false;
@@ -372,15 +397,14 @@ internal static class Evaluator
             return true;
         }
 
-        var enumerator = new ArrayEnumerator(doc, index);
+        int end = TAccess.EndIndex(ref state, doc, index);
         if (items.IsTypeOnly)
         {
             TypeMask mask = items.Type;
             bool lexical = items.Dialect == JsonSchemaDialect.Draft4;
-            while (enumerator.MoveNext())
+            for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = TAccess.NextIndex(ref state, doc, valueIndex))
             {
-                int valueIndex = enumerator.CurrentIndex;
-                if (!MatchesType(mask, doc.GetJsonTokenType(valueIndex), doc, valueIndex, lexical))
+                if (!MatchesType<TAccess>(mask, TAccess.TokenType(ref state, doc, valueIndex), ref state, doc, valueIndex, lexical))
                 {
                     return false;
                 }
@@ -389,9 +413,9 @@ internal static class Evaluator
             return true;
         }
 
-        while (enumerator.MoveNext())
+        for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = TAccess.NextIndex(ref state, doc, valueIndex))
         {
-            if (!EvalLeafFast(items, doc, enumerator.CurrentIndex, ref state))
+            if (!EvalLeafFast<TAccess>(items, doc, valueIndex, ref state))
             {
                 return false;
             }
@@ -400,9 +424,10 @@ internal static class Evaluator
         return true;
     }
 
-    private static bool IsInteger(IJsonDocument doc, int index, bool lexicalInteger)
+    private static bool IsInteger<TAccess>(ref EvaluationState state, IJsonDocument doc, int index, bool lexicalInteger)
+        where TAccess : struct, IDocumentAccess
     {
-        ReadOnlySpan<byte> raw = doc.GetRawSimpleValue(index).Span;
+        ReadOnlySpan<byte> raw = TAccess.RawValue(ref state, doc, index);
         if (raw.IndexOfAny((byte)'.', (byte)'e', (byte)'E') < 0)
         {
             return true;
@@ -418,7 +443,8 @@ internal static class Evaluator
         return exponent >= 0;
     }
 
-    private static bool MatchesConst(SchemaNode node, IJsonDocument doc, int index, JsonTokenType tokenType)
+    private static bool MatchesConst<TAccess>(SchemaNode node, ref EvaluationState state, IJsonDocument doc, int index, JsonTokenType tokenType)
+        where TAccess : struct, IDocumentAccess
     {
         if (node.ConstString is byte[] constString)
         {
@@ -427,7 +453,7 @@ internal static class Evaluator
                 return false;
             }
 
-            using UnescapedUtf8JsonString s = doc.GetUtf8JsonString(index, JsonTokenType.String);
+            using UnescapedUtf8JsonString s = StringValue<TAccess>(ref state, doc, index);
             return s.Span.SequenceEqual(constString);
         }
 
@@ -438,7 +464,7 @@ internal static class Evaluator
                 return false;
             }
 
-            JsonElementHelpers.ParseNumber(doc.GetRawSimpleValue(index).Span, out bool neg, out ReadOnlySpan<byte> integral, out ReadOnlySpan<byte> fractional, out int exponent);
+            JsonElementHelpers.ParseNumber(TAccess.RawValue(ref state, doc, index), out bool neg, out ReadOnlySpan<byte> integral, out ReadOnlySpan<byte> fractional, out int exponent);
             return constNumber.CompareTo(neg, integral, fractional, exponent) == 0;
         }
 
@@ -456,7 +482,8 @@ internal static class Evaluator
         return JsonElementHelpers.DeepEqualsNoParentDocumentCheck(doc, index, c.Document, c.Index);
     }
 
-    private static bool MatchesEnum(SchemaNode node, IJsonDocument doc, int index, JsonTokenType tokenType)
+    private static bool MatchesEnum<TAccess>(SchemaNode node, ref EvaluationState state, IJsonDocument doc, int index, JsonTokenType tokenType)
+        where TAccess : struct, IDocumentAccess
     {
         if (node.EnumAllStrings)
         {
@@ -465,7 +492,7 @@ internal static class Evaluator
                 return false;
             }
 
-            using UnescapedUtf8JsonString s = doc.GetUtf8JsonString(index, JsonTokenType.String);
+            using UnescapedUtf8JsonString s = StringValue<TAccess>(ref state, doc, index);
             return node.EnumStrings!.TryGetValue(s.Span, out _);
         }
 
@@ -502,10 +529,11 @@ internal static class Evaluator
     // number
     // ---------------------------------------------------------------------------------------------
 
-    private static bool EvalNumber<TMode>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
+    private static bool EvalNumber<TMode, TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
         where TMode : struct, IEvaluationMode
+        where TAccess : struct, IDocumentAccess
     {
-        ReadOnlySpan<byte> raw = doc.GetRawSimpleValue(index).Span;
+        ReadOnlySpan<byte> raw = TAccess.RawValue(ref state, doc, index);
 
         // Plain integer literal against plain integer bounds: compare as longs (exact) without normalising.
         if (!TMode.Collecting && !DisableIntegerFastPath && node.MultipleOf is null && raw.Length <= 18 && raw.IndexOfAny((byte)'.', (byte)'e', (byte)'E') < 0
@@ -680,10 +708,11 @@ internal static class Evaluator
     // string
     // ---------------------------------------------------------------------------------------------
 
-    private static bool EvalString<TMode>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
+    private static bool EvalString<TMode, TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
         where TMode : struct, IEvaluationMode
+        where TAccess : struct, IDocumentAccess
     {
-        using UnescapedUtf8JsonString s = doc.GetUtf8JsonString(index, JsonTokenType.String);
+        using UnescapedUtf8JsonString s = StringValue<TAccess>(ref state, doc, index);
         ReadOnlySpan<byte> value = s.Span;
         bool ok = true;
 
@@ -821,7 +850,7 @@ internal static class Evaluator
         return ok;
     }
 
-    private static bool MatchesFormat(FormatKind format, ReadOnlySpan<byte> value, ref EvaluationState state)
+    private static bool MatchesFormat(FormatKind format, scoped ReadOnlySpan<byte> value, ref EvaluationState state)
     {
         ReadOnlySpan<byte> keyword = FormatKeyword;
         return format switch
@@ -853,12 +882,13 @@ internal static class Evaluator
     // object
     // ---------------------------------------------------------------------------------------------
 
-    private static bool EvalObject<TMode>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> evaluated, int seq)
+    private static bool EvalObject<TMode, TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> evaluated, int seq)
         where TMode : struct, IEvaluationMode
+        where TAccess : struct, IDocumentAccess
     {
         if (!TMode.Collecting && evaluated.IsEmpty && node.UnrolledProperties is PropertyEntry[] unrolled)
         {
-            return EvalObjectUnrolled(node, unrolled, doc, index, ref state);
+            return EvalObjectUnrolled<TAccess>(node, unrolled, doc, index, ref state);
         }
 
         int words = (node.SeenBitCount + 63) >> 6;
@@ -867,7 +897,7 @@ internal static class Evaluator
             Span<ulong> seen = stackalloc ulong[InlineBitWords];
             seen = seen[..words];
             seen.Clear();
-            return EvalObjectCore<TMode>(node, doc, index, ref state, evaluated, seen, seq);
+            return EvalObjectCore<TMode, TAccess>(node, doc, index, ref state, evaluated, seen, seq);
         }
 
         ulong[] rented = ArrayPool<ulong>.Shared.Rent(words);
@@ -875,7 +905,7 @@ internal static class Evaluator
         bits.Clear();
         try
         {
-            return EvalObjectCore<TMode>(node, doc, index, ref state, evaluated, bits, seq);
+            return EvalObjectCore<TMode, TAccess>(node, doc, index, ref state, evaluated, bits, seq);
         }
         finally
         {
@@ -886,11 +916,12 @@ internal static class Evaluator
     /// <summary>
     /// Flag-mode object evaluation by direct property lookup (required entries first).
     /// </summary>
-    private static bool EvalObjectUnrolled(SchemaNode node, PropertyEntry[] entries, IJsonDocument doc, int index, ref EvaluationState state)
+    private static bool EvalObjectUnrolled<TAccess>(SchemaNode node, PropertyEntry[] entries, IJsonDocument doc, int index, ref EvaluationState state)
+        where TAccess : struct, IDocumentAccess
     {
         if (node.MinProperties >= 0 || node.MaxProperties >= 0)
         {
-            int count = doc.GetPropertyCount(index);
+            int count = TAccess.Count(ref state, doc, index, JsonTokenType.StartObject);
             if ((node.MinProperties >= 0 && count < node.MinProperties) || (node.MaxProperties >= 0 && count > node.MaxProperties))
             {
                 return false;
@@ -902,9 +933,15 @@ internal static class Evaluator
             PropertyEntry entry = entries[i];
             if (doc.TryGetNamedPropertyValue(index, entry.Name, out IJsonDocument? valueDoc, out int valueIndex))
             {
-                if (entry.Schema.IsPresent && !EvalProperty<FastMode>(entry.Schema, valueDoc, valueIndex, ref state, 0))
+                if (entry.Schema.IsPresent)
                 {
-                    return false;
+                    bool ok = ReferenceEquals(valueDoc, doc)
+                        ? EvalProperty<FastMode, TAccess>(entry.Schema, doc, valueIndex, ref state, 0)
+                        : EvalProperty<FastMode, InterfaceAccess>(entry.Schema, valueDoc, valueIndex, ref state, 0);
+                    if (!ok)
+                    {
+                        return false;
+                    }
                 }
             }
             else if (entry.IsRequired)
@@ -916,14 +953,15 @@ internal static class Evaluator
         return true;
     }
 
-    private static bool EvalObjectCore<TMode>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> evaluated, scoped Span<ulong> seen, int seq)
+    private static bool EvalObjectCore<TMode, TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> evaluated, scoped Span<ulong> seen, int seq)
         where TMode : struct, IEvaluationMode
+        where TAccess : struct, IDocumentAccess
     {
         bool ok = true;
 
         if (node.MinProperties >= 0 || node.MaxProperties >= 0)
         {
-            int count = doc.GetPropertyCount(index);
+            int count = TAccess.Count(ref state, doc, index, JsonTokenType.StartObject);
             if (node.MinProperties >= 0)
             {
                 bool m = count >= node.MinProperties;
@@ -973,12 +1011,11 @@ internal static class Evaluator
         {
             // Fast path: additionalProperties: false with no property schemas can short-circuit.
             int propertyIndex = 0;
-            var enumerator = new ObjectEnumerator(doc, index);
-            while (enumerator.MoveNext())
+            int end = TAccess.EndIndex(ref state, doc, index);
+            for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; valueIndex = TAccess.NextIndex(ref state, doc, valueIndex) + RowSize)
             {
-                int valueIndex = enumerator.CurrentIndex;
                 bool matched = false;
-                using UnescapedUtf8JsonString name = doc.GetPropertyNameUnescaped(valueIndex);
+                using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
                 ReadOnlySpan<byte> nameSpan = name.Span;
 
                 if (properties is not null && properties.TryGetValue(nameSpan, out PropertyEntry? entry))
@@ -992,7 +1029,7 @@ internal static class Evaluator
                     {
                         matched = true;
                         MarkEvaluated(evaluated, propertyIndex);
-                        if (!EvalProperty<TMode>(entry.Schema, doc, valueIndex, ref state, seq))
+                        if (!EvalProperty<TMode, TAccess>(entry.Schema, doc, valueIndex, ref state, seq))
                         {
                             if (!TMode.Collecting)
                             {
@@ -1013,7 +1050,7 @@ internal static class Evaluator
                         {
                             matched = true;
                             MarkEvaluated(evaluated, propertyIndex);
-                            if (!EvalProperty<TMode>(pp.Schema, doc, valueIndex, ref state, seq))
+                            if (!EvalProperty<TMode, TAccess>(pp.Schema, doc, valueIndex, ref state, seq))
                             {
                                 if (!TMode.Collecting)
                                 {
@@ -1029,7 +1066,7 @@ internal static class Evaluator
                 if (!matched && hasAdditional)
                 {
                     MarkEvaluated(evaluated, propertyIndex);
-                    if (!EvalProperty<TMode>(node.AdditionalProperties, doc, valueIndex, ref state, seq))
+                    if (!EvalProperty<TMode, TAccess>(node.AdditionalProperties, doc, valueIndex, ref state, seq))
                     {
                         if (!TMode.Collecting)
                         {
@@ -1042,7 +1079,7 @@ internal static class Evaluator
 
                 if (hasPropertyNames)
                 {
-                    if (!EvalPropertyName<TMode>(node.PropertyNames, doc, valueIndex, ref state, seq))
+                    if (!EvalPropertyName<TMode, TAccess>(node.PropertyNames, doc, valueIndex, ref state, seq))
                     {
                         if (!TMode.Collecting)
                         {
@@ -1059,11 +1096,10 @@ internal static class Evaluator
         else if (node.HasSeenBits)
         {
             // Only presence checks (required / dependencies): enumerate names without descending.
-            var enumerator = new ObjectEnumerator(doc, index);
-            while (enumerator.MoveNext())
+            int end = TAccess.EndIndex(ref state, doc, index);
+            for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; valueIndex = TAccess.NextIndex(ref state, doc, valueIndex) + RowSize)
             {
-                int valueIndex = enumerator.CurrentIndex;
-                using UnescapedUtf8JsonString name = doc.GetPropertyNameUnescaped(valueIndex);
+                using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
                 if (node.Properties is not null && node.Properties.TryGetValue(name.Span, out PropertyEntry? entry) && entry.SeenBit >= 0)
                 {
                     seen[entry.SeenBit >> 6] |= 1UL << (entry.SeenBit & 63);
@@ -1128,7 +1164,7 @@ internal static class Evaluator
 
                 if (dep.Schema.IsPresent)
                 {
-                    bool m = EvalInPlaceChild<TMode>(dep.Schema, doc, index, ref state, evaluated, seq);
+                    bool m = EvalInPlaceChild<TMode, TAccess>(dep.Schema, doc, index, ref state, evaluated, seq);
                     if (TMode.Collecting)
                     {
                         state.Collector!.EvaluatedKeywordForProperty(m, null, dep.Name, node.Dialect >= JsonSchemaDialect.Draft201909 ? "dependentSchemas"u8 : "dependencies"u8);
@@ -1165,8 +1201,9 @@ internal static class Evaluator
         return (bits[i >> 6] & (1UL << (i & 63))) != 0;
     }
 
-    private static bool EvalProperty<TMode>(in ChildRef child, IJsonDocument doc, int valueIndex, ref EvaluationState state, int parentSeq)
+    private static bool EvalProperty<TMode, TAccess>(in ChildRef child, IJsonDocument doc, int valueIndex, ref EvaluationState state, int parentSeq)
         where TMode : struct, IEvaluationMode
+        where TAccess : struct, IDocumentAccess
     {
         SchemaNode target = state.Nodes[TMode.Collecting ? child.Node : child.FastNode];
         if (!TMode.Collecting)
@@ -1183,26 +1220,27 @@ internal static class Evaluator
 
             if (target.IsLeaf)
             {
-                return EvalLeafFast(target, doc, valueIndex, ref state);
+                return EvalLeafFast<TAccess>(target, doc, valueIndex, ref state);
             }
 
             if (target.IsSimpleArray)
             {
-                return EvalSimpleArrayFast(target, doc, valueIndex, ref state);
+                return EvalSimpleArrayFast<TAccess>(target, doc, valueIndex, ref state);
             }
 
-            return Eval<FastMode>(target, doc, valueIndex, ref state, default, 0);
+            return Eval<FastMode, TAccess>(target, doc, valueIndex, ref state, default, 0);
         }
 
         IJsonSchemaResultsCollector collector = state.Collector!;
         int seq = collector.BeginChildContext(parentSeq, new EdgeContext(child.Path, target.SchemaLocation, doc, valueIndex, -1), Providers.EvalPath, Providers.SchemaPath, Providers.DocumentPath);
-        bool ok = Eval<TMode>(target, doc, valueIndex, ref state, default, seq);
+        bool ok = Eval<TMode, TAccess>(target, doc, valueIndex, ref state, default, seq);
         collector.CommitChildContext(seq, ok, ok, JsonSchemaEvaluation.EvaluatedSubschema);
         return ok;
     }
 
-    private static bool EvalPropertyName<TMode>(in ChildRef child, IJsonDocument doc, int valueIndex, ref EvaluationState state, int parentSeq)
+    private static bool EvalPropertyName<TMode, TAccess>(in ChildRef child, IJsonDocument doc, int valueIndex, ref EvaluationState state, int parentSeq)
         where TMode : struct, IEvaluationMode
+        where TAccess : struct, IDocumentAccess
     {
         SchemaNode target = state.Nodes[TMode.Collecting ? child.Node : child.FastNode];
         if (!TMode.Collecting)
@@ -1221,12 +1259,12 @@ internal static class Evaluator
         using FixedStringJsonDocument<JsonElement> nameDoc = FixedStringJsonDocument<JsonElement>.Parse(doc.GetPropertyNameRaw(valueIndex, true), doc.ValueIsEscaped(valueIndex, true));
         if (!TMode.Collecting)
         {
-            return Eval<FastMode>(target, nameDoc, 0, ref state, default, 0);
+            return Eval<FastMode, InterfaceAccess>(target, nameDoc, 0, ref state, default, 0);
         }
 
         IJsonSchemaResultsCollector collector = state.Collector!;
         int seq = collector.BeginChildContext(parentSeq, new EdgeContext(child.Path, target.SchemaLocation, null, -1, -1), Providers.EvalPath, Providers.SchemaPath, null);
-        bool ok = Eval<TMode>(target, nameDoc, 0, ref state, default, seq);
+        bool ok = Eval<TMode, InterfaceAccess>(target, nameDoc, 0, ref state, default, seq);
         collector.CommitChildContext(seq, ok, ok, JsonSchemaEvaluation.EvaluatedSubschema);
         if (!ok)
         {
@@ -1236,16 +1274,16 @@ internal static class Evaluator
         return ok;
     }
 
-    private static bool EvalUnevaluatedProperties<TMode>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> evaluated, int seq)
+    private static bool EvalUnevaluatedProperties<TMode, TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> evaluated, int seq)
         where TMode : struct, IEvaluationMode
+        where TAccess : struct, IDocumentAccess
     {
         SchemaNode target = state.Nodes[node.UnevaluatedProperties.Node];
         bool ok = true;
         int propertyIndex = 0;
-        var enumerator = new ObjectEnumerator(doc, index);
-        while (enumerator.MoveNext())
+        int end = TAccess.EndIndex(ref state, doc, index);
+        for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; valueIndex = TAccess.NextIndex(ref state, doc, valueIndex) + RowSize)
         {
-            int valueIndex = enumerator.CurrentIndex;
             if (evaluated.IsEmpty || !IsEvaluated(evaluated, propertyIndex))
             {
                 MarkEvaluated(evaluated, propertyIndex);
@@ -1254,7 +1292,7 @@ internal static class Evaluator
                     return false;
                 }
 
-                if (!EvalProperty<TMode>(node.UnevaluatedProperties, doc, valueIndex, ref state, seq))
+                if (!EvalProperty<TMode, TAccess>(node.UnevaluatedProperties, doc, valueIndex, ref state, seq))
                 {
                     if (!TMode.Collecting)
                     {
@@ -1280,11 +1318,12 @@ internal static class Evaluator
     // array
     // ---------------------------------------------------------------------------------------------
 
-    private static bool EvalArray<TMode>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> evaluated, int seq)
+    private static bool EvalArray<TMode, TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> evaluated, int seq)
         where TMode : struct, IEvaluationMode
+        where TAccess : struct, IDocumentAccess
     {
         bool ok = true;
-        int length = doc.GetArrayLength(index);
+        int length = TAccess.Count(ref state, doc, index, JsonTokenType.StartArray);
 
         if (node.MinItems >= 0)
         {
@@ -1363,15 +1402,14 @@ internal static class Evaluator
         // Flag mode, items only, no tracking: tight loops for type-only / leaf item schemas.
         if (!TMode.Collecting && prefixItems is null && !hasContains && !unique && evaluated.IsEmpty && itemsNode is not null && (itemsNode.IsTypeOnly || itemsNode.IsLeaf))
         {
-            var simple = new ArrayEnumerator(doc, index);
+            int simpleEnd = TAccess.EndIndex(ref state, doc, index);
             if (itemsNode.IsTypeOnly)
             {
                 TypeMask mask = itemsNode.Type;
                 bool lexical = itemsNode.Dialect == JsonSchemaDialect.Draft4;
-                while (simple.MoveNext())
+                for (int valueIndex = index + RowSize; valueIndex < simpleEnd; valueIndex = TAccess.NextIndex(ref state, doc, valueIndex))
                 {
-                    int valueIndex = simple.CurrentIndex;
-                    if (!MatchesType(mask, doc.GetJsonTokenType(valueIndex), doc, valueIndex, lexical))
+                    if (!MatchesType<TAccess>(mask, TAccess.TokenType(ref state, doc, valueIndex), ref state, doc, valueIndex, lexical))
                     {
                         return false;
                     }
@@ -1380,9 +1418,9 @@ internal static class Evaluator
                 return ok;
             }
 
-            while (simple.MoveNext())
+            for (int valueIndex = index + RowSize; valueIndex < simpleEnd; valueIndex = TAccess.NextIndex(ref state, doc, valueIndex))
             {
-                if (!EvalLeafFast(itemsNode, doc, simple.CurrentIndex, ref state))
+                if (!EvalLeafFast<TAccess>(itemsNode, doc, valueIndex, ref state))
                 {
                     return false;
                 }
@@ -1404,15 +1442,14 @@ internal static class Evaluator
 
         try
         {
-            var enumerator = new ArrayEnumerator(doc, index);
-            while (enumerator.MoveNext())
+            int end = TAccess.EndIndex(ref state, doc, index);
+            for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = TAccess.NextIndex(ref state, doc, valueIndex))
             {
-                int valueIndex = enumerator.CurrentIndex;
 
                 if (prefixItems is not null && itemIndex < prefixItems.Length)
                 {
                     MarkEvaluated(evaluated, itemIndex);
-                    if (!EvalItem<TMode>(prefixItems[itemIndex], doc, valueIndex, itemIndex, ref state, seq))
+                    if (!EvalItem<TMode, TAccess>(prefixItems[itemIndex], doc, valueIndex, itemIndex, ref state, seq))
                     {
                         if (!TMode.Collecting)
                         {
@@ -1425,7 +1462,7 @@ internal static class Evaluator
                 else if (hasItems)
                 {
                     MarkEvaluated(evaluated, itemIndex);
-                    if (!EvalItem<TMode>(node.Items, doc, valueIndex, itemIndex, ref state, seq))
+                    if (!EvalItem<TMode, TAccess>(node.Items, doc, valueIndex, itemIndex, ref state, seq))
                     {
                         if (!TMode.Collecting)
                         {
@@ -1438,7 +1475,7 @@ internal static class Evaluator
 
                 if (hasContains)
                 {
-                    if (EvalContainsItem<TMode>(node.Contains, doc, valueIndex, itemIndex, ref state, seq))
+                    if (EvalContainsItem<TMode, TAccess>(node.Contains, doc, valueIndex, itemIndex, ref state, seq))
                     {
                         containsCount++;
                         if (node.ContainsMarksEvaluated)
@@ -1450,7 +1487,7 @@ internal static class Evaluator
 
                 if (unique && isUnique)
                 {
-                    bool duplicate = pairwise ? IsDuplicate(doc, valueIndex, seenIndices[..itemIndex]) : !set.AddItemIfNotExists(valueIndex);
+                    bool duplicate = pairwise ? IsDuplicate<TAccess>(ref state, doc, valueIndex, seenIndices[..itemIndex]) : !set.AddItemIfNotExists(valueIndex);
                     if (pairwise)
                     {
                         seenIndices[itemIndex] = valueIndex;
@@ -1514,13 +1551,14 @@ internal static class Evaluator
     /// <summary>
     /// Pairwise duplicate test for small arrays with cheap prefilters (token type, raw bytes for scalars).
     /// </summary>
-    private static bool IsDuplicate(IJsonDocument doc, int valueIndex, ReadOnlySpan<int> previous)
+    private static bool IsDuplicate<TAccess>(ref EvaluationState state, IJsonDocument doc, int valueIndex, scoped ReadOnlySpan<int> previous)
+        where TAccess : struct, IDocumentAccess
     {
-        JsonTokenType tokenType = doc.GetJsonTokenType(valueIndex);
+        JsonTokenType tokenType = TAccess.TokenType(ref state, doc, valueIndex);
         for (int i = 0; i < previous.Length; i++)
         {
             int other = previous[i];
-            JsonTokenType otherType = doc.GetJsonTokenType(other);
+            JsonTokenType otherType = TAccess.TokenType(ref state, doc, other);
             if (otherType != tokenType)
             {
                 continue;
@@ -1533,8 +1571,8 @@ internal static class Evaluator
                 case JsonTokenType.Null:
                     return true;
                 case JsonTokenType.String:
-                    if (doc.GetRawSimpleValue(valueIndex).Span.SequenceEqual(doc.GetRawSimpleValue(other).Span)
-                        || (doc.ValueIsEscaped(valueIndex, false) | doc.ValueIsEscaped(other, false)) && JsonElementHelpers.DeepEqualsNoParentDocumentCheck(doc, valueIndex, doc, other))
+                    if (TAccess.RawValue(ref state, doc, valueIndex).SequenceEqual(TAccess.RawValue(ref state, doc, other))
+                        || (TAccess.IsEscaped(ref state, doc, valueIndex) | TAccess.IsEscaped(ref state, doc, other)) && JsonElementHelpers.DeepEqualsNoParentDocumentCheck(doc, valueIndex, doc, other))
                     {
                         return true;
                     }
@@ -1542,8 +1580,8 @@ internal static class Evaluator
                     break;
                 case JsonTokenType.Number:
                 {
-                    ReadOnlySpan<byte> a = doc.GetRawSimpleValue(valueIndex).Span;
-                    ReadOnlySpan<byte> b = doc.GetRawSimpleValue(other).Span;
+                    ReadOnlySpan<byte> a = TAccess.RawValue(ref state, doc, valueIndex);
+                    ReadOnlySpan<byte> b = TAccess.RawValue(ref state, doc, other);
                     if (a.SequenceEqual(b))
                     {
                         return true;
@@ -1601,8 +1639,9 @@ internal static class Evaluator
         }
     }
 
-    private static bool EvalItem<TMode>(in ChildRef child, IJsonDocument doc, int valueIndex, int itemIndex, ref EvaluationState state, int parentSeq)
+    private static bool EvalItem<TMode, TAccess>(in ChildRef child, IJsonDocument doc, int valueIndex, int itemIndex, ref EvaluationState state, int parentSeq)
         where TMode : struct, IEvaluationMode
+        where TAccess : struct, IDocumentAccess
     {
         SchemaNode target = state.Nodes[TMode.Collecting ? child.Node : child.FastNode];
         if (!TMode.Collecting)
@@ -1619,26 +1658,27 @@ internal static class Evaluator
 
             if (target.IsLeaf)
             {
-                return EvalLeafFast(target, doc, valueIndex, ref state);
+                return EvalLeafFast<TAccess>(target, doc, valueIndex, ref state);
             }
 
             if (target.IsSimpleArray)
             {
-                return EvalSimpleArrayFast(target, doc, valueIndex, ref state);
+                return EvalSimpleArrayFast<TAccess>(target, doc, valueIndex, ref state);
             }
 
-            return Eval<FastMode>(target, doc, valueIndex, ref state, default, 0);
+            return Eval<FastMode, TAccess>(target, doc, valueIndex, ref state, default, 0);
         }
 
         IJsonSchemaResultsCollector collector = state.Collector!;
         int seq = collector.BeginChildContext(parentSeq, new EdgeContext(child.Path, target.SchemaLocation, doc, -1, itemIndex), Providers.EvalPath, Providers.SchemaPath, Providers.DocumentPath);
-        bool ok = Eval<TMode>(target, doc, valueIndex, ref state, default, seq);
+        bool ok = Eval<TMode, TAccess>(target, doc, valueIndex, ref state, default, seq);
         collector.CommitChildContext(seq, ok, ok, JsonSchemaEvaluation.EvaluatedSubschema);
         return ok;
     }
 
-    private static bool EvalContainsItem<TMode>(in ChildRef child, IJsonDocument doc, int valueIndex, int itemIndex, ref EvaluationState state, int parentSeq)
+    private static bool EvalContainsItem<TMode, TAccess>(in ChildRef child, IJsonDocument doc, int valueIndex, int itemIndex, ref EvaluationState state, int parentSeq)
         where TMode : struct, IEvaluationMode
+        where TAccess : struct, IDocumentAccess
     {
         SchemaNode target = state.Nodes[TMode.Collecting ? child.Node : child.FastNode];
         if (!TMode.Collecting)
@@ -1655,20 +1695,20 @@ internal static class Evaluator
 
             if (target.IsLeaf)
             {
-                return EvalLeafFast(target, doc, valueIndex, ref state);
+                return EvalLeafFast<TAccess>(target, doc, valueIndex, ref state);
             }
 
             if (target.IsSimpleArray)
             {
-                return EvalSimpleArrayFast(target, doc, valueIndex, ref state);
+                return EvalSimpleArrayFast<TAccess>(target, doc, valueIndex, ref state);
             }
 
-            return Eval<FastMode>(target, doc, valueIndex, ref state, default, 0);
+            return Eval<FastMode, TAccess>(target, doc, valueIndex, ref state, default, 0);
         }
 
         IJsonSchemaResultsCollector collector = state.Collector!;
         int seq = collector.BeginChildContext(parentSeq, new EdgeContext(child.Path, target.SchemaLocation, doc, -1, itemIndex), Providers.EvalPath, Providers.SchemaPath, Providers.DocumentPath);
-        bool ok = Eval<TMode>(target, doc, valueIndex, ref state, default, seq);
+        bool ok = Eval<TMode, TAccess>(target, doc, valueIndex, ref state, default, seq);
         if (ok)
         {
             collector.CommitChildContext(seq, true, true, JsonSchemaEvaluation.EvaluatedSubschema);
@@ -1681,16 +1721,16 @@ internal static class Evaluator
         return ok;
     }
 
-    private static bool EvalUnevaluatedItems<TMode>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> evaluated, int seq)
+    private static bool EvalUnevaluatedItems<TMode, TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> evaluated, int seq)
         where TMode : struct, IEvaluationMode
+        where TAccess : struct, IDocumentAccess
     {
         SchemaNode target = state.Nodes[node.UnevaluatedItems.Node];
         bool ok = true;
         int itemIndex = 0;
-        var enumerator = new ArrayEnumerator(doc, index);
-        while (enumerator.MoveNext())
+        int end = TAccess.EndIndex(ref state, doc, index);
+        for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = TAccess.NextIndex(ref state, doc, valueIndex))
         {
-            int valueIndex = enumerator.CurrentIndex;
             if (evaluated.IsEmpty || !IsEvaluated(evaluated, itemIndex))
             {
                 MarkEvaluated(evaluated, itemIndex);
@@ -1699,7 +1739,7 @@ internal static class Evaluator
                     return false;
                 }
 
-                if (!EvalItem<TMode>(node.UnevaluatedItems, doc, valueIndex, itemIndex, ref state, seq))
+                if (!EvalItem<TMode, TAccess>(node.UnevaluatedItems, doc, valueIndex, itemIndex, ref state, seq))
                 {
                     if (!TMode.Collecting)
                     {
@@ -1729,13 +1769,14 @@ internal static class Evaluator
     /// Evaluates a child schema against the same instance, merging its evaluated annotations into the
     /// parent's only when the child succeeds. Annotations never flow downwards.
     /// </summary>
-    private static bool EvalInPlaceChild<TMode>(in ChildRef child, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> parentBits, int parentSeq)
+    private static bool EvalInPlaceChild<TMode, TAccess>(in ChildRef child, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> parentBits, int parentSeq)
         where TMode : struct, IEvaluationMode
+        where TAccess : struct, IDocumentAccess
     {
-        if (parentBits.IsEmpty || !CanMark(state.Nodes[TMode.Collecting ? child.Node : child.FastNode], doc, index))
+        if (parentBits.IsEmpty || !CanMark<TAccess>(state.Nodes[TMode.Collecting ? child.Node : child.FastNode], ref state, doc, index))
         {
             // Nothing to merge: the child cannot mark properties/items of this instance.
-            return EvalInPlaceCore<TMode>(child, doc, index, ref state, default, parentSeq, commitOnFailure: true);
+            return EvalInPlaceCore<TMode, TAccess>(child, doc, index, ref state, default, parentSeq, commitOnFailure: true);
         }
 
         if (parentBits.Length <= InlineBitWords)
@@ -1743,7 +1784,7 @@ internal static class Evaluator
             Span<ulong> scratch = stackalloc ulong[InlineBitWords];
             scratch = scratch[..parentBits.Length];
             scratch.Clear();
-            bool ok = EvalInPlaceCore<TMode>(child, doc, index, ref state, scratch, parentSeq, commitOnFailure: true);
+            bool ok = EvalInPlaceCore<TMode, TAccess>(child, doc, index, ref state, scratch, parentSeq, commitOnFailure: true);
             if (ok)
             {
                 Merge(parentBits, scratch);
@@ -1757,7 +1798,7 @@ internal static class Evaluator
         {
             Span<ulong> scratch = rented.AsSpan(0, parentBits.Length);
             scratch.Clear();
-            bool ok = EvalInPlaceCore<TMode>(child, doc, index, ref state, scratch, parentSeq, commitOnFailure: true);
+            bool ok = EvalInPlaceCore<TMode, TAccess>(child, doc, index, ref state, scratch, parentSeq, commitOnFailure: true);
             if (ok)
             {
                 Merge(parentBits, scratch);
@@ -1772,9 +1813,10 @@ internal static class Evaluator
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool CanMark(SchemaNode target, IJsonDocument doc, int index)
+    private static bool CanMark<TAccess>(SchemaNode target, ref EvaluationState state, IJsonDocument doc, int index)
+        where TAccess : struct, IDocumentAccess
     {
-        return doc.GetJsonTokenType(index) == JsonTokenType.StartObject ? target.MarksProperties : target.MarksItems;
+        return TAccess.TokenType(ref state, doc, index) == JsonTokenType.StartObject ? target.MarksProperties : target.MarksItems;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1786,18 +1828,40 @@ internal static class Evaluator
         }
     }
 
-    private static bool EvalInPlaceCore<TMode>(in ChildRef child, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> bits, int parentSeq, bool commitOnFailure)
+    private static bool EvalInPlaceCore<TMode, TAccess>(in ChildRef child, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> bits, int parentSeq, bool commitOnFailure)
         where TMode : struct, IEvaluationMode
+        where TAccess : struct, IDocumentAccess
+    {
+        // Only in-place applicators can recurse without consuming the instance (whose depth the parser bounds),
+        // so the runaway guard counts in-place nesting alone.
+        if (++state.Depth > state.MaxDepth)
+        {
+            throw new JsonSchemaEvaluationException("Maximum in-place applicator depth exceeded; the schema recurses through $ref/allOf/anyOf/oneOf/not/if without consuming the instance.");
+        }
+
+        try
+        {
+            return EvalInPlaceCoreImpl<TMode, TAccess>(child, doc, index, ref state, bits, parentSeq, commitOnFailure);
+        }
+        finally
+        {
+            state.Depth--;
+        }
+    }
+
+    private static bool EvalInPlaceCoreImpl<TMode, TAccess>(in ChildRef child, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> bits, int parentSeq, bool commitOnFailure)
+        where TMode : struct, IEvaluationMode
+        where TAccess : struct, IDocumentAccess
     {
         SchemaNode target = state.Nodes[TMode.Collecting ? child.Node : child.FastNode];
         if (!TMode.Collecting)
         {
-            return Eval<FastMode>(target, doc, index, ref state, bits, 0);
+            return Eval<FastMode, TAccess>(target, doc, index, ref state, bits, 0);
         }
 
         IJsonSchemaResultsCollector collector = state.Collector!;
         int seq = collector.BeginChildContext(parentSeq, new EdgeContext(child.Path, target.SchemaLocation, null, -1, -1), Providers.EvalPath, Providers.SchemaPath, null);
-        bool ok = Eval<TMode>(target, doc, index, ref state, bits, seq);
+        bool ok = Eval<TMode, TAccess>(target, doc, index, ref state, bits, seq);
         if (ok || commitOnFailure)
         {
             collector.CommitChildContext(seq, ok, ok, JsonSchemaEvaluation.EvaluatedSubschema);
@@ -1810,15 +1874,16 @@ internal static class Evaluator
         return ok;
     }
 
-    private static bool EvalInPlace<TMode>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> evaluated, int seq)
+    private static bool EvalInPlace<TMode, TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> evaluated, int seq)
         where TMode : struct, IEvaluationMode
+        where TAccess : struct, IDocumentAccess
     {
         bool ok = true;
         SchemaNode[] nodes = state.Nodes;
 
         if (node.Ref.IsPresent)
         {
-            bool m = EvalInPlaceChild<TMode>(node.Ref, doc, index, ref state, evaluated, seq);
+            bool m = EvalInPlaceChild<TMode, TAccess>(node.Ref, doc, index, ref state, evaluated, seq);
             if (TMode.Collecting)
             {
                 state.Collector!.EvaluatedKeyword(m, m ? JsonSchemaEvaluation.MatchedAllSchema : JsonSchemaEvaluation.DidNotMatchAllSchema, node.Ref.Path);
@@ -1856,7 +1921,7 @@ internal static class Evaluator
             }
 
             var child = new ChildRef(targetNode, dynamicRef.PathSegment);
-            bool m = EvalInPlaceChild<TMode>(child, doc, index, ref state, evaluated, seq);
+            bool m = EvalInPlaceChild<TMode, TAccess>(child, doc, index, ref state, evaluated, seq);
             if (TMode.Collecting)
             {
                 state.Collector!.EvaluatedKeyword(m, m ? JsonSchemaEvaluation.MatchedAllSchema : JsonSchemaEvaluation.DidNotMatchAllSchema, dynamicRef.PathSegment);
@@ -1878,7 +1943,7 @@ internal static class Evaluator
             bool all = true;
             for (int i = 0; i < allOf.Length; i++)
             {
-                if (!EvalInPlaceChild<TMode>(allOf[i], doc, index, ref state, evaluated, seq))
+                if (!EvalInPlaceChild<TMode, TAccess>(allOf[i], doc, index, ref state, evaluated, seq))
                 {
                     if (!TMode.Collecting)
                     {
@@ -1902,15 +1967,15 @@ internal static class Evaluator
             bool any;
             if (!TMode.Collecting && node.AnyOfTypeUnion != TypeMask.None)
             {
-                any = MatchesType(node.AnyOfTypeUnion, doc.GetJsonTokenType(index), doc, index, node.Dialect == JsonSchemaDialect.Draft4);
+                any = MatchesType<TAccess>(node.AnyOfTypeUnion, TAccess.TokenType(ref state, doc, index), ref state, doc, index, node.Dialect == JsonSchemaDialect.Draft4);
             }
-            else if (!TMode.Collecting && node.AnyOfDiscriminator is Discriminator anyDiscriminator && TrySelectBranches(anyDiscriminator, doc, index, out int[] selected))
+            else if (!TMode.Collecting && node.AnyOfDiscriminator is Discriminator anyDiscriminator && TrySelectBranches<TAccess>(anyDiscriminator, ref state, doc, index, out int[] selected))
             {
-                any = EvalAnyOfSelected(anyOf, selected, doc, index, ref state, evaluated);
+                any = EvalAnyOfSelected<TAccess>(anyOf, selected, doc, index, ref state, evaluated);
             }
             else
             {
-                any = EvalAnyOf<TMode>(anyOf, doc, index, ref state, evaluated, seq);
+                any = EvalAnyOf<TMode, TAccess>(anyOf, doc, index, ref state, evaluated, seq);
             }
 
             if (TMode.Collecting)
@@ -1934,15 +1999,15 @@ internal static class Evaluator
             int matched;
             if (!TMode.Collecting && node.OneOfTypeUnion != TypeMask.None)
             {
-                matched = MatchesType(node.OneOfTypeUnion, doc.GetJsonTokenType(index), doc, index, node.Dialect == JsonSchemaDialect.Draft4) ? 1 : 0;
+                matched = MatchesType<TAccess>(node.OneOfTypeUnion, TAccess.TokenType(ref state, doc, index), ref state, doc, index, node.Dialect == JsonSchemaDialect.Draft4) ? 1 : 0;
             }
-            else if (!TMode.Collecting && node.OneOfDiscriminator is Discriminator oneDiscriminator && TrySelectBranches(oneDiscriminator, doc, index, out int[] selected))
+            else if (!TMode.Collecting && node.OneOfDiscriminator is Discriminator oneDiscriminator && TrySelectBranches<TAccess>(oneDiscriminator, ref state, doc, index, out int[] selected))
             {
-                matched = EvalOneOfSelected(oneOf, selected, doc, index, ref state, evaluated);
+                matched = EvalOneOfSelected<TAccess>(oneOf, selected, doc, index, ref state, evaluated);
             }
             else
             {
-                matched = EvalOneOf<TMode>(oneOf, doc, index, ref state, evaluated, seq);
+                matched = EvalOneOf<TMode, TAccess>(oneOf, doc, index, ref state, evaluated, seq);
             }
 
             bool one = matched == 1;
@@ -1968,13 +2033,13 @@ internal static class Evaluator
             bool inner;
             if (!TMode.Collecting)
             {
-                inner = Eval<FastMode>(target, doc, index, ref state, default, 0);
+                inner = Eval<FastMode, TAccess>(target, doc, index, ref state, default, 0);
             }
             else
             {
                 IJsonSchemaResultsCollector collector = state.Collector!;
                 int childSeq = collector.BeginChildContext(seq, new EdgeContext(node.Not.Path, target.SchemaLocation, null, -1, -1), Providers.EvalPath, Providers.SchemaPath, null);
-                inner = Eval<TMode>(target, doc, index, ref state, default, childSeq);
+                inner = Eval<TMode, TAccess>(target, doc, index, ref state, default, childSeq);
 
                 // Results (and therefore annotations) produced beneath `not` are always discarded.
                 collector.PopChildContext(childSeq);
@@ -1994,12 +2059,12 @@ internal static class Evaluator
 
         if (node.If.IsPresent)
         {
-            bool condition = EvalIf<TMode>(node.If, doc, index, ref state, evaluated, seq);
+            bool condition = EvalIf<TMode, TAccess>(node.If, doc, index, ref state, evaluated, seq);
             if (condition)
             {
                 if (node.Then.IsPresent)
                 {
-                    bool m = EvalInPlaceChild<TMode>(node.Then, doc, index, ref state, evaluated, seq);
+                    bool m = EvalInPlaceChild<TMode, TAccess>(node.Then, doc, index, ref state, evaluated, seq);
                     if (TMode.Collecting)
                     {
                         state.Collector!.EvaluatedKeyword(m, m ? JsonSchemaEvaluation.MatchedThen : JsonSchemaEvaluation.DidNotMatchThen, "then"u8);
@@ -2018,7 +2083,7 @@ internal static class Evaluator
             }
             else if (node.Else.IsPresent)
             {
-                bool m = EvalInPlaceChild<TMode>(node.Else, doc, index, ref state, evaluated, seq);
+                bool m = EvalInPlaceChild<TMode, TAccess>(node.Else, doc, index, ref state, evaluated, seq);
                 if (TMode.Collecting)
                 {
                     state.Collector!.EvaluatedKeyword(m, m ? JsonSchemaEvaluation.MatchedElse : JsonSchemaEvaluation.DidNotMatchElse, "else"u8);
@@ -2039,12 +2104,13 @@ internal static class Evaluator
         return ok;
     }
 
-    private static bool EvalIf<TMode>(in ChildRef child, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> parentBits, int parentSeq)
+    private static bool EvalIf<TMode, TAccess>(in ChildRef child, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> parentBits, int parentSeq)
         where TMode : struct, IEvaluationMode
+        where TAccess : struct, IDocumentAccess
     {
-        if (parentBits.IsEmpty || !CanMark(state.Nodes[TMode.Collecting ? child.Node : child.FastNode], doc, index))
+        if (parentBits.IsEmpty || !CanMark<TAccess>(state.Nodes[TMode.Collecting ? child.Node : child.FastNode], ref state, doc, index))
         {
-            bool r = EvalInPlaceCore<TMode>(child, doc, index, ref state, default, parentSeq, commitOnFailure: false);
+            bool r = EvalInPlaceCore<TMode, TAccess>(child, doc, index, ref state, default, parentSeq, commitOnFailure: false);
             if (TMode.Collecting)
             {
                 state.Collector!.EvaluatedKeyword(true, r ? JsonSchemaEvaluation.MatchedIfForThen : JsonSchemaEvaluation.MatchedIfForElse, "if"u8);
@@ -2059,7 +2125,7 @@ internal static class Evaluator
         scratch.Clear();
         try
         {
-            bool r = EvalInPlaceCore<TMode>(child, doc, index, ref state, scratch, parentSeq, commitOnFailure: false);
+            bool r = EvalInPlaceCore<TMode, TAccess>(child, doc, index, ref state, scratch, parentSeq, commitOnFailure: false);
             if (r)
             {
                 Merge(parentBits, scratch);
@@ -2084,9 +2150,10 @@ internal static class Evaluator
     /// <summary>
     /// Selects the candidate branches for an object instance from its discriminator property.
     /// </summary>
-    private static bool TrySelectBranches(Discriminator discriminator, IJsonDocument doc, int index, out int[] selected)
+    private static bool TrySelectBranches<TAccess>(Discriminator discriminator, ref EvaluationState state, IJsonDocument doc, int index, out int[] selected)
+        where TAccess : struct, IDocumentAccess
     {
-        if (doc.GetJsonTokenType(index) != JsonTokenType.StartObject)
+        if (TAccess.TokenType(ref state, doc, index) != JsonTokenType.StartObject)
         {
             selected = [];
             return false;
@@ -2099,13 +2166,15 @@ internal static class Evaluator
             return discriminator.AllRequire;
         }
 
-        if (valueDoc.GetJsonTokenType(valueIndex) != JsonTokenType.String)
+        bool sameDoc = ReferenceEquals(valueDoc, doc);
+        JsonTokenType valueType = sameDoc ? TAccess.TokenType(ref state, doc, valueIndex) : valueDoc.GetJsonTokenType(valueIndex);
+        if (valueType != JsonTokenType.String)
         {
             selected = discriminator.NonString;
             return true;
         }
 
-        using UnescapedUtf8JsonString value = valueDoc.GetUtf8JsonString(valueIndex, JsonTokenType.String);
+        using UnescapedUtf8JsonString value = sameDoc ? StringValue<TAccess>(ref state, doc, valueIndex) : valueDoc.GetUtf8JsonString(valueIndex, JsonTokenType.String);
         if (discriminator.KnownValues.TryGetValue(value.Span, out int[]? branches))
         {
             selected = branches;
@@ -2118,13 +2187,14 @@ internal static class Evaluator
         return true;
     }
 
-    private static bool EvalAnyOfSelected(ChildRef[] branches, int[] selected, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> parentBits)
+    private static bool EvalAnyOfSelected<TAccess>(ChildRef[] branches, int[] selected, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> parentBits)
+        where TAccess : struct, IDocumentAccess
     {
         if (parentBits.IsEmpty)
         {
             for (int i = 0; i < selected.Length; i++)
             {
-                if (EvalInPlaceCore<FastMode>(branches[selected[i]], doc, index, ref state, default, 0, commitOnFailure: false))
+                if (EvalInPlaceCore<FastMode, TAccess>(branches[selected[i]], doc, index, ref state, default, 0, commitOnFailure: false))
                 {
                     return true;
                 }
@@ -2142,7 +2212,7 @@ internal static class Evaluator
             for (int i = 0; i < selected.Length; i++)
             {
                 scratch.Clear();
-                if (EvalInPlaceCore<FastMode>(branches[selected[i]], doc, index, ref state, scratch, 0, commitOnFailure: false))
+                if (EvalInPlaceCore<FastMode, TAccess>(branches[selected[i]], doc, index, ref state, scratch, 0, commitOnFailure: false))
                 {
                     any = true;
                     Merge(parentBits, scratch);
@@ -2160,14 +2230,15 @@ internal static class Evaluator
         }
     }
 
-    private static int EvalOneOfSelected(ChildRef[] branches, int[] selected, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> parentBits)
+    private static int EvalOneOfSelected<TAccess>(ChildRef[] branches, int[] selected, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> parentBits)
+        where TAccess : struct, IDocumentAccess
     {
         if (parentBits.IsEmpty)
         {
             int matched = 0;
             for (int i = 0; i < selected.Length; i++)
             {
-                if (EvalInPlaceCore<FastMode>(branches[selected[i]], doc, index, ref state, default, 0, commitOnFailure: false))
+                if (EvalInPlaceCore<FastMode, TAccess>(branches[selected[i]], doc, index, ref state, default, 0, commitOnFailure: false))
                 {
                     matched++;
                     if (matched > 1)
@@ -2192,7 +2263,7 @@ internal static class Evaluator
             for (int i = 0; i < selected.Length; i++)
             {
                 scratch.Clear();
-                if (EvalInPlaceCore<FastMode>(branches[selected[i]], doc, index, ref state, scratch, 0, commitOnFailure: false))
+                if (EvalInPlaceCore<FastMode, TAccess>(branches[selected[i]], doc, index, ref state, scratch, 0, commitOnFailure: false))
                 {
                     matched++;
                     if (matched == 1)
@@ -2227,15 +2298,16 @@ internal static class Evaluator
         }
     }
 
-    private static bool EvalAnyOf<TMode>(ChildRef[] branches, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> parentBits, int parentSeq)
+    private static bool EvalAnyOf<TMode, TAccess>(ChildRef[] branches, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> parentBits, int parentSeq)
         where TMode : struct, IEvaluationMode
+        where TAccess : struct, IDocumentAccess
     {
         if (parentBits.IsEmpty)
         {
             bool any = false;
             for (int i = 0; i < branches.Length; i++)
             {
-                if (EvalInPlaceCore<TMode>(branches[i], doc, index, ref state, default, parentSeq, commitOnFailure: false))
+                if (EvalInPlaceCore<TMode, TAccess>(branches[i], doc, index, ref state, default, parentSeq, commitOnFailure: false))
                 {
                     any = true;
                     if (!TMode.Collecting)
@@ -2257,7 +2329,7 @@ internal static class Evaluator
             for (int i = 0; i < branches.Length; i++)
             {
                 scratch.Clear();
-                if (EvalInPlaceCore<TMode>(branches[i], doc, index, ref state, scratch, parentSeq, commitOnFailure: false))
+                if (EvalInPlaceCore<TMode, TAccess>(branches[i], doc, index, ref state, scratch, parentSeq, commitOnFailure: false))
                 {
                     any = true;
                     Merge(parentBits, scratch);
@@ -2275,15 +2347,16 @@ internal static class Evaluator
         }
     }
 
-    private static int EvalOneOf<TMode>(ChildRef[] branches, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> parentBits, int parentSeq)
+    private static int EvalOneOf<TMode, TAccess>(ChildRef[] branches, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> parentBits, int parentSeq)
         where TMode : struct, IEvaluationMode
+        where TAccess : struct, IDocumentAccess
     {
         if (parentBits.IsEmpty)
         {
             int matched = 0;
             for (int i = 0; i < branches.Length; i++)
             {
-                if (EvalInPlaceCore<TMode>(branches[i], doc, index, ref state, default, parentSeq, commitOnFailure: false))
+                if (EvalInPlaceCore<TMode, TAccess>(branches[i], doc, index, ref state, default, parentSeq, commitOnFailure: false))
                 {
                     matched++;
                     if (!TMode.Collecting && matched > 1)
@@ -2308,7 +2381,7 @@ internal static class Evaluator
             for (int i = 0; i < branches.Length; i++)
             {
                 scratch.Clear();
-                if (EvalInPlaceCore<TMode>(branches[i], doc, index, ref state, scratch, parentSeq, commitOnFailure: false))
+                if (EvalInPlaceCore<TMode, TAccess>(branches[i], doc, index, ref state, scratch, parentSeq, commitOnFailure: false))
                 {
                     matched++;
                     if (matched == 1)

@@ -79,7 +79,9 @@ public sealed class JsonSchemaEvaluatorOptions
     public string? EntryPoint { get; set; }
 
     /// <summary>
-    /// Gets or sets the maximum nesting depth for in-place applicator recursion before evaluation fails.
+    /// Gets or sets the maximum nesting of in-place applicators (<c>$ref</c>, <c>allOf</c>, <c>anyOf</c>, <c>oneOf</c>,
+    /// <c>not</c>, <c>if</c>/<c>then</c>/<c>else</c>, dependent schemas) before evaluation fails with
+    /// <see cref="JsonSchemaEvaluationException"/>. Instance depth is bounded separately by the parser.
     /// </summary>
-    public int MaxDepth { get; set; } = 512;
+    public int MaxDepth { get; set; } = 128;
 }

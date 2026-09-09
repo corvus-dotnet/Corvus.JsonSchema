@@ -100,6 +100,18 @@ public abstract partial class JsonDocument
     protected MetadataDb _parsedData;
 
     /// <summary>
+    /// Tries to get direct access to the document's rows and UTF-8 text for documents whose rows are all local.
+    /// </summary>
+    /// <param name="access">The accessor, valid until the document is disposed or mutated.</param>
+    /// <returns><see langword="true"/> if direct access is available for this document type.</returns>
+    [CLSCompliant(false)]
+    public virtual bool TryGetRawAccess(out RawDocumentAccess access)
+    {
+        access = default;
+        return false;
+    }
+
+    /// <summary>
     /// Indicates whether this document instance is immutable and cannot be modified.
     /// </summary>
     [CLSCompliant(false)]
