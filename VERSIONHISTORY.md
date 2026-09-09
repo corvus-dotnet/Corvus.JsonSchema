@@ -1,5 +1,29 @@
 # Version History
 
+## V5.5.5
+
+V5.5.5 fixes the schema locations reported by the V4 engine's generated types, which regressed in V5.0, and brings the V5 engine's schema locations into one consistent shape: root-level results carry the schema's pointer, nested locations keep their leading slash, and generated types now name the document they were generated from. The AsyncAPI 2.6 and 3.0 model packages are regenerated with the current generator.
+
+### New features
+
+- **Generated types report the schema document they were generated from.** The V5 engine's `SchemaLocation` constant is a JSON Pointer within the root schema document, so unlike the V4 engine's `file#/pointer` form it never named the document. Every generated type's nested `JsonSchema` class now also carries `SchemaDocument` (and `SchemaDocumentUtf8`): the root document the type was generated from, relative to the base location for generation, with no fragment, so `SchemaDocument + "#" + SchemaLocation` is a reference to the schema. A schema inside a `$id` sub-resource reports the document that contains the sub-resource and the pointer from that document's root, matching the existing pointer semantics. Global simple types report an empty document and pointer as before. See [#957](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/957).
+
+### Bug fixes
+
+- **The V4 engine's generated types push a file-relative schema location again.** The 5.0 migration switched the V4 C# emitter to the shared model's root-document pointer, a bare JSON Pointer with no `#`. The V4 runtime parses the pushed location as a `JsonReference`, so the pointer was read as a URI and keyword locations came out as `/parameters/FooId#/type` rather than `api.json#/parameters/FooId/type`, and the generated `SchemaLocation` property lost its file name. Both emitters use the relative schema location again, restoring the 4.x shape, and the OpenAPI 2.0 dialect model, the only checked-in V4 model regenerated with the bare form, is regenerated. See [#957](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/957).
+
+- **V5 root-level results carry the schema's root-document pointer.** A generated type's `Evaluate` wrapper began the root evaluation context without the type's schema location, and only child contexts set it, so a failure on the root schema reported `/type` while the same schema reached through a property reported `/$defs/foo/type`. The root context now begins with the type's schema location, in both generated types and standalone evaluators. See [#957](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/957).
+
+- **V5 nested schema locations keep their leading slash.** The generated schema location provider copied its pointer through the evaluation-path helper, which strips a leading `/` because evaluation path segments are appended after a separator. Schema locations are set rather than appended, so nested results and annotations from generated types read `$defs/foo/type` with no leading slash while standalone evaluators produced `/$defs/foo/type`, and the annotation JSON output keyed them as `#$defs/foo`. The provider now copies the pointer verbatim. See [#957](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/957).
+
+- **The schema navigation refactoring resolves the pointer the generator emits.** The analyzer required a `#` in the `SchemaLocation` constant to extract a pointer, but the V5 generator emits a bare pointer, so "Go to schema type" opened the schema file at the top rather than at the type's definition. The bare shape is now accepted alongside the `file#/pointer` and `https://host/id#/pointer` shapes. See [#957](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/957).
+
+### Breaking changes
+
+- **`JsonSchemaAnnotationProducer.Annotation.GetSchemaLocationText()` returns the JSON Pointer without a `#` prefix.** It previously returned the URI-fragment-encoded form with a `#` prefix while its `SchemaLocation` span, the callback overload's documentation, and the results collector's `GetSchemaEvaluationLocationText()` all described a plain JSON Pointer. It now returns the pointer, and the `#`-prefixed form is available from the new `GetSchemaLocationFragmentText()`. The JSON written by `WriteAnnotationsTo` and the keys returned by `CollectAnnotations` keep the `#`-prefixed form. See [#957](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/957).
+
+- **Three nested types in the AsyncAPI 3.0 model are renamed.** The `Corvus.Text.Json.AsyncApi26` and `Corvus.Text.Json.AsyncApi30` models had been generated at V5.1 and are regenerated with the current generator, whose naming heuristics now derive different names for three nested types in the 3.0 model: `PrincipalEntity` under `Sns010Channel.Statement`, `Sqs020Channel.Statement` and `Sqs020Operation.Statement` becomes `TheAwsAccountOrResourceArnThatThisStatementAppliesTo`, and `NameEntity` under `Type030Channel.WhenIsQueueThisObjectDefinesTheQueueProperties` becomes `TheNameOfTheQueueItMustNotExceed255CharactersLong`. The 2.6 model's type names are unchanged. See [#957](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/957).
+
 ## V5.5.4
 
 V5.5.4 adds native C# enums to the generated type surface: a pure string enum gains a nested `KnownValues` enum, and an object whose declared properties are all boolean gains a nested `[Flags]` enum, each with implicit conversions in both directions and direct builder support. Emission is on by default and controlled by a new `nativeEnums` option. There are no breaking changes.
