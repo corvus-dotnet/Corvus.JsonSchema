@@ -1283,11 +1283,16 @@ internal static partial class CodeGeneratorExtensions
         string schemaLocation = isGlobalSimpleType
             ? string.Empty
             : typeDeclaration.LocatedSchema.RootDocumentPointer;
+        string schemaDocument = isGlobalSimpleType
+            ? string.Empty
+            : typeDeclaration.RelativeSchemaDocument;
 
         generator
             .ReserveName("SchemaLocationProvider")
             .ReserveName("SchemaLocation")
             .ReserveName("SchemaLocationUtf8")
+            .ReserveName("SchemaDocument")
+            .ReserveName("SchemaDocumentUtf8")
             .AppendSeparatorLine()
             .AppendBlockIndent(
             """
@@ -1316,7 +1321,7 @@ internal static partial class CodeGeneratorExtensions
             .AppendBlockIndent(
             """
             /// <summary>
-            /// Gets the schema location from which this type was generated.
+            /// Gets the schema location from which this type was generated, as a JSON Pointer within <see cref="SchemaDocument"/>.
             /// </summary>
             """)
             .AppendLineIndent(
@@ -1330,7 +1335,30 @@ internal static partial class CodeGeneratorExtensions
             """)
             .AppendLineIndent(
                 "public static ReadOnlySpan<byte> SchemaLocationUtf8 => ",
-                SymbolDisplay.FormatLiteral(schemaLocation, true), "u8;");
+                SymbolDisplay.FormatLiteral(schemaLocation, true), "u8;")
+            .AppendSeparatorLine()
+            .AppendBlockIndent(
+            """
+            /// <summary>
+            /// Gets the schema document from which this type was generated, relative to the base location for generation.
+            /// </summary>
+            /// <remarks>
+            /// <see cref="SchemaLocation"/> is a JSON Pointer within this document, so <c>SchemaDocument + "#" + SchemaLocation</c>
+            /// is a reference to the schema, even for a schema inside a <c>$id</c> sub-resource.
+            /// </remarks>
+            """)
+            .AppendLineIndent(
+                "public const string SchemaDocument = ", SymbolDisplay.FormatLiteral(schemaDocument, true), ";")
+            .AppendSeparatorLine()
+            .AppendBlockIndent(
+            """
+            /// <summary>
+            /// Gets the schema document from which this type was generated as a UTF-8 string.
+            /// </summary>
+            """)
+            .AppendLineIndent(
+                "public static ReadOnlySpan<byte> SchemaDocumentUtf8 => ",
+                SymbolDisplay.FormatLiteral(schemaDocument, true), "u8;");
     }
 
     /// <summary>

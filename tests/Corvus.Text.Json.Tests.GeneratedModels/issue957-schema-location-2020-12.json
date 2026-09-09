@@ -11,6 +11,16 @@
       "properties": {
         "fooId": { "$ref": "#/$defs/fooId" }
       }
+    },
+    "sub": {
+      "$id": "https://example.com/issue957/sub-resource.json",
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
     }
   }
 }

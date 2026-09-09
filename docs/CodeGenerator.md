@@ -276,6 +276,7 @@ The tool generates:
 - **Immutable document factory**: `Person.Create(...)` builds a self-contained `ParsedJsonDocument<Person>` in a single pass, with no workspace and no serialization round trip
 - **Pattern matching**: `Match()` methods for `oneOf`/`anyOf` discriminated unions, plus `MatchEvery()` on `anyOf` compositions to visit every matching subschema, threading an accumulator through the calls
 - **Serialization**: `WriteTo(Utf8JsonWriter)` for zero-allocation output
+- **Schema provenance**: `Person.JsonSchema.SchemaDocument` is the schema document the type was generated from, relative to the generation base (for example `person.json`), and `Person.JsonSchema.SchemaLocation` is the JSON Pointer to the schema within that document (for example `/$defs/person`). Together they form the reference `person.json#/$defs/person`. A schema inside a `$id` sub-resource still reports the containing document and the pointer from its root. Validation results and annotations report the same pointer shape.
 
 ## Schema Draft Support
 

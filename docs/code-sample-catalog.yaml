@@ -802,9 +802,9 @@ main-docs:
       - {index: 8, language: bash, lines: [216, 218]}
       - {index: 9, language: bash, lines: [224, 226]}
       - {index: 10, language: json, lines: [258, 268]}
-      - {index: 11, language: bash, lines: [297, 302]}
-      - {index: 12, language: json, lines: [322, 331]}
-      - {index: 13, language: bash, lines: [360, 372]}
+      - {index: 11, language: bash, lines: [298, 303]}
+      - {index: 12, language: json, lines: [323, 332]}
+      - {index: 13, language: bash, lines: [361, 373]}
   - path: "docs/CodeSampleCatalog.md"
     blocks:
       - {index: 0, language: powershell, lines: [13, 26]}

@@ -66,6 +66,17 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
     public JsonReference RelativeSchemaLocation { get; internal set; }
 
     /// <summary>
+    /// Gets the root document from which this type was generated, relative to the base location
+    /// for generation (for example <c>schema.json</c>), with no fragment.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="LocatedSchema.RootDocumentPointer"/> is a JSON Pointer within this document, so
+    /// <c>RelativeSchemaDocument + "#" + LocatedSchema.RootDocumentPointer</c> locates the schema in the
+    /// document from which it was generated, even for a schema inside a <c>$id</c> sub-resource.
+    /// </remarks>
+    public string RelativeSchemaDocument { get; internal set; } = string.Empty;
+
+    /// <summary>
     /// Gets the property declarations for this type declaration.
     /// </summary>
     public IReadOnlyList<PropertyDeclaration> PropertyDeclarations =>

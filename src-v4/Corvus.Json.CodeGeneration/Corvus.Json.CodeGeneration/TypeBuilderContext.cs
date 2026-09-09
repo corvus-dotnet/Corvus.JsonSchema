@@ -449,6 +449,7 @@ public class TypeBuilderContext
             }
 
             typeDeclaration.RelativeSchemaLocation = this.GetRelativeLocationFor(typeDeclaration.LocatedSchema.Location);
+            typeDeclaration.RelativeSchemaDocument = this.GetRelativeSchemaDocumentFor(typeDeclaration.LocatedSchema);
             typeDeclaration.BuildComplete = true;
             return typeDeclaration;
         }
@@ -496,6 +497,22 @@ public class TypeBuilderContext
     private JsonReference GetRelativeLocationFor(JsonReference target)
     {
         return GetRelativeLocationFor(target, this.baseLocation);
+    }
+
+    /// <summary>
+    /// Gets the root document of the located schema, relative to the base location, with no fragment.
+    /// </summary>
+    /// <param name="locatedSchema">The located schema.</param>
+    /// <returns>The relative root document (for example <c>schema.json</c>), or an empty string if the schema has no root document.</returns>
+    private string GetRelativeSchemaDocumentFor(LocatedSchema locatedSchema)
+    {
+        if (locatedSchema.RootDocumentUri.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        JsonReference relative = GetRelativeLocationFor(new JsonReference(locatedSchema.RootDocumentUri), this.baseLocation);
+        return relative.HasUri ? relative.Uri.ToString() : string.Empty;
     }
 
     /// <summary>

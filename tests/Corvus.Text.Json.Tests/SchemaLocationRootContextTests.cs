@@ -67,6 +67,35 @@ public class SchemaLocationRootContextTests
     {
         Assert.AreEqual(FooIdSchemaLocation, Issue957FooId.JsonSchema.SchemaLocation);
         Assert.AreEqual("/$defs/holder", Issue957Holder.JsonSchema.SchemaLocation);
+        Assert.AreEqual("/$defs/sub/properties/x", Issue957SubResourceX.JsonSchema.SchemaLocation);
+    }
+
+    [TestMethod]
+    public void GeneratedType_SchemaDocument_IsTheRootDocumentThePointerIsRelativeTo()
+    {
+        // The schema at #/$defs/sub is a sub-resource with its own $id. Its types still report the
+        // file that contains the sub-resource, so SchemaDocument + "#" + SchemaLocation locates them.
+        Assert.AreEqual("issue957-schema-location-2020-12.json", Issue957FooId.JsonSchema.SchemaDocument);
+        Assert.AreEqual("issue957-schema-location-2020-12.json", Issue957Holder.JsonSchema.SchemaDocument);
+        Assert.AreEqual("issue957-schema-location-2020-12.json", Issue957SubResourceX.JsonSchema.SchemaDocument);
+        Assert.AreEqual("issue957-schema-location-2020-12.json#/$defs/sub/properties/x", Issue957SubResourceX.JsonSchema.SchemaDocument + "#" + Issue957SubResourceX.JsonSchema.SchemaLocation);
+        Assert.IsTrue(Issue957SubResourceX.JsonSchema.SchemaDocumentUtf8.SequenceEqual("issue957-schema-location-2020-12.json"u8));
+    }
+
+    [TestMethod]
+    public void SubResourceFailure_ReportsRootDocumentPointerOfTheFailingKeyword()
+    {
+        using var doc = ParsedJsonDocument<Issue957SubResourceX>.Parse("\"\"");
+        using var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+
+        Assert.IsFalse(doc.RootElement.EvaluateSchema(collector));
+
+        Assert.AreEqual(
+            """
+            fail|/$defs/sub/properties/x|||The value was expected to match the subschema.
+            fail|/$defs/sub/properties/x/minLength|/minLength||Expected the length of the value to be greater than or equal to '1'
+            """,
+            Dump(collector));
     }
 
     [TestMethod]
