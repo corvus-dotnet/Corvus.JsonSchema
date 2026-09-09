@@ -688,7 +688,7 @@ var element = JsonElement.ParseValue(&quot;{}&quot;u8);
 <p>The refactoring resolves schema files using three strategies (in order):</p>
 <ol>
 <li><strong>Attribute-based</strong> — Finds <code>[JsonSchemaTypeGenerator(&quot;path/to/schema.json&quot;)]</code> on the type or its containing types, then matches the path to an <code>AdditionalFiles</code> entry.</li>
-<li><strong><code>$id</code>-based</strong> — Reads the type's <code>SchemaLocation</code> constant (e.g., <code>&quot;https://example.com/order#/properties/total&quot;</code>), extracts the base URL, and searches <code>AdditionalFiles</code> for a schema whose <code>$id</code> matches.</li>
+<li><strong><code>$id</code>-based</strong> — Reads the type's <code>SchemaLocation</code> constant. The generator emits this as a JSON Pointer from the root of the schema document with no <code>#</code> (e.g., <code>&quot;/properties/total&quot;</code>). If the value is a full URL with a fragment instead (e.g., <code>&quot;https://example.com/order#/properties/total&quot;</code>), the base URL is extracted and <code>AdditionalFiles</code> is searched for a schema whose <code>$id</code> matches.</li>
 <li><strong>Property fallback</strong> — If a property's type is a project-global type (e.g., <code>JsonString</code>) with no schema of its own, falls back to the containing type's schema and appends <code>/properties/{jsonPropertyName}</code>.</li>
 </ol>
 <h3 id="cursor-positioning">Cursor positioning</h3>

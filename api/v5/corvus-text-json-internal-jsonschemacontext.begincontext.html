@@ -98,10 +98,10 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/7d01c8c8b65b1de81986d7f4f32c36c8752860b7/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaContext.cs#L34">JsonSchemaContext.cs</a></p>
-<h2 id="begincontext-t-int-bool-bool-ijsonschemaresultscollector">BeginContext(T, int, bool, bool, IJsonSchemaResultsCollector?)</h2>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/1a6b992ce6b77b209f4a9a6740f0e6a668e5cd15/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaContext.cs#L34">JsonSchemaContext.cs</a></p>
+<h2 id="begincontext-t-int-bool-bool-ijsonschemaresultscollector-jsonschemapathprovider">BeginContext(T, int, bool, bool, IJsonSchemaResultsCollector?, JsonSchemaPathProvider?)</h2>
 <p>Begins a new JSON schema evaluation context for the specified document.</p>
-<pre><code class="language-csharp">public static JsonSchemaContext BeginContext&lt;T&gt;(T parentDocument, int parentDocumentIndex, bool usingEvaluatedItems, bool usingEvaluatedProperties, IJsonSchemaResultsCollector? resultsCollector)
+<pre><code class="language-csharp">public static JsonSchemaContext BeginContext&lt;T&gt;(T parentDocument, int parentDocumentIndex, bool usingEvaluatedItems, bool usingEvaluatedProperties, IJsonSchemaResultsCollector? resultsCollector, JsonSchemaPathProvider? schemaEvaluationPath)
     where T : IJsonDocument
 </code></pre>
 <h3 id="type-parameters">Type Parameters</h3>
@@ -154,11 +154,18 @@
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-ijsonschemaresultscollector.html"><code>IJsonSchemaResultsCollector?</code></a></td>
 <td>An optional results collector for gathering evaluation results. <em>(optional)</em></td>
 </tr>
+<tr>
+<td><code>schemaEvaluationPath</code></td>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider?</code></a></td>
+<td>An optional provider for the location of the root schema, as a JSON Pointer from the root of the schema document. <em>(optional)</em></td>
+</tr>
 </tbody>
 </table>
 <h3 id="returns">Returns</h3>
 <p><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>JsonSchemaContext</code></a></p>
 <p>A new <a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>JsonSchemaContext</code></a> for the evaluation.</p>
+<h3 id="remarks">Remarks</h3>
+<p>A generated type passes its <code>SchemaLocationProvider</code> so that results reported against the root schema carry the same schema location as they would when the same schema is reached through a child context (for example, <code>/$defs/foo/type</code> rather than <code>/type</code>).</p>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

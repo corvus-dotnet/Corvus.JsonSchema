@@ -3171,6 +3171,13 @@
     "Body": ""
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-jsonschemaannotationproducer-annotation.getschemalocationfragmenttext.html",
+    "Title": "JsonSchemaAnnotationProducer.Annotation.GetSchemaLocationFragmentText",
+    "Description": "",
+    "Keywords": "JsonSchemaAnnotationProducer.Annotation GetSchemaLocationFragmentText method Corvus.Text.Json",
+    "Body": ""
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-jsonschemaannotationproducer-annotation.getvaluetext.html",
     "Title": "JsonSchemaAnnotationProducer.Annotation.GetValueText",
     "Description": "",
@@ -7595,6 +7602,13 @@
     "Body": ""
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonboolean-jsonschema.schemadocumentutf8.html",
+    "Title": "JsonBoolean.JsonSchema.SchemaDocumentUtf8",
+    "Description": "",
+    "Keywords": "JsonBoolean.JsonSchema SchemaDocumentUtf8 property Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonboolean-mutable.html",
     "Title": "JsonBoolean.Mutable",
     "Description": "",
@@ -7914,6 +7928,13 @@
     "Title": "JsonString.JsonSchema.SchemaLocationUtf8",
     "Description": "",
     "Keywords": "JsonString.JsonSchema SchemaLocationUtf8 property Corvus.Text.Json.AsyncApi.Internal",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-asyncapi-internal-jsonstring-jsonschema.schemadocumentutf8.html",
+    "Title": "JsonString.JsonSchema.SchemaDocumentUtf8",
+    "Description": "",
+    "Keywords": "JsonString.JsonSchema SchemaDocumentUtf8 property Corvus.Text.Json.AsyncApi.Internal",
     "Body": ""
   },
   {
@@ -16387,6 +16408,13 @@
     "Body": ""
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-addoperation-jsonschema.schemadocumentutf8.html",
+    "Title": "JsonPatchDocument.AddOperation.JsonSchema.SchemaDocumentUtf8",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.AddOperation.JsonSchema SchemaDocumentUtf8 property Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-addoperation-mutable.html",
     "Title": "JsonPatchDocument.AddOperation.Mutable",
     "Description": "",
@@ -16797,6 +16825,13 @@
     "Title": "JsonPatchDocument.AddOperation.OpEntity.JsonSchema.SchemaLocationUtf8",
     "Description": "",
     "Keywords": "JsonPatchDocument.AddOperation.OpEntity.JsonSchema SchemaLocationUtf8 property Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-addoperation-opentity-jsonschema.schemadocumentutf8.html",
+    "Title": "JsonPatchDocument.AddOperation.OpEntity.JsonSchema.SchemaDocumentUtf8",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.AddOperation.OpEntity.JsonSchema SchemaDocumentUtf8 property Corvus.Text.Json.Patch",
     "Body": ""
   },
   {
@@ -17444,6 +17479,13 @@
     "Body": ""
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-copyoperation-jsonschema.schemadocumentutf8.html",
+    "Title": "JsonPatchDocument.CopyOperation.JsonSchema.SchemaDocumentUtf8",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.CopyOperation.JsonSchema SchemaDocumentUtf8 property Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-copyoperation-mutable.html",
     "Title": "JsonPatchDocument.CopyOperation.Mutable",
     "Description": "",
@@ -17857,6 +17899,13 @@
     "Body": ""
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-copyoperation-opentity-jsonschema.schemadocumentutf8.html",
+    "Title": "JsonPatchDocument.CopyOperation.OpEntity.JsonSchema.SchemaDocumentUtf8",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.CopyOperation.OpEntity.JsonSchema SchemaDocumentUtf8 property Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-copyoperation-opentity-mutable.html",
     "Title": "JsonPatchDocument.CopyOperation.OpEntity.Mutable",
     "Description": "",
@@ -18078,6 +18127,13 @@
     "Title": "JsonPatchDocument.JsonSchema.SchemaLocationUtf8",
     "Description": "",
     "Keywords": "JsonPatchDocument.JsonSchema SchemaLocationUtf8 property Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-jsonschema.schemadocumentutf8.html",
+    "Title": "JsonPatchDocument.JsonSchema.SchemaDocumentUtf8",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.JsonSchema SchemaDocumentUtf8 property Corvus.Text.Json.Patch",
     "Body": ""
   },
   {
@@ -18428,6 +18484,13 @@
     "Title": "JsonPatchDocument.MoveOperation.JsonSchema.SchemaLocationUtf8",
     "Description": "",
     "Keywords": "JsonPatchDocument.MoveOperation.JsonSchema SchemaLocationUtf8 property Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-moveoperation-jsonschema.schemadocumentutf8.html",
+    "Title": "JsonPatchDocument.MoveOperation.JsonSchema.SchemaDocumentUtf8",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.MoveOperation.JsonSchema SchemaDocumentUtf8 property Corvus.Text.Json.Patch",
     "Body": ""
   },
   {
@@ -18841,6 +18904,13 @@
     "Title": "JsonPatchDocument.MoveOperation.OpEntity.JsonSchema.SchemaLocationUtf8",
     "Description": "",
     "Keywords": "JsonPatchDocument.MoveOperation.OpEntity.JsonSchema SchemaLocationUtf8 property Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-moveoperation-opentity-jsonschema.schemadocumentutf8.html",
+    "Title": "JsonPatchDocument.MoveOperation.OpEntity.JsonSchema.SchemaDocumentUtf8",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.MoveOperation.OpEntity.JsonSchema SchemaDocumentUtf8 property Corvus.Text.Json.Patch",
     "Body": ""
   },
   {
@@ -19635,6 +19705,13 @@
     "Body": ""
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-patchoperation-jsonschema.schemadocumentutf8.html",
+    "Title": "JsonPatchDocument.PatchOperation.JsonSchema.SchemaDocumentUtf8",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.PatchOperation.JsonSchema SchemaDocumentUtf8 property Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-patchoperation-mutable.html",
     "Title": "JsonPatchDocument.PatchOperation.Mutable",
     "Description": "",
@@ -20265,6 +20342,13 @@
     "Body": ""
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-patchoperationcommon-jsonschema.schemadocumentutf8.html",
+    "Title": "JsonPatchDocument.PatchOperationCommon.JsonSchema.SchemaDocumentUtf8",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.PatchOperationCommon.JsonSchema SchemaDocumentUtf8 property Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-patchoperationcommon-mutable.html",
     "Title": "JsonPatchDocument.PatchOperationCommon.Mutable",
     "Description": "",
@@ -20832,6 +20916,13 @@
     "Body": ""
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-removeoperation-jsonschema.schemadocumentutf8.html",
+    "Title": "JsonPatchDocument.RemoveOperation.JsonSchema.SchemaDocumentUtf8",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.RemoveOperation.JsonSchema SchemaDocumentUtf8 property Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-removeoperation-mutable.html",
     "Title": "JsonPatchDocument.RemoveOperation.Mutable",
     "Description": "",
@@ -21228,6 +21319,13 @@
     "Title": "JsonPatchDocument.RemoveOperation.OpEntity.JsonSchema.SchemaLocationUtf8",
     "Description": "",
     "Keywords": "JsonPatchDocument.RemoveOperation.OpEntity.JsonSchema SchemaLocationUtf8 property Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-removeoperation-opentity-jsonschema.schemadocumentutf8.html",
+    "Title": "JsonPatchDocument.RemoveOperation.OpEntity.JsonSchema.SchemaDocumentUtf8",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.RemoveOperation.OpEntity.JsonSchema SchemaDocumentUtf8 property Corvus.Text.Json.Patch",
     "Body": ""
   },
   {
@@ -21791,6 +21889,13 @@
     "Body": ""
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-replaceoperation-jsonschema.schemadocumentutf8.html",
+    "Title": "JsonPatchDocument.ReplaceOperation.JsonSchema.SchemaDocumentUtf8",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.ReplaceOperation.JsonSchema SchemaDocumentUtf8 property Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-replaceoperation-mutable.html",
     "Title": "JsonPatchDocument.ReplaceOperation.Mutable",
     "Description": "",
@@ -22201,6 +22306,13 @@
     "Title": "JsonPatchDocument.ReplaceOperation.OpEntity.JsonSchema.SchemaLocationUtf8",
     "Description": "",
     "Keywords": "JsonPatchDocument.ReplaceOperation.OpEntity.JsonSchema SchemaLocationUtf8 property Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-replaceoperation-opentity-jsonschema.schemadocumentutf8.html",
+    "Title": "JsonPatchDocument.ReplaceOperation.OpEntity.JsonSchema.SchemaDocumentUtf8",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.ReplaceOperation.OpEntity.JsonSchema SchemaDocumentUtf8 property Corvus.Text.Json.Patch",
     "Body": ""
   },
   {
@@ -22806,6 +22918,13 @@
     "Body": ""
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-testoperation-jsonschema.schemadocumentutf8.html",
+    "Title": "JsonPatchDocument.TestOperation.JsonSchema.SchemaDocumentUtf8",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.TestOperation.JsonSchema SchemaDocumentUtf8 property Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-testoperation-mutable.html",
     "Title": "JsonPatchDocument.TestOperation.Mutable",
     "Description": "",
@@ -23216,6 +23335,13 @@
     "Title": "JsonPatchDocument.TestOperation.OpEntity.JsonSchema.SchemaLocationUtf8",
     "Description": "",
     "Keywords": "JsonPatchDocument.TestOperation.OpEntity.JsonSchema SchemaLocationUtf8 property Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpatchdocument-testoperation-opentity-jsonschema.schemadocumentutf8.html",
+    "Title": "JsonPatchDocument.TestOperation.OpEntity.JsonSchema.SchemaDocumentUtf8",
+    "Description": "",
+    "Keywords": "JsonPatchDocument.TestOperation.OpEntity.JsonSchema SchemaDocumentUtf8 property Corvus.Text.Json.Patch",
     "Body": ""
   },
   {
@@ -23688,6 +23814,13 @@
     "Body": ""
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer-jsonschema.schemadocumentutf8.html",
+    "Title": "JsonPointer.JsonSchema.SchemaDocumentUtf8",
+    "Description": "",
+    "Keywords": "JsonPointer.JsonSchema SchemaDocumentUtf8 property Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonpointer-mutable.html",
     "Title": "JsonPointer.Mutable",
     "Description": "",
@@ -24042,6 +24175,13 @@
     "Title": "JsonString.JsonSchema.SchemaLocationUtf8",
     "Description": "",
     "Keywords": "JsonString.JsonSchema SchemaLocationUtf8 property Corvus.Text.Json.Patch",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-patch-jsonstring-jsonschema.schemadocumentutf8.html",
+    "Title": "JsonString.JsonSchema.SchemaDocumentUtf8",
+    "Description": "",
+    "Keywords": "JsonString.JsonSchema SchemaDocumentUtf8 property Corvus.Text.Json.Patch",
     "Body": ""
   },
   {
