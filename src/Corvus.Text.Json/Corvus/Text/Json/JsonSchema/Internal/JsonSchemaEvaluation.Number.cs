@@ -1319,7 +1319,7 @@ public static partial class JsonSchemaEvaluation
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool ExpectedNumberFormat(ReadOnlySpan<byte> typeName, Span<byte> buffer, out int written)
     {
-        if (!JsonReaderHelper.TryGetUtf8FromText(SR.JsonSchema_ExpectedNumberFormat.AsSpan(), buffer, out written))
+        if (!TryCopyUtf8(s_JsonSchema_ExpectedNumberFormat ??= Utf8(SR.JsonSchema_ExpectedNumberFormat), buffer, out written))
         {
             return false;
         }
@@ -1330,7 +1330,7 @@ public static partial class JsonSchemaEvaluation
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool ExpectedEqualsValue(string value, Span<byte> buffer, out int written)
     {
-        if (!JsonReaderHelper.TryGetUtf8FromText(SR.JsonSchema_ExpectedEquals.AsSpan(), buffer, out written))
+        if (!TryCopyUtf8(s_JsonSchema_ExpectedEquals ??= Utf8(SR.JsonSchema_ExpectedEquals), buffer, out written))
         {
             return false;
         }
@@ -1341,7 +1341,7 @@ public static partial class JsonSchemaEvaluation
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool ExpectedNotEqualsValue(string value, Span<byte> buffer, out int written)
     {
-        if (!JsonReaderHelper.TryGetUtf8FromText(SR.JsonSchema_ExpectedNotEquals.AsSpan(), buffer, out written))
+        if (!TryCopyUtf8(s_JsonSchema_ExpectedNotEquals ??= Utf8(SR.JsonSchema_ExpectedNotEquals), buffer, out written))
         {
             return false;
         }
@@ -1352,7 +1352,7 @@ public static partial class JsonSchemaEvaluation
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool ExpectedGreaterThanValue(string value, Span<byte> buffer, out int written)
     {
-        if (!JsonReaderHelper.TryGetUtf8FromText(SR.JsonSchema_ExpectedGreaterThan.AsSpan(), buffer, out written))
+        if (!TryCopyUtf8(s_JsonSchema_ExpectedGreaterThan ??= Utf8(SR.JsonSchema_ExpectedGreaterThan), buffer, out written))
         {
             return false;
         }
@@ -1363,7 +1363,7 @@ public static partial class JsonSchemaEvaluation
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool ExpectedGreaterThanOrEqualsValue(string value, Span<byte> buffer, out int written)
     {
-        if (!JsonReaderHelper.TryGetUtf8FromText(SR.JsonSchema_ExpectedGreaterThanOrEquals.AsSpan(), buffer, out written))
+        if (!TryCopyUtf8(s_JsonSchema_ExpectedGreaterThanOrEquals ??= Utf8(SR.JsonSchema_ExpectedGreaterThanOrEquals), buffer, out written))
         {
             return false;
         }
@@ -1374,7 +1374,7 @@ public static partial class JsonSchemaEvaluation
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool ExpectedLessThanValue(string value, Span<byte> buffer, out int written)
     {
-        if (!JsonReaderHelper.TryGetUtf8FromText(SR.JsonSchema_ExpectedLessThan.AsSpan(), buffer, out written))
+        if (!TryCopyUtf8(s_JsonSchema_ExpectedLessThan ??= Utf8(SR.JsonSchema_ExpectedLessThan), buffer, out written))
         {
             return false;
         }
@@ -1385,7 +1385,7 @@ public static partial class JsonSchemaEvaluation
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool ExpectedLessThanOrEqualsValue(string value, Span<byte> buffer, out int written)
     {
-        if (!JsonReaderHelper.TryGetUtf8FromText(SR.JsonSchema_ExpectedLessThanOrEquals.AsSpan(), buffer, out written))
+        if (!TryCopyUtf8(s_JsonSchema_ExpectedLessThanOrEquals ??= Utf8(SR.JsonSchema_ExpectedLessThanOrEquals), buffer, out written))
         {
             return false;
         }
