@@ -59,6 +59,13 @@ The `corvusjson` command-line tool generates C# from JSON Schema files. Used for
 
 > The legacy `generatejsonschematypes` command (package: `Corvus.Json.CodeGenerator`) still works as a shim but defaults to the V4 engine.
 
+### Runtime evaluator (`Corvus.Text.Json.RuntimeEvaluator`)
+
+Compiles a schema document into an in-memory node graph at runtime (no code generation, no Roslyn) and
+evaluates any `IJsonElement<T>` against it: zero-allocation flag validation, or full results and annotations
+through `JsonSchemaResultsCollector`. Supports Draft 4 to 2020-12 including `$dynamicRef`/`$recursiveRef`, and
+evaluation rooted at any subschema. Intended to replace the standalone evaluator for validation-only scenarios.
+
 ### Validator (`Corvus.Json.Validator`)
 
 A standalone schema validation tool that uses the standalone evaluator for command-line JSON validation.
@@ -174,6 +181,7 @@ finally { if (rentedArray != null) ArrayPool<byte>.Shared.Return(rentedArray); }
 |-------|----------|
 | Code generation patterns | [CodeGenerationPatternDiscovery.md](docs/CodeGenerationPatternDiscovery.md) |
 | Standalone evaluator | [StandaloneEvaluatorInternals.md](docs/StandaloneEvaluatorInternals.md) |
+| Runtime evaluator (no codegen) | [RuntimeEvaluator.md](docs/RuntimeEvaluator.md), [RuntimeEvaluatorResults.md](docs/RuntimeEvaluatorResults.md) |
 | Validation handlers | [ValidationHandlerGuide.md](docs/ValidationHandlerGuide.md) |
 | Annotation system | [AnnotationSystem.md](docs/AnnotationSystem.md) |
 | Adding keywords | [AddingKeywords.md](docs/AddingKeywords.md) |

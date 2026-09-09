@@ -1,0 +1,20 @@
+<Project Sdk="MSTest.Sdk">
+  <PropertyGroup>
+    <!-- net481 is not targeted: the evaluator library is net9.0/net10.0 only. -->
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <NoWarn>$(NoWarn);CS1591;MSTEST0014;MSTEST0032;MSTEST0003</NoWarn>
+    <IsPackable>false</IsPackable>
+    <JsonSchemaTestSuiteRoot>$(MSBuildThisFileDirectory)..\..\JSON-Schema-Test-Suite\</JsonSchemaTestSuiteRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.RuntimeEvaluator\Corvus.Text.Json.RuntimeEvaluator.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>JsonSchemaTestSuiteRoot</_Parameter1>
+      <_Parameter2>$(JsonSchemaTestSuiteRoot)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+</Project>
