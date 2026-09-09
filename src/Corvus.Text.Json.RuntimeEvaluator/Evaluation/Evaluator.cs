@@ -15,7 +15,7 @@ namespace Corvus.Text.Json.RuntimeEvaluator.Evaluation;
 [SkipLocalsInit]
 internal static class Evaluator
 {
-    private const int InlineBitWords = 4; // 256 properties/items before renting
+    internal const int InlineBitWords = 4; // 256 properties/items before renting
 
     /// <summary>The size of a metadata row; the layout shared by every Corvus document (see ObjectEnumerator/ArrayEnumerator).</summary>
     internal const int RowSize = 12;
@@ -104,12 +104,7 @@ internal static class Evaluator
             return value;
         }
 
-        bool pushedScope = false;
-        if (state.UsesDynamicScope && (state.ScopeDepth == 0 || state.Scope[state.ScopeDepth - 1] != node.ResourceId))
-        {
-            state.PushScope(node.ResourceId);
-            pushedScope = true;
-        }
+        bool pushedScope = EnterScope(node, ref state);
 
         JsonTokenType tokenType = default(TAccess).TokenType(ref state, doc, index);
 
@@ -385,6 +380,252 @@ internal static class Evaluator
     /// <summary>
     /// Fused flag-mode evaluation of an array whose items are leaves: size bounds plus one tight loop.
     /// </summary>
+    /// <summary>
+    /// Pushes the node's resource onto the dynamic scope when it differs from the innermost one; the caller pops
+    /// it again when this returns <see langword="true"/>.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool EnterScope(SchemaNode node, ref EvaluationState state)
+    {
+        if (state.UsesDynamicScope && (state.ScopeDepth == 0 || state.Scope[state.ScopeDepth - 1] != node.ResourceId))
+        {
+            state.PushScope(node.ResourceId);
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Flag-mode entry for a child schema of a consuming keyword (or an in-place child with no live bitset):
+    /// dispatches once on the node's compile-time plan.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool EvalChildFast<TAccess>(SchemaNode target, IJsonDocument doc, int index, ref EvaluationState state)
+        where TAccess : struct, IDocumentAccess
+    {
+        switch (target.Plan)
+        {
+            case NodePlan.AlwaysTrue:
+                return true;
+            case NodePlan.AlwaysFalse:
+                return false;
+            case NodePlan.Leaf:
+                return EvalLeafFast<TAccess>(target, doc, index, ref state);
+            case NodePlan.SimpleArray:
+                return EvalSimpleArrayFast<TAccess>(target, doc, index, ref state);
+            case NodePlan.Object:
+                return EvalObjectPlan<TAccess>(target, doc, index, ref state);
+            case NodePlan.ArrayItems:
+                return EvalArrayItemsPlan<TAccess>(target, doc, index, ref state);
+            case NodePlan.DynamicRef:
+                return EvalDynamicRefPlan<TAccess>(target, doc, index, ref state);
+            default:
+                return Eval<FastMode, TAccess>(target, doc, index, ref state, default, 0);
+        }
+    }
+
+    /// <summary>
+    /// <see cref="NodePlan.Object"/>: optional type test, then properties/additionalProperties/required/count bounds
+    /// in one loop, with children dispatched through <see cref="EvalChildFast{TAccess}"/>.
+    /// </summary>
+    private static bool EvalObjectPlan<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
+        where TAccess : struct, IDocumentAccess
+    {
+        JsonTokenType tokenType = default(TAccess).TokenType(ref state, doc, index);
+        if (tokenType != JsonTokenType.StartObject)
+        {
+            return !node.HasType || MatchesType<TAccess>(node.Type, tokenType, ref state, doc, index, (node.Flags & NodeFlags.Draft4) != 0);
+        }
+
+        if (node.HasType && (node.Type & TypeMask.Object) == 0)
+        {
+            return false;
+        }
+
+        bool pushed = EnterScope(node, ref state);
+        bool ok = EvalObjectPlanCore<TAccess>(node, doc, index, ref state);
+        if (pushed)
+        {
+            state.ScopeDepth--;
+        }
+
+        return ok;
+    }
+
+    private static bool EvalObjectPlanCore<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
+        where TAccess : struct, IDocumentAccess
+    {
+        if (node.UnrolledProperties is PropertyEntry[] unrolled)
+        {
+            return EvalObjectUnrolled<TAccess>(node, unrolled, doc, index, ref state);
+        }
+
+        if (node.MinProperties >= 0 || node.MaxProperties >= 0)
+        {
+            int count = default(TAccess).Count(ref state, doc, index, JsonTokenType.StartObject);
+            if ((node.MinProperties >= 0 && count < node.MinProperties) || (node.MaxProperties >= 0 && count > node.MaxProperties))
+            {
+                return false;
+            }
+        }
+
+        Utf8NameMap<PropertyEntry>? properties = node.Properties;
+        SchemaNode? additional = node.AdditionalProperties.IsPresent ? state.Nodes[node.AdditionalProperties.FastNode] : null;
+        int words = (node.SeenBitCount + 63) >> 6;
+        Span<ulong> seen = stackalloc ulong[InlineBitWords];
+        seen = seen[..words];
+        seen.Clear();
+
+        if (properties is not null || additional is not null)
+        {
+            int end = default(TAccess).EndIndex(ref state, doc, index);
+            for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex) + RowSize)
+            {
+                if (!default(TAccess).PropertyNameIsEscaped(ref state, doc, valueIndex))
+                {
+                    if (!EvalObjectPlanProperty<TAccess>(properties, additional, default(TAccess).PropertyNameRawMemory(ref state, doc, valueIndex).Span, doc, valueIndex, ref state, seen))
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
+                    if (!EvalObjectPlanProperty<TAccess>(properties, additional, name.Span, doc, valueIndex, ref state, seen))
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        if (node.RequiredSeenBits is int[] required)
+        {
+            for (int i = 0; i < required.Length; i++)
+            {
+                int bit = required[i];
+                if ((seen[bit >> 6] & (1UL << (bit & 63))) == 0)
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool EvalObjectPlanProperty<TAccess>(Utf8NameMap<PropertyEntry>? properties, SchemaNode? additional, scoped ReadOnlySpan<byte> name, IJsonDocument doc, int valueIndex, ref EvaluationState state, scoped Span<ulong> seen)
+        where TAccess : struct, IDocumentAccess
+    {
+        if (properties is not null && properties.TryGetValue(name, out PropertyEntry? entry))
+        {
+            if (entry.SeenBit >= 0)
+            {
+                seen[entry.SeenBit >> 6] |= 1UL << (entry.SeenBit & 63);
+            }
+
+            return !entry.Schema.IsPresent || EvalChildFast<TAccess>(state.Nodes[entry.Schema.FastNode], doc, valueIndex, ref state);
+        }
+
+        return additional is null || EvalChildFast<TAccess>(additional, doc, valueIndex, ref state);
+    }
+
+    /// <summary>
+    /// <see cref="NodePlan.ArrayItems"/>: optional type test, length bounds, then every item through
+    /// <see cref="EvalChildFast{TAccess}"/>.
+    /// </summary>
+    private static bool EvalArrayItemsPlan<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
+        where TAccess : struct, IDocumentAccess
+    {
+        JsonTokenType tokenType = default(TAccess).TokenType(ref state, doc, index);
+        if (tokenType != JsonTokenType.StartArray)
+        {
+            return !node.HasType || MatchesType<TAccess>(node.Type, tokenType, ref state, doc, index, (node.Flags & NodeFlags.Draft4) != 0);
+        }
+
+        if (node.HasType && (node.Type & TypeMask.Array) == 0)
+        {
+            return false;
+        }
+
+        if (node.MinItems >= 0 || node.MaxItems >= 0)
+        {
+            int length = default(TAccess).Count(ref state, doc, index, JsonTokenType.StartArray);
+            if ((node.MinItems >= 0 && length < node.MinItems) || (node.MaxItems >= 0 && length > node.MaxItems))
+            {
+                return false;
+            }
+        }
+
+        if (!node.Items.IsPresent)
+        {
+            return true;
+        }
+
+        SchemaNode items = state.Nodes[node.Items.FastNode];
+        if (items.Plan == NodePlan.AlwaysTrue)
+        {
+            return true;
+        }
+
+        bool pushed = EnterScope(node, ref state);
+        bool ok = true;
+        int end = default(TAccess).EndIndex(ref state, doc, index);
+        for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex))
+        {
+            if (!EvalChildFast<TAccess>(items, doc, valueIndex, ref state))
+            {
+                ok = false;
+                break;
+            }
+        }
+
+        if (pushed)
+        {
+            state.ScopeDepth--;
+        }
+
+        return ok;
+    }
+
+    /// <summary>
+    /// <see cref="NodePlan.DynamicRef"/>: resolves the anchor against the dynamic scope (outermost resource first)
+    /// and dispatches straight to the target's plan. Targets on an in-place cycle keep the general path so that the
+    /// runaway guard still applies.
+    /// </summary>
+    private static bool EvalDynamicRefPlan<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
+        where TAccess : struct, IDocumentAccess
+    {
+        DynamicRefTarget dynamicRef = node.DynamicRef!;
+        int targetNode = -1;
+        int[] table = dynamicRef.NodeByResource;
+        Span<int> scope = state.Scope[..state.ScopeDepth];
+        for (int i = 0; i < scope.Length; i++)
+        {
+            int candidate = table[scope[i]];
+            if (candidate >= 0)
+            {
+                targetNode = candidate;
+                break;
+            }
+        }
+
+        if (targetNode < 0)
+        {
+            targetNode = dynamicRef.FallbackNode;
+        }
+
+        SchemaNode target = state.Nodes[targetNode];
+        if ((target.Flags & NodeFlags.InPlaceCycle) != 0)
+        {
+            return Eval<FastMode, TAccess>(node, doc, index, ref state, default, 0);
+        }
+
+        return EvalChildFast<TAccess>(target, doc, index, ref state);
+    }
+
     private static bool EvalSimpleArrayFast<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
         where TAccess : struct, IDocumentAccess
     {
@@ -1218,27 +1459,7 @@ internal static class Evaluator
         SchemaNode target = state.Nodes[default(TMode).Collecting ? child.Node : child.FastNode];
         if (!default(TMode).Collecting)
         {
-            if (target.AlwaysTrue)
-            {
-                return true;
-            }
-
-            if (target.AlwaysFalse)
-            {
-                return false;
-            }
-
-            if (target.IsLeaf)
-            {
-                return EvalLeafFast<TAccess>(target, doc, valueIndex, ref state);
-            }
-
-            if (target.IsSimpleArray)
-            {
-                return EvalSimpleArrayFast<TAccess>(target, doc, valueIndex, ref state);
-            }
-
-            return Eval<FastMode, TAccess>(target, doc, valueIndex, ref state, default, 0);
+            return EvalChildFast<TAccess>(target, doc, valueIndex, ref state);
         }
 
         IJsonSchemaResultsCollector collector = state.Collector!;
@@ -1656,27 +1877,7 @@ internal static class Evaluator
         SchemaNode target = state.Nodes[default(TMode).Collecting ? child.Node : child.FastNode];
         if (!default(TMode).Collecting)
         {
-            if (target.AlwaysTrue)
-            {
-                return true;
-            }
-
-            if (target.AlwaysFalse)
-            {
-                return false;
-            }
-
-            if (target.IsLeaf)
-            {
-                return EvalLeafFast<TAccess>(target, doc, valueIndex, ref state);
-            }
-
-            if (target.IsSimpleArray)
-            {
-                return EvalSimpleArrayFast<TAccess>(target, doc, valueIndex, ref state);
-            }
-
-            return Eval<FastMode, TAccess>(target, doc, valueIndex, ref state, default, 0);
+            return EvalChildFast<TAccess>(target, doc, valueIndex, ref state);
         }
 
         IJsonSchemaResultsCollector collector = state.Collector!;
@@ -1693,27 +1894,7 @@ internal static class Evaluator
         SchemaNode target = state.Nodes[default(TMode).Collecting ? child.Node : child.FastNode];
         if (!default(TMode).Collecting)
         {
-            if (target.AlwaysTrue)
-            {
-                return true;
-            }
-
-            if (target.AlwaysFalse)
-            {
-                return false;
-            }
-
-            if (target.IsLeaf)
-            {
-                return EvalLeafFast<TAccess>(target, doc, valueIndex, ref state);
-            }
-
-            if (target.IsSimpleArray)
-            {
-                return EvalSimpleArrayFast<TAccess>(target, doc, valueIndex, ref state);
-            }
-
-            return Eval<FastMode, TAccess>(target, doc, valueIndex, ref state, default, 0);
+            return EvalChildFast<TAccess>(target, doc, valueIndex, ref state);
         }
 
         IJsonSchemaResultsCollector collector = state.Collector!;
@@ -1867,7 +2048,9 @@ internal static class Evaluator
         SchemaNode target = state.Nodes[default(TMode).Collecting ? child.Node : child.FastNode];
         if (!default(TMode).Collecting)
         {
-            return Eval<FastMode, TAccess>(target, doc, index, ref state, bits, 0);
+            return bits.IsEmpty
+                ? EvalChildFast<TAccess>(target, doc, index, ref state)
+                : Eval<FastMode, TAccess>(target, doc, index, ref state, bits, 0);
         }
 
         IJsonSchemaResultsCollector collector = state.Collector!;

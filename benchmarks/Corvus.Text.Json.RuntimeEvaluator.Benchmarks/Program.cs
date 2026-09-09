@@ -24,6 +24,11 @@ if (args.Length > 0 && args[0] == "asm")
     return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.AssemblyCheck.Run();
 }
 
+if (args.Length > 0 && args[0] == "dump")
+{
+    return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.NodeDump.Run(args[1..]);
+}
+
 if (args.Length > 0 && args[0] == "profile")
 {
     return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.ProfileLoop.Run(args[1..]);

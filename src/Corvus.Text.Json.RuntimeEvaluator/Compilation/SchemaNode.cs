@@ -479,6 +479,38 @@ internal enum NodeFlags : uint
     ValueKeywords = HasType | HasConst | HasEnum,
 }
 
+/// <summary>
+/// The fused flag-mode evaluation routine selected for a node at compile time. Child entry sites dispatch on this
+/// once instead of testing keyword flags on every entry (the runtime analogue of Blaze's instruction selection).
+/// Collecting mode and in-place entry with a live evaluated bitset always use the general path.
+/// </summary>
+internal enum NodePlan : byte
+{
+    /// <summary>The general keyword-by-keyword path (<c>Evaluator.Eval</c>).</summary>
+    General = 0,
+
+    /// <summary>The boolean schema <c>true</c>.</summary>
+    AlwaysTrue,
+
+    /// <summary>The boolean schema <c>false</c>.</summary>
+    AlwaysFalse,
+
+    /// <summary>Only local keywords (type/const/enum/number/string).</summary>
+    Leaf,
+
+    /// <summary><c>type: array</c> with leaf items and length bounds only.</summary>
+    SimpleArray,
+
+    /// <summary>Optional <c>type</c> plus <c>items</c> and length bounds only; items may be any plan.</summary>
+    ArrayItems,
+
+    /// <summary>Optional <c>type</c> plus properties/required/additionalProperties/property-count bounds only.</summary>
+    Object,
+
+    /// <summary>A bare <c>$dynamicRef</c>: resolved against the dynamic scope at the entry site and dispatched directly.</summary>
+    DynamicRef,
+}
+
 internal sealed class SchemaNode
 {
     public int Id;
@@ -526,6 +558,9 @@ internal sealed class SchemaNode
 
     /// <summary>The packed flags; see <see cref="NodeFlags"/>.</summary>
     public NodeFlags Flags;
+
+    /// <summary>The fused flag-mode routine for this node; see <see cref="NodePlan"/>.</summary>
+    public NodePlan Plan;
     public bool HasSeenBits;
 
     // type

@@ -92,6 +92,7 @@ internal sealed class SchemaCompiler
     private static readonly bool DisableDiscriminator = Environment.GetEnvironmentVariable("CORVUS_RT_NO_DISCRIMINATOR") == "1";
     private static readonly bool DisableLeaf = Environment.GetEnvironmentVariable("CORVUS_RT_NO_LEAF") == "1";
     private static readonly bool DisableOrdering = Environment.GetEnvironmentVariable("CORVUS_RT_NO_ORDER") == "1";
+    private static readonly bool DisablePlans = Environment.GetEnvironmentVariable("CORVUS_RT_NO_PLANS") == "1";
 
     private readonly SchemaLoader loader;
     private readonly JsonSchemaEvaluatorOptions options;
@@ -311,6 +312,7 @@ internal sealed class SchemaCompiler
         this.OrderUnrolledProperties();
         this.ComputeSimpleArrays();
         this.ComputeInPlaceCycles();
+        this.ComputePlans();
         this.ComputeFlags();
     }
 
@@ -851,51 +853,18 @@ internal sealed class SchemaCompiler
         }
     }
 
+    /// <summary>
+    /// A node allocates an evaluated-property/item bitset on entry only when it consumes one itself
+    /// (<c>unevaluatedProperties</c>/<c>unevaluatedItems</c>). In-place children receive the parent's bitset (or a
+    /// scratch copy) through the call, so they need no flag of their own; a node reached with an empty bitset has
+    /// no consumer above it on this instance and skips the marking entirely.
+    /// </summary>
     private void ComputeTracking()
     {
-        var queueProps = new Queue<int>();
-        var queueItems = new Queue<int>();
         foreach (SchemaNode n in this.nodes)
         {
-            if (n.UnevaluatedProperties.IsPresent)
-            {
-                n.TracksProperties = true;
-                queueProps.Enqueue(n.Id);
-            }
-
-            if (n.UnevaluatedItems.IsPresent)
-            {
-                n.TracksItems = true;
-                queueItems.Enqueue(n.Id);
-            }
-        }
-
-        while (queueProps.Count > 0)
-        {
-            SchemaNode n = this.nodes[queueProps.Dequeue()];
-            foreach (int child in n.InPlaceChildren(includeNot: false))
-            {
-                SchemaNode c = this.nodes[child];
-                if (!c.TracksProperties)
-                {
-                    c.TracksProperties = true;
-                    queueProps.Enqueue(child);
-                }
-            }
-        }
-
-        while (queueItems.Count > 0)
-        {
-            SchemaNode n = this.nodes[queueItems.Dequeue()];
-            foreach (int child in n.InPlaceChildren(includeNot: false))
-            {
-                SchemaNode c = this.nodes[child];
-                if (!c.TracksItems)
-                {
-                    c.TracksItems = true;
-                    queueItems.Enqueue(child);
-                }
-            }
+            n.TracksProperties = n.UnevaluatedProperties.IsPresent;
+            n.TracksItems = n.UnevaluatedItems.IsPresent;
         }
     }
 
@@ -1907,6 +1876,74 @@ internal sealed class SchemaCompiler
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Selects the fused flag-mode routine for every node; see <see cref="NodePlan"/>. With
+    /// <c>CORVUS_RT_NO_PLANS=1</c> only the routines that predate plans (leaf, simple array) are selected, for A/B runs.
+    /// </summary>
+    private void ComputePlans()
+    {
+        foreach (SchemaNode node in this.nodes)
+        {
+            node.Plan = SelectPlan(node);
+        }
+    }
+
+    private static NodePlan SelectPlan(SchemaNode node)
+    {
+        if (node.AlwaysTrue)
+        {
+            return NodePlan.AlwaysTrue;
+        }
+
+        if (node.AlwaysFalse)
+        {
+            return NodePlan.AlwaysFalse;
+        }
+
+        if (node.IsLeaf)
+        {
+            return NodePlan.Leaf;
+        }
+
+        if (node.IsSimpleArray)
+        {
+            return NodePlan.SimpleArray;
+        }
+
+        if (DisablePlans)
+        {
+            return NodePlan.General;
+        }
+
+        bool noValueKeywords = !node.HasConst && node.Enum is null && !node.HasNumberKeywords && !node.HasStringKeywords;
+        bool noUnevaluated = !node.UnevaluatedProperties.IsPresent && !node.UnevaluatedItems.IsPresent;
+
+        if (node.DynamicRef is not null && !node.Ref.IsPresent && node.AllOf is null && node.AnyOf is null && node.OneOf is null
+            && !node.Not.IsPresent && !node.If.IsPresent && !node.Then.IsPresent && !node.Else.IsPresent && node.Dependencies is null
+            && !node.HasType && noValueKeywords && !node.HasObjectKeywords && !node.HasArrayKeywords && noUnevaluated)
+        {
+            return NodePlan.DynamicRef;
+        }
+
+        if (node.HasInPlaceApplicators || !noUnevaluated || !noValueKeywords)
+        {
+            return NodePlan.General;
+        }
+
+        if (node.HasObjectKeywords && !node.HasArrayKeywords && node.PatternProperties is null && !node.PropertyNames.IsPresent
+            && node.Dependencies is null && node.SeenBitCount <= Evaluation.Evaluator.InlineBitWords * 64)
+        {
+            return NodePlan.Object;
+        }
+
+        if (node.HasArrayKeywords && !node.HasObjectKeywords && node.PrefixItems is null && !node.Contains.IsPresent && !node.UniqueItems)
+        {
+            return NodePlan.ArrayItems;
+        }
+
+        return NodePlan.General;
     }
 
     /// <summary>Packs the per-node presence flags into <see cref="SchemaNode.Flags"/>. Runs last.</summary>

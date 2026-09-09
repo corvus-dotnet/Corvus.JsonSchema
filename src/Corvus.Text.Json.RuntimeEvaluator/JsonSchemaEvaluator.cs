@@ -46,6 +46,12 @@ public sealed class JsonSchemaEvaluator : IDisposable
     /// </summary>
     public bool UsesDynamicScope => this.program.UsesDynamicScope;
 
+    /// <summary>Gets the compiled program (for diagnostics and tests).</summary>
+    internal CompiledSchema Program => this.program;
+
+    /// <summary>Gets the root node index (for diagnostics and tests).</summary>
+    internal int RootNode => this.rootNode;
+
     /// <summary>
     /// Compiles a schema from UTF-8 JSON.
     /// </summary>

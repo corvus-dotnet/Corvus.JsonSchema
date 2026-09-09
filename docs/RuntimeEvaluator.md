@@ -95,10 +95,12 @@ suite through a verbose collector and `JsonSchemaAnnotationProducer`.
 | Process-wide regex cache | `PatternMatcher.RegexCache` | Identical patterns compile once per process (regexes are immutable); helps cold start with compiled regexes. |
 | Cheapest-first unrolled order | `SchemaCompiler.OrderUnrolledProperties` | Required before optional, leaves before applicators. The unroll heuristic itself is "all required, or at most two entries": a looser rule regressed jasmine/cypress. |
 
+| Fused evaluation plans | `NodePlan`, `SchemaNode.Plan`, `SchemaCompiler.SelectPlan`, `Evaluator.EvalChildFast` | Every node gets one flag-mode routine at compile time and child entry sites dispatch on it once: `Leaf`, `SimpleArray`, `Object` (type + properties/required/additionalProperties/count bounds in one loop, raw property-name spans when unescaped), `ArrayItems` (type + items/length bounds), `DynamicRef` (a bare `$dynamicRef` resolved at the entry site and dispatched straight to its target), or `General`. In-place entry with a live evaluated bitset and collecting mode stay on the general path. The strict-tree `$dynamicRef` shape drops from about a dozen calls per tree node to about half that. `CORVUS_RT_NO_PLANS=1` keeps only the pre-plan routines for A/B runs. |
+| Tracking only where consumed | `SchemaCompiler.ComputeTracking` | A node allocates an evaluated bitset on entry only when it has `unevaluatedProperties`/`unevaluatedItems` itself; in-place children receive the parent's bitset through the call, so the earlier downward propagation of the tracking flag (which made every `$ref` target of a tracking node allocate and mark for nothing when reached from a consuming keyword) is gone. |
 | Packed node flags; compile-time cycle detection | `NodeFlags`, `SchemaNode.Flags`, `SchemaCompiler.ComputeInPlaceCycles` | Node entry reads one flags word instead of a dozen booleans, and nodes without type/const/enum skip that block with a single test. The runaway guard for in-place recursion (`MaxDepth`) applies only to nodes the compiler finds on a cycle of in-place applicators (Tarjan SCC over `$ref`/`$dynamicRef`/allOf/anyOf/oneOf/not/if/dependent-schema edges), so ordinary in-place edges carry no counter and no try/finally. |
 | Direct document access | `RawDocumentAccess` (Corvus.Text.Json), `IDocumentAccess`/`RawAccess`/`InterfaceAccess` | The evaluator is generic over an access type as well as the evaluation mode. For parsed documents (`JsonDocument.TryGetRawAccess`) it reads metadata rows and text directly: token type, size, sibling stepping and raw values are a couple of loads each, with no per-call disposal check, and the object/array loops step siblings by row arithmetic instead of enumerators. Every other document type uses the `IJsonDocument` interface path (`propertyNames` always does, for its fixed string document). Strings and names that contain escapes still unescape through the document. |
 
-Experiment switches (environment variables, read once): `CORVUS_RT_NO_UNROLL`, `CORVUS_RT_NO_ELIDE`,
+Experiment switches (environment variables, read once): `CORVUS_RT_NO_PLANS`, `CORVUS_RT_NO_UNROLL`, `CORVUS_RT_NO_ELIDE`,
 `CORVUS_RT_NO_DISCRIMINATOR`, `CORVUS_RT_NO_LEAF`, `CORVUS_RT_NO_ORDER`, `CORVUS_RT_NO_INTFAST`,
 `CORVUS_RT_REGEX_INTERPRETED`.
 
@@ -127,6 +129,10 @@ hot format helpers, or by ReadyToRun.
   the runtime evaluator over identical schemas (source-generated in `Corvus.Text.Json.RuntimeEvaluator.MicroModels`).
 
 ## Results (2026-09-09, loaded machine, in-process interleaved min-of-N)
+
+The harness also has `dump <case|schema-file>` (prints every node with its plan, flags and fast-path markers) and
+`CORVUS_RT_QUICK_CPUTIME=1` (times `quick` rounds by thread CPU time; pair with `DOTNET_TieredCompilation=0` for
+same-binary A/B runs on a loaded host).
 
 Measured with `dotnet run -c Release -- quick 40` in `benchmarks/Corvus.Text.Json.RuntimeEvaluator.Benchmarks`
 (alternating the generated model and the runtime evaluator, keeping the fastest round of each). Ratios are
