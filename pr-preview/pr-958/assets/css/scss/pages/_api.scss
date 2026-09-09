@@ -1,0 +1,593 @@
+// ==========================================================================
+// API — API reference browser styling
+// ==========================================================================
+
+@use '../abstracts/mixins' as *;
+
+// ---- Version switcher bar ----
+.api-version-bar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.api-version-switcher {
+  position: relative;
+  display: inline-flex;
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+
+  &__current {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.35em 0.75em;
+    border-radius: var(--radius-md);
+    background: var(--color-bg-raised, #23242a);
+    border: 1px solid var(--color-border);
+    color: var(--color-white);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: border-color var(--transition-fast), background var(--transition-fast);
+
+    &:hover {
+      border-color: var(--color-border-active);
+      background: var(--color-border);
+    }
+
+    &::after {
+      content: '';
+      display: inline-block;
+      width: 0.45em;
+      height: 0.45em;
+      border-right: 1.5px solid currentColor;
+      border-bottom: 1.5px solid currentColor;
+      transform: rotate(45deg);
+      margin-top: -0.15em;
+      opacity: 0.6;
+      transition: transform var(--transition-fast);
+    }
+  }
+
+  &__alt {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    display: none;
+    padding: 0.4em 0.85em;
+    border-radius: var(--radius-md);
+    background: var(--color-bg-raised, #23242a);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-muted, #9ca3af);
+    text-decoration: none;
+    font-weight: var(--font-weight-medium);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.3);
+    z-index: 100;
+    transition: color var(--transition-fast), background var(--transition-fast);
+
+    &:hover {
+      color: var(--color-white);
+      background: var(--color-border);
+    }
+  }
+
+  // Show dropdown when open
+  &.is-open {
+    .api-version-switcher__current {
+      border-color: var(--color-border-active);
+
+      &::after {
+        transform: rotate(-135deg);
+        margin-top: 0.15em;
+      }
+    }
+
+    .api-version-switcher__alt {
+      display: block;
+    }
+  }
+}
+
+.api {
+  // ---- Search / filter ----
+  &__filter {
+    margin-bottom: var(--space-lg);
+
+    .search__input {
+      max-width: 24rem;
+    }
+  }
+
+  // ---- Namespace grouping ----
+  &__namespace {
+    margin-bottom: var(--space-xl);
+
+    &-title {
+      font-size: var(--font-size-lg);
+      font-weight: var(--font-weight-medium);
+      color: var(--color-brand);
+      margin-bottom: var(--space-md);
+      padding-bottom: var(--space-sm);
+      border-bottom: 1px solid var(--color-border);
+    }
+  }
+
+  // ---- Type tree (sidebar / panel) ----
+  &__tree {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    &-item {
+      margin: 0;
+    }
+
+    &-toggle {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      width: 100%;
+      padding: var(--space-xs) var(--space-sm);
+      background: none;
+      border: none;
+      color: var(--color-gray-med);
+      font-size: var(--font-size-sm);
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: background var(--transition-fast), color var(--transition-fast);
+
+      &:hover {
+        background: var(--color-bg-raised);
+        color: var(--color-white);
+      }
+
+      // Expand/collapse chevron
+      &::before {
+        content: '';
+        display: inline-block;
+        width: 0.4em;
+        height: 0.4em;
+        border-right: 1.5px solid currentColor;
+        border-bottom: 1.5px solid currentColor;
+        transform: rotate(-45deg);
+        transition: transform var(--transition-fast);
+      }
+
+      &.is-expanded::before {
+        transform: rotate(45deg);
+      }
+    }
+
+    &-link {
+      display: block;
+      padding: var(--space-xs) var(--space-sm);
+      padding-left: var(--space-lg);
+      font-size: var(--font-size-sm);
+      color: var(--color-gray-dark);
+      text-decoration: none;
+      border-radius: var(--radius-sm);
+      transition: color var(--transition-fast), background var(--transition-fast);
+
+      &:hover {
+        color: var(--color-white);
+        background: var(--color-bg-raised);
+      }
+
+      &.is-active {
+        color: var(--color-brand);
+        background: rgb(111 177 40 / 0.06);
+      }
+    }
+
+    // Nested tree
+    &-children {
+      list-style: none;
+      padding-left: var(--space-md);
+      margin: 0;
+      overflow: hidden;
+
+      &.is-collapsed {
+        display: none;
+      }
+    }
+  }
+
+  // ---- Type kind badges ----
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.5rem;
+    height: 1.25rem;
+    padding: 0 0.35em;
+    font-size: 0.65rem;
+    font-weight: var(--font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-radius: var(--radius-sm);
+    line-height: 1;
+
+    &--class     { background: rgb(97 175 239 / 0.15); color: var(--syntax-function); }
+    &--struct    { background: rgb(229 192 123 / 0.15); color: var(--syntax-type); }
+    &--interface { background: rgb(198 120 221 / 0.15); color: var(--syntax-keyword); }
+    &--enum      { background: rgb(209 154 102 / 0.15); color: var(--syntax-number); }
+    &--delegate  { background: rgb(86 182 194 / 0.15);  color: var(--syntax-operator); }
+  }
+
+  // ---- Member list ----
+  &__members {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--space-lg);
+  }
+
+  &__member {
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 1px solid var(--color-border);
+    transition: background var(--transition-fast);
+
+    &:hover {
+      background: rgb(41 42 47 / 0.15);
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &-signature {
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: var(--font-size-sm);
+      color: var(--color-gray-light);
+      margin-bottom: var(--space-xs);
+
+      .api__member-name {
+        color: var(--syntax-function);
+        font-weight: var(--font-weight-medium);
+      }
+
+      .api__member-type {
+        color: var(--syntax-type);
+      }
+
+      .api__member-keyword {
+        color: var(--syntax-keyword);
+      }
+    }
+
+    &-summary {
+      font-size: var(--font-size-sm);
+      color: var(--color-gray-dark);
+      line-height: var(--line-height-regular);
+    }
+  }
+
+  // ---- Section headings within API detail ----
+  &__section-title {
+    font-size: var(--font-size-rg);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-gray-med);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: var(--space-sm);
+    padding-bottom: var(--space-xs);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  // ---- Inheritance chain ----
+  &__inheritance {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-dark);
+    margin-bottom: var(--space-md);
+
+    &-separator {
+      color: var(--color-border-active);
+    }
+
+    a {
+      color: var(--syntax-type);
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+// ---- Inline API browser (landing page filter) ----
+.api-browser {
+  margin-bottom: var(--space-lg);
+
+  &__input {
+    width: 100%;
+    max-width: 36rem;
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--font-size-rg);
+    font-family: inherit;
+    color: var(--color-white);
+    background: var(--color-bg-raised);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    outline: none;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+
+    &::placeholder {
+      color: var(--color-gray-dark);
+    }
+
+    &:focus {
+      border-color: var(--color-brand);
+      box-shadow: 0 0 0 2px rgb(111 177 40 / 0.2);
+    }
+  }
+
+  &__status {
+    margin-top: var(--space-sm);
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-dark);
+    min-height: 1.25rem;
+  }
+
+  &__results {
+    margin-top: var(--space-md);
+  }
+
+  &__group {
+    margin-bottom: var(--space-lg);
+  }
+
+  &__group-title {
+    font-size: var(--font-size-rg);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-brand);
+    padding-bottom: var(--space-xs);
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: var(--space-sm);
+  }
+
+  &__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  &__item {
+    border-bottom: 1px solid var(--color-border);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  &__item-link {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-xs) var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    text-decoration: none;
+    color: inherit;
+    border-radius: var(--radius-sm);
+    transition: background var(--transition-fast);
+
+    &:hover {
+      background: rgb(41 42 47 / 0.3);
+      color: inherit;
+      text-decoration: none;
+    }
+
+    &:visited,
+    &:focus-visible {
+      color: inherit;
+    }
+  }
+
+  &__item-name {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--syntax-function);
+  }
+
+  &__item-desc {
+    flex-basis: 100%;
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-dark);
+    line-height: var(--line-height-regular);
+  }
+}
+
+// ---- Source link (like .NET reference docs) ----
+.api-source {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-dark);
+  margin: calc(-1 * var(--space-sm)) 0 var(--space-md);
+
+  a {
+    color: var(--color-brand);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--color-brand-hover);
+      text-decoration: underline;
+    }
+  }
+}
+
+// ---- API reference typography (matches .NET reference docs sizing) ----
+.api-ref {
+  // Headings — tighter and smaller than prose docs
+  h1 {
+    font-size: 1.5rem;
+    margin-bottom: var(--space-md);
+    line-height: 1.2;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+    margin-top: var(--space-lg);
+    margin-bottom: var(--space-sm);
+    line-height: 1.25;
+  }
+
+  h3 {
+    font-size: 1rem;
+    margin-top: var(--space-md);
+    margin-bottom: var(--space-xs);
+    line-height: 1.3;
+  }
+
+  h4 {
+    font-size: 0.875rem;
+    margin-top: var(--space-md);
+    margin-bottom: var(--space-xs);
+  }
+
+  // Body text — slightly smaller
+  p {
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-regular);
+    margin-bottom: var(--space-sm);
+  }
+
+  // Code blocks — compact
+  pre {
+    margin-top: var(--space-xs);
+    margin-bottom: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+
+  // Inline code
+  code:not(pre code) {
+    font-size: 0.8125rem;
+  }
+
+  // Tables — compact cells
+  table {
+    font-size: 0.8125rem;
+    margin-bottom: var(--space-md);
+
+    th {
+      padding: var(--space-xs) var(--space-sm);
+    }
+
+    td {
+      padding: var(--space-xs) var(--space-sm);
+    }
+  }
+
+  // Lists
+  ul, ol {
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--space-sm);
+    padding-left: var(--space-md);
+  }
+
+  // Horizontal rules — tighter spacing between overload sections
+  hr {
+    margin: var(--space-md) 0;
+  }
+
+  // Definition section (Namespace/Assembly)
+  > h2:first-of-type {
+    margin-top: var(--space-sm);
+  }
+
+  // Source link adjusts for smaller heading spacing
+  .api-source {
+    margin: 0 0 var(--space-sm);
+    font-size: 0.8125rem;
+  }
+
+  // Overload summary table links
+  table a {
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+// ---- API Feedback banner ----
+.api-feedback {
+  margin-top: var(--space-xl);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-border);
+
+  &__inner {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-lg);
+    padding: var(--space-lg);
+    background: var(--color-bg-raised);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+  }
+
+  &__logo {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    opacity: 0.85;
+  }
+
+  &__text {
+    h3 {
+      font-size: var(--font-size-rg);
+      font-weight: var(--font-weight-medium);
+      color: var(--color-white);
+      margin: 0 0 var(--space-xs);
+    }
+
+    p {
+      font-size: var(--font-size-sm);
+      color: var(--color-gray-dark);
+      line-height: var(--line-height-regular);
+      margin: 0 0 var(--space-md);
+
+      a {
+        color: var(--color-brand);
+        text-decoration: none;
+
+        &:hover {
+          color: var(--color-brand-hover);
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+
+  &__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-brand);
+    text-decoration: none;
+    padding: var(--space-xs) var(--space-sm);
+    border: 1px solid var(--color-brand-muted);
+    border-radius: var(--radius-sm);
+    transition: background var(--transition-fast), color var(--transition-fast);
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    &:hover {
+      background: rgb(111 177 40 / 0.1);
+      color: var(--color-brand-hover);
+    }
+  }
+}

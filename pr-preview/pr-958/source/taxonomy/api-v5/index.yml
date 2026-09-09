@@ -1,0 +1,22 @@
+ContentType: application/vnd.endjin.ssg.page+yaml
+Title: "V5 API Reference"
+Navigation:
+  Title: V5 API
+  Description: "API reference for the V5 engine — Corvus.Text.Json."
+  Parent: /api/index.html
+  Url: /api/v5/index.html
+  Rank: 1
+  Header:
+    Visible: False
+    Link: False
+  Footer:
+    Visible: False
+    Link: False
+MetaData:
+  Title: "V5 API Reference — Corvus.Text.Json"
+  Description: "API reference for the Corvus.Text.Json V5 engine."
+  Keywords: [API, reference, V5, Corvus.Text.Json]
+OpenGraph:
+  Title: "V5 API Reference — Corvus.Text.Json"
+  Description: "API reference for the V5 engine."
+  Image:

@@ -1,0 +1,22 @@
+ContentType: application/vnd.endjin.ssg.page+yaml
+Title: "V4 API Reference"
+Navigation:
+  Title: V4 API
+  Description: "API reference for the V4 engine — Corvus.Json.ExtendedTypes and related packages."
+  Parent: /api/index.html
+  Url: /api/v4/index.html
+  Rank: 2
+  Header:
+    Visible: False
+    Link: False
+  Footer:
+    Visible: False
+    Link: False
+MetaData:
+  Title: "V4 API Reference — Corvus.Text.Json"
+  Description: "API reference for the Corvus.Text.Json V4 engine (ExtendedTypes, Patch, Validator, JsonSchema)."
+  Keywords: [API, reference, V4, Corvus.Json.ExtendedTypes, Corvus.Json.Patch, Corvus.Json.Validator]
+OpenGraph:
+  Title: "V4 API Reference — Corvus.Text.Json"
+  Description: "API reference for the V4 engine."
+  Image:
