@@ -62,7 +62,8 @@ public readonly partial struct AsyncApiDocument
             /// <summary>
             /// Initializes a new instance of the <see cref="Mutable"/> struct.
             /// </summary>
-            /// <param name="value">The value from which to construct the instance.</param>
+            /// <param name="parent">The document that contains the element.</param>
+            /// <param name="idx">The index of the element within the document.</param>
             internal Mutable(IJsonDocument parent, int idx)
             {
                 Debug.Assert(idx >= 0);
@@ -132,7 +133,7 @@ public readonly partial struct AsyncApiDocument
             /// <summary>
             /// Converts the instance to a JsonElement.
             /// </summary>
-            /// <param name="value">The instance of this type.</param>
+            /// <param name="instance">The instance of this type.</param>
             /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator JsonElement(Mutable instance)
@@ -143,7 +144,7 @@ public readonly partial struct AsyncApiDocument
             /// <summary>
             /// Converts an immutable instance to a mutable instance, if the instance is backed by a mutable document.
             /// </summary>
-            /// <param name="value">The instance of this type.</param>
+            /// <param name="instance">The instance of this type.</param>
             /// <returns>A mutable instance.</returns>
             /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
             public static explicit operator Mutable(Components instance)
@@ -160,7 +161,7 @@ public readonly partial struct AsyncApiDocument
             /// <summary>
             /// Converts to an immutable instance of the <see cref="Mutable"/> type.
             /// </summary>
-            /// <param name="value">The <see cref="Mutable"/> instance.</param>
+            /// <param name="instance">The <see cref="Mutable"/> instance.</param>
             /// <returns>An immutable instance of a <see cref="Components"/>, initialized from the <see cref="Mutable"/> value.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Components(Mutable instance)
@@ -171,7 +172,8 @@ public readonly partial struct AsyncApiDocument
             /// <summary>
             /// Gets an instance of the JSON value from another element.
             /// </summary>
-            /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
+            /// <typeparam name="T">The type of the <see cref="IJsonElement{T}"/> from which to instantiate the instance.</typeparam>
+            /// <param name="instance">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
             /// <returns>An instance of this type, initialized from the JSON element.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static Mutable From<T>(in T instance)
@@ -656,7 +658,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>channelBindings</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetChannelBindings(in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableChannelBindingsObjects.Source value)
+            public void SetChannelBindings(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableChannelBindingsObjects.Source value)
             {
                 CheckValidInstance();
 
@@ -737,7 +739,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>channels</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetChannels(in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableChannelObjects.Source value)
+            public void SetChannels(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableChannelObjects.Source value)
             {
                 CheckValidInstance();
 
@@ -818,7 +820,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>correlationIds</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCorrelationIds(in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableCorrelationIdObjects.Source value)
+            public void SetCorrelationIds(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableCorrelationIdObjects.Source value)
             {
                 CheckValidInstance();
 
@@ -899,7 +901,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>externalDocs</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetExternalDocs(in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableExternalDocumentationObjects.Source value)
+            public void SetExternalDocs(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableExternalDocumentationObjects.Source value)
             {
                 CheckValidInstance();
 
@@ -980,7 +982,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>messageBindings</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMessageBindings(in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageBindingsObjects.Source value)
+            public void SetMessageBindings(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageBindingsObjects.Source value)
             {
                 CheckValidInstance();
 
@@ -1061,7 +1063,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>messages</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMessages(in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageObjects.Source value)
+            public void SetMessages(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageObjects.Source value)
             {
                 CheckValidInstance();
 
@@ -1142,7 +1144,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>messageTraits</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetMessageTraits(in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageTraitObjects.Source value)
+            public void SetMessageTraits(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageTraitObjects.Source value)
             {
                 CheckValidInstance();
 
@@ -1223,7 +1225,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>operationBindings</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOperationBindings(in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationBindingsObjects.Source value)
+            public void SetOperationBindings(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationBindingsObjects.Source value)
             {
                 CheckValidInstance();
 
@@ -1304,7 +1306,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>operations</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOperations(in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.OperationsEntity.Source value)
+            public void SetOperations(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.OperationsEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1385,7 +1387,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>operationTraits</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOperationTraits(in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationTraitObjects.Source value)
+            public void SetOperationTraits(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationTraitObjects.Source value)
             {
                 CheckValidInstance();
 
@@ -1466,7 +1468,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>parameters</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetParameters(in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableParameterObjects.Source value)
+            public void SetParameters(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableParameterObjects.Source value)
             {
                 CheckValidInstance();
 
@@ -1547,7 +1549,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>replies</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetReplies(in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationReplyObjects.Source value)
+            public void SetReplies(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationReplyObjects.Source value)
             {
                 CheckValidInstance();
 
@@ -1628,7 +1630,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>replyAddresses</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetReplyAddresses(in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationReplyAddressObjects.Source value)
+            public void SetReplyAddresses(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationReplyAddressObjects.Source value)
             {
                 CheckValidInstance();
 
@@ -1709,7 +1711,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>schemas</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSchemas(in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.SchemasEntity.Source value)
+            public void SetSchemas(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.SchemasEntity.Source value)
             {
                 CheckValidInstance();
 
@@ -1790,7 +1792,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>securitySchemes</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSecuritySchemes(in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableSecuritySchemeObjects.Source value)
+            public void SetSecuritySchemes(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableSecuritySchemeObjects.Source value)
             {
                 CheckValidInstance();
 
@@ -1871,7 +1873,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>serverBindings</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetServerBindings(in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerBindingsObjects.Source value)
+            public void SetServerBindings(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerBindingsObjects.Source value)
             {
                 CheckValidInstance();
 
@@ -1952,7 +1954,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>servers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetServers(in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerObjects.Source value)
+            public void SetServers(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerObjects.Source value)
             {
                 CheckValidInstance();
 
@@ -2033,7 +2035,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>serverVariables</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetServerVariables(in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerVariableObjects.Source value)
+            public void SetServerVariables(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerVariableObjects.Source value)
             {
                 CheckValidInstance();
 
@@ -2114,7 +2116,7 @@ public readonly partial struct AsyncApiDocument
             /// Set the <c>tags</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTags(in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableTagObjects.Source value)
+            public void SetTags(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableTagObjects.Source value)
             {
                 CheckValidInstance();
 
@@ -2296,7 +2298,7 @@ public readonly partial struct AsyncApiDocument
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.SpecificationExtension.Source value)
+            public void SetProperty(string propertyName, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.SpecificationExtension.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -2319,7 +2321,7 @@ public readonly partial struct AsyncApiDocument
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.SpecificationExtension.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.SpecificationExtension.Source value)
             {
                 CheckValidInstance();
 
@@ -2366,7 +2368,7 @@ public readonly partial struct AsyncApiDocument
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.SpecificationExtension.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.SpecificationExtension.Source value)
             {
                 CheckValidInstance();
 
@@ -2514,12 +2516,32 @@ public readonly partial struct AsyncApiDocument
             {
                 Unknown,
                 JsonElement,
+                Create,
                 Builder,
             }
 
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
             private readonly Builder.Build? _objectBuilder;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableChannelBindingsObjects.Source _createArg1;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableChannelObjects.Source _createArg2;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableCorrelationIdObjects.Source _createArg3;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableExternalDocumentationObjects.Source _createArg4;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageBindingsObjects.Source _createArg5;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageObjects.Source _createArg6;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageTraitObjects.Source _createArg7;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationBindingsObjects.Source _createArg8;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.OperationsEntity.Source _createArg9;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationTraitObjects.Source _createArg10;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableParameterObjects.Source _createArg11;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationReplyObjects.Source _createArg12;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationReplyAddressObjects.Source _createArg13;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.SchemasEntity.Source _createArg14;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableSecuritySchemeObjects.Source _createArg15;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerBindingsObjects.Source _createArg16;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerObjects.Source _createArg17;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerVariableObjects.Source _createArg18;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableTagObjects.Source _createArg19;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -2533,6 +2555,30 @@ public readonly partial struct AsyncApiDocument
             }
 
             internal Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableChannelBindingsObjects.Source arg1, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableChannelObjects.Source arg2, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableCorrelationIdObjects.Source arg3, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableExternalDocumentationObjects.Source arg4, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageBindingsObjects.Source arg5, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageObjects.Source arg6, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageTraitObjects.Source arg7, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationBindingsObjects.Source arg8, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.OperationsEntity.Source arg9, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationTraitObjects.Source arg10, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableParameterObjects.Source arg11, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationReplyObjects.Source arg12, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationReplyAddressObjects.Source arg13, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.SchemasEntity.Source arg14, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableSecuritySchemeObjects.Source arg15, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerBindingsObjects.Source arg16, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerObjects.Source arg17, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerVariableObjects.Source arg18, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableTagObjects.Source arg19)
+            {
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _createArg11 = arg11;
+                _createArg12 = arg12;
+                _createArg13 = arg13;
+                _createArg14 = arg14;
+                _createArg15 = arg15;
+                _createArg16 = arg16;
+                _createArg17 = arg17;
+                _createArg18 = arg18;
+                _createArg19 = arg19;
+                _kind = Kind.Create;
+            }
 
             public static implicit operator Source(Components instance) => new(JsonElement.From(instance));
 
@@ -2548,6 +2594,13 @@ public readonly partial struct AsyncApiDocument
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2566,6 +2619,13 @@ public readonly partial struct AsyncApiDocument
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2584,6 +2644,13 @@ public readonly partial struct AsyncApiDocument
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2602,6 +2669,13 @@ public readonly partial struct AsyncApiDocument
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2620,6 +2694,13 @@ public readonly partial struct AsyncApiDocument
                     case Kind.Builder:
                         valueBuilder.AddItem(_objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2637,12 +2718,32 @@ public readonly partial struct AsyncApiDocument
                 Unknown,
                 Source,
                 Builder,
+                Create,
             }
 
             private readonly Kind _kind;
             TContext _context;
             Source _source;
             private readonly Builder.Build<TContext>? _objectBuilder;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableChannelBindingsObjects.Source<TContext> _createArg1;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableChannelObjects.Source<TContext> _createArg2;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableCorrelationIdObjects.Source<TContext> _createArg3;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableExternalDocumentationObjects.Source<TContext> _createArg4;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageBindingsObjects.Source<TContext> _createArg5;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageObjects.Source<TContext> _createArg6;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageTraitObjects.Source<TContext> _createArg7;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationBindingsObjects.Source<TContext> _createArg8;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.OperationsEntity.Source<TContext> _createArg9;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationTraitObjects.Source<TContext> _createArg10;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableParameterObjects.Source<TContext> _createArg11;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationReplyObjects.Source<TContext> _createArg12;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationReplyAddressObjects.Source<TContext> _createArg13;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.SchemasEntity.Source<TContext> _createArg14;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableSecuritySchemeObjects.Source<TContext> _createArg15;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerBindingsObjects.Source<TContext> _createArg16;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerObjects.Source<TContext> _createArg17;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerVariableObjects.Source<TContext> _createArg18;
+            private readonly Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableTagObjects.Source<TContext> _createArg19;
 
             /// <summary>
             /// Gets a value indicating whether this Source is undefined (uninitialized).
@@ -2654,6 +2755,31 @@ public readonly partial struct AsyncApiDocument
             public static implicit operator Source<TContext>(Source source) => new (source);
 
             internal Source(scoped in TContext context, Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+
+            internal Source(scoped in TContext context, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableChannelBindingsObjects.Source<TContext> arg1, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableChannelObjects.Source<TContext> arg2, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableCorrelationIdObjects.Source<TContext> arg3, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableExternalDocumentationObjects.Source<TContext> arg4, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageBindingsObjects.Source<TContext> arg5, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageObjects.Source<TContext> arg6, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageTraitObjects.Source<TContext> arg7, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationBindingsObjects.Source<TContext> arg8, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.OperationsEntity.Source<TContext> arg9, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationTraitObjects.Source<TContext> arg10, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableParameterObjects.Source<TContext> arg11, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationReplyObjects.Source<TContext> arg12, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationReplyAddressObjects.Source<TContext> arg13, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.SchemasEntity.Source<TContext> arg14, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableSecuritySchemeObjects.Source<TContext> arg15, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerBindingsObjects.Source<TContext> arg16, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerObjects.Source<TContext> arg17, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerVariableObjects.Source<TContext> arg18, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableTagObjects.Source<TContext> arg19)
+            {
+                _context = context;
+                _createArg1 = arg1;
+                _createArg2 = arg2;
+                _createArg3 = arg3;
+                _createArg4 = arg4;
+                _createArg5 = arg5;
+                _createArg6 = arg6;
+                _createArg7 = arg7;
+                _createArg8 = arg8;
+                _createArg9 = arg9;
+                _createArg10 = arg10;
+                _createArg11 = arg11;
+                _createArg12 = arg12;
+                _createArg13 = arg13;
+                _createArg14 = arg14;
+                _createArg15 = arg15;
+                _createArg16 = arg16;
+                _createArg17 = arg17;
+                _createArg18 = arg18;
+                _createArg19 = arg19;
+                _kind = Kind.Create;
+            }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -2667,6 +2793,13 @@ public readonly partial struct AsyncApiDocument
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2685,6 +2818,13 @@ public readonly partial struct AsyncApiDocument
                     case Kind.Builder:
                         valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2703,6 +2843,13 @@ public readonly partial struct AsyncApiDocument
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2721,6 +2868,13 @@ public readonly partial struct AsyncApiDocument
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                            valueBuilder.EndProperty(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2739,6 +2893,13 @@ public readonly partial struct AsyncApiDocument
                     case Kind.Builder:
                         valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
+                    case Kind.Create:
+                        {
+                            ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
+                            Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, _createArg7, _createArg8, _createArg9, _createArg10, _createArg11, _createArg12, _createArg13, _createArg14, _createArg15, _createArg16, _createArg17, _createArg18, _createArg19, ref valueBuilder);
+                            valueBuilder.EndItem(handle);
+                            break;
+                        }
                     default:
                         Debug.Fail("Unexpected Kind");
                         break;
@@ -2933,6 +3094,19 @@ public readonly partial struct AsyncApiDocument
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<byte> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(ReadOnlySpan<char> propertyName, in JsonElement.Source value)
             {
                 value.AddAsProperty(propertyName, ref _builder);
@@ -2943,7 +3117,33 @@ public readonly partial struct AsyncApiDocument
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(ReadOnlySpan<char> propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
             public void AddProperty(string propertyName, in JsonElement.Source value)
+            {
+                value.AddAsProperty(propertyName, ref _builder);
+            }
+
+            /// <summary>
+            /// Add a property to the object.
+            /// </summary>
+            /// <param name="propertyName">The name of the property to add.</param>
+            /// <param name="value">The value of the property to add.</param>
+            public void AddProperty<TContext>(string propertyName, in JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
             {
                 value.AddAsProperty(propertyName, ref _builder);
             }
@@ -2968,6 +3168,71 @@ public readonly partial struct AsyncApiDocument
                 Builder ovb = new(o);
                 value(context, ref ovb);
                 o = ovb._builder;
+                o.EndObject();
+            }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="arg11">The value of the property.</param>
+            /// <param name="arg12">The value of the property.</param>
+            /// <param name="arg13">The value of the property.</param>
+            /// <param name="arg14">The value of the property.</param>
+            /// <param name="arg15">The value of the property.</param>
+            /// <param name="arg16">The value of the property.</param>
+            /// <param name="arg17">The value of the property.</param>
+            /// <param name="arg18">The value of the property.</param>
+            /// <param name="arg19">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableChannelBindingsObjects.Source arg1, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableChannelObjects.Source arg2, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableCorrelationIdObjects.Source arg3, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableExternalDocumentationObjects.Source arg4, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageBindingsObjects.Source arg5, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageObjects.Source arg6, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageTraitObjects.Source arg7, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationBindingsObjects.Source arg8, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.OperationsEntity.Source arg9, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationTraitObjects.Source arg10, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableParameterObjects.Source arg11, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationReplyObjects.Source arg12, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationReplyAddressObjects.Source arg13, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.SchemasEntity.Source arg14, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableSecuritySchemeObjects.Source arg15, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerBindingsObjects.Source arg16, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerObjects.Source arg17, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerVariableObjects.Source arg18, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableTagObjects.Source arg19, ref ComplexValueBuilder o)
+            {
+                o.StartObject();
+                Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19);
+                o.EndObject();
+            }
+
+            /// <summary>
+            /// Builds the object value directly from its captured property values into the given complex value builder.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+            /// <param name="context">The context to pass to the builder.</param>
+            /// <param name="arg1">The value of the property.</param>
+            /// <param name="arg2">The value of the property.</param>
+            /// <param name="arg3">The value of the property.</param>
+            /// <param name="arg4">The value of the property.</param>
+            /// <param name="arg5">The value of the property.</param>
+            /// <param name="arg6">The value of the property.</param>
+            /// <param name="arg7">The value of the property.</param>
+            /// <param name="arg8">The value of the property.</param>
+            /// <param name="arg9">The value of the property.</param>
+            /// <param name="arg10">The value of the property.</param>
+            /// <param name="arg11">The value of the property.</param>
+            /// <param name="arg12">The value of the property.</param>
+            /// <param name="arg13">The value of the property.</param>
+            /// <param name="arg14">The value of the property.</param>
+            /// <param name="arg15">The value of the property.</param>
+            /// <param name="arg16">The value of the property.</param>
+            /// <param name="arg17">The value of the property.</param>
+            /// <param name="arg18">The value of the property.</param>
+            /// <param name="arg19">The value of the property.</param>
+            /// <param name="o">The complex value builder into which to write the object.</param>
+            internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableChannelBindingsObjects.Source<TContext> arg1, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableChannelObjects.Source<TContext> arg2, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableCorrelationIdObjects.Source<TContext> arg3, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableExternalDocumentationObjects.Source<TContext> arg4, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageBindingsObjects.Source<TContext> arg5, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageObjects.Source<TContext> arg6, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageTraitObjects.Source<TContext> arg7, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationBindingsObjects.Source<TContext> arg8, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.OperationsEntity.Source<TContext> arg9, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationTraitObjects.Source<TContext> arg10, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableParameterObjects.Source<TContext> arg11, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationReplyObjects.Source<TContext> arg12, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationReplyAddressObjects.Source<TContext> arg13, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.SchemasEntity.Source<TContext> arg14, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableSecuritySchemeObjects.Source<TContext> arg15, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerBindingsObjects.Source<TContext> arg16, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerObjects.Source<TContext> arg17, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerVariableObjects.Source<TContext> arg18, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableTagObjects.Source<TContext> arg19, ref ComplexValueBuilder o)
+#if NET9_0_OR_GREATER
+                where TContext : allows ref struct
+#endif
+            {
+                o.StartObject();
+                Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19);
                 o.EndObject();
             }
         }
@@ -3002,6 +3267,67 @@ public readonly partial struct AsyncApiDocument
         }
 
         /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <param name="channelBindings">The value of the <c>"channelBindings"</c> property.</param>
+        /// <param name="channels">The value of the <c>"channels"</c> property.</param>
+        /// <param name="correlationIds">The value of the <c>"correlationIds"</c> property.</param>
+        /// <param name="externalDocs">The value of the <c>"externalDocs"</c> property.</param>
+        /// <param name="messageBindings">The value of the <c>"messageBindings"</c> property.</param>
+        /// <param name="messages">The value of the <c>"messages"</c> property.</param>
+        /// <param name="messageTraits">The value of the <c>"messageTraits"</c> property.</param>
+        /// <param name="operationBindings">The value of the <c>"operationBindings"</c> property.</param>
+        /// <param name="operations">The value of the <c>"operations"</c> property.</param>
+        /// <param name="operationTraits">The value of the <c>"operationTraits"</c> property.</param>
+        /// <param name="parameters">The value of the <c>"parameters"</c> property.</param>
+        /// <param name="replies">The value of the <c>"replies"</c> property.</param>
+        /// <param name="replyAddresses">The value of the <c>"replyAddresses"</c> property.</param>
+        /// <param name="schemas">The value of the <c>"schemas"</c> property.</param>
+        /// <param name="securitySchemes">The value of the <c>"securitySchemes"</c> property.</param>
+        /// <param name="serverBindings">The value of the <c>"serverBindings"</c> property.</param>
+        /// <param name="servers">The value of the <c>"servers"</c> property.</param>
+        /// <param name="serverVariables">The value of the <c>"serverVariables"</c> property.</param>
+        /// <param name="tags">The value of the <c>"tags"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source Build(scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableChannelBindingsObjects.Source channelBindings = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableChannelObjects.Source channels = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableCorrelationIdObjects.Source correlationIds = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableExternalDocumentationObjects.Source externalDocs = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageBindingsObjects.Source messageBindings = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageObjects.Source messages = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageTraitObjects.Source messageTraits = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationBindingsObjects.Source operationBindings = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.OperationsEntity.Source operations = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationTraitObjects.Source operationTraits = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableParameterObjects.Source parameters = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationReplyObjects.Source replies = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationReplyAddressObjects.Source replyAddresses = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.SchemasEntity.Source schemas = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableSecuritySchemeObjects.Source securitySchemes = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerBindingsObjects.Source serverBindings = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerObjects.Source servers = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerVariableObjects.Source serverVariables = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableTagObjects.Source tags = default)
+        {
+            return new Source(channelBindings, channels, correlationIds, externalDocs, messageBindings, messages, messageTraits, operationBindings, operations, operationTraits, parameters, replies, replyAddresses, schemas, securitySchemes, serverBindings, servers, serverVariables, tags);
+        }
+
+        /// <summary>
+        /// Build an instance of the value directly from its property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="channelBindings">The value of the <c>"channelBindings"</c> property.</param>
+        /// <param name="channels">The value of the <c>"channels"</c> property.</param>
+        /// <param name="correlationIds">The value of the <c>"correlationIds"</c> property.</param>
+        /// <param name="externalDocs">The value of the <c>"externalDocs"</c> property.</param>
+        /// <param name="messageBindings">The value of the <c>"messageBindings"</c> property.</param>
+        /// <param name="messages">The value of the <c>"messages"</c> property.</param>
+        /// <param name="messageTraits">The value of the <c>"messageTraits"</c> property.</param>
+        /// <param name="operationBindings">The value of the <c>"operationBindings"</c> property.</param>
+        /// <param name="operations">The value of the <c>"operations"</c> property.</param>
+        /// <param name="operationTraits">The value of the <c>"operationTraits"</c> property.</param>
+        /// <param name="parameters">The value of the <c>"parameters"</c> property.</param>
+        /// <param name="replies">The value of the <c>"replies"</c> property.</param>
+        /// <param name="replyAddresses">The value of the <c>"replyAddresses"</c> property.</param>
+        /// <param name="schemas">The value of the <c>"schemas"</c> property.</param>
+        /// <param name="securitySchemes">The value of the <c>"securitySchemes"</c> property.</param>
+        /// <param name="serverBindings">The value of the <c>"serverBindings"</c> property.</param>
+        /// <param name="servers">The value of the <c>"servers"</c> property.</param>
+        /// <param name="serverVariables">The value of the <c>"serverVariables"</c> property.</param>
+        /// <param name="tags">The value of the <c>"tags"</c> property.</param>
+        /// <returns>The source from which to build the value.</returns>
+        public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableChannelBindingsObjects.Source<TContext> channelBindings = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableChannelObjects.Source<TContext> channels = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableCorrelationIdObjects.Source<TContext> correlationIds = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableExternalDocumentationObjects.Source<TContext> externalDocs = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageBindingsObjects.Source<TContext> messageBindings = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageObjects.Source<TContext> messages = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageTraitObjects.Source<TContext> messageTraits = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationBindingsObjects.Source<TContext> operationBindings = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.OperationsEntity.Source<TContext> operations = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationTraitObjects.Source<TContext> operationTraits = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableParameterObjects.Source<TContext> parameters = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationReplyObjects.Source<TContext> replies = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationReplyAddressObjects.Source<TContext> replyAddresses = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.SchemasEntity.Source<TContext> schemas = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableSecuritySchemeObjects.Source<TContext> securitySchemes = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerBindingsObjects.Source<TContext> serverBindings = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerObjects.Source<TContext> servers = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerVariableObjects.Source<TContext> serverVariables = default, scoped in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableTagObjects.Source<TContext> tags = default)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            return new Source<TContext>(context, channelBindings, channels, correlationIds, externalDocs, messageBindings, messages, messageTraits, operationBindings, operations, operationTraits, parameters, replies, replyAddresses, schemas, securitySchemes, serverBindings, servers, serverVariables, tags);
+        }
+
+        /// <summary>
         /// Creates and initializes a mutable document from a value.
         /// </summary>
         /// <param name="workspace">The JSON workspace.</param>
@@ -3010,6 +3336,29 @@ public readonly partial struct AsyncApiDocument
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
             JsonWorkspace workspace, scoped in Source value, int initialCapacity = 30)
+        {
+            // Create the document builder without a MetadataDb
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+            value.AddAsItem(ref cvb);
+            Debug.Assert(cvb.MemberCount == 1);
+            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+            return documentBuilder;
+        }
+
+        /// <summary>
+        /// Creates and initializes a mutable document from a context-threaded value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context carried by the value.</typeparam>
+        /// <param name="workspace">The JSON workspace.</param>
+        /// <param name="value">The context-threaded value with which to initialize the builder.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>An instance of a mutable document initialized with the given value.</returns>
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
+            JsonWorkspace workspace, scoped in Source<TContext> value, int initialCapacity = 30)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
         {
             // Create the document builder without a MetadataDb
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
@@ -3156,6 +3505,180 @@ public readonly partial struct AsyncApiDocument
         public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
         {
             return workspace.CreateBuilder<Components, Mutable>(this);
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Components> Create(
+            scoped in Source value, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                value.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Components>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Components> Create(
+            scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source(value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Components>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The context to pass to the builder.</param>
+        /// <param name="value">The value with which to initialize the document.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Components> Create<TContext>(
+            scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                var source = new Source<TContext>(context, value);
+                source.AddAsItem(ref cvb);
+                Debug.Assert(cvb.MemberCount == 1);
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Components>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <param name="channelBindings">The value of the property.</param>
+        /// <param name="channels">The value of the property.</param>
+        /// <param name="correlationIds">The value of the property.</param>
+        /// <param name="externalDocs">The value of the property.</param>
+        /// <param name="messageBindings">The value of the property.</param>
+        /// <param name="messages">The value of the property.</param>
+        /// <param name="messageTraits">The value of the property.</param>
+        /// <param name="operationBindings">The value of the property.</param>
+        /// <param name="operations">The value of the property.</param>
+        /// <param name="operationTraits">The value of the property.</param>
+        /// <param name="parameters">The value of the property.</param>
+        /// <param name="replies">The value of the property.</param>
+        /// <param name="replyAddresses">The value of the property.</param>
+        /// <param name="schemas">The value of the property.</param>
+        /// <param name="securitySchemes">The value of the property.</param>
+        /// <param name="serverBindings">The value of the property.</param>
+        /// <param name="servers">The value of the property.</param>
+        /// <param name="serverVariables">The value of the property.</param>
+        /// <param name="tags">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Components> Create(in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableChannelBindingsObjects.Source channelBindings = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableChannelObjects.Source channels = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableCorrelationIdObjects.Source correlationIds = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableExternalDocumentationObjects.Source externalDocs = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageBindingsObjects.Source messageBindings = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageObjects.Source messages = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageTraitObjects.Source messageTraits = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationBindingsObjects.Source operationBindings = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.OperationsEntity.Source operations = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationTraitObjects.Source operationTraits = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableParameterObjects.Source parameters = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationReplyObjects.Source replies = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationReplyAddressObjects.Source replyAddresses = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.SchemasEntity.Source schemas = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableSecuritySchemeObjects.Source securitySchemes = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerBindingsObjects.Source serverBindings = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerObjects.Source servers = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerVariableObjects.Source serverVariables = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableTagObjects.Source tags = default, int initialCapacity = 30)
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(channelBindings, channels, correlationIds, externalDocs, messageBindings, messages, messageTraits, operationBindings, operations, operationTraits, parameters, replies, replyAddresses, schemas, securitySchemes, serverBindings, servers, serverVariables, tags);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Components>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
+        /// </summary>
+        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
+        /// <param name="context">The value of the property.</param>
+        /// <param name="channelBindings">The value of the property.</param>
+        /// <param name="channels">The value of the property.</param>
+        /// <param name="correlationIds">The value of the property.</param>
+        /// <param name="externalDocs">The value of the property.</param>
+        /// <param name="messageBindings">The value of the property.</param>
+        /// <param name="messages">The value of the property.</param>
+        /// <param name="messageTraits">The value of the property.</param>
+        /// <param name="operationBindings">The value of the property.</param>
+        /// <param name="operations">The value of the property.</param>
+        /// <param name="operationTraits">The value of the property.</param>
+        /// <param name="parameters">The value of the property.</param>
+        /// <param name="replies">The value of the property.</param>
+        /// <param name="replyAddresses">The value of the property.</param>
+        /// <param name="schemas">The value of the property.</param>
+        /// <param name="securitySchemes">The value of the property.</param>
+        /// <param name="serverBindings">The value of the property.</param>
+        /// <param name="servers">The value of the property.</param>
+        /// <param name="serverVariables">The value of the property.</param>
+        /// <param name="tags">The value of the property.</param>
+        /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
+        public static ParsedJsonDocument<Components> Create<TContext>(in TContext context, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableChannelBindingsObjects.Source<TContext> channelBindings = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableChannelObjects.Source<TContext> channels = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableCorrelationIdObjects.Source<TContext> correlationIds = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableExternalDocumentationObjects.Source<TContext> externalDocs = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageBindingsObjects.Source<TContext> messageBindings = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageObjects.Source<TContext> messages = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableMessageTraitObjects.Source<TContext> messageTraits = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationBindingsObjects.Source<TContext> operationBindings = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.OperationsEntity.Source<TContext> operations = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationTraitObjects.Source<TContext> operationTraits = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableParameterObjects.Source<TContext> parameters = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationReplyObjects.Source<TContext> replies = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableOperationReplyAddressObjects.Source<TContext> replyAddresses = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.SchemasEntity.Source<TContext> schemas = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableSecuritySchemeObjects.Source<TContext> securitySchemes = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerBindingsObjects.Source<TContext> serverBindings = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerObjects.Source<TContext> servers = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableServerVariableObjects.Source<TContext> serverVariables = default, in Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Components.AnObjectToHoldReusableTagObjects.Source<TContext> tags = default, int initialCapacity = 30)
+            #if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+            #endif
+        {
+            ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+            try
+            {
+                ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                cvb.StartObject();
+                Builder ovb = new(cvb);
+                ovb.Create(context, channelBindings, channels, correlationIds, externalDocs, messageBindings, messages, messageTraits, operationBindings, operations, operationTraits, parameters, replies, replyAddresses, schemas, securitySchemes, serverBindings, servers, serverVariables, tags);
+                cvb = ovb._builder;
+                cvb.EndObject();
+                ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                return documentBuilder.ToParsedJsonDocument<Components>();
+            }
+            finally
+            {
+                documentBuilder.Dispose();
+            }
         }
     }
 }

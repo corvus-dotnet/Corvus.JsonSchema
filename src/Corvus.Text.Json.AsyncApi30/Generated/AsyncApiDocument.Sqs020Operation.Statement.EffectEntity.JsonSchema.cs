@@ -105,15 +105,87 @@ public readonly partial struct AsyncApiDocument
                     public static ReadOnlySpan<byte> DenyUtf8 => Constants.Enum2;
                 }
 
+                /// <summary>
+                /// A native enum for the well-known values of this type.
+                /// </summary>
+                /// <remarks>
+                /// Member ordinals follow the schema declaration order. Inserting or reordering values
+                /// in the schema renumbers the ordinals, so do not persist their integer values.
+                /// </remarks>
+                public enum KnownValues
+                {
+                    /// <summary>
+                    /// Corresponds to the JSON string "Allow".
+                    /// </summary>
+                    Allow = 0,
+                    /// <summary>
+                    /// Corresponds to the JSON string "Deny".
+                    /// </summary>
+                    Deny = 1,
+                }
+
+                /// <summary>
+                /// Converts a <see cref="KnownValues"/> to an instance of this type.
+                /// </summary>
+                /// <param name="value">The well-known value from which to convert.</param>
+                /// <exception cref="InvalidOperationException">The value was not a defined member of the <see cref="KnownValues"/> enumeration.</exception>
+                public static implicit operator EffectEntity(KnownValues value)
+                {
+                    return value switch
+                    {
+                        KnownValues.Allow => Constants.EnumJson1,
+                        KnownValues.Deny => Constants.EnumJson2,
+                        _ => throw new InvalidOperationException(),
+                    };
+                }
+
+                /// <summary>
+                /// Converts the value to its <see cref="KnownValues"/> equivalent.
+                /// </summary>
+                /// <param name="value">The value from which to convert.</param>
+                /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+                public static implicit operator KnownValues(EffectEntity value)
+                {
+                    if (value.TryGetKnownValue(out KnownValues result))
+                    {
+                        return result;
+                    }
+
+                    throw new InvalidOperationException();
+                }
+
+                /// <summary>
+                /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+                /// </summary>
+                /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+                /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+                public bool TryGetKnownValue(out KnownValues result)
+                {
+                    if (this.ValueEquals(Constants.Enum1))
+                    {
+                        result = KnownValues.Allow;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum2))
+                    {
+                        result = KnownValues.Deny;
+                        return true;
+                    }
+
+                    result = default;
+                    return false;
+                }
+
                 public static partial class JsonSchema
                 {
                     /// <summary>
                     /// Gets a provider for the schema location from which this type was generated.
                     /// </summary>
-                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/http:~1~1asyncapi.com~1bindings~1sqs~10.2.0~1operation.json/definitions/statement/properties/effect"u8, buffer, out written);
+                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/definitions/http:~1~1asyncapi.com~1bindings~1sqs~10.2.0~1operation.json/definitions/statement/properties/effect"u8, buffer, out written);
 
                     /// <summary>
-                    /// Gets the schema location from which this type was generated.
+                    /// Gets the schema location from which this type was generated, as a JSON Pointer within <see cref="SchemaDocument"/>.
                     /// </summary>
                     public const string SchemaLocation = "/definitions/http:~1~1asyncapi.com~1bindings~1sqs~10.2.0~1operation.json/definitions/statement/properties/effect";
 
@@ -121,6 +193,20 @@ public readonly partial struct AsyncApiDocument
                     /// Gets the schema location from which this type was generated as a UTF-8 string.
                     /// </summary>
                     public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/http:~1~1asyncapi.com~1bindings~1sqs~10.2.0~1operation.json/definitions/statement/properties/effect"u8;
+
+                    /// <summary>
+                    /// Gets the schema document from which this type was generated, relative to the base location for generation.
+                    /// </summary>
+                    /// <remarks>
+                    /// <see cref="SchemaLocation"/> is a JSON Pointer within this document, so <c>SchemaDocument + "#" + SchemaLocation</c>
+                    /// is a reference to the schema, even for a schema inside a <c>$id</c> sub-resource.
+                    /// </remarks>
+                    public const string SchemaDocument = "AsyncApi30.json";
+
+                    /// <summary>
+                    /// Gets the schema document from which this type was generated as a UTF-8 string.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> SchemaDocumentUtf8 => "AsyncApi30.json"u8;
 
                     /// <summary>
                     /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -188,7 +274,8 @@ enumAfterFailure:;
                         parentIndex,
                         usingEvaluatedItems: false,
                         usingEvaluatedProperties: false,
-                        resultsCollector: resultsCollector);
+                        resultsCollector: resultsCollector,
+                        schemaEvaluationPath: SchemaLocationProvider);
 
                         try
                         {

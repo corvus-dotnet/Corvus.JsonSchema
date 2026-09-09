@@ -85,7 +85,8 @@ public readonly partial struct AsyncApiDocument
                         /// <summary>
                         /// Initializes a new instance of the <see cref="ExamplesEntity"/> struct.
                         /// </summary>
-                        /// <param name="value">The value from which to construct the instance.</param>
+                        /// <param name="parent">The document that contains the element.</param>
+                        /// <param name="idx">The index of the element within the document.</param>
                         internal ExamplesEntity(IJsonDocument parent, int idx)
                         {
                             Debug.Assert(idx >= 0);
@@ -217,6 +218,15 @@ public readonly partial struct AsyncApiDocument
                         }
 
                         /// <summary>
+                        /// Conversion from the <see cref="Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Message.OneOf1Entity.OneOf1Entity2.ExamplesEntityArray.ExamplesEntity.RequiredPayload"/> mutable view.
+                        /// </summary>
+                        /// <param name="value">The value from which to convert.</param>
+                        public static implicit operator ExamplesEntity(Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Message.OneOf1Entity.OneOf1Entity2.ExamplesEntityArray.ExamplesEntity.RequiredPayload.Mutable value)
+                        {
+                            return From(value);
+                        }
+
+                        /// <summary>
                         /// Conversion to <see cref="Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Message.OneOf1Entity.OneOf1Entity2.ExamplesEntityArray.ExamplesEntity.RequiredHeaders"/>.
                         /// </summary>
                         /// <param name="value">The value from which to convert.</param>
@@ -230,6 +240,15 @@ public readonly partial struct AsyncApiDocument
                         /// </summary>
                         /// <param name="value">The value from which to convert.</param>
                         public static implicit operator ExamplesEntity(Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Message.OneOf1Entity.OneOf1Entity2.ExamplesEntityArray.ExamplesEntity.RequiredHeaders value)
+                        {
+                            return From(value);
+                        }
+
+                        /// <summary>
+                        /// Conversion from the <see cref="Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Message.OneOf1Entity.OneOf1Entity2.ExamplesEntityArray.ExamplesEntity.RequiredHeaders"/> mutable view.
+                        /// </summary>
+                        /// <param name="value">The value from which to convert.</param>
+                        public static implicit operator ExamplesEntity(Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Message.OneOf1Entity.OneOf1Entity2.ExamplesEntityArray.ExamplesEntity.RequiredHeaders.Mutable value)
                         {
                             return From(value);
                         }
@@ -289,7 +308,7 @@ public readonly partial struct AsyncApiDocument
                         /// <summary>
                         /// Converts the instance to a JsonElement.
                         /// </summary>
-                        /// <param name="value">The instance of this type.</param>
+                        /// <param name="instance">The instance of this type.</param>
                         /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
                         public static implicit operator JsonElement(ExamplesEntity instance)
@@ -300,7 +319,7 @@ public readonly partial struct AsyncApiDocument
                         /// <summary>
                         /// Converts the instance from a JsonElement.
                         /// </summary>
-                        /// <param name="value">The instance of this type as a JsonElement.</param>
+                        /// <param name="instance">The instance of this type as a JsonElement.</param>
                         /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
                         public static implicit operator ExamplesEntity(JsonElement instance)
@@ -311,7 +330,8 @@ public readonly partial struct AsyncApiDocument
                         /// <summary>
                         /// Gets an instance of the JSON value from another element.
                         /// </summary>
-                        /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
+                        /// <typeparam name="T">The type of the <see cref="IJsonElement{T}"/> from which to instantiate the instance.</typeparam>
+                        /// <param name="instance">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
                         /// <returns>An instance of this type, initialized from the JSON element.</returns>
                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
                         public static ExamplesEntity From<T>(in T instance)
@@ -337,10 +357,13 @@ public readonly partial struct AsyncApiDocument
                         /// <exception cref="JsonException">
                         ///   A value could not be read from the span.
                         /// </exception>
+                        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
                         public static ExamplesEntity ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
                         {
+                            #pragma warning disable CS0618 // Type or member is obsolete
                             return JsonElementHelpers.ParseValue<ExamplesEntity>(utf8Json, options);
+                            #pragma warning restore CS0618
                         }
 
                         /// <summary>
@@ -360,10 +383,13 @@ public readonly partial struct AsyncApiDocument
                         /// <exception cref="JsonException">
                         ///   A value could not be read from the span.
                         /// </exception>
+                        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
                         public static ExamplesEntity ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
                         {
+                            #pragma warning disable CS0618 // Type or member is obsolete
                             return JsonElementHelpers.ParseValue<ExamplesEntity>(json, options);
+                            #pragma warning restore CS0618
                         }
 
                         /// <summary>
@@ -383,10 +409,13 @@ public readonly partial struct AsyncApiDocument
                         /// <exception cref="JsonException">
                         ///   A value could not be read from the text.
                         /// </exception>
+                        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
                         public static ExamplesEntity ParseValue(string json, JsonDocumentOptions options = default)
                         {
+                            #pragma warning disable CS0618 // Type or member is obsolete
                             return JsonElementHelpers.ParseValue<ExamplesEntity>(json, options);
+                            #pragma warning restore CS0618
                         }
 
                         /// <summary>
@@ -424,16 +453,19 @@ public readonly partial struct AsyncApiDocument
                         /// <exception cref="JsonException">
                         ///   A value could not be read from the reader.
                         /// </exception>
+                        [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                         public static ExamplesEntity ParseValue(ref Utf8JsonReader reader)
                         {
+                            #pragma warning disable CS0618 // Type or member is obsolete
                             return JsonElementHelpers.ParseValue<ExamplesEntity>(ref reader);
+                            #pragma warning restore CS0618
                         }
 
                         /// <summary>
                         ///   Attempts to parse one JSON value (including objects or arrays) from the provided reader.
                         /// </summary>
                         /// <param name="reader">The reader to read.</param>
-                        /// <param name="element">Receives the parsed element.</param>
+                        /// <param name="result">Receives the parsed element.</param>
                         /// <returns>
                         ///   <see langword="true"/> if a value was read and parsed into a JsonElement;
                         ///   <see langword="false"/> if the reader ran out of data while parsing.
@@ -724,6 +756,38 @@ public readonly partial struct AsyncApiDocument
                             }
 
                             return defaultMatch(this);
+                        }
+
+                        /// <summary>
+                        /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+                        /// </summary>
+                        /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+                        /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+                        /// <param name="matchRequiredPayload">Match a <see cref="Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Message.OneOf1Entity.OneOf1Entity2.ExamplesEntityArray.ExamplesEntity.RequiredPayload"/>.</param>
+                        /// <param name="matchRequiredHeaders">Match a <see cref="Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Message.OneOf1Entity.OneOf1Entity2.ExamplesEntityArray.ExamplesEntity.RequiredHeaders"/>.</param>
+                        /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+                        /// <returns>The accumulator returned by the last match function called.</returns>
+                        public TAccumulator MatchEvery<TAccumulator>(
+                            TAccumulator accumulator,
+                            Matcher<Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Message.OneOf1Entity.OneOf1Entity2.ExamplesEntityArray.ExamplesEntity.RequiredPayload, TAccumulator, TAccumulator> matchRequiredPayload,
+                            Matcher<Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Message.OneOf1Entity.OneOf1Entity2.ExamplesEntityArray.ExamplesEntity.RequiredHeaders, TAccumulator, TAccumulator> matchRequiredHeaders,
+                            Matcher<Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Message.OneOf1Entity.OneOf1Entity2.ExamplesEntityArray.ExamplesEntity, TAccumulator, TAccumulator> defaultMatch)
+                        {
+                            bool matched = false;
+
+                            if (Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Message.OneOf1Entity.OneOf1Entity2.ExamplesEntityArray.ExamplesEntity.RequiredPayload.JsonSchema.Evaluate(_parent, _idx))
+                            {
+                                matched = true;
+                                accumulator = matchRequiredPayload(Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Message.OneOf1Entity.OneOf1Entity2.ExamplesEntityArray.ExamplesEntity.RequiredPayload.From(this), accumulator);
+                            }
+
+                            if (Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Message.OneOf1Entity.OneOf1Entity2.ExamplesEntityArray.ExamplesEntity.RequiredHeaders.JsonSchema.Evaluate(_parent, _idx))
+                            {
+                                matched = true;
+                                accumulator = matchRequiredHeaders(Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Message.OneOf1Entity.OneOf1Entity2.ExamplesEntityArray.ExamplesEntity.RequiredHeaders.From(this), accumulator);
+                            }
+
+                            return matched ? accumulator : defaultMatch(this, accumulator);
                         }
 
                         /// <summary>

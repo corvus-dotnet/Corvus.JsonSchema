@@ -80,7 +80,7 @@ public readonly partial struct AsyncApiDocument
                             private const uint RequiredBitMask0 =
                                 RequiredBitForBindingVersion;
 
-                            private static void MatchBindingVersion(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                            private static void MatchBindingVersion(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
                             {
                                 requiredBitBuffer[RequiredOffsetForBindingVersion] |= RequiredBitForBindingVersion;
                             }
@@ -104,10 +104,10 @@ public readonly partial struct AsyncApiDocument
                             /// <summary>
                             /// Gets a provider for the schema location from which this type was generated.
                             /// </summary>
-                            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/http:~1~1asyncapi.com~1definitions~13.0.0~1serverBindingsObject.json/properties/mqtt/allOf/0/if/not"u8, buffer, out written);
+                            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/definitions/http:~1~1asyncapi.com~1definitions~13.0.0~1serverBindingsObject.json/properties/mqtt/allOf/0/if/not"u8, buffer, out written);
 
                             /// <summary>
-                            /// Gets the schema location from which this type was generated.
+                            /// Gets the schema location from which this type was generated, as a JSON Pointer within <see cref="SchemaDocument"/>.
                             /// </summary>
                             public const string SchemaLocation = "/definitions/http:~1~1asyncapi.com~1definitions~13.0.0~1serverBindingsObject.json/properties/mqtt/allOf/0/if/not";
 
@@ -115,6 +115,20 @@ public readonly partial struct AsyncApiDocument
                             /// Gets the schema location from which this type was generated as a UTF-8 string.
                             /// </summary>
                             public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/http:~1~1asyncapi.com~1definitions~13.0.0~1serverBindingsObject.json/properties/mqtt/allOf/0/if/not"u8;
+
+                            /// <summary>
+                            /// Gets the schema document from which this type was generated, relative to the base location for generation.
+                            /// </summary>
+                            /// <remarks>
+                            /// <see cref="SchemaLocation"/> is a JSON Pointer within this document, so <c>SchemaDocument + "#" + SchemaLocation</c>
+                            /// is a reference to the schema, even for a schema inside a <c>$id</c> sub-resource.
+                            /// </remarks>
+                            public const string SchemaDocument = "AsyncApi30.json";
+
+                            /// <summary>
+                            /// Gets the schema document from which this type was generated as a UTF-8 string.
+                            /// </summary>
+                            public static ReadOnlySpan<byte> SchemaDocumentUtf8 => "AsyncApi30.json"u8;
 
                             /// <summary>
                             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -148,7 +162,7 @@ public readonly partial struct AsyncApiDocument
 
                                         if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Text.Json.AsyncApi30.PropertiesValidationHandler_NamedPropertyValidator? validator))
                                         {
-                                            validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
+                                            validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
 
                                             if (!context.HasCollector && !context.IsMatch)
                                             {
@@ -197,7 +211,8 @@ public readonly partial struct AsyncApiDocument
                                 parentIndex,
                                 usingEvaluatedItems: false,
                                 usingEvaluatedProperties: false,
-                                resultsCollector: resultsCollector);
+                                resultsCollector: resultsCollector,
+                                schemaEvaluationPath: SchemaLocationProvider);
 
                                 try
                                 {

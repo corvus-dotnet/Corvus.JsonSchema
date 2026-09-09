@@ -72,7 +72,8 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Initializes a new instance of the <see cref="Mutable"/> struct.
                 /// </summary>
-                /// <param name="value">The value from which to construct the instance.</param>
+                /// <param name="parent">The document that contains the element.</param>
+                /// <param name="idx">The index of the element within the document.</param>
                 internal Mutable(IJsonDocument parent, int idx)
                 {
                     Debug.Assert(idx >= 0);
@@ -124,10 +125,10 @@ public readonly partial struct AsyncApiDocument
                 }
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public static explicit operator long(Mutable value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
+                public static implicit operator long(Mutable value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public static explicit operator double(Mutable value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
+                public static implicit operator double(Mutable value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static explicit operator Corvus.Numerics.BigNumber(Mutable value) => value._parent.TryGetValue(value._idx, out Corvus.Numerics.BigNumber result) ? result : throw new FormatException();
@@ -137,6 +138,45 @@ public readonly partial struct AsyncApiDocument
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static explicit operator decimal(Mutable value) => value._parent.TryGetValue(value._idx, out decimal result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator sbyte(Mutable value) => value._parent.TryGetValue(value._idx, out sbyte result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator byte(Mutable value) => value._parent.TryGetValue(value._idx, out byte result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator short(Mutable value) => value._parent.TryGetValue(value._idx, out short result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator ushort(Mutable value) => value._parent.TryGetValue(value._idx, out ushort result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator int(Mutable value) => value._parent.TryGetValue(value._idx, out int result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator uint(Mutable value) => value._parent.TryGetValue(value._idx, out uint result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator ulong(Mutable value) => value._parent.TryGetValue(value._idx, out ulong result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator float(Mutable value) => value._parent.TryGetValue(value._idx, out float result) ? result : throw new FormatException();
+
+#if NET
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator Int128(Mutable value) => value._parent.TryGetValue(value._idx, out Int128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator UInt128(Mutable value) => value._parent.TryGetValue(value._idx, out UInt128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator Half(Mutable value) => value._parent.TryGetValue(value._idx, out Half result) ? result : throw new FormatException();
+#endif
 
                 /// <summary>
                 /// Operator ==.
@@ -193,7 +233,7 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Converts the instance to a JsonElement.
                 /// </summary>
-                /// <param name="value">The instance of this type.</param>
+                /// <param name="instance">The instance of this type.</param>
                 /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator JsonElement(Mutable instance)
@@ -204,7 +244,7 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Converts an immutable instance to a mutable instance, if the instance is backed by a mutable document.
                 /// </summary>
-                /// <param name="value">The instance of this type.</param>
+                /// <param name="instance">The instance of this type.</param>
                 /// <returns>A mutable instance.</returns>
                 /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
                 public static explicit operator Mutable(NonNegativeIntegerDefault0 instance)
@@ -221,7 +261,7 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Converts to an immutable instance of the <see cref="Mutable"/> type.
                 /// </summary>
-                /// <param name="value">The <see cref="Mutable"/> instance.</param>
+                /// <param name="instance">The <see cref="Mutable"/> instance.</param>
                 /// <returns>An immutable instance of a <see cref="NonNegativeIntegerDefault0"/>, initialized from the <see cref="Mutable"/> value.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator NonNegativeIntegerDefault0(Mutable instance)
@@ -232,7 +272,8 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Gets an instance of the JSON value from another element.
                 /// </summary>
-                /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
+                /// <typeparam name="T">The type of the <see cref="IJsonElement{T}"/> from which to instantiate the instance.</typeparam>
+                /// <param name="instance">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
                 /// <returns>An instance of this type, initialized from the JSON element.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static Mutable From<T>(in T instance)
@@ -543,11 +584,11 @@ public readonly partial struct AsyncApiDocument
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Draft07Schema.NonNegativeInteger" />.
+                /// Gets the value as a <see cref="Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Draft07Schema.NonNegativeInteger.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsNonNegativeInteger(out Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Draft07Schema.NonNegativeInteger result)
+                public bool TryGetAsNonNegativeInteger(out Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Draft07Schema.NonNegativeInteger.Mutable result)
                 {
                     if (Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Draft07Schema.NonNegativeInteger.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -560,11 +601,11 @@ public readonly partial struct AsyncApiDocument
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Draft07Schema.NonNegativeIntegerDefault0.DefaultValueType0" />.
+                /// Gets the value as a <see cref="Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Draft07Schema.NonNegativeIntegerDefault0.DefaultValueType0.Mutable" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsDefaultValueType0(out Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Draft07Schema.NonNegativeIntegerDefault0.DefaultValueType0 result)
+                public bool TryGetAsDefaultValueType0(out Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Draft07Schema.NonNegativeIntegerDefault0.DefaultValueType0.Mutable result)
                 {
                     if (Corvus.Text.Json.AsyncApi26.AsyncApiDocument.Draft07Schema.NonNegativeIntegerDefault0.DefaultValueType0.JsonSchema.Evaluate(_parent, _idx))
                     {
@@ -763,6 +804,30 @@ public readonly partial struct AsyncApiDocument
             public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
             {
                 return workspace.CreateBuilder<NonNegativeIntegerDefault0, Mutable>(this);
+            }
+
+            /// <summary>
+            /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+            /// </summary>
+            /// <param name="value">The value with which to initialize the document.</param>
+            /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+            public static ParsedJsonDocument<NonNegativeIntegerDefault0> Create(
+                scoped in Source value, int initialCapacity = 1)
+            {
+                ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                try
+                {
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    value.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder.ToParsedJsonDocument<NonNegativeIntegerDefault0>();
+                }
+                finally
+                {
+                    documentBuilder.Dispose();
+                }
             }
         }
     }

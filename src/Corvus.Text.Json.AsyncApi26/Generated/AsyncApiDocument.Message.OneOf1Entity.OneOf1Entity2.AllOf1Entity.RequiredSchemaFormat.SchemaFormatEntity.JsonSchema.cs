@@ -481,6 +481,287 @@ public readonly partial struct AsyncApiDocument
                                 public static ReadOnlySpan<byte> ApplicationVndAaiAsyncapiYamlVersion260Utf8 => Constants.Enum21;
                             }
 
+                            /// <summary>
+                            /// A native enum for the well-known values of this type.
+                            /// </summary>
+                            /// <remarks>
+                            /// Member ordinals follow the schema declaration order. Inserting or reordering values
+                            /// in the schema renumbers the ordinals, so do not persist their integer values.
+                            /// </remarks>
+                            public enum KnownValues
+                            {
+                                /// <summary>
+                                /// Corresponds to the JSON string "application/vnd.aai.asyncapi;version=2.0.0".
+                                /// </summary>
+                                ApplicationVndAaiAsyncapiVersion200 = 0,
+                                /// <summary>
+                                /// Corresponds to the JSON string "application/vnd.aai.asyncapi+json;version=2.0.0".
+                                /// </summary>
+                                ApplicationVndAaiAsyncapiJsonVersion200 = 1,
+                                /// <summary>
+                                /// Corresponds to the JSON string "application/vnd.aai.asyncapi+yaml;version=2.0.0".
+                                /// </summary>
+                                ApplicationVndAaiAsyncapiYamlVersion200 = 2,
+                                /// <summary>
+                                /// Corresponds to the JSON string "application/vnd.aai.asyncapi;version=2.1.0".
+                                /// </summary>
+                                ApplicationVndAaiAsyncapiVersion210 = 3,
+                                /// <summary>
+                                /// Corresponds to the JSON string "application/vnd.aai.asyncapi+json;version=2.1.0".
+                                /// </summary>
+                                ApplicationVndAaiAsyncapiJsonVersion210 = 4,
+                                /// <summary>
+                                /// Corresponds to the JSON string "application/vnd.aai.asyncapi+yaml;version=2.1.0".
+                                /// </summary>
+                                ApplicationVndAaiAsyncapiYamlVersion210 = 5,
+                                /// <summary>
+                                /// Corresponds to the JSON string "application/vnd.aai.asyncapi;version=2.2.0".
+                                /// </summary>
+                                ApplicationVndAaiAsyncapiVersion220 = 6,
+                                /// <summary>
+                                /// Corresponds to the JSON string "application/vnd.aai.asyncapi+json;version=2.2.0".
+                                /// </summary>
+                                ApplicationVndAaiAsyncapiJsonVersion220 = 7,
+                                /// <summary>
+                                /// Corresponds to the JSON string "application/vnd.aai.asyncapi+yaml;version=2.2.0".
+                                /// </summary>
+                                ApplicationVndAaiAsyncapiYamlVersion220 = 8,
+                                /// <summary>
+                                /// Corresponds to the JSON string "application/vnd.aai.asyncapi;version=2.3.0".
+                                /// </summary>
+                                ApplicationVndAaiAsyncapiVersion230 = 9,
+                                /// <summary>
+                                /// Corresponds to the JSON string "application/vnd.aai.asyncapi+json;version=2.3.0".
+                                /// </summary>
+                                ApplicationVndAaiAsyncapiJsonVersion230 = 10,
+                                /// <summary>
+                                /// Corresponds to the JSON string "application/vnd.aai.asyncapi+yaml;version=2.3.0".
+                                /// </summary>
+                                ApplicationVndAaiAsyncapiYamlVersion230 = 11,
+                                /// <summary>
+                                /// Corresponds to the JSON string "application/vnd.aai.asyncapi;version=2.4.0".
+                                /// </summary>
+                                ApplicationVndAaiAsyncapiVersion240 = 12,
+                                /// <summary>
+                                /// Corresponds to the JSON string "application/vnd.aai.asyncapi+json;version=2.4.0".
+                                /// </summary>
+                                ApplicationVndAaiAsyncapiJsonVersion240 = 13,
+                                /// <summary>
+                                /// Corresponds to the JSON string "application/vnd.aai.asyncapi+yaml;version=2.4.0".
+                                /// </summary>
+                                ApplicationVndAaiAsyncapiYamlVersion240 = 14,
+                                /// <summary>
+                                /// Corresponds to the JSON string "application/vnd.aai.asyncapi;version=2.5.0".
+                                /// </summary>
+                                ApplicationVndAaiAsyncapiVersion250 = 15,
+                                /// <summary>
+                                /// Corresponds to the JSON string "application/vnd.aai.asyncapi+json;version=2.5.0".
+                                /// </summary>
+                                ApplicationVndAaiAsyncapiJsonVersion250 = 16,
+                                /// <summary>
+                                /// Corresponds to the JSON string "application/vnd.aai.asyncapi+yaml;version=2.5.0".
+                                /// </summary>
+                                ApplicationVndAaiAsyncapiYamlVersion250 = 17,
+                                /// <summary>
+                                /// Corresponds to the JSON string "application/vnd.aai.asyncapi;version=2.6.0".
+                                /// </summary>
+                                ApplicationVndAaiAsyncapiVersion260 = 18,
+                                /// <summary>
+                                /// Corresponds to the JSON string "application/vnd.aai.asyncapi+json;version=2.6.0".
+                                /// </summary>
+                                ApplicationVndAaiAsyncapiJsonVersion260 = 19,
+                                /// <summary>
+                                /// Corresponds to the JSON string "application/vnd.aai.asyncapi+yaml;version=2.6.0".
+                                /// </summary>
+                                ApplicationVndAaiAsyncapiYamlVersion260 = 20,
+                            }
+
+                            /// <summary>
+                            /// Converts a <see cref="KnownValues"/> to an instance of this type.
+                            /// </summary>
+                            /// <param name="value">The well-known value from which to convert.</param>
+                            /// <exception cref="InvalidOperationException">The value was not a defined member of the <see cref="KnownValues"/> enumeration.</exception>
+                            public static implicit operator SchemaFormatEntity(KnownValues value)
+                            {
+                                return value switch
+                                {
+                                    KnownValues.ApplicationVndAaiAsyncapiVersion200 => Constants.EnumJson1,
+                                    KnownValues.ApplicationVndAaiAsyncapiJsonVersion200 => Constants.EnumJson2,
+                                    KnownValues.ApplicationVndAaiAsyncapiYamlVersion200 => Constants.EnumJson3,
+                                    KnownValues.ApplicationVndAaiAsyncapiVersion210 => Constants.EnumJson4,
+                                    KnownValues.ApplicationVndAaiAsyncapiJsonVersion210 => Constants.EnumJson5,
+                                    KnownValues.ApplicationVndAaiAsyncapiYamlVersion210 => Constants.EnumJson6,
+                                    KnownValues.ApplicationVndAaiAsyncapiVersion220 => Constants.EnumJson7,
+                                    KnownValues.ApplicationVndAaiAsyncapiJsonVersion220 => Constants.EnumJson8,
+                                    KnownValues.ApplicationVndAaiAsyncapiYamlVersion220 => Constants.EnumJson9,
+                                    KnownValues.ApplicationVndAaiAsyncapiVersion230 => Constants.EnumJson10,
+                                    KnownValues.ApplicationVndAaiAsyncapiJsonVersion230 => Constants.EnumJson11,
+                                    KnownValues.ApplicationVndAaiAsyncapiYamlVersion230 => Constants.EnumJson12,
+                                    KnownValues.ApplicationVndAaiAsyncapiVersion240 => Constants.EnumJson13,
+                                    KnownValues.ApplicationVndAaiAsyncapiJsonVersion240 => Constants.EnumJson14,
+                                    KnownValues.ApplicationVndAaiAsyncapiYamlVersion240 => Constants.EnumJson15,
+                                    KnownValues.ApplicationVndAaiAsyncapiVersion250 => Constants.EnumJson16,
+                                    KnownValues.ApplicationVndAaiAsyncapiJsonVersion250 => Constants.EnumJson17,
+                                    KnownValues.ApplicationVndAaiAsyncapiYamlVersion250 => Constants.EnumJson18,
+                                    KnownValues.ApplicationVndAaiAsyncapiVersion260 => Constants.EnumJson19,
+                                    KnownValues.ApplicationVndAaiAsyncapiJsonVersion260 => Constants.EnumJson20,
+                                    KnownValues.ApplicationVndAaiAsyncapiYamlVersion260 => Constants.EnumJson21,
+                                    _ => throw new InvalidOperationException(),
+                                };
+                            }
+
+                            /// <summary>
+                            /// Converts the value to its <see cref="KnownValues"/> equivalent.
+                            /// </summary>
+                            /// <param name="value">The value from which to convert.</param>
+                            /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+                            public static implicit operator KnownValues(SchemaFormatEntity value)
+                            {
+                                if (value.TryGetKnownValue(out KnownValues result))
+                                {
+                                    return result;
+                                }
+
+                                throw new InvalidOperationException();
+                            }
+
+                            /// <summary>
+                            /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+                            /// </summary>
+                            /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+                            /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+                            public bool TryGetKnownValue(out KnownValues result)
+                            {
+                                if (this.ValueEquals(Constants.Enum1))
+                                {
+                                    result = KnownValues.ApplicationVndAaiAsyncapiVersion200;
+                                    return true;
+                                }
+
+                                if (this.ValueEquals(Constants.Enum2))
+                                {
+                                    result = KnownValues.ApplicationVndAaiAsyncapiJsonVersion200;
+                                    return true;
+                                }
+
+                                if (this.ValueEquals(Constants.Enum3))
+                                {
+                                    result = KnownValues.ApplicationVndAaiAsyncapiYamlVersion200;
+                                    return true;
+                                }
+
+                                if (this.ValueEquals(Constants.Enum4))
+                                {
+                                    result = KnownValues.ApplicationVndAaiAsyncapiVersion210;
+                                    return true;
+                                }
+
+                                if (this.ValueEquals(Constants.Enum5))
+                                {
+                                    result = KnownValues.ApplicationVndAaiAsyncapiJsonVersion210;
+                                    return true;
+                                }
+
+                                if (this.ValueEquals(Constants.Enum6))
+                                {
+                                    result = KnownValues.ApplicationVndAaiAsyncapiYamlVersion210;
+                                    return true;
+                                }
+
+                                if (this.ValueEquals(Constants.Enum7))
+                                {
+                                    result = KnownValues.ApplicationVndAaiAsyncapiVersion220;
+                                    return true;
+                                }
+
+                                if (this.ValueEquals(Constants.Enum8))
+                                {
+                                    result = KnownValues.ApplicationVndAaiAsyncapiJsonVersion220;
+                                    return true;
+                                }
+
+                                if (this.ValueEquals(Constants.Enum9))
+                                {
+                                    result = KnownValues.ApplicationVndAaiAsyncapiYamlVersion220;
+                                    return true;
+                                }
+
+                                if (this.ValueEquals(Constants.Enum10))
+                                {
+                                    result = KnownValues.ApplicationVndAaiAsyncapiVersion230;
+                                    return true;
+                                }
+
+                                if (this.ValueEquals(Constants.Enum11))
+                                {
+                                    result = KnownValues.ApplicationVndAaiAsyncapiJsonVersion230;
+                                    return true;
+                                }
+
+                                if (this.ValueEquals(Constants.Enum12))
+                                {
+                                    result = KnownValues.ApplicationVndAaiAsyncapiYamlVersion230;
+                                    return true;
+                                }
+
+                                if (this.ValueEquals(Constants.Enum13))
+                                {
+                                    result = KnownValues.ApplicationVndAaiAsyncapiVersion240;
+                                    return true;
+                                }
+
+                                if (this.ValueEquals(Constants.Enum14))
+                                {
+                                    result = KnownValues.ApplicationVndAaiAsyncapiJsonVersion240;
+                                    return true;
+                                }
+
+                                if (this.ValueEquals(Constants.Enum15))
+                                {
+                                    result = KnownValues.ApplicationVndAaiAsyncapiYamlVersion240;
+                                    return true;
+                                }
+
+                                if (this.ValueEquals(Constants.Enum16))
+                                {
+                                    result = KnownValues.ApplicationVndAaiAsyncapiVersion250;
+                                    return true;
+                                }
+
+                                if (this.ValueEquals(Constants.Enum17))
+                                {
+                                    result = KnownValues.ApplicationVndAaiAsyncapiJsonVersion250;
+                                    return true;
+                                }
+
+                                if (this.ValueEquals(Constants.Enum18))
+                                {
+                                    result = KnownValues.ApplicationVndAaiAsyncapiYamlVersion250;
+                                    return true;
+                                }
+
+                                if (this.ValueEquals(Constants.Enum19))
+                                {
+                                    result = KnownValues.ApplicationVndAaiAsyncapiVersion260;
+                                    return true;
+                                }
+
+                                if (this.ValueEquals(Constants.Enum20))
+                                {
+                                    result = KnownValues.ApplicationVndAaiAsyncapiJsonVersion260;
+                                    return true;
+                                }
+
+                                if (this.ValueEquals(Constants.Enum21))
+                                {
+                                    result = KnownValues.ApplicationVndAaiAsyncapiYamlVersion260;
+                                    return true;
+                                }
+
+                                result = default;
+                                return false;
+                            }
+
                             public static partial class JsonSchema
                             {
                                 private static EnumStringSet BuildEnumStringSet()
@@ -515,10 +796,10 @@ public readonly partial struct AsyncApiDocument
                                 /// <summary>
                                 /// Gets a provider for the schema location from which this type was generated.
                                 /// </summary>
-                                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/http:~1~1asyncapi.com~1definitions~12.6.0~1message.json/oneOf/1/oneOf/1/allOf/1/if/properties/schemaFormat"u8, buffer, out written);
+                                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/definitions/http:~1~1asyncapi.com~1definitions~12.6.0~1message.json/oneOf/1/oneOf/1/allOf/1/if/properties/schemaFormat"u8, buffer, out written);
 
                                 /// <summary>
-                                /// Gets the schema location from which this type was generated.
+                                /// Gets the schema location from which this type was generated, as a JSON Pointer within <see cref="SchemaDocument"/>.
                                 /// </summary>
                                 public const string SchemaLocation = "/definitions/http:~1~1asyncapi.com~1definitions~12.6.0~1message.json/oneOf/1/oneOf/1/allOf/1/if/properties/schemaFormat";
 
@@ -526,6 +807,20 @@ public readonly partial struct AsyncApiDocument
                                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                                 /// </summary>
                                 public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/http:~1~1asyncapi.com~1definitions~12.6.0~1message.json/oneOf/1/oneOf/1/allOf/1/if/properties/schemaFormat"u8;
+
+                                /// <summary>
+                                /// Gets the schema document from which this type was generated, relative to the base location for generation.
+                                /// </summary>
+                                /// <remarks>
+                                /// <see cref="SchemaLocation"/> is a JSON Pointer within this document, so <c>SchemaDocument + "#" + SchemaLocation</c>
+                                /// is a reference to the schema, even for a schema inside a <c>$id</c> sub-resource.
+                                /// </remarks>
+                                public const string SchemaDocument = "2.6.0.json";
+
+                                /// <summary>
+                                /// Gets the schema document from which this type was generated as a UTF-8 string.
+                                /// </summary>
+                                public static ReadOnlySpan<byte> SchemaDocumentUtf8 => "2.6.0.json"u8;
 
                                 /// <summary>
                                 /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -581,7 +876,8 @@ enumAfterFailure:;
                                     parentIndex,
                                     usingEvaluatedItems: false,
                                     usingEvaluatedProperties: false,
-                                    resultsCollector: resultsCollector);
+                                    resultsCollector: resultsCollector,
+                                    schemaEvaluationPath: SchemaLocationProvider);
 
                                     try
                                     {

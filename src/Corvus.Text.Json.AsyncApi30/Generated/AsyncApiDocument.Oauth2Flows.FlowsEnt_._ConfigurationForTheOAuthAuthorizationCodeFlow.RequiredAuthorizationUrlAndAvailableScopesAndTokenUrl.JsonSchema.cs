@@ -33,55 +33,123 @@ namespace Corvus.Text.Json.AsyncApi30;
 public readonly partial struct AsyncApiDocument
 {
     /// <summary>
-    /// Channel Schema
+    /// Generated from JSON Schema.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// This object contains information about the channel representation in SNS.
+    /// Allows configuration of the supported OAuth Flows.
     /// </para>
     /// </remarks>
-    public readonly partial struct Sns010Channel
+    public readonly partial struct Oauth2Flows
     {
         /// <summary>
         /// Generated from JSON Schema.
         /// </summary>
-        public readonly partial struct Statement
+        public readonly partial struct FlowsEntity
         {
             /// <summary>
             /// Generated from JSON Schema.
             /// </summary>
             /// <remarks>
             /// <para>
-            /// The AWS account or resource ARN that this statement applies to.
+            /// Configuration for the OAuth Authorization Code flow.
             /// </para>
             /// </remarks>
-            public readonly partial struct PrincipalEntity
+            public readonly partial struct ConfigurationForTheOAuthAuthorizationCodeFlow
             {
                 /// <summary>
                 /// Generated from JSON Schema.
                 /// </summary>
                 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-                public readonly partial struct JsonStringArray
-                    : IJsonElement<JsonStringArray>
+                public readonly partial struct RequiredAuthorizationUrlAndAvailableScopesAndTokenUrl
+                    : IJsonElement<RequiredAuthorizationUrlAndAvailableScopesAndTokenUrl>
                 {
                     public static partial class JsonSchema
                     {
-                        private static readonly JsonSchemaPathProvider ItemsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/items"u8, buffer, out written);
+                        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyAuthorizationUrlPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("authorizationUrl"u8, buffer, out written);
+                        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyAuthorizationUrlNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("authorizationUrl"u8, buffer, out written);
+
+                        private const int RequiredOffsetForAuthorizationUrl = 0;
+                        private const uint RequiredBitForAuthorizationUrl = 0b00000000000000000000000000000001;
+
+                        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyAvailableScopesPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("availableScopes"u8, buffer, out written);
+                        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyAvailableScopesNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("availableScopes"u8, buffer, out written);
+
+                        private const int RequiredOffsetForAvailableScopes = 0;
+                        private const uint RequiredBitForAvailableScopes = 0b00000000000000000000000000000010;
+
+                        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyTokenUrlPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("tokenUrl"u8, buffer, out written);
+                        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyTokenUrlNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("tokenUrl"u8, buffer, out written);
+
+                        private const int RequiredOffsetForTokenUrl = 0;
+                        private const uint RequiredBitForTokenUrl = 0b00000000000000000000000000000100;
+
+                        private const uint RequiredBitMask0 =
+                            RequiredBitForAuthorizationUrl | RequiredBitForAvailableScopes | RequiredBitForTokenUrl;
+
+                        private static void MatchAuthorizationUrl(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+                        {
+                            requiredBitBuffer[RequiredOffsetForAuthorizationUrl] |= RequiredBitForAuthorizationUrl;
+                        }
+
+                        private static void MatchAvailableScopes(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+                        {
+                            requiredBitBuffer[RequiredOffsetForAvailableScopes] |= RequiredBitForAvailableScopes;
+                        }
+
+                        private static void MatchTokenUrl(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
+                        {
+                            requiredBitBuffer[RequiredOffsetForTokenUrl] |= RequiredBitForTokenUrl;
+                        }
+
+                        private static PropertySchemaMatchers<Corvus.Text.Json.AsyncApi30.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
+                        {
+                            return new PropertySchemaMatchers<Corvus.Text.Json.AsyncApi30.PropertiesValidationHandler_NamedPropertyValidator>([
+                                (static () => JsonPropertyNames.AuthorizationUrlUtf8, MatchAuthorizationUrl),
+                                (static () => JsonPropertyNames.AvailableScopesUtf8, MatchAvailableScopes),
+                                (static () => JsonPropertyNames.TokenUrlUtf8, MatchTokenUrl),
+                            ]);
+                        }
+
+                        private static PropertySchemaMatchers<Corvus.Text.Json.AsyncApi30.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
+
+                        private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
+#if NET
+                        [NotNullWhen(true)]
+#endif
+                        out Corvus.Text.Json.AsyncApi30.PropertiesValidationHandler_NamedPropertyValidator? matcher)
+                        {
+                            return Matchers.TryGetNamedMatcher(span, out matcher);
+                        }
 
                         /// <summary>
                         /// Gets a provider for the schema location from which this type was generated.
                         /// </summary>
-                        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/http:~1~1asyncapi.com~1bindings~1sns~10.1.0~1channel.json/definitions/statement/properties/principal/oneOf/1"u8, buffer, out written);
+                        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/definitions/http:~1~1asyncapi.com~1definitions~13.0.0~1oauth2Flows.json/properties/flows/properties/authorizationCode/allOf/1"u8, buffer, out written);
 
                         /// <summary>
-                        /// Gets the schema location from which this type was generated.
+                        /// Gets the schema location from which this type was generated, as a JSON Pointer within <see cref="SchemaDocument"/>.
                         /// </summary>
-                        public const string SchemaLocation = "/definitions/http:~1~1asyncapi.com~1bindings~1sns~10.1.0~1channel.json/definitions/statement/properties/principal/oneOf/1";
+                        public const string SchemaLocation = "/definitions/http:~1~1asyncapi.com~1definitions~13.0.0~1oauth2Flows.json/properties/flows/properties/authorizationCode/allOf/1";
 
                         /// <summary>
                         /// Gets the schema location from which this type was generated as a UTF-8 string.
                         /// </summary>
-                        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/http:~1~1asyncapi.com~1bindings~1sns~10.1.0~1channel.json/definitions/statement/properties/principal/oneOf/1"u8;
+                        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/http:~1~1asyncapi.com~1definitions~13.0.0~1oauth2Flows.json/properties/flows/properties/authorizationCode/allOf/1"u8;
+
+                        /// <summary>
+                        /// Gets the schema document from which this type was generated, relative to the base location for generation.
+                        /// </summary>
+                        /// <remarks>
+                        /// <see cref="SchemaLocation"/> is a JSON Pointer within this document, so <c>SchemaDocument + "#" + SchemaLocation</c>
+                        /// is a reference to the schema, even for a schema inside a <c>$id</c> sub-resource.
+                        /// </remarks>
+                        public const string SchemaDocument = "AsyncApi30.json";
+
+                        /// <summary>
+                        /// Gets the schema document from which this type was generated as a UTF-8 string.
+                        /// </summary>
+                        public static ReadOnlySpan<byte> SchemaDocumentUtf8 => "AsyncApi30.json"u8;
 
                         /// <summary>
                         /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -102,48 +170,78 @@ public readonly partial struct AsyncApiDocument
                                 JsonTokenType.EndObject or
                                 JsonTokenType.EndArray));
 
-                            if (!JsonSchemaEvaluation.MatchTypeArray(tokenType,"type"u8, ref context))
+                            if (tokenType == JsonTokenType.StartObject)
                             {
-                                if (!context.HasCollector)
+                                Span<uint> requiredPropertyChildHandler_seenItems = stackalloc uint[1];
+                                int objectValidation_propertyCount = 0;
+
+                                var objectValidation_enumerator = new ObjectEnumerator(parentDocument, parentIndex);
+                                while (objectValidation_enumerator.MoveNext())
                                 {
-                                    return;
-                                }
-                                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeArray, "items"u8);
-                            }
-                            else
-                            {
-                                int arrayValidation_itemCount = 0;
+                                    int objectValidation_currentIndex = objectValidation_enumerator.CurrentIndex;
+                                    using UnescapedUtf8JsonString objectValidation_unescapedPropertyName = parentDocument.GetPropertyNameUnescaped(objectValidation_currentIndex);
 
-                                var arrayValidation_enumerator = new ArrayEnumerator(parentDocument, parentIndex);
-                                while (arrayValidation_enumerator.MoveNext())
-                                {
-                                    int arrayValidation_currentIndex = arrayValidation_enumerator.CurrentIndex;
-
-                                    JsonSchemaContext childContext = Corvus.Text.Json.AsyncApi30.JsonString.JsonSchema.PushChildContext(
-                                        parentDocument,
-                                        arrayValidation_currentIndex,
-                                        ref context,
-                                        itemIndex: arrayValidation_itemCount,
-                                        evaluationPath: ItemsSchemaEvaluationPath);
-
-                                    Corvus.Text.Json.AsyncApi30.JsonString.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext);
-                                    if (!childContext.IsMatch)
+                                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Text.Json.AsyncApi30.PropertiesValidationHandler_NamedPropertyValidator? validator))
                                     {
-                                        context.CommitChildContext(false, ref childContext);
+                                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
 
-                                        if (!context.HasCollector)
+                                        if (!context.HasCollector && !context.IsMatch)
                                         {
                                             return;
                                         }
                                     }
+
+                                    objectValidation_propertyCount++;
+                                }
+
+                                // Do a quick test to see if we have all of the required bits set in each element
+                                if ((~(requiredPropertyChildHandler_seenItems[0]) & RequiredBitMask0) == 0)
+                                {
+                                    if (context.HasCollector)
+                                    {
+                                        context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyAuthorizationUrlPresent, "authorizationUrl"u8, "required"u8);
+                                        context.EvaluatedKeywordForProperty(true, 1, RequiredPropertyAvailableScopesPresent, "availableScopes"u8, "required"u8);
+                                        context.EvaluatedKeywordForProperty(true, 2, RequiredPropertyTokenUrlPresent, "tokenUrl"u8, "required"u8);
+                                    }
+                                }
+                                else if (!context.HasCollector)
+                                {
+                                    context.EvaluatedBooleanSchema(false);
+                                    return;
+                                }
+                                else
+                                {
+                                    if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForAuthorizationUrl] & RequiredBitForAuthorizationUrl) == 0)
+                                    {
+                                        context.EvaluatedKeywordForProperty(false, 0, RequiredPropertyAuthorizationUrlNotPresent, "authorizationUrl"u8, "required"u8);
+                                    }
                                     else
                                     {
-                                        context.CommitChildContext(true, ref childContext);
-                                        context.AddLocalEvaluatedItem(arrayValidation_itemCount);
+                                        context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyAuthorizationUrlPresent, "authorizationUrl"u8, "required"u8);
                                     }
 
-                                    arrayValidation_itemCount++;
+                                    if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForAvailableScopes] & RequiredBitForAvailableScopes) == 0)
+                                    {
+                                        context.EvaluatedKeywordForProperty(false, 1, RequiredPropertyAvailableScopesNotPresent, "availableScopes"u8, "required"u8);
+                                    }
+                                    else
+                                    {
+                                        context.EvaluatedKeywordForProperty(true, 1, RequiredPropertyAvailableScopesPresent, "availableScopes"u8, "required"u8);
+                                    }
+
+                                    if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForTokenUrl] & RequiredBitForTokenUrl) == 0)
+                                    {
+                                        context.EvaluatedKeywordForProperty(false, 2, RequiredPropertyTokenUrlNotPresent, "tokenUrl"u8, "required"u8);
+                                    }
+                                    else
+                                    {
+                                        context.EvaluatedKeywordForProperty(true, 2, RequiredPropertyTokenUrlPresent, "tokenUrl"u8, "required"u8);
+                                    }
                                 }
+                            }
+                            else
+                            {
+                                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "required"u8);
                             }
                         }
 
@@ -157,7 +255,8 @@ public readonly partial struct AsyncApiDocument
                             parentIndex,
                             usingEvaluatedItems: false,
                             usingEvaluatedProperties: false,
-                            resultsCollector: resultsCollector);
+                            resultsCollector: resultsCollector,
+                            schemaEvaluationPath: SchemaLocationProvider);
 
                             try
                             {

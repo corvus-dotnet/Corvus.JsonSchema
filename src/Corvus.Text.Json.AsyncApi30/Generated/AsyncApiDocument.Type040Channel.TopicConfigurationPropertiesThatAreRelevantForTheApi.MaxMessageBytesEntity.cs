@@ -80,7 +80,8 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Initializes a new instance of the <see cref="MaxMessageBytesEntity"/> struct.
                 /// </summary>
-                /// <param name="value">The value from which to construct the instance.</param>
+                /// <param name="parent">The document that contains the element.</param>
+                /// <param name="idx">The index of the element within the document.</param>
                 internal MaxMessageBytesEntity(IJsonDocument parent, int idx)
                 {
                     Debug.Assert(idx >= 0);
@@ -154,10 +155,10 @@ public readonly partial struct AsyncApiDocument
                 private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public static explicit operator long(MaxMessageBytesEntity value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
+                public static implicit operator long(MaxMessageBytesEntity value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public static explicit operator double(MaxMessageBytesEntity value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
+                public static implicit operator double(MaxMessageBytesEntity value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static explicit operator Corvus.Numerics.BigNumber(MaxMessageBytesEntity value) => value._parent.TryGetValue(value._idx, out Corvus.Numerics.BigNumber result) ? result : throw new FormatException();
@@ -167,6 +168,45 @@ public readonly partial struct AsyncApiDocument
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static explicit operator decimal(MaxMessageBytesEntity value) => value._parent.TryGetValue(value._idx, out decimal result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator sbyte(MaxMessageBytesEntity value) => value._parent.TryGetValue(value._idx, out sbyte result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator byte(MaxMessageBytesEntity value) => value._parent.TryGetValue(value._idx, out byte result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator short(MaxMessageBytesEntity value) => value._parent.TryGetValue(value._idx, out short result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator ushort(MaxMessageBytesEntity value) => value._parent.TryGetValue(value._idx, out ushort result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator int(MaxMessageBytesEntity value) => value._parent.TryGetValue(value._idx, out int result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator uint(MaxMessageBytesEntity value) => value._parent.TryGetValue(value._idx, out uint result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator ulong(MaxMessageBytesEntity value) => value._parent.TryGetValue(value._idx, out ulong result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator float(MaxMessageBytesEntity value) => value._parent.TryGetValue(value._idx, out float result) ? result : throw new FormatException();
+
+#if NET
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator Int128(MaxMessageBytesEntity value) => value._parent.TryGetValue(value._idx, out Int128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator UInt128(MaxMessageBytesEntity value) => value._parent.TryGetValue(value._idx, out UInt128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator Half(MaxMessageBytesEntity value) => value._parent.TryGetValue(value._idx, out Half result) ? result : throw new FormatException();
+#endif
 
                 /// <summary>
                 /// Operator ==.
@@ -223,7 +263,7 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Converts the instance to a JsonElement.
                 /// </summary>
-                /// <param name="value">The instance of this type.</param>
+                /// <param name="instance">The instance of this type.</param>
                 /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator JsonElement(MaxMessageBytesEntity instance)
@@ -234,7 +274,7 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Converts the instance from a JsonElement.
                 /// </summary>
-                /// <param name="value">The instance of this type as a JsonElement.</param>
+                /// <param name="instance">The instance of this type as a JsonElement.</param>
                 /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator MaxMessageBytesEntity(JsonElement instance)
@@ -245,7 +285,8 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Gets an instance of the JSON value from another element.
                 /// </summary>
-                /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
+                /// <typeparam name="T">The type of the <see cref="IJsonElement{T}"/> from which to instantiate the instance.</typeparam>
+                /// <param name="instance">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
                 /// <returns>An instance of this type, initialized from the JSON element.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static MaxMessageBytesEntity From<T>(in T instance)
@@ -271,10 +312,13 @@ public readonly partial struct AsyncApiDocument
                 /// <exception cref="JsonException">
                 ///   A value could not be read from the span.
                 /// </exception>
+                [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static MaxMessageBytesEntity ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
                 {
+                    #pragma warning disable CS0618 // Type or member is obsolete
                     return JsonElementHelpers.ParseValue<MaxMessageBytesEntity>(utf8Json, options);
+                    #pragma warning restore CS0618
                 }
 
                 /// <summary>
@@ -294,10 +338,13 @@ public readonly partial struct AsyncApiDocument
                 /// <exception cref="JsonException">
                 ///   A value could not be read from the span.
                 /// </exception>
+                [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static MaxMessageBytesEntity ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
                 {
+                    #pragma warning disable CS0618 // Type or member is obsolete
                     return JsonElementHelpers.ParseValue<MaxMessageBytesEntity>(json, options);
+                    #pragma warning restore CS0618
                 }
 
                 /// <summary>
@@ -317,10 +364,13 @@ public readonly partial struct AsyncApiDocument
                 /// <exception cref="JsonException">
                 ///   A value could not be read from the text.
                 /// </exception>
+                [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static MaxMessageBytesEntity ParseValue(string json, JsonDocumentOptions options = default)
                 {
+                    #pragma warning disable CS0618 // Type or member is obsolete
                     return JsonElementHelpers.ParseValue<MaxMessageBytesEntity>(json, options);
+                    #pragma warning restore CS0618
                 }
 
                 /// <summary>
@@ -358,16 +408,19 @@ public readonly partial struct AsyncApiDocument
                 /// <exception cref="JsonException">
                 ///   A value could not be read from the reader.
                 /// </exception>
+                [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                 public static MaxMessageBytesEntity ParseValue(ref Utf8JsonReader reader)
                 {
+                    #pragma warning disable CS0618 // Type or member is obsolete
                     return JsonElementHelpers.ParseValue<MaxMessageBytesEntity>(ref reader);
+                    #pragma warning restore CS0618
                 }
 
                 /// <summary>
                 ///   Attempts to parse one JSON value (including objects or arrays) from the provided reader.
                 /// </summary>
                 /// <param name="reader">The reader to read.</param>
-                /// <param name="element">Receives the parsed element.</param>
+                /// <param name="result">Receives the parsed element.</param>
                 /// <returns>
                 ///   <see langword="true"/> if a value was read and parsed into a JsonElement;
                 ///   <see langword="false"/> if the reader ran out of data while parsing.

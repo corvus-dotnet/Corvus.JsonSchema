@@ -33,14 +33,14 @@ namespace Corvus.Text.Json.AsyncApi30;
 public readonly partial struct AsyncApiDocument
 {
     /// <summary>
-    /// Channel Schema
+    /// Operation Schema
     /// </summary>
     /// <remarks>
     /// <para>
-    /// This object contains information about the channel representation in SNS.
+    /// This object contains information about the operation representation in SQS.
     /// </para>
     /// </remarks>
-    public readonly partial struct Sns010Channel
+    public readonly partial struct Sqs020Operation
     {
         /// <summary>
         /// Generated from JSON Schema.
@@ -56,14 +56,14 @@ public readonly partial struct AsyncApiDocument
             /// </para>
             /// </remarks>
             [DebuggerDisplay("{DebuggerDisplay,nq}")]
-            public readonly partial struct PrincipalEntity
+            public readonly partial struct TheAwsAccountOrResourceArnThatThisStatementAppliesTo
 #if NET8_0_OR_GREATER
-                : IJsonElement<PrincipalEntity>,
+                : IJsonElement<TheAwsAccountOrResourceArnThatThisStatementAppliesTo>,
                   IFormattable,
                   ISpanFormattable,
                   IUtf8SpanFormattable
 #else
-                : IJsonElement<PrincipalEntity>,
+                : IJsonElement<TheAwsAccountOrResourceArnThatThisStatementAppliesTo>,
                   IFormattable
 #endif
             {
@@ -73,10 +73,11 @@ public readonly partial struct AsyncApiDocument
 
                 #pragma warning restore CS8618 // JsonDocument nullability
                 /// <summary>
-                /// Initializes a new instance of the <see cref="PrincipalEntity"/> struct.
+                /// Initializes a new instance of the <see cref="TheAwsAccountOrResourceArnThatThisStatementAppliesTo"/> struct.
                 /// </summary>
-                /// <param name="value">The value from which to construct the instance.</param>
-                internal PrincipalEntity(IJsonDocument parent, int idx)
+                /// <param name="parent">The document that contains the element.</param>
+                /// <param name="idx">The index of the element within the document.</param>
+                internal TheAwsAccountOrResourceArnThatThisStatementAppliesTo(IJsonDocument parent, int idx)
                 {
                     Debug.Assert(idx >= 0);
                     _parent = parent;
@@ -86,7 +87,7 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Gets the default instance.
                 /// </summary>
-                public static PrincipalEntity DefaultInstance { get; }
+                public static TheAwsAccountOrResourceArnThatThisStatementAppliesTo DefaultInstance { get; }
 
                 /// <summary>
                 /// Gets the item at the given index.
@@ -143,25 +144,34 @@ public readonly partial struct AsyncApiDocument
                 private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
                 /// <summary>
-                /// Conversion to <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray"/>.
+                /// Conversion to <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray"/>.
                 /// </summary>
                 /// <param name="value">The value from which to convert.</param>
-                public static explicit operator Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray(PrincipalEntity value)
+                public static explicit operator Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray(TheAwsAccountOrResourceArnThatThisStatementAppliesTo value)
                 {
-                    return Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray.From(value);
+                    return Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray.From(value);
                 }
 
                 /// <summary>
-                /// Conversion from <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray"/>.
+                /// Conversion from <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray"/>.
                 /// </summary>
                 /// <param name="value">The value from which to convert.</param>
-                public static implicit operator PrincipalEntity(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray value)
+                public static implicit operator TheAwsAccountOrResourceArnThatThisStatementAppliesTo(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray value)
+                {
+                    return From(value);
+                }
+
+                /// <summary>
+                /// Conversion from the <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray"/> mutable view.
+                /// </summary>
+                /// <param name="value">The value from which to convert.</param>
+                public static implicit operator TheAwsAccountOrResourceArnThatThisStatementAppliesTo(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray.Mutable value)
                 {
                     return From(value);
                 }
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public static explicit operator string(PrincipalEntity value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
+                public static explicit operator string(TheAwsAccountOrResourceArnThatThisStatementAppliesTo value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 
                 /// <summary>
                 /// Operator ==.
@@ -171,7 +181,7 @@ public readonly partial struct AsyncApiDocument
                 /// <returns>
                 /// <c>True</c> if the values are equal.
                 /// </returns>
-                public static bool operator ==(in PrincipalEntity left, in PrincipalEntity right)
+                public static bool operator ==(in TheAwsAccountOrResourceArnThatThisStatementAppliesTo left, in TheAwsAccountOrResourceArnThatThisStatementAppliesTo right)
                 {
                     return left.Equals(right);
                 }
@@ -184,7 +194,7 @@ public readonly partial struct AsyncApiDocument
                 /// <returns>
                 /// <c>True</c> if the values are not equal.
                 /// </returns>
-                public static bool operator !=(in PrincipalEntity left, in PrincipalEntity right)
+                public static bool operator !=(in TheAwsAccountOrResourceArnThatThisStatementAppliesTo left, in TheAwsAccountOrResourceArnThatThisStatementAppliesTo right)
                 {
                     return !left.Equals(right);
                 }
@@ -197,7 +207,7 @@ public readonly partial struct AsyncApiDocument
                 /// <returns>
                 /// <c>True</c> if the values are equal.
                 /// </returns>
-                public static bool operator ==(in PrincipalEntity left, in JsonElement right)
+                public static bool operator ==(in TheAwsAccountOrResourceArnThatThisStatementAppliesTo left, in JsonElement right)
                 {
                     return left.Equals(right);
                 }
@@ -210,7 +220,7 @@ public readonly partial struct AsyncApiDocument
                 /// <returns>
                 /// <c>True</c> if the values are not equal.
                 /// </returns>
-                public static bool operator !=(in PrincipalEntity left, in JsonElement right)
+                public static bool operator !=(in TheAwsAccountOrResourceArnThatThisStatementAppliesTo left, in JsonElement right)
                 {
                     return !left.Equals(right);
                 }
@@ -218,10 +228,10 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Converts the instance to a JsonElement.
                 /// </summary>
-                /// <param name="value">The instance of this type.</param>
+                /// <param name="instance">The instance of this type.</param>
                 /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public static implicit operator JsonElement(PrincipalEntity instance)
+                public static implicit operator JsonElement(TheAwsAccountOrResourceArnThatThisStatementAppliesTo instance)
                 {
                     return JsonElement.From(instance);
                 }
@@ -229,21 +239,22 @@ public readonly partial struct AsyncApiDocument
                 /// <summary>
                 /// Converts the instance from a JsonElement.
                 /// </summary>
-                /// <param name="value">The instance of this type as a JsonElement.</param>
+                /// <param name="instance">The instance of this type as a JsonElement.</param>
                 /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public static implicit operator PrincipalEntity(JsonElement instance)
+                public static implicit operator TheAwsAccountOrResourceArnThatThisStatementAppliesTo(JsonElement instance)
                 {
-                    return PrincipalEntity.From(instance);
+                    return TheAwsAccountOrResourceArnThatThisStatementAppliesTo.From(instance);
                 }
 
                 /// <summary>
                 /// Gets an instance of the JSON value from another element.
                 /// </summary>
-                /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
+                /// <typeparam name="T">The type of the <see cref="IJsonElement{T}"/> from which to instantiate the instance.</typeparam>
+                /// <param name="instance">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
                 /// <returns>An instance of this type, initialized from the JSON element.</returns>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public static PrincipalEntity From<T>(in T instance)
+                public static TheAwsAccountOrResourceArnThatThisStatementAppliesTo From<T>(in T instance)
                     where T : struct, IJsonElement<T>
                 {
                     return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -266,10 +277,13 @@ public readonly partial struct AsyncApiDocument
                 /// <exception cref="JsonException">
                 ///   A value could not be read from the span.
                 /// </exception>
+                [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public static PrincipalEntity ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+                public static TheAwsAccountOrResourceArnThatThisStatementAppliesTo ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
                 {
-                    return JsonElementHelpers.ParseValue<PrincipalEntity>(utf8Json, options);
+                    #pragma warning disable CS0618 // Type or member is obsolete
+                    return JsonElementHelpers.ParseValue<TheAwsAccountOrResourceArnThatThisStatementAppliesTo>(utf8Json, options);
+                    #pragma warning restore CS0618
                 }
 
                 /// <summary>
@@ -289,10 +303,13 @@ public readonly partial struct AsyncApiDocument
                 /// <exception cref="JsonException">
                 ///   A value could not be read from the span.
                 /// </exception>
+                [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public static PrincipalEntity ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+                public static TheAwsAccountOrResourceArnThatThisStatementAppliesTo ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
                 {
-                    return JsonElementHelpers.ParseValue<PrincipalEntity>(json, options);
+                    #pragma warning disable CS0618 // Type or member is obsolete
+                    return JsonElementHelpers.ParseValue<TheAwsAccountOrResourceArnThatThisStatementAppliesTo>(json, options);
+                    #pragma warning restore CS0618
                 }
 
                 /// <summary>
@@ -312,10 +329,13 @@ public readonly partial struct AsyncApiDocument
                 /// <exception cref="JsonException">
                 ///   A value could not be read from the text.
                 /// </exception>
+                [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public static PrincipalEntity ParseValue(string json, JsonDocumentOptions options = default)
+                public static TheAwsAccountOrResourceArnThatThisStatementAppliesTo ParseValue(string json, JsonDocumentOptions options = default)
                 {
-                    return JsonElementHelpers.ParseValue<PrincipalEntity>(json, options);
+                    #pragma warning disable CS0618 // Type or member is obsolete
+                    return JsonElementHelpers.ParseValue<TheAwsAccountOrResourceArnThatThisStatementAppliesTo>(json, options);
+                    #pragma warning restore CS0618
                 }
 
                 /// <summary>
@@ -353,16 +373,19 @@ public readonly partial struct AsyncApiDocument
                 /// <exception cref="JsonException">
                 ///   A value could not be read from the reader.
                 /// </exception>
-                public static PrincipalEntity ParseValue(ref Utf8JsonReader reader)
+                [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
+                public static TheAwsAccountOrResourceArnThatThisStatementAppliesTo ParseValue(ref Utf8JsonReader reader)
                 {
-                    return JsonElementHelpers.ParseValue<PrincipalEntity>(ref reader);
+                    #pragma warning disable CS0618 // Type or member is obsolete
+                    return JsonElementHelpers.ParseValue<TheAwsAccountOrResourceArnThatThisStatementAppliesTo>(ref reader);
+                    #pragma warning restore CS0618
                 }
 
                 /// <summary>
                 ///   Attempts to parse one JSON value (including objects or arrays) from the provided reader.
                 /// </summary>
                 /// <param name="reader">The reader to read.</param>
-                /// <param name="element">Receives the parsed element.</param>
+                /// <param name="result">Receives the parsed element.</param>
                 /// <returns>
                 ///   <see langword="true"/> if a value was read and parsed into a JsonElement;
                 ///   <see langword="false"/> if the reader ran out of data while parsing.
@@ -396,16 +419,16 @@ public readonly partial struct AsyncApiDocument
                 /// <exception cref="JsonException">
                 ///   A value could not be read from the reader.
                 /// </exception>
-                public static bool TryParseValue(ref Utf8JsonReader reader, out PrincipalEntity? result)
+                public static bool TryParseValue(ref Utf8JsonReader reader, out TheAwsAccountOrResourceArnThatThisStatementAppliesTo? result)
                 {
-                    return JsonElementHelpers.TryParseValue<PrincipalEntity>(ref reader, out result);
+                    return JsonElementHelpers.TryParseValue<TheAwsAccountOrResourceArnThatThisStatementAppliesTo>(ref reader, out result);
                 }
 
                 /// <inheritdoc/>
                 public override bool Equals(object? obj)
                 {
                     return
-                        (obj is IJsonElement value && Equals(new PrincipalEntity(value.ParentDocument, value.ParentDocumentIndex))) ||
+                        (obj is IJsonElement value && Equals(new TheAwsAccountOrResourceArnThatThisStatementAppliesTo(value.ParentDocument, value.ParentDocumentIndex))) ||
                         (obj is null && this.IsNull());
                 }
 
@@ -546,11 +569,11 @@ public readonly partial struct AsyncApiDocument
                 void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-                static PrincipalEntity IJsonElement<PrincipalEntity>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+                static TheAwsAccountOrResourceArnThatThisStatementAppliesTo IJsonElement<TheAwsAccountOrResourceArnThatThisStatementAppliesTo>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
                 [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-                private string DebuggerDisplay => $"PrincipalEntity: ValueKind = {ValueKind} : \"{ToString()}\"";
+                private string DebuggerDisplay => $"TheAwsAccountOrResourceArnThatThisStatementAppliesTo: ValueKind = {ValueKind} : \"{ToString()}\"";
 
                 [DebuggerBrowsable(DebuggerBrowsableState.Never)]
                 IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -565,11 +588,11 @@ public readonly partial struct AsyncApiDocument
                 JsonValueKind IJsonElement.ValueKind => ValueKind;
 
                 /// <summary>
-                /// Gets a <see cref="PrincipalEntity"/> which can be safely stored beyond the lifetime of the
+                /// Gets a <see cref="TheAwsAccountOrResourceArnThatThisStatementAppliesTo"/> which can be safely stored beyond the lifetime of the
                 /// original document.
                 /// </summary>
                 /// <returns>
-                /// A <see cref="PrincipalEntity"/> which can be safely stored beyond the lifetime of the
+                /// A <see cref="TheAwsAccountOrResourceArnThatThisStatementAppliesTo"/> which can be safely stored beyond the lifetime of the
                 /// original document.
                 /// </returns>
                 /// <remarks>
@@ -578,10 +601,10 @@ public readonly partial struct AsyncApiDocument
                 /// this method returns the same instance without additional allocation.
                 /// </para>
                 /// </remarks>
-                public PrincipalEntity Clone()
+                public TheAwsAccountOrResourceArnThatThisStatementAppliesTo Clone()
                 {
                     CheckValidInstance();
-                    return _parent.CloneElement<PrincipalEntity>(_idx);
+                    return _parent.CloneElement<TheAwsAccountOrResourceArnThatThisStatementAppliesTo>(_idx);
                 }
 
                 /// <summary>
@@ -589,7 +612,7 @@ public readonly partial struct AsyncApiDocument
                 /// or returns this instance if it is already immutable.
                 /// </summary>
                 /// <returns>
-                /// An immutable <see cref="PrincipalEntity"/> that lives for the lifetime of its
+                /// An immutable <see cref="TheAwsAccountOrResourceArnThatThisStatementAppliesTo"/> that lives for the lifetime of its
                 /// workspace and its associated documents.
                 /// </returns>
                 /// <remarks>
@@ -603,12 +626,12 @@ public readonly partial struct AsyncApiDocument
                 /// If this instance is already backed by an immutable document, it is returned as-is.
                 /// </para>
                 /// </remarks>
-                public PrincipalEntity Freeze()
+                public TheAwsAccountOrResourceArnThatThisStatementAppliesTo Freeze()
                 {
                     CheckValidInstance();
                     if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
                     {
-                        return mutable.FreezeElement<PrincipalEntity>(_idx);
+                        return mutable.FreezeElement<TheAwsAccountOrResourceArnThatThisStatementAppliesTo>(_idx);
                     }
 
                     return this;
@@ -632,15 +655,15 @@ public readonly partial struct AsyncApiDocument
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray" />.
+                /// Gets the value as a <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsJsonStringArray(out Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray result)
+                public bool TryGetAsJsonStringArray(out Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray result)
                 {
-                    if (Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray.JsonSchema.Evaluate(_parent, _idx))
+                    if (Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray.JsonSchema.Evaluate(_parent, _idx))
                     {
-                        result = Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray.From(this);
+                        result = Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray.From(this);
                         return true;
                     }
 
@@ -655,14 +678,14 @@ public readonly partial struct AsyncApiDocument
                 /// <typeparam name="TResult">The result of calling the match function.</typeparam>
                 /// <param name="context">The context to pass to the match function.</param>
                 /// <param name="matchJsonString">Match a <see cref="Corvus.Text.Json.AsyncApi30.JsonString"/>.</param>
-                /// <param name="matchJsonStringArray">Match a <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray"/>.</param>
+                /// <param name="matchJsonStringArray">Match a <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray"/>.</param>
                 /// <param name="defaultMatch">Match any other value.</param>
                 /// <returns>An instance of the value returned by the match function.</returns>
                 public TResult Match<TContext, TResult>(
                     in TContext context,
                     Matcher<Corvus.Text.Json.AsyncApi30.JsonString, TContext, TResult> matchJsonString,
-                    Matcher<Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray, TContext, TResult> matchJsonStringArray,
-                    Matcher<Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity, TContext, TResult> defaultMatch)
+                    Matcher<Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray, TContext, TResult> matchJsonStringArray,
+                    Matcher<Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo, TContext, TResult> defaultMatch)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -672,9 +695,9 @@ public readonly partial struct AsyncApiDocument
                         return matchJsonString(Corvus.Text.Json.AsyncApi30.JsonString.From(this), context);
                     }
 
-                    if (Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray.JsonSchema.Evaluate(_parent, _idx))
+                    if (Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray.JsonSchema.Evaluate(_parent, _idx))
                     {
-                        return matchJsonStringArray(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray.From(this), context);
+                        return matchJsonStringArray(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray.From(this), context);
                     }
 
                     return defaultMatch(this, context);
@@ -685,22 +708,22 @@ public readonly partial struct AsyncApiDocument
                 /// </summary>
                 /// <typeparam name="TResult">The result of calling the match function.</typeparam>
                 /// <param name="matchJsonString">Match a <see cref="Corvus.Text.Json.AsyncApi30.JsonString"/>.</param>
-                /// <param name="matchJsonStringArray">Match a <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray"/>.</param>
+                /// <param name="matchJsonStringArray">Match a <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray"/>.</param>
                 /// <param name="defaultMatch">Match any other value.</param>
                 /// <returns>An instance of the value returned by the match function.</returns>
                 public TResult Match<TResult>(
                     Matcher<Corvus.Text.Json.AsyncApi30.JsonString, TResult> matchJsonString,
-                    Matcher<Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray, TResult> matchJsonStringArray,
-                    Matcher<Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity, TResult> defaultMatch)
+                    Matcher<Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray, TResult> matchJsonStringArray,
+                    Matcher<Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo, TResult> defaultMatch)
                 {
                     if (Corvus.Text.Json.AsyncApi30.JsonString.JsonSchema.Evaluate(_parent, _idx))
                     {
                         return matchJsonString(Corvus.Text.Json.AsyncApi30.JsonString.From(this));
                     }
 
-                    if (Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray.JsonSchema.Evaluate(_parent, _idx))
+                    if (Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray.JsonSchema.Evaluate(_parent, _idx))
                     {
-                        return matchJsonStringArray(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray.From(this));
+                        return matchJsonStringArray(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray.From(this));
                     }
 
                     return defaultMatch(this);

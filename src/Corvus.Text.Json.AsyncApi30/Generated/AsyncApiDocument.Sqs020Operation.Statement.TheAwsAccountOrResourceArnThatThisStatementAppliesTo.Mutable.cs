@@ -33,14 +33,14 @@ namespace Corvus.Text.Json.AsyncApi30;
 public readonly partial struct AsyncApiDocument
 {
     /// <summary>
-    /// Channel Schema
+    /// Operation Schema
     /// </summary>
     /// <remarks>
     /// <para>
-    /// This object contains information about the channel representation in SNS.
+    /// This object contains information about the operation representation in SQS.
     /// </para>
     /// </remarks>
-    public readonly partial struct Sns010Channel
+    public readonly partial struct Sqs020Operation
     {
         /// <summary>
         /// Generated from JSON Schema.
@@ -56,7 +56,7 @@ public readonly partial struct AsyncApiDocument
             /// </para>
             /// </remarks>
             [DebuggerDisplay("{DebuggerDisplay,nq}")]
-            public readonly partial struct PrincipalEntity
+            public readonly partial struct TheAwsAccountOrResourceArnThatThisStatementAppliesTo
             {
                 public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -77,7 +77,8 @@ public readonly partial struct AsyncApiDocument
                     /// <summary>
                     /// Initializes a new instance of the <see cref="Mutable"/> struct.
                     /// </summary>
-                    /// <param name="value">The value from which to construct the instance.</param>
+                    /// <param name="parent">The document that contains the element.</param>
+                    /// <param name="idx">The index of the element within the document.</param>
                     internal Mutable(IJsonDocument parent, int idx)
                     {
                         Debug.Assert(idx >= 0);
@@ -93,19 +94,19 @@ public readonly partial struct AsyncApiDocument
                     private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
                     /// <summary>
-                    /// Conversion to <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray"/>.
+                    /// Conversion to <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray"/>.
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
-                    public static explicit operator Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray.Mutable(Mutable value)
+                    public static explicit operator Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray.Mutable(Mutable value)
                     {
-                        return Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray.Mutable.From(value);
+                        return Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray.Mutable.From(value);
                     }
 
                     /// <summary>
-                    /// Conversion from <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray"/>.
+                    /// Conversion from <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray"/>.
                     /// </summary>
                     /// <param name="value">The value from which to convert.</param>
-                    public static implicit operator Mutable(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray.Mutable value)
+                    public static implicit operator Mutable(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray.Mutable value)
                     {
                         return From(value);
                     }
@@ -168,7 +169,7 @@ public readonly partial struct AsyncApiDocument
                     /// <summary>
                     /// Converts the instance to a JsonElement.
                     /// </summary>
-                    /// <param name="value">The instance of this type.</param>
+                    /// <param name="instance">The instance of this type.</param>
                     /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static implicit operator JsonElement(Mutable instance)
@@ -179,10 +180,10 @@ public readonly partial struct AsyncApiDocument
                     /// <summary>
                     /// Converts an immutable instance to a mutable instance, if the instance is backed by a mutable document.
                     /// </summary>
-                    /// <param name="value">The instance of this type.</param>
+                    /// <param name="instance">The instance of this type.</param>
                     /// <returns>A mutable instance.</returns>
                     /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-                    public static explicit operator Mutable(PrincipalEntity instance)
+                    public static explicit operator Mutable(TheAwsAccountOrResourceArnThatThisStatementAppliesTo instance)
                     {
                         if (instance._parent is not IMutableJsonDocument doc)
                         {
@@ -196,10 +197,10 @@ public readonly partial struct AsyncApiDocument
                     /// <summary>
                     /// Converts to an immutable instance of the <see cref="Mutable"/> type.
                     /// </summary>
-                    /// <param name="value">The <see cref="Mutable"/> instance.</param>
-                    /// <returns>An immutable instance of a <see cref="PrincipalEntity"/>, initialized from the <see cref="Mutable"/> value.</returns>
+                    /// <param name="instance">The <see cref="Mutable"/> instance.</param>
+                    /// <returns>An immutable instance of a <see cref="TheAwsAccountOrResourceArnThatThisStatementAppliesTo"/>, initialized from the <see cref="Mutable"/> value.</returns>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    public static implicit operator PrincipalEntity(Mutable instance)
+                    public static implicit operator TheAwsAccountOrResourceArnThatThisStatementAppliesTo(Mutable instance)
                     {
                         return new(instance._parent, instance._idx);
                     }
@@ -207,7 +208,8 @@ public readonly partial struct AsyncApiDocument
                     /// <summary>
                     /// Gets an instance of the JSON value from another element.
                     /// </summary>
-                    /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
+                    /// <typeparam name="T">The type of the <see cref="IJsonElement{T}"/> from which to instantiate the instance.</typeparam>
+                    /// <param name="instance">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
                     /// <returns>An instance of this type, initialized from the JSON element.</returns>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static Mutable From<T>(in T instance)
@@ -268,7 +270,7 @@ public readonly partial struct AsyncApiDocument
                     public override bool Equals(object? obj)
                     {
                         return
-                            (obj is IJsonElement value && Equals(new PrincipalEntity(value.ParentDocument, value.ParentDocumentIndex))) ||
+                            (obj is IJsonElement value && Equals(new TheAwsAccountOrResourceArnThatThisStatementAppliesTo(value.ParentDocument, value.ParentDocumentIndex))) ||
                             (obj is null && this.IsNull());
                     }
 
@@ -418,7 +420,7 @@ public readonly partial struct AsyncApiDocument
 #endif
 
                     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-                    private string DebuggerDisplay => $"PrincipalEntity.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+                    private string DebuggerDisplay => $"TheAwsAccountOrResourceArnThatThisStatementAppliesTo.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
                     /// <summary>
                     ///   Sets the value of an array element at the specified index.
                     /// </summary>
@@ -488,7 +490,7 @@ public readonly partial struct AsyncApiDocument
                     ///   </para>
                     /// </remarks>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    public void InsertItem(int itemIndex, in JsonElement.Source value)
+                    public void InsertItem(int itemIndex, scoped in JsonElement.Source value)
                     {
                         CheckValidInstance();
 
@@ -514,7 +516,7 @@ public readonly partial struct AsyncApiDocument
                     ///   The parent <see cref="JsonDocument"/> has been disposed.
                     /// </exception>
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    public void AddItem(in JsonElement.Source value)
+                    public void AddItem(scoped in JsonElement.Source value)
                     {
                         InsertItem(GetArrayLength(), in value);
                     }
@@ -785,11 +787,11 @@ public readonly partial struct AsyncApiDocument
                     JsonValueKind IJsonElement.ValueKind => ValueKind;
 
                     /// <summary>
-                    /// Gets a <see cref="PrincipalEntity"/> which can be safely stored beyond the lifetime of the
+                    /// Gets a <see cref="TheAwsAccountOrResourceArnThatThisStatementAppliesTo"/> which can be safely stored beyond the lifetime of the
                     /// original document.
                     /// </summary>
                     /// <returns>
-                    /// A <see cref="PrincipalEntity"/> which can be safely stored beyond the lifetime of the
+                    /// A <see cref="TheAwsAccountOrResourceArnThatThisStatementAppliesTo"/> which can be safely stored beyond the lifetime of the
                     /// original document.
                     /// </returns>
                     /// <remarks>
@@ -798,10 +800,10 @@ public readonly partial struct AsyncApiDocument
                     /// document. The result is independent of the workspace.
                     /// </para>
                     /// </remarks>
-                    public readonly PrincipalEntity Clone()
+                    public readonly TheAwsAccountOrResourceArnThatThisStatementAppliesTo Clone()
                     {
                         CheckValidInstance();
-                        return _parent.CloneElement<PrincipalEntity>(_idx);
+                        return _parent.CloneElement<TheAwsAccountOrResourceArnThatThisStatementAppliesTo>(_idx);
                     }
 
                     /// <summary>
@@ -809,7 +811,7 @@ public readonly partial struct AsyncApiDocument
                     /// document builder registered in the same workspace.
                     /// </summary>
                     /// <returns>
-                    /// An immutable <see cref="PrincipalEntity"/> that lives for the lifetime of its
+                    /// An immutable <see cref="TheAwsAccountOrResourceArnThatThisStatementAppliesTo"/> that lives for the lifetime of its
                     /// workspace and its associated documents.
                     /// </returns>
                     /// <remarks>
@@ -820,10 +822,10 @@ public readonly partial struct AsyncApiDocument
                     /// immutable but is only valid for the lifetime of the workspace.
                     /// </para>
                     /// </remarks>
-                    public readonly PrincipalEntity Freeze()
+                    public readonly TheAwsAccountOrResourceArnThatThisStatementAppliesTo Freeze()
                     {
                         CheckValidInstance();
-                        return _parent.FreezeElement<PrincipalEntity>(_idx);
+                        return _parent.FreezeElement<TheAwsAccountOrResourceArnThatThisStatementAppliesTo>(_idx);
                     }
 
                     /// <summary>
@@ -833,14 +835,14 @@ public readonly partial struct AsyncApiDocument
                     /// <typeparam name="TResult">The result of calling the match function.</typeparam>
                     /// <param name="context">The context to pass to the match function.</param>
                     /// <param name="matchJsonString">Match a <see cref="Corvus.Text.Json.AsyncApi30.JsonString"/>.</param>
-                    /// <param name="matchJsonStringArray">Match a <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray"/>.</param>
+                    /// <param name="matchJsonStringArray">Match a <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray"/>.</param>
                     /// <param name="defaultMatch">Match any other value.</param>
                     /// <returns>An instance of the value returned by the match function.</returns>
                     public TResult Match<TContext, TResult>(
                         in TContext context,
                         Matcher<Corvus.Text.Json.AsyncApi30.JsonString, TContext, TResult> matchJsonString,
-                        Matcher<Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray, TContext, TResult> matchJsonStringArray,
-                        Matcher<Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.Mutable, TContext, TResult> defaultMatch)
+                        Matcher<Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray, TContext, TResult> matchJsonStringArray,
+                        Matcher<Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.Mutable, TContext, TResult> defaultMatch)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -850,9 +852,9 @@ public readonly partial struct AsyncApiDocument
                             return matchJsonString(Corvus.Text.Json.AsyncApi30.JsonString.Mutable.From(this), context);
                         }
 
-                        if (Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray.JsonSchema.Evaluate(_parent, _idx))
+                        if (Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray.JsonSchema.Evaluate(_parent, _idx))
                         {
-                            return matchJsonStringArray(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray.Mutable.From(this), context);
+                            return matchJsonStringArray(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray.Mutable.From(this), context);
                         }
 
                         return defaultMatch(this, context);
@@ -863,33 +865,33 @@ public readonly partial struct AsyncApiDocument
                     /// </summary>
                     /// <typeparam name="TResult">The result of calling the match function.</typeparam>
                     /// <param name="matchJsonString">Match a <see cref="Corvus.Text.Json.AsyncApi30.JsonString"/>.</param>
-                    /// <param name="matchJsonStringArray">Match a <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray"/>.</param>
+                    /// <param name="matchJsonStringArray">Match a <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray"/>.</param>
                     /// <param name="defaultMatch">Match any other value.</param>
                     /// <returns>An instance of the value returned by the match function.</returns>
                     public TResult Match<TResult>(
                         Matcher<Corvus.Text.Json.AsyncApi30.JsonString, TResult> matchJsonString,
-                        Matcher<Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray, TResult> matchJsonStringArray,
-                        Matcher<Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.Mutable, TResult> defaultMatch)
+                        Matcher<Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray, TResult> matchJsonStringArray,
+                        Matcher<Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.Mutable, TResult> defaultMatch)
                     {
                         if (Corvus.Text.Json.AsyncApi30.JsonString.JsonSchema.Evaluate(_parent, _idx))
                         {
                             return matchJsonString(Corvus.Text.Json.AsyncApi30.JsonString.Mutable.From(this));
                         }
 
-                        if (Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray.JsonSchema.Evaluate(_parent, _idx))
+                        if (Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray.JsonSchema.Evaluate(_parent, _idx))
                         {
-                            return matchJsonStringArray(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray.Mutable.From(this));
+                            return matchJsonStringArray(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray.Mutable.From(this));
                         }
 
                         return defaultMatch(this);
                     }
 
                     /// <summary>
-                    /// Gets the value as a <see cref="Corvus.Text.Json.AsyncApi30.JsonString" />.
+                    /// Gets the value as a <see cref="Corvus.Text.Json.AsyncApi30.JsonString.Mutable" />.
                     /// </summary>
                     /// <param name="result">The result of the conversions.</param>
                     /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                    public bool TryGetAsJsonString(out Corvus.Text.Json.AsyncApi30.JsonString result)
+                    public bool TryGetAsJsonString(out Corvus.Text.Json.AsyncApi30.JsonString.Mutable result)
                     {
                         if (Corvus.Text.Json.AsyncApi30.JsonString.JsonSchema.Evaluate(_parent, _idx))
                         {
@@ -902,15 +904,15 @@ public readonly partial struct AsyncApiDocument
                     }
 
                     /// <summary>
-                    /// Gets the value as a <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray" />.
+                    /// Gets the value as a <see cref="Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray.Mutable" />.
                     /// </summary>
                     /// <param name="result">The result of the conversions.</param>
                     /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                    public bool TryGetAsJsonStringArray(out Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray result)
+                    public bool TryGetAsJsonStringArray(out Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray.Mutable result)
                     {
-                        if (Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray.JsonSchema.Evaluate(_parent, _idx))
+                        if (Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray.JsonSchema.Evaluate(_parent, _idx))
                         {
-                            result = Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.JsonStringArray.Mutable.From(this);
+                            result = Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.JsonStringArray.Mutable.From(this);
                             return true;
                         }
 
@@ -967,9 +969,9 @@ public readonly partial struct AsyncApiDocument
                         _kind = requiresUnescaping ? Kind.RawUtf8StringRequiresUnescaping : Kind.RawUtf8StringNotRequiresUnescaping;
                     }
 
-                    internal Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+                    internal Source(Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
-                    public static implicit operator Source(PrincipalEntity instance) => new(JsonElement.From(instance));
+                    public static implicit operator Source(TheAwsAccountOrResourceArnThatThisStatementAppliesTo instance) => new(JsonElement.From(instance));
 
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static implicit operator Source(ReadOnlySpan<byte> value) => new (value);
@@ -1163,7 +1165,7 @@ public readonly partial struct AsyncApiDocument
 
                     public static implicit operator Source<TContext>(Source source) => new (source);
 
-                    internal Source(scoped in TContext context, Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sns010Channel.Statement.PrincipalEntity.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+                    internal Source(scoped in TContext context, Corvus.Text.Json.AsyncApi30.AsyncApiDocument.Sqs020Operation.Statement.TheAwsAccountOrResourceArnThatThisStatementAppliesTo.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
                     internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                     {
@@ -1282,6 +1284,17 @@ public readonly partial struct AsyncApiDocument
                         value.AddAsItem(ref _builder);
                     }
 
+                    /// <summary>
+                    /// Add an item to the array.
+                    /// </summary>
+                    public void AddItem<TContext>(in Corvus.Text.Json.JsonElement.Source<TContext> value)
+#if NET9_0_OR_GREATER
+                        where TContext : allows ref struct
+#endif
+                    {
+                        value.AddAsItem(ref _builder);
+                    }
+
                     internal static void BuildValue(Build value, ref ComplexValueBuilder o)
                     {
                         o.StartArray();
@@ -1355,6 +1368,29 @@ public readonly partial struct AsyncApiDocument
                 }
 
                 /// <summary>
+                /// Creates and initializes a mutable document from a context-threaded value.
+                /// </summary>
+                /// <typeparam name="TContext">The type of the context carried by the value.</typeparam>
+                /// <param name="workspace">The JSON workspace.</param>
+                /// <param name="value">The context-threaded value with which to initialize the builder.</param>
+                /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                /// <returns>An instance of a mutable document initialized with the given value.</returns>
+                public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
+                    JsonWorkspace workspace, scoped in Source<TContext> value, int initialCapacity = 30)
+                    #if NET9_0_OR_GREATER
+                    where TContext : allows ref struct
+                    #endif
+                {
+                    // Create the document builder without a MetadataDb
+                    JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                    ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                    value.AddAsItem(ref cvb);
+                    Debug.Assert(cvb.MemberCount == 1);
+                    ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                    return documentBuilder;
+                }
+
+                /// <summary>
                 /// Creates an empty mutable document builder.
                 /// </summary>
                 /// <param name="workspace">The JSON workspace.</param>
@@ -1379,7 +1415,55 @@ public readonly partial struct AsyncApiDocument
                 /// <returns>An instance of a mutable document initialized with this instance.</returns>
                 public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
                 {
-                    return workspace.CreateBuilder<PrincipalEntity, Mutable>(this);
+                    return workspace.CreateBuilder<TheAwsAccountOrResourceArnThatThisStatementAppliesTo, Mutable>(this);
+                }
+
+                /// <summary>
+                /// Creates a new <see cref="ParsedJsonDocument{T}"/> from a value.
+                /// </summary>
+                /// <param name="value">The value with which to initialize the document.</param>
+                /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
+                public static ParsedJsonDocument<TheAwsAccountOrResourceArnThatThisStatementAppliesTo> Create(
+                    scoped in Source value, int initialCapacity = 30)
+                {
+                    ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
+                    try
+                    {
+                        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                        value.AddAsItem(ref cvb);
+                        Debug.Assert(cvb.MemberCount == 1);
+                        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                        return documentBuilder.ToParsedJsonDocument<TheAwsAccountOrResourceArnThatThisStatementAppliesTo>();
+                    }
+                    finally
+                    {
+                        documentBuilder.Dispose();
+                    }
+                }
+
+                /// <summary>
+                /// Creates an empty <see cref="ParsedJsonDocument{T}"/>.
+                /// </summary>
+                /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
+                /// <returns>An empty <see cref="ParsedJsonDocument{T}"/>. The caller must dispose it.</returns>
+                public static ParsedJsonDocument<TheAwsAccountOrResourceArnThatThisStatementAppliesTo> Create(
+                    int initialCapacity = 30, int initialValueBufferSize = 8192)
+                {
+                    ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
+                    try
+                    {
+                        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
+                        cvb.StartArray();
+                        cvb.EndArray();
+                        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
+                        return documentBuilder.ToParsedJsonDocument<TheAwsAccountOrResourceArnThatThisStatementAppliesTo>();
+                    }
+                    finally
+                    {
+                        documentBuilder.Dispose();
+                    }
                 }
             }
         }
