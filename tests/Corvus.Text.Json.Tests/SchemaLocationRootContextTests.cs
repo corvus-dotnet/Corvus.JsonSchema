@@ -90,7 +90,7 @@ public class SchemaLocationRootContextTests
 
         Assert.IsFalse(doc.RootElement.EvaluateSchema(collector));
 
-        Assert.AreEqual(
+        AssertEqualLines(
             """
             fail|/$defs/sub/properties/x|||The value was expected to match the subschema.
             fail|/$defs/sub/properties/x/minLength|/minLength||Expected the length of the value to be greater than or equal to '1'
@@ -106,7 +106,7 @@ public class SchemaLocationRootContextTests
 
         Assert.IsFalse(doc.RootElement.EvaluateSchema(collector));
 
-        Assert.AreEqual(
+        AssertEqualLines(
             """
             fail|/$defs/fooId|||The value was expected to match the subschema.
             fail|/$defs/fooId/type|/type||The value was expected to be of type 'integer'
@@ -122,7 +122,7 @@ public class SchemaLocationRootContextTests
 
         Assert.IsFalse(doc.RootElement.EvaluateSchema(collector));
 
-        Assert.AreEqual(
+        AssertEqualLines(
             """
             fail|/$defs/fooId|/properties/fooId/$ref|/fooId|The value was expected to match the subschema.
             fail|/$defs/fooId/type|/properties/fooId/$ref/type|/fooId|The value was expected to be of type 'integer'
@@ -141,7 +141,7 @@ public class SchemaLocationRootContextTests
 
         Assert.IsFalse(Issue957FooIdEvaluator.Evaluate(doc.RootElement, collector));
 
-        Assert.AreEqual(
+        AssertEqualLines(
             """
             fail|/$defs/fooId|/$ref/0||The value was expected to match the subschema.
             fail|/$defs/fooId/type|/$ref/0/type||The value was expected to be of type 'integer'
@@ -159,7 +159,7 @@ public class SchemaLocationRootContextTests
 
         Assert.IsFalse(s_fooIdEvaluator.Evaluate(doc.RootElement, collector));
 
-        Assert.AreEqual(
+        AssertEqualLines(
             """
             fail|/$defs/fooId|/$ref/0||The value was expected to match the subschema.
             fail|/$defs/fooId/type|/$ref/0/type||The value was expected to be of type 'integer'
@@ -199,7 +199,7 @@ public class SchemaLocationRootContextTests
             }
         }
 
-        Assert.AreEqual(
+        AssertEqualLines(
             """
             match|/$defs/fooId|/$ref/0||The value was expected to match the subschema.
             match|/$defs/fooId|/$ref/0/title||"Foo identifier"
@@ -212,6 +212,15 @@ public class SchemaLocationRootContextTests
             collected|title|#/$defs/fooId|"Foo identifier"
             """,
             text.ToString().TrimEnd('\n'));
+    }
+
+    /// <summary>
+    /// Compares line-oriented text. The expected value is a multi-line raw string literal, whose line breaks
+    /// follow the source file's line endings, so they are normalized before comparison.
+    /// </summary>
+    private static void AssertEqualLines(string expected, string actual)
+    {
+        Assert.AreEqual(expected.Replace("\r\n", "\n"), actual);
     }
 
     /// <summary>
@@ -232,4 +241,4 @@ public class SchemaLocationRootContextTests
 
         return builder.ToString().TrimEnd('\n');
     }
-}
+}
