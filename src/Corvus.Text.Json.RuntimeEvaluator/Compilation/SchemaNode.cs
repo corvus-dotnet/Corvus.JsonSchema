@@ -211,7 +211,14 @@ internal sealed class PatternMatcher
 
     public string Source { get; }
 
-    public static PatternMatcher Create(string ecmaPattern, JsonSchemaEvaluatorOptions options)
+    /// <summary>Gets a value indicating whether matching uses a <see cref="Regex"/> (as opposed to a prefix, range or trivial test).</summary>
+    public bool UsesRegex => this.kind == Kind.Regex;
+
+    /// <summary>
+    /// Creates a matcher for a pattern, consulting <see cref="JsonSchemaEvaluatorOptions.RegexProvider"/> (with the
+    /// given pattern-table index) before constructing a regular expression for patterns that need one.
+    /// </summary>
+    public static PatternMatcher Create(string ecmaPattern, JsonSchemaEvaluatorOptions options, int patternIndex = -1)
     {
         switch (ecmaPattern)
         {
@@ -238,6 +245,11 @@ internal sealed class PatternMatcher
         if (TryParseRange(ecmaPattern, out int min, out int max))
         {
             return new PatternMatcher(Kind.Range, ecmaPattern, null, null, min, max);
+        }
+
+        if (options.RegexProvider is JsonSchemaRegexProvider provider && provider(patternIndex, ecmaPattern) is Regex provided)
+        {
+            return new PatternMatcher(Kind.Regex, ecmaPattern, provided, null, 0, 0);
         }
 
         RegexOptions regexOptions = RegexOptions.CultureInvariant;

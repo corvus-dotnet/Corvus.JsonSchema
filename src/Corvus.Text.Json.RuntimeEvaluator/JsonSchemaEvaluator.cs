@@ -144,6 +144,30 @@ public sealed class JsonSchemaEvaluator : IDisposable
     }
 
     /// <summary>
+    /// Gets the pattern table of a program image: every pattern that needs a regular expression, in the index order
+    /// a <see cref="JsonSchemaRegexProvider"/> is asked for them. Patterns are in ECMA-262 syntax as written in the
+    /// schema; <see cref="ToDotNetPattern"/> gives the form the evaluator itself would construct.
+    /// </summary>
+    /// <param name="image">The image bytes.</param>
+    /// <returns>The patterns.</returns>
+    public static IReadOnlyList<string> GetImagePatterns(ReadOnlyMemory<byte> image)
+    {
+        return ProgramImage.ReadPatterns(image);
+    }
+
+    /// <summary>
+    /// Translates a schema pattern (ECMA-262 syntax) to the .NET pattern the evaluator constructs for it, so that a
+    /// generated <c>[GeneratedRegex]</c> matches exactly what the evaluator would have used. The evaluator constructs
+    /// its own instances with <see cref="System.Text.RegularExpressions.RegexOptions.CultureInvariant"/>.
+    /// </summary>
+    /// <param name="ecmaPattern">The pattern as written in the schema.</param>
+    /// <returns>The .NET pattern.</returns>
+    public static string ToDotNetPattern(string ecmaPattern)
+    {
+        return Corvus.Text.Json.CodeGeneration.EcmaRegexTranslator.TranslateOrFallback(ecmaPattern);
+    }
+
+    /// <summary>
     /// Gets an evaluator for another entry point of the same schema document set, sharing the loaded documents
     /// and every already-compiled subschema. Only subschemas newly reachable from the entry point are compiled.
     /// </summary>
@@ -225,6 +249,7 @@ public sealed class JsonSchemaEvaluator : IDisposable
             FormatModes = source.FormatModes,
             CompileRegularExpressions = source.CompileRegularExpressions,
             RegexMatchTimeout = source.RegexMatchTimeout,
+            RegexProvider = source.RegexProvider,
             DocumentResolver = source.DocumentResolver,
             FallbackDocumentResolver = source.FallbackDocumentResolver,
             BaseUri = source.BaseUri,

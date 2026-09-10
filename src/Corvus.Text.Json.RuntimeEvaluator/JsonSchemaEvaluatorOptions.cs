@@ -15,6 +15,16 @@ namespace Corvus.Text.Json.RuntimeEvaluator;
 public delegate bool JsonSchemaDocumentResolver(string uri, out ReadOnlyMemory<byte> utf8Json);
 
 /// <summary>
+/// Supplies a ready-made <see cref="Regex"/> for a schema pattern, so that a program emitted ahead of time can wire
+/// in <c>[GeneratedRegex]</c> instances instead of constructing regular expressions at load.
+/// </summary>
+/// <param name="index">The pattern's position in the program image's pattern table (see
+/// <see cref="JsonSchemaEvaluator.GetImagePatterns"/>), or -1 when the schema is being compiled from text.</param>
+/// <param name="ecmaPattern">The pattern as written in the schema (ECMA-262 syntax).</param>
+/// <returns>The regular expression to use, or <see langword="null"/> to let the evaluator construct one.</returns>
+public delegate Regex? JsonSchemaRegexProvider(int index, string ecmaPattern);
+
+/// <summary>
 /// Options controlling schema compilation and evaluation.
 /// </summary>
 public sealed class JsonSchemaEvaluatorOptions
@@ -72,6 +82,14 @@ public sealed class JsonSchemaEvaluatorOptions
     /// Gets or sets the match timeout for regular expressions.
     /// </summary>
     public TimeSpan RegexMatchTimeout { get; set; } = Regex.InfiniteMatchTimeout;
+
+    /// <summary>
+    /// Gets or sets the provider consulted before a regular expression is constructed. Only patterns that need a
+    /// <see cref="Regex"/> are offered (the evaluator matches trivial patterns such as prefixes and length ranges
+    /// without one); a <see langword="null"/> result falls back to construction with
+    /// <see cref="CompileRegularExpressions"/> and <see cref="RegexMatchTimeout"/>.
+    /// </summary>
+    public JsonSchemaRegexProvider? RegexProvider { get; set; }
 
     /// <summary>
     /// Gets or sets the resolver used to load documents referenced by <c>$ref</c> that are not already known.

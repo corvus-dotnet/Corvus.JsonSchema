@@ -20,6 +20,11 @@ public class MicroBenchmarks
     private const string StringJson = "\"abc-1234\"";
     private const string TreeJson = """{"data": 1, "children": [{"data": 2, "children": [{"data": 3}, {"data": 4}]}, {"data": 5, "children": [{"data": 6}]}]}""";
 
+    /// <summary>The instances, for other harness commands.</summary>
+    public const string ObjectJsonText = ObjectJson;
+    public const string ArrayJsonText = ArrayJson;
+    public const string TreeJsonText = TreeJson;
+
     private static readonly string SchemaDir = Path.Combine(AppContext.BaseDirectory, "micro-schemas");
 
     private JsonSchemaEvaluator objectEvaluator = null!;

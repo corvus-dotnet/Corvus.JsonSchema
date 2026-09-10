@@ -28,13 +28,14 @@ namespace Corvus.Text.Json.RuntimeEvaluator.Compilation;
 internal static class ProgramImage
 {
     private const uint Magic = 0x50534A43; // "CJSP" little-endian
-    private const int Version = 1;
+    private const int Version = 2;
 
     /// <summary>Writes the program to an image.</summary>
     public static byte[] Write(CompiledSchema program)
     {
         SchemaNode[] nodes = program.Nodes;
         var constants = new ConstantPool();
+        var patterns = new PatternTable();
         var w = new ImageWriter(64 * 1024);
 
         w.WriteUInt32(Magic);
@@ -57,29 +58,44 @@ internal static class ProgramImage
         body.WriteInt(nodes.Length);
         foreach (SchemaNode node in nodes)
         {
-            WriteNode(ref body, node, constants);
+            WriteNode(ref body, node, constants, patterns);
         }
 
         w.WriteBytes(constants.ToJsonArray());
+        w.WriteInt(patterns.Count);
+        foreach (string pattern in patterns.Patterns)
+        {
+            w.WriteString(pattern);
+        }
+
         w.WriteRaw(body.WrittenSpan);
         return w.ToArray();
+    }
+
+    /// <summary>Reads the pattern table of an image: the patterns that need a regular expression, in index order.</summary>
+    public static string[] ReadPatterns(ReadOnlyMemory<byte> image)
+    {
+        var r = new ImageReader(image.Span);
+        ReadHeader(ref r);
+        r.ReadBool();
+        r.ReadInt();
+        r.ReadInt();
+        int entryCount = r.ReadInt();
+        for (int i = 0; i < entryCount; i++)
+        {
+            r.ReadString();
+            r.ReadInt();
+        }
+
+        r.ReadBytes();
+        return ReadPatternTable(ref r);
     }
 
     /// <summary>Reads a program from an image.</summary>
     public static CompiledSchema Read(ReadOnlyMemory<byte> image, JsonSchemaEvaluatorOptions options)
     {
         var r = new ImageReader(image.Span);
-        if (r.ReadUInt32() != Magic)
-        {
-            throw new JsonSchemaCompilationException("The data is not a compiled schema program image.");
-        }
-
-        int version = r.ReadInt();
-        if (version != Version)
-        {
-            throw new JsonSchemaCompilationException($"The program image is version {version}; this evaluator reads version {Version}.");
-        }
-
+        ReadHeader(ref r);
         bool usesDynamicScope = r.ReadBool();
         int resourceCount = r.ReadInt();
         int rootNode = r.ReadInt();
@@ -102,17 +118,83 @@ internal static class ProgramImage
             constants.Add(new ConstantValue(d, index, d.GetJsonTokenType(index)));
         }
 
+        string[] patterns = ReadPatternTable(ref r);
+        var matchers = new PatternMatcher?[patterns.Length];
+
         int nodeCount = r.ReadInt();
         var nodes = new SchemaNode[nodeCount];
         for (int i = 0; i < nodeCount; i++)
         {
-            nodes[i] = ReadNode(ref r, constants, options);
+            nodes[i] = ReadNode(ref r, constants, patterns, matchers, options);
         }
 
         return new CompiledSchema(nodes, rootNode, usesDynamicScope, resourceCount, options, entryPoints, constantsDocument);
     }
 
-    private static void WriteNode(ref ImageWriter w, SchemaNode n, ConstantPool constants)
+    private static void ReadHeader(ref ImageReader r)
+    {
+        if (r.ReadUInt32() != Magic)
+        {
+            throw new JsonSchemaCompilationException("The data is not a compiled schema program image.");
+        }
+
+        int version = r.ReadInt();
+        if (version != Version)
+        {
+            throw new JsonSchemaCompilationException($"The program image is version {version}; this evaluator reads version {Version}.");
+        }
+    }
+
+    private static string[] ReadPatternTable(ref ImageReader r)
+    {
+        int count = r.ReadInt();
+        var patterns = new string[count];
+        for (int i = 0; i < count; i++)
+        {
+            patterns[i] = r.ReadString()!;
+        }
+
+        return patterns;
+    }
+
+    /// <summary>
+    /// A pattern is written as its table index when it needs a regular expression (so a provider can supply one) and
+    /// as its source otherwise; matchers for the same index are shared within a loaded program.
+    /// </summary>
+    private static void WritePattern(ref ImageWriter w, PatternMatcher? matcher, PatternTable patterns)
+    {
+        if (matcher is null)
+        {
+            w.WriteInt(-2);
+        }
+        else if (matcher.UsesRegex)
+        {
+            w.WriteInt(patterns.IndexOf(matcher.Source));
+        }
+        else
+        {
+            w.WriteInt(-1);
+            w.WriteString(matcher.Source);
+        }
+    }
+
+    private static PatternMatcher? ReadPattern(ref ImageReader r, string[] patterns, PatternMatcher?[] matchers, JsonSchemaEvaluatorOptions options)
+    {
+        int index = r.ReadInt();
+        if (index == -2)
+        {
+            return null;
+        }
+
+        if (index == -1)
+        {
+            return PatternMatcher.Create(r.ReadString()!, options);
+        }
+
+        return matchers[index] ??= PatternMatcher.Create(patterns[index], options, index);
+    }
+
+    private static void WriteNode(ref ImageWriter w, SchemaNode n, ConstantPool constants, PatternTable patterns)
     {
         w.WriteInt(n.Id);
         w.WriteInt(n.ResourceId);
@@ -191,7 +273,7 @@ internal static class ProgramImage
         // string
         w.WriteInt(n.MinLength);
         w.WriteInt(n.MaxLength);
-        w.WriteString(n.Pattern?.Source);
+        WritePattern(ref w, n.Pattern, patterns);
         w.WriteByte((byte)n.Format);
         w.WriteInt(n.ElidedTarget);
         w.WriteByte((byte)n.Content);
@@ -237,7 +319,7 @@ internal static class ProgramImage
             w.WriteInt(patternProperties.Length);
             foreach (PatternPropertyEntry p in patternProperties)
             {
-                w.WriteString(p.Matcher.Source);
+                WritePattern(ref w, p.Matcher, patterns);
                 WriteChildRef(ref w, p.Schema);
                 w.WriteBytes(p.Name);
             }
@@ -325,7 +407,7 @@ internal static class ProgramImage
         }
     }
 
-    private static SchemaNode ReadNode(ref ImageReader r, List<ConstantValue> constants, JsonSchemaEvaluatorOptions options)
+    private static SchemaNode ReadNode(ref ImageReader r, List<ConstantValue> constants, string[] patterns, PatternMatcher?[] matchers, JsonSchemaEvaluatorOptions options)
     {
         var n = new SchemaNode
         {
@@ -421,8 +503,7 @@ internal static class ProgramImage
         // string
         n.MinLength = r.ReadInt();
         n.MaxLength = r.ReadInt();
-        string? pattern = r.ReadString();
-        n.Pattern = pattern is null ? null : PatternMatcher.Create(pattern, options);
+        n.Pattern = ReadPattern(ref r, patterns, matchers, options);
         n.Format = (FormatKind)r.ReadByte();
         n.ElidedTarget = r.ReadInt();
         n.Content = (ContentKind)r.ReadByte();
@@ -469,7 +550,7 @@ internal static class ProgramImage
             var patternProperties = new PatternPropertyEntry[patternPropertyCount];
             for (int i = 0; i < patternPropertyCount; i++)
             {
-                var p = new PatternPropertyEntry { Matcher = PatternMatcher.Create(r.ReadString()!, options) };
+                var p = new PatternPropertyEntry { Matcher = ReadPattern(ref r, patterns, matchers, options)! };
                 p.Schema = ReadChildRef(ref r);
                 p.Name = r.ReadBytes()!;
                 patternProperties[i] = p;
@@ -743,6 +824,29 @@ internal static class ProgramImage
         bool value = (bits & (1u << bit)) != 0;
         bit++;
         return value;
+    }
+
+    /// <summary>Assigns each distinct regular-expression pattern an index, in first-seen order.</summary>
+    private sealed class PatternTable
+    {
+        private readonly List<string> patterns = [];
+        private readonly Dictionary<string, int> indices = new(StringComparer.Ordinal);
+
+        public int Count => this.patterns.Count;
+
+        public IReadOnlyList<string> Patterns => this.patterns;
+
+        public int IndexOf(string pattern)
+        {
+            if (!this.indices.TryGetValue(pattern, out int index))
+            {
+                index = this.patterns.Count;
+                this.patterns.Add(pattern);
+                this.indices.Add(pattern, index);
+            }
+
+            return index;
+        }
     }
 
     /// <summary>

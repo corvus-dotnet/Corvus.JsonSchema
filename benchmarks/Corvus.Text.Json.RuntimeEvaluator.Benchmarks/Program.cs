@@ -50,6 +50,11 @@ if (args.Length > 0 && args[0] == "alloc")
     return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.AllocationCheck.Run(args[1..]);
 }
 
+if (args.Length > 0 && args[0] == "ceiling")
+{
+    return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.CeilingProbe.Run(args[1..]);
+}
+
 if (args.Length > 0 && args[0] == "emit")
 {
     return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.StaticInitEmitter.Run(args[1..]);
