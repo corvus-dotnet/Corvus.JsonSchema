@@ -43,8 +43,9 @@ The schema analysis and code emission layer:
 - **Vocabularies** — keyword groups per draft (4, 6, 7, 2019-09, 2020-12)
 - **TypeDeclaration** — the central data structure representing a resolved JSON Schema as a type
 - **Type reduction** — collapses trivial subschemas into their parents for leaner generated code
-- **Validation handlers** — emit C# validation code from keyword constraints
-- **Standalone evaluator generator** — emits a single static evaluator class
+- **Schema evaluation program** — emits, once per compilation, the schema documents and entry points that
+  generated types and standalone evaluators validate through (`RuntimeProgramGenerator`); the
+  evaluation logic itself is the runtime evaluator
 
 ### Source generator (`Corvus.Text.Json.SourceGenerator`)
 
@@ -64,8 +65,8 @@ The `corvusjson` command-line tool generates C# from JSON Schema files. Used for
 Compiles a schema document into an in-memory node graph at runtime (no code generation, no Roslyn) and
 evaluates any `IJsonElement<T>` against it: zero-allocation flag validation, or full results and annotations
 through `JsonSchemaResultsCollector`. Supports Draft 4 to 2020-12 including `$dynamicRef`/`$recursiveRef`, and
-evaluation rooted at any subschema. It is the engine behind `Corvus.Text.Json.Validator` and the CLI's
-`validate` command.
+evaluation rooted at any subschema. It is the engine behind `Corvus.Text.Json.Validator`, the CLI's
+`validate` command, and the validation of every generated type.
 
 ### Validator (`Corvus.Text.Json.Validator`)
 
@@ -183,9 +184,9 @@ finally { if (rentedArray != null) ArrayPool<byte>.Shared.Return(rentedArray); }
 | Topic | Document |
 |-------|----------|
 | Code generation patterns | [CodeGenerationPatternDiscovery.md](docs/CodeGenerationPatternDiscovery.md) |
-| Standalone evaluator | [StandaloneEvaluatorInternals.md](docs/StandaloneEvaluatorInternals.md) |
+| Schema evaluation program (generated validation) | [StandaloneEvaluatorInternals.md](docs/StandaloneEvaluatorInternals.md) |
 | Runtime evaluator (no codegen) | [RuntimeEvaluator.md](docs/RuntimeEvaluator.md), [RuntimeEvaluatorResults.md](docs/RuntimeEvaluatorResults.md) |
-| Validation handlers | [ValidationHandlerGuide.md](docs/ValidationHandlerGuide.md) |
+| Keyword evaluation (where handlers used to be) | [ValidationHandlerGuide.md](docs/ValidationHandlerGuide.md) |
 | Annotation system | [AnnotationSystem.md](docs/AnnotationSystem.md) |
 | Adding keywords | [AddingKeywords.md](docs/AddingKeywords.md) |
 | Numeric types | [NumericTypes.md](docs/NumericTypes.md) |

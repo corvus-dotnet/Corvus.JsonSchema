@@ -143,43 +143,43 @@ public static partial class JsonSchemaEvaluation
 
     private const bool MinimumUInt64IsNegative = false;
 
-    private static readonly JsonSchemaMessageProvider ExpectedByte = static (buffer, out written) => ExpectedNumberFormat("byte"u8, buffer, out written);
+    public static readonly JsonSchemaMessageProvider ExpectedByte = static (buffer, out written) => ExpectedNumberFormat("byte"u8, buffer, out written);
 
-    private static readonly JsonSchemaMessageProvider ExpectedDecimal = static (buffer, out written) => ExpectedNumberFormat("decimal"u8, buffer, out written);
+    public static readonly JsonSchemaMessageProvider ExpectedDecimal = static (buffer, out written) => ExpectedNumberFormat("decimal"u8, buffer, out written);
 
-    private static readonly JsonSchemaMessageProvider ExpectedDouble = static (buffer, out written) => ExpectedNumberFormat("double"u8, buffer, out written);
+    public static readonly JsonSchemaMessageProvider ExpectedDouble = static (buffer, out written) => ExpectedNumberFormat("double"u8, buffer, out written);
 
-    private static readonly JsonSchemaMessageProvider ExpectedHalf = static (buffer, out written) => ExpectedNumberFormat("half"u8, buffer, out written);
+    public static readonly JsonSchemaMessageProvider ExpectedHalf = static (buffer, out written) => ExpectedNumberFormat("half"u8, buffer, out written);
 
-    private static readonly JsonSchemaMessageProvider ExpectedInt128 = static (buffer, out written) => ExpectedNumberFormat("int128"u8, buffer, out written);
+    public static readonly JsonSchemaMessageProvider ExpectedInt128 = static (buffer, out written) => ExpectedNumberFormat("int128"u8, buffer, out written);
 
-    private static readonly JsonSchemaMessageProvider ExpectedInt16 = static (buffer, out written) => ExpectedNumberFormat("int16"u8, buffer, out written);
+    public static readonly JsonSchemaMessageProvider ExpectedInt16 = static (buffer, out written) => ExpectedNumberFormat("int16"u8, buffer, out written);
 
-    private static readonly JsonSchemaMessageProvider ExpectedInt32 = static (buffer, out written) => ExpectedNumberFormat("int32"u8, buffer, out written);
+    public static readonly JsonSchemaMessageProvider ExpectedInt32 = static (buffer, out written) => ExpectedNumberFormat("int32"u8, buffer, out written);
 
-    private static readonly JsonSchemaMessageProvider ExpectedInt64 = static (buffer, out written) => ExpectedNumberFormat("int64"u8, buffer, out written);
+    public static readonly JsonSchemaMessageProvider ExpectedInt64 = static (buffer, out written) => ExpectedNumberFormat("int64"u8, buffer, out written);
 
-    private static readonly JsonSchemaMessageProvider ExpectedSByte = static (buffer, out written) => ExpectedNumberFormat("sbyte"u8, buffer, out written);
+    public static readonly JsonSchemaMessageProvider ExpectedSByte = static (buffer, out written) => ExpectedNumberFormat("sbyte"u8, buffer, out written);
 
-    private static readonly JsonSchemaMessageProvider ExpectedSingle = static (buffer, out written) => ExpectedNumberFormat("single"u8, buffer, out written);
+    public static readonly JsonSchemaMessageProvider ExpectedSingle = static (buffer, out written) => ExpectedNumberFormat("single"u8, buffer, out written);
 
-    private static readonly JsonSchemaMessageProvider ExpectedUInt128 = static (buffer, out written) => ExpectedNumberFormat("uint128"u8, buffer, out written);
+    public static readonly JsonSchemaMessageProvider ExpectedUInt128 = static (buffer, out written) => ExpectedNumberFormat("uint128"u8, buffer, out written);
 
-    private static readonly JsonSchemaMessageProvider ExpectedUInt16 = static (buffer, out written) => ExpectedNumberFormat("uint16"u8, buffer, out written);
+    public static readonly JsonSchemaMessageProvider ExpectedUInt16 = static (buffer, out written) => ExpectedNumberFormat("uint16"u8, buffer, out written);
 
-    private static readonly JsonSchemaMessageProvider ExpectedUInt32 = static (buffer, out written) => ExpectedNumberFormat("uint32"u8, buffer, out written);
+    public static readonly JsonSchemaMessageProvider ExpectedUInt32 = static (buffer, out written) => ExpectedNumberFormat("uint32"u8, buffer, out written);
 
-    private static readonly JsonSchemaMessageProvider ExpectedUInt64 = static (buffer, out written) => ExpectedNumberFormat("uint64"u8, buffer, out written);
+    public static readonly JsonSchemaMessageProvider ExpectedUInt64 = static (buffer, out written) => ExpectedNumberFormat("uint64"u8, buffer, out written);
 
-    private static readonly JsonSchemaMessageProvider<string> ExpectedNotEquals = static (value, buffer, out written) => ExpectedNotEqualsValue(value, buffer, out written);
+    public static readonly JsonSchemaMessageProvider<string> ExpectedNotEquals = static (value, buffer, out written) => ExpectedNotEqualsValue(value, buffer, out written);
 
-    private static readonly JsonSchemaMessageProvider<string> ExpectedLessThanOrEquals = static (value, buffer, out written) => ExpectedLessThanOrEqualsValue(value, buffer, out written);
+    public static readonly JsonSchemaMessageProvider<string> ExpectedLessThanOrEquals = static (value, buffer, out written) => ExpectedLessThanOrEqualsValue(value, buffer, out written);
 
-    private static readonly JsonSchemaMessageProvider<string> ExpectedLessThan = static (value, buffer, out written) => ExpectedLessThanValue(value, buffer, out written);
+    public static readonly JsonSchemaMessageProvider<string> ExpectedLessThan = static (value, buffer, out written) => ExpectedLessThanValue(value, buffer, out written);
 
-    private static readonly JsonSchemaMessageProvider<string> ExpectedGreaterThanOrEquals = static (value, buffer, out written) => ExpectedGreaterThanOrEqualsValue(value, buffer, out written);
+    public static readonly JsonSchemaMessageProvider<string> ExpectedGreaterThanOrEquals = static (value, buffer, out written) => ExpectedGreaterThanOrEqualsValue(value, buffer, out written);
 
-    private static readonly JsonSchemaMessageProvider<string> ExpectedGreaterThan = static (value, buffer, out written) => ExpectedGreaterThanValue(value, buffer, out written);
+    public static readonly JsonSchemaMessageProvider<string> ExpectedGreaterThan = static (value, buffer, out written) => ExpectedGreaterThanValue(value, buffer, out written);
 
     private static ReadOnlySpan<byte> MaximumByteFractional => ""u8;
 

@@ -53,7 +53,14 @@ internal static class Evaluator
                     : Eval<FastMode, InterfaceAccess>(root, document, index, ref state, default, 0);
             }
 
-            int seq = collector.BeginChildContext(0);
+            // A root that is nothing but a $ref reports against its target, as a generated model rooted at a
+            // reduced type does; the root context carries the target's schema location.
+            if (root.ElidedTarget >= 0)
+            {
+                root = nodes[root.ElidedTarget];
+            }
+
+            int seq = collector.BeginChildContext(0, new EdgeContext(null, root.SchemaLocation, null, -1, -1), null, Providers.SchemaPath, null);
             bool ok = raw
                 ? Eval<CollectingMode, RawAccess>(root, document, index, ref state, default, seq)
                 : Eval<CollectingMode, InterfaceAccess>(root, document, index, ref state, default, seq);
@@ -253,7 +260,7 @@ internal static class Evaluator
             bool match = MatchesType<TAccess>(node.Type, tokenType, ref state, doc, index, (flags & NodeFlags.Draft4) != 0);
             if (default(TMode).Collecting)
             {
-                state.Collector!.EvaluatedKeyword(match, match ? null : ExpectedTypeProvider(node.Type), "type"u8);
+                state.Collector!.EvaluatedKeyword(match, node.TypeMessage, "type"u8);
             }
 
             if (!match)
@@ -272,7 +279,7 @@ internal static class Evaluator
             bool match = MatchesConst<TAccess>(node, ref state, doc, index, tokenType);
             if (default(TMode).Collecting)
             {
-                state.Collector!.EvaluatedKeyword(match, null, "const"u8);
+                ReportConst(node, match, ref state);
             }
 
             if (!match)
@@ -694,6 +701,32 @@ internal static class Evaluator
         return exponent >= 0;
     }
 
+    private static void ReportConst(SchemaNode node, bool match, ref EvaluationState state)
+    {
+        IJsonSchemaResultsCollector collector = state.Collector!;
+        switch (node.Const.TokenType)
+        {
+            case JsonTokenType.String:
+                collector.EvaluatedKeyword(match, node.ConstText!, JsonSchemaEvaluation.ExpectedStringEquals, "const"u8);
+                break;
+            case JsonTokenType.Number:
+                collector.EvaluatedKeyword(match, node.ConstText!, JsonSchemaEvaluation.ExpectedEquals, "const"u8);
+                break;
+            case JsonTokenType.True:
+                collector.EvaluatedKeyword(match, JsonSchemaEvaluation.ExpectedBooleanTrue, "const"u8);
+                break;
+            case JsonTokenType.False:
+                collector.EvaluatedKeyword(match, JsonSchemaEvaluation.ExpectedBooleanFalse, "const"u8);
+                break;
+            case JsonTokenType.Null:
+                collector.EvaluatedKeyword(match, JsonSchemaEvaluation.ExpectedNull, "const"u8);
+                break;
+            default:
+                collector.EvaluatedKeyword(match, null, "const"u8);
+                break;
+        }
+    }
+
     private static bool MatchesConst<TAccess>(SchemaNode node, ref EvaluationState state, IJsonDocument doc, int index, JsonTokenType tokenType)
         where TAccess : struct, IDocumentAccess
     {
@@ -784,6 +817,57 @@ internal static class Evaluator
         where TMode : struct, IEvaluationMode
         where TAccess : struct, IDocumentAccess
     {
+        bool ok = true;
+        if (node.AssertFormat && FormatKinds.IsNumeric(node.Format))
+        {
+            JsonElementHelpers.ParseNumber(default(TAccess).RawValue(ref state, doc, index), out bool neg, out ReadOnlySpan<byte> integral, out ReadOnlySpan<byte> fractional, out int exponent);
+            bool m = MatchesNumericFormat(node.Format, neg, integral, fractional, exponent, ref state);
+            if (default(TMode).Collecting)
+            {
+                state.Collector!.EvaluatedKeyword(m, Providers.ExpectedFor(node.Format), "format"u8);
+            }
+
+            if (!m)
+            {
+                if (!default(TMode).Collecting)
+                {
+                    return false;
+                }
+
+                ok = false;
+            }
+        }
+
+        return EvalNumberBounds<TMode, TAccess>(node, doc, index, ref state) & ok;
+    }
+
+    private static bool MatchesNumericFormat(FormatKind format, bool isNegative, scoped ReadOnlySpan<byte> integral, scoped ReadOnlySpan<byte> fractional, int exponent, ref EvaluationState state)
+    {
+        ReadOnlySpan<byte> keyword = FormatKeyword;
+        return format switch
+        {
+            FormatKind.Byte => JsonSchemaEvaluation.MatchByte(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
+            FormatKind.UInt16 => JsonSchemaEvaluation.MatchUInt16(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
+            FormatKind.UInt32 => JsonSchemaEvaluation.MatchUInt32(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
+            FormatKind.UInt64 => JsonSchemaEvaluation.MatchUInt64(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
+            FormatKind.UInt128 => JsonSchemaEvaluation.MatchUInt128(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
+            FormatKind.SByte => JsonSchemaEvaluation.MatchSByte(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
+            FormatKind.Int16 => JsonSchemaEvaluation.MatchInt16(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
+            FormatKind.Int32 => JsonSchemaEvaluation.MatchInt32(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
+            FormatKind.Int64 => JsonSchemaEvaluation.MatchInt64(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
+            FormatKind.Int128 => JsonSchemaEvaluation.MatchInt128(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
+            FormatKind.Half => JsonSchemaEvaluation.MatchHalf(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
+            FormatKind.Single => JsonSchemaEvaluation.MatchSingle(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
+            FormatKind.Double => JsonSchemaEvaluation.MatchDouble(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
+            FormatKind.Decimal => JsonSchemaEvaluation.MatchDecimal(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
+            _ => true,
+        };
+    }
+
+    private static bool EvalNumberBounds<TMode, TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
+        where TMode : struct, IEvaluationMode
+        where TAccess : struct, IDocumentAccess
+    {
         ReadOnlySpan<byte> raw = default(TAccess).RawValue(ref state, doc, index);
 
         // Plain integer literal against plain integer bounds: compare as longs (exact) without normalising.
@@ -862,7 +946,7 @@ internal static class Evaluator
             bool m = min.CompareTo(neg, integral, fractional, exponent) >= 0;
             if (default(TMode).Collecting)
             {
-                state.Collector!.EvaluatedKeyword(m, null, "minimum"u8);
+                state.Collector!.EvaluatedKeyword(m, min.Text, JsonSchemaEvaluation.ExpectedGreaterThanOrEquals, "minimum"u8);
             }
 
             if (!m)
@@ -881,7 +965,7 @@ internal static class Evaluator
             bool m = max.CompareTo(neg, integral, fractional, exponent) <= 0;
             if (default(TMode).Collecting)
             {
-                state.Collector!.EvaluatedKeyword(m, null, "maximum"u8);
+                state.Collector!.EvaluatedKeyword(m, max.Text, JsonSchemaEvaluation.ExpectedLessThanOrEquals, "maximum"u8);
             }
 
             if (!m)
@@ -900,7 +984,7 @@ internal static class Evaluator
             bool m = emin.CompareTo(neg, integral, fractional, exponent) > 0;
             if (default(TMode).Collecting)
             {
-                state.Collector!.EvaluatedKeyword(m, null, "exclusiveMinimum"u8);
+                state.Collector!.EvaluatedKeyword(m, emin.Text, JsonSchemaEvaluation.ExpectedGreaterThan, "exclusiveMinimum"u8);
             }
 
             if (!m)
@@ -919,7 +1003,7 @@ internal static class Evaluator
             bool m = emax.CompareTo(neg, integral, fractional, exponent) < 0;
             if (default(TMode).Collecting)
             {
-                state.Collector!.EvaluatedKeyword(m, null, "exclusiveMaximum"u8);
+                state.Collector!.EvaluatedKeyword(m, emax.Text, JsonSchemaEvaluation.ExpectedLessThan, "exclusiveMaximum"u8);
             }
 
             if (!m)
@@ -938,7 +1022,7 @@ internal static class Evaluator
             bool m = divisor.IsMultiple(integral, fractional, exponent);
             if (default(TMode).Collecting)
             {
-                state.Collector!.EvaluatedKeyword(m, null, "multipleOf"u8);
+                state.Collector!.EvaluatedKeyword(m, divisor.Text, JsonSchemaEvaluation.ExpectedMultipleOf, "multipleOf"u8);
             }
 
             if (!m)
@@ -986,7 +1070,7 @@ internal static class Evaluator
 
                 if (default(TMode).Collecting)
                 {
-                    state.Collector!.EvaluatedKeyword(m, null, "minLength"u8);
+                    state.Collector!.EvaluatedKeyword(m, node.MinLength, JsonSchemaEvaluation.ExpectedStringLengthGreaterThanOrEquals, "minLength"u8);
                 }
 
                 if (!m)
@@ -1019,7 +1103,7 @@ internal static class Evaluator
 
                 if (default(TMode).Collecting)
                 {
-                    state.Collector!.EvaluatedKeyword(m, null, "maxLength"u8);
+                    state.Collector!.EvaluatedKeyword(m, node.MaxLength, JsonSchemaEvaluation.ExpectedStringLengthLessThanOrEquals, "maxLength"u8);
                 }
 
                 if (!m)
@@ -1039,7 +1123,7 @@ internal static class Evaluator
             bool m = pattern.IsMatch(value);
             if (default(TMode).Collecting)
             {
-                state.Collector!.EvaluatedKeyword(m, null, "pattern"u8);
+                state.Collector!.EvaluatedKeyword(m, pattern.Source, JsonSchemaEvaluation.ExpectedStringMatchesRegularExpression, "pattern"u8);
             }
 
             if (!m)
@@ -1053,12 +1137,21 @@ internal static class Evaluator
             }
         }
 
-        if (node.AssertFormat && node.Format != FormatKind.None)
+        if (node.AssertFormat && node.Format != FormatKind.None && !FormatKinds.IsNumeric(node.Format))
         {
             bool m = MatchesFormat(node.Format, value, ref state);
-            if (default(TMode).Collecting)
+            if (node.WarnFormat)
             {
-                state.Collector!.EvaluatedKeyword(m, null, "format"u8);
+                if (default(TMode).Collecting)
+                {
+                    state.Collector!.EvaluatedKeyword(true, m ? Providers.ExpectedFor(node.Format) : Providers.WarningFor(node.Format), "format"u8);
+                }
+
+                m = true;
+            }
+            else if (default(TMode).Collecting)
+            {
+                state.Collector!.EvaluatedKeyword(m, Providers.ExpectedFor(node.Format), "format"u8);
             }
 
             if (!m)
@@ -1084,7 +1177,15 @@ internal static class Evaluator
 
             if (default(TMode).Collecting)
             {
-                state.Collector!.EvaluatedKeyword(m, null, node.Content == ContentKind.Base64 ? "contentEncoding"u8 : "contentMediaType"u8);
+                state.Collector!.EvaluatedKeyword(
+                    m,
+                    node.Content switch
+                    {
+                        ContentKind.Base64 => JsonSchemaEvaluation.ExpectedBase64String,
+                        ContentKind.Json => JsonSchemaEvaluation.ExpectedJsonContent,
+                        _ => JsonSchemaEvaluation.ExpectedBase64Content,
+                    },
+                    node.Content == ContentKind.Base64 ? "contentEncoding"u8 : "contentMediaType"u8);
             }
 
             if (!m)
@@ -1103,6 +1204,11 @@ internal static class Evaluator
 
     private static bool MatchesFormat(FormatKind format, scoped ReadOnlySpan<byte> value, ref EvaluationState state)
     {
+        if (FormatKinds.IsNumeric(format))
+        {
+            return true;
+        }
+
         ReadOnlySpan<byte> keyword = FormatKeyword;
         return format switch
         {
@@ -1218,7 +1324,7 @@ internal static class Evaluator
                 bool m = count >= node.MinProperties;
                 if (default(TMode).Collecting)
                 {
-                    state.Collector!.EvaluatedKeyword(m, null, "minProperties"u8);
+                    state.Collector!.EvaluatedKeyword(m, node.MinProperties, JsonSchemaEvaluation.ExpectedPropertyCountGreaterThanOrEqualsValue, "minProperties"u8);
                 }
 
                 if (!m)
@@ -1237,7 +1343,7 @@ internal static class Evaluator
                 bool m = count <= node.MaxProperties;
                 if (default(TMode).Collecting)
                 {
-                    state.Collector!.EvaluatedKeyword(m, null, "maxProperties"u8);
+                    state.Collector!.EvaluatedKeyword(m, node.MaxProperties, JsonSchemaEvaluation.ExpectedPropertyCountLessThanOrEqualsValue, "maxProperties"u8);
                 }
 
                 if (!m)
@@ -1366,7 +1472,7 @@ internal static class Evaluator
                 bool present = (seen[bit >> 6] & (1UL << (bit & 63))) != 0;
                 if (default(TMode).Collecting)
                 {
-                    state.Collector!.EvaluatedKeywordForProperty(present, null, node.RequiredNames![i], "required"u8);
+                    state.Collector!.EvaluatedKeywordForProperty(present, node.RequiredNames![i], present ? Providers.RequiredPresent : Providers.RequiredNotPresent, node.RequiredNames![i], "required"u8);
                 }
 
                 if (!present)
@@ -1399,7 +1505,7 @@ internal static class Evaluator
                     bool present = (seen[rb >> 6] & (1UL << (rb & 63))) != 0;
                     if (default(TMode).Collecting)
                     {
-                        state.Collector!.EvaluatedKeywordForProperty(present, null, dep.RequiredNames[r], node.Dialect >= JsonSchemaDialect.Draft201909 ? "dependentRequired"u8 : "dependencies"u8);
+                        state.Collector!.EvaluatedKeywordForProperty(present, dep.RequiredNames[r], present ? Providers.RequiredPresent : Providers.RequiredNotPresent, dep.RequiredNames[r], node.Dialect >= JsonSchemaDialect.Draft201909 ? "dependentRequired"u8 : "dependencies"u8);
                     }
 
                     if (!present)
@@ -1418,7 +1524,7 @@ internal static class Evaluator
                     bool m = EvalInPlaceChild<TMode, TAccess>(dep.Schema, doc, index, ref state, evaluated, seq);
                     if (default(TMode).Collecting)
                     {
-                        state.Collector!.EvaluatedKeywordForProperty(m, null, dep.Name, node.Dialect >= JsonSchemaDialect.Draft201909 ? "dependentSchemas"u8 : "dependencies"u8);
+                        state.Collector!.EvaluatedKeywordForProperty(m, dep.NameText, JsonSchemaEvaluation.ExpectedMatchesDependentSchemaValue, dep.Name, node.Dialect >= JsonSchemaDialect.Draft201909 ? "dependentSchemas"u8 : "dependencies"u8);
                     }
 
                     if (!m)
@@ -1456,14 +1562,14 @@ internal static class Evaluator
         where TMode : struct, IEvaluationMode
         where TAccess : struct, IDocumentAccess
     {
-        SchemaNode target = state.Nodes[default(TMode).Collecting ? child.Node : child.FastNode];
+        SchemaNode target = state.Nodes[child.FastNode];
         if (!default(TMode).Collecting)
         {
             return EvalChildFast<TAccess>(target, doc, valueIndex, ref state);
         }
 
         IJsonSchemaResultsCollector collector = state.Collector!;
-        int seq = collector.BeginChildContext(parentSeq, new EdgeContext(child.Path, target.SchemaLocation, doc, valueIndex, -1), Providers.EvalPath, Providers.SchemaPath, Providers.DocumentPath);
+        int seq = collector.BeginChildContext(parentSeq, new EdgeContext(child.CollectingPath ?? child.Path, target.SchemaLocation, doc, valueIndex, -1), Providers.EvalPath, Providers.SchemaPath, Providers.DocumentPath);
         bool ok = Eval<TMode, TAccess>(target, doc, valueIndex, ref state, default, seq);
         collector.CommitChildContext(seq, ok, ok, JsonSchemaEvaluation.EvaluatedSubschema);
         return ok;
@@ -1499,7 +1605,7 @@ internal static class Evaluator
         collector.CommitChildContext(seq, ok, ok, JsonSchemaEvaluation.EvaluatedSubschema);
         if (!ok)
         {
-            collector.EvaluatedKeyword(false, null, "propertyNames"u8);
+            collector.EvaluatedKeyword(false, JsonSchemaEvaluation.ExpectedPropertyNameMatchesSchema, "propertyNames"u8);
         }
 
         return ok;
@@ -1561,7 +1667,7 @@ internal static class Evaluator
             bool m = length >= node.MinItems;
             if (default(TMode).Collecting)
             {
-                state.Collector!.EvaluatedKeyword(m, null, "minItems"u8);
+                state.Collector!.EvaluatedKeyword(m, node.MinItems, JsonSchemaEvaluation.ExpectedItemCountGreaterThanOrEqualsValue, "minItems"u8);
             }
 
             if (!m)
@@ -1580,7 +1686,7 @@ internal static class Evaluator
             bool m = length <= node.MaxItems;
             if (default(TMode).Collecting)
             {
-                state.Collector!.EvaluatedKeyword(m, null, "maxItems"u8);
+                state.Collector!.EvaluatedKeyword(m, node.MaxItems, JsonSchemaEvaluation.ExpectedItemCountLessThanOrEqualsValue, "maxItems"u8);
             }
 
             if (!m)
@@ -1749,7 +1855,7 @@ internal static class Evaluator
         {
             if (default(TMode).Collecting)
             {
-                state.Collector!.EvaluatedKeyword(isUnique, isUnique ? null : JsonSchemaEvaluation.ExpectedUniqueItems, "uniqueItems"u8);
+                state.Collector!.EvaluatedKeyword(isUnique, JsonSchemaEvaluation.ExpectedUniqueItems, "uniqueItems"u8);
             }
 
             ok &= isUnique;
@@ -1760,7 +1866,14 @@ internal static class Evaluator
             bool m = containsCount >= node.MinContains && (node.MaxContains < 0 || containsCount <= node.MaxContains);
             if (default(TMode).Collecting)
             {
-                state.Collector!.EvaluatedKeyword(m, null, "contains"u8);
+                if (node.MaxContains >= 0 && containsCount > node.MaxContains)
+                {
+                    state.Collector!.EvaluatedKeyword(m, node.MaxContains, JsonSchemaEvaluation.ExpectedContainsCountLessThanOrEqualsValue, "contains"u8);
+                }
+                else
+                {
+                    state.Collector!.EvaluatedKeyword(m, node.MinContains, JsonSchemaEvaluation.ExpectedContainsCountGreaterThanOrEqualsValue, "contains"u8);
+                }
             }
 
             if (!m)
@@ -1874,14 +1987,14 @@ internal static class Evaluator
         where TMode : struct, IEvaluationMode
         where TAccess : struct, IDocumentAccess
     {
-        SchemaNode target = state.Nodes[default(TMode).Collecting ? child.Node : child.FastNode];
+        SchemaNode target = state.Nodes[child.FastNode];
         if (!default(TMode).Collecting)
         {
             return EvalChildFast<TAccess>(target, doc, valueIndex, ref state);
         }
 
         IJsonSchemaResultsCollector collector = state.Collector!;
-        int seq = collector.BeginChildContext(parentSeq, new EdgeContext(child.Path, target.SchemaLocation, doc, -1, itemIndex), Providers.EvalPath, Providers.SchemaPath, Providers.DocumentPath);
+        int seq = collector.BeginChildContext(parentSeq, new EdgeContext(child.CollectingPath ?? child.Path, target.SchemaLocation, doc, -1, itemIndex), Providers.EvalPath, Providers.SchemaPath, Providers.DocumentPath);
         bool ok = Eval<TMode, TAccess>(target, doc, valueIndex, ref state, default, seq);
         collector.CommitChildContext(seq, ok, ok, JsonSchemaEvaluation.EvaluatedSubschema);
         return ok;
@@ -1891,14 +2004,14 @@ internal static class Evaluator
         where TMode : struct, IEvaluationMode
         where TAccess : struct, IDocumentAccess
     {
-        SchemaNode target = state.Nodes[default(TMode).Collecting ? child.Node : child.FastNode];
+        SchemaNode target = state.Nodes[child.FastNode];
         if (!default(TMode).Collecting)
         {
             return EvalChildFast<TAccess>(target, doc, valueIndex, ref state);
         }
 
         IJsonSchemaResultsCollector collector = state.Collector!;
-        int seq = collector.BeginChildContext(parentSeq, new EdgeContext(child.Path, target.SchemaLocation, doc, -1, itemIndex), Providers.EvalPath, Providers.SchemaPath, Providers.DocumentPath);
+        int seq = collector.BeginChildContext(parentSeq, new EdgeContext(child.CollectingPath ?? child.Path, target.SchemaLocation, doc, -1, itemIndex), Providers.EvalPath, Providers.SchemaPath, Providers.DocumentPath);
         bool ok = Eval<TMode, TAccess>(target, doc, valueIndex, ref state, default, seq);
         if (ok)
         {
@@ -2045,7 +2158,7 @@ internal static class Evaluator
         where TMode : struct, IEvaluationMode
         where TAccess : struct, IDocumentAccess
     {
-        SchemaNode target = state.Nodes[default(TMode).Collecting ? child.Node : child.FastNode];
+        SchemaNode target = state.Nodes[child.FastNode];
         if (!default(TMode).Collecting)
         {
             return bits.IsEmpty
@@ -2054,7 +2167,7 @@ internal static class Evaluator
         }
 
         IJsonSchemaResultsCollector collector = state.Collector!;
-        int seq = collector.BeginChildContext(parentSeq, new EdgeContext(child.Path, target.SchemaLocation, null, -1, -1), Providers.EvalPath, Providers.SchemaPath, null);
+        int seq = collector.BeginChildContext(parentSeq, new EdgeContext(child.CollectingPath ?? child.Path, target.SchemaLocation, null, -1, -1), Providers.EvalPath, Providers.SchemaPath, null);
         bool ok = Eval<TMode, TAccess>(target, doc, index, ref state, bits, seq);
         if (ok || commitOnFailure)
         {
@@ -2608,24 +2721,5 @@ internal static class Evaluator
                 ArrayPool<ulong>.Shared.Return(rentedWinner);
             }
         }
-    }
-
-    // ---------------------------------------------------------------------------------------------
-    // messages
-    // ---------------------------------------------------------------------------------------------
-
-    private static JsonSchemaMessageProvider? ExpectedTypeProvider(TypeMask mask)
-    {
-        return mask switch
-        {
-            TypeMask.String => JsonSchemaEvaluation.ExpectedTypeString,
-            TypeMask.Object => JsonSchemaEvaluation.ExpectedTypeObject,
-            TypeMask.Array => JsonSchemaEvaluation.ExpectedTypeArray,
-            TypeMask.Number => JsonSchemaEvaluation.ExpectedTypeNumber,
-            TypeMask.Integer => JsonSchemaEvaluation.ExpectedTypeInteger,
-            TypeMask.Boolean => JsonSchemaEvaluation.ExpectedTypeBoolean,
-            TypeMask.Null => JsonSchemaEvaluation.ExpectedTypeNull,
-            _ => null,
-        };
     }
 }

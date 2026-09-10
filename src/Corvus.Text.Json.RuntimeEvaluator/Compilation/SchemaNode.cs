@@ -52,6 +52,29 @@ internal enum FormatKind : byte
     JsonPointer,
     RelativeJsonPointer,
     Regex,
+
+    // Numeric formats (Corvus extensions) follow; see IsNumeric. Keep Byte first.
+    Byte,
+    UInt16,
+    UInt32,
+    UInt64,
+    UInt128,
+    SByte,
+    Int16,
+    Int32,
+    Int64,
+    Int128,
+    Half,
+    Single,
+    Double,
+    Decimal,
+}
+
+/// <summary>Helpers over <see cref="FormatKind"/>.</summary>
+internal static class FormatKinds
+{
+    /// <summary>Gets a value indicating whether the format applies to numbers rather than strings.</summary>
+    public static bool IsNumeric(FormatKind kind) => kind >= FormatKind.Byte;
 }
 
 /// <summary>
@@ -318,6 +341,13 @@ internal struct ChildRef
 
     public int Node;
 
+    /// <summary>
+    /// The evaluation path segment to report in collecting mode when the child is reached through elided pure
+    /// <c>$ref</c> hops (<see cref="Path"/> followed by one <c>$ref</c> per hop), or <see langword="null"/> when
+    /// <see cref="Path"/> applies.
+    /// </summary>
+    public byte[]? CollectingPath;
+
     /// <summary>The evaluation path segment (without leading slash), e.g. "properties/foo".</summary>
     public byte[]? Path;
 
@@ -363,6 +393,9 @@ internal sealed class PatternPropertyEntry
 internal sealed class DependencyEntry
 {
     public byte[] Name = [];
+
+    /// <summary>The dependency property name as text, for messages.</summary>
+    public string NameText = string.Empty;
 
     public int SeenBit;
 
@@ -567,10 +600,16 @@ internal sealed class SchemaNode
     public bool HasType;
     public TypeMask Type;
 
+    /// <summary>The message reported for the <c>type</c> keyword (match or mismatch), mirroring generated models.</summary>
+    public JsonSchemaMessageProvider? TypeMessage;
+
     // const / enum
     public bool HasConst;
     public ConstantValue Const;
     public byte[]? ConstString;
+
+    /// <summary>The <c>const</c> value as message text: the JSON literal for numbers, the string for strings.</summary>
+    public string? ConstText;
     public NumberValue? ConstNumber;
     public ConstantValue[]? Enum;
     public Utf8NameMap<object>? EnumStrings;
@@ -589,6 +628,15 @@ internal sealed class SchemaNode
     public PatternMatcher? Pattern;
     public FormatKind Format;
     public bool AssertFormat;
+
+    /// <summary>When set with <see cref="AssertFormat"/>, a non-conforming value is reported as a warning rather than a failure.</summary>
+    public bool WarnFormat;
+
+    /// <summary>
+    /// For a node that is nothing but a <c>$ref</c>, the node its chain of pure references ends at (or -1): results
+    /// are reported against that node, as generated models do for reduced types.
+    /// </summary>
+    public int ElidedTarget = -1;
     public ContentKind Content;
     public bool AssertContent;
 

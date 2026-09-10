@@ -134,8 +134,8 @@ public class SchemaLocationRootContextTests
     [TestMethod]
     public void SourceGeneratedEvaluator_RootTypeFailure_ReportsRootDocumentPointerOfTheFailingKeyword()
     {
-        // The source generator wraps a fragment-rooted evaluator in a $ref to the target schema,
-        // so the failing keyword is reached through that $ref and still carries the root-document pointer.
+        // The source generator wraps a fragment-rooted evaluator in a $ref to the target schema; the evaluation
+        // program elides that pure $ref, so results are reported exactly as for the typed model rooted at the target.
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"notAnInteger\"");
         using var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
 
@@ -143,10 +143,8 @@ public class SchemaLocationRootContextTests
 
         AssertEqualLines(
             """
-            fail|/$defs/fooId|/$ref/0||The value was expected to match the subschema.
-            fail|/$defs/fooId/type|/$ref/0/type||The value was expected to be of type 'integer'
-            fail||||The value was expected to match the subschema.
-            fail|/$ref|/$ref||The value did not match all subschema.
+            fail|/$defs/fooId|||The value was expected to match the subschema.
+            fail|/$defs/fooId/type|/type||The value was expected to be of type 'integer'
             """,
             Dump(collector));
     }
@@ -161,10 +159,8 @@ public class SchemaLocationRootContextTests
 
         AssertEqualLines(
             """
-            fail|/$defs/fooId|/$ref/0||The value was expected to match the subschema.
-            fail|/$defs/fooId/type|/$ref/0/type||The value was expected to be of type 'integer'
-            fail||||The value was expected to match the subschema.
-            fail|/$ref|/$ref||The value did not match all subschema.
+            fail|/$defs/fooId|||The value was expected to match the subschema.
+            fail|/$defs/fooId/type|/type||The value was expected to be of type 'integer'
             """,
             Dump(collector));
     }
@@ -201,12 +197,10 @@ public class SchemaLocationRootContextTests
 
         AssertEqualLines(
             """
-            match|/$defs/fooId|/$ref/0||The value was expected to match the subschema.
-            match|/$defs/fooId|/$ref/0/title||"Foo identifier"
-            match|/$defs/fooId/minimum|/$ref/0/minimum||The value was expected to be greater than or equal to '0'
-            match|/$defs/fooId/type|/$ref/0/type||The value was expected to be of type 'integer'
-            match||||The value was expected to match the subschema.
-            match|/$ref|/$ref||The value matched all subschema.
+            match|/$defs/fooId|||The value was expected to match the subschema.
+            match|/$defs/fooId|/title||"Foo identifier"
+            match|/$defs/fooId/minimum|/minimum||The value was expected to be greater than or equal to '0'
+            match|/$defs/fooId/type|/type||The value was expected to be of type 'integer'
             annotation|title|/$defs/fooId|#/$defs/fooId
             callback|title|/$defs/fooId
             collected|title|#/$defs/fooId|"Foo identifier"

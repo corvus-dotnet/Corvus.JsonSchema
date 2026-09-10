@@ -22,6 +22,7 @@ Add the source generator and runtime packages to your project:
   <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 </PackageReference>
 <PackageReference Include="Corvus.Text.Json" Version="5.0.0" />
+<PackageReference Include="Corvus.Text.Json.RuntimeEvaluator" Version="5.0.0" />
 ```
 
 Annotate a partial struct with `EmitEvaluator = true`:
@@ -31,7 +32,7 @@ Annotate a partial struct with `EmitEvaluator = true`:
 public readonly partial struct Person;
 ```
 
-This generates both the strongly-typed `Person` type **and** a standalone evaluator class. The evaluator class is emitted as a nested static class that performs validation and annotation collection independently of the typed model.
+This generates both the strongly-typed `Person` type **and** a standalone `PersonEvaluator` class. Both validate through the same schema evaluation program; the evaluator is useful when you want to evaluate any `IJsonElement<T>` without going through the typed model.
 
 If you only want the evaluator (no types), use the CLI tool with `--codeGenerationMode SchemaEvaluationOnly`.
 
@@ -61,13 +62,18 @@ corvusjson jsonschema Schemas/person.json \
 
 ## What Gets Generated
 
-The standalone evaluator produces a single static class with:
+The evaluator is a small static class with the public `Evaluate<TElement>(in instance, resultsCollector)`
+entry point (and an `Evaluate(IJsonDocument, int, resultsCollector)` overload). It delegates to the
+assembly's schema evaluation program, `CorvusJsonSchemaProgram`, which is emitted once per compilation and
+holds the schema documents as UTF-8 static data plus one entry point per schema. On first use the program
+is compiled by `Corvus.Text.Json.RuntimeEvaluator` into an in-memory node graph with every `$ref`
+resolved, regular expressions compiled, and flag-mode fast paths precomputed; evaluation then walks the
+parsed instance once against that graph, allocating nothing.
 
-- **Per-subschema validation methods** — one `static void` method per schema and subschema, performing full validation including type checks, constraints, composition (allOf/anyOf/oneOf/not), and conditional logic (if/then/else)
-- **Property matchers** — hash-based property dispatch for efficient object validation
-- **Discriminator fast paths** — for oneOf and anyOf schemas with discriminator properties, the evaluator uses direct property lookup (`TryGetNamedPropertyValue`) for O(1) branch dispatch
-- **Optimized regex handling** — common patterns like `.*`, `.+`, `^prefix`, and `^.{n,m}$` are classified at code generation time and replaced with inline checks (no `Regex` object allocation)
-- **Schema path tracking** — evaluation paths and schema locations are tracked throughout validation for standards-compliant error and annotation reporting
+Generated types use the same program: `EvaluateSchema()` on a typed model is an entry point of the same
+graph, so validation and annotation results are identical whichever entry you use. Projects that consume
+generated code must reference `Corvus.Text.Json.RuntimeEvaluator`. See
+[StandaloneEvaluatorInternals.md](StandaloneEvaluatorInternals.md) for the emitted shape.
 
 ## Annotation Collection
 
@@ -173,13 +179,11 @@ Assert.AreEqual("\"Person\"", titleMap["#"]);
 
 ## Performance Optimizations
 
-The standalone evaluator includes the same performance optimizations as the type-based generator:
-
-- **Regex pattern classification** — patterns like `.*` (noop), `.+` (non-empty), `^prefix` (starts-with), and `^.{n,m}$` (range) are detected at code generation time and replaced with inline checks, avoiding `Regex` allocation entirely
-- **Discriminator fast paths** — both oneOf and anyOf schemas with discriminator properties use `TryGetNamedPropertyValue` for direct property lookup instead of object enumeration
-- **Numeric discriminators** — discriminator values can be numbers (not just strings), using normalized number comparison
-- **Named-property else clause** — when named properties don't overlap with pattern properties, the evaluator wraps pattern/additional property checks in an else clause, skipping them for already-matched properties
-- **Hash-based property dispatch** — schemas with 4+ named properties use a hash map for O(1) property routing
+The evaluator inherits every optimisation of the runtime evaluator: direct metadata-row access into parsed
+documents, per-node fused evaluation plans, oneOf/anyOf discriminators, type unions, unrolled small
+objects, fused simple arrays, plain-integer bounds, pattern classification (`.*`, `.+`, `^prefix`,
+`^.{n,m}$` never allocate a `Regex`), compiled regexes with a process-wide cache, and compile-time
+elision of pure `$ref` hops. The optimisation table is in [RuntimeEvaluator.md](RuntimeEvaluator.md).
 
 ## Comparison with Type-Based Generation
 
@@ -190,9 +194,12 @@ The standalone evaluator includes the same performance optimizations as the type
 | Mutable builder support | ✅ | ❌ |
 | Implicit/explicit conversions | ✅ | ❌ |
 | Schema validation | ✅ | ✅ |
-| Annotation collection | Validation keywords only | Fully compliant |
-| Binary size | Larger | Smaller |
-| Compilation time | Longer | Shorter |
+| Annotation collection | Fully compliant | Fully compliant |
+| Binary size | Larger (model code) | Smaller |
+| Compilation time | Longer (model code) | Shorter |
+
+Validation itself is the same engine in both modes; the difference is only whether the typed model is
+emitted.
 
 ## See Also
 

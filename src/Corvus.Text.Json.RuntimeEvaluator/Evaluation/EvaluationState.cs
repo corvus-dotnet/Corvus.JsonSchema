@@ -280,6 +280,82 @@ internal static class Providers
         return true;
     };
 
+    public static readonly JsonSchemaMessageProvider<byte[]> RequiredPresent = static (byte[] name, Span<byte> buffer, out int written) =>
+        JsonSchemaEvaluation.RequiredPropertyPresent(name, buffer, out written);
+
+    public static readonly JsonSchemaMessageProvider<byte[]> RequiredNotPresent = static (byte[] name, Span<byte> buffer, out int written) =>
+        JsonSchemaEvaluation.RequiredPropertyNotPresent(name, buffer, out written);
+
+    /// <summary>Gets the expected-value message provider for a format.</summary>
+    public static JsonSchemaMessageProvider? ExpectedFor(FormatKind format)
+    {
+        return format switch
+        {
+            FormatKind.Date => JsonSchemaEvaluation.ExpectedDate,
+            FormatKind.DateTime => JsonSchemaEvaluation.ExpectedDateTime,
+            FormatKind.Time => JsonSchemaEvaluation.ExpectedTime,
+            FormatKind.Duration => JsonSchemaEvaluation.ExpectedDuration,
+            FormatKind.Email => JsonSchemaEvaluation.ExpectedEmail,
+            FormatKind.IdnEmail => JsonSchemaEvaluation.ExpectedIdnEmail,
+            FormatKind.Hostname => JsonSchemaEvaluation.ExpectedHostname,
+            FormatKind.IdnHostname => JsonSchemaEvaluation.ExpectedIdnHostname,
+            FormatKind.Ipv4 => JsonSchemaEvaluation.ExpectedIPV4,
+            FormatKind.Ipv6 => JsonSchemaEvaluation.ExpectedIPV6,
+            FormatKind.Uri => JsonSchemaEvaluation.ExpectedUri,
+            FormatKind.UriReference => JsonSchemaEvaluation.ExpectedUriReference,
+            FormatKind.Iri => JsonSchemaEvaluation.ExpectedIri,
+            FormatKind.IriReference => JsonSchemaEvaluation.ExpectedIriReference,
+            FormatKind.Uuid => JsonSchemaEvaluation.ExpectedUuid,
+            FormatKind.UriTemplate => JsonSchemaEvaluation.ExpectedUriTemplate,
+            FormatKind.JsonPointer => JsonSchemaEvaluation.ExpectedJsonPointer,
+            FormatKind.RelativeJsonPointer => JsonSchemaEvaluation.ExpectedRelativeJsonPointer,
+            FormatKind.Regex => JsonSchemaEvaluation.ExpectedRegex,
+            FormatKind.Byte => JsonSchemaEvaluation.ExpectedByte,
+            FormatKind.UInt16 => JsonSchemaEvaluation.ExpectedUInt16,
+            FormatKind.UInt32 => JsonSchemaEvaluation.ExpectedUInt32,
+            FormatKind.UInt64 => JsonSchemaEvaluation.ExpectedUInt64,
+            FormatKind.UInt128 => JsonSchemaEvaluation.ExpectedUInt128,
+            FormatKind.SByte => JsonSchemaEvaluation.ExpectedSByte,
+            FormatKind.Int16 => JsonSchemaEvaluation.ExpectedInt16,
+            FormatKind.Int32 => JsonSchemaEvaluation.ExpectedInt32,
+            FormatKind.Int64 => JsonSchemaEvaluation.ExpectedInt64,
+            FormatKind.Int128 => JsonSchemaEvaluation.ExpectedInt128,
+            FormatKind.Half => JsonSchemaEvaluation.ExpectedHalf,
+            FormatKind.Single => JsonSchemaEvaluation.ExpectedSingle,
+            FormatKind.Double => JsonSchemaEvaluation.ExpectedDouble,
+            FormatKind.Decimal => JsonSchemaEvaluation.ExpectedDecimal,
+            _ => null,
+        };
+    }
+
+    /// <summary>Gets the warning message provider for a string format that did not conform.</summary>
+    public static JsonSchemaMessageProvider? WarningFor(FormatKind format)
+    {
+        return format switch
+        {
+            FormatKind.Date => JsonSchemaEvaluation.WarningDate,
+            FormatKind.DateTime => JsonSchemaEvaluation.WarningDateTime,
+            FormatKind.Time => JsonSchemaEvaluation.WarningTime,
+            FormatKind.Duration => JsonSchemaEvaluation.WarningDuration,
+            FormatKind.Email => JsonSchemaEvaluation.WarningEmail,
+            FormatKind.IdnEmail => JsonSchemaEvaluation.WarningIdnEmail,
+            FormatKind.Hostname => JsonSchemaEvaluation.WarningHostname,
+            FormatKind.IdnHostname => JsonSchemaEvaluation.WarningIdnHostname,
+            FormatKind.Ipv4 => JsonSchemaEvaluation.WarningIPV4,
+            FormatKind.Ipv6 => JsonSchemaEvaluation.WarningIPV6,
+            FormatKind.Uri => JsonSchemaEvaluation.WarningUri,
+            FormatKind.UriReference => JsonSchemaEvaluation.WarningUriReference,
+            FormatKind.Iri => JsonSchemaEvaluation.WarningIri,
+            FormatKind.IriReference => JsonSchemaEvaluation.WarningIriReference,
+            FormatKind.Uuid => JsonSchemaEvaluation.WarningUuid,
+            FormatKind.UriTemplate => JsonSchemaEvaluation.WarningUriTemplate,
+            FormatKind.JsonPointer => JsonSchemaEvaluation.WarningJsonPointer,
+            FormatKind.RelativeJsonPointer => JsonSchemaEvaluation.WarningRelativeJsonPointer,
+            FormatKind.Regex => JsonSchemaEvaluation.WarningRegex,
+            _ => null,
+        };
+    }
+
     public static readonly JsonSchemaMessageProvider<string> Text = static (string text, Span<byte> buffer, out int written) =>
     {
 #if NET8_0_OR_GREATER

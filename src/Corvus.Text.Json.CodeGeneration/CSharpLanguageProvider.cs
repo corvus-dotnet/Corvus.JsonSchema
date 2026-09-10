@@ -14,7 +14,6 @@ using System.Linq;
 using System.Threading;
 using Corvus.Json;
 using Corvus.Json.CodeGeneration;
-using Corvus.Text.Json.CodeGeneration.ValidationHandlers;
 
 namespace Corvus.Text.Json.CodeGeneration;
 
@@ -31,7 +30,7 @@ public delegate void NamedTypeEmitter(CodeGenerator generator, string typeName);
 /// <remarks>
 /// Initializes a new instance of the <see cref="CSharpLanguageProvider"/> class.
 /// </remarks>
-public class CSharpLanguageProvider : IHierarchicalLanguageProvider
+public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProgramLanguageProvider
 {
     private readonly KeywordValidationHandlerRegistry validationHandlerRegistry = new();
     private readonly CodeFileBuilderRegistry codeFileBuilderRegistry = new();
@@ -45,6 +44,10 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider
     private IReadOnlyList<INameHeuristic>? cachedNameBeforeSubschemaHeuristics;
     private IReadOnlyList<INameHeuristic>? cachedNameAfterSubschemaHeuristics;
     private TypeDeclaration[]? evaluatorRootTypes;
+    private IReadOnlyList<KeyValuePair<string, string>> schemaDocuments = [];
+    private string? fallbackVocabularyUri;
+    private readonly List<(string RootDocumentUri, string RootDocumentPointer)> programEntries = [];
+    private readonly Dictionary<(string, string), int> programEntryIndex = new();
 
     private CSharpLanguageProvider(Options? options = null)
     {
@@ -82,6 +85,44 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider
     public void SetEvaluatorRootTypes(params TypeDeclaration[] rootTypes)
     {
         this.evaluatorRootTypes = rootTypes;
+    }
+
+    /// <summary>Gets the name of the emitted schema evaluation program class.</summary>
+    internal const string ProgramClassName = "CorvusJsonSchemaProgram";
+
+    /// <summary>Gets the fully qualified reference to the program class for use in generated code.</summary>
+    internal string ProgramClassReference => options.DefaultNamespace.Length == 0 ? "global::" + ProgramClassName : "global::" + options.DefaultNamespace + "." + ProgramClassName;
+
+    /// <inheritdoc/>
+    public void SetSchemaDocuments(IReadOnlyList<KeyValuePair<string, string>> documents, string? fallbackVocabularyUri)
+    {
+        this.schemaDocuments = documents;
+        this.fallbackVocabularyUri = fallbackVocabularyUri;
+    }
+
+    /// <summary>
+    /// Gets (registering on first use) the program entry point index for a type declaration's schema, or -1 when
+    /// the type has no located schema document.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <returns>The entry point index.</returns>
+    internal int GetProgramEntry(TypeDeclaration typeDeclaration)
+    {
+        LocatedSchema located = typeDeclaration.LocatedSchema;
+        if (located.RootDocumentUri.Length == 0)
+        {
+            return -1;
+        }
+
+        (string, string) key = (located.RootDocumentUri, located.RootDocumentPointer);
+        if (!this.programEntryIndex.TryGetValue(key, out int index))
+        {
+            index = this.programEntries.Count;
+            this.programEntries.Add(key);
+            this.programEntryIndex.Add(key, index);
+        }
+
+        return index;
     }
 
     /// <summary>
@@ -290,20 +331,65 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider
             }
         }
 
-        // Use the original (unreduced) root types stored via SetEvaluatorRootTypes,
-        // not the types from the filtered pipeline which may have been reduced
-        // (e.g., annotation-only schemas become JsonAny/boolean true).
+        // Standalone evaluators are thin entry points into the program. Use the original (unreduced) root
+        // types stored via SetEvaluatorRootTypes so that the entry point is the schema as written.
         if (generateEvaluator && this.evaluatorRootTypes is not null)
         {
             foreach (TypeDeclaration rootType in this.evaluatorRootTypes)
             {
-                GeneratedCodeFile? evaluatorFile = StandaloneEvaluatorGenerator.Generate(
-                    rootType, options, options.LineEndSequence);
-                if (evaluatorFile is not null)
+                int entry = this.GetProgramEntry(rootType);
+                if (entry >= 0)
                 {
-                    result.Add(evaluatorFile);
+                    result.Add(RuntimeProgramGenerator.GenerateStandaloneEvaluator(
+                        options.GetNamespace(rootType),
+                        RuntimeProgramGenerator.GetEvaluatorClassName(rootType),
+                        this.ProgramClassReference,
+                        entry,
+                        options.FileExtension,
+                        options.LineEndSequence));
+                }
+                else if (rootType.LocatedSchema.IsBooleanSchema)
+                {
+                    // A boolean root reduces to the built-in any/not-any type, which has no document of its own
+                    // and therefore no program entry; the shim compiles the constant schema itself.
+                    result.Add(RuntimeProgramGenerator.GenerateBooleanStandaloneEvaluator(
+                        options.GetNamespace(rootType),
+                        RuntimeProgramGenerator.GetEvaluatorClassName(rootType),
+                        rootType.LocatedSchema.Schema.ValueKind == System.Text.Json.JsonValueKind.True,
+                        options.FileExtension,
+                        options.LineEndSequence));
                 }
             }
+        }
+
+        if (this.programEntries.Count > 0)
+        {
+            IReadOnlyDictionary<string, string> keys = RuntimeProgramGenerator.MapDocumentKeys(
+                this.schemaDocuments.Select(d => d.Key).Concat(this.programEntries.Select(e => e.RootDocumentUri)));
+            List<RuntimeProgramGenerator.SchemaDocumentSource> documents = [];
+            foreach (KeyValuePair<string, string> document in this.schemaDocuments)
+            {
+                documents.Add(new RuntimeProgramGenerator.SchemaDocumentSource(keys[document.Key], document.Value));
+            }
+
+            List<string> entryPoints = [];
+            foreach ((string rootDocumentUri, string rootDocumentPointer) in this.programEntries)
+            {
+                entryPoints.Add(keys[rootDocumentUri] + "#" + rootDocumentPointer);
+            }
+
+            string rootDocumentKey = documents.Count > 0 ? documents[0].Key : keys[this.programEntries[0].RootDocumentUri];
+            result.Add(RuntimeProgramGenerator.Generate(
+                options.DefaultNamespace,
+                ProgramClassName,
+                documents,
+                rootDocumentKey,
+                entryPoints,
+                RuntimeProgramGenerator.DialectFor(this.fallbackVocabularyUri),
+                options.AlwaysAssertFormat,
+                options.FormatModeOverrides.OrderBy(m => m.Key, StringComparer.Ordinal).Select(m => new KeyValuePair<string, string>(m.Key, m.Value.ToString())).ToList(),
+                options.FileExtension,
+                options.LineEndSequence));
         }
 
         return result;
@@ -531,20 +617,6 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider
             CorePartial.Instance,
             MutableCorePartial.Instance,
             JsonSchemaPartial.Instance);
-
-        languageProvider.RegisterValidationHandlers(
-            TypeValidationHandler.Instance,
-            FormatValidationHandler.Instance,
-            NumberValidationHandler.Instance,
-            StringValidationHandler.Instance,
-            ConstValidationHandler.Instance,
-            CompositionAllOfValidationHandler.Instance,
-            CompositionAnyOfValidationHandler.Instance,
-            CompositionOneOfValidationHandler.Instance,
-            CompositionNotValidationHandler.Instance,
-            TernaryIfValidationHandler.Instance,
-            ObjectValidationHandler.Instance,
-            ArrayValidationHandler.Instance);
 
         SimpleCoreTypeNameHeuristic simpleCoreTypeHeuristic = new(resolvedOptions);
         languageProvider.simpleCoreTypeHeuristic = simpleCoreTypeHeuristic;

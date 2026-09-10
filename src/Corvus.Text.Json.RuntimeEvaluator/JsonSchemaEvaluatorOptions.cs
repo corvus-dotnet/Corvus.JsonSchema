@@ -46,6 +46,13 @@ public sealed class JsonSchemaEvaluatorOptions
     public bool AssertContent { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets per-format overrides of the assertion decision, keyed by format name; the key <c>*</c> applies
+    /// to every format that has no entry of its own. An entry overrides both <see cref="AssertFormat"/> and the
+    /// dialect default for that format.
+    /// </summary>
+    public IReadOnlyDictionary<string, JsonSchemaFormatMode>? FormatModes { get; set; }
+
+    /// <summary>
     /// Gets or sets a value indicating whether regular expressions are compiled to IL. Defaults to <see langword="true"/>.
     /// </summary>
     /// <remarks>

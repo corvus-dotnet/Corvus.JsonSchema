@@ -22,6 +22,7 @@ public class JsonSchemaTypeBuilder(
     private readonly Dictionary<string, TypeDeclaration> locatedTypeDeclarations = new(StringComparer.Ordinal);
     private readonly JsonSchemaRegistry schemaRegistry = new(documentResolver, vocabularyRegistry);
     private readonly HashSet<TypeDeclaration> propertiesCollected = [];
+    private IVocabulary? lastFallbackVocabulary;
 
     /// <summary>
     /// Walk a JSON document to build a JSON schema type declaration.
@@ -53,6 +54,7 @@ public class JsonSchemaTypeBuilder(
         bool rebaseAsRoot = false,
         CancellationToken? cancellationToken = null)
     {
+        this.lastFallbackVocabulary = fallbackVocabulary;
         ValueTask<TypeDeclaration> task = this.AddTypeDeclarationsAsync(documentPath, fallbackVocabulary, rebaseAsRoot, cancellationToken);
 
         if (!task.IsCompleted)
@@ -83,6 +85,7 @@ public class JsonSchemaTypeBuilder(
         bool rebaseAsRoot = false,
         CancellationToken? cancellationToken = null)
     {
+        this.lastFallbackVocabulary = fallbackVocabulary;
         CancellationToken ct = cancellationToken ?? CancellationToken.None;
 
         // First we do a document "load" - this enables us to build the map of the schema, anchors etc.
@@ -165,8 +168,44 @@ public class JsonSchemaTypeBuilder(
 
         IEnumerable<TypeDeclaration> typeDeclarations = candidateTypesToGenerate.Where(languageProvider.ShouldGenerate);
 
+        if (languageProvider is ISchemaProgramLanguageProvider programProvider)
+        {
+            programProvider.SetSchemaDocuments(this.GetSchemaDocuments(), this.lastFallbackVocabulary?.Uri);
+        }
+
         return languageProvider.GenerateCodeFor(typeDeclarations, cancellationToken);
     }
+
+    /// <summary>
+    /// Gets the text of every root document the builder has loaded, keyed by root document URI, in first-seen order.
+    /// </summary>
+    /// <returns>The documents.</returns>
+    public IReadOnlyList<KeyValuePair<string, string>> GetSchemaDocuments()
+    {
+        List<KeyValuePair<string, string>> result = [];
+        HashSet<string> seen = new(StringComparer.Ordinal);
+        foreach (LocatedSchema located in this.schemaRegistry.LocatedSchemas)
+        {
+            string uri = located.RootDocumentUri;
+            if (uri.Length == 0 || !seen.Add(uri))
+            {
+                continue;
+            }
+
+            JsonElement? root = documentResolver.TryResolve(new JsonReference(uri)).AsTask().GetAwaiter().GetResult();
+            if (root is JsonElement element)
+            {
+                result.Add(new KeyValuePair<string, string>(uri, element.GetRawText()));
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets every schema the builder has registered, including those that reduce away during type generation.
+    /// </summary>
+    public IEnumerable<LocatedSchema> LocatedSchemas => this.schemaRegistry.LocatedSchemas;
 
     /// <summary>
     /// Add a document to the document resolver for the type builder.

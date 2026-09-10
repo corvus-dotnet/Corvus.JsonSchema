@@ -199,7 +199,7 @@
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)FormatHandlers\WellKnownStringFormatHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\FormatHandlers" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)Formatting.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)EcmaRegexTranslator.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)StandaloneEvaluatorGenerator.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
+    <Compile Include="$(CorvusTextJsonCodeGenerationPath)RuntimeProgramGenerator.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)CodeGenerationMode.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)RegexPatternCategory.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)FrameworkType.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
@@ -225,45 +225,6 @@
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)SimpleTypeAndFormatterAndKind.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)ThrowHelper.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)TypeDeclarationExtensions.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\AllOfChildHandlers\AllOfSubschemaValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers\AllOfChildHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\AnyOfChildHandlers\AnyOfConstValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers\AnyOfChildHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\AnyOfChildHandlers\AnyOfSubschemaValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers\AnyOfChildHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\ArrayChildHandlers\UniqueItemsValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers\ArrayChildHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\ArrayChildHandlers\ItemCountValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers\ArrayChildHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\ArrayChildHandlers\ContainsValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers\ArrayChildHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\ArrayChildHandlers\ItemsValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers\ArrayChildHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\CompositionNotValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\IJsonSchemaClassSetup.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\ObjectChildHandlers\IChildArrayItemValidationHandler2.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers\ObjectChildHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\ObjectChildHandlers\IChildObjectPropertyValidationHandler2.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers\ObjectChildHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\ObjectChildHandlers\HoistedAllOfPropertyValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers\ObjectChildHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\ObjectChildHandlers\NamedPropertyChildHandlers\INamedPropertyChildHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers\ObjectChildHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\ObjectChildHandlers\PatternPropertiesValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers\ObjectChildHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\ObjectChildHandlers\PropertiesValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers\ObjectChildHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\ObjectChildHandlers\NamedPropertyChildHandlers\DependentSchemasChildHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers\ObjectChildHandlers\NamedPropertyChildHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\ObjectChildHandlers\NamedPropertyChildHandlers\RequiredPropertyChildHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers\ObjectChildHandlers\NamePropertyChildHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\ObjectChildHandlers\NamedPropertyChildHandlers\PropertySubschemaChildHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers\ObjectChildHandlers\NamedPropertyChildHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\ObjectChildHandlers\UnevaluatedPropertyValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers\ObjectChildHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\ObjectChildHandlers\PropertyNamesValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers\ObjectChildHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\ObjectChildHandlers\PropertyCountValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers\ObjectChildHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\ObjectChildHandlers\NamedPropertyChildHandlers\ObjectPropertyValidatorParameter.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers\ObjectChildHandlers\NamedPropertyChildHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\ArrayValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\ObjectValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\TernaryIfValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\CompositionOneOfValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\CompositionAnyOfValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\CompositionAllOfValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\NumberChildHandlers\NumberRangeValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers\NumberChildHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\OneOfChildHandlers\OneOfSubschemaValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers\OneOfChildHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\StringChildHandlers\StringRegularExpressionValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers\StringChildHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\StringChildHandlers\StringLengthValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers\StringChildHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\ConstValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\StringValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\NumberValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\ITypeSensitiveKeywordValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\KeywordValidationHandlerBase.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\FormatValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers" />
-    <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\TypeValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers" />
   </ItemGroup>
   <ItemGroup>
     <!-- DateTimeParsing -->

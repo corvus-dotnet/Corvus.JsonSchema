@@ -21,7 +21,7 @@ See `docs/UpstreamReview.md` for the component mapping, review process, and the 
 | `corvus-build-and-test` | Building, testing, TFM targeting, solution files |
 | `corvus-codegen` | Source generator and CLI code generation from JSON Schema |
 | `corvus-keywords-and-validation` | JSON Schema keywords, vocabularies, validation handlers |
-| `corvus-standalone-evaluator` | Validation-only evaluator generation and annotation collection |
+| `corvus-standalone-evaluator` | Evaluator-only generation, the schema evaluation program, annotation collection |
 | `corvus-parsed-documents-and-memory` | Parsing, IJsonElement, memory model, UTF-8 transcoding |
 | `corvus-mutable-documents` | JsonWorkspace, JsonDocumentBuilder, mutation, JSON Patch |
 | `corvus-buffer-and-pooling` | stackalloc/ArrayPool/ThreadStatic pooling patterns |

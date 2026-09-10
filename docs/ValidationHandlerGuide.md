@@ -1,192 +1,33 @@
 # Validation Handler Guide
 
-This document explains how validation handlers work in the Corvus.JsonSchema code generation system — the components that emit C# validation code from JSON Schema keywords.
+> **Retired.** The validation handlers (`ValidationHandlers/**` in `Corvus.Text.Json.CodeGeneration`) and
+> the standalone evaluator generator no longer exist. Generated types and standalone evaluators validate
+> through the schema evaluation program described in
+> [StandaloneEvaluatorInternals.md](StandaloneEvaluatorInternals.md), which is compiled and run by
+> `Corvus.Text.Json.RuntimeEvaluator`.
 
-## Overview
+## Where keyword semantics live now
 
-Validation handlers are responsible for translating JSON Schema keywords into C# validation code. Each handler targets a specific category of validation (type checking, string constraints, object properties, composition, etc.) and emits the corresponding code into the generated types.
+| Concern | Location |
+|---|---|
+| Schema loading, `$id`/anchor/`$ref`/`$dynamicRef` resolution, dialect and vocabulary detection | `src/Corvus.Text.Json.RuntimeEvaluator/Compilation/SchemaLoader.cs` |
+| Keyword compilation into the node graph (one `SchemaNode` per subschema), whole-graph passes | `src/Corvus.Text.Json.RuntimeEvaluator/Compilation/SchemaCompiler.cs` |
+| Node data (type masks, bounds, property maps, discriminators, plans, flags) | `src/Corvus.Text.Json.RuntimeEvaluator/Compilation/SchemaNode.cs` |
+| Evaluation (flag mode and collecting mode, fused per-node plans) | `src/Corvus.Text.Json.RuntimeEvaluator/Evaluation/Evaluator.cs` |
+| Format, number, string and equality helpers shared with the core library | `Corvus.Text.Json.Internal.JsonSchemaEvaluation`, `JsonElementHelpers` |
 
-## Handler hierarchy and priorities
+The design, the optimisation table and the results-collector conventions are in
+[RuntimeEvaluator.md](RuntimeEvaluator.md).
 
-Handlers execute in a strict priority order defined by `ValidationPriorities`:
+## Adding or changing a keyword
 
-| Priority | Name | Value | Handlers |
-|----------|------|-------|----------|
-| 1 | `CoreType` | 1000 | `TypeValidationHandler` |
-| 2 | `Default` | `uint.MaxValue / 2` | `ConstValidationHandler`, `StringValidationHandler`, `NumberValidationHandler`, `FormatValidationHandler` |
-| 3 | `Composition` | `Default + 1000` | `AllOfSubschemaValidationHandler`, `AnyOfSubschemaValidationHandler`, `OneOfSubschemaValidationHandler`, `NotSubschemaValidationHandler`, `IfThenElseValidationHandler` |
-| 4 | `AfterComposition` | `Composition + 1000` | `ObjectValidationHandler`, `ArrayValidationHandler`, `PropertiesValidationHandler` |
-| 5 | `Last` | `uint.MaxValue` | `UnevaluatedPropertyValidationHandler`, `UnevaluatedItemValidationHandler` |
-
-Handlers are sorted by `ValidationPriority` (ascending) and executed in that order. This ensures:
-
-1. **Type checking first** — reject invalid types before doing detailed validation
-2. **Value-level validation** — const, string, number constraints
-3. **Composition** — allOf/anyOf/oneOf/not/if-then-else
-4. **Structural validation** — object properties and array items (after composition, so evaluated tracking is complete)
-5. **Unevaluated keywords last** — can only run after all other validation has marked items/properties as evaluated
-
-## Type validation handler
-
-`TypeValidationHandler` (priority: `CoreType`) runs first and emits the `type` keyword check:
-
-```csharp
-// Generated code pattern:
-if (!MatchTypeObject(tokenType))
-{
-    // Emit IgnoredKeyword for type-specific keywords that don't apply
-    collector.IgnoredKeyword(null, "properties"u8);
-    collector.IgnoredKeyword(null, "required"u8);
-}
-```
-
-When the type check fails, downstream keywords that only apply to that type are reported as `IgnoredKeyword` rather than evaluated. This prevents false negatives when a schema has (e.g.) both string and object keywords.
-
-## Object and property validation
-
-### ObjectValidationHandler
-
-Handles structural object constraints:
-- `minProperties` / `maxProperties`
-- `required` (bitmask tracking)
-- `dependentRequired` (bitmask tracking)
-- `dependentSchemas`
-- `propertyNames`
-
-### PropertiesValidationHandler
-
-Handles property-level validation:
-- `properties` — named property schemas
-- `patternProperties` — regex-matched property schemas
-- `additionalProperties` — fallback schema for unmatched properties
-
-Uses a `PropertySchemaMatchers` hash map for O(1) named property dispatch (same pattern as the standalone evaluator).
-
-## Array validation
-
-`ArrayValidationHandler` handles:
-- `items` / `prefixItems` — item schemas
-- `contains` / `minContains` / `maxContains`
-- `minItems` / `maxItems`
-- `uniqueItems`
-- `additionalItems`
-
-It has its own token type guard:
-```csharp
-if (tokenType == JsonTokenType.StartArray)
-{
-    // Array-specific validation
-}
-```
-
-## Composition handlers
-
-### AllOfSubschemaValidationHandler
-
-Evaluates all branches; all must pass. Generated code pattern:
-
-```csharp
-// allOf[0]
-{
-    var childContext = context.PushChildContext(...);
-    AllOf0.Validate(element, ref childContext);
-    context.CommitChildContext(childContext.IsMatch, ref childContext);
-}
-```
-
-### AnyOfSubschemaValidationHandler
-
-Evaluates all branches; at least one must pass. Supports discriminator optimisation for branches distinguishable by a property value.
-
-### OneOfSubschemaValidationHandler
-
-Evaluates all branches; exactly one must pass. Also supports discriminator optimisation.
-
-### NotSubschemaValidationHandler
-
-Evaluates child schema and inverts result.
-
-### IfThenElseValidationHandler
-
-Evaluates `if` schema; on success evaluates `then`, on failure evaluates `else`.
-
-## How handlers query TypeDeclaration
-
-Handlers inspect the `TypeDeclaration` to decide what code to emit. Key queries:
-
-```csharp
-// What JSON types does this schema allow?
-CoreTypes coreTypes = typeDeclaration.ImpliedCoreTypesOrAny();
-
-// Does it have specific keywords?
-bool hasProperties = typeDeclaration.HasKeyword<PropertiesKeyword>();
-bool hasItems = typeDeclaration.HasKeyword<ItemsKeyword>();
-
-// Get keyword values
-if (typeDeclaration.TryGetKeyword<MinLengthKeyword>(out JsonElement value))
-{
-    int minLength = value.GetInt32();
-}
-
-// Get property declarations
-foreach (PropertyDeclaration prop in typeDeclaration.PropertyDeclarations)
-{
-    string name = prop.JsonPropertyName;
-    bool required = prop.RequiredOrOptional == RequiredOrOptional.Required;
-    TypeDeclaration propertyType = prop.UnreducedPropertyType;
-}
-
-// Get composition subschemas
-foreach (TypeDeclaration allOfType in typeDeclaration.AllOfTypes())
-{
-    // Process each allOf branch
-}
-```
-
-## Child handler registration
-
-Some handlers register child handlers for nested validation. For example, `ObjectValidationHandler` registers `PropertiesValidationHandler` to handle the per-property validation within the object enumeration loop.
-
-The registration pattern:
-
-```csharp
-public class ObjectValidationHandler : IValidationHandler
-{
-    public IEnumerable<IValidationHandler> GetChildHandlers(TypeDeclaration typeDeclaration)
-    {
-        if (typeDeclaration.HasKeyword<PropertiesKeyword>())
-        {
-            yield return new PropertiesValidationHandler(typeDeclaration);
-        }
-    }
-}
-```
-
-## Emitting validation code
-
-Each handler implements `EmitValidation` which writes C# code to a `CodeGenerator` context:
-
-```csharp
-public void EmitValidation(
-    CodeGenerator generator,
-    TypeDeclaration typeDeclaration,
-    string elementVariable,
-    string contextVariable)
-{
-    // Emit C# validation code
-    generator.AppendLine($"if ({elementVariable}.GetArrayLength() < {minItems})");
-    generator.AppendLine("{");
-    generator.PushIndent();
-    generator.AppendLine($"{contextVariable}.EvaluatedKeyword(false, null, \"minItems\"u8);");
-    generator.PopIndent();
-    generator.AppendLine("}");
-}
-```
-
-## Adding a new validation handler
-
-1. Create a handler class implementing the validation handler interface
-2. Set the appropriate `ValidationPriority`
-3. Implement `EmitValidation` to generate the C# validation code
-4. Register the handler in the handler pipeline
-5. Add tests to verify the generated code validates correctly
+1. **Analysis side.** Keywords are still declared for the type builder (`IKeyword` implementations in the
+   vocabulary projects) so that generated *types* reflect them; see [AddingKeywords.md](AddingKeywords.md).
+2. **Evaluation side.** Add the keyword to `SchemaCompiler.CompileNode` (dispatch is by keyword name
+   length, then bytes), store what the evaluator needs on `SchemaNode`, and implement the assertion in
+   `Evaluator` for both `FastMode` and `CollectingMode`. Report results through the collector with the
+   keyword name so that results and annotations match the generated-model conventions.
+3. **Tests.** Add a unit test under `tests/Corvus.Text.Json.RuntimeEvaluator.Tests/Unit` and, if the
+   keyword is in the JSON Schema Test Suite, confirm the suite tests there and in the generated suite
+   projects (`tests/Corvus.Text.Json.SchemaTestSuite.Tests`, `tests/Corvus.Text.Json.EvaluatorTestSuite.Tests`)
+   pass; all three run the same engine.

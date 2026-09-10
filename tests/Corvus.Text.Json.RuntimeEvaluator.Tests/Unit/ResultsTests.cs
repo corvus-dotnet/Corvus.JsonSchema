@@ -97,4 +97,37 @@ public class ResultsTests
             Assert.IsTrue(collector.GetResultCount() > 0);
         }
     }
+
+    /// <summary>
+    /// Generated models report the keyword's message on a match as well as on a mismatch; verbose consumers
+    /// (and the core library's schema-location tests) depend on that text being present.
+    /// </summary>
+    [TestMethod]
+    public void MatchingKeywordsCarryTheGeneratedModelMessage()
+    {
+        const string schema = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": ["integer", "array"],
+              "uniqueItems": true,
+              "properties": { "n": { "type": "integer" } }
+            }
+            """;
+
+        var results = Collect(schema, "[1, 2]", JsonSchemaResultsLevel.Verbose, out bool valid);
+        Assert.IsTrue(valid);
+        string dump = string.Join("\n", results);
+        Assert.IsTrue(results.Any(r => r.IsMatch && r.Eval == "/type" && r.Message == "The value was expected to be of type '[\"array\", \"integer\"]'"), dump);
+        Assert.IsTrue(results.Any(r => r.IsMatch && r.Eval == "/uniqueItems" && r.Message.Length > 0), dump);
+
+        results = Collect(schema, "[1, 1]", JsonSchemaResultsLevel.Verbose, out valid);
+        Assert.IsFalse(valid);
+        dump = string.Join("\n", results);
+        Assert.IsTrue(results.Any(r => !r.IsMatch && r.Eval == "/uniqueItems" && r.Message.Length > 0), dump);
+
+        results = Collect("""{"type": "integer"}""", "3", JsonSchemaResultsLevel.Verbose, out valid);
+        Assert.IsTrue(valid);
+        dump = string.Join("\n", results);
+        Assert.IsTrue(results.Any(r => r.IsMatch && r.Eval == "/type" && r.Message == "The value was expected to be of type 'integer'"), dump);
+    }
 }

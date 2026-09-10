@@ -394,10 +394,11 @@ internal sealed class SchemaCompiler
             usesDynamicScope |= n.DynamicRef is not null;
         }
 
-        int Resolve(int id)
+        int Resolve(int id, out int hops)
         {
             int current = id;
-            for (int hops = 0; hops < 16; hops++)
+            hops = 0;
+            while (hops < 16)
             {
                 SchemaNode n = this.nodes[current];
                 if (!n.Ref.IsPresent || !IsPureRef(n))
@@ -412,6 +413,7 @@ internal sealed class SchemaCompiler
                 }
 
                 current = n.Ref.Node;
+                hops++;
             }
 
             return current;
@@ -421,8 +423,15 @@ internal sealed class SchemaCompiler
         {
             if (c.IsPresent)
             {
-                c.FastNode = Resolve(c.Node);
+                c.FastNode = Resolve(c.Node, out int hops);
+                c.CollectingPath = hops == 0 ? null : CollectingPathFor(c.Path, hops);
             }
+        }
+
+        foreach (SchemaNode node in this.nodes)
+        {
+            int target = Resolve(node.Id, out int hops);
+            node.ElidedTarget = hops == 0 ? -1 : target;
         }
 
         void FixAll(ChildRef[]? cs)
@@ -481,16 +490,46 @@ internal sealed class SchemaCompiler
 
             if (node.DynamicRef is not null)
             {
-                node.DynamicRef.FallbackNode = Resolve(node.DynamicRef.FallbackNode);
+                node.DynamicRef.FallbackNode = Resolve(node.DynamicRef.FallbackNode, out _);
                 for (int i = 0; i < node.DynamicRef.NodeByResource.Length; i++)
                 {
                     if (node.DynamicRef.NodeByResource[i] >= 0)
                     {
-                        node.DynamicRef.NodeByResource[i] = Resolve(node.DynamicRef.NodeByResource[i]);
+                        node.DynamicRef.NodeByResource[i] = Resolve(node.DynamicRef.NodeByResource[i], out _);
                     }
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// The evaluation path segment for a child reached through elided pure <c>$ref</c> hops: the child's own
+    /// segment followed by one <c>$ref</c> per hop, matching the paths generated models report for reduced types.
+    /// </summary>
+    private static byte[] CollectingPathFor(byte[]? path, int hops)
+    {
+        ReadOnlySpan<byte> refSegment = "$ref"u8;
+        int length = (path?.Length ?? 0) + (hops * (refSegment.Length + 1)) - (path is null ? 1 : 0);
+        byte[] result = new byte[length];
+        int written = 0;
+        if (path is not null)
+        {
+            path.CopyTo(result, 0);
+            written = path.Length;
+        }
+
+        for (int i = 0; i < hops; i++)
+        {
+            if (written > 0)
+            {
+                result[written++] = (byte)'/';
+            }
+
+            refSegment.CopyTo(result.AsSpan(written));
+            written += refSegment.Length;
+        }
+
+        return result;
     }
 
     private static bool IsPureRef(SchemaNode n)
@@ -1079,8 +1118,28 @@ internal sealed class SchemaCompiler
                     {
                         if (value.ValueKind == JsonValueKind.String)
                         {
-                            node.Format = GetFormatKind(value.GetString()!, dialect);
-                            node.AssertFormat = formatAssert;
+                            string formatName = value.GetString()!;
+                            node.Format = GetFormatKind(formatName, dialect);
+                            JsonSchemaFormatMode? formatMode = this.ResolveFormatMode(formatName);
+                            node.AssertFormat = formatMode switch
+                            {
+                                JsonSchemaFormatMode.Assert => true,
+                                JsonSchemaFormatMode.Warning => true,
+                                JsonSchemaFormatMode.Disable => false,
+                                _ => formatAssert,
+                            };
+                            node.WarnFormat = formatMode == JsonSchemaFormatMode.Warning && !FormatKinds.IsNumeric(node.Format);
+                            if (node.AssertFormat && node.Format != FormatKind.None && node.Format != FormatKind.Unknown)
+                            {
+                                if (FormatKinds.IsNumeric(node.Format))
+                                {
+                                    node.HasNumberKeywords = true;
+                                }
+                                else
+                                {
+                                    node.HasStringKeywords = true;
+                                }
+                            }
                             if (formatAnnotate)
                             {
                                 Annotate(name, value);
@@ -1316,7 +1375,7 @@ internal sealed class SchemaCompiler
                             foreach (JsonProperty<JsonElement> p in value.EnumerateObject())
                             {
                                 ReadOnlySpan<byte> pn = p.Utf8NameSpan.Span;
-                                var dep = new DependencyEntry { Name = pn.ToArray(), SeenBit = SeenBit(pn) };
+                                var dep = new DependencyEntry { Name = pn.ToArray(), NameText = System.Text.Encoding.UTF8.GetString(pn), SeenBit = SeenBit(pn) };
                                 if (p.Value.ValueKind == JsonValueKind.Array)
                                 {
                                     this.FillRequiredDependency(dep, p.Value, SeenBitArray);
@@ -1443,6 +1502,7 @@ internal sealed class SchemaCompiler
                                 dependencies.Add(new DependencyEntry
                                 {
                                     Name = pn.ToArray(),
+                                    NameText = System.Text.Encoding.UTF8.GetString(pn),
                                     SeenBit = SeenBit(pn),
                                     Schema = this.Child(target, p.Value, Segment("dependentSchemas", pn)),
                                 });
@@ -1486,7 +1546,7 @@ internal sealed class SchemaCompiler
                             foreach (JsonProperty<JsonElement> p in value.EnumerateObject())
                             {
                                 ReadOnlySpan<byte> pn = p.Utf8NameSpan.Span;
-                                var dep = new DependencyEntry { Name = pn.ToArray(), SeenBit = SeenBit(pn) };
+                                var dep = new DependencyEntry { Name = pn.ToArray(), NameText = System.Text.Encoding.UTF8.GetString(pn), SeenBit = SeenBit(pn) };
                                 if (p.Value.ValueKind == JsonValueKind.Array)
                                 {
                                     this.FillRequiredDependency(dep, p.Value, SeenBitArray);
@@ -2090,6 +2150,58 @@ internal sealed class SchemaCompiler
         return [.. list];
     }
 
+    /// <summary>
+    /// Builds the <c>type</c> message provider for a mask: the shared single-type provider, or, for a type list, the
+    /// generated-model form <c>'["array", "object"]'</c> in the generator's order.
+    /// </summary>
+    private static JsonSchemaMessageProvider? TypeMessageFor(TypeMask mask)
+    {
+        switch (mask)
+        {
+            case TypeMask.None:
+                return null;
+            case TypeMask.String:
+                return JsonSchemaEvaluation.ExpectedTypeString;
+            case TypeMask.Object:
+                return JsonSchemaEvaluation.ExpectedTypeObject;
+            case TypeMask.Array:
+                return JsonSchemaEvaluation.ExpectedTypeArray;
+            case TypeMask.Number:
+                return JsonSchemaEvaluation.ExpectedTypeNumber;
+            case TypeMask.Integer:
+                return JsonSchemaEvaluation.ExpectedTypeInteger;
+            case TypeMask.Boolean:
+                return JsonSchemaEvaluation.ExpectedTypeBoolean;
+            case TypeMask.Null:
+                return JsonSchemaEvaluation.ExpectedTypeNull;
+        }
+
+        StringBuilder names = new("[");
+        Append(TypeMask.Array, "\"array\"");
+        Append(TypeMask.Object, "\"object\"");
+        Append(TypeMask.Null, "\"null\"");
+        Append(TypeMask.Boolean, "\"boolean\"");
+        Append(TypeMask.Number, "\"number\"");
+        Append(TypeMask.Integer, "\"integer\"");
+        Append(TypeMask.String, "\"string\"");
+        names.Append(']');
+        byte[] utf8 = Encoding.UTF8.GetBytes(names.ToString());
+        return (Span<byte> buffer, out int written) => JsonSchemaEvaluation.ExpectedType(utf8, buffer, out written);
+
+        void Append(TypeMask flag, string name)
+        {
+            if ((mask & flag) != 0)
+            {
+                if (names.Length > 1)
+                {
+                    names.Append(", ");
+                }
+
+                names.Append(name);
+            }
+        }
+    }
+
     private void CompileType(SchemaNode node, in JsonElement value)
     {
         TypeMask mask = TypeMask.None;
@@ -2114,6 +2226,7 @@ internal sealed class SchemaCompiler
 
         node.HasType = true;
         node.Type = mask;
+        node.TypeMessage = TypeMessageFor(mask);
 
         static TypeMask ParseType(in JsonElement t)
         {
@@ -2164,10 +2277,12 @@ internal sealed class SchemaCompiler
         {
             using UnescapedUtf8JsonString s = value.GetUtf8String();
             node.ConstString = s.Span.ToArray();
+            node.ConstText = System.Text.Encoding.UTF8.GetString(node.ConstString);
         }
         else if (value.ValueKind == JsonValueKind.Number)
         {
             node.ConstNumber = new NumberValue(Elements.Document(value).GetRawSimpleValue(Elements.Index(value)).Span);
+            node.ConstText = node.ConstNumber.Text;
         }
     }
 
@@ -2253,10 +2368,55 @@ internal sealed class SchemaCompiler
         });
     }
 
+    private JsonSchemaFormatMode? ResolveFormatMode(string format)
+    {
+        IReadOnlyDictionary<string, JsonSchemaFormatMode>? modes = this.options.FormatModes;
+        if (modes is null || modes.Count == 0)
+        {
+            return null;
+        }
+
+        if (modes.TryGetValue(format, out JsonSchemaFormatMode mode) || modes.TryGetValue("*", out mode))
+        {
+            return mode;
+        }
+
+        return null;
+    }
+
     private static FormatKind GetFormatKind(string format, JsonSchemaDialect dialect)
     {
         switch (format)
         {
+            case "byte":
+                return FormatKind.Byte;
+            case "uint16":
+                return FormatKind.UInt16;
+            case "uint32":
+                return FormatKind.UInt32;
+            case "uint64":
+                return FormatKind.UInt64;
+            case "uint128":
+                return FormatKind.UInt128;
+            case "sbyte":
+                return FormatKind.SByte;
+            case "int16":
+                return FormatKind.Int16;
+            case "int32":
+                return FormatKind.Int32;
+            case "int64":
+                return FormatKind.Int64;
+            case "int128":
+                return FormatKind.Int128;
+            case "half":
+                return FormatKind.Half;
+            case "single":
+            case "float":
+                return FormatKind.Single;
+            case "double":
+                return FormatKind.Double;
+            case "decimal":
+                return FormatKind.Decimal;
             case "date-time":
                 return FormatKind.DateTime;
             case "email":
