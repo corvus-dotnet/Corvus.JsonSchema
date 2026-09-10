@@ -1572,12 +1572,11 @@ public class GeneratedServerEndToEndTests
     }
 
     [TestMethod]
-    public async Task GetVersion_InvalidVersionParameter_IsIgnored()
+    public async Task GetVersion_NonNumericVersionParameter_ReturnsBadRequest()
     {
+        // The value is not a JSON number, so it is bound as a string and fails the integer schema.
         HttpResponseMessage response = await client!.GetAsync("/versions/v1?version=abc");
-        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        string body = await response.Content.ReadAsStringAsync();
-        Assert.AreEqual("""{"version":1}""", body);
+        await AssertProblemDetailsAsync(response, HttpStatusCode.BadRequest, "The parameter 'version' failed schema validation.");
     }
 
     [TestMethod]

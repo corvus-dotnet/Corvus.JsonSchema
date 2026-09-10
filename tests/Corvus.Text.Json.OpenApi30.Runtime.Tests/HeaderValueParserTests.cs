@@ -83,4 +83,48 @@ public class HeaderValueParserTests
         JsonString result = HeaderValueParser.ParseString<JsonString>(@"path\to\file", workspace);
         Assert.AreEqual(@"path\to\file", (string)result);
     }
+
+    [TestMethod]
+    public void ParseNumber_NonNumericText_IsBoundAsStringAndFailsTheSchema()
+    {
+        // Arbitrary text must never become a number token; bound as a string, the integer schema rejects it.
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonInt32 result = HeaderValueParser.ParseNumber<JsonInt32>("abc", workspace);
+        Assert.AreEqual(JsonValueKind.String, result.ValueKind);
+        Assert.IsFalse(result.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void ParseNumber_NumberWithTrailingText_IsBoundAsStringAndFailsTheSchema()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonInt32 result = HeaderValueParser.ParseNumber<JsonInt32>("12abc", workspace);
+        Assert.AreEqual(JsonValueKind.String, result.ValueKind);
+        Assert.IsFalse(result.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void ParseNumber_EmptyText_IsBoundAsString()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonInt32 result = HeaderValueParser.ParseNumber<JsonInt32>(string.Empty, workspace);
+        Assert.AreEqual(JsonValueKind.String, result.ValueKind);
+    }
+
+    [TestMethod]
+    public void ParseBoolean_Literals_AreBooleans()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        Assert.AreEqual(JsonValueKind.True, HeaderValueParser.ParseBoolean<JsonString>("true", workspace).ValueKind);
+        Assert.AreEqual(JsonValueKind.False, HeaderValueParser.ParseBoolean<JsonString>("false", workspace).ValueKind);
+    }
+
+    [TestMethod]
+    public void ParseBoolean_NonLiteralText_IsBoundAsString()
+    {
+        // Only the JSON literals are booleans; "maybe" (or "True") must not become a boolean token.
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        Assert.AreEqual(JsonValueKind.String, HeaderValueParser.ParseBoolean<JsonString>("maybe", workspace).ValueKind);
+        Assert.AreEqual(JsonValueKind.String, HeaderValueParser.ParseBoolean<JsonString>("True", workspace).ValueKind);
+    }
 }
