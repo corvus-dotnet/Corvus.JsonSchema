@@ -18,7 +18,13 @@ namespace Corvus.Text.Json.RuntimeEvaluator.Compilation;
 /// discriminators, resolved static and dynamic references, evaluation-path segments, annotation bytes) plus one
 /// JSON array of every <c>const</c> and <c>enum</c> value, which is the only thing the evaluator still needs a parsed
 /// document for (deep equality of object and array constants). Regular expressions are stored as their source
-/// pattern and constructed on load.
+/// pattern in a table and constructed (or supplied by the regex provider) on load.
+/// </para>
+/// <para>
+/// Size is kept down three ways: every byte payload (path segments, names, keywords, number text, annotation JSON)
+/// is interned in one table and referenced by index; a node's schema location is stored as the earlier node whose
+/// location is its longest prefix plus the interned remainder; and keyword groups a node does not use are skipped
+/// under a per-node section mask.
 /// </para>
 /// <para>
 /// The format is private to this assembly version: the header carries a version number and a loader rejects any
@@ -28,7 +34,7 @@ namespace Corvus.Text.Json.RuntimeEvaluator.Compilation;
 internal static class ProgramImage
 {
     private const uint Magic = 0x50534A43; // "CJSP" little-endian
-    private const int Version = 2;
+    private const int Version = 4;
 
     /// <summary>Writes the program to an image.</summary>
     public static byte[] Write(CompiledSchema program)
@@ -54,11 +60,15 @@ internal static class ProgramImage
 
         // The node section is written to a separate buffer so the constants array, which the nodes reference by
         // index, can be placed before it.
-        var body = new ImageWriter(64 * 1024);
+        // Node bodies intern every byte payload (schema locations, path segments, property names, annotation
+        // bytes, number texts) in one table, since the same names and segments recur across nodes.
+        var table = new BytesTable();
+        var locations = new LocationTable();
+        var body = new ImageWriter(64 * 1024, table);
         body.WriteInt(nodes.Length);
         foreach (SchemaNode node in nodes)
         {
-            WriteNode(ref body, node, constants, patterns);
+            WriteNode(ref body, node, constants, patterns, locations);
         }
 
         w.WriteBytes(constants.ToJsonArray());
@@ -66,6 +76,12 @@ internal static class ProgramImage
         foreach (string pattern in patterns.Patterns)
         {
             w.WriteString(pattern);
+        }
+
+        w.WriteInt(table.Count);
+        foreach (byte[] entry in table.Entries)
+        {
+            w.WriteBytes(entry);
         }
 
         w.WriteRaw(body.WrittenSpan);
@@ -121,11 +137,19 @@ internal static class ProgramImage
         string[] patterns = ReadPatternTable(ref r);
         var matchers = new PatternMatcher?[patterns.Length];
 
+        int tableCount = r.ReadInt();
+        var table = new byte[tableCount][];
+        for (int i = 0; i < tableCount; i++)
+        {
+            table[i] = r.ReadBytes()!;
+        }
+
+        r.UseTable(table);
         int nodeCount = r.ReadInt();
         var nodes = new SchemaNode[nodeCount];
         for (int i = 0; i < nodeCount; i++)
         {
-            nodes[i] = ReadNode(ref r, constants, patterns, matchers, options);
+            nodes[i] = ReadNode(ref r, constants, patterns, matchers, options, nodes);
         }
 
         // Fused plans are derived from the graph rather than stored; a node whose plan was fused when the image was
@@ -209,7 +233,7 @@ internal static class ProgramImage
         return matchers[index] ??= PatternMatcher.Create(patterns[index], options, index);
     }
 
-    private static void WriteNode(ref ImageWriter w, SchemaNode n, ConstantPool constants, PatternTable patterns)
+    private static void WriteNode(ref ImageWriter w, SchemaNode n, ConstantPool constants, PatternTable patterns, LocationTable locations)
     {
         w.WriteInt(n.Id);
         w.WriteInt(n.ResourceId);
@@ -245,58 +269,75 @@ internal static class ProgramImage
 
         w.WriteUInt32((uint)n.Flags);
         w.WriteByte((byte)n.Plan);
-        w.WriteBytes(n.SchemaLocation);
+
+        // A location is written as the earlier node whose location it extends, plus the (interned) suffix.
+        (int baseNode, byte[] suffix) = locations.Add(n.Id, n.SchemaLocation);
+        w.WriteInt(baseNode);
+        w.WriteBytes(suffix);
         w.WriteByte((byte)n.Type);
 
-        // const / enum
-        w.WriteInt(n.HasConst ? constants.Add(n.Const) : -1);
-        w.WriteBytes(n.ConstString);
-        w.WriteString(n.ConstNumber?.Text);
-        if (n.Enum is ConstantValue[] values)
+        // Keyword groups that are entirely absent are skipped; the reader leaves the node's defaults.
+        byte sections = Sections(n);
+        w.WriteByte(sections);
+
+        if ((sections & SectionValue) != 0)
         {
+            // const / enum
+            w.WriteInt(n.HasConst ? constants.Add(n.Const) : -1);
+            w.WriteBytes(n.ConstString);
+            w.WriteString(n.ConstNumber?.Text);
+            if (n.Enum is ConstantValue[] values)
+            {
             w.WriteInt(values.Length);
             foreach (ConstantValue v in values)
             {
                 w.WriteInt(constants.Add(v));
             }
-        }
-        else
-        {
+            }
+            else
+            {
             w.WriteInt(-1);
-        }
+            }
 
-        if (n.EnumStrings is Utf8NameMap<object> enumStrings)
-        {
+            if (n.EnumStrings is Utf8NameMap<object> enumStrings)
+            {
             w.WriteInt(enumStrings.Count);
             foreach (byte[] key in enumStrings.Keys)
             {
                 w.WriteBytes(key);
             }
-        }
-        else
-        {
+            }
+            else
+            {
             w.WriteInt(-1);
+            }
+
         }
 
-        // number
-        w.WriteString(n.Minimum?.Text);
-        w.WriteString(n.Maximum?.Text);
-        w.WriteString(n.ExclusiveMinimum?.Text);
-        w.WriteString(n.ExclusiveMaximum?.Text);
-        w.WriteString(n.MultipleOf?.Text);
-
-        // string
-        w.WriteInt(n.MinLength);
-        w.WriteInt(n.MaxLength);
-        WritePattern(ref w, n.Pattern, patterns);
-        w.WriteByte((byte)n.Format);
-        w.WriteInt(n.ElidedTarget);
-        w.WriteByte((byte)n.Content);
-
-        // object
-        PropertyEntry[]? propertyValues = null;
-        if (n.Properties is Utf8NameMap<PropertyEntry> properties)
+        if ((sections & SectionNumber) != 0)
         {
+            w.WriteString(n.Minimum?.Text);
+            w.WriteString(n.Maximum?.Text);
+            w.WriteString(n.ExclusiveMinimum?.Text);
+            w.WriteString(n.ExclusiveMaximum?.Text);
+            w.WriteString(n.MultipleOf?.Text);
+        }
+
+        if ((sections & SectionString) != 0)
+        {
+            w.WriteInt(n.MinLength);
+            w.WriteInt(n.MaxLength);
+            WritePattern(ref w, n.Pattern, patterns);
+            w.WriteByte((byte)n.Format);
+            w.WriteInt(n.ElidedTarget);
+            w.WriteByte((byte)n.Content);
+        }
+
+        if ((sections & SectionObject) != 0)
+        {
+            PropertyEntry[]? propertyValues = null;
+            if (n.Properties is Utf8NameMap<PropertyEntry> properties)
+            {
             propertyValues = properties.Values.ToArray();
             w.WriteInt(propertyValues.Length);
             foreach (PropertyEntry p in propertyValues)
@@ -306,31 +347,31 @@ internal static class ProgramImage
                 w.WriteInt(p.SeenBit);
                 w.WriteBool(p.IsRequired);
             }
-        }
-        else
-        {
+            }
+            else
+            {
             w.WriteInt(-1);
-        }
+            }
 
-        if (n.UnrolledProperties is PropertyEntry[] unrolled)
-        {
+            if (n.UnrolledProperties is PropertyEntry[] unrolled)
+            {
             w.WriteInt(unrolled.Length);
             foreach (PropertyEntry p in unrolled)
             {
                 w.WriteInt(Array.IndexOf(propertyValues!, p));
             }
-        }
-        else
-        {
+            }
+            else
+            {
             w.WriteInt(-1);
-        }
+            }
 
-        w.WriteInt(n.SeenBitCount);
-        WriteInts(ref w, n.RequiredSeenBits);
-        WriteByteArrays(ref w, n.RequiredNames);
+            w.WriteInt(n.SeenBitCount);
+            WriteInts(ref w, n.RequiredSeenBits);
+            WriteByteArrays(ref w, n.RequiredNames);
 
-        if (n.PatternProperties is PatternPropertyEntry[] patternProperties)
-        {
+            if (n.PatternProperties is PatternPropertyEntry[] patternProperties)
+            {
             w.WriteInt(patternProperties.Length);
             foreach (PatternPropertyEntry p in patternProperties)
             {
@@ -338,20 +379,20 @@ internal static class ProgramImage
                 WriteChildRef(ref w, p.Schema);
                 w.WriteBytes(p.Name);
             }
-        }
-        else
-        {
+            }
+            else
+            {
             w.WriteInt(-1);
-        }
+            }
 
-        WriteChildRef(ref w, n.AdditionalProperties);
-        WriteChildRef(ref w, n.PropertyNames);
-        WriteChildRef(ref w, n.UnevaluatedProperties);
-        w.WriteInt(n.MinProperties);
-        w.WriteInt(n.MaxProperties);
+            WriteChildRef(ref w, n.AdditionalProperties);
+            WriteChildRef(ref w, n.PropertyNames);
+            WriteChildRef(ref w, n.UnevaluatedProperties);
+            w.WriteInt(n.MinProperties);
+            w.WriteInt(n.MaxProperties);
 
-        if (n.Dependencies is DependencyEntry[] dependencies)
-        {
+            if (n.Dependencies is DependencyEntry[] dependencies)
+            {
             w.WriteInt(dependencies.Length);
             foreach (DependencyEntry d in dependencies)
             {
@@ -361,53 +402,59 @@ internal static class ProgramImage
                 WriteByteArrays(ref w, d.RequiredNames);
                 WriteChildRef(ref w, d.Schema);
             }
-        }
-        else
-        {
+            }
+            else
+            {
             w.WriteInt(-1);
+            }
+
         }
 
-        // array
-        WriteChildRefs(ref w, n.PrefixItems);
-        WriteChildRef(ref w, n.Items);
-        WriteChildRef(ref w, n.Contains);
-        w.WriteInt(n.MinContains);
-        w.WriteInt(n.MaxContains);
-        w.WriteInt(n.MinItems);
-        w.WriteInt(n.MaxItems);
-        WriteChildRef(ref w, n.UnevaluatedItems);
-
-        // in-place applicators
-        WriteChildRef(ref w, n.Ref);
-        if (n.DynamicRef is DynamicRefTarget dynamicRef)
+        if ((sections & SectionArray) != 0)
         {
+            WriteChildRefs(ref w, n.PrefixItems);
+            WriteChildRef(ref w, n.Items);
+            WriteChildRef(ref w, n.Contains);
+            w.WriteInt(n.MinContains);
+            w.WriteInt(n.MaxContains);
+            w.WriteInt(n.MinItems);
+            w.WriteInt(n.MaxItems);
+            WriteChildRef(ref w, n.UnevaluatedItems);
+        }
+
+        if ((sections & SectionInPlace) != 0)
+        {
+            WriteChildRef(ref w, n.Ref);
+            if (n.DynamicRef is DynamicRefTarget dynamicRef)
+            {
             w.WriteBool(true);
             w.WriteString(dynamicRef.Anchor);
             w.WriteInt(dynamicRef.FallbackNode);
             WriteInts(ref w, dynamicRef.NodeByResource);
             w.WriteBytes(dynamicRef.PathSegment);
             w.WriteBool(dynamicRef.IsRecursive);
-        }
-        else
-        {
+            }
+            else
+            {
             w.WriteBool(false);
+            }
+
+            WriteChildRefs(ref w, n.AllOf);
+            WriteChildRefs(ref w, n.AnyOf);
+            WriteChildRefs(ref w, n.OneOf);
+            WriteDiscriminator(ref w, n.AnyOfDiscriminator);
+            WriteDiscriminator(ref w, n.OneOfDiscriminator);
+            w.WriteByte((byte)n.AnyOfTypeUnion);
+            w.WriteByte((byte)n.OneOfTypeUnion);
+            WriteChildRef(ref w, n.Not);
+            WriteChildRef(ref w, n.If);
+            WriteChildRef(ref w, n.Then);
+            WriteChildRef(ref w, n.Else);
         }
 
-        WriteChildRefs(ref w, n.AllOf);
-        WriteChildRefs(ref w, n.AnyOf);
-        WriteChildRefs(ref w, n.OneOf);
-        WriteDiscriminator(ref w, n.AnyOfDiscriminator);
-        WriteDiscriminator(ref w, n.OneOfDiscriminator);
-        w.WriteByte((byte)n.AnyOfTypeUnion);
-        w.WriteByte((byte)n.OneOfTypeUnion);
-        WriteChildRef(ref w, n.Not);
-        WriteChildRef(ref w, n.If);
-        WriteChildRef(ref w, n.Then);
-        WriteChildRef(ref w, n.Else);
-
-        // annotations
-        if (n.Annotations is AnnotationEntry[] annotations)
+        if ((sections & SectionAnnotations) != 0)
         {
+            AnnotationEntry[] annotations = n.Annotations!;
             w.WriteInt(annotations.Length);
             foreach (AnnotationEntry a in annotations)
             {
@@ -416,13 +463,62 @@ internal static class ProgramImage
                 w.WriteBool(a.StringsOnly);
             }
         }
-        else
-        {
-            w.WriteInt(-1);
-        }
     }
 
-    private static SchemaNode ReadNode(ref ImageReader r, List<ConstantValue> constants, string[] patterns, PatternMatcher?[] matchers, JsonSchemaEvaluatorOptions options)
+    private const byte SectionValue = 1;
+    private const byte SectionNumber = 2;
+    private const byte SectionString = 4;
+    private const byte SectionObject = 8;
+    private const byte SectionArray = 16;
+    private const byte SectionInPlace = 32;
+    private const byte SectionAnnotations = 64;
+
+    /// <summary>The keyword groups a node carries; a group whose every field is at its default is absent.</summary>
+    private static byte Sections(SchemaNode n)
+    {
+        byte sections = 0;
+        if (n.HasConst || n.ConstString is not null || n.ConstNumber is not null || n.Enum is not null || n.EnumStrings is not null)
+        {
+            sections |= SectionValue;
+        }
+
+        if (n.Minimum is not null || n.Maximum is not null || n.ExclusiveMinimum is not null || n.ExclusiveMaximum is not null || n.MultipleOf is not null)
+        {
+            sections |= SectionNumber;
+        }
+
+        if (n.MinLength >= 0 || n.MaxLength >= 0 || n.Pattern is not null || n.Format != FormatKind.None || n.ElidedTarget >= 0 || n.Content != ContentKind.None)
+        {
+            sections |= SectionString;
+        }
+
+        if (n.Properties is not null || n.UnrolledProperties is not null || n.SeenBitCount != 0 || n.RequiredSeenBits is not null || n.RequiredNames is not null
+            || n.PatternProperties is not null || n.AdditionalProperties.IsPresent || n.PropertyNames.IsPresent || n.UnevaluatedProperties.IsPresent
+            || n.MinProperties >= 0 || n.MaxProperties >= 0 || n.Dependencies is not null)
+        {
+            sections |= SectionObject;
+        }
+
+        if (n.PrefixItems is not null || n.Items.IsPresent || n.Contains.IsPresent || n.MinContains != 1 || n.MaxContains >= 0 || n.MinItems >= 0 || n.MaxItems >= 0 || n.UnevaluatedItems.IsPresent)
+        {
+            sections |= SectionArray;
+        }
+
+        if (n.Ref.IsPresent || n.DynamicRef is not null || n.AllOf is not null || n.AnyOf is not null || n.OneOf is not null || n.AnyOfDiscriminator is not null
+            || n.OneOfDiscriminator is not null || n.AnyOfTypeUnion != TypeMask.None || n.OneOfTypeUnion != TypeMask.None || n.Not.IsPresent || n.If.IsPresent || n.Then.IsPresent || n.Else.IsPresent)
+        {
+            sections |= SectionInPlace;
+        }
+
+        if (n.Annotations is not null)
+        {
+            sections |= SectionAnnotations;
+        }
+
+        return sections;
+    }
+
+    private static SchemaNode ReadNode(ref ImageReader r, List<ConstantValue> constants, string[] patterns, PatternMatcher?[] matchers, JsonSchemaEvaluatorOptions options, SchemaNode[] nodes)
     {
         var n = new SchemaNode
         {
@@ -460,32 +556,48 @@ internal static class ProgramImage
 
         n.Flags = (NodeFlags)r.ReadUInt32();
         n.Plan = (NodePlan)r.ReadByte();
-        n.SchemaLocation = r.ReadBytes() ?? [];
+        int baseNode = r.ReadInt();
+        byte[] suffix = r.ReadBytes() ?? [];
+        if (baseNode < 0)
+        {
+            n.SchemaLocation = suffix;
+        }
+        else
+        {
+            byte[] baseLocation = nodes[baseNode].SchemaLocation;
+            byte[] location = new byte[baseLocation.Length + suffix.Length];
+            baseLocation.CopyTo(location, 0);
+            suffix.CopyTo(location, baseLocation.Length);
+            n.SchemaLocation = location;
+        }
+
         n.Type = (TypeMask)r.ReadByte();
         n.TypeMessage = SchemaCompiler.TypeMessageFor(n.Type);
+        byte sections = r.ReadByte();
 
-        // const / enum
-        int constIndex = r.ReadInt();
-        if (constIndex >= 0)
+        if ((sections & SectionValue) != 0)
         {
+            int constIndex = r.ReadInt();
+            if (constIndex >= 0)
+            {
             n.Const = constants[constIndex];
-        }
+            }
 
-        n.ConstString = r.ReadBytes();
-        string? constNumber = r.ReadString();
-        if (n.ConstString is not null)
-        {
+            n.ConstString = r.ReadBytes();
+            string? constNumber = r.ReadString();
+            if (n.ConstString is not null)
+            {
             n.ConstText = Encoding.UTF8.GetString(n.ConstString);
-        }
-        else if (constNumber is not null)
-        {
+            }
+            else if (constNumber is not null)
+            {
             n.ConstNumber = new NumberValue(Encoding.UTF8.GetBytes(constNumber));
             n.ConstText = n.ConstNumber.Text;
-        }
+            }
 
-        int enumCount = r.ReadInt();
-        if (enumCount >= 0)
-        {
+            int enumCount = r.ReadInt();
+            if (enumCount >= 0)
+            {
             var values = new ConstantValue[enumCount];
             for (int i = 0; i < enumCount; i++)
             {
@@ -493,11 +605,11 @@ internal static class ProgramImage
             }
 
             n.Enum = values;
-        }
+            }
 
-        int enumStringCount = r.ReadInt();
-        if (enumStringCount >= 0)
-        {
+            int enumStringCount = r.ReadInt();
+            if (enumStringCount >= 0)
+            {
             var strings = new List<KeyValuePair<byte[], object>>(enumStringCount);
             for (int i = 0; i < enumStringCount; i++)
             {
@@ -505,29 +617,36 @@ internal static class ProgramImage
             }
 
             n.EnumStrings = new Utf8NameMap<object>(strings);
+            }
+
         }
 
-        // number
-        n.Minimum = ReadNumber(ref r);
-        n.Maximum = ReadNumber(ref r);
-        n.ExclusiveMinimum = ReadNumber(ref r);
-        n.ExclusiveMaximum = ReadNumber(ref r);
-        string? multipleOf = r.ReadString();
-        n.MultipleOf = multipleOf is null ? null : new DivisorValue(Encoding.UTF8.GetBytes(multipleOf));
-
-        // string
-        n.MinLength = r.ReadInt();
-        n.MaxLength = r.ReadInt();
-        n.Pattern = ReadPattern(ref r, patterns, matchers, options);
-        n.Format = (FormatKind)r.ReadByte();
-        n.ElidedTarget = r.ReadInt();
-        n.Content = (ContentKind)r.ReadByte();
-
-        // object
-        PropertyEntry[]? propertyValues = null;
-        int propertyCount = r.ReadInt();
-        if (propertyCount >= 0)
+        if ((sections & SectionNumber) != 0)
         {
+            n.Minimum = ReadNumber(ref r);
+            n.Maximum = ReadNumber(ref r);
+            n.ExclusiveMinimum = ReadNumber(ref r);
+            n.ExclusiveMaximum = ReadNumber(ref r);
+            string? multipleOf = r.ReadString();
+            n.MultipleOf = multipleOf is null ? null : new DivisorValue(Encoding.UTF8.GetBytes(multipleOf));
+        }
+
+        if ((sections & SectionString) != 0)
+        {
+            n.MinLength = r.ReadInt();
+            n.MaxLength = r.ReadInt();
+            n.Pattern = ReadPattern(ref r, patterns, matchers, options);
+            n.Format = (FormatKind)r.ReadByte();
+            n.ElidedTarget = r.ReadInt();
+            n.Content = (ContentKind)r.ReadByte();
+        }
+
+        if ((sections & SectionObject) != 0)
+        {
+            PropertyEntry[]? propertyValues = null;
+            int propertyCount = r.ReadInt();
+            if (propertyCount >= 0)
+            {
             propertyValues = new PropertyEntry[propertyCount];
             var entries = new List<KeyValuePair<byte[], PropertyEntry>>(propertyCount);
             for (int i = 0; i < propertyCount; i++)
@@ -541,11 +660,11 @@ internal static class ProgramImage
             }
 
             n.Properties = new Utf8NameMap<PropertyEntry>(entries);
-        }
+            }
 
-        int unrolledCount = r.ReadInt();
-        if (unrolledCount >= 0)
-        {
+            int unrolledCount = r.ReadInt();
+            if (unrolledCount >= 0)
+            {
             var unrolled = new PropertyEntry[unrolledCount];
             for (int i = 0; i < unrolledCount; i++)
             {
@@ -553,15 +672,15 @@ internal static class ProgramImage
             }
 
             n.UnrolledProperties = unrolled;
-        }
+            }
 
-        n.SeenBitCount = r.ReadInt();
-        n.RequiredSeenBits = ReadInts(ref r);
-        n.RequiredNames = ReadByteArrays(ref r);
+            n.SeenBitCount = r.ReadInt();
+            n.RequiredSeenBits = ReadInts(ref r);
+            n.RequiredNames = ReadByteArrays(ref r);
 
-        int patternPropertyCount = r.ReadInt();
-        if (patternPropertyCount >= 0)
-        {
+            int patternPropertyCount = r.ReadInt();
+            if (patternPropertyCount >= 0)
+            {
             var patternProperties = new PatternPropertyEntry[patternPropertyCount];
             for (int i = 0; i < patternPropertyCount; i++)
             {
@@ -572,17 +691,17 @@ internal static class ProgramImage
             }
 
             n.PatternProperties = patternProperties;
-        }
+            }
 
-        n.AdditionalProperties = ReadChildRef(ref r);
-        n.PropertyNames = ReadChildRef(ref r);
-        n.UnevaluatedProperties = ReadChildRef(ref r);
-        n.MinProperties = r.ReadInt();
-        n.MaxProperties = r.ReadInt();
+            n.AdditionalProperties = ReadChildRef(ref r);
+            n.PropertyNames = ReadChildRef(ref r);
+            n.UnevaluatedProperties = ReadChildRef(ref r);
+            n.MinProperties = r.ReadInt();
+            n.MaxProperties = r.ReadInt();
 
-        int dependencyCount = r.ReadInt();
-        if (dependencyCount >= 0)
-        {
+            int dependencyCount = r.ReadInt();
+            if (dependencyCount >= 0)
+            {
             var dependencies = new DependencyEntry[dependencyCount];
             for (int i = 0; i < dependencyCount; i++)
             {
@@ -596,22 +715,27 @@ internal static class ProgramImage
             }
 
             n.Dependencies = dependencies;
+            }
+
         }
 
-        // array
-        n.PrefixItems = ReadChildRefs(ref r);
-        n.Items = ReadChildRef(ref r);
-        n.Contains = ReadChildRef(ref r);
-        n.MinContains = r.ReadInt();
-        n.MaxContains = r.ReadInt();
-        n.MinItems = r.ReadInt();
-        n.MaxItems = r.ReadInt();
-        n.UnevaluatedItems = ReadChildRef(ref r);
-
-        // in-place applicators
-        n.Ref = ReadChildRef(ref r);
-        if (r.ReadBool())
+        if ((sections & SectionArray) != 0)
         {
+            n.PrefixItems = ReadChildRefs(ref r);
+            n.Items = ReadChildRef(ref r);
+            n.Contains = ReadChildRef(ref r);
+            n.MinContains = r.ReadInt();
+            n.MaxContains = r.ReadInt();
+            n.MinItems = r.ReadInt();
+            n.MaxItems = r.ReadInt();
+            n.UnevaluatedItems = ReadChildRef(ref r);
+        }
+
+        if ((sections & SectionInPlace) != 0)
+        {
+            n.Ref = ReadChildRef(ref r);
+            if (r.ReadBool())
+            {
             n.DynamicRef = new DynamicRefTarget
             {
                 Anchor = r.ReadString()!,
@@ -620,24 +744,24 @@ internal static class ProgramImage
                 PathSegment = r.ReadBytes() ?? [],
                 IsRecursive = r.ReadBool(),
             };
+            }
+
+            n.AllOf = ReadChildRefs(ref r);
+            n.AnyOf = ReadChildRefs(ref r);
+            n.OneOf = ReadChildRefs(ref r);
+            n.AnyOfDiscriminator = ReadDiscriminator(ref r);
+            n.OneOfDiscriminator = ReadDiscriminator(ref r);
+            n.AnyOfTypeUnion = (TypeMask)r.ReadByte();
+            n.OneOfTypeUnion = (TypeMask)r.ReadByte();
+            n.Not = ReadChildRef(ref r);
+            n.If = ReadChildRef(ref r);
+            n.Then = ReadChildRef(ref r);
+            n.Else = ReadChildRef(ref r);
         }
 
-        n.AllOf = ReadChildRefs(ref r);
-        n.AnyOf = ReadChildRefs(ref r);
-        n.OneOf = ReadChildRefs(ref r);
-        n.AnyOfDiscriminator = ReadDiscriminator(ref r);
-        n.OneOfDiscriminator = ReadDiscriminator(ref r);
-        n.AnyOfTypeUnion = (TypeMask)r.ReadByte();
-        n.OneOfTypeUnion = (TypeMask)r.ReadByte();
-        n.Not = ReadChildRef(ref r);
-        n.If = ReadChildRef(ref r);
-        n.Then = ReadChildRef(ref r);
-        n.Else = ReadChildRef(ref r);
-
-        // annotations
-        int annotationCount = r.ReadInt();
-        if (annotationCount >= 0)
+        if ((sections & SectionAnnotations) != 0)
         {
+            int annotationCount = r.ReadInt();
             var annotations = new AnnotationEntry[annotationCount];
             for (int i = 0; i < annotationCount; i++)
             {
@@ -648,6 +772,43 @@ internal static class ProgramImage
         }
 
         return n;
+    }
+
+    /// <summary>
+    /// Encodes schema locations as the earlier node whose location is the longest prefix on a segment boundary, plus
+    /// the remaining suffix, so a node's pointer costs an index and one interned segment instead of the whole pointer.
+    /// </summary>
+    private sealed class LocationTable
+    {
+        private readonly Dictionary<string, int> firstNodeByLocation = new(StringComparer.Ordinal);
+
+        public (int BaseNode, byte[] Suffix) Add(int nodeId, byte[] location)
+        {
+            string text = Encoding.UTF8.GetString(location);
+            (int BaseNode, byte[] Suffix) result = (-1, location);
+            int cut = text.Length;
+            while (true)
+            {
+                cut = text.LastIndexOf('/', Math.Max(0, cut - 1));
+                if (cut <= 0)
+                {
+                    break;
+                }
+
+                if (this.firstNodeByLocation.TryGetValue(text.Substring(0, cut), out int baseNode))
+                {
+                    result = (baseNode, Encoding.UTF8.GetBytes(text.Substring(cut)));
+                    break;
+                }
+            }
+
+            if (!this.firstNodeByLocation.ContainsKey(text))
+            {
+                this.firstNodeByLocation.Add(text, nodeId);
+            }
+
+            return result;
+        }
     }
 
     private static NumberValue? ReadNumber(ref ImageReader r)
@@ -841,6 +1002,50 @@ internal static class ProgramImage
         return value;
     }
 
+    /// <summary>Interns byte payloads by content, in first-seen order.</summary>
+    private sealed class BytesTable
+    {
+        private readonly List<byte[]> entries = [];
+        private readonly Dictionary<byte[], int> indices = new(ByteArrayComparer.Instance);
+
+        public int Count => this.entries.Count;
+
+        public IReadOnlyList<byte[]> Entries => this.entries;
+
+        public int Intern(byte[] value)
+        {
+            if (!this.indices.TryGetValue(value, out int index))
+            {
+                index = this.entries.Count;
+                this.entries.Add(value);
+                this.indices.Add(value, index);
+            }
+
+            return index;
+        }
+
+        private sealed class ByteArrayComparer : IEqualityComparer<byte[]>
+        {
+            public static readonly ByteArrayComparer Instance = new();
+
+            public bool Equals(byte[]? x, byte[]? y) => x.AsSpan().SequenceEqual(y);
+
+            public int GetHashCode(byte[] obj)
+            {
+                var hash = new HashCode();
+#if NET6_0_OR_GREATER
+                hash.AddBytes(obj);
+#else
+                foreach (byte b in obj)
+                {
+                    hash.Add(b);
+                }
+#endif
+                return hash.ToHashCode();
+            }
+        }
+    }
+
     /// <summary>Assigns each distinct regular-expression pattern an index, in first-seen order.</summary>
     private sealed class PatternTable
     {
@@ -917,13 +1122,15 @@ internal static class ProgramImage
 
     private struct ImageWriter
     {
+        private readonly BytesTable? table;
         private byte[] buffer;
         private int position;
 
-        public ImageWriter(int capacity)
+        public ImageWriter(int capacity, BytesTable? table = null)
         {
             this.buffer = new byte[capacity];
             this.position = 0;
+            this.table = table;
         }
 
         public readonly ReadOnlySpan<byte> WrittenSpan => this.buffer.AsSpan(0, this.position);
@@ -959,12 +1166,21 @@ internal static class ProgramImage
             this.buffer[this.position++] = (byte)v;
         }
 
-        /// <summary>Writes a length-prefixed byte array; <see langword="null"/> is distinct from empty.</summary>
+        /// <summary>
+        /// Writes a byte array: as a table index when this writer interns, else length-prefixed inline;
+        /// <see langword="null"/> is distinct from empty either way.
+        /// </summary>
         public void WriteBytes(byte[]? value)
         {
             if (value is null)
             {
                 this.WriteInt(-1);
+                return;
+            }
+
+            if (this.table is BytesTable table)
+            {
+                this.WriteInt(table.Intern(value));
                 return;
             }
 
@@ -998,11 +1214,22 @@ internal static class ProgramImage
     {
         private readonly ReadOnlySpan<byte> data;
         private int position;
+        private byte[][]? table;
+        private string?[]? strings;
 
         public ImageReader(ReadOnlySpan<byte> data)
         {
             this.data = data;
             this.position = 0;
+            this.table = null;
+            this.strings = null;
+        }
+
+        /// <summary>Switches to table-indexed byte arrays and strings for the node section.</summary>
+        public void UseTable(byte[][] entries)
+        {
+            this.table = entries;
+            this.strings = new string?[entries.Length];
         }
 
         public byte ReadByte() => this.data[this.position++];
@@ -1043,6 +1270,11 @@ internal static class ProgramImage
                 return null;
             }
 
+            if (this.table is byte[][] table)
+            {
+                return table[length];
+            }
+
             byte[] value = this.data.Slice(this.position, length).ToArray();
             this.position += length;
             return value;
@@ -1054,6 +1286,11 @@ internal static class ProgramImage
             if (length < 0)
             {
                 return null;
+            }
+
+            if (this.table is byte[][] table)
+            {
+                return this.strings![length] ??= Encoding.UTF8.GetString(table[length]);
             }
 
 #if NETSTANDARD2_0

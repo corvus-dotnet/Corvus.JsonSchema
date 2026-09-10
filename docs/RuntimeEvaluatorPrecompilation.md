@@ -70,9 +70,16 @@ The cql2 row is the regular-expression cost: with `CompileRegularExpressions` on
 of each `Regex` compiles it to IL, and that dominates the image load. `[GeneratedRegex]` moves exactly that cost to
 build time, so it is the case Stage 2 must handle, not a limit of the image.
 
-Image size is currently about 1.3 times the schema text (2.16 MB against 1.66 MB over the corpora). Evaluation-path
-segments and schema locations are stored per edge and per node; a string table would remove most of the excess.
-Size was not a goal of the spike.
+Image size (version 4) is about two thirds of the schema text: 1.05 MB against 1.66 MB over the corpora, down from
+2.16 MB in version 2. Three changes account for it. Byte payloads (path segments, property names, keywords, number
+text, annotation JSON) are interned in one table and referenced by index. A node's schema location is stored as the
+index of the earlier node whose location is its longest prefix on a segment boundary, plus the interned remainder,
+so the per-node JSON pointer costs a few bytes instead of the whole string (the locations were the largest single
+item: 195 KB of ui5-manifest's 525 KB). Keyword groups a node does not use (value, number, string, object, array,
+in-place applicators, annotations) are skipped under a per-node section mask instead of writing every default. What
+remains is dominated by annotation JSON (`title`, `description`, `default`, `examples` raw text, about 0.5 MB in
+total), which verbose output needs and which compresses no further without changing what is kept. Load time is
+unchanged (8.8 ms warm across the 37 corpora); the `breakdown` benchmark command reports the per-schema split.
 
 The machine was loaded during these runs (load average 8 to 25 from concurrent builds); the minimum-of-N figures are
 stable, the cold first-load figures vary by roughly a third between runs.
@@ -148,7 +155,8 @@ field and is not recommended.
    size and start-up gains.
 4. **Entry points.** Every entry point a generated type needs must be compiled when the image is produced; the
    generator already knows them (the program entries of Stage 0).
-5. **String table.** Paths and locations deduplicated in the image (size only).
+5. **String table.** Done (image version 4): interned byte payloads, prefix-encoded locations and a section mask per
+   node; see the size paragraph above.
 
 ## Recommendation
 
@@ -169,8 +177,46 @@ Order of work:
    carries the image as base64 UTF-8 literals decoded on first use, loads it with `FromProgramImage`, and wires one
    `[GeneratedRegex]` method per pattern through `RegexProvider` under the same framework guard the old generator
    used; the schema documents are not embedded. Without a compiler (the source generator) the Stage 0 form is emitted.
-3. Link the compiler and its document model into the source generator, so both producers emit the same shape.
-4. String table in the image (size only), then constants as static values if the load-time parse ever shows up.
+3. Link the compiler into the source generator, so both producers emit the same shape. See the next section.
+4. String table in the image (size only; done, image version 4), then constants as static values if the load-time
+   parse ever shows up.
+
+## The source generator
+
+The source generator takes no binary dependencies: every component it uses is linked in as source files, as the
+JMESPath and JSONPath generators do, and it builds against `System.Text.Json` (`STJ` and `BUILDING_SOURCE_GENERATOR`
+are defined). The program compiler follows the same rule, so the compiler and the image writer are linked as files
+and must compile over `System.Text.Json` in that configuration; the Corvus document model is not brought in for
+their sake.
+
+The compile path already uses an element API that `System.Text.Json` shares (`ValueKind`, `GetString`,
+`TryGetProperty`, `ValueEquals`, `EnumerateObject`/`EnumerateArray`, `GetRawText`). What differs is confined to a
+few places:
+
+* **Element identity.** The loader and compiler identify a subschema by (document, element index), which the Corvus
+  document exposes and `System.Text.Json` does not. Under `STJ` the loader assigns the index itself: every element it
+  reaches (walking, resolving a pointer fragment, or an anchor) is interned by its JSON pointer, and the index is the
+  intern ordinal. The node's schema location is then that pointer, which replaces `TryGetJsonPointer`, and pointer
+  fragments are resolved by walking properties and array indices with the usual `~0`/`~1` decoding, which replaces
+  `TryResolvePointer`.
+* **Raw values.** `GetRawSimpleValue` (number text) becomes `GetRawText`; `GetUtf8String` becomes the UTF-8 encoding
+  of `GetString`; the token type of a constant is derived from its `ValueKind`.
+* **Constants.** `ConstantValue` holds the element and its (document, ordinal) identity instead of a document and
+  index; the pool writes `GetRawText`.
+* **Runtime-only members** are compiled out under `STJ`: number comparison and `multipleOf` (they use the Corvus
+  number helpers; the writer needs only the text), regular-expression matching, the message providers, the image
+  reader except the pattern table, `CompiledSchema`'s constants document, and every `Evaluate` overload.
+
+The linked file set is the `Compilation` directory (compiler, loader, node model, fused-object analysis, name map,
+keywords, URI utilities, metaschema table, image), the public option, dialect, format-mode and exception types, the
+compile-side half of `JsonSchemaEvaluator`, the ECMA regex translator (already linked), and the CLI's
+`RuntimeProgramCompiler`, which is the `SchemaProgramCompiler` implementation the generator passes in its language
+provider options. The evaluation directory is not linked. The generator's embedded metaschemas already use the
+logical names the evaluator's metaschema table looks up.
+
+Version coupling is the same as today's source generator to `Corvus.Text.Json` pairing: the generator emits the image
+version of the files it was built from, and `FromProgramImage` rejects any other version at type initialisation
+with a message naming both versions. There is no schema-text fallback.
 
 ## Throughput ceiling: emitted evaluation code against the engine
 
@@ -251,4 +297,3 @@ disables it for A/B runs.
 
 * Whether the source generator links the compiler and document model in (single emitted shape) or defers to the CLI.
 * Whether the evaluator package merges into `Corvus.Text.Json`, which decides the assembly the emitted program targets.
-* Whether image compaction (string table) is worth doing before the emitter is wired.

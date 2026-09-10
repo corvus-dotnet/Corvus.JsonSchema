@@ -60,6 +60,11 @@ if (args.Length > 0 && args[0] == "emit")
     return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.StaticInitEmitter.Run(args[1..]);
 }
 
+if (args.Length > 0 && args[0] == "breakdown")
+{
+    return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.ImageBreakdown.Run(args[1..]);
+}
+
 if (args.Length > 0 && args[0] == "image")
 {
     return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.ImageMeasure.Run(args[1..]);
