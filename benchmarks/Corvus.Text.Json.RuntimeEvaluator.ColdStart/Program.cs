@@ -9,7 +9,59 @@ using CorvusValidator = Corvus.Text.Json.Validator.JsonSchema;
 // Usage: coldstart [schema-name ...]   (defaults to a representative subset)
 
 string dir = Path.Combine(AppContext.BaseDirectory, "sourcemeta");
-string[] names = args.Length > 0 ? args : ["aws-cdk", "cql2", "geojson", "cmake-presets", "ansible-meta", "openapi", "pulumi"];
+string imageDir = Path.Combine(AppContext.BaseDirectory, "images");
+string[] defaults = ["aws-cdk", "cql2", "geojson", "cmake-presets", "ansible-meta", "openapi", "pulumi"];
+
+// coldstart write [names]: compile each schema and write its program image next to the binary.
+// coldstart image [names]: load the images written earlier and time the first (process-cold) and warm loads,
+//                          in a process that has never run the compiler.
+if (args.Length > 0 && args[0] == "write")
+{
+    Directory.CreateDirectory(imageDir);
+    foreach (string name in args.Length > 1 ? args[1..] : defaults)
+    {
+        byte[] schema = File.ReadAllBytes(Path.Combine(dir, name + "-schema.json"));
+        var o = new JsonSchemaEvaluatorOptions { DefaultDialect = DialectOf(Encoding.UTF8.GetString(schema)) };
+        using JsonSchemaEvaluator e = JsonSchemaEvaluator.Compile(schema, o);
+        File.WriteAllBytes(Path.Combine(imageDir, name + ".cjsp"), e.ToProgramImage());
+    }
+
+    return;
+}
+
+if (args.Length > 0 && args[0] == "image")
+{
+    Console.WriteLine($"{"schema",-16} {"image",8} {"img first",10} {"img warm",10} {"img alloc",10}");
+    foreach (string name in args.Length > 1 ? args[1..] : defaults)
+    {
+        byte[] image = File.ReadAllBytes(Path.Combine(imageDir, name + ".cjsp"));
+        var o = new JsonSchemaEvaluatorOptions();
+        long a0 = GC.GetAllocatedBytesForCurrentThread();
+        long t0 = Stopwatch.GetTimestamp();
+        using (JsonSchemaEvaluator.FromProgramImage(image, o))
+        {
+        }
+
+        double first = Ms(Stopwatch.GetTimestamp() - t0);
+        long alloc = GC.GetAllocatedBytesForCurrentThread() - a0;
+        double warm = double.MaxValue;
+        for (int i = 0; i < 20; i++)
+        {
+            long w0 = Stopwatch.GetTimestamp();
+            using (JsonSchemaEvaluator.FromProgramImage(image, o))
+            {
+            }
+
+            warm = Math.Min(warm, Ms(Stopwatch.GetTimestamp() - w0));
+        }
+
+        Console.WriteLine($"{name,-16} {image.Length,8} {first,8:F2}ms {warm,8:F2}ms {alloc / 1024.0,7:F0}KB");
+    }
+
+    return;
+}
+
+string[] names = args.Length > 0 ? args : defaults;
 
 static double Ms(long ticks) => ticks * 1000.0 / Stopwatch.Frequency;
 

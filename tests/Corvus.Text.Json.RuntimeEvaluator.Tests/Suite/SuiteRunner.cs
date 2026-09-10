@@ -80,7 +80,16 @@ public static class SuiteRunner
     /// <summary>
     /// Runs every group and test in a suite file.
     /// </summary>
-    public static List<CaseResult> RunFile(string file, string draft, bool assertFormat)
+    /// <summary>
+    /// Runs every case in a suite file.
+    /// </summary>
+    /// <param name="file">The suite file.</param>
+    /// <param name="draft">The draft directory name.</param>
+    /// <param name="assertFormat">Whether <c>format</c> is asserted.</param>
+    /// <param name="throughImage">When set, each compiled schema is round-tripped through a program image before the
+    /// cases are evaluated, so the run exercises <see cref="JsonSchemaEvaluator.FromProgramImage"/>.</param>
+    /// <returns>The case results.</returns>
+    public static List<CaseResult> RunFile(string file, string draft, bool assertFormat, bool throughImage = false)
     {
         var results = new List<CaseResult>();
         JsonSchemaEvaluatorOptions options = OptionsFor(draft, assertFormat);
@@ -96,6 +105,12 @@ public static class SuiteRunner
             try
             {
                 evaluator = JsonSchemaEvaluator.Compile(schemaBytes, options);
+                if (throughImage)
+                {
+                    byte[] image = evaluator.ToProgramImage();
+                    evaluator.Dispose();
+                    evaluator = JsonSchemaEvaluator.FromProgramImage(image, options);
+                }
             }
             catch (Exception ex)
             {

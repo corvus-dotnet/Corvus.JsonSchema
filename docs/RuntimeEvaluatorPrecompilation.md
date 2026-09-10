@@ -1,0 +1,169 @@
+# Pre-compiled schema programs (Stage 2 design note)
+
+Status: design and measurement spike, 2026-09-10. Nothing in this note is wired into the generators yet; the
+measurements come from `ProgramImage` (in `Corvus.Text.Json.RuntimeEvaluator`), the `image`/`emit` commands of the
+runtime-evaluator benchmark harness, the `write`/`image` modes of the cold-start harness, and a throw-away "spike"
+console project that compiled emitted C# against the evaluator.
+
+## Where Stage 0 leaves us
+
+After Stage 0 a generated assembly carries, per compilation, one `CorvusJsonSchemaProgram` with the schema documents
+as UTF-8 data and lazily compiled entry points. At first use the runtime evaluator parses the documents, resolves
+references, reads any custom metaschema's `$vocabulary`, builds the node graph, and constructs the regular expressions.
+Stage 2 moves everything except regular-expression construction to generation time, and hands regular expressions to
+`[GeneratedRegex]`.
+
+What Stage 2 cannot remove is JIT of the evaluation engine itself, measured earlier at roughly 40 ms floor for the
+first evaluation in a cold process and about half that with ReadyToRun. That is a consumer publish setting, not
+something the package can ship.
+
+## What a compiled program is
+
+The compiler's output is a plain object graph, `SchemaNode[]`, with:
+
+* per-node summary flags, the fused `NodePlan`, the dialect and resource id, and the schema location bytes;
+* value keywords: a `TypeMask`, `const`/`enum` values, normalised numeric bounds and divisor, string bounds, a
+  `PatternMatcher`, format and content kinds with their assertion flags;
+* object keywords: a `Utf8NameMap<PropertyEntry>` (with presence bits for `required`, `dependentRequired`,
+  `dependentSchemas` and `dependencies`), pattern properties, additional/unevaluated properties, property names;
+* array keywords: prefix items, items, contains bounds, unevaluated items;
+* in-place applicators: resolved `$ref` targets, `$dynamicRef` tables (`resourceId -> nodeId`), `allOf`/`anyOf`/`oneOf`
+  with their discriminators and type unions, `not`, `if`/`then`/`else`;
+* annotation keywords as raw JSON bytes, and every child edge (`ChildRef`) with its evaluation-path segment bytes.
+
+Only one thing in that graph still points at a parsed schema document: `ConstantValue`, used for deep equality of
+object and array `const`/`enum` values. Everything else is bytes, integers, and small objects.
+
+## Two emitted shapes
+
+### A. Program image
+
+`ProgramImage` serialises the graph to a versioned binary image (varints, length-prefixed byte arrays, a packed bit
+set per node) plus one JSON array holding every `const`/`enum` value. `JsonSchemaEvaluator.FromProgramImage` rebuilds
+the graph without the loader or compiler; the constants array is parsed once, which is the only parse left.
+`ToProgramImage` records every entry point compiled so far, and `ForEntryPoint` on an image resolves only those.
+
+Conformance: the entire JSON Schema Test Suite passes with every schema round-tripped through an image (the
+`ImageSuiteTests` class), and all 37 Sourcemeta corpora agree instance for instance between the compiled program and
+its image.
+
+Warm, in-process, minimum of 15 rounds, interpreted regexes (compiled regexes are cached process-wide, so warm figures
+are the same either way):
+
+| | Compile | Image load |
+|---|---|---|
+| All 37 corpora, total | 45.9 ms | 8.6 ms |
+| Allocation, all corpora | 21.4 MB | 10.7 MB |
+| Largest (ui5-manifest, 2688 nodes) | 8.2 ms | 1.4 ms |
+| Median corpus (deno, 108 nodes) | 0.92 ms | 0.13 ms |
+
+Process-cold, first schema in a fresh process (three runs each):
+
+| | First load | Warm |
+|---|---|---|
+| Compile, aws-cdk (10 nodes) | 71 to 85 ms | 0.07 ms |
+| Image, aws-cdk | 19 to 24 ms | 0.01 ms |
+| Compile, cql2 (regex-heavy) | 35 to 39 ms | 2.5 to 2.8 ms |
+| Image, cql2 | 33 to 38 ms | 0.4 ms |
+
+The cql2 row is the regular-expression cost: with `CompileRegularExpressions` on (the default) the first construction
+of each `Regex` compiles it to IL, and that dominates the image load. `[GeneratedRegex]` moves exactly that cost to
+build time, so it is the case Stage 2 must handle, not a limit of the image.
+
+Image size is currently about 1.3 times the schema text (2.16 MB against 1.66 MB over the corpora). Evaluation-path
+segments and schema locations are stored per edge and per node; a string table would remove most of the excess.
+Size was not a goal of the spike.
+
+The machine was loaded during these runs (load average 8 to 25 from concurrent builds); the minimum-of-N figures are
+stable, the cold first-load figures vary by roughly a third between runs.
+
+### B. C# static initialisers
+
+`StaticInitEmitter` (benchmark harness, `emit` command) writes the same graph as C# object initialisers, chunked into
+methods of 32 nodes, with the constants array as a UTF-8 literal, regexes constructed through `PatternMatcher.Create`
+and the `Build` method returning a `CompiledSchema` through the image constructor. The spike project compiled five
+corpora (babelrc, openapi, cmake-presets, krakend, ui5-manifest) and timed `Build()` against loading the equivalent
+image; the emitted graph is checked by writing it back to an image and comparing bytes with the compiler's image.
+
+Emitted source and compile cost (Release, five programs, one project):
+
+| Corpus | Nodes | Emitted C# | Image |
+|---|---|---|---|
+| babelrc | 38 | 80 KB | 8 KB |
+| openapi | 363 | 698 KB | 52 KB |
+| cmake-presets | 677 | 1.36 MB | 146 KB |
+| krakend | 1334 | 3.10 MB | 489 KB |
+| ui5-manifest | 2688 | 5.52 MB | 582 KB |
+
+Roslyn compiled the five programs in about 10 seconds of wall time; the resulting assembly is 5.4 MB. The emitted
+graphs are byte-for-byte identical to the compiler's when written back as images.
+
+Type initialisation against image load, same process, three runs (first call includes JIT of the emitted methods;
+warm is the minimum of 20):
+
+| Corpus | Build first | Build warm | Image first | Image warm |
+|---|---|---|---|---|
+| babelrc | 21 ms | 0.02 ms | 2.4 to 3.1 ms | 0.04 ms |
+| openapi | 51 to 55 ms | 0.16 ms | 0.3 ms | 0.24 ms |
+| cmake-presets | 99 to 104 ms | 0.32 ms | 0.6 ms | 0.45 ms |
+| krakend | 245 to 256 ms | 0.9 ms | 1.3 to 1.7 ms | 1.1 ms |
+| ui5-manifest | 421 to 427 ms | 1.5 ms | 2.1 to 2.3 ms | 2.0 ms |
+
+The first-call column is the decisive one: JIT of the object-initialiser methods costs roughly 0.16 ms per node,
+so a 2688-node program spends over 400 ms initialising the first time, two hundred times the image load. Once
+JIT-compiled the static form is 25 to 35 percent faster than the image reader, which is not worth the cold-start
+cost, the tenfold source size, or the public surface the emitted code would need over the node model. ReadyToRun on
+the consumer would recover some of the JIT cost, but only for consumers that opt in, and the image needs no such help.
+
+## Where pre-compilation runs
+
+Two producers emit programs today: the CLI (`Corvus.Json.Cli`, a normal .NET application) and the Roslyn source
+generator (`Corvus.Text.Json.SourceGenerator`, netstandard2.0, which by design carries no binary dependencies and
+compiles the V4 analysis core and selected Corvus.Text.Json files in as sources).
+
+Pre-compiling in the CLI is straightforward: it can reference the evaluator package and call the compiler. Pre-compiling
+in the source generator needs the schema compiler and the document model it reads with (`ParsedJsonDocument`,
+`JsonElement`, `JsonElementHelpers`, `UnescapedUtf8JsonString`, `EcmaRegexTranslator`) compiled into the generator.
+Both `Corvus.Text.Json` and the evaluator already target netstandard2.0, so this is a matter of linking sources the
+way the generator links the V4 core, and of the generator's build-time cost. The alternative is for the source
+generator to keep emitting the Stage 0 form while the CLI emits pre-compiled programs; that leaves two shapes in the
+field and is not recommended.
+
+## Engine changes Stage 2 needs
+
+1. **Regular-expression provider.** The image stores each pattern's source; the emitted shim supplies a table of
+   `[GeneratedRegex]` methods in pattern order, and `FromProgramImage` takes a provider that returns the `Regex` for a
+   pattern index (falling back to `PatternMatcher.Create` when absent, for the CLI and for interpreted builds).
+2. **Constants.** The image carries the values as one JSON array parsed at load. Emitting them as statically
+   constructed values instead requires `const`/`enum` deep equality to work against standalone values rather than a
+   document and index; the load-time parse measured under 0.1 ms for every corpus, so this is an optimisation to do
+   after the shape is settled, not before.
+3. **Image versioning.** The image version is tied to the evaluator assembly. The generator and the evaluator ship
+   from the same repository, and a consumer referencing mismatched packages should fail at type initialisation with a
+   clear message rather than silently recompiling from schema text; keeping the text as a fallback would forfeit the
+   size and start-up gains.
+4. **Entry points.** Every entry point a generated type needs must be compiled when the image is produced; the
+   generator already knows them (the program entries of Stage 0).
+5. **String table.** Paths and locations deduplicated in the image (size only).
+
+## Recommendation
+
+Emit **program images**, not static initialisers. The image loads in a fifth of the compile time warm, a quarter of
+it process-cold, halves compile-time allocation, needs no schema text, keeps the node model internal, and is already
+conformance-clean. The emitted C# per compilation shrinks to a shim: the image as UTF-8 data, the entry-point table,
+the options, and a `[GeneratedRegex]` method per pattern wired in through the regular-expression provider.
+
+Order of work:
+
+1. Regular-expression provider on `FromProgramImage`, and the emitted `[GeneratedRegex]` table (the cql2 row above
+   is what this buys).
+2. `RuntimeProgramGenerator` emits the image and the shim instead of the schema documents; the CLI drives it first
+   because it can reference the evaluator directly.
+3. Link the compiler and its document model into the source generator, so both producers emit the same shape.
+4. String table in the image (size only), then constants as static values if the load-time parse ever shows up.
+
+## Open decisions
+
+* Whether the source generator links the compiler and document model in (single emitted shape) or defers to the CLI.
+* Whether the evaluator package merges into `Corvus.Text.Json`, which decides the assembly the emitted program targets.
+* Whether image compaction (string table) is worth doing before the emitter is wired.

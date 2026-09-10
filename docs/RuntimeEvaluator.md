@@ -163,3 +163,8 @@ replaced; the Validator is now a facade over this evaluator (see `docs/Validator
 * The public `Corvus.Text.Json` helpers used here (`JsonSchemaEvaluation.Match*`, `JsonElementHelpers.*`) take a
   `ref JsonSchemaContext` for reporting; the evaluator passes a scratch context. When merged into Corvus V5 the
   pure predicates (`MatchEmail(ReadOnlySpan<byte>)` etc.) should be made public instead.
+
+## Pre-compilation
+
+Program images (`JsonSchemaEvaluator.ToProgramImage`/`FromProgramImage`) and the Stage 2 design and measurements are in
+[RuntimeEvaluatorPrecompilation.md](RuntimeEvaluatorPrecompilation.md).

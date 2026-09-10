@@ -15,6 +15,8 @@ internal sealed class CompiledSchema : IDisposable
     private readonly object gate = new();
     private SchemaCompiler? compiler;
     private int references;
+    private readonly Dictionary<string, int> entryPoints = new(StringComparer.Ordinal);
+    private readonly ParsedJsonDocument<JsonElement>? constantsDocument;
 
     public CompiledSchema(SchemaNode[] nodes, int rootNode, SchemaLoader loader, bool usesDynamicScope, JsonSchemaEvaluatorOptions options, SchemaCompiler compiler)
     {
@@ -25,14 +27,37 @@ internal sealed class CompiledSchema : IDisposable
         this.Options = options;
         this.ResourceCount = loader.Resources.Count;
         this.compiler = compiler;
+        this.entryPoints[options.EntryPoint ?? string.Empty] = rootNode;
     }
+
+    /// <summary>
+    /// Initializes a program loaded from an image: no loader and no compiler, so only the entry points recorded in
+    /// the image are available, and the constants document is the program's only parsed JSON.
+    /// </summary>
+    public CompiledSchema(SchemaNode[] nodes, int rootNode, bool usesDynamicScope, int resourceCount, JsonSchemaEvaluatorOptions options, Dictionary<string, int> entryPoints, ParsedJsonDocument<JsonElement> constantsDocument)
+    {
+        this.Nodes = nodes;
+        this.RootNode = rootNode;
+        this.Loader = null;
+        this.UsesDynamicScope = usesDynamicScope;
+        this.Options = options;
+        this.ResourceCount = resourceCount;
+        this.entryPoints = entryPoints;
+        this.constantsDocument = constantsDocument;
+    }
+
+    /// <summary>Gets the entry points compiled so far, keyed by the reference they were requested with.</summary>
+    public IReadOnlyDictionary<string, int> EntryPoints => this.entryPoints;
+
+    /// <summary>Gets a value indicating whether the program was loaded from an image rather than compiled.</summary>
+    public bool IsImage => this.Loader is null;
 
     /// <summary>The node graph. Replaced (never mutated in place) when entry points add nodes.</summary>
     public SchemaNode[] Nodes { get; private set; }
 
     public int RootNode { get; }
 
-    public SchemaLoader Loader { get; }
+    public SchemaLoader? Loader { get; }
 
     public bool UsesDynamicScope { get; private set; }
 
@@ -53,11 +78,22 @@ internal sealed class CompiledSchema : IDisposable
     {
         lock (this.gate)
         {
+            if (this.entryPoints.TryGetValue(reference, out int known))
+            {
+                return known;
+            }
+
+            if (this.Loader is null)
+            {
+                throw new JsonSchemaCompilationException($"The program image has no entry point '{reference}'; entry points must be compiled when the image is created.");
+            }
+
             SchemaCompiler c = this.compiler ?? throw new ObjectDisposedException(nameof(JsonSchemaEvaluator));
             int node = c.AddEntryPoint(reference);
             this.Nodes = c.NodesSnapshot();
             this.UsesDynamicScope = c.UsesDynamicScope;
             this.ResourceCount = this.Loader.Resources.Count;
+            this.entryPoints[reference] = node;
             return node;
         }
     }
@@ -74,10 +110,15 @@ internal sealed class CompiledSchema : IDisposable
             this.compiler = null;
         }
 
-        foreach (SchemaDocument doc in this.Loader.Documents)
+        if (this.Loader is SchemaLoader loader)
         {
-            doc.Document.Dispose();
+            foreach (SchemaDocument doc in loader.Documents)
+            {
+                doc.Document.Dispose();
+            }
         }
+
+        this.constantsDocument?.Dispose();
     }
 }
 
@@ -2154,7 +2195,7 @@ internal sealed class SchemaCompiler
     /// Builds the <c>type</c> message provider for a mask: the shared single-type provider, or, for a type list, the
     /// generated-model form <c>'["array", "object"]'</c> in the generator's order.
     /// </summary>
-    private static JsonSchemaMessageProvider? TypeMessageFor(TypeMask mask)
+    internal static JsonSchemaMessageProvider? TypeMessageFor(TypeMask mask)
     {
         switch (mask)
         {
@@ -2297,7 +2338,7 @@ internal sealed class SchemaCompiler
             if (v.ValueKind == JsonValueKind.String)
             {
                 using UnescapedUtf8JsonString s = v.GetUtf8String();
-                strings.Add(new KeyValuePair<byte[], object>(s.Span.ToArray(), Sentinel));
+                strings.Add(new KeyValuePair<byte[], object>(s.Span.ToArray(), EnumSentinel));
             }
             else
             {
@@ -2313,7 +2354,8 @@ internal sealed class SchemaCompiler
         }
     }
 
-    private static readonly object Sentinel = new();
+    /// <summary>The value stored against every key of an enum string set; only membership matters.</summary>
+    internal static readonly object EnumSentinel = new();
 
     private void CompileRef(SchemaNode node, SchemaTarget target, string reference)
     {

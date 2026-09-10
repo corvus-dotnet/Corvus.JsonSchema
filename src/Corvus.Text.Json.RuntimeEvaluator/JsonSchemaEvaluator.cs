@@ -118,6 +118,32 @@ public sealed class JsonSchemaEvaluator : IDisposable
     }
 
     /// <summary>
+    /// Serialises the compiled program to a binary image that <see cref="FromProgramImage"/> loads without the schema
+    /// text, the document resolver or the compiler. Every entry point created so far (the root and any
+    /// <see cref="ForEntryPoint"/>) is recorded in the image.
+    /// </summary>
+    /// <returns>The image bytes.</returns>
+    public byte[] ToProgramImage()
+    {
+        return ProgramImage.Write(this.program);
+    }
+
+    /// <summary>
+    /// Loads a compiled program from an image produced by <see cref="ToProgramImage"/>. The evaluator returned is
+    /// rooted at the image's root entry point; <see cref="ForEntryPoint"/> selects any other recorded entry point.
+    /// </summary>
+    /// <param name="image">The image bytes.</param>
+    /// <param name="options">The evaluation options; only the settings that apply at evaluation time
+    /// (<see cref="JsonSchemaEvaluatorOptions.MaxDepth"/>, regular-expression construction) are used, because the
+    /// schema was compiled when the image was created.</param>
+    /// <returns>The evaluator.</returns>
+    public static JsonSchemaEvaluator FromProgramImage(ReadOnlyMemory<byte> image, JsonSchemaEvaluatorOptions? options = null)
+    {
+        CompiledSchema program = ProgramImage.Read(image, options ?? JsonSchemaEvaluatorOptions.Default);
+        return new JsonSchemaEvaluator(program, program.RootNode);
+    }
+
+    /// <summary>
     /// Gets an evaluator for another entry point of the same schema document set, sharing the loaded documents
     /// and every already-compiled subschema. Only subschemas newly reachable from the entry point are compiled.
     /// </summary>

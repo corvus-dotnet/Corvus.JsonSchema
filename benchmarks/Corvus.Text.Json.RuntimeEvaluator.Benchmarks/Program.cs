@@ -50,6 +50,16 @@ if (args.Length > 0 && args[0] == "alloc")
     return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.AllocationCheck.Run(args[1..]);
 }
 
+if (args.Length > 0 && args[0] == "emit")
+{
+    return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.StaticInitEmitter.Run(args[1..]);
+}
+
+if (args.Length > 0 && args[0] == "image")
+{
+    return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.ImageMeasure.Run(args[1..]);
+}
+
 if (args.Length > 0 && args[0] == "diff")
 {
     return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.SourceMetaDiff.Run(args[1..]) == 0 ? 0 : 1;

@@ -68,5 +68,6 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Corvus.Text.Json.RuntimeEvaluator.Tests" />
     <InternalsVisibleTo Include="Corvus.Text.Json.RuntimeEvaluator.Benchmarks" />
+    <InternalsVisibleTo Include="Corvus.Text.Json.RuntimeEvaluator.Spike" />
   </ItemGroup>
 </Project>
