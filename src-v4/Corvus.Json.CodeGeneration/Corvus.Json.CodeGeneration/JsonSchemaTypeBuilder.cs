@@ -170,6 +170,7 @@ public class JsonSchemaTypeBuilder(
 
         if (languageProvider is ISchemaProgramLanguageProvider programProvider)
         {
+            programProvider.SetProgramRootTypes(rootTypeDeclarations);
             programProvider.SetSchemaDocuments(this.GetSchemaDocuments(), this.lastFallbackVocabulary?.Uri);
         }
 
@@ -196,10 +197,45 @@ public class JsonSchemaTypeBuilder(
             if (root is JsonElement element)
             {
                 result.Add(new KeyValuePair<string, string>(uri, element.GetRawText()));
+                AddCustomMetaschemas(element);
             }
         }
 
         return result;
+
+        // A schema whose $schema is not one of the standard metaschemas needs that metaschema at evaluation time to
+        // discover its $vocabulary; the standard ones are built into the evaluator.
+        void AddCustomMetaschemas(JsonElement schema)
+        {
+            while (schema.ValueKind == JsonValueKind.Object &&
+                   schema.TryGetProperty("$schema", out JsonElement metaschemaElement) &&
+                   metaschemaElement.ValueKind == JsonValueKind.String &&
+                   metaschemaElement.GetString() is string metaschemaUri)
+            {
+                int fragment = metaschemaUri.IndexOf('#');
+                if (fragment >= 0)
+                {
+                    metaschemaUri = metaschemaUri.Substring(0, fragment);
+                }
+
+                if (metaschemaUri.Length == 0 ||
+                    metaschemaUri.StartsWith("http://json-schema.org/", StringComparison.Ordinal) ||
+                    metaschemaUri.StartsWith("https://json-schema.org/", StringComparison.Ordinal) ||
+                    !seen.Add(metaschemaUri))
+                {
+                    return;
+                }
+
+                JsonElement? metaschema = documentResolver.TryResolve(new JsonReference(metaschemaUri)).AsTask().GetAwaiter().GetResult();
+                if (metaschema is not JsonElement metaschemaRoot)
+                {
+                    return;
+                }
+
+                result.Add(new KeyValuePair<string, string>(metaschemaUri, metaschemaRoot.GetRawText()));
+                schema = metaschemaRoot;
+            }
+        }
     }
 
     /// <summary>

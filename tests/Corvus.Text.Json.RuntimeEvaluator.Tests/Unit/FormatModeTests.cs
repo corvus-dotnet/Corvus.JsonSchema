@@ -130,4 +130,29 @@ public class FormatModeTests
         using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile("""{"format": "int32"}""", options);
         Assert.IsFalse(evaluator.Evaluate("3000000000"));
     }
+
+    private const string Draft7DateTimeSchema = """{"$schema": "http://json-schema.org/draft-07/schema#", "type": "string", "format": "date-time"}""";
+
+    [TestMethod]
+    public void LegacyDraftsAnnotateByDefault()
+    {
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(Draft7DateTimeSchema);
+        Assert.IsTrue(evaluator.Evaluate("\"nope\""));
+    }
+
+    [TestMethod]
+    public void LegacyDraftsAssertWhenOptedIn()
+    {
+        using JsonSchemaEvaluator legacy = JsonSchemaEvaluator.Compile(Draft7DateTimeSchema, new JsonSchemaEvaluatorOptions { AssertFormatInLegacyDrafts = true });
+        Assert.IsFalse(legacy.Evaluate("\"nope\""));
+        Assert.IsTrue(legacy.Evaluate("\"2020-01-01T00:00:00Z\""));
+
+        // The opt-in only fills in the drafts that left the choice open; 2020-12 still follows its vocabulary.
+        using JsonSchemaEvaluator modern = JsonSchemaEvaluator.Compile(DateTimeSchema, new JsonSchemaEvaluatorOptions { AssertFormatInLegacyDrafts = true });
+        Assert.IsTrue(modern.Evaluate("\"nope\""));
+
+        // An explicit AssertFormat still wins.
+        using JsonSchemaEvaluator forcedOff = JsonSchemaEvaluator.Compile(Draft7DateTimeSchema, new JsonSchemaEvaluatorOptions { AssertFormat = false, AssertFormatInLegacyDrafts = true });
+        Assert.IsTrue(forcedOff.Evaluate("\"nope\""));
+    }
 }

@@ -44,6 +44,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
     private IReadOnlyList<INameHeuristic>? cachedNameBeforeSubschemaHeuristics;
     private IReadOnlyList<INameHeuristic>? cachedNameAfterSubschemaHeuristics;
     private TypeDeclaration[]? evaluatorRootTypes;
+    private IReadOnlyList<TypeDeclaration>? programRootTypes;
     private IReadOnlyList<KeyValuePair<string, string>> schemaDocuments = [];
     private string? fallbackVocabularyUri;
     private readonly List<(string RootDocumentUri, string RootDocumentPointer)> programEntries = [];
@@ -94,6 +95,12 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
     internal string ProgramClassReference => options.DefaultNamespace.Length == 0 ? "global::" + ProgramClassName : "global::" + options.DefaultNamespace + "." + ProgramClassName;
 
     /// <inheritdoc/>
+    public void SetProgramRootTypes(IReadOnlyList<TypeDeclaration> rootTypes)
+    {
+        this.programRootTypes = rootTypes;
+    }
+
+    /// <inheritdoc/>
     public void SetSchemaDocuments(IReadOnlyList<KeyValuePair<string, string>> documents, string? fallbackVocabularyUri)
     {
         this.schemaDocuments = documents;
@@ -108,7 +115,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
     /// <returns>The entry point index.</returns>
     internal int GetProgramEntry(TypeDeclaration typeDeclaration)
     {
-        LocatedSchema located = typeDeclaration.LocatedSchema;
+        LocatedSchema located = this.GetEntryType(typeDeclaration).LocatedSchema;
         if (located.RootDocumentUri.Length == 0)
         {
             return -1;
@@ -123,6 +130,38 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
         }
 
         return index;
+    }
+
+    /// <summary>
+    /// Gets the type whose schema location is the entry point for a generated type: the type itself when it is a
+    /// requested root, else the first requested root that reduces to it (a root that is nothing but a <c>$ref</c>, say),
+    /// so that evaluation starts at the schema as written, with its dynamic scope, rather than at the reduced target.
+    /// </summary>
+    private TypeDeclaration GetEntryType(TypeDeclaration typeDeclaration)
+    {
+        if (this.programRootTypes is null)
+        {
+            return typeDeclaration;
+        }
+
+        foreach (TypeDeclaration root in this.programRootTypes)
+        {
+            if (ReferenceEquals(root, typeDeclaration))
+            {
+                return typeDeclaration;
+            }
+        }
+
+        foreach (TypeDeclaration root in this.programRootTypes)
+        {
+            if (root.LocatedSchema.RootDocumentUri.Length > 0 &&
+                ReferenceEquals(root.ReducedTypeDeclaration().ReducedType, typeDeclaration))
+            {
+                return root;
+            }
+        }
+
+        return typeDeclaration;
     }
 
     /// <summary>

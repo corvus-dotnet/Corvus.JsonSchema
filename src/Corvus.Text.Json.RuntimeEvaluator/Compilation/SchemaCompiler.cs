@@ -953,7 +953,7 @@ internal sealed class SchemaCompiler
         bool metaData = legacy || (vocab & JsonSchemaVocabularies.MetaData) != 0;
         bool unevaluated = dialect == JsonSchemaDialect.Draft201909 ? applicator : (vocab & JsonSchemaVocabularies.Unevaluated) != 0;
         bool content = legacy || (vocab & JsonSchemaVocabularies.Content) != 0;
-        bool formatAssert = this.options.AssertFormat ?? (vocab & JsonSchemaVocabularies.FormatAssertion) != 0;
+        bool formatAssert = this.options.AssertFormat ?? ((legacy && this.options.AssertFormatInLegacyDrafts) || (vocab & JsonSchemaVocabularies.FormatAssertion) != 0);
         bool formatAnnotate = legacy || (vocab & (JsonSchemaVocabularies.FormatAnnotation | JsonSchemaVocabularies.FormatAssertion)) != 0 || this.options.AssertFormat is not null;
 
         Dictionary<string, PropertyEntry>? propertyEntries = null;

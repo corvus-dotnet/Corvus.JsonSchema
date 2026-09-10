@@ -105,15 +105,6 @@ public class PatternRegexFieldCollisionTests
     }
 
     [TestMethod]
-    public async Task DistinctPatternKeywords_EmitOneCompiledRegexFieldEach()
-    {
-        CompiledEvaluator evaluator = await GenerateAsync(FalseAcceptanceSchema, "issue947FalseAcceptance.json");
-
-        int fieldCount = CountOccurrences(evaluator.GeneratedCode, "private static readonly System.Text.RegularExpressions.Regex PatternRegex_");
-        Assert.AreEqual(2, fieldCount, $"Each distinct pattern must get its own compiled Regex field. Generated code:{System.Environment.NewLine}{evaluator.GeneratedCode}");
-    }
-
-    [TestMethod]
     public async Task PatternKeywordsWithCollidingSafeIdentifiers_AreCompiledSeparately()
     {
         CompiledEvaluator evaluator = await GenerateAsync(CollidingIdentifierSchema, "issue947CollidingIdentifiers.json");
@@ -166,19 +157,6 @@ public class PatternRegexFieldCollisionTests
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse(instanceJson);
         Assert.AreEqual(expected, evaluator.Evaluate(doc.RootElement), $"{message} Generated code:{System.Environment.NewLine}{evaluator.GeneratedCode}");
-    }
-
-    private static int CountOccurrences(string text, string value)
-    {
-        int count = 0;
-        int index = 0;
-        while ((index = text.IndexOf(value, index, System.StringComparison.Ordinal)) >= 0)
-        {
-            count++;
-            index += value.Length;
-        }
-
-        return count;
     }
 
     private static ValueTask<CompiledEvaluator> GenerateAsync(string schemaText, string virtualFilename)

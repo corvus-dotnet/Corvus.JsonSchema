@@ -155,6 +155,7 @@ internal static class RuntimeProgramGenerator
         Line("        {");
         Line($"            DefaultDialect = JsonSchemaDialect.{dialect},");
         Line($"            AssertFormat = {(alwaysAssertFormat ? "true" : "null")},");
+        Line("            AssertFormatInLegacyDrafts = true,");
         Line("            DocumentResolver = TryGetDocument,");
         if (formatModes.Count > 0)
         {

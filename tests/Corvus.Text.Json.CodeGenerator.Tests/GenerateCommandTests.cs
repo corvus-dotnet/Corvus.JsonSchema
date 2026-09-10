@@ -328,8 +328,9 @@ public class GenerateCommandTests : IDisposable
 
         Assert.AreEqual(0, asserted.ExitCode, asserted.StandardError);
         Assert.AreEqual(0, annotated.ExitCode, annotated.StandardError);
-        Assert.IsTrue(ReadAllGeneratedCode(assertDir).Contains("MatchDateTime"), "--assertFormat true must assert date-time.");
-        Assert.IsFalse(ReadAllGeneratedCode(annotateDir).Contains("MatchDateTime"), "--assertFormat false must not assert date-time.");
+        // Validation runs in the runtime evaluator; the emitted program carries the assertion setting.
+        Assert.IsTrue(ReadAllGeneratedCode(assertDir).Contains("AssertFormat = true,"), "--assertFormat true must assert date-time.");
+        Assert.IsTrue(ReadAllGeneratedCode(annotateDir).Contains("AssertFormat = null,"), "--assertFormat false must leave format to the schema's vocabulary.");
     }
 
     [TestMethod]
@@ -348,8 +349,10 @@ public class GenerateCommandTests : IDisposable
 
         Assert.AreEqual(0, def.ExitCode, def.StandardError);
         Assert.AreEqual(0, disabled.ExitCode, disabled.StandardError);
-        Assert.IsTrue(ReadAllGeneratedCode(defaultDir).Contains("MatchDateTime"), "draft-07 asserts format by default.");
-        Assert.IsFalse(ReadAllGeneratedCode(disabledDir).Contains("MatchDateTime"), "--formatMode disable must produce annotation-only output.");
+        // Validation runs in the runtime evaluator; the emitted program carries the assertion setting and the mode overrides.
+        Assert.IsTrue(ReadAllGeneratedCode(defaultDir).Contains("AssertFormatInLegacyDrafts = true,"), "draft-07 asserts format by default.");
+        Assert.IsFalse(ReadAllGeneratedCode(defaultDir).Contains("JsonSchemaFormatMode.Disable"), "No override is emitted by default.");
+        Assert.IsTrue(ReadAllGeneratedCode(disabledDir).Contains("[\"*\"] = JsonSchemaFormatMode.Disable"), "--formatMode disable must produce annotation-only output.");
     }
 
     [TestMethod]

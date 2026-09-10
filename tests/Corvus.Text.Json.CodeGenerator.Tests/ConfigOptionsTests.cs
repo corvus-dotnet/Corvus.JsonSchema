@@ -286,13 +286,14 @@ public class ConfigOptionsTests : IDisposable
         string[] files = Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories);
         Assert.IsTrue(files.Length > 0, "Expected generated files");
 
-        // With explicit usings, the GlobalDeclarations file should contain 'using global::System;'
-        string globalDecl = files.FirstOrDefault(f =>
-            Path.GetFileName(f).Contains("GlobalDeclarations", StringComparison.OrdinalIgnoreCase));
-        Assert.IsNotNull(globalDecl);
+        // With explicit usings, the generated type files carry 'using global::System;'
+        bool anyExplicitUsing = false;
+        foreach (string file in files)
+        {
+            anyExplicitUsing |= (await File.ReadAllTextAsync(file)).Contains("using global::System;");
+        }
 
-        string content = await File.ReadAllTextAsync(globalDecl);
-        StringAssert.Contains(content, "using global::System;");
+        Assert.IsTrue(anyExplicitUsing, "Expected an explicit 'using global::System;' in the generated code.");
     }
 
     [TestMethod]
@@ -316,13 +317,11 @@ public class ConfigOptionsTests : IDisposable
         string[] files = Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories);
         Assert.IsTrue(files.Length > 0, "Expected generated files");
 
-        // Without explicit usings, the GlobalDeclarations file should NOT contain 'using global::System;'
-        string globalDecl = files.FirstOrDefault(f =>
-            Path.GetFileName(f).Contains("GlobalDeclarations", StringComparison.OrdinalIgnoreCase));
-        Assert.IsNotNull(globalDecl);
-
-        string content = await File.ReadAllTextAsync(globalDecl);
-        Assert.DoesNotContain("using global::System;", content);
+        // Without explicit usings, no generated file carries 'using global::System;'
+        foreach (string file in files)
+        {
+            Assert.DoesNotContain("using global::System;", await File.ReadAllTextAsync(file));
+        }
     }
 
     [TestMethod]

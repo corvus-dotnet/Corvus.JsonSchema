@@ -194,6 +194,7 @@ public sealed class JsonSchemaEvaluator : IDisposable
         {
             DefaultDialect = source.DefaultDialect,
             AssertFormat = source.AssertFormat,
+            AssertFormatInLegacyDrafts = source.AssertFormatInLegacyDrafts,
             AssertContent = source.AssertContent,
             FormatModes = source.FormatModes,
             CompileRegularExpressions = source.CompileRegularExpressions,

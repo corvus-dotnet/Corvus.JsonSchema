@@ -40,6 +40,13 @@ public sealed class JsonSchemaEvaluatorOptions
     public bool? AssertFormat { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether, when <see cref="AssertFormat"/> is <see langword="null"/>, resources
+    /// written against draft 4, 6 or 7 treat <c>format</c> as an assertion. Those drafts left the choice to the
+    /// implementation; generated models have always asserted, so the programs they emit set this.
+    /// </summary>
+    public bool AssertFormatInLegacyDrafts { get; set; }
+
+    /// <summary>
     /// Gets or sets a value indicating whether <c>contentEncoding</c>/<c>contentMediaType</c> are asserted
     /// in dialects where the specification leaves this to the implementation (Draft 7 and earlier).
     /// </summary>
