@@ -118,6 +118,17 @@ public sealed class JsonSchemaEvaluator : IDisposable
     }
 
     /// <summary>
+    /// Compiles the given entry points into the program in one step, so that <see cref="ToProgramImage"/> records
+    /// them and later <see cref="ForEntryPoint"/> calls find them compiled. Adding many entry points this way runs
+    /// the compiler's analyses once rather than once per entry point.
+    /// </summary>
+    /// <param name="entryPoints">The entry point references.</param>
+    public void RegisterEntryPoints(IReadOnlyList<string> entryPoints)
+    {
+        this.program.AddEntryPoints(entryPoints);
+    }
+
+    /// <summary>
     /// Serialises the compiled program to a binary image that <see cref="FromProgramImage"/> loads without the schema
     /// text, the document resolver or the compiler. Every entry point created so far (the root and any
     /// <see cref="ForEntryPoint"/>) is recorded in the image.

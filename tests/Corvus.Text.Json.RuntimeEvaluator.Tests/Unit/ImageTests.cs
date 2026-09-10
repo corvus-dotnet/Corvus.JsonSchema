@@ -217,4 +217,20 @@ public class ImageTests
         using JsonSchemaEvaluator compiled = JsonSchemaEvaluator.Compile("""{"type": "string", "pattern": "^[0-9]+$"}""", new JsonSchemaEvaluatorOptions { RegexProvider = (index, _) => { asked.Add(index); return null; } });
         CollectionAssert.AreEqual(new[] { -1 }, asked);
     }
+
+    [TestMethod]
+    public void RegisteredEntryPointsAreRecordedInTheImage()
+    {
+        using JsonSchemaEvaluator compiled = JsonSchemaEvaluator.Compile(Schema);
+        compiled.RegisterEntryPoints(["#/$defs/item", "#/$defs/left", "#/$defs/item"]);
+        byte[] image = compiled.ToProgramImage();
+
+        using JsonSchemaEvaluator loaded = JsonSchemaEvaluator.FromProgramImage(image);
+        using JsonSchemaEvaluator item = loaded.ForEntryPoint("#/$defs/item");
+        using JsonSchemaEvaluator left = loaded.ForEntryPoint("#/$defs/left");
+        Assert.IsTrue(item.Evaluate("""{"id": 1}"""));
+        Assert.IsTrue(left.Evaluate("""{"type": "left"}"""));
+        Assert.IsFalse(left.Evaluate("""{"type": "right"}"""));
+        Assert.ThrowsExactly<JsonSchemaCompilationException>(() => loaded.ForEntryPoint("#/$defs/right"));
+    }
 }

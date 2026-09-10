@@ -411,7 +411,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
         AnsiConsole.MarkupLine($"[yellow]Registered {typesToGenerate.Count} type declarations, generating code...[/]");
 
         // Generate code — register OpenAPI naming heuristic for contextual inline schema names
-        CSharpLanguageProvider.Options options = new(rootNamespace + ".Models");
+        CSharpLanguageProvider.Options options = new(rootNamespace + ".Models", programCompiler: global::Corvus.Json.CodeGenerator.RuntimeProgramCompiler.Compile);
         CSharpLanguageProvider languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
         languageProvider.RegisterNameHeuristics(new OpenApiSchemaNameHeuristic(parameterNames));
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =

@@ -70,6 +70,8 @@ internal static class RuntimeProgramGenerator
     /// <param name="alwaysAssertFormat">Whether <c>format</c> is asserted regardless of dialect.</param>
     /// <param name="fileExtension">The generated file extension.</param>
     /// <param name="lineEnd">The line ending sequence.</param>
+    /// <param name="image">The program compiled ahead of time, or <see langword="null"/> to embed the documents and
+    /// compile at first use.</param>
     /// <returns>The generated file.</returns>
     public static GeneratedCodeFile Generate(
         string ns,
@@ -81,7 +83,8 @@ internal static class RuntimeProgramGenerator
         bool alwaysAssertFormat,
         IReadOnlyList<KeyValuePair<string, string>> formatModes,
         string fileExtension,
-        string lineEnd)
+        string lineEnd,
+        SchemaProgramImage? image = null)
     {
         var sb = new StringBuilder();
         void Line(string text = "")
@@ -101,6 +104,12 @@ internal static class RuntimeProgramGenerator
         Line("#pragma warning disable");
         Line();
         Line("using System;");
+        if (image is not null)
+        {
+            Line("using System.Buffers.Text;");
+            Line("using System.Text.RegularExpressions;");
+        }
+
         Line("using Corvus.Text.Json;");
         Line("using Corvus.Text.Json.RuntimeEvaluator;");
         Line();
@@ -112,11 +121,20 @@ internal static class RuntimeProgramGenerator
 
         Line("/// <summary>");
         Line("/// The JSON Schema evaluation program for the generated types in this assembly. Generated types validate by");
-        Line("/// evaluating against an entry point of this program, which is compiled from the embedded schema documents");
-        Line("/// on first use.");
+        if (image is null)
+        {
+            Line("/// evaluating against an entry point of this program, which is compiled from the embedded schema documents");
+            Line("/// on first use.");
+        }
+        else
+        {
+            Line("/// evaluating against an entry point of this program, which was compiled when the code was generated and is");
+            Line("/// loaded from its image on first use.");
+        }
+
         Line("/// </summary>");
         Line("[global::System.CodeDom.Compiler.GeneratedCode(\"Corvus.Text.Json.CodeGeneration\", \"1.0\")]");
-        Line($"internal static class {className}");
+        Line(image is null ? $"internal static class {className}" : $"internal static partial class {className}");
         Line("{");
         Line("    private static readonly object Gate = new();");
         Line($"    private static readonly JsonSchemaEvaluator?[] Evaluators = new JsonSchemaEvaluator?[{entryPoints.Count}];");
@@ -142,7 +160,9 @@ internal static class RuntimeProgramGenerator
         Line("                return existing;");
         Line("            }");
         Line();
-        Line("            root ??= JsonSchemaEvaluator.CompileFromUri(RootDocument, CreateOptions());");
+        Line(image is null
+            ? "            root ??= JsonSchemaEvaluator.CompileFromUri(RootDocument, CreateOptions());"
+            : "            root ??= JsonSchemaEvaluator.FromProgramImage(LoadImage(), CreateOptions());");
         Line("            JsonSchemaEvaluator evaluator = root.ForEntryPoint(EntryPoints[index]);");
         Line("            Evaluators[index] = evaluator;");
         Line("            return evaluator;");
@@ -156,7 +176,7 @@ internal static class RuntimeProgramGenerator
         Line($"            DefaultDialect = JsonSchemaDialect.{dialect},");
         Line($"            AssertFormat = {(alwaysAssertFormat ? "true" : "null")},");
         Line("            AssertFormatInLegacyDrafts = true,");
-        Line("            DocumentResolver = TryGetDocument,");
+        Line(image is null ? "            DocumentResolver = TryGetDocument," : "            RegexProvider = GetRegex,");
         if (formatModes.Count > 0)
         {
             Line("            FormatModes = new global::System.Collections.Generic.Dictionary<string, JsonSchemaFormatMode>(global::System.StringComparer.Ordinal)");
@@ -172,8 +192,12 @@ internal static class RuntimeProgramGenerator
         Line("        };");
         Line("    }");
         Line();
-        Line($"    private const string RootDocument = {Literal(rootDocumentKey)};");
-        Line();
+        if (image is null)
+        {
+            Line($"    private const string RootDocument = {Literal(rootDocumentKey)};");
+            Line();
+        }
+
         Line("    private static readonly string[] EntryPoints =");
         Line("    [");
         for (int i = 0; i < entryPoints.Count; i++)
@@ -183,6 +207,13 @@ internal static class RuntimeProgramGenerator
 
         Line("    ];");
         Line();
+        if (image is not null)
+        {
+            EmitImage(Line, image);
+            Line("}");
+            return new GeneratedCodeFile(className + fileExtension, sb.ToString());
+        }
+
         Line("    private static bool TryGetDocument(string uri, out ReadOnlyMemory<byte> utf8Json)");
         Line("    {");
         Line("        switch (uri)");
@@ -212,6 +243,78 @@ internal static class RuntimeProgramGenerator
         Line("}");
 
         return new GeneratedCodeFile(className + fileExtension, sb.ToString());
+    }
+
+    /// <summary>
+    /// Emits the image (base64 in UTF-8 literals, decoded on first use) and the regular-expression table: one
+    /// <c>[GeneratedRegex]</c> method per pattern, in the image's pattern-table order, on runtimes that have the
+    /// generator; elsewhere the provider returns <see langword="null"/> and the evaluator constructs the expression.
+    /// </summary>
+    private static void EmitImage(Action<string> line, SchemaProgramImage image)
+    {
+        line("    private static byte[] LoadImage()");
+        line("    {");
+        line("        ReadOnlySpan<byte> encoded = ImageBase64;");
+        line("        byte[] buffer = new byte[Base64.GetMaxDecodedFromUtf8Length(encoded.Length)];");
+        line("        Base64.DecodeFromUtf8(encoded, buffer, out _, out int written);");
+        line("        return written == buffer.Length ? buffer : buffer.AsSpan(0, written).ToArray();");
+        line("    }");
+        line(string.Empty);
+        line("    private static Regex? GetRegex(int index, string pattern)");
+        line("    {");
+        if (image.DotNetPatterns.Count > 0)
+        {
+            line("#if NET8_0_OR_GREATER && !DYNAMIC_BUILD");
+            line("        switch (index)");
+            line("        {");
+            for (int i = 0; i < image.DotNetPatterns.Count; i++)
+            {
+                line($"            case {i}:");
+                line($"                return Regex{i}();");
+            }
+
+            line("            default:");
+            line("                return null;");
+            line("        }");
+            line("#else");
+            line("        return null;");
+            line("#endif");
+        }
+        else
+        {
+            line("        return null;");
+        }
+
+        line("    }");
+        if (image.DotNetPatterns.Count > 0)
+        {
+            line(string.Empty);
+            line("#if NET8_0_OR_GREATER && !DYNAMIC_BUILD");
+            for (int i = 0; i < image.DotNetPatterns.Count; i++)
+            {
+                line($"    [GeneratedRegex({Literal(image.DotNetPatterns[i])}, RegexOptions.CultureInvariant)]");
+                line($"    private static partial Regex Regex{i}();");
+            }
+
+            line("#endif");
+        }
+
+        line(string.Empty);
+        string base64 = Convert.ToBase64String(image.Image);
+        line($"    // Program image: {image.Image.Length} bytes.");
+        line("    private static ReadOnlySpan<byte> ImageBase64 =>");
+        const int chunk = 120;
+        if (base64.Length == 0)
+        {
+            line("        \"\"u8;");
+        }
+
+        for (int i = 0; i < base64.Length; i += chunk)
+        {
+            string part = base64.Substring(i, Math.Min(chunk, base64.Length - i));
+            bool last = i + chunk >= base64.Length;
+            line($"        \"{part}\"u8{(last ? ";" : " +")}");
+        }
     }
 
     /// <summary>

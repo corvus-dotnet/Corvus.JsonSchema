@@ -162,7 +162,13 @@ Order of work:
 1. Regular-expression provider on `FromProgramImage`, and the emitted `[GeneratedRegex]` table (the cql2 row above
    is what this buys).
 2. `RuntimeProgramGenerator` emits the image and the shim instead of the schema documents; the CLI drives it first
-   because it can reference the evaluator directly.
+   because it can reference the evaluator directly. Done: `CSharpLanguageProvider.Options.ProgramCompiler` takes a
+   `SchemaProgramCompiler` delegate (the generator library keeps no evaluator dependency); the CLI supplies
+   `RuntimeProgramCompiler.Compile`, which compiles the program exactly as the emitted code would, registers every
+   entry point, and returns the image and its patterns translated to .NET syntax. The emitted class is then partial,
+   carries the image as base64 UTF-8 literals decoded on first use, loads it with `FromProgramImage`, and wires one
+   `[GeneratedRegex]` method per pattern through `RegexProvider` under the same framework guard the old generator
+   used; the schema documents are not embedded. Without a compiler (the source generator) the Stage 0 form is emitted.
 3. Link the compiler and its document model into the source generator, so both producers emit the same shape.
 4. String table in the image (size only), then constants as static values if the load-time parse ever shows up.
 

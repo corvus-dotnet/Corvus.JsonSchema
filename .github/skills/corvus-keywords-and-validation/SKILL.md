@@ -96,8 +96,9 @@ the CLI all use:
 - Tests: `tests/Corvus.Text.Json.RuntimeEvaluator.Tests` (unit + JSON Schema Test Suite), plus the
   generated suite projects, which now run the same engine through generated types.
 
-The generator emits one `CorvusJsonSchemaProgram` per compilation (`RuntimeProgramGenerator.cs`) holding
-the schema documents and an entry point per type; see `docs/StandaloneEvaluatorInternals.md`.
+The generator emits one `CorvusJsonSchemaProgram` per compilation (`RuntimeProgramGenerator.cs`) with an
+entry point per type: pre-compiled as an image when the host supplies `Options.ProgramCompiler` (the CLI),
+else holding the schema documents for compilation on first use; see `docs/StandaloneEvaluatorInternals.md`.
 
 ## TypeDeclaration
 

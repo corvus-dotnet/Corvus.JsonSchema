@@ -267,7 +267,8 @@ public static class GenerationDriverV5
                 : CodeGeneration.CSharpLanguageProvider.Options.DefaultBuildParametersThreshold,
             formatModeOverrides: GetFormatModeOverrides(generatorConfig),
             emitNativeStringEnums: emitNativeStringEnums,
-            emitNativeFlagsEnums: emitNativeFlagsEnums);
+            emitNativeFlagsEnums: emitNativeFlagsEnums,
+            programCompiler: RuntimeProgramCompiler.Compile);
     }
 
     private static IReadOnlyDictionary<string, FormatAssertionMode>? GetFormatModeOverrides(in GeneratorConfig generatorConfig)

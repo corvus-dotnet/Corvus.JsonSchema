@@ -23,8 +23,13 @@ from the generator.
 Per compilation, `RuntimeProgramGenerator` (`src/Corvus.Text.Json.CodeGeneration/RuntimeProgramGenerator.cs`)
 emits one `CorvusJsonSchemaProgram` class in the default namespace:
 
-- **Documents.** Every root schema document the type builder loaded, as UTF-8 static data
-  (`"..."u8`). File-system documents are keyed under the synthetic `corvus-schema:///` scheme, relative
+- **Program image or documents.** When the generator host can compile ahead of time (the CLI, through
+  `CSharpLanguageProvider.Options.ProgramCompiler`), the class carries the compiled program image as base64
+  UTF-8 literals, decoded and loaded with `JsonSchemaEvaluator.FromProgramImage` on first use, plus one
+  `[GeneratedRegex]` method per pattern the image needs, wired in through `RegexProvider` (on .NET 8 and
+  later; elsewhere the evaluator constructs the expression). A host without the evaluator (the Roslyn
+  source generator today) emits the documents instead: every root schema document the type builder loaded,
+  as UTF-8 static data (`"..."u8`). File-system documents are keyed under the synthetic `corvus-schema:///` scheme, relative
   to the common directory of all file documents, so no build-machine path reaches the generated code;
   documents with an absolute `$id` are keyed by that `$id`. Relative `$ref`s between documents resolve
   within the same scheme, so the keys are consistent.
@@ -69,8 +74,8 @@ generator or CLI output must reference that package alongside `Corvus.Text.Json`
 
 ## Roadmap
 
-The program is currently compiled from the embedded documents on first use, which costs milliseconds per
-program (see the cold-start table in [RuntimeEvaluatorResults.md](RuntimeEvaluatorResults.md)). The
-next step emits the compiled node graph itself as static data so that no compilation happens at start-up,
-with `const`/`enum` values emitted as statically parsed values and regexes as `[GeneratedRegex]`; the
-step after that emits fused per-node C# from the compiled plans.
+Programs emitted by the CLI are pre-compiled (see [RuntimeEvaluatorPrecompilation.md](RuntimeEvaluatorPrecompilation.md)
+for the design and measurements); programs emitted by the Roslyn source generator are still compiled from
+the embedded documents on first use, until the schema compiler and its document model are linked into the
+generator. Emitting per-node C# was measured and rejected: the fused plans in the compiler reach the same
+throughput without generated evaluation code.

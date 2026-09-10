@@ -98,6 +98,42 @@ internal sealed class CompiledSchema : IDisposable
         }
     }
 
+    /// <summary>Compiles several entry points at once (see <see cref="SchemaCompiler.AddEntryPoints"/>).</summary>
+    public void AddEntryPoints(IReadOnlyList<string> references)
+    {
+        lock (this.gate)
+        {
+            var pending = new List<string>();
+            foreach (string reference in references)
+            {
+                if (!this.entryPoints.ContainsKey(reference) && !pending.Contains(reference))
+                {
+                    pending.Add(reference);
+                }
+            }
+
+            if (pending.Count == 0)
+            {
+                return;
+            }
+
+            if (this.Loader is null)
+            {
+                throw new JsonSchemaCompilationException("The program image has no entry point for one of the references; entry points must be compiled when the image is created.");
+            }
+
+            SchemaCompiler c = this.compiler ?? throw new ObjectDisposedException(nameof(JsonSchemaEvaluator));
+            int[] nodes = c.AddEntryPoints(pending);
+            this.Nodes = c.NodesSnapshot();
+            this.UsesDynamicScope = c.UsesDynamicScope;
+            this.ResourceCount = this.Loader.Resources.Count;
+            for (int i = 0; i < pending.Count; i++)
+            {
+                this.entryPoints[pending[i]] = nodes[i];
+            }
+        }
+    }
+
     public void Dispose()
     {
         if (Interlocked.Decrement(ref this.references) > 0)
@@ -197,6 +233,31 @@ internal sealed class SchemaCompiler
     /// </summary>
     public int AddEntryPoint(string? entryPoint)
     {
+        int node = this.RegisterEntryPoint(entryPoint);
+        this.CompileAll();
+        this.ComputeUsesDynamicScope();
+        return node;
+    }
+
+    /// <summary>
+    /// Adds several entry points with one pass of the post-compilation analyses, which otherwise run once per entry
+    /// point: a program generated for hundreds of types would repeat them hundreds of times.
+    /// </summary>
+    public int[] AddEntryPoints(IReadOnlyList<string> entryPoints)
+    {
+        var nodes = new int[entryPoints.Count];
+        for (int i = 0; i < entryPoints.Count; i++)
+        {
+            nodes[i] = this.RegisterEntryPoint(entryPoints[i]);
+        }
+
+        this.CompileAll();
+        this.ComputeUsesDynamicScope();
+        return nodes;
+    }
+
+    private int RegisterEntryPoint(string? entryPoint)
+    {
         SchemaTarget entry = new(this.rootResource.Document, this.rootResource.RootIndex, this.rootResource);
         if (entryPoint is not null && entryPoint.Length > 0 && entryPoint != "#")
         {
@@ -207,8 +268,11 @@ internal sealed class SchemaCompiler
         }
 
         this.entryResourceIds.Add(entry.Resource.Id);
-        int node = this.GetNode(entry);
-        this.CompileAll();
+        return this.GetNode(entry);
+    }
+
+    private void ComputeUsesDynamicScope()
+    {
         bool usesDynamicScope = false;
         foreach (SchemaNode n in this.nodes)
         {
@@ -216,7 +280,6 @@ internal sealed class SchemaCompiler
         }
 
         this.UsesDynamicScope = usesDynamicScope;
-        return node;
     }
 
     private static byte[] Utf8(string s) => Encoding.UTF8.GetBytes(s);

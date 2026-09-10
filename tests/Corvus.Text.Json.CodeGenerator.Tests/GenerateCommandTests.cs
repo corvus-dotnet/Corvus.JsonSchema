@@ -334,6 +334,27 @@ public class GenerateCommandTests : IDisposable
     }
 
     [TestMethod]
+    public async Task Generate_EmitsPrecompiledProgramImageWithGeneratedRegexTable()
+    {
+        string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "complex-validation.json");
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync(
+            $"jsonschema \"{schema}\" --rootNamespace T --outputPath \"{_outputDir}\"");
+
+        Assert.AreEqual(0, result.ExitCode, result.StandardError);
+        string code = ReadAllGeneratedCode(_outputDir);
+
+        // The CLI compiles the program when it generates: the emitted program loads an image and wires its patterns
+        // through [GeneratedRegex]; the schema documents are no longer embedded.
+        StringAssert.Contains(code, "JsonSchemaEvaluator.FromProgramImage(LoadImage(), CreateOptions())");
+        StringAssert.Contains(code, "RegexProvider = GetRegex");
+        StringAssert.Contains(code, "[GeneratedRegex(");
+        StringAssert.Contains(code, "private static ReadOnlySpan<byte> ImageBase64 =>");
+        Assert.IsFalse(code.Contains("TryGetDocument"), "The schema documents must not be embedded alongside the image.");
+        Assert.IsFalse(code.Contains("CompileFromUri"), "Nothing should compile at first use.");
+    }
+
+    [TestMethod]
     public async Task Generate_FormatModeDisable_DisablesFormatEvenForDraft07()
     {
         // A bare '--formatMode disable' (the '*' wildcard) disables format assertion for ALL drafts,

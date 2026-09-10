@@ -200,6 +200,7 @@
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)Formatting.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)EcmaRegexTranslator.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)RuntimeProgramGenerator.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
+    <Compile Include="$(CorvusTextJsonCodeGenerationPath)SchemaProgramCompiler.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)CodeGenerationMode.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)RegexPatternCategory.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)FrameworkType.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />

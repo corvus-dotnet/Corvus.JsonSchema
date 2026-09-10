@@ -418,17 +418,27 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
             }
 
             string rootDocumentKey = documents.Count > 0 ? documents[0].Key : keys[this.programEntries[0].RootDocumentUri];
+            string dialect = RuntimeProgramGenerator.DialectFor(this.fallbackVocabularyUri);
+            List<KeyValuePair<string, string>> formatModes = options.FormatModeOverrides.OrderBy(m => m.Key, StringComparer.Ordinal).Select(m => new KeyValuePair<string, string>(m.Key, m.Value.ToString())).ToList();
+            SchemaProgramImage? image = options.ProgramCompiler?.Invoke(new SchemaProgramSource(
+                documents.Select(d => new KeyValuePair<string, string>(d.Key, d.Json)).ToList(),
+                rootDocumentKey,
+                entryPoints,
+                dialect,
+                options.AlwaysAssertFormat,
+                formatModes));
             result.Add(RuntimeProgramGenerator.Generate(
                 options.DefaultNamespace,
                 ProgramClassName,
                 documents,
                 rootDocumentKey,
                 entryPoints,
-                RuntimeProgramGenerator.DialectFor(this.fallbackVocabularyUri),
+                dialect,
                 options.AlwaysAssertFormat,
-                options.FormatModeOverrides.OrderBy(m => m.Key, StringComparer.Ordinal).Select(m => new KeyValuePair<string, string>(m.Key, m.Value.ToString())).ToList(),
+                formatModes,
                 options.FileExtension,
-                options.LineEndSequence));
+                options.LineEndSequence,
+                image));
         }
 
         return result;
@@ -992,8 +1002,15 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
         int buildParametersThreshold = 32,
         IReadOnlyDictionary<string, FormatAssertionMode>? formatModeOverrides = null,
         bool emitNativeStringEnums = true,
-        bool emitNativeFlagsEnums = true)
+        bool emitNativeFlagsEnums = true,
+        SchemaProgramCompiler? programCompiler = null)
     {
+        /// <summary>
+        /// Gets the ahead-of-time program compiler, or <see langword="null"/> to emit the schema documents and compile
+        /// at first use.
+        /// </summary>
+        internal SchemaProgramCompiler? ProgramCompiler { get; } = programCompiler;
+
         /// <summary>
         /// The default value for <see cref="BuildParametersThreshold"/>.
         /// </summary>

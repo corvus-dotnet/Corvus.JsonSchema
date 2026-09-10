@@ -280,7 +280,7 @@ internal sealed class OpenApiCallbackServerCommand : AsyncCommand<OpenApiGenerat
 
         AnsiConsole.MarkupLine($"[yellow]Registered {typesToGenerate.Count} type declarations, generating code...[/]");
 
-        CSharpLanguageProvider.Options options = new(rootNamespace + ".Models");
+        CSharpLanguageProvider.Options options = new(rootNamespace + ".Models", programCompiler: global::Corvus.Json.CodeGenerator.RuntimeProgramCompiler.Compile);
         CSharpLanguageProvider languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
         languageProvider.RegisterNameHeuristics(new OpenApiSchemaNameHeuristic(parameterNames));
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =
