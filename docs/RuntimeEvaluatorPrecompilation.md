@@ -209,6 +209,38 @@ validation code, not the Stage 0 shims: geometric mean ratio 0.25 over 37 cases 
 Decision (2026-09-10): no emitted evaluation code; do the schema-level fusion in the compiler, after the regular
 expression provider.
 
+### Fusion, done
+
+Two compiler transformations followed, both flag-mode plans with collecting mode unchanged, and both checked by
+running the whole JSON Schema Test Suite in collecting mode (the general path) as well as flag mode (the plans):
+
+* **Static `$dynamicRef` when every entry resource defines the anchor** with the same target. The scope is searched
+  outermost-first and its outermost entry is always the resource evaluation started in, so the target is the answer
+  on every path; programs with no remaining dynamic references keep no scope at all. This is re-applied as entry points
+  are added, and two entries that resolve differently keep the reference dynamic, which is why a generated program
+  that registers an entry for every type, including the sub-resource, does not get it for the strict-tree micro case
+  (its typed column stays at the general-path figure).
+* **Fused object plan** (`FusedObjects`, `NodePlan.FusedObject`) for a node with `unevaluatedProperties` whose object
+  semantics spread over `allOf`, `$ref` and `if`/`then`/`else` with required-only conditions: every property name any
+  branch knows is resolved at compile time to the child schemas that apply (own property, matching pattern
+  properties, or the branch's `additionalProperties`), unknown names resolve per branch at evaluation, conditional
+  branches are deferred to a second step over the properties they touched, and the coverage bits feed the unevaluated
+  check directly. It is restricted to nodes with `unevaluatedProperties` because there the pass over every instance
+  property is unavoidable; fusing branches without it doubled cmake-presets (large instances, small branches, where
+  the general path's schema-driven unrolled lookups win).
+
+Micro cases after fusion (quiet-ish machine, ratio is engine after / engine before):
+
+| Case | Engine before | Engine after | Straight-line |
+|---|---|---|---|
+| Unevaluated | 589 ns | 142 to 170 ns | 151 to 181 ns |
+| DynamicRef (strict tree) | 878 ns | 226 to 242 ns | 192 to 200 ns |
+| Object, Array, OneOf | unchanged | unchanged | |
+
+Corpora: openapi (27 `unevaluated*`) 8.1 ms to 7.2 ms; cmake-presets unchanged after the restriction; the rest within
+noise. The general path remains the fallback for every shape the plan does not take, and `CORVUS_RT_NO_FUSE=1`
+disables it for A/B runs.
+
 ## Open decisions
 
 * Whether the source generator links the compiler and document model in (single emitted shape) or defers to the CLI.

@@ -128,6 +128,21 @@ internal static class ProgramImage
             nodes[i] = ReadNode(ref r, constants, patterns, matchers, options);
         }
 
+        // Fused plans are derived from the graph rather than stored; a node whose plan was fused when the image was
+        // written but is not now (fusion disabled) falls back to the general path, and the reverse.
+        FusedObjects.Compute(nodes);
+        foreach (SchemaNode n in nodes)
+        {
+            if (n.Plan == NodePlan.FusedObject && n.Fused is null)
+            {
+                n.Plan = NodePlan.General;
+            }
+            else if (n.Fused is not null && n.Plan == NodePlan.General)
+            {
+                n.Plan = NodePlan.FusedObject;
+            }
+        }
+
         return new CompiledSchema(nodes, rootNode, usesDynamicScope, resourceCount, options, entryPoints, constantsDocument);
     }
 

@@ -116,6 +116,17 @@ internal static class Evaluator
         JsonTokenType tokenType = default(TAccess).TokenType(ref state, doc, index);
 
         bool result;
+        if (!default(TMode).Collecting && evaluated.IsEmpty && node.Plan == NodePlan.FusedObject && tokenType == JsonTokenType.StartObject)
+        {
+            result = EvalFusedObject<TAccess>(node, doc, index, ref state);
+            if (pushedScope)
+            {
+                state.ScopeDepth--;
+            }
+
+            return result;
+        }
+
         if (evaluated.IsEmpty && (tokenType == JsonTokenType.StartObject ? (flags & NodeFlags.TracksProperties) != 0 : (tokenType == JsonTokenType.StartArray && (flags & NodeFlags.TracksItems) != 0)))
         {
             int count = default(TAccess).Count(ref state, doc, index, tokenType);
@@ -427,9 +438,293 @@ internal static class Evaluator
                 return EvalArrayItemsPlan<TAccess>(target, doc, index, ref state);
             case NodePlan.DynamicRef:
                 return EvalDynamicRefPlan<TAccess>(target, doc, index, ref state);
+            case NodePlan.FusedObject:
+                return default(TAccess).TokenType(ref state, doc, index) == JsonTokenType.StartObject
+                    ? EvalFusedObject<TAccess>(target, doc, index, ref state)
+                    : Eval<FastMode, TAccess>(target, doc, index, ref state, default, 0);
             default:
                 return Eval<FastMode, TAccess>(target, doc, index, ref state, default, 0);
         }
+    }
+
+    /// <summary>
+    /// <see cref="NodePlan.FusedObject"/>: one pass over the properties applying every branch's resolution for each
+    /// name, a second step for the branches whose <c>if</c> is decided by the properties seen, then the required
+    /// names and the unevaluated check. See <see cref="FusedObject"/>.
+    /// </summary>
+    private static bool EvalFusedObject<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
+        where TAccess : struct, IDocumentAccess
+    {
+        FusedObject f = node.Fused!;
+        SchemaNode[] nodes = state.Nodes;
+        FusedContributor[] contributors = f.Contributors;
+        int count = default(TAccess).Count(ref state, doc, index, JsonTokenType.StartObject);
+
+        if (f.HasCountBounds)
+        {
+            for (int c = 0; c < contributors.Length; c++)
+            {
+                FusedContributor contributor = contributors[c];
+                if (contributor.Condition < 0 && ((contributor.MinProperties >= 0 && count < contributor.MinProperties) || (contributor.MaxProperties >= 0 && count > contributor.MaxProperties)))
+                {
+                    return false;
+                }
+            }
+        }
+
+        int seenWords = (f.EntryList.Length + 63) >> 6;
+        Span<ulong> seen = stackalloc ulong[InlineBitWords];
+        seen = seen[..seenWords];
+        seen.Clear();
+
+        bool trackCoverage = f.Unevaluated.IsPresent;
+        int coverWords = trackCoverage ? (count + 63) >> 6 : 0;
+        ulong[]? rentedCover = coverWords > InlineBitWords ? ArrayPool<ulong>.Shared.Rent(coverWords) : null;
+        Span<ulong> coverInline = stackalloc ulong[InlineBitWords];
+        Span<ulong> covered = rentedCover is null ? coverInline[..coverWords] : rentedCover.AsSpan(0, coverWords);
+        covered.Clear();
+
+        Span<int> deferredInline = stackalloc int[3 * 16];
+        Span<int> deferred = deferredInline;
+        int[]? rentedDeferred = null;
+        int deferredCount = 0;
+        try
+        {
+            int ordinal = 0;
+            int end = default(TAccess).EndIndex(ref state, doc, index);
+            for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex) + RowSize, ordinal++)
+            {
+                bool cover = false;
+                bool defer = false;
+                int entryIndex = -1;
+                using (UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex))
+                {
+                    ReadOnlySpan<byte> nameSpan = name.Span;
+                    if (f.Entries.TryGetValue(nameSpan, out FusedEntry? entry))
+                    {
+                        seen[entry.Index >> 6] |= 1UL << (entry.Index & 63);
+                        entryIndex = entry.Index;
+                        FusedApplication[] applications = entry.Applications;
+                        for (int a = 0; a < applications.Length; a++)
+                        {
+                            FusedApplication app = applications[a];
+                            if (contributors[app.Contributor].Condition < 0)
+                            {
+                                if (app.Node >= 0 && !EvalChildFast<TAccess>(nodes[app.Node], doc, valueIndex, ref state))
+                                {
+                                    return false;
+                                }
+
+                                cover = true;
+                            }
+                            else
+                            {
+                                defer = true;
+                            }
+                        }
+                    }
+                    else if (f.ResolvesUnknownNames)
+                    {
+                        for (int c = 0; c < contributors.Length; c++)
+                        {
+                            FusedContributor contributor = contributors[c];
+                            if (contributor.Condition >= 0)
+                            {
+                                defer |= contributor.Patterns is not null || contributor.AdditionalNode >= 0 || contributor.AdditionalCoversOnly;
+                                continue;
+                            }
+
+                            if (!ResolveUnknownName<TAccess>(contributor, nameSpan, nodes, doc, valueIndex, ref state, out bool matched))
+                            {
+                                return false;
+                            }
+
+                            cover |= matched;
+                        }
+                    }
+                }
+
+                if (cover && trackCoverage)
+                {
+                    MarkEvaluated(covered, ordinal);
+                }
+
+                if (defer)
+                {
+                    if ((deferredCount * 3) + 3 > deferred.Length)
+                    {
+                        int[] grown = ArrayPool<int>.Shared.Rent(deferred.Length * 2);
+                        deferred.CopyTo(grown);
+                        if (rentedDeferred is not null)
+                        {
+                            ArrayPool<int>.Shared.Return(rentedDeferred);
+                        }
+
+                        rentedDeferred = grown;
+                        deferred = grown;
+                    }
+
+                    deferred[deferredCount * 3] = ordinal;
+                    deferred[(deferredCount * 3) + 1] = valueIndex;
+                    deferred[(deferredCount * 3) + 2] = entryIndex;
+                    deferredCount++;
+                }
+            }
+
+            Span<bool> holds = stackalloc bool[64];
+            FusedCondition[] conditions = f.Conditions;
+            for (int i = 0; i < conditions.Length; i++)
+            {
+                bool all = true;
+                int[] bits = conditions[i].RequiredBits;
+                for (int b = 0; b < bits.Length && all; b++)
+                {
+                    all = (seen[bits[b] >> 6] & (1UL << (bits[b] & 63))) != 0;
+                }
+
+                holds[i] = all;
+            }
+
+            for (int d = 0; d < deferredCount; d++)
+            {
+                int ordinal2 = deferred[d * 3];
+                int valueIndex = deferred[(d * 3) + 1];
+                int entryIndex = deferred[(d * 3) + 2];
+                bool cover = false;
+                if (entryIndex >= 0)
+                {
+                    FusedApplication[] applications = f.EntryList[entryIndex].Applications;
+                    for (int a = 0; a < applications.Length; a++)
+                    {
+                        FusedApplication app = applications[a];
+                        FusedContributor contributor = contributors[app.Contributor];
+                        if (contributor.Condition >= 0 && holds[contributor.Condition] == contributor.Polarity)
+                        {
+                            if (app.Node >= 0 && !EvalChildFast<TAccess>(nodes[app.Node], doc, valueIndex, ref state))
+                            {
+                                return false;
+                            }
+
+                            cover = true;
+                        }
+                    }
+                }
+                else
+                {
+                    using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
+                    for (int c = 0; c < contributors.Length; c++)
+                    {
+                        FusedContributor contributor = contributors[c];
+                        if (contributor.Condition >= 0 && holds[contributor.Condition] == contributor.Polarity)
+                        {
+                            if (!ResolveUnknownName<TAccess>(contributor, name.Span, nodes, doc, valueIndex, ref state, out bool matched))
+                            {
+                                return false;
+                            }
+
+                            cover |= matched;
+                        }
+                    }
+                }
+
+                if (cover && trackCoverage)
+                {
+                    MarkEvaluated(covered, ordinal2);
+                }
+            }
+
+            for (int c = 0; c < contributors.Length; c++)
+            {
+                FusedContributor contributor = contributors[c];
+                if (contributor.Condition >= 0)
+                {
+                    if (holds[contributor.Condition] != contributor.Polarity)
+                    {
+                        continue;
+                    }
+
+                    if ((contributor.MinProperties >= 0 && count < contributor.MinProperties) || (contributor.MaxProperties >= 0 && count > contributor.MaxProperties))
+                    {
+                        return false;
+                    }
+                }
+
+                int[] required = contributor.RequiredBits;
+                for (int b = 0; b < required.Length; b++)
+                {
+                    if ((seen[required[b] >> 6] & (1UL << (required[b] & 63))) == 0)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            if (trackCoverage)
+            {
+                SchemaNode target = nodes[f.Unevaluated.FastNode];
+                int ordinal2 = 0;
+                for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex) + RowSize, ordinal2++)
+                {
+                    if (!IsEvaluated(covered, ordinal2))
+                    {
+                        if (target.AlwaysFalse || (!target.AlwaysTrue && !EvalChildFast<TAccess>(target, doc, valueIndex, ref state)))
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+        finally
+        {
+            if (rentedCover is not null)
+            {
+                ArrayPool<ulong>.Shared.Return(rentedCover);
+            }
+
+            if (rentedDeferred is not null)
+            {
+                ArrayPool<int>.Shared.Return(rentedDeferred);
+            }
+        }
+    }
+
+    /// <summary>Applies a branch's pattern properties, or its additional properties when none matched, to a name no entry knows.</summary>
+    private static bool ResolveUnknownName<TAccess>(FusedContributor contributor, scoped ReadOnlySpan<byte> name, SchemaNode[] nodes, IJsonDocument doc, int valueIndex, ref EvaluationState state, out bool covered)
+        where TAccess : struct, IDocumentAccess
+    {
+        covered = false;
+        if (contributor.Patterns is PatternPropertyEntry[] patterns)
+        {
+            for (int p = 0; p < patterns.Length; p++)
+            {
+                PatternPropertyEntry pattern = patterns[p];
+                if (pattern.Matcher.IsMatch(name))
+                {
+                    covered = true;
+                    SchemaNode target = nodes[pattern.Schema.FastNode];
+                    if (!target.AlwaysTrue && !EvalChildFast<TAccess>(target, doc, valueIndex, ref state))
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        if (!covered)
+        {
+            if (contributor.AdditionalNode >= 0)
+            {
+                covered = true;
+                return EvalChildFast<TAccess>(nodes[contributor.AdditionalNode], doc, valueIndex, ref state);
+            }
+
+            covered = contributor.AdditionalCoversOnly;
+        }
+
+        return true;
     }
 
     /// <summary>

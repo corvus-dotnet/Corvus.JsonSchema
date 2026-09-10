@@ -357,6 +357,7 @@ internal sealed class SchemaCompiler
         this.OrderUnrolledProperties();
         this.ComputeSimpleArrays();
         this.ComputeInPlaceCycles();
+        FusedObjects.Compute([.. this.nodes]);
         this.ComputePlans();
         this.ComputeFlags();
     }
@@ -2063,6 +2064,11 @@ internal sealed class SchemaCompiler
         if (DisablePlans)
         {
             return NodePlan.General;
+        }
+
+        if (node.Fused is not null)
+        {
+            return NodePlan.FusedObject;
         }
 
         bool noValueKeywords = !node.HasConst && node.Enum is null && !node.HasNumberKeywords && !node.HasStringKeywords;

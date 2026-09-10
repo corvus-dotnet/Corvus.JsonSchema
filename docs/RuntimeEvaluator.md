@@ -106,6 +106,15 @@ Experiment switches (environment variables, read once): `CORVUS_RT_NO_PLANS`, `C
 `CORVUS_RT_NO_DISCRIMINATOR`, `CORVUS_RT_NO_LEAF`, `CORVUS_RT_NO_ORDER`, `CORVUS_RT_NO_INTFAST`,
 `CORVUS_RT_REGEX_INTERPRETED`.
 
+### Fused object plan
+
+A node with `unevaluatedProperties` whose object semantics are spread over `allOf`, `$ref` and `if`/`then`/`else`
+(with `if` a pure `required` list) gets a fused flag-mode plan: one pass over the instance's properties applying,
+for each name, the child schemas every branch resolves it to (precomputed for known names, per-branch pattern and
+additional resolution for unknown ones), a second step for the branches whose condition the seen properties decide,
+then required names and the unevaluated check from the coverage bits. See `FusedObjects` and the Stage 2 design note.
+Collecting mode keeps the general path; `CORVUS_RT_NO_FUSE=1` disables the plan.
+
 ## Allocation and JIT tiering
 
 Steady-state evaluation allocates nothing (verified with `GC.GetAllocatedBytesForCurrentThread` and a

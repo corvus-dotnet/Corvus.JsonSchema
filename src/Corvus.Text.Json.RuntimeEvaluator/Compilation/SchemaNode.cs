@@ -554,6 +554,9 @@ internal enum NodePlan : byte
 
     /// <summary>A bare <c>$dynamicRef</c>: resolved against the dynamic scope at the entry site and dispatched directly.</summary>
     DynamicRef,
+
+    /// <summary>One pass over an object for a schema whose object semantics are spread over in-place applicators; see <see cref="FusedObject"/>.</summary>
+    FusedObject,
 }
 
 internal sealed class SchemaNode
@@ -606,6 +609,9 @@ internal sealed class SchemaNode
 
     /// <summary>The fused flag-mode routine for this node; see <see cref="NodePlan"/>.</summary>
     public NodePlan Plan;
+
+    /// <summary>The fused object plan (flag mode), when the node's object semantics fuse into one pass.</summary>
+    public FusedObject? Fused;
     public bool HasSeenBits;
 
     // type

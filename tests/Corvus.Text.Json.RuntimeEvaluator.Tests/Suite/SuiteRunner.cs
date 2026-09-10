@@ -88,8 +88,10 @@ public static class SuiteRunner
     /// <param name="assertFormat">Whether <c>format</c> is asserted.</param>
     /// <param name="throughImage">When set, each compiled schema is round-tripped through a program image before the
     /// cases are evaluated, so the run exercises <see cref="JsonSchemaEvaluator.FromProgramImage"/>.</param>
+    /// <param name="collecting">When set, every case is evaluated with a results collector, which takes the engine's
+    /// general path rather than its fused flag-mode plans; the two must agree.</param>
     /// <returns>The case results.</returns>
-    public static List<CaseResult> RunFile(string file, string draft, bool assertFormat, bool throughImage = false)
+    public static List<CaseResult> RunFile(string file, string draft, bool assertFormat, bool throughImage = false, bool collecting = false)
     {
         var results = new List<CaseResult>();
         JsonSchemaEvaluatorOptions options = OptionsFor(draft, assertFormat);
@@ -130,7 +132,16 @@ public static class SuiteRunner
                 try
                 {
                     JsonElement instance = test.GetProperty("data");
-                    bool actual = evaluator.Evaluate(instance);
+                    bool actual;
+                    if (collecting)
+                    {
+                        using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Basic);
+                        actual = evaluator.Evaluate(instance, collector);
+                    }
+                    else
+                    {
+                        actual = evaluator.Evaluate(instance);
+                    }
                     results.Add(new CaseResult(groupDescription, testDescription, expected, actual, null));
                 }
                 catch (Exception ex)
