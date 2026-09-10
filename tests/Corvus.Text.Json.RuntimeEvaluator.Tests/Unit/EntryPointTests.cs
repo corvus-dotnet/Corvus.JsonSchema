@@ -72,9 +72,10 @@ public class EntryPointTests
     [TestMethod]
     public void EmbeddedResourceEntryPointStartsTheDynamicScope()
     {
-        // Rooting at strict-tree makes it the outermost resource, so every $dynamicRef resolves to it.
+        // Rooting at strict-tree makes it the outermost resource, so every $dynamicRef resolves to it; the compiler
+        // therefore resolves the reference statically and the program needs no dynamic scope.
         using JsonSchemaEvaluator strict = JsonSchemaEvaluator.Compile(DocumentBytes, "strict-tree");
-        Assert.IsTrue(strict.UsesDynamicScope);
+        Assert.IsFalse(strict.UsesDynamicScope);
         Assert.IsTrue(strict.Evaluate("""{"data": 1, "children": [{"data": 2}]}"""));
         Assert.IsFalse(strict.Evaluate("""{"data": 1, "children": [{"daat": 2}]}"""));
 

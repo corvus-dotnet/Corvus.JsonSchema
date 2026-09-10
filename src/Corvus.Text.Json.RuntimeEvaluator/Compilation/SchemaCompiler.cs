@@ -143,6 +143,9 @@ internal sealed class SchemaCompiler
     private readonly Queue<int> worklist = new();
     private readonly List<PendingDynamicRef> pendingDynamicRefs = [];
 
+    // The resources evaluation can start in: the dynamic scope's outermost entry is always one of these.
+    private readonly HashSet<int> entryResourceIds = [];
+
     private SchemaCompiler(SchemaLoader loader, JsonSchemaEvaluatorOptions options)
     {
         this.loader = loader;
@@ -203,6 +206,7 @@ internal sealed class SchemaCompiler
             }
         }
 
+        this.entryResourceIds.Add(entry.Resource.Id);
         int node = this.GetNode(entry);
         this.CompileAll();
         bool usesDynamicScope = false;
@@ -863,6 +867,17 @@ internal sealed class SchemaCompiler
                 continue;
             }
 
+            // The dynamic scope is searched outermost-first and its outermost entry is always the resource evaluation
+            // started in. When every entry resource defines the anchor, and with the same target, that target is the
+            // answer on every path, so the reference is static after all (the strict-tree shape).
+            if (this.TryGetUniformEntryTarget(pending, out int uniform))
+            {
+                node.Ref = new ChildRef(uniform, pending.PathSegment);
+                node.DynamicRef = null;
+                node.HasInPlaceApplicators = true;
+                continue;
+            }
+
             // Promoted (or re-finalised) to a dynamic reference: undo any earlier static demotion.
             if (node.Ref.IsPresent && node.Ref.Path == pending.PathSegment)
             {
@@ -894,6 +909,38 @@ internal sealed class SchemaCompiler
             int id = this.worklist.Dequeue();
             this.CompileNode(this.nodes[id], this.targets[id]);
         }
+    }
+
+    private bool TryGetUniformEntryTarget(PendingDynamicRef pending, out int target)
+    {
+        target = -1;
+        if (this.entryResourceIds.Count == 0)
+        {
+            return false;
+        }
+
+        foreach (int entryResource in this.entryResourceIds)
+        {
+            int candidate = -1;
+            foreach ((int resourceId, int nodeId) in pending.Candidates)
+            {
+                if (resourceId == entryResource)
+                {
+                    candidate = nodeId;
+                    break;
+                }
+            }
+
+            if (candidate < 0 || (target >= 0 && target != candidate))
+            {
+                target = -1;
+                return false;
+            }
+
+            target = candidate;
+        }
+
+        return true;
     }
 
     /// <summary>

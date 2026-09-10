@@ -91,7 +91,10 @@ public class ReferenceTests
             """;
         var options = new JsonSchemaEvaluatorOptions { DocumentResolver = Tests.Suite.SuiteRunner.ResolveRemote };
         using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(strictTree, options);
-        Assert.IsTrue(evaluator.UsesDynamicScope);
+
+        // The entry resource defines the anchor, so every $dynamicRef resolves to it on every path and the compiler
+        // makes the reference static; the strict semantics hold without a dynamic scope.
+        Assert.IsFalse(evaluator.UsesDynamicScope);
         Assert.IsFalse(evaluator.Evaluate("""{"children": [{"daat": 1}]}"""));
         Assert.IsTrue(evaluator.Evaluate("""{"children": [{"data": 1}]}"""));
     }
@@ -134,7 +137,9 @@ public class ReferenceTests
             }
             """;
         using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(schema);
-        Assert.IsTrue(evaluator.UsesDynamicScope);
+
+        // The root carries $recursiveAnchor, so the reference is resolved to it statically.
+        Assert.IsFalse(evaluator.UsesDynamicScope);
         Assert.IsTrue(evaluator.Evaluate("1"));
         Assert.IsTrue(evaluator.Evaluate("""{"foo": "bar"}"""));
         Assert.IsTrue(evaluator.Evaluate("""{"foo": 1}"""), "integer is allowed because the outermost resource with $recursiveAnchor is the root");
