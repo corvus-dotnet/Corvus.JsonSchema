@@ -384,6 +384,18 @@ cmake-presets took a further 1.2 (5.52 to 4.52 ms) from its required-only altern
 gained as well. Geometric mean over the 37 corpora: 0.38 against the shipping generated code, from 0.47 before this
 round of work. Pinned, back to back with the same baseline binary as above.
 
+## Against Blaze (2026-09-11)
+
+Blaze is run through the Sourcemeta `jsonschema` CLI release binary (`benchmarks/.../tools/blaze-compare.py`, see
+its README) over the same 37 corpora, `--fast` and 20 loops, pinned, on the idle box, against the pinned `quick`
+run after the fused-plan extension. Geometric mean of our runtime over Blaze: 1.36. We are faster on jshintrc
+(0.59), clang-format (0.62), omnisharp (0.62), cql2 (0.64), openapi (0.81), aws-cdk (0.90) and draft-04 (0.92), within
+20% on fourteen more, and behind by two times or more on helm-chart-lock (4.3), importmap (3.5), ui5 (2.8), yamllint
+(2.2), cmake-presets (2.1) and cspell (2.0). The shipping generated code is 3.9 behind Blaze on the same geometric
+mean. The corpora where Blaze leads most are the ones with the smallest instances per evaluation (helm-chart-lock
+has 3,888 instances at 34 ns each in Blaze against 148 ns in ours; importmap and yamllint likewise), which points
+at the fixed cost per evaluation and per object rather than at any keyword, consistent with the profiles.
+
 ## Open decisions
 
 * Resolved: the evaluator is part of `Corvus.Text.Json` (namespace `Corvus.Text.Json.RuntimeEvaluator`, sources under
