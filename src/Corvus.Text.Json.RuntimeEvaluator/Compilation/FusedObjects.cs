@@ -93,11 +93,15 @@ internal sealed class FusedCondition
 /// <summary>Builds fused object plans over a compiled node graph.</summary>
 internal static class FusedObjects
 {
-    private const int MaxNames = Evaluation.Evaluator.InlineBitWords * 64;
+    private const int MaxNames = SchemaNode.InlineBitWords * 64;
     private const int MaxConditions = 64;
     private const int MaxContributors = 64;
 
+#if STJ
+    private static readonly bool Disabled = false;
+#else
     private static readonly bool Disabled = Environment.GetEnvironmentVariable("CORVUS_RT_NO_FUSE") == "1";
+#endif
 
     /// <summary>
     /// Computes the fused plan for every eligible node. Runs after in-place cycles and pure-reference elision are

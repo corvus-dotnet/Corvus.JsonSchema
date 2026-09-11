@@ -22,6 +22,23 @@ public static class RuntimeProgramCompiler
     /// <returns>The image and its patterns in .NET syntax.</returns>
     public static SchemaProgramImage Compile(SchemaProgramSource source)
     {
+        return Compile(source, emitRegexTable: true);
+    }
+
+    /// <summary>
+    /// Compiles the program for a Roslyn source generator: the image without the regular-expression table. Roslyn
+    /// does not chain generators, so <c>[GeneratedRegex]</c> methods in generated code would never be implemented;
+    /// the evaluator constructs the expressions from the image's pattern table on first use instead.
+    /// </summary>
+    /// <param name="source">The program's documents, entry points and options.</param>
+    /// <returns>The image, with no patterns.</returns>
+    public static SchemaProgramImage CompileWithoutRegexTable(SchemaProgramSource source)
+    {
+        return Compile(source, emitRegexTable: false);
+    }
+
+    private static SchemaProgramImage Compile(SchemaProgramSource source, bool emitRegexTable)
+    {
         var documents = new Dictionary<string, byte[]>(StringComparer.Ordinal);
         foreach (KeyValuePair<string, string> document in source.Documents)
         {
@@ -34,13 +51,13 @@ public static class RuntimeProgramCompiler
             formatModes = new Dictionary<string, JsonSchemaFormatMode>(StringComparer.Ordinal);
             foreach (KeyValuePair<string, string> mode in source.FormatModes)
             {
-                formatModes[mode.Key] = Enum.Parse<JsonSchemaFormatMode>(mode.Value);
+                formatModes[mode.Key] = (JsonSchemaFormatMode)Enum.Parse(typeof(JsonSchemaFormatMode), mode.Value);
             }
         }
 
         var options = new JsonSchemaEvaluatorOptions
         {
-            DefaultDialect = Enum.Parse<JsonSchemaDialect>(source.Dialect),
+            DefaultDialect = (JsonSchemaDialect)Enum.Parse(typeof(JsonSchemaDialect), source.Dialect),
             AssertFormat = source.AlwaysAssertFormat ? true : null,
             AssertFormatInLegacyDrafts = true,
             FormatModes = formatModes,
@@ -62,6 +79,11 @@ public static class RuntimeProgramCompiler
         root.RegisterEntryPoints(source.EntryPoints);
 
         byte[] image = root.ToProgramImage();
+        if (!emitRegexTable)
+        {
+            return new SchemaProgramImage(image, []);
+        }
+
         IReadOnlyList<string> patterns = JsonSchemaEvaluator.GetImagePatterns(image);
         var dotNetPatterns = new string[patterns.Count];
         for (int i = 0; i < patterns.Count; i++)

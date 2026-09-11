@@ -15,7 +15,7 @@ namespace Corvus.Text.Json.RuntimeEvaluator.Evaluation;
 [SkipLocalsInit]
 internal static class Evaluator
 {
-    internal const int InlineBitWords = 4; // 256 properties/items before renting
+    internal const int InlineBitWords = SchemaNode.InlineBitWords;
 
     /// <summary>The size of a metadata row; the layout shared by every Corvus document (see ObjectEnumerator/ArrayEnumerator).</summary>
     internal const int RowSize = 12;

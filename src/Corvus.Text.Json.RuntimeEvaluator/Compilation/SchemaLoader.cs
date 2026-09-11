@@ -3,7 +3,9 @@
 // </copyright>
 
 using System.Diagnostics.CodeAnalysis;
+#if !STJ
 using Corvus.Text.Json.Internal;
+#endif
 
 namespace Corvus.Text.Json.RuntimeEvaluator.Compilation;
 

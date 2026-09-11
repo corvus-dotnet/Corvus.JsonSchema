@@ -3,7 +3,9 @@
 // </copyright>
 
 using System.Text;
+#if !STJ
 using Corvus.Text.Json.Internal;
+#endif
 
 namespace Corvus.Text.Json.RuntimeEvaluator.Compilation;
 
@@ -164,12 +166,21 @@ internal sealed class CompiledSchema : IDisposable
 internal sealed class SchemaCompiler
 {
     // Experiment switches (environment variables) for A/B measurement of flag-mode optimisations.
+#if STJ
+    private static readonly bool DisableUnroll = false;
+    private static readonly bool DisableElision = false;
+    private static readonly bool DisableDiscriminator = false;
+    private static readonly bool DisableLeaf = false;
+    private static readonly bool DisableOrdering = false;
+    private static readonly bool DisablePlans = false;
+#else
     private static readonly bool DisableUnroll = Environment.GetEnvironmentVariable("CORVUS_RT_NO_UNROLL") == "1";
     private static readonly bool DisableElision = Environment.GetEnvironmentVariable("CORVUS_RT_NO_ELIDE") == "1";
     private static readonly bool DisableDiscriminator = Environment.GetEnvironmentVariable("CORVUS_RT_NO_DISCRIMINATOR") == "1";
     private static readonly bool DisableLeaf = Environment.GetEnvironmentVariable("CORVUS_RT_NO_LEAF") == "1";
     private static readonly bool DisableOrdering = Environment.GetEnvironmentVariable("CORVUS_RT_NO_ORDER") == "1";
     private static readonly bool DisablePlans = Environment.GetEnvironmentVariable("CORVUS_RT_NO_PLANS") == "1";
+#endif
 
     private readonly SchemaLoader loader;
     private readonly JsonSchemaEvaluatorOptions options;
@@ -259,7 +270,7 @@ internal sealed class SchemaCompiler
     private int RegisterEntryPoint(string? entryPoint)
     {
         SchemaTarget entry = new(this.rootResource.Document, this.rootResource.RootIndex, this.rootResource);
-        if (entryPoint is not null && entryPoint.Length > 0 && entryPoint != "#")
+        if (entryPoint is { Length: > 0 } && entryPoint != "#")
         {
             if (!this.loader.TryResolveReference(this.rootResource, entryPoint, out entry))
             {
@@ -397,19 +408,15 @@ internal sealed class SchemaCompiler
 
     private void CompileAll()
     {
-        while (true)
+        do
         {
             while (this.worklist.Count > 0)
             {
                 int id = this.worklist.Dequeue();
                 this.CompileNode(this.nodes[id], this.targets[id]);
             }
-
-            if (!this.ExpandDynamicRefs())
-            {
-                break;
-            }
         }
+        while (this.ExpandDynamicRefs());
 
         this.FinalizeDynamicRefs();
         this.ComputeLeafFlags();
@@ -651,7 +658,6 @@ internal sealed class SchemaCompiler
     // ---------------------------------------------------------------------------------------------
     // Discriminators
     // ---------------------------------------------------------------------------------------------
-
     private enum BranchKind
     {
         Wildcard,
@@ -668,13 +674,13 @@ internal sealed class SchemaCompiler
 
         foreach (SchemaNode node in this.nodes)
         {
-            if (node.OneOf is not null && node.OneOf.Length > 1)
+            if (node.OneOf?.Length > 1)
             {
                 node.OneOfDiscriminator = this.BuildDiscriminator(node.OneOf);
                 node.OneOfTypeUnion = this.TypeUnion(node.OneOf, requireDisjoint: true);
             }
 
-            if (node.AnyOf is not null && node.AnyOf.Length > 1)
+            if (node.AnyOf?.Length > 1)
             {
                 node.AnyOfDiscriminator = this.BuildDiscriminator(node.AnyOf);
                 node.AnyOfTypeUnion = this.TypeUnion(node.AnyOf, requireDisjoint: false);
@@ -700,7 +706,7 @@ internal sealed class SchemaCompiler
             if (requireDisjoint)
             {
                 // integer and number overlap, so a oneOf of both is not a plain union.
-                TypeMask numeric = TypeMask.Number | TypeMask.Integer;
+                const TypeMask numeric = TypeMask.Number | TypeMask.Integer;
                 if ((union & mask) != 0 || ((union & numeric) != 0 && (mask & numeric) != 0))
                 {
                     return TypeMask.None;
@@ -1256,10 +1262,7 @@ internal sealed class SchemaCompiler
                             Annotate(name, value);
                         }
                     }
-                    else if (name.SequenceEqual("$defs"u8))
-                    {
-                    }
-                    else
+                    else if (!name.SequenceEqual("$defs"u8))
                     {
                         goto default;
                     }
@@ -1292,6 +1295,7 @@ internal sealed class SchemaCompiler
                                     node.HasStringKeywords = true;
                                 }
                             }
+
                             if (formatAnnotate)
                             {
                                 Annotate(name, value);
@@ -1328,10 +1332,7 @@ internal sealed class SchemaCompiler
                             Annotate(name, value);
                         }
                     }
-                    else if (name.SequenceEqual("$schema"u8) || name.SequenceEqual("$anchor"u8))
-                    {
-                    }
-                    else
+                    else if (!name.SequenceEqual("$schema"u8) && !name.SequenceEqual("$anchor"u8))
                     {
                         goto default;
                     }
@@ -1398,10 +1399,7 @@ internal sealed class SchemaCompiler
                             Annotate(name, value);
                         }
                     }
-                    else if (name.SequenceEqual("$comment"u8))
-                    {
-                    }
-                    else
+                    else if (!name.SequenceEqual("$comment"u8))
                     {
                         goto default;
                     }
@@ -1593,10 +1591,7 @@ internal sealed class SchemaCompiler
 
                     continue;
                 case 14:
-                    if (name.SequenceEqual("$dynamicAnchor"u8))
-                    {
-                    }
-                    else
+                    if (!name.SequenceEqual("$dynamicAnchor"u8))
                     {
                         goto default;
                     }
@@ -2150,7 +2145,7 @@ internal sealed class SchemaCompiler
         }
 
         if (node.HasObjectKeywords && !node.HasArrayKeywords && node.PatternProperties is null && !node.PropertyNames.IsPresent
-            && node.Dependencies is null && node.SeenBitCount <= Evaluation.Evaluator.InlineBitWords * 64)
+            && node.Dependencies is null && node.SeenBitCount <= SchemaNode.InlineBitWords * 64)
         {
             return NodePlan.Object;
         }
@@ -2307,6 +2302,7 @@ internal sealed class SchemaCompiler
         return [.. list];
     }
 
+#if !STJ
     /// <summary>
     /// Builds the <c>type</c> message provider for a mask: the shared single-type provider, or, for a type list, the
     /// generated-model form <c>'["array", "object"]'</c> in the generator's order.
@@ -2358,6 +2354,7 @@ internal sealed class SchemaCompiler
             }
         }
     }
+#endif
 
     private void CompileType(SchemaNode node, in JsonElement value)
     {
@@ -2383,7 +2380,9 @@ internal sealed class SchemaCompiler
 
         node.HasType = true;
         node.Type = mask;
+#if !STJ
         node.TypeMessage = TypeMessageFor(mask);
+#endif
 
         static TypeMask ParseType(in JsonElement t)
         {

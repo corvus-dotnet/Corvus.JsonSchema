@@ -7,6 +7,7 @@
     <NoWarn>$(NoWarn);CS0436;nullable;IDE0007;NU5128;RS2008;SA0001;NU1504;CS3021</NoWarn>
     <CorvusTextJsonPath>..\Corvus.Text.Json\</CorvusTextJsonPath>
     <CorvusTextJsonCodeGenerationPath>..\Corvus.Text.Json.CodeGeneration\</CorvusTextJsonCodeGenerationPath>
+    <CorvusTextJsonRuntimeEvaluatorPath>..\Corvus.Text.Json.RuntimeEvaluator\</CorvusTextJsonRuntimeEvaluatorPath>
     <CorvusV4Path>..\..\src-v4\</CorvusV4Path>
     <CtjYamlSourceDir>..\Corvus.Text.Json.Yaml\Corvus\Text\Json\Yaml\</CtjYamlSourceDir>
     <CtjYamlInternalDir>..\Corvus.Text.Json.Yaml\Corvus\Text\Json\Yaml\Internal\</CtjYamlInternalDir>
@@ -201,6 +202,18 @@
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)EcmaRegexTranslator.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)RuntimeProgramGenerator.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)SchemaProgramCompiler.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The runtime evaluator's compiler and image writer, built over System.Text.Json (STJ): the generator emits
+         pre-compiled program images. The evaluation engine itself is not linked. -->
+    <Compile Include="$(CorvusTextJsonRuntimeEvaluatorPath)Compilation\*.cs" LinkBase="Corvus.Text.Json.RuntimeEvaluator\Compilation" />
+    <Compile Include="$(CorvusTextJsonRuntimeEvaluatorPath)Exceptions.cs" LinkBase="Corvus.Text.Json.RuntimeEvaluator" />
+    <Compile Include="$(CorvusTextJsonRuntimeEvaluatorPath)JsonSchemaDialect.cs" LinkBase="Corvus.Text.Json.RuntimeEvaluator" />
+    <Compile Include="$(CorvusTextJsonRuntimeEvaluatorPath)JsonSchemaEvaluator.cs" LinkBase="Corvus.Text.Json.RuntimeEvaluator" />
+    <Compile Include="$(CorvusTextJsonRuntimeEvaluatorPath)JsonSchemaEvaluatorOptions.cs" LinkBase="Corvus.Text.Json.RuntimeEvaluator" />
+    <Compile Include="$(CorvusTextJsonRuntimeEvaluatorPath)JsonSchemaFormatMode.cs" LinkBase="Corvus.Text.Json.RuntimeEvaluator" />
+    <Compile Include="$(CorvusTextJsonRuntimeEvaluatorPath)Polyfills\NetStandardExtensions.cs" LinkBase="Corvus.Text.Json.RuntimeEvaluator\Polyfills" />
+    <Compile Include="..\Corvus.Json.Cli.Core\RuntimeProgramCompiler.cs" LinkBase="Corvus.Json.Cli.Core" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)CodeGenerationMode.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)RegexPatternCategory.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)FrameworkType.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />

@@ -176,8 +176,8 @@ Order of work:
    entry point, and returns the image and its patterns translated to .NET syntax. The emitted class is then partial,
    carries the image as base64 UTF-8 literals decoded on first use, loads it with `FromProgramImage`, and wires one
    `[GeneratedRegex]` method per pattern through `RegexProvider` under the same framework guard the old generator
-   used; the schema documents are not embedded. Without a compiler (the source generator) the Stage 0 form is emitted.
-3. Link the compiler into the source generator, so both producers emit the same shape. See the next section.
+   used; the schema documents are not embedded. Without a compiler the Stage 0 form is emitted.
+3. Link the compiler into the source generator, so both producers emit the same shape. Done; see the next section.
 4. String table in the image (size only; done, image version 4), then constants as static values if the load-time
    parse ever shows up.
 
@@ -208,11 +208,20 @@ few places:
   reader except the pattern table, `CompiledSchema`'s constants document, and every `Evaluate` overload.
 
 The linked file set is the `Compilation` directory (compiler, loader, node model, fused-object analysis, name map,
-keywords, URI utilities, metaschema table, image), the public option, dialect, format-mode and exception types, the
-compile-side half of `JsonSchemaEvaluator`, the ECMA regex translator (already linked), and the CLI's
-`RuntimeProgramCompiler`, which is the `SchemaProgramCompiler` implementation the generator passes in its language
-provider options. The evaluation directory is not linked. The generator's embedded metaschemas already use the
-logical names the evaluator's metaschema table looks up.
+keywords, URI utilities, metaschema table, image, and the `System.Text.Json` shim), the netstandard2.0 polyfills,
+the public option, dialect, format-mode and exception types, the compile-side half of `JsonSchemaEvaluator`, the
+ECMA regex translator (already linked), and the CLI's `RuntimeProgramCompiler`, which is the
+`SchemaProgramCompiler` implementation the generator passes in its language provider options. The evaluation
+directory is not linked. The generator's embedded metaschemas already use the logical names the evaluator's
+metaschema table looks up. Because the generator applies the repository's analyzer set (StyleCop, Roslynator, the
+analyzer-banned-API rules) to linked files, the evaluator sources follow the `src` conventions (no trailing
+newline, no environment reads on the generator path: the A/B switches are constants under `STJ`).
+
+One difference from the CLI's output: the generator's program carries no `[GeneratedRegex]` table. Roslyn does not
+chain source generators, so the regular-expression generator never sees code another generator produced and the
+partial methods would have no implementation. The generator's shim therefore returns no provider and the evaluator
+constructs each expression from the image's pattern table on first use, as it does on runtimes without the regex
+generator. The image itself is identical.
 
 Version coupling is the same as today's source generator to `Corvus.Text.Json` pairing: the generator emits the image
 version of the files it was built from, and `FromProgramImage` rejects any other version at type initialisation
@@ -295,5 +304,4 @@ disables it for A/B runs.
 
 ## Open decisions
 
-* Whether the source generator links the compiler and document model in (single emitted shape) or defers to the CLI.
 * Whether the evaluator package merges into `Corvus.Text.Json`, which decides the assembly the emitted program targets.

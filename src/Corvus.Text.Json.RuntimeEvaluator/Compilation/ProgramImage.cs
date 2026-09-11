@@ -4,7 +4,9 @@
 
 using System.Buffers.Binary;
 using System.Text;
+#if !STJ
 using Corvus.Text.Json.Internal;
+#endif
 
 namespace Corvus.Text.Json.RuntimeEvaluator.Compilation;
 
@@ -107,6 +109,7 @@ internal static class ProgramImage
         return ReadPatternTable(ref r);
     }
 
+#if !STJ
     /// <summary>Reads a program from an image.</summary>
     public static CompiledSchema Read(ReadOnlyMemory<byte> image, JsonSchemaEvaluatorOptions options)
     {
@@ -169,6 +172,7 @@ internal static class ProgramImage
 
         return new CompiledSchema(nodes, rootNode, usesDynamicScope, resourceCount, options, entryPoints, constantsDocument);
     }
+#endif
 
     private static void ReadHeader(ref ImageReader r)
     {
@@ -217,6 +221,7 @@ internal static class ProgramImage
         }
     }
 
+#if !STJ
     private static PatternMatcher? ReadPattern(ref ImageReader r, string[] patterns, PatternMatcher?[] matchers, JsonSchemaEvaluatorOptions options)
     {
         int index = r.ReadInt();
@@ -232,6 +237,7 @@ internal static class ProgramImage
 
         return matchers[index] ??= PatternMatcher.Create(patterns[index], options, index);
     }
+#endif
 
     private static void WriteNode(ref ImageWriter w, SchemaNode n, ConstantPool constants, PatternTable patterns, LocationTable locations)
     {
@@ -311,7 +317,6 @@ internal static class ProgramImage
             {
             w.WriteInt(-1);
             }
-
         }
 
         if ((sections & SectionNumber) != 0)
@@ -407,7 +412,6 @@ internal static class ProgramImage
             {
             w.WriteInt(-1);
             }
-
         }
 
         if ((sections & SectionArray) != 0)
@@ -518,6 +522,7 @@ internal static class ProgramImage
         return sections;
     }
 
+#if !STJ
     private static SchemaNode ReadNode(ref ImageReader r, List<ConstantValue> constants, string[] patterns, PatternMatcher?[] matchers, JsonSchemaEvaluatorOptions options, SchemaNode[] nodes)
     {
         var n = new SchemaNode
@@ -618,7 +623,6 @@ internal static class ProgramImage
 
             n.EnumStrings = new Utf8NameMap<object>(strings);
             }
-
         }
 
         if ((sections & SectionNumber) != 0)
@@ -716,7 +720,6 @@ internal static class ProgramImage
 
             n.Dependencies = dependencies;
             }
-
         }
 
         if ((sections & SectionArray) != 0)
@@ -773,6 +776,7 @@ internal static class ProgramImage
 
         return n;
     }
+#endif
 
     /// <summary>
     /// Encodes schema locations as the earlier node whose location is the longest prefix on a segment boundary, plus
@@ -811,11 +815,13 @@ internal static class ProgramImage
         }
     }
 
+#if !STJ
     private static NumberValue? ReadNumber(ref ImageReader r)
     {
         string? text = r.ReadString();
         return text is null ? null : new NumberValue(Encoding.UTF8.GetBytes(text));
     }
+#endif
 
     private static void WriteChildRef(ref ImageWriter w, in ChildRef c)
     {
@@ -828,6 +834,7 @@ internal static class ProgramImage
         }
     }
 
+#if !STJ
     private static ChildRef ReadChildRef(ref ImageReader r)
     {
         int node = r.ReadInt();
@@ -841,6 +848,7 @@ internal static class ProgramImage
         c.FastNode = r.ReadInt();
         return c;
     }
+#endif
 
     private static void WriteChildRefs(ref ImageWriter w, ChildRef[]? refs)
     {
@@ -857,6 +865,7 @@ internal static class ProgramImage
         }
     }
 
+#if !STJ
     private static ChildRef[]? ReadChildRefs(ref ImageReader r)
     {
         int count = r.ReadInt();
@@ -873,6 +882,7 @@ internal static class ProgramImage
 
         return refs;
     }
+#endif
 
     private static void WriteDiscriminator(ref ImageWriter w, Discriminator? d)
     {
@@ -898,6 +908,7 @@ internal static class ProgramImage
         w.WriteBool(d.AllRequire);
     }
 
+#if !STJ
     private static Discriminator? ReadDiscriminator(ref ImageReader r)
     {
         if (!r.ReadBool())
@@ -920,6 +931,7 @@ internal static class ProgramImage
         d.AllRequire = r.ReadBool();
         return d;
     }
+#endif
 
     private static void WriteInts(ref ImageWriter w, int[]? values)
     {
@@ -936,6 +948,7 @@ internal static class ProgramImage
         }
     }
 
+#if !STJ
     private static int[]? ReadInts(ref ImageReader r)
     {
         int count = r.ReadInt();
@@ -952,6 +965,7 @@ internal static class ProgramImage
 
         return values;
     }
+#endif
 
     private static void WriteByteArrays(ref ImageWriter w, byte[][]? values)
     {
@@ -968,6 +982,7 @@ internal static class ProgramImage
         }
     }
 
+#if !STJ
     private static byte[][]? ReadByteArrays(ref ImageReader r)
     {
         int count = r.ReadInt();
@@ -984,6 +999,7 @@ internal static class ProgramImage
 
         return values;
     }
+#endif
 
     private static void Pack(ref uint bits, ref int bit, bool value)
     {
@@ -995,12 +1011,14 @@ internal static class ProgramImage
         bit++;
     }
 
+#if !STJ
     private static bool Unpack(uint bits, ref int bit)
     {
         bool value = (bits & (1u << bit)) != 0;
         bit++;
         return value;
     }
+#endif
 
     /// <summary>Interns byte payloads by content, in first-seen order.</summary>
     private sealed class BytesTable
@@ -1032,7 +1050,7 @@ internal static class ProgramImage
 
             public int GetHashCode(byte[] obj)
             {
-                var hash = new HashCode();
+                HashCode hash = default;
 #if NET6_0_OR_GREATER
                 hash.AddBytes(obj);
 #else

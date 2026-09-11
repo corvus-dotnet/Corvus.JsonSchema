@@ -18,9 +18,10 @@ description: >
 
 Generated types and standalone evaluators no longer contain validation code. The generator emits one
 `CorvusJsonSchemaProgram` class per compilation with one entry point per generated type and evaluator
-root. The CLI pre-compiles it (a program image plus `[GeneratedRegex]` methods, loaded on first use);
-the Roslyn source generator embeds the schema documents and `Corvus.Text.Json.RuntimeEvaluator` compiles
-them on first use. Every `EvaluateSchema()` / `Evaluate()` call runs against that graph.
+root. Both the CLI and the Roslyn source generator pre-compile it (a program image plus `[GeneratedRegex]`
+methods, loaded by `Corvus.Text.Json.RuntimeEvaluator` on first use); the source generator links the
+compiler in as source, built over `System.Text.Json` under the `STJ` define. Every `EvaluateSchema()` /
+`Evaluate()` call runs against that graph.
 
 ## Generating an evaluator
 

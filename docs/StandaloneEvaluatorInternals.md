@@ -27,8 +27,9 @@ emits one `CorvusJsonSchemaProgram` class in the default namespace:
   `CSharpLanguageProvider.Options.ProgramCompiler`), the class carries the compiled program image as base64
   UTF-8 literals, decoded and loaded with `JsonSchemaEvaluator.FromProgramImage` on first use, plus one
   `[GeneratedRegex]` method per pattern the image needs, wired in through `RegexProvider` (on .NET 8 and
-  later; elsewhere the evaluator constructs the expression). A host without the evaluator (the Roslyn
-  source generator today) emits the documents instead: every root schema document the type builder loaded,
+  later; elsewhere the evaluator constructs the expression). The Roslyn source generator emits the same
+  shape: it links the evaluator's compiler and image writer in as source, built over `System.Text.Json`. A
+  host without a program compiler emits the documents instead: every root schema document the type builder loaded,
   as UTF-8 static data (`"..."u8`). File-system documents are keyed under the synthetic `corvus-schema:///` scheme, relative
   to the common directory of all file documents, so no build-machine path reaches the generated code;
   documents with an absolute `$id` are keyed by that `$id`. Relative `$ref`s between documents resolve

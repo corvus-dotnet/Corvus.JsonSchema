@@ -3,8 +3,35 @@
 // </copyright>
 
 using System.Runtime.CompilerServices;
+#if !STJ
 using Corvus.Text.Json.Internal;
+#endif
 
+#if STJ
+namespace Corvus.Text.Json.RuntimeEvaluator.Compilation;
+
+/// <summary>
+/// Access to the document/index behind an element in the generator build (see <see cref="ParsedJsonDocument{T}"/>).
+/// </summary>
+internal static class Elements
+{
+    public static T Create<T>(IJsonDocument document, int index)
+        where T : struct
+    {
+        return (T)(object)document.GetElement(index);
+    }
+
+    public static IJsonDocument Document(in JsonElement element)
+    {
+        return element.ParentDocument;
+    }
+
+    public static int Index(in JsonElement element)
+    {
+        return element.ParentDocumentIndex;
+    }
+}
+#else
 namespace Corvus.Text.Json.RuntimeEvaluator.Compilation;
 
 /// <summary>
@@ -37,3 +64,4 @@ internal static class Elements
         return element.ParentDocumentIndex;
     }
 }
+#endif

@@ -6,7 +6,9 @@ using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+#if !STJ
 using Corvus.Text.Json.Internal;
+#endif
 
 namespace Corvus.Text.Json.RuntimeEvaluator.Compilation;
 
@@ -95,11 +97,17 @@ internal sealed class NumberValue
 {
     public NumberValue(ReadOnlySpan<byte> raw)
     {
+#if STJ
+        // The generator build only carries the text into the image; the normalized form is rebuilt on load.
+        this.Integral = [];
+        this.Fractional = [];
+#else
         JsonElementHelpers.ParseNumber(raw, out bool isNegative, out ReadOnlySpan<byte> integral, out ReadOnlySpan<byte> fractional, out int exponent);
         this.IsNegative = isNegative;
         this.Integral = integral.ToArray();
         this.Fractional = fractional.ToArray();
         this.Exponent = exponent;
+#endif
         this.Text = System.Text.Encoding.UTF8.GetString(raw);
         if (raw.IndexOfAny((byte)'.', (byte)'e', (byte)'E') < 0 && raw.Length <= 18 && long.TryParse(this.Text, System.Globalization.NumberStyles.AllowLeadingSign, System.Globalization.CultureInfo.InvariantCulture, out long l))
         {
@@ -120,12 +128,14 @@ internal sealed class NumberValue
 
     public string Text { get; }
 
+#if !STJ
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int CompareTo(bool isNegative, ReadOnlySpan<byte> integral, ReadOnlySpan<byte> fractional, int exponent)
     {
         // Returns the sign of (instance - this).
         return JsonElementHelpers.CompareNormalizedJsonNumbers(isNegative, integral, fractional, exponent, this.IsNegative, this.Integral, this.Fractional, this.Exponent);
     }
+#endif
 }
 
 /// <summary>
@@ -135,9 +145,13 @@ internal sealed class DivisorValue
 {
     public DivisorValue(ReadOnlySpan<byte> raw)
     {
+        this.Text = System.Text.Encoding.UTF8.GetString(raw);
+#if STJ
+        // The generator build only carries the text into the image; the normalized form is rebuilt on load.
+        return;
+#else
         JsonElementHelpers.ParseNumber(raw, out _, out ReadOnlySpan<byte> integral, out ReadOnlySpan<byte> fractional, out int exponent);
         this.Exponent = exponent;
-        this.Text = System.Text.Encoding.UTF8.GetString(raw);
         Span<byte> digits = stackalloc byte[integral.Length + fractional.Length];
         integral.CopyTo(digits);
         fractional.CopyTo(digits[integral.Length..]);
@@ -156,6 +170,7 @@ internal sealed class DivisorValue
             this.IsBig = true;
             this.Big = BigInteger.Parse(System.Text.Encoding.ASCII.GetString(digits));
         }
+#endif
     }
 
     public bool IsBig { get; }
@@ -168,12 +183,14 @@ internal sealed class DivisorValue
 
     public string Text { get; }
 
+#if !STJ
     public bool IsMultiple(ReadOnlySpan<byte> integral, ReadOnlySpan<byte> fractional, int exponent)
     {
         return this.IsBig
             ? JsonElementHelpers.IsMultipleOf(integral, fractional, exponent, this.Big, this.Exponent)
             : JsonElementHelpers.IsMultipleOf(integral, fractional, exponent, this.Small, this.Exponent);
     }
+#endif
 }
 
 /// <summary>
@@ -181,7 +198,11 @@ internal sealed class DivisorValue
 /// </summary>
 internal sealed class PatternMatcher
 {
+#if STJ
+    private static readonly bool ForceInterpretedRegex = false;
+#else
     private static readonly bool ForceInterpretedRegex = Environment.GetEnvironmentVariable("CORVUS_RT_REGEX_INTERPRETED") == "1";
+#endif
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<(string Pattern, RegexOptions Options, TimeSpan Timeout), Regex> RegexCache = new();
 
     private readonly Regex? regex;
@@ -278,10 +299,31 @@ internal sealed class PatternMatcher
             Kind.Noop => true,
             Kind.NonEmpty => utf8Value.Length > 0,
             Kind.Prefix => utf8Value.StartsWith(this.prefix),
+#if STJ
+            Kind.Range => RuneCount(utf8Value) >= this.min && RuneCount(utf8Value) <= this.max,
+            _ => this.regex!.IsMatch(System.Text.Encoding.UTF8.GetString(utf8Value)),
+#else
             Kind.Range => JsonSchemaEvaluation.MatchRangeRegularExpression(utf8Value, this.min, this.max),
             _ => JsonSchemaEvaluation.MatchRegularExpression(utf8Value, this.regex!),
+#endif
         };
     }
+
+#if STJ
+    private static int RuneCount(ReadOnlySpan<byte> utf8)
+    {
+        int count = 0;
+        foreach (byte b in utf8)
+        {
+            if ((b & 0xC0) != 0x80)
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+#endif
 
     private static bool TryParsePrefix(string pattern, out string? prefix)
     {
@@ -561,6 +603,9 @@ internal enum NodePlan : byte
 
 internal sealed class SchemaNode
 {
+    /// <summary>The number of 64-bit words of seen/evaluated bits the evaluator keeps on the stack before renting (256 properties or items).</summary>
+    public const int InlineBitWords = 4;
+
     public int Id;
     public int ResourceId;
     public JsonSchemaDialect Dialect;
@@ -618,8 +663,10 @@ internal sealed class SchemaNode
     public bool HasType;
     public TypeMask Type;
 
+#if !STJ
     /// <summary>The message reported for the <c>type</c> keyword (match or mismatch), mirroring generated models.</summary>
     public JsonSchemaMessageProvider? TypeMessage;
+#endif
 
     // const / enum
     public bool HasConst;

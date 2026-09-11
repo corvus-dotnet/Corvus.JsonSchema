@@ -3,9 +3,13 @@
 // </copyright>
 
 using System.Text;
+#if !STJ
 using Corvus.Text.Json.Internal;
+#endif
 using Corvus.Text.Json.RuntimeEvaluator.Compilation;
+#if !STJ
 using Corvus.Text.Json.RuntimeEvaluator.Evaluation;
+#endif
 
 namespace Corvus.Text.Json.RuntimeEvaluator;
 
@@ -139,6 +143,7 @@ public sealed class JsonSchemaEvaluator : IDisposable
         return ProgramImage.Write(this.program);
     }
 
+#if !STJ
     /// <summary>
     /// Loads a compiled program from an image produced by <see cref="ToProgramImage"/>. The evaluator returned is
     /// rooted at the image's root entry point; <see cref="ForEntryPoint"/> selects any other recorded entry point.
@@ -153,6 +158,7 @@ public sealed class JsonSchemaEvaluator : IDisposable
         CompiledSchema program = ProgramImage.Read(image, options ?? JsonSchemaEvaluatorOptions.Default);
         return new JsonSchemaEvaluator(program, program.RootNode);
     }
+#endif
 
     /// <summary>
     /// Gets the pattern table of a program image: every pattern that needs a regular expression, in the index order
@@ -194,6 +200,7 @@ public sealed class JsonSchemaEvaluator : IDisposable
         return new JsonSchemaEvaluator(this.program, node);
     }
 
+#if !STJ
     /// <summary>
     /// Evaluates an instance.
     /// </summary>
@@ -206,7 +213,9 @@ public sealed class JsonSchemaEvaluator : IDisposable
     {
         return Evaluator.Evaluate(this.program, this.rootNode, instance.ParentDocument, instance.ParentDocumentIndex, resultsCollector);
     }
+#endif
 
+#if !STJ
     /// <summary>
     /// Evaluates an instance given its document and index.
     /// </summary>
@@ -218,7 +227,9 @@ public sealed class JsonSchemaEvaluator : IDisposable
     {
         return Evaluator.Evaluate(this.program, this.rootNode, document, index, resultsCollector);
     }
+#endif
 
+#if !STJ
     /// <summary>
     /// Parses and evaluates UTF-8 JSON.
     /// </summary>
@@ -230,7 +241,9 @@ public sealed class JsonSchemaEvaluator : IDisposable
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(utf8Json);
         return this.Evaluate(doc.RootElement, resultsCollector);
     }
+#endif
 
+#if !STJ
     /// <summary>
     /// Parses and evaluates JSON text.
     /// </summary>
@@ -242,6 +255,7 @@ public sealed class JsonSchemaEvaluator : IDisposable
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
         return this.Evaluate(doc.RootElement, resultsCollector);
     }
+#endif
 
     /// <inheritdoc/>
     public void Dispose()

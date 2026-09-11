@@ -249,6 +249,8 @@ internal static class RuntimeProgramGenerator
     /// Emits the image (base64 in UTF-8 literals, decoded on first use) and the regular-expression table: one
     /// <c>[GeneratedRegex]</c> method per pattern, in the image's pattern-table order, on runtimes that have the
     /// generator; elsewhere the provider returns <see langword="null"/> and the evaluator constructs the expression.
+    /// A program from a Roslyn source generator carries no patterns (generators do not chain, so the regex generator
+    /// would never implement the methods) and the evaluator constructs every expression on first use.
     /// </summary>
     private static void EmitImage(Action<string> line, SchemaProgramImage image)
     {
