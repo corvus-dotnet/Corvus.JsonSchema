@@ -483,6 +483,8 @@ internal static partial class Evaluator
         Span<ulong> covered = rentedCover is null ? coverInline[..coverWords] : rentedCover.AsSpan(0, coverWords);
         covered.Clear();
 
+        Span<bool> failed = stackalloc bool[64];
+        failed.Clear();
         Span<int> deferredInline = stackalloc int[3 * 16];
         Span<int> deferred = deferredInline;
         int[]? rentedDeferred = null;
@@ -503,6 +505,11 @@ internal static partial class Evaluator
                     {
                         seen[entry.Index >> 6] |= 1UL << (entry.Index & 63);
                         entryIndex = entry.Index;
+                        if (entry.ValueTests.Length > 0)
+                        {
+                            ApplyValueTests<TAccess>(entry.ValueTests, ref state, doc, valueIndex, failed);
+                        }
+
                         FusedApplication[] applications = entry.Applications;
                         for (int a = 0; a < applications.Length; a++)
                         {
@@ -574,7 +581,7 @@ internal static partial class Evaluator
             FusedCondition[] conditions = f.Conditions;
             for (int i = 0; i < conditions.Length; i++)
             {
-                bool all = true;
+                bool all = !failed[i];
                 int[] bits = conditions[i].RequiredBits;
                 for (int b = 0; b < bits.Length && all; b++)
                 {
@@ -688,6 +695,95 @@ internal static partial class Evaluator
                 ArrayPool<int>.Shared.Return(rentedDeferred);
             }
         }
+    }
+
+    /// <summary>
+    /// Checks a property's value against the conditions that test it: the value is keyed like a discriminator value
+    /// (tagged string, canonical integer or boolean) and each condition whose allowed set lacks it is marked failed.
+    /// A value of any other kind fails every test, since only keyable constants are accepted at compile time.
+    /// </summary>
+    private static void ApplyValueTests<TAccess>(FusedValueTest[] tests, ref EvaluationState state, IJsonDocument doc, int valueIndex, scoped Span<bool> failed)
+        where TAccess : struct, IDocumentAccess
+    {
+        Span<byte> buffer = stackalloc byte[128];
+        switch (default(TAccess).TokenType(ref state, doc, valueIndex))
+        {
+            case JsonTokenType.String:
+            {
+                using UnescapedUtf8JsonString text = StringValue<TAccess>(ref state, doc, valueIndex);
+                TestValueKey(tests, Discriminator.StringTag, text.Span, buffer, failed);
+                return;
+            }
+
+            case JsonTokenType.True:
+                TestValueKey(tests, Discriminator.BooleanTag, "true"u8, buffer, failed);
+                return;
+            case JsonTokenType.False:
+                TestValueKey(tests, Discriminator.BooleanTag, "false"u8, buffer, failed);
+                return;
+            case JsonTokenType.Number:
+            {
+                ReadOnlySpan<byte> raw = default(TAccess).RawValue(ref state, doc, valueIndex);
+                if (IsCanonicalInteger(raw))
+                {
+                    TestValueKey(tests, Discriminator.NumberTag, raw, buffer, failed);
+                    return;
+                }
+
+                // "2.0" may equal a keyed integer: test it the slow way, by value.
+                for (int t = 0; t < tests.Length; t++)
+                {
+                    if (!NumberInKeys(raw, tests[t].Allowed))
+                    {
+                        failed[tests[t].Condition] = true;
+                    }
+                }
+
+                return;
+            }
+
+            default:
+                for (int t = 0; t < tests.Length; t++)
+                {
+                    failed[tests[t].Condition] = true;
+                }
+
+                return;
+        }
+    }
+
+    private static void TestValueKey(FusedValueTest[] tests, byte tag, ReadOnlySpan<byte> value, Span<byte> buffer, Span<bool> failed)
+    {
+        byte[]? rented = value.Length + 1 > buffer.Length ? ArrayPool<byte>.Shared.Rent(value.Length + 1) : null;
+        Span<byte> key = rented is null ? buffer[..(value.Length + 1)] : rented.AsSpan(0, value.Length + 1);
+        key[0] = tag;
+        value.CopyTo(key[1..]);
+        for (int t = 0; t < tests.Length; t++)
+        {
+            if (!tests[t].Allowed.TryGetValue(key, out _))
+            {
+                failed[tests[t].Condition] = true;
+            }
+        }
+
+        if (rented is not null)
+        {
+            ArrayPool<byte>.Shared.Return(rented);
+        }
+    }
+
+    /// <summary>Whether a non-canonical number equals any integer key of the set.</summary>
+    private static bool NumberInKeys(ReadOnlySpan<byte> raw, Utf8NameMap<object> allowed)
+    {
+        foreach (byte[] key in allowed.Keys)
+        {
+            if (key.Length > 1 && key[0] == Discriminator.NumberTag && JsonElementHelpers.AreEqualJsonNumbers(raw, key.AsSpan(1)))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>Applies a branch's pattern properties, or its additional properties when none matched, to a name no entry knows.</summary>

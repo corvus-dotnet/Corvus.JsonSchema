@@ -914,7 +914,7 @@ internal sealed class SchemaCompiler
     /// canonical integers key; other numbers (a fraction or exponent form may equal an integer) and structured values
     /// do not.
     /// </summary>
-    private static bool TryGetDiscriminatorKey(in ConstantValue value, out byte[]? key)
+    internal static bool TryGetDiscriminatorKey(in ConstantValue value, out byte[]? key)
     {
         switch (value.TokenType)
         {

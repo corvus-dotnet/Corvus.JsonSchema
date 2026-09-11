@@ -57,6 +57,19 @@ public class FusedObjectTests
         }
         """;
 
+    private const string ValueConditions = """
+        {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "allOf": [
+            {"properties": {"in": {"enum": ["query", "path", "header"]}, "name": {"type": "string"}}, "required": ["in", "name"]},
+            {"if": {"properties": {"in": {"const": "path"}}, "required": ["in"]}, "then": {"properties": {"required": {"const": true}}, "required": ["required"]}},
+            {"if": {"properties": {"in": {"const": "query"}}}, "then": {"properties": {"allowEmptyValue": {"type": "boolean"}}}, "else": {"properties": {"style": {"type": "string"}}}},
+            {"if": {"properties": {"version": {"enum": [1, 2]}}, "required": ["version"]}, "then": {"properties": {"legacy": {"type": "boolean"}}}}
+          ],
+          "unevaluatedProperties": false
+        }
+        """;
+
     private static readonly string[] Instances =
     [
         """{"id": 1, "name": "n", "email": "e", "tags": [], "address": {}}""",
@@ -83,11 +96,25 @@ public class FusedObjectTests
         """{"version": 0, "legacy": "old"}""",
         """[1, 2]""",
         "\"string\"",
+        """{"in": "query", "name": "q", "allowEmptyValue": true}""",
+        """{"in": "query", "name": "q", "style": "form"}""",
+        """{"in": "path", "name": "id", "required": true}""",
+        """{"in": "path", "name": "id"}""",
+        """{"in": "path", "name": "id", "required": false}""",
+        """{"in": "header", "name": "h", "style": "simple"}""",
+        """{"in": "header", "name": "h", "allowEmptyValue": true}""",
+        """{"in": "cookie", "name": "c"}""",
+        """{"in": "query", "name": "q", "version": 2, "legacy": true}""",
+        """{"in": "query", "name": "q", "version": 2.0, "legacy": true}""",
+        """{"in": "query", "name": "q", "version": 3, "legacy": true}""",
+        """{"in": "query", "name": "q", "version": "2", "legacy": true}""",
+        """{"in": 5, "name": "q"}""",
     ];
 
     [TestMethod]
     [DataRow(AllOfWithUnevaluated, DisplayName = "allOf with unevaluatedProperties")]
     [DataRow(PerBranchAdditional, DisplayName = "per-branch additional and pattern properties")]
+    [DataRow(ValueConditions, DisplayName = "conditions on property values")]
     [DataRow(RefChainWithElse, DisplayName = "$ref chain with if/then/else")]
     public void FusedPlanAgreesWithTheGeneralPath(string schema)
     {

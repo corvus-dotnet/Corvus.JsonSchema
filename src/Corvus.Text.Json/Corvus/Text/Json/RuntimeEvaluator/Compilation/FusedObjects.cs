@@ -64,6 +64,20 @@ internal sealed class FusedEntry
     public int Index;
     public FusedApplication[] Applications = [];
     public bool AnyConditional;
+
+    /// <summary>The conditions whose value test this property decides, checked as the property is passed.</summary>
+    public FusedValueTest[] ValueTests = [];
+}
+
+/// <summary>
+/// A condition's test on one property's value: the property, when present, must hold one of the allowed constants
+/// (keys tagged by kind exactly as <see cref="Discriminator"/> keys are).
+/// </summary>
+internal sealed class FusedValueTest
+{
+    public int Condition;
+    public int Entry;
+    public Utf8NameMap<object> Allowed = null!;
 }
 
 /// <summary>One child schema applying to a property on behalf of a branch; a node of -1 covers without evaluation.</summary>
@@ -90,6 +104,9 @@ internal sealed class FusedContributor
 internal sealed class FusedCondition
 {
     public int[] RequiredBits = [];
+
+    /// <summary>Value tests on properties (see <see cref="FusedValueTest"/>); a property that is absent passes its test.</summary>
+    public FusedValueTest[] ValueTests = [];
 }
 
 /// <summary>Builds fused object plans over a compiled node graph.</summary>
@@ -235,7 +252,7 @@ internal static class FusedObjects
 
         foreach (SchemaNode condition in conditions)
         {
-            foreach (byte[] name in condition.RequiredNames!)
+            foreach (byte[] name in condition.RequiredNames ?? [])
             {
                 NameBit(name);
             }
@@ -289,16 +306,40 @@ internal static class FusedObjects
         fused.Contributors = built;
 
         var builtConditions = new FusedCondition[conditions.Count];
+        var valueTestsByEntry = new Dictionary<int, List<FusedValueTest>>();
         for (int i = 0; i < conditions.Count; i++)
         {
-            byte[][] required = conditions[i].RequiredNames!;
+            byte[][] required = conditions[i].RequiredNames ?? [];
             var bits = new int[required.Length];
             for (int j = 0; j < required.Length; j++)
             {
                 bits[j] = NameBit(required[j]);
             }
 
-            builtConditions[i] = new FusedCondition { RequiredBits = bits };
+            var tests = new List<FusedValueTest>();
+            if (conditions[i].Properties is Utf8NameMap<PropertyEntry> testProperties)
+            {
+                foreach (PropertyEntry entry in testProperties.Values)
+                {
+                    if (!entry.Schema.IsPresent)
+                    {
+                        continue;
+                    }
+
+                    // IsSupportedCondition accepted the schema, so its constants all key.
+                    var test = new FusedValueTest { Condition = i, Entry = NameBit(entry.Name), Allowed = new Utf8NameMap<object>(ConstantKeys(nodes[entry.Schema.FastNode])!) };
+                    tests.Add(test);
+                    if (!valueTestsByEntry.TryGetValue(test.Entry, out List<FusedValueTest>? list))
+                    {
+                        list = [];
+                        valueTestsByEntry.Add(test.Entry, list);
+                    }
+
+                    list.Add(test);
+                }
+            }
+
+            builtConditions[i] = new FusedCondition { RequiredBits = bits, ValueTests = [.. tests] };
         }
 
         fused.Conditions = builtConditions;
@@ -345,6 +386,11 @@ internal static class FusedObjects
             }
 
             var fusedEntry = new FusedEntry { Name = name, Index = i, Applications = [.. applications], AnyConditional = anyConditional };
+            if (valueTestsByEntry.TryGetValue(i, out List<FusedValueTest>? entryTests))
+            {
+                fusedEntry.ValueTests = [.. entryTests];
+            }
+
             entries[i] = fusedEntry;
             mapEntries.Add(new KeyValuePair<byte[], FusedEntry>(name, fusedEntry));
         }
@@ -413,13 +459,21 @@ internal static class FusedObjects
                 return !branch.Else.IsPresent || Collect(nodes, nodes[branch.Else.FastNode], condition, polarity, contributors, conditions);
             }
 
-            if (!IsRequiredOnly(test) || conditions.Count >= MaxConditions)
+            if (!IsSupportedCondition(nodes, test) || conditions.Count >= MaxConditions)
             {
                 return false;
             }
 
             int id = conditions.Count;
             conditions.Add(test);
+
+            // When the condition holds, the if schema's own properties count as evaluated (its annotations are
+            // kept), so it contributes under the same condition as then.
+            if (test.Properties is not null && !Collect(nodes, test, id, true, contributors, conditions))
+            {
+                return false;
+            }
+
             if (branch.Then.IsPresent && !Collect(nodes, nodes[branch.Then.FastNode], id, true, contributors, conditions))
             {
                 return false;
@@ -467,13 +521,14 @@ internal static class FusedObjects
     }
 
     /// <summary>An <c>if</c> that is only a <c>required</c> list (and possibly <c>type: object</c>).</summary>
-    private static bool IsRequiredOnly(SchemaNode test)
+    /// <summary>
+    /// A condition the plan can decide from the pass alone: <c>required</c> names, and <c>properties</c> whose
+    /// schemas are constants or enums of strings, canonical integers or booleans (a value test), optionally with
+    /// <c>type: object</c>, which the object plan has already established. At least one of the two must be present.
+    /// </summary>
+    private static bool IsSupportedCondition(SchemaNode[] nodes, SchemaNode test)
     {
-        if (test.RequiredNames is not byte[][] { Length: > 0 })
-        {
-            return false;
-        }
-
+        bool anyTest = test.RequiredNames is byte[][] { Length: > 0 };
         if (test.HasConst || test.Enum is not null || test.HasNumberKeywords || test.HasStringKeywords || test.HasArrayKeywords || test.HasInPlaceApplicators)
         {
             return false;
@@ -494,13 +549,62 @@ internal static class FusedObjects
         {
             foreach (PropertyEntry entry in properties.Values)
             {
-                if (entry.Schema.IsPresent)
+                if (!entry.Schema.IsPresent)
+                {
+                    continue;
+                }
+
+                if (ConstantKeys(nodes[entry.Schema.FastNode]) is null)
                 {
                     return false;
                 }
+
+                anyTest = true;
             }
         }
 
-        return true;
+        return anyTest;
+    }
+
+    /// <summary>
+    /// The tagged keys of a schema that is nothing but a keyable <c>const</c> or <c>enum</c> (plus an optional
+    /// <c>type</c>), or null when the schema is anything else.
+    /// </summary>
+    private static List<KeyValuePair<byte[], object>>? ConstantKeys(SchemaNode schema)
+    {
+        if (schema.HasNumberKeywords || schema.HasStringKeywords || schema.HasObjectKeywords || schema.HasArrayKeywords || schema.HasInPlaceApplicators
+            || schema.UnevaluatedProperties.IsPresent || schema.UnevaluatedItems.IsPresent || schema.AlwaysFalse)
+        {
+            return null;
+        }
+
+        var keys = new List<KeyValuePair<byte[], object>>();
+        if (schema.HasConst)
+        {
+            if (!SchemaCompiler.TryGetDiscriminatorKey(schema.Const, out byte[]? key))
+            {
+                return null;
+            }
+
+            keys.Add(new KeyValuePair<byte[], object>(key!, SchemaCompiler.EnumSentinel));
+        }
+        else if (schema.Enum is ConstantValue[] values && values.Length > 0)
+        {
+            foreach (ConstantValue value in values)
+            {
+                if (!SchemaCompiler.TryGetDiscriminatorKey(value, out byte[]? key))
+                {
+                    return null;
+                }
+
+                keys.Add(new KeyValuePair<byte[], object>(key!, SchemaCompiler.EnumSentinel));
+            }
+        }
+        else
+        {
+            return null;
+        }
+
+        return keys;
     }
 }
