@@ -4,6 +4,7 @@
 
 using System.Buffers;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.RuntimeEvaluator.Compilation;
 
@@ -52,11 +53,11 @@ internal interface IDocumentAccess
     /// <summary>Gets a value indicating whether a string value contains escapes.</summary>
     bool IsEscaped(ref EvaluationState state, IJsonDocument doc, int index);
 
-    /// <summary>Gets the raw property name for a property value index.</summary>
-    ReadOnlyMemory<byte> PropertyNameRawMemory(ref EvaluationState state, IJsonDocument doc, int valueIndex);
-
-    /// <summary>Gets a value indicating whether the property name for a value index contains escapes.</summary>
-    bool PropertyNameIsEscaped(ref EvaluationState state, IJsonDocument doc, int valueIndex);
+    /// <summary>
+    /// Gets the raw (not unescaped) text of the property name for a property value index, and whether it contains
+    /// escapes; when it does, the caller must go through <see cref="GetPropertyName"/> instead.
+    /// </summary>
+    ReadOnlySpan<byte> PropertyNameRaw(ref EvaluationState state, IJsonDocument doc, int valueIndex, out bool escaped);
 
     /// <summary>Gets the index of a container's end row.</summary>
     int EndIndex(ref EvaluationState state, IJsonDocument doc, int containerIndex);
@@ -71,41 +72,74 @@ internal interface IDocumentAccess
     UnescapedUtf8JsonString GetPropertyName(ref EvaluationState state, IJsonDocument doc, int valueIndex);
 }
 
-/// <summary>Direct row access for parsed documents.</summary>
+/// <summary>
+/// Direct row access for parsed documents: the metadata rows and the UTF-8 text are read as spans held in the
+/// <see cref="EvaluationState"/>, one bounds check per field, no <see cref="ReadOnlyMemory{T}"/> round trips.
+/// </summary>
 internal readonly struct RawAccess : IDocumentAccess
 {
-    public JsonTokenType TokenType(ref EvaluationState state, IJsonDocument doc, int index) => state.Raw.GetTokenType(index);
+    private const int RowSize = Evaluator.RowSize;
+    private const int SizeOrLengthOffset = 4;
+    private const int NumberOfRowsOffset = 8;
+    private const int LocationMask = 0x0FFFFFFF;
+    private const uint NumberOfRowsMask = 0x0FFFFFFFU;
 
-    public int Count(ref EvaluationState state, IJsonDocument doc, int index, JsonTokenType tokenType) => state.Raw.GetSizeOrLength(index);
+    public JsonTokenType TokenType(ref EvaluationState state, IJsonDocument doc, int index) => (JsonTokenType)(ReadUInt32(state.RawRows, index + NumberOfRowsOffset) >> 28);
 
-    public ReadOnlySpan<byte> RawValue(ref EvaluationState state, IJsonDocument doc, int index) => state.Raw.GetRawValue(index);
+    public int Count(ref EvaluationState state, IJsonDocument doc, int index, JsonTokenType tokenType) => ReadInt32(state.RawRows, index + SizeOrLengthOffset) & int.MaxValue;
+
+    public ReadOnlySpan<byte> RawValue(ref EvaluationState state, IJsonDocument doc, int index)
+    {
+        ReadOnlySpan<byte> rows = state.RawRows;
+        int location = ReadInt32(rows, index) & LocationMask;
+        int length = ReadInt32(rows, index + SizeOrLengthOffset) & int.MaxValue;
+        return state.RawUtf8.Slice(location, length);
+    }
 
     public ReadOnlyMemory<byte> RawValueMemory(ref EvaluationState state, IJsonDocument doc, int index) => state.Raw.GetRawValueMemory(index);
 
-    public bool IsEscaped(ref EvaluationState state, IJsonDocument doc, int index) => state.Raw.IsEscaped(index);
+    public bool IsEscaped(ref EvaluationState state, IJsonDocument doc, int index) => ReadInt32(state.RawRows, index + SizeOrLengthOffset) < 0;
 
-    public ReadOnlyMemory<byte> PropertyNameRawMemory(ref EvaluationState state, IJsonDocument doc, int valueIndex) => state.Raw.GetRawValueMemory(valueIndex - Evaluator.RowSize);
+    public ReadOnlySpan<byte> PropertyNameRaw(ref EvaluationState state, IJsonDocument doc, int valueIndex, out bool escaped)
+    {
+        ReadOnlySpan<byte> rows = state.RawRows;
+        int nameIndex = valueIndex - RowSize;
+        int location = ReadInt32(rows, nameIndex) & LocationMask;
+        int length = ReadInt32(rows, nameIndex + SizeOrLengthOffset);
+        escaped = length < 0;
+        return state.RawUtf8.Slice(location, length & int.MaxValue);
+    }
 
-    public bool PropertyNameIsEscaped(ref EvaluationState state, IJsonDocument doc, int valueIndex) => state.Raw.PropertyNameIsEscaped(valueIndex);
+    public int EndIndex(ref EvaluationState state, IJsonDocument doc, int containerIndex) => containerIndex + (RowSize * (int)(ReadUInt32(state.RawRows, containerIndex + NumberOfRowsOffset) & NumberOfRowsMask));
 
-    public int EndIndex(ref EvaluationState state, IJsonDocument doc, int containerIndex) => state.Raw.GetEndIndex(containerIndex);
-
-    public int NextIndex(ref EvaluationState state, IJsonDocument doc, int index) => state.Raw.GetNextIndex(index);
+    public int NextIndex(ref EvaluationState state, IJsonDocument doc, int index)
+    {
+        uint union = ReadUInt32(state.RawRows, index + NumberOfRowsOffset);
+        return (union >> 28) >= (uint)JsonTokenType.PropertyName
+            ? index + RowSize
+            : index + (RowSize * (int)(union & NumberOfRowsMask)) + RowSize;
+    }
 
     public UnescapedUtf8JsonString GetString(ref EvaluationState state, IJsonDocument doc, int index)
     {
         // Escaped strings are rare: unescape through the document; otherwise wrap the raw text without renting.
-        return state.Raw.IsEscaped(index)
+        return this.IsEscaped(ref state, doc, index)
             ? doc.GetUtf8JsonString(index, JsonTokenType.String)
             : new UnescapedUtf8JsonString(state.Raw.GetRawValueMemory(index));
     }
 
     public UnescapedUtf8JsonString GetPropertyName(ref EvaluationState state, IJsonDocument doc, int valueIndex)
     {
-        return state.Raw.PropertyNameIsEscaped(valueIndex)
+        return this.IsEscaped(ref state, doc, valueIndex - RowSize)
             ? doc.GetPropertyNameUnescaped(valueIndex)
-            : new UnescapedUtf8JsonString(state.Raw.GetRawValueMemory(valueIndex - Evaluator.RowSize));
+            : new UnescapedUtf8JsonString(state.Raw.GetRawValueMemory(valueIndex - RowSize));
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int ReadInt32(ReadOnlySpan<byte> rows, int offset) => MemoryMarshal.Read<int>(rows.Slice(offset, sizeof(int)));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static uint ReadUInt32(ReadOnlySpan<byte> rows, int offset) => MemoryMarshal.Read<uint>(rows.Slice(offset, sizeof(uint)));
 }
 
 /// <summary>Access through the <see cref="IJsonDocument"/> interface.</summary>
@@ -124,9 +158,11 @@ internal readonly struct InterfaceAccess : IDocumentAccess
 
     public bool IsEscaped(ref EvaluationState state, IJsonDocument doc, int index) => doc.ValueIsEscaped(index, isPropertyName: false);
 
-    public ReadOnlyMemory<byte> PropertyNameRawMemory(ref EvaluationState state, IJsonDocument doc, int valueIndex) => doc.GetPropertyNameRaw(valueIndex, includeQuotes: false);
-
-    public bool PropertyNameIsEscaped(ref EvaluationState state, IJsonDocument doc, int valueIndex) => doc.ValueIsEscaped(valueIndex, isPropertyName: true);
+    public ReadOnlySpan<byte> PropertyNameRaw(ref EvaluationState state, IJsonDocument doc, int valueIndex, out bool escaped)
+    {
+        escaped = doc.ValueIsEscaped(valueIndex, isPropertyName: true);
+        return doc.GetPropertyNameRaw(valueIndex, includeQuotes: false).Span;
+    }
 
     public int EndIndex(ref EvaluationState state, IJsonDocument doc, int containerIndex) => containerIndex + doc.GetDbSize(containerIndex, includeEndElement: false);
 
@@ -157,6 +193,12 @@ internal ref struct EvaluationState
 
     /// <summary>Direct row access to the instance document, when <see cref="RawAccess"/> is in use.</summary>
     public RawDocumentAccess Raw;
+
+    /// <summary>The metadata rows of <see cref="Raw"/>.</summary>
+    public ReadOnlySpan<byte> RawRows;
+
+    /// <summary>The UTF-8 text of <see cref="Raw"/>.</summary>
+    public ReadOnlySpan<byte> RawUtf8;
 
     /// <summary>A throwaway context so that the shared format helpers can be reused.</summary>
     public JsonSchemaContext Scratch;

@@ -39,6 +39,16 @@ public readonly struct RawDocumentAccess
     }
 
     /// <summary>
+    /// Gets the metadata rows: <see cref="RowSize"/> bytes per row, the layout of <see cref="DbRow"/>.
+    /// </summary>
+    internal byte[] Rows => this.rows;
+
+    /// <summary>
+    /// Gets the UTF-8 text the rows index into.
+    /// </summary>
+    internal ReadOnlyMemory<byte> Utf8 => this.utf8;
+
+    /// <summary>
     /// Gets the token type of the element at the index.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

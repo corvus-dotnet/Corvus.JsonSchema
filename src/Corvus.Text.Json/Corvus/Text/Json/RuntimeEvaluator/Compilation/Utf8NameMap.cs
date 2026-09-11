@@ -26,12 +26,10 @@ internal sealed class Utf8NameMap<T>
     private readonly T[] values;
 
     // Per length: the byte position that splits its keys, and a 256-entry table of first candidate + 1 (0 = none).
-    // Candidates sharing a byte chain through `next`.
-    private readonly int[] positionByLength;
-    private readonly int[][] tableByLength;
+    // Candidates sharing a byte chain through `next`. One array of buckets so that a lookup loads one element for
+    // its length: no separate range test, position array and table array.
+    private readonly Bucket[] buckets;
     private readonly int[] next;
-    private readonly int minLength;
-    private readonly int maxLength;
 
     public Utf8NameMap(IReadOnlyList<KeyValuePair<byte[], T>> entries)
     {
@@ -39,25 +37,16 @@ internal sealed class Utf8NameMap<T>
         this.keys = new byte[n][];
         this.values = new T[n];
         this.next = new int[n];
-        this.minLength = int.MaxValue;
-        this.maxLength = 0;
+        int maxLength = 0;
         for (int i = 0; i < n; i++)
         {
             this.keys[i] = entries[i].Key;
             this.values[i] = entries[i].Value;
-            this.minLength = Math.Min(this.minLength, this.keys[i].Length);
-            this.maxLength = Math.Max(this.maxLength, this.keys[i].Length);
+            maxLength = Math.Max(maxLength, this.keys[i].Length);
         }
 
-        if (n == 0)
-        {
-            this.minLength = 0;
-            this.maxLength = -1;
-        }
-
-        int lengths = Math.Max(0, this.maxLength + 1);
-        this.positionByLength = new int[lengths];
-        this.tableByLength = new int[lengths][];
+        int lengths = n == 0 ? 0 : maxLength + 1;
+        this.buckets = new Bucket[lengths];
         var byLength = new List<int>?[lengths];
         for (int i = 0; i < n; i++)
         {
@@ -100,7 +89,6 @@ internal sealed class Utf8NameMap<T>
             }
 
             int[] table = new int[256];
-            this.positionByLength[length] = bestPosition;
             for (int g = group.Count - 1; g >= 0; g--)
             {
                 int i = group[g];
@@ -109,7 +97,7 @@ internal sealed class Utf8NameMap<T>
                 table[b] = i + 1;
             }
 
-            this.tableByLength[length] = table;
+            this.buckets[length] = new Bucket(bestPosition, table);
         }
     }
 
@@ -123,20 +111,22 @@ internal sealed class Utf8NameMap<T>
     public bool TryGetValue(ReadOnlySpan<byte> key, [NotNullWhen(true)] out T? value)
     {
         int length = key.Length;
-        if (length < this.minLength || length > this.maxLength)
+        Bucket[] buckets = this.buckets;
+        if ((uint)length >= (uint)buckets.Length)
         {
             value = null;
             return false;
         }
 
-        int[]? table = this.tableByLength[length];
+        Bucket bucket = buckets[length];
+        int[]? table = bucket.Table;
         if (table is null)
         {
             value = null;
             return false;
         }
 
-        int slot = table[length == 0 ? 0 : key[this.positionByLength[length]]];
+        int slot = table[length == 0 ? 0 : key[bucket.Position]];
         while (slot != 0)
         {
             int i = slot - 1;
@@ -151,5 +141,11 @@ internal sealed class Utf8NameMap<T>
 
         value = null;
         return false;
+    }
+
+    private readonly struct Bucket(int position, int[] table)
+    {
+        public readonly int Position = position;
+        public readonly int[] Table = table;
     }
 }

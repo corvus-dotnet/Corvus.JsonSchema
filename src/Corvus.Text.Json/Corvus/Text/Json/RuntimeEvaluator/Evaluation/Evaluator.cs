@@ -48,6 +48,12 @@ internal static partial class Evaluator
         {
             SchemaNode root = nodes[rootNode];
             bool raw = document is JsonDocument jsonDocument && jsonDocument.TryGetRawAccess(out state.Raw);
+            if (raw)
+            {
+                state.RawRows = state.Raw.Rows;
+                state.RawUtf8 = state.Raw.Utf8.Span;
+            }
+
             if (collector is null)
             {
                 return raw
@@ -495,58 +501,23 @@ internal static partial class Evaluator
             int end = default(TAccess).EndIndex(ref state, doc, index);
             for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex) + RowSize, ordinal++)
             {
-                bool cover = false;
-                bool defer = false;
-                int entryIndex = -1;
-                using (UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex))
+                ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRaw(ref state, doc, valueIndex, out bool escaped);
+                bool cover;
+                bool defer;
+                int entryIndex;
+                if (!escaped)
                 {
-                    ReadOnlySpan<byte> nameSpan = name.Span;
-                    if (f.Entries.TryGetValue(nameSpan, out FusedEntry? entry))
+                    if (!ApplyFusedName<TAccess>(f, raw, doc, valueIndex, ref state, seen, failed, out cover, out defer, out entryIndex))
                     {
-                        seen[entry.Index >> 6] |= 1UL << (entry.Index & 63);
-                        entryIndex = entry.Index;
-                        if (entry.ValueTests.Length > 0)
-                        {
-                            ApplyValueTests<TAccess>(entry.ValueTests, ref state, doc, valueIndex, failed);
-                        }
-
-                        FusedApplication[] applications = entry.Applications;
-                        for (int a = 0; a < applications.Length; a++)
-                        {
-                            FusedApplication app = applications[a];
-                            if (contributors[app.Contributor].Condition < 0)
-                            {
-                                if (app.Node >= 0 && !EvalChildFast<TAccess>(nodes[app.Node], doc, valueIndex, ref state))
-                                {
-                                    return false;
-                                }
-
-                                cover = true;
-                            }
-                            else
-                            {
-                                defer = true;
-                            }
-                        }
+                        return false;
                     }
-                    else if (f.ResolvesUnknownNames)
+                }
+                else
+                {
+                    using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
+                    if (!ApplyFusedName<TAccess>(f, name.Span, doc, valueIndex, ref state, seen, failed, out cover, out defer, out entryIndex))
                     {
-                        for (int c = 0; c < contributors.Length; c++)
-                        {
-                            FusedContributor contributor = contributors[c];
-                            if (contributor.Condition >= 0)
-                            {
-                                defer |= contributor.Patterns is not null || contributor.AdditionalNode >= 0 || contributor.AdditionalCoversOnly;
-                                continue;
-                            }
-
-                            if (!ResolveUnknownName<TAccess>(contributor, nameSpan, nodes, doc, valueIndex, ref state, out bool matched))
-                            {
-                                return false;
-                            }
-
-                            cover |= matched;
-                        }
+                        return false;
                     }
                 }
 
@@ -735,6 +706,70 @@ internal static partial class Evaluator
                 ArrayPool<int>.Shared.Return(rentedDeferred);
             }
         }
+    }
+
+    /// <summary>
+    /// The per-property step of <see cref="EvalFusedObject{TAccess}"/>: applies every unconditional resolution of the
+    /// name now and notes whether a conditional one is pending. Returns <see langword="false"/> when a child failed.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool ApplyFusedName<TAccess>(FusedObject f, scoped ReadOnlySpan<byte> nameSpan, IJsonDocument doc, int valueIndex, ref EvaluationState state, scoped Span<ulong> seen, scoped Span<bool> failed, out bool cover, out bool defer, out int entryIndex)
+        where TAccess : struct, IDocumentAccess
+    {
+        SchemaNode[] nodes = state.Nodes;
+        FusedContributor[] contributors = f.Contributors;
+        cover = false;
+        defer = false;
+        entryIndex = -1;
+        if (f.Entries.TryGetValue(nameSpan, out FusedEntry? entry))
+        {
+            seen[entry.Index >> 6] |= 1UL << (entry.Index & 63);
+            entryIndex = entry.Index;
+            if (entry.ValueTests.Length > 0)
+            {
+                ApplyValueTests<TAccess>(entry.ValueTests, ref state, doc, valueIndex, failed);
+            }
+
+            FusedApplication[] applications = entry.Applications;
+            for (int a = 0; a < applications.Length; a++)
+            {
+                FusedApplication app = applications[a];
+                if (contributors[app.Contributor].Condition < 0)
+                {
+                    if (app.Node >= 0 && !EvalChildFast<TAccess>(nodes[app.Node], doc, valueIndex, ref state))
+                    {
+                        return false;
+                    }
+
+                    cover = true;
+                }
+                else
+                {
+                    defer = true;
+                }
+            }
+        }
+        else if (f.ResolvesUnknownNames)
+        {
+            for (int c = 0; c < contributors.Length; c++)
+            {
+                FusedContributor contributor = contributors[c];
+                if (contributor.Condition >= 0)
+                {
+                    defer |= contributor.Patterns is not null || contributor.AdditionalNode >= 0 || contributor.AdditionalCoversOnly;
+                    continue;
+                }
+
+                if (!ResolveUnknownName<TAccess>(contributor, nameSpan, nodes, doc, valueIndex, ref state, out bool matched))
+                {
+                    return false;
+                }
+
+                cover |= matched;
+            }
+        }
+
+        return true;
     }
 
     /// <summary>
@@ -929,9 +964,10 @@ internal static partial class Evaluator
             int end = default(TAccess).EndIndex(ref state, doc, index);
             for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex) + RowSize)
             {
-                if (!default(TAccess).PropertyNameIsEscaped(ref state, doc, valueIndex))
+                ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRaw(ref state, doc, valueIndex, out bool escaped);
+                if (!escaped)
                 {
-                    if (!EvalObjectPlanProperty<TAccess>(properties, patternProperties, additional, default(TAccess).PropertyNameRawMemory(ref state, doc, valueIndex).Span, doc, valueIndex, ref state, seen))
+                    if (!EvalObjectPlanProperty<TAccess>(properties, patternProperties, additional, raw, doc, valueIndex, ref state, seen))
                     {
                         return false;
                     }
@@ -1835,9 +1871,10 @@ internal static partial class Evaluator
         for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex) + RowSize)
         {
             int match;
-            if (!default(TAccess).PropertyNameIsEscaped(ref state, doc, valueIndex))
+            ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRaw(ref state, doc, valueIndex, out bool escaped);
+            if (!escaped)
             {
-                match = FindEntry(entries, default(TAccess).PropertyNameRawMemory(ref state, doc, valueIndex).Span);
+                match = FindEntry(entries, raw);
             }
             else
             {
@@ -1891,9 +1928,9 @@ internal static partial class Evaluator
         int end = default(TAccess).EndIndex(ref state, doc, index);
         for (int candidate = index + (2 * RowSize); candidate - RowSize < end; candidate = default(TAccess).NextIndex(ref state, doc, candidate) + RowSize)
         {
-            if (!default(TAccess).PropertyNameIsEscaped(ref state, doc, candidate))
+            ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRaw(ref state, doc, candidate, out bool escaped);
+            if (!escaped)
             {
-                ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRawMemory(ref state, doc, candidate).Span;
                 if (raw.Length == name.Length && raw.SequenceEqual(name))
                 {
                     valueIndex = candidate;
