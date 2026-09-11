@@ -30,6 +30,41 @@ internal static partial class Evaluator
 
     public static bool Evaluate(CompiledSchema program, int rootNode, IJsonDocument document, int index, IJsonSchemaResultsCollector? collector)
     {
+        // Flag mode over a parsed document without a dynamic scope needs no scope buffer and nothing to release:
+        // the common call, kept free of the stack allocation and the try/finally the general entry carries.
+        if (collector is null && !program.UsesDynamicScope && document is JsonDocument parsed && parsed.TryGetRawAccess(out RawDocumentAccess rawAccess))
+        {
+            return EvaluateFlagRaw(program, rootNode, document, index, rawAccess);
+        }
+
+        return EvaluateGeneral(program, rootNode, document, index, collector);
+    }
+
+    private static bool EvaluateFlagRaw(CompiledSchema program, int rootNode, IJsonDocument document, int index, in RawDocumentAccess raw)
+    {
+        SchemaNode[] nodes = program.Nodes;
+        SchemaNode root = nodes[rootNode];
+        var state = new EvaluationState
+        {
+            Program = program,
+            Nodes = nodes,
+            MaxDepth = program.Options.MaxDepth,
+            EntryResource = root.ResourceId,
+            Raw = raw,
+            RawRows = raw.Rows,
+            RawUtf8 = raw.Utf8.Span,
+        };
+
+        if (root.ElidedTarget >= 0)
+        {
+            root = nodes[root.ElidedTarget];
+        }
+
+        return EvalChildFast<RawAccess>(root, document, index, ref state);
+    }
+
+    private static bool EvaluateGeneral(CompiledSchema program, int rootNode, IJsonDocument document, int index, IJsonSchemaResultsCollector? collector)
+    {
         Span<int> scope = stackalloc int[32];
         SchemaNode[] nodes = program.Nodes;
         var state = new EvaluationState
