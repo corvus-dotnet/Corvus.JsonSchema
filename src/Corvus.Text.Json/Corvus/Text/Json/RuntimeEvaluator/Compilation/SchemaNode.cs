@@ -475,6 +475,16 @@ internal sealed class DynamicRefTarget
     /// <summary>Resource id to node id. Indexed by resource id; -1 where the resource has no such anchor.</summary>
     public int[] NodeByResource = [];
 
+    /// <summary>
+    /// When every entry point that can reach the reference starts in a resource that defines the anchor, the
+    /// outermost scope decides on every path and the target is a function of the entry resource alone: this table,
+    /// indexed by entry resource id, gives it, and the evaluator keeps no dynamic scope for the reference.
+    /// </summary>
+    public int[]? NodeByEntryResource;
+
+    /// <summary>Gets a value indicating whether the reference needs the dynamic scope at evaluation time.</summary>
+    public bool NeedsScope => this.NodeByEntryResource is null;
+
     public byte[] PathSegment = [];
 
     public bool IsRecursive;
@@ -756,6 +766,62 @@ internal sealed class SchemaNode
 
     // annotations
     public AnnotationEntry[]? Annotations;
+
+    /// <summary>
+    /// Adds every child node to a list: the in-place applicators (with every candidate of a dynamic reference),
+    /// the property, item and dependency schemas, and the remaining single-schema keywords.
+    /// </summary>
+    public void CollectChildren(List<int> into)
+    {
+        into.AddRange(this.InPlaceChildren(includeNot: true));
+
+        if (this.Properties is not null)
+        {
+            foreach (PropertyEntry e in this.Properties.Values)
+            {
+                Add(into, e.Schema);
+            }
+        }
+
+        if (this.PatternProperties is not null)
+        {
+            foreach (PatternPropertyEntry e in this.PatternProperties)
+            {
+                Add(into, e.Schema);
+            }
+        }
+
+        if (this.Dependencies is not null)
+        {
+            foreach (DependencyEntry e in this.Dependencies)
+            {
+                Add(into, e.Schema);
+            }
+        }
+
+        if (this.PrefixItems is not null)
+        {
+            foreach (ChildRef c in this.PrefixItems)
+            {
+                Add(into, c);
+            }
+        }
+
+        Add(into, this.AdditionalProperties);
+        Add(into, this.PropertyNames);
+        Add(into, this.UnevaluatedProperties);
+        Add(into, this.Items);
+        Add(into, this.Contains);
+        Add(into, this.UnevaluatedItems);
+
+        static void Add(List<int> into, in ChildRef c)
+        {
+            if (c.IsPresent)
+            {
+                into.Add(c.Node);
+            }
+        }
+    }
 
     /// <summary>
     /// Enumerates the in-place applicator children (those applied to the same instance).

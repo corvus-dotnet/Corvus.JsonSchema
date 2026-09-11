@@ -118,7 +118,7 @@ public class FusedObjectTests
         using JsonSchemaEvaluator ifValue = JsonSchemaEvaluator.Compile("""{"if": {"properties": {"kind": {"const": "a"}}}, "then": {"required": ["x"]}}""");
         Assert.AreNotEqual(NodePlan.FusedObject, ifValue.Program.Nodes[ifValue.RootNode].Plan);
 
-        // A live dynamic scope disables fusion for the whole program.
+        // A live dynamic scope reachable from the node disables fusion for that node.
         using JsonSchemaEvaluator dynamic = JsonSchemaEvaluator.Compile("""
             {
               "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -133,5 +133,48 @@ public class FusedObjectTests
             """);
         Assert.IsTrue(dynamic.UsesDynamicScope);
         Assert.AreNotEqual(NodePlan.FusedObject, dynamic.Program.Nodes[dynamic.RootNode].Plan);
+    }
+
+    [TestMethod]
+    public void ADynamicReferenceElsewhereInTheProgramDoesNotBlockFusion()
+    {
+        // A generated program compiles every schema of a compilation as one program with an entry point per type. A
+        // live $dynamicRef in one schema must not cost the fused plan in an unrelated one.
+        const string program = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "$id": "https://example.com/program",
+              "$defs": {
+                "fusable": {
+                  "allOf": [
+                    {"properties": {"id": {"type": "integer"}, "name": {"type": "string"}}},
+                    {"if": {"required": ["active"]}, "then": {"properties": {"active": {"type": "boolean"}}}}
+                  ],
+                  "unevaluatedProperties": false
+                },
+                "dynamic": {
+                  "$id": "dynamic",
+                  "$ref": "a",
+                  "$defs": {
+                    "a": {"$id": "a", "$dynamicAnchor": "items", "$ref": "b"},
+                    "b": {"$id": "b", "$dynamicAnchor": "items", "type": "array", "items": {"$dynamicRef": "#items"}}
+                  }
+                }
+              }
+            }
+            """;
+        using JsonSchemaEvaluator root = JsonSchemaEvaluator.Compile(System.Text.Encoding.UTF8.GetBytes(program), "#/$defs/fusable");
+        root.RegisterEntryPoints(["#/$defs/dynamic"]);
+        Assert.IsTrue(root.UsesDynamicScope, "The dynamic schema keeps its dynamic scope.");
+        Assert.AreEqual(NodePlan.FusedObject, root.Program.Nodes[root.RootNode].Plan, "The unrelated schema still fuses.");
+
+        JsonSchemaEvaluator fusable = root.ForEntryPoint("#/$defs/fusable");
+        Assert.IsTrue(fusable.Evaluate("""{"id": 1, "name": "n", "active": true}"""));
+        Assert.IsFalse(fusable.Evaluate("""{"id": 1, "other": true}"""));
+        Assert.IsFalse(fusable.Evaluate("""{"active": "no"}"""));
+
+        JsonSchemaEvaluator dynamic = root.ForEntryPoint("#/$defs/dynamic");
+        Assert.IsTrue(dynamic.Evaluate("[[], [[]]]"));
+        Assert.IsFalse(dynamic.Evaluate("[1]"));
     }
 }

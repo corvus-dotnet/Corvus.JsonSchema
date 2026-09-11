@@ -38,7 +38,7 @@ namespace Corvus.Text.Json.RuntimeEvaluator.Compilation;
 internal static class ProgramImage
 {
     private const uint Magic = 0x50534A43; // "CJSP" little-endian
-    private const int Version = 4;
+    private const int Version = 5;
 
     /// <summary>Writes the program to an image.</summary>
     public static byte[] Write(CompiledSchema program)
@@ -437,6 +437,7 @@ internal static class ProgramImage
             w.WriteString(dynamicRef.Anchor);
             w.WriteInt(dynamicRef.FallbackNode);
             WriteInts(ref w, dynamicRef.NodeByResource);
+            WriteInts(ref w, dynamicRef.NodeByEntryResource);
             w.WriteBytes(dynamicRef.PathSegment);
             w.WriteBool(dynamicRef.IsRecursive);
             }
@@ -746,6 +747,7 @@ internal static class ProgramImage
                 Anchor = r.ReadString()!,
                 FallbackNode = r.ReadInt(),
                 NodeByResource = ReadInts(ref r) ?? [],
+                NodeByEntryResource = ReadInts(ref r),
                 PathSegment = r.ReadBytes() ?? [],
                 IsRecursive = r.ReadBool(),
             };

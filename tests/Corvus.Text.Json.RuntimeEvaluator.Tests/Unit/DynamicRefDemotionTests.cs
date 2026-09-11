@@ -61,11 +61,11 @@ public class DynamicRefDemotionTests
     }
 
     [TestMethod]
-    public void TwoEntriesWithDifferentTargetsStayDynamic()
+    public void TwoEntriesWithDifferentTargetsResolveByEntryResource()
     {
         using JsonSchemaEvaluator root = JsonSchemaEvaluator.Compile(StrictTree);
         using JsonSchemaEvaluator tree = root.ForEntryPoint("#/$defs/tree");
-        Assert.IsTrue(root.UsesDynamicScope, "Two entry resources resolve the anchor to different nodes, so the reference must stay dynamic.");
+        Assert.IsFalse(root.UsesDynamicScope, "Both entry resources define the anchor, so the entry resource alone decides and no scope is kept.");
         Assert.IsFalse(root.Evaluate("""{"data": 1, "children": [{"data": 2, "extra": true}]}"""));
         Assert.IsTrue(tree.Evaluate("""{"data": 1, "children": [{"data": 2, "extra": true}]}"""));
     }
@@ -86,5 +86,43 @@ public class DynamicRefDemotionTests
             """;
         using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(schema);
         Assert.IsTrue(evaluator.UsesDynamicScope, "The entry resource has no anchor, so the scope decides at evaluation time.");
+    }
+
+    [TestMethod]
+    public void EntryPointsThatCannotReachTheReferenceDoNotBlockDemotion()
+    {
+        // A generated program registers an entry point per type; entries whose resource never defines the anchor
+        // are irrelevant to a $dynamicRef they cannot reach.
+        const string program = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "$id": "https://example.com/program",
+              "$defs": {
+                "plain": {"type": "string"},
+                "tree": {
+                  "$id": "https://example.com/strict-tree",
+                  "$dynamicAnchor": "node",
+                  "$ref": "tree",
+                  "unevaluatedProperties": false,
+                  "$defs": {
+                    "tree": {
+                      "$id": "tree",
+                      "$dynamicAnchor": "node",
+                      "type": "object",
+                      "properties": { "data": true, "children": { "type": "array", "items": { "$dynamicRef": "#node" } } }
+                    }
+                  }
+                }
+              }
+            }
+            """;
+        using JsonSchemaEvaluator root = JsonSchemaEvaluator.Compile(System.Text.Encoding.UTF8.GetBytes(program), "#/$defs/tree");
+        root.RegisterEntryPoints(["#/$defs/plain"]);
+        Assert.IsFalse(root.UsesDynamicScope, "Only the strict-tree entry reaches the reference, and its resource defines the anchor.");
+
+        JsonSchemaEvaluator tree = root.ForEntryPoint("#/$defs/tree");
+        Assert.IsTrue(tree.Evaluate("""{"data": 1, "children": [{"data": 2, "children": [{"data": 3}]}]}"""));
+        Assert.IsFalse(tree.Evaluate("""{"data": 1, "children": [{"data": 2, "extra": true}]}"""), "The outer scope's unevaluatedProperties applies at every level.");
+        Assert.IsTrue(root.ForEntryPoint("#/$defs/plain").Evaluate("\"s\""));
     }
 }

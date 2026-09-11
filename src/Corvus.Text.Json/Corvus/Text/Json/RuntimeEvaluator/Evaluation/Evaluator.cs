@@ -41,6 +41,7 @@ internal static class Evaluator
             ScopeDepth = 0,
             MaxDepth = program.Options.MaxDepth,
             UsesDynamicScope = program.UsesDynamicScope,
+            EntryResource = nodes[rootNode].ResourceId,
         };
 
         try
@@ -891,6 +892,33 @@ internal static class Evaluator
     }
 
     /// <summary>
+    /// Resolves a dynamic reference: by the entry resource alone when the compiler proved that decides it, otherwise
+    /// by the dynamic scope, outermost resource first, falling back to the initial target.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int ResolveDynamicRef(DynamicRefTarget dynamicRef, ref EvaluationState state)
+    {
+        if (dynamicRef.NodeByEntryResource is int[] byEntry)
+        {
+            int resolved = byEntry[state.EntryResource];
+            return resolved >= 0 ? resolved : dynamicRef.FallbackNode;
+        }
+
+        int[] table = dynamicRef.NodeByResource;
+        Span<int> scope = state.Scope[..state.ScopeDepth];
+        for (int i = 0; i < scope.Length; i++)
+        {
+            int candidate = table[scope[i]];
+            if (candidate >= 0)
+            {
+                return candidate;
+            }
+        }
+
+        return dynamicRef.FallbackNode;
+    }
+
+    /// <summary>
     /// <see cref="NodePlan.DynamicRef"/>: resolves the anchor against the dynamic scope (outermost resource first)
     /// and dispatches straight to the target's plan. Targets on an in-place cycle keep the general path so that the
     /// runaway guard still applies.
@@ -899,24 +927,7 @@ internal static class Evaluator
         where TAccess : struct, IDocumentAccess
     {
         DynamicRefTarget dynamicRef = node.DynamicRef!;
-        int targetNode = -1;
-        int[] table = dynamicRef.NodeByResource;
-        Span<int> scope = state.Scope[..state.ScopeDepth];
-        for (int i = 0; i < scope.Length; i++)
-        {
-            int candidate = table[scope[i]];
-            if (candidate >= 0)
-            {
-                targetNode = candidate;
-                break;
-            }
-        }
-
-        if (targetNode < 0)
-        {
-            targetNode = dynamicRef.FallbackNode;
-        }
-
+        int targetNode = ResolveDynamicRef(dynamicRef, ref state);
         SchemaNode target = state.Nodes[targetNode];
         if ((target.Flags & NodeFlags.InPlaceCycle) != 0)
         {
@@ -2501,24 +2512,7 @@ internal static class Evaluator
 
         if (node.DynamicRef is DynamicRefTarget dynamicRef)
         {
-            int targetNode = -1;
-            int[] table = dynamicRef.NodeByResource;
-            Span<int> scope = state.Scope[..state.ScopeDepth];
-            for (int i = 0; i < scope.Length; i++)
-            {
-                int candidate = table[scope[i]];
-                if (candidate >= 0)
-                {
-                    targetNode = candidate;
-                    break;
-                }
-            }
-
-            if (targetNode < 0)
-            {
-                targetNode = dynamicRef.FallbackNode;
-            }
-
+            int targetNode = ResolveDynamicRef(dynamicRef, ref state);
             var child = new ChildRef(targetNode, dynamicRef.PathSegment);
             bool m = EvalInPlaceChild<TMode, TAccess>(child, doc, index, ref state, evaluated, seq);
             if (default(TMode).Collecting)

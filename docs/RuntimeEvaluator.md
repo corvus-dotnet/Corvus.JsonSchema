@@ -41,10 +41,16 @@ embeds the standard metaschemas from its `metaschema` folder.
    initial target carries the matching `$dynamicAnchor` (or `$recursiveAnchor: true`) is the reference
    dynamic: a table `resourceId -> nodeId` is built over all loaded resources (iterated to a fixpoint, since
    compiling candidates may load more documents). If only one resource defines the anchor, the reference is
-   demoted to a static `$ref`. So is a reference whose anchor every entry resource defines with the same target:
-   the scope is searched outermost-first and its outermost entry is always the resource evaluation started in, so
-   that target is the answer on every path (the strict-tree shape). If no dynamic references remain the engine
-   never maintains a dynamic scope at all (`UsesDynamicScope == false`).
+   demoted to a static `$ref`. So is a reference whose anchor every entry resource that can reach it defines with
+   the same target: the scope is searched outermost-first and its outermost entry is always the resource evaluation
+   started in, so that target is the answer on every path (the strict-tree shape). Entries that cannot reach the
+   reference never evaluate it, so a program with an entry point per generated type is judged per reference, not as
+   a whole. When every reaching entry resource defines the anchor but with different targets (the strict-tree shape
+   with an entry point inside the inner resource too), the outermost scope still decides on every path, so the
+   target is a function of the entry resource alone: the reference keeps a table indexed by entry resource
+   (`DynamicRefTarget.NodeByEntryResource`) and the evaluator resolves it from the resource evaluation started in,
+   with no scope maintenance. Only references that some reaching entry resource cannot decide keep the dynamic
+   scope; if none remain the engine never maintains one (`UsesDynamicScope == false`).
 5. **Unevaluated tracking**: nodes with `unevaluatedProperties`/`unevaluatedItems` are marked, and the mark
    is propagated to every in-place applicator descendant (excluding `not`) so that only those nodes pay for
    evaluated-bit bookkeeping.

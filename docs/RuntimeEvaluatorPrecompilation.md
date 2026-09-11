@@ -278,9 +278,24 @@ running the whole JSON Schema Test Suite in collecting mode (the general path) a
 * **Static `$dynamicRef` when every entry resource defines the anchor** with the same target. The scope is searched
   outermost-first and its outermost entry is always the resource evaluation started in, so the target is the answer
   on every path; programs with no remaining dynamic references keep no scope at all. This is re-applied as entry points
-  are added, and two entries that resolve differently keep the reference dynamic, which is why a generated program
-  that registers an entry for every type, including the sub-resource, does not get it for the strict-tree micro case
-  (its typed column stays at the general-path figure).
+  are added, and only the entries that can reach the reference count: a generated program registers an entry for every
+  type, and entries whose resource never defines the anchor cannot block a reference they never evaluate. Two
+  reachable entries that resolve differently make the reference entry-resolved rather than dynamic: since each
+  entry's resource is the outermost scope on every path, the target is a function of the entry resource, kept as a
+  table on the reference and read once at evaluation with no scope maintenance (image version 5). Only a reaching
+  entry whose resource lacks the anchor keeps the scope. This is what makes the strict-tree micro case as fast
+  generated (entry points in both resources) as through the API (one entry).
+
+Generated code against the API, measured on the micro cases with both fixes in (typed generated model, generated
+standalone evaluator, runtime API; quiet box, minimum of 40 rounds): object 153/154/152 ns, array 617/549/563,
+string 182/171/171, unevaluated 138/132/128, dynamic reference 274/263/233, verbose 1.59/1.60/1.63 µs. The one
+remaining gap, oneOf (110/77/72), is not the program: the program over the plain document matches the API, and the
+API over the oneOf model's own `ParsedJsonDocument<MicroOneOf>` costs the same as the generated call. The extra cost
+follows the document's class, not the schema (the object schema over that document is slower too, and the oneOf
+schema over the object model's document is not), which is the JIT's guarded devirtualisation of the interface calls
+the raw-access path still makes: in one process that mostly evaluates `ParsedJsonDocument<JsonElement>`, a rarely
+seen document class misses the guard and pays the virtual call. Removing those calls from the raw-access path would
+close it for every document class.
 * **Fused object plan** (`FusedObjects`, `NodePlan.FusedObject`) for a node with `unevaluatedProperties` whose object
   semantics spread over `allOf`, `$ref` and `if`/`then`/`else` with required-only conditions: every property name any
   branch knows is resolved at compile time to the child schemas that apply (own property, matching pattern
@@ -288,7 +303,10 @@ running the whole JSON Schema Test Suite in collecting mode (the general path) a
   branches are deferred to a second step over the properties they touched, and the coverage bits feed the unevaluated
   check directly. It is restricted to nodes with `unevaluatedProperties` because there the pass over every instance
   property is unavoidable; fusing branches without it doubled cmake-presets (large instances, small branches, where
-  the general path's schema-driven unrolled lookups win).
+  the general path's schema-driven unrolled lookups win). A fused plan applies its contributors' keywords without
+  entering them as nodes, so it is withheld only from nodes that can reach a live dynamic reference; the guard was
+  program-wide at first, which cost every schema in a generated program its fused plans as soon as one schema in the
+  compilation used `$dynamicRef` (the unevaluated micro case ran four times slower generated than through the API).
 
 Micro cases after fusion (quiet-ish machine, ratio is engine after / engine before):
 

@@ -194,7 +194,7 @@ internal sealed class SchemaCompiler
     private readonly List<PendingDynamicRef> pendingDynamicRefs = [];
 
     // The resources evaluation can start in: the dynamic scope's outermost entry is always one of these.
-    private readonly HashSet<int> entryResourceIds = [];
+    private readonly HashSet<int> entryNodeIds = [];
 
     private SchemaCompiler(SchemaLoader loader, JsonSchemaEvaluatorOptions options)
     {
@@ -281,8 +281,9 @@ internal sealed class SchemaCompiler
             }
         }
 
-        this.entryResourceIds.Add(entry.Resource.Id);
-        return this.GetNode(entry);
+        int node = this.GetNode(entry);
+        this.entryNodeIds.Add(node);
+        return node;
     }
 
     private void ComputeUsesDynamicScope()
@@ -290,7 +291,7 @@ internal sealed class SchemaCompiler
         bool usesDynamicScope = false;
         foreach (SchemaNode n in this.nodes)
         {
-            usesDynamicScope |= n.DynamicRef is not null;
+            usesDynamicScope |= n.DynamicRef is { NeedsScope: true };
         }
 
         this.UsesDynamicScope = usesDynamicScope;
@@ -510,7 +511,7 @@ internal sealed class SchemaCompiler
         bool usesDynamicScope = false;
         foreach (SchemaNode n in this.nodes)
         {
-            usesDynamicScope |= n.DynamicRef is not null;
+            usesDynamicScope |= n.DynamicRef is { NeedsScope: true };
         }
 
         int Resolve(int id, out int hops)
@@ -927,6 +928,7 @@ internal sealed class SchemaCompiler
     private void FinalizeDynamicRefs()
     {
         int resourceCount = this.loader.Resources.Count;
+        Dictionary<int, bool[]>? reachableFromEntry = null;
         foreach (PendingDynamicRef pending in this.pendingDynamicRefs)
         {
             SchemaNode node = this.nodes[pending.NodeId];
@@ -941,9 +943,12 @@ internal sealed class SchemaCompiler
             }
 
             // The dynamic scope is searched outermost-first and its outermost entry is always the resource evaluation
-            // started in. When every entry resource defines the anchor, and with the same target, that target is the
-            // answer on every path, so the reference is static after all (the strict-tree shape).
-            if (this.TryGetUniformEntryTarget(pending, out int uniform))
+            // started in. When every entry resource that can reach this reference defines the anchor, and with the
+            // same target, that target is the answer on every path, so the reference is static after all (the
+            // strict-tree shape). Entries that cannot reach it never evaluate it, so a program with many entry points
+            // (one per generated type) is judged per reference, not as a whole.
+            reachableFromEntry ??= this.ComputeReachabilityFromEntries();
+            if (this.TryGetUniformEntryTarget(pending, reachableFromEntry, out int uniform))
             {
                 node.Ref = new ChildRef(uniform, pending.PathSegment);
                 node.DynamicRef = null;
@@ -969,6 +974,7 @@ internal sealed class SchemaCompiler
                 Anchor = pending.Anchor,
                 FallbackNode = fallback,
                 NodeByResource = table,
+                NodeByEntryResource = this.TryGetEntryResolvedTable(pending, reachableFromEntry, resourceCount),
                 PathSegment = pending.PathSegment,
                 IsRecursive = pending.IsRecursive,
             };
@@ -984,16 +990,119 @@ internal sealed class SchemaCompiler
         }
     }
 
-    private bool TryGetUniformEntryTarget(PendingDynamicRef pending, out int target)
+    /// <summary>
+    /// Computes, for each entry node, the set of nodes reachable from it through any child, counting every candidate
+    /// of a dynamic reference (finalised or still pending) as a child.
+    /// </summary>
+    private Dictionary<int, bool[]> ComputeReachabilityFromEntries()
     {
-        target = -1;
-        if (this.entryResourceIds.Count == 0)
+        var pendingChildren = new Dictionary<int, List<int>>();
+        foreach (PendingDynamicRef pending in this.pendingDynamicRefs)
         {
-            return false;
+            if (!pendingChildren.TryGetValue(pending.NodeId, out List<int>? list))
+            {
+                list = [];
+                pendingChildren.Add(pending.NodeId, list);
+            }
+
+            list.Add(this.GetNode(pending.InitialTarget));
+            foreach ((int _, int nodeId) in pending.Candidates)
+            {
+                list.Add(nodeId);
+            }
         }
 
-        foreach (int entryResource in this.entryResourceIds)
+        var result = new Dictionary<int, bool[]>();
+        var stack = new Stack<int>();
+        var children = new List<int>();
+        foreach (int entry in this.entryNodeIds)
         {
+            bool[] reached = new bool[this.nodes.Count];
+            reached[entry] = true;
+            stack.Push(entry);
+            while (stack.Count > 0)
+            {
+                int id = stack.Pop();
+                children.Clear();
+                this.nodes[id].CollectChildren(children);
+                if (pendingChildren.TryGetValue(id, out List<int>? extra))
+                {
+                    children.AddRange(extra);
+                }
+
+                foreach (int child in children)
+                {
+                    if (!reached[child])
+                    {
+                        reached[child] = true;
+                        stack.Push(child);
+                    }
+                }
+            }
+
+            result[entry] = reached;
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// When every entry that can reach the reference starts in a resource that defines the anchor, the outermost
+    /// scope decides on every path, so the target depends on the entry resource alone (the strict-tree shape with an
+    /// entry point per generated type, including one in the inner resource). Returns the table indexed by entry
+    /// resource id, or null when some reaching entry's resource lacks the anchor and the scope must be kept.
+    /// </summary>
+    private int[]? TryGetEntryResolvedTable(PendingDynamicRef pending, Dictionary<int, bool[]> reachableFromEntry, int resourceCount)
+    {
+        int[]? table = null;
+        foreach (KeyValuePair<int, bool[]> entry in reachableFromEntry)
+        {
+            if (!entry.Value[pending.NodeId])
+            {
+                continue;
+            }
+
+            int entryResource = this.nodes[entry.Key].ResourceId;
+            int candidate = -1;
+            foreach ((int resourceId, int nodeId) in pending.Candidates)
+            {
+                if (resourceId == entryResource)
+                {
+                    candidate = nodeId;
+                    break;
+                }
+            }
+
+            if (candidate < 0)
+            {
+                return null;
+            }
+
+            if (table is null)
+            {
+                table = new int[resourceCount];
+                table.AsSpan().Fill(-1);
+            }
+
+            table[entryResource] = candidate;
+        }
+
+        return table;
+    }
+
+    private bool TryGetUniformEntryTarget(PendingDynamicRef pending, Dictionary<int, bool[]> reachableFromEntry, out int target)
+    {
+        target = -1;
+        bool anyEntry = false;
+        foreach (KeyValuePair<int, bool[]> entry in reachableFromEntry)
+        {
+            if (!entry.Value[pending.NodeId])
+            {
+                continue;
+            }
+
+            anyEntry = true;
+            int entryResource = this.nodes[entry.Key].ResourceId;
             int candidate = -1;
             foreach ((int resourceId, int nodeId) in pending.Candidates)
             {
@@ -1013,7 +1122,7 @@ internal sealed class SchemaCompiler
             target = candidate;
         }
 
-        return true;
+        return anyEntry;
     }
 
     /// <summary>

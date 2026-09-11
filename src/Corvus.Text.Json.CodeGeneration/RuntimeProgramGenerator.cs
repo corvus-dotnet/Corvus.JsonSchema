@@ -39,8 +39,10 @@ internal static class RuntimeProgramGenerator
     /// <summary>
     /// Maps every root document URI seen at generation time to the key it will have in the emitted program.
     /// File documents (a <c>file:</c> URI or a bare path) are keyed under the synthetic <c>corvus-schema:///</c>
-    /// scheme by their full path, so that the relative, path-absolute and <c>file:</c> reference forms the type
-    /// builder produces all resolve to the same key; every other absolute URI (an absolute <c>$id</c>) is kept
+    /// scheme by their path relative to the common directory of all file documents, so that the relative,
+    /// path-absolute and <c>file:</c> reference forms the type builder produces all resolve to the same key, relative
+    /// references between documents still resolve (every referenced file document lies under that directory), and no
+    /// build-machine path reaches the generated code. Every other absolute URI (an absolute <c>$id</c>) is kept
     /// verbatim, since relative references resolve against it. An empty trailing fragment is dropped.
     /// </summary>
     /// <param name="rootDocumentUris">The root document URIs.</param>
@@ -48,14 +50,140 @@ internal static class RuntimeProgramGenerator
     public static IReadOnlyDictionary<string, string> MapDocumentKeys(IEnumerable<string> rootDocumentUris)
     {
         Dictionary<string, string> result = new(StringComparer.Ordinal);
+        List<(string Uri, string Path)> files = [];
         foreach (string uri in rootDocumentUris.Distinct(StringComparer.Ordinal))
         {
-            result[uri] = TryGetFilePath(uri, out string? path)
-                ? SyntheticScheme + path!.TrimStart('/')
-                : StripEmptyFragment(uri);
+            if (TryGetFilePath(uri, out string? path))
+            {
+                files.Add((uri, path!));
+            }
+            else
+            {
+                result[uri] = StripEmptyFragment(uri);
+            }
+        }
+
+        // Only rooted paths carry a build-machine prefix; a bare relative path (an in-memory document's synthetic
+        // name, say) is already machine-independent and is kept whole.
+        string common = CommonDirectory(files.Where(f => IsBarePath(f.Path)).Select(f => f.Path));
+        foreach ((string uri, string path) in files)
+        {
+            result[uri] = SyntheticScheme + (IsBarePath(path) ? path.Substring(common.Length) : path).TrimStart('/');
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Rewrites a reference-only document (the wrapper the type builder synthesises for a schema addressed by a
+    /// fragment, <c>{"$ref": "&lt;document&gt;#&lt;pointer&gt;"}</c>) so that it names the document by its program
+    /// key rather than by the build-machine path the builder resolved. Any other document is returned unchanged.
+    /// </summary>
+    /// <param name="json">The document text.</param>
+    /// <param name="keys">The mapping from root document URI to program key.</param>
+    /// <returns>The document text to emit.</returns>
+    public static string MapReferenceDocument(string json, IReadOnlyDictionary<string, string> keys)
+    {
+        string? reference = TryGetSoleReference(json);
+        if (reference is null)
+        {
+            return json;
+        }
+
+        int hash = reference.IndexOf('#');
+        string document = hash < 0 ? reference : reference.Substring(0, hash);
+        string fragment = hash < 0 ? string.Empty : reference.Substring(hash);
+        if (!TryMapDocument(document, keys, out string? key) || key == document)
+        {
+            return json;
+        }
+
+        return "{\"$ref\": " + System.Text.Json.JsonSerializer.Serialize(key + fragment) + "}";
+    }
+
+    private static string? TryGetSoleReference(string json)
+    {
+        try
+        {
+            using System.Text.Json.JsonDocument document = System.Text.Json.JsonDocument.Parse(json);
+            System.Text.Json.JsonElement root = document.RootElement;
+            if (root.ValueKind != System.Text.Json.JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            string? reference = null;
+            int count = 0;
+            foreach (System.Text.Json.JsonProperty property in root.EnumerateObject())
+            {
+                count++;
+                if (property.Name == "$ref" && property.Value.ValueKind == System.Text.Json.JsonValueKind.String)
+                {
+                    reference = property.Value.GetString();
+                }
+            }
+
+            return count == 1 ? reference : null;
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static bool TryMapDocument(string document, IReadOnlyDictionary<string, string> keys, out string? key)
+    {
+        if (keys.TryGetValue(document, out key))
+        {
+            return true;
+        }
+
+        if (TryGetFilePath(document, out string? path))
+        {
+            foreach (KeyValuePair<string, string> candidate in keys)
+            {
+                if (TryGetFilePath(candidate.Key, out string? candidatePath) && candidatePath == path)
+                {
+                    key = candidate.Value;
+                    return true;
+                }
+            }
+        }
+
+        key = null;
+        return false;
+    }
+
+    /// <summary>
+    /// The longest directory prefix (ending in a separator, or empty) shared by every path.
+    /// </summary>
+    private static string CommonDirectory(IEnumerable<string> paths)
+    {
+        string? common = null;
+        foreach (string path in paths)
+        {
+            int slash = path.LastIndexOf('/');
+            string directory = slash < 0 ? string.Empty : path.Substring(0, slash + 1);
+            if (common is null)
+            {
+                common = directory;
+                continue;
+            }
+
+            int length = 0;
+            int limit = Math.Min(common.Length, directory.Length);
+            for (int i = 0; i < limit && common[i] == directory[i]; i++)
+            {
+                if (common[i] == '/')
+                {
+                    length = i + 1;
+                }
+            }
+
+            common = common.Substring(0, length);
+        }
+
+        return common ?? string.Empty;
     }
 
     /// <summary>

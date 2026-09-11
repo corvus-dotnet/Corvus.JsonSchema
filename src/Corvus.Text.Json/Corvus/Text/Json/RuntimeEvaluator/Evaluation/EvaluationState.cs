@@ -152,6 +152,9 @@ internal ref struct EvaluationState
     public int MaxDepth;
     public bool UsesDynamicScope;
 
+    /// <summary>The resource evaluation started in: the outermost dynamic scope on every path.</summary>
+    public int EntryResource;
+
     /// <summary>Direct row access to the instance document, when <see cref="RawAccess"/> is in use.</summary>
     public RawDocumentAccess Raw;
 

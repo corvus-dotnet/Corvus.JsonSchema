@@ -408,7 +408,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
             List<RuntimeProgramGenerator.SchemaDocumentSource> documents = [];
             foreach (KeyValuePair<string, string> document in this.schemaDocuments)
             {
-                documents.Add(new RuntimeProgramGenerator.SchemaDocumentSource(keys[document.Key], document.Value));
+                documents.Add(new RuntimeProgramGenerator.SchemaDocumentSource(keys[document.Key], RuntimeProgramGenerator.MapReferenceDocument(document.Value, keys)));
             }
 
             List<string> entryPoints = [];

@@ -99,10 +99,12 @@ public class SharedEntryPointTests
         Assert.IsFalse(treeEvaluator.UsesDynamicScope);
         Assert.IsTrue(treeEvaluator.Evaluate("""{"data": 1, "children": [{"daat": 2}]}"""));
 
-        // Adding strict-tree as an entry point loads a second resource defining "node": the reference becomes
-        // dynamic, and evaluation rooted at strict-tree rejects the misspelling while tree still accepts it.
+        // Adding strict-tree as an entry point loads a second resource defining "node": the reference now depends
+        // on where evaluation starts. Both entry resources define the anchor, so the entry resource alone decides
+        // (no dynamic scope is kept), and evaluation rooted at strict-tree rejects the misspelling while tree still
+        // accepts it.
         using JsonSchemaEvaluator strict = treeEvaluator.ForEntryPoint("https://t.example/strict-tree");
-        Assert.IsTrue(strict.UsesDynamicScope);
+        Assert.IsFalse(strict.UsesDynamicScope);
         Assert.IsFalse(strict.Evaluate("""{"data": 1, "children": [{"daat": 2}]}"""));
         Assert.IsTrue(strict.Evaluate("""{"data": 1, "children": [{"data": 2}]}"""));
         Assert.IsTrue(treeEvaluator.Evaluate("""{"data": 1, "children": [{"daat": 2}]}"""), "rooted at tree, strict-tree is not in scope");

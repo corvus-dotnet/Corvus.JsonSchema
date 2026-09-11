@@ -122,18 +122,57 @@ internal static class FusedObjects
             return;
         }
 
+        // A fused plan applies its contributors' keywords without entering the contributors as nodes, so the dynamic
+        // scope below it would differ from the general path's. That only matters where a live dynamic reference can
+        // be reached, so only those nodes keep the general plan; the rest of the program fuses as usual.
+        bool[] reachesDynamic = ReachesDynamicReference(nodes);
         foreach (SchemaNode node in nodes)
         {
-            if (node.DynamicRef is not null)
+            if (reachesDynamic[node.Id])
             {
-                return;
+                continue;
+            }
+
+            node.Fused = TryFuse(nodes, node);
+        }
+    }
+
+    /// <summary>Marks every node from which a live dynamic reference is reachable through any child.</summary>
+    private static bool[] ReachesDynamicReference(SchemaNode[] nodes)
+    {
+        bool[] reaches = new bool[nodes.Length];
+        var children = new List<int>();
+        foreach (SchemaNode node in nodes)
+        {
+            reaches[node.Id] = node.DynamicRef is { NeedsScope: true };
+        }
+
+        bool changed = true;
+        while (changed)
+        {
+            changed = false;
+            foreach (SchemaNode node in nodes)
+            {
+                if (reaches[node.Id])
+                {
+                    continue;
+                }
+
+                children.Clear();
+                node.CollectChildren(children);
+                foreach (int child in children)
+                {
+                    if (reaches[child])
+                    {
+                        reaches[node.Id] = true;
+                        changed = true;
+                        break;
+                    }
+                }
             }
         }
 
-        foreach (SchemaNode node in nodes)
-        {
-            node.Fused = TryFuse(nodes, node);
-        }
+        return reaches;
     }
 
     private static FusedObject? TryFuse(SchemaNode[] nodes, SchemaNode node)
