@@ -10,6 +10,7 @@ public sealed class SourceMetaCase : IDisposable
 {
     public SourceMetaCase(string name)
     {
+        this.Name = name;
         string dir = Path.Combine(AppContext.BaseDirectory, "sourcemeta");
         this.SchemaBytes = File.ReadAllBytes(Path.Combine(dir, name + "-schema.json"));
         string[] lines = File.ReadAllLines(Path.Combine(dir, name + "-instances.jsonl"));
@@ -30,6 +31,9 @@ public sealed class SourceMetaCase : IDisposable
 
         this.Evaluator = JsonSchemaEvaluator.Compile(this.SchemaBytes, new JsonSchemaEvaluatorOptions { DefaultDialect = dialect });
     }
+
+    /// <summary>Gets the corpus name.</summary>
+    public string Name { get; }
 
     public byte[] SchemaBytes { get; }
 

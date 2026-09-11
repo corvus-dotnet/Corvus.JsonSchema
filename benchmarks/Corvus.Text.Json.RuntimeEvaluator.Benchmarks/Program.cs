@@ -65,6 +65,11 @@ if (args.Length > 0 && args[0] == "breakdown")
     return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.ImageBreakdown.Run(args[1..]);
 }
 
+if (args.Length > 0 && args[0] == "blazebasis")
+{
+    return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.BlazeBasis.Run(args[1..]);
+}
+
 if (args.Length > 0 && args[0] == "docprobe")
 {
     return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.DocumentProbe.Run(args[1..]);

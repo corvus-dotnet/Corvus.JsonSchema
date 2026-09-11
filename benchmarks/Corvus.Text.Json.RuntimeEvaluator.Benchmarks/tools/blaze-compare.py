@@ -3,7 +3,11 @@
 
 Usage:
   blaze-compare.py --cli <path to jsonschema binary> --corpus <dir with *-schema.json and *-instances.jsonl>
-                   [--quick <quick-run log>] [--loop 20] [--pin 0-11] [corpus ...]
+                   [--quick <quick-run or blazebasis log>] [--loop 20] [--pin 0-11] [corpus ...]
+
+For a like-for-like comparison use the harness's `blazebasis <loop>` command, which times every instance the way
+the CLI does (per evaluation, clock overhead subtracted, mean over the loop, after a JIT warm-up), and pass its
+output as --quick.
 
 The CLI's `validate --benchmark --loop N --fast` prints, per instance, the mean and standard deviation of the
 evaluation time over N loops (parsing excluded). Summing the means over a corpus gives the time to evaluate every
@@ -37,11 +41,16 @@ def blaze_total(cli, schema, instances, loop, pin):
     return total, count
 
 def quick_runtimes(path):
+    """Reads either a `quick` log (generated, runtime, ratio) or a `blazebasis` log (instances, sum of means, ...)."""
     rows = {}
     for line in open(path):
         m = re.match(r"^(\S[\w-]*)\s+([\d.]+ (?:us|ms|ns))\s+([\d.]+ (?:us|ms|ns))\s+([\d.]+)\s*$", line)
         if m:
             rows[m.group(1)] = (us(m.group(2)), us(m.group(3)))
+            continue
+        m = re.match(r"^(\S[\w-]*)\s+(\d+)\s+([\d.]+ (?:us|ms))\s+([\d.]+ (?:us|ms))\s+[\d.]+\s*$", line)
+        if m:
+            rows[m.group(1)] = (float("nan"), us(m.group(3)))
     return rows
 
 def main():
@@ -67,7 +76,8 @@ def main():
         if q:
             gen, rt = q
             logs.append(math.log(rt / total))
-            print(f"{name:24} {count:>9} {fmt(total):>12} {fmt(rt):>12} {rt/total:>12.2f}x {fmt(gen):>12} {gen/total:>9.2f}x")
+            gen_text = "" if math.isnan(gen) else f"{fmt(gen):>12} {gen/total:>9.2f}x"
+            print(f"{name:24} {count:>9} {fmt(total):>12} {fmt(rt):>12} {rt/total:>12.2f}x {gen_text}")
         else:
             print(f"{name:24} {count:>9} {fmt(total):>12}")
     if logs:

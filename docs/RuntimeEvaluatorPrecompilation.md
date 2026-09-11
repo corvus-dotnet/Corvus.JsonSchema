@@ -387,14 +387,21 @@ round of work. Pinned, back to back with the same baseline binary as above.
 ## Against Blaze (2026-09-11)
 
 Blaze is run through the Sourcemeta `jsonschema` CLI release binary (`benchmarks/.../tools/blaze-compare.py`, see
-its README) over the same 37 corpora, `--fast` and 20 loops, pinned, on the idle box, against the pinned `quick`
-run after the fused-plan extension. Geometric mean of our runtime over Blaze: 1.36. We are faster on jshintrc
-(0.59), clang-format (0.62), omnisharp (0.62), cql2 (0.64), openapi (0.81), aws-cdk (0.90) and draft-04 (0.92), within
-20% on fourteen more, and behind by two times or more on helm-chart-lock (4.3), importmap (3.5), ui5 (2.8), yamllint
-(2.2), cmake-presets (2.1) and cspell (2.0). The shipping generated code is 3.9 behind Blaze on the same geometric
-mean. The corpora where Blaze leads most are the ones with the smallest instances per evaluation (helm-chart-lock
-has 3,888 instances at 34 ns each in Blaze against 148 ns in ours; importmap and yamllint likewise), which points
-at the fixed cost per evaluation and per object rather than at any keyword, consistent with the profiles.
+its README) over the same 37 corpora with `--fast`. The CLI's benchmark mode times every evaluation of every
+instance on its own, subtracts the clock's overhead, and reports the mean over the loop with no warm-up; the
+harness's `blazebasis <loop>` command does exactly the same after a JIT warm-up, so the two are compared like for
+like: 200 loops each, pinned, idle box. Geometric mean of our runtime over Blaze: 1.32. We are faster on jshintrc
+(0.48), clang-format (0.53), omnisharp (0.59), cql2 (0.65), openapi (0.72), draft-04 (0.80), ansible-meta (0.85),
+fabric-mod, pre-commit-hooks, geojson and deno (0.90 to 0.96); within 40% on sixteen more; and behind by two to
+five times on helm-chart-lock (5.2), importmap (4.8), yamllint (4.1), ui5 (2.7), semantic-release (2.2) and krakend
+(2.0). At 20 loops Blaze's means on the small corpora carry its cold first iterations, so more loops favour it there:
+yamllint fell from 14 to 7.6 µs between 20 and 200 loops while ours held at 31.
+
+The corpora where Blaze leads most are the ones with the smallest instances: yamllint is 984 instances at 8 ns each
+in Blaze against 32 ns in ours, helm-chart-lock 3,888 at 26 ns against 136 ns. That is fixed cost per evaluation
+and per object, not any keyword, which is consistent with the profiles and puts the object-plan inner loop and the
+per-evaluation entry path first among the remaining optimisations. The shipping generated code is 3.9 behind Blaze on
+the same geometric mean.
 
 ## Open decisions
 
