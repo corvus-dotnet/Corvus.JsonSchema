@@ -14,7 +14,7 @@ namespace Corvus.Text.Json.RuntimeEvaluator.Evaluation;
 /// The evaluation engine.
 /// </summary>
 [SkipLocalsInit]
-internal static class Evaluator
+internal static partial class Evaluator
 {
     internal const int InlineBitWords = SchemaNode.InlineBitWords;
 
@@ -772,20 +772,21 @@ internal static class Evaluator
         }
 
         Utf8NameMap<PropertyEntry>? properties = node.Properties;
+        PatternPropertyEntry[]? patternProperties = node.PatternProperties;
         SchemaNode? additional = node.AdditionalProperties.IsPresent ? state.Nodes[node.AdditionalProperties.FastNode] : null;
         int words = (node.SeenBitCount + 63) >> 6;
         Span<ulong> seen = stackalloc ulong[InlineBitWords];
         seen = seen[..words];
         seen.Clear();
 
-        if (properties is not null || additional is not null)
+        if (properties is not null || patternProperties is not null || additional is not null)
         {
             int end = default(TAccess).EndIndex(ref state, doc, index);
             for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex) + RowSize)
             {
                 if (!default(TAccess).PropertyNameIsEscaped(ref state, doc, valueIndex))
                 {
-                    if (!EvalObjectPlanProperty<TAccess>(properties, additional, default(TAccess).PropertyNameRawMemory(ref state, doc, valueIndex).Span, doc, valueIndex, ref state, seen))
+                    if (!EvalObjectPlanProperty<TAccess>(properties, patternProperties, additional, default(TAccess).PropertyNameRawMemory(ref state, doc, valueIndex).Span, doc, valueIndex, ref state, seen))
                     {
                         return false;
                     }
@@ -793,7 +794,7 @@ internal static class Evaluator
                 else
                 {
                     using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
-                    if (!EvalObjectPlanProperty<TAccess>(properties, additional, name.Span, doc, valueIndex, ref state, seen))
+                    if (!EvalObjectPlanProperty<TAccess>(properties, patternProperties, additional, name.Span, doc, valueIndex, ref state, seen))
                     {
                         return false;
                     }
@@ -813,13 +814,42 @@ internal static class Evaluator
             }
         }
 
+        if (node.Dependencies is DependencyEntry[] dependencies)
+        {
+            for (int i = 0; i < dependencies.Length; i++)
+            {
+                DependencyEntry dep = dependencies[i];
+                int bit = dep.SeenBit;
+                if ((seen[bit >> 6] & (1UL << (bit & 63))) == 0)
+                {
+                    continue;
+                }
+
+                int[] requiredBits = dep.RequiredSeenBits;
+                for (int r = 0; r < requiredBits.Length; r++)
+                {
+                    int rb = requiredBits[r];
+                    if ((seen[rb >> 6] & (1UL << (rb & 63))) == 0)
+                    {
+                        return false;
+                    }
+                }
+
+                if (dep.Schema.IsPresent && !EvalChildFast<TAccess>(state.Nodes[dep.Schema.FastNode], doc, index, ref state))
+                {
+                    return false;
+                }
+            }
+        }
+
         return true;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool EvalObjectPlanProperty<TAccess>(Utf8NameMap<PropertyEntry>? properties, SchemaNode? additional, scoped ReadOnlySpan<byte> name, IJsonDocument doc, int valueIndex, ref EvaluationState state, scoped Span<ulong> seen)
+    private static bool EvalObjectPlanProperty<TAccess>(Utf8NameMap<PropertyEntry>? properties, PatternPropertyEntry[]? patternProperties, SchemaNode? additional, scoped ReadOnlySpan<byte> name, IJsonDocument doc, int valueIndex, ref EvaluationState state, scoped Span<ulong> seen)
         where TAccess : struct, IDocumentAccess
     {
+        bool matched = false;
         if (properties is not null && properties.TryGetValue(name, out PropertyEntry? entry))
         {
             if (entry.SeenBit >= 0)
@@ -827,10 +857,31 @@ internal static class Evaluator
                 seen[entry.SeenBit >> 6] |= 1UL << (entry.SeenBit & 63);
             }
 
-            return !entry.Schema.IsPresent || EvalChildFast<TAccess>(state.Nodes[entry.Schema.FastNode], doc, valueIndex, ref state);
+            if (entry.Schema.IsPresent && !EvalChildFast<TAccess>(state.Nodes[entry.Schema.FastNode], doc, valueIndex, ref state))
+            {
+                return false;
+            }
+
+            matched = true;
         }
 
-        return additional is null || EvalChildFast<TAccess>(additional, doc, valueIndex, ref state);
+        if (patternProperties is not null)
+        {
+            for (int p = 0; p < patternProperties.Length; p++)
+            {
+                PatternPropertyEntry pp = patternProperties[p];
+                if (pp.Matcher.IsMatch(name))
+                {
+                    matched = true;
+                    if (!EvalChildFast<TAccess>(state.Nodes[pp.Schema.FastNode], doc, valueIndex, ref state))
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return matched || additional is null || EvalChildFast<TAccess>(additional, doc, valueIndex, ref state);
     }
 
     /// <summary>
@@ -866,7 +917,7 @@ internal static class Evaluator
         }
 
         SchemaNode items = state.Nodes[node.Items.FastNode];
-        if (items.Plan == NodePlan.AlwaysTrue)
+        if (items.Plan == NodePlan.AlwaysTrue && !node.UniqueItems)
         {
             return true;
         }
@@ -874,12 +925,34 @@ internal static class Evaluator
         bool pushed = EnterScope(node, ref state);
         bool ok = true;
         int end = default(TAccess).EndIndex(ref state, doc, index);
-        for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex))
+        if (node.UniqueItems)
         {
-            if (!EvalChildFast<TAccess>(items, doc, valueIndex, ref state))
+            var set = new UniqueItemSet(default(TAccess).Count(ref state, doc, index, JsonTokenType.StartArray));
+            try
             {
-                ok = false;
-                break;
+                for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex))
+                {
+                    if (!set.TryAdd<TAccess>(ref state, doc, valueIndex) || (items.Plan != NodePlan.AlwaysTrue && !EvalChildFast<TAccess>(items, doc, valueIndex, ref state)))
+                    {
+                        ok = false;
+                        break;
+                    }
+                }
+            }
+            finally
+            {
+                set.Dispose();
+            }
+        }
+        else
+        {
+            for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex))
+            {
+                if (!EvalChildFast<TAccess>(items, doc, valueIndex, ref state))
+                {
+                    ok = false;
+                    break;
+                }
             }
         }
 
@@ -954,12 +1027,33 @@ internal static class Evaluator
         }
 
         SchemaNode items = state.Nodes[node.Items.FastNode];
+        int end = default(TAccess).EndIndex(ref state, doc, index);
+        if (node.UniqueItems)
+        {
+            var set = new UniqueItemSet(length);
+            try
+            {
+                for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex))
+                {
+                    if (!set.TryAdd<TAccess>(ref state, doc, valueIndex) || (!items.AlwaysTrue && !EvalLeafFast<TAccess>(items, doc, valueIndex, ref state)))
+                    {
+                        return false;
+                    }
+                }
+            }
+            finally
+            {
+                set.Dispose();
+            }
+
+            return true;
+        }
+
         if (items.AlwaysTrue)
         {
             return true;
         }
 
-        int end = default(TAccess).EndIndex(ref state, doc, index);
         if (items.IsTypeOnly)
         {
             TypeMask mask = items.Type;
@@ -1589,29 +1683,91 @@ internal static class Evaluator
             }
         }
 
-        for (int i = 0; i < entries.Length; i++)
+        // One pass over the instance, matching each name against the few entries by length then bytes: no hash, no
+        // by-name lookup through the document (which scans or builds a map per property).
+        uint seen = 0;
+        int end = default(TAccess).EndIndex(ref state, doc, index);
+        for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex) + RowSize)
         {
-            PropertyEntry entry = entries[i];
-            if (doc.TryGetNamedPropertyValue(index, entry.Name, out IJsonDocument? valueDoc, out int valueIndex))
+            int match;
+            if (!default(TAccess).PropertyNameIsEscaped(ref state, doc, valueIndex))
             {
-                if (entry.Schema.IsPresent)
+                match = FindEntry(entries, default(TAccess).PropertyNameRawMemory(ref state, doc, valueIndex).Span);
+            }
+            else
+            {
+                using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
+                match = FindEntry(entries, name.Span);
+            }
+
+            if (match >= 0)
+            {
+                seen |= 1u << match;
+                PropertyEntry entry = entries[match];
+                if (entry.Schema.IsPresent && !EvalProperty<FastMode, TAccess>(entry.Schema, doc, valueIndex, ref state, 0))
                 {
-                    bool ok = ReferenceEquals(valueDoc, doc)
-                        ? EvalProperty<FastMode, TAccess>(entry.Schema, doc, valueIndex, ref state, 0)
-                        : EvalProperty<FastMode, InterfaceAccess>(entry.Schema, valueDoc, valueIndex, ref state, 0);
-                    if (!ok)
-                    {
-                        return false;
-                    }
+                    return false;
                 }
             }
-            else if (entry.IsRequired)
+        }
+
+        for (int i = 0; i < entries.Length; i++)
+        {
+            if (entries[i].IsRequired && (seen & (1u << i)) == 0)
             {
                 return false;
             }
         }
 
         return true;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static int FindEntry(PropertyEntry[] entries, ReadOnlySpan<byte> name)
+        {
+            for (int i = 0; i < entries.Length; i++)
+            {
+                byte[] candidate = entries[i].Name;
+                if (candidate.Length == name.Length && name.SequenceEqual(candidate))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+    }
+
+    /// <summary>
+    /// Finds a property of an object by name with one pass over its properties through the document access in use.
+    /// </summary>
+    private static bool TryFindProperty<TAccess>(ref EvaluationState state, IJsonDocument doc, int index, byte[] name, out int valueIndex)
+        where TAccess : struct, IDocumentAccess
+    {
+        int end = default(TAccess).EndIndex(ref state, doc, index);
+        for (int candidate = index + (2 * RowSize); candidate - RowSize < end; candidate = default(TAccess).NextIndex(ref state, doc, candidate) + RowSize)
+        {
+            if (!default(TAccess).PropertyNameIsEscaped(ref state, doc, candidate))
+            {
+                ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRawMemory(ref state, doc, candidate).Span;
+                if (raw.Length == name.Length && raw.SequenceEqual(name))
+                {
+                    valueIndex = candidate;
+                    return true;
+                }
+            }
+            else
+            {
+                using UnescapedUtf8JsonString unescaped = PropertyName<TAccess>(ref state, doc, candidate);
+                if (unescaped.Span.SequenceEqual(name))
+                {
+                    valueIndex = candidate;
+                    return true;
+                }
+            }
+        }
+
+        valueIndex = -1;
+        return false;
     }
 
     private static bool EvalObjectCore<TMode, TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> evaluated, scoped Span<ulong> seen, int seq)
@@ -2069,13 +2225,7 @@ internal static class Evaluator
             return ok;
         }
 
-        // Small arrays: pairwise comparison beats hashing every element (object hashing transcodes every string).
-        bool pairwise = unique && length <= SmallUniqueThreshold;
-        bool useSet = unique && !pairwise;
-        Span<int> buckets = useSet ? stackalloc int[UniqueItemsHashSet.StackAllocBucketSize] : default;
-        Span<byte> entries = useSet ? stackalloc byte[UniqueItemsHashSet.StackAllocEntrySize] : default;
-        UniqueItemsHashSet set = useSet ? new UniqueItemsHashSet(doc, length, buckets, entries) : default;
-        Span<int> seenIndices = pairwise ? stackalloc int[SmallUniqueThreshold] : default;
+        UniqueItemSet set = unique ? new UniqueItemSet(length) : default;
         bool isUnique = true;
         int containsCount = 0;
         int itemIndex = 0;
@@ -2126,13 +2276,7 @@ internal static class Evaluator
 
                 if (unique && isUnique)
                 {
-                    bool duplicate = pairwise ? IsDuplicate<TAccess>(ref state, doc, valueIndex, seenIndices[..itemIndex]) : !set.AddItemIfNotExists(valueIndex);
-                    if (pairwise)
-                    {
-                        seenIndices[itemIndex] = valueIndex;
-                    }
-
-                    if (duplicate)
+                    if (!set.TryAdd<TAccess>(ref state, doc, valueIndex))
                     {
                         isUnique = false;
                         if (!default(TMode).Collecting)
@@ -2147,7 +2291,7 @@ internal static class Evaluator
         }
         finally
         {
-            if (useSet)
+            if (unique)
             {
                 set.Dispose();
             }
@@ -2190,74 +2334,6 @@ internal static class Evaluator
         }
 
         return ok;
-    }
-
-    private const int SmallUniqueThreshold = 8;
-
-    /// <summary>
-    /// Pairwise duplicate test for small arrays with cheap prefilters (token type, raw bytes for scalars).
-    /// </summary>
-    private static bool IsDuplicate<TAccess>(ref EvaluationState state, IJsonDocument doc, int valueIndex, scoped ReadOnlySpan<int> previous)
-        where TAccess : struct, IDocumentAccess
-    {
-        JsonTokenType tokenType = default(TAccess).TokenType(ref state, doc, valueIndex);
-        for (int i = 0; i < previous.Length; i++)
-        {
-            int other = previous[i];
-            JsonTokenType otherType = default(TAccess).TokenType(ref state, doc, other);
-            if (otherType != tokenType)
-            {
-                continue;
-            }
-
-            switch (tokenType)
-            {
-                case JsonTokenType.True:
-                case JsonTokenType.False:
-                case JsonTokenType.Null:
-                    return true;
-                case JsonTokenType.String:
-                    if (default(TAccess).RawValue(ref state, doc, valueIndex).SequenceEqual(default(TAccess).RawValue(ref state, doc, other))
-                        || (default(TAccess).IsEscaped(ref state, doc, valueIndex) || default(TAccess).IsEscaped(ref state, doc, other)) && JsonElementHelpers.DeepEqualsNoParentDocumentCheck(doc, valueIndex, doc, other))
-                    {
-                        return true;
-                    }
-
-                    break;
-                case JsonTokenType.Number:
-                {
-                    ReadOnlySpan<byte> a = default(TAccess).RawValue(ref state, doc, valueIndex);
-                    ReadOnlySpan<byte> b = default(TAccess).RawValue(ref state, doc, other);
-                    if (a.SequenceEqual(b))
-                    {
-                        return true;
-                    }
-
-                    // Two canonical integer literals with different text are different numbers.
-                    if (IsCanonicalInteger(a) && IsCanonicalInteger(b))
-                    {
-                        break;
-                    }
-
-                    if (JsonElementHelpers.AreEqualJsonNumbers(a, b))
-                    {
-                        return true;
-                    }
-
-                    break;
-                }
-
-                default:
-                    if (JsonElementHelpers.DeepEqualsNoParentDocumentCheck(doc, valueIndex, doc, other))
-                    {
-                        return true;
-                    }
-
-                    break;
-            }
-        }
-
-        return false;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2752,20 +2828,19 @@ internal static class Evaluator
             return false;
         }
 
-        if (!doc.TryGetNamedPropertyValue(index, discriminator.PropertyName, out IJsonDocument? valueDoc, out int valueIndex))
+        if (!TryFindProperty<TAccess>(ref state, doc, index, discriminator.PropertyName, out int valueIndex))
         {
             // Every branch requires the property: none can match.
             selected = [];
             return discriminator.AllRequire;
         }
 
-        bool sameDoc = ReferenceEquals(valueDoc, doc);
-        JsonTokenType valueType = sameDoc ? default(TAccess).TokenType(ref state, doc, valueIndex) : valueDoc.GetJsonTokenType(valueIndex);
+        JsonTokenType valueType = default(TAccess).TokenType(ref state, doc, valueIndex);
         switch (valueType)
         {
             case JsonTokenType.String:
             {
-                using UnescapedUtf8JsonString value = sameDoc ? StringValue<TAccess>(ref state, doc, valueIndex) : valueDoc.GetUtf8JsonString(valueIndex, JsonTokenType.String);
+                using UnescapedUtf8JsonString value = StringValue<TAccess>(ref state, doc, valueIndex);
                 selected = LookupDiscriminator(discriminator, Discriminator.StringTag, value.Span);
                 return true;
             }
@@ -2778,7 +2853,7 @@ internal static class Evaluator
                 return true;
             case JsonTokenType.Number:
             {
-                ReadOnlySpan<byte> raw = sameDoc ? default(TAccess).RawValue(ref state, doc, valueIndex) : valueDoc.GetRawSimpleValue(valueIndex).Span;
+                ReadOnlySpan<byte> raw = default(TAccess).RawValue(ref state, doc, valueIndex);
                 if (IsCanonicalInteger(raw))
                 {
                     selected = LookupDiscriminator(discriminator, Discriminator.NumberTag, raw);

@@ -443,7 +443,7 @@ internal sealed class SchemaCompiler
     {
         foreach (SchemaNode node in this.nodes)
         {
-            if (DisableLeaf || !node.Items.IsPresent || node.PrefixItems is not null || node.Contains.IsPresent || node.UniqueItems
+            if (DisableLeaf || !node.Items.IsPresent || node.PrefixItems is not null || node.Contains.IsPresent
                 || node.UnevaluatedItems.IsPresent || node.TracksItems || node.HasInPlaceApplicators || node.HasObjectKeywords
                 || node.HasConst || node.Enum is not null || node.HasNumberKeywords || node.HasStringKeywords
                 || node.AlwaysTrue || node.AlwaysFalse || node.UnevaluatedProperties.IsPresent)
@@ -2353,13 +2353,12 @@ internal sealed class SchemaCompiler
             return NodePlan.General;
         }
 
-        if (node.HasObjectKeywords && !node.HasArrayKeywords && node.PatternProperties is null && !node.PropertyNames.IsPresent
-            && node.Dependencies is null && node.SeenBitCount <= SchemaNode.InlineBitWords * 64)
+        if (node.HasObjectKeywords && !node.HasArrayKeywords && !node.PropertyNames.IsPresent && node.SeenBitCount <= SchemaNode.InlineBitWords * 64)
         {
             return NodePlan.Object;
         }
 
-        if (node.HasArrayKeywords && !node.HasObjectKeywords && node.PrefixItems is null && !node.Contains.IsPresent && !node.UniqueItems)
+        if (node.HasArrayKeywords && !node.HasObjectKeywords && node.PrefixItems is null && !node.Contains.IsPresent)
         {
             return NodePlan.ArrayItems;
         }
