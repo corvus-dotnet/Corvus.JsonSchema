@@ -582,15 +582,16 @@ internal static partial class Evaluator
         {
             int ordinal = 0;
             int end = default(TAccess).EndIndex(ref state, doc, index);
-            for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex) + RowSize, ordinal++)
+            for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; ordinal++)
             {
+                JsonTokenType valueType = default(TAccess).TokenTypeAndNext(ref state, doc, valueIndex, out int next);
                 ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRaw(ref state, doc, valueIndex, out bool escaped);
                 bool cover;
                 bool defer;
                 int entryIndex;
                 if (!escaped)
                 {
-                    if (!ApplyFusedName<TAccess>(f, raw, doc, valueIndex, ref state, seen, failed, out cover, out defer, out entryIndex))
+                    if (!ApplyFusedName<TAccess>(f, raw, valueType, doc, valueIndex, ref state, seen, failed, out cover, out defer, out entryIndex))
                     {
                         return false;
                     }
@@ -598,7 +599,7 @@ internal static partial class Evaluator
                 else
                 {
                     using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
-                    if (!ApplyFusedName<TAccess>(f, name.Span, doc, valueIndex, ref state, seen, failed, out cover, out defer, out entryIndex))
+                    if (!ApplyFusedName<TAccess>(f, name.Span, valueType, doc, valueIndex, ref state, seen, failed, out cover, out defer, out entryIndex))
                     {
                         return false;
                     }
@@ -629,6 +630,8 @@ internal static partial class Evaluator
                     deferred[(deferredCount * 3) + 2] = entryIndex;
                     deferredCount++;
                 }
+
+                valueIndex = next + RowSize;
             }
 
             Span<bool> holds = stackalloc bool[64];
@@ -668,7 +671,7 @@ internal static partial class Evaluator
                         FusedContributor contributor = contributors[app.Contributor];
                         if (contributor.Condition >= 0 && gateOk[contributor.Condition] && holds[contributor.Condition] == contributor.Polarity)
                         {
-                            if (!ApplyApplication<TAccess>(app, nodes, doc, valueIndex, ref state))
+                            if (!ApplyApplication<TAccess>(app, nodes, default(TAccess).TokenType(ref state, doc, valueIndex), doc, valueIndex, ref state))
                             {
                                 return false;
                             }
@@ -793,7 +796,7 @@ internal static partial class Evaluator
 
     /// <summary>Applies one fused resolution to a property value: nothing for <c>true</c>, a token-type test for a type-only leaf, else the child's plan.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool ApplyApplication<TAccess>(in FusedApplication app, SchemaNode[] nodes, IJsonDocument doc, int valueIndex, ref EvaluationState state)
+    private static bool ApplyApplication<TAccess>(in FusedApplication app, SchemaNode[] nodes, JsonTokenType valueType, IJsonDocument doc, int valueIndex, ref EvaluationState state)
         where TAccess : struct, IDocumentAccess
     {
         if (app.Node < 0)
@@ -804,7 +807,7 @@ internal static partial class Evaluator
         TypeMask inline = app.InlineType;
         if (inline != TypeMask.None)
         {
-            return MatchesType<TAccess>(inline, default(TAccess).TokenType(ref state, doc, valueIndex), ref state, doc, valueIndex, app.InlineLexical);
+            return MatchesType<TAccess>(inline, valueType, ref state, doc, valueIndex, app.InlineLexical);
         }
 
         return app.InlineEnum is Utf8NameMap<object> allowed
@@ -836,7 +839,7 @@ internal static partial class Evaluator
     /// name now and notes whether a conditional one is pending. Returns <see langword="false"/> when a child failed.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool ApplyFusedName<TAccess>(FusedObject f, scoped ReadOnlySpan<byte> nameSpan, IJsonDocument doc, int valueIndex, ref EvaluationState state, scoped Span<ulong> seen, scoped Span<bool> failed, out bool cover, out bool defer, out int entryIndex)
+    private static bool ApplyFusedName<TAccess>(FusedObject f, scoped ReadOnlySpan<byte> nameSpan, JsonTokenType valueType, IJsonDocument doc, int valueIndex, ref EvaluationState state, scoped Span<ulong> seen, scoped Span<bool> failed, out bool cover, out bool defer, out int entryIndex)
         where TAccess : struct, IDocumentAccess
     {
         SchemaNode[] nodes = state.Nodes;
@@ -859,7 +862,7 @@ internal static partial class Evaluator
                 FusedApplication app = applications[a];
                 if (contributors[app.Contributor].Condition < 0)
                 {
-                    if (!ApplyApplication<TAccess>(app, nodes, doc, valueIndex, ref state))
+                    if (!ApplyApplication<TAccess>(app, nodes, valueType, doc, valueIndex, ref state))
                     {
                         return false;
                     }
@@ -1178,13 +1181,16 @@ internal static partial class Evaluator
 
         if (properties is not null || patternProperties is not null || additional is not null)
         {
+            StrictEntry[] entries = node.StrictEntries ?? [];
             int end = default(TAccess).EndIndex(ref state, doc, index);
-            for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex) + RowSize)
+            int valueIndex = index + (2 * RowSize);
+            while (valueIndex - RowSize < end)
             {
+                JsonTokenType valueType = default(TAccess).TokenTypeAndNext(ref state, doc, valueIndex, out int next);
                 ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRaw(ref state, doc, valueIndex, out bool escaped);
                 if (!escaped)
                 {
-                    if (!EvalObjectPlanProperty<TAccess>(properties, patternProperties, additional, node.AdditionalInlineType, node.AdditionalInlineLexical, raw, doc, valueIndex, ref state, seen))
+                    if (!EvalObjectPlanProperty<TAccess>(node, properties, entries, patternProperties, additional, raw, valueType, doc, valueIndex, ref state, seen))
                     {
                         return false;
                     }
@@ -1192,11 +1198,13 @@ internal static partial class Evaluator
                 else
                 {
                     using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
-                    if (!EvalObjectPlanProperty<TAccess>(properties, patternProperties, additional, node.AdditionalInlineType, node.AdditionalInlineLexical, name.Span, doc, valueIndex, ref state, seen))
+                    if (!EvalObjectPlanProperty<TAccess>(node, properties, entries, patternProperties, additional, name.Span, valueType, doc, valueIndex, ref state, seen))
                     {
                         return false;
                     }
                 }
+
+                valueIndex = next + RowSize;
             }
         }
 
@@ -1254,33 +1262,34 @@ internal static partial class Evaluator
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool EvalObjectPlanProperty<TAccess>(Utf8NameMap<PropertyEntry>? properties, PatternPropertyEntry[]? patternProperties, SchemaNode? additional, TypeMask additionalInlineType, bool additionalLexical, scoped ReadOnlySpan<byte> name, IJsonDocument doc, int valueIndex, ref EvaluationState state, scoped Span<ulong> seen)
+    private static bool EvalObjectPlanProperty<TAccess>(SchemaNode node, Utf8NameMap<PropertyEntry>? properties, StrictEntry[] entries, PatternPropertyEntry[]? patternProperties, SchemaNode? additional, scoped ReadOnlySpan<byte> name, JsonTokenType valueType, IJsonDocument doc, int valueIndex, ref EvaluationState state, scoped Span<ulong> seen)
         where TAccess : struct, IDocumentAccess
     {
         bool matched = false;
-        if (properties is not null && properties.TryGetValue(name, out PropertyEntry? entry))
+        if (properties is not null && properties.TryGetIndex(name, out int entryIndex))
         {
+            ref readonly StrictEntry entry = ref entries[entryIndex];
             if (entry.SeenBit >= 0)
             {
                 seen[entry.SeenBit >> 6] |= 1UL << (entry.SeenBit & 63);
             }
 
-            TypeMask inline = entry.InlineType;
+            TypeMask inline = entry.Mask;
             if (inline != TypeMask.None)
             {
-                if (!MatchesType<TAccess>(inline, default(TAccess).TokenType(ref state, doc, valueIndex), ref state, doc, valueIndex, entry.InlineLexical))
+                if (!MatchesType<TAccess>(inline, valueType, ref state, doc, valueIndex, entry.Lexical))
                 {
                     return false;
                 }
             }
-            else if (entry.InlineEnum is Utf8NameMap<object> allowed)
+            else if (entry.Set is Utf8NameMap<object> allowed)
             {
                 if (!MatchesStringSet<TAccess>(allowed, ref state, doc, valueIndex))
                 {
                     return false;
                 }
             }
-            else if (entry.Schema.IsPresent && !entry.InlineTrue && !EvalChildFast<TAccess>(state.Nodes[entry.Schema.FastNode], doc, valueIndex, ref state))
+            else if (entry.Child >= 0 && !EvalChildFast<TAccess>(state.Nodes[entry.Child], doc, valueIndex, ref state))
             {
                 return false;
             }
@@ -1309,9 +1318,9 @@ internal static partial class Evaluator
             return true;
         }
 
-        TypeMask additionalType = additionalInlineType;
+        TypeMask additionalType = node.AdditionalInlineType;
         return additionalType != TypeMask.None
-            ? MatchesType<TAccess>(additionalType, default(TAccess).TokenType(ref state, doc, valueIndex), ref state, doc, valueIndex, additionalLexical)
+            ? MatchesType<TAccess>(additionalType, valueType, ref state, doc, valueIndex, node.AdditionalInlineLexical)
             : EvalChildFast<TAccess>(additional, doc, valueIndex, ref state);
     }
 
