@@ -70,6 +70,36 @@ public class FusedObjectTests
         }
         """;
 
+    private const string OpenApiLikeParameter = """
+        {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "name": {"type": "string"},
+            "in": {"enum": ["query", "header", "path", "cookie"]},
+            "required": {"type": "boolean"},
+            "schema": {"type": "object"},
+            "content": {"type": "object"}
+          },
+          "required": ["in", "name"],
+          "oneOf": [{"required": ["schema"]}, {"required": ["content"]}],
+          "if": {"properties": {"in": {"const": "query"}}, "required": ["in"]},
+          "then": {"properties": {"allowEmptyValue": {"type": "boolean"}}},
+          "dependentSchemas": {
+            "schema": {
+              "properties": {"style": {"type": "string"}, "explode": {"type": "boolean"}},
+              "allOf": [
+                {"if": {"properties": {"in": {"const": "path"}}, "required": ["in"]}, "then": {"properties": {"required": {"const": true}}, "required": ["required"]}},
+                {"if": {"properties": {"style": {"const": "form"}}, "required": ["style"]}, "then": {"properties": {"explode": {"default": true}}}, "else": {"properties": {"explode": {"default": false}}}},
+                {"if": {"properties": {"in": {"const": "header"}, "scheme": {"type": "string", "pattern": "^[Bb]earer$"}}, "required": ["in", "scheme"]}, "then": {"properties": {"bearerFormat": {"type": "string"}}}}
+              ]
+            }
+          },
+          "dependentRequired": {"content": ["name"]},
+          "unevaluatedProperties": false
+        }
+        """;
+
     private static readonly string[] Instances =
     [
         """{"id": 1, "name": "n", "email": "e", "tags": [], "address": {}}""",
@@ -109,12 +139,28 @@ public class FusedObjectTests
         """{"in": "query", "name": "q", "version": 3, "legacy": true}""",
         """{"in": "query", "name": "q", "version": "2", "legacy": true}""",
         """{"in": 5, "name": "q"}""",
+        """{"in": "query", "name": "q", "schema": {}}""",
+        """{"in": "query", "name": "q", "content": {}}""",
+        """{"in": "query", "name": "q", "schema": {}, "content": {}}""",
+        """{"in": "query", "name": "q"}""",
+        """{"in": "query", "name": "q", "schema": {}, "style": "form", "explode": true}""",
+        """{"in": "query", "name": "q", "schema": {}, "style": "form", "explode": "yes"}""",
+        """{"in": "query", "name": "q", "content": {}, "style": "form"}""",
+        """{"in": "path", "name": "id", "schema": {}, "required": true}""",
+        """{"in": "path", "name": "id", "schema": {}}""",
+        """{"in": "path", "name": "id", "content": {}}""",
+        """{"in": "header", "name": "h", "schema": {}, "scheme": "Bearer", "bearerFormat": "JWT"}""",
+        """{"in": "header", "name": "h", "schema": {}, "scheme": "Basic", "bearerFormat": "JWT"}""",
+        """{"in": "header", "name": "h", "schema": {}, "scheme": 7, "bearerFormat": "JWT"}""",
+        """{"in": "query", "name": "q", "schema": {}, "allowEmptyValue": true}""",
+        """{"in": "header", "name": "h", "schema": {}, "allowEmptyValue": true}""",
     ];
 
     [TestMethod]
     [DataRow(AllOfWithUnevaluated, DisplayName = "allOf with unevaluatedProperties")]
     [DataRow(PerBranchAdditional, DisplayName = "per-branch additional and pattern properties")]
     [DataRow(ValueConditions, DisplayName = "conditions on property values")]
+    [DataRow(OpenApiLikeParameter, DisplayName = "dependent schemas, required-only oneOf, nested and pattern conditions")]
     [DataRow(RefChainWithElse, DisplayName = "$ref chain with if/then/else")]
     public void FusedPlanAgreesWithTheGeneralPath(string schema)
     {

@@ -41,8 +41,11 @@ internal sealed class FusedObject
     /// <summary>The branches, the node itself first.</summary>
     public FusedContributor[] Contributors = [];
 
-    /// <summary>The <c>if</c> conditions, each a set of names that must be present.</summary>
+    /// <summary>The conditions (an <c>if</c>'s tests, or a dependency's presence), each possibly gated on another.</summary>
     public FusedCondition[] Conditions = [];
+
+    /// <summary>Required-only <c>oneOf</c>/<c>anyOf</c> keywords, decided from the seen bits after the pass.</summary>
+    public FusedAlternative[] Alternatives = [];
 
     /// <summary>Whether any branch has pattern properties or additional properties, so unknown names need resolving.</summary>
     public bool ResolvesUnknownNames;
@@ -77,7 +80,26 @@ internal sealed class FusedValueTest
 {
     public int Condition;
     public int Entry;
-    public Utf8NameMap<object> Allowed = null!;
+
+    /// <summary>The allowed tagged keys, or null when the test is a <see cref="Pattern"/>.</summary>
+    public Utf8NameMap<object>? Allowed;
+
+    /// <summary>A <c>pattern</c> test on string values; a non-string value passes unless <see cref="RequiresString"/>.</summary>
+    public PatternMatcher? Pattern;
+
+    public bool RequiresString;
+}
+
+/// <summary>
+/// A <c>oneOf</c> or <c>anyOf</c> whose branches are nothing but <c>required</c> lists: after the pass, the number
+/// of branches whose names were all seen decides it. Gated like a contributor when it sits under a condition.
+/// </summary>
+internal sealed class FusedAlternative
+{
+    public int Condition = -1;
+    public bool Polarity = true;
+    public bool ExactlyOne;
+    public int[][] Branches = [];
 }
 
 /// <summary>One child schema applying to a property on behalf of a branch; a node of -1 covers without evaluation.</summary>
@@ -107,6 +129,24 @@ internal sealed class FusedCondition
 
     /// <summary>Value tests on properties (see <see cref="FusedValueTest"/>); a property that is absent passes its test.</summary>
     public FusedValueTest[] ValueTests = [];
+
+    /// <summary>
+    /// The enclosing condition and the polarity under which this one is reached (a nested <c>if</c>, or an <c>if</c>
+    /// inside a dependent schema), or -1 at the top level. A contributor applies when its own condition matches its
+    /// polarity and every condition on the chain above matches too.
+    /// </summary>
+    public int Gate = -1;
+
+    public bool GatePolarity = true;
+}
+
+/// <summary>A condition as collected: an <c>if</c> schema, or the presence of a property for a dependency.</summary>
+internal sealed class PendingCondition
+{
+    public SchemaNode? Test;
+    public byte[]? DependencyName;
+    public int Gate = -1;
+    public bool GatePolarity = true;
 }
 
 /// <summary>Builds fused object plans over a compiled node graph.</summary>
@@ -204,8 +244,11 @@ internal static class FusedObjects
         }
 
         var contributors = new List<(SchemaNode Node, int Condition, bool Polarity)>();
-        var conditions = new List<SchemaNode>();
-        if (!Collect(nodes, node, -1, true, contributors, conditions))
+        var conditions = new List<PendingCondition>();
+        var extras = new List<(int Condition, bool Polarity, byte[][] RequiredNames)>();
+        var alternatives = new List<(int Condition, bool Polarity, bool ExactlyOne, byte[][][] Branches)>();
+        var context = new CollectContext(nodes, contributors, conditions, extras, alternatives);
+        if (!Collect(context, node, -1, true))
         {
             return null;
         }
@@ -250,11 +293,35 @@ internal static class FusedObjects
             }
         }
 
-        foreach (SchemaNode condition in conditions)
+        foreach (PendingCondition condition in conditions)
         {
-            foreach (byte[] name in condition.RequiredNames ?? [])
+            foreach (byte[] name in condition.Test?.RequiredNames ?? [])
             {
                 NameBit(name);
+            }
+
+            if (condition.DependencyName is byte[] dependencyName)
+            {
+                NameBit(dependencyName);
+            }
+        }
+
+        foreach ((_, _, byte[][] requiredNames) in extras)
+        {
+            foreach (byte[] name in requiredNames)
+            {
+                NameBit(name);
+            }
+        }
+
+        foreach ((_, _, _, byte[][][] branches) in alternatives)
+        {
+            foreach (byte[][] branch in branches)
+            {
+                foreach (byte[] name in branch)
+                {
+                    NameBit(name);
+                }
             }
         }
 
@@ -303,13 +370,52 @@ internal static class FusedObjects
             built[c] = contributor;
         }
 
+        if (extras.Count > 0)
+        {
+            var all = new FusedContributor[built.Length + extras.Count];
+            built.CopyTo(all, 0);
+            for (int e = 0; e < extras.Count; e++)
+            {
+                (int condition, bool polarity, byte[][] requiredNames) = extras[e];
+                var bits = new int[requiredNames.Length];
+                for (int i = 0; i < bits.Length; i++)
+                {
+                    bits[i] = NameBit(requiredNames[i]);
+                }
+
+                all[built.Length + e] = new FusedContributor { Condition = condition, Polarity = polarity, RequiredBits = bits };
+            }
+
+            built = all;
+        }
+
         fused.Contributors = built;
+
+        var builtAlternatives = new FusedAlternative[alternatives.Count];
+        for (int a = 0; a < alternatives.Count; a++)
+        {
+            (int condition, bool polarity, bool exactlyOne, byte[][][] branches) = alternatives[a];
+            var branchBits = new int[branches.Length][];
+            for (int b = 0; b < branches.Length; b++)
+            {
+                branchBits[b] = new int[branches[b].Length];
+                for (int i = 0; i < branches[b].Length; i++)
+                {
+                    branchBits[b][i] = NameBit(branches[b][i]);
+                }
+            }
+
+            builtAlternatives[a] = new FusedAlternative { Condition = condition, Polarity = polarity, ExactlyOne = exactlyOne, Branches = branchBits };
+        }
+
+        fused.Alternatives = builtAlternatives;
 
         var builtConditions = new FusedCondition[conditions.Count];
         var valueTestsByEntry = new Dictionary<int, List<FusedValueTest>>();
         for (int i = 0; i < conditions.Count; i++)
         {
-            byte[][] required = conditions[i].RequiredNames ?? [];
+            PendingCondition pending = conditions[i];
+            byte[][] required = pending.Test?.RequiredNames ?? (pending.DependencyName is byte[] dependency ? [dependency] : []);
             var bits = new int[required.Length];
             for (int j = 0; j < required.Length; j++)
             {
@@ -317,7 +423,7 @@ internal static class FusedObjects
             }
 
             var tests = new List<FusedValueTest>();
-            if (conditions[i].Properties is Utf8NameMap<PropertyEntry> testProperties)
+            if (pending.Test?.Properties is Utf8NameMap<PropertyEntry> testProperties)
             {
                 foreach (PropertyEntry entry in testProperties.Values)
                 {
@@ -326,8 +432,10 @@ internal static class FusedObjects
                         continue;
                     }
 
-                    // IsSupportedCondition accepted the schema, so its constants all key.
-                    var test = new FusedValueTest { Condition = i, Entry = NameBit(entry.Name), Allowed = new Utf8NameMap<object>(ConstantKeys(nodes[entry.Schema.FastNode])!) };
+                    // IsSupportedCondition accepted the schema, so it keys or is a pattern.
+                    FusedValueTest test = ValueTestFor(nodes[entry.Schema.FastNode])!;
+                    test.Condition = i;
+                    test.Entry = NameBit(entry.Name);
                     tests.Add(test);
                     if (!valueTestsByEntry.TryGetValue(test.Entry, out List<FusedValueTest>? list))
                     {
@@ -339,7 +447,7 @@ internal static class FusedObjects
                 }
             }
 
-            builtConditions[i] = new FusedCondition { RequiredBits = bits, ValueTests = [.. tests] };
+            builtConditions[i] = new FusedCondition { RequiredBits = bits, ValueTests = [.. tests], Gate = pending.Gate, GatePolarity = pending.GatePolarity };
         }
 
         fused.Conditions = builtConditions;
@@ -406,25 +514,45 @@ internal static class FusedObjects
         return nodes[child.FastNode].AlwaysTrue ? -1 : child.FastNode;
     }
 
-    /// <summary>
-    /// Walks the in-place applicators of a branch, adding every object branch with its condition. Fails when a branch
-    /// cannot be fused.
-    /// </summary>
-    private static bool Collect(SchemaNode[] nodes, SchemaNode branch, int condition, bool polarity, List<(SchemaNode, int, bool)> contributors, List<SchemaNode> conditions)
+    /// <summary>The lists a collection fills.</summary>
+    private sealed class CollectContext(
+        SchemaNode[] nodes,
+        List<(SchemaNode Node, int Condition, bool Polarity)> contributors,
+        List<PendingCondition> conditions,
+        List<(int Condition, bool Polarity, byte[][] RequiredNames)> extras,
+        List<(int Condition, bool Polarity, bool ExactlyOne, byte[][][] Branches)> alternatives)
     {
+        public SchemaNode[] Nodes { get; } = nodes;
+
+        public List<(SchemaNode Node, int Condition, bool Polarity)> Contributors { get; } = contributors;
+
+        public List<PendingCondition> Conditions { get; } = conditions;
+
+        public List<(int Condition, bool Polarity, byte[][] RequiredNames)> Extras { get; } = extras;
+
+        public List<(int Condition, bool Polarity, bool ExactlyOne, byte[][][] Branches)> Alternatives { get; } = alternatives;
+    }
+
+    /// <summary>
+    /// Walks the in-place applicators of a branch, adding every object branch with its condition. Conditions nest:
+    /// an <c>if</c> under a condition, or the dependent schemas of a branch under one, get a condition gated on it.
+    /// Fails when a branch cannot be fused.
+    /// </summary>
+    private static bool Collect(CollectContext ctx, SchemaNode branch, int condition, bool polarity)
+    {
+        SchemaNode[] nodes = ctx.Nodes;
         if (branch.AlwaysTrue)
         {
             return true;
         }
 
-        if (branch.AlwaysFalse || branch.InPlaceCycle || !IsObjectBranch(branch, allowUnevaluated: contributors.Count == 0))
+        if (branch.AlwaysFalse || branch.InPlaceCycle || !IsObjectBranch(branch, allowUnevaluated: ctx.Contributors.Count == 0))
         {
             return false;
         }
 
-        contributors.Add((branch, condition, polarity));
-
-        if (branch.Ref.IsPresent && !Collect(nodes, nodes[branch.Ref.FastNode], condition, polarity, contributors, conditions))
+        ctx.Contributors.Add((branch, condition, polarity));
+        if (branch.Ref.IsPresent && !Collect(ctx, nodes[branch.Ref.FastNode], condition, polarity))
         {
             return false;
         }
@@ -433,7 +561,40 @@ internal static class FusedObjects
         {
             foreach (ChildRef child in allOf)
             {
-                if (!Collect(nodes, nodes[child.FastNode], condition, polarity, contributors, conditions))
+                if (!Collect(ctx, nodes[child.FastNode], condition, polarity))
+                {
+                    return false;
+                }
+            }
+        }
+
+        if (branch.OneOf is ChildRef[] oneOf && !CollectAlternative(ctx, oneOf, condition, polarity, exactlyOne: true))
+        {
+            return false;
+        }
+
+        if (branch.AnyOf is ChildRef[] anyOf && !CollectAlternative(ctx, anyOf, condition, polarity, exactlyOne: false))
+        {
+            return false;
+        }
+
+        if (branch.Dependencies is DependencyEntry[] dependencies)
+        {
+            foreach (DependencyEntry dependency in dependencies)
+            {
+                if (ctx.Conditions.Count >= MaxConditions)
+                {
+                    return false;
+                }
+
+                int id = ctx.Conditions.Count;
+                ctx.Conditions.Add(new PendingCondition { DependencyName = dependency.Name, Gate = condition, GatePolarity = polarity });
+                if (dependency.RequiredNames.Length > 0)
+                {
+                    ctx.Extras.Add((id, true, dependency.RequiredNames));
+                }
+
+                if (dependency.Schema.IsPresent && !Collect(ctx, nodes[dependency.Schema.FastNode], id, true))
                 {
                     return false;
                 }
@@ -442,62 +603,72 @@ internal static class FusedObjects
 
         if (branch.If.IsPresent)
         {
-            // One level of condition: a conditional branch may not introduce another.
-            if (condition >= 0)
-            {
-                return false;
-            }
-
             SchemaNode test = nodes[branch.If.FastNode];
             if (test.AlwaysTrue)
             {
-                return !branch.Then.IsPresent || Collect(nodes, nodes[branch.Then.FastNode], condition, polarity, contributors, conditions);
+                return !branch.Then.IsPresent || Collect(ctx, nodes[branch.Then.FastNode], condition, polarity);
             }
 
             if (test.AlwaysFalse)
             {
-                return !branch.Else.IsPresent || Collect(nodes, nodes[branch.Else.FastNode], condition, polarity, contributors, conditions);
+                return !branch.Else.IsPresent || Collect(ctx, nodes[branch.Else.FastNode], condition, polarity);
             }
 
-            if (!IsSupportedCondition(nodes, test) || conditions.Count >= MaxConditions)
+            if (!IsSupportedCondition(nodes, test) || ctx.Conditions.Count >= MaxConditions)
             {
                 return false;
             }
 
-            int id = conditions.Count;
-            conditions.Add(test);
+            int id = ctx.Conditions.Count;
+            ctx.Conditions.Add(new PendingCondition { Test = test, Gate = condition, GatePolarity = polarity });
 
             // When the condition holds, the if schema's own properties count as evaluated (its annotations are
             // kept), so it contributes under the same condition as then.
-            if (test.Properties is not null && !Collect(nodes, test, id, true, contributors, conditions))
+            if (test.Properties is not null && !Collect(ctx, test, id, true))
             {
                 return false;
             }
 
-            if (branch.Then.IsPresent && !Collect(nodes, nodes[branch.Then.FastNode], id, true, contributors, conditions))
+            if (branch.Then.IsPresent && !Collect(ctx, nodes[branch.Then.FastNode], id, true))
             {
                 return false;
             }
 
-            if (branch.Else.IsPresent && !Collect(nodes, nodes[branch.Else.FastNode], id, false, contributors, conditions))
+            if (branch.Else.IsPresent && !Collect(ctx, nodes[branch.Else.FastNode], id, false))
             {
                 return false;
             }
-        }
-        else if (branch.Then.IsPresent || branch.Else.IsPresent)
-        {
-            // then/else without if are ignored by the specification; nothing to fuse.
         }
 
         return true;
     }
 
     /// <summary>
-    /// A branch whose only effect on an object instance is through object keywords and the fusable in-place applicators.
+    /// A <c>oneOf</c>/<c>anyOf</c> fuses only when every branch is a plain <c>required</c> list (with at most a
+    /// <c>type: object</c>), which the seen bits decide after the pass.
     /// </summary>
-    private static bool IsObjectBranch(SchemaNode node, bool allowUnevaluated)
+    private static bool CollectAlternative(CollectContext ctx, ChildRef[] branches, int condition, bool polarity, bool exactlyOne)
     {
-        if (node.HasConst || node.Enum is not null || node.HasNumberKeywords || node.HasStringKeywords)
+        var collected = new List<byte[][]>(branches.Length);
+        foreach (ChildRef child in branches)
+        {
+            SchemaNode branch = ctx.Nodes[child.FastNode];
+            if (branch.RequiredNames is not byte[][] { Length: > 0 } required || !IsRequiredListOnly(branch))
+            {
+                return false;
+            }
+
+            collected.Add(required);
+        }
+
+        ctx.Alternatives.Add((condition, polarity, exactlyOne, [.. collected]));
+        return true;
+    }
+
+    private static bool IsRequiredListOnly(SchemaNode node)
+    {
+        if (node.HasConst || node.Enum is not null || node.HasNumberKeywords || node.HasStringKeywords || node.HasArrayKeywords || node.HasInPlaceApplicators
+            || node.DynamicRef is not null || node.UnevaluatedProperties.IsPresent || node.UnevaluatedItems.IsPresent)
         {
             return false;
         }
@@ -507,20 +678,27 @@ internal static class FusedObjects
             return false;
         }
 
-        if (node.AnyOf is not null || node.OneOf is not null || node.Not.IsPresent || node.Dependencies is not null || node.PropertyNames.IsPresent || node.DynamicRef is not null)
+        if (node.PatternProperties is not null || node.AdditionalProperties.IsPresent || node.PropertyNames.IsPresent
+            || node.Dependencies is not null || node.MinProperties >= 0 || node.MaxProperties >= 0)
         {
             return false;
         }
 
-        if (!allowUnevaluated && node.UnevaluatedProperties.IsPresent)
+        // The compiler registers every required name as a property entry without a schema.
+        if (node.Properties is Utf8NameMap<PropertyEntry> properties)
         {
-            return false;
+            foreach (PropertyEntry entry in properties.Values)
+            {
+                if (entry.Schema.IsPresent)
+                {
+                    return false;
+                }
+            }
         }
 
         return true;
     }
 
-    /// <summary>An <c>if</c> that is only a <c>required</c> list (and possibly <c>type: object</c>).</summary>
     /// <summary>
     /// A condition the plan can decide from the pass alone: <c>required</c> names, and <c>properties</c> whose
     /// schemas are constants or enums of strings, canonical integers or booleans (a value test), optionally with
@@ -554,7 +732,7 @@ internal static class FusedObjects
                     continue;
                 }
 
-                if (ConstantKeys(nodes[entry.Schema.FastNode]) is null)
+                if (ValueTestFor(nodes[entry.Schema.FastNode]) is null)
                 {
                     return false;
                 }
@@ -567,13 +745,29 @@ internal static class FusedObjects
     }
 
     /// <summary>
-    /// The tagged keys of a schema that is nothing but a keyable <c>const</c> or <c>enum</c> (plus an optional
-    /// <c>type</c>), or null when the schema is anything else.
+    /// The value test for a property schema inside an <c>if</c>: a keyable <c>const</c> or <c>enum</c> (strings,
+    /// canonical integers, booleans), or a <c>pattern</c>, each with at most a <c>type</c>; null for anything else.
     /// </summary>
-    private static List<KeyValuePair<byte[], object>>? ConstantKeys(SchemaNode schema)
+    private static FusedValueTest? ValueTestFor(SchemaNode schema)
     {
-        if (schema.HasNumberKeywords || schema.HasStringKeywords || schema.HasObjectKeywords || schema.HasArrayKeywords || schema.HasInPlaceApplicators
+        if (schema.HasNumberKeywords || schema.HasObjectKeywords || schema.HasArrayKeywords || schema.HasInPlaceApplicators
             || schema.UnevaluatedProperties.IsPresent || schema.UnevaluatedItems.IsPresent || schema.AlwaysFalse)
+        {
+            return null;
+        }
+
+        if (schema.Pattern is PatternMatcher pattern)
+        {
+            if (schema.HasConst || schema.Enum is not null || schema.MinLength >= 0 || schema.MaxLength >= 0 || schema.Format != FormatKind.None || schema.Content != ContentKind.None
+                || (schema.HasType && schema.Type != TypeMask.String))
+            {
+                return null;
+            }
+
+            return new FusedValueTest { Pattern = pattern, RequiresString = schema.HasType };
+        }
+
+        if (schema.HasStringKeywords)
         {
             return null;
         }
@@ -605,6 +799,35 @@ internal static class FusedObjects
             return null;
         }
 
-        return keys;
+        return new FusedValueTest { Allowed = new Utf8NameMap<object>(keys) };
+    }
+
+    /// <summary>
+    /// A branch whose only effect on an object instance is through object keywords and the fusable in-place applicators.
+    /// </summary>
+    private static bool IsObjectBranch(SchemaNode node, bool allowUnevaluated)
+    {
+        if (node.HasConst || node.Enum is not null || node.HasNumberKeywords || node.HasStringKeywords)
+        {
+            return false;
+        }
+
+        if (node.HasType && (node.Type & TypeMask.Object) == 0)
+        {
+            return false;
+        }
+
+        // anyOf, oneOf and dependencies are accepted here and validated by Collect (required-only branches, gated conditions).
+        if (node.Not.IsPresent || node.PropertyNames.IsPresent || node.DynamicRef is not null)
+        {
+            return false;
+        }
+
+        if (!allowUnevaluated && node.UnevaluatedProperties.IsPresent)
+        {
+            return false;
+        }
+
+        return true;
     }
 }

@@ -591,6 +591,14 @@ internal static partial class Evaluator
                 holds[i] = all;
             }
 
+            // A condition under another applies only along the chain that reaches it.
+            Span<bool> gateOk = stackalloc bool[64];
+            for (int i = 0; i < conditions.Length; i++)
+            {
+                int gate = conditions[i].Gate;
+                gateOk[i] = gate < 0 || (gateOk[gate] && holds[gate] == conditions[i].GatePolarity);
+            }
+
             for (int d = 0; d < deferredCount; d++)
             {
                 int ordinal2 = deferred[d * 3];
@@ -604,7 +612,7 @@ internal static partial class Evaluator
                     {
                         FusedApplication app = applications[a];
                         FusedContributor contributor = contributors[app.Contributor];
-                        if (contributor.Condition >= 0 && holds[contributor.Condition] == contributor.Polarity)
+                        if (contributor.Condition >= 0 && gateOk[contributor.Condition] && holds[contributor.Condition] == contributor.Polarity)
                         {
                             if (app.Node >= 0 && !EvalChildFast<TAccess>(nodes[app.Node], doc, valueIndex, ref state))
                             {
@@ -621,7 +629,7 @@ internal static partial class Evaluator
                     for (int c = 0; c < contributors.Length; c++)
                     {
                         FusedContributor contributor = contributors[c];
-                        if (contributor.Condition >= 0 && holds[contributor.Condition] == contributor.Polarity)
+                        if (contributor.Condition >= 0 && gateOk[contributor.Condition] && holds[contributor.Condition] == contributor.Polarity)
                         {
                             if (!ResolveUnknownName<TAccess>(contributor, name.Span, nodes, doc, valueIndex, ref state, out bool matched))
                             {
@@ -644,7 +652,7 @@ internal static partial class Evaluator
                 FusedContributor contributor = contributors[c];
                 if (contributor.Condition >= 0)
                 {
-                    if (holds[contributor.Condition] != contributor.Polarity)
+                    if (!gateOk[contributor.Condition] || holds[contributor.Condition] != contributor.Polarity)
                     {
                         continue;
                     }
@@ -662,6 +670,38 @@ internal static partial class Evaluator
                     {
                         return false;
                     }
+                }
+            }
+
+            FusedAlternative[] alternatives = f.Alternatives;
+            for (int a = 0; a < alternatives.Length; a++)
+            {
+                FusedAlternative alternative = alternatives[a];
+                if (alternative.Condition >= 0 && (!gateOk[alternative.Condition] || holds[alternative.Condition] != alternative.Polarity))
+                {
+                    continue;
+                }
+
+                int matches = 0;
+                int[][] branches = alternative.Branches;
+                for (int b = 0; b < branches.Length; b++)
+                {
+                    bool all = true;
+                    int[] bits = branches[b];
+                    for (int i = 0; i < bits.Length && all; i++)
+                    {
+                        all = (seen[bits[i] >> 6] & (1UL << (bits[i] & 63))) != 0;
+                    }
+
+                    if (all)
+                    {
+                        matches++;
+                    }
+                }
+
+                if (matches == 0 || (alternative.ExactlyOne && matches != 1))
+                {
+                    return false;
                 }
             }
 
@@ -733,7 +773,8 @@ internal static partial class Evaluator
                 // "2.0" may equal a keyed integer: test it the slow way, by value.
                 for (int t = 0; t < tests.Length; t++)
                 {
-                    if (!NumberInKeys(raw, tests[t].Allowed))
+                    bool passes = tests[t].Pattern is not null ? !tests[t].RequiresString : NumberInKeys(raw, tests[t].Allowed!);
+                    if (!passes)
                     {
                         failed[tests[t].Condition] = true;
                     }
@@ -743,9 +784,13 @@ internal static partial class Evaluator
             }
 
             default:
+                // A pattern does not apply to a non-string; a key set has nothing that matches a structured value or null.
                 for (int t = 0; t < tests.Length; t++)
                 {
-                    failed[tests[t].Condition] = true;
+                    if (tests[t].Pattern is null || tests[t].RequiresString)
+                    {
+                        failed[tests[t].Condition] = true;
+                    }
                 }
 
                 return;
@@ -760,9 +805,13 @@ internal static partial class Evaluator
         value.CopyTo(key[1..]);
         for (int t = 0; t < tests.Length; t++)
         {
-            if (!tests[t].Allowed.TryGetValue(key, out _))
+            FusedValueTest test = tests[t];
+            bool passes = test.Pattern is PatternMatcher pattern
+                ? (tag == Discriminator.StringTag ? pattern.IsMatch(value) : !test.RequiresString)
+                : test.Allowed!.TryGetValue(key, out _);
+            if (!passes)
             {
-                failed[tests[t].Condition] = true;
+                failed[test.Condition] = true;
             }
         }
 
