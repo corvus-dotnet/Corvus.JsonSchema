@@ -1073,32 +1073,35 @@ internal static partial class Evaluator
         }
 
         Utf8NameMap<PropertyEntry>? properties = node.Properties;
+        StrictEntry[] entries = node.StrictEntries ?? [];
         ulong seen = 0;
         int end = default(TAccess).EndIndex(ref state, doc, index);
-        for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex) + RowSize)
+        int valueIndex = index + (2 * RowSize);
+        while (valueIndex - RowSize < end)
         {
-            PropertyEntry? entry = null;
+            // The value's header gives its type and the next row in one read.
+            JsonTokenType valueType = default(TAccess).TokenTypeAndNext(ref state, doc, valueIndex, out int next);
+            int entryIndex = -1;
             if (properties is not null)
             {
                 ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRaw(ref state, doc, valueIndex, out bool escaped);
                 if (!escaped)
                 {
-                    properties.TryGetValue(raw, out entry);
+                    properties.TryGetIndex(raw, out entryIndex);
                 }
                 else
                 {
                     using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
-                    properties.TryGetValue(name.Span, out entry);
+                    properties.TryGetIndex(name.Span, out entryIndex);
                 }
             }
 
-            // The resolution for the value: a known entry's, or the additional-properties one for an unknown name.
-            // One type test and one child dispatch keep the loop small.
+            // The resolution for the value: the entry's, or the additional-properties one for an unknown name.
             TypeMask mask;
             bool lexical;
             Utf8NameMap<object>? set = null;
-            int child = -1;
-            if (entry is null)
+            int child;
+            if (entryIndex < 0)
             {
                 if (node.AdditionalRejects)
                 {
@@ -1111,23 +1114,21 @@ internal static partial class Evaluator
             }
             else
             {
+                ref readonly StrictEntry entry = ref entries[entryIndex];
                 if (entry.SeenBit >= 0)
                 {
                     seen |= 1UL << entry.SeenBit;
                 }
 
-                mask = entry.InlineType;
-                lexical = entry.InlineLexical;
-                set = entry.InlineEnum;
-                if (entry.Schema.IsPresent && !entry.InlineTrue)
-                {
-                    child = entry.Schema.FastNode;
-                }
+                mask = entry.Mask;
+                lexical = entry.Lexical;
+                set = entry.Set;
+                child = entry.Child;
             }
 
             if (mask != TypeMask.None)
             {
-                if (!MatchesType<TAccess>(mask, default(TAccess).TokenType(ref state, doc, valueIndex), ref state, doc, valueIndex, lexical))
+                if (!MatchesType<TAccess>(mask, valueType, ref state, doc, valueIndex, lexical))
                 {
                     return false;
                 }
@@ -1143,6 +1144,8 @@ internal static partial class Evaluator
             {
                 return false;
             }
+
+            valueIndex = next + RowSize;
         }
 
         return (seen & node.RequiredMask) == node.RequiredMask;

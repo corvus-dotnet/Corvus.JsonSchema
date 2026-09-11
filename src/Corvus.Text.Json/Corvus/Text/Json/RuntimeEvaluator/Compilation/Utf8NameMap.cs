@@ -111,11 +111,25 @@ internal sealed class Utf8NameMap<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryGetValue(ReadOnlySpan<byte> key, [NotNullWhen(true)] out T? value)
     {
+        if (this.TryGetIndex(key, out int index))
+        {
+            value = this.values[index];
+            return true;
+        }
+
+        value = null;
+        return false;
+    }
+
+    /// <summary>Looks a key up and returns its index into <see cref="Values"/> (and <see cref="Keys"/>), for callers that keep a parallel table.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryGetIndex(ReadOnlySpan<byte> key, out int index)
+    {
         int length = key.Length;
         Bucket[] buckets = this.buckets;
         if ((uint)length >= (uint)buckets.Length)
         {
-            value = null;
+            index = -1;
             return false;
         }
 
@@ -123,7 +137,7 @@ internal sealed class Utf8NameMap<T>
         int[]? table = bucket.Table;
         if (table is null)
         {
-            value = null;
+            index = -1;
             return false;
         }
 
@@ -133,14 +147,14 @@ internal sealed class Utf8NameMap<T>
             int i = slot - 1;
             if (KeyEquals(key, this.keys[i]))
             {
-                value = this.values[i];
+                index = i;
                 return true;
             }
 
             slot = this.next[i];
         }
 
-        value = null;
+        index = -1;
         return false;
     }
 
@@ -187,12 +201,20 @@ internal sealed class Utf8NameMap<T>
 
     /// <summary>
     /// Equality of a name and a key of the same length (the bucket guarantees it): up to sixteen bytes as one or two
-    /// overlapping word loads, longer keys through the vectorised comparison.
+    /// overlapping word loads, longer keys through the vectorised comparison. The word loads are unchecked: both
+    /// spans are at least <c>n</c> bytes long and every offset read is within <c>n</c>.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool KeyEquals(ReadOnlySpan<byte> name, ReadOnlySpan<byte> k)
     {
         int n = name.Length;
+        if (k.Length != n)
+        {
+            return false;
+        }
+
+        ref byte a = ref MemoryMarshal.GetReference(name);
+        ref byte b = ref MemoryMarshal.GetReference(k);
         if (n >= 8)
         {
             if (n > 16)
@@ -200,19 +222,19 @@ internal sealed class Utf8NameMap<T>
                 return name.SequenceEqual(k);
             }
 
-            return MemoryMarshal.Read<ulong>(name) == MemoryMarshal.Read<ulong>(k)
-                && MemoryMarshal.Read<ulong>(name.Slice(n - 8)) == MemoryMarshal.Read<ulong>(k.Slice(n - 8));
+            return Unsafe.ReadUnaligned<ulong>(ref a) == Unsafe.ReadUnaligned<ulong>(ref b)
+                && Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref a, n - 8)) == Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref b, n - 8));
         }
 
         if (n >= 4)
         {
-            return MemoryMarshal.Read<uint>(name) == MemoryMarshal.Read<uint>(k)
-                && MemoryMarshal.Read<uint>(name.Slice(n - 4)) == MemoryMarshal.Read<uint>(k.Slice(n - 4));
+            return Unsafe.ReadUnaligned<uint>(ref a) == Unsafe.ReadUnaligned<uint>(ref b)
+                && Unsafe.ReadUnaligned<uint>(ref Unsafe.Add(ref a, n - 4)) == Unsafe.ReadUnaligned<uint>(ref Unsafe.Add(ref b, n - 4));
         }
 
-        for (int b = 0; b < n; b++)
+        for (int i = 0; i < n; i++)
         {
-            if (name[b] != k[b])
+            if (Unsafe.Add(ref a, i) != Unsafe.Add(ref b, i))
             {
                 return false;
             }

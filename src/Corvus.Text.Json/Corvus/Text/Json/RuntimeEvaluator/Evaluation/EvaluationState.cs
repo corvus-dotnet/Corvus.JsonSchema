@@ -65,6 +65,9 @@ internal interface IDocumentAccess
     /// <summary>Gets the index of the row after an element (its next sibling, or the parent's end row).</summary>
     int NextIndex(ref EvaluationState state, IJsonDocument doc, int index);
 
+    /// <summary>Gets the token type of an element and the index of the row after it, from one read of its header where the layout allows.</summary>
+    JsonTokenType TokenTypeAndNext(ref EvaluationState state, IJsonDocument doc, int index, out int nextIndex);
+
     /// <summary>Gets the unescaped text of a string value.</summary>
     UnescapedUtf8JsonString GetString(ref EvaluationState state, IJsonDocument doc, int index);
 
@@ -102,12 +105,35 @@ internal readonly struct RawAccess : IDocumentAccess
 
     public ReadOnlySpan<byte> PropertyNameRaw(ref EvaluationState state, IJsonDocument doc, int valueIndex, out bool escaped)
     {
+        // Location and length are the row's first two ints: one read, one bounds check.
         ReadOnlySpan<byte> rows = state.RawRows;
         int nameIndex = valueIndex - RowSize;
-        int location = ReadInt32(rows, nameIndex) & LocationMask;
-        int length = ReadInt32(rows, nameIndex + SizeOrLengthOffset);
+        ulong pair = MemoryMarshal.Read<ulong>(rows.Slice(nameIndex, sizeof(ulong)));
+        int location;
+        int length;
+        if (BitConverter.IsLittleEndian)
+        {
+            location = (int)pair & LocationMask;
+            length = (int)(pair >> 32);
+        }
+        else
+        {
+            location = (int)(pair >> 32) & LocationMask;
+            length = (int)pair;
+        }
+
         escaped = length < 0;
         return state.RawUtf8.Slice(location, length & int.MaxValue);
+    }
+
+    public JsonTokenType TokenTypeAndNext(ref EvaluationState state, IJsonDocument doc, int index, out int nextIndex)
+    {
+        uint union = ReadUInt32(state.RawRows, index + NumberOfRowsOffset);
+        uint tokenType = union >> 28;
+        nextIndex = tokenType >= (uint)JsonTokenType.PropertyName
+            ? index + RowSize
+            : index + (RowSize * (int)(union & NumberOfRowsMask)) + RowSize;
+        return (JsonTokenType)tokenType;
     }
 
     public int EndIndex(ref EvaluationState state, IJsonDocument doc, int containerIndex) => containerIndex + (RowSize * (int)(ReadUInt32(state.RawRows, containerIndex + NumberOfRowsOffset) & NumberOfRowsMask));
@@ -168,6 +194,12 @@ internal readonly struct InterfaceAccess : IDocumentAccess
     public int EndIndex(ref EvaluationState state, IJsonDocument doc, int containerIndex) => containerIndex + doc.GetDbSize(containerIndex, includeEndElement: false);
 
     public int NextIndex(ref EvaluationState state, IJsonDocument doc, int index) => index + doc.GetDbSize(index, includeEndElement: true);
+
+    public JsonTokenType TokenTypeAndNext(ref EvaluationState state, IJsonDocument doc, int index, out int nextIndex)
+    {
+        nextIndex = index + doc.GetDbSize(index, includeEndElement: true);
+        return doc.GetJsonTokenType(index);
+    }
 
     public UnescapedUtf8JsonString GetString(ref EvaluationState state, IJsonDocument doc, int index) => doc.GetUtf8JsonString(index, JsonTokenType.String);
 

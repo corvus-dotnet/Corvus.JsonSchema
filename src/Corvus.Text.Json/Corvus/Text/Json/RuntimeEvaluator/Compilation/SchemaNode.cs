@@ -1095,6 +1095,19 @@ internal sealed class PropertyEntry
 }
 
 /// <summary>
+/// What the strict object loop does with one known property, as a value: the seen bit, a type mask to test in place,
+/// a string set to test in place, or a child node to dispatch on (-1 for none).
+/// </summary>
+internal readonly struct StrictEntry(int seenBit, TypeMask mask, bool lexical, Utf8NameMap<object>? set, int child)
+{
+    public readonly int SeenBit = seenBit;
+    public readonly TypeMask Mask = mask;
+    public readonly bool Lexical = lexical;
+    public readonly Utf8NameMap<object>? Set = set;
+    public readonly int Child = child;
+}
+
+/// <summary>
 /// A <c>patternProperties</c> entry.
 /// </summary>
 internal sealed class PatternPropertyEntry
@@ -1430,6 +1443,9 @@ internal sealed class SchemaNode
 
     /// <summary>The node to evaluate unknown names' values against when <c>additionalProperties</c> is a schema that is neither <c>true</c>, <c>false</c> nor a type-only leaf; -1 otherwise. Derived from the graph.</summary>
     public int AdditionalFastNode = -1;
+
+    /// <summary>The strict loop's per-property resolutions, parallel to <see cref="Properties"/>' values. Derived from the graph.</summary>
+    public StrictEntry[]? StrictEntries;
     public byte[][]? RequiredNames;
     public PatternPropertyEntry[]? PatternProperties;
     public ChildRef AdditionalProperties = ChildRef.None;

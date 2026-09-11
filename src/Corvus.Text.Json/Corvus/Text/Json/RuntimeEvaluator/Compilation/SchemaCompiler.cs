@@ -479,6 +479,7 @@ internal sealed class SchemaCompiler
                 }
             }
 
+            node.StrictEntries = null;
             if (node.Properties is null)
             {
                 continue;
@@ -510,6 +511,17 @@ internal sealed class SchemaCompiler
                     entry.InlineEnum = target.EnumStrings;
                 }
             }
+
+            ReadOnlySpan<PropertyEntry> values = node.Properties.Values;
+            var strict = new StrictEntry[values.Length];
+            for (int i = 0; i < values.Length; i++)
+            {
+                PropertyEntry e = values[i];
+                int child = e.Schema.IsPresent && !e.InlineTrue && e.InlineType == TypeMask.None && e.InlineEnum is null ? e.Schema.FastNode : -1;
+                strict[i] = new StrictEntry(e.SeenBit, e.InlineType, e.InlineLexical, e.InlineEnum, child);
+            }
+
+            node.StrictEntries = strict;
         }
     }
 
