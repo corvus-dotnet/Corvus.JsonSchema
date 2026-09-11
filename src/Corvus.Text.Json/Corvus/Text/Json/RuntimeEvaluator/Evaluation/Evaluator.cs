@@ -981,27 +981,43 @@ internal static partial class Evaluator
             }
         }
 
-        Utf8NameMap<PropertyEntry> properties = node.Properties!;
-        bool rejectUnknown = node.AdditionalProperties.IsPresent && state.Nodes[node.AdditionalProperties.FastNode].AlwaysFalse;
+        Utf8NameMap<PropertyEntry>? properties = node.Properties;
         ulong seen = 0;
         int end = default(TAccess).EndIndex(ref state, doc, index);
         for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex) + RowSize)
         {
-            ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRaw(ref state, doc, valueIndex, out bool escaped);
-            PropertyEntry? entry;
-            if (!escaped)
+            PropertyEntry? entry = null;
+            if (properties is not null)
             {
-                properties.TryGetValue(raw, out entry);
-            }
-            else
-            {
-                using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
-                properties.TryGetValue(name.Span, out entry);
+                ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRaw(ref state, doc, valueIndex, out bool escaped);
+                if (!escaped)
+                {
+                    properties.TryGetValue(raw, out entry);
+                }
+                else
+                {
+                    using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
+                    properties.TryGetValue(name.Span, out entry);
+                }
             }
 
             if (entry is null)
             {
-                if (rejectUnknown)
+                // An unknown name: rejected, tested in place, dispatched, or allowed.
+                if (node.AdditionalRejects)
+                {
+                    return false;
+                }
+
+                TypeMask additionalType = node.AdditionalInlineType;
+                if (additionalType != TypeMask.None)
+                {
+                    if (!MatchesType<TAccess>(additionalType, default(TAccess).TokenType(ref state, doc, valueIndex), ref state, doc, valueIndex, node.AdditionalInlineLexical))
+                    {
+                        return false;
+                    }
+                }
+                else if (node.AdditionalFastNode >= 0 && !EvalChildFast<TAccess>(state.Nodes[node.AdditionalFastNode], doc, valueIndex, ref state))
                 {
                     return false;
                 }
@@ -1018,6 +1034,13 @@ internal static partial class Evaluator
             if (mask != TypeMask.None)
             {
                 if (!MatchesType<TAccess>(mask, default(TAccess).TokenType(ref state, doc, valueIndex), ref state, doc, valueIndex, entry.InlineLexical))
+                {
+                    return false;
+                }
+            }
+            else if (entry.InlineEnum is Utf8NameMap<object> allowed)
+            {
+                if (!MatchesStringSet<TAccess>(allowed, ref state, doc, valueIndex))
                 {
                     return false;
                 }
@@ -1064,7 +1087,7 @@ internal static partial class Evaluator
                 ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRaw(ref state, doc, valueIndex, out bool escaped);
                 if (!escaped)
                 {
-                    if (!EvalObjectPlanProperty<TAccess>(properties, patternProperties, additional, raw, doc, valueIndex, ref state, seen))
+                    if (!EvalObjectPlanProperty<TAccess>(properties, patternProperties, additional, node.AdditionalInlineType, node.AdditionalInlineLexical, raw, doc, valueIndex, ref state, seen))
                     {
                         return false;
                     }
@@ -1072,7 +1095,7 @@ internal static partial class Evaluator
                 else
                 {
                     using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
-                    if (!EvalObjectPlanProperty<TAccess>(properties, patternProperties, additional, name.Span, doc, valueIndex, ref state, seen))
+                    if (!EvalObjectPlanProperty<TAccess>(properties, patternProperties, additional, node.AdditionalInlineType, node.AdditionalInlineLexical, name.Span, doc, valueIndex, ref state, seen))
                     {
                         return false;
                     }
@@ -1134,7 +1157,7 @@ internal static partial class Evaluator
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool EvalObjectPlanProperty<TAccess>(Utf8NameMap<PropertyEntry>? properties, PatternPropertyEntry[]? patternProperties, SchemaNode? additional, scoped ReadOnlySpan<byte> name, IJsonDocument doc, int valueIndex, ref EvaluationState state, scoped Span<ulong> seen)
+    private static bool EvalObjectPlanProperty<TAccess>(Utf8NameMap<PropertyEntry>? properties, PatternPropertyEntry[]? patternProperties, SchemaNode? additional, TypeMask additionalInlineType, bool additionalLexical, scoped ReadOnlySpan<byte> name, IJsonDocument doc, int valueIndex, ref EvaluationState state, scoped Span<ulong> seen)
         where TAccess : struct, IDocumentAccess
     {
         bool matched = false;
@@ -1177,7 +1200,15 @@ internal static partial class Evaluator
             }
         }
 
-        return matched || additional is null || EvalChildFast<TAccess>(additional, doc, valueIndex, ref state);
+        if (matched || additional is null)
+        {
+            return true;
+        }
+
+        TypeMask additionalType = additionalInlineType;
+        return additionalType != TypeMask.None
+            ? MatchesType<TAccess>(additionalType, default(TAccess).TokenType(ref state, doc, valueIndex), ref state, doc, valueIndex, additionalLexical)
+            : EvalChildFast<TAccess>(additional, doc, valueIndex, ref state);
     }
 
     /// <summary>

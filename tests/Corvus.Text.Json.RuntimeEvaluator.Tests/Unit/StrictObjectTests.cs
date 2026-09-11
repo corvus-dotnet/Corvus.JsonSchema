@@ -125,8 +125,10 @@ public class StrictObjectTests
         Assert.IsFalse(schemaChild.Evaluate("""{"a": "x", "b": "2"}"""), "The inlined child still applies.");
         Assert.IsFalse(schemaChild.Evaluate("""{"b": 2}"""), "Required as a mask.");
 
+        // A type-only additionalProperties is tested in place on the strict plan.
         using JsonSchemaEvaluator additionalSchema = JsonSchemaEvaluator.Compile("""{"properties": {"a": {"type": "string"}}, "additionalProperties": {"type": "integer"}}""");
-        Assert.AreEqual(NodePlan.Object, additionalSchema.Program.Nodes[additionalSchema.RootNode].Plan);
+        Assert.AreEqual(NodePlan.StrictObject, additionalSchema.Program.Nodes[additionalSchema.RootNode].Plan);
+        Assert.AreEqual(TypeMask.Integer, additionalSchema.Program.Nodes[additionalSchema.RootNode].AdditionalInlineType);
         Assert.IsTrue(additionalSchema.Evaluate("""{"a": "x", "n": 1}"""));
         Assert.IsFalse(additionalSchema.Evaluate("""{"a": "x", "n": "1"}"""));
 
@@ -146,6 +148,49 @@ public class StrictObjectTests
         Assert.IsTrue(wide.Evaluate(all));
         Assert.IsFalse(wide.Evaluate(all.Replace("\"p69\": 69", "\"p69\": \"x\"")));
         Assert.IsFalse(wide.Evaluate("{" + string.Join(", ", Enumerable.Range(0, 69).Select(i => $"\"p{i}\": {i}")) + "}"), "One required name missing.");
+    }
+
+    [TestMethod]
+    public void MapsAndTypedAdditionalPropertiesTakeTheStrictPlan()
+    {
+        const string importMap = """
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "imports": {"type": "object", "additionalProperties": {"type": "string"}},
+                "scopes": {"type": "object", "additionalProperties": {"type": "object", "additionalProperties": {"type": "string"}}}
+              }
+            }
+            """;
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(importMap);
+        foreach (SchemaNode n in evaluator.Program.Nodes)
+        {
+            if (n.HasObjectKeywords)
+            {
+                Assert.AreEqual(NodePlan.StrictObject, n.Plan, System.Text.Encoding.UTF8.GetString(n.SchemaLocation));
+            }
+        }
+
+        SchemaNode imports = evaluator.Program.Nodes.First(n => n.SchemaLocation.AsSpan().EndsWith("/imports"u8));
+        Assert.AreEqual(TypeMask.String, imports.AdditionalInlineType, "A type-only additionalProperties is tested in place.");
+        Assert.IsTrue(evaluator.Program.Nodes[evaluator.RootNode].AdditionalRejects);
+
+        using JsonSchemaEvaluator loaded = JsonSchemaEvaluator.FromProgramImage(evaluator.ToProgramImage());
+        AssertAgree(evaluator, loaded, """{"imports": {"react": "https://esm.sh/react", "vue": "https://esm.sh/vue"}}""", true);
+        AssertAgree(evaluator, loaded, """{"imports": {"react": 1}}""", false);
+        AssertAgree(evaluator, loaded, """{"imports": {}, "scopes": {"/a/": {"x": "y"}, "/b/": {}}}""", true);
+        AssertAgree(evaluator, loaded, """{"scopes": {"/a/": {"x": 1}}}""", false);
+        AssertAgree(evaluator, loaded, """{"scopes": {"/a/": "not an object"}}""", false);
+        AssertAgree(evaluator, loaded, """{"other": {}}""", false);
+        AssertAgree(evaluator, loaded, """{"imports": {"\u0061": "escaped name is still a string value"}}""", true);
+
+        // A schema additionalProperties that is neither true, false nor type-only is dispatched on its plan.
+        using JsonSchemaEvaluator schemaAdditional = JsonSchemaEvaluator.Compile("""{"properties": {"a": {"type": "string"}}, "additionalProperties": {"type": "integer", "minimum": 0}}""");
+        Assert.AreEqual(NodePlan.StrictObject, schemaAdditional.Program.Nodes[schemaAdditional.RootNode].Plan);
+        Assert.IsTrue(schemaAdditional.Evaluate("""{"a": "x", "n": 1}"""));
+        Assert.IsFalse(schemaAdditional.Evaluate("""{"a": "x", "n": -1}"""));
+        Assert.IsFalse(schemaAdditional.Evaluate("""{"a": 1}"""));
     }
 
     [TestMethod]

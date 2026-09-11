@@ -457,6 +457,28 @@ internal sealed class SchemaCompiler
                 }
             }
 
+            node.AdditionalRejects = false;
+            node.AdditionalInlineType = TypeMask.None;
+            node.AdditionalInlineLexical = false;
+            node.AdditionalFastNode = -1;
+            if (node.AdditionalProperties.IsPresent)
+            {
+                SchemaNode additional = nodes[node.AdditionalProperties.FastNode];
+                if (additional.AlwaysFalse)
+                {
+                    node.AdditionalRejects = true;
+                }
+                else if (additional.IsTypeOnly)
+                {
+                    node.AdditionalInlineType = additional.Type;
+                    node.AdditionalInlineLexical = additional.Dialect == JsonSchemaDialect.Draft4;
+                }
+                else if (!additional.AlwaysTrue)
+                {
+                    node.AdditionalFastNode = node.AdditionalProperties.FastNode;
+                }
+            }
+
             if (node.Properties is null)
             {
                 continue;
@@ -2564,27 +2586,14 @@ internal sealed class SchemaCompiler
     }
 
     /// <summary>
-    /// An object node the strict loop can take: named properties only (no pattern properties, dependencies or
-    /// additional-properties schema; <c>additionalProperties</c> absent, <c>true</c> or <c>false</c>) with at most 64
-    /// seen bits. Children that are type-only leaves are tested in place; the rest dispatch on their plan.
+    /// An object node the strict loop can take: no pattern properties or dependencies and at most 64 seen bits.
+    /// Children (and the additional-properties schema) that are type-only leaves are tested in place; the rest
+    /// dispatch on their plan. An object with only <c>additionalProperties</c> (a map) qualifies too.
     /// </summary>
     private static bool IsStrictObject(SchemaNode node, SchemaNode[] nodes)
     {
-        if (node.Properties is null || node.PatternProperties is not null || node.Dependencies is not null || node.SeenBitCount > 64)
-        {
-            return false;
-        }
-
-        if (node.AdditionalProperties.IsPresent)
-        {
-            SchemaNode additional = nodes[node.AdditionalProperties.FastNode];
-            if (!additional.AlwaysTrue && !additional.AlwaysFalse)
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return node.PatternProperties is null && node.Dependencies is null && node.SeenBitCount <= 64
+            && (node.Properties is not null || node.AdditionalProperties.IsPresent);
     }
 
     /// <summary>Packs the per-node presence flags into <see cref="SchemaNode.Flags"/>. Runs last.</summary>

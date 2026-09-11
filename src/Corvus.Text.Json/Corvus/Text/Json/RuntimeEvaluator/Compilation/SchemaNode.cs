@@ -1279,9 +1279,10 @@ internal enum NodePlan : byte
     Object,
 
     /// <summary>
-    /// An <see cref="Object"/> with named properties only (no pattern properties, dependencies or additional-properties
-    /// schema) and at most 64 seen bits: one loop that looks each name up and tests the value's token type where the
-    /// child is a type-only leaf (dispatching on the child's plan otherwise), then one mask test for <c>required</c>.
+    /// An <see cref="Object"/> without pattern properties or dependencies and with at most 64 seen bits: one loop that
+    /// looks each name up (or, for an object with only <c>additionalProperties</c>, skips the lookup) and tests the
+    /// value's token type where the child is a type-only leaf, dispatching on the child's plan otherwise, then one
+    /// mask test for <c>required</c>.
     /// </summary>
     StrictObject,
 
@@ -1409,6 +1410,17 @@ internal sealed class SchemaNode
 
     /// <summary>The required seen bits as one word when there are at most 64 of them. Derived from the graph.</summary>
     public ulong RequiredMask;
+
+    /// <summary>Whether <c>additionalProperties</c> is <c>false</c>: an unknown name fails the object. Derived from the graph.</summary>
+    public bool AdditionalRejects;
+
+    /// <summary>The <c>additionalProperties</c> schema's type mask when it is a type-only leaf, else <see cref="TypeMask.None"/>. Derived from the graph.</summary>
+    public TypeMask AdditionalInlineType;
+
+    public bool AdditionalInlineLexical;
+
+    /// <summary>The node to evaluate unknown names' values against when <c>additionalProperties</c> is a schema that is neither <c>true</c>, <c>false</c> nor a type-only leaf; -1 otherwise. Derived from the graph.</summary>
+    public int AdditionalFastNode = -1;
     public byte[][]? RequiredNames;
     public PatternPropertyEntry[]? PatternProperties;
     public ChildRef AdditionalProperties = ChildRef.None;
