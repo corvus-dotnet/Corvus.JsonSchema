@@ -15,3 +15,8 @@ evaluation time over N loops with the instance already parsed; summing the means
 evaluate every instance once, which is what the harness's runtime column measures (as a minimum over rounds rather
 than a mean, which favours us slightly). Format assertion is off on both sides, as it is for the checked-in generated
 models. The last column compares the shipping generated code with Blaze as well.
+
+Paired measurements of an engine change use `blazebasis` rather than `quick`: run the baseline binary, the new one,
+then the baseline again (the third run is the noise floor), all pinned and on an idle box. `quick 40`'s
+generated-code column, an identical binary on both sides, moves by a median 10% between paired runs, so it cannot
+resolve a 10% engine change.

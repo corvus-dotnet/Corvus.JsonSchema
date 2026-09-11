@@ -384,6 +384,80 @@ cmake-presets took a further 1.2 (5.52 to 4.52 ms) from its required-only altern
 gained as well. Geometric mean over the 37 corpora: 0.38 against the shipping generated code, from 0.47 before this
 round of work. Pinned, back to back with the same baseline binary as above.
 
+## Engine mechanics after the schema-shape work (2026-09-11, second round)
+
+With the fused plan covering openapi's shapes, the profiles of the least-improved corpora (jasmine, stale, jsconfig,
+pulumi, yamllint) pointed at the engine's per-property and per-node mechanics rather than any keyword. Six changes,
+each its own commit:
+
+1. **Property names from the row spans.** The object loops (object plan, fused plan, unrolled objects, discriminator
+   lookups) read a name's location and length from the metadata rows held as spans in the evaluation state, one
+   bounds check per field, instead of slicing a `ReadOnlyMemory` and converting it to a span per property; the
+   fused loop's per-name step is split out so the raw span feeds it directly, and `Utf8NameMap` keeps its per-length
+   position and table in one bucket array. Alone this was worth 3% on the geometric mean: the loop was already
+   tight, and the disassembly (`DOTNET_JitDisasm`) shows the remaining per-property cost is the `SequenceEqual`
+   call and the child's own entry, not the access.
+2. **Fused plan without `unevaluatedProperties`; forward plan.** The fused plan now fuses whenever its one pass
+   replaces several: two or more contributors with object keywords, an `if` the seen bits decide, or required-only
+   alternatives. jasmine's root (`allOf` of three object branches) and stale's (`type`, two properties, `allOf` of a
+   twelve-property `$ref`) each went from three passes to one. A node whose object keywords are all its own keeps the
+   object plan, dependencies included: fusing draft-04's root for its two `dependencies` alone cost 40% on that
+   corpus, because the fused routine's fixed per-object cost outweighs a second pass over small objects. A node
+   whose only assertion is a lone `allOf` branch or a kept `$ref` gets `NodePlan.Forward` and dispatches straight
+   to the child's plan (yamllint's root). Both are derived from the graph on image load.
+3. **Type-dispatched `anyOf`/`oneOf`.** When every branch asserts a `type` and no two accept the same token type,
+   the token type selects the one branch that can match (pulumi's `runtime`: a string or an object). The branch
+   keeps its own type test, so `integer` and draft 4 lexical integers need nothing special, and it marks straight
+   into the parent's evaluated bits.
+4. **String leaves.** An unescaped string is evaluated from its raw text with no wrapper to dispose, and since a
+   rune is one to four bytes, `minLength` passes and `maxLength` fails from the byte length alone outside the band
+   where the rune count matters. This exposed a quirk: a fixed-string document (property names) keeps the quotes on
+   the one-argument raw-value overload, so the interface access path asks for them stripped explicitly.
+5. **Flag-mode entry.** Without a collector and without a dynamic scope the scope buffer never grows, so the entry
+   has no try/finally and dispatches the root (or its elided `$ref` target) on its plan. This exposed a gap: the
+   array-items plan returned early for a node without `items`, skipping `uniqueItems`, which the general path had
+   always covered at the root. Arrays of up to eight items are now compared pairwise, renting nothing.
+6. **Leftovers.** The class-sequence parser flattens groups of alternatives (`^[Ee][Ss]2022(\.(A|B))?$`, jsconfig's
+   case-insensitive literals with optional suffixes; `^[1-5](?:[0-9]{2}|XX)$`) into whole alternatives, a dot is a
+   one-rune class, and top-level alternations stay with the regex since `^a|b$` anchors only its ends. The
+   unique-items hash mixes eight bytes at a time.
+
+Measured on the like-for-like basis (`blazebasis 200`, pinned, idle box), baseline binary, new binary, baseline
+again, so the third run gives the noise floor (0.99 on the geometric mean, up to 8% on a single corpus, and yamllint,
+whose whole corpus is 20 µs, swings by half):
+
+| Corpus | Before | After | After / before |
+|---|---|---|---|
+| jasmine | 107 µs | 68 µs | 0.63 |
+| aws-cdk | 36 µs | 24 µs | 0.67 |
+| lazygit | 88 µs | 59 µs | 0.68 |
+| unreal-engine-uproject | 444 µs | 300 µs | 0.68 |
+| pulumi | 417 µs | 309 µs | 0.74 |
+| jsconfig | 352 µs | 268 µs | 0.76 |
+| cmake-presets | 3.23 ms | 2.55 ms | 0.79 |
+| cypress, fabric-mod, openapi, vercel | | | 0.80 to 0.83 |
+| clang-format, ansible-meta, draft-04, stylecop, ui5 | | | 0.84 to 0.86 |
+| stale, helm-chart-lock, cql2 | | | within noise |
+| geometric mean over 37 | | | 0.85 |
+
+Blaze, re-run the same afternoon (its own figures were 8% faster than in the earlier session, so both sides are
+taken from the same hour): geometric mean of our runtime over Blaze 1.06, from 1.23 for the baseline binary the same
+day. We lead on 17 corpora (ui5-manifest 0.25, jshintrc 0.40, clang-format 0.50, omnisharp 0.55, openapi 0.56, cql2
+0.64, draft-04 0.76, cypress 0.78, pre-commit-hooks 0.79, ansible-meta and tmuxinator 0.82, deno and fabric-mod
+0.85, lerna and aws-cdk 0.87, geojson 0.88, lazygit 0.92); within 20% on eleven; and still behind on the
+small-instance corpora: helm-chart-lock (5.2, unchanged), importmap (3.9), yamllint and ui5 (2.4), semantic-release
+and krakend (1.7). What remains there is the per-evaluation and per-object fixed cost, which the entry change only
+dented.
+
+Two measurement notes. The `quick 40` protocol is too noisy for changes of this size: its generated-code column, an
+identical binary on both sides, moved by a median 10% and up to 2.7x between paired runs, so a paired `quick`
+comparison cannot see a 10% change; `blazebasis` with the baseline run twice is the protocol now. And a method with
+`stackalloc` cannot use on-stack replacement, so the JIT compiles the object loops straight to full opts without
+dynamic PGO; nothing in them is virtual, so this costs little, but it is why `EvalObjectPlanCore` shows one tier in a
+disassembly.
+
+## Against Blaze (2026-09-11)
+
 ## Against Blaze (2026-09-11)
 
 Blaze is run through the Sourcemeta `jsonschema` CLI release binary (`benchmarks/.../tools/blaze-compare.py`, see
