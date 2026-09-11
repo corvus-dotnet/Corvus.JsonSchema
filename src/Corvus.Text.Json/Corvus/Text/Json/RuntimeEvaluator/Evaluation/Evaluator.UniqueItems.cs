@@ -15,10 +15,14 @@ namespace Corvus.Text.Json.RuntimeEvaluator.Evaluation;
 /// UTF-8 (unescaped strings, numbers by value, objects order-independently), sized to the array and cleared only as
 /// far as it is used, so an array of objects costs one hash per item instead of a rented table zeroed in full and
 /// a UTF-16 transcode of every string. The table is rented (not stack-allocated) so that the set may be passed
-/// alongside the evaluation state without the ref-safety analysis seeing stack memory that could escape.
+/// alongside the evaluation state without the ref-safety analysis seeing stack memory that could escape; arrays of
+/// up to <see cref="PairwiseLimit"/> items are checked pairwise instead and rent nothing.
 /// </summary>
 internal static partial class Evaluator
 {
+    /// <summary>Arrays of up to this many items are checked pairwise (at most 28 comparisons) without a table.</summary>
+    internal const int PairwiseLimit = 8;
+
     /// <summary>
     /// The set. Slots hold item index + 1 (0 is empty) with the item's hash alongside; linear probing. One rented
     /// array holds the slots followed by the hashes.
@@ -76,6 +80,24 @@ internal static partial class Evaluator
                 this.table = null;
             }
         }
+    }
+
+    /// <summary>Whether every item of a small array differs from every other, by pairwise structural comparison.</summary>
+    private static bool AllUniquePairwise<TAccess>(ref EvaluationState state, IJsonDocument doc, int index, int end)
+        where TAccess : struct, IDocumentAccess
+    {
+        for (int a = index + RowSize; a < end; a = default(TAccess).NextIndex(ref state, doc, a))
+        {
+            for (int b = default(TAccess).NextIndex(ref state, doc, a); b < end; b = default(TAccess).NextIndex(ref state, doc, b))
+            {
+                if (ValuesEqual<TAccess>(ref state, doc, a, b))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     /// <summary>

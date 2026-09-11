@@ -48,12 +48,6 @@ internal static partial class Evaluator
         {
             SchemaNode root = nodes[rootNode];
             bool raw = document is JsonDocument jsonDocument && jsonDocument.TryGetRawAccess(out state.Raw);
-            if (raw)
-            {
-                state.RawRows = state.Raw.Rows;
-                state.RawUtf8 = state.Raw.Utf8.Span;
-            }
-
             if (collector is null)
             {
                 return raw
@@ -1092,13 +1086,15 @@ internal static partial class Evaluator
             }
         }
 
-        if (!node.Items.IsPresent)
+        if (!node.Items.IsPresent && !node.UniqueItems)
         {
             return true;
         }
 
-        SchemaNode items = state.Nodes[node.Items.FastNode];
-        if (items.Plan == NodePlan.AlwaysTrue && !node.UniqueItems)
+        // Without items (or with items: true), uniqueness is the only per-item work.
+        SchemaNode? items = node.Items.IsPresent ? state.Nodes[node.Items.FastNode] : null;
+        bool checkItems = items is not null && items.Plan != NodePlan.AlwaysTrue;
+        if (!checkItems && !node.UniqueItems)
         {
             return true;
         }
@@ -1106,14 +1102,33 @@ internal static partial class Evaluator
         bool pushed = EnterScope(node, ref state);
         bool ok = true;
         int end = default(TAccess).EndIndex(ref state, doc, index);
-        if (node.UniqueItems)
+        int count = node.UniqueItems ? default(TAccess).Count(ref state, doc, index, JsonTokenType.StartArray) : 0;
+        if (node.UniqueItems && count <= PairwiseLimit)
         {
-            var set = new UniqueItemSet(default(TAccess).Count(ref state, doc, index, JsonTokenType.StartArray));
+            if (!AllUniquePairwise<TAccess>(ref state, doc, index, end))
+            {
+                ok = false;
+            }
+            else if (checkItems)
+            {
+                for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex))
+                {
+                    if (!EvalChildFast<TAccess>(items!, doc, valueIndex, ref state))
+                    {
+                        ok = false;
+                        break;
+                    }
+                }
+            }
+        }
+        else if (node.UniqueItems)
+        {
+            var set = new UniqueItemSet(count);
             try
             {
                 for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex))
                 {
-                    if (!set.TryAdd<TAccess>(ref state, doc, valueIndex) || (items.Plan != NodePlan.AlwaysTrue && !EvalChildFast<TAccess>(items, doc, valueIndex, ref state)))
+                    if (!set.TryAdd<TAccess>(ref state, doc, valueIndex) || (checkItems && !EvalChildFast<TAccess>(items!, doc, valueIndex, ref state)))
                     {
                         ok = false;
                         break;
@@ -1129,7 +1144,7 @@ internal static partial class Evaluator
         {
             for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex))
             {
-                if (!EvalChildFast<TAccess>(items, doc, valueIndex, ref state))
+                if (!EvalChildFast<TAccess>(items!, doc, valueIndex, ref state))
                 {
                     ok = false;
                     break;
@@ -1209,7 +1224,14 @@ internal static partial class Evaluator
 
         SchemaNode items = state.Nodes[node.Items.FastNode];
         int end = default(TAccess).EndIndex(ref state, doc, index);
-        if (node.UniqueItems)
+        if (node.UniqueItems && length <= PairwiseLimit)
+        {
+            if (!AllUniquePairwise<TAccess>(ref state, doc, index, end))
+            {
+                return false;
+            }
+        }
+        else if (node.UniqueItems)
         {
             var set = new UniqueItemSet(length);
             try
