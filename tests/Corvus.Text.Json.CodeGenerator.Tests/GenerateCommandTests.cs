@@ -336,7 +336,9 @@ public class GenerateCommandTests : IDisposable
     [TestMethod]
     public async Task Generate_EmitsPrecompiledProgramImageWithGeneratedRegexTable()
     {
-        string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "complex-validation.json");
+        // A schema whose patterns need a regular expression (a variable atom before another, or a variable tail after
+        // a fixed one): anchored ASCII class sequences are matched without one and would leave the table empty.
+        string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "regex-table.json");
 
         ProcessResult result = await CodeGeneratorRunner.RunAsync(
             $"jsonschema \"{schema}\" --rootNamespace T --outputPath \"{_outputDir}\"");
