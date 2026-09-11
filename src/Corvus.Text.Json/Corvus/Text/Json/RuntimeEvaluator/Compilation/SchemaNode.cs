@@ -566,13 +566,13 @@ internal sealed class PatternMatcher
         {
             body = body.Substring(1, body.Length - 2);
         }
-        else if (body.Contains('|'))
+        else if (body.IndexOf('|') >= 0)
         {
             // ^a|b$ anchors only its first and last alternatives.
             return false;
         }
 
-        if (body.Length == 0 || body.Contains('('))
+        if (body.Length == 0 || body.IndexOf('(') >= 0)
         {
             return false;
         }
