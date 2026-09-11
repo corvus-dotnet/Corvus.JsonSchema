@@ -162,6 +162,7 @@ internal static class ProgramImage
         FusedObjects.Compute(nodes);
         SchemaCompiler.ComputeForwards(nodes);
         SchemaCompiler.ComputeTypeDispatch(nodes);
+        SchemaCompiler.ComputeObjectDetails(nodes);
         foreach (SchemaNode n in nodes)
         {
             if (n.Plan == NodePlan.FusedObject && n.Fused is null)

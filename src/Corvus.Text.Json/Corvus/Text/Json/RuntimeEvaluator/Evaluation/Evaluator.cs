@@ -596,7 +596,7 @@ internal static partial class Evaluator
                         FusedContributor contributor = contributors[app.Contributor];
                         if (contributor.Condition >= 0 && gateOk[contributor.Condition] && holds[contributor.Condition] == contributor.Polarity)
                         {
-                            if (app.Node >= 0 && !EvalChildFast<TAccess>(nodes[app.Node], doc, valueIndex, ref state))
+                            if (!ApplyApplication<TAccess>(app, nodes, doc, valueIndex, ref state))
                             {
                                 return false;
                             }
@@ -719,6 +719,22 @@ internal static partial class Evaluator
         }
     }
 
+    /// <summary>Applies one fused resolution to a property value: nothing for <c>true</c>, a token-type test for a type-only leaf, else the child's plan.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool ApplyApplication<TAccess>(in FusedApplication app, SchemaNode[] nodes, IJsonDocument doc, int valueIndex, ref EvaluationState state)
+        where TAccess : struct, IDocumentAccess
+    {
+        if (app.Node < 0)
+        {
+            return true;
+        }
+
+        TypeMask inline = app.InlineType;
+        return inline != TypeMask.None
+            ? MatchesType<TAccess>(inline, default(TAccess).TokenType(ref state, doc, valueIndex), ref state, doc, valueIndex, app.InlineLexical)
+            : EvalChildFast<TAccess>(nodes[app.Node], doc, valueIndex, ref state);
+    }
+
     /// <summary>
     /// The per-property step of <see cref="EvalFusedObject{TAccess}"/>: applies every unconditional resolution of the
     /// name now and notes whether a conditional one is pending. Returns <see langword="false"/> when a child failed.
@@ -747,7 +763,7 @@ internal static partial class Evaluator
                 FusedApplication app = applications[a];
                 if (contributors[app.Contributor].Condition < 0)
                 {
-                    if (app.Node >= 0 && !EvalChildFast<TAccess>(nodes[app.Node], doc, valueIndex, ref state))
+                    if (!ApplyApplication<TAccess>(app, nodes, doc, valueIndex, ref state))
                     {
                         return false;
                     }
@@ -996,12 +1012,22 @@ internal static partial class Evaluator
 
         if (node.RequiredSeenBits is int[] required)
         {
-            for (int i = 0; i < required.Length; i++)
+            if (words == 1)
             {
-                int bit = required[i];
-                if ((seen[bit >> 6] & (1UL << (bit & 63))) == 0)
+                if ((seen[0] & node.RequiredMask) != node.RequiredMask)
                 {
                     return false;
+                }
+            }
+            else
+            {
+                for (int i = 0; i < required.Length; i++)
+                {
+                    int bit = required[i];
+                    if ((seen[bit >> 6] & (1UL << (bit & 63))) == 0)
+                    {
+                        return false;
+                    }
                 }
             }
         }
@@ -1049,7 +1075,15 @@ internal static partial class Evaluator
                 seen[entry.SeenBit >> 6] |= 1UL << (entry.SeenBit & 63);
             }
 
-            if (entry.Schema.IsPresent && !EvalChildFast<TAccess>(state.Nodes[entry.Schema.FastNode], doc, valueIndex, ref state))
+            TypeMask inline = entry.InlineType;
+            if (inline != TypeMask.None)
+            {
+                if (!MatchesType<TAccess>(inline, default(TAccess).TokenType(ref state, doc, valueIndex), ref state, doc, valueIndex, entry.InlineLexical))
+                {
+                    return false;
+                }
+            }
+            else if (entry.Schema.IsPresent && !entry.InlineTrue && !EvalChildFast<TAccess>(state.Nodes[entry.Schema.FastNode], doc, valueIndex, ref state))
             {
                 return false;
             }

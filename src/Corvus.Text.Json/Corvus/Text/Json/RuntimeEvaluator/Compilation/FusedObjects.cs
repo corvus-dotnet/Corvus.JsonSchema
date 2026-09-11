@@ -103,10 +103,15 @@ internal sealed class FusedAlternative
 }
 
 /// <summary>One child schema applying to a property on behalf of a branch; a node of -1 covers without evaluation.</summary>
-internal readonly struct FusedApplication(int contributor, int node)
+internal readonly struct FusedApplication(int contributor, int node, TypeMask inlineType, bool inlineLexical)
 {
     public readonly int Contributor = contributor;
     public readonly int Node = node;
+
+    /// <summary>The child's type mask when it is a type-only leaf (tested in place of a call), else <see cref="TypeMask.None"/>.</summary>
+    public readonly TypeMask InlineType = inlineType;
+
+    public readonly bool InlineLexical = inlineLexical;
 }
 
 /// <summary>A branch: its condition, what it does with names no entry knows, and what it requires.</summary>
@@ -493,7 +498,7 @@ internal static class FusedObjects
                 if (branch.Properties is Utf8NameMap<PropertyEntry> properties && properties.TryGetValue(name, out PropertyEntry? entry) && entry.Schema.IsPresent)
                 {
                     matched = true;
-                    applications.Add(new FusedApplication(c, ApplicationNode(nodes, entry.Schema)));
+                    applications.Add(Application(nodes, c, entry.Schema));
                     anyConditional |= conditional;
                 }
 
@@ -504,7 +509,7 @@ internal static class FusedObjects
                         if (pattern.Matcher.IsMatch(name))
                         {
                             matched = true;
-                            applications.Add(new FusedApplication(c, ApplicationNode(nodes, pattern.Schema)));
+                            applications.Add(Application(nodes, c, pattern.Schema));
                             anyConditional |= conditional;
                         }
                     }
@@ -512,7 +517,7 @@ internal static class FusedObjects
 
                 if (!matched && branch.AdditionalProperties.IsPresent)
                 {
-                    applications.Add(new FusedApplication(c, ApplicationNode(nodes, branch.AdditionalProperties)));
+                    applications.Add(Application(nodes, c, branch.AdditionalProperties));
                     anyConditional |= conditional;
                 }
             }
@@ -532,10 +537,18 @@ internal static class FusedObjects
         return fused;
     }
 
-    /// <summary>A child that is <c>true</c> covers the property without a call.</summary>
-    private static int ApplicationNode(SchemaNode[] nodes, in ChildRef child)
+    /// <summary>A child that is <c>true</c> covers the property without a call; a type-only leaf is a token-type test.</summary>
+    private static FusedApplication Application(SchemaNode[] nodes, int contributor, in ChildRef child)
     {
-        return nodes[child.FastNode].AlwaysTrue ? -1 : child.FastNode;
+        SchemaNode target = nodes[child.FastNode];
+        if (target.AlwaysTrue)
+        {
+            return new FusedApplication(contributor, -1, TypeMask.None, false);
+        }
+
+        return target.IsTypeOnly
+            ? new FusedApplication(contributor, child.FastNode, target.Type, target.Dialect == JsonSchemaDialect.Draft4)
+            : new FusedApplication(contributor, child.FastNode, TypeMask.None, false);
     }
 
     /// <summary>The lists a collection fills.</summary>

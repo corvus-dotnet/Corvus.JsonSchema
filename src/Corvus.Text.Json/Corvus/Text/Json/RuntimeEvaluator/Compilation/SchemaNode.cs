@@ -1266,6 +1266,13 @@ internal enum NodePlan : byte
     /// <summary>Optional <c>type</c> plus properties/required/additionalProperties/property-count bounds only.</summary>
     Object,
 
+    /// <summary>
+    /// An <see cref="Object"/> with named properties only (no pattern properties, dependencies or additional-properties
+    /// schema) and at most 64 seen bits: one loop that looks each name up and tests the value's token type where the
+    /// child is a type-only leaf (dispatching on the child's plan otherwise), then one mask test for <c>required</c>.
+    /// </summary>
+    StrictObject,
+
     /// <summary>A bare <c>$dynamicRef</c>: resolved against the dynamic scope at the entry site and dispatched directly.</summary>
     DynamicRef,
 
@@ -1387,6 +1394,9 @@ internal sealed class SchemaNode
     public PropertyEntry[]? UnrolledProperties;
     public int SeenBitCount;
     public int[]? RequiredSeenBits;
+
+    /// <summary>The required seen bits as one word when there are at most 64 of them. Derived from the graph.</summary>
+    public ulong RequiredMask;
     public byte[][]? RequiredNames;
     public PatternPropertyEntry[]? PatternProperties;
     public ChildRef AdditionalProperties = ChildRef.None;

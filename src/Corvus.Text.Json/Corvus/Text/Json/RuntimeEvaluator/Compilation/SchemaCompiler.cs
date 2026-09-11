@@ -434,8 +434,56 @@ internal sealed class SchemaCompiler
         SchemaNode[] all = [.. this.nodes];
         FusedObjects.Compute(all);
         ComputeForwards(all);
+        ComputeObjectDetails(all);
         this.ComputePlans();
         this.ComputeFlags();
+    }
+
+    /// <summary>
+    /// Fills the derived object-plan details: for every property entry whose child is a type-only leaf, the type mask
+    /// the object loops test in place of a call (and whether the child is <c>true</c>); and the required seen bits as
+    /// one mask when there are at most 64. Runs at compile time and on image load.
+    /// </summary>
+    internal static void ComputeObjectDetails(SchemaNode[] nodes)
+    {
+        foreach (SchemaNode node in nodes)
+        {
+            node.RequiredMask = 0;
+            if (node.RequiredSeenBits is int[] required && node.SeenBitCount <= 64)
+            {
+                foreach (int bit in required)
+                {
+                    node.RequiredMask |= 1UL << bit;
+                }
+            }
+
+            if (node.Properties is null)
+            {
+                continue;
+            }
+
+            foreach (PropertyEntry entry in node.Properties.Values)
+            {
+                entry.InlineType = TypeMask.None;
+                entry.InlineLexical = false;
+                entry.InlineTrue = false;
+                if (!entry.Schema.IsPresent)
+                {
+                    continue;
+                }
+
+                SchemaNode target = nodes[entry.Schema.FastNode];
+                if (target.AlwaysTrue)
+                {
+                    entry.InlineTrue = true;
+                }
+                else if (target.IsTypeOnly)
+                {
+                    entry.InlineType = target.Type;
+                    entry.InlineLexical = target.Dialect == JsonSchemaDialect.Draft4;
+                }
+            }
+        }
     }
 
     /// <summary>
