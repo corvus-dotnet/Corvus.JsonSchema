@@ -103,7 +103,7 @@ internal sealed class FusedAlternative
 }
 
 /// <summary>One child schema applying to a property on behalf of a branch; a node of -1 covers without evaluation.</summary>
-internal readonly struct FusedApplication(int contributor, int node, TypeMask inlineType, bool inlineLexical)
+internal readonly struct FusedApplication(int contributor, int node, TypeMask inlineType, bool inlineLexical, Utf8NameMap<object>? inlineEnum = null)
 {
     public readonly int Contributor = contributor;
     public readonly int Node = node;
@@ -112,6 +112,9 @@ internal readonly struct FusedApplication(int contributor, int node, TypeMask in
     public readonly TypeMask InlineType = inlineType;
 
     public readonly bool InlineLexical = inlineLexical;
+
+    /// <summary>The child's string set when it is a string-enum leaf (tested in place of a call).</summary>
+    public readonly Utf8NameMap<object>? InlineEnum = inlineEnum;
 }
 
 /// <summary>A branch: its condition, what it does with names no entry knows, and what it requires.</summary>
@@ -546,8 +549,13 @@ internal static class FusedObjects
             return new FusedApplication(contributor, -1, TypeMask.None, false);
         }
 
-        return target.IsTypeOnly
-            ? new FusedApplication(contributor, child.FastNode, target.Type, target.Dialect == JsonSchemaDialect.Draft4)
+        if (target.IsTypeOnly)
+        {
+            return new FusedApplication(contributor, child.FastNode, target.Type, target.Dialect == JsonSchemaDialect.Draft4);
+        }
+
+        return SchemaCompiler.IsStringEnumOnly(target)
+            ? new FusedApplication(contributor, child.FastNode, TypeMask.None, false, target.EnumStrings)
             : new FusedApplication(contributor, child.FastNode, TypeMask.None, false);
     }
 

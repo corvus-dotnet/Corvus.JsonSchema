@@ -747,9 +747,33 @@ internal static partial class Evaluator
         }
 
         TypeMask inline = app.InlineType;
-        return inline != TypeMask.None
-            ? MatchesType<TAccess>(inline, default(TAccess).TokenType(ref state, doc, valueIndex), ref state, doc, valueIndex, app.InlineLexical)
+        if (inline != TypeMask.None)
+        {
+            return MatchesType<TAccess>(inline, default(TAccess).TokenType(ref state, doc, valueIndex), ref state, doc, valueIndex, app.InlineLexical);
+        }
+
+        return app.InlineEnum is Utf8NameMap<object> allowed
+            ? MatchesStringSet<TAccess>(allowed, ref state, doc, valueIndex)
             : EvalChildFast<TAccess>(nodes[app.Node], doc, valueIndex, ref state);
+    }
+
+    /// <summary>A string value's membership of a set (an <c>enum</c> of strings): the raw text when unescaped, else the unescaped text.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool MatchesStringSet<TAccess>(Utf8NameMap<object> allowed, ref EvaluationState state, IJsonDocument doc, int index)
+        where TAccess : struct, IDocumentAccess
+    {
+        if (default(TAccess).TokenType(ref state, doc, index) != JsonTokenType.String)
+        {
+            return false;
+        }
+
+        if (!default(TAccess).IsEscaped(ref state, doc, index))
+        {
+            return allowed.TryGetValue(default(TAccess).RawValue(ref state, doc, index), out _);
+        }
+
+        using UnescapedUtf8JsonString s = StringValue<TAccess>(ref state, doc, index);
+        return allowed.TryGetValue(s.Span, out _);
     }
 
     /// <summary>
@@ -824,28 +848,33 @@ internal static partial class Evaluator
     private static void ApplyValueTests<TAccess>(FusedValueTest[] tests, ref EvaluationState state, IJsonDocument doc, int valueIndex, scoped Span<bool> failed)
         where TAccess : struct, IDocumentAccess
     {
-        Span<byte> buffer = stackalloc byte[128];
         switch (default(TAccess).TokenType(ref state, doc, valueIndex))
         {
             case JsonTokenType.String:
             {
+                if (!default(TAccess).IsEscaped(ref state, doc, valueIndex))
+                {
+                    TestValueKey(tests, Discriminator.StringTag, default(TAccess).RawValue(ref state, doc, valueIndex), failed);
+                    return;
+                }
+
                 using UnescapedUtf8JsonString text = StringValue<TAccess>(ref state, doc, valueIndex);
-                TestValueKey(tests, Discriminator.StringTag, text.Span, buffer, failed);
+                TestValueKey(tests, Discriminator.StringTag, text.Span, failed);
                 return;
             }
 
             case JsonTokenType.True:
-                TestValueKey(tests, Discriminator.BooleanTag, "true"u8, buffer, failed);
+                TestValueKey(tests, Discriminator.BooleanTag, "true"u8, failed);
                 return;
             case JsonTokenType.False:
-                TestValueKey(tests, Discriminator.BooleanTag, "false"u8, buffer, failed);
+                TestValueKey(tests, Discriminator.BooleanTag, "false"u8, failed);
                 return;
             case JsonTokenType.Number:
             {
                 ReadOnlySpan<byte> raw = default(TAccess).RawValue(ref state, doc, valueIndex);
                 if (IsCanonicalInteger(raw))
                 {
-                    TestValueKey(tests, Discriminator.NumberTag, raw, buffer, failed);
+                    TestValueKey(tests, Discriminator.NumberTag, raw, failed);
                     return;
                 }
 
@@ -876,27 +905,18 @@ internal static partial class Evaluator
         }
     }
 
-    private static void TestValueKey(FusedValueTest[] tests, byte tag, ReadOnlySpan<byte> value, Span<byte> buffer, Span<bool> failed)
+    private static void TestValueKey(FusedValueTest[] tests, byte tag, ReadOnlySpan<byte> value, Span<bool> failed)
     {
-        byte[]? rented = value.Length + 1 > buffer.Length ? ArrayPool<byte>.Shared.Rent(value.Length + 1) : null;
-        Span<byte> key = rented is null ? buffer[..(value.Length + 1)] : rented.AsSpan(0, value.Length + 1);
-        key[0] = tag;
-        value.CopyTo(key[1..]);
         for (int t = 0; t < tests.Length; t++)
         {
             FusedValueTest test = tests[t];
             bool passes = test.Pattern is PatternMatcher pattern
                 ? (tag == Discriminator.StringTag ? pattern.IsMatch(value) : !test.RequiresString)
-                : test.Allowed!.TryGetValue(key, out _);
+                : test.Allowed!.TryGetValue(tag, value, out _);
             if (!passes)
             {
                 failed[test.Condition] = true;
             }
-        }
-
-        if (rented is not null)
-        {
-            ArrayPool<byte>.Shared.Return(rented);
         }
     }
 
@@ -1188,6 +1208,13 @@ internal static partial class Evaluator
             if (inline != TypeMask.None)
             {
                 if (!MatchesType<TAccess>(inline, default(TAccess).TokenType(ref state, doc, valueIndex), ref state, doc, valueIndex, entry.InlineLexical))
+                {
+                    return false;
+                }
+            }
+            else if (entry.InlineEnum is Utf8NameMap<object> allowed)
+            {
+                if (!MatchesStringSet<TAccess>(allowed, ref state, doc, valueIndex))
                 {
                     return false;
                 }
@@ -1545,8 +1572,7 @@ internal static partial class Evaluator
                 return false;
             }
 
-            using UnescapedUtf8JsonString s = StringValue<TAccess>(ref state, doc, index);
-            return node.EnumStrings!.TryGetValue(s.Span, out _);
+            return MatchesStringSet<TAccess>(node.EnumStrings!, ref state, doc, index);
         }
 
         ConstantValue[] values = node.Enum!;
@@ -3250,6 +3276,12 @@ internal static partial class Evaluator
         {
             case JsonTokenType.String:
             {
+                if (!default(TAccess).IsEscaped(ref state, doc, valueIndex))
+                {
+                    selected = LookupDiscriminator(discriminator, Discriminator.StringTag, default(TAccess).RawValue(ref state, doc, valueIndex));
+                    return true;
+                }
+
                 using UnescapedUtf8JsonString value = StringValue<TAccess>(ref state, doc, valueIndex);
                 selected = LookupDiscriminator(discriminator, Discriminator.StringTag, value.Span);
                 return true;
@@ -3286,18 +3318,7 @@ internal static partial class Evaluator
     /// <summary>Looks a tagged value up in the discriminator's known values, falling back to the unknown-value list.</summary>
     private static int[] LookupDiscriminator(Discriminator discriminator, byte tag, ReadOnlySpan<byte> value)
     {
-        Span<byte> inline = stackalloc byte[128];
-        byte[]? rented = null;
-        Span<byte> key = value.Length < inline.Length ? inline[..(value.Length + 1)] : (rented = ArrayPool<byte>.Shared.Rent(value.Length + 1)).AsSpan(0, value.Length + 1);
-        key[0] = tag;
-        value.CopyTo(key[1..]);
-        int[] selected = discriminator.KnownValues.TryGetValue(key, out int[]? branches) ? branches : discriminator.UnknownString;
-        if (rented is not null)
-        {
-            ArrayPool<byte>.Shared.Return(rented);
-        }
-
-        return selected;
+        return discriminator.KnownValues.TryGetValue(tag, value, out int[]? branches) ? branches : discriminator.UnknownString;
     }
 
     private static bool EvalAnyOfSelected<TAccess>(ChildRef[] branches, int[] selected, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> parentBits)

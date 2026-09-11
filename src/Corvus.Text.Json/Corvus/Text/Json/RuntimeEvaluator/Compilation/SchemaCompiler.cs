@@ -495,6 +495,7 @@ internal sealed class SchemaCompiler
                 }
 
                 SchemaNode target = nodes[entry.Schema.FastNode];
+                entry.InlineEnum = null;
                 if (target.AlwaysTrue)
                 {
                     entry.InlineTrue = true;
@@ -503,6 +504,10 @@ internal sealed class SchemaCompiler
                 {
                     entry.InlineType = target.Type;
                     entry.InlineLexical = target.Dialect == JsonSchemaDialect.Draft4;
+                }
+                else if (IsStringEnumOnly(target))
+                {
+                    entry.InlineEnum = target.EnumStrings;
                 }
             }
         }
@@ -2613,6 +2618,13 @@ internal sealed class SchemaCompiler
         }
 
         return NodePlan.General;
+    }
+
+    /// <summary>A leaf whose only assertion is an <c>enum</c> of strings, with at most <c>type: string</c> alongside.</summary>
+    internal static bool IsStringEnumOnly(SchemaNode node)
+    {
+        return node.IsLeaf && node.EnumAllStrings && node.EnumStrings is not null && !node.HasConst && !node.HasNumberKeywords && !node.HasStringKeywords
+            && (!node.HasType || node.Type == TypeMask.String) && !node.AlwaysTrue && !node.AlwaysFalse;
     }
 
     /// <summary>A node whose only keyword is one <c>anyOf</c> or <c>oneOf</c>, off any in-place cycle.</summary>

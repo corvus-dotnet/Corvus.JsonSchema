@@ -194,6 +194,31 @@ public class StrictObjectTests
     }
 
     [TestMethod]
+    public void StringEnumChildrenAreTestedInPlace()
+    {
+        const string schema = """
+            {
+              "properties": {"level": {"enum": ["debug", "info", "warn"]}, "mode": {"type": "string", "enum": ["a", "b"]}, "count": {"enum": [1, 2]}},
+              "required": ["level"]
+            }
+            """;
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(schema);
+        SchemaNode root = evaluator.Program.Nodes[evaluator.RootNode];
+        Assert.AreEqual(NodePlan.StrictObject, root.Plan);
+        PropertyEntry[] entries = root.Properties!.Values.ToArray();
+        Assert.AreEqual(2, entries.Count(e => e.InlineEnum is not null), "The two string enums are inlined; the integer enum dispatches to its leaf.");
+
+        using JsonSchemaEvaluator loaded = JsonSchemaEvaluator.FromProgramImage(evaluator.ToProgramImage());
+        AssertAgree(evaluator, loaded, """{"level": "info", "mode": "b", "count": 2}""", true);
+        AssertAgree(evaluator, loaded, """{"level": "verbose"}""", false);
+        AssertAgree(evaluator, loaded, """{"level": 1}""", false);
+        AssertAgree(evaluator, loaded, """{"level": "warn", "mode": "c"}""", false);
+        AssertAgree(evaluator, loaded, """{"level": "warn", "count": 3}""", false);
+        AssertAgree(evaluator, loaded, """{"level": "in\u0066o"}""", true);
+        AssertAgree(evaluator, loaded, """{"mode": "a"}""", false);
+    }
+
+    [TestMethod]
     public void FusedPlanInlinesTypeOnlyChildren()
     {
         const string schema = """

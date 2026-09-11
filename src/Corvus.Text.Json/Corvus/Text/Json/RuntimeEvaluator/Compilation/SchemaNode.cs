@@ -1295,6 +1295,12 @@ internal enum NodePlan : byte
     /// <summary>A node whose only assertion is one in-place child (a lone <c>allOf</c> branch or <c>$ref</c>): flag mode goes straight to <see cref="SchemaNode.ForwardNode"/>.</summary>
     Forward,
 
+    /// <summary>A node whose only keyword is an <c>anyOf</c>/<c>oneOf</c> of type-only branches: one mask test (<see cref="SchemaNode.InPlaceUnionMask"/>).</summary>
+    TypeUnion,
+
+    /// <summary>A node whose only keyword is an <c>anyOf</c>/<c>oneOf</c> with disjoint branch types: the token type selects the branch (<see cref="SchemaNode.InPlaceDispatch"/>).</summary>
+    TypeDispatch,
+
     /// <summary>One pass over an object for a schema whose object semantics are spread over in-place applicators; see <see cref="FusedObject"/>.</summary>
     FusedObject,
 }

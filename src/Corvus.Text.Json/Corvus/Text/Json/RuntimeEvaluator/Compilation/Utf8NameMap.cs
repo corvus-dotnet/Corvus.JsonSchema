@@ -145,14 +145,54 @@ internal sealed class Utf8NameMap<T>
     }
 
     /// <summary>
+    /// Looks up a value under a one-byte tag without building the tagged key: the tag stands for the key's first byte.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryGetValue(byte tag, ReadOnlySpan<byte> value, [NotNullWhen(true)] out T? result)
+    {
+        int length = value.Length + 1;
+        Bucket[] buckets = this.buckets;
+        if ((uint)length >= (uint)buckets.Length)
+        {
+            result = null;
+            return false;
+        }
+
+        Bucket bucket = buckets[length];
+        int[]? table = bucket.Table;
+        if (table is null)
+        {
+            result = null;
+            return false;
+        }
+
+        int position = bucket.Position;
+        int slot = table[position == 0 ? tag : value[position - 1]];
+        while (slot != 0)
+        {
+            int i = slot - 1;
+            byte[] key = this.keys[i];
+            if (key[0] == tag && KeyEquals(value, key.AsSpan(1)))
+            {
+                result = this.values[i];
+                return true;
+            }
+
+            slot = this.next[i];
+        }
+
+        result = null;
+        return false;
+    }
+
+    /// <summary>
     /// Equality of a name and a key of the same length (the bucket guarantees it): up to sixteen bytes as one or two
     /// overlapping word loads, longer keys through the vectorised comparison.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool KeyEquals(ReadOnlySpan<byte> name, byte[] key)
+    private static bool KeyEquals(ReadOnlySpan<byte> name, ReadOnlySpan<byte> k)
     {
         int n = name.Length;
-        ReadOnlySpan<byte> k = key;
         if (n >= 8)
         {
             if (n > 16)
