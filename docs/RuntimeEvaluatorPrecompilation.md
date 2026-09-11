@@ -523,23 +523,32 @@ A fourth change was tried and reverted: allocating the dynamic-scope stack only 
 on every call; the small-instance corpora (cypress, aws-cdk, nest-cli, stale, yamllint) lost 7 to 16% from that
 alone. The scope stack is back to a fixed frame slot.
 
-Measured three-way on a box that stayed throttled after the builds (overhead column 19 ns rather than 13.5, stable
-across the three runs; noise floor 1.01, but single corpora swing by up to 10% in that state):
+Two lessons from measuring this round. First, the box's page-reporting order had been raised from 5 to 10 during
+the afternoon, which halved guest throughput for everything (identical binaries ran 1.7 to 2.0 times slower on the
+timer-free `quick` mode, and the overhead column read 19 ns instead of 13.5); every measurement taken in that state
+was discarded once the cause was found, and the setting is back at the default. Second, the first cool-box run
+showed a group of small corpora 10 to 30% slower: the child dispatch is inlined into every loop, and the two new
+plan cases plus the inlined string-set test had doubled the strict loop's tier-1 code (3,136 to 6,042 bytes). The
+loop now resolves a property to one mask, set or child and runs one type test and one dispatch, with the new plans
+and the set test out of line (3,259 bytes).
 
-| Corpus | Before | After | After / before |
+Measured three-way on the cool box (overhead column 13.4 to 13.9 ns), twice; noise floor 1.02 on the geometric mean
+and up to 10% on a single small corpus:
+
+| Corpus | Before | After | After / before (two runs) |
 |---|---|---|---|
-| semantic-release | 104 µs | 62 µs | 0.59 |
-| importmap | 94 µs | 56 µs | 0.60 |
-| tmuxinator | 56 µs | 40 µs | 0.70 |
-| fabric-mod | 374 µs | 288 µs | 0.77 |
-| dependabot | 276 µs | 234 µs | 0.85 |
-| clang-format, pulumi, pre-commit-hooks, yamllint, unreal-engine-uproject, gitpod-configuration, stylecop, deno, ui5, cmake-presets | | | 0.87 to 0.90 |
-| jshintrc, krakend | | | 1.22 in this run, 1.0 in the two earlier runs of the same code |
-| geometric mean over 37 | | | 0.935 (0.92 and 0.90 in the two earlier runs) |
+| semantic-release | 74 µs | 42 µs | 0.56, 0.57 |
+| importmap | 45 µs | 27 µs | 0.65, 0.54 |
+| fabric-mod | 253 µs | 195 µs | 0.78, 0.74 |
+| dependabot | 210 µs | 165 µs | 0.82, 0.74 |
+| tmuxinator | 36 µs | 28 µs | 0.70, 0.85 |
+| pre-commit-hooks, cql2, stylecop, draft-04, cmake-presets, deno, krakend, pulumi | | | 0.85 to 0.94 |
+| the rest | | | within the noise |
+| geometric mean over 37 | | | 0.927, 0.917 |
 
-The gain is concentrated where the profiles said it would be; helm-chart-lock did not move (0.97), since its cost
-is now the per-object prologue and the per-evaluation entry, which this round left alone after the reverted
-experiment. Those two, and a clean re-measure of jshintrc and krakend on a cool box, are the open items.
+Against the same-day Blaze run the geometric mean of our runtime over Blaze is 0.85; semantic-release is level with
+Blaze (0.93) and importmap at 1.9 from 2.9. helm-chart-lock did not move: its cost is the per-object prologue and
+the per-evaluation entry, which this round left alone after the reverted experiment. Those are the open items.
 
 ## Against Blaze (2026-09-11)
 
