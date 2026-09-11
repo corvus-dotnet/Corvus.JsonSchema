@@ -500,6 +500,47 @@ clock and runaway network traffic on the host), which the overhead column showed
 and memory looked normal. Every run in that window was discarded; the column is the health check before trusting
 any run.
 
+## In-place plans, maps and inline enums (2026-09-11, fourth round)
+
+Profiles of the corpora still behind Blaze after the strict plan pointed at three more mechanics, each its own
+commit:
+
+1. **Strict plan for maps and any `additionalProperties`.** The unknown-name decision is precomputed on the node:
+   rejected (`false`), tested in place (a type-only leaf), dispatched on its plan (any other schema) or allowed. An
+   object whose only keyword is `additionalProperties` (importmap's maps of strings) skips the name lookup
+   altogether.
+2. **Plans for nodes whose only keyword is a typed `anyOf`/`oneOf`.** `NodePlan.TypeUnion` and
+   `NodePlan.TypeDispatch`: the child entry tests the mask or reads the table and jumps to the branch's plan without
+   the general node prologue (semantic-release's `plugins` items are a string or an array, its `branches` a string,
+   an object or an array). A branch on an in-place cycle keeps the guarded general edge.
+3. **String enums in place; lookups without copying.** A property entry or fused application whose child is a leaf
+   with only an `enum` of strings carries the string set and is tested in the loops without a call, from the raw
+   text when unescaped. `Utf8NameMap` gained a tagged lookup, so discriminator values and fused value tests no longer
+   copy the value behind a tag byte.
+
+A fourth change was tried and reverted: allocating the dynamic-scope stack only for programs that need it made the
+`stackalloc` conditional, which turns it into a variable-size `localloc` and changed the entry method's frame setup
+on every call; the small-instance corpora (cypress, aws-cdk, nest-cli, stale, yamllint) lost 7 to 16% from that
+alone. The scope stack is back to a fixed frame slot.
+
+Measured three-way on a box that stayed throttled after the builds (overhead column 19 ns rather than 13.5, stable
+across the three runs; noise floor 1.01, but single corpora swing by up to 10% in that state):
+
+| Corpus | Before | After | After / before |
+|---|---|---|---|
+| semantic-release | 104 µs | 62 µs | 0.59 |
+| importmap | 94 µs | 56 µs | 0.60 |
+| tmuxinator | 56 µs | 40 µs | 0.70 |
+| fabric-mod | 374 µs | 288 µs | 0.77 |
+| dependabot | 276 µs | 234 µs | 0.85 |
+| clang-format, pulumi, pre-commit-hooks, yamllint, unreal-engine-uproject, gitpod-configuration, stylecop, deno, ui5, cmake-presets | | | 0.87 to 0.90 |
+| jshintrc, krakend | | | 1.22 in this run, 1.0 in the two earlier runs of the same code |
+| geometric mean over 37 | | | 0.935 (0.92 and 0.90 in the two earlier runs) |
+
+The gain is concentrated where the profiles said it would be; helm-chart-lock did not move (0.97), since its cost
+is now the per-object prologue and the per-evaluation entry, which this round left alone after the reverted
+experiment. Those two, and a clean re-measure of jshintrc and krakend on a cool box, are the open items.
+
 ## Against Blaze (2026-09-11)
 
 ## Against Blaze (2026-09-11)
