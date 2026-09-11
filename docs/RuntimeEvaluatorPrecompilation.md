@@ -553,12 +553,15 @@ commit and measured neutral to a few percent on the smallest corpora in an alter
 binary on seven corpora, medians: yamllint 1.02, cypress 0.98, aws-cdk 0.97, cspell 0.92), so the entry is not
 where the remaining fixed cost lives; the per-object prologue is the open item.
 
-A third measurement lesson: WSL's guest CPU numbers have no fixed relation to host cores. With other work on the
-host's E-cores the same loop ran anywhere from 0.12 to 0.89 s across guest CPUs, and pinning inside the guest
-changed nothing. The remedy is on the host: set the `vmmemWSL` process affinity to the P-cores (logical 0 to 11 on
-this i7-13800H), after which every guest CPU measured alike. Even then the box drifted by 5% within a ninety-second
-run while other work ran, so alternating the two binaries in short runs and comparing medians is the protocol for
-small changes.
+A third measurement lesson, and the cause of every "idle guest but slow" episode of the day: Windows core parking.
+The host's power scheme had `CPMINCORES` at 4, which parked sixteen of the twenty logical processors, all six
+P-cores among them, and left the VM and everything else on four E-core threads; from inside the guest that showed
+as a run queue in the fifties with 96% idle, the same loop taking 0.12 to 0.89 s depending on which guest CPU it
+landed on, and pinning inside the guest changing nothing, since guest CPU numbers have no fixed relation to host
+cores. Setting `CPMINCORES` to 100 (`powercfg /setacvalueindex SCHEME_CURRENT SUB_PROCESSOR CPMINCORES 100`, the
+same for DC, then `/setactive`) is the fix; pinning the `vmmemWSL` process to the P-cores is a useful belt and
+braces. The harness's overhead column (13.5 ns healthy) is the check to run before trusting any measurement, and
+alternating the two binaries in short runs and comparing medians is the protocol for changes of a few percent.
 
 ## Against Blaze (2026-09-11)
 
