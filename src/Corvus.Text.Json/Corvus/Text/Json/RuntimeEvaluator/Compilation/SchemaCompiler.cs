@@ -431,9 +431,67 @@ internal sealed class SchemaCompiler
         this.OrderUnrolledProperties();
         this.ComputeSimpleArrays();
         this.ComputeInPlaceCycles();
-        FusedObjects.Compute([.. this.nodes]);
+        SchemaNode[] all = [.. this.nodes];
+        FusedObjects.Compute(all);
+        ComputeForwards(all);
         this.ComputePlans();
         this.ComputeFlags();
+    }
+
+    /// <summary>
+    /// Marks every node whose only assertion is a single in-place child (a lone <c>allOf</c> branch, or a <c>$ref</c>
+    /// the pure-reference elision left in place) so that flag mode dispatches straight to that child's plan. A node
+    /// on an in-place cycle keeps the general path and its runaway guard; when the program keeps a dynamic scope a
+    /// child in another resource is not forwarded to, because entering it must push that resource. Runs at compile
+    /// time and again when an image is loaded, since the result is not stored.
+    /// </summary>
+    internal static void ComputeForwards(SchemaNode[] nodes)
+    {
+        bool usesDynamicScope = false;
+        foreach (SchemaNode n in nodes)
+        {
+            n.ForwardNode = -1;
+            usesDynamicScope |= n.DynamicRef is { NeedsScope: true };
+        }
+
+        if (DisablePlans)
+        {
+            return;
+        }
+
+        foreach (SchemaNode node in nodes)
+        {
+            if (node.AlwaysTrue || node.AlwaysFalse || node.InPlaceCycle || node.Fused is not null
+                || node.HasType || node.HasConst || node.Enum is not null || node.HasNumberKeywords || node.HasStringKeywords
+                || node.HasObjectKeywords || node.HasArrayKeywords || node.DynamicRef is not null || node.AnyOf is not null || node.OneOf is not null
+                || node.Not.IsPresent || node.If.IsPresent || node.Dependencies is not null
+                || node.UnevaluatedProperties.IsPresent || node.UnevaluatedItems.IsPresent)
+            {
+                continue;
+            }
+
+            int target;
+            if (node.Ref.IsPresent && node.AllOf is null)
+            {
+                target = node.Ref.FastNode;
+            }
+            else if (!node.Ref.IsPresent && node.AllOf is { Length: 1 } allOf)
+            {
+                target = allOf[0].FastNode;
+            }
+            else
+            {
+                continue;
+            }
+
+            // A target on an in-place cycle is entered through the guarded general edge, as dynamic references do.
+            if (target == node.Id || nodes[target].InPlaceCycle || (usesDynamicScope && nodes[target].ResourceId != node.ResourceId))
+            {
+                continue;
+            }
+
+            node.ForwardNode = target;
+        }
     }
 
     /// <summary>
@@ -2336,6 +2394,11 @@ internal sealed class SchemaCompiler
         if (node.Fused is not null)
         {
             return NodePlan.FusedObject;
+        }
+
+        if (node.ForwardNode >= 0)
+        {
+            return NodePlan.Forward;
         }
 
         bool noValueKeywords = !node.HasConst && node.Enum is null && !node.HasNumberKeywords && !node.HasStringKeywords;

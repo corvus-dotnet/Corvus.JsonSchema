@@ -234,11 +234,7 @@ internal static class FusedObjects
 
     private static FusedObject? TryFuse(SchemaNode[] nodes, SchemaNode node)
     {
-        // Fusing pays when a pass over every instance property is unavoidable, which is what unevaluatedProperties
-        // demands; for branches without it the general path's schema-driven lookups (unrolled properties) can beat a
-        // pass over a large instance, so those are left alone.
-        bool worthwhile = node.UnevaluatedProperties.IsPresent;
-        if (!worthwhile || !IsObjectBranch(node, allowUnevaluated: true) || node.InPlaceCycle)
+        if (!IsObjectBranch(node, allowUnevaluated: true) || node.InPlaceCycle)
         {
             return null;
         }
@@ -256,6 +252,34 @@ internal static class FusedObjects
         if (contributors.Count > MaxContributors || conditions.Count > MaxConditions)
         {
             return null;
+        }
+
+        // Fusing pays when a pass over every instance property is unavoidable (unevaluatedProperties) or when it
+        // replaces several passes: two or more branches with object keywords, an if whose condition the seen bits
+        // decide, or required-only alternatives. A node whose object keywords are all its own keeps its object plan,
+        // which already takes dependencies in its one pass.
+        bool hasIfCondition = false;
+        foreach (PendingCondition condition in conditions)
+        {
+            hasIfCondition |= condition.Test is not null;
+        }
+
+        if (!node.UnevaluatedProperties.IsPresent && !hasIfCondition && alternatives.Count == 0)
+        {
+            int effective = 0;
+            foreach ((SchemaNode branch, _, _) in contributors)
+            {
+                if (branch.Properties is not null || branch.PatternProperties is not null || branch.AdditionalProperties.IsPresent
+                    || branch.RequiredNames is { Length: > 0 } || branch.MinProperties >= 0 || branch.MaxProperties >= 0)
+                {
+                    effective++;
+                }
+            }
+
+            if (effective < 2)
+            {
+                return null;
+            }
         }
 
         // Every name any branch or condition knows gets a bit.

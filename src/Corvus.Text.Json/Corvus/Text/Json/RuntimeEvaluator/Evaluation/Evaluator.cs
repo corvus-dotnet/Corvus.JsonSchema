@@ -452,6 +452,8 @@ internal static partial class Evaluator
                 return EvalArrayItemsPlan<TAccess>(target, doc, index, ref state);
             case NodePlan.DynamicRef:
                 return EvalDynamicRefPlan<TAccess>(target, doc, index, ref state);
+            case NodePlan.Forward:
+                return EvalChildFast<TAccess>(state.Nodes[target.ForwardNode], doc, index, ref state);
             case NodePlan.FusedObject:
                 return default(TAccess).TokenType(ref state, doc, index) == JsonTokenType.StartObject
                     ? EvalFusedObject<TAccess>(target, doc, index, ref state)

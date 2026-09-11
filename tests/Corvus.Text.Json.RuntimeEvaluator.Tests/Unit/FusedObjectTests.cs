@@ -227,9 +227,18 @@ public class FusedObjectTests
         using JsonSchemaEvaluator anyOf = JsonSchemaEvaluator.Compile("""{"anyOf": [{"properties": {"a": {"type": "integer"}}}, {"required": ["b"]}], "unevaluatedProperties": false}""");
         Assert.AreNotEqual(NodePlan.FusedObject, anyOf.Program.Nodes[anyOf.RootNode].Plan);
 
-        // An if that tests more than presence is not fused.
+        // A condition on a property value fuses even without unevaluatedProperties: one pass decides it.
         using JsonSchemaEvaluator ifValue = JsonSchemaEvaluator.Compile("""{"if": {"properties": {"kind": {"const": "a"}}}, "then": {"required": ["x"]}}""");
-        Assert.AreNotEqual(NodePlan.FusedObject, ifValue.Program.Nodes[ifValue.RootNode].Plan);
+        Assert.AreEqual(NodePlan.FusedObject, ifValue.Program.Nodes[ifValue.RootNode].Plan);
+        Assert.IsFalse(ifValue.Evaluate("""{"kind": "a"}"""));
+        Assert.IsTrue(ifValue.Evaluate("""{"kind": "a", "x": 1}"""));
+        Assert.IsTrue(ifValue.Evaluate("""{"kind": "b"}"""));
+
+        // A node whose object keywords are all its own is not fused: the branch adds no object keywords.
+        using JsonSchemaEvaluator plain = JsonSchemaEvaluator.Compile("""{"properties": {"a": {"type": "integer"}}, "required": ["a"], "allOf": [{"type": "object"}]}""");
+        Assert.AreNotEqual(NodePlan.FusedObject, plain.Program.Nodes[plain.RootNode].Plan);
+        Assert.IsTrue(plain.Evaluate("""{"a": 1}"""));
+        Assert.IsFalse(plain.Evaluate("""{"a": "x"}"""));
 
         // A live dynamic scope reachable from the node disables fusion for that node.
         using JsonSchemaEvaluator dynamic = JsonSchemaEvaluator.Compile("""

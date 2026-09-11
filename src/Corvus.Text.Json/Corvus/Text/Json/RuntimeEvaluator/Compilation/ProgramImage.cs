@@ -160,6 +160,7 @@ internal static class ProgramImage
         // Fused plans are derived from the graph rather than stored; a node whose plan was fused when the image was
         // written but is not now (fusion disabled) falls back to the general path, and the reverse.
         FusedObjects.Compute(nodes);
+        SchemaCompiler.ComputeForwards(nodes);
         foreach (SchemaNode n in nodes)
         {
             if (n.Plan == NodePlan.FusedObject && n.Fused is null)
@@ -169,6 +170,15 @@ internal static class ProgramImage
             else if (n.Fused is not null && n.Plan == NodePlan.General)
             {
                 n.Plan = NodePlan.FusedObject;
+            }
+
+            if (n.Plan == NodePlan.Forward && n.ForwardNode < 0)
+            {
+                n.Plan = NodePlan.General;
+            }
+            else if (n.ForwardNode >= 0 && n.Plan == NodePlan.General)
+            {
+                n.Plan = NodePlan.Forward;
             }
         }
 

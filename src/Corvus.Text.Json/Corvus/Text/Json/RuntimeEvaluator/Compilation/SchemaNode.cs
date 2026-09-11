@@ -1042,6 +1042,9 @@ internal enum NodePlan : byte
     /// <summary>A bare <c>$dynamicRef</c>: resolved against the dynamic scope at the entry site and dispatched directly.</summary>
     DynamicRef,
 
+    /// <summary>A node whose only assertion is one in-place child (a lone <c>allOf</c> branch or <c>$ref</c>): flag mode goes straight to <see cref="SchemaNode.ForwardNode"/>.</summary>
+    Forward,
+
     /// <summary>One pass over an object for a schema whose object semantics are spread over in-place applicators; see <see cref="FusedObject"/>.</summary>
     FusedObject,
 }
@@ -1186,6 +1189,9 @@ internal sealed class SchemaNode
     public ChildRef[]? OneOf;
     public Discriminator? AnyOfDiscriminator;
     public Discriminator? OneOfDiscriminator;
+
+    /// <summary>The node flag mode forwards to under <see cref="NodePlan.Forward"/>, or -1. Derived from the graph.</summary>
+    public int ForwardNode = -1;
 
     /// <summary>When every anyOf branch is a type-only schema, the union of their types; otherwise None.</summary>
     public TypeMask AnyOfTypeUnion;
