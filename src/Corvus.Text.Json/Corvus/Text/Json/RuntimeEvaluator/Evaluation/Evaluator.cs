@@ -456,20 +456,9 @@ internal static partial class Evaluator
             case NodePlan.Forward:
                 return EvalChildFast<TAccess>(state.Nodes[target.ForwardNode], doc, index, ref state);
             case NodePlan.TypeUnion:
-                return MatchesType<TAccess>(target.InPlaceUnionMask, default(TAccess).TokenType(ref state, doc, index), ref state, doc, index, target.Dialect == JsonSchemaDialect.Draft4);
+                return EvalTypeUnionPlan<TAccess>(target, doc, index, ref state);
             case NodePlan.TypeDispatch:
-            {
-                int branch = target.InPlaceDispatch![(int)default(TAccess).TokenType(ref state, doc, index)];
-                if (branch < 0)
-                {
-                    return false;
-                }
-
-                SchemaNode selected = state.Nodes[target.InPlaceBranches![branch].FastNode];
-                return (selected.Flags & NodeFlags.InPlaceCycle) != 0
-                    ? Eval<FastMode, TAccess>(target, doc, index, ref state, default, 0)
-                    : EvalChildFast<TAccess>(selected, doc, index, ref state);
-            }
+                return EvalTypeDispatchPlan<TAccess>(target, doc, index, ref state);
 
             case NodePlan.FusedObject:
                 return default(TAccess).TokenType(ref state, doc, index) == JsonTokenType.StartObject
@@ -478,6 +467,37 @@ internal static partial class Evaluator
             default:
                 return Eval<FastMode, TAccess>(target, doc, index, ref state, default, 0);
         }
+    }
+
+    /// <summary>
+    /// <see cref="NodePlan.TypeUnion"/>: one mask test. Kept out of line so the child dispatch, which is inlined into
+    /// every loop, stays small.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static bool EvalTypeUnionPlan<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
+        where TAccess : struct, IDocumentAccess
+    {
+        return MatchesType<TAccess>(node.InPlaceUnionMask, default(TAccess).TokenType(ref state, doc, index), ref state, doc, index, node.Dialect == JsonSchemaDialect.Draft4);
+    }
+
+    /// <summary>
+    /// <see cref="NodePlan.TypeDispatch"/>: the token type selects the one branch that can match; a branch on an
+    /// in-place cycle is entered through the guarded general edge.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static bool EvalTypeDispatchPlan<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
+        where TAccess : struct, IDocumentAccess
+    {
+        int branch = node.InPlaceDispatch![(int)default(TAccess).TokenType(ref state, doc, index)];
+        if (branch < 0)
+        {
+            return false;
+        }
+
+        SchemaNode selected = state.Nodes[node.InPlaceBranches![branch].FastNode];
+        return (selected.Flags & NodeFlags.InPlaceCycle) != 0
+            ? Eval<FastMode, TAccess>(node, doc, index, ref state, default, 0)
+            : EvalChildFast<TAccess>(selected, doc, index, ref state);
     }
 
     /// <summary>
@@ -757,8 +777,8 @@ internal static partial class Evaluator
             : EvalChildFast<TAccess>(nodes[app.Node], doc, valueIndex, ref state);
     }
 
-    /// <summary>A string value's membership of a set (an <c>enum</c> of strings): the raw text when unescaped, else the unescaped text.</summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    /// <summary>A string value's membership of a set (an <c>enum</c> of strings): the raw text when unescaped, else the unescaped text. Out of line: the loops that call it are inlined widely.</summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
     private static bool MatchesStringSet<TAccess>(Utf8NameMap<object> allowed, ref EvaluationState state, IJsonDocument doc, int index)
         where TAccess : struct, IDocumentAccess
     {
@@ -1037,51 +1057,54 @@ internal static partial class Evaluator
                 }
             }
 
+            // The resolution for the value: a known entry's, or the additional-properties one for an unknown name.
+            // One type test and one child dispatch keep the loop small.
+            TypeMask mask;
+            bool lexical;
+            Utf8NameMap<object>? set = null;
+            int child = -1;
             if (entry is null)
             {
-                // An unknown name: rejected, tested in place, dispatched, or allowed.
                 if (node.AdditionalRejects)
                 {
                     return false;
                 }
 
-                TypeMask additionalType = node.AdditionalInlineType;
-                if (additionalType != TypeMask.None)
-                {
-                    if (!MatchesType<TAccess>(additionalType, default(TAccess).TokenType(ref state, doc, valueIndex), ref state, doc, valueIndex, node.AdditionalInlineLexical))
-                    {
-                        return false;
-                    }
-                }
-                else if (node.AdditionalFastNode >= 0 && !EvalChildFast<TAccess>(state.Nodes[node.AdditionalFastNode], doc, valueIndex, ref state))
-                {
-                    return false;
-                }
-
-                continue;
+                mask = node.AdditionalInlineType;
+                lexical = node.AdditionalInlineLexical;
+                child = node.AdditionalFastNode;
             }
-
-            if (entry.SeenBit >= 0)
+            else
             {
-                seen |= 1UL << entry.SeenBit;
+                if (entry.SeenBit >= 0)
+                {
+                    seen |= 1UL << entry.SeenBit;
+                }
+
+                mask = entry.InlineType;
+                lexical = entry.InlineLexical;
+                set = entry.InlineEnum;
+                if (entry.Schema.IsPresent && !entry.InlineTrue)
+                {
+                    child = entry.Schema.FastNode;
+                }
             }
 
-            TypeMask mask = entry.InlineType;
             if (mask != TypeMask.None)
             {
-                if (!MatchesType<TAccess>(mask, default(TAccess).TokenType(ref state, doc, valueIndex), ref state, doc, valueIndex, entry.InlineLexical))
+                if (!MatchesType<TAccess>(mask, default(TAccess).TokenType(ref state, doc, valueIndex), ref state, doc, valueIndex, lexical))
                 {
                     return false;
                 }
             }
-            else if (entry.InlineEnum is Utf8NameMap<object> allowed)
+            else if (set is not null)
             {
-                if (!MatchesStringSet<TAccess>(allowed, ref state, doc, valueIndex))
+                if (!MatchesStringSet<TAccess>(set, ref state, doc, valueIndex))
                 {
                     return false;
                 }
             }
-            else if (entry.Schema.IsPresent && !entry.InlineTrue && !EvalChildFast<TAccess>(state.Nodes[entry.Schema.FastNode], doc, valueIndex, ref state))
+            else if (child >= 0 && !EvalChildFast<TAccess>(state.Nodes[child], doc, valueIndex, ref state))
             {
                 return false;
             }
