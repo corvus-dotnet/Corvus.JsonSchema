@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Corvus.Text.Json.RuntimeEvaluator.Compilation;
 
@@ -130,7 +131,7 @@ internal sealed class Utf8NameMap<T>
         while (slot != 0)
         {
             int i = slot - 1;
-            if (key.SequenceEqual(this.keys[i]))
+            if (KeyEquals(key, this.keys[i]))
             {
                 value = this.values[i];
                 return true;
@@ -141,6 +142,43 @@ internal sealed class Utf8NameMap<T>
 
         value = null;
         return false;
+    }
+
+    /// <summary>
+    /// Equality of a name and a key of the same length (the bucket guarantees it): up to sixteen bytes as one or two
+    /// overlapping word loads, longer keys through the vectorised comparison.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool KeyEquals(ReadOnlySpan<byte> name, byte[] key)
+    {
+        int n = name.Length;
+        ReadOnlySpan<byte> k = key;
+        if (n >= 8)
+        {
+            if (n > 16)
+            {
+                return name.SequenceEqual(k);
+            }
+
+            return MemoryMarshal.Read<ulong>(name) == MemoryMarshal.Read<ulong>(k)
+                && MemoryMarshal.Read<ulong>(name.Slice(n - 8)) == MemoryMarshal.Read<ulong>(k.Slice(n - 8));
+        }
+
+        if (n >= 4)
+        {
+            return MemoryMarshal.Read<uint>(name) == MemoryMarshal.Read<uint>(k)
+                && MemoryMarshal.Read<uint>(name.Slice(n - 4)) == MemoryMarshal.Read<uint>(k.Slice(n - 4));
+        }
+
+        for (int b = 0; b < n; b++)
+        {
+            if (name[b] != k[b])
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private readonly struct Bucket(int position, int[] table)

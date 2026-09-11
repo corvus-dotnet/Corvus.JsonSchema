@@ -1463,23 +1463,25 @@ internal static partial class Evaluator
 
     private static bool MatchesNumericFormat(FormatKind format, bool isNegative, scoped ReadOnlySpan<byte> integral, scoped ReadOnlySpan<byte> fractional, int exponent, ref EvaluationState state)
     {
+        // A throwaway context so that the shared helpers can be reused; formats are rare enough to build it per call.
+        JsonSchemaContext scratch = default;
         ReadOnlySpan<byte> keyword = FormatKeyword;
         return format switch
         {
-            FormatKind.Byte => JsonSchemaEvaluation.MatchByte(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
-            FormatKind.UInt16 => JsonSchemaEvaluation.MatchUInt16(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
-            FormatKind.UInt32 => JsonSchemaEvaluation.MatchUInt32(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
-            FormatKind.UInt64 => JsonSchemaEvaluation.MatchUInt64(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
-            FormatKind.UInt128 => JsonSchemaEvaluation.MatchUInt128(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
-            FormatKind.SByte => JsonSchemaEvaluation.MatchSByte(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
-            FormatKind.Int16 => JsonSchemaEvaluation.MatchInt16(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
-            FormatKind.Int32 => JsonSchemaEvaluation.MatchInt32(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
-            FormatKind.Int64 => JsonSchemaEvaluation.MatchInt64(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
-            FormatKind.Int128 => JsonSchemaEvaluation.MatchInt128(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
-            FormatKind.Half => JsonSchemaEvaluation.MatchHalf(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
-            FormatKind.Single => JsonSchemaEvaluation.MatchSingle(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
-            FormatKind.Double => JsonSchemaEvaluation.MatchDouble(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
-            FormatKind.Decimal => JsonSchemaEvaluation.MatchDecimal(isNegative, integral, fractional, exponent, keyword, ref state.Scratch),
+            FormatKind.Byte => JsonSchemaEvaluation.MatchByte(isNegative, integral, fractional, exponent, keyword, ref scratch),
+            FormatKind.UInt16 => JsonSchemaEvaluation.MatchUInt16(isNegative, integral, fractional, exponent, keyword, ref scratch),
+            FormatKind.UInt32 => JsonSchemaEvaluation.MatchUInt32(isNegative, integral, fractional, exponent, keyword, ref scratch),
+            FormatKind.UInt64 => JsonSchemaEvaluation.MatchUInt64(isNegative, integral, fractional, exponent, keyword, ref scratch),
+            FormatKind.UInt128 => JsonSchemaEvaluation.MatchUInt128(isNegative, integral, fractional, exponent, keyword, ref scratch),
+            FormatKind.SByte => JsonSchemaEvaluation.MatchSByte(isNegative, integral, fractional, exponent, keyword, ref scratch),
+            FormatKind.Int16 => JsonSchemaEvaluation.MatchInt16(isNegative, integral, fractional, exponent, keyword, ref scratch),
+            FormatKind.Int32 => JsonSchemaEvaluation.MatchInt32(isNegative, integral, fractional, exponent, keyword, ref scratch),
+            FormatKind.Int64 => JsonSchemaEvaluation.MatchInt64(isNegative, integral, fractional, exponent, keyword, ref scratch),
+            FormatKind.Int128 => JsonSchemaEvaluation.MatchInt128(isNegative, integral, fractional, exponent, keyword, ref scratch),
+            FormatKind.Half => JsonSchemaEvaluation.MatchHalf(isNegative, integral, fractional, exponent, keyword, ref scratch),
+            FormatKind.Single => JsonSchemaEvaluation.MatchSingle(isNegative, integral, fractional, exponent, keyword, ref scratch),
+            FormatKind.Double => JsonSchemaEvaluation.MatchDouble(isNegative, integral, fractional, exponent, keyword, ref scratch),
+            FormatKind.Decimal => JsonSchemaEvaluation.MatchDecimal(isNegative, integral, fractional, exponent, keyword, ref scratch),
             _ => true,
         };
     }
@@ -1808,11 +1810,12 @@ internal static partial class Evaluator
 
         if (node.AssertContent)
         {
+            JsonSchemaContext scratch = default;
             bool m = node.Content switch
             {
-                ContentKind.Base64 => JsonSchemaEvaluation.MatchBase64String(value, ContentEncodingKeyword, ref state.Scratch),
-                ContentKind.Json => JsonSchemaEvaluation.MatchJsonContent(value, ContentMediaTypeKeyword, ref state.Scratch),
-                ContentKind.Base64Json => JsonSchemaEvaluation.MatchBase64Content(value, ContentMediaTypeKeyword, ref state.Scratch),
+                ContentKind.Base64 => JsonSchemaEvaluation.MatchBase64String(value, ContentEncodingKeyword, ref scratch),
+                ContentKind.Json => JsonSchemaEvaluation.MatchJsonContent(value, ContentMediaTypeKeyword, ref scratch),
+                ContentKind.Base64Json => JsonSchemaEvaluation.MatchBase64Content(value, ContentMediaTypeKeyword, ref scratch),
                 _ => true,
             };
 
@@ -1851,27 +1854,28 @@ internal static partial class Evaluator
         }
 
         ReadOnlySpan<byte> keyword = FormatKeyword;
+        JsonSchemaContext scratch = default;
         return format switch
         {
-            FormatKind.Date => JsonSchemaEvaluation.MatchDate(value, keyword, ref state.Scratch),
-            FormatKind.DateTime => JsonSchemaEvaluation.MatchDateTime(value, keyword, ref state.Scratch),
-            FormatKind.Time => JsonSchemaEvaluation.MatchTime(value, keyword, ref state.Scratch),
-            FormatKind.Duration => JsonSchemaEvaluation.MatchDuration(value, keyword, ref state.Scratch),
-            FormatKind.Email => JsonSchemaEvaluation.MatchEmail(value, keyword, ref state.Scratch),
-            FormatKind.IdnEmail => JsonSchemaEvaluation.MatchIdnEmail(value, keyword, ref state.Scratch),
-            FormatKind.Hostname => JsonSchemaEvaluation.MatchHostname(value, keyword, ref state.Scratch),
-            FormatKind.IdnHostname => JsonSchemaEvaluation.MatchIdnHostname(value, keyword, ref state.Scratch),
-            FormatKind.Ipv4 => JsonSchemaEvaluation.MatchIPV4(value, keyword, ref state.Scratch),
-            FormatKind.Ipv6 => JsonSchemaEvaluation.MatchIPV6(value, keyword, ref state.Scratch),
-            FormatKind.Uri => JsonSchemaEvaluation.MatchUri(value, keyword, ref state.Scratch),
-            FormatKind.UriReference => JsonSchemaEvaluation.MatchUriReference(value, keyword, ref state.Scratch),
-            FormatKind.Iri => JsonSchemaEvaluation.MatchIri(value, keyword, ref state.Scratch),
-            FormatKind.IriReference => JsonSchemaEvaluation.MatchIriReference(value, keyword, ref state.Scratch),
-            FormatKind.Uuid => JsonSchemaEvaluation.MatchUuid(value, keyword, ref state.Scratch),
-            FormatKind.UriTemplate => JsonSchemaEvaluation.MatchUriTemplate(value, keyword, ref state.Scratch),
-            FormatKind.JsonPointer => JsonSchemaEvaluation.MatchJsonPointer(value, keyword, ref state.Scratch),
-            FormatKind.RelativeJsonPointer => JsonSchemaEvaluation.MatchRelativeJsonPointer(value, keyword, ref state.Scratch),
-            FormatKind.Regex => JsonSchemaEvaluation.MatchRegex(value, keyword, ref state.Scratch),
+            FormatKind.Date => JsonSchemaEvaluation.MatchDate(value, keyword, ref scratch),
+            FormatKind.DateTime => JsonSchemaEvaluation.MatchDateTime(value, keyword, ref scratch),
+            FormatKind.Time => JsonSchemaEvaluation.MatchTime(value, keyword, ref scratch),
+            FormatKind.Duration => JsonSchemaEvaluation.MatchDuration(value, keyword, ref scratch),
+            FormatKind.Email => JsonSchemaEvaluation.MatchEmail(value, keyword, ref scratch),
+            FormatKind.IdnEmail => JsonSchemaEvaluation.MatchIdnEmail(value, keyword, ref scratch),
+            FormatKind.Hostname => JsonSchemaEvaluation.MatchHostname(value, keyword, ref scratch),
+            FormatKind.IdnHostname => JsonSchemaEvaluation.MatchIdnHostname(value, keyword, ref scratch),
+            FormatKind.Ipv4 => JsonSchemaEvaluation.MatchIPV4(value, keyword, ref scratch),
+            FormatKind.Ipv6 => JsonSchemaEvaluation.MatchIPV6(value, keyword, ref scratch),
+            FormatKind.Uri => JsonSchemaEvaluation.MatchUri(value, keyword, ref scratch),
+            FormatKind.UriReference => JsonSchemaEvaluation.MatchUriReference(value, keyword, ref scratch),
+            FormatKind.Iri => JsonSchemaEvaluation.MatchIri(value, keyword, ref scratch),
+            FormatKind.IriReference => JsonSchemaEvaluation.MatchIriReference(value, keyword, ref scratch),
+            FormatKind.Uuid => JsonSchemaEvaluation.MatchUuid(value, keyword, ref scratch),
+            FormatKind.UriTemplate => JsonSchemaEvaluation.MatchUriTemplate(value, keyword, ref scratch),
+            FormatKind.JsonPointer => JsonSchemaEvaluation.MatchJsonPointer(value, keyword, ref scratch),
+            FormatKind.RelativeJsonPointer => JsonSchemaEvaluation.MatchRelativeJsonPointer(value, keyword, ref scratch),
+            FormatKind.Regex => JsonSchemaEvaluation.MatchRegex(value, keyword, ref scratch),
             _ => true,
         };
     }

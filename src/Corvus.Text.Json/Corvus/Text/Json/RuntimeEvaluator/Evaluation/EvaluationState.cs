@@ -201,9 +201,6 @@ internal ref struct EvaluationState
     /// <summary>The UTF-8 text of <see cref="Raw"/>.</summary>
     public ReadOnlySpan<byte> RawUtf8;
 
-    /// <summary>A throwaway context so that the shared format helpers can be reused.</summary>
-    public JsonSchemaContext Scratch;
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void PushScope(int resourceId)
     {
