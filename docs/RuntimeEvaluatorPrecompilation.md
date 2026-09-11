@@ -456,6 +456,50 @@ comparison cannot see a 10% change; `blazebasis` with the baseline run twice is 
 dynamic PGO; nothing in them is virtual, so this costs little, but it is why `EvalObjectPlanCore` shows one tier in a
 disassembly.
 
+## Strict object plan and per-property mechanics (2026-09-11, third round)
+
+helm-chart-lock is the simplest shape in the corpus (an object of three required properties with
+`additionalProperties: false`, one of them an array of such objects) and our plan for it was already the best we
+had, so what was left was the cost per property: about 13 ns against Blaze's 2.5. Three commits:
+
+1. **Name map keys as word loads; scratch context per call.** Keys of up to sixteen bytes (the bucket guarantees
+   equal length) compare as one or two overlapping word loads instead of a `SequenceEqual` call. The
+   `JsonSchemaContext` the shared format helpers need is a local at its three call sites instead of a field the
+   evaluation state zeroed on every entry.
+2. **Type-only children tested in place; `required` as a mask.** A property entry, and a fused application, whose
+   child is a type-only leaf carries the child's type mask, so the object plan, the fused plan and the strict loop
+   test the token type without a call (and skip a child that is `true`); with at most 64 seen bits, `required` is
+   one mask test. Derived from the graph at compile time and on image load.
+3. **`NodePlan.StrictObject`.** An object node with named properties only (no pattern properties, dependencies or
+   additional-properties schema; `additionalProperties` absent, `true` or `false`) and at most 64 seen bits gets one
+   loop: look the name up, reject an unknown name when additional properties are false, test the token type for a
+   type-only child and dispatch the rest on their plan, then one mask test for `required`.
+
+Measured on the like-for-like basis after the box had recovered (the timer-overhead column read 13.5 ns in all
+three runs; noise floor 1.03 on the geometric mean):
+
+| Corpus | Before | After | After / before |
+|---|---|---|---|
+| helm-chart-lock | 445 µs | 270 µs | 0.61 |
+| gitpod-configuration | 125 µs | 77 µs | 0.62 |
+| jshintrc | 187 µs | 131 µs | 0.70 |
+| nest-cli | 109 µs | 76 µs | 0.70 |
+| dependabot | 282 µs | 199 µs | 0.71 |
+| omnisharp | 134 µs | 99 µs | 0.74 |
+| lerna, deno, pre-commit-hooks, cmake-presets, cypress, cspell, importmap | | | 0.77 to 0.82 |
+| ui5, semantic-release, tmuxinator, openapi | | | 1.04 to 1.12, inside that run's noise |
+| geometric mean over 37 | | | 0.86 |
+
+Against the same-day Blaze run the geometric mean of our runtime over Blaze is now 0.89; we lead on 22 corpora.
+helm-chart-lock is at 70 ns per instance against Blaze's 24, importmap 3.1 times Blaze, yamllint 2.1, ui5 2.7. The
+remaining gap on those is the per-evaluation entry (state setup and the root dispatch, about 15 ns) and the
+per-object prologue of the plans; the property loop itself is now a lookup, a word compare and a token-type test.
+
+A measurement note for the record: from mid-afternoon the host ran the VM at a third of its speed (a throttled
+clock and runaway network traffic on the host), which the overhead column showed as 30 to 1,200 ns while guest load
+and memory looked normal. Every run in that window was discarded; the column is the health check before trusting
+any run.
+
 ## Against Blaze (2026-09-11)
 
 ## Against Blaze (2026-09-11)
