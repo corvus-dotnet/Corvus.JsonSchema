@@ -211,9 +211,11 @@ internal sealed class PatternMatcher
     private readonly byte[]? prefix;
     private readonly int min;
     private readonly int max;
+    private readonly ClassAtom[]? atoms;
+    private readonly byte[][]? literals;
     private readonly Kind kind;
 
-    private PatternMatcher(Kind kind, string source, Regex? regex, byte[]? prefix, int min, int max)
+    private PatternMatcher(Kind kind, string source, Regex? regex, byte[]? prefix, int min, int max, ClassAtom[]? atoms = null, byte[][]? literals = null)
     {
         this.kind = kind;
         this.Source = source;
@@ -221,6 +223,8 @@ internal sealed class PatternMatcher
         this.prefix = prefix;
         this.min = min;
         this.max = max;
+        this.atoms = atoms;
+        this.literals = literals;
     }
 
     private enum Kind : byte
@@ -229,6 +233,8 @@ internal sealed class PatternMatcher
         NonEmpty,
         Prefix,
         Range,
+        ClassSequence,
+        Literals,
         Regex,
     }
 
@@ -270,6 +276,16 @@ internal sealed class PatternMatcher
             return new PatternMatcher(Kind.Range, ecmaPattern, null, null, min, max);
         }
 
+        if (TryParseLiterals(ecmaPattern, out byte[][]? literals))
+        {
+            return new PatternMatcher(Kind.Literals, ecmaPattern, null, null, 0, 0, literals: literals);
+        }
+
+        if (TryParseClassSequence(ecmaPattern, out ClassAtom[]? atoms))
+        {
+            return new PatternMatcher(Kind.ClassSequence, ecmaPattern, null, null, 0, 0, atoms: atoms);
+        }
+
         if (options.RegexProvider is JsonSchemaRegexProvider provider && provider(patternIndex, ecmaPattern) is Regex provided)
         {
             return new PatternMatcher(Kind.Regex, ecmaPattern, provided, null, 0, 0);
@@ -301,6 +317,8 @@ internal sealed class PatternMatcher
             Kind.Noop => true,
             Kind.NonEmpty => utf8Value.Length > 0,
             Kind.Prefix => utf8Value.StartsWith(this.prefix),
+            Kind.Literals => MatchesLiterals(this.literals!, utf8Value),
+            Kind.ClassSequence => MatchesClassSequence(this.atoms!, utf8Value),
 #if STJ
             Kind.Range => RuneCount(utf8Value) >= this.min && RuneCount(utf8Value) <= this.max,
             _ => this.regex!.IsMatch(System.Text.Encoding.UTF8.GetString(utf8Value)),
@@ -358,6 +376,409 @@ internal sealed class PatternMatcher
 
         prefix = pattern[1..end];
         return true;
+    }
+
+    /// <summary>
+    /// An anchored sequence of ASCII character classes with quantifiers, matched on UTF-8 without a regular
+    /// expression: <c>^[a-z][a-z0-9_]+$</c>, <c>^\d{4}-\d{2}-\d{2}$</c>, <c>^[A-F0-9]{1,32}$</c>. Every atom but the
+    /// last has a fixed count, so no backtracking is needed; the last is greedy to the end. Classes are ASCII only,
+    /// so a byte of a multi-byte character never matches and the character count is the byte count.
+    /// </summary>
+    internal readonly struct ClassAtom
+    {
+        public ClassAtom(ulong bits0, ulong bits1, int min, int max)
+        {
+            this.Bits0 = bits0;
+            this.Bits1 = bits1;
+            this.Min = min;
+            this.Max = max;
+        }
+
+        public ulong Bits0 { get; }
+
+        public ulong Bits1 { get; }
+
+        public int Min { get; }
+
+        public int Max { get; }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Contains(byte b)
+        {
+            return b < 64 ? (this.Bits0 & (1UL << b)) != 0 : b < 128 && (this.Bits1 & (1UL << (b - 64))) != 0;
+        }
+    }
+
+    private static bool MatchesLiterals(byte[][] literals, ReadOnlySpan<byte> value)
+    {
+        for (int i = 0; i < literals.Length; i++)
+        {
+            if (value.SequenceEqual(literals[i]))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool MatchesClassSequence(ClassAtom[] atoms, ReadOnlySpan<byte> value)
+    {
+        int pos = 0;
+        int last = atoms.Length - 1;
+        for (int a = 0; a < last; a++)
+        {
+            ClassAtom atom = atoms[a];
+            for (int n = 0; n < atom.Min; n++)
+            {
+                if (pos >= value.Length || !atom.Contains(value[pos]))
+                {
+                    return false;
+                }
+
+                pos++;
+            }
+        }
+
+        ClassAtom tail = atoms[last];
+        int count = 0;
+        while (pos < value.Length)
+        {
+            if (!tail.Contains(value[pos]))
+            {
+                return false;
+            }
+
+            pos++;
+            count++;
+        }
+
+        return count >= tail.Min && (tail.Max < 0 || count <= tail.Max);
+    }
+
+    /// <summary>Parses <c>^(a|b|c)$</c> or <c>^a|b|c$</c>-style anchored alternations of plain literals.</summary>
+    private static bool TryParseLiterals(string pattern, out byte[][]? literals)
+    {
+        literals = null;
+        if (pattern.Length < 3 || pattern[0] != '^' || pattern[pattern.Length - 1] != '$')
+        {
+            return false;
+        }
+
+        string body = pattern.Substring(1, pattern.Length - 2);
+        if (body.StartsWith("(?:", StringComparison.Ordinal) && body.EndsWith(")", StringComparison.Ordinal))
+        {
+            body = body.Substring(3, body.Length - 4);
+        }
+        else if (body.StartsWith("(", StringComparison.Ordinal) && body.EndsWith(")", StringComparison.Ordinal))
+        {
+            body = body.Substring(1, body.Length - 2);
+        }
+
+        if (body.Length == 0)
+        {
+            return false;
+        }
+
+        string[] parts = body.Split('|');
+        var result = new byte[parts.Length][];
+        for (int i = 0; i < parts.Length; i++)
+        {
+            string part = parts[i];
+            if (part.Length == 0)
+            {
+                return false;
+            }
+
+            foreach (char c in part)
+            {
+                if (c >= 128 || !(char.IsLetterOrDigit(c) || c == '_' || c == '-' || c == ':' || c == '/' || c == '@' || c == '#' || c == ',' || c == '=' || c == '%' || c == '!' || c == '~' || c == ' '))
+                {
+                    return false;
+                }
+            }
+
+            result[i] = System.Text.Encoding.UTF8.GetBytes(part);
+        }
+
+        literals = result;
+        return true;
+    }
+
+    /// <summary>
+    /// Parses an anchored sequence of ASCII classes and literal characters with quantifiers into atoms, or returns
+    /// false for anything outside that subset (which then goes to a regular expression).
+    /// </summary>
+    private static bool TryParseClassSequence(string pattern, out ClassAtom[]? atoms)
+    {
+        atoms = null;
+        if (pattern.Length < 3 || pattern[0] != '^' || pattern[pattern.Length - 1] != '$')
+        {
+            return false;
+        }
+
+        var result = new List<ClassAtom>();
+        int i = 1;
+        int end = pattern.Length - 1;
+        while (i < end)
+        {
+            ulong bits0 = 0;
+            ulong bits1 = 0;
+            char c = pattern[i];
+            if (c == '[')
+            {
+                int close = pattern.IndexOf(']', i + 1);
+                if (close < 0 || close > end - 1 || (i + 1 < pattern.Length && pattern[i + 1] == '^'))
+                {
+                    return false;
+                }
+
+                if (!TryParseClass(pattern.AsSpan(i + 1, close - i - 1), ref bits0, ref bits1))
+                {
+                    return false;
+                }
+
+                i = close + 1;
+            }
+            else if (c == '\\')
+            {
+                if (i + 1 >= end)
+                {
+                    return false;
+                }
+
+                char e = pattern[i + 1];
+                if (!TryAddEscape(e, ref bits0, ref bits1))
+                {
+                    return false;
+                }
+
+                i += 2;
+            }
+            else if (c < 128 && (char.IsLetterOrDigit(c) || c == '_' || c == '-' || c == ':' || c == '/' || c == '@' || c == '#' || c == ',' || c == '=' || c == '%' || c == '!' || c == '~' || c == ' '))
+            {
+                Set(c, ref bits0, ref bits1);
+                i++;
+            }
+            else
+            {
+                return false;
+            }
+
+            int min = 1;
+            int max = 1;
+            if (i < end)
+            {
+                char q = pattern[i];
+                if (q == '*')
+                {
+                    min = 0;
+                    max = -1;
+                    i++;
+                }
+                else if (q == '+')
+                {
+                    min = 1;
+                    max = -1;
+                    i++;
+                }
+                else if (q == '?')
+                {
+                    min = 0;
+                    max = 1;
+                    i++;
+                }
+                else if (q == '{')
+                {
+                    int close = pattern.IndexOf('}', i);
+                    if (close < 0 || close >= end)
+                    {
+                        return false;
+                    }
+
+                    string inner = pattern.Substring(i + 1, close - i - 1);
+                    int comma = inner.IndexOf(',');
+                    if (comma < 0)
+                    {
+                        if (!int.TryParse(inner, NumberStyles.None, CultureInfo.InvariantCulture, out min))
+                        {
+                            return false;
+                        }
+
+                        max = min;
+                    }
+                    else
+                    {
+                        if (!int.TryParse(inner.Substring(0, comma), NumberStyles.None, CultureInfo.InvariantCulture, out min))
+                        {
+                            return false;
+                        }
+
+                        string upper = inner.Substring(comma + 1);
+                        if (upper.Length == 0)
+                        {
+                            max = -1;
+                        }
+                        else if (!int.TryParse(upper, NumberStyles.None, CultureInfo.InvariantCulture, out max) || max < min)
+                        {
+                            return false;
+                        }
+                    }
+
+                    i = close + 1;
+                }
+
+                // A lazy or possessive suffix changes nothing for an anchored match but is left to the regex.
+                if (i < end && (pattern[i] == '?' || pattern[i] == '+'))
+                {
+                    return false;
+                }
+            }
+
+            result.Add(new ClassAtom(bits0, bits1, min, max));
+        }
+
+        if (result.Count == 0)
+        {
+            return false;
+        }
+
+        // Without backtracking every atom but the last must have a fixed count.
+        for (int a = 0; a < result.Count - 1; a++)
+        {
+            if (result[a].Min != result[a].Max)
+            {
+                return false;
+            }
+        }
+
+        atoms = [.. result];
+        return true;
+    }
+
+    private static bool TryParseClass(ReadOnlySpan<char> body, ref ulong bits0, ref ulong bits1)
+    {
+        if (body.Length == 0)
+        {
+            return false;
+        }
+
+        int i = 0;
+        while (i < body.Length)
+        {
+            char c = body[i];
+            char low;
+            if (c == '\\')
+            {
+                if (i + 1 >= body.Length)
+                {
+                    return false;
+                }
+
+                char e = body[i + 1];
+                if (e == 'w' || e == 'd')
+                {
+                    if (!TryAddEscape(e, ref bits0, ref bits1))
+                    {
+                        return false;
+                    }
+
+                    i += 2;
+                    continue;
+                }
+
+                if (e >= 128 || char.IsLetterOrDigit(e))
+                {
+                    return false;
+                }
+
+                low = e;
+                i += 2;
+            }
+            else if (c >= 128 || c == '[')
+            {
+                return false;
+            }
+            else
+            {
+                low = c;
+                i++;
+            }
+
+            if (i + 1 < body.Length && body[i] == '-')
+            {
+                char high = body[i + 1];
+                if (high == '\\' || high >= 128 || high < low)
+                {
+                    return false;
+                }
+
+                for (char r = low; r <= high; r++)
+                {
+                    Set(r, ref bits0, ref bits1);
+                }
+
+                i += 2;
+            }
+            else
+            {
+                Set(low, ref bits0, ref bits1);
+            }
+        }
+
+        return true;
+    }
+
+    private static bool TryAddEscape(char e, ref ulong bits0, ref ulong bits1)
+    {
+        switch (e)
+        {
+            case 'd':
+                for (char r = '0'; r <= '9'; r++)
+                {
+                    Set(r, ref bits0, ref bits1);
+                }
+
+                return true;
+            case 'w':
+                for (char r = '0'; r <= '9'; r++)
+                {
+                    Set(r, ref bits0, ref bits1);
+                }
+
+                for (char r = 'a'; r <= 'z'; r++)
+                {
+                    Set(r, ref bits0, ref bits1);
+                }
+
+                for (char r = 'A'; r <= 'Z'; r++)
+                {
+                    Set(r, ref bits0, ref bits1);
+                }
+
+                Set('_', ref bits0, ref bits1);
+                return true;
+            default:
+                if (e < 128 && !char.IsLetterOrDigit(e))
+                {
+                    Set(e, ref bits0, ref bits1);
+                    return true;
+                }
+
+                return false;
+        }
+    }
+
+    private static void Set(char c, ref ulong bits0, ref ulong bits1)
+    {
+        if (c < 64)
+        {
+            bits0 |= 1UL << c;
+        }
+        else
+        {
+            bits1 |= 1UL << (c - 64);
+        }
     }
 
     private static bool TryParseRange(string pattern, out int min, out int max)
