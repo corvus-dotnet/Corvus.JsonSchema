@@ -286,16 +286,22 @@ running the whole JSON Schema Test Suite in collecting mode (the general path) a
   entry whose resource lacks the anchor keeps the scope. This is what makes the strict-tree micro case as fast
   generated (entry points in both resources) as through the API (one entry).
 
-Generated code against the API, measured on the micro cases with both fixes in (typed generated model, generated
-standalone evaluator, runtime API; quiet box, minimum of 40 rounds): object 153/154/152 ns, array 617/549/563,
-string 182/171/171, unevaluated 138/132/128, dynamic reference 274/263/233, verbose 1.59/1.60/1.63 µs. The one
-remaining gap, oneOf (110/77/72), is not the program: the program over the plain document matches the API, and the
-API over the oneOf model's own `ParsedJsonDocument<MicroOneOf>` costs the same as the generated call. The extra cost
-follows the document's class, not the schema (the object schema over that document is slower too, and the oneOf
-schema over the object model's document is not), which is the JIT's guarded devirtualisation of the interface calls
-the raw-access path still makes: in one process that mostly evaluates `ParsedJsonDocument<JsonElement>`, a rarely
-seen document class misses the guard and pays the virtual call. Removing those calls from the raw-access path would
-close it for every document class.
+Generated code against the API, measured on the micro cases with the fixes in (typed generated model, generated
+standalone evaluator, runtime API; quiet box, minimum of 40 rounds) and with tiered compilation disabled
+(`DOTNET_TieredCompilation=0`): object 276/286/283 ns, array 1.14/1.14/1.14 µs, string 193/194/193, unevaluated
+178/179/179, dynamic reference 241/240/242, oneOf 59/59/59, verbose 2.47/2.41/2.41 µs. The three paths run the same
+machine code. With tiering on, the same process reports ratios between 0.6 and 1.0 on the short cases (oneOf 132
+against 80 ns, dynamic reference 322 against 247), and the figures move between runs: the JIT produces different
+tier-1 code for the same shared engine methods depending on which call sites and generic instantiations were hot when
+each tiered up, and that is not a property of either path. Dynamic PGO is not the cause (the ratios persist with
+`DOTNET_TieredPGO=0`), and neither is the document: a probe that evaluates one schema over documents of every model
+type, and over twelve identical documents in either order, shows them all within 5% (`docprobe` command). Compare
+generated code with the API with tiering off, or in separate processes, not by ratio inside one tiered process.
+
+Two things the oneOf profile did show, both engine work rather than generator work: the discriminator reads its
+property through the document's by-name lookup (`JsonDocument.TryGetNamedPropertyValueIndexUnsafe`, 30% of the
+evaluation) instead of the raw-access scan the rest of the engine uses, and tier-1 code for the discriminated oneOf
+is slower than fully optimised code (80 to 100 ns tiered against 59 ns with tiering off).
 * **Fused object plan** (`FusedObjects`, `NodePlan.FusedObject`) for a node with `unevaluatedProperties` whose object
   semantics spread over `allOf`, `$ref` and `if`/`then`/`else` with required-only conditions: every property name any
   branch knows is resolved at compile time to the child schemas that apply (own property, matching pattern
