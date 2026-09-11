@@ -563,6 +563,22 @@ same for DC, then `/setactive`) is the fix; pinning the `vmmemWSL` process to th
 braces. The harness's overhead column (13.5 ns healthy) is the check to run before trusting any measurement, and
 alternating the two binaries in short runs and comparing medians is the protocol for changes of a few percent.
 
+## The strict loop's instruction budget (2026-09-11, late)
+
+With the entry shown not to be the fixed cost, the tier-1 disassembly of the strict loop was read instruction by
+instruction: about 150 per property with some twenty bounds checks, against the thirty or forty Blaze needs. Four
+of the sources were avoidable without giving up the checks that matter: the value row's header (type and row count)
+was read once for the type test and again to step to the next row; the name row's location and length were two
+checked reads where one 8-byte read serves; the key compare did six checked slice reads on spans already known to
+hold `n` bytes; and each property's entry was a class reached through a checked array load, then five field loads.
+One commit takes all four: `IDocumentAccess.TokenTypeAndNext`, a single read for the name row, the key words read
+through refs, and a value-type `StrictEntry` table parallel to the name map (`Utf8NameMap.TryGetIndex`).
+
+Alternating A/B (five runs of each binary, medians): helm-chart-lock 0.85, ui5 and krakend 0.89, vercel 0.91,
+aws-cdk 0.92, cypress, cspell, jsconfig and stale 0.95; yamllint, whose root has one named property and whose
+instances have none of it, unchanged within noise. The same recipe applies to the object plan's loop and the fused
+loop, which still read the header twice and go through the entry class; those are next.
+
 ## Against Blaze (2026-09-11)
 
 ## Against Blaze (2026-09-11)
