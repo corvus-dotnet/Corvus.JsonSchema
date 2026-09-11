@@ -548,7 +548,17 @@ and up to 10% on a single small corpus:
 
 Against the same-day Blaze run the geometric mean of our runtime over Blaze is 0.85; semantic-release is level with
 Blaze (0.93) and importmap at 1.9 from 2.9. helm-chart-lock did not move: its cost is the per-object prologue and
-the per-evaluation entry, which this round left alone after the reverted experiment. Those are the open items.
+the per-evaluation entry. A flag-mode entry without the scope buffer and the try/finally followed as its own
+commit and measured neutral to a few percent on the smallest corpora in an alternating A/B (five runs of each
+binary on seven corpora, medians: yamllint 1.02, cypress 0.98, aws-cdk 0.97, cspell 0.92), so the entry is not
+where the remaining fixed cost lives; the per-object prologue is the open item.
+
+A third measurement lesson: WSL's guest CPU numbers have no fixed relation to host cores. With other work on the
+host's E-cores the same loop ran anywhere from 0.12 to 0.89 s across guest CPUs, and pinning inside the guest
+changed nothing. The remedy is on the host: set the `vmmemWSL` process affinity to the P-cores (logical 0 to 11 on
+this i7-13800H), after which every guest CPU measured alike. Even then the box drifted by 5% within a ninety-second
+run while other work ran, so alternating the two binaries in short runs and comparing medians is the protocol for
+small changes.
 
 ## Against Blaze (2026-09-11)
 
