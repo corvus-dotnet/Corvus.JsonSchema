@@ -161,6 +161,7 @@ internal static class ProgramImage
         // written but is not now (fusion disabled) falls back to the general path, and the reverse.
         FusedObjects.Compute(nodes);
         SchemaCompiler.ComputeForwards(nodes);
+        SchemaCompiler.ComputeTypeDispatch(nodes);
         foreach (SchemaNode n in nodes)
         {
             if (n.Plan == NodePlan.FusedObject && n.Fused is null)

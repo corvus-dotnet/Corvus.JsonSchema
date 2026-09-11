@@ -2863,6 +2863,13 @@ internal static partial class Evaluator
             {
                 any = EvalAnyOfSelected<TAccess>(anyOf, selected, doc, index, ref state, evaluated);
             }
+            else if (!default(TMode).Collecting && node.AnyOfTypeDispatch is int[] anyDispatch)
+            {
+                // Only one branch accepts the instance's type; it marks straight into the parent's bits since in
+                // flag mode its failure fails the keyword.
+                int branch = anyDispatch[(int)default(TAccess).TokenType(ref state, doc, index)];
+                any = branch >= 0 && EvalInPlaceCore<FastMode, TAccess>(anyOf[branch], doc, index, ref state, evaluated, 0, commitOnFailure: false);
+            }
             else
             {
                 any = EvalAnyOf<TMode, TAccess>(anyOf, doc, index, ref state, evaluated, seq);
@@ -2894,6 +2901,11 @@ internal static partial class Evaluator
             else if (!default(TMode).Collecting && node.OneOfDiscriminator is Discriminator oneDiscriminator && TrySelectBranches<TAccess>(oneDiscriminator, ref state, doc, index, out int[] selected))
             {
                 matched = EvalOneOfSelected<TAccess>(oneOf, selected, doc, index, ref state, evaluated);
+            }
+            else if (!default(TMode).Collecting && node.OneOfTypeDispatch is int[] oneDispatch)
+            {
+                int branch = oneDispatch[(int)default(TAccess).TokenType(ref state, doc, index)];
+                matched = branch >= 0 && EvalInPlaceCore<FastMode, TAccess>(oneOf[branch], doc, index, ref state, evaluated, 0, commitOnFailure: false) ? 1 : 0;
             }
             else
             {

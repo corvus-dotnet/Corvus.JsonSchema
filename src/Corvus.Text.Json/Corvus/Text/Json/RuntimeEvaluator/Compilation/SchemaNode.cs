@@ -1190,6 +1190,15 @@ internal sealed class SchemaNode
     public Discriminator? AnyOfDiscriminator;
     public Discriminator? OneOfDiscriminator;
 
+    /// <summary>
+    /// For an <c>anyOf</c> whose branches assert disjoint types: the branch index for each <see cref="JsonTokenType"/>
+    /// value, or -1 where no branch accepts the type. Derived from the graph (not stored in images).
+    /// </summary>
+    public int[]? AnyOfTypeDispatch;
+
+    /// <summary>The <c>oneOf</c> counterpart of <see cref="AnyOfTypeDispatch"/>.</summary>
+    public int[]? OneOfTypeDispatch;
+
     /// <summary>The node flag mode forwards to under <see cref="NodePlan.Forward"/>, or -1. Derived from the graph.</summary>
     public int ForwardNode = -1;
 

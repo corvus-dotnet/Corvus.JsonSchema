@@ -748,6 +748,91 @@ internal sealed class SchemaCompiler
                 node.AnyOfTypeUnion = this.TypeUnion(node.AnyOf, requireDisjoint: false);
             }
         }
+
+        ComputeTypeDispatch([.. this.nodes]);
+    }
+
+    /// <summary>
+    /// For every <c>anyOf</c>/<c>oneOf</c> whose branches all assert a <c>type</c> and no two branches accept the same
+    /// token type, builds the token-type-to-branch table (see <see cref="SchemaNode.AnyOfTypeDispatch"/>); a branch
+    /// keeps its own type test, so <c>integer</c> and draft 4 lexical integers need nothing special here. Runs at
+    /// compile time and on image load, since the tables are derived from the branches' types rather than stored.
+    /// </summary>
+    internal static void ComputeTypeDispatch(SchemaNode[] nodes)
+    {
+        foreach (SchemaNode node in nodes)
+        {
+            node.AnyOfTypeDispatch = null;
+            node.OneOfTypeDispatch = null;
+        }
+
+        if (DisableDiscriminator)
+        {
+            return;
+        }
+
+        foreach (SchemaNode node in nodes)
+        {
+            if (node.OneOf is { Length: > 1 } oneOf && node.OneOfTypeUnion == TypeMask.None)
+            {
+                node.OneOfTypeDispatch = BuildTypeDispatch(nodes, oneOf);
+            }
+
+            if (node.AnyOf is { Length: > 1 } anyOf && node.AnyOfTypeUnion == TypeMask.None)
+            {
+                node.AnyOfTypeDispatch = BuildTypeDispatch(nodes, anyOf);
+            }
+        }
+    }
+
+    private static int[]? BuildTypeDispatch(SchemaNode[] nodes, ChildRef[] branches)
+    {
+        // Token types are 0..11; a number token is accepted by number and integer alike.
+        int[] table = new int[12];
+        table.AsSpan().Fill(-1);
+        for (int b = 0; b < branches.Length; b++)
+        {
+            SchemaNode n = nodes[branches[b].FastNode];
+            if (n.AlwaysFalse)
+            {
+                continue;
+            }
+
+            if (n.AlwaysTrue || !n.HasType)
+            {
+                return null;
+            }
+
+            TypeMask mask = n.Type;
+            if (!Claim(table, JsonTokenType.String, (mask & TypeMask.String) != 0, b)
+                || !Claim(table, JsonTokenType.StartObject, (mask & TypeMask.Object) != 0, b)
+                || !Claim(table, JsonTokenType.StartArray, (mask & TypeMask.Array) != 0, b)
+                || !Claim(table, JsonTokenType.Number, (mask & (TypeMask.Number | TypeMask.Integer)) != 0, b)
+                || !Claim(table, JsonTokenType.True, (mask & TypeMask.Boolean) != 0, b)
+                || !Claim(table, JsonTokenType.False, (mask & TypeMask.Boolean) != 0, b)
+                || !Claim(table, JsonTokenType.Null, (mask & TypeMask.Null) != 0, b))
+            {
+                return null;
+            }
+        }
+
+        return table;
+
+        static bool Claim(int[] table, JsonTokenType token, bool accepts, int branch)
+        {
+            if (!accepts)
+            {
+                return true;
+            }
+
+            if (table[(int)token] >= 0)
+            {
+                return false;
+            }
+
+            table[(int)token] = branch;
+            return true;
+        }
     }
 
     /// <summary>
