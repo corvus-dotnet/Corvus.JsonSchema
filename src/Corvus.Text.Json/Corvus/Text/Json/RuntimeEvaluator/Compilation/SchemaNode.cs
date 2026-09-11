@@ -1077,6 +1077,18 @@ internal sealed class PropertyEntry
 
     /// <summary>Whether the property is listed in <c>required</c>.</summary>
     public bool IsRequired;
+
+    /// <summary>
+    /// When the child is a type-only leaf, its type mask, so the object loops test the token type in place of a call;
+    /// <see cref="TypeMask.None"/> otherwise. Derived from the graph (see <c>SchemaCompiler.ComputeObjectDetails</c>).
+    /// </summary>
+    public TypeMask InlineType;
+
+    /// <summary>Whether <see cref="InlineType"/> uses draft 4's lexical integer test.</summary>
+    public bool InlineLexical;
+
+    /// <summary>Whether the child is the schema <c>true</c> (nothing to evaluate). Derived from the graph.</summary>
+    public bool InlineTrue;
 }
 
 /// <summary>

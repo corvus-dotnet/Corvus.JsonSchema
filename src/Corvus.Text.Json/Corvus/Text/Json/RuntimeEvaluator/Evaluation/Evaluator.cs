@@ -447,6 +447,7 @@ internal static partial class Evaluator
             case NodePlan.SimpleArray:
                 return EvalSimpleArrayFast<TAccess>(target, doc, index, ref state);
             case NodePlan.Object:
+            case NodePlan.StrictObject:
                 return EvalObjectPlan<TAccess>(target, doc, index, ref state);
             case NodePlan.ArrayItems:
                 return EvalArrayItemsPlan<TAccess>(target, doc, index, ref state);
@@ -952,13 +953,82 @@ internal static partial class Evaluator
         }
 
         bool pushed = EnterScope(node, ref state);
-        bool ok = EvalObjectPlanCore<TAccess>(node, doc, index, ref state);
+        bool ok = node.Plan == NodePlan.StrictObject
+            ? EvalStrictObjectCore<TAccess>(node, doc, index, ref state)
+            : EvalObjectPlanCore<TAccess>(node, doc, index, ref state);
         if (pushed)
         {
             state.ScopeDepth--;
         }
 
         return ok;
+    }
+
+    /// <summary>
+    /// <see cref="NodePlan.StrictObject"/>: a name lookup and a token-type test per property (a call only for children
+    /// that are not type-only leaves), unknown names rejected when additionalProperties is false, and
+    /// <c>required</c> one mask test at the end.
+    /// </summary>
+    private static bool EvalStrictObjectCore<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
+        where TAccess : struct, IDocumentAccess
+    {
+        if (node.MinProperties >= 0 || node.MaxProperties >= 0)
+        {
+            int count = default(TAccess).Count(ref state, doc, index, JsonTokenType.StartObject);
+            if ((node.MinProperties >= 0 && count < node.MinProperties) || (node.MaxProperties >= 0 && count > node.MaxProperties))
+            {
+                return false;
+            }
+        }
+
+        Utf8NameMap<PropertyEntry> properties = node.Properties!;
+        bool rejectUnknown = node.AdditionalProperties.IsPresent && state.Nodes[node.AdditionalProperties.FastNode].AlwaysFalse;
+        ulong seen = 0;
+        int end = default(TAccess).EndIndex(ref state, doc, index);
+        for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex) + RowSize)
+        {
+            ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRaw(ref state, doc, valueIndex, out bool escaped);
+            PropertyEntry? entry;
+            if (!escaped)
+            {
+                properties.TryGetValue(raw, out entry);
+            }
+            else
+            {
+                using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
+                properties.TryGetValue(name.Span, out entry);
+            }
+
+            if (entry is null)
+            {
+                if (rejectUnknown)
+                {
+                    return false;
+                }
+
+                continue;
+            }
+
+            if (entry.SeenBit >= 0)
+            {
+                seen |= 1UL << entry.SeenBit;
+            }
+
+            TypeMask mask = entry.InlineType;
+            if (mask != TypeMask.None)
+            {
+                if (!MatchesType<TAccess>(mask, default(TAccess).TokenType(ref state, doc, valueIndex), ref state, doc, valueIndex, entry.InlineLexical))
+                {
+                    return false;
+                }
+            }
+            else if (entry.Schema.IsPresent && !entry.InlineTrue && !EvalChildFast<TAccess>(state.Nodes[entry.Schema.FastNode], doc, valueIndex, ref state))
+            {
+                return false;
+            }
+        }
+
+        return (seen & node.RequiredMask) == node.RequiredMask;
     }
 
     private static bool EvalObjectPlanCore<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)

@@ -31,7 +31,7 @@ public class ForwardPlanTests
         using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(schema);
         SchemaNode root = evaluator.Program.Nodes[evaluator.RootNode];
         Assert.AreEqual(NodePlan.Forward, root.Plan);
-        Assert.AreEqual(NodePlan.Object, evaluator.Program.Nodes[root.ForwardNode].Plan, "The forward target is the referenced object node.");
+        Assert.AreEqual(NodePlan.StrictObject, evaluator.Program.Nodes[root.ForwardNode].Plan, "The forward target is the referenced object node.");
 
         using JsonSchemaEvaluator loaded = JsonSchemaEvaluator.FromProgramImage(evaluator.ToProgramImage());
         Assert.AreEqual(NodePlan.Forward, loaded.Program.Nodes[loaded.RootNode].Plan, "The plan is rebuilt on load.");

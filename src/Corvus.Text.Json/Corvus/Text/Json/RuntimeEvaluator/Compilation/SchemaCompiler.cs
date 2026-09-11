@@ -2491,13 +2491,14 @@ internal sealed class SchemaCompiler
     /// </summary>
     private void ComputePlans()
     {
-        foreach (SchemaNode node in this.nodes)
+        SchemaNode[] all = [.. this.nodes];
+        foreach (SchemaNode node in all)
         {
-            node.Plan = SelectPlan(node);
+            node.Plan = SelectPlan(node, all);
         }
     }
 
-    private static NodePlan SelectPlan(SchemaNode node)
+    private static NodePlan SelectPlan(SchemaNode node, SchemaNode[] nodes)
     {
         if (node.AlwaysTrue)
         {
@@ -2551,7 +2552,7 @@ internal sealed class SchemaCompiler
 
         if (node.HasObjectKeywords && !node.HasArrayKeywords && !node.PropertyNames.IsPresent && node.SeenBitCount <= SchemaNode.InlineBitWords * 64)
         {
-            return NodePlan.Object;
+            return IsStrictObject(node, nodes) ? NodePlan.StrictObject : NodePlan.Object;
         }
 
         if (node.HasArrayKeywords && !node.HasObjectKeywords && node.PrefixItems is null && !node.Contains.IsPresent)
@@ -2560,6 +2561,30 @@ internal sealed class SchemaCompiler
         }
 
         return NodePlan.General;
+    }
+
+    /// <summary>
+    /// An object node the strict loop can take: named properties only (no pattern properties, dependencies or
+    /// additional-properties schema; <c>additionalProperties</c> absent, <c>true</c> or <c>false</c>) with at most 64
+    /// seen bits. Children that are type-only leaves are tested in place; the rest dispatch on their plan.
+    /// </summary>
+    private static bool IsStrictObject(SchemaNode node, SchemaNode[] nodes)
+    {
+        if (node.Properties is null || node.PatternProperties is not null || node.Dependencies is not null || node.SeenBitCount > 64)
+        {
+            return false;
+        }
+
+        if (node.AdditionalProperties.IsPresent)
+        {
+            SchemaNode additional = nodes[node.AdditionalProperties.FastNode];
+            if (!additional.AlwaysTrue && !additional.AlwaysFalse)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /// <summary>Packs the per-node presence flags into <see cref="SchemaNode.Flags"/>. Runs last.</summary>
