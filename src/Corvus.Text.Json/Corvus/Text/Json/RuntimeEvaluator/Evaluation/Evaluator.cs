@@ -455,6 +455,22 @@ internal static partial class Evaluator
                 return EvalDynamicRefPlan<TAccess>(target, doc, index, ref state);
             case NodePlan.Forward:
                 return EvalChildFast<TAccess>(state.Nodes[target.ForwardNode], doc, index, ref state);
+            case NodePlan.TypeUnion:
+                return MatchesType<TAccess>(target.InPlaceUnionMask, default(TAccess).TokenType(ref state, doc, index), ref state, doc, index, target.Dialect == JsonSchemaDialect.Draft4);
+            case NodePlan.TypeDispatch:
+            {
+                int branch = target.InPlaceDispatch![(int)default(TAccess).TokenType(ref state, doc, index)];
+                if (branch < 0)
+                {
+                    return false;
+                }
+
+                SchemaNode selected = state.Nodes[target.InPlaceBranches![branch].FastNode];
+                return (selected.Flags & NodeFlags.InPlaceCycle) != 0
+                    ? Eval<FastMode, TAccess>(target, doc, index, ref state, default, 0)
+                    : EvalChildFast<TAccess>(selected, doc, index, ref state);
+            }
+
             case NodePlan.FusedObject:
                 return default(TAccess).TokenType(ref state, doc, index) == JsonTokenType.StartObject
                     ? EvalFusedObject<TAccess>(target, doc, index, ref state)

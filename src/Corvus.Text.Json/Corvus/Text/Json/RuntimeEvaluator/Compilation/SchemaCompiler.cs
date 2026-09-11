@@ -852,6 +852,23 @@ internal sealed class SchemaCompiler
             {
                 node.AnyOfTypeDispatch = BuildTypeDispatch(nodes, anyOf);
             }
+
+            // For a node with exactly one of the two keywords, the plans that decide it by type.
+            node.InPlaceUnionMask = TypeMask.None;
+            node.InPlaceDispatch = null;
+            node.InPlaceBranches = null;
+            if (node.AnyOf is not null && node.OneOf is null)
+            {
+                node.InPlaceUnionMask = node.AnyOfTypeUnion;
+                node.InPlaceDispatch = node.AnyOfTypeDispatch;
+                node.InPlaceBranches = node.AnyOf;
+            }
+            else if (node.OneOf is not null && node.AnyOf is null)
+            {
+                node.InPlaceUnionMask = node.OneOfTypeUnion;
+                node.InPlaceDispatch = node.OneOfTypeDispatch;
+                node.InPlaceBranches = node.OneOf;
+            }
         }
     }
 
@@ -2557,6 +2574,19 @@ internal sealed class SchemaCompiler
             return NodePlan.Forward;
         }
 
+        if (IsInPlaceOnly(node))
+        {
+            if (node.InPlaceUnionMask != TypeMask.None)
+            {
+                return NodePlan.TypeUnion;
+            }
+
+            if (node.InPlaceDispatch is not null)
+            {
+                return NodePlan.TypeDispatch;
+            }
+        }
+
         bool noValueKeywords = !node.HasConst && node.Enum is null && !node.HasNumberKeywords && !node.HasStringKeywords;
         bool noUnevaluated = !node.UnevaluatedProperties.IsPresent && !node.UnevaluatedItems.IsPresent;
 
@@ -2583,6 +2613,15 @@ internal sealed class SchemaCompiler
         }
 
         return NodePlan.General;
+    }
+
+    /// <summary>A node whose only keyword is one <c>anyOf</c> or <c>oneOf</c>, off any in-place cycle.</summary>
+    private static bool IsInPlaceOnly(SchemaNode node)
+    {
+        return node.InPlaceBranches is not null && !node.InPlaceCycle
+            && !node.Ref.IsPresent && node.DynamicRef is null && node.AllOf is null && !node.Not.IsPresent && !node.If.IsPresent && node.Dependencies is null
+            && !node.HasType && !node.HasConst && node.Enum is null && !node.HasNumberKeywords && !node.HasStringKeywords && !node.HasObjectKeywords && !node.HasArrayKeywords
+            && !node.UnevaluatedProperties.IsPresent && !node.UnevaluatedItems.IsPresent;
     }
 
     /// <summary>

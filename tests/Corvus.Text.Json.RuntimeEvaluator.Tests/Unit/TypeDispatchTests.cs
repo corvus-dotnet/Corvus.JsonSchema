@@ -56,6 +56,7 @@ public class TypeDispatchTests
     {
         using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(MixedOneOf);
         Assert.IsNotNull(evaluator.Program.Nodes[evaluator.RootNode].OneOfTypeDispatch, "Four branches with disjoint types dispatch on the token type.");
+        Assert.AreEqual(NodePlan.TypeDispatch, evaluator.Program.Nodes[evaluator.RootNode].Plan, "A node whose only keyword is the oneOf takes the dispatch plan.");
         using JsonSchemaEvaluator loaded = JsonSchemaEvaluator.FromProgramImage(evaluator.ToProgramImage());
         Assert.IsNotNull(loaded.Program.Nodes[loaded.RootNode].OneOfTypeDispatch, "The dispatch is rebuilt on load.");
 
@@ -120,10 +121,30 @@ public class TypeDispatchTests
         Assert.IsTrue(shared.Evaluate("\"a\""));
         Assert.IsFalse(shared.Evaluate("\"ab\""));
 
-        // Type-only branches keep the cheaper union test.
+        // Type-only branches keep the cheaper union test, as a plan of its own.
         using JsonSchemaEvaluator union = JsonSchemaEvaluator.Compile("""{"anyOf": [{"type": "string"}, {"type": "null"}]}""");
         Assert.AreNotEqual(TypeMask.None, union.Program.Nodes[union.RootNode].AnyOfTypeUnion);
         Assert.IsNull(union.Program.Nodes[union.RootNode].AnyOfTypeDispatch);
+        Assert.AreEqual(NodePlan.TypeUnion, union.Program.Nodes[union.RootNode].Plan);
+        using JsonSchemaEvaluator unionLoaded = JsonSchemaEvaluator.FromProgramImage(union.ToProgramImage());
+        Assert.AreEqual(NodePlan.TypeUnion, unionLoaded.Program.Nodes[unionLoaded.RootNode].Plan);
+        foreach (string instance in new[] { "\"s\"", "null", "1", "{}", "true" })
+        {
+            AssertAgree(union, unionLoaded, instance);
+        }
+
+        // With another keyword alongside, the node keeps the general plan (the keyword still uses the union test).
+        using JsonSchemaEvaluator mixed = JsonSchemaEvaluator.Compile("""{"anyOf": [{"type": "string"}, {"type": "null"}], "minLength": 2}""");
+        Assert.AreEqual(NodePlan.General, mixed.Program.Nodes[mixed.RootNode].Plan);
+        Assert.IsFalse(mixed.Evaluate("\"s\""));
+        Assert.IsTrue(mixed.Evaluate("\"ss\""));
+        Assert.IsTrue(mixed.Evaluate("null"));
+
+        // A branch on an in-place cycle keeps the guarded general edge.
+        using JsonSchemaEvaluator cyclic = JsonSchemaEvaluator.Compile("""{"oneOf": [{"type": "string"}, {"type": "array", "items": {"$ref": "#"}}, {"type": "object", "allOf": [{"$ref": "#/$defs/loop"}]}], "$defs": {"loop": {"anyOf": [{"$ref": "#/$defs/loop"}, {"type": "object"}]}}}""");
+        Assert.IsTrue(cyclic.Evaluate("[\"a\", [\"b\"]]"));
+        Assert.IsFalse(cyclic.Evaluate("[1]"));
+        Assert.ThrowsExactly<JsonSchemaEvaluationException>(() => cyclic.Evaluate("{}"), "The self-referential anyOf is detected as runaway recursion.");
     }
 
     [TestMethod]

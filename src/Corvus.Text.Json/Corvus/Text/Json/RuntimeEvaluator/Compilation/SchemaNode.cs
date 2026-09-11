@@ -1089,6 +1089,9 @@ internal sealed class PropertyEntry
 
     /// <summary>Whether the child is the schema <c>true</c> (nothing to evaluate). Derived from the graph.</summary>
     public bool InlineTrue;
+
+    /// <summary>When the child is a leaf whose only assertion is an <c>enum</c> of strings (with at most <c>type: string</c>), that set. Derived from the graph.</summary>
+    public Utf8NameMap<object>? InlineEnum;
 }
 
 /// <summary>
@@ -1462,6 +1465,13 @@ internal sealed class SchemaNode
 
     /// <summary>The node flag mode forwards to under <see cref="NodePlan.Forward"/>, or -1. Derived from the graph.</summary>
     public int ForwardNode = -1;
+
+    /// <summary>For a node whose only keyword is one <c>anyOf</c>/<c>oneOf</c>: that keyword's type union, dispatch table and branches. Derived from the graph.</summary>
+    public TypeMask InPlaceUnionMask;
+
+    public int[]? InPlaceDispatch;
+
+    public ChildRef[]? InPlaceBranches;
 
     /// <summary>When every anyOf branch is a type-only schema, the union of their types; otherwise None.</summary>
     public TypeMask AnyOfTypeUnion;
