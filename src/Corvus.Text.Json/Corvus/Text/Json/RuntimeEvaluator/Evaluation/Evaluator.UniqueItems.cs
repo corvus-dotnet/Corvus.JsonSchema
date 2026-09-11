@@ -175,16 +175,32 @@ internal static partial class Evaluator
         }
     }
 
+    /// <summary>Hashes eight bytes at a time (the order only has to be stable within a process).</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int Fnv(ReadOnlySpan<byte> bytes, int seed)
     {
-        uint h = (uint)seed ^ 2166136261u;
-        for (int i = 0; i < bytes.Length; i++)
+        const ulong Multiplier = 0x9E3779B97F4A7C15UL;
+        ulong h = ((ulong)(uint)seed ^ 0x243F6A8885A308D3UL) * Multiplier;
+        int i = 0;
+        for (; i + sizeof(ulong) <= bytes.Length; i += sizeof(ulong))
         {
-            h = (h ^ bytes[i]) * 16777619u;
+            h = (h ^ System.Runtime.InteropServices.MemoryMarshal.Read<ulong>(bytes.Slice(i, sizeof(ulong)))) * Multiplier;
+            h ^= h >> 29;
         }
 
-        return (int)h;
+        if (i < bytes.Length)
+        {
+            ulong tail = (ulong)(bytes.Length - i) << 56;
+            for (int j = 0; i + j < bytes.Length; j++)
+            {
+                tail |= (ulong)bytes[i + j] << (8 * j);
+            }
+
+            h = (h ^ tail) * Multiplier;
+            h ^= h >> 29;
+        }
+
+        return (int)(h ^ (h >> 32));
     }
 
     /// <summary>JSON equality of two values in the same document, with cheap prefilters for scalars.</summary>
