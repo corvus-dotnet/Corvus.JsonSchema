@@ -1666,12 +1666,26 @@ internal static partial class Evaluator
         where TMode : struct, IEvaluationMode
         where TAccess : struct, IDocumentAccess
     {
+        // Escapes are rare: the raw text is the value, with no wrapper to dispose.
+        if (!default(TAccess).IsEscaped(ref state, doc, index))
+        {
+            return EvalStringCore<TMode, TAccess>(node, default(TAccess).RawValue(ref state, doc, index), ref state);
+        }
+
         using UnescapedUtf8JsonString s = StringValue<TAccess>(ref state, doc, index);
-        ReadOnlySpan<byte> value = s.Span;
+        return EvalStringCore<TMode, TAccess>(node, s.Span, ref state);
+    }
+
+    private static bool EvalStringCore<TMode, TAccess>(SchemaNode node, scoped ReadOnlySpan<byte> value, ref EvaluationState state)
+        where TMode : struct, IEvaluationMode
+        where TAccess : struct, IDocumentAccess
+    {
         bool ok = true;
 
         if (node.MinLength >= 0 || node.MaxLength >= 0)
         {
+            // A rune is one to four bytes, so the byte length bounds the rune count both ways; only values inside
+            // the band are counted.
             int byteLength = value.Length;
             int runeCount = -1;
             if (node.MinLength >= 0)
@@ -1680,6 +1694,10 @@ internal static partial class Evaluator
                 if (byteLength < node.MinLength)
                 {
                     m = false;
+                }
+                else if (((byteLength + 3) >> 2) >= node.MinLength)
+                {
+                    m = true;
                 }
                 else
                 {
@@ -1709,6 +1727,10 @@ internal static partial class Evaluator
                 if (byteLength <= node.MaxLength)
                 {
                     m = true;
+                }
+                else if (((byteLength + 3) >> 2) > node.MaxLength)
+                {
+                    m = false;
                 }
                 else
                 {

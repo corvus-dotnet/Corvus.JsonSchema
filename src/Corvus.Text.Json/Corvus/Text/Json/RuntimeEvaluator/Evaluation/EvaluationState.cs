@@ -152,9 +152,10 @@ internal readonly struct InterfaceAccess : IDocumentAccess
         return tokenType == JsonTokenType.StartObject ? doc.GetPropertyCount(index) : doc.GetArrayLength(index);
     }
 
-    public ReadOnlySpan<byte> RawValue(ref EvaluationState state, IJsonDocument doc, int index) => doc.GetRawSimpleValue(index).Span;
+    // The explicit overload: a fixed-string document's one-argument form keeps the quotes.
+    public ReadOnlySpan<byte> RawValue(ref EvaluationState state, IJsonDocument doc, int index) => doc.GetRawSimpleValue(index, includeQuotes: false).Span;
 
-    public ReadOnlyMemory<byte> RawValueMemory(ref EvaluationState state, IJsonDocument doc, int index) => doc.GetRawSimpleValue(index);
+    public ReadOnlyMemory<byte> RawValueMemory(ref EvaluationState state, IJsonDocument doc, int index) => doc.GetRawSimpleValue(index, includeQuotes: false);
 
     public bool IsEscaped(ref EvaluationState state, IJsonDocument doc, int index) => doc.ValueIsEscaped(index, isPropertyName: false);
 
