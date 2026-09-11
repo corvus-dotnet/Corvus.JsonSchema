@@ -44,22 +44,37 @@ internal static partial class Evaluator
             EntryResource = nodes[rootNode].ResourceId,
         };
 
+        SchemaNode root = nodes[rootNode];
+        bool raw = document is JsonDocument jsonDocument && jsonDocument.TryGetRawAccess(out state.Raw);
+        if (raw)
+        {
+            state.RawRows = state.Raw.Rows;
+            state.RawUtf8 = state.Raw.Utf8.Span;
+        }
+
+        // A root that is nothing but a $ref reports against its target, as a generated model rooted at a reduced
+        // type does; the root context carries the target's schema location. Flag mode starts there too.
+        if (root.ElidedTarget >= 0)
+        {
+            root = nodes[root.ElidedTarget];
+        }
+
+        if (collector is null && !state.UsesDynamicScope)
+        {
+            // The scope never grows without a dynamic scope, so there is nothing to return: dispatch straight to
+            // the root's plan without the try/finally.
+            return raw
+                ? EvalChildFast<RawAccess>(root, document, index, ref state)
+                : EvalChildFast<InterfaceAccess>(root, document, index, ref state);
+        }
+
         try
         {
-            SchemaNode root = nodes[rootNode];
-            bool raw = document is JsonDocument jsonDocument && jsonDocument.TryGetRawAccess(out state.Raw);
             if (collector is null)
             {
                 return raw
                     ? Eval<FastMode, RawAccess>(root, document, index, ref state, default, 0)
                     : Eval<FastMode, InterfaceAccess>(root, document, index, ref state, default, 0);
-            }
-
-            // A root that is nothing but a $ref reports against its target, as a generated model rooted at a
-            // reduced type does; the root context carries the target's schema location.
-            if (root.ElidedTarget >= 0)
-            {
-                root = nodes[root.ElidedTarget];
             }
 
             int seq = collector.BeginChildContext(0, new EdgeContext(null, root.SchemaLocation, null, -1, -1), null, Providers.SchemaPath, null);
