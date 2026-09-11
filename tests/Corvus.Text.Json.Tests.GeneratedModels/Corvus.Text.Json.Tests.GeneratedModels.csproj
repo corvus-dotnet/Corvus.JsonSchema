@@ -69,7 +69,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json.SourceGenerator\Corvus.Text.Json.SourceGenerator.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
-    <ProjectReference Include="..\..\src\Corvus.Text.Json.RuntimeEvaluator\Corvus.Text.Json.RuntimeEvaluator.csproj" />
   </ItemGroup>
 
 </Project>

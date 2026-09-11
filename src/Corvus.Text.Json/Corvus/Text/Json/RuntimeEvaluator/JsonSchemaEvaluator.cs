@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
 using System.Text;
 #if !STJ
 using Corvus.Text.Json.Internal;
@@ -208,6 +209,7 @@ public sealed class JsonSchemaEvaluator : IDisposable
     /// <param name="instance">The instance.</param>
     /// <param name="resultsCollector">The optional results collector.</param>
     /// <returns><see langword="true"/> if the instance is valid.</returns>
+    [CLSCompliant(false)]
     public bool Evaluate<T>(in T instance, IJsonSchemaResultsCollector? resultsCollector = null)
         where T : struct, IJsonElement<T>
     {
@@ -223,6 +225,7 @@ public sealed class JsonSchemaEvaluator : IDisposable
     /// <param name="index">The element index within the document.</param>
     /// <param name="resultsCollector">The optional results collector.</param>
     /// <returns><see langword="true"/> if the instance is valid.</returns>
+    [CLSCompliant(false)]
     public bool Evaluate(IJsonDocument document, int index, IJsonSchemaResultsCollector? resultsCollector = null)
     {
         return Evaluator.Evaluate(this.program, this.rootNode, document, index, resultsCollector);

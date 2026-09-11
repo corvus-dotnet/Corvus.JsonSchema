@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
 #if !NET5_0_OR_GREATER
 
 using System.Text;

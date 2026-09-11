@@ -10,7 +10,6 @@
     <CorvusBenchmarks>$(MSBuildThisFileDirectory)..\</CorvusBenchmarks>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Corvus.Text.Json.RuntimeEvaluator\Corvus.Text.Json.RuntimeEvaluator.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Validator\Corvus.Text.Json.Validator.csproj" />
   </ItemGroup>
   <ItemGroup>

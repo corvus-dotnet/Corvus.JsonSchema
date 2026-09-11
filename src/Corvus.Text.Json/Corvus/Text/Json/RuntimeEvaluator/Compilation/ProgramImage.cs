@@ -3,6 +3,8 @@
 // </copyright>
 
 using System.Buffers.Binary;
+using System.Collections.Generic;
+using System.IO;
 using System.Text;
 #if !STJ
 using Corvus.Text.Json.Internal;

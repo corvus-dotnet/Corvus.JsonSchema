@@ -304,4 +304,6 @@ disables it for A/B runs.
 
 ## Open decisions
 
-* Whether the evaluator package merges into `Corvus.Text.Json`, which decides the assembly the emitted program targets.
+* Resolved: the evaluator is part of `Corvus.Text.Json` (namespace `Corvus.Text.Json.RuntimeEvaluator`, sources under
+  `Corvus/Text/Json/RuntimeEvaluator`). Generated code needs no reference beyond `Corvus.Text.Json`, and code generated
+  before the merge keeps compiling because the namespace and public API are unchanged; only `internal` details moved.

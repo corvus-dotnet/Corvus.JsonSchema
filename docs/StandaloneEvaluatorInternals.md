@@ -65,7 +65,7 @@ point.
 | Entry-point registration, document hand-off | `CSharpLanguageProvider.GetProgramEntry`, `ISchemaProgramLanguageProvider` |
 | Document collection at generation time | `JsonSchemaTypeBuilder.GetSchemaDocuments` (every registered `LocatedSchema`'s root document) |
 | Per-type shim | `CodeGeneratorExtensions.JsonSchema.cs`, `AppendRuntimeProgramEvaluateMethod` |
-| Schema compilation and evaluation | `src/Corvus.Text.Json.RuntimeEvaluator` ([design notes](RuntimeEvaluator.md)) |
+| Schema compilation and evaluation | `src/Corvus.Text.Json/Corvus/Text/Json/RuntimeEvaluator` in `Corvus.Text.Json` ([design notes](RuntimeEvaluator.md)) |
 
 ## Consumer requirements
 

@@ -85,7 +85,8 @@ The code generation engine exposes extension points at different phases:
 
 Validation handlers no longer exist. Keywords are declared for the type builder (so generated *types*
 reflect them), but every assertion is implemented once in the runtime evaluator
-(`src/Corvus.Text.Json.RuntimeEvaluator`), which generated types, standalone evaluators, the Validator and
+(`src/Corvus.Text.Json/Corvus/Text/Json/RuntimeEvaluator`, namespace `Corvus.Text.Json.RuntimeEvaluator`, in the
+`Corvus.Text.Json` assembly), which generated types, standalone evaluators, the Validator and
 the CLI all use:
 
 - `Compilation/SchemaCompiler.cs` — `CompileNode` reads each keyword into a `SchemaNode` (dispatch by

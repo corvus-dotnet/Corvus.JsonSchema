@@ -10,8 +10,6 @@ namespace System.Runtime.CompilerServices;
 /// Polyfill for <c>System.Runtime.CompilerServices.SkipLocalsInitAttribute</c> on netstandard.
 /// </summary>
 [AttributeUsage(AttributeTargets.Module | AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface | AttributeTargets.Constructor | AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Event, Inherited = false)]
-internal sealed class SkipLocalsInitAttribute : Attribute
-{
-}
+internal sealed class SkipLocalsInitAttribute : Attribute;
 
 #endif

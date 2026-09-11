@@ -182,7 +182,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.CodeGeneration\Corvus.Text.Json.CodeGeneration.csproj" />
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
-    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.RuntimeEvaluator\Corvus.Text.Json.RuntimeEvaluator.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="metaschema\draft2019-09\meta\applicator.json">

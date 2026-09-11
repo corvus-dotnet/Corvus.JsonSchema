@@ -9,7 +9,7 @@ the existing `JsonSchemaResultsCollector` / `JsonSchemaAnnotationProducer`.
 
 | Path | Purpose |
 |---|---|
-| `src/Corvus.Text.Json.RuntimeEvaluator` | The library. Public surface: `JsonSchemaEvaluator`, `JsonSchemaEvaluatorOptions`, `JsonSchemaDialect`, `JsonSchemaDocumentResolver`. |
+| `src/Corvus.Text.Json/Corvus/Text/Json/RuntimeEvaluator` | Part of the `Corvus.Text.Json` assembly, namespace `Corvus.Text.Json.RuntimeEvaluator`. Public surface: `JsonSchemaEvaluator`, `JsonSchemaEvaluatorOptions`, `JsonSchemaDialect`, `JsonSchemaDocumentResolver`. |
 | `src/.../Compilation` | Loader (documents, resources, `$id`/anchors), compiler (node graph), node model. |
 | `src/.../Evaluation` | The engine: `Evaluator` (generic over `FastMode` / `CollectingMode`), `EvaluationState`. |
 | `tests/...Tests/Suite` | JSON-Schema-Test-Suite runner (validation + annotations), one MSTest per suite file. |

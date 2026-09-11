@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers;
+using System.IO;
 using System.Runtime.CompilerServices;
 using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.RuntimeEvaluator.Compilation;
@@ -76,7 +77,6 @@ internal static class Evaluator
     // ---------------------------------------------------------------------------------------------
     // Document access helpers
     // ---------------------------------------------------------------------------------------------
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static UnescapedUtf8JsonString StringValue<TAccess>(ref EvaluationState state, IJsonDocument doc, int index)
         where TAccess : struct, IDocumentAccess
@@ -94,7 +94,6 @@ internal static class Evaluator
     // ---------------------------------------------------------------------------------------------
     // Node evaluation
     // ---------------------------------------------------------------------------------------------
-
     private static bool Eval<TMode, TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> evaluated, int seq)
         where TMode : struct, IEvaluationMode
         where TAccess : struct, IDocumentAccess
@@ -329,7 +328,6 @@ internal static class Evaluator
     // ---------------------------------------------------------------------------------------------
     // type / const / enum
     // ---------------------------------------------------------------------------------------------
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool MatchesType<TAccess>(TypeMask mask, JsonTokenType tokenType, ref EvaluationState state, IJsonDocument doc, int index, bool lexicalInteger)
         where TAccess : struct, IDocumentAccess
@@ -1107,7 +1105,6 @@ internal static class Evaluator
     // ---------------------------------------------------------------------------------------------
     // number
     // ---------------------------------------------------------------------------------------------
-
     private static bool EvalNumber<TMode, TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
         where TMode : struct, IEvaluationMode
         where TAccess : struct, IDocumentAccess
@@ -1133,7 +1130,10 @@ internal static class Evaluator
             }
         }
 
+        // Both sides run: in collecting mode every keyword reports, so this must not short-circuit.
+#pragma warning disable RCS1233 // Use short-circuiting operator
         return EvalNumberBounds<TMode, TAccess>(node, doc, index, ref state) & ok;
+#pragma warning restore RCS1233
     }
 
     private static bool MatchesNumericFormat(FormatKind format, bool isNegative, scoped ReadOnlySpan<byte> integral, scoped ReadOnlySpan<byte> fractional, int exponent, ref EvaluationState state)
@@ -1337,7 +1337,6 @@ internal static class Evaluator
     // ---------------------------------------------------------------------------------------------
     // string
     // ---------------------------------------------------------------------------------------------
-
     private static bool EvalString<TMode, TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
         where TMode : struct, IEvaluationMode
         where TAccess : struct, IDocumentAccess
@@ -1533,7 +1532,6 @@ internal static class Evaluator
     // ---------------------------------------------------------------------------------------------
     // object
     // ---------------------------------------------------------------------------------------------
-
     private static bool EvalObject<TMode, TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> evaluated, int seq)
         where TMode : struct, IEvaluationMode
         where TAccess : struct, IDocumentAccess
@@ -1949,7 +1947,6 @@ internal static class Evaluator
     // ---------------------------------------------------------------------------------------------
     // array
     // ---------------------------------------------------------------------------------------------
-
     private static bool EvalArray<TMode, TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> evaluated, int seq)
         where TMode : struct, IEvaluationMode
         where TAccess : struct, IDocumentAccess
@@ -2077,7 +2074,6 @@ internal static class Evaluator
             int end = default(TAccess).EndIndex(ref state, doc, index);
             for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex))
             {
-
                 if (prefixItems is not null && itemIndex < prefixItems.Length)
                 {
                     MarkEvaluated(evaluated, itemIndex);
@@ -2211,7 +2207,7 @@ internal static class Evaluator
                     return true;
                 case JsonTokenType.String:
                     if (default(TAccess).RawValue(ref state, doc, valueIndex).SequenceEqual(default(TAccess).RawValue(ref state, doc, other))
-                        || (default(TAccess).IsEscaped(ref state, doc, valueIndex) | default(TAccess).IsEscaped(ref state, doc, other)) && JsonElementHelpers.DeepEqualsNoParentDocumentCheck(doc, valueIndex, doc, other))
+                        || (default(TAccess).IsEscaped(ref state, doc, valueIndex) || default(TAccess).IsEscaped(ref state, doc, other)) && JsonElementHelpers.DeepEqualsNoParentDocumentCheck(doc, valueIndex, doc, other))
                     {
                         return true;
                     }
@@ -2239,6 +2235,7 @@ internal static class Evaluator
 
                     break;
                 }
+
                 default:
                     if (JsonElementHelpers.DeepEqualsNoParentDocumentCheck(doc, valueIndex, doc, other))
                     {

@@ -2,7 +2,10 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
+using System.IO;
 using System.Text;
+using System.Threading;
 #if !STJ
 using Corvus.Text.Json.Internal;
 #endif

@@ -22,7 +22,6 @@
     <ProjectReference Include="..\Corvus.Text.Json.SourceGenerator\Corvus.Text.Json.SourceGenerator.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
     <ProjectReference Include="..\Corvus.Text.Json.AsyncApi\Corvus.Text.Json.AsyncApi.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
-    <ProjectReference Include="..\Corvus.Text.Json.RuntimeEvaluator\Corvus.Text.Json.RuntimeEvaluator.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />

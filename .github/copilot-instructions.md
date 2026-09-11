@@ -605,7 +605,7 @@ The `benchmarks/Corvus.Text.Json.Benchmarks/` project compares validation perfor
 
 - **`Corvus.Text.Json.Patch`** — RFC 6902 JSON Patch, JSON Merge Patch, and JSON Diff. See `docs/JsonPatch.md`.
 - **`Corvus.Text.Json.Canonicalization`** — RFC 8785 JCS lives in the core `Corvus.Text.Json` package (not a separate package). See `docs/JsonCanonicalization.md`.
-- **`Corvus.Text.Json.Validator`** — Runtime schema validation: loads schemas at runtime, compiles them into an in-memory evaluator with `Corvus.Text.Json.RuntimeEvaluator`, caches results. Supports Draft 4–2020-12. See `docs/Validator.md`.
+- **`Corvus.Text.Json.Validator`** — Runtime schema validation: loads schemas at runtime, compiles them into an in-memory evaluator with the `Corvus.Text.Json.RuntimeEvaluator` namespace of `Corvus.Text.Json`, caches results. Supports Draft 4–2020-12. See `docs/Validator.md`.
 - **`Corvus.Text.Json.Compatibility`** — Interoperability layer that references both V5 (`Corvus.Text.Json`) and V4 (`Corvus.Json.ExtendedTypes`) plus `System.Text.Json`, providing bridge helpers for migration scenarios. Uses `EnableDefaultCompileItems=false`.
 
 ## All Benchmark Projects

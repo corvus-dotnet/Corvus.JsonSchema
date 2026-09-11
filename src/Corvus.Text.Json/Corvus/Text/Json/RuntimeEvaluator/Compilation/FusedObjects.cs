@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
+
 namespace Corvus.Text.Json.RuntimeEvaluator.Compilation;
 
 /// <summary>

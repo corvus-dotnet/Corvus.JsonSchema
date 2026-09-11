@@ -153,7 +153,6 @@
     <Project Path="src/Corvus.Text.Json.Patch/Corvus.Text.Json.Patch.csproj" />
     <Project Path="src/Corvus.Text.Json.SourceGenerator/Corvus.Text.Json.SourceGenerator.csproj" />
     <Project Path="src/Corvus.Text.Json.Toon/Corvus.Text.Json.Toon.csproj" />
-    <Project Path="src/Corvus.Text.Json.RuntimeEvaluator/Corvus.Text.Json.RuntimeEvaluator.csproj" />
     <Project Path="src/Corvus.Text.Json.Validator/Corvus.Text.Json.Validator.csproj" />
     <Project Path="src/Corvus.Text.Json.Yaml/Corvus.Text.Json.Yaml.csproj" />
     <Project Path="src/Corvus.Text.Json/Corvus.Text.Json.csproj" />

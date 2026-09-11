@@ -60,7 +60,7 @@ The `corvusjson` command-line tool generates C# from JSON Schema files. Used for
 
 > The legacy `generatejsonschematypes` command (package: `Corvus.Json.CodeGenerator`) still works as a shim but defaults to the V4 engine.
 
-### Runtime evaluator (`Corvus.Text.Json.RuntimeEvaluator`)
+### Runtime evaluator (`Corvus.Text.Json.RuntimeEvaluator` namespace, in `Corvus.Text.Json`)
 
 Compiles a schema document into an in-memory node graph at runtime (no code generation, no Roslyn) and
 evaluates any `IJsonElement<T>` against it: zero-allocation flag validation, or full results and annotations

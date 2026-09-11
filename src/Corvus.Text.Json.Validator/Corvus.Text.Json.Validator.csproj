@@ -31,7 +31,6 @@
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Corvus.Text.Json.RuntimeEvaluator\Corvus.Text.Json.RuntimeEvaluator.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
   </ItemGroup>
   <ItemGroup>
