@@ -287,21 +287,25 @@ running the whole JSON Schema Test Suite in collecting mode (the general path) a
   generated (entry points in both resources) as through the API (one entry).
 
 Generated code against the API, measured on the micro cases with the fixes in (typed generated model, generated
-standalone evaluator, runtime API; quiet box, minimum of 40 rounds) and with tiered compilation disabled
-(`DOTNET_TieredCompilation=0`): object 276/286/283 ns, array 1.14/1.14/1.14 µs, string 193/194/193, unevaluated
-178/179/179, dynamic reference 241/240/242, oneOf 59/59/59, verbose 2.47/2.41/2.41 µs. The three paths run the same
-machine code. With tiering on, the same process reports ratios between 0.6 and 1.0 on the short cases (oneOf 132
-against 80 ns, dynamic reference 322 against 247), and the figures move between runs: the JIT produces different
-tier-1 code for the same shared engine methods depending on which call sites and generic instantiations were hot when
-each tiered up, and that is not a property of either path. Dynamic PGO is not the cause (the ratios persist with
-`DOTNET_TieredPGO=0`), and neither is the document: a probe that evaluates one schema over documents of every model
-type, and over twelve identical documents in either order, shows them all within 5% (`docprobe` command). Compare
-generated code with the API with tiering off, or in separate processes, not by ratio inside one tiered process.
+standalone evaluator, runtime API; quiet box, minimum of 40 rounds): object 262/258/253 ns, array 1.05/1.07/1.02 µs,
+string 83/80/76, unevaluated 245/241/238, dynamic reference 273/281/263, oneOf 68/63/63, verbose 3.09/2.82/3.06 µs.
+With tiered compilation disabled the three paths are identical to the nanosecond (oneOf 59/59/59, dynamic reference
+241/240/242): they run the same machine code.
 
-Two things the oneOf profile did show, both engine work rather than generator work: the discriminator reads its
-property through the document's by-name lookup (`JsonDocument.TryGetNamedPropertyValueIndexUnsafe`, 30% of the
-evaluation) instead of the raw-access scan the rest of the engine uses, and tier-1 code for the discriminated oneOf
-is slower than fully optimised code (80 to 100 ns tiered against 59 ns with tiering off).
+The harness had to be fixed to show this. Its quick timer warmed each workload with a hundred calls and then took the
+minimum of forty rounds; that leaves paths at tier 0 or in on-stack-replacement code during measurement, because the
+runtime's tiering delay restarts whenever new tier-0 code appears and an interleaved three-way loop keeps producing
+it. Under that warmup the same process reported oneOf at 132 against 80 ns and the string case above 200 ns, and the
+figures moved between runs. The timer now warms for a second, pauses past the tiering delay, warms again, and only
+then measures. Two other explanations were chased and ruled out on the way: dynamic PGO (the gap persisted with it
+off) and the document instance or its element type (a probe that evaluates one schema over documents of every model
+type, and over twelve identical documents in either order, shows them all within 5%; `docprobe` command). None of
+this can be measured on a loaded box: with a build running, the same document measured 198 ns in one pass and 434 in
+the next.
+
+The oneOf profile did show one engine cost worth taking: the discriminator reads its property through the document's
+by-name lookup (`JsonDocument.TryGetNamedPropertyValueIndexUnsafe`, 30% of the evaluation) rather than the raw-access
+scan the rest of the engine uses.
 * **Fused object plan** (`FusedObjects`, `NodePlan.FusedObject`) for a node with `unevaluatedProperties` whose object
   semantics spread over `allOf`, `$ref` and `if`/`then`/`else` with required-only conditions: every property name any
   branch knows is resolved at compile time to the child schemas that apply (own property, matching pattern
