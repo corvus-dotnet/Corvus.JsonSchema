@@ -362,8 +362,27 @@ efficiency cores at random, which was the source of the bimodal noise seen earli
 
 Corpora that read slower in the single paired run (vercel, ui5-manifest, pulumi, semantic-release) were repeated three
 times on each binary and are equal within run-to-run noise, which is up to 25% on the small ones even pinned and
-idle. openapi is the one targeted corpus that barely moved: its time is in the general object path and in
-`if`/`then` conditions over property values, which the fused plan does not accept, and that is the next candidate.
+idle.
+
+### Fused plan: conditions on values, nested conditions, dependencies, required-only alternatives
+
+openapi barely moved under the six items because its object schemas were still on the general path: its `if`
+keywords test property values (`{"properties": {"in": {"const": "query"}}, "required": ["in"]}`, one with a
+`pattern`), `parameter` and `header` carry a `oneOf` of two required-only branches (schema or content) and a
+`dependentSchemas` whose schema holds further conditions, and `security-scheme` has six conditional `allOf`
+branches. The fused plan now takes all of these. A condition carries value tests keyed like discriminator values
+(tagged string, canonical integer and boolean constants; a `pattern` test for strings), checked as each property is
+passed. Conditions nest: each records the condition and polarity it is reached through, and a contributor applies
+only when its own condition matches and the chain above does; `dependentSchemas` and `dependentRequired` become
+presence-gated contributors the same way. A `oneOf`/`anyOf` whose branches are plain `required` lists is decided
+after the pass by counting the branches whose names were all seen. When a condition holds, the `if` schema's own
+properties count as evaluated, as the general path's annotations do. Fused plans are rebuilt on load, so the image
+format is unchanged.
+
+openapi: 24 fused object schemas instead of 19; 7.61 ms to 5.62 ms (1.59 against the pre-optimisation 8.94 ms).
+cmake-presets took a further 1.2 (5.52 to 4.52 ms) from its required-only alternatives; omnisharp and nest-cli
+gained as well. Geometric mean over the 37 corpora: 0.38 against the shipping generated code, from 0.47 before this
+round of work. Pinned, back to back with the same baseline binary as above.
 
 ## Open decisions
 

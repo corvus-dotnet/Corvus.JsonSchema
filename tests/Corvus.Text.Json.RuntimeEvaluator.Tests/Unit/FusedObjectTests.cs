@@ -100,6 +100,27 @@ public class FusedObjectTests
         }
         """;
 
+    private const string NestedConditionsAndAlternatives = """
+        {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {"kind": {"type": "string"}, "mode": {"type": "string"}, "flag": {"type": "boolean"}, "a": true, "b": true, "c": true},
+          "anyOf": [{"required": ["a"]}, {"required": ["b", "c"]}],
+          "if": {"properties": {"flag": {"const": true}}, "required": ["flag"]},
+          "then": {
+            "if": {"properties": {"kind": {"const": "x"}}, "required": ["kind"]},
+            "then": {"properties": {"x": {"type": "integer"}}, "required": ["x"]},
+            "else": {"properties": {"y": {"type": "integer"}}}
+          },
+          "else": {
+            "if": {"properties": {"mode": {"pattern": "^[a-z]+$"}}},
+            "then": {"properties": {"m": {"type": "string"}}},
+            "else": {"properties": {"n": {"type": "string"}}}
+          },
+          "unevaluatedProperties": false
+        }
+        """;
+
     private static readonly string[] Instances =
     [
         """{"id": 1, "name": "n", "email": "e", "tags": [], "address": {}}""",
@@ -154,6 +175,24 @@ public class FusedObjectTests
         """{"in": "header", "name": "h", "schema": {}, "scheme": 7, "bearerFormat": "JWT"}""",
         """{"in": "query", "name": "q", "schema": {}, "allowEmptyValue": true}""",
         """{"in": "header", "name": "h", "schema": {}, "allowEmptyValue": true}""",
+        """{"a": 1, "flag": true, "kind": "x", "x": 1}""",
+        """{"a": 1, "flag": true, "kind": "x"}""",
+        """{"a": 1, "flag": true, "kind": "x", "x": "no"}""",
+        """{"a": 1, "flag": true, "kind": "z", "y": 2}""",
+        """{"a": 1, "flag": true, "kind": "z", "x": 2}""",
+        """{"a": 1, "flag": true, "y": 2}""",
+        """{"a": 1, "flag": false, "mode": "abc", "m": "s"}""",
+        """{"a": 1, "flag": false, "mode": "abc", "n": "s"}""",
+        """{"a": 1, "flag": false, "mode": "ABC", "n": "s"}""",
+        """{"a": 1, "flag": false, "mode": "ABC", "m": "s"}""",
+        """{"a": 1, "flag": false, "mode": 5, "m": "s"}""",
+        """{"a": 1, "flag": false, "m": "s"}""",
+        """{"a": 1, "mode": "abc", "m": "s"}""",
+        """{"a": 1, "flag": "true", "kind": "x", "x": 1}""",
+        """{"b": 1, "c": 2, "flag": false, "n": "s"}""",
+        """{"b": 1, "flag": false, "n": "s"}""",
+        """{"flag": false, "n": "s"}""",
+        """{"a": 1, "b": 1, "c": 1, "flag": true, "kind": "x", "x": 1}""",
     ];
 
     [TestMethod]
@@ -161,6 +200,7 @@ public class FusedObjectTests
     [DataRow(PerBranchAdditional, DisplayName = "per-branch additional and pattern properties")]
     [DataRow(ValueConditions, DisplayName = "conditions on property values")]
     [DataRow(OpenApiLikeParameter, DisplayName = "dependent schemas, required-only oneOf, nested and pattern conditions")]
+    [DataRow(NestedConditionsAndAlternatives, DisplayName = "if nested in then and else, boolean and untyped pattern tests, required-only anyOf")]
     [DataRow(RefChainWithElse, DisplayName = "$ref chain with if/then/else")]
     public void FusedPlanAgreesWithTheGeneralPath(string schema)
     {
@@ -206,6 +246,22 @@ public class FusedObjectTests
             """);
         Assert.IsTrue(dynamic.UsesDynamicScope);
         Assert.AreNotEqual(NodePlan.FusedObject, dynamic.Program.Nodes[dynamic.RootNode].Plan);
+
+        // A property test the pass cannot decide (a number bound) is not a fusable condition.
+        using JsonSchemaEvaluator bound = JsonSchemaEvaluator.Compile("""{"if": {"properties": {"n": {"minimum": 1}}}, "then": {"required": ["x"]}, "unevaluatedProperties": false}""");
+        Assert.AreNotEqual(NodePlan.FusedObject, bound.Program.Nodes[bound.RootNode].Plan);
+
+        // A pattern test with another string keyword alongside is left to the general path.
+        using JsonSchemaEvaluator lengthy = JsonSchemaEvaluator.Compile("""{"if": {"properties": {"s": {"pattern": "^a", "minLength": 3}}}, "then": {"required": ["x"]}, "unevaluatedProperties": false}""");
+        Assert.AreNotEqual(NodePlan.FusedObject, lengthy.Program.Nodes[lengthy.RootNode].Plan);
+
+        // An alternative whose branch constrains a property is not a required-only alternative.
+        using JsonSchemaEvaluator branchy = JsonSchemaEvaluator.Compile("""{"oneOf": [{"required": ["a"]}, {"properties": {"b": {"type": "integer"}}, "required": ["b"]}], "unevaluatedProperties": false}""");
+        Assert.AreNotEqual(NodePlan.FusedObject, branchy.Program.Nodes[branchy.RootNode].Plan);
+
+        // A dependent schema with a keyword the plan does not fuse keeps the whole node on the general path.
+        using JsonSchemaEvaluator negated = JsonSchemaEvaluator.Compile("""{"dependentSchemas": {"a": {"not": {"required": ["b"]}}}, "unevaluatedProperties": false}""");
+        Assert.AreNotEqual(NodePlan.FusedObject, negated.Program.Nodes[negated.RootNode].Plan);
     }
 
     [TestMethod]
