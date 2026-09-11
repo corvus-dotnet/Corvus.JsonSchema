@@ -576,8 +576,12 @@ through refs, and a value-type `StrictEntry` table parallel to the name map (`Ut
 
 Alternating A/B (five runs of each binary, medians): helm-chart-lock 0.85, ui5 and krakend 0.89, vercel 0.91,
 aws-cdk 0.92, cypress, cspell, jsconfig and stale 0.95; yamllint, whose root has one named property and whose
-instances have none of it, unchanged within noise. The same recipe applies to the object plan's loop and the fused
-loop, which still read the header twice and go through the entry class; those are next.
+instances have none of it, unchanged within noise. The same recipe then went into the object plan's loop and the
+fused loop (one header read, the type handed to the inline tests, the object plan resolving through the value table
+by index): against the round's baseline, draft-04 0.77 (its root sits on the object plan for its dependencies),
+helm-chart-lock and ui5 0.88, aws-cdk 0.91, cypress 0.94, krakend 0.95. yamllint alone reads about 1.10 in both
+A/B runs, some two nanoseconds per instance on a corpus whose properties are all unknown names; the loop's
+prologue for that case is the one place left to look at there.
 
 ## Against Blaze (2026-09-11)
 
