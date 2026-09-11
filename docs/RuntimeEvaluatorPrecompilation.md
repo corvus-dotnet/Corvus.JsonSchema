@@ -330,6 +330,41 @@ Corpora: openapi (27 `unevaluated*`) 8.1 ms to 7.2 ms; cmake-presets unchanged a
 noise. The general path remains the fallback for every shape the plan does not take, and `CORVUS_RT_NO_FUSE=1`
 disables it for A/B runs.
 
+## Compile-step optimisations after the merge (2026-09-11)
+
+Six changes, profiled on the corpora with the least gain over the shipping generated code (sampled with
+`dotnet-trace` through the harness's `profile` command), all in the compiler and its plans: discriminators keyed on
+integer and boolean constants (cmake-presets' root is a `oneOf` of eight branches on an integer `version`);
+`uniqueItems` through a structural set that every array plan accepts (unreal-engine-uproject spent 55% of its time
+renting, zeroing and transcoding for the shared hash set); the object plan taking `patternProperties` and
+`dependencies` (draft-04 and clang-format roots were on the general path); a length-then-byte name map in place of a
+hash per instance name (17 to 28% of cypress, cmake-presets and pre-commit-hooks); one-pass property matching for
+unrolled objects and discriminators instead of by-name lookups through the document; and regex-free matchers for
+anchored ASCII class sequences and literal alternations.
+
+Measured as a pair, the commit before the six against the commit after, both harnesses run back to back on an idle
+box pinned to the performance cores (`taskset -c 0-11`; this is a hybrid i7-13800H and unpinned runs land on
+efficiency cores at random, which was the source of the bimodal noise seen earlier):
+
+| Corpus | Runtime before | Runtime after | Speed-up | Ratio to generated, before to after |
+|---|---|---|---|---|
+| unreal-engine-uproject | 3.75 ms | 611 µs | 6.1 | 0.54 to 0.07 |
+| jshintrc | 1.18 ms | 342 µs | 3.5 | 1.02 to 0.41 |
+| omnisharp | 566 µs | 224 µs | 2.5 | 0.45 to 0.37 |
+| ansible-meta | 331 µs | 133 µs | 2.5 | 0.50 to 0.41 |
+| clang-format | 84 µs | 34 µs | 2.5 | 0.50 to 0.41 |
+| babelrc, jsconfig, cypress, jasmine | | | 1.8 to 1.9 | |
+| cmake-presets | 9.58 ms | 5.52 ms | 1.7 | 0.72 to 0.57 |
+| draft-04 | 5.88 ms | 3.38 ms | 1.7 | 0.60 to 0.34 |
+| krakend | 346 µs | 245 µs | 1.4 | |
+| openapi | 8.94 ms | 7.61 ms | 1.2 | 0.59 to 0.53 |
+| geometric mean over 37 | | | | 0.47 to 0.39 |
+
+Corpora that read slower in the single paired run (vercel, ui5-manifest, pulumi, semantic-release) were repeated three
+times on each binary and are equal within run-to-run noise, which is up to 25% on the small ones even pinned and
+idle. openapi is the one targeted corpus that barely moved: its time is in the general object path and in
+`if`/`then` conditions over property values, which the fused plan does not accept, and that is the next candidate.
+
 ## Open decisions
 
 * Resolved: the evaluator is part of `Corvus.Text.Json` (namespace `Corvus.Text.Json.RuntimeEvaluator`, sources under
