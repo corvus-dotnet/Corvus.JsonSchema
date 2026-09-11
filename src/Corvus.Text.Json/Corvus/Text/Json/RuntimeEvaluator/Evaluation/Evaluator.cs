@@ -2761,23 +2761,58 @@ internal static class Evaluator
 
         bool sameDoc = ReferenceEquals(valueDoc, doc);
         JsonTokenType valueType = sameDoc ? default(TAccess).TokenType(ref state, doc, valueIndex) : valueDoc.GetJsonTokenType(valueIndex);
-        if (valueType != JsonTokenType.String)
+        switch (valueType)
         {
-            selected = discriminator.NonString;
-            return true;
+            case JsonTokenType.String:
+            {
+                using UnescapedUtf8JsonString value = sameDoc ? StringValue<TAccess>(ref state, doc, valueIndex) : valueDoc.GetUtf8JsonString(valueIndex, JsonTokenType.String);
+                selected = LookupDiscriminator(discriminator, Discriminator.StringTag, value.Span);
+                return true;
+            }
+
+            case JsonTokenType.True:
+                selected = LookupDiscriminator(discriminator, Discriminator.BooleanTag, "true"u8);
+                return true;
+            case JsonTokenType.False:
+                selected = LookupDiscriminator(discriminator, Discriminator.BooleanTag, "false"u8);
+                return true;
+            case JsonTokenType.Number:
+            {
+                ReadOnlySpan<byte> raw = sameDoc ? default(TAccess).RawValue(ref state, doc, valueIndex) : valueDoc.GetRawSimpleValue(valueIndex).Span;
+                if (IsCanonicalInteger(raw))
+                {
+                    selected = LookupDiscriminator(discriminator, Discriminator.NumberTag, raw);
+                }
+                else
+                {
+                    // "3.0" may equal a keyed integer: no branch can be excluded.
+                    selected = discriminator.AllBranches;
+                }
+
+                return true;
+            }
+
+            default:
+                selected = discriminator.NonString;
+                return true;
+        }
+    }
+
+    /// <summary>Looks a tagged value up in the discriminator's known values, falling back to the unknown-value list.</summary>
+    private static int[] LookupDiscriminator(Discriminator discriminator, byte tag, ReadOnlySpan<byte> value)
+    {
+        Span<byte> inline = stackalloc byte[128];
+        byte[]? rented = null;
+        Span<byte> key = value.Length < inline.Length ? inline[..(value.Length + 1)] : (rented = ArrayPool<byte>.Shared.Rent(value.Length + 1)).AsSpan(0, value.Length + 1);
+        key[0] = tag;
+        value.CopyTo(key[1..]);
+        int[] selected = discriminator.KnownValues.TryGetValue(key, out int[]? branches) ? branches : discriminator.UnknownString;
+        if (rented is not null)
+        {
+            ArrayPool<byte>.Shared.Return(rented);
         }
 
-        using UnescapedUtf8JsonString value = sameDoc ? StringValue<TAccess>(ref state, doc, valueIndex) : valueDoc.GetUtf8JsonString(valueIndex, JsonTokenType.String);
-        if (discriminator.KnownValues.TryGetValue(value.Span, out int[]? branches))
-        {
-            selected = branches;
-        }
-        else
-        {
-            selected = discriminator.UnknownString;
-        }
-
-        return true;
+        return selected;
     }
 
     private static bool EvalAnyOfSelected<TAccess>(ChildRef[] branches, int[] selected, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> parentBits)

@@ -725,7 +725,8 @@ internal sealed class SchemaCompiler
 
     private Discriminator? BuildDiscriminator(ChildRef[] branches)
     {
-        // Candidate property names: those with a string constraint in the first constrained branch.
+        // Candidate property names: those with a const or enum constraint (string, integer or boolean) in the first
+        // constrained branch.
         var candidates = new List<byte[]>();
         foreach (ChildRef branch in branches)
         {
@@ -816,12 +817,19 @@ internal sealed class SchemaCompiler
                     && pe.IsRequired;
             }
 
+            int[] all = new int[branches.Length];
+            for (int i = 0; i < all.Length; i++)
+            {
+                all[i] = i;
+            }
+
             return new Discriminator
             {
                 PropertyName = name,
                 KnownValues = new Utf8NameMap<int[]>(known),
                 UnknownString = [.. unknownOrNonString],
                 NonString = [.. unknownOrNonString],
+                AllBranches = all,
                 AllRequire = allRequire,
             };
         }
@@ -855,16 +863,31 @@ internal sealed class SchemaCompiler
         }
 
         SchemaNode property = this.EffectiveNode(entry.Schema.Node);
-        if (property.ConstString is byte[] constString)
+        if (property.HasConst && TryGetDiscriminatorKey(property.Const, out byte[]? constKey))
         {
-            set = [constString];
+            set = [constKey!];
             return BranchKind.Positive;
         }
 
-        if (property.EnumAllStrings)
+        if (property.Enum is ConstantValue[] values && values.Length > 0)
         {
-            set = [.. property.EnumStrings!.Keys];
-            return BranchKind.Positive;
+            var keys = new List<byte[]>(values.Length);
+            foreach (ConstantValue v in values)
+            {
+                if (!TryGetDiscriminatorKey(v, out byte[]? key))
+                {
+                    keys = null;
+                    break;
+                }
+
+                keys.Add(key!);
+            }
+
+            if (keys is not null)
+            {
+                set = keys;
+                return BranchKind.Positive;
+            }
         }
 
         // { "type": "string", "not": { "enum": [...] } }: any non-listed string may pass.
@@ -873,12 +896,86 @@ internal sealed class SchemaCompiler
             SchemaNode not = this.EffectiveNode(property.Not.Node);
             if (not.EnumAllStrings && !not.HasType && !not.HasConst && !not.HasStringKeywords && !not.HasInPlaceApplicators)
             {
-                set = [.. not.EnumStrings!.Keys];
+                set = [];
+                foreach (byte[] s in not.EnumStrings!.Keys)
+                {
+                    set.Add(Tagged(Discriminator.StringTag, s));
+                }
+
                 return BranchKind.Negative;
             }
         }
 
         return BranchKind.Wildcard;
+    }
+
+    /// <summary>
+    /// The discriminator key of a constant: a tag byte for its kind followed by its text. Strings, booleans and
+    /// canonical integers key; other numbers (a fraction or exponent form may equal an integer) and structured values
+    /// do not.
+    /// </summary>
+    private static bool TryGetDiscriminatorKey(in ConstantValue value, out byte[]? key)
+    {
+        switch (value.TokenType)
+        {
+            case JsonTokenType.String:
+            {
+                using UnescapedUtf8JsonString s = Elements.Create<JsonElement>(value.Document, value.Index).GetUtf8String();
+                key = Tagged(Discriminator.StringTag, s.Span);
+                return true;
+            }
+
+            case JsonTokenType.True:
+                key = Tagged(Discriminator.BooleanTag, "true"u8);
+                return true;
+            case JsonTokenType.False:
+                key = Tagged(Discriminator.BooleanTag, "false"u8);
+                return true;
+            case JsonTokenType.Number:
+            {
+                ReadOnlySpan<byte> raw = value.Document.GetRawSimpleValue(value.Index).Span;
+                if (IsCanonicalInteger(raw))
+                {
+                    key = Tagged(Discriminator.NumberTag, raw);
+                    return true;
+                }
+
+                key = null;
+                return false;
+            }
+
+            default:
+                key = null;
+                return false;
+        }
+    }
+
+    internal static bool IsCanonicalInteger(ReadOnlySpan<byte> raw)
+    {
+        // Optional '-', no leading zero (except "0" itself), digits only.
+        int start = raw.Length > 0 && raw[0] == (byte)'-' ? 1 : 0;
+        if (raw.Length == start)
+        {
+            return false;
+        }
+
+        for (int i = start; i < raw.Length; i++)
+        {
+            if (raw[i] < (byte)'0' || raw[i] > (byte)'9')
+            {
+                return false;
+            }
+        }
+
+        return !(raw[start] == (byte)'0' && raw.Length > start + 1) && !raw.SequenceEqual("-0"u8);
+    }
+
+    private static byte[] Tagged(byte tag, ReadOnlySpan<byte> value)
+    {
+        byte[] key = new byte[value.Length + 1];
+        key[0] = tag;
+        value.CopyTo(key.AsSpan(1));
+        return key;
     }
 
     /// <summary>

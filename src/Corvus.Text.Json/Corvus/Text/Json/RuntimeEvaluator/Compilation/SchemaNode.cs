@@ -504,11 +504,23 @@ internal sealed class Discriminator
     /// <summary>Branch indices to evaluate for a string value not in any set.</summary>
     public int[] UnknownString = [];
 
-    /// <summary>Branch indices to evaluate when the property has a non-string value.</summary>
+    /// <summary>Branch indices to evaluate when the property has a value of a kind no branch keys on (object, array, null).</summary>
     public int[] NonString = [];
+
+    /// <summary>Every branch: the choice when the value is a number whose text is not canonical, since it may equal any keyed number.</summary>
+    public int[] AllBranches = [];
 
     /// <summary>Whether every branch requires the property, so its absence fails all branches.</summary>
     public bool AllRequire;
+
+    /// <summary>Key tag for a string value; keys are the tag byte followed by the value's UTF-8.</summary>
+    public const byte StringTag = (byte)'s';
+
+    /// <summary>Key tag for a canonical integer value (the digits with an optional sign).</summary>
+    public const byte NumberTag = (byte)'n';
+
+    /// <summary>Key tag for a boolean value (<c>true</c> or <c>false</c>).</summary>
+    public const byte BooleanTag = (byte)'b';
 }
 
 /// <summary>

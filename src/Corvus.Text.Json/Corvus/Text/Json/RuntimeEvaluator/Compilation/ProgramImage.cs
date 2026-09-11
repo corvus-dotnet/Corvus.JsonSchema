@@ -38,7 +38,7 @@ namespace Corvus.Text.Json.RuntimeEvaluator.Compilation;
 internal static class ProgramImage
 {
     private const uint Magic = 0x50534A43; // "CJSP" little-endian
-    private const int Version = 5;
+    private const int Version = 6;
 
     /// <summary>Writes the program to an image.</summary>
     public static byte[] Write(CompiledSchema program)
@@ -909,6 +909,7 @@ internal static class ProgramImage
 
         WriteInts(ref w, d.UnknownString);
         WriteInts(ref w, d.NonString);
+        WriteInts(ref w, d.AllBranches);
         w.WriteBool(d.AllRequire);
     }
 
@@ -932,6 +933,7 @@ internal static class ProgramImage
         d.KnownValues = new Utf8NameMap<int[]>(known);
         d.UnknownString = ReadInts(ref r) ?? [];
         d.NonString = ReadInts(ref r) ?? [];
+        d.AllBranches = ReadInts(ref r) ?? [];
         d.AllRequire = r.ReadBool();
         return d;
     }
