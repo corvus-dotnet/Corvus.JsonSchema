@@ -45,6 +45,10 @@ public class PatternMatcherTests
         "^a.c$",
         "^(x|y)(1|2)$",
         "^(a|ab)c$",
+        "^[@$_#]",
+        "^x-[0-9]",
+        "^[a-z]+_",
+        "^\\d{2}.*",
     ];
 
     private static readonly string[] Inputs =
@@ -57,6 +61,7 @@ public class PatternMatcherTests
         "ES2022", "es2022", "ES2022.Array", "es2022.array", "ES2022.error", "ES2022.Symbol.Well", "ES2022.SymbolXWell", "ES2022.", "ES2022.arr", "ES2023", "ES2022.arrayx",
         "WEB", "web.imp", "web.", "webimp", "es5", "es6", "esnext", "es7", "es", "abc-def", "abc-", "-def", "abc-def-ghi", "v1", "v1.2", "v1.", "v1.2.3", "v", "1.2",
         "abc", "a.c", "a\nc", "a\rc", "a\u2028c", "aéc", "ac", "x1", "y2", "xy1", "x12", "z1",
+        "@x", "$", "#tag", "_", "x@", "x-1", "x-12", "x-", "x-a", "ab_", "ab_c", "_a", "a_b_", "12", "123x", "1x",
     ];
 
     [TestMethod]
@@ -102,5 +107,9 @@ public class PatternMatcherTests
         Assert.IsFalse(PatternMatcher.Create("^(a|ab)c$", options).UsesRegex, "Groups are flattened into whole alternatives, so no backtracking is needed.");
         Assert.IsTrue(PatternMatcher.Create("^(a|ab)+c$", options).UsesRegex, "A quantified group needs backtracking.");
         Assert.IsTrue(PatternMatcher.Create("^[a-z]+(-[a-z]+)?$", options).UsesRegex, "A variable atom before another needs backtracking.");
+        Assert.IsFalse(PatternMatcher.Create("^[@$_#]", options).UsesRegex, "A start-anchored class is a prefix test.");
+        Assert.IsFalse(PatternMatcher.Create("^x-[0-9]", options).UsesRegex);
+        Assert.IsTrue(PatternMatcher.Create("^[a-z]+_", options).UsesRegex, "A variable atom before another needs backtracking even for a prefix.");
+        Assert.IsFalse(PatternMatcher.Create("^\\d{2}.*", options).UsesRegex, "A trailing .* is redundant for a prefix.");
     }
 }

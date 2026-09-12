@@ -237,6 +237,7 @@ internal sealed class PatternMatcher
         Prefix,
         Range,
         ClassSequence,
+        PrefixSequence,
         Alternatives,
         Literals,
         Regex,
@@ -292,6 +293,11 @@ internal sealed class PatternMatcher
                 : new PatternMatcher(Kind.Alternatives, ecmaPattern, null, null, 0, 0, alternatives: alternatives);
         }
 
+        if (TryParsePrefixSequence(ecmaPattern, out ClassAtom[]? prefixAtoms))
+        {
+            return new PatternMatcher(Kind.PrefixSequence, ecmaPattern, null, null, 0, 0, atoms: prefixAtoms);
+        }
+
         if (options.RegexProvider is JsonSchemaRegexProvider provider && provider(patternIndex, ecmaPattern) is Regex provided)
         {
             return new PatternMatcher(Kind.Regex, ecmaPattern, provided, null, 0, 0);
@@ -325,6 +331,7 @@ internal sealed class PatternMatcher
             Kind.Prefix => utf8Value.StartsWith(this.prefix),
             Kind.Literals => MatchesLiterals(this.literals!, utf8Value),
             Kind.ClassSequence => MatchesClassSequence(this.atoms!, utf8Value),
+            Kind.PrefixSequence => MatchesPrefixSequence(this.atoms!, utf8Value),
             Kind.Alternatives => MatchesAlternatives(this.alternatives!, utf8Value),
 #if STJ
             Kind.Range => !ContainsLineTerminator(utf8Value) && RuneCount(utf8Value) >= this.min && RuneCount(utf8Value) <= this.max,
@@ -535,6 +542,25 @@ internal sealed class PatternMatcher
         return count >= tail.Min && (tail.Max < 0 || count <= tail.Max);
     }
 
+    /// <summary>A sequence anchored at the start only: every atom consumes its minimum and the rest of the value is free.</summary>
+    private static bool MatchesPrefixSequence(ClassAtom[] atoms, ReadOnlySpan<byte> value)
+    {
+        int pos = 0;
+        for (int a = 0; a < atoms.Length; a++)
+        {
+            ClassAtom atom = atoms[a];
+            for (int n = 0; n < atom.Min; n++)
+            {
+                if (!atom.TryConsume(value, ref pos))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     private static bool MatchesAlternatives(ClassAtom[][] alternatives, ReadOnlySpan<byte> value)
     {
         for (int i = 0; i < alternatives.Length; i++)
@@ -639,6 +665,55 @@ internal sealed class PatternMatcher
         }
 
         alternatives = result;
+        return true;
+    }
+
+    /// <summary>
+    /// Parses <c>^</c> followed by atoms and no closing anchor (<c>^[@$_#]</c>, <c>^x-[0-9]</c>): a match needs only
+    /// the atoms at the start, so the last atom needs just its minimum count; every atom before it must have a
+    /// fixed count, since a variable one would have to backtrack into its successor. A trailing <c>.*</c> is
+    /// redundant and dropped.
+    /// </summary>
+    private static bool TryParsePrefixSequence(string pattern, [NotNullWhen(true)] out ClassAtom[]? atoms)
+    {
+        atoms = null;
+        if (pattern.Length < 2 || pattern[0] != '^' || pattern[pattern.Length - 1] == '$')
+        {
+            return false;
+        }
+
+        int end = pattern.Length;
+        if (pattern.EndsWith(".*", StringComparison.Ordinal))
+        {
+            end -= 2;
+        }
+
+        var result = new List<ClassAtom>();
+        int i = 1;
+        while (i < end)
+        {
+            if (pattern[i] == '(' || pattern[i] == '|' || pattern[i] == ')' || pattern[i] == '$' || !TryParseAtom(pattern, ref i, end, out ClassAtom atom))
+            {
+                return false;
+            }
+
+            result.Add(atom);
+        }
+
+        if (result.Count == 0)
+        {
+            return false;
+        }
+
+        for (int a = 0; a < result.Count - 1; a++)
+        {
+            if (result[a].Min != result[a].Max)
+            {
+                return false;
+            }
+        }
+
+        atoms = [.. result];
         return true;
     }
 
