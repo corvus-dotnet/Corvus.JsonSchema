@@ -1821,6 +1821,9 @@ internal sealed class SchemaNode
     /// <summary>For a node whose only keyword is one <c>anyOf</c>/<c>oneOf</c>: that keyword's type union, dispatch table and branches. Derived from the graph.</summary>
     public TypeMask InPlaceUnionMask;
 
+    /// <summary>The node flag-mode evaluation enters for this root: the elided target with its forward hop taken. Derived with the forwards.</summary>
+    public int FlagEntry;
+
     /// <summary>Under <see cref="NodePlan.Conditional"/>, the plan for the node's own keywords: strict object, object, leaf (type only) or always-true (none).</summary>
     public NodePlan ConditionalOwnPlan;
 

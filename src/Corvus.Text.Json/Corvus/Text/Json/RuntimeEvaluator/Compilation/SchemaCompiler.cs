@@ -542,11 +542,21 @@ internal sealed class SchemaCompiler
             usesDynamicScope |= n.DynamicRef is { NeedsScope: true };
         }
 
-        if (DisablePlans)
+        if (!DisablePlans)
         {
-            return;
+            ComputeForwardTargets(nodes, usesDynamicScope);
         }
 
+        // The node a root's flag-mode evaluation enters: the elided target, then its forward hop (chains are collapsed).
+        foreach (SchemaNode node in nodes)
+        {
+            int entry = node.ElidedTarget >= 0 ? node.ElidedTarget : node.Id;
+            node.FlagEntry = nodes[entry].ForwardNode >= 0 ? nodes[entry].ForwardNode : entry;
+        }
+    }
+
+    private static void ComputeForwardTargets(SchemaNode[] nodes, bool usesDynamicScope)
+    {
         foreach (SchemaNode node in nodes)
         {
             if (node.AlwaysTrue || node.AlwaysFalse || node.InPlaceCycle || node.Fused is not null

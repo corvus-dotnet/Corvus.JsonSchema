@@ -112,6 +112,23 @@ public abstract partial class JsonDocument
     }
 
     /// <summary>
+    /// Tries to get direct access to the document's rows and UTF-8 text as spans, for documents whose rows are all
+    /// local: the accessor plus the spans an evaluation reads, built without going through <see cref="ReadOnlyMemory{T}"/>.
+    /// </summary>
+    /// <param name="access">The accessor, valid until the document is disposed or mutated.</param>
+    /// <param name="rows">The metadata rows.</param>
+    /// <param name="utf8">The UTF-8 text the rows index into.</param>
+    /// <returns><see langword="true"/> if direct access is available for this document type.</returns>
+    [CLSCompliant(false)]
+    public virtual bool TryGetRawSpans(out RawDocumentAccess access, out ReadOnlySpan<byte> rows, out ReadOnlySpan<byte> utf8)
+    {
+        access = default;
+        rows = default;
+        utf8 = default;
+        return false;
+    }
+
+    /// <summary>
     /// Indicates whether this document instance is immutable and cannot be modified.
     /// </summary>
     [CLSCompliant(false)]

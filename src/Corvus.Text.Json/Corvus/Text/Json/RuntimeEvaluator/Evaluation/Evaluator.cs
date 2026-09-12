@@ -32,15 +32,15 @@ internal static partial class Evaluator
     {
         // Flag mode over a parsed document without a dynamic scope needs no scope buffer and nothing to release:
         // the common call, kept free of the stack allocation and the try/finally the general entry carries.
-        if (collector is null && !program.UsesDynamicScope && document is JsonDocument parsed && parsed.TryGetRawAccess(out RawDocumentAccess rawAccess))
+        if (collector is null && !program.UsesDynamicScope && document is JsonDocument parsed && parsed.TryGetRawSpans(out RawDocumentAccess rawAccess, out ReadOnlySpan<byte> rows, out ReadOnlySpan<byte> utf8))
         {
-            return EvaluateFlagRaw(program, rootNode, document, index, rawAccess);
+            return EvaluateFlagRaw(program, rootNode, document, index, rawAccess, rows, utf8);
         }
 
         return EvaluateGeneral(program, rootNode, document, index, collector);
     }
 
-    private static bool EvaluateFlagRaw(CompiledSchema program, int rootNode, IJsonDocument document, int index, in RawDocumentAccess raw)
+    private static bool EvaluateFlagRaw(CompiledSchema program, int rootNode, IJsonDocument document, int index, in RawDocumentAccess raw, ReadOnlySpan<byte> rows, ReadOnlySpan<byte> utf8)
     {
         SchemaNode[] nodes = program.Nodes;
         SchemaNode root = nodes[rootNode];
@@ -58,20 +58,9 @@ internal static partial class Evaluator
         state.UsesDynamicScope = false;
         state.EntryResource = root.ResourceId;
         state.Raw = raw;
-        state.RawRows = raw.Rows;
-        state.RawUtf8 = raw.Utf8.Span;
-
-        if (root.ElidedTarget >= 0)
-        {
-            root = nodes[root.ElidedTarget];
-        }
-
-        if (root.Plan == NodePlan.Forward)
-        {
-            root = nodes[root.ForwardNode];
-        }
-
-        return EvalChildFast<RawAccess>(root, document, index, ref state);
+        state.RawRows = rows;
+        state.RawUtf8 = utf8;
+        return EvalChildFast<RawAccess>(nodes[root.FlagEntry], document, index, ref state);
     }
 
     // Not inlined: its scope buffer would otherwise sit in the flag-mode entry's frame and be zeroed on every call.
