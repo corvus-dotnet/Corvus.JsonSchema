@@ -215,10 +215,12 @@ internal sealed class PatternMatcher
     private readonly ClassAtom[]? atoms;
     private readonly ClassAtom[][]? alternatives;
     private readonly byte[][]? literals;
+    private readonly LiteralAnchor[]? anchors;
     private readonly Kind kind;
 
-    private PatternMatcher(Kind kind, string source, Regex? regex, byte[]? prefix, int min, int max, ClassAtom[]? atoms = null, byte[][]? literals = null, ClassAtom[][]? alternatives = null)
+    private PatternMatcher(Kind kind, string source, Regex? regex, byte[]? prefix, int min, int max, ClassAtom[]? atoms = null, byte[][]? literals = null, ClassAtom[][]? alternatives = null, LiteralAnchor[]? anchors = null)
     {
+        this.anchors = anchors;
         this.kind = kind;
         this.Source = source;
         this.regex = regex;
@@ -228,6 +230,14 @@ internal sealed class PatternMatcher
         this.atoms = atoms;
         this.alternatives = alternatives;
         this.literals = literals;
+    }
+
+    private enum LiteralAnchor : byte
+    {
+        None,
+        Start,
+        End,
+        Both,
     }
 
     private enum Kind : byte
@@ -241,6 +251,7 @@ internal sealed class PatternMatcher
         Alternatives,
         ExcludedClassWithWord,
         Literals,
+        AnchoredLiterals,
         Regex,
     }
 
@@ -285,6 +296,11 @@ internal sealed class PatternMatcher
         if (TryParseLiterals(ecmaPattern, out byte[][]? literals))
         {
             return new PatternMatcher(Kind.Literals, ecmaPattern, null, null, 0, 0, literals: literals);
+        }
+
+        if (TryParseAnchoredLiterals(ecmaPattern, out literals, out LiteralAnchor[]? anchors))
+        {
+            return new PatternMatcher(Kind.AnchoredLiterals, ecmaPattern, null, null, 0, 0, literals: literals, anchors: anchors);
         }
 
         if (TryParseAlternatives(ecmaPattern, out ClassAtom[][]? alternatives))
@@ -336,6 +352,7 @@ internal sealed class PatternMatcher
             Kind.NonEmpty => utf8Value.Length > 0,
             Kind.Prefix => utf8Value.StartsWith(this.prefix),
             Kind.Literals => MatchesLiterals(this.literals!, utf8Value),
+            Kind.AnchoredLiterals => MatchesAnchoredLiterals(this.literals!, this.anchors!, utf8Value),
             Kind.ClassSequence => MatchesClassSequence(this.atoms!, utf8Value),
             Kind.PrefixSequence => MatchesPrefixSequence(this.atoms!, utf8Value),
             Kind.ExcludedClassWithWord => MatchesExcludedClassWithWord(this.atoms!, utf8Value),
@@ -505,6 +522,28 @@ internal sealed class PatternMatcher
         for (int i = 0; i < literals.Length; i++)
         {
             if (value.SequenceEqual(literals[i]))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool MatchesAnchoredLiterals(byte[][] literals, LiteralAnchor[] anchors, ReadOnlySpan<byte> value)
+    {
+        for (int i = 0; i < literals.Length; i++)
+        {
+            byte[] literal = literals[i];
+            bool matched = anchors[i] switch
+            {
+                LiteralAnchor.Both => value.SequenceEqual(literal),
+                LiteralAnchor.Start => value.StartsWith(literal),
+                LiteralAnchor.End => value.EndsWith(literal),
+                _ => value.IndexOf(literal) >= 0,
+            };
+
+            if (matched)
             {
                 return true;
             }
@@ -683,6 +722,57 @@ internal sealed class PatternMatcher
         }
 
         literals = result;
+        return true;
+    }
+
+    /// <summary>
+    /// Parses <c>^a|b|c$</c>: an ungrouped alternation of plain literals where the anchors bind only to the first and
+    /// last alternatives, so <c>^ES5|ES6|ES7$</c> is "starts with ES5, or contains ES6, or ends with ES7".
+    /// </summary>
+    private static bool TryParseAnchoredLiterals(string pattern, out byte[][]? literals, out LiteralAnchor[]? anchors)
+    {
+        literals = null;
+        anchors = null;
+        if (pattern.Length < 2 || pattern.IndexOf('|') < 0 || pattern.IndexOf('(') >= 0 || pattern.IndexOf(')') >= 0)
+        {
+            return false;
+        }
+
+        bool startAnchored = pattern[0] == '^';
+        bool endAnchored = pattern[pattern.Length - 1] == '$';
+        string body = pattern.Substring(startAnchored ? 1 : 0, pattern.Length - (startAnchored ? 1 : 0) - (endAnchored ? 1 : 0));
+        if (body.Length == 0 || body.IndexOf('^') >= 0 || body.IndexOf('$') >= 0)
+        {
+            return false;
+        }
+
+        string[] parts = body.Split('|');
+        var result = new byte[parts.Length][];
+        var resultAnchors = new LiteralAnchor[parts.Length];
+        for (int i = 0; i < parts.Length; i++)
+        {
+            string part = parts[i];
+            if (part.Length == 0)
+            {
+                return false;
+            }
+
+            foreach (char c in part)
+            {
+                if (c >= 128 || !(char.IsLetterOrDigit(c) || c == '_' || c == '-' || c == ':' || c == '/' || c == '@' || c == '#' || c == ',' || c == '=' || c == '%' || c == '!' || c == '~' || c == ' '))
+                {
+                    return false;
+                }
+            }
+
+            result[i] = System.Text.Encoding.UTF8.GetBytes(part);
+            bool start = startAnchored && i == 0;
+            bool end = endAnchored && i == parts.Length - 1;
+            resultAnchors[i] = start && end ? LiteralAnchor.Both : start ? LiteralAnchor.Start : end ? LiteralAnchor.End : LiteralAnchor.None;
+        }
+
+        literals = result;
+        anchors = resultAnchors;
         return true;
     }
 

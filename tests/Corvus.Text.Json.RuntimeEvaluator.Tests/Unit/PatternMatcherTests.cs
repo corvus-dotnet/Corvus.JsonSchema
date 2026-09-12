@@ -51,11 +51,15 @@ public class PatternMatcherTests
         "^\\d{2}.*",
         "^(?=[^!*,;{}[\\]~\\n]+$)(?=(.*\\w)).+$",
         "^(?=!+[^!*,;{}[\\]~\\n]+$)(?=(.*\\w)).+$",
+        "^ES5|ES6|ES7$",
+        "^ES5|ES6",
+        "ES6|ES7$",
+        "es5|es6",
     ];
 
     private static readonly string[] Inputs =
     [
-        string.Empty, "a", "ab", "abc", "abcd", "abcde", "A", "Z9", "a1_b", "1abc", "_abc", "a.b", "a-b", "a|b", "a@b", "a#b",
+        string.Empty, "ES5", "ES6", "ES7", "ES5x", "xES5", "xES6x", "xES7", "ES7x", "es5", "ES6|ES7", "a", "ab", "abc", "abcd", "abcde", "A", "Z9", "a1_b", "1abc", "_abc", "a.b", "a-b", "a|b", "a@b", "a#b",
         "hello world", "x-vendor", "x", "-x", "schemas", "responses", "Schemas", "schema", "on", "off", "onoff",
         "200", "2XX", "6XX", "20", "2024-01-31", "2024-1-31", "12:34", "12-34", "1234", "ab.cd", "ab.", ".cd",
         "ABCDEF0123", "abcdef", "G", "café", "naïve.x", "日本語", "aé", "é", "\t", " ", "a b",
