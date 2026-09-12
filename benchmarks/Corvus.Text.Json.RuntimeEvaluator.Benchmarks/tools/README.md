@@ -20,3 +20,12 @@ Paired measurements of an engine change use `blazebasis` rather than `quick`: ru
 then the baseline again (the third run is the noise floor), all pinned and on an idle box. `quick 40`'s
 generated-code column, an identical binary on both sides, moves by a median 10% between paired runs, so it cannot
 resolve a 10% engine change.
+
+## The four-axis tables
+
+`measure.sh` produces the cold, warm, compile and memory comparison of every path (Blaze compiling and from its
+template; the runtime evaluator compiling, from an image, under the JIT, ReadyToRun and native AOT; the generated
+models under the JIT and native AOT), every corpus in its own process for every column, and `assemble.py` builds the
+tables from its logs. `JSONSCHEMA=<blaze cli> ./measure.sh publish`, then `warm <tag>`, `cold <tag>`, `table <tag>`;
+see the script header. The `Corvus.Text.Json.RuntimeEvaluator.ColdRunner` project is what gets published; it needs
+clang for native AOT.
