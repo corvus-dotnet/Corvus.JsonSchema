@@ -339,6 +339,46 @@ public class FusedObjectTests
     }
 
     [TestMethod]
+    public void NullKeysAConditionOnAValue()
+    {
+        // ui5's shape: a condition on a property whose enum or const includes null.
+        const string schema = """
+            {
+              "type": "object",
+              "properties": {"kind": {"enum": ["project", "extension", null]}},
+              "if": {"properties": {"kind": {"enum": ["project", null]}}},
+              "then": {"required": ["type"], "if": {"properties": {"type": {"const": null}}}, "then": {"required": ["name"]}},
+              "else": {"required": ["extends"]}
+            }
+            """;
+        using JsonSchemaEvaluator e = JsonSchemaEvaluator.Compile(schema);
+        using JsonSchemaEvaluator l = JsonSchemaEvaluator.FromProgramImage(e.ToProgramImage());
+        Assert.AreEqual(NodePlan.FusedObject, e.Program.Nodes[e.RootNode].Plan, "null is a keyable value in a fused condition.");
+        Assert.AreEqual(NodePlan.FusedObject, l.Program.Nodes[l.RootNode].Plan);
+
+        foreach ((string instance, bool expected) in new[]
+        {
+            ("""{"kind": null, "type": "application"}""", true),
+            ("""{"kind": null}""", false),
+            ("""{"kind": null, "type": null}""", false),
+            ("""{"kind": null, "type": null, "name": "n"}""", true),
+            ("""{"kind": "project", "type": "library"}""", true),
+            ("""{"kind": "extension"}""", false),
+            ("""{"kind": "extension", "extends": "x"}""", true),
+            ("""{"kind": "other", "extends": "x"}""", false),
+            ("""{"type": "application"}""", true),
+            ("""{}""", false),
+        })
+        {
+            using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(instance);
+            using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Basic);
+            Assert.AreEqual(expected, e.Evaluate(doc.RootElement, collector), "general " + instance);
+            Assert.AreEqual(expected, e.Evaluate(doc.RootElement), "fused " + instance);
+            Assert.AreEqual(expected, l.Evaluate(doc.RootElement), "image " + instance);
+        }
+    }
+
+    [TestMethod]
     public void ShapesThatCannotFuseKeepTheGeneralPlan()
     {
         // anyOf is not an in-place applicator the plan fuses.

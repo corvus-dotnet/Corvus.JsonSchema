@@ -1515,6 +1515,9 @@ internal sealed class Discriminator
 
     /// <summary>Key tag for a boolean value (<c>true</c> or <c>false</c>).</summary>
     public const byte BooleanTag = (byte)'b';
+
+    /// <summary>Key tag for <c>null</c>; the value bytes are <c>null</c>.</summary>
+    public const byte NullTag = (byte)'z';
 }
 
 /// <summary>

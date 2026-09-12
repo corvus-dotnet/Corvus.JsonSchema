@@ -1191,6 +1191,9 @@ internal sealed class SchemaCompiler
             case JsonTokenType.False:
                 key = Tagged(Discriminator.BooleanTag, "false"u8);
                 return true;
+            case JsonTokenType.Null:
+                key = Tagged(Discriminator.NullTag, "null"u8);
+                return true;
             case JsonTokenType.Number:
             {
                 ReadOnlySpan<byte> raw = value.Document.GetRawSimpleValue(value.Index).Span;

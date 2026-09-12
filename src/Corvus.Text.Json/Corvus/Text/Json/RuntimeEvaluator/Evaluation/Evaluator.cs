@@ -1045,6 +1045,9 @@ internal static partial class Evaluator
             case JsonTokenType.False:
                 TestValueKey(entry, Discriminator.BooleanTag, "false"u8, failed);
                 return;
+            case JsonTokenType.Null:
+                TestValueKey(entry, Discriminator.NullTag, "null"u8, failed);
+                return;
             case JsonTokenType.Number:
             {
                 ReadOnlySpan<byte> rawNumber = default(TAccess).RawValue(ref state, doc, valueIndex);
@@ -3548,6 +3551,9 @@ internal static partial class Evaluator
                 return true;
             case JsonTokenType.False:
                 selected = LookupDiscriminator(discriminator, Discriminator.BooleanTag, "false"u8);
+                return true;
+            case JsonTokenType.Null:
+                selected = LookupDiscriminator(discriminator, Discriminator.NullTag, "null"u8);
                 return true;
             case JsonTokenType.Number:
             {

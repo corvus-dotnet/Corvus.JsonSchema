@@ -77,6 +77,29 @@ public class DiscriminatorKeyTests
     }
 
     [TestMethod]
+    public void NullConstantsKeyTheDiscriminator()
+    {
+        const string schema = """
+            {
+              "oneOf": [
+                {"type": "object", "required": ["mode"], "properties": {"mode": {"const": null}, "a": {"type": "string"}}, "additionalProperties": false},
+                {"type": "object", "required": ["mode"], "properties": {"mode": {"enum": ["fast", "slow"]}, "b": {"type": "string"}}, "additionalProperties": false}
+              ]
+            }
+            """;
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(schema);
+        Discriminator? d = evaluator.Program.Nodes[evaluator.RootNode].OneOfDiscriminator;
+        Assert.IsNotNull(d, "null is a keyable constant.");
+        Assert.AreEqual(3, d.KnownValues.Count);
+        Assert.IsTrue(evaluator.Evaluate("""{"mode": null, "a": "x"}"""));
+        Assert.IsTrue(evaluator.Evaluate("""{"mode": "fast", "b": "x"}"""));
+        Assert.IsFalse(evaluator.Evaluate("""{"mode": null, "b": "x"}"""), "The null branch rejects b.");
+        Assert.IsFalse(evaluator.Evaluate("""{"mode": "null", "a": "x"}"""), "The string \"null\" is not null.");
+        Assert.IsFalse(evaluator.Evaluate("""{"mode": false, "a": "x"}"""));
+        Assert.IsFalse(evaluator.Evaluate("""{"a": "x"}"""));
+    }
+
+    [TestMethod]
     public void KeysSurviveTheImage()
     {
         using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(VersionedOneOf);
