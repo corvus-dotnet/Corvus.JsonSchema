@@ -24,6 +24,12 @@
 
   <!-- With -p:ColdGenerated=true the runner also carries the checked-in generated models of every corpus, so the
        shipping generator's validation code can be measured the same way (`generated warm|cold ...`). -->
+  <!-- With -p:ColdMibc=<file.mibc> a static profile (dotnet-pgo create-mibc over an instrumented trace) drives the native AOT compile and the ReadyToRun one. -->
+  <ItemGroup Condition="'$(ColdMibc)' != ''">
+    <MibcFile Include="$(ColdMibc)" />
+    <PublishReadyToRunPgoFiles Include="$(ColdMibc)" />
+  </ItemGroup>
+
   <PropertyGroup Condition="'$(ColdGenerated)' == 'true'">
     <DefineConstants>$(DefineConstants);COLD_GENERATED</DefineConstants>
     <SourceMetaModels>AnsibleMeta;AwsCdk;Babelrc;ClangFormat;CmakePresets;CodeClimate;Cql2;Cspell;Cypress;Deno;Dependabot;Draft04;FabricMod;GeoJson;GitpodConfiguration;HelmChartLock;Importmap;Jasmine;Jsconfig;Jshintrc;Krakend;Lazygit;Lerna;NestCli;Omnisharp;Openapi;PreCommitHooks;Pulumi;SemanticRelease;Stale;Stylecop;Tmuxinator;Ui5;Ui5Manifest;UnrealEngineUproject;Vercel;Yamllint</SourceMetaModels>

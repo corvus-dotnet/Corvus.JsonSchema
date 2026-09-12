@@ -10,6 +10,10 @@
 #                                 from its template), the runtime evaluator (JIT, JIT from image, R2R, AOT, AOT from
 #                                 image) and the generated models (JIT, AOT); Blaze's compile command; image loads
 #   measure.sh table <tag>        assemble <out>/<tag>/summary.md and summary.csv (and corvus-vs-blaze.md) from the logs
+#   measure.sh profile            collect an instrumented JIT trace of the warm run over every corpus and turn it into
+#                                 <out>/corvus.mibc with dotnet-pgo (DOTNET_PGO=<path to dotnet-pgo.dll>, built from the
+#                                 runtime repository's src/coreclr/tools/dotnet-pgo); then `publish` uses it for the
+#                                 native AOT runner (the ColdMibc property), which recovers most of AOT's gap to the JIT
 #
 # Environment: JSONSCHEMA (the Blaze CLI binary, required), OUT (output root, default tools/out), CORES (pin set,
 # default 0-11), CORPORA (space-separated subset, default all). Requires clang for the native AOT publish, pwsh is not
@@ -36,12 +40,22 @@ corpora() {
   if [ -n "${CORPORA:-}" ]; then echo $CORPORA; else for f in $C/*-schema.json; do basename $f -schema.json; done; fi
 }
 case $cmd in
+  profile)
+    [ -n "${DOTNET_PGO:-}" ] || { echo "set DOTNET_PGO to the dotnet-pgo.dll built from the runtime repository"; exit 2; }
+    mkdir -p $RUNNERS
+    dotnet publish $R -c Release -r linux-x64 --self-contained false -m:4 -nr:false -p:UseSharedCompilation=false -o $RUNNERS/fd-jit || exit 1
+    pkill -f "VBCSCompile[r]" 2>/dev/null
+    DOTNET_TieredPGO=1 DOTNET_TC_QuickJitForLoops=1 DOTNET_TC_CallCountThreshold=10000 DOTNET_ReadyToRun=0 dotnet-trace collect --providers Microsoft-Windows-DotNETRuntime:0x1E000080018:5 -o $OUT/profile.nettrace -- dotnet $RUNNERS/fd-jit/$RUNNER.dll warm 50 $(corpora) || exit 1
+    dotnet $DOTNET_PGO create-mibc --trace $OUT/profile.nettrace --output $OUT/corvus.mibc || exit 1
+    echo "profile in $OUT/corvus.mibc"
+    ;;
   publish)
     mkdir -p $RUNNERS
+    MIBC=""; [ -f $OUT/corvus.mibc ] && MIBC="-p:ColdMibc=$OUT/corvus.mibc"
     dotnet build $B -c Release -f net10.0 -m:4 -nr:false -p:UseSharedCompilation=false || exit 1
     dotnet publish $R -c Release -r linux-x64 --self-contained -p:PublishReadyToRun=true -m:4 -nr:false -p:UseSharedCompilation=false -o $RUNNERS/r2r || exit 1
-    dotnet publish $R -c Release -r linux-x64 -p:ColdAot=true -m:4 -nr:false -p:UseSharedCompilation=false -o $RUNNERS/aot || exit 1
-    dotnet publish $R -c Release -r linux-x64 -p:ColdAot=true -p:ColdGenerated=true -m:4 -nr:false -p:UseSharedCompilation=false -o $RUNNERS/aot-gen || exit 1
+    dotnet publish $R -c Release -r linux-x64 -p:ColdAot=true $MIBC -m:4 -nr:false -p:UseSharedCompilation=false -o $RUNNERS/aot || exit 1
+    dotnet publish $R -c Release -r linux-x64 -p:ColdAot=true -p:ColdGenerated=true $MIBC -m:4 -nr:false -p:UseSharedCompilation=false -o $RUNNERS/aot-gen || exit 1
     pkill -f "VBCSCompile[r]" 2>/dev/null
     dotnet $H cold prepare
     mkdir -p $OUT/blaze-templates

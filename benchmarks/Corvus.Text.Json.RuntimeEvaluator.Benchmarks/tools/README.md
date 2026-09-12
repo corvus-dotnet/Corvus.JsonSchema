@@ -29,3 +29,9 @@ models under the JIT and native AOT), every corpus in its own process for every 
 tables from its logs. `JSONSCHEMA=<blaze cli> ./measure.sh publish`, then `warm <tag>`, `cold <tag>`, `table <tag>`;
 see the script header. The `Corvus.Text.Json.RuntimeEvaluator.ColdRunner` project is what gets published; it needs
 clang for native AOT.
+
+`measure.sh profile` produces a static profile (`corvus.mibc`) from an instrumented JIT run over the corpora with
+dotnet-pgo, which is not shipped: build it from the runtime repository (`src/coreclr/tools/dotnet-pgo`, after
+`./build.sh -restore -subset clr.tools /p:NuGetAudit=false`) and point `DOTNET_PGO` at its `dotnet-pgo.dll`. When the
+profile is present, `publish` passes it to the native AOT builds through the runner's `ColdMibc` property; native AOT
+without it runs 10 to 20% behind the JIT's tier-1 code, and the profile recovers most of that.
