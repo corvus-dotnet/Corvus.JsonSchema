@@ -615,6 +615,13 @@ runtime is fastest on 27 of 37 corpora, geometric mean 0.80 against Blaze; krake
 our side, and only ui5-manifest (1.08), dependabot (1.11), cspell (1.13) and jsconfig (1.17) sit above parity
 besides the four structural ones: importmap 2.0, ui5 2.2, yamllint 2.3, helm-chart-lock 2.9.
 
+Two more after that table. An object with no named properties takes a map loop that reads no names: every value
+takes the additional-properties resolution (importmap 0.39 from 0.49). And on the fused plan an entry's keyed value
+tests merge into one map from tagged value to the mask of tests that allow it, so a property under several
+conditions is looked up once, while the string-set membership test takes the token type its caller already has and
+reads the value's row once (ui5 0.84 from 0.88, cspell 0.92 from 1.05, draft-04 0.74 from 0.79, jsconfig 0.88 from
+0.92).
+
 ## Against Blaze (2026-09-11)
 
 ## Against Blaze (2026-09-11)
