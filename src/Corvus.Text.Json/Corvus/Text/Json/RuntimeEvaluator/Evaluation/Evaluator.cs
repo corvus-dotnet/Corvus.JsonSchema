@@ -559,7 +559,7 @@ internal static partial class Evaluator
             for (int c = 0; c < contributors.Length; c++)
             {
                 FusedContributor contributor = contributors[c];
-                if (contributor.Condition < 0 && ((contributor.MinProperties >= 0 && count < contributor.MinProperties) || (contributor.MaxProperties >= 0 && count > contributor.MaxProperties)))
+                if (contributor.Condition < 0 && contributor.AltGroup < 0 && ((contributor.MinProperties >= 0 && count < contributor.MinProperties) || (contributor.MaxProperties >= 0 && count > contributor.MaxProperties)))
                 {
                     return false;
                 }
@@ -580,6 +580,8 @@ internal static partial class Evaluator
 
         Span<bool> failed = stackalloc bool[64];
         failed.Clear();
+        Span<ulong> altFailed = stackalloc ulong[8];
+        altFailed.Clear();
         Span<int> deferredInline = stackalloc int[3 * 16];
         Span<int> deferred = deferredInline;
         int[]? rentedDeferred = null;
@@ -602,7 +604,7 @@ internal static partial class Evaluator
                 int entryIndex;
                 if (!escaped)
                 {
-                    if (!ApplyFusedName<TAccess>(f, raw, valueType, doc, valueIndex, ref state, seen, failed, out cover, out defer, out entryIndex))
+                    if (!ApplyFusedName<TAccess>(f, raw, valueType, doc, valueIndex, ref state, seen, failed, altFailed, out cover, out defer, out entryIndex))
                     {
                         return false;
                     }
@@ -610,7 +612,7 @@ internal static partial class Evaluator
                 else
                 {
                     using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
-                    if (!ApplyFusedName<TAccess>(f, name.Span, valueType, doc, valueIndex, ref state, seen, failed, out cover, out defer, out entryIndex))
+                    if (!ApplyFusedName<TAccess>(f, name.Span, valueType, doc, valueIndex, ref state, seen, failed, altFailed, out cover, out defer, out entryIndex))
                     {
                         return false;
                     }
@@ -731,13 +733,37 @@ internal static partial class Evaluator
                     }
                 }
 
-                int[] required = contributor.RequiredBits;
-                for (int b = 0; b < required.Length; b++)
+                bool satisfied = true;
+                if (contributor.AltGroup >= 0 && ((contributor.MinProperties >= 0 && count < contributor.MinProperties) || (contributor.MaxProperties >= 0 && count > contributor.MaxProperties)))
                 {
-                    if ((seen[required[b] >> 6] & (1UL << (required[b] & 63))) == 0)
+                    satisfied = false;
+                }
+
+                int[] required = contributor.RequiredBits;
+                for (int b = 0; b < required.Length && satisfied; b++)
+                {
+                    satisfied = (seen[required[b] >> 6] & (1UL << (required[b] & 63))) != 0;
+                }
+
+                if (!satisfied)
+                {
+                    if (contributor.AltGroup < 0)
                     {
                         return false;
                     }
+
+                    altFailed[contributor.AltGroup] |= 1UL << contributor.AltBranch;
+                }
+            }
+
+            FusedAltGroup[] altGroups = f.AltGroups;
+            for (int g = 0; g < altGroups.Length; g++)
+            {
+                FusedAltGroup group = altGroups[g];
+                ulong survivors = ~altFailed[g] & (group.BranchCount == 64 ? ulong.MaxValue : (1UL << group.BranchCount) - 1);
+                if (survivors == 0 || (group.ExactlyOne && (survivors & (survivors - 1)) != 0))
+                {
+                    return false;
                 }
             }
 
@@ -916,7 +942,7 @@ internal static partial class Evaluator
     /// name now and notes whether a conditional one is pending. Returns <see langword="false"/> when a child failed.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool ApplyFusedName<TAccess>(FusedObject f, scoped ReadOnlySpan<byte> nameSpan, JsonTokenType valueType, IJsonDocument doc, int valueIndex, ref EvaluationState state, scoped Span<ulong> seen, scoped Span<bool> failed, out bool cover, out bool defer, out int entryIndex)
+    private static bool ApplyFusedName<TAccess>(FusedObject f, scoped ReadOnlySpan<byte> nameSpan, JsonTokenType valueType, IJsonDocument doc, int valueIndex, ref EvaluationState state, scoped Span<ulong> seen, scoped Span<bool> failed, scoped Span<ulong> altFailed, out bool cover, out bool defer, out int entryIndex)
         where TAccess : struct, IDocumentAccess
     {
         SchemaNode[] nodes = state.Nodes;
@@ -937,11 +963,19 @@ internal static partial class Evaluator
             for (int a = 0; a < applications.Length; a++)
             {
                 FusedApplication app = applications[a];
-                if (contributors[app.Contributor].Condition < 0)
+                FusedContributor applied = contributors[app.Contributor];
+                if (applied.Condition < 0)
                 {
                     if (!ApplyApplication<TAccess>(app, nodes, valueType, doc, valueIndex, ref state))
                     {
-                        return false;
+                        // A branch of an alternative group fails on its own; anything else fails the object.
+                        if (applied.AltGroup < 0)
+                        {
+                            return false;
+                        }
+
+                        altFailed[applied.AltGroup] |= 1UL << applied.AltBranch;
+                        continue;
                     }
 
                     cover = true;
@@ -965,7 +999,13 @@ internal static partial class Evaluator
 
                 if (!ResolveUnknownName<TAccess>(contributor, nameSpan, nodes, doc, valueIndex, ref state, out bool matched))
                 {
-                    return false;
+                    if (contributor.AltGroup < 0)
+                    {
+                        return false;
+                    }
+
+                    altFailed[contributor.AltGroup] |= 1UL << contributor.AltBranch;
+                    continue;
                 }
 
                 cover |= matched;

@@ -48,6 +48,12 @@ internal sealed class FusedObject
     /// <summary>Required-only <c>oneOf</c>/<c>anyOf</c> keywords, decided from the seen bits after the pass.</summary>
     public FusedAlternative[] Alternatives = [];
 
+    /// <summary>
+    /// The <c>anyOf</c>/<c>oneOf</c> groups whose branches carry object keywords: each branch is a contributor whose
+    /// failure marks the branch rather than the object, and the group is decided from the surviving branches.
+    /// </summary>
+    public FusedAltGroup[] AltGroups = [];
+
     /// <summary>Whether any branch has pattern properties or additional properties, so unknown names need resolving.</summary>
     public bool ResolvesUnknownNames;
 
@@ -112,6 +118,13 @@ internal sealed class FusedValueTest
 /// A <c>oneOf</c> or <c>anyOf</c> whose branches are nothing but <c>required</c> lists: after the pass, the number
 /// of branches whose names were all seen decides it. Gated like a contributor when it sits under a condition.
 /// </summary>
+/// <summary>An alternative group of contributors: at least one branch must survive, or exactly one for <c>oneOf</c>.</summary>
+internal sealed class FusedAltGroup
+{
+    public bool ExactlyOne;
+    public int BranchCount;
+}
+
 internal sealed class FusedAlternative
 {
     public int Condition = -1;
@@ -145,6 +158,11 @@ internal sealed class FusedContributor
 {
     public int Condition = -1;
     public bool Polarity = true;
+
+    /// <summary>The alternative group this contributor is a branch of, or -1 for an ordinary contributor.</summary>
+    public int AltGroup = -1;
+
+    public int AltBranch;
     public PatternPropertyEntry[]? Patterns;
     public int AdditionalNode = -1;
     public bool AdditionalCoversOnly;
@@ -186,6 +204,7 @@ internal static class FusedObjects
     private const int MaxNames = SchemaNode.InlineBitWords * 64;
     private const int MaxConditions = 64;
     private const int MaxContributors = 64;
+    private const int MaxAltGroups = 8;
 
 #if STJ
     private static readonly bool Disabled = false;
@@ -270,11 +289,12 @@ internal static class FusedObjects
             return null;
         }
 
-        var contributors = new List<(SchemaNode Node, int Condition, bool Polarity)>();
+        var contributors = new List<(SchemaNode Node, int Condition, bool Polarity, int AltGroup, int AltBranch)>();
         var conditions = new List<PendingCondition>();
         var extras = new List<(int Condition, bool Polarity, byte[][] RequiredNames)>();
         var alternatives = new List<(int Condition, bool Polarity, bool ExactlyOne, byte[][][] Branches)>();
-        var context = new CollectContext(nodes, contributors, conditions, extras, alternatives);
+        var altGroups = new List<(bool ExactlyOne, int BranchCount)>();
+        var context = new CollectContext(nodes, contributors, conditions, extras, alternatives, altGroups, !node.UnevaluatedProperties.IsPresent);
         if (!Collect(context, node, -1, true))
         {
             return null;
@@ -295,10 +315,10 @@ internal static class FusedObjects
             hasIfCondition |= condition.Test is not null;
         }
 
-        if (!node.UnevaluatedProperties.IsPresent && !hasIfCondition && alternatives.Count == 0)
+        if (!node.UnevaluatedProperties.IsPresent && !hasIfCondition && alternatives.Count == 0 && altGroups.Count == 0)
         {
             int effective = 0;
-            foreach ((SchemaNode branch, _, _) in contributors)
+            foreach ((SchemaNode branch, _, _, _, _) in contributors)
             {
                 if (branch.Properties is not null || branch.PatternProperties is not null || branch.AdditionalProperties.IsPresent
                     || branch.RequiredNames is { Length: > 0 } || branch.MinProperties >= 0 || branch.MaxProperties >= 0)
@@ -329,7 +349,7 @@ internal static class FusedObjects
             return bit;
         }
 
-        foreach ((SchemaNode branch, _, _) in contributors)
+        foreach ((SchemaNode branch, _, _, _, _) in contributors)
         {
             if (branch.Properties is Utf8NameMap<PropertyEntry> properties)
             {
@@ -394,11 +414,13 @@ internal static class FusedObjects
         var built = new FusedContributor[contributors.Count];
         for (int c = 0; c < contributors.Count; c++)
         {
-            (SchemaNode branch, int condition, bool polarity) = contributors[c];
+            (SchemaNode branch, int condition, bool polarity, int altGroup, int altBranch) = contributors[c];
             var contributor = new FusedContributor
             {
                 Condition = condition,
                 Polarity = polarity,
+                AltGroup = altGroup,
+                AltBranch = altBranch,
                 Patterns = branch.PatternProperties,
                 MinProperties = branch.MinProperties,
                 MaxProperties = branch.MaxProperties,
@@ -445,6 +467,14 @@ internal static class FusedObjects
         }
 
         fused.Contributors = built;
+
+        var builtGroups = new FusedAltGroup[altGroups.Count];
+        for (int g = 0; g < altGroups.Count; g++)
+        {
+            builtGroups[g] = new FusedAltGroup { ExactlyOne = altGroups[g].ExactlyOne, BranchCount = altGroups[g].BranchCount };
+        }
+
+        fused.AltGroups = builtGroups;
 
         var builtAlternatives = new FusedAlternative[alternatives.Count];
         for (int a = 0; a < alternatives.Count; a++)
@@ -627,14 +657,21 @@ internal static class FusedObjects
     /// <summary>The lists a collection fills.</summary>
     private sealed class CollectContext(
         SchemaNode[] nodes,
-        List<(SchemaNode Node, int Condition, bool Polarity)> contributors,
+        List<(SchemaNode Node, int Condition, bool Polarity, int AltGroup, int AltBranch)> contributors,
         List<PendingCondition> conditions,
         List<(int Condition, bool Polarity, byte[][] RequiredNames)> extras,
-        List<(int Condition, bool Polarity, bool ExactlyOne, byte[][][] Branches)> alternatives)
+        List<(int Condition, bool Polarity, bool ExactlyOne, byte[][][] Branches)> alternatives,
+        List<(bool ExactlyOne, int BranchCount)> altGroups,
+        bool allowAltGroups)
     {
         public SchemaNode[] Nodes { get; } = nodes;
 
-        public List<(SchemaNode Node, int Condition, bool Polarity)> Contributors { get; } = contributors;
+        public List<(SchemaNode Node, int Condition, bool Polarity, int AltGroup, int AltBranch)> Contributors { get; } = contributors;
+
+        public List<(bool ExactlyOne, int BranchCount)> AltGroups { get; } = altGroups;
+
+        /// <summary>Alternative groups with object keywords are taken only where coverage is not tracked, since a failed branch must not cover.</summary>
+        public bool AllowAltGroups { get; } = allowAltGroups;
 
         public List<PendingCondition> Conditions { get; } = conditions;
 
@@ -661,7 +698,7 @@ internal static class FusedObjects
             return false;
         }
 
-        ctx.Contributors.Add((branch, condition, polarity));
+        ctx.Contributors.Add((branch, condition, polarity, -1, 0));
         if (branch.Ref.IsPresent && !Collect(ctx, nodes[branch.Ref.FastNode], condition, polarity))
         {
             return false;
@@ -678,12 +715,12 @@ internal static class FusedObjects
             }
         }
 
-        if (branch.OneOf is ChildRef[] oneOf && !CollectAlternative(ctx, oneOf, condition, polarity, exactlyOne: true))
+        if (branch.OneOf is ChildRef[] oneOf && !CollectAlternative(ctx, oneOf, condition, polarity, exactlyOne: true, discriminated: branch.OneOfDiscriminator is not null || branch.OneOfTypeUnion != TypeMask.None))
         {
             return false;
         }
 
-        if (branch.AnyOf is ChildRef[] anyOf && !CollectAlternative(ctx, anyOf, condition, polarity, exactlyOne: false))
+        if (branch.AnyOf is ChildRef[] anyOf && !CollectAlternative(ctx, anyOf, condition, polarity, exactlyOne: false, discriminated: branch.AnyOfDiscriminator is not null || branch.AnyOfTypeUnion != TypeMask.None))
         {
             return false;
         }
@@ -757,22 +794,102 @@ internal static class FusedObjects
     /// A <c>oneOf</c>/<c>anyOf</c> fuses only when every branch is a plain <c>required</c> list (with at most a
     /// <c>type: object</c>), which the seen bits decide after the pass.
     /// </summary>
-    private static bool CollectAlternative(CollectContext ctx, ChildRef[] branches, int condition, bool polarity, bool exactlyOne)
+    private static bool CollectAlternative(CollectContext ctx, ChildRef[] branches, int condition, bool polarity, bool exactlyOne, bool discriminated)
     {
         var collected = new List<byte[][]>(branches.Length);
+        bool requiredOnly = true;
         foreach (ChildRef child in branches)
         {
             SchemaNode branch = ctx.Nodes[child.FastNode];
             if (branch.RequiredNames is not byte[][] { Length: > 0 } required || !IsRequiredListOnly(branch))
             {
-                return false;
+                requiredOnly = false;
+                break;
             }
 
             collected.Add(required);
         }
 
-        ctx.Alternatives.Add((condition, polarity, exactlyOne, [.. collected]));
+        if (requiredOnly)
+        {
+            ctx.Alternatives.Add((condition, polarity, exactlyOne, [.. collected]));
+            return true;
+        }
+
+        // Branches with object keywords: each becomes a contributor of a group, unconditional and without further
+        // in-place applicators, so that a failure marks the branch and the group is counted after the pass. The pass
+        // applies every branch that knows a name to that property, where the general path stops at the first branch
+        // that passes, so a name with an expensive child in more than one branch is refused; and a keyword the general
+        // path decides by discriminator or type union stays with it.
+        if (!ctx.AllowAltGroups || discriminated || condition >= 0 || ctx.AltGroups.Count >= MaxAltGroups || branches.Length > 64
+            || !ExpensiveChildrenAreDisjoint(ctx.Nodes, branches))
+        {
+            return false;
+        }
+
+        int group = ctx.AltGroups.Count;
+        for (int b = 0; b < branches.Length; b++)
+        {
+            SchemaNode branch = ctx.Nodes[branches[b].FastNode];
+            if (branch.AlwaysTrue || branch.AlwaysFalse || branch.InPlaceCycle || branch.HasInPlaceApplicators || branch.Dependencies is not null
+                || !IsObjectBranch(branch, allowUnevaluated: false) || ctx.Contributors.Count >= MaxContributors)
+            {
+                return false;
+            }
+
+            ctx.Contributors.Add((branch, -1, true, group, b));
+        }
+
+        ctx.AltGroups.Add((exactlyOne, branches.Length));
         return true;
+    }
+
+    /// <summary>
+    /// Whether no property name gets an expensive child (anything but a leaf, a simple array or a boolean schema)
+    /// from more than one branch; pattern and additional properties count as every name.
+    /// </summary>
+    private static bool ExpensiveChildrenAreDisjoint(SchemaNode[] nodes, ChildRef[] branches)
+    {
+        static bool Cheap(SchemaNode n) => n.IsLeaf || n.IsSimpleArray || n.AlwaysTrue || n.AlwaysFalse;
+
+        var expensiveBy = new Dictionary<string, int>(StringComparer.Ordinal);
+        int expensiveWildcards = 0;
+        foreach (ChildRef child in branches)
+        {
+            SchemaNode branch = nodes[child.FastNode];
+            if (branch.Properties is Utf8NameMap<PropertyEntry> properties)
+            {
+                foreach (PropertyEntry entry in properties.Values)
+                {
+                    if (entry.Schema.IsPresent && !Cheap(nodes[entry.Schema.FastNode]))
+                    {
+                        string name = System.Text.Encoding.UTF8.GetString(entry.Name);
+                        expensiveBy[name] = (expensiveBy.TryGetValue(name, out int n) ? n : 0) + 1;
+                        if (expensiveBy[name] > 1)
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            bool wildcard = false;
+            if (branch.PatternProperties is PatternPropertyEntry[] patterns)
+            {
+                foreach (PatternPropertyEntry pattern in patterns)
+                {
+                    wildcard |= !Cheap(nodes[pattern.Schema.FastNode]);
+                }
+            }
+
+            wildcard |= branch.AdditionalProperties.IsPresent && !Cheap(nodes[branch.AdditionalProperties.FastNode]);
+            if (wildcard && ++expensiveWildcards > 1)
+            {
+                return false;
+            }
+        }
+
+        return expensiveWildcards == 0 || expensiveBy.Count == 0;
     }
 
     private static bool IsRequiredListOnly(SchemaNode node)

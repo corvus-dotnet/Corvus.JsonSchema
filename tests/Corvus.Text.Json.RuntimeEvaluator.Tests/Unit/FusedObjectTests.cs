@@ -271,6 +271,74 @@ public class FusedObjectTests
     }
 
     [TestMethod]
+    public void AlternativesWithPropertiesFuseWhenCoverageIsNotTracked()
+    {
+        // jsconfig's root: allOf of property branches plus an anyOf whose branches carry properties, no required.
+        const string schema = """
+            {
+              "type": "object",
+              "allOf": [
+                {"properties": {"compilerOptions": {"type": "object"}}},
+                {"properties": {"extends": {"type": "string"}}},
+                {"anyOf": [
+                  {"properties": {"files": {"type": "array"}}},
+                  {"properties": {"exclude": {"type": "array"}}},
+                  {"properties": {"include": {"type": "array"}}, "required": ["include"]}
+                ]}
+              ]
+            }
+            """;
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(schema);
+        Assert.AreEqual(NodePlan.FusedObject, evaluator.Program.Nodes[evaluator.RootNode].Plan, "The anyOf branches become an alternative group.");
+        Assert.AreEqual(1, evaluator.Program.Nodes[evaluator.RootNode].Fused!.AltGroups.Length);
+        using JsonSchemaEvaluator loaded = JsonSchemaEvaluator.FromProgramImage(evaluator.ToProgramImage());
+
+        const string oneOfSchema = """
+            {
+              "type": "object",
+              "oneOf": [
+                {"properties": {"files": {"type": "array"}}, "required": ["files"]},
+                {"properties": {"exclude": {"type": "array"}}, "required": ["exclude"], "additionalProperties": {"type": "string"}}
+              ]
+            }
+            """;
+        using JsonSchemaEvaluator oneOf = JsonSchemaEvaluator.Compile(oneOfSchema);
+        Assert.AreEqual(NodePlan.FusedObject, oneOf.Program.Nodes[oneOf.RootNode].Plan);
+        using JsonSchemaEvaluator oneOfLoaded = JsonSchemaEvaluator.FromProgramImage(oneOf.ToProgramImage());
+
+        foreach ((JsonSchemaEvaluator e, JsonSchemaEvaluator l, string instance, bool expected) in new[]
+        {
+            (evaluator, loaded, """{"compilerOptions": {}, "files": []}""", true),
+            (evaluator, loaded, """{"files": 1}""", true),
+            (evaluator, loaded, """{"files": 1, "exclude": 1}""", false),
+            (evaluator, loaded, """{"files": 1, "exclude": 1, "include": []}""", true),
+            (evaluator, loaded, """{"files": 1, "exclude": 1, "include": 1}""", false),
+            (evaluator, loaded, """{"compilerOptions": 1, "files": []}""", false),
+            (evaluator, loaded, """{}""", true),
+            (evaluator, loaded, """{"extends": 1}""", false),
+            (oneOf, oneOfLoaded, """{"files": []}""", true),
+            (oneOf, oneOfLoaded, """{"exclude": [], "x": "s"}""", true),
+            (oneOf, oneOfLoaded, """{"files": [], "exclude": []}""", true),
+            (oneOf, oneOfLoaded, """{"files": [], "exclude": [], "x": 1}""", true),
+            (oneOf, oneOfLoaded, """{"exclude": [], "x": 1}""", false),
+            (oneOf, oneOfLoaded, """{}""", false),
+        })
+        {
+            using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(instance);
+            using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Basic);
+            bool general = e.Evaluate(doc.RootElement, collector);
+            Assert.AreEqual(expected, general, "general " + instance);
+            Assert.AreEqual(expected, e.Evaluate(doc.RootElement), "fused " + instance);
+            Assert.AreEqual(expected, l.Evaluate(doc.RootElement), "image " + instance);
+        }
+
+        // With unevaluatedProperties the group is refused, since a failed branch must not count as coverage.
+        using JsonSchemaEvaluator tracked = JsonSchemaEvaluator.Compile("""{"anyOf": [{"properties": {"a": {"type": "integer"}}}, {"properties": {"b": {"type": "integer"}}}], "unevaluatedProperties": false}""");
+        Assert.AreNotEqual(NodePlan.FusedObject, tracked.Program.Nodes[tracked.RootNode].Plan);
+        Assert.IsFalse(tracked.Evaluate("""{"a": "x", "b": 1}"""), "a is unevaluated once its branch fails.");
+    }
+
+    [TestMethod]
     public void ShapesThatCannotFuseKeepTheGeneralPlan()
     {
         // anyOf is not an in-place applicator the plan fuses.
