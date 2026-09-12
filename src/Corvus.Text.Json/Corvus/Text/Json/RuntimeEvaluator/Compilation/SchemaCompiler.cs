@@ -2641,12 +2641,16 @@ internal sealed class SchemaCompiler
             return NodePlan.General;
         }
 
-        if (node.HasObjectKeywords && !node.HasArrayKeywords && !node.PropertyNames.IsPresent && node.SeenBitCount <= SchemaNode.InlineBitWords * 64)
+        // Object keywords under a type that excludes objects apply to nothing, and array keywords under a type that
+        // excludes arrays likewise (ui5 writes additionalProperties: false on arrays), so they do not bar the plans.
+        bool objectKeywords = LiveObjectKeywords(node);
+        bool arrayKeywords = LiveArrayKeywords(node);
+        if (objectKeywords && !arrayKeywords && !node.PropertyNames.IsPresent && node.SeenBitCount <= SchemaNode.InlineBitWords * 64)
         {
             return IsStrictObject(node, nodes) ? NodePlan.StrictObject : NodePlan.Object;
         }
 
-        if (node.HasArrayKeywords && !node.HasObjectKeywords && node.PrefixItems is null && !node.Contains.IsPresent)
+        if (arrayKeywords && !objectKeywords && node.PrefixItems is null && !node.Contains.IsPresent)
         {
             return NodePlan.ArrayItems;
         }
@@ -2675,6 +2679,18 @@ internal sealed class SchemaCompiler
     /// Children (and the additional-properties schema) that are type-only leaves are tested in place; the rest
     /// dispatch on their plan. An object with only <c>additionalProperties</c> (a map) qualifies too.
     /// </summary>
+    /// <summary>Whether the node's object keywords can apply: present, and the type (if any) admits objects.</summary>
+    private static bool LiveObjectKeywords(SchemaNode node)
+    {
+        return node.HasObjectKeywords && (!node.HasType || (node.Type & TypeMask.Object) != 0);
+    }
+
+    /// <summary>Whether the node's array keywords can apply: present, and the type (if any) admits arrays.</summary>
+    private static bool LiveArrayKeywords(SchemaNode node)
+    {
+        return node.HasArrayKeywords && (!node.HasType || (node.Type & TypeMask.Array) != 0);
+    }
+
     /// <summary>
     /// A node with <c>if</c> whose other keywords are at most <c>type</c> and the object keywords the object plans
     /// take, with the condition and branches off any in-place cycle; gives the plan for those own keywords.
@@ -2683,7 +2699,7 @@ internal sealed class SchemaCompiler
     {
         own = NodePlan.AlwaysTrue;
         if (!node.If.IsPresent || node.AlwaysTrue || node.AlwaysFalse || node.InPlaceCycle || node.Fused is not null || DisablePlans
-            || node.HasConst || node.Enum is not null || node.HasNumberKeywords || node.HasStringKeywords || node.HasArrayKeywords
+            || node.HasConst || node.Enum is not null || node.HasNumberKeywords || node.HasStringKeywords || LiveArrayKeywords(node)
             || node.Ref.IsPresent || node.DynamicRef is not null || node.AllOf is not null || node.AnyOf is not null || node.OneOf is not null
             || node.Not.IsPresent || node.UnevaluatedProperties.IsPresent || node.UnevaluatedItems.IsPresent || node.PropertyNames.IsPresent)
         {
@@ -2695,7 +2711,7 @@ internal sealed class SchemaCompiler
             return false;
         }
 
-        if (node.HasObjectKeywords)
+        if (LiveObjectKeywords(node))
         {
             if (node.SeenBitCount > SchemaNode.InlineBitWords * 64)
             {

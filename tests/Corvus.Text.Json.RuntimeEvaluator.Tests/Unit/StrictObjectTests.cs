@@ -268,4 +268,29 @@ public class StrictObjectTests
         AssertAgree(evaluator, loaded, """{"id": 1, "other": 1}""", false);
         AssertAgree(evaluator, loaded, """{"name": "n"}""", false);
     }
+
+    [TestMethod]
+    public void KeywordsDeadUnderTheTypeDoNotBarThePlans()
+    {
+        // ui5 writes additionalProperties: false on arrays; it applies to nothing, so the array keeps its items plan.
+        using JsonSchemaEvaluator array = JsonSchemaEvaluator.Compile("""{"type": "array", "additionalProperties": false, "items": {"type": "string"}}""");
+        Assert.AreEqual(NodePlan.ArrayItems, array.Program.Nodes[array.RootNode].Plan);
+        Assert.IsTrue(array.Evaluate("""["a", "b"]"""));
+        Assert.IsFalse(array.Evaluate("""["a", 1]"""));
+        Assert.IsFalse(array.Evaluate("""{"x": 1}"""), "The type excludes objects.");
+        Assert.IsFalse(array.Evaluate("\"a\""));
+
+        using JsonSchemaEvaluator obj = JsonSchemaEvaluator.Compile("""{"type": ["object", "null"], "properties": {"a": {"type": "integer"}}, "items": false}""");
+        Assert.AreEqual(NodePlan.StrictObject, obj.Program.Nodes[obj.RootNode].Plan);
+        Assert.IsTrue(obj.Evaluate("""{"a": 1}"""));
+        Assert.IsFalse(obj.Evaluate("""{"a": "x"}"""));
+        Assert.IsTrue(obj.Evaluate("null"));
+        Assert.IsFalse(obj.Evaluate("[1]"), "The type excludes arrays.");
+
+        // Without a type both families are live and the node stays general.
+        using JsonSchemaEvaluator both = JsonSchemaEvaluator.Compile("""{"properties": {"a": {"type": "integer"}}, "items": {"type": "string"}}""");
+        Assert.AreEqual(NodePlan.General, both.Program.Nodes[both.RootNode].Plan);
+        Assert.IsTrue(both.Evaluate("""["x"]"""));
+        Assert.IsFalse(both.Evaluate("[1]"));
+    }
 }
