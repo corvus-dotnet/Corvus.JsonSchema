@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 
 namespace Corvus.Text.Json.RuntimeEvaluator.Compilation;
@@ -70,6 +71,23 @@ internal sealed class FusedEntry
 
     /// <summary>The conditions whose value test this property decides, checked as the property is passed.</summary>
     public FusedValueTest[] ValueTests = [];
+
+    /// <summary>The tests with a key set, in the order of the bits of <see cref="MergedAllowed"/>'s masks (at most 64).</summary>
+    public FusedValueTest[] KeyedTests = [];
+
+    /// <summary>Tagged value to the mask of <see cref="KeyedTests"/> that allow it: one lookup decides every keyed test.</summary>
+    public Utf8NameMap<FusedTestMask>? MergedAllowed;
+
+    /// <summary>The tests that match a pattern instead of a key set.</summary>
+    public FusedValueTest[] PatternTests = [];
+
+    public bool HasValueTests => this.ValueTests.Length > 0;
+}
+
+/// <summary>The keyed tests a value satisfies, as a bit per test.</summary>
+internal sealed class FusedTestMask(ulong mask)
+{
+    public readonly ulong Mask = mask;
 }
 
 /// <summary>
@@ -534,6 +552,7 @@ internal static class FusedObjects
             if (valueTestsByEntry.TryGetValue(i, out List<FusedValueTest>? entryTests))
             {
                 fusedEntry.ValueTests = [.. entryTests];
+                MergeValueTests(fusedEntry);
             }
 
             entries[i] = fusedEntry;
@@ -543,6 +562,47 @@ internal static class FusedObjects
         fused.EntryList = entries;
         fused.Entries = new Utf8NameMap<FusedEntry>(mapEntries);
         return fused;
+    }
+
+    /// <summary>
+    /// Splits an entry's value tests into pattern tests and keyed tests, and merges the keyed tests' sets into one
+    /// map from tagged value to the mask of tests that allow it (up to 64 keyed tests; beyond that the keyed tests
+    /// are consulted one by one).
+    /// </summary>
+    private static void MergeValueTests(FusedEntry entry)
+    {
+        var keyed = new List<FusedValueTest>();
+        var patterns = new List<FusedValueTest>();
+        foreach (FusedValueTest test in entry.ValueTests)
+        {
+            (test.Pattern is not null ? patterns : keyed).Add(test);
+        }
+
+        entry.PatternTests = [.. patterns];
+        entry.KeyedTests = [.. keyed];
+        if (keyed.Count == 0 || keyed.Count > 64)
+        {
+            entry.MergedAllowed = null;
+            return;
+        }
+
+        var masks = new Dictionary<string, (byte[] Key, ulong Mask)>(StringComparer.Ordinal);
+        for (int t = 0; t < keyed.Count; t++)
+        {
+            foreach (byte[] key in keyed[t].Allowed!.Keys)
+            {
+                string text = Convert.ToBase64String(key);
+                masks[text] = (key, (masks.TryGetValue(text, out (byte[] Key, ulong Mask) existing) ? existing.Mask : 0UL) | (1UL << t));
+            }
+        }
+
+        var pairs = new List<KeyValuePair<byte[], FusedTestMask>>(masks.Count);
+        foreach ((byte[] key, ulong mask) in masks.Values)
+        {
+            pairs.Add(new KeyValuePair<byte[], FusedTestMask>(key, new FusedTestMask(mask)));
+        }
+
+        entry.MergedAllowed = new Utf8NameMap<FusedTestMask>(pairs);
     }
 
     /// <summary>A child that is <c>true</c> covers the property without a call; a type-only leaf is a token-type test.</summary>

@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Linq;
 using Corvus.Text.Json;
 using Corvus.Text.Json.RuntimeEvaluator;
 using Corvus.Text.Json.RuntimeEvaluator.Compilation;
@@ -217,6 +218,55 @@ public class FusedObjectTests
             bool general = evaluator.Evaluate(doc.RootElement, collector);
             Assert.AreEqual(general, evaluator.Evaluate(doc.RootElement), $"flag mode differs for {instance}");
             Assert.AreEqual(general, loaded.Evaluate(doc.RootElement), $"image differs for {instance}");
+        }
+    }
+
+    [TestMethod]
+    public void SeveralKeyedConditionsOnOnePropertyShareOneLookup()
+    {
+        // Three conditions key the same property: two by string constants, one by integers. One lookup of the value
+        // must decide all of them, including a non-canonical number that equals a keyed integer.
+        const string schema = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "properties": {"kind": true, "a": {"type": "integer"}, "b": {"type": "string"}, "c": {"type": "boolean"}},
+              "allOf": [
+                {"if": {"properties": {"kind": {"const": "alpha"}}, "required": ["kind"]}, "then": {"required": ["a"]}},
+                {"if": {"properties": {"kind": {"enum": ["alpha", "beta"]}}, "required": ["kind"]}, "then": {"required": ["b"]}},
+                {"if": {"properties": {"kind": {"enum": [1, 2]}}, "required": ["kind"]}, "then": {"required": ["c"]}}
+              ],
+              "unevaluatedProperties": false
+            }
+            """;
+        using JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(schema);
+        Assert.AreEqual(NodePlan.FusedObject, evaluator.Program.Nodes[evaluator.RootNode].Plan);
+        FusedEntry kind = evaluator.Program.Nodes[evaluator.RootNode].Fused!.EntryList.First(e => e.Name.AsSpan().SequenceEqual("kind"u8));
+        Assert.AreEqual(3, kind.KeyedTests.Length);
+        Assert.IsNotNull(kind.MergedAllowed, "The keyed tests merge into one map.");
+
+        using JsonSchemaEvaluator loaded = JsonSchemaEvaluator.FromProgramImage(evaluator.ToProgramImage());
+        foreach ((string instance, bool expected) in new[]
+        {
+            ("""{"kind": "alpha", "a": 1, "b": "x"}""", true),
+            ("""{"kind": "alpha", "a": 1}""", false),
+            ("""{"kind": "alpha", "b": "x"}""", false),
+            ("""{"kind": "beta", "b": "x"}""", true),
+            ("""{"kind": "beta"}""", false),
+            ("""{"kind": 2, "c": true}""", true),
+            ("""{"kind": 2}""", false),
+            ("""{"kind": 2.0, "c": true}""", true),
+            ("""{"kind": 2.0}""", false),
+            ("""{"kind": "gamma"}""", true),
+            ("""{"kind": null}""", true),
+            ("""{"kind": "\u0061lpha", "a": 1, "b": "x"}""", true),
+        })
+        {
+            using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(instance);
+            using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Basic);
+            bool general = evaluator.Evaluate(doc.RootElement, collector);
+            Assert.AreEqual(expected, general, "general " + instance);
+            Assert.AreEqual(expected, evaluator.Evaluate(doc.RootElement), "fused " + instance);
+            Assert.AreEqual(expected, loaded.Evaluate(doc.RootElement), "image " + instance);
         }
     }
 
