@@ -44,16 +44,22 @@ internal static partial class Evaluator
     {
         SchemaNode[] nodes = program.Nodes;
         SchemaNode root = nodes[rootNode];
-        var state = new EvaluationState
-        {
-            Program = program,
-            Nodes = nodes,
-            MaxDepth = program.Options.MaxDepth,
-            EntryResource = root.ResourceId,
-            Raw = raw,
-            RawRows = raw.Rows,
-            RawUtf8 = raw.Utf8.Span,
-        };
+
+        // Every field written once, in place: an object initializer builds a zeroed temporary and copies it over.
+        Unsafe.SkipInit(out EvaluationState state);
+        state.Program = program;
+        state.Nodes = nodes;
+        state.Collector = null;
+        state.Scope = default;
+        state.ScopeDepth = 0;
+        state.RentedScope = null;
+        state.Depth = 0;
+        state.MaxDepth = program.Options.MaxDepth;
+        state.UsesDynamicScope = false;
+        state.EntryResource = root.ResourceId;
+        state.Raw = raw;
+        state.RawRows = raw.Rows;
+        state.RawUtf8 = raw.Utf8.Span;
 
         if (root.ElidedTarget >= 0)
         {
@@ -68,6 +74,8 @@ internal static partial class Evaluator
         return EvalChildFast<RawAccess>(root, document, index, ref state);
     }
 
+    // Not inlined: its scope buffer would otherwise sit in the flag-mode entry's frame and be zeroed on every call.
+    [MethodImpl(MethodImplOptions.NoInlining)]
     private static bool EvaluateGeneral(CompiledSchema program, int rootNode, IJsonDocument document, int index, IJsonSchemaResultsCollector? collector)
     {
         Span<int> scope = stackalloc int[32];

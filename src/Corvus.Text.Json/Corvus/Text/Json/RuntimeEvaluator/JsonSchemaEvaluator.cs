@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 #if !STJ
 using Corvus.Text.Json.Internal;
@@ -24,6 +25,7 @@ namespace Corvus.Text.Json.RuntimeEvaluator;
 /// <see cref="JsonSchemaResultsCollector"/> produces basic, detailed or verbose results (and annotations
 /// via <see cref="JsonSchemaAnnotationProducer"/>).
 /// </remarks>
+[SkipLocalsInit]
 public sealed class JsonSchemaEvaluator : IDisposable
 {
     private readonly CompiledSchema program;
