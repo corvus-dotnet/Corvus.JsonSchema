@@ -732,6 +732,39 @@ profile-driven layout), which native AOT lacks. The trade is therefore start-up 
 starts in 4 to 25 ms where the JIT takes 120 to 320 ms, and settles 15 to 20% slower per evaluation. Table:
 `warm-2026-09-12.md`.
 
+## The four-axis table (2026-09-12, evening)
+
+One table, eight implementations by 37 corpora, four measures each: `summary2-2026-09-12.md` in the session notes.
+The rows pair Blaze's two paths (compile at run time; validate from its precompiled template) with ours: the runtime
+evaluator compiling at run time, the runtime evaluator loading a program image, and the shipping generator's
+strongly typed models, each under the JIT and as native AOT. The measures: cold (one fresh process, prepare, read
+the instances, validate each once), warm (per evaluation at steady state), compile (the preparation step alone;
+for generated code, its first evaluation), and memory as bytes allocated per evaluation at steady state (the
+harness's `GC.GetAllocatedBytesForCurrentThread` over the timed loop; Blaze's binary carries its own allocator, so
+its column is not measurable from outside, though its heap is flat across benchmark loops). Medians over the corpora:
+
+| implementation | cold | warm | compile | memory | warm faster than Blaze on |
+|---|---:|---:|---:|---:|---:|
+| blaze-compile | 10.5 ms | 118 µs | 2.9 ms | n/a | |
+| blaze-template | 9.8 ms | 118 µs | 0 | n/a | |
+| corvus-runtime-jit | 154 ms | 80 µs | 77 ms | 0 B | 31 of 37 |
+| corvus-runtime-aot | 5.2 ms | 108 µs | 0.34 ms | 0 B | 22 of 37 |
+| corvus-image-jit | 108 ms | 80 µs | 26 ms | 0 B | 31 of 37 |
+| corvus-image-aot | 4.7 ms | 108 µs | 0.16 ms | 0 B | 22 of 37 |
+| corvus-generated-jit | 132 ms | 352 µs | 26 ms | 0 B | 1 of 37 |
+| corvus-generated-aot | 6.7 ms | 513 µs | 0.07 ms | 0 B | 0 of 37 |
+
+Two things the table settles. The runtime evaluator allocates nothing per evaluation on any corpus, under the JIT or
+AOT. And the shipping generator's validation code is 4.4 times slower than the runtime evaluator at steady state
+under the JIT (352 against 80 µs at the median) and behind Blaze on 36 of 37 corpora, where the runtime evaluator is
+ahead on 31; under AOT the generated code is slower still (513 µs), the runtime evaluator 108 µs. Cold start is the
+other way round for the JIT rows only because generated code has no schema to compile; under AOT every Corvus row
+starts in 5 to 7 ms against Blaze's 10.
+
+A measurement lesson from the generated rows: their first take subtracted a clock overhead read at 140 to 480 ns
+instead of 14 on twelve corpora, a tier-0 loop in a method run once, which took a 100 µs corpus down to 25. The
+clock's cost is now taken from a warmed non-generic loop as the minimum over several batches, in both measurements.
+
 ## Against Blaze (2026-09-11)
 
 Blaze is run through the Sourcemeta `jsonschema` CLI release binary (`benchmarks/.../tools/blaze-compare.py`, see
