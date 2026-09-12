@@ -653,6 +653,17 @@ keywords, then the `if` and the branch it selects dispatched as plain children. 
 last alternatives only, also matches without the regex now; jsconfig did not move, so that pattern is not on its
 hot path.
 
+The entry's fixed cost, read from the tier-1 listing of the public `Evaluate`: it inlined the whole flag-mode
+entry and with it the general entry's stack scope buffer, which the frame then zeroed on every call (the public
+class lacked `SkipLocalsInit`), and the evaluation state was built as a zeroed temporary and copied over. The
+general entry is no longer inlined, the class skips locals init, and the state is written field by field in place:
+frame 376 to 232 bytes, entry code 3061 to 2827 bytes, yamllint 0.91 of the round baseline. What remains at the
+entry is the document type check, the raw-access construction and the memory-to-span conversion for the UTF-8
+text, about twenty instructions. And ui5's bundle arrays carry `additionalProperties: false`, which applies to
+nothing on an array; plan selection now treats object keywords under a type that excludes objects, and array
+keywords under a type that excludes arrays, as absent, so those nodes take the array-items plan (ui5's general-path
+nodes 7 to 4, ui5-manifest 0.85 from 0.88).
+
 ## Against Blaze (2026-09-11)
 
 Blaze is run through the Sourcemeta `jsonschema` CLI release binary (`benchmarks/.../tools/blaze-compare.py`, see
