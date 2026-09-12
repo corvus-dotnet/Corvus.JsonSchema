@@ -75,6 +75,11 @@ if (args.Length > 0 && args[0] == "docprobe")
     return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.DocumentProbe.Run(args[1..]);
 }
 
+if (args.Length > 0 && args[0] == "generated")
+{
+    return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.GeneratedRun.Main(args[1..]);
+}
+
 if (args.Length > 0 && args[0] == "cold")
 {
     return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.ColdRun.Run(args[1..]);

@@ -30,22 +30,15 @@ public static class BlazeBasis
         Thread.Sleep(400);
         Warm(cases, 300);
 
-        Console.WriteLine($"{"corpus",-24} {"instances",9} {"sum of means",14} {"sum of stdev",14} {"overhead ns",12}");
+        Console.WriteLine($"{"corpus",-24} {"instances",9} {"sum of means",14} {"sum of stdev",14} {"overhead ns",12} {"alloc B/eval",12}");
         foreach (SourceMetaCase c in cases)
         {
-            double empty = 0;
-            for (int i = 0; i < loop; i++)
-            {
-                long a = Stopwatch.GetTimestamp();
-                long b = Stopwatch.GetTimestamp();
-                empty += (b - a) * tick;
-            }
-
-            empty /= loop;
+            double empty = ClockOverheadUs(loop, tick);
 
             double total = 0;
             double totalStdev = 0;
             JsonSchemaEvaluator evaluator = c.Evaluator;
+            long allocated = GC.GetAllocatedBytesForCurrentThread();
             foreach (ParsedJsonDocument<JsonElement> doc in c.Documents)
             {
                 double sum = 0;
@@ -67,7 +60,8 @@ public static class BlazeBasis
                 totalStdev += loop == 1 ? 0 : Math.Sqrt(Math.Max(0, (squares / loop) - (mean * mean)));
             }
 
-            Console.WriteLine($"{c.Name,-24} {c.Documents.Length,9} {Format(total),14} {Format(totalStdev),14} {empty * 1000,12:F1}");
+            double allocPerEval = (GC.GetAllocatedBytesForCurrentThread() - allocated) / (double)(loop * (long)c.Documents.Length);
+            Console.WriteLine($"{c.Name,-24} {c.Documents.Length,9} {Format(total),14} {Format(totalStdev),14} {empty * 1000,12:F1} {allocPerEval,12:F2}");
         }
 
         foreach (SourceMetaCase c in cases)
@@ -76,6 +70,34 @@ public static class BlazeBasis
         }
 
         return 0;
+    }
+
+    /// <summary>
+    /// The clock's own cost per timed evaluation: a warmed, non-generic loop of timestamp pairs, the minimum mean over
+    /// several batches, so that tier-0 code or a stray interruption cannot inflate what is subtracted.
+    /// </summary>
+    public static double ClockOverheadUs(int loop, double tick)
+    {
+        double best = double.MaxValue;
+        for (int batch = 0; batch < 7; batch++)
+        {
+            best = Math.Min(best, EmptyLoopUs(loop, tick) / loop);
+        }
+
+        return best;
+    }
+
+    private static double EmptyLoopUs(int loop, double tick)
+    {
+        double empty = 0;
+        for (int i = 0; i < loop; i++)
+        {
+            long a = Stopwatch.GetTimestamp();
+            long b = Stopwatch.GetTimestamp();
+            empty += (b - a) * tick;
+        }
+
+        return empty;
     }
 
     private static void Warm(List<SourceMetaCase> cases, int milliseconds)

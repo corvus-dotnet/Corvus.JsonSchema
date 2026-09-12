@@ -22,4 +22,17 @@
     <Compile Include="../Corvus.Text.Json.RuntimeEvaluator.Benchmarks/SourceMeta/BlazeBasis.cs" Link="BlazeBasis.cs" />
   </ItemGroup>
 
+  <!-- With -p:ColdGenerated=true the runner also carries the checked-in generated models of every corpus, so the
+       shipping generator's validation code can be measured the same way (`generated warm|cold ...`). -->
+  <PropertyGroup Condition="'$(ColdGenerated)' == 'true'">
+    <DefineConstants>$(DefineConstants);COLD_GENERATED</DefineConstants>
+    <SourceMetaModels>AnsibleMeta;AwsCdk;Babelrc;ClangFormat;CmakePresets;CodeClimate;Cql2;Cspell;Cypress;Deno;Dependabot;Draft04;FabricMod;GeoJson;GitpodConfiguration;HelmChartLock;Importmap;Jasmine;Jsconfig;Jshintrc;Krakend;Lazygit;Lerna;NestCli;Omnisharp;Openapi;PreCommitHooks;Pulumi;SemanticRelease;Stale;Stylecop;Tmuxinator;Ui5;Ui5Manifest;UnrealEngineUproject;Vercel;Yamllint</SourceMetaModels>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(ColdGenerated)' == 'true'">
+    <SourceMetaModel Include="$(SourceMetaModels)" />
+    <ProjectReference Include="@(SourceMetaModel->'../Corvus.Text.Json.%(Identity)BenchmarkModels/Corvus.Text.Json.%(Identity)BenchmarkModels.csproj')" />
+    <Compile Include="../Corvus.Text.Json.RuntimeEvaluator.Benchmarks/SourceMeta/GeneratedCases.cs" Link="GeneratedCases.cs" />
+    <Compile Include="../Corvus.Text.Json.RuntimeEvaluator.Benchmarks/SourceMeta/GeneratedRun.cs" Link="GeneratedRun.cs" />
+  </ItemGroup>
+
 </Project>
