@@ -213,14 +213,17 @@ internal sealed class PatternMatcher
     private readonly int min;
     private readonly int max;
     private readonly ClassAtom[]? atoms;
-    private readonly ClassAtom[][]? alternatives;
+    private readonly PatternSequence[]? sequences;
+    private readonly SeparatedList? separated;
     private readonly byte[][]? literals;
     private readonly LiteralAnchor[]? anchors;
     private readonly Kind kind;
 
-    private PatternMatcher(Kind kind, string source, Regex? regex, byte[]? prefix, int min, int max, ClassAtom[]? atoms = null, byte[][]? literals = null, ClassAtom[][]? alternatives = null, LiteralAnchor[]? anchors = null)
+    private PatternMatcher(Kind kind, string source, Regex? regex, byte[]? prefix, int min, int max, ClassAtom[]? atoms = null, byte[][]? literals = null, LiteralAnchor[]? anchors = null, PatternSequence[]? sequences = null, SeparatedList? separated = null)
     {
         this.anchors = anchors;
+        this.sequences = sequences;
+        this.separated = separated;
         this.kind = kind;
         this.Source = source;
         this.regex = regex;
@@ -228,7 +231,6 @@ internal sealed class PatternMatcher
         this.min = min;
         this.max = max;
         this.atoms = atoms;
-        this.alternatives = alternatives;
         this.literals = literals;
     }
 
@@ -246,9 +248,8 @@ internal sealed class PatternMatcher
         NonEmpty,
         Prefix,
         Range,
-        ClassSequence,
-        PrefixSequence,
-        Alternatives,
+        Sequences,
+        SeparatedList,
         ExcludedClassWithWord,
         Literals,
         AnchoredLiterals,
@@ -303,21 +304,19 @@ internal sealed class PatternMatcher
             return new PatternMatcher(Kind.AnchoredLiterals, ecmaPattern, null, null, 0, 0, literals: literals, anchors: anchors);
         }
 
-        if (TryParseAlternatives(ecmaPattern, out ClassAtom[][]? alternatives))
-        {
-            return alternatives.Length == 1
-                ? new PatternMatcher(Kind.ClassSequence, ecmaPattern, null, null, 0, 0, atoms: alternatives[0])
-                : new PatternMatcher(Kind.Alternatives, ecmaPattern, null, null, 0, 0, alternatives: alternatives);
-        }
-
-        if (TryParsePrefixSequence(ecmaPattern, out ClassAtom[]? prefixAtoms))
-        {
-            return new PatternMatcher(Kind.PrefixSequence, ecmaPattern, null, null, 0, 0, atoms: prefixAtoms);
-        }
-
         if (TryParseExcludedClassWithWord(ecmaPattern, out ClassAtom[]? excluded))
         {
             return new PatternMatcher(Kind.ExcludedClassWithWord, ecmaPattern, null, null, 0, 0, atoms: excluded);
+        }
+
+        if (TryParseSeparatedList(ecmaPattern, out SeparatedList? separated))
+        {
+            return new PatternMatcher(Kind.SeparatedList, ecmaPattern, null, null, 0, 0, separated: separated);
+        }
+
+        if (TryParseSequences(ecmaPattern, out PatternSequence[]? sequences))
+        {
+            return new PatternMatcher(Kind.Sequences, ecmaPattern, null, null, 0, 0, sequences: sequences);
         }
 
         if (options.RegexProvider is JsonSchemaRegexProvider provider && provider(patternIndex, ecmaPattern) is Regex provided)
@@ -353,10 +352,9 @@ internal sealed class PatternMatcher
             Kind.Prefix => utf8Value.StartsWith(this.prefix),
             Kind.Literals => MatchesLiterals(this.literals!, utf8Value),
             Kind.AnchoredLiterals => MatchesAnchoredLiterals(this.literals!, this.anchors!, utf8Value),
-            Kind.ClassSequence => MatchesClassSequence(this.atoms!, utf8Value),
-            Kind.PrefixSequence => MatchesPrefixSequence(this.atoms!, utf8Value),
+            Kind.Sequences => MatchesSequences(this.sequences!, utf8Value),
+            Kind.SeparatedList => MatchesSeparatedList(this.separated!, utf8Value),
             Kind.ExcludedClassWithWord => MatchesExcludedClassWithWord(this.atoms!, utf8Value),
-            Kind.Alternatives => MatchesAlternatives(this.alternatives!, utf8Value),
 #if STJ
             Kind.Range => !ContainsLineTerminator(utf8Value) && RuneCount(utf8Value) >= this.min && RuneCount(utf8Value) <= this.max,
             _ => this.regex!.IsMatch(System.Text.Encoding.UTF8.GetString(utf8Value)),
@@ -416,22 +414,37 @@ internal sealed class PatternMatcher
         return true;
     }
 
-    /// <summary>
-    /// An anchored sequence of ASCII character classes with quantifiers, matched on UTF-8 without a regular
-    /// expression: <c>^[a-z][a-z0-9_]+$</c>, <c>^\d{4}-\d{2}-\d{2}$</c>, <c>^[A-F0-9]{1,32}$</c>. Every atom but the
-    /// last has a fixed count, so no backtracking is needed; the last is greedy to the end. Classes are ASCII only,
-    /// so a byte of a multi-byte character never matches and the character count is the byte count.
-    /// </summary>
-    internal readonly struct ClassAtom
+    /// <summary>The non-ASCII characters a class admits, in the three parts ECMA-262's classes distinguish: the line separators U+2028 and U+2029, the other non-ASCII members of <c>\s</c>, and everything else.</summary>
+    [Flags]
+    internal enum NonAscii : byte
     {
-        public ClassAtom(ulong bits0, ulong bits1, int min, int max, bool anyRune = false)
+        None = 0,
+        LineSeparators = 1,
+        Spaces = 2,
+        Others = 4,
+        All = 7,
+    }
+
+    /// <summary>
+    /// One class (or literal, or <c>.</c>) with its quantifier: an ASCII bitset plus which non-ASCII characters it
+    /// admits. ECMA-262 classes are ASCII (<c>\w</c> is <c>[a-zA-Z0-9_]</c>), so a non-ASCII character can only be
+    /// admitted wholesale by a negated class, by <c>\W</c>, <c>\D</c> or <c>\S</c>, as one of the <c>\s</c> spaces,
+    /// or by <c>.</c>.
+    /// </summary>
+    internal readonly struct ClassAtom : IEquatable<ClassAtom>
+    {
+        public ClassAtom(ulong bits0, ulong bits1, int min, int max, NonAscii extra = NonAscii.None, byte[]? rune = null)
         {
             this.Bits0 = bits0;
             this.Bits1 = bits1;
             this.Min = min;
             this.Max = max;
-            this.AnyRune = anyRune;
+            this.Extra = extra;
+            this.Rune = rune;
         }
+
+        /// <summary>A single non-ASCII character the atom admits (its UTF-8 bytes), for a literal outside ASCII.</summary>
+        public byte[]? Rune { get; }
 
         public ulong Bits0 { get; }
 
@@ -439,10 +452,50 @@ internal sealed class PatternMatcher
 
         public int Min { get; }
 
+        /// <summary>The maximum count, or -1 for unbounded.</summary>
         public int Max { get; }
 
-        /// <summary>Gets a value indicating whether the atom is <c>.</c>: any code point but a line terminator.</summary>
-        public bool AnyRune { get; }
+        public NonAscii Extra { get; }
+
+        /// <summary>Whether the atom consumes a fixed number of characters.</summary>
+        public bool Fixed => this.Min == this.Max;
+
+        /// <summary>The atom for <c>.</c>: everything but the line terminators.</summary>
+        public static ClassAtom Dot(int min, int max) => new(~((1UL << '\n') | (1UL << '\r')), ulong.MaxValue, min, max, NonAscii.Spaces | NonAscii.Others);
+
+        /// <summary>Classifies a non-ASCII character (its UTF-8 bytes) into the parts of <see cref="NonAscii"/>.</summary>
+        public static NonAscii Classify(ReadOnlySpan<byte> rune)
+        {
+            // U+2028/U+2029 are E2 80 A8/A9. The other ECMA-262 \s members: U+00A0 (C2 A0), U+1680 (E1 9A 80),
+            // U+2000-U+200A (E2 80 80-8A), U+202F (E2 80 AF), U+205F (E2 81 9F), U+3000 (E3 80 80), U+FEFF (EF BB BF).
+            if (rune.Length == 2)
+            {
+                return rune[0] == 0xC2 && rune[1] == 0xA0 ? NonAscii.Spaces : NonAscii.Others;
+            }
+
+            if (rune.Length == 3)
+            {
+                byte b0 = rune[0];
+                byte b1 = rune[1];
+                byte b2 = rune[2];
+                if (b0 == 0xE2 && b1 == 0x80)
+                {
+                    if (b2 == 0xA8 || b2 == 0xA9)
+                    {
+                        return NonAscii.LineSeparators;
+                    }
+
+                    return (b2 >= 0x80 && b2 <= 0x8A) || b2 == 0xAF ? NonAscii.Spaces : NonAscii.Others;
+                }
+
+                if ((b0 == 0xE1 && b1 == 0x9A && b2 == 0x80) || (b0 == 0xE2 && b1 == 0x81 && b2 == 0x9F) || (b0 == 0xE3 && b1 == 0x80 && b2 == 0x80) || (b0 == 0xEF && b1 == 0xBB && b2 == 0xBF))
+                {
+                    return NonAscii.Spaces;
+                }
+            }
+
+            return NonAscii.Others;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Contains(byte b)
@@ -450,7 +503,24 @@ internal sealed class PatternMatcher
             return b < 64 ? (this.Bits0 & (1UL << b)) != 0 : b < 128 && (this.Bits1 & (1UL << (b - 64))) != 0;
         }
 
-        /// <summary>Consumes one occurrence of the atom at <paramref name="pos"/> (one byte, or one UTF-8 sequence for <c>.</c>).</summary>
+        /// <summary>Whether no character is in both atoms.</summary>
+        public bool Disjoint(in ClassAtom other)
+        {
+            if ((this.Bits0 & other.Bits0) != 0 || (this.Bits1 & other.Bits1) != 0 || (this.Extra & other.Extra) != 0)
+            {
+                return false;
+            }
+
+            return (this.Rune is null || !other.Admits(this.Rune)) && (other.Rune is null || !this.Admits(other.Rune));
+        }
+
+        /// <summary>Whether two atoms admit the same characters, whatever their counts.</summary>
+        public bool SameClass(in ClassAtom other)
+        {
+            return this.Bits0 == other.Bits0 && this.Bits1 == other.Bits1 && this.Extra == other.Extra
+                && (this.Rune is null ? other.Rune is null : other.Rune is not null && this.Rune.AsSpan().SequenceEqual(other.Rune));
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryConsume(ReadOnlySpan<byte> value, ref int pos)
         {
@@ -460,7 +530,7 @@ internal sealed class PatternMatcher
             }
 
             byte b = value[pos];
-            if (!this.AnyRune)
+            if (b < 0x80)
             {
                 if (!this.Contains(b))
                 {
@@ -471,20 +541,15 @@ internal sealed class PatternMatcher
                 return true;
             }
 
-            if (b < 0x80)
-            {
-                if (b == (byte)'\n' || b == (byte)'\r')
-                {
-                    return false;
-                }
+            return this.TryConsumeNonAscii(value, ref pos, b);
+        }
 
-                pos++;
-                return true;
-            }
-
-            // The text is valid UTF-8, so the lead byte gives the length; U+2028 and U+2029 are line terminators.
-            int length = b >= 0xF0 ? 4 : b >= 0xE0 ? 3 : 2;
-            if (pos + length > value.Length || (length == 3 && b == 0xE2 && value[pos + 1] == 0x80 && (value[pos + 2] == 0xA8 || value[pos + 2] == 0xA9)))
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private bool TryConsumeNonAscii(ReadOnlySpan<byte> value, ref int pos, byte lead)
+        {
+            // The text is valid UTF-8, so the lead byte gives the length.
+            int length = lead >= 0xF0 ? 4 : lead >= 0xE0 ? 3 : 2;
+            if (pos + length > value.Length || !this.Admits(value.Slice(pos, length)))
             {
                 return false;
             }
@@ -492,9 +557,962 @@ internal sealed class PatternMatcher
             pos += length;
             return true;
         }
+
+        /// <summary>Consumes one character ending at <paramref name="end"/> (exclusive), moving it back.</summary>
+        public bool TryConsumeBackward(ReadOnlySpan<byte> value, ref int end)
+        {
+            if (end <= 0)
+            {
+                return false;
+            }
+
+            int start = end - 1;
+            byte b = value[start];
+            if (b < 0x80)
+            {
+                if (!this.Contains(b))
+                {
+                    return false;
+                }
+
+                end = start;
+                return true;
+            }
+
+            while (start > 0 && (value[start] & 0xC0) == 0x80)
+            {
+                start--;
+            }
+
+            if (!this.Admits(value.Slice(start, end - start)))
+            {
+                return false;
+            }
+
+            end = start;
+            return true;
+        }
+
+        public bool Equals(ClassAtom other)
+        {
+            return this.SameClass(other) && this.Min == other.Min && this.Max == other.Max;
+        }
+
+        public override bool Equals(object? obj) => obj is ClassAtom other && this.Equals(other);
+
+        public override int GetHashCode() => HashCode.Combine(this.Bits0, this.Bits1, this.Min, this.Max, this.Extra);
+
+        private bool Admits(ReadOnlySpan<byte> rune)
+        {
+            if (this.Rune is byte[] exact && rune.SequenceEqual(exact))
+            {
+                return true;
+            }
+
+            NonAscii extra = this.Extra;
+            if (extra == NonAscii.All)
+            {
+                return true;
+            }
+
+            return extra != NonAscii.None && (extra & Classify(rune)) != 0;
+        }
+    }
+
+    /// <summary>Where a sequence is anchored: the alternatives of <c>^a|b|c$</c> anchor only the first at the start and the last at the end.</summary>
+    internal enum SequenceAnchor : byte
+    {
+        None,
+        Start,
+        End,
+        Both,
+    }
+
+    /// <summary>
+    /// A sequence of atoms with an anchoring. Every variable atom but the last is followed by a fixed atom disjoint
+    /// from it, so consuming it greedily is exact; the atoms after the last variable one are fixed and are matched
+    /// from the end. No backtracking is ever needed.
+    /// </summary>
+    internal sealed class PatternSequence
+    {
+        public PatternSequence(ClassAtom[] atoms, SequenceAnchor anchor)
+        {
+            this.Atoms = atoms;
+            this.Anchor = anchor;
+            this.LastVariable = -1;
+            int minimum = 0;
+            for (int i = 0; i < atoms.Length; i++)
+            {
+                if (!atoms[i].Fixed)
+                {
+                    this.LastVariable = i;
+                }
+
+                minimum += atoms[i].Min;
+            }
+
+            this.MinimumLength = minimum;
+            if (atoms.Length > 0 && atoms[0].Min >= 1 && atoms[0].Extra == NonAscii.None && atoms[0].Rune is null)
+            {
+                var bytes = new List<byte>(4);
+                for (int b = 0; b < 128 && bytes.Count <= 3; b++)
+                {
+                    if (atoms[0].Contains((byte)b))
+                    {
+                        bytes.Add((byte)b);
+                    }
+                }
+
+                if (bytes.Count <= 3)
+                {
+                    this.StartBytes = [.. bytes];
+                }
+            }
+        }
+
+        /// <summary>The first atom's characters when they are at most three ASCII bytes, for a vectorised search.</summary>
+        public byte[]? StartBytes { get; }
+
+        public ClassAtom[] Atoms { get; }
+
+        public SequenceAnchor Anchor { get; }
+
+        /// <summary>The index of the last variable atom, or -1.</summary>
+        public int LastVariable { get; }
+
+        /// <summary>The fewest characters (so at least as many bytes) a match takes.</summary>
+        public int MinimumLength { get; }
+
+        /// <summary>Whether a match could start at <paramref name="start"/>: the first atom admits the character there (or needs none).</summary>
+        public bool CanStartAt(ReadOnlySpan<byte> value, int start)
+        {
+            if (this.Atoms.Length == 0 || this.Atoms[0].Min == 0)
+            {
+                return true;
+            }
+
+            if (start >= value.Length)
+            {
+                return false;
+            }
+
+            ref readonly ClassAtom first = ref this.Atoms[0];
+            byte b = value[start];
+            return b < 0x80 ? first.Contains(b) : first.Extra != NonAscii.None || first.Rune is not null;
+        }
+    }
+
+    /// <summary>
+    /// <c>^item(separator item)*$</c> (or <c>+</c>, or <c>^(item separator)*item$</c>): the item's last atom may be
+    /// variable, the separator is fixed and starts with a character the item's variable atom does not admit, so the
+    /// list splits exactly where the greedy item stops.
+    /// </summary>
+    internal sealed class SeparatedList
+    {
+        public SeparatedList(ClassAtom[]? first, ClassAtom[] repeated, ClassAtom[]? final, ClassAtom[] separator, int minRepeats)
+        {
+            this.First = first;
+            this.Repeated = repeated;
+            this.Final = final is null ? null : new PatternSequence(final, SequenceAnchor.Both);
+            this.Separator = separator;
+            this.MinRepeats = minRepeats;
+        }
+
+        /// <summary>The first item when it differs from the repeated one (<c>^first(separator item)*$</c>).</summary>
+        public ClassAtom[]? First { get; }
+
+        public ClassAtom[] Repeated { get; }
+
+        /// <summary>The last item when it differs from the repeated one (<c>^(item separator)*final$</c>), matched over the remainder.</summary>
+        public PatternSequence? Final { get; }
+
+        public ClassAtom[] Separator { get; }
+
+        public int MinRepeats { get; }
     }
 
     /// <summary>ECMA-262 <c>.</c> excludes the line terminators U+000A, U+000D, U+2028 and U+2029.</summary>
+    private static bool MatchesSequences(PatternSequence[] sequences, ReadOnlySpan<byte> value)
+    {
+        if (sequences.Length == 1 && sequences[0].Anchor == SequenceAnchor.Both)
+        {
+            return MatchWhole(sequences[0], value);
+        }
+
+        for (int i = 0; i < sequences.Length; i++)
+        {
+            if (MatchesSequence(sequences[i], value))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool MatchesSequence(PatternSequence sequence, ReadOnlySpan<byte> value)
+    {
+        switch (sequence.Anchor)
+        {
+            case SequenceAnchor.Both:
+                return MatchWhole(sequence, value);
+            case SequenceAnchor.Start:
+                return MatchPrefix(sequence, value);
+            case SequenceAnchor.End:
+                return Search(sequence, value, whole: true);
+            default:
+                return Search(sequence, value, whole: false);
+        }
+    }
+
+    /// <summary>A match starting at any character boundary: positions the first atom rejects, or too near the end, are skipped without an attempt.</summary>
+    private static bool Search(PatternSequence sequence, ReadOnlySpan<byte> value, bool whole)
+    {
+        int minimum = sequence.MinimumLength;
+        int start = 0;
+        if (sequence.StartBytes is byte[] sb)
+        {
+            while (value.Length - start >= minimum)
+            {
+                ReadOnlySpan<byte> rest = value[start..];
+                int at = sb.Length == 1 ? rest.IndexOf(sb[0]) : sb.Length == 2 ? rest.IndexOfAny(sb[0], sb[1]) : sb.Length == 3 ? rest.IndexOfAny(sb[0], sb[1], sb[2]) : -1;
+                if (at < 0)
+                {
+                    return false;
+                }
+
+                start += at;
+                if (value.Length - start < minimum)
+                {
+                    return false;
+                }
+
+                if (whole ? MatchWhole(sequence, value[start..]) : MatchPrefix(sequence, value[start..]))
+                {
+                    return true;
+                }
+
+                start++;
+            }
+
+            return false;
+        }
+
+        while (value.Length - start >= minimum)
+        {
+            if (sequence.CanStartAt(value, start) && (whole ? MatchWhole(sequence, value[start..]) : MatchPrefix(sequence, value[start..])))
+            {
+                return true;
+            }
+
+            if (start >= value.Length)
+            {
+                return false;
+            }
+
+            start++;
+            while (start < value.Length && (value[start] & 0xC0) == 0x80)
+            {
+                start++;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>Consumes the atoms before the last variable one: fixed atoms their count, variable ones greedily.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool ConsumeHead(ClassAtom[] atoms, int upTo, ReadOnlySpan<byte> value, ref int pos)
+    {
+        for (int a = 0; a < upTo; a++)
+        {
+            ref readonly ClassAtom atom = ref atoms[a];
+            if (atom.Fixed)
+            {
+                for (int n = 0; n < atom.Min; n++)
+                {
+                    if (!atom.TryConsume(value, ref pos))
+                    {
+                        return false;
+                    }
+                }
+            }
+            else
+            {
+                int count = 0;
+                while ((atom.Max < 0 || count < atom.Max) && atom.TryConsume(value, ref pos))
+                {
+                    count++;
+                }
+
+                if (count < atom.Min)
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>The whole value, anchored at both ends.</summary>
+    private static bool MatchWhole(PatternSequence sequence, ReadOnlySpan<byte> value)
+    {
+        ClassAtom[] atoms = sequence.Atoms;
+        int last = sequence.LastVariable;
+        int pos = 0;
+        if (!ConsumeHead(atoms, last < 0 ? atoms.Length : last, value, ref pos))
+        {
+            return false;
+        }
+
+        if (last < 0)
+        {
+            return pos == value.Length;
+        }
+
+        int end = value.Length;
+        for (int a = atoms.Length - 1; a > last; a--)
+        {
+            ref readonly ClassAtom atom = ref atoms[a];
+            for (int n = 0; n < atom.Min; n++)
+            {
+                if (!atom.TryConsumeBackward(value, ref end))
+                {
+                    return false;
+                }
+            }
+        }
+
+        if (end < pos)
+        {
+            return false;
+        }
+
+        ref readonly ClassAtom variable = ref atoms[last];
+        int count = 0;
+        while (pos < end)
+        {
+            if (!variable.TryConsume(value, ref pos))
+            {
+                return false;
+            }
+
+            count++;
+        }
+
+        return count >= variable.Min && (variable.Max < 0 || count <= variable.Max);
+    }
+
+    /// <summary>Anchored at the start only: the rest of the value is free after the last atom.</summary>
+    private static bool MatchPrefix(PatternSequence sequence, ReadOnlySpan<byte> value)
+    {
+        ClassAtom[] atoms = sequence.Atoms;
+        int last = sequence.LastVariable;
+        int pos = 0;
+        if (!ConsumeHead(atoms, last < 0 ? atoms.Length : last, value, ref pos))
+        {
+            return false;
+        }
+
+        if (last < 0)
+        {
+            return true;
+        }
+
+        ref readonly ClassAtom variable = ref atoms[last];
+        int count = 0;
+        int p = pos;
+        while ((variable.Max < 0 || count < variable.Max) && variable.TryConsume(value, ref p))
+        {
+            count++;
+        }
+
+        if (count < variable.Min)
+        {
+            return false;
+        }
+
+        if (last == atoms.Length - 1)
+        {
+            return true;
+        }
+
+        // The fixed tail may need the variable atom to give characters back; try each extent from the greedy one down.
+        while (true)
+        {
+            if (TailMatchesAt(atoms, last + 1, value, p))
+            {
+                return true;
+            }
+
+            if (count == variable.Min)
+            {
+                return false;
+            }
+
+            p--;
+            while (p > pos && (value[p] & 0xC0) == 0x80)
+            {
+                p--;
+            }
+
+            count--;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool TailMatchesAt(ClassAtom[] atoms, int from, ReadOnlySpan<byte> value, int pos)
+    {
+        for (int a = from; a < atoms.Length; a++)
+        {
+            ref readonly ClassAtom atom = ref atoms[a];
+            for (int n = 0; n < atom.Min; n++)
+            {
+                if (!atom.TryConsume(value, ref pos))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static bool MatchesSeparatedList(SeparatedList list, ReadOnlySpan<byte> value)
+    {
+        ClassAtom[] separator = list.Separator;
+        int pos = 0;
+        int repeats = 0;
+        while (true)
+        {
+            int segment = pos;
+            ClassAtom[] item = repeats == 0 && list.First is ClassAtom[] first ? first : list.Repeated;
+            bool consumed = ConsumeHead(item, item.Length, value, ref pos);
+            if (!consumed || pos == value.Length || !TailMatchesAt(separator, 0, value, pos))
+            {
+                // The remainder is the final item, or the list ends here.
+                if (list.Final is PatternSequence final)
+                {
+                    return repeats >= list.MinRepeats && MatchWhole(final, value[segment..]);
+                }
+
+                return consumed && pos == value.Length && repeats >= list.MinRepeats;
+            }
+
+            for (int a = 0; a < separator.Length; a++)
+            {
+                for (int n = 0; n < separator[a].Min; n++)
+                {
+                    separator[a].TryConsume(value, ref pos);
+                }
+            }
+
+            repeats++;
+        }
+    }
+
+    /// <summary>
+    /// Splits a pattern on its top-level <c>|</c> (outside classes, groups and escapes).
+    /// </summary>
+    private static List<string>? SplitTopLevel(string pattern)
+    {
+        var parts = new List<string>();
+        int depth = 0;
+        bool inClass = false;
+        int start = 0;
+        for (int i = 0; i < pattern.Length; i++)
+        {
+            char c = pattern[i];
+            if (c == '\\')
+            {
+                i++;
+                continue;
+            }
+
+            if (inClass)
+            {
+                if (c == ']')
+                {
+                    inClass = false;
+                }
+
+                continue;
+            }
+
+            if (c == '[')
+            {
+                inClass = true;
+            }
+            else if (c == '(')
+            {
+                depth++;
+            }
+            else if (c == ')')
+            {
+                depth--;
+                if (depth < 0)
+                {
+                    return null;
+                }
+            }
+            else if (c == '|' && depth == 0)
+            {
+                parts.Add(pattern.Substring(start, i - start));
+                start = i + 1;
+            }
+        }
+
+        if (depth != 0 || inClass)
+        {
+            return null;
+        }
+
+        parts.Add(pattern.Substring(start));
+        return parts;
+    }
+
+    /// <summary>Removes a plain or non-capturing group that encloses the whole text, repeatedly.</summary>
+    private static string StripEnclosingGroup(string text)
+    {
+        while (text.Length >= 2 && text[0] == '(' && text[text.Length - 1] != '\\' && MatchingParen(text, 0) == text.Length - 1)
+        {
+            if (text.Length >= 3 && text[1] == '?')
+            {
+                if (text.Length >= 4 && text[2] == ':')
+                {
+                    text = text.Substring(3, text.Length - 4);
+                    continue;
+                }
+
+                return text;
+            }
+
+            text = text.Substring(1, text.Length - 2);
+        }
+
+        return text;
+    }
+
+    /// <summary>The index of the parenthesis closing the one at <paramref name="open"/>, or -1.</summary>
+    private static int MatchingParen(string text, int open)
+    {
+        int depth = 0;
+        bool inClass = false;
+        for (int i = open; i < text.Length; i++)
+        {
+            char c = text[i];
+            if (c == '\\')
+            {
+                i++;
+            }
+            else if (inClass)
+            {
+                inClass = c != ']';
+            }
+            else if (c == '[')
+            {
+                inClass = true;
+            }
+            else if (c == '(')
+            {
+                depth++;
+            }
+            else if (c == ')')
+            {
+                depth--;
+                if (depth == 0)
+                {
+                    return i;
+                }
+            }
+        }
+
+        return -1;
+    }
+
+    private static bool EndsWithUnescapedDollar(string text)
+    {
+        if (text.Length == 0 || text[text.Length - 1] != '$')
+        {
+            return false;
+        }
+
+        int backslashes = 0;
+        for (int i = text.Length - 2; i >= 0 && text[i] == '\\'; i--)
+        {
+            backslashes++;
+        }
+
+        return backslashes % 2 == 0;
+    }
+
+    /// <summary>Whether the text has an unescaped <c>^</c> or <c>$</c> outside a class (which the sequence form cannot express).</summary>
+    private static bool HasInnerAnchor(string text)
+    {
+        bool inClass = false;
+        for (int i = 0; i < text.Length; i++)
+        {
+            char c = text[i];
+            if (c == '\\')
+            {
+                i++;
+            }
+            else if (inClass)
+            {
+                inClass = c != ']';
+            }
+            else if (c == '[')
+            {
+                inClass = true;
+            }
+            else if (c == '^' || c == '$')
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static string StripFreeDotStar(string inner, bool start, bool end)
+    {
+        // A leading .* without a start anchor, or a trailing one without an end anchor, changes nothing.
+        if (!end)
+        {
+            foreach (string tail in new[] { "(?:.*)", "(.*)", ".*" })
+            {
+                if (inner.EndsWith(tail, StringComparison.Ordinal))
+                {
+                    inner = inner.Substring(0, inner.Length - tail.Length);
+                    break;
+                }
+            }
+        }
+
+        if (!start)
+        {
+            foreach (string head in new[] { "(?:.*)", "(.*)", ".*" })
+            {
+                if (inner.StartsWith(head, StringComparison.Ordinal))
+                {
+                    inner = inner.Substring(head.Length);
+                    break;
+                }
+            }
+        }
+
+        return inner;
+    }
+
+    /// <summary>
+    /// Parses a pattern as alternatives of sequences, each anchored where its own <c>^</c> and <c>$</c> say (so in
+    /// <c>^a|b|c$</c> only the first is anchored at the start and the last at the end), with groups of alternatives
+    /// and optional groups flattened into whole alternatives. A sequence qualifies when every variable atom but the
+    /// last is followed by a fixed atom disjoint from it.
+    /// </summary>
+    private static bool TryParseSequences(string pattern, [NotNullWhen(true)] out PatternSequence[]? sequences)
+    {
+        sequences = null;
+        List<string>? parts = SplitTopLevel(pattern);
+        if (parts is null)
+        {
+            return false;
+        }
+
+        var result = new List<PatternSequence>();
+        foreach (string rawPart in parts)
+        {
+            string part = StripEnclosingGroup(rawPart);
+            bool start = part.Length > 0 && part[0] == '^';
+            bool end = EndsWithUnescapedDollar(part) && !(start && part.Length == 1);
+            string inner = part.Substring(start ? 1 : 0, part.Length - (start ? 1 : 0) - (end ? 1 : 0));
+            inner = StripFreeDotStar(inner, start, end);
+            if (HasInnerAnchor(inner))
+            {
+                return false;
+            }
+
+            SequenceAnchor anchor = start && end ? SequenceAnchor.Both : start ? SequenceAnchor.Start : end ? SequenceAnchor.End : SequenceAnchor.None;
+            if (inner.Length == 0)
+            {
+                result.Add(new PatternSequence([], anchor));
+                continue;
+            }
+
+            int i = 0;
+            if (!TryParseAlternation(inner, ref i, inner.Length, depth: 1, out List<List<ClassAtom>>? alternatives) || i != inner.Length)
+            {
+                return false;
+            }
+
+            foreach (List<ClassAtom> atoms in alternatives)
+            {
+                var sequence = new PatternSequence([.. atoms], anchor);
+                if (!IsDeterministic(sequence.Atoms, sequence.LastVariable))
+                {
+                    return false;
+                }
+
+                result.Add(sequence);
+                if (result.Count > MaxAlternatives)
+                {
+                    return false;
+                }
+            }
+        }
+
+        sequences = [.. result];
+        return true;
+    }
+
+    /// <summary>
+    /// Every variable atom before the last one is followed by atoms that admit none of its characters, up to and
+    /// including the first that must consume something, so its greedy run ends exactly where the regex's would.
+    /// </summary>
+    private static bool IsDeterministic(ClassAtom[] atoms, int lastVariable)
+    {
+        for (int a = 0; a < lastVariable; a++)
+        {
+            if (atoms[a].Fixed)
+            {
+                continue;
+            }
+
+            for (int j = a + 1; j < atoms.Length; j++)
+            {
+                if (!atoms[j].Disjoint(atoms[a]))
+                {
+                    return false;
+                }
+
+                if (atoms[j].Min >= 1)
+                {
+                    break;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>Parses <c>^item(separator item)*$</c>, <c>^item(separator item)+$</c> or <c>^(item separator)*item$</c>; see <see cref="SeparatedList"/>.</summary>
+    private static bool TryParseSeparatedList(string pattern, [NotNullWhen(true)] out SeparatedList? list)
+    {
+        list = null;
+        if (pattern.Length < 4 || pattern[0] != '^' || !EndsWithUnescapedDollar(pattern))
+        {
+            return false;
+        }
+
+        string body = pattern.Substring(1, pattern.Length - 2);
+        int groupStart = -1;
+        int groupEnd = -1;
+        int depth = 0;
+        bool inClass = false;
+        for (int i = 0; i < body.Length; i++)
+        {
+            char c = body[i];
+            if (c == '\\')
+            {
+                i++;
+            }
+            else if (inClass)
+            {
+                inClass = c != ']';
+            }
+            else if (c == '[')
+            {
+                inClass = true;
+            }
+            else if (c == '(')
+            {
+                if (depth == 0)
+                {
+                    groupStart = i;
+                }
+
+                depth++;
+            }
+            else if (c == ')')
+            {
+                depth--;
+                if (depth == 0 && i + 1 < body.Length && (body[i + 1] == '*' || body[i + 1] == '+'))
+                {
+                    if (groupEnd >= 0)
+                    {
+                        return false;
+                    }
+
+                    groupEnd = i;
+                }
+            }
+        }
+
+        if (groupEnd < 0)
+        {
+            return false;
+        }
+
+        // The quantified group is the one that ends at groupEnd; find its opening parenthesis.
+        depth = 0;
+        inClass = false;
+        for (int i = groupEnd; i >= 0; i--)
+        {
+            char c = body[i];
+            if (i > 0 && body[i - 1] == '\\')
+            {
+                continue;
+            }
+
+            if (c == ')')
+            {
+                depth++;
+            }
+            else if (c == '(')
+            {
+                depth--;
+                if (depth == 0)
+                {
+                    groupStart = i;
+                    break;
+                }
+            }
+        }
+
+        int minRepeats = body[groupEnd + 1] == '+' ? 1 : 0;
+        string before = body.Substring(0, groupStart);
+        string after = body.Substring(groupEnd + 2);
+        string group = body.Substring(groupStart + 1, groupEnd - groupStart - 1);
+        if (group.StartsWith("?:", StringComparison.Ordinal))
+        {
+            group = group.Substring(2);
+        }
+        else if (group.StartsWith("?", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        if ((before.Length > 0) == (after.Length > 0))
+        {
+            return false;
+        }
+
+        bool itemFirst = before.Length > 0;
+        string itemText = itemFirst ? before : after;
+        if (itemText.Length >= 2 && itemText[0] == '(' && itemText[itemText.Length - 1] == ')' && SplitTopLevel(itemText.Substring(1, itemText.Length - 2)) is { Count: 1 })
+        {
+            itemText = itemText.Substring(1, itemText.Length - 2);
+            if (itemText.StartsWith("?:", StringComparison.Ordinal))
+            {
+                itemText = itemText.Substring(2);
+            }
+            else if (itemText.StartsWith("?", StringComparison.Ordinal))
+            {
+                return false;
+            }
+        }
+
+        if (!TryParseSingleSequence(itemText, out ClassAtom[]? item) || !TryParseSingleSequence(group, out ClassAtom[]? groupAtoms) || groupAtoms.Length <= item.Length)
+        {
+            return false;
+        }
+
+        // The group is separator + repeated item (item first) or repeated item + separator (final item last). The
+        // repeated item is the part of the group with the same classes as the outer item, else the part from its
+        // first (or up to its last) variable atom.
+        ClassAtom[] separator;
+        ClassAtom[] repeated;
+        if (itemFirst)
+        {
+            int split = SameClasses(groupAtoms, groupAtoms.Length - item.Length, item) ? groupAtoms.Length - item.Length : Array.FindIndex(groupAtoms, a => !a.Fixed);
+            if (split <= 0)
+            {
+                return false;
+            }
+
+            separator = groupAtoms[..split];
+            repeated = groupAtoms[split..];
+        }
+        else
+        {
+            int split = SameClasses(groupAtoms, 0, item) ? item.Length : Array.FindLastIndex(groupAtoms, a => !a.Fixed) + 1;
+            if (split <= 0 || split >= groupAtoms.Length)
+            {
+                return false;
+            }
+
+            repeated = groupAtoms[..split];
+            separator = groupAtoms[split..];
+        }
+
+        foreach (ClassAtom atom in separator)
+        {
+            if (!atom.Fixed || atom.Min < 1)
+            {
+                return false;
+            }
+        }
+
+        foreach (ClassAtom[] segment in new[] { item, repeated })
+        {
+            for (int k = 0; k < segment.Length; k++)
+            {
+                if (!segment[k].Fixed && (k != segment.Length - 1 || !separator[0].Disjoint(segment[k])))
+                {
+                    return false;
+                }
+            }
+        }
+
+        bool same = item.Length == repeated.Length && SameClasses(repeated, 0, item);
+        for (int k = 0; same && k < item.Length; k++)
+        {
+            same = item[k].Equals(repeated[k]);
+        }
+
+        list = itemFirst
+            ? new SeparatedList(same ? null : item, repeated, null, separator, minRepeats)
+            : new SeparatedList(null, repeated, same ? null : item, separator, minRepeats);
+        return true;
+    }
+
+    private static bool SameClasses(ClassAtom[] atoms, int from, ClassAtom[] reference)
+    {
+        if (from < 0 || from + reference.Length > atoms.Length)
+        {
+            return false;
+        }
+
+        for (int k = 0; k < reference.Length; k++)
+        {
+            if (!atoms[from + k].SameClass(reference[k]))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool TryParseSingleSequence(string text, [NotNullWhen(true)] out ClassAtom[]? atoms)
+    {
+        atoms = null;
+        if (text.Length == 0 || HasInnerAnchor(text))
+        {
+            return false;
+        }
+
+        int i = 0;
+        if (!TryParseAlternation(text, ref i, text.Length, depth: 1, out List<List<ClassAtom>>? alternatives) || i != text.Length || alternatives.Count != 1)
+        {
+            return false;
+        }
+
+        atoms = [.. alternatives[0]];
+        return true;
+    }
+
     private static bool ContainsLineTerminator(ReadOnlySpan<byte> value)
     {
         if (value.IndexOfAny((byte)'\n', (byte)'\r') >= 0)
@@ -552,42 +1570,6 @@ internal sealed class PatternMatcher
         return false;
     }
 
-    private static bool MatchesClassSequence(ClassAtom[] atoms, ReadOnlySpan<byte> value)
-    {
-        if (atoms.Length == 0)
-        {
-            return value.Length == 0;
-        }
-
-        int pos = 0;
-        int last = atoms.Length - 1;
-        for (int a = 0; a < last; a++)
-        {
-            ClassAtom atom = atoms[a];
-            for (int n = 0; n < atom.Min; n++)
-            {
-                if (!atom.TryConsume(value, ref pos))
-                {
-                    return false;
-                }
-            }
-        }
-
-        ClassAtom tail = atoms[last];
-        int count = 0;
-        while (pos < value.Length)
-        {
-            if (!tail.TryConsume(value, ref pos))
-            {
-                return false;
-            }
-
-            count++;
-        }
-
-        return count >= tail.Min && (tail.Max < 0 || count <= tail.Max);
-    }
-
     /// <summary>
     /// <c>^(?=[^SET]+$)(?=(.*\w)).+$</c>, optionally <c>^(?=!+[^SET]+$)...</c>: after any leading <c>!</c>s (when the
     /// form allows them) no byte may be in SET, the value must be non-empty, and some ASCII word character must
@@ -637,38 +1619,6 @@ internal sealed class PatternMatcher
         }
 
         return word;
-    }
-
-    /// <summary>A sequence anchored at the start only: every atom consumes its minimum and the rest of the value is free.</summary>
-    private static bool MatchesPrefixSequence(ClassAtom[] atoms, ReadOnlySpan<byte> value)
-    {
-        int pos = 0;
-        for (int a = 0; a < atoms.Length; a++)
-        {
-            ClassAtom atom = atoms[a];
-            for (int n = 0; n < atom.Min; n++)
-            {
-                if (!atom.TryConsume(value, ref pos))
-                {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    private static bool MatchesAlternatives(ClassAtom[][] alternatives, ReadOnlySpan<byte> value)
-    {
-        for (int i = 0; i < alternatives.Length; i++)
-        {
-            if (MatchesClassSequence(alternatives[i], value))
-            {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /// <summary>Parses <c>^(a|b|c)$</c>-style anchored alternations of plain literals.</summary>
@@ -773,95 +1723,6 @@ internal sealed class PatternMatcher
 
         literals = result;
         anchors = resultAnchors;
-        return true;
-    }
-
-    /// <summary>
-    /// Parses an anchored sequence of ASCII classes, literal characters and <c>.</c> with quantifiers, with groups of
-    /// alternatives (<c>(a|b)</c>, optionally followed by <c>?</c>) flattened into whole alternatives, or returns false
-    /// for anything outside that subset (which then goes to a regular expression). Within an alternative every atom
-    /// but the last has a fixed count, so a match needs no backtracking.
-    /// </summary>
-    private static bool TryParseAlternatives(string pattern, [NotNullWhen(true)] out ClassAtom[][]? alternatives)
-    {
-        alternatives = null;
-        if (pattern.Length < 3 || pattern[0] != '^' || pattern[pattern.Length - 1] != '$')
-        {
-            return false;
-        }
-
-        int i = 1;
-        int end = pattern.Length - 1;
-        if (!TryParseAlternation(pattern, ref i, end, depth: 0, out List<List<ClassAtom>>? parsed) || i != end || parsed.Count == 0)
-        {
-            return false;
-        }
-
-        var result = new ClassAtom[parsed.Count][];
-        for (int a = 0; a < parsed.Count; a++)
-        {
-            List<ClassAtom> atoms = parsed[a];
-            for (int k = 0; k < atoms.Count - 1; k++)
-            {
-                if (atoms[k].Min != atoms[k].Max)
-                {
-                    return false;
-                }
-            }
-
-            result[a] = [.. atoms];
-        }
-
-        alternatives = result;
-        return true;
-    }
-
-    /// <summary>
-    /// Parses <c>^</c> followed by atoms and no closing anchor (<c>^[@$_#]</c>, <c>^x-[0-9]</c>): a match needs only
-    /// the atoms at the start, so the last atom needs just its minimum count; every atom before it must have a
-    /// fixed count, since a variable one would have to backtrack into its successor. A trailing <c>.*</c> is
-    /// redundant and dropped.
-    /// </summary>
-    private static bool TryParsePrefixSequence(string pattern, [NotNullWhen(true)] out ClassAtom[]? atoms)
-    {
-        atoms = null;
-        if (pattern.Length < 2 || pattern[0] != '^' || pattern[pattern.Length - 1] == '$')
-        {
-            return false;
-        }
-
-        int end = pattern.Length;
-        if (pattern.EndsWith(".*", StringComparison.Ordinal))
-        {
-            end -= 2;
-        }
-
-        var result = new List<ClassAtom>();
-        int i = 1;
-        while (i < end)
-        {
-            if (pattern[i] == '(' || pattern[i] == '|' || pattern[i] == ')' || pattern[i] == '$' || !TryParseAtom(pattern, ref i, end, out ClassAtom atom))
-            {
-                return false;
-            }
-
-            result.Add(atom);
-        }
-
-        if (result.Count == 0)
-        {
-            return false;
-        }
-
-        for (int a = 0; a < result.Count - 1; a++)
-        {
-            if (result[a].Min != result[a].Max)
-            {
-                return false;
-            }
-        }
-
-        atoms = [.. result];
         return true;
     }
 
@@ -979,6 +1840,41 @@ internal sealed class PatternMatcher
                     group.Add([]);
                     i++;
                 }
+                else if (i < end && pattern[i] == '{')
+                {
+                    // (…){n} for a small fixed n repeats the group's alternatives n times.
+                    int close = pattern.IndexOf('}', i);
+                    if (close < 0 || close >= end || !int.TryParse(pattern.AsSpan(i + 1, close - i - 1), NumberStyles.None, CultureInfo.InvariantCulture, out int times) || times > 8)
+                    {
+                        return false;
+                    }
+
+                    List<List<ClassAtom>> once = group;
+                    group = [[]];
+                    for (int t = 0; t < times; t++)
+                    {
+                        if (group.Count * once.Count > MaxAlternatives)
+                        {
+                            return false;
+                        }
+
+                        var repeated = new List<List<ClassAtom>>(group.Count * once.Count);
+                        foreach (List<ClassAtom> head in group)
+                        {
+                            foreach (List<ClassAtom> tail in once)
+                            {
+                                var combined = new List<ClassAtom>(head.Count + tail.Count);
+                                combined.AddRange(head);
+                                combined.AddRange(tail);
+                                repeated.Add(combined);
+                            }
+                        }
+
+                        group = repeated;
+                    }
+
+                    i = close + 1;
+                }
 
                 if (i < end && (pattern[i] == '*' || pattern[i] == '+' || pattern[i] == '{' || pattern[i] == '?'))
                 {
@@ -1027,19 +1923,28 @@ internal sealed class PatternMatcher
         atom = default;
         ulong bits0 = 0;
         ulong bits1 = 0;
-        bool anyRune = false;
+        NonAscii extra = NonAscii.None;
+        byte[]? rune = null;
         char c = pattern[i];
         if (c == '[')
         {
-            int close = pattern.IndexOf(']', i + 1);
-            if (close < 0 || close > end - 1 || (i + 1 < pattern.Length && pattern[i + 1] == '^'))
+            int close = FindClassEnd(pattern, i + 1);
+            if (close < 0 || close > end - 1)
             {
                 return false;
             }
 
-            if (!TryParseClass(pattern.AsSpan(i + 1, close - i - 1), ref bits0, ref bits1))
+            bool negated = i + 1 < close && pattern[i + 1] == '^';
+            if (!TryParseClass(pattern.AsSpan(i + (negated ? 2 : 1), close - i - (negated ? 2 : 1)), ref bits0, ref bits1, ref extra))
             {
                 return false;
+            }
+
+            if (negated)
+            {
+                bits0 = ~bits0;
+                bits1 = ~bits1;
+                extra = NonAscii.All & ~extra;
             }
 
             i = close + 1;
@@ -1052,7 +1957,7 @@ internal sealed class PatternMatcher
             }
 
             char e = pattern[i + 1];
-            if (!TryAddEscape(e, ref bits0, ref bits1))
+            if (!TryAddEscape(e, ref bits0, ref bits1, ref extra))
             {
                 return false;
             }
@@ -1061,13 +1966,37 @@ internal sealed class PatternMatcher
         }
         else if (c == '.')
         {
-            anyRune = true;
+            ClassAtom dot = ClassAtom.Dot(1, 1);
+            bits0 = dot.Bits0;
+            bits1 = dot.Bits1;
+            extra = dot.Extra;
             i++;
         }
-        else if (c < 128 && (char.IsLetterOrDigit(c) || c == '_' || c == '-' || c == ':' || c == '/' || c == '@' || c == '#' || c == ',' || c == '=' || c == '%' || c == '!' || c == '~' || c == ' '))
+        else if (c >= 32 && c < 127 && c != '^' && c != '$' && c != '|' && c != '?' && c != '*' && c != '+' && c != '(' && c != ')' && c != '[' && c != ']' && c != '{' && c != '}')
         {
             Set(c, ref bits0, ref bits1);
             i++;
+        }
+        else if (c >= 128)
+        {
+            // A literal outside ASCII: exactly that character.
+            int codePoint;
+            if (char.IsHighSurrogate(c) && i + 1 < end && char.IsLowSurrogate(pattern[i + 1]))
+            {
+                codePoint = char.ConvertToUtf32(c, pattern[i + 1]);
+                i += 2;
+            }
+            else if (char.IsSurrogate(c))
+            {
+                return false;
+            }
+            else
+            {
+                codePoint = c;
+                i++;
+            }
+
+            rune = System.Text.Encoding.UTF8.GetBytes(char.ConvertFromUtf32(codePoint));
         }
         else
         {
@@ -1144,11 +2073,46 @@ internal sealed class PatternMatcher
             }
         }
 
-        atom = new ClassAtom(bits0, bits1, min, max, anyRune);
+        atom = new ClassAtom(bits0, bits1, min, max, extra, rune);
         return true;
     }
 
+    /// <summary>The index of the <c>]</c> closing a class whose body starts at <paramref name="from"/>, skipping escapes; a leading <c>]</c> or <c>^]</c> is literal.</summary>
+    private static int FindClassEnd(string pattern, int from)
+    {
+        int i = from;
+        if (i < pattern.Length && pattern[i] == '^')
+        {
+            i++;
+        }
+
+        if (i < pattern.Length && pattern[i] == ']')
+        {
+            i++;
+        }
+
+        for (; i < pattern.Length; i++)
+        {
+            if (pattern[i] == '\\')
+            {
+                i++;
+            }
+            else if (pattern[i] == ']')
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
     private static bool TryParseClass(ReadOnlySpan<char> body, ref ulong bits0, ref ulong bits1)
+    {
+        NonAscii extra = NonAscii.None;
+        return TryParseClass(body, ref bits0, ref bits1, ref extra) && extra == NonAscii.None;
+    }
+
+    private static bool TryParseClass(ReadOnlySpan<char> body, ref ulong bits0, ref ulong bits1, ref NonAscii extra)
     {
         if (body.Length == 0)
         {
@@ -1168,9 +2132,9 @@ internal sealed class PatternMatcher
                 }
 
                 char e = body[i + 1];
-                if (e == 'w' || e == 'd' || e == 'n' || e == 'r' || e == 't')
+                if (char.IsLetter(e))
                 {
-                    if (!TryAddEscape(e, ref bits0, ref bits1))
+                    if (!TryAddEscape(e, ref bits0, ref bits1, ref extra))
                     {
                         return false;
                     }
@@ -1179,7 +2143,7 @@ internal sealed class PatternMatcher
                     continue;
                 }
 
-                if (e >= 128 || char.IsLetterOrDigit(e))
+                if (e >= 128)
                 {
                     return false;
                 }
@@ -1222,35 +2186,49 @@ internal sealed class PatternMatcher
         return true;
     }
 
-    private static bool TryAddEscape(char e, ref ulong bits0, ref ulong bits1)
+    /// <summary>Adds an escape's characters: the ECMA-262 classes (<c>\d \w \s</c> and their negations, ASCII except for the <c>\s</c> spaces), the control escapes, or a literal.</summary>
+    private static bool TryAddEscape(char e, ref ulong bits0, ref ulong bits1, ref NonAscii extra)
     {
+        ulong d0 = 0;
+        ulong d1 = 0;
         switch (e)
         {
             case 'd':
+            case 'D':
                 for (char r = '0'; r <= '9'; r++)
                 {
-                    Set(r, ref bits0, ref bits1);
+                    Set(r, ref d0, ref d1);
                 }
 
-                return true;
+                break;
             case 'w':
+            case 'W':
                 for (char r = '0'; r <= '9'; r++)
                 {
-                    Set(r, ref bits0, ref bits1);
+                    Set(r, ref d0, ref d1);
                 }
 
                 for (char r = 'a'; r <= 'z'; r++)
                 {
-                    Set(r, ref bits0, ref bits1);
+                    Set(r, ref d0, ref d1);
                 }
 
                 for (char r = 'A'; r <= 'Z'; r++)
                 {
-                    Set(r, ref bits0, ref bits1);
+                    Set(r, ref d0, ref d1);
                 }
 
-                Set('_', ref bits0, ref bits1);
-                return true;
+                Set('_', ref d0, ref d1);
+                break;
+            case 's':
+            case 'S':
+                Set('\t', ref d0, ref d1);
+                Set('\n', ref d0, ref d1);
+                Set('\v', ref d0, ref d1);
+                Set('\f', ref d0, ref d1);
+                Set('\r', ref d0, ref d1);
+                Set(' ', ref d0, ref d1);
+                break;
             case 'n':
                 Set('\n', ref bits0, ref bits1);
                 return true;
@@ -1259,6 +2237,12 @@ internal sealed class PatternMatcher
                 return true;
             case 't':
                 Set('\t', ref bits0, ref bits1);
+                return true;
+            case 'v':
+                Set('\v', ref bits0, ref bits1);
+                return true;
+            case 'f':
+                Set('\f', ref bits0, ref bits1);
                 return true;
             default:
                 if (e < 128 && !char.IsLetterOrDigit(e))
@@ -1269,6 +2253,24 @@ internal sealed class PatternMatcher
 
                 return false;
         }
+
+        if (char.IsLower(e))
+        {
+            bits0 |= d0;
+            bits1 |= d1;
+            if (e == 's')
+            {
+                extra |= NonAscii.Spaces | NonAscii.LineSeparators;
+            }
+        }
+        else
+        {
+            bits0 |= ~d0;
+            bits1 |= ~d1;
+            extra |= e == 'S' ? NonAscii.Others : NonAscii.All;
+        }
+
+        return true;
     }
 
     private static void Set(char c, ref ulong bits0, ref ulong bits1)

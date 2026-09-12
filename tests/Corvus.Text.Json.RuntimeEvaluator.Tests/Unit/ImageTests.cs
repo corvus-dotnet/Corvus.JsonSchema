@@ -156,11 +156,11 @@ public class ImageTests
             {
               "type": "object",
               "properties": {
-                "code": { "type": "string", "pattern": "^[a-z]+-[0-9]{2,4}$" },
+                "code": { "type": "string", "pattern": "^[a-z]+[a-z0-9]{2,4}$" },
                 "prefixed": { "type": "string", "pattern": "^abc" },
                 "sized": { "type": "string", "pattern": "^.{2,5}$" }
               },
-              "patternProperties": { "^x-[a-z]+[0-9]*$": { "type": "number" }, "^[a-z]+-[0-9]{2,4}$": { "type": "string" } }
+              "patternProperties": { "^x-[a-z]+[a-z0-9]*$": { "type": "number" }, "^[a-z]+[a-z0-9]{2,4}$": { "type": "string" } }
             }
             """;
         using JsonSchemaEvaluator compiled = JsonSchemaEvaluator.Compile(schema);
@@ -169,7 +169,7 @@ public class ImageTests
         // Only the patterns that need a Regex are in the table, in first-seen node order (the root's patternProperties
         // come before the property subschemas), each once; prefixes and length ranges are matched without one.
         IReadOnlyList<string> patterns = JsonSchemaEvaluator.GetImagePatterns(image);
-        CollectionAssert.AreEqual(new[] { "^x-[a-z]+[0-9]*$", "^[a-z]+-[0-9]{2,4}$" }, patterns.ToArray());
+        CollectionAssert.AreEqual(new[] { "^x-[a-z]+[a-z0-9]*$", "^[a-z]+[a-z0-9]{2,4}$" }, patterns.ToArray());
 
         var asked = new List<(int Index, string Pattern)>();
         var options = new JsonSchemaEvaluatorOptions
@@ -182,7 +182,7 @@ public class ImageTests
         };
         using JsonSchemaEvaluator loaded = JsonSchemaEvaluator.FromProgramImage(image, options);
 
-        CollectionAssert.AreEqual(new[] { (0, "^x-[a-z]+[0-9]*$"), (1, "^[a-z]+-[0-9]{2,4}$") }, asked.ToArray(), "Each table pattern is requested once, by index.");
+        CollectionAssert.AreEqual(new[] { (0, "^x-[a-z]+[a-z0-9]*$"), (1, "^[a-z]+[a-z0-9]{2,4}$") }, asked.ToArray(), "Each table pattern is requested once, by index.");
 
         foreach (string instance in new[]
         {
@@ -201,7 +201,7 @@ public class ImageTests
     [TestMethod]
     public void RegexProviderReturningNullFallsBackToConstruction()
     {
-        using JsonSchemaEvaluator compiled = JsonSchemaEvaluator.Compile("""{"type": "string", "pattern": "^[0-9]+(?:x[0-9]+)?$"}""");
+        using JsonSchemaEvaluator compiled = JsonSchemaEvaluator.Compile("""{"type": "string", "pattern": "^[0-9]+(?:.[0-9]+)?$"}""");
         byte[] image = compiled.ToProgramImage();
         int calls = 0;
         using JsonSchemaEvaluator loaded = JsonSchemaEvaluator.FromProgramImage(image, new JsonSchemaEvaluatorOptions { RegexProvider = (_, _) => { calls++; return null; } });
@@ -214,7 +214,7 @@ public class ImageTests
     public void RegexProviderIsOfferedCompiledPatternsWithNoIndex()
     {
         var asked = new List<int>();
-        using JsonSchemaEvaluator compiled = JsonSchemaEvaluator.Compile("""{"type": "string", "pattern": "^[0-9]+(?:x[0-9]+)?$"}""", new JsonSchemaEvaluatorOptions { RegexProvider = (index, _) => { asked.Add(index); return null; } });
+        using JsonSchemaEvaluator compiled = JsonSchemaEvaluator.Compile("""{"type": "string", "pattern": "^[0-9]+(?:.[0-9]+)?$"}""", new JsonSchemaEvaluatorOptions { RegexProvider = (index, _) => { asked.Add(index); return null; } });
         CollectionAssert.AreEqual(new[] { -1 }, asked);
     }
 
