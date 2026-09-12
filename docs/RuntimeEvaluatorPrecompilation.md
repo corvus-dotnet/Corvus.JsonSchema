@@ -637,6 +637,22 @@ whose eight discriminated branches share names with large children and went 5.8 
 version: applying every branch to every property is only cheaper than one branch at a time when the branches
 mostly reject by name. jsconfig 0.68 (from 0.88), cmake-presets unchanged.
 
+Three more tries on ui5 before the one that paid. Its root and the levels of its type-and-version decision tree
+were on the general path. Their conditions key on `null` in places, which is now a keyable value for fused
+conditions and discriminators, but that moved only two nodes: the real blocker is size, since fusing the root would
+take about 80 contributors against the limit of 64. Raising the limit fused the root and made ui5 1.5 times slower
+than the baseline: the fused pass applies every property to every gated application, and against a tree that
+mostly rejects by one property's value that costs more than walking one branch. A shallow variant, folding a
+branch whose subtree does not fit as an opaque child evaluated after the pass, was 1.17: the pass itself, with its
+deferrals and condition tables, costs more per level than the general path's one-property `if` scan. What was
+expensive was not the scans but the general path's in-place bookkeeping around each level, about a fifth of ui5's
+time in `EvalInPlace`, `EvalIf`, `EvalCore` and their callees. A node whose keywords are type and object keywords
+plus if/then/else, and which does not fuse, now takes a conditional plan: the strict or object plan for its own
+keywords, then the `if` and the branch it selects dispatched as plain children. ui5 0.72 of the round baseline
+(from 0.87), openapi 0.82 (from 0.93). A pattern of the form `^ES5|ES6|ES7$`, whose anchors bind to the first and
+last alternatives only, also matches without the regex now; jsconfig did not move, so that pattern is not on its
+hot path.
+
 ## Against Blaze (2026-09-11)
 
 Blaze is run through the Sourcemeta `jsonschema` CLI release binary (`benchmarks/.../tools/blaze-compare.py`, see
