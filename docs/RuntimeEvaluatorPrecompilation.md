@@ -715,6 +715,14 @@ validation pass, parse included, is 0.5 to 12 ms for all but geojson (108 ms, la
 Blaze's own compile is what costs it on the large schemas: ui5-manifest 165 ms and openapi 100 ms end to end.
 Table: `cold-start-2026-09-12.md` in the session notes.
 
+The warm measurement under the same three builds (the runner's `warm` command, one process per corpus, fresh Blaze
+run): the JIT's tier-1 code is fastest on 30 of 37 at a geometric mean of 0.75 against Blaze; ReadyToRun 23 of 37
+at 0.87; native AOT 23 of 37 at 0.88, about 17% behind the JIT at the median. The machine's instruction set instead
+of the x64 baseline moves AOT by 2 to 4%, so the difference is dynamic PGO (guarded devirtualisation and
+profile-driven layout), which native AOT lacks. The trade is therefore start-up against steady state: native AOT
+starts in 4 to 25 ms where the JIT takes 120 to 320 ms, and settles 15 to 20% slower per evaluation. Table:
+`warm-2026-09-12.md`.
+
 ## Against Blaze (2026-09-11)
 
 Blaze is run through the Sourcemeta `jsonschema` CLI release binary (`benchmarks/.../tools/blaze-compare.py`, see
