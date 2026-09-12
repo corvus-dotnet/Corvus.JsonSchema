@@ -604,6 +604,17 @@ helm-chart-lock, stale, aws-cdk and jsconfig. And krakend spent a quarter of its
 and a regex scan. A start-anchored class sequence without a closing anchor now matches as a prefix (fixed counts
 before the last atom, the last atom's minimum count), and krakend halved (0.50 from 0.88).
 
+A last pass on the call chain between the entry and the loops: forward chains collapse to their final target at
+compile time and the entry skips a forwarding root; the strict object plan is entered in one call with its prologue
+and loop in one method; the array-items loop steps siblings unchecked after one range check. Inlining the flag-mode
+entry into `Evaluate` was tried and cost yamllint 15%, so the entry stays a call. importmap 0.49 (from 0.54), the
+rest within noise.
+
+The table taken on the healthy box before that last pass (both engines back to back, overhead column 14.6 ns): our
+runtime is fastest on 27 of 37 corpora, geometric mean 0.80 against Blaze; krakend, cypress and dependabot moved to
+our side, and only ui5-manifest (1.08), dependabot (1.11), cspell (1.13) and jsconfig (1.17) sit above parity
+besides the four structural ones: importmap 2.0, ui5 2.2, yamllint 2.3, helm-chart-lock 2.9.
+
 ## Against Blaze (2026-09-11)
 
 ## Against Blaze (2026-09-11)
