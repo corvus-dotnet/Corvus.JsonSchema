@@ -11,7 +11,7 @@ public sealed class SourceMetaCase : IDisposable
     public SourceMetaCase(string name)
     {
         this.Name = name;
-        string dir = Path.Combine(AppContext.BaseDirectory, "sourcemeta");
+        string dir = Environment.GetEnvironmentVariable("COLD_ROOT") ?? Path.Combine(AppContext.BaseDirectory, "sourcemeta");
         this.SchemaBytes = File.ReadAllBytes(Path.Combine(dir, name + "-schema.json"));
         string[] lines = File.ReadAllLines(Path.Combine(dir, name + "-instances.jsonl"));
         this.Documents = new ParsedJsonDocument<JsonElement>[lines.Length];
