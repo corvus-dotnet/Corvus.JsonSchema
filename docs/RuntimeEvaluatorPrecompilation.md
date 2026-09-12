@@ -595,6 +595,15 @@ residual against Blaze on these corpora is now structural (span headers, the per
 register allocation across a large method) rather than incidental. The object plan's loop and the fused loop got
 the same treatment afterwards, worth cypress 0.84 (from 0.93) and draft-04 0.75 (0.76), the rest within noise.
 
+Two more from the profiles taken after that. The name map's lookup had stopped inlining: the bucket struct was
+nested in the generic map and the unchecked accessor was a generic method on it, so the shared instantiation needed
+a runtime type lookup and both showed up as frames. With the bucket and the accessor moved to non-generic types the
+loops inline them again, which was yamllint's unexplained 10% (0.98 from 1.10) and a further 4 to 8% on
+helm-chart-lock, stale, aws-cdk and jsconfig. And krakend spent a quarter of its time in a regex: it applies
+`^[@$_#]` as a pattern property on 128 objects, so every property of every instance went through a UTF-16 transcode
+and a regex scan. A start-anchored class sequence without a closing anchor now matches as a prefix (fixed counts
+before the last atom, the last atom's minimum count), and krakend halved (0.50 from 0.88).
+
 ## Against Blaze (2026-09-11)
 
 ## Against Blaze (2026-09-11)
