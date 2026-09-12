@@ -30,6 +30,12 @@
     <PublishReadyToRunPgoFiles Include="$(ColdMibc)" />
   </ItemGroup>
 
+  <!-- With -p:ColdPartial=true the ReadyToRun publish precompiles only the methods in the profile: give it a profile of
+       the compile phase alone and the evaluation loops stay with the JIT, which keeps steady state at JIT parity. -->
+  <PropertyGroup Condition="'$(ColdPartial)' == 'true'">
+    <PublishReadyToRunCrossgen2ExtraArgs>$(PublishReadyToRunCrossgen2ExtraArgs);--partial</PublishReadyToRunCrossgen2ExtraArgs>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(ColdGenerated)' == 'true'">
     <DefineConstants>$(DefineConstants);COLD_GENERATED</DefineConstants>
     <SourceMetaModels>AnsibleMeta;AwsCdk;Babelrc;ClangFormat;CmakePresets;CodeClimate;Cql2;Cspell;Cypress;Deno;Dependabot;Draft04;FabricMod;GeoJson;GitpodConfiguration;HelmChartLock;Importmap;Jasmine;Jsconfig;Jshintrc;Krakend;Lazygit;Lerna;NestCli;Omnisharp;Openapi;PreCommitHooks;Pulumi;SemanticRelease;Stale;Stylecop;Tmuxinator;Ui5;Ui5Manifest;UnrealEngineUproject;Vercel;Yamllint</SourceMetaModels>

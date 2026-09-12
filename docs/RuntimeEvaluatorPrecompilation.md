@@ -771,6 +771,29 @@ from the runtime repository since it is not shipped, should recover most of the 
 PGO (`DOTNET_JitDisasm` on the hot loops) are the map for the alternative of making the devirtualised sites direct
 in source.
 
+dotnet-pgo, built from the runtime repository (`src/coreclr/tools/dotnet-pgo`; the `clr.tools` restore needs the
+NuGet audit off for an unrelated project), turns an instrumented trace of the warm run over every corpus
+(`DOTNET_TieredPGO=1`, a call-count threshold of 10,000 so methods stay instrumented long enough, `ReadyToRun=0`,
+the runtime provider at keyword 0x1E000080018 level 5) into a MIBC of 2,656 methods of ours. Published with it
+(`MibcFile`, the runner's `ColdMibc` property; `measure.sh profile`), native AOT goes from 1.15x the JIT's steady
+state to 1.08x at the median: importmap 1.18 to 0.93, openapi 1.10 to 0.98, yamllint 1.09 to 1.01, jsconfig 1.27
+to 1.07, cspell 1.30 to 1.11, draft-04 1.33 to 1.16. Half the gap, from a four-second trace; the rest is what the
+static profile cannot express or ILC does not use.
+
+The ReadyToRun anomaly is real and has a different cause than expected. Forcing the JIT on the precompiled build
+(`DOTNET_ReadyToRun=0`) restores parity (yamllint 20.7 to 14.9 µs, helm-chart-lock 247 to 205). The tier listing
+(`DOTNET_JitDisasmSummary`) shows the hot methods are re-jitted from the precompiled code, through an instrumented
+tier 1 to tier 1, but the tier-1 code they end with is a quarter of the size the pure-JIT process produces
+(EvaluateFlagRaw 585 bytes against 2,420): on that path the JIT does not inline the loops into the entry, and a
+profile given to crossgen (`PublishReadyToRunPgoFiles`) changes nothing since the runtime re-jits anyway. What
+works is partial precompilation: a profile of the compile phase alone (a trace of `prepare`, which compiles every
+schema and writes its image: 1,679 of our methods, none of the evaluation loops) and crossgen's `--partial`
+(the runner's `ColdPartial` property), so the compiler is precompiled and the evaluation loops stay with the JIT.
+Cold start keeps most of the full-R2R gain (yamllint 50 ms against 49 and 84 for the JIT, helm-chart-lock 55
+against 54 and 89, ui5 113 against 88 and 159) and steady state is at JIT parity on every corpus (yamllint 14.2
+against 14.0 µs, ui5 421 against 423). That is the form to ship for JIT consumers; `measure.sh profile` produces
+both profiles.
+
 ## The four-axis table (2026-09-12, evening)
 
 One table, eight implementations by 37 corpora, four measures each: `summary2-2026-09-12.md` in the session notes.

@@ -47,13 +47,17 @@ case $cmd in
     pkill -f "VBCSCompile[r]" 2>/dev/null
     DOTNET_TieredPGO=1 DOTNET_TC_QuickJitForLoops=1 DOTNET_TC_CallCountThreshold=10000 DOTNET_ReadyToRun=0 dotnet-trace collect --providers Microsoft-Windows-DotNETRuntime:0x1E000080018:5 -o $OUT/profile.nettrace -- dotnet $RUNNERS/fd-jit/$RUNNER.dll warm 50 $(corpora) || exit 1
     dotnet $DOTNET_PGO create-mibc --trace $OUT/profile.nettrace --output $OUT/corvus.mibc || exit 1
-    echo "profile in $OUT/corvus.mibc"
+    # The compile phase alone (cold prepare compiles every schema and writes its image): the profile for a partial R2R.
+    DOTNET_TieredPGO=1 DOTNET_TC_QuickJitForLoops=1 DOTNET_TC_CallCountThreshold=30 DOTNET_ReadyToRun=0 dotnet-trace collect --providers Microsoft-Windows-DotNETRuntime:0x1E000080018:5 -o $OUT/profile-compile.nettrace -- dotnet $RUNNERS/fd-jit/$RUNNER.dll prepare || exit 1
+    dotnet $DOTNET_PGO create-mibc --trace $OUT/profile-compile.nettrace --output $OUT/corvus-compile.mibc || exit 1
+    echo "profiles in $OUT/corvus.mibc (whole run, for native AOT) and $OUT/corvus-compile.mibc (compile phase, for a partial ReadyToRun)"
     ;;
   publish)
     mkdir -p $RUNNERS
     MIBC=""; [ -f $OUT/corvus.mibc ] && MIBC="-p:ColdMibc=$OUT/corvus.mibc"
+    R2RMIBC=""; [ -f $OUT/corvus-compile.mibc ] && R2RMIBC="-p:ColdMibc=$OUT/corvus-compile.mibc -p:ColdPartial=true"
     dotnet build $B -c Release -f net10.0 -m:4 -nr:false -p:UseSharedCompilation=false || exit 1
-    dotnet publish $R -c Release -r linux-x64 --self-contained -p:PublishReadyToRun=true -m:4 -nr:false -p:UseSharedCompilation=false -o $RUNNERS/r2r || exit 1
+    dotnet publish $R -c Release -r linux-x64 --self-contained -p:PublishReadyToRun=true $R2RMIBC -m:4 -nr:false -p:UseSharedCompilation=false -o $RUNNERS/r2r || exit 1
     dotnet publish $R -c Release -r linux-x64 -p:ColdAot=true $MIBC -m:4 -nr:false -p:UseSharedCompilation=false -o $RUNNERS/aot || exit 1
     dotnet publish $R -c Release -r linux-x64 -p:ColdAot=true -p:ColdGenerated=true $MIBC -m:4 -nr:false -p:UseSharedCompilation=false -o $RUNNERS/aot-gen || exit 1
     pkill -f "VBCSCompile[r]" 2>/dev/null
