@@ -622,7 +622,20 @@ conditions is looked up once, while the string-set membership test takes the tok
 reads the value's row once (ui5 0.84 from 0.88, cspell 0.92 from 1.05, draft-04 0.74 from 0.79, jsconfig 0.88 from
 0.92).
 
-## Against Blaze (2026-09-11)
+Two from the shapes of individual corpora. cspell tests its word lists with `^(?=[^SET]+$)(?=(.*\\w)).+$` (and the
+`!+` variant): a lookahead that excludes a set and one that demands a word character. That form is recognised and
+matched as one scan of the bytes, none in the set or a line terminator, at least one ASCII word character; cspell
+0.73 (from 0.92). And jsconfig's root is a oneOf of three object branches over disjoint property names, which the
+general path applied one branch at a time, each with its own pass over the instance. An unconditional oneOf or
+anyOf whose branches carry object keywords now fuses into the object pass as a contributor group: each branch is a
+contributor tagged with its group and branch index; a failed application marks the branch in a per-group bitmask
+instead of failing the object; and the group is decided after the pass, any survivor for anyOf, exactly one for
+oneOf. The group is refused when the keyword has a discriminator or type union (the general path decides those from
+one property), when the node tracks coverage, and when a property name would receive an expensive child, anything
+but a leaf, a simple array or a boolean schema, from more than one branch. That last guard came from cmake-presets,
+whose eight discriminated branches share names with large children and went 5.8 times slower on an unguarded
+version: applying every branch to every property is only cheaper than one branch at a time when the branches
+mostly reject by name. jsconfig 0.68 (from 0.88), cmake-presets unchanged.
 
 ## Against Blaze (2026-09-11)
 
