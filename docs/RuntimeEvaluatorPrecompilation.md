@@ -664,6 +664,19 @@ nothing on an array; plan selection now treats object keywords under a type that
 keywords under a type that excludes arrays, as absent, so those nodes take the array-items plan (ui5's general-path
 nodes 7 to 4, ui5-manifest 0.85 from 0.88).
 
+The table at the end of the day, on a healthy box (overhead 14.0 ns, both engines back to back): fastest on 30 of
+37, geometric mean 0.77. Since the morning table jsconfig (1.17 to 0.82), cspell (1.13 to 0.84) and dependabot
+(1.11 to 0.94) crossed to our side; importmap 2.02 to 1.57, ui5 2.15 to 1.72 and helm-chart-lock 2.86 to 2.38 on
+the structural gaps; yamllint 2.33. One correction to the morning table: its babelrc row (0.46) was an artefact of
+the harness's per-corpus overhead probe spiking during that run, so too much was subtracted; babelrc is about 52
+µs on every build including the round baseline, 1.13 against Blaze, and the morning's honest count was 26 of 37.
+Two lessons about measurement from the day. The host, a laptop, drops to a lower performance mode when its screen
+sleeps even while work continues over a remote session; both engines run about 35% slower and stay there, and
+nothing shows from inside the VM (no steal, same clocksource, same speed on every vCPU). Only alternating A/B pairs
+are trustworthy in that state; the overhead column of the harness's output (13 to 15 ns healthy) is the tell. And a
+single spike of that probe zeroes or inflates one corpus's row, so every row's overhead column is checked before
+a table is read.
+
 ## Against Blaze (2026-09-11)
 
 Blaze is run through the Sourcemeta `jsonschema` CLI release binary (`benchmarks/.../tools/blaze-compare.py`, see
