@@ -29,7 +29,7 @@ internal sealed class Utf8NameMap<T>
     // Per length: the byte position that splits its keys, and a 256-entry table of first candidate + 1 (0 = none).
     // Candidates sharing a byte chain through `next`. One array of buckets so that a lookup loads one element for
     // its length: no separate range test, position array and table array.
-    private readonly Bucket[] buckets;
+    private readonly Utf8NameBucket[] buckets;
     private readonly int[] next;
 
     public Utf8NameMap(IReadOnlyList<KeyValuePair<byte[], T>> entries)
@@ -47,7 +47,7 @@ internal sealed class Utf8NameMap<T>
         }
 
         int lengths = n == 0 ? 0 : maxLength + 1;
-        this.buckets = new Bucket[lengths];
+        this.buckets = new Utf8NameBucket[lengths];
         var byLength = new List<int>?[lengths];
         for (int i = 0; i < n; i++)
         {
@@ -98,7 +98,7 @@ internal sealed class Utf8NameMap<T>
                 table[b] = i + 1;
             }
 
-            this.buckets[length] = new Bucket(bestPosition, table);
+            this.buckets[length] = new Utf8NameBucket(bestPosition, table);
         }
     }
 
@@ -125,20 +125,21 @@ internal sealed class Utf8NameMap<T>
     /// Looks a key up and returns its index into <see cref="Values"/> (and <see cref="Keys"/>), for callers that keep a
     /// parallel table. The only checked read is the bucket for the key's length; the position read is within the
     /// key (the bucket was built for keys of that length), the table has 256 entries and is indexed by a byte, and
-    /// the key, chain and value indices came out of that table, so those reads go through refs.
+    /// the key, chain and value indices came out of that table, so those reads go through refs. Nothing here depends
+    /// on <typeparamref name="T"/>, so the shared code inlines into the loops that call it.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryGetIndex(ReadOnlySpan<byte> key, out int index)
     {
         int length = key.Length;
-        Bucket[] buckets = this.buckets;
+        Utf8NameBucket[] buckets = this.buckets;
         if ((uint)length >= (uint)buckets.Length)
         {
             index = -1;
             return false;
         }
 
-        ref Bucket bucket = ref At(buckets, length);
+        ref Utf8NameBucket bucket = ref ArrayRef.At(buckets, length);
         int[]? table = bucket.Table;
         if (table is null)
         {
@@ -147,32 +148,21 @@ internal sealed class Utf8NameMap<T>
         }
 
         int b = length == 0 ? 0 : Unsafe.Add(ref MemoryMarshal.GetReference(key), bucket.Position);
-        int slot = At(table, b);
+        int slot = ArrayRef.At(table, b);
         while (slot != 0)
         {
             int i = slot - 1;
-            if (KeyEquals(key, At(this.keys, i)))
+            if (KeyEquals(key, ArrayRef.At(this.keys, i)))
             {
                 index = i;
                 return true;
             }
 
-            slot = At(this.next, i);
+            slot = ArrayRef.At(this.next, i);
         }
 
         index = -1;
         return false;
-    }
-
-    /// <summary>An element reference without the range check, for indices the map's construction guarantees.</summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static ref TElement At<TElement>(TElement[] array, int i)
-    {
-#if NET5_0_OR_GREATER
-        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(array), i);
-#else
-        return ref Unsafe.Add(ref MemoryMarshal.GetReference(array.AsSpan()), i);
-#endif
     }
 
     /// <summary>
@@ -182,14 +172,14 @@ internal sealed class Utf8NameMap<T>
     public bool TryGetValue(byte tag, ReadOnlySpan<byte> value, [NotNullWhen(true)] out T? result)
     {
         int length = value.Length + 1;
-        Bucket[] buckets = this.buckets;
+        Utf8NameBucket[] buckets = this.buckets;
         if ((uint)length >= (uint)buckets.Length)
         {
             result = null;
             return false;
         }
 
-        Bucket bucket = buckets[length];
+        Utf8NameBucket bucket = buckets[length];
         int[]? table = bucket.Table;
         if (table is null)
         {
@@ -259,10 +249,25 @@ internal sealed class Utf8NameMap<T>
 
         return true;
     }
+}
 
-    private readonly struct Bucket(int position, int[] table)
+/// <summary>Per key length: the byte position that splits the keys of that length and the 256-entry table of first candidates.</summary>
+internal readonly struct Utf8NameBucket(int position, int[] table)
+{
+    public readonly int Position = position;
+    public readonly int[] Table = table;
+}
+
+/// <summary>Array element references without the range check, for indices a data structure's construction guarantees.</summary>
+internal static class ArrayRef
+{
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ref T At<T>(T[] array, int i)
     {
-        public readonly int Position = position;
-        public readonly int[] Table = table;
+#if NET5_0_OR_GREATER
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(array), i);
+#else
+        return ref Unsafe.Add(ref MemoryMarshal.GetReference(array.AsSpan()), i);
+#endif
     }
 }

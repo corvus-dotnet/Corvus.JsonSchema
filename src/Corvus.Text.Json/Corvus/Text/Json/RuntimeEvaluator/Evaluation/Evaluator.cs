@@ -1129,7 +1129,7 @@ internal static partial class Evaluator
                 return false;
             }
 
-            ref readonly StrictEntry entry = ref entryIndex < 0 ? ref node.AdditionalEntry : ref Utf8NameMap<PropertyEntry>.At(entries, entryIndex);
+            ref readonly StrictEntry entry = ref entryIndex < 0 ? ref node.AdditionalEntry : ref ArrayRef.At(entries, entryIndex);
             if (entry.SeenBit >= 0)
             {
                 seen |= 1UL << entry.SeenBit;
@@ -1280,7 +1280,7 @@ internal static partial class Evaluator
         bool matched = false;
         if (properties is not null && properties.TryGetIndex(name, out int entryIndex))
         {
-            ref readonly StrictEntry entry = ref Utf8NameMap<PropertyEntry>.At(entries, entryIndex);
+            ref readonly StrictEntry entry = ref ArrayRef.At(entries, entryIndex);
             if (entry.SeenBit >= 0)
             {
                 seen[entry.SeenBit >> 6] |= 1UL << (entry.SeenBit & 63);
