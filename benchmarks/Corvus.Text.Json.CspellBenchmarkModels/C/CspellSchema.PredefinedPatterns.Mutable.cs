@@ -815,6 +815,200 @@ public readonly partial struct CspellSchema
 
                 return defaultMatch();
             }
+
+            /// <summary>
+            /// Converts the value to its <see cref="KnownValues"/> equivalent.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+            public static implicit operator KnownValues(Mutable value)
+            {
+                if (value.TryGetKnownValue(out KnownValues result))
+                {
+                    return result;
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+            /// </summary>
+            /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+            /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+            public bool TryGetKnownValue(out KnownValues result)
+            {
+                if (this.ValueEquals(Constants.Enum1))
+                {
+                    result = KnownValues.Base64;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum2))
+                {
+                    result = KnownValues.Base64MultiLine;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum3))
+                {
+                    result = KnownValues.Base64SingleLine;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum4))
+                {
+                    result = KnownValues.CStyleComment;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum5))
+                {
+                    result = KnownValues.CStyleHexValue;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum6))
+                {
+                    result = KnownValues.CssHexValue;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum7))
+                {
+                    result = KnownValues.CommitHash;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum8))
+                {
+                    result = KnownValues.CommitHashLink;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum9))
+                {
+                    result = KnownValues.Email;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum10))
+                {
+                    result = KnownValues.EscapeCharacters;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum11))
+                {
+                    result = KnownValues.HexValues;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum12))
+                {
+                    result = KnownValues.Href;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum13))
+                {
+                    result = KnownValues.PhpHereDoc;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum14))
+                {
+                    result = KnownValues.PublicKey;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum15))
+                {
+                    result = KnownValues.RsaCert;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum16))
+                {
+                    result = KnownValues.SshRsa;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum17))
+                {
+                    result = KnownValues.Sha;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum18))
+                {
+                    result = KnownValues.HashStrings;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum19))
+                {
+                    result = KnownValues.SpellCheckerDisable;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum20))
+                {
+                    result = KnownValues.SpellCheckerDisableBlock;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum21))
+                {
+                    result = KnownValues.SpellCheckerDisableLine;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum22))
+                {
+                    result = KnownValues.SpellCheckerDisableNext;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum23))
+                {
+                    result = KnownValues.SpellCheckerIgnoreInDocSetting;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum24))
+                {
+                    result = KnownValues.StringValue;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum25))
+                {
+                    result = KnownValues.UnicodeRef;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum26))
+                {
+                    result = KnownValues.Urls;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum27))
+                {
+                    result = KnownValues.Uuid;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum28))
+                {
+                    result = KnownValues.Everything;
+                    return true;
+                }
+
+                result = default;
+                return false;
+            }
         }
 
         public ref struct Source
@@ -873,6 +1067,9 @@ public readonly partial struct CspellSchema
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(string value) => new (value.AsSpan());
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(KnownValues value) => (PredefinedPatterns)value;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);

@@ -882,6 +882,218 @@ public readonly partial struct OmnisharpSchema
 
                         return defaultMatch();
                     }
+
+                    /// <summary>
+                    /// Converts the value to its <see cref="KnownValues"/> equivalent.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+                    public static implicit operator KnownValues(Mutable value)
+                    {
+                        if (value.TryGetKnownValue(out KnownValues result))
+                        {
+                            return result;
+                        }
+
+                        throw new InvalidOperationException();
+                    }
+
+                    /// <summary>
+                    /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+                    /// </summary>
+                    /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+                    /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+                    public bool TryGetKnownValue(out KnownValues result)
+                    {
+                        if (this.ValueEquals(Constants.Enum1))
+                        {
+                            result = KnownValues.Netstandard10;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum2))
+                        {
+                            result = KnownValues.Netstandard11;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum3))
+                        {
+                            result = KnownValues.Netstandard12;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum4))
+                        {
+                            result = KnownValues.Netstandard13;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum5))
+                        {
+                            result = KnownValues.Netstandard14;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum6))
+                        {
+                            result = KnownValues.Netstandard15;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum7))
+                        {
+                            result = KnownValues.Netstandard16;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum8))
+                        {
+                            result = KnownValues.Netstandard20;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum9))
+                        {
+                            result = KnownValues.Netstandard21;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum10))
+                        {
+                            result = KnownValues.Netcoreapp10;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum11))
+                        {
+                            result = KnownValues.Netcoreapp11;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum12))
+                        {
+                            result = KnownValues.Netcoreapp20;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum13))
+                        {
+                            result = KnownValues.Netcoreapp21;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum14))
+                        {
+                            result = KnownValues.Netcoreapp22;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum15))
+                        {
+                            result = KnownValues.Netcoreapp30;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum16))
+                        {
+                            result = KnownValues.Netcoreapp31;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum17))
+                        {
+                            result = KnownValues.Net11;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum18))
+                        {
+                            result = KnownValues.Net20;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum19))
+                        {
+                            result = KnownValues.Net35;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum20))
+                        {
+                            result = KnownValues.Net40;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum21))
+                        {
+                            result = KnownValues.Net403;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum22))
+                        {
+                            result = KnownValues.Net45;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum23))
+                        {
+                            result = KnownValues.Net451;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum24))
+                        {
+                            result = KnownValues.Net452;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum25))
+                        {
+                            result = KnownValues.Net46;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum26))
+                        {
+                            result = KnownValues.Net461;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum27))
+                        {
+                            result = KnownValues.Net462;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum28))
+                        {
+                            result = KnownValues.Net47;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum29))
+                        {
+                            result = KnownValues.Net471;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum30))
+                        {
+                            result = KnownValues.Net472;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum31))
+                        {
+                            result = KnownValues.Net48;
+                            return true;
+                        }
+
+                        result = default;
+                        return false;
+                    }
                 }
 
                 public ref struct Source
@@ -940,6 +1152,9 @@ public readonly partial struct OmnisharpSchema
 
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static implicit operator Source(string value) => new (value.AsSpan());
+
+                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                    public static implicit operator Source(KnownValues value) => (AnyOf0Entity)value;
 
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);

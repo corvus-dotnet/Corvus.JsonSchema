@@ -4680,267 +4680,2749 @@ public readonly partial struct PreCommitHooksSchema
             public static ReadOnlySpan<byte> ZshUtf8 => Constants.Enum244;
         }
 
-        public static partial class JsonSchema
+        /// <summary>
+        /// A native enum for the well-known values of this type.
+        /// </summary>
+        /// <remarks>
+        /// Member ordinals follow the schema declaration order. Inserting or reordering values
+        /// in the schema renumbers the ordinals, so do not persist their integer values.
+        /// </remarks>
+        public enum KnownValues
         {
-            private static EnumStringSet BuildEnumStringSet()
+            /// <summary>
+            /// Corresponds to the JSON string "adobe-illustrator".
+            /// </summary>
+            AdobeIllustrator = 0,
+            /// <summary>
+            /// Corresponds to the JSON string "alpm".
+            /// </summary>
+            Alpm = 1,
+            /// <summary>
+            /// Corresponds to the JSON string "apinotes".
+            /// </summary>
+            Apinotes = 2,
+            /// <summary>
+            /// Corresponds to the JSON string "asar".
+            /// </summary>
+            Asar = 3,
+            /// <summary>
+            /// Corresponds to the JSON string "asciidoc".
+            /// </summary>
+            Asciidoc = 4,
+            /// <summary>
+            /// Corresponds to the JSON string "ash".
+            /// </summary>
+            Ash = 5,
+            /// <summary>
+            /// Corresponds to the JSON string "asm".
+            /// </summary>
+            Asm = 6,
+            /// <summary>
+            /// Corresponds to the JSON string "aspectj".
+            /// </summary>
+            Aspectj = 7,
+            /// <summary>
+            /// Corresponds to the JSON string "audio".
+            /// </summary>
+            Audio = 8,
+            /// <summary>
+            /// Corresponds to the JSON string "avif".
+            /// </summary>
+            Avif = 9,
+            /// <summary>
+            /// Corresponds to the JSON string "awk".
+            /// </summary>
+            Awk = 10,
+            /// <summary>
+            /// Corresponds to the JSON string "babelrc".
+            /// </summary>
+            Babelrc = 11,
+            /// <summary>
+            /// Corresponds to the JSON string "bash".
+            /// </summary>
+            Bash = 12,
+            /// <summary>
+            /// Corresponds to the JSON string "batch".
+            /// </summary>
+            Batch = 13,
+            /// <summary>
+            /// Corresponds to the JSON string "bats".
+            /// </summary>
+            Bats = 14,
+            /// <summary>
+            /// Corresponds to the JSON string "bazel".
+            /// </summary>
+            Bazel = 15,
+            /// <summary>
+            /// Corresponds to the JSON string "bazelrc".
+            /// </summary>
+            Bazelrc = 16,
+            /// <summary>
+            /// Corresponds to the JSON string "bib".
+            /// </summary>
+            Bib = 17,
+            /// <summary>
+            /// Corresponds to the JSON string "binary".
+            /// </summary>
+            Binary = 18,
+            /// <summary>
+            /// Corresponds to the JSON string "bitmap".
+            /// </summary>
+            Bitmap = 19,
+            /// <summary>
+            /// Corresponds to the JSON string "bowerrc".
+            /// </summary>
+            Bowerrc = 20,
+            /// <summary>
+            /// Corresponds to the JSON string "browserslistrc".
+            /// </summary>
+            Browserslistrc = 21,
+            /// <summary>
+            /// Corresponds to the JSON string "bzip2".
+            /// </summary>
+            Bzip2 = 22,
+            /// <summary>
+            /// Corresponds to the JSON string "c".
+            /// </summary>
+            C = 23,
+            /// <summary>
+            /// Corresponds to the JSON string "c#".
+            /// </summary>
+            C1 = 24,
+            /// <summary>
+            /// Corresponds to the JSON string "c++".
+            /// </summary>
+            C2 = 25,
+            /// <summary>
+            /// Corresponds to the JSON string "c2hs".
+            /// </summary>
+            C2hs = 26,
+            /// <summary>
+            /// Corresponds to the JSON string "cbsd".
+            /// </summary>
+            Cbsd = 27,
+            /// <summary>
+            /// Corresponds to the JSON string "clojure".
+            /// </summary>
+            Clojure = 28,
+            /// <summary>
+            /// Corresponds to the JSON string "clojurescript".
+            /// </summary>
+            Clojurescript = 29,
+            /// <summary>
+            /// Corresponds to the JSON string "cmake".
+            /// </summary>
+            Cmake = 30,
+            /// <summary>
+            /// Corresponds to the JSON string "codespellrc".
+            /// </summary>
+            Codespellrc = 31,
+            /// <summary>
+            /// Corresponds to the JSON string "coffee".
+            /// </summary>
+            Coffee = 32,
+            /// <summary>
+            /// Corresponds to the JSON string "coveragerc".
+            /// </summary>
+            Coveragerc = 33,
+            /// <summary>
+            /// Corresponds to the JSON string "crystal".
+            /// </summary>
+            Crystal = 34,
+            /// <summary>
+            /// Corresponds to the JSON string "csh".
+            /// </summary>
+            Csh = 35,
+            /// <summary>
+            /// Corresponds to the JSON string "cson".
+            /// </summary>
+            Cson = 36,
+            /// <summary>
+            /// Corresponds to the JSON string "csproj".
+            /// </summary>
+            Csproj = 37,
+            /// <summary>
+            /// Corresponds to the JSON string "css".
+            /// </summary>
+            Css = 38,
+            /// <summary>
+            /// Corresponds to the JSON string "csslintrc".
+            /// </summary>
+            Csslintrc = 39,
+            /// <summary>
+            /// Corresponds to the JSON string "csv".
+            /// </summary>
+            Csv = 40,
+            /// <summary>
+            /// Corresponds to the JSON string "cuda".
+            /// </summary>
+            Cuda = 41,
+            /// <summary>
+            /// Corresponds to the JSON string "cython".
+            /// </summary>
+            Cython = 42,
+            /// <summary>
+            /// Corresponds to the JSON string "dart".
+            /// </summary>
+            Dart = 43,
+            /// <summary>
+            /// Corresponds to the JSON string "dash".
+            /// </summary>
+            Dash = 44,
+            /// <summary>
+            /// Corresponds to the JSON string "def".
+            /// </summary>
+            Def = 45,
+            /// <summary>
+            /// Corresponds to the JSON string "diff".
+            /// </summary>
+            Diff = 46,
+            /// <summary>
+            /// Corresponds to the JSON string "directory".
+            /// </summary>
+            Directory = 47,
+            /// <summary>
+            /// Corresponds to the JSON string "dockerfile".
+            /// </summary>
+            Dockerfile = 48,
+            /// <summary>
+            /// Corresponds to the JSON string "dockerignore".
+            /// </summary>
+            Dockerignore = 49,
+            /// <summary>
+            /// Corresponds to the JSON string "dotenv".
+            /// </summary>
+            Dotenv = 50,
+            /// <summary>
+            /// Corresponds to the JSON string "dtd".
+            /// </summary>
+            Dtd = 51,
+            /// <summary>
+            /// Corresponds to the JSON string "editorconfig".
+            /// </summary>
+            Editorconfig = 52,
+            /// <summary>
+            /// Corresponds to the JSON string "edn".
+            /// </summary>
+            Edn = 53,
+            /// <summary>
+            /// Corresponds to the JSON string "ejs".
+            /// </summary>
+            Ejs = 54,
+            /// <summary>
+            /// Corresponds to the JSON string "eot".
+            /// </summary>
+            Eot = 55,
+            /// <summary>
+            /// Corresponds to the JSON string "eps".
+            /// </summary>
+            Eps = 56,
+            /// <summary>
+            /// Corresponds to the JSON string "erb".
+            /// </summary>
+            Erb = 57,
+            /// <summary>
+            /// Corresponds to the JSON string "executable".
+            /// </summary>
+            Executable = 58,
+            /// <summary>
+            /// Corresponds to the JSON string "expect".
+            /// </summary>
+            Expect = 59,
+            /// <summary>
+            /// Corresponds to the JSON string "file".
+            /// </summary>
+            File = 60,
+            /// <summary>
+            /// Corresponds to the JSON string "fish".
+            /// </summary>
+            Fish = 61,
+            /// <summary>
+            /// Corresponds to the JSON string "flake8".
+            /// </summary>
+            Flake8 = 62,
+            /// <summary>
+            /// Corresponds to the JSON string "gdscript".
+            /// </summary>
+            Gdscript = 63,
+            /// <summary>
+            /// Corresponds to the JSON string "geojson".
+            /// </summary>
+            Geojson = 64,
+            /// <summary>
+            /// Corresponds to the JSON string "gherkin".
+            /// </summary>
+            Gherkin = 65,
+            /// <summary>
+            /// Corresponds to the JSON string "gif".
+            /// </summary>
+            Gif = 66,
+            /// <summary>
+            /// Corresponds to the JSON string "gitattributes".
+            /// </summary>
+            Gitattributes = 67,
+            /// <summary>
+            /// Corresponds to the JSON string "gitconfig".
+            /// </summary>
+            Gitconfig = 68,
+            /// <summary>
+            /// Corresponds to the JSON string "gitignore".
+            /// </summary>
+            Gitignore = 69,
+            /// <summary>
+            /// Corresponds to the JSON string "gitlint".
+            /// </summary>
+            Gitlint = 70,
+            /// <summary>
+            /// Corresponds to the JSON string "gitmodules".
+            /// </summary>
+            Gitmodules = 71,
+            /// <summary>
+            /// Corresponds to the JSON string "go".
+            /// </summary>
+            Go = 72,
+            /// <summary>
+            /// Corresponds to the JSON string "go-mod".
+            /// </summary>
+            GoMod = 73,
+            /// <summary>
+            /// Corresponds to the JSON string "go-sum".
+            /// </summary>
+            GoSum = 74,
+            /// <summary>
+            /// Corresponds to the JSON string "gotmpl".
+            /// </summary>
+            Gotmpl = 75,
+            /// <summary>
+            /// Corresponds to the JSON string "gpx".
+            /// </summary>
+            Gpx = 76,
+            /// <summary>
+            /// Corresponds to the JSON string "graphql".
+            /// </summary>
+            Graphql = 77,
+            /// <summary>
+            /// Corresponds to the JSON string "groovy".
+            /// </summary>
+            Groovy = 78,
+            /// <summary>
+            /// Corresponds to the JSON string "gyb".
+            /// </summary>
+            Gyb = 79,
+            /// <summary>
+            /// Corresponds to the JSON string "gyp".
+            /// </summary>
+            Gyp = 80,
+            /// <summary>
+            /// Corresponds to the JSON string "gzip".
+            /// </summary>
+            Gzip = 81,
+            /// <summary>
+            /// Corresponds to the JSON string "handlebars".
+            /// </summary>
+            Handlebars = 82,
+            /// <summary>
+            /// Corresponds to the JSON string "haskell".
+            /// </summary>
+            Haskell = 83,
+            /// <summary>
+            /// Corresponds to the JSON string "hcl".
+            /// </summary>
+            Hcl = 84,
+            /// <summary>
+            /// Corresponds to the JSON string "header".
+            /// </summary>
+            Header = 85,
+            /// <summary>
+            /// Corresponds to the JSON string "hgrc".
+            /// </summary>
+            Hgrc = 86,
+            /// <summary>
+            /// Corresponds to the JSON string "html".
+            /// </summary>
+            Html = 87,
+            /// <summary>
+            /// Corresponds to the JSON string "icalendar".
+            /// </summary>
+            Icalendar = 88,
+            /// <summary>
+            /// Corresponds to the JSON string "icns".
+            /// </summary>
+            Icns = 89,
+            /// <summary>
+            /// Corresponds to the JSON string "icon".
+            /// </summary>
+            Icon = 90,
+            /// <summary>
+            /// Corresponds to the JSON string "idl".
+            /// </summary>
+            Idl = 91,
+            /// <summary>
+            /// Corresponds to the JSON string "idris".
+            /// </summary>
+            Idris = 92,
+            /// <summary>
+            /// Corresponds to the JSON string "image".
+            /// </summary>
+            Image = 93,
+            /// <summary>
+            /// Corresponds to the JSON string "inc".
+            /// </summary>
+            Inc = 94,
+            /// <summary>
+            /// Corresponds to the JSON string "ini".
+            /// </summary>
+            Ini = 95,
+            /// <summary>
+            /// Corresponds to the JSON string "inl".
+            /// </summary>
+            Inl = 96,
+            /// <summary>
+            /// Corresponds to the JSON string "ino".
+            /// </summary>
+            Ino = 97,
+            /// <summary>
+            /// Corresponds to the JSON string "inx".
+            /// </summary>
+            Inx = 98,
+            /// <summary>
+            /// Corresponds to the JSON string "jade".
+            /// </summary>
+            Jade = 99,
+            /// <summary>
+            /// Corresponds to the JSON string "jar".
+            /// </summary>
+            Jar = 100,
+            /// <summary>
+            /// Corresponds to the JSON string "java".
+            /// </summary>
+            Java = 101,
+            /// <summary>
+            /// Corresponds to the JSON string "java-properties".
+            /// </summary>
+            JavaProperties = 102,
+            /// <summary>
+            /// Corresponds to the JSON string "javascript".
+            /// </summary>
+            Javascript = 103,
+            /// <summary>
+            /// Corresponds to the JSON string "jenkins".
+            /// </summary>
+            Jenkins = 104,
+            /// <summary>
+            /// Corresponds to the JSON string "jinja".
+            /// </summary>
+            Jinja = 105,
+            /// <summary>
+            /// Corresponds to the JSON string "jpeg".
+            /// </summary>
+            Jpeg = 106,
+            /// <summary>
+            /// Corresponds to the JSON string "jshintrc".
+            /// </summary>
+            Jshintrc = 107,
+            /// <summary>
+            /// Corresponds to the JSON string "json".
+            /// </summary>
+            Json = 108,
+            /// <summary>
+            /// Corresponds to the JSON string "json5".
+            /// </summary>
+            Json5 = 109,
+            /// <summary>
+            /// Corresponds to the JSON string "jsonnet".
+            /// </summary>
+            Jsonnet = 110,
+            /// <summary>
+            /// Corresponds to the JSON string "jsx".
+            /// </summary>
+            Jsx = 111,
+            /// <summary>
+            /// Corresponds to the JSON string "jupyter".
+            /// </summary>
+            Jupyter = 112,
+            /// <summary>
+            /// Corresponds to the JSON string "kml".
+            /// </summary>
+            Kml = 113,
+            /// <summary>
+            /// Corresponds to the JSON string "kotlin".
+            /// </summary>
+            Kotlin = 114,
+            /// <summary>
+            /// Corresponds to the JSON string "ksh".
+            /// </summary>
+            Ksh = 115,
+            /// <summary>
+            /// Corresponds to the JSON string "lean".
+            /// </summary>
+            Lean = 116,
+            /// <summary>
+            /// Corresponds to the JSON string "lektor".
+            /// </summary>
+            Lektor = 117,
+            /// <summary>
+            /// Corresponds to the JSON string "lektorproject".
+            /// </summary>
+            Lektorproject = 118,
+            /// <summary>
+            /// Corresponds to the JSON string "less".
+            /// </summary>
+            Less = 119,
+            /// <summary>
+            /// Corresponds to the JSON string "liquid".
+            /// </summary>
+            Liquid = 120,
+            /// <summary>
+            /// Corresponds to the JSON string "literate-haskell".
+            /// </summary>
+            LiterateHaskell = 121,
+            /// <summary>
+            /// Corresponds to the JSON string "lua".
+            /// </summary>
+            Lua = 122,
+            /// <summary>
+            /// Corresponds to the JSON string "mailmap".
+            /// </summary>
+            Mailmap = 123,
+            /// <summary>
+            /// Corresponds to the JSON string "makefile".
+            /// </summary>
+            Makefile = 124,
+            /// <summary>
+            /// Corresponds to the JSON string "manifest".
+            /// </summary>
+            Manifest = 125,
+            /// <summary>
+            /// Corresponds to the JSON string "map".
+            /// </summary>
+            Map = 126,
+            /// <summary>
+            /// Corresponds to the JSON string "markdown".
+            /// </summary>
+            Markdown = 127,
+            /// <summary>
+            /// Corresponds to the JSON string "mdx".
+            /// </summary>
+            Mdx = 128,
+            /// <summary>
+            /// Corresponds to the JSON string "mention-bot".
+            /// </summary>
+            MentionBot = 129,
+            /// <summary>
+            /// Corresponds to the JSON string "mib".
+            /// </summary>
+            Mib = 130,
+            /// <summary>
+            /// Corresponds to the JSON string "modulemap".
+            /// </summary>
+            Modulemap = 131,
+            /// <summary>
+            /// Corresponds to the JSON string "musescore".
+            /// </summary>
+            Musescore = 132,
+            /// <summary>
+            /// Corresponds to the JSON string "myst".
+            /// </summary>
+            Myst = 133,
+            /// <summary>
+            /// Corresponds to the JSON string "ngdoc".
+            /// </summary>
+            Ngdoc = 134,
+            /// <summary>
+            /// Corresponds to the JSON string "nim".
+            /// </summary>
+            Nim = 135,
+            /// <summary>
+            /// Corresponds to the JSON string "nimble".
+            /// </summary>
+            Nimble = 136,
+            /// <summary>
+            /// Corresponds to the JSON string "nix".
+            /// </summary>
+            Nix = 137,
+            /// <summary>
+            /// Corresponds to the JSON string "non-executable".
+            /// </summary>
+            NonExecutable = 138,
+            /// <summary>
+            /// Corresponds to the JSON string "npmignore".
+            /// </summary>
+            Npmignore = 139,
+            /// <summary>
+            /// Corresponds to the JSON string "nunjucks".
+            /// </summary>
+            Nunjucks = 140,
+            /// <summary>
+            /// Corresponds to the JSON string "objective-c".
+            /// </summary>
+            ObjectiveC = 141,
+            /// <summary>
+            /// Corresponds to the JSON string "objective-c++".
+            /// </summary>
+            ObjectiveC1 = 142,
+            /// <summary>
+            /// Corresponds to the JSON string "ocaml".
+            /// </summary>
+            Ocaml = 143,
+            /// <summary>
+            /// Corresponds to the JSON string "otf".
+            /// </summary>
+            Otf = 144,
+            /// <summary>
+            /// Corresponds to the JSON string "p12".
+            /// </summary>
+            P12 = 145,
+            /// <summary>
+            /// Corresponds to the JSON string "pdbrc".
+            /// </summary>
+            Pdbrc = 146,
+            /// <summary>
+            /// Corresponds to the JSON string "pdf".
+            /// </summary>
+            Pdf = 147,
+            /// <summary>
+            /// Corresponds to the JSON string "pem".
+            /// </summary>
+            Pem = 148,
+            /// <summary>
+            /// Corresponds to the JSON string "perl".
+            /// </summary>
+            Perl = 149,
+            /// <summary>
+            /// Corresponds to the JSON string "php".
+            /// </summary>
+            Php = 150,
+            /// <summary>
+            /// Corresponds to the JSON string "pkgbuild".
+            /// </summary>
+            Pkgbuild = 151,
+            /// <summary>
+            /// Corresponds to the JSON string "plain-text".
+            /// </summary>
+            PlainText = 152,
+            /// <summary>
+            /// Corresponds to the JSON string "plantuml".
+            /// </summary>
+            Plantuml = 153,
+            /// <summary>
+            /// Corresponds to the JSON string "plist".
+            /// </summary>
+            Plist = 154,
+            /// <summary>
+            /// Corresponds to the JSON string "png".
+            /// </summary>
+            Png = 155,
+            /// <summary>
+            /// Corresponds to the JSON string "pofile".
+            /// </summary>
+            Pofile = 156,
+            /// <summary>
+            /// Corresponds to the JSON string "powershell".
+            /// </summary>
+            Powershell = 157,
+            /// <summary>
+            /// Corresponds to the JSON string "prettierignore".
+            /// </summary>
+            Prettierignore = 158,
+            /// <summary>
+            /// Corresponds to the JSON string "prisma".
+            /// </summary>
+            Prisma = 159,
+            /// <summary>
+            /// Corresponds to the JSON string "proto".
+            /// </summary>
+            Proto = 160,
+            /// <summary>
+            /// Corresponds to the JSON string "puppet".
+            /// </summary>
+            Puppet = 161,
+            /// <summary>
+            /// Corresponds to the JSON string "purescript".
+            /// </summary>
+            Purescript = 162,
+            /// <summary>
+            /// Corresponds to the JSON string "pyi".
+            /// </summary>
+            Pyi = 163,
+            /// <summary>
+            /// Corresponds to the JSON string "pylintrc".
+            /// </summary>
+            Pylintrc = 164,
+            /// <summary>
+            /// Corresponds to the JSON string "pypirc".
+            /// </summary>
+            Pypirc = 165,
+            /// <summary>
+            /// Corresponds to the JSON string "pyproj".
+            /// </summary>
+            Pyproj = 166,
+            /// <summary>
+            /// Corresponds to the JSON string "python".
+            /// </summary>
+            Python = 167,
+            /// <summary>
+            /// Corresponds to the JSON string "python2".
+            /// </summary>
+            Python2 = 168,
+            /// <summary>
+            /// Corresponds to the JSON string "python3".
+            /// </summary>
+            Python3 = 169,
+            /// <summary>
+            /// Corresponds to the JSON string "pyz".
+            /// </summary>
+            Pyz = 170,
+            /// <summary>
+            /// Corresponds to the JSON string "qml".
+            /// </summary>
+            Qml = 171,
+            /// <summary>
+            /// Corresponds to the JSON string "r".
+            /// </summary>
+            R = 172,
+            /// <summary>
+            /// Corresponds to the JSON string "relax-ng".
+            /// </summary>
+            RelaxNg = 173,
+            /// <summary>
+            /// Corresponds to the JSON string "rst".
+            /// </summary>
+            Rst = 174,
+            /// <summary>
+            /// Corresponds to the JSON string "ruby".
+            /// </summary>
+            Ruby = 175,
+            /// <summary>
+            /// Corresponds to the JSON string "rust".
+            /// </summary>
+            Rust = 176,
+            /// <summary>
+            /// Corresponds to the JSON string "salt".
+            /// </summary>
+            Salt = 177,
+            /// <summary>
+            /// Corresponds to the JSON string "sass".
+            /// </summary>
+            Sass = 178,
+            /// <summary>
+            /// Corresponds to the JSON string "sbt".
+            /// </summary>
+            Sbt = 179,
+            /// <summary>
+            /// Corresponds to the JSON string "scala".
+            /// </summary>
+            Scala = 180,
+            /// <summary>
+            /// Corresponds to the JSON string "scheme".
+            /// </summary>
+            Scheme = 181,
+            /// <summary>
+            /// Corresponds to the JSON string "scss".
+            /// </summary>
+            Scss = 182,
+            /// <summary>
+            /// Corresponds to the JSON string "sh".
+            /// </summary>
+            Sh = 183,
+            /// <summary>
+            /// Corresponds to the JSON string "shell".
+            /// </summary>
+            Shell = 184,
+            /// <summary>
+            /// Corresponds to the JSON string "sln".
+            /// </summary>
+            Sln = 185,
+            /// <summary>
+            /// Corresponds to the JSON string "socket".
+            /// </summary>
+            Socket = 186,
+            /// <summary>
+            /// Corresponds to the JSON string "solidity".
+            /// </summary>
+            Solidity = 187,
+            /// <summary>
+            /// Corresponds to the JSON string "spec".
+            /// </summary>
+            Spec = 188,
+            /// <summary>
+            /// Corresponds to the JSON string "sql".
+            /// </summary>
+            Sql = 189,
+            /// <summary>
+            /// Corresponds to the JSON string "stylus".
+            /// </summary>
+            Stylus = 190,
+            /// <summary>
+            /// Corresponds to the JSON string "svelte".
+            /// </summary>
+            Svelte = 191,
+            /// <summary>
+            /// Corresponds to the JSON string "svg".
+            /// </summary>
+            Svg = 192,
+            /// <summary>
+            /// Corresponds to the JSON string "swf".
+            /// </summary>
+            Swf = 193,
+            /// <summary>
+            /// Corresponds to the JSON string "swift".
+            /// </summary>
+            Swift = 194,
+            /// <summary>
+            /// Corresponds to the JSON string "swiftdeps".
+            /// </summary>
+            Swiftdeps = 195,
+            /// <summary>
+            /// Corresponds to the JSON string "symlink".
+            /// </summary>
+            Symlink = 196,
+            /// <summary>
+            /// Corresponds to the JSON string "system-verilog".
+            /// </summary>
+            SystemVerilog = 197,
+            /// <summary>
+            /// Corresponds to the JSON string "tar".
+            /// </summary>
+            Tar = 198,
+            /// <summary>
+            /// Corresponds to the JSON string "tcsh".
+            /// </summary>
+            Tcsh = 199,
+            /// <summary>
+            /// Corresponds to the JSON string "terraform".
+            /// </summary>
+            Terraform = 200,
+            /// <summary>
+            /// Corresponds to the JSON string "tex".
+            /// </summary>
+            Tex = 201,
+            /// <summary>
+            /// Corresponds to the JSON string "text".
+            /// </summary>
+            Text = 202,
+            /// <summary>
+            /// Corresponds to the JSON string "thrift".
+            /// </summary>
+            Thrift = 203,
+            /// <summary>
+            /// Corresponds to the JSON string "tiff".
+            /// </summary>
+            Tiff = 204,
+            /// <summary>
+            /// Corresponds to the JSON string "toml".
+            /// </summary>
+            Toml = 205,
+            /// <summary>
+            /// Corresponds to the JSON string "ts".
+            /// </summary>
+            Ts = 206,
+            /// <summary>
+            /// Corresponds to the JSON string "tsv".
+            /// </summary>
+            Tsv = 207,
+            /// <summary>
+            /// Corresponds to the JSON string "tsx".
+            /// </summary>
+            Tsx = 208,
+            /// <summary>
+            /// Corresponds to the JSON string "ttf".
+            /// </summary>
+            Ttf = 209,
+            /// <summary>
+            /// Corresponds to the JSON string "twig".
+            /// </summary>
+            Twig = 210,
+            /// <summary>
+            /// Corresponds to the JSON string "twisted".
+            /// </summary>
+            Twisted = 211,
+            /// <summary>
+            /// Corresponds to the JSON string "txsprofile".
+            /// </summary>
+            Txsprofile = 212,
+            /// <summary>
+            /// Corresponds to the JSON string "urdf".
+            /// </summary>
+            Urdf = 213,
+            /// <summary>
+            /// Corresponds to the JSON string "vb".
+            /// </summary>
+            Vb = 214,
+            /// <summary>
+            /// Corresponds to the JSON string "vbproj".
+            /// </summary>
+            Vbproj = 215,
+            /// <summary>
+            /// Corresponds to the JSON string "vcxproj".
+            /// </summary>
+            Vcxproj = 216,
+            /// <summary>
+            /// Corresponds to the JSON string "vdx".
+            /// </summary>
+            Vdx = 217,
+            /// <summary>
+            /// Corresponds to the JSON string "verilog".
+            /// </summary>
+            Verilog = 218,
+            /// <summary>
+            /// Corresponds to the JSON string "vhdl".
+            /// </summary>
+            Vhdl = 219,
+            /// <summary>
+            /// Corresponds to the JSON string "vim".
+            /// </summary>
+            Vim = 220,
+            /// <summary>
+            /// Corresponds to the JSON string "vtl".
+            /// </summary>
+            Vtl = 221,
+            /// <summary>
+            /// Corresponds to the JSON string "vue".
+            /// </summary>
+            Vue = 222,
+            /// <summary>
+            /// Corresponds to the JSON string "wav".
+            /// </summary>
+            Wav = 223,
+            /// <summary>
+            /// Corresponds to the JSON string "webp".
+            /// </summary>
+            Webp = 224,
+            /// <summary>
+            /// Corresponds to the JSON string "wheel".
+            /// </summary>
+            Wheel = 225,
+            /// <summary>
+            /// Corresponds to the JSON string "wkt".
+            /// </summary>
+            Wkt = 226,
+            /// <summary>
+            /// Corresponds to the JSON string "woff".
+            /// </summary>
+            Woff = 227,
+            /// <summary>
+            /// Corresponds to the JSON string "woff2".
+            /// </summary>
+            Woff2 = 228,
+            /// <summary>
+            /// Corresponds to the JSON string "wsgi".
+            /// </summary>
+            Wsgi = 229,
+            /// <summary>
+            /// Corresponds to the JSON string "xhtml".
+            /// </summary>
+            Xhtml = 230,
+            /// <summary>
+            /// Corresponds to the JSON string "xml".
+            /// </summary>
+            Xml = 231,
+            /// <summary>
+            /// Corresponds to the JSON string "xquery".
+            /// </summary>
+            Xquery = 232,
+            /// <summary>
+            /// Corresponds to the JSON string "xsd".
+            /// </summary>
+            Xsd = 233,
+            /// <summary>
+            /// Corresponds to the JSON string "xsl".
+            /// </summary>
+            Xsl = 234,
+            /// <summary>
+            /// Corresponds to the JSON string "yaml".
+            /// </summary>
+            Yaml = 235,
+            /// <summary>
+            /// Corresponds to the JSON string "yamllint".
+            /// </summary>
+            Yamllint = 236,
+            /// <summary>
+            /// Corresponds to the JSON string "yang".
+            /// </summary>
+            Yang = 237,
+            /// <summary>
+            /// Corresponds to the JSON string "yin".
+            /// </summary>
+            Yin = 238,
+            /// <summary>
+            /// Corresponds to the JSON string "zcml".
+            /// </summary>
+            Zcml = 239,
+            /// <summary>
+            /// Corresponds to the JSON string "zig".
+            /// </summary>
+            Zig = 240,
+            /// <summary>
+            /// Corresponds to the JSON string "zip".
+            /// </summary>
+            Zip = 241,
+            /// <summary>
+            /// Corresponds to the JSON string "zpt".
+            /// </summary>
+            Zpt = 242,
+            /// <summary>
+            /// Corresponds to the JSON string "zsh".
+            /// </summary>
+            Zsh = 243,
+        }
+
+        /// <summary>
+        /// Converts a <see cref="KnownValues"/> to an instance of this type.
+        /// </summary>
+        /// <param name="value">The well-known value from which to convert.</param>
+        /// <exception cref="InvalidOperationException">The value was not a defined member of the <see cref="KnownValues"/> enumeration.</exception>
+        public static implicit operator FileType(KnownValues value)
+        {
+            return value switch
             {
-                return new EnumStringSet([
-                    static () => "adobe-illustrator"u8,
-                    static () => "alpm"u8,
-                    static () => "apinotes"u8,
-                    static () => "asar"u8,
-                    static () => "asciidoc"u8,
-                    static () => "ash"u8,
-                    static () => "asm"u8,
-                    static () => "aspectj"u8,
-                    static () => "audio"u8,
-                    static () => "avif"u8,
-                    static () => "awk"u8,
-                    static () => "babelrc"u8,
-                    static () => "bash"u8,
-                    static () => "batch"u8,
-                    static () => "bats"u8,
-                    static () => "bazel"u8,
-                    static () => "bazelrc"u8,
-                    static () => "bib"u8,
-                    static () => "binary"u8,
-                    static () => "bitmap"u8,
-                    static () => "bowerrc"u8,
-                    static () => "browserslistrc"u8,
-                    static () => "bzip2"u8,
-                    static () => "c"u8,
-                    static () => "c#"u8,
-                    static () => "c++"u8,
-                    static () => "c2hs"u8,
-                    static () => "cbsd"u8,
-                    static () => "clojure"u8,
-                    static () => "clojurescript"u8,
-                    static () => "cmake"u8,
-                    static () => "codespellrc"u8,
-                    static () => "coffee"u8,
-                    static () => "coveragerc"u8,
-                    static () => "crystal"u8,
-                    static () => "csh"u8,
-                    static () => "cson"u8,
-                    static () => "csproj"u8,
-                    static () => "css"u8,
-                    static () => "csslintrc"u8,
-                    static () => "csv"u8,
-                    static () => "cuda"u8,
-                    static () => "cython"u8,
-                    static () => "dart"u8,
-                    static () => "dash"u8,
-                    static () => "def"u8,
-                    static () => "diff"u8,
-                    static () => "directory"u8,
-                    static () => "dockerfile"u8,
-                    static () => "dockerignore"u8,
-                    static () => "dotenv"u8,
-                    static () => "dtd"u8,
-                    static () => "editorconfig"u8,
-                    static () => "edn"u8,
-                    static () => "ejs"u8,
-                    static () => "eot"u8,
-                    static () => "eps"u8,
-                    static () => "erb"u8,
-                    static () => "executable"u8,
-                    static () => "expect"u8,
-                    static () => "file"u8,
-                    static () => "fish"u8,
-                    static () => "flake8"u8,
-                    static () => "gdscript"u8,
-                    static () => "geojson"u8,
-                    static () => "gherkin"u8,
-                    static () => "gif"u8,
-                    static () => "gitattributes"u8,
-                    static () => "gitconfig"u8,
-                    static () => "gitignore"u8,
-                    static () => "gitlint"u8,
-                    static () => "gitmodules"u8,
-                    static () => "go"u8,
-                    static () => "go-mod"u8,
-                    static () => "go-sum"u8,
-                    static () => "gotmpl"u8,
-                    static () => "gpx"u8,
-                    static () => "graphql"u8,
-                    static () => "groovy"u8,
-                    static () => "gyb"u8,
-                    static () => "gyp"u8,
-                    static () => "gzip"u8,
-                    static () => "handlebars"u8,
-                    static () => "haskell"u8,
-                    static () => "hcl"u8,
-                    static () => "header"u8,
-                    static () => "hgrc"u8,
-                    static () => "html"u8,
-                    static () => "icalendar"u8,
-                    static () => "icns"u8,
-                    static () => "icon"u8,
-                    static () => "idl"u8,
-                    static () => "idris"u8,
-                    static () => "image"u8,
-                    static () => "inc"u8,
-                    static () => "ini"u8,
-                    static () => "inl"u8,
-                    static () => "ino"u8,
-                    static () => "inx"u8,
-                    static () => "jade"u8,
-                    static () => "jar"u8,
-                    static () => "java"u8,
-                    static () => "java-properties"u8,
-                    static () => "javascript"u8,
-                    static () => "jenkins"u8,
-                    static () => "jinja"u8,
-                    static () => "jpeg"u8,
-                    static () => "jshintrc"u8,
-                    static () => "json"u8,
-                    static () => "json5"u8,
-                    static () => "jsonnet"u8,
-                    static () => "jsx"u8,
-                    static () => "jupyter"u8,
-                    static () => "kml"u8,
-                    static () => "kotlin"u8,
-                    static () => "ksh"u8,
-                    static () => "lean"u8,
-                    static () => "lektor"u8,
-                    static () => "lektorproject"u8,
-                    static () => "less"u8,
-                    static () => "liquid"u8,
-                    static () => "literate-haskell"u8,
-                    static () => "lua"u8,
-                    static () => "mailmap"u8,
-                    static () => "makefile"u8,
-                    static () => "manifest"u8,
-                    static () => "map"u8,
-                    static () => "markdown"u8,
-                    static () => "mdx"u8,
-                    static () => "mention-bot"u8,
-                    static () => "mib"u8,
-                    static () => "modulemap"u8,
-                    static () => "musescore"u8,
-                    static () => "myst"u8,
-                    static () => "ngdoc"u8,
-                    static () => "nim"u8,
-                    static () => "nimble"u8,
-                    static () => "nix"u8,
-                    static () => "non-executable"u8,
-                    static () => "npmignore"u8,
-                    static () => "nunjucks"u8,
-                    static () => "objective-c"u8,
-                    static () => "objective-c++"u8,
-                    static () => "ocaml"u8,
-                    static () => "otf"u8,
-                    static () => "p12"u8,
-                    static () => "pdbrc"u8,
-                    static () => "pdf"u8,
-                    static () => "pem"u8,
-                    static () => "perl"u8,
-                    static () => "php"u8,
-                    static () => "pkgbuild"u8,
-                    static () => "plain-text"u8,
-                    static () => "plantuml"u8,
-                    static () => "plist"u8,
-                    static () => "png"u8,
-                    static () => "pofile"u8,
-                    static () => "powershell"u8,
-                    static () => "prettierignore"u8,
-                    static () => "prisma"u8,
-                    static () => "proto"u8,
-                    static () => "puppet"u8,
-                    static () => "purescript"u8,
-                    static () => "pyi"u8,
-                    static () => "pylintrc"u8,
-                    static () => "pypirc"u8,
-                    static () => "pyproj"u8,
-                    static () => "python"u8,
-                    static () => "python2"u8,
-                    static () => "python3"u8,
-                    static () => "pyz"u8,
-                    static () => "qml"u8,
-                    static () => "r"u8,
-                    static () => "relax-ng"u8,
-                    static () => "rst"u8,
-                    static () => "ruby"u8,
-                    static () => "rust"u8,
-                    static () => "salt"u8,
-                    static () => "sass"u8,
-                    static () => "sbt"u8,
-                    static () => "scala"u8,
-                    static () => "scheme"u8,
-                    static () => "scss"u8,
-                    static () => "sh"u8,
-                    static () => "shell"u8,
-                    static () => "sln"u8,
-                    static () => "socket"u8,
-                    static () => "solidity"u8,
-                    static () => "spec"u8,
-                    static () => "sql"u8,
-                    static () => "stylus"u8,
-                    static () => "svelte"u8,
-                    static () => "svg"u8,
-                    static () => "swf"u8,
-                    static () => "swift"u8,
-                    static () => "swiftdeps"u8,
-                    static () => "symlink"u8,
-                    static () => "system-verilog"u8,
-                    static () => "tar"u8,
-                    static () => "tcsh"u8,
-                    static () => "terraform"u8,
-                    static () => "tex"u8,
-                    static () => "text"u8,
-                    static () => "thrift"u8,
-                    static () => "tiff"u8,
-                    static () => "toml"u8,
-                    static () => "ts"u8,
-                    static () => "tsv"u8,
-                    static () => "tsx"u8,
-                    static () => "ttf"u8,
-                    static () => "twig"u8,
-                    static () => "twisted"u8,
-                    static () => "txsprofile"u8,
-                    static () => "urdf"u8,
-                    static () => "vb"u8,
-                    static () => "vbproj"u8,
-                    static () => "vcxproj"u8,
-                    static () => "vdx"u8,
-                    static () => "verilog"u8,
-                    static () => "vhdl"u8,
-                    static () => "vim"u8,
-                    static () => "vtl"u8,
-                    static () => "vue"u8,
-                    static () => "wav"u8,
-                    static () => "webp"u8,
-                    static () => "wheel"u8,
-                    static () => "wkt"u8,
-                    static () => "woff"u8,
-                    static () => "woff2"u8,
-                    static () => "wsgi"u8,
-                    static () => "xhtml"u8,
-                    static () => "xml"u8,
-                    static () => "xquery"u8,
-                    static () => "xsd"u8,
-                    static () => "xsl"u8,
-                    static () => "yaml"u8,
-                    static () => "yamllint"u8,
-                    static () => "yang"u8,
-                    static () => "yin"u8,
-                    static () => "zcml"u8,
-                    static () => "zig"u8,
-                    static () => "zip"u8,
-                    static () => "zpt"u8,
-                    static () => "zsh"u8,
-                ]);
+                KnownValues.AdobeIllustrator => Constants.EnumJson1,
+                KnownValues.Alpm => Constants.EnumJson2,
+                KnownValues.Apinotes => Constants.EnumJson3,
+                KnownValues.Asar => Constants.EnumJson4,
+                KnownValues.Asciidoc => Constants.EnumJson5,
+                KnownValues.Ash => Constants.EnumJson6,
+                KnownValues.Asm => Constants.EnumJson7,
+                KnownValues.Aspectj => Constants.EnumJson8,
+                KnownValues.Audio => Constants.EnumJson9,
+                KnownValues.Avif => Constants.EnumJson10,
+                KnownValues.Awk => Constants.EnumJson11,
+                KnownValues.Babelrc => Constants.EnumJson12,
+                KnownValues.Bash => Constants.EnumJson13,
+                KnownValues.Batch => Constants.EnumJson14,
+                KnownValues.Bats => Constants.EnumJson15,
+                KnownValues.Bazel => Constants.EnumJson16,
+                KnownValues.Bazelrc => Constants.EnumJson17,
+                KnownValues.Bib => Constants.EnumJson18,
+                KnownValues.Binary => Constants.EnumJson19,
+                KnownValues.Bitmap => Constants.EnumJson20,
+                KnownValues.Bowerrc => Constants.EnumJson21,
+                KnownValues.Browserslistrc => Constants.EnumJson22,
+                KnownValues.Bzip2 => Constants.EnumJson23,
+                KnownValues.C => Constants.EnumJson24,
+                KnownValues.C1 => Constants.EnumJson25,
+                KnownValues.C2 => Constants.EnumJson26,
+                KnownValues.C2hs => Constants.EnumJson27,
+                KnownValues.Cbsd => Constants.EnumJson28,
+                KnownValues.Clojure => Constants.EnumJson29,
+                KnownValues.Clojurescript => Constants.EnumJson30,
+                KnownValues.Cmake => Constants.EnumJson31,
+                KnownValues.Codespellrc => Constants.EnumJson32,
+                KnownValues.Coffee => Constants.EnumJson33,
+                KnownValues.Coveragerc => Constants.EnumJson34,
+                KnownValues.Crystal => Constants.EnumJson35,
+                KnownValues.Csh => Constants.EnumJson36,
+                KnownValues.Cson => Constants.EnumJson37,
+                KnownValues.Csproj => Constants.EnumJson38,
+                KnownValues.Css => Constants.EnumJson39,
+                KnownValues.Csslintrc => Constants.EnumJson40,
+                KnownValues.Csv => Constants.EnumJson41,
+                KnownValues.Cuda => Constants.EnumJson42,
+                KnownValues.Cython => Constants.EnumJson43,
+                KnownValues.Dart => Constants.EnumJson44,
+                KnownValues.Dash => Constants.EnumJson45,
+                KnownValues.Def => Constants.EnumJson46,
+                KnownValues.Diff => Constants.EnumJson47,
+                KnownValues.Directory => Constants.EnumJson48,
+                KnownValues.Dockerfile => Constants.EnumJson49,
+                KnownValues.Dockerignore => Constants.EnumJson50,
+                KnownValues.Dotenv => Constants.EnumJson51,
+                KnownValues.Dtd => Constants.EnumJson52,
+                KnownValues.Editorconfig => Constants.EnumJson53,
+                KnownValues.Edn => Constants.EnumJson54,
+                KnownValues.Ejs => Constants.EnumJson55,
+                KnownValues.Eot => Constants.EnumJson56,
+                KnownValues.Eps => Constants.EnumJson57,
+                KnownValues.Erb => Constants.EnumJson58,
+                KnownValues.Executable => Constants.EnumJson59,
+                KnownValues.Expect => Constants.EnumJson60,
+                KnownValues.File => Constants.EnumJson61,
+                KnownValues.Fish => Constants.EnumJson62,
+                KnownValues.Flake8 => Constants.EnumJson63,
+                KnownValues.Gdscript => Constants.EnumJson64,
+                KnownValues.Geojson => Constants.EnumJson65,
+                KnownValues.Gherkin => Constants.EnumJson66,
+                KnownValues.Gif => Constants.EnumJson67,
+                KnownValues.Gitattributes => Constants.EnumJson68,
+                KnownValues.Gitconfig => Constants.EnumJson69,
+                KnownValues.Gitignore => Constants.EnumJson70,
+                KnownValues.Gitlint => Constants.EnumJson71,
+                KnownValues.Gitmodules => Constants.EnumJson72,
+                KnownValues.Go => Constants.EnumJson73,
+                KnownValues.GoMod => Constants.EnumJson74,
+                KnownValues.GoSum => Constants.EnumJson75,
+                KnownValues.Gotmpl => Constants.EnumJson76,
+                KnownValues.Gpx => Constants.EnumJson77,
+                KnownValues.Graphql => Constants.EnumJson78,
+                KnownValues.Groovy => Constants.EnumJson79,
+                KnownValues.Gyb => Constants.EnumJson80,
+                KnownValues.Gyp => Constants.EnumJson81,
+                KnownValues.Gzip => Constants.EnumJson82,
+                KnownValues.Handlebars => Constants.EnumJson83,
+                KnownValues.Haskell => Constants.EnumJson84,
+                KnownValues.Hcl => Constants.EnumJson85,
+                KnownValues.Header => Constants.EnumJson86,
+                KnownValues.Hgrc => Constants.EnumJson87,
+                KnownValues.Html => Constants.EnumJson88,
+                KnownValues.Icalendar => Constants.EnumJson89,
+                KnownValues.Icns => Constants.EnumJson90,
+                KnownValues.Icon => Constants.EnumJson91,
+                KnownValues.Idl => Constants.EnumJson92,
+                KnownValues.Idris => Constants.EnumJson93,
+                KnownValues.Image => Constants.EnumJson94,
+                KnownValues.Inc => Constants.EnumJson95,
+                KnownValues.Ini => Constants.EnumJson96,
+                KnownValues.Inl => Constants.EnumJson97,
+                KnownValues.Ino => Constants.EnumJson98,
+                KnownValues.Inx => Constants.EnumJson99,
+                KnownValues.Jade => Constants.EnumJson100,
+                KnownValues.Jar => Constants.EnumJson101,
+                KnownValues.Java => Constants.EnumJson102,
+                KnownValues.JavaProperties => Constants.EnumJson103,
+                KnownValues.Javascript => Constants.EnumJson104,
+                KnownValues.Jenkins => Constants.EnumJson105,
+                KnownValues.Jinja => Constants.EnumJson106,
+                KnownValues.Jpeg => Constants.EnumJson107,
+                KnownValues.Jshintrc => Constants.EnumJson108,
+                KnownValues.Json => Constants.EnumJson109,
+                KnownValues.Json5 => Constants.EnumJson110,
+                KnownValues.Jsonnet => Constants.EnumJson111,
+                KnownValues.Jsx => Constants.EnumJson112,
+                KnownValues.Jupyter => Constants.EnumJson113,
+                KnownValues.Kml => Constants.EnumJson114,
+                KnownValues.Kotlin => Constants.EnumJson115,
+                KnownValues.Ksh => Constants.EnumJson116,
+                KnownValues.Lean => Constants.EnumJson117,
+                KnownValues.Lektor => Constants.EnumJson118,
+                KnownValues.Lektorproject => Constants.EnumJson119,
+                KnownValues.Less => Constants.EnumJson120,
+                KnownValues.Liquid => Constants.EnumJson121,
+                KnownValues.LiterateHaskell => Constants.EnumJson122,
+                KnownValues.Lua => Constants.EnumJson123,
+                KnownValues.Mailmap => Constants.EnumJson124,
+                KnownValues.Makefile => Constants.EnumJson125,
+                KnownValues.Manifest => Constants.EnumJson126,
+                KnownValues.Map => Constants.EnumJson127,
+                KnownValues.Markdown => Constants.EnumJson128,
+                KnownValues.Mdx => Constants.EnumJson129,
+                KnownValues.MentionBot => Constants.EnumJson130,
+                KnownValues.Mib => Constants.EnumJson131,
+                KnownValues.Modulemap => Constants.EnumJson132,
+                KnownValues.Musescore => Constants.EnumJson133,
+                KnownValues.Myst => Constants.EnumJson134,
+                KnownValues.Ngdoc => Constants.EnumJson135,
+                KnownValues.Nim => Constants.EnumJson136,
+                KnownValues.Nimble => Constants.EnumJson137,
+                KnownValues.Nix => Constants.EnumJson138,
+                KnownValues.NonExecutable => Constants.EnumJson139,
+                KnownValues.Npmignore => Constants.EnumJson140,
+                KnownValues.Nunjucks => Constants.EnumJson141,
+                KnownValues.ObjectiveC => Constants.EnumJson142,
+                KnownValues.ObjectiveC1 => Constants.EnumJson143,
+                KnownValues.Ocaml => Constants.EnumJson144,
+                KnownValues.Otf => Constants.EnumJson145,
+                KnownValues.P12 => Constants.EnumJson146,
+                KnownValues.Pdbrc => Constants.EnumJson147,
+                KnownValues.Pdf => Constants.EnumJson148,
+                KnownValues.Pem => Constants.EnumJson149,
+                KnownValues.Perl => Constants.EnumJson150,
+                KnownValues.Php => Constants.EnumJson151,
+                KnownValues.Pkgbuild => Constants.EnumJson152,
+                KnownValues.PlainText => Constants.EnumJson153,
+                KnownValues.Plantuml => Constants.EnumJson154,
+                KnownValues.Plist => Constants.EnumJson155,
+                KnownValues.Png => Constants.EnumJson156,
+                KnownValues.Pofile => Constants.EnumJson157,
+                KnownValues.Powershell => Constants.EnumJson158,
+                KnownValues.Prettierignore => Constants.EnumJson159,
+                KnownValues.Prisma => Constants.EnumJson160,
+                KnownValues.Proto => Constants.EnumJson161,
+                KnownValues.Puppet => Constants.EnumJson162,
+                KnownValues.Purescript => Constants.EnumJson163,
+                KnownValues.Pyi => Constants.EnumJson164,
+                KnownValues.Pylintrc => Constants.EnumJson165,
+                KnownValues.Pypirc => Constants.EnumJson166,
+                KnownValues.Pyproj => Constants.EnumJson167,
+                KnownValues.Python => Constants.EnumJson168,
+                KnownValues.Python2 => Constants.EnumJson169,
+                KnownValues.Python3 => Constants.EnumJson170,
+                KnownValues.Pyz => Constants.EnumJson171,
+                KnownValues.Qml => Constants.EnumJson172,
+                KnownValues.R => Constants.EnumJson173,
+                KnownValues.RelaxNg => Constants.EnumJson174,
+                KnownValues.Rst => Constants.EnumJson175,
+                KnownValues.Ruby => Constants.EnumJson176,
+                KnownValues.Rust => Constants.EnumJson177,
+                KnownValues.Salt => Constants.EnumJson178,
+                KnownValues.Sass => Constants.EnumJson179,
+                KnownValues.Sbt => Constants.EnumJson180,
+                KnownValues.Scala => Constants.EnumJson181,
+                KnownValues.Scheme => Constants.EnumJson182,
+                KnownValues.Scss => Constants.EnumJson183,
+                KnownValues.Sh => Constants.EnumJson184,
+                KnownValues.Shell => Constants.EnumJson185,
+                KnownValues.Sln => Constants.EnumJson186,
+                KnownValues.Socket => Constants.EnumJson187,
+                KnownValues.Solidity => Constants.EnumJson188,
+                KnownValues.Spec => Constants.EnumJson189,
+                KnownValues.Sql => Constants.EnumJson190,
+                KnownValues.Stylus => Constants.EnumJson191,
+                KnownValues.Svelte => Constants.EnumJson192,
+                KnownValues.Svg => Constants.EnumJson193,
+                KnownValues.Swf => Constants.EnumJson194,
+                KnownValues.Swift => Constants.EnumJson195,
+                KnownValues.Swiftdeps => Constants.EnumJson196,
+                KnownValues.Symlink => Constants.EnumJson197,
+                KnownValues.SystemVerilog => Constants.EnumJson198,
+                KnownValues.Tar => Constants.EnumJson199,
+                KnownValues.Tcsh => Constants.EnumJson200,
+                KnownValues.Terraform => Constants.EnumJson201,
+                KnownValues.Tex => Constants.EnumJson202,
+                KnownValues.Text => Constants.EnumJson203,
+                KnownValues.Thrift => Constants.EnumJson204,
+                KnownValues.Tiff => Constants.EnumJson205,
+                KnownValues.Toml => Constants.EnumJson206,
+                KnownValues.Ts => Constants.EnumJson207,
+                KnownValues.Tsv => Constants.EnumJson208,
+                KnownValues.Tsx => Constants.EnumJson209,
+                KnownValues.Ttf => Constants.EnumJson210,
+                KnownValues.Twig => Constants.EnumJson211,
+                KnownValues.Twisted => Constants.EnumJson212,
+                KnownValues.Txsprofile => Constants.EnumJson213,
+                KnownValues.Urdf => Constants.EnumJson214,
+                KnownValues.Vb => Constants.EnumJson215,
+                KnownValues.Vbproj => Constants.EnumJson216,
+                KnownValues.Vcxproj => Constants.EnumJson217,
+                KnownValues.Vdx => Constants.EnumJson218,
+                KnownValues.Verilog => Constants.EnumJson219,
+                KnownValues.Vhdl => Constants.EnumJson220,
+                KnownValues.Vim => Constants.EnumJson221,
+                KnownValues.Vtl => Constants.EnumJson222,
+                KnownValues.Vue => Constants.EnumJson223,
+                KnownValues.Wav => Constants.EnumJson224,
+                KnownValues.Webp => Constants.EnumJson225,
+                KnownValues.Wheel => Constants.EnumJson226,
+                KnownValues.Wkt => Constants.EnumJson227,
+                KnownValues.Woff => Constants.EnumJson228,
+                KnownValues.Woff2 => Constants.EnumJson229,
+                KnownValues.Wsgi => Constants.EnumJson230,
+                KnownValues.Xhtml => Constants.EnumJson231,
+                KnownValues.Xml => Constants.EnumJson232,
+                KnownValues.Xquery => Constants.EnumJson233,
+                KnownValues.Xsd => Constants.EnumJson234,
+                KnownValues.Xsl => Constants.EnumJson235,
+                KnownValues.Yaml => Constants.EnumJson236,
+                KnownValues.Yamllint => Constants.EnumJson237,
+                KnownValues.Yang => Constants.EnumJson238,
+                KnownValues.Yin => Constants.EnumJson239,
+                KnownValues.Zcml => Constants.EnumJson240,
+                KnownValues.Zig => Constants.EnumJson241,
+                KnownValues.Zip => Constants.EnumJson242,
+                KnownValues.Zpt => Constants.EnumJson243,
+                KnownValues.Zsh => Constants.EnumJson244,
+                _ => throw new InvalidOperationException(),
+            };
+        }
+
+        /// <summary>
+        /// Converts the value to its <see cref="KnownValues"/> equivalent.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+        public static implicit operator KnownValues(FileType value)
+        {
+            if (value.TryGetKnownValue(out KnownValues result))
+            {
+                return result;
             }
 
-            private static EnumStringSet EnumStringSet { get; } = BuildEnumStringSet();
+            throw new InvalidOperationException();
+        }
 
+        /// <summary>
+        /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+        /// </summary>
+        /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+        /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+        public bool TryGetKnownValue(out KnownValues result)
+        {
+            if (this.ValueEquals(Constants.Enum1))
+            {
+                result = KnownValues.AdobeIllustrator;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum2))
+            {
+                result = KnownValues.Alpm;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum3))
+            {
+                result = KnownValues.Apinotes;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum4))
+            {
+                result = KnownValues.Asar;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum5))
+            {
+                result = KnownValues.Asciidoc;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum6))
+            {
+                result = KnownValues.Ash;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum7))
+            {
+                result = KnownValues.Asm;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum8))
+            {
+                result = KnownValues.Aspectj;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum9))
+            {
+                result = KnownValues.Audio;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum10))
+            {
+                result = KnownValues.Avif;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum11))
+            {
+                result = KnownValues.Awk;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum12))
+            {
+                result = KnownValues.Babelrc;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum13))
+            {
+                result = KnownValues.Bash;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum14))
+            {
+                result = KnownValues.Batch;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum15))
+            {
+                result = KnownValues.Bats;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum16))
+            {
+                result = KnownValues.Bazel;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum17))
+            {
+                result = KnownValues.Bazelrc;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum18))
+            {
+                result = KnownValues.Bib;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum19))
+            {
+                result = KnownValues.Binary;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum20))
+            {
+                result = KnownValues.Bitmap;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum21))
+            {
+                result = KnownValues.Bowerrc;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum22))
+            {
+                result = KnownValues.Browserslistrc;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum23))
+            {
+                result = KnownValues.Bzip2;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum24))
+            {
+                result = KnownValues.C;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum25))
+            {
+                result = KnownValues.C1;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum26))
+            {
+                result = KnownValues.C2;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum27))
+            {
+                result = KnownValues.C2hs;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum28))
+            {
+                result = KnownValues.Cbsd;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum29))
+            {
+                result = KnownValues.Clojure;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum30))
+            {
+                result = KnownValues.Clojurescript;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum31))
+            {
+                result = KnownValues.Cmake;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum32))
+            {
+                result = KnownValues.Codespellrc;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum33))
+            {
+                result = KnownValues.Coffee;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum34))
+            {
+                result = KnownValues.Coveragerc;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum35))
+            {
+                result = KnownValues.Crystal;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum36))
+            {
+                result = KnownValues.Csh;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum37))
+            {
+                result = KnownValues.Cson;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum38))
+            {
+                result = KnownValues.Csproj;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum39))
+            {
+                result = KnownValues.Css;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum40))
+            {
+                result = KnownValues.Csslintrc;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum41))
+            {
+                result = KnownValues.Csv;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum42))
+            {
+                result = KnownValues.Cuda;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum43))
+            {
+                result = KnownValues.Cython;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum44))
+            {
+                result = KnownValues.Dart;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum45))
+            {
+                result = KnownValues.Dash;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum46))
+            {
+                result = KnownValues.Def;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum47))
+            {
+                result = KnownValues.Diff;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum48))
+            {
+                result = KnownValues.Directory;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum49))
+            {
+                result = KnownValues.Dockerfile;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum50))
+            {
+                result = KnownValues.Dockerignore;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum51))
+            {
+                result = KnownValues.Dotenv;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum52))
+            {
+                result = KnownValues.Dtd;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum53))
+            {
+                result = KnownValues.Editorconfig;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum54))
+            {
+                result = KnownValues.Edn;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum55))
+            {
+                result = KnownValues.Ejs;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum56))
+            {
+                result = KnownValues.Eot;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum57))
+            {
+                result = KnownValues.Eps;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum58))
+            {
+                result = KnownValues.Erb;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum59))
+            {
+                result = KnownValues.Executable;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum60))
+            {
+                result = KnownValues.Expect;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum61))
+            {
+                result = KnownValues.File;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum62))
+            {
+                result = KnownValues.Fish;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum63))
+            {
+                result = KnownValues.Flake8;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum64))
+            {
+                result = KnownValues.Gdscript;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum65))
+            {
+                result = KnownValues.Geojson;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum66))
+            {
+                result = KnownValues.Gherkin;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum67))
+            {
+                result = KnownValues.Gif;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum68))
+            {
+                result = KnownValues.Gitattributes;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum69))
+            {
+                result = KnownValues.Gitconfig;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum70))
+            {
+                result = KnownValues.Gitignore;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum71))
+            {
+                result = KnownValues.Gitlint;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum72))
+            {
+                result = KnownValues.Gitmodules;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum73))
+            {
+                result = KnownValues.Go;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum74))
+            {
+                result = KnownValues.GoMod;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum75))
+            {
+                result = KnownValues.GoSum;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum76))
+            {
+                result = KnownValues.Gotmpl;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum77))
+            {
+                result = KnownValues.Gpx;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum78))
+            {
+                result = KnownValues.Graphql;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum79))
+            {
+                result = KnownValues.Groovy;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum80))
+            {
+                result = KnownValues.Gyb;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum81))
+            {
+                result = KnownValues.Gyp;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum82))
+            {
+                result = KnownValues.Gzip;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum83))
+            {
+                result = KnownValues.Handlebars;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum84))
+            {
+                result = KnownValues.Haskell;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum85))
+            {
+                result = KnownValues.Hcl;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum86))
+            {
+                result = KnownValues.Header;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum87))
+            {
+                result = KnownValues.Hgrc;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum88))
+            {
+                result = KnownValues.Html;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum89))
+            {
+                result = KnownValues.Icalendar;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum90))
+            {
+                result = KnownValues.Icns;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum91))
+            {
+                result = KnownValues.Icon;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum92))
+            {
+                result = KnownValues.Idl;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum93))
+            {
+                result = KnownValues.Idris;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum94))
+            {
+                result = KnownValues.Image;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum95))
+            {
+                result = KnownValues.Inc;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum96))
+            {
+                result = KnownValues.Ini;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum97))
+            {
+                result = KnownValues.Inl;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum98))
+            {
+                result = KnownValues.Ino;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum99))
+            {
+                result = KnownValues.Inx;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum100))
+            {
+                result = KnownValues.Jade;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum101))
+            {
+                result = KnownValues.Jar;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum102))
+            {
+                result = KnownValues.Java;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum103))
+            {
+                result = KnownValues.JavaProperties;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum104))
+            {
+                result = KnownValues.Javascript;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum105))
+            {
+                result = KnownValues.Jenkins;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum106))
+            {
+                result = KnownValues.Jinja;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum107))
+            {
+                result = KnownValues.Jpeg;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum108))
+            {
+                result = KnownValues.Jshintrc;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum109))
+            {
+                result = KnownValues.Json;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum110))
+            {
+                result = KnownValues.Json5;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum111))
+            {
+                result = KnownValues.Jsonnet;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum112))
+            {
+                result = KnownValues.Jsx;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum113))
+            {
+                result = KnownValues.Jupyter;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum114))
+            {
+                result = KnownValues.Kml;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum115))
+            {
+                result = KnownValues.Kotlin;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum116))
+            {
+                result = KnownValues.Ksh;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum117))
+            {
+                result = KnownValues.Lean;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum118))
+            {
+                result = KnownValues.Lektor;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum119))
+            {
+                result = KnownValues.Lektorproject;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum120))
+            {
+                result = KnownValues.Less;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum121))
+            {
+                result = KnownValues.Liquid;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum122))
+            {
+                result = KnownValues.LiterateHaskell;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum123))
+            {
+                result = KnownValues.Lua;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum124))
+            {
+                result = KnownValues.Mailmap;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum125))
+            {
+                result = KnownValues.Makefile;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum126))
+            {
+                result = KnownValues.Manifest;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum127))
+            {
+                result = KnownValues.Map;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum128))
+            {
+                result = KnownValues.Markdown;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum129))
+            {
+                result = KnownValues.Mdx;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum130))
+            {
+                result = KnownValues.MentionBot;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum131))
+            {
+                result = KnownValues.Mib;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum132))
+            {
+                result = KnownValues.Modulemap;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum133))
+            {
+                result = KnownValues.Musescore;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum134))
+            {
+                result = KnownValues.Myst;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum135))
+            {
+                result = KnownValues.Ngdoc;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum136))
+            {
+                result = KnownValues.Nim;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum137))
+            {
+                result = KnownValues.Nimble;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum138))
+            {
+                result = KnownValues.Nix;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum139))
+            {
+                result = KnownValues.NonExecutable;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum140))
+            {
+                result = KnownValues.Npmignore;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum141))
+            {
+                result = KnownValues.Nunjucks;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum142))
+            {
+                result = KnownValues.ObjectiveC;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum143))
+            {
+                result = KnownValues.ObjectiveC1;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum144))
+            {
+                result = KnownValues.Ocaml;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum145))
+            {
+                result = KnownValues.Otf;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum146))
+            {
+                result = KnownValues.P12;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum147))
+            {
+                result = KnownValues.Pdbrc;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum148))
+            {
+                result = KnownValues.Pdf;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum149))
+            {
+                result = KnownValues.Pem;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum150))
+            {
+                result = KnownValues.Perl;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum151))
+            {
+                result = KnownValues.Php;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum152))
+            {
+                result = KnownValues.Pkgbuild;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum153))
+            {
+                result = KnownValues.PlainText;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum154))
+            {
+                result = KnownValues.Plantuml;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum155))
+            {
+                result = KnownValues.Plist;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum156))
+            {
+                result = KnownValues.Png;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum157))
+            {
+                result = KnownValues.Pofile;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum158))
+            {
+                result = KnownValues.Powershell;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum159))
+            {
+                result = KnownValues.Prettierignore;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum160))
+            {
+                result = KnownValues.Prisma;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum161))
+            {
+                result = KnownValues.Proto;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum162))
+            {
+                result = KnownValues.Puppet;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum163))
+            {
+                result = KnownValues.Purescript;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum164))
+            {
+                result = KnownValues.Pyi;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum165))
+            {
+                result = KnownValues.Pylintrc;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum166))
+            {
+                result = KnownValues.Pypirc;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum167))
+            {
+                result = KnownValues.Pyproj;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum168))
+            {
+                result = KnownValues.Python;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum169))
+            {
+                result = KnownValues.Python2;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum170))
+            {
+                result = KnownValues.Python3;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum171))
+            {
+                result = KnownValues.Pyz;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum172))
+            {
+                result = KnownValues.Qml;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum173))
+            {
+                result = KnownValues.R;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum174))
+            {
+                result = KnownValues.RelaxNg;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum175))
+            {
+                result = KnownValues.Rst;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum176))
+            {
+                result = KnownValues.Ruby;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum177))
+            {
+                result = KnownValues.Rust;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum178))
+            {
+                result = KnownValues.Salt;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum179))
+            {
+                result = KnownValues.Sass;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum180))
+            {
+                result = KnownValues.Sbt;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum181))
+            {
+                result = KnownValues.Scala;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum182))
+            {
+                result = KnownValues.Scheme;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum183))
+            {
+                result = KnownValues.Scss;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum184))
+            {
+                result = KnownValues.Sh;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum185))
+            {
+                result = KnownValues.Shell;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum186))
+            {
+                result = KnownValues.Sln;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum187))
+            {
+                result = KnownValues.Socket;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum188))
+            {
+                result = KnownValues.Solidity;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum189))
+            {
+                result = KnownValues.Spec;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum190))
+            {
+                result = KnownValues.Sql;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum191))
+            {
+                result = KnownValues.Stylus;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum192))
+            {
+                result = KnownValues.Svelte;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum193))
+            {
+                result = KnownValues.Svg;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum194))
+            {
+                result = KnownValues.Swf;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum195))
+            {
+                result = KnownValues.Swift;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum196))
+            {
+                result = KnownValues.Swiftdeps;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum197))
+            {
+                result = KnownValues.Symlink;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum198))
+            {
+                result = KnownValues.SystemVerilog;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum199))
+            {
+                result = KnownValues.Tar;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum200))
+            {
+                result = KnownValues.Tcsh;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum201))
+            {
+                result = KnownValues.Terraform;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum202))
+            {
+                result = KnownValues.Tex;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum203))
+            {
+                result = KnownValues.Text;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum204))
+            {
+                result = KnownValues.Thrift;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum205))
+            {
+                result = KnownValues.Tiff;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum206))
+            {
+                result = KnownValues.Toml;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum207))
+            {
+                result = KnownValues.Ts;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum208))
+            {
+                result = KnownValues.Tsv;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum209))
+            {
+                result = KnownValues.Tsx;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum210))
+            {
+                result = KnownValues.Ttf;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum211))
+            {
+                result = KnownValues.Twig;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum212))
+            {
+                result = KnownValues.Twisted;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum213))
+            {
+                result = KnownValues.Txsprofile;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum214))
+            {
+                result = KnownValues.Urdf;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum215))
+            {
+                result = KnownValues.Vb;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum216))
+            {
+                result = KnownValues.Vbproj;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum217))
+            {
+                result = KnownValues.Vcxproj;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum218))
+            {
+                result = KnownValues.Vdx;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum219))
+            {
+                result = KnownValues.Verilog;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum220))
+            {
+                result = KnownValues.Vhdl;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum221))
+            {
+                result = KnownValues.Vim;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum222))
+            {
+                result = KnownValues.Vtl;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum223))
+            {
+                result = KnownValues.Vue;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum224))
+            {
+                result = KnownValues.Wav;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum225))
+            {
+                result = KnownValues.Webp;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum226))
+            {
+                result = KnownValues.Wheel;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum227))
+            {
+                result = KnownValues.Wkt;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum228))
+            {
+                result = KnownValues.Woff;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum229))
+            {
+                result = KnownValues.Woff2;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum230))
+            {
+                result = KnownValues.Wsgi;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum231))
+            {
+                result = KnownValues.Xhtml;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum232))
+            {
+                result = KnownValues.Xml;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum233))
+            {
+                result = KnownValues.Xquery;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum234))
+            {
+                result = KnownValues.Xsd;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum235))
+            {
+                result = KnownValues.Xsl;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum236))
+            {
+                result = KnownValues.Yaml;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum237))
+            {
+                result = KnownValues.Yamllint;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum238))
+            {
+                result = KnownValues.Yang;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum239))
+            {
+                result = KnownValues.Yin;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum240))
+            {
+                result = KnownValues.Zcml;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum241))
+            {
+                result = KnownValues.Zig;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum242))
+            {
+                result = KnownValues.Zip;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum243))
+            {
+                result = KnownValues.Zpt;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum244))
+            {
+                result = KnownValues.Zsh;
+                return true;
+            }
+
+            result = default;
+            return false;
+        }
+
+        public static partial class JsonSchema
+        {
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/file_type"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/definitions/file_type"u8, buffer, out written);
 
             /// <summary>
-            /// Gets the schema location from which this type was generated.
+            /// Gets the schema location from which this type was generated, as a JSON Pointer within <see cref="SchemaDocument"/>.
             /// </summary>
             public const string SchemaLocation = "/definitions/file_type";
 
@@ -4950,215 +7432,34 @@ public readonly partial struct PreCommitHooksSchema
             public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/file_type"u8;
 
             /// <summary>
+            /// Gets the schema document from which this type was generated, relative to the base location for generation.
+            /// </summary>
+            /// <remarks>
+            /// <see cref="SchemaLocation"/> is a JSON Pointer within this document, so <c>SchemaDocument + "#" + SchemaLocation</c>
+            /// is a reference to the schema, even for a schema inside a <c>$id</c> sub-resource.
+            /// </remarks>
+            public const string SchemaDocument = "pre-commit-hooks-schema.json";
+
+            /// <summary>
+            /// Gets the schema document from which this type was generated as a UTF-8 string.
+            /// </summary>
+            public static ReadOnlySpan<byte> SchemaDocumentUtf8 => "pre-commit-hooks-schema.json"u8;
+
+            private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Corvus.PreCommitHooksBenchmark.Current.CorvusJsonSchemaProgram.Entry(2);
+
+            /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
             /// </summary>
             /// <param name="parentDocument">The parent document.</param>
             /// <param name="parentIndex">The parent index.</param>
-            /// <param name="context">A reference to the validation context, configured with the appropriate values.</param>
-            internal static void Evaluate(
-                IJsonDocument parentDocument,
-                int parentIndex,
-                ref JsonSchemaContext context)
-            {
-                JsonTokenType tokenType = parentDocument.GetJsonTokenType(parentIndex);
-
-                // You're not allowed to ask about non-value-like entities
-                Debug.Assert(parentDocument.GetJsonTokenType(parentIndex) is not
-                    (JsonTokenType.None or
-                    JsonTokenType.EndObject or
-                    JsonTokenType.EndArray));
-
-                if (!JsonSchemaEvaluation.MatchTypeString(tokenType,"type"u8, ref context))
-                {
-                    if (!context.HasCollector)
-                    {
-                        return;
-                    }
-                }
-                else
-                {
-                    using UnescapedUtf8JsonString unescapedUtf8JsonString = parentDocument.GetUtf8JsonString(parentIndex, JsonTokenType.String);
-
-                    if (EnumStringSet.Contains(unescapedUtf8JsonString.Span))
-                    {
-                        goto enumShortCircuitSuccess;
-                    }
-
-                    context.EvaluatedKeyword(false, messageProvider: JsonSchemaEvaluation.DidNotMatchAtLeastOneConstantValue, "enum"u8);
-
-                    if (!context.HasCollector)
-                    {
-                        return;
-                    }
-
-                    goto enumAfterFailure;
-
-enumShortCircuitSuccess:
-                    context.EvaluatedKeyword(true, messageProvider: JsonSchemaEvaluation.MatchedAtLeastOneConstantValue, ", formattedKeyword, "u8);
-
-enumAfterFailure:;
-                }
-            }
-
+            /// <param name="resultsCollector">The (optional) results collector.</param>
+            /// <returns><see langword="true" /> if the instance evaluates against the schema.</returns>
             internal static bool Evaluate(
                 IJsonDocument parentDocument,
                 int parentIndex,
                 IJsonSchemaResultsCollector? resultsCollector = null)
             {
-                JsonSchemaContext context = JsonSchemaContext.BeginContext(
-                parentDocument,
-                parentIndex,
-                usingEvaluatedItems: false,
-                usingEvaluatedProperties: false,
-                resultsCollector: resultsCollector);
-
-                try
-                {
-                    Evaluate(parentDocument, parentIndex, ref context);
-                    context.EndContext();
-                    return context.IsMatch;
-                }
-                finally
-                {
-                    context.Dispose();
-                }
-            }
-
-            /// <summary>
-            /// Push the current context as a child context for schema evaluation.
-            /// </summary>
-            /// <typeparam name="TContext">The type of the context to be passed to the path providers.</typeparam>
-            /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-            /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-            /// <param name="context">The current evaluation context.</param>
-            /// <param name="providerContext">The context to be passed to the path providers.</param>
-            /// <param name="schemaEvaluationPath">The (optional) path to the schema being evaluated in the child context.</param>
-            /// <param name="documentEvaluationPath">The (optional) path in the document being evaluated in the child context.</param>
-            /// <returns>The child context.</returns>
-            internal static JsonSchemaContext PushChildContext<TContext>(
-                IJsonDocument parentDocument,
-                int parentDocumentIndex,
-                ref JsonSchemaContext context,
-                TContext providerContext,
-                JsonSchemaPathProvider<TContext>? schemaEvaluationPath = null,
-                JsonSchemaPathProvider<TContext>? documentEvaluationPath = null)
-            {
-                return
-                    context.PushChildContext(
-                        parentDocument,
-                        parentDocumentIndex,
-                        useEvaluatedItems: false,
-                        useEvaluatedProperties: false,
-                        evaluationPath: schemaEvaluationPath,
-                        documentEvaluationPath: documentEvaluationPath,
-                        providerContext: providerContext);
-            }
-
-            /// <summary>
-            /// Push the current context as a child context for schema evaluation.
-            /// </summary>
-            /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-            /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-            /// <param name="context">The current evaluation context.</param>
-            /// <param name="schemaEvaluationPath">The (optional) path to the schema being evaluated in the child context.</param>
-            /// <param name="documentEvaluationPath">The (optional) path in the document being evaluated in the child context.</param>
-            /// <returns>The child context.</returns>
-            internal static JsonSchemaContext PushChildContext(
-                IJsonDocument parentDocument,
-                int parentDocumentIndex,
-                ref JsonSchemaContext context,
-                JsonSchemaPathProvider? schemaEvaluationPath = null,
-                JsonSchemaPathProvider? documentEvaluationPath = null)
-            {
-                return
-                    context.PushChildContext(
-                        parentDocument,
-                        parentDocumentIndex,
-                        useEvaluatedItems: false,
-                        useEvaluatedProperties: false,
-                        evaluationPath: schemaEvaluationPath,
-                        documentEvaluationPath: documentEvaluationPath);
-            }
-
-            /// <summary>
-            /// Push the current context as a child context for schema evaluation of a property.
-            /// </summary>
-            /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-            /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-            /// <param name="context">The current evaluation context.</param>
-            /// <param name="propertyName">The name of the property </param>
-            /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-            /// <returns>The child context.</returns>
-            internal static JsonSchemaContext PushChildContext(
-                IJsonDocument parentDocument,
-                int parentDocumentIndex,
-                ref JsonSchemaContext context,
-                ReadOnlySpan<byte> propertyName,
-                JsonSchemaPathProvider? evaluationPath = null)
-            {
-                return
-                    context.PushChildContext(
-                        parentDocument,
-                        parentDocumentIndex,
-                        useEvaluatedItems: false,
-                        useEvaluatedProperties: false,
-                        propertyName,
-                        evaluationPath: evaluationPath,
-                        schemaEvaluationPath: SchemaLocationProvider);
-            }
-
-            /// <summary>
-            /// Push the current context as a child context for schema evaluation of a property where the property name is known to be unescaped.
-            /// </summary>
-            /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-            /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-            /// <param name="context">The current evaluation context.</param>
-            /// <param name="propertyName">The name of the property </param>
-            /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-            /// <returns>The child context.</returns>
-            internal static JsonSchemaContext PushChildContextUnescaped(
-                IJsonDocument parentDocument,
-                int parentDocumentIndex,
-                ref JsonSchemaContext context,
-                ReadOnlySpan<byte> propertyName,
-                JsonSchemaPathProvider? evaluationPath = null)
-            {
-                return
-                    context.PushChildContext(
-                        parentDocument,
-                        parentDocumentIndex,
-                        useEvaluatedItems: false,
-                        useEvaluatedProperties: false,
-                        propertyName,
-                        evaluationPath: evaluationPath,
-                        schemaEvaluationPath: SchemaLocationProvider);
-            }
-
-            /// <summary>
-            /// Push the current context as a child context for schema evaluation of an array item.
-            /// </summary>
-            /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-            /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-            /// <param name="context">The current evaluation context.</param>
-            /// <param name="itemIndex">The index of the item in the array.</param>
-            /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-            /// <returns>The child context.</returns>
-            internal static JsonSchemaContext PushChildContext(
-                IJsonDocument parentDocument,
-                int parentDocumentIndex,
-                ref JsonSchemaContext context,
-                int itemIndex,
-                JsonSchemaPathProvider? evaluationPath = null)
-            {
-                return
-                    context.PushChildContext(
-                        parentDocument,
-                        parentDocumentIndex,
-                        useEvaluatedItems: false,
-                        useEvaluatedProperties: false,
-                        itemIndex,
-                        evaluationPath: evaluationPath,
-                        schemaEvaluationPath: SchemaLocationProvider);
+                return Evaluator.Evaluate(parentDocument, parentIndex, resultsCollector);
             }
         }
     }

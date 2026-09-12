@@ -550,6 +550,62 @@ public readonly partial struct KrakendSchema
 
                             return defaultMatch();
                         }
+
+                        /// <summary>
+                        /// Converts the value to its <see cref="KnownValues"/> equivalent.
+                        /// </summary>
+                        /// <param name="value">The value from which to convert.</param>
+                        /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+                        public static implicit operator KnownValues(Mutable value)
+                        {
+                            if (value.TryGetKnownValue(out KnownValues result))
+                            {
+                                return result;
+                            }
+
+                            throw new InvalidOperationException();
+                        }
+
+                        /// <summary>
+                        /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+                        /// </summary>
+                        /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+                        /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+                        public bool TryGetKnownValue(out KnownValues result)
+                        {
+                            if (this.ValueEquals(Constants.Enum1))
+                            {
+                                result = KnownValues.Linear;
+                                return true;
+                            }
+
+                            if (this.ValueEquals(Constants.Enum2))
+                            {
+                                result = KnownValues.LinearJitter;
+                                return true;
+                            }
+
+                            if (this.ValueEquals(Constants.Enum3))
+                            {
+                                result = KnownValues.Exponential;
+                                return true;
+                            }
+
+                            if (this.ValueEquals(Constants.Enum4))
+                            {
+                                result = KnownValues.ExponentialJitter;
+                                return true;
+                            }
+
+                            if (this.ValueEquals(Constants.Enum5))
+                            {
+                                result = KnownValues.Fallback;
+                                return true;
+                            }
+
+                            result = default;
+                            return false;
+                        }
                     }
 
                     public ref struct Source
@@ -608,6 +664,9 @@ public readonly partial struct KrakendSchema
 
                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
                         public static implicit operator Source(string value) => new (value.AsSpan());
+
+                        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                        public static implicit operator Source(KnownValues value) => (BackoffStrategy)value;
 
                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
                         public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);

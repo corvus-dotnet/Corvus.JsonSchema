@@ -43,178 +43,13 @@ public readonly partial struct Ui5ManifestSchema
             {
                 public static partial class JsonSchema
                 {
-                    private static readonly JsonSchemaMessageProvider<int> RequiredPropertyIdPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("id"u8, buffer, out written);
-                    private static readonly JsonSchemaMessageProvider<int> RequiredPropertyIdNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("id"u8, buffer, out written);
-
-                    private const int RequiredOffsetForId = 0;
-                    private const uint RequiredBitForId = 0b00000000000000000000000000000001;
-
-                    private static readonly JsonSchemaMessageProvider<int> RequiredPropertyTitlePresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("title"u8, buffer, out written);
-                    private static readonly JsonSchemaMessageProvider<int> RequiredPropertyTitleNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("title"u8, buffer, out written);
-
-                    private const int RequiredOffsetForTitle = 0;
-                    private const uint RequiredBitForTitle = 0b00000000000000000000000000000010;
-
-                    private const uint RequiredBitMask0 =
-                        RequiredBitForId | RequiredBitForTitle;
-                    private static readonly JsonSchemaPathProvider BindingSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/binding"u8, buffer, out written);
-                    private static readonly JsonSchemaPathProvider GroupTitleSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/groupTitle"u8, buffer, out written);
-                    private static readonly JsonSchemaPathProvider HiddenByDefaultSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/hiddenByDefault"u8, buffer, out written);
-                    private static readonly JsonSchemaPathProvider IdSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/id"u8, buffer, out written);
-                    private static readonly JsonSchemaPathProvider LeadingSectionIdOrPathSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/leadingSectionIdOrPath"u8, buffer, out written);
-                    private static readonly JsonSchemaPathProvider SettingsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/settings"u8, buffer, out written);
-                    private static readonly JsonSchemaPathProvider TitleSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/title"u8, buffer, out written);
-
-                    private static void MatchBinding(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
-                    {
-                        context.AddLocalEvaluatedProperty(propertyCount);
-                        JsonSchemaContext childContext =
-                            Corvus.Ui5ManifestBenchmark.Current.JsonString.JsonSchema.PushChildContextUnescaped(
-                                parentDocument,
-                                parentDocumentIndex,
-                                ref context,
-                                JsonPropertyNames.BindingUtf8,
-                                evaluationPath: BindingSchemaEvaluationPath);
-
-                        Corvus.Ui5ManifestBenchmark.Current.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
-                        context.CommitChildContext(childContext.IsMatch, ref childContext);
-                    }
-
-                    private static void MatchGroupTitle(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
-                    {
-                        context.AddLocalEvaluatedProperty(propertyCount);
-                        JsonSchemaContext childContext1 =
-                            Corvus.Ui5ManifestBenchmark.Current.JsonString.JsonSchema.PushChildContextUnescaped(
-                                parentDocument,
-                                parentDocumentIndex,
-                                ref context,
-                                JsonPropertyNames.GroupTitleUtf8,
-                                evaluationPath: GroupTitleSchemaEvaluationPath);
-
-                        Corvus.Ui5ManifestBenchmark.Current.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
-                        context.CommitChildContext(childContext1.IsMatch, ref childContext1);
-                    }
-
-                    private static void MatchHiddenByDefault(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
-                    {
-                        context.AddLocalEvaluatedProperty(propertyCount);
-                        JsonSchemaContext childContext2 =
-                            Corvus.Text.Json.JsonElement.JsonSchema.PushChildContextUnescaped(
-                                parentDocument,
-                                parentDocumentIndex,
-                                ref context,
-                                JsonPropertyNames.HiddenByDefaultUtf8,
-                                evaluationPath: HiddenByDefaultSchemaEvaluationPath);
-
-                        Corvus.Text.Json.JsonElement.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
-                        context.CommitChildContext(childContext2.IsMatch, ref childContext2);
-                    }
-
-                    private static void MatchId(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
-                    {
-                        context.AddLocalEvaluatedProperty(propertyCount);
-                        JsonSchemaContext childContext3 =
-                            Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.IdEntity.JsonSchema.PushChildContextUnescaped(
-                                parentDocument,
-                                parentDocumentIndex,
-                                ref context,
-                                JsonPropertyNames.IdUtf8,
-                                evaluationPath: IdSchemaEvaluationPath);
-
-                        Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.IdEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
-                        context.CommitChildContext(childContext3.IsMatch, ref childContext3);
-
-                        if (!context.HasCollector && !context.IsMatch)
-                        {
-                            return;
-                        }
-
-                        requiredBitBuffer[RequiredOffsetForId] |= RequiredBitForId;
-                    }
-
-                    private static void MatchLeadingSectionIdOrPath(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
-                    {
-                        context.AddLocalEvaluatedProperty(propertyCount);
-                        JsonSchemaContext childContext4 =
-                            Corvus.Ui5ManifestBenchmark.Current.JsonString.JsonSchema.PushChildContextUnescaped(
-                                parentDocument,
-                                parentDocumentIndex,
-                                ref context,
-                                JsonPropertyNames.LeadingSectionIdOrPathUtf8,
-                                evaluationPath: LeadingSectionIdOrPathSchemaEvaluationPath);
-
-                        Corvus.Ui5ManifestBenchmark.Current.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext4);
-                        context.CommitChildContext(childContext4.IsMatch, ref childContext4);
-                    }
-
-                    private static void MatchSettings(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
-                    {
-                        context.AddLocalEvaluatedProperty(propertyCount);
-                        JsonSchemaContext childContext5 =
-                            Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.PushChildContextUnescaped(
-                                parentDocument,
-                                parentDocumentIndex,
-                                ref context,
-                                JsonPropertyNames.SettingsUtf8,
-                                evaluationPath: SettingsSchemaEvaluationPath);
-
-                        Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext5);
-                        context.CommitChildContext(childContext5.IsMatch, ref childContext5);
-                    }
-
-                    private static void MatchTitle(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
-                    {
-                        context.AddLocalEvaluatedProperty(propertyCount);
-                        JsonSchemaContext childContext6 =
-                            Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.RepresentsTheTitleForTheContentOfTheReuseComponent.JsonSchema.PushChildContextUnescaped(
-                                parentDocument,
-                                parentDocumentIndex,
-                                ref context,
-                                JsonPropertyNames.TitleUtf8,
-                                evaluationPath: TitleSchemaEvaluationPath);
-
-                        Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.RepresentsTheTitleForTheContentOfTheReuseComponent.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext6);
-                        context.CommitChildContext(childContext6.IsMatch, ref childContext6);
-
-                        if (!context.HasCollector && !context.IsMatch)
-                        {
-                            return;
-                        }
-
-                        requiredBitBuffer[RequiredOffsetForTitle] |= RequiredBitForTitle;
-                    }
-
-                    private static PropertySchemaMatchers<Corvus.Ui5ManifestBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
-                    {
-                        return new PropertySchemaMatchers<Corvus.Ui5ManifestBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator>([
-                            (static () => JsonPropertyNames.BindingUtf8, MatchBinding),
-                            (static () => JsonPropertyNames.GroupTitleUtf8, MatchGroupTitle),
-                            (static () => JsonPropertyNames.HiddenByDefaultUtf8, MatchHiddenByDefault),
-                            (static () => JsonPropertyNames.IdUtf8, MatchId),
-                            (static () => JsonPropertyNames.LeadingSectionIdOrPathUtf8, MatchLeadingSectionIdOrPath),
-                            (static () => JsonPropertyNames.SettingsUtf8, MatchSettings),
-                            (static () => JsonPropertyNames.TitleUtf8, MatchTitle),
-                        ]);
-                    }
-
-                    private static PropertySchemaMatchers<Corvus.Ui5ManifestBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
-
-                    private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
-#if NET
-                    [NotNullWhen(true)]
-#endif
-                    out Corvus.Ui5ManifestBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator? matcher)
-                    {
-                        return Matchers.TryGetNamedMatcher(span, out matcher);
-                    }
-
                     /// <summary>
                     /// Gets a provider for the schema location from which this type was generated.
                     /// </summary>
-                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/embeddedComponent/patternProperties/^[a-zA-Z0-9_.:-]+$/allOf/0"u8, buffer, out written);
+                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/definitions/embeddedComponent/patternProperties/^[a-zA-Z0-9_.:-]+$/allOf/0"u8, buffer, out written);
 
                     /// <summary>
-                    /// Gets the schema location from which this type was generated.
+                    /// Gets the schema location from which this type was generated, as a JSON Pointer within <see cref="SchemaDocument"/>.
                     /// </summary>
                     public const string SchemaLocation = "/definitions/embeddedComponent/patternProperties/^[a-zA-Z0-9_.:-]+$/allOf/0";
 
@@ -224,250 +59,34 @@ public readonly partial struct Ui5ManifestSchema
                     public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/embeddedComponent/patternProperties/^[a-zA-Z0-9_.:-]+$/allOf/0"u8;
 
                     /// <summary>
+                    /// Gets the schema document from which this type was generated, relative to the base location for generation.
+                    /// </summary>
+                    /// <remarks>
+                    /// <see cref="SchemaLocation"/> is a JSON Pointer within this document, so <c>SchemaDocument + "#" + SchemaLocation</c>
+                    /// is a reference to the schema, even for a schema inside a <c>$id</c> sub-resource.
+                    /// </remarks>
+                    public const string SchemaDocument = "ui5-manifest-schema.json";
+
+                    /// <summary>
+                    /// Gets the schema document from which this type was generated as a UTF-8 string.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> SchemaDocumentUtf8 => "ui5-manifest-schema.json"u8;
+
+                    private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Corvus.Ui5ManifestBenchmark.Current.CorvusJsonSchemaProgram.Entry(339);
+
+                    /// <summary>
                     /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
                     /// </summary>
                     /// <param name="parentDocument">The parent document.</param>
                     /// <param name="parentIndex">The parent index.</param>
-                    /// <param name="context">A reference to the validation context, configured with the appropriate values.</param>
-                    internal static void Evaluate(
-                        IJsonDocument parentDocument,
-                        int parentIndex,
-                        ref JsonSchemaContext context)
-                    {
-                        JsonTokenType tokenType = parentDocument.GetJsonTokenType(parentIndex);
-
-                        // You're not allowed to ask about non-value-like entities
-                        Debug.Assert(parentDocument.GetJsonTokenType(parentIndex) is not
-                            (JsonTokenType.None or
-                            JsonTokenType.EndObject or
-                            JsonTokenType.EndArray));
-
-                        if (!JsonSchemaEvaluation.MatchTypeObject(tokenType,"type"u8, ref context))
-                        {
-                            if (!context.HasCollector)
-                            {
-                                return;
-                            }
-                            context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "required"u8);
-                            context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "properties"u8);
-                        }
-                        else
-                        {
-                            Span<uint> requiredPropertyChildHandler_seenItems = stackalloc uint[1];
-                            int objectValidation_propertyCount = 0;
-
-                            var objectValidation_enumerator = new ObjectEnumerator(parentDocument, parentIndex);
-                            while (objectValidation_enumerator.MoveNext())
-                            {
-                                int objectValidation_currentIndex = objectValidation_enumerator.CurrentIndex;
-                                using UnescapedUtf8JsonString objectValidation_unescapedPropertyName = parentDocument.GetPropertyNameUnescaped(objectValidation_currentIndex);
-
-                                if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Ui5ManifestBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator? validator))
-                                {
-                                    validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
-
-                                    if (!context.HasCollector && !context.IsMatch)
-                                    {
-                                        return;
-                                    }
-                                }
-
-                                objectValidation_propertyCount++;
-                            }
-
-                            // Do a quick test to see if we have all of the required bits set in each element
-                            if ((~(requiredPropertyChildHandler_seenItems[0]) & RequiredBitMask0) == 0)
-                            {
-                                context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyIdPresent, "id"u8, "required"u8);
-                                context.EvaluatedKeywordForProperty(true, 1, RequiredPropertyTitlePresent, "title"u8, "required"u8);
-                            }
-                            else if (!context.HasCollector)
-                            {
-                                context.EvaluatedBooleanSchema(false);
-                                return;
-                            }
-                            else
-                            {
-                                if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForId] & RequiredBitForId) == 0)
-                                {
-                                    context.EvaluatedKeywordForProperty(false, 0, RequiredPropertyIdNotPresent, "id"u8, "required"u8);
-                                }
-                                else
-                                {
-                                    context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyIdPresent, "id"u8, "required"u8);
-                                }
-
-                                if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForTitle] & RequiredBitForTitle) == 0)
-                                {
-                                    context.EvaluatedKeywordForProperty(false, 1, RequiredPropertyTitleNotPresent, "title"u8, "required"u8);
-                                }
-                                else
-                                {
-                                    context.EvaluatedKeywordForProperty(true, 1, RequiredPropertyTitlePresent, "title"u8, "required"u8);
-                                }
-                            }
-                        }
-                    }
-
+                    /// <param name="resultsCollector">The (optional) results collector.</param>
+                    /// <returns><see langword="true" /> if the instance evaluates against the schema.</returns>
                     internal static bool Evaluate(
                         IJsonDocument parentDocument,
                         int parentIndex,
                         IJsonSchemaResultsCollector? resultsCollector = null)
                     {
-                        JsonSchemaContext context = JsonSchemaContext.BeginContext(
-                        parentDocument,
-                        parentIndex,
-                        usingEvaluatedItems: false,
-                        usingEvaluatedProperties: false,
-                        resultsCollector: resultsCollector);
-
-                        try
-                        {
-                            Evaluate(parentDocument, parentIndex, ref context);
-                            context.EndContext();
-                            return context.IsMatch;
-                        }
-                        finally
-                        {
-                            context.Dispose();
-                        }
-                    }
-
-                    /// <summary>
-                    /// Push the current context as a child context for schema evaluation.
-                    /// </summary>
-                    /// <typeparam name="TContext">The type of the context to be passed to the path providers.</typeparam>
-                    /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                    /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                    /// <param name="context">The current evaluation context.</param>
-                    /// <param name="providerContext">The context to be passed to the path providers.</param>
-                    /// <param name="schemaEvaluationPath">The (optional) path to the schema being evaluated in the child context.</param>
-                    /// <param name="documentEvaluationPath">The (optional) path in the document being evaluated in the child context.</param>
-                    /// <returns>The child context.</returns>
-                    internal static JsonSchemaContext PushChildContext<TContext>(
-                        IJsonDocument parentDocument,
-                        int parentDocumentIndex,
-                        ref JsonSchemaContext context,
-                        TContext providerContext,
-                        JsonSchemaPathProvider<TContext>? schemaEvaluationPath = null,
-                        JsonSchemaPathProvider<TContext>? documentEvaluationPath = null)
-                    {
-                        return
-                            context.PushChildContext(
-                                parentDocument,
-                                parentDocumentIndex,
-                                useEvaluatedItems: false,
-                                useEvaluatedProperties: false,
-                                evaluationPath: schemaEvaluationPath,
-                                documentEvaluationPath: documentEvaluationPath,
-                                providerContext: providerContext);
-                    }
-
-                    /// <summary>
-                    /// Push the current context as a child context for schema evaluation.
-                    /// </summary>
-                    /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                    /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                    /// <param name="context">The current evaluation context.</param>
-                    /// <param name="schemaEvaluationPath">The (optional) path to the schema being evaluated in the child context.</param>
-                    /// <param name="documentEvaluationPath">The (optional) path in the document being evaluated in the child context.</param>
-                    /// <returns>The child context.</returns>
-                    internal static JsonSchemaContext PushChildContext(
-                        IJsonDocument parentDocument,
-                        int parentDocumentIndex,
-                        ref JsonSchemaContext context,
-                        JsonSchemaPathProvider? schemaEvaluationPath = null,
-                        JsonSchemaPathProvider? documentEvaluationPath = null)
-                    {
-                        return
-                            context.PushChildContext(
-                                parentDocument,
-                                parentDocumentIndex,
-                                useEvaluatedItems: false,
-                                useEvaluatedProperties: false,
-                                evaluationPath: schemaEvaluationPath,
-                                documentEvaluationPath: documentEvaluationPath);
-                    }
-
-                    /// <summary>
-                    /// Push the current context as a child context for schema evaluation of a property.
-                    /// </summary>
-                    /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                    /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                    /// <param name="context">The current evaluation context.</param>
-                    /// <param name="propertyName">The name of the property </param>
-                    /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-                    /// <returns>The child context.</returns>
-                    internal static JsonSchemaContext PushChildContext(
-                        IJsonDocument parentDocument,
-                        int parentDocumentIndex,
-                        ref JsonSchemaContext context,
-                        ReadOnlySpan<byte> propertyName,
-                        JsonSchemaPathProvider? evaluationPath = null)
-                    {
-                        return
-                            context.PushChildContext(
-                                parentDocument,
-                                parentDocumentIndex,
-                                useEvaluatedItems: false,
-                                useEvaluatedProperties: false,
-                                propertyName,
-                                evaluationPath: evaluationPath,
-                                schemaEvaluationPath: SchemaLocationProvider);
-                    }
-
-                    /// <summary>
-                    /// Push the current context as a child context for schema evaluation of a property where the property name is known to be unescaped.
-                    /// </summary>
-                    /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                    /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                    /// <param name="context">The current evaluation context.</param>
-                    /// <param name="propertyName">The name of the property </param>
-                    /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-                    /// <returns>The child context.</returns>
-                    internal static JsonSchemaContext PushChildContextUnescaped(
-                        IJsonDocument parentDocument,
-                        int parentDocumentIndex,
-                        ref JsonSchemaContext context,
-                        ReadOnlySpan<byte> propertyName,
-                        JsonSchemaPathProvider? evaluationPath = null)
-                    {
-                        return
-                            context.PushChildContext(
-                                parentDocument,
-                                parentDocumentIndex,
-                                useEvaluatedItems: false,
-                                useEvaluatedProperties: false,
-                                propertyName,
-                                evaluationPath: evaluationPath,
-                                schemaEvaluationPath: SchemaLocationProvider);
-                    }
-
-                    /// <summary>
-                    /// Push the current context as a child context for schema evaluation of an array item.
-                    /// </summary>
-                    /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                    /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                    /// <param name="context">The current evaluation context.</param>
-                    /// <param name="itemIndex">The index of the item in the array.</param>
-                    /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-                    /// <returns>The child context.</returns>
-                    internal static JsonSchemaContext PushChildContext(
-                        IJsonDocument parentDocument,
-                        int parentDocumentIndex,
-                        ref JsonSchemaContext context,
-                        int itemIndex,
-                        JsonSchemaPathProvider? evaluationPath = null)
-                    {
-                        return
-                            context.PushChildContext(
-                                parentDocument,
-                                parentDocumentIndex,
-                                useEvaluatedItems: false,
-                                useEvaluatedProperties: false,
-                                itemIndex,
-                                evaluationPath: evaluationPath,
-                                schemaEvaluationPath: SchemaLocationProvider);
+                        return Evaluator.Evaluate(parentDocument, parentIndex, resultsCollector);
                     }
                 }
             }

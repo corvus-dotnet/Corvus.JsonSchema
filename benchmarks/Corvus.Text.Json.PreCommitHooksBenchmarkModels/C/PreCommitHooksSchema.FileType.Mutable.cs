@@ -3839,6 +3839,1496 @@ public readonly partial struct PreCommitHooksSchema
 
                 return defaultMatch();
             }
+
+            /// <summary>
+            /// Converts the value to its <see cref="KnownValues"/> equivalent.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+            public static implicit operator KnownValues(Mutable value)
+            {
+                if (value.TryGetKnownValue(out KnownValues result))
+                {
+                    return result;
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+            /// </summary>
+            /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+            /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+            public bool TryGetKnownValue(out KnownValues result)
+            {
+                if (this.ValueEquals(Constants.Enum1))
+                {
+                    result = KnownValues.AdobeIllustrator;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum2))
+                {
+                    result = KnownValues.Alpm;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum3))
+                {
+                    result = KnownValues.Apinotes;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum4))
+                {
+                    result = KnownValues.Asar;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum5))
+                {
+                    result = KnownValues.Asciidoc;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum6))
+                {
+                    result = KnownValues.Ash;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum7))
+                {
+                    result = KnownValues.Asm;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum8))
+                {
+                    result = KnownValues.Aspectj;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum9))
+                {
+                    result = KnownValues.Audio;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum10))
+                {
+                    result = KnownValues.Avif;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum11))
+                {
+                    result = KnownValues.Awk;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum12))
+                {
+                    result = KnownValues.Babelrc;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum13))
+                {
+                    result = KnownValues.Bash;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum14))
+                {
+                    result = KnownValues.Batch;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum15))
+                {
+                    result = KnownValues.Bats;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum16))
+                {
+                    result = KnownValues.Bazel;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum17))
+                {
+                    result = KnownValues.Bazelrc;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum18))
+                {
+                    result = KnownValues.Bib;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum19))
+                {
+                    result = KnownValues.Binary;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum20))
+                {
+                    result = KnownValues.Bitmap;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum21))
+                {
+                    result = KnownValues.Bowerrc;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum22))
+                {
+                    result = KnownValues.Browserslistrc;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum23))
+                {
+                    result = KnownValues.Bzip2;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum24))
+                {
+                    result = KnownValues.C;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum25))
+                {
+                    result = KnownValues.C1;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum26))
+                {
+                    result = KnownValues.C2;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum27))
+                {
+                    result = KnownValues.C2hs;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum28))
+                {
+                    result = KnownValues.Cbsd;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum29))
+                {
+                    result = KnownValues.Clojure;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum30))
+                {
+                    result = KnownValues.Clojurescript;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum31))
+                {
+                    result = KnownValues.Cmake;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum32))
+                {
+                    result = KnownValues.Codespellrc;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum33))
+                {
+                    result = KnownValues.Coffee;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum34))
+                {
+                    result = KnownValues.Coveragerc;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum35))
+                {
+                    result = KnownValues.Crystal;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum36))
+                {
+                    result = KnownValues.Csh;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum37))
+                {
+                    result = KnownValues.Cson;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum38))
+                {
+                    result = KnownValues.Csproj;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum39))
+                {
+                    result = KnownValues.Css;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum40))
+                {
+                    result = KnownValues.Csslintrc;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum41))
+                {
+                    result = KnownValues.Csv;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum42))
+                {
+                    result = KnownValues.Cuda;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum43))
+                {
+                    result = KnownValues.Cython;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum44))
+                {
+                    result = KnownValues.Dart;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum45))
+                {
+                    result = KnownValues.Dash;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum46))
+                {
+                    result = KnownValues.Def;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum47))
+                {
+                    result = KnownValues.Diff;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum48))
+                {
+                    result = KnownValues.Directory;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum49))
+                {
+                    result = KnownValues.Dockerfile;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum50))
+                {
+                    result = KnownValues.Dockerignore;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum51))
+                {
+                    result = KnownValues.Dotenv;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum52))
+                {
+                    result = KnownValues.Dtd;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum53))
+                {
+                    result = KnownValues.Editorconfig;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum54))
+                {
+                    result = KnownValues.Edn;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum55))
+                {
+                    result = KnownValues.Ejs;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum56))
+                {
+                    result = KnownValues.Eot;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum57))
+                {
+                    result = KnownValues.Eps;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum58))
+                {
+                    result = KnownValues.Erb;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum59))
+                {
+                    result = KnownValues.Executable;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum60))
+                {
+                    result = KnownValues.Expect;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum61))
+                {
+                    result = KnownValues.File;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum62))
+                {
+                    result = KnownValues.Fish;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum63))
+                {
+                    result = KnownValues.Flake8;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum64))
+                {
+                    result = KnownValues.Gdscript;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum65))
+                {
+                    result = KnownValues.Geojson;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum66))
+                {
+                    result = KnownValues.Gherkin;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum67))
+                {
+                    result = KnownValues.Gif;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum68))
+                {
+                    result = KnownValues.Gitattributes;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum69))
+                {
+                    result = KnownValues.Gitconfig;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum70))
+                {
+                    result = KnownValues.Gitignore;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum71))
+                {
+                    result = KnownValues.Gitlint;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum72))
+                {
+                    result = KnownValues.Gitmodules;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum73))
+                {
+                    result = KnownValues.Go;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum74))
+                {
+                    result = KnownValues.GoMod;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum75))
+                {
+                    result = KnownValues.GoSum;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum76))
+                {
+                    result = KnownValues.Gotmpl;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum77))
+                {
+                    result = KnownValues.Gpx;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum78))
+                {
+                    result = KnownValues.Graphql;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum79))
+                {
+                    result = KnownValues.Groovy;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum80))
+                {
+                    result = KnownValues.Gyb;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum81))
+                {
+                    result = KnownValues.Gyp;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum82))
+                {
+                    result = KnownValues.Gzip;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum83))
+                {
+                    result = KnownValues.Handlebars;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum84))
+                {
+                    result = KnownValues.Haskell;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum85))
+                {
+                    result = KnownValues.Hcl;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum86))
+                {
+                    result = KnownValues.Header;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum87))
+                {
+                    result = KnownValues.Hgrc;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum88))
+                {
+                    result = KnownValues.Html;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum89))
+                {
+                    result = KnownValues.Icalendar;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum90))
+                {
+                    result = KnownValues.Icns;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum91))
+                {
+                    result = KnownValues.Icon;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum92))
+                {
+                    result = KnownValues.Idl;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum93))
+                {
+                    result = KnownValues.Idris;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum94))
+                {
+                    result = KnownValues.Image;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum95))
+                {
+                    result = KnownValues.Inc;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum96))
+                {
+                    result = KnownValues.Ini;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum97))
+                {
+                    result = KnownValues.Inl;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum98))
+                {
+                    result = KnownValues.Ino;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum99))
+                {
+                    result = KnownValues.Inx;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum100))
+                {
+                    result = KnownValues.Jade;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum101))
+                {
+                    result = KnownValues.Jar;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum102))
+                {
+                    result = KnownValues.Java;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum103))
+                {
+                    result = KnownValues.JavaProperties;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum104))
+                {
+                    result = KnownValues.Javascript;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum105))
+                {
+                    result = KnownValues.Jenkins;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum106))
+                {
+                    result = KnownValues.Jinja;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum107))
+                {
+                    result = KnownValues.Jpeg;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum108))
+                {
+                    result = KnownValues.Jshintrc;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum109))
+                {
+                    result = KnownValues.Json;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum110))
+                {
+                    result = KnownValues.Json5;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum111))
+                {
+                    result = KnownValues.Jsonnet;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum112))
+                {
+                    result = KnownValues.Jsx;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum113))
+                {
+                    result = KnownValues.Jupyter;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum114))
+                {
+                    result = KnownValues.Kml;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum115))
+                {
+                    result = KnownValues.Kotlin;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum116))
+                {
+                    result = KnownValues.Ksh;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum117))
+                {
+                    result = KnownValues.Lean;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum118))
+                {
+                    result = KnownValues.Lektor;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum119))
+                {
+                    result = KnownValues.Lektorproject;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum120))
+                {
+                    result = KnownValues.Less;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum121))
+                {
+                    result = KnownValues.Liquid;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum122))
+                {
+                    result = KnownValues.LiterateHaskell;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum123))
+                {
+                    result = KnownValues.Lua;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum124))
+                {
+                    result = KnownValues.Mailmap;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum125))
+                {
+                    result = KnownValues.Makefile;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum126))
+                {
+                    result = KnownValues.Manifest;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum127))
+                {
+                    result = KnownValues.Map;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum128))
+                {
+                    result = KnownValues.Markdown;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum129))
+                {
+                    result = KnownValues.Mdx;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum130))
+                {
+                    result = KnownValues.MentionBot;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum131))
+                {
+                    result = KnownValues.Mib;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum132))
+                {
+                    result = KnownValues.Modulemap;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum133))
+                {
+                    result = KnownValues.Musescore;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum134))
+                {
+                    result = KnownValues.Myst;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum135))
+                {
+                    result = KnownValues.Ngdoc;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum136))
+                {
+                    result = KnownValues.Nim;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum137))
+                {
+                    result = KnownValues.Nimble;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum138))
+                {
+                    result = KnownValues.Nix;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum139))
+                {
+                    result = KnownValues.NonExecutable;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum140))
+                {
+                    result = KnownValues.Npmignore;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum141))
+                {
+                    result = KnownValues.Nunjucks;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum142))
+                {
+                    result = KnownValues.ObjectiveC;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum143))
+                {
+                    result = KnownValues.ObjectiveC1;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum144))
+                {
+                    result = KnownValues.Ocaml;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum145))
+                {
+                    result = KnownValues.Otf;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum146))
+                {
+                    result = KnownValues.P12;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum147))
+                {
+                    result = KnownValues.Pdbrc;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum148))
+                {
+                    result = KnownValues.Pdf;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum149))
+                {
+                    result = KnownValues.Pem;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum150))
+                {
+                    result = KnownValues.Perl;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum151))
+                {
+                    result = KnownValues.Php;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum152))
+                {
+                    result = KnownValues.Pkgbuild;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum153))
+                {
+                    result = KnownValues.PlainText;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum154))
+                {
+                    result = KnownValues.Plantuml;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum155))
+                {
+                    result = KnownValues.Plist;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum156))
+                {
+                    result = KnownValues.Png;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum157))
+                {
+                    result = KnownValues.Pofile;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum158))
+                {
+                    result = KnownValues.Powershell;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum159))
+                {
+                    result = KnownValues.Prettierignore;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum160))
+                {
+                    result = KnownValues.Prisma;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum161))
+                {
+                    result = KnownValues.Proto;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum162))
+                {
+                    result = KnownValues.Puppet;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum163))
+                {
+                    result = KnownValues.Purescript;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum164))
+                {
+                    result = KnownValues.Pyi;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum165))
+                {
+                    result = KnownValues.Pylintrc;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum166))
+                {
+                    result = KnownValues.Pypirc;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum167))
+                {
+                    result = KnownValues.Pyproj;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum168))
+                {
+                    result = KnownValues.Python;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum169))
+                {
+                    result = KnownValues.Python2;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum170))
+                {
+                    result = KnownValues.Python3;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum171))
+                {
+                    result = KnownValues.Pyz;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum172))
+                {
+                    result = KnownValues.Qml;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum173))
+                {
+                    result = KnownValues.R;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum174))
+                {
+                    result = KnownValues.RelaxNg;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum175))
+                {
+                    result = KnownValues.Rst;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum176))
+                {
+                    result = KnownValues.Ruby;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum177))
+                {
+                    result = KnownValues.Rust;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum178))
+                {
+                    result = KnownValues.Salt;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum179))
+                {
+                    result = KnownValues.Sass;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum180))
+                {
+                    result = KnownValues.Sbt;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum181))
+                {
+                    result = KnownValues.Scala;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum182))
+                {
+                    result = KnownValues.Scheme;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum183))
+                {
+                    result = KnownValues.Scss;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum184))
+                {
+                    result = KnownValues.Sh;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum185))
+                {
+                    result = KnownValues.Shell;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum186))
+                {
+                    result = KnownValues.Sln;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum187))
+                {
+                    result = KnownValues.Socket;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum188))
+                {
+                    result = KnownValues.Solidity;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum189))
+                {
+                    result = KnownValues.Spec;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum190))
+                {
+                    result = KnownValues.Sql;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum191))
+                {
+                    result = KnownValues.Stylus;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum192))
+                {
+                    result = KnownValues.Svelte;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum193))
+                {
+                    result = KnownValues.Svg;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum194))
+                {
+                    result = KnownValues.Swf;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum195))
+                {
+                    result = KnownValues.Swift;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum196))
+                {
+                    result = KnownValues.Swiftdeps;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum197))
+                {
+                    result = KnownValues.Symlink;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum198))
+                {
+                    result = KnownValues.SystemVerilog;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum199))
+                {
+                    result = KnownValues.Tar;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum200))
+                {
+                    result = KnownValues.Tcsh;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum201))
+                {
+                    result = KnownValues.Terraform;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum202))
+                {
+                    result = KnownValues.Tex;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum203))
+                {
+                    result = KnownValues.Text;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum204))
+                {
+                    result = KnownValues.Thrift;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum205))
+                {
+                    result = KnownValues.Tiff;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum206))
+                {
+                    result = KnownValues.Toml;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum207))
+                {
+                    result = KnownValues.Ts;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum208))
+                {
+                    result = KnownValues.Tsv;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum209))
+                {
+                    result = KnownValues.Tsx;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum210))
+                {
+                    result = KnownValues.Ttf;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum211))
+                {
+                    result = KnownValues.Twig;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum212))
+                {
+                    result = KnownValues.Twisted;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum213))
+                {
+                    result = KnownValues.Txsprofile;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum214))
+                {
+                    result = KnownValues.Urdf;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum215))
+                {
+                    result = KnownValues.Vb;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum216))
+                {
+                    result = KnownValues.Vbproj;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum217))
+                {
+                    result = KnownValues.Vcxproj;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum218))
+                {
+                    result = KnownValues.Vdx;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum219))
+                {
+                    result = KnownValues.Verilog;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum220))
+                {
+                    result = KnownValues.Vhdl;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum221))
+                {
+                    result = KnownValues.Vim;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum222))
+                {
+                    result = KnownValues.Vtl;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum223))
+                {
+                    result = KnownValues.Vue;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum224))
+                {
+                    result = KnownValues.Wav;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum225))
+                {
+                    result = KnownValues.Webp;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum226))
+                {
+                    result = KnownValues.Wheel;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum227))
+                {
+                    result = KnownValues.Wkt;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum228))
+                {
+                    result = KnownValues.Woff;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum229))
+                {
+                    result = KnownValues.Woff2;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum230))
+                {
+                    result = KnownValues.Wsgi;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum231))
+                {
+                    result = KnownValues.Xhtml;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum232))
+                {
+                    result = KnownValues.Xml;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum233))
+                {
+                    result = KnownValues.Xquery;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum234))
+                {
+                    result = KnownValues.Xsd;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum235))
+                {
+                    result = KnownValues.Xsl;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum236))
+                {
+                    result = KnownValues.Yaml;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum237))
+                {
+                    result = KnownValues.Yamllint;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum238))
+                {
+                    result = KnownValues.Yang;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum239))
+                {
+                    result = KnownValues.Yin;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum240))
+                {
+                    result = KnownValues.Zcml;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum241))
+                {
+                    result = KnownValues.Zig;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum242))
+                {
+                    result = KnownValues.Zip;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum243))
+                {
+                    result = KnownValues.Zpt;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum244))
+                {
+                    result = KnownValues.Zsh;
+                    return true;
+                }
+
+                result = default;
+                return false;
+            }
         }
 
         public ref struct Source
@@ -3897,6 +5387,9 @@ public readonly partial struct PreCommitHooksSchema
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(string value) => new (value.AsSpan());
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(KnownValues value) => (FileType)value;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);

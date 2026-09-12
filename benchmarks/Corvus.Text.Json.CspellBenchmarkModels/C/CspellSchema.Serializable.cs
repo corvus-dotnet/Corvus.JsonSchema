@@ -297,6 +297,45 @@ public readonly partial struct CspellSchema
         public static explicit operator decimal(Serializable value) => value._parent.TryGetValue(value._idx, out decimal result) ? result : throw new FormatException();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator sbyte(Serializable value) => value._parent.TryGetValue(value._idx, out sbyte result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator byte(Serializable value) => value._parent.TryGetValue(value._idx, out byte result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator short(Serializable value) => value._parent.TryGetValue(value._idx, out short result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator ushort(Serializable value) => value._parent.TryGetValue(value._idx, out ushort result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator int(Serializable value) => value._parent.TryGetValue(value._idx, out int result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator uint(Serializable value) => value._parent.TryGetValue(value._idx, out uint result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator ulong(Serializable value) => value._parent.TryGetValue(value._idx, out ulong result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator float(Serializable value) => value._parent.TryGetValue(value._idx, out float result) ? result : throw new FormatException();
+
+#if NET
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator Int128(Serializable value) => value._parent.TryGetValue(value._idx, out Int128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator UInt128(Serializable value) => value._parent.TryGetValue(value._idx, out UInt128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator Half(Serializable value) => value._parent.TryGetValue(value._idx, out Half result) ? result : throw new FormatException();
+#endif
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator bool(Serializable value)
         {
             JsonTokenType type = value._parent.GetJsonTokenType(value._idx);

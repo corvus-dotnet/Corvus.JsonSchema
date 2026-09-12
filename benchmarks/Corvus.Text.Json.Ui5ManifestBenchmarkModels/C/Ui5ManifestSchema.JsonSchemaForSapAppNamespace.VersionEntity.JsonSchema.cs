@@ -439,43 +439,285 @@ public readonly partial struct Ui5ManifestSchema
                 public static ReadOnlySpan<byte> Value1200Utf8 => Constants.Enum20;
             }
 
-            public static partial class JsonSchema
+            /// <summary>
+            /// A native enum for the well-known values of this type.
+            /// </summary>
+            /// <remarks>
+            /// Member ordinals follow the schema declaration order. Inserting or reordering values
+            /// in the schema renumbers the ordinals, so do not persist their integer values.
+            /// </remarks>
+            public enum KnownValues
             {
-                private static EnumStringSet BuildEnumStringSet()
+                /// <summary>
+                /// Corresponds to the JSON string "1.1.0".
+                /// </summary>
+                Value110 = 0,
+                /// <summary>
+                /// Corresponds to the JSON string "1.2.0".
+                /// </summary>
+                Value120 = 1,
+                /// <summary>
+                /// Corresponds to the JSON string "1.3.0".
+                /// </summary>
+                Value130 = 2,
+                /// <summary>
+                /// Corresponds to the JSON string "1.4.0".
+                /// </summary>
+                Value140 = 3,
+                /// <summary>
+                /// Corresponds to the JSON string "1.5.0".
+                /// </summary>
+                Value150 = 4,
+                /// <summary>
+                /// Corresponds to the JSON string "1.6.0".
+                /// </summary>
+                Value160 = 5,
+                /// <summary>
+                /// Corresponds to the JSON string "1.7.0".
+                /// </summary>
+                Value170 = 6,
+                /// <summary>
+                /// Corresponds to the JSON string "1.8.0".
+                /// </summary>
+                Value180 = 7,
+                /// <summary>
+                /// Corresponds to the JSON string "1.9.0".
+                /// </summary>
+                Value190 = 8,
+                /// <summary>
+                /// Corresponds to the JSON string "1.10.0".
+                /// </summary>
+                Value1100 = 9,
+                /// <summary>
+                /// Corresponds to the JSON string "1.11.0".
+                /// </summary>
+                Value1110 = 10,
+                /// <summary>
+                /// Corresponds to the JSON string "1.12.0".
+                /// </summary>
+                Value1120 = 11,
+                /// <summary>
+                /// Corresponds to the JSON string "1.13.0".
+                /// </summary>
+                Value1130 = 12,
+                /// <summary>
+                /// Corresponds to the JSON string "1.14.0".
+                /// </summary>
+                Value1140 = 13,
+                /// <summary>
+                /// Corresponds to the JSON string "1.15.0".
+                /// </summary>
+                Value1150 = 14,
+                /// <summary>
+                /// Corresponds to the JSON string "1.16.0".
+                /// </summary>
+                Value1160 = 15,
+                /// <summary>
+                /// Corresponds to the JSON string "1.17.0".
+                /// </summary>
+                Value1170 = 16,
+                /// <summary>
+                /// Corresponds to the JSON string "1.18.0".
+                /// </summary>
+                Value1180 = 17,
+                /// <summary>
+                /// Corresponds to the JSON string "1.19.0".
+                /// </summary>
+                Value1190 = 18,
+                /// <summary>
+                /// Corresponds to the JSON string "1.20.0".
+                /// </summary>
+                Value1200 = 19,
+            }
+
+            /// <summary>
+            /// Converts a <see cref="KnownValues"/> to an instance of this type.
+            /// </summary>
+            /// <param name="value">The well-known value from which to convert.</param>
+            /// <exception cref="InvalidOperationException">The value was not a defined member of the <see cref="KnownValues"/> enumeration.</exception>
+            public static implicit operator VersionEntity(KnownValues value)
+            {
+                return value switch
                 {
-                    return new EnumStringSet([
-                        static () => "1.1.0"u8,
-                        static () => "1.2.0"u8,
-                        static () => "1.3.0"u8,
-                        static () => "1.4.0"u8,
-                        static () => "1.5.0"u8,
-                        static () => "1.6.0"u8,
-                        static () => "1.7.0"u8,
-                        static () => "1.8.0"u8,
-                        static () => "1.9.0"u8,
-                        static () => "1.10.0"u8,
-                        static () => "1.11.0"u8,
-                        static () => "1.12.0"u8,
-                        static () => "1.13.0"u8,
-                        static () => "1.14.0"u8,
-                        static () => "1.15.0"u8,
-                        static () => "1.16.0"u8,
-                        static () => "1.17.0"u8,
-                        static () => "1.18.0"u8,
-                        static () => "1.19.0"u8,
-                        static () => "1.20.0"u8,
-                    ]);
+                    KnownValues.Value110 => Constants.EnumJson1,
+                    KnownValues.Value120 => Constants.EnumJson2,
+                    KnownValues.Value130 => Constants.EnumJson3,
+                    KnownValues.Value140 => Constants.EnumJson4,
+                    KnownValues.Value150 => Constants.EnumJson5,
+                    KnownValues.Value160 => Constants.EnumJson6,
+                    KnownValues.Value170 => Constants.EnumJson7,
+                    KnownValues.Value180 => Constants.EnumJson8,
+                    KnownValues.Value190 => Constants.EnumJson9,
+                    KnownValues.Value1100 => Constants.EnumJson10,
+                    KnownValues.Value1110 => Constants.EnumJson11,
+                    KnownValues.Value1120 => Constants.EnumJson12,
+                    KnownValues.Value1130 => Constants.EnumJson13,
+                    KnownValues.Value1140 => Constants.EnumJson14,
+                    KnownValues.Value1150 => Constants.EnumJson15,
+                    KnownValues.Value1160 => Constants.EnumJson16,
+                    KnownValues.Value1170 => Constants.EnumJson17,
+                    KnownValues.Value1180 => Constants.EnumJson18,
+                    KnownValues.Value1190 => Constants.EnumJson19,
+                    KnownValues.Value1200 => Constants.EnumJson20,
+                    _ => throw new InvalidOperationException(),
+                };
+            }
+
+            /// <summary>
+            /// Converts the value to its <see cref="KnownValues"/> equivalent.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+            public static implicit operator KnownValues(VersionEntity value)
+            {
+                if (value.TryGetKnownValue(out KnownValues result))
+                {
+                    return result;
                 }
 
-                private static EnumStringSet EnumStringSet { get; } = BuildEnumStringSet();
+                throw new InvalidOperationException();
+            }
 
+            /// <summary>
+            /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+            /// </summary>
+            /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+            /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+            public bool TryGetKnownValue(out KnownValues result)
+            {
+                if (this.ValueEquals(Constants.Enum1))
+                {
+                    result = KnownValues.Value110;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum2))
+                {
+                    result = KnownValues.Value120;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum3))
+                {
+                    result = KnownValues.Value130;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum4))
+                {
+                    result = KnownValues.Value140;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum5))
+                {
+                    result = KnownValues.Value150;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum6))
+                {
+                    result = KnownValues.Value160;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum7))
+                {
+                    result = KnownValues.Value170;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum8))
+                {
+                    result = KnownValues.Value180;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum9))
+                {
+                    result = KnownValues.Value190;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum10))
+                {
+                    result = KnownValues.Value1100;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum11))
+                {
+                    result = KnownValues.Value1110;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum12))
+                {
+                    result = KnownValues.Value1120;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum13))
+                {
+                    result = KnownValues.Value1130;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum14))
+                {
+                    result = KnownValues.Value1140;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum15))
+                {
+                    result = KnownValues.Value1150;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum16))
+                {
+                    result = KnownValues.Value1160;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum17))
+                {
+                    result = KnownValues.Value1170;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum18))
+                {
+                    result = KnownValues.Value1180;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum19))
+                {
+                    result = KnownValues.Value1190;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum20))
+                {
+                    result = KnownValues.Value1200;
+                    return true;
+                }
+
+                result = default;
+                return false;
+            }
+
+            public static partial class JsonSchema
+            {
                 /// <summary>
                 /// Gets a provider for the schema location from which this type was generated.
                 /// </summary>
-                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/properties/sap.app/properties/_version"u8, buffer, out written);
+                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/properties/sap.app/properties/_version"u8, buffer, out written);
 
                 /// <summary>
-                /// Gets the schema location from which this type was generated.
+                /// Gets the schema location from which this type was generated, as a JSON Pointer within <see cref="SchemaDocument"/>.
                 /// </summary>
                 public const string SchemaLocation = "/properties/sap.app/properties/_version";
 
@@ -485,215 +727,34 @@ public readonly partial struct Ui5ManifestSchema
                 public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/properties/sap.app/properties/_version"u8;
 
                 /// <summary>
+                /// Gets the schema document from which this type was generated, relative to the base location for generation.
+                /// </summary>
+                /// <remarks>
+                /// <see cref="SchemaLocation"/> is a JSON Pointer within this document, so <c>SchemaDocument + "#" + SchemaLocation</c>
+                /// is a reference to the schema, even for a schema inside a <c>$id</c> sub-resource.
+                /// </remarks>
+                public const string SchemaDocument = "ui5-manifest-schema.json";
+
+                /// <summary>
+                /// Gets the schema document from which this type was generated as a UTF-8 string.
+                /// </summary>
+                public static ReadOnlySpan<byte> SchemaDocumentUtf8 => "ui5-manifest-schema.json"u8;
+
+                private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Corvus.Ui5ManifestBenchmark.Current.CorvusJsonSchemaProgram.Entry(574);
+
+                /// <summary>
                 /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
                 /// </summary>
                 /// <param name="parentDocument">The parent document.</param>
                 /// <param name="parentIndex">The parent index.</param>
-                /// <param name="context">A reference to the validation context, configured with the appropriate values.</param>
-                internal static void Evaluate(
-                    IJsonDocument parentDocument,
-                    int parentIndex,
-                    ref JsonSchemaContext context)
-                {
-                    JsonTokenType tokenType = parentDocument.GetJsonTokenType(parentIndex);
-
-                    // You're not allowed to ask about non-value-like entities
-                    Debug.Assert(parentDocument.GetJsonTokenType(parentIndex) is not
-                        (JsonTokenType.None or
-                        JsonTokenType.EndObject or
-                        JsonTokenType.EndArray));
-
-                    if (!JsonSchemaEvaluation.MatchTypeString(tokenType,"type"u8, ref context))
-                    {
-                        if (!context.HasCollector)
-                        {
-                            return;
-                        }
-                    }
-                    else
-                    {
-                        using UnescapedUtf8JsonString unescapedUtf8JsonString = parentDocument.GetUtf8JsonString(parentIndex, JsonTokenType.String);
-
-                        if (EnumStringSet.Contains(unescapedUtf8JsonString.Span))
-                        {
-                            goto enumShortCircuitSuccess;
-                        }
-
-                        context.EvaluatedKeyword(false, messageProvider: JsonSchemaEvaluation.DidNotMatchAtLeastOneConstantValue, "enum"u8);
-
-                        if (!context.HasCollector)
-                        {
-                            return;
-                        }
-
-                        goto enumAfterFailure;
-
-enumShortCircuitSuccess:
-                        context.EvaluatedKeyword(true, messageProvider: JsonSchemaEvaluation.MatchedAtLeastOneConstantValue, ", formattedKeyword, "u8);
-
-enumAfterFailure:;
-                    }
-                }
-
+                /// <param name="resultsCollector">The (optional) results collector.</param>
+                /// <returns><see langword="true" /> if the instance evaluates against the schema.</returns>
                 internal static bool Evaluate(
                     IJsonDocument parentDocument,
                     int parentIndex,
                     IJsonSchemaResultsCollector? resultsCollector = null)
                 {
-                    JsonSchemaContext context = JsonSchemaContext.BeginContext(
-                    parentDocument,
-                    parentIndex,
-                    usingEvaluatedItems: false,
-                    usingEvaluatedProperties: false,
-                    resultsCollector: resultsCollector);
-
-                    try
-                    {
-                        Evaluate(parentDocument, parentIndex, ref context);
-                        context.EndContext();
-                        return context.IsMatch;
-                    }
-                    finally
-                    {
-                        context.Dispose();
-                    }
-                }
-
-                /// <summary>
-                /// Push the current context as a child context for schema evaluation.
-                /// </summary>
-                /// <typeparam name="TContext">The type of the context to be passed to the path providers.</typeparam>
-                /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                /// <param name="context">The current evaluation context.</param>
-                /// <param name="providerContext">The context to be passed to the path providers.</param>
-                /// <param name="schemaEvaluationPath">The (optional) path to the schema being evaluated in the child context.</param>
-                /// <param name="documentEvaluationPath">The (optional) path in the document being evaluated in the child context.</param>
-                /// <returns>The child context.</returns>
-                internal static JsonSchemaContext PushChildContext<TContext>(
-                    IJsonDocument parentDocument,
-                    int parentDocumentIndex,
-                    ref JsonSchemaContext context,
-                    TContext providerContext,
-                    JsonSchemaPathProvider<TContext>? schemaEvaluationPath = null,
-                    JsonSchemaPathProvider<TContext>? documentEvaluationPath = null)
-                {
-                    return
-                        context.PushChildContext(
-                            parentDocument,
-                            parentDocumentIndex,
-                            useEvaluatedItems: false,
-                            useEvaluatedProperties: false,
-                            evaluationPath: schemaEvaluationPath,
-                            documentEvaluationPath: documentEvaluationPath,
-                            providerContext: providerContext);
-                }
-
-                /// <summary>
-                /// Push the current context as a child context for schema evaluation.
-                /// </summary>
-                /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                /// <param name="context">The current evaluation context.</param>
-                /// <param name="schemaEvaluationPath">The (optional) path to the schema being evaluated in the child context.</param>
-                /// <param name="documentEvaluationPath">The (optional) path in the document being evaluated in the child context.</param>
-                /// <returns>The child context.</returns>
-                internal static JsonSchemaContext PushChildContext(
-                    IJsonDocument parentDocument,
-                    int parentDocumentIndex,
-                    ref JsonSchemaContext context,
-                    JsonSchemaPathProvider? schemaEvaluationPath = null,
-                    JsonSchemaPathProvider? documentEvaluationPath = null)
-                {
-                    return
-                        context.PushChildContext(
-                            parentDocument,
-                            parentDocumentIndex,
-                            useEvaluatedItems: false,
-                            useEvaluatedProperties: false,
-                            evaluationPath: schemaEvaluationPath,
-                            documentEvaluationPath: documentEvaluationPath);
-                }
-
-                /// <summary>
-                /// Push the current context as a child context for schema evaluation of a property.
-                /// </summary>
-                /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                /// <param name="context">The current evaluation context.</param>
-                /// <param name="propertyName">The name of the property </param>
-                /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-                /// <returns>The child context.</returns>
-                internal static JsonSchemaContext PushChildContext(
-                    IJsonDocument parentDocument,
-                    int parentDocumentIndex,
-                    ref JsonSchemaContext context,
-                    ReadOnlySpan<byte> propertyName,
-                    JsonSchemaPathProvider? evaluationPath = null)
-                {
-                    return
-                        context.PushChildContext(
-                            parentDocument,
-                            parentDocumentIndex,
-                            useEvaluatedItems: false,
-                            useEvaluatedProperties: false,
-                            propertyName,
-                            evaluationPath: evaluationPath,
-                            schemaEvaluationPath: SchemaLocationProvider);
-                }
-
-                /// <summary>
-                /// Push the current context as a child context for schema evaluation of a property where the property name is known to be unescaped.
-                /// </summary>
-                /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                /// <param name="context">The current evaluation context.</param>
-                /// <param name="propertyName">The name of the property </param>
-                /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-                /// <returns>The child context.</returns>
-                internal static JsonSchemaContext PushChildContextUnescaped(
-                    IJsonDocument parentDocument,
-                    int parentDocumentIndex,
-                    ref JsonSchemaContext context,
-                    ReadOnlySpan<byte> propertyName,
-                    JsonSchemaPathProvider? evaluationPath = null)
-                {
-                    return
-                        context.PushChildContext(
-                            parentDocument,
-                            parentDocumentIndex,
-                            useEvaluatedItems: false,
-                            useEvaluatedProperties: false,
-                            propertyName,
-                            evaluationPath: evaluationPath,
-                            schemaEvaluationPath: SchemaLocationProvider);
-                }
-
-                /// <summary>
-                /// Push the current context as a child context for schema evaluation of an array item.
-                /// </summary>
-                /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                /// <param name="context">The current evaluation context.</param>
-                /// <param name="itemIndex">The index of the item in the array.</param>
-                /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-                /// <returns>The child context.</returns>
-                internal static JsonSchemaContext PushChildContext(
-                    IJsonDocument parentDocument,
-                    int parentDocumentIndex,
-                    ref JsonSchemaContext context,
-                    int itemIndex,
-                    JsonSchemaPathProvider? evaluationPath = null)
-                {
-                    return
-                        context.PushChildContext(
-                            parentDocument,
-                            parentDocumentIndex,
-                            useEvaluatedItems: false,
-                            useEvaluatedProperties: false,
-                            itemIndex,
-                            evaluationPath: evaluationPath,
-                            schemaEvaluationPath: SchemaLocationProvider);
+                    return Evaluator.Evaluate(parentDocument, parentIndex, resultsCollector);
                 }
             }
         }

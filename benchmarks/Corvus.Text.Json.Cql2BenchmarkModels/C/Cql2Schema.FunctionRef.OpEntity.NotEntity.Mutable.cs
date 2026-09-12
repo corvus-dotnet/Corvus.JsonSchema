@@ -1119,6 +1119,326 @@ public readonly partial struct Cql2Schema
 
                         return defaultMatch();
                     }
+
+                    /// <summary>
+                    /// Converts the value to its <see cref="KnownValues"/> equivalent.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+                    public static implicit operator KnownValues(Mutable value)
+                    {
+                        if (value.TryGetKnownValue(out KnownValues result))
+                        {
+                            return result;
+                        }
+
+                        throw new InvalidOperationException();
+                    }
+
+                    /// <summary>
+                    /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+                    /// </summary>
+                    /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+                    /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+                    public bool TryGetKnownValue(out KnownValues result)
+                    {
+                        if (this.ValueEquals(Constants.Enum1))
+                        {
+                            result = KnownValues.And;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum2))
+                        {
+                            result = KnownValues.Or;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum3))
+                        {
+                            result = KnownValues.Not;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum4))
+                        {
+                            result = KnownValues.EqualsValue;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum5))
+                        {
+                            result = KnownValues.Value;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum6))
+                        {
+                            result = KnownValues.Lt;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum7))
+                        {
+                            result = KnownValues.Gt;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum8))
+                        {
+                            result = KnownValues.Value1;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum9))
+                        {
+                            result = KnownValues.Value2;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum10))
+                        {
+                            result = KnownValues.Like;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum11))
+                        {
+                            result = KnownValues.Between;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum12))
+                        {
+                            result = KnownValues.In;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum13))
+                        {
+                            result = KnownValues.IsNull;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum14))
+                        {
+                            result = KnownValues.Casei;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum15))
+                        {
+                            result = KnownValues.Accenti;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum16))
+                        {
+                            result = KnownValues.SContains;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum17))
+                        {
+                            result = KnownValues.SCrosses;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum18))
+                        {
+                            result = KnownValues.SDisjoint;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum19))
+                        {
+                            result = KnownValues.SEquals;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum20))
+                        {
+                            result = KnownValues.SIntersects;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum21))
+                        {
+                            result = KnownValues.SOverlaps;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum22))
+                        {
+                            result = KnownValues.STouches;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum23))
+                        {
+                            result = KnownValues.SWithin;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum24))
+                        {
+                            result = KnownValues.TAfter;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum25))
+                        {
+                            result = KnownValues.TBefore;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum26))
+                        {
+                            result = KnownValues.TContains;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum27))
+                        {
+                            result = KnownValues.TDisjoint;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum28))
+                        {
+                            result = KnownValues.TDuring;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum29))
+                        {
+                            result = KnownValues.TEquals;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum30))
+                        {
+                            result = KnownValues.TFinishedBy;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum31))
+                        {
+                            result = KnownValues.TFinishes;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum32))
+                        {
+                            result = KnownValues.TIntersects;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum33))
+                        {
+                            result = KnownValues.TMeets;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum34))
+                        {
+                            result = KnownValues.TMetBy;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum35))
+                        {
+                            result = KnownValues.TOverlappedBy;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum36))
+                        {
+                            result = KnownValues.TOverlaps;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum37))
+                        {
+                            result = KnownValues.TStartedBy;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum38))
+                        {
+                            result = KnownValues.TStarts;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum39))
+                        {
+                            result = KnownValues.AContainedBy;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum40))
+                        {
+                            result = KnownValues.AContains;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum41))
+                        {
+                            result = KnownValues.AEquals;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum42))
+                        {
+                            result = KnownValues.AOverlaps;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum43))
+                        {
+                            result = KnownValues.Plus;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum44))
+                        {
+                            result = KnownValues.Minus;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum45))
+                        {
+                            result = KnownValues.Ast;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum46))
+                        {
+                            result = KnownValues.Sol;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum47))
+                        {
+                            result = KnownValues.Caret;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum48))
+                        {
+                            result = KnownValues.Percent;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum49))
+                        {
+                            result = KnownValues.Div;
+                            return true;
+                        }
+
+                        result = default;
+                        return false;
+                    }
                 }
 
                 public ref struct Source
@@ -1177,6 +1497,9 @@ public readonly partial struct Cql2Schema
 
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static implicit operator Source(string value) => new (value.AsSpan());
+
+                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                    public static implicit operator Source(KnownValues value) => (NotEntity)value;
 
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);

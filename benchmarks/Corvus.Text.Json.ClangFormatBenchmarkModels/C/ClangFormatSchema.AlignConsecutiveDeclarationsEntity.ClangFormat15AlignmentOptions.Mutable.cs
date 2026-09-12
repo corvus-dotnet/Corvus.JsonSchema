@@ -835,6 +835,57 @@ public readonly partial struct ClangFormatSchema
                     CheckValidInstance();
                     return _parent.FreezeElement<ClangFormat15AlignmentOptions>(_idx);
                 }
+
+                /// <summary>
+                /// Converts the value to its <see cref="Flags"/> equivalent.
+                /// </summary>
+                /// <param name="value">The value from which to convert.</param>
+                /// <exception cref="InvalidOperationException">The value was not an object.</exception>
+                public static implicit operator Flags(Mutable value)
+                {
+                    if (value.TryGetFlags(out Flags result))
+                    {
+                        return result;
+                    }
+
+                    throw new InvalidOperationException();
+                }
+
+                /// <summary>
+                /// Tries to get the <see cref="Flags"/> equivalent of this value.
+                /// </summary>
+                /// <param name="result">The flags whose bits are set for each boolean property that is present with the value <see langword="true"/>.</param>
+                /// <returns><see langword="true"/> if this value was an object.</returns>
+                public bool TryGetFlags(out Flags result)
+                {
+                    if (this.ValueKind != JsonValueKind.Object)
+                    {
+                        result = default;
+                        return false;
+                    }
+
+                    Flags flags = Flags.None;
+                    JsonElement element = this;
+                    JsonElement propertyValue;
+
+                    if (element.TryGetProperty(JsonPropertyNames.AcrossCommentsUtf8, out propertyValue) && propertyValue.ValueKind == JsonValueKind.True)
+                    {
+                        flags |= Flags.AcrossComments;
+                    }
+
+                    if (element.TryGetProperty(JsonPropertyNames.AcrossEmptyLinesUtf8, out propertyValue) && propertyValue.ValueKind == JsonValueKind.True)
+                    {
+                        flags |= Flags.AcrossEmptyLines;
+                    }
+
+                    if (element.TryGetProperty(JsonPropertyNames.EnabledUtf8, out propertyValue) && propertyValue.ValueKind == JsonValueKind.True)
+                    {
+                        flags |= Flags.Enabled;
+                    }
+
+                    result = flags;
+                    return true;
+                }
             }
 
             public ref struct Source
@@ -876,6 +927,8 @@ public readonly partial struct ClangFormatSchema
                 }
 
                 public static implicit operator Source(ClangFormat15AlignmentOptions instance) => new(JsonElement.From(instance));
+
+                public static implicit operator Source(Flags value) => ClangFormat15AlignmentOptions.Build((value & Flags.AcrossComments) != 0, (value & Flags.AcrossEmptyLines) != 0, (value & Flags.Enabled) != 0);
 
                 internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                 {

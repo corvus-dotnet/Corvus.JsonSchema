@@ -1003,6 +1003,272 @@ public readonly partial struct Ui5ManifestSchema
 
                         return defaultMatch();
                     }
+
+                    /// <summary>
+                    /// Converts the value to its <see cref="KnownValues"/> equivalent.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+                    public static implicit operator KnownValues(Mutable value)
+                    {
+                        if (value.TryGetKnownValue(out KnownValues result))
+                        {
+                            return result;
+                        }
+
+                        throw new InvalidOperationException();
+                    }
+
+                    /// <summary>
+                    /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+                    /// </summary>
+                    /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+                    /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+                    public bool TryGetKnownValue(out KnownValues result)
+                    {
+                        if (this.ValueEquals(Constants.Enum1))
+                        {
+                            result = KnownValues.Date;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum2))
+                        {
+                            result = KnownValues.Today;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum3))
+                        {
+                            result = KnownValues.Yesterday;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum4))
+                        {
+                            result = KnownValues.Tomorrow;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum5))
+                        {
+                            result = KnownValues.DateRange;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum6))
+                        {
+                            result = KnownValues.DateTimeRange;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum7))
+                        {
+                            result = KnownValues.From;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum8))
+                        {
+                            result = KnownValues.To;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum9))
+                        {
+                            result = KnownValues.FromDateTime;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum10))
+                        {
+                            result = KnownValues.ToDateTime;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum11))
+                        {
+                            result = KnownValues.YearToDate;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum12))
+                        {
+                            result = KnownValues.LastDays;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum13))
+                        {
+                            result = KnownValues.LastWeeks;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum14))
+                        {
+                            result = KnownValues.LastMonths;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum15))
+                        {
+                            result = KnownValues.LastQuarters;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum16))
+                        {
+                            result = KnownValues.LastYears;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum17))
+                        {
+                            result = KnownValues.NextDays;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum18))
+                        {
+                            result = KnownValues.NextWeeks;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum19))
+                        {
+                            result = KnownValues.NextMonths;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum20))
+                        {
+                            result = KnownValues.NextQuarters;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum21))
+                        {
+                            result = KnownValues.NextYears;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum22))
+                        {
+                            result = KnownValues.TodayFromTo;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum23))
+                        {
+                            result = KnownValues.ThisWeek;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum24))
+                        {
+                            result = KnownValues.LastWeek;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum25))
+                        {
+                            result = KnownValues.NextWeek;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum26))
+                        {
+                            result = KnownValues.SpecificMonth;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum27))
+                        {
+                            result = KnownValues.ThisMonth;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum28))
+                        {
+                            result = KnownValues.LastMonth;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum29))
+                        {
+                            result = KnownValues.NextMonth;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum30))
+                        {
+                            result = KnownValues.ThisQuarter;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum31))
+                        {
+                            result = KnownValues.LastQuarter;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum32))
+                        {
+                            result = KnownValues.NextQuarter;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum33))
+                        {
+                            result = KnownValues.Quarter1;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum34))
+                        {
+                            result = KnownValues.Quarter2;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum35))
+                        {
+                            result = KnownValues.Quarter3;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum36))
+                        {
+                            result = KnownValues.Quarter4;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum37))
+                        {
+                            result = KnownValues.ThisYear;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum38))
+                        {
+                            result = KnownValues.LastYear;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum39))
+                        {
+                            result = KnownValues.NextYear;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum40))
+                        {
+                            result = KnownValues.DateTimeValue;
+                            return true;
+                        }
+
+                        result = default;
+                        return false;
+                    }
                 }
 
                 public ref struct Source
@@ -1061,6 +1327,9 @@ public readonly partial struct Ui5ManifestSchema
 
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static implicit operator Source(string value) => new (value.AsSpan());
+
+                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                    public static implicit operator Source(KnownValues value) => (OptionsEntity)value;
 
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);

@@ -494,6 +494,52 @@ public readonly partial struct CmakePresetsSchema
                         CheckValidInstance();
                         return _parent.FreezeElement<AnOptionalObjectSpecifyingOutputOptions>(_idx);
                     }
+
+                    /// <summary>
+                    /// Converts the value to its <see cref="Flags"/> equivalent.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    /// <exception cref="InvalidOperationException">The value was not an object.</exception>
+                    public static implicit operator Flags(Mutable value)
+                    {
+                        if (value.TryGetFlags(out Flags result))
+                        {
+                            return result;
+                        }
+
+                        throw new InvalidOperationException();
+                    }
+
+                    /// <summary>
+                    /// Tries to get the <see cref="Flags"/> equivalent of this value.
+                    /// </summary>
+                    /// <param name="result">The flags whose bits are set for each boolean property that is present with the value <see langword="true"/>.</param>
+                    /// <returns><see langword="true"/> if this value was an object.</returns>
+                    public bool TryGetFlags(out Flags result)
+                    {
+                        if (this.ValueKind != JsonValueKind.Object)
+                        {
+                            result = default;
+                            return false;
+                        }
+
+                        Flags flags = Flags.None;
+                        JsonElement element = this;
+                        JsonElement propertyValue;
+
+                        if (element.TryGetProperty(JsonPropertyNames.DebugValueUtf8, out propertyValue) && propertyValue.ValueKind == JsonValueKind.True)
+                        {
+                            flags |= Flags.DebugValue;
+                        }
+
+                        if (element.TryGetProperty(JsonPropertyNames.VerboseUtf8, out propertyValue) && propertyValue.ValueKind == JsonValueKind.True)
+                        {
+                            flags |= Flags.Verbose;
+                        }
+
+                        result = flags;
+                        return true;
+                    }
                 }
 
                 public ref struct Source
@@ -533,6 +579,8 @@ public readonly partial struct CmakePresetsSchema
                     }
 
                     public static implicit operator Source(AnOptionalObjectSpecifyingOutputOptions instance) => new(JsonElement.From(instance));
+
+                    public static implicit operator Source(Flags value) => AnOptionalObjectSpecifyingOutputOptions.Build((value & Flags.DebugValue) != 0, (value & Flags.Verbose) != 0);
 
                     internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
                     {

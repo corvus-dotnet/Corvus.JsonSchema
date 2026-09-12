@@ -1226,6 +1226,87 @@ public readonly partial struct ClangFormatSchema
                 CheckValidInstance();
                 return _parent.FreezeElement<SpaceBeforeParensOptionsEntity>(_idx);
             }
+
+            /// <summary>
+            /// Converts the value to its <see cref="Flags"/> equivalent.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            /// <exception cref="InvalidOperationException">The value was not an object.</exception>
+            public static implicit operator Flags(Mutable value)
+            {
+                if (value.TryGetFlags(out Flags result))
+                {
+                    return result;
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Tries to get the <see cref="Flags"/> equivalent of this value.
+            /// </summary>
+            /// <param name="result">The flags whose bits are set for each boolean property that is present with the value <see langword="true"/>.</param>
+            /// <returns><see langword="true"/> if this value was an object.</returns>
+            public bool TryGetFlags(out Flags result)
+            {
+                if (this.ValueKind != JsonValueKind.Object)
+                {
+                    result = default;
+                    return false;
+                }
+
+                Flags flags = Flags.None;
+                JsonElement element = this;
+                JsonElement propertyValue;
+
+                if (element.TryGetProperty(JsonPropertyNames.AfterControlStatementsUtf8, out propertyValue) && propertyValue.ValueKind == JsonValueKind.True)
+                {
+                    flags |= Flags.AfterControlStatements;
+                }
+
+                if (element.TryGetProperty(JsonPropertyNames.AfterForeachMacrosUtf8, out propertyValue) && propertyValue.ValueKind == JsonValueKind.True)
+                {
+                    flags |= Flags.AfterForeachMacros;
+                }
+
+                if (element.TryGetProperty(JsonPropertyNames.AfterFunctionDeclarationNameUtf8, out propertyValue) && propertyValue.ValueKind == JsonValueKind.True)
+                {
+                    flags |= Flags.AfterFunctionDeclarationName;
+                }
+
+                if (element.TryGetProperty(JsonPropertyNames.AfterFunctionDefinitionNameUtf8, out propertyValue) && propertyValue.ValueKind == JsonValueKind.True)
+                {
+                    flags |= Flags.AfterFunctionDefinitionName;
+                }
+
+                if (element.TryGetProperty(JsonPropertyNames.AfterIfMacrosUtf8, out propertyValue) && propertyValue.ValueKind == JsonValueKind.True)
+                {
+                    flags |= Flags.AfterIfMacros;
+                }
+
+                if (element.TryGetProperty(JsonPropertyNames.AfterOverloadedOperatorUtf8, out propertyValue) && propertyValue.ValueKind == JsonValueKind.True)
+                {
+                    flags |= Flags.AfterOverloadedOperator;
+                }
+
+                if (element.TryGetProperty(JsonPropertyNames.AfterRequiresInClauseUtf8, out propertyValue) && propertyValue.ValueKind == JsonValueKind.True)
+                {
+                    flags |= Flags.AfterRequiresInClause;
+                }
+
+                if (element.TryGetProperty(JsonPropertyNames.AfterRequiresInExpressionUtf8, out propertyValue) && propertyValue.ValueKind == JsonValueKind.True)
+                {
+                    flags |= Flags.AfterRequiresInExpression;
+                }
+
+                if (element.TryGetProperty(JsonPropertyNames.BeforeNonEmptyParenthesesUtf8, out propertyValue) && propertyValue.ValueKind == JsonValueKind.True)
+                {
+                    flags |= Flags.BeforeNonEmptyParentheses;
+                }
+
+                result = flags;
+                return true;
+            }
         }
 
         public ref struct Source
@@ -1279,6 +1360,8 @@ public readonly partial struct ClangFormatSchema
             }
 
             public static implicit operator Source(SpaceBeforeParensOptionsEntity instance) => new(JsonElement.From(instance));
+
+            public static implicit operator Source(Flags value) => SpaceBeforeParensOptionsEntity.Build((value & Flags.AfterControlStatements) != 0, (value & Flags.AfterForeachMacros) != 0, (value & Flags.AfterFunctionDeclarationName) != 0, (value & Flags.AfterFunctionDefinitionName) != 0, (value & Flags.AfterIfMacros) != 0, (value & Flags.AfterOverloadedOperator) != 0, (value & Flags.AfterRequiresInClause) != 0, (value & Flags.AfterRequiresInExpression) != 0, (value & Flags.BeforeNonEmptyParentheses) != 0);
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
