@@ -677,6 +677,18 @@ are trustworthy in that state; the overhead column of the harness's output (13 t
 single spike of that probe zeroes or inflates one corpus's row, so every row's overhead column is checked before
 a table is read.
 
+Two more on the fixed costs, taken on the healthy box. The parsed document now keeps the array behind its UTF-8
+memory when there is one and hands the evaluator its rows and text as spans in one call, so the entry no longer
+converts a memory to a span per evaluation; and the node a root's flag-mode evaluation enters is computed with the
+forwards instead of resolved on every call. And a strict-object child whose type admits objects, reached from a
+loop that already holds the value's token type, is entered at its loop directly: no second token-type read, no type
+test, no plan dispatch. yamllint 0.79 of the round baseline (from 0.91), helm-chart-lock 0.72 (from 0.78), the rest
+within noise. What remains at the entry is the document type test and the raw-access construction; what remains per
+object is the loop itself, whose per-property step is about the same work as Blaze's. The remaining gap on the
+small-instance corpora is the difference between a generic loop and a per-schema compiled closure, and the two
+core-library options that would narrow it further (a pre-classified name word per row, or short keys inline in the
+row) were judged not worth their parse-time cost, which every instance pays.
+
 ## Against Blaze (2026-09-11)
 
 Blaze is run through the Sourcemeta `jsonschema` CLI release binary (`benchmarks/.../tools/blaze-compare.py`, see
