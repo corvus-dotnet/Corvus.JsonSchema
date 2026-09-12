@@ -732,6 +732,27 @@ profile-driven layout), which native AOT lacks. The trade is therefore start-up 
 starts in 4 to 25 ms where the JIT takes 120 to 320 ms, and settles 15 to 20% slower per evaluation. Table:
 `warm-2026-09-12.md`.
 
+## Regular expressions without a regex (2026-09-12, late)
+
+Native AOT has no compiled regular expressions, so every `pattern` the matcher kinds did not cover ran in the
+interpreter there, and the harness's `patterns` command counted 68 such pattern nodes across the corpora (335 in
+all). The matcher's special kinds are replaced by one general form. A pattern is alternatives of atom sequences,
+each anchored where its own `^` and `$` say, so `^a|b|c$` anchors only its first alternative at the start and its
+last at the end, and unanchored ones search (with a vectorised start when the first atom is one to three ASCII
+bytes). A sequence qualifies when every variable atom but the last is followed by atoms that admit none of its
+characters, up to the first that must consume something, so its greedy run ends exactly where the regex's would;
+the atoms after the last variable one are fixed and are matched from the end. Groups of alternatives, optional
+groups and small fixed repeats flatten into whole alternatives. Classes gained negation, `\d \w \s` and their
+negations with ECMA-262's ASCII semantics (plus the non-ASCII members of `\s`, kept exactly), and literals outside
+ASCII such as `µ`. A separated-list kind takes `^item(sep item)*$` and `^(item sep)*item$` when the separator
+starts with a character the item's variable atom does not admit, with a different first or last item allowed. The
+agreement test checks every pattern, the corpus ones included, against the translated regex on every input.
+Regex-backed nodes fall from 68 to 8, the eight being backtracking shapes (`[a-z]+[a-z0-9]+`, a dot after a
+variable atom, semver) and a lookahead. Under AOT cspell, krakend, ui5-manifest and unreal-engine-uproject are 20
+to 25% faster; under the JIT, where the regex was compiled, they are 3 to 10% faster; jsconfig, whose one
+alternation was a compiled literal search, sits 10% slower under AOT than the interpreted regex did and unchanged
+under the JIT.
+
 ## The four-axis table (2026-09-12, evening)
 
 One table, eight implementations by 37 corpora, four measures each: `summary2-2026-09-12.md` in the session notes.
