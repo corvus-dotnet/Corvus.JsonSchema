@@ -715,6 +715,15 @@ validation pass, parse included, is 0.5 to 12 ms for all but geojson (108 ms, la
 Blaze's own compile is what costs it on the large schemas: ui5-manifest 165 ms and openapi 100 ms end to end.
 Table: `cold-start-2026-09-12.md` in the session notes.
 
+Blaze's compile can be measured on its own through its `compile --fast --minify` command (wall time in a fresh
+process less the 2.3 ms of a bare `--version`; it includes writing the template as JSON, so it slightly overstates).
+Medians over the corpora: Blaze 2.9 ms, ours under native AOT 0.34 ms, a ratio of 0.11; the large schemas are where
+it tells, ui5-manifest 207 ms against 9.9, krakend 64 against 6.3, ui5 39 against 3.0, cmake-presets 24 against 1.7.
+Blaze's templates are big (ui5-manifest's is 41 MB of JSON, cql2's 5.5 MB), so its `validate --template`, the
+analogue of our program image, is no faster than compiling on those: parsing the template costs what the compile
+did. Precompiled cold start like for like (Blaze `validate --template` against our AOT runner loading an image):
+medians 9.8 ms against 4.7 ms, a ratio of 0.49, ours faster on all 37. Table: `compile-2026-09-12.md`.
+
 The warm measurement under the same three builds (the runner's `warm` command, one process per corpus, fresh Blaze
 run): the JIT's tier-1 code is fastest on 30 of 37 at a geometric mean of 0.75 against Blaze; ReadyToRun 23 of 37
 at 0.87; native AOT 23 of 37 at 0.88, about 17% behind the JIT at the median. The machine's instruction set instead
