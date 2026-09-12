@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- One cold run of a corpus in a fresh process, publishable as native AOT for a like-for-like cold-start
+       comparison with the Blaze CLI: dotnet publish -c Release -r linux-x64 -p:ColdAot=true. See ColdRun.cs. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <IsPackable>false</IsPackable>
+    <PublishAot Condition="'$(ColdAot)' == 'true'">true</PublishAot>
+    <OptimizationPreference>Speed</OptimizationPreference>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Corvus.Text.Json/Corvus.Text.Json.csproj" />
+    <Compile Include="../Corvus.Text.Json.RuntimeEvaluator.Benchmarks/SourceMeta/SourceMetaCases.cs" Link="SourceMetaCases.cs" />
+    <Compile Include="../Corvus.Text.Json.RuntimeEvaluator.Benchmarks/SourceMeta/ColdRun.cs" Link="ColdRun.cs" />
+  </ItemGroup>
+
+</Project>
