@@ -53,6 +53,9 @@ internal interface IDocumentAccess
     /// <summary>Gets a value indicating whether a string value contains escapes.</summary>
     bool IsEscaped(ref EvaluationState state, IJsonDocument doc, int index);
 
+    /// <summary>Gets the raw text of a string value and whether it contains escapes, from one read of its row where the layout allows.</summary>
+    ReadOnlySpan<byte> RawValue(ref EvaluationState state, IJsonDocument doc, int index, out bool escaped);
+
     /// <summary>
     /// Gets the raw (not unescaped) text of the property name for a property value index, and whether it contains
     /// escapes; when it does, the caller must go through <see cref="GetPropertyName"/> instead.
@@ -117,6 +120,26 @@ internal readonly struct RawAccess : IDocumentAccess
     public ReadOnlyMemory<byte> RawValueMemory(ref EvaluationState state, IJsonDocument doc, int index) => state.Raw.GetRawValueMemory(index);
 
     public bool IsEscaped(ref EvaluationState state, IJsonDocument doc, int index) => ReadInt32(state.RawRows, index + SizeOrLengthOffset) < 0;
+
+    public ReadOnlySpan<byte> RawValue(ref EvaluationState state, IJsonDocument doc, int index, out bool escaped)
+    {
+        ulong pair = MemoryMarshal.Read<ulong>(state.RawRows.Slice(index, sizeof(ulong)));
+        int location;
+        int length;
+        if (BitConverter.IsLittleEndian)
+        {
+            location = (int)pair & LocationMask;
+            length = (int)(pair >> 32);
+        }
+        else
+        {
+            location = (int)(pair >> 32) & LocationMask;
+            length = (int)pair;
+        }
+
+        escaped = length < 0;
+        return state.RawUtf8.Slice(location, length & int.MaxValue);
+    }
 
     public ReadOnlySpan<byte> PropertyNameRaw(ref EvaluationState state, IJsonDocument doc, int valueIndex, out bool escaped)
     {
@@ -239,6 +262,12 @@ internal readonly struct InterfaceAccess : IDocumentAccess
     public ReadOnlyMemory<byte> RawValueMemory(ref EvaluationState state, IJsonDocument doc, int index) => doc.GetRawSimpleValue(index, includeQuotes: false);
 
     public bool IsEscaped(ref EvaluationState state, IJsonDocument doc, int index) => doc.ValueIsEscaped(index, isPropertyName: false);
+
+    public ReadOnlySpan<byte> RawValue(ref EvaluationState state, IJsonDocument doc, int index, out bool escaped)
+    {
+        escaped = doc.ValueIsEscaped(index, isPropertyName: false);
+        return doc.GetRawSimpleValue(index, includeQuotes: false).Span;
+    }
 
     public ReadOnlySpan<byte> PropertyNameRaw(ref EvaluationState state, IJsonDocument doc, int valueIndex, out bool escaped)
     {

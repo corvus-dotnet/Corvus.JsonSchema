@@ -194,6 +194,34 @@ public class StrictObjectTests
     }
 
     [TestMethod]
+    public void MapsWithoutPropertiesTakeTheMapLoop()
+    {
+        using JsonSchemaEvaluator closed = JsonSchemaEvaluator.Compile("""{"type": "object", "additionalProperties": false}""");
+        Assert.AreEqual(NodePlan.StrictObject, closed.Program.Nodes[closed.RootNode].Plan);
+        Assert.IsTrue(closed.Evaluate("{}"));
+        Assert.IsFalse(closed.Evaluate("""{"a": 1}"""));
+
+        using JsonSchemaEvaluator integers = JsonSchemaEvaluator.Compile("""{"additionalProperties": {"type": "integer"}}""");
+        Assert.AreEqual(NodePlan.StrictObject, integers.Program.Nodes[integers.RootNode].Plan);
+        Assert.IsTrue(integers.Evaluate("""{"a": 1, "b": 2, "c": 3.0}"""));
+        Assert.IsFalse(integers.Evaluate("""{"a": 1, "b": 2.5}"""));
+        Assert.IsFalse(integers.Evaluate("""{"a": "1"}"""));
+        Assert.IsTrue(integers.Evaluate("{}"));
+        Assert.IsTrue(integers.Evaluate("[1]"), "Object keywords ignore arrays.");
+
+        using JsonSchemaEvaluator nested = JsonSchemaEvaluator.Compile("""{"additionalProperties": {"type": "object", "required": ["x"], "properties": {"x": {"type": "string"}}}}""");
+        Assert.AreEqual(NodePlan.StrictObject, nested.Program.Nodes[nested.RootNode].Plan);
+        Assert.IsTrue(nested.Evaluate("""{"a": {"x": "1"}, "b": {"x": "2", "y": 3}}"""));
+        Assert.IsFalse(nested.Evaluate("""{"a": {"x": "1"}, "b": {}}"""));
+        Assert.IsFalse(nested.Evaluate("""{"a": {"x": 1}}"""));
+
+        using JsonSchemaEvaluator open = JsonSchemaEvaluator.Compile("""{"additionalProperties": true, "minProperties": 1}""");
+        Assert.AreEqual(NodePlan.StrictObject, open.Program.Nodes[open.RootNode].Plan);
+        Assert.IsTrue(open.Evaluate("""{"a": [1, {"b": null}]}"""));
+        Assert.IsFalse(open.Evaluate("{}"));
+    }
+
+    [TestMethod]
     public void StringEnumChildrenAreTestedInPlace()
     {
         const string schema = """

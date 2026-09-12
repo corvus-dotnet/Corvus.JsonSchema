@@ -822,8 +822,58 @@ internal static partial class Evaluator
         }
 
         return app.InlineEnum is Utf8NameMap<object> allowed
-            ? MatchesStringSet<TAccess>(allowed, ref state, doc, valueIndex)
+            ? MatchesStringSet<TAccess>(allowed, valueType, ref state, doc, valueIndex)
             : EvalChildFast<TAccess>(nodes[app.Node], doc, valueIndex, ref state);
+    }
+
+    /// <summary>
+    /// An object with only <c>additionalProperties</c> (a map): no names are read at all. Every value takes the
+    /// additional resolution: rejected, a token-bit test, a child dispatch, or nothing.
+    /// </summary>
+    private static bool EvalMapLoop<TAccess>(SchemaNode node, IJsonDocument doc, int index, int end, ref EvaluationState state)
+        where TAccess : struct, IDocumentAccess
+    {
+        int valueIndex = index + (2 * RowSize);
+        if (node.AdditionalRejects)
+        {
+            return valueIndex - RowSize >= end;
+        }
+
+        ref readonly StrictEntry extra = ref node.AdditionalEntry;
+        int tokenBits = extra.TokenBits;
+        if (tokenBits != 0)
+        {
+            bool integerOnly = extra.IntegerOnly;
+            bool lexical = extra.Lexical;
+            while (valueIndex - RowSize < end)
+            {
+                JsonTokenType valueType = default(TAccess).TokenTypeAndNextUnchecked(ref state, doc, valueIndex, out int next);
+                if ((tokenBits & (1 << (int)valueType)) == 0 || (integerOnly && valueType == JsonTokenType.Number && !IsInteger<TAccess>(ref state, doc, valueIndex, lexical)))
+                {
+                    return false;
+                }
+
+                valueIndex = next + RowSize;
+            }
+
+            return true;
+        }
+
+        if (extra.Child >= 0)
+        {
+            SchemaNode child = state.Nodes[extra.Child];
+            while (valueIndex - RowSize < end)
+            {
+                if (!EvalChildFast<TAccess>(child, doc, valueIndex, ref state))
+                {
+                    return false;
+                }
+
+                valueIndex = default(TAccess).NextIndexUnchecked(ref state, doc, valueIndex) + RowSize;
+            }
+        }
+
+        return true;
     }
 
     /// <summary>The name lookup for an escaped property name, out of line: escapes are rare and the loop is register-bound.</summary>
@@ -843,21 +893,22 @@ internal static partial class Evaluator
 
     /// <summary>A string value's membership of a set (an <c>enum</c> of strings): the raw text when unescaped, else the unescaped text. Out of line: the loops that call it are inlined widely.</summary>
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static bool MatchesStringSet<TAccess>(Utf8NameMap<object> allowed, ref EvaluationState state, IJsonDocument doc, int index)
+    private static bool MatchesStringSet<TAccess>(Utf8NameMap<object> allowed, JsonTokenType tokenType, ref EvaluationState state, IJsonDocument doc, int index)
         where TAccess : struct, IDocumentAccess
     {
-        if (default(TAccess).TokenType(ref state, doc, index) != JsonTokenType.String)
+        if (tokenType != JsonTokenType.String)
         {
             return false;
         }
 
-        if (!default(TAccess).IsEscaped(ref state, doc, index))
+        ReadOnlySpan<byte> raw = default(TAccess).RawValue(ref state, doc, index, out bool escaped);
+        if (!escaped)
         {
-            return allowed.TryGetValue(default(TAccess).RawValue(ref state, doc, index), out _);
+            return allowed.TryGetIndex(raw, out _);
         }
 
         using UnescapedUtf8JsonString s = StringValue<TAccess>(ref state, doc, index);
-        return allowed.TryGetValue(s.Span, out _);
+        return allowed.TryGetIndex(s.Span, out _);
     }
 
     /// <summary>
@@ -877,9 +928,9 @@ internal static partial class Evaluator
         {
             seen[entry.Index >> 6] |= 1UL << (entry.Index & 63);
             entryIndex = entry.Index;
-            if (entry.ValueTests.Length > 0)
+            if (entry.HasValueTests)
             {
-                ApplyValueTests<TAccess>(entry.ValueTests, ref state, doc, valueIndex, failed);
+                ApplyValueTests<TAccess>(entry, valueType, ref state, doc, valueIndex, failed);
             }
 
             FusedApplication[] applications = entry.Applications;
@@ -929,46 +980,54 @@ internal static partial class Evaluator
     /// (tagged string, canonical integer or boolean) and each condition whose allowed set lacks it is marked failed.
     /// A value of any other kind fails every test, since only keyable constants are accepted at compile time.
     /// </summary>
-    private static void ApplyValueTests<TAccess>(FusedValueTest[] tests, ref EvaluationState state, IJsonDocument doc, int valueIndex, scoped Span<bool> failed)
+    private static void ApplyValueTests<TAccess>(FusedEntry entry, JsonTokenType valueType, ref EvaluationState state, IJsonDocument doc, int valueIndex, scoped Span<bool> failed)
         where TAccess : struct, IDocumentAccess
     {
-        switch (default(TAccess).TokenType(ref state, doc, valueIndex))
+        switch (valueType)
         {
             case JsonTokenType.String:
             {
-                if (!default(TAccess).IsEscaped(ref state, doc, valueIndex))
+                ReadOnlySpan<byte> raw = default(TAccess).RawValue(ref state, doc, valueIndex, out bool escaped);
+                if (!escaped)
                 {
-                    TestValueKey(tests, Discriminator.StringTag, default(TAccess).RawValue(ref state, doc, valueIndex), failed);
+                    TestValueKey(entry, Discriminator.StringTag, raw, failed);
                     return;
                 }
 
                 using UnescapedUtf8JsonString text = StringValue<TAccess>(ref state, doc, valueIndex);
-                TestValueKey(tests, Discriminator.StringTag, text.Span, failed);
+                TestValueKey(entry, Discriminator.StringTag, text.Span, failed);
                 return;
             }
 
             case JsonTokenType.True:
-                TestValueKey(tests, Discriminator.BooleanTag, "true"u8, failed);
+                TestValueKey(entry, Discriminator.BooleanTag, "true"u8, failed);
                 return;
             case JsonTokenType.False:
-                TestValueKey(tests, Discriminator.BooleanTag, "false"u8, failed);
+                TestValueKey(entry, Discriminator.BooleanTag, "false"u8, failed);
                 return;
             case JsonTokenType.Number:
             {
-                ReadOnlySpan<byte> raw = default(TAccess).RawValue(ref state, doc, valueIndex);
-                if (IsCanonicalInteger(raw))
+                ReadOnlySpan<byte> rawNumber = default(TAccess).RawValue(ref state, doc, valueIndex);
+                if (IsCanonicalInteger(rawNumber))
                 {
-                    TestValueKey(tests, Discriminator.NumberTag, raw, failed);
+                    TestValueKey(entry, Discriminator.NumberTag, rawNumber, failed);
                     return;
                 }
 
                 // "2.0" may equal a keyed integer: test it the slow way, by value.
-                for (int t = 0; t < tests.Length; t++)
+                foreach (FusedValueTest test in entry.KeyedTests)
                 {
-                    bool passes = tests[t].Pattern is not null ? !tests[t].RequiresString : NumberInKeys(raw, tests[t].Allowed!);
-                    if (!passes)
+                    if (!NumberInKeys(rawNumber, test.Allowed!))
                     {
-                        failed[tests[t].Condition] = true;
+                        failed[test.Condition] = true;
+                    }
+                }
+
+                foreach (FusedValueTest test in entry.PatternTests)
+                {
+                    if (test.RequiresString)
+                    {
+                        failed[test.Condition] = true;
                     }
                 }
 
@@ -977,11 +1036,16 @@ internal static partial class Evaluator
 
             default:
                 // A pattern does not apply to a non-string; a key set has nothing that matches a structured value or null.
-                for (int t = 0; t < tests.Length; t++)
+                foreach (FusedValueTest test in entry.KeyedTests)
                 {
-                    if (tests[t].Pattern is null || tests[t].RequiresString)
+                    failed[test.Condition] = true;
+                }
+
+                foreach (FusedValueTest test in entry.PatternTests)
+                {
+                    if (test.RequiresString)
                     {
-                        failed[tests[t].Condition] = true;
+                        failed[test.Condition] = true;
                     }
                 }
 
@@ -989,14 +1053,40 @@ internal static partial class Evaluator
         }
     }
 
-    private static void TestValueKey(FusedValueTest[] tests, byte tag, ReadOnlySpan<byte> value, Span<bool> failed)
+    /// <summary>One lookup of the tagged value decides every keyed test; the pattern tests run on the string.</summary>
+    private static void TestValueKey(FusedEntry entry, byte tag, ReadOnlySpan<byte> value, Span<bool> failed)
     {
-        for (int t = 0; t < tests.Length; t++)
+        FusedValueTest[] keyed = entry.KeyedTests;
+        if (keyed.Length > 0)
         {
-            FusedValueTest test = tests[t];
-            bool passes = test.Pattern is PatternMatcher pattern
-                ? (tag == Discriminator.StringTag ? pattern.IsMatch(value) : !test.RequiresString)
-                : test.Allowed!.TryGetValue(tag, value, out _);
+            if (entry.MergedAllowed is Utf8NameMap<FusedTestMask> merged)
+            {
+                ulong mask = merged.TryGetValue(tag, value, out FusedTestMask? box) ? box.Mask : 0;
+                for (int t = 0; t < keyed.Length; t++)
+                {
+                    if ((mask & (1UL << t)) == 0)
+                    {
+                        failed[keyed[t].Condition] = true;
+                    }
+                }
+            }
+            else
+            {
+                for (int t = 0; t < keyed.Length; t++)
+                {
+                    if (!keyed[t].Allowed!.TryGetValue(tag, value, out _))
+                    {
+                        failed[keyed[t].Condition] = true;
+                    }
+                }
+            }
+        }
+
+        FusedValueTest[] patterns = entry.PatternTests;
+        for (int t = 0; t < patterns.Length; t++)
+        {
+            FusedValueTest test = patterns[t];
+            bool passes = tag == Discriminator.StringTag ? test.Pattern!.IsMatch(value) : !test.RequiresString;
             if (!passes)
             {
                 failed[test.Condition] = true;
@@ -1134,6 +1224,11 @@ internal static partial class Evaluator
             ThrowMalformedRows();
         }
 
+        if (properties is null)
+        {
+            return EvalMapLoop<TAccess>(node, doc, index, end, ref state);
+        }
+
         // Every row from here to the end row exists (checked once above), so the header and name reads are unchecked.
         int valueIndex = index + (2 * RowSize);
         while (valueIndex - RowSize < end)
@@ -1175,7 +1270,7 @@ internal static partial class Evaluator
             }
             else if (entry.Set is Utf8NameMap<object> set)
             {
-                if (!MatchesStringSet<TAccess>(set, ref state, doc, valueIndex))
+                if (!MatchesStringSet<TAccess>(set, valueType, ref state, doc, valueIndex))
                 {
                     return false;
                 }
@@ -1326,7 +1421,7 @@ internal static partial class Evaluator
             }
             else if (entry.Set is Utf8NameMap<object> allowed)
             {
-                if (!MatchesStringSet<TAccess>(allowed, ref state, doc, valueIndex))
+                if (!MatchesStringSet<TAccess>(allowed, valueType, ref state, doc, valueIndex))
                 {
                     return false;
                 }
@@ -1693,7 +1788,7 @@ internal static partial class Evaluator
                 return false;
             }
 
-            return MatchesStringSet<TAccess>(node.EnumStrings!, ref state, doc, index);
+            return MatchesStringSet<TAccess>(node.EnumStrings!, tokenType, ref state, doc, index);
         }
 
         ConstantValue[] values = node.Enum!;
