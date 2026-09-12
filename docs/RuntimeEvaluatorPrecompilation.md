@@ -592,7 +592,8 @@ accepts as one bit per token type, and only the integer case still calls out. Th
 line to relieve register pressure. Against the round baseline, medians of five: helm-chart-lock 0.83 (from 0.88),
 importmap 0.55 (0.59), krakend 0.89 (0.95), stale 0.90 (0.95), vercel 0.93 (0.98), with the rest unchanged. The
 residual against Blaze on these corpora is now structural (span headers, the per-child plan switch, the JIT's
-register allocation across a large method) rather than incidental.
+register allocation across a large method) rather than incidental. The object plan's loop and the fused loop got
+the same treatment afterwards, worth cypress 0.84 (from 0.93) and draft-04 0.75 (0.76), the rest within noise.
 
 ## Against Blaze (2026-09-11)
 
