@@ -583,6 +583,17 @@ helm-chart-lock and ui5 0.88, aws-cdk 0.91, cypress 0.94, krakend 0.95. yamllint
 A/B runs, some two nanoseconds per instance on a corpus whose properties are all unknown names; the loop's
 prologue for that case is the one place left to look at there.
 
+The bounds checks were then sorted by what makes them unnecessary. Five per property are guaranteed by the name
+map's construction (the position read is within a key of the bucket's length, the table has 256 entries indexed by
+a byte, and the key, chain and entry indices came out of that table) and now go through refs; the two row reads are
+covered by one check per object that the container's rows exist; the slice into the text keeps its check, since its
+location and length come from the rows. The type test became a bit test: a strict entry carries the token types it
+accepts as one bit per token type, and only the integer case still calls out. The escaped-name lookup moved out of
+line to relieve register pressure. Against the round baseline, medians of five: helm-chart-lock 0.83 (from 0.88),
+importmap 0.55 (0.59), krakend 0.89 (0.95), stale 0.90 (0.95), vercel 0.93 (0.98), with the rest unchanged. The
+residual against Blaze on these corpora is now structural (span headers, the per-child plan switch, the JIT's
+register allocation across a large method) rather than incidental.
+
 ## Against Blaze (2026-09-11)
 
 ## Against Blaze (2026-09-11)
