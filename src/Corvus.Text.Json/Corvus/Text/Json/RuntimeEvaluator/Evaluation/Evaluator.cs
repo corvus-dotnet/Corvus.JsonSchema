@@ -582,10 +582,15 @@ internal static partial class Evaluator
         {
             int ordinal = 0;
             int end = default(TAccess).EndIndex(ref state, doc, index);
+            if (!default(TAccess).RowsAvailable(ref state, doc, end))
+            {
+                ThrowMalformedRows();
+            }
+
             for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; ordinal++)
             {
-                JsonTokenType valueType = default(TAccess).TokenTypeAndNext(ref state, doc, valueIndex, out int next);
-                ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRaw(ref state, doc, valueIndex, out bool escaped);
+                JsonTokenType valueType = default(TAccess).TokenTypeAndNextUnchecked(ref state, doc, valueIndex, out int next);
+                ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRawUnchecked(ref state, doc, valueIndex, out bool escaped);
                 bool cover;
                 bool defer;
                 int entryIndex;
@@ -804,10 +809,10 @@ internal static partial class Evaluator
             return true;
         }
 
-        TypeMask inline = app.InlineType;
-        if (inline != TypeMask.None)
+        int tokenBits = app.TokenBits;
+        if (tokenBits != 0)
         {
-            return MatchesType<TAccess>(inline, valueType, ref state, doc, valueIndex, app.InlineLexical);
+            return (tokenBits & (1 << (int)valueType)) != 0 && (!app.IntegerOnly || valueType != JsonTokenType.Number || IsInteger<TAccess>(ref state, doc, valueIndex, app.InlineLexical));
         }
 
         return app.InlineEnum is Utf8NameMap<object> allowed
@@ -1185,11 +1190,16 @@ internal static partial class Evaluator
         {
             StrictEntry[] entries = node.StrictEntries ?? [];
             int end = default(TAccess).EndIndex(ref state, doc, index);
+            if (!default(TAccess).RowsAvailable(ref state, doc, end))
+            {
+                ThrowMalformedRows();
+            }
+
             int valueIndex = index + (2 * RowSize);
             while (valueIndex - RowSize < end)
             {
-                JsonTokenType valueType = default(TAccess).TokenTypeAndNext(ref state, doc, valueIndex, out int next);
-                ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRaw(ref state, doc, valueIndex, out bool escaped);
+                JsonTokenType valueType = default(TAccess).TokenTypeAndNextUnchecked(ref state, doc, valueIndex, out int next);
+                ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRawUnchecked(ref state, doc, valueIndex, out bool escaped);
                 if (!escaped)
                 {
                     if (!EvalObjectPlanProperty<TAccess>(node, properties, entries, patternProperties, additional, raw, valueType, doc, valueIndex, ref state, seen))
@@ -1270,16 +1280,16 @@ internal static partial class Evaluator
         bool matched = false;
         if (properties is not null && properties.TryGetIndex(name, out int entryIndex))
         {
-            ref readonly StrictEntry entry = ref entries[entryIndex];
+            ref readonly StrictEntry entry = ref Utf8NameMap<PropertyEntry>.At(entries, entryIndex);
             if (entry.SeenBit >= 0)
             {
                 seen[entry.SeenBit >> 6] |= 1UL << (entry.SeenBit & 63);
             }
 
-            TypeMask inline = entry.Mask;
-            if (inline != TypeMask.None)
+            int tokenBits = entry.TokenBits;
+            if (tokenBits != 0)
             {
-                if (!MatchesType<TAccess>(inline, valueType, ref state, doc, valueIndex, entry.Lexical))
+                if ((tokenBits & (1 << (int)valueType)) == 0 || (entry.IntegerOnly && valueType == JsonTokenType.Number && !IsInteger<TAccess>(ref state, doc, valueIndex, entry.Lexical)))
                 {
                     return false;
                 }
@@ -1320,10 +1330,14 @@ internal static partial class Evaluator
             return true;
         }
 
-        TypeMask additionalType = node.AdditionalInlineType;
-        return additionalType != TypeMask.None
-            ? MatchesType<TAccess>(additionalType, valueType, ref state, doc, valueIndex, node.AdditionalInlineLexical)
-            : EvalChildFast<TAccess>(additional, doc, valueIndex, ref state);
+        ref readonly StrictEntry extra = ref node.AdditionalEntry;
+        int additionalBits = extra.TokenBits;
+        if (additionalBits != 0)
+        {
+            return (additionalBits & (1 << (int)valueType)) != 0 && (!extra.IntegerOnly || valueType != JsonTokenType.Number || IsInteger<TAccess>(ref state, doc, valueIndex, extra.Lexical));
+        }
+
+        return EvalChildFast<TAccess>(additional, doc, valueIndex, ref state);
     }
 
     /// <summary>

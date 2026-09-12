@@ -115,6 +115,11 @@ internal readonly struct FusedApplication(int contributor, int node, TypeMask in
 
     /// <summary>The child's string set when it is a string-enum leaf (tested in place of a call).</summary>
     public readonly Utf8NameMap<object>? InlineEnum = inlineEnum;
+
+    /// <summary>The token types <see cref="InlineType"/> accepts, one bit per token type; 0 when there is no type to test.</summary>
+    public readonly ushort TokenBits = StrictEntry.TokenBitsOf(inlineType);
+
+    public readonly bool IntegerOnly = (inlineType & TypeMask.Integer) != 0 && (inlineType & TypeMask.Number) == 0;
 }
 
 /// <summary>A branch: its condition, what it does with names no entry knows, and what it requires.</summary>
