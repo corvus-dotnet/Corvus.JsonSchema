@@ -699,6 +699,22 @@ the healthy box (overhead 14.6 ns), fastest on 31 of 37, geometric mean 0.73; th
 helm-chart-lock 2.32, yamllint 1.90, ui5 1.69, importmap 1.40, ui5-manifest 1.14 and stale 1.02, with babelrc at
 0.97.
 
+## Cold start against Blaze (2026-09-12)
+
+Wall time of one fresh process per corpus (median of three, pinned, healthy box): read the schema, compile it or
+load a program image, read the instances file, validate every instance once, which is what the Blaze CLI's
+`validate --fast` does. The harness's `cold` command and the `Corvus.Text.Json.RuntimeEvaluator.ColdRunner` project
+run it; the runner publishes as ReadyToRun or native AOT (`-p:ColdAot=true`). Under the JIT the run is dominated by
+start-up and JIT time: about 55 ms to reach `main` and 60 to 140 ms of JIT for the compiler before any validation,
+so every corpus takes 120 to 320 ms against Blaze's 6 to 250 ms (median ratio 14.6, geojson and openapi the only
+ones within 3x). ReadyToRun removes most of the JIT but keeps the runtime start-up: 42 to 330 ms (median ratio
+4.4). Native AOT removes both: 3.6 to 155 ms, faster than Blaze on all 37 corpora, median ratio 0.50, totals 445 ms
+against 1024 ms. Under AOT the schema compile is 0.1 to 3 ms for all but two corpora (krakend 6 ms and ui5-manifest
+10 ms, their regular expressions), and loading a program image instead brings ui5-manifest from 26 to 15 ms; the
+validation pass, parse included, is 0.5 to 12 ms for all but geojson (108 ms, large instances) and openapi (28 ms).
+Blaze's own compile is what costs it on the large schemas: ui5-manifest 165 ms and openapi 100 ms end to end.
+Table: `cold-start-2026-09-12.md` in the session notes.
+
 ## Against Blaze (2026-09-11)
 
 Blaze is run through the Sourcemeta `jsonschema` CLI release binary (`benchmarks/.../tools/blaze-compare.py`, see
