@@ -46,7 +46,7 @@ internal static partial class Evaluator
         SchemaNode root = nodes[rootNode];
 
         // Every field written once, in place: an object initializer builds a zeroed temporary and copies it over.
-        Unsafe.SkipInit(out EvaluationState state);
+        EvaluationState state;
         state.Program = program;
         state.Nodes = nodes;
         state.Collector = null;
