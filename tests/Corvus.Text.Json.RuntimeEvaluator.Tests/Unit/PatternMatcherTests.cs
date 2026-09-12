@@ -49,6 +49,8 @@ public class PatternMatcherTests
         "^x-[0-9]",
         "^[a-z]+_",
         "^\\d{2}.*",
+        "^(?=[^!*,;{}[\\]~\\n]+$)(?=(.*\\w)).+$",
+        "^(?=!+[^!*,;{}[\\]~\\n]+$)(?=(.*\\w)).+$",
     ];
 
     private static readonly string[] Inputs =
@@ -62,6 +64,7 @@ public class PatternMatcherTests
         "WEB", "web.imp", "web.", "webimp", "es5", "es6", "esnext", "es7", "es", "abc-def", "abc-", "-def", "abc-def-ghi", "v1", "v1.2", "v1.", "v1.2.3", "v", "1.2",
         "abc", "a.c", "a\nc", "a\rc", "a\u2028c", "aéc", "ac", "x1", "y2", "xy1", "x12", "z1",
         "@x", "$", "#tag", "_", "x@", "x-1", "x-12", "x-", "x-a", "ab_", "ab_c", "_a", "a_b_", "12", "123x", "1x",
+        "word", "!word", "!!word", "!", "!!", "wo,rd", "!wo*rd", "---", "!---", "a b", "!a b", "wörd", "ö", "!ö", "a\nb", "!a\nb", "{}", "a]b",
     ];
 
     [TestMethod]
@@ -79,7 +82,7 @@ public class PatternMatcherTests
             {
                 bool expected = regex.IsMatch(input);
                 bool actual = matcher.IsMatch(Encoding.UTF8.GetBytes(input));
-                Assert.AreEqual(expected, actual, $"pattern {pattern} input \"{input}\"");
+                Assert.AreEqual(expected, actual, $"pattern {pattern} translated {regex} input \"{input}\" bytes {BitConverter.ToString(Encoding.UTF8.GetBytes(input))}");
                 checkedCount++;
             }
         }
@@ -111,5 +114,8 @@ public class PatternMatcherTests
         Assert.IsFalse(PatternMatcher.Create("^x-[0-9]", options).UsesRegex);
         Assert.IsTrue(PatternMatcher.Create("^[a-z]+_", options).UsesRegex, "A variable atom before another needs backtracking even for a prefix.");
         Assert.IsFalse(PatternMatcher.Create("^\\d{2}.*", options).UsesRegex, "A trailing .* is redundant for a prefix.");
+        Assert.IsFalse(PatternMatcher.Create("^(?=[^!*,;{}[\\]~\\n]+$)(?=(.*\\w)).+$", options).UsesRegex, "An excluded set plus a required word character is a scan.");
+        Assert.IsFalse(PatternMatcher.Create("^(?=!+[^!*,;{}[\\]~\\n]+$)(?=(.*\\w)).+$", options).UsesRegex);
+        Assert.IsTrue(PatternMatcher.Create("^(?=[^a]+$).+$", options).UsesRegex, "Only the exact two-lookahead form is recognised.");
     }
 }

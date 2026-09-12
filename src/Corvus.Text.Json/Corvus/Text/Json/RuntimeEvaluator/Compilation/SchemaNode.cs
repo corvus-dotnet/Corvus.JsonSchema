@@ -239,6 +239,7 @@ internal sealed class PatternMatcher
         ClassSequence,
         PrefixSequence,
         Alternatives,
+        ExcludedClassWithWord,
         Literals,
         Regex,
     }
@@ -298,6 +299,11 @@ internal sealed class PatternMatcher
             return new PatternMatcher(Kind.PrefixSequence, ecmaPattern, null, null, 0, 0, atoms: prefixAtoms);
         }
 
+        if (TryParseExcludedClassWithWord(ecmaPattern, out ClassAtom[]? excluded))
+        {
+            return new PatternMatcher(Kind.ExcludedClassWithWord, ecmaPattern, null, null, 0, 0, atoms: excluded);
+        }
+
         if (options.RegexProvider is JsonSchemaRegexProvider provider && provider(patternIndex, ecmaPattern) is Regex provided)
         {
             return new PatternMatcher(Kind.Regex, ecmaPattern, provided, null, 0, 0);
@@ -332,6 +338,7 @@ internal sealed class PatternMatcher
             Kind.Literals => MatchesLiterals(this.literals!, utf8Value),
             Kind.ClassSequence => MatchesClassSequence(this.atoms!, utf8Value),
             Kind.PrefixSequence => MatchesPrefixSequence(this.atoms!, utf8Value),
+            Kind.ExcludedClassWithWord => MatchesExcludedClassWithWord(this.atoms!, utf8Value),
             Kind.Alternatives => MatchesAlternatives(this.alternatives!, utf8Value),
 #if STJ
             Kind.Range => !ContainsLineTerminator(utf8Value) && RuneCount(utf8Value) >= this.min && RuneCount(utf8Value) <= this.max,
@@ -542,6 +549,57 @@ internal sealed class PatternMatcher
         return count >= tail.Min && (tail.Max < 0 || count <= tail.Max);
     }
 
+    /// <summary>
+    /// <c>^(?=[^SET]+$)(?=(.*\w)).+$</c>, optionally <c>^(?=!+[^SET]+$)...</c>: after any leading <c>!</c>s (when the
+    /// form allows them) no byte may be in SET, the value must be non-empty, and some ASCII word character must
+    /// occur. Non-ASCII characters are outside any ASCII SET and are never word characters.
+    /// </summary>
+    private static bool MatchesExcludedClassWithWord(ClassAtom[] atoms, ReadOnlySpan<byte> value)
+    {
+        // atoms[0]: the excluded set; atoms[0].Min == 1 when leading '!'s are required, 0 otherwise.
+        ClassAtom excluded = atoms[0];
+        int pos = 0;
+        if (excluded.Min == 1)
+        {
+            while (pos < value.Length && value[pos] == (byte)'!')
+            {
+                pos++;
+            }
+
+            if (pos == 0)
+            {
+                return false;
+            }
+        }
+
+        if (pos >= value.Length)
+        {
+            return false;
+        }
+
+        // The trailing .+ excludes line terminators whatever the set says.
+        bool word = false;
+        for (int i = pos; i < value.Length; i++)
+        {
+            byte b = value[i];
+            if (b < 128)
+            {
+                if (excluded.Contains(b) || b == (byte)'\n' || b == (byte)'\r')
+                {
+                    return false;
+                }
+
+                word |= (b >= (byte)'0' && b <= (byte)'9') || (b >= (byte)'a' && b <= (byte)'z') || (b >= (byte)'A' && b <= (byte)'Z') || b == (byte)'_';
+            }
+            else if (b == 0xE2 && i + 2 < value.Length && value[i + 1] == 0x80 && (value[i + 2] == 0xA8 || value[i + 2] == 0xA9))
+            {
+                return false;
+            }
+        }
+
+        return word;
+    }
+
     /// <summary>A sequence anchored at the start only: every atom consumes its minimum and the rest of the value is free.</summary>
     private static bool MatchesPrefixSequence(ClassAtom[] atoms, ReadOnlySpan<byte> value)
     {
@@ -714,6 +772,48 @@ internal sealed class PatternMatcher
         }
 
         atoms = [.. result];
+        return true;
+    }
+
+    /// <summary>Recognises exactly <c>^(?=[^SET]+$)(?=(.*\w)).+$</c> and <c>^(?=!+[^SET]+$)(?=(.*\w)).+$</c> with an ASCII SET.</summary>
+    private static bool TryParseExcludedClassWithWord(string pattern, [NotNullWhen(true)] out ClassAtom[]? atoms)
+    {
+        atoms = null;
+        const string Tail = "]+$)(?=(.*\\w)).+$";
+        if (!pattern.EndsWith(Tail, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        int bangs;
+        if (pattern.StartsWith("^(?=[^", StringComparison.Ordinal))
+        {
+            bangs = 0;
+        }
+        else if (pattern.StartsWith("^(?=!+[^", StringComparison.Ordinal))
+        {
+            bangs = 1;
+        }
+        else
+        {
+            return false;
+        }
+
+        int start = bangs == 0 ? 6 : 8;
+        int end = pattern.Length - Tail.Length;
+        if (end <= start)
+        {
+            return false;
+        }
+
+        ulong bits0 = 0;
+        ulong bits1 = 0;
+        if (!TryParseClass(pattern.AsSpan(start, end - start), ref bits0, ref bits1))
+        {
+            return false;
+        }
+
+        atoms = [new ClassAtom(bits0, bits1, bangs, bangs)];
         return true;
     }
 
@@ -978,7 +1078,7 @@ internal sealed class PatternMatcher
                 }
 
                 char e = body[i + 1];
-                if (e == 'w' || e == 'd')
+                if (e == 'w' || e == 'd' || e == 'n' || e == 'r' || e == 't')
                 {
                     if (!TryAddEscape(e, ref bits0, ref bits1))
                     {
@@ -997,12 +1097,13 @@ internal sealed class PatternMatcher
                 low = e;
                 i += 2;
             }
-            else if (c >= 128 || c == '[')
+            else if (c >= 128)
             {
                 return false;
             }
             else
             {
+                // A bare '[' inside a class is a literal in ECMA-262.
                 low = c;
                 i++;
             }
@@ -1059,6 +1160,15 @@ internal sealed class PatternMatcher
                 }
 
                 Set('_', ref bits0, ref bits1);
+                return true;
+            case 'n':
+                Set('\n', ref bits0, ref bits1);
+                return true;
+            case 'r':
+                Set('\r', ref bits0, ref bits1);
+                return true;
+            case 't':
+                Set('\t', ref bits0, ref bits1);
                 return true;
             default:
                 if (e < 128 && !char.IsLetterOrDigit(e))
