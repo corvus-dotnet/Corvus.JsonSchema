@@ -1373,8 +1373,11 @@ internal sealed class PropertyEntry
 /// What the strict object loop does with one known property, as a value: the seen bit, a type mask to test in place,
 /// a string set to test in place, or a child node to dispatch on (-1 for none).
 /// </summary>
-internal readonly struct StrictEntry(int seenBit, TypeMask mask, bool lexical, Utf8NameMap<object>? set, int child)
+internal readonly struct StrictEntry(int seenBit, TypeMask mask, bool lexical, Utf8NameMap<object>? set, int child, bool nestedObject = false)
 {
+    /// <summary>Whether <see cref="Child"/> is a strict object the loop enters without its prologue when the value is an object.</summary>
+    public readonly bool NestedObject = nestedObject;
+
     public readonly int SeenBit = seenBit;
     public readonly TypeMask Mask = mask;
     public readonly bool Lexical = lexical;
@@ -1823,6 +1826,9 @@ internal sealed class SchemaNode
 
     /// <summary>The node flag-mode evaluation enters for this root: the elided target with its forward hop taken. Derived with the forwards.</summary>
     public int FlagEntry;
+
+    /// <summary>Whether <c>items</c> is a strict object the array loop enters without its prologue when the element is an object.</summary>
+    public bool ItemsNestedObject;
 
     /// <summary>Under <see cref="NodePlan.Conditional"/>, the plan for the node's own keywords: strict object, object, leaf (type only) or always-true (none).</summary>
     public NodePlan ConditionalOwnPlan;

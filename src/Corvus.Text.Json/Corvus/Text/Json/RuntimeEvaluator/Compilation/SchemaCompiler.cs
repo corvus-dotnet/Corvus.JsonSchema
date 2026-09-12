@@ -480,7 +480,8 @@ internal sealed class SchemaCompiler
             }
 
             node.StrictEntries = null;
-            node.AdditionalEntry = new StrictEntry(-1, node.AdditionalInlineType, node.AdditionalInlineLexical, null, node.AdditionalFastNode);
+            node.AdditionalEntry = new StrictEntry(-1, node.AdditionalInlineType, node.AdditionalInlineLexical, null, node.AdditionalFastNode, node.AdditionalFastNode >= 0 && IsNestedObject(nodes[node.AdditionalFastNode], nodes));
+            node.ItemsNestedObject = node.Items.IsPresent && IsNestedObject(nodes[node.Items.FastNode], nodes);
             if (node.Properties is null)
             {
                 continue;
@@ -519,11 +520,20 @@ internal sealed class SchemaCompiler
             {
                 PropertyEntry e = values[i];
                 int child = e.Schema.IsPresent && !e.InlineTrue && e.InlineType == TypeMask.None && e.InlineEnum is null ? e.Schema.FastNode : -1;
-                strict[i] = new StrictEntry(e.SeenBit, e.InlineType, e.InlineLexical, e.InlineEnum, child);
+                strict[i] = new StrictEntry(e.SeenBit, e.InlineType, e.InlineLexical, e.InlineEnum, child, child >= 0 && IsNestedObject(nodes[child], nodes));
             }
 
             node.StrictEntries = strict;
         }
+    }
+
+    /// <summary>
+    /// A child that will take the strict object plan and whose type admits objects: a loop that already holds an
+    /// object value enters its loop directly, skipping the plan's prologue (token type, type test).
+    /// </summary>
+    private static bool IsNestedObject(SchemaNode child, SchemaNode[] nodes)
+    {
+        return !child.AlwaysTrue && !child.AlwaysFalse && SelectPlan(child, nodes) == NodePlan.StrictObject && (!child.HasType || (child.Type & TypeMask.Object) != 0);
     }
 
     /// <summary>

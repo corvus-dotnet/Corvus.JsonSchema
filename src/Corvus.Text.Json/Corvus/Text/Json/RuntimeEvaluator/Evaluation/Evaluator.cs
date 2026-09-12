@@ -919,14 +919,18 @@ internal static partial class Evaluator
         if (extra.Child >= 0)
         {
             SchemaNode child = state.Nodes[extra.Child];
+            bool nested = extra.NestedObject;
             while (valueIndex - RowSize < end)
             {
-                if (!EvalChildFast<TAccess>(child, doc, valueIndex, ref state))
+                JsonTokenType valueType = default(TAccess).TokenTypeAndNextUnchecked(ref state, doc, valueIndex, out int next);
+                if (!(nested && valueType == JsonTokenType.StartObject
+                    ? EvalStrictObjectNested<TAccess>(child, doc, valueIndex, ref state)
+                    : EvalChildFast<TAccess>(child, doc, valueIndex, ref state)))
                 {
                     return false;
                 }
 
-                valueIndex = default(TAccess).NextIndexUnchecked(ref state, doc, valueIndex) + RowSize;
+                valueIndex = next + RowSize;
             }
         }
 
@@ -1276,6 +1280,24 @@ internal static partial class Evaluator
         return ok;
     }
 
+    /// <summary>
+    /// A strict object entered from a loop that already holds the value's token type (an object) and whose entry
+    /// says the child's type admits objects: the loop without the plan's prologue.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static bool EvalStrictObjectNested<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
+        where TAccess : struct, IDocumentAccess
+    {
+        bool pushed = EnterScope(node, ref state);
+        bool ok = EvalStrictObjectLoop<TAccess>(node, doc, index, ref state);
+        if (pushed)
+        {
+            state.ScopeDepth--;
+        }
+
+        return ok;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool EvalStrictObjectLoop<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
         where TAccess : struct, IDocumentAccess
@@ -1349,9 +1371,15 @@ internal static partial class Evaluator
                     return false;
                 }
             }
-            else if (entry.Child >= 0 && !EvalChildFast<TAccess>(state.Nodes[entry.Child], doc, valueIndex, ref state))
+            else if (entry.Child >= 0)
             {
-                return false;
+                SchemaNode child = state.Nodes[entry.Child];
+                if (!(entry.NestedObject && valueType == JsonTokenType.StartObject
+                    ? EvalStrictObjectNested<TAccess>(child, doc, valueIndex, ref state)
+                    : EvalChildFast<TAccess>(child, doc, valueIndex, ref state)))
+                {
+                    return false;
+                }
             }
 
             valueIndex = next + RowSize;
@@ -1500,9 +1528,15 @@ internal static partial class Evaluator
                     return false;
                 }
             }
-            else if (entry.Child >= 0 && !EvalChildFast<TAccess>(state.Nodes[entry.Child], doc, valueIndex, ref state))
+            else if (entry.Child >= 0)
             {
-                return false;
+                SchemaNode child = state.Nodes[entry.Child];
+                if (!(entry.NestedObject && valueType == JsonTokenType.StartObject
+                    ? EvalStrictObjectNested<TAccess>(child, doc, valueIndex, ref state)
+                    : EvalChildFast<TAccess>(child, doc, valueIndex, ref state)))
+                {
+                    return false;
+                }
             }
 
             matched = true;
@@ -1627,13 +1661,19 @@ internal static partial class Evaluator
         }
         else
         {
-            for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = default(TAccess).NextIndexUnchecked(ref state, doc, valueIndex))
+            bool nested = node.ItemsNestedObject;
+            for (int valueIndex = index + RowSize; valueIndex < end;)
             {
-                if (!EvalChildFast<TAccess>(items!, doc, valueIndex, ref state))
+                JsonTokenType valueType = default(TAccess).TokenTypeAndNextUnchecked(ref state, doc, valueIndex, out int next);
+                if (!(nested && valueType == JsonTokenType.StartObject
+                    ? EvalStrictObjectNested<TAccess>(items!, doc, valueIndex, ref state)
+                    : EvalChildFast<TAccess>(items!, doc, valueIndex, ref state)))
                 {
                     ok = false;
                     break;
                 }
+
+                valueIndex = next;
             }
         }
 

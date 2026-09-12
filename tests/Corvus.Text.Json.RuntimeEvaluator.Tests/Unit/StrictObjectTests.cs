@@ -293,4 +293,47 @@ public class StrictObjectTests
         Assert.IsTrue(both.Evaluate("""["x"]"""));
         Assert.IsFalse(both.Evaluate("[1]"));
     }
+
+    [TestMethod]
+    public void NestedStrictObjectsSkipThePrologue()
+    {
+        const string schema = """
+            {
+              "type": "object",
+              "properties": {
+                "rec": {"type": "object", "properties": {"n": {"type": "integer"}}, "required": ["n"], "additionalProperties": false},
+                "typed": {"type": "string", "properties": {"n": {"type": "integer"}}},
+                "list": {"type": "array", "items": {"type": "object", "properties": {"id": {"type": "string"}}, "required": ["id"]}}
+              },
+              "additionalProperties": {"type": "object", "properties": {"v": {"type": "boolean"}}}
+            }
+            """;
+        using JsonSchemaEvaluator e = JsonSchemaEvaluator.Compile(schema);
+        using JsonSchemaEvaluator l = JsonSchemaEvaluator.FromProgramImage(e.ToProgramImage());
+        foreach (JsonSchemaEvaluator evaluator in new[] { e, l })
+        {
+            SchemaNode root = evaluator.Program.Nodes[evaluator.RootNode];
+            Assert.AreEqual(NodePlan.StrictObject, root.Plan);
+            StrictEntry rec = root.StrictEntries![root.Properties!.Keys.ToList().FindIndex(k => k.AsSpan().SequenceEqual("rec"u8))];
+            StrictEntry typed = root.StrictEntries[root.Properties.Keys.ToList().FindIndex(k => k.AsSpan().SequenceEqual("typed"u8))];
+            Assert.IsTrue(rec.NestedObject, "A strict-object child admitting objects is entered without its prologue.");
+            Assert.IsFalse(typed.NestedObject, "A child whose type excludes objects keeps the plan entry, which rejects the object.");
+            Assert.IsTrue(root.AdditionalEntry.NestedObject);
+            Assert.IsTrue(evaluator.Program.Nodes[root.Properties.Keys.ToList().FindIndex(k => k.AsSpan().SequenceEqual("list"u8)) >= 0 ? root.StrictEntries[root.Properties.Keys.ToList().FindIndex(k => k.AsSpan().SequenceEqual("list"u8))].Child : -1].ItemsNestedObject);
+
+            Assert.IsTrue(evaluator.Evaluate("""{"rec": {"n": 1}}"""));
+            Assert.IsFalse(evaluator.Evaluate("""{"rec": {"n": "x"}}"""));
+            Assert.IsFalse(evaluator.Evaluate("""{"rec": {}}"""));
+            Assert.IsFalse(evaluator.Evaluate("""{"rec": {"n": 1, "extra": 1}}"""));
+            Assert.IsFalse(evaluator.Evaluate("""{"rec": "s"}"""), "A non-object value goes through the plan entry and fails the type.");
+            Assert.IsTrue(evaluator.Evaluate("""{"typed": "s"}"""));
+            Assert.IsFalse(evaluator.Evaluate("""{"typed": {"n": 1}}"""), "The type excludes objects even though the properties would pass.");
+            Assert.IsTrue(evaluator.Evaluate("""{"list": [{"id": "a"}, {"id": "b"}]}"""));
+            Assert.IsFalse(evaluator.Evaluate("""{"list": [{"id": "a"}, {}]}"""));
+            Assert.IsFalse(evaluator.Evaluate("""{"list": [{"id": "a"}, 1]}"""));
+            Assert.IsTrue(evaluator.Evaluate("""{"other": {"v": true}, "more": {"v": false}}"""));
+            Assert.IsFalse(evaluator.Evaluate("""{"other": {"v": 1}}"""));
+            Assert.IsFalse(evaluator.Evaluate("""{"other": 1}"""));
+        }
+    }
 }
