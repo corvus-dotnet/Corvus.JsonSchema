@@ -31,13 +31,15 @@ CORES=${CORES:-0-11}
 RUNNERS=$OUT/runners
 RUNNER=Corvus.Text.Json.RuntimeEvaluator.ColdRunner
 export COLD_ROOT=$C
+# The runners also find the corpus beside themselves (a link), for launchers that do not pass the environment on.
+link() { ln -sfn $C $1/sourcemeta; }
 cmd=${1:-}; tag=${2:-}
 ms() { python3 -c "import sys; print(f'{(float(sys.argv[2])-float(sys.argv[1]))*1000:.1f}')" "$@"; }
 median3() { printf "%s\n" "$@" | sort -n | sed -n 2p; }
 wall() { local t0=$EPOCHREALTIME; "$@" > /dev/null 2>&1; local t1=$EPOCHREALTIME; ms $t0 $t1; }
 wall3() { local a=(); for i in 1 2 3; do a+=($(wall "$@")); done; median3 "${a[@]}"; }
 corpora() {
-  if [ -n "${CORPORA:-}" ]; then echo $CORPORA; else for f in $C/*-schema.json; do basename $f -schema.json; done; fi
+  if [ -n "${CORPORA:-}" ]; then echo $CORPORA; else for f in $C/*-instances.jsonl; do basename $f -instances.jsonl; done; fi
 }
 case $cmd in
   profile)
@@ -45,6 +47,7 @@ case $cmd in
     mkdir -p $RUNNERS
     dotnet publish $R -c Release -r linux-x64 --self-contained false -m:4 -nr:false -p:UseSharedCompilation=false -o $RUNNERS/fd-jit || exit 1
     pkill -f "VBCSCompile[r]" 2>/dev/null
+    link $RUNNERS/fd-jit
     DOTNET_TieredPGO=1 DOTNET_TC_QuickJitForLoops=1 DOTNET_TC_CallCountThreshold=10000 DOTNET_ReadyToRun=0 dotnet-trace collect --providers Microsoft-Windows-DotNETRuntime:0x1E000080018:5 -o $OUT/profile.nettrace -- dotnet $RUNNERS/fd-jit/$RUNNER.dll warm 50 $(corpora) || exit 1
     dotnet $DOTNET_PGO create-mibc --trace $OUT/profile.nettrace --output $OUT/corvus.mibc || exit 1
     # The compile phase alone (cold prepare compiles every schema and writes its image): the profile for a partial R2R.
@@ -61,6 +64,7 @@ case $cmd in
     dotnet publish $R -c Release -r linux-x64 -p:ColdAot=true $MIBC -m:4 -nr:false -p:UseSharedCompilation=false -o $RUNNERS/aot || exit 1
     dotnet publish $R -c Release -r linux-x64 -p:ColdAot=true -p:ColdGenerated=true $MIBC -m:4 -nr:false -p:UseSharedCompilation=false -o $RUNNERS/aot-gen || exit 1
     pkill -f "VBCSCompile[r]" 2>/dev/null
+    for k in r2r aot aot-gen; do link $RUNNERS/$k; done
     dotnet $H cold prepare
     mkdir -p $OUT/blaze-templates
     for c in $(corpora); do $JSONSCHEMA compile $C/$c-schema.json --fast --minify > $OUT/blaze-templates/$c.json 2>/dev/null; done

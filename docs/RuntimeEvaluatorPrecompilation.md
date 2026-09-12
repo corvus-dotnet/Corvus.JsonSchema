@@ -794,6 +794,15 @@ against 54 and 89, ui5 113 against 88 and 159) and steady state is at JIT parity
 against 14.0 µs, ui5 421 against 423). That is the form to ship for JIT consumers; `measure.sh profile` produces
 both profiles.
 
+What the profile buys, in source terms, was tried and rejected. Without a profile the public `Evaluate` is a
+37-byte stub: it calls `Evaluator.Evaluate`, which calls the flag-mode entry, which dispatches the root plan, three
+calls per evaluation; with the profile the JIT inlines the chain into a 2.9 KB entry. Marking the first two links
+`AggressiveInlining` reproduces that chain everywhere, and native AOT gains 4% from it at the median (yamllint 8%),
+less than the MIBC gives (1.08 to 1.04 against the JIT). But the JIT with the attribute loses what it had gained on
+yamllint (0.79 of the pre-round baseline to 1.01): forcing the inline at the entry changes what the JIT then
+inlines inside it, the same lesson as an earlier attempt to inline the flag-mode entry. The attributes are not in
+the tree; the static profile is the route for AOT and the JIT keeps its own judgement.
+
 ## The four-axis table (2026-09-12, evening)
 
 One table, eight implementations by 37 corpora, four measures each: `summary2-2026-09-12.md` in the session notes.
@@ -834,6 +843,29 @@ code, allocate nothing per evaluation on any corpus; and under AOT every Corvus 
 A measurement lesson from the generated rows: their first take subtracted a clock overhead read at 140 to 480 ns
 instead of 14 on twelve corpora, a tier-0 loop in a method run once, which took a 100 µs corpus down to 25. The
 clock's cost is now taken from a warmed non-generic loop as the minimum over several batches, in both measurements.
+
+The table taken again at the end of the day with everything above in place (`tools/measure.sh profile`, `publish`,
+`warm`, `cold`, `table`; commit c44ee2b's matcher, the partial ReadyToRun with the compile-phase profile as the
+R2R row, the static profile in the native AOT rows; overhead 12.6 to 14.4 ns on every row). Medians over the corpora:
+
+| implementation | cold | warm | compile | memory | warm faster than Blaze on |
+|---|---:|---:|---:|---:|---:|
+| blaze-compile | 10.2 ms | 115 µs | 2.9 ms | n/a | |
+| blaze-template | 10.2 ms | 115 µs | 0 | n/a | |
+| corvus-runtime-jit | 150 ms | 76 µs | 77 ms | 0 B | 31 of 37 |
+| corvus-runtime-r2r (partial, profiled) | 60 ms | 79 µs | | 0 B | 30 of 37 |
+| corvus-runtime-aot (profiled) | 4.7 ms | 90 µs | 0.36 ms | 0 B | 29 of 37 |
+| corvus-image-jit | 125 ms | 76 µs | 25 ms | 0 B | 31 of 37 |
+| corvus-image-aot (profiled) | 4.4 ms | 90 µs | 0.15 ms | 0 B | 29 of 37 |
+| corvus-generated-jit | 119 ms | 80 µs | 42 ms | 0 B | 31 of 37 |
+| corvus-generated-aot (profiled) | 5.1 ms | 84 µs | 0.18 ms | 0 B | 28 of 37 |
+
+Against the morning's table the native AOT rows went from 108 to 90 µs (the matcher and the profile; 1.09 of the
+JIT at the median, from 1.35) and from 22 to 29 corpora ahead of Blaze, the generated AOT row from 91 to 84 and
+25 to 28; the JIT rows gained the matcher's share (80 to 76 µs) and the partial ReadyToRun row is new: cold start
+at 60 ms against the JIT's 150, steady state at 1.00 of the JIT's. The runtime evaluator under the JIT is fastest
+on 31 of 37 at a geometric mean of 0.75 of Blaze; the four structural losses remain (helm-chart-lock 2.4,
+yamllint 2.2, ui5 1.75, importmap 1.4), and the two others (ui5-manifest, stale) are within a few percent.
 
 ## Against Blaze (2026-09-11)
 
