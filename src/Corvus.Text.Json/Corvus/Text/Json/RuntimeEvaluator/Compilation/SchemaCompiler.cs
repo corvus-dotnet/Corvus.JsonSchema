@@ -480,6 +480,7 @@ internal sealed class SchemaCompiler
             }
 
             node.StrictEntries = null;
+            node.AdditionalEntry = new StrictEntry(-1, node.AdditionalInlineType, node.AdditionalInlineLexical, null, node.AdditionalFastNode);
             if (node.Properties is null)
             {
                 continue;

@@ -121,7 +121,12 @@ internal sealed class Utf8NameMap<T>
         return false;
     }
 
-    /// <summary>Looks a key up and returns its index into <see cref="Values"/> (and <see cref="Keys"/>), for callers that keep a parallel table.</summary>
+    /// <summary>
+    /// Looks a key up and returns its index into <see cref="Values"/> (and <see cref="Keys"/>), for callers that keep a
+    /// parallel table. The only checked read is the bucket for the key's length; the position read is within the
+    /// key (the bucket was built for keys of that length), the table has 256 entries and is indexed by a byte, and
+    /// the key, chain and value indices came out of that table, so those reads go through refs.
+    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryGetIndex(ReadOnlySpan<byte> key, out int index)
     {
@@ -133,7 +138,7 @@ internal sealed class Utf8NameMap<T>
             return false;
         }
 
-        Bucket bucket = buckets[length];
+        ref Bucket bucket = ref At(buckets, length);
         int[]? table = bucket.Table;
         if (table is null)
         {
@@ -141,21 +146,33 @@ internal sealed class Utf8NameMap<T>
             return false;
         }
 
-        int slot = table[length == 0 ? 0 : key[bucket.Position]];
+        int b = length == 0 ? 0 : Unsafe.Add(ref MemoryMarshal.GetReference(key), bucket.Position);
+        int slot = At(table, b);
         while (slot != 0)
         {
             int i = slot - 1;
-            if (KeyEquals(key, this.keys[i]))
+            if (KeyEquals(key, At(this.keys, i)))
             {
                 index = i;
                 return true;
             }
 
-            slot = this.next[i];
+            slot = At(this.next, i);
         }
 
         index = -1;
         return false;
+    }
+
+    /// <summary>An element reference without the range check, for indices the map's construction guarantees.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static ref TElement At<TElement>(TElement[] array, int i)
+    {
+#if NET5_0_OR_GREATER
+        return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(array), i);
+#else
+        return ref Unsafe.Add(ref MemoryMarshal.GetReference(array.AsSpan()), i);
+#endif
     }
 
     /// <summary>

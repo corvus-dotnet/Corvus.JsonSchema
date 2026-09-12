@@ -815,6 +815,21 @@ internal static partial class Evaluator
             : EvalChildFast<TAccess>(nodes[app.Node], doc, valueIndex, ref state);
     }
 
+    /// <summary>The name lookup for an escaped property name, out of line: escapes are rare and the loop is register-bound.</summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static int LookupEscapedName<TAccess>(Utf8NameMap<PropertyEntry> properties, ref EvaluationState state, IJsonDocument doc, int valueIndex)
+        where TAccess : struct, IDocumentAccess
+    {
+        using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
+        return properties.TryGetIndex(name.Span, out int entryIndex) ? entryIndex : -1;
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ThrowMalformedRows()
+    {
+        throw new InvalidOperationException("The document's metadata rows end before the container's end row.");
+    }
+
     /// <summary>A string value's membership of a set (an <c>enum</c> of strings): the raw text when unescaped, else the unescaped text. Out of line: the loops that call it are inlined widely.</summary>
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static bool MatchesStringSet<TAccess>(Utf8NameMap<object> allowed, ref EvaluationState state, IJsonDocument doc, int index)
@@ -1079,71 +1094,58 @@ internal static partial class Evaluator
         StrictEntry[] entries = node.StrictEntries ?? [];
         ulong seen = 0;
         int end = default(TAccess).EndIndex(ref state, doc, index);
+        if (!default(TAccess).RowsAvailable(ref state, doc, end))
+        {
+            ThrowMalformedRows();
+        }
+
+        // Every row from here to the end row exists (checked once above), so the header and name reads are unchecked.
         int valueIndex = index + (2 * RowSize);
         while (valueIndex - RowSize < end)
         {
-            // The value's header gives its type and the next row in one read.
-            JsonTokenType valueType = default(TAccess).TokenTypeAndNext(ref state, doc, valueIndex, out int next);
+            JsonTokenType valueType = default(TAccess).TokenTypeAndNextUnchecked(ref state, doc, valueIndex, out int next);
             int entryIndex = -1;
             if (properties is not null)
             {
-                ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRaw(ref state, doc, valueIndex, out bool escaped);
+                ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRawUnchecked(ref state, doc, valueIndex, out bool escaped);
                 if (!escaped)
                 {
                     properties.TryGetIndex(raw, out entryIndex);
                 }
                 else
                 {
-                    using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
-                    properties.TryGetIndex(name.Span, out entryIndex);
+                    entryIndex = LookupEscapedName<TAccess>(properties, ref state, doc, valueIndex);
                 }
             }
 
-            // The resolution for the value: the entry's, or the additional-properties one for an unknown name.
-            TypeMask mask;
-            bool lexical;
-            Utf8NameMap<object>? set = null;
-            int child;
-            if (entryIndex < 0)
+            // The resolution for the value: the entry's (its index came from the map) or the additional-properties one.
+            if (entryIndex < 0 && node.AdditionalRejects)
             {
-                if (node.AdditionalRejects)
-                {
-                    return false;
-                }
-
-                mask = node.AdditionalInlineType;
-                lexical = node.AdditionalInlineLexical;
-                child = node.AdditionalFastNode;
-            }
-            else
-            {
-                ref readonly StrictEntry entry = ref entries[entryIndex];
-                if (entry.SeenBit >= 0)
-                {
-                    seen |= 1UL << entry.SeenBit;
-                }
-
-                mask = entry.Mask;
-                lexical = entry.Lexical;
-                set = entry.Set;
-                child = entry.Child;
+                return false;
             }
 
-            if (mask != TypeMask.None)
+            ref readonly StrictEntry entry = ref entryIndex < 0 ? ref node.AdditionalEntry : ref Utf8NameMap<PropertyEntry>.At(entries, entryIndex);
+            if (entry.SeenBit >= 0)
             {
-                if (!MatchesType<TAccess>(mask, valueType, ref state, doc, valueIndex, lexical))
+                seen |= 1UL << entry.SeenBit;
+            }
+
+            int tokenBits = entry.TokenBits;
+            if (tokenBits != 0)
+            {
+                if ((tokenBits & (1 << (int)valueType)) == 0 || (entry.IntegerOnly && valueType == JsonTokenType.Number && !IsInteger<TAccess>(ref state, doc, valueIndex, entry.Lexical)))
                 {
                     return false;
                 }
             }
-            else if (set is not null)
+            else if (entry.Set is Utf8NameMap<object> set)
             {
                 if (!MatchesStringSet<TAccess>(set, ref state, doc, valueIndex))
                 {
                     return false;
                 }
             }
-            else if (child >= 0 && !EvalChildFast<TAccess>(state.Nodes[child], doc, valueIndex, ref state))
+            else if (entry.Child >= 0 && !EvalChildFast<TAccess>(state.Nodes[entry.Child], doc, valueIndex, ref state))
             {
                 return false;
             }

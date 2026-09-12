@@ -1105,6 +1105,49 @@ internal readonly struct StrictEntry(int seenBit, TypeMask mask, bool lexical, U
     public readonly bool Lexical = lexical;
     public readonly Utf8NameMap<object>? Set = set;
     public readonly int Child = child;
+
+    /// <summary>The token types <see cref="Mask"/> accepts, one bit per <see cref="JsonTokenType"/> value; 0 when there is no type to test.</summary>
+    public readonly ushort TokenBits = TokenBitsOf(mask);
+
+    /// <summary>Whether a number token must also be an integer (the mask has integer but not number).</summary>
+    public readonly bool IntegerOnly = (mask & TypeMask.Integer) != 0 && (mask & TypeMask.Number) == 0;
+
+    /// <summary>The token bits a type mask accepts: a number token for number or integer, both booleans for boolean.</summary>
+    public static ushort TokenBitsOf(TypeMask mask)
+    {
+        int bits = 0;
+        if ((mask & TypeMask.String) != 0)
+        {
+            bits |= 1 << (int)JsonTokenType.String;
+        }
+
+        if ((mask & TypeMask.Object) != 0)
+        {
+            bits |= 1 << (int)JsonTokenType.StartObject;
+        }
+
+        if ((mask & TypeMask.Array) != 0)
+        {
+            bits |= 1 << (int)JsonTokenType.StartArray;
+        }
+
+        if ((mask & (TypeMask.Number | TypeMask.Integer)) != 0)
+        {
+            bits |= 1 << (int)JsonTokenType.Number;
+        }
+
+        if ((mask & TypeMask.Boolean) != 0)
+        {
+            bits |= (1 << (int)JsonTokenType.True) | (1 << (int)JsonTokenType.False);
+        }
+
+        if ((mask & TypeMask.Null) != 0)
+        {
+            bits |= 1 << (int)JsonTokenType.Null;
+        }
+
+        return (ushort)bits;
+    }
 }
 
 /// <summary>
@@ -1446,6 +1489,9 @@ internal sealed class SchemaNode
 
     /// <summary>The strict loop's per-property resolutions, parallel to <see cref="Properties"/>' values. Derived from the graph.</summary>
     public StrictEntry[]? StrictEntries;
+
+    /// <summary>The additional-properties resolution in the same form, for unknown names. Derived from the graph.</summary>
+    public StrictEntry AdditionalEntry;
     public byte[][]? RequiredNames;
     public PatternPropertyEntry[]? PatternProperties;
     public ChildRef AdditionalProperties = ChildRef.None;

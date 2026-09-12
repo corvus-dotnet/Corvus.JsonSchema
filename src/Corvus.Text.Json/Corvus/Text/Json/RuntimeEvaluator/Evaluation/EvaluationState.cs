@@ -68,6 +68,18 @@ internal interface IDocumentAccess
     /// <summary>Gets the token type of an element and the index of the row after it, from one read of its header where the layout allows.</summary>
     JsonTokenType TokenTypeAndNext(ref EvaluationState state, IJsonDocument doc, int index, out int nextIndex);
 
+    /// <summary>
+    /// Whether the rows up to and including <paramref name="lastIndex"/> exist, so that a loop over a container may use the
+    /// unchecked accessors below for every row from the container's index to its end row.
+    /// </summary>
+    bool RowsAvailable(ref EvaluationState state, IJsonDocument doc, int lastIndex);
+
+    /// <summary><see cref="TokenTypeAndNext"/> without the range check; only after <see cref="RowsAvailable"/> covered the row.</summary>
+    JsonTokenType TokenTypeAndNextUnchecked(ref EvaluationState state, IJsonDocument doc, int index, out int nextIndex);
+
+    /// <summary><see cref="PropertyNameRaw"/> with the name row read unchecked; only after <see cref="RowsAvailable"/> covered the row. The slice into the text stays checked.</summary>
+    ReadOnlySpan<byte> PropertyNameRawUnchecked(ref EvaluationState state, IJsonDocument doc, int valueIndex, out bool escaped);
+
     /// <summary>Gets the unescaped text of a string value.</summary>
     UnescapedUtf8JsonString GetString(ref EvaluationState state, IJsonDocument doc, int index);
 
@@ -136,6 +148,38 @@ internal readonly struct RawAccess : IDocumentAccess
         return (JsonTokenType)tokenType;
     }
 
+    public bool RowsAvailable(ref EvaluationState state, IJsonDocument doc, int lastIndex) => lastIndex >= 0 && (long)lastIndex + RowSize <= state.RawRows.Length;
+
+    public JsonTokenType TokenTypeAndNextUnchecked(ref EvaluationState state, IJsonDocument doc, int index, out int nextIndex)
+    {
+        uint union = Unsafe.ReadUnaligned<uint>(ref Unsafe.Add(ref MemoryMarshal.GetReference(state.RawRows), index + NumberOfRowsOffset));
+        uint tokenType = union >> 28;
+        nextIndex = tokenType >= (uint)JsonTokenType.PropertyName
+            ? index + RowSize
+            : index + (RowSize * (int)(union & NumberOfRowsMask)) + RowSize;
+        return (JsonTokenType)tokenType;
+    }
+
+    public ReadOnlySpan<byte> PropertyNameRawUnchecked(ref EvaluationState state, IJsonDocument doc, int valueIndex, out bool escaped)
+    {
+        ulong pair = Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref MemoryMarshal.GetReference(state.RawRows), valueIndex - RowSize));
+        int location;
+        int length;
+        if (BitConverter.IsLittleEndian)
+        {
+            location = (int)pair & LocationMask;
+            length = (int)(pair >> 32);
+        }
+        else
+        {
+            location = (int)(pair >> 32) & LocationMask;
+            length = (int)pair;
+        }
+
+        escaped = length < 0;
+        return state.RawUtf8.Slice(location, length & int.MaxValue);
+    }
+
     public int EndIndex(ref EvaluationState state, IJsonDocument doc, int containerIndex) => containerIndex + (RowSize * (int)(ReadUInt32(state.RawRows, containerIndex + NumberOfRowsOffset) & NumberOfRowsMask));
 
     public int NextIndex(ref EvaluationState state, IJsonDocument doc, int index)
@@ -200,6 +244,12 @@ internal readonly struct InterfaceAccess : IDocumentAccess
         nextIndex = index + doc.GetDbSize(index, includeEndElement: true);
         return doc.GetJsonTokenType(index);
     }
+
+    public bool RowsAvailable(ref EvaluationState state, IJsonDocument doc, int lastIndex) => true;
+
+    public JsonTokenType TokenTypeAndNextUnchecked(ref EvaluationState state, IJsonDocument doc, int index, out int nextIndex) => this.TokenTypeAndNext(ref state, doc, index, out nextIndex);
+
+    public ReadOnlySpan<byte> PropertyNameRawUnchecked(ref EvaluationState state, IJsonDocument doc, int valueIndex, out bool escaped) => this.PropertyNameRaw(ref state, doc, valueIndex, out escaped);
 
     public UnescapedUtf8JsonString GetString(ref EvaluationState state, IJsonDocument doc, int index) => doc.GetUtf8JsonString(index, JsonTokenType.String);
 
