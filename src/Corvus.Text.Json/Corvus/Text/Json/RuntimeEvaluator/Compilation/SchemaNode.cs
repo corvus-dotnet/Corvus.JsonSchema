@@ -1431,8 +1431,8 @@ internal sealed class PatternMatcher
                 return false;
             }
 
-            separator = groupAtoms[..split];
-            repeated = groupAtoms[split..];
+            separator = groupAtoms.AsSpan(0, split).ToArray();
+            repeated = groupAtoms.AsSpan(split).ToArray();
         }
         else
         {
@@ -1442,8 +1442,8 @@ internal sealed class PatternMatcher
                 return false;
             }
 
-            repeated = groupAtoms[..split];
-            separator = groupAtoms[split..];
+            repeated = groupAtoms.AsSpan(0, split).ToArray();
+            separator = groupAtoms.AsSpan(split).ToArray();
         }
 
         foreach (ClassAtom atom in separator)
@@ -1844,7 +1844,7 @@ internal sealed class PatternMatcher
                 {
                     // (…){n} for a small fixed n repeats the group's alternatives n times.
                     int close = pattern.IndexOf('}', i);
-                    if (close < 0 || close >= end || !int.TryParse(pattern.AsSpan(i + 1, close - i - 1), NumberStyles.None, CultureInfo.InvariantCulture, out int times) || times > 8)
+                    if (close < 0 || close >= end || !int.TryParse(pattern.Substring(i + 1, close - i - 1), NumberStyles.None, CultureInfo.InvariantCulture, out int times) || times > 8)
                     {
                         return false;
                     }
