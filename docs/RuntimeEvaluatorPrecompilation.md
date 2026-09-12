@@ -753,6 +753,24 @@ to 25% faster; under the JIT, where the regex was compiled, they are 3 to 10% fa
 alternation was a compiled literal search, sits 10% slower under AOT than the interpreted regex did and unchanged
 under the JIT.
 
+## What a ReadyToRun library and a static profile would give (2026-09-12, late)
+
+Two experiments with the cold runner, one process per corpus, medians over the corpora. Published framework-
+dependent with `PublishReadyToRun` (the runner and the library precompiled; the shared framework already is) the
+cold run drops from 107 ms to 53, from an image 79 to 41, the compile step 56 to 24 ms and the first validation
+pass 20 to 3.9 ms: shipping the library precompiled would halve cold start for every consumer under the JIT. The
+steady-state measurement under the precompiled library read slower on the smallest corpora (yamllint 1.49x,
+helm-chart-lock 1.20x), which says the precompiled code had not been replaced by tier-1 code with a profile within
+the warm-up; to be settled before it is recommended.
+
+And the AOT gap is dynamic PGO: with `DOTNET_TieredPGO=0` the JIT's steady state is 1.14x slower at the median and
+native AOT is 1.12x, matching corpus by corpus (cspell 1.33 against 1.31, draft-04 1.27 against 1.33, helm-chart-lock
+1.16 against 1.16, yamllint 0.98 against 1.06). ILC takes a static profile (`--mibc`, the `MibcFile` item), which
+is how the framework itself is profile-optimised under AOT, so a profile of the corpus run through dotnet-pgo, built
+from the runtime repository since it is not shipped, should recover most of the gap; the listings with and without
+PGO (`DOTNET_JitDisasm` on the hot loops) are the map for the alternative of making the devirtualised sites direct
+in source.
+
 ## The four-axis table (2026-09-12, evening)
 
 One table, eight implementations by 37 corpora, four measures each: `summary2-2026-09-12.md` in the session notes.
