@@ -1637,6 +1637,12 @@ internal enum NodePlan : byte
 
     /// <summary>One pass over an object for a schema whose object semantics are spread over in-place applicators; see <see cref="FusedObject"/>.</summary>
     FusedObject,
+
+    /// <summary>
+    /// Type and object keywords through their plan (<see cref="SchemaNode.ConditionalOwnPlan"/>), then <c>if</c> and the
+    /// branch it selects as children: the shape of a decision tree too large to fuse, without the general path's bookkeeping.
+    /// </summary>
+    Conditional,
 }
 
 internal sealed class SchemaNode
@@ -1814,6 +1820,9 @@ internal sealed class SchemaNode
 
     /// <summary>For a node whose only keyword is one <c>anyOf</c>/<c>oneOf</c>: that keyword's type union, dispatch table and branches. Derived from the graph.</summary>
     public TypeMask InPlaceUnionMask;
+
+    /// <summary>Under <see cref="NodePlan.Conditional"/>, the plan for the node's own keywords: strict object, object, leaf (type only) or always-true (none).</summary>
+    public NodePlan ConditionalOwnPlan;
 
     public int[]? InPlaceDispatch;
 

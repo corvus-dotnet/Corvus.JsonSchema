@@ -498,6 +498,8 @@ internal static partial class Evaluator
                 return EvalChildFast<TAccess>(state.Nodes[target.ForwardNode], doc, index, ref state);
             case NodePlan.TypeUnion:
                 return EvalTypeUnionPlan<TAccess>(target, doc, index, ref state);
+            case NodePlan.Conditional:
+                return EvalConditionalPlan<TAccess>(target, doc, index, ref state);
             case NodePlan.TypeDispatch:
                 return EvalTypeDispatchPlan<TAccess>(target, doc, index, ref state);
 
@@ -539,6 +541,38 @@ internal static partial class Evaluator
         return (selected.Flags & NodeFlags.InPlaceCycle) != 0
             ? Eval<FastMode, TAccess>(node, doc, index, ref state, default, 0)
             : EvalChildFast<TAccess>(selected, doc, index, ref state);
+    }
+
+    /// <summary>
+    /// <see cref="NodePlan.Conditional"/>: the node's own type and object keywords through their plan, then the
+    /// <c>if</c> and the branch it selects as children, with none of the general path's in-place bookkeeping.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static bool EvalConditionalPlan<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
+        where TAccess : struct, IDocumentAccess
+    {
+        bool pushed = EnterScope(node, ref state);
+        bool ok = node.ConditionalOwnPlan switch
+        {
+            NodePlan.StrictObject => EvalStrictObjectPlan<TAccess>(node, doc, index, ref state),
+            NodePlan.Object => EvalObjectPlan<TAccess>(node, doc, index, ref state),
+            NodePlan.Leaf => MatchesType<TAccess>(node.Type, default(TAccess).TokenType(ref state, doc, index), ref state, doc, index, (node.Flags & NodeFlags.Draft4) != 0),
+            _ => true,
+        };
+
+        if (ok)
+        {
+            SchemaNode[] nodes = state.Nodes;
+            ChildRef branch = EvalChildFast<TAccess>(nodes[node.If.FastNode], doc, index, ref state) ? node.Then : node.Else;
+            ok = !branch.IsPresent || EvalChildFast<TAccess>(nodes[branch.FastNode], doc, index, ref state);
+        }
+
+        if (pushed)
+        {
+            state.ScopeDepth--;
+        }
+
+        return ok;
     }
 
     /// <summary>

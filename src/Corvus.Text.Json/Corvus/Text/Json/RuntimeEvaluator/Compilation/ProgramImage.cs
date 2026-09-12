@@ -178,6 +178,12 @@ internal static class ProgramImage
             {
                 n.Plan = NodePlan.General;
             }
+
+            if (n.Plan is NodePlan.Conditional or NodePlan.General)
+            {
+                n.Plan = SchemaCompiler.IsConditionalOnly(n, nodes, out NodePlan own) ? NodePlan.Conditional : NodePlan.General;
+                n.ConditionalOwnPlan = own;
+            }
             else if (n.ForwardNode >= 0 && n.Plan == NodePlan.General)
             {
                 n.Plan = NodePlan.Forward;

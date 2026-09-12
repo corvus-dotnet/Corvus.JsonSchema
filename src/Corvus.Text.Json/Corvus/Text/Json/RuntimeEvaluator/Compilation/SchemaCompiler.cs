@@ -2607,6 +2607,12 @@ internal sealed class SchemaCompiler
             return NodePlan.Forward;
         }
 
+        if (IsConditionalOnly(node, nodes, out NodePlan own))
+        {
+            node.ConditionalOwnPlan = own;
+            return NodePlan.Conditional;
+        }
+
         if (IsInPlaceOnly(node))
         {
             if (node.InPlaceUnionMask != TypeMask.None)
@@ -2669,6 +2675,43 @@ internal sealed class SchemaCompiler
     /// Children (and the additional-properties schema) that are type-only leaves are tested in place; the rest
     /// dispatch on their plan. An object with only <c>additionalProperties</c> (a map) qualifies too.
     /// </summary>
+    /// <summary>
+    /// A node with <c>if</c> whose other keywords are at most <c>type</c> and the object keywords the object plans
+    /// take, with the condition and branches off any in-place cycle; gives the plan for those own keywords.
+    /// </summary>
+    internal static bool IsConditionalOnly(SchemaNode node, SchemaNode[] nodes, out NodePlan own)
+    {
+        own = NodePlan.AlwaysTrue;
+        if (!node.If.IsPresent || node.AlwaysTrue || node.AlwaysFalse || node.InPlaceCycle || node.Fused is not null || DisablePlans
+            || node.HasConst || node.Enum is not null || node.HasNumberKeywords || node.HasStringKeywords || node.HasArrayKeywords
+            || node.Ref.IsPresent || node.DynamicRef is not null || node.AllOf is not null || node.AnyOf is not null || node.OneOf is not null
+            || node.Not.IsPresent || node.UnevaluatedProperties.IsPresent || node.UnevaluatedItems.IsPresent || node.PropertyNames.IsPresent)
+        {
+            return false;
+        }
+
+        if (nodes[node.If.FastNode].InPlaceCycle || (node.Then.IsPresent && nodes[node.Then.FastNode].InPlaceCycle) || (node.Else.IsPresent && nodes[node.Else.FastNode].InPlaceCycle))
+        {
+            return false;
+        }
+
+        if (node.HasObjectKeywords)
+        {
+            if (node.SeenBitCount > SchemaNode.InlineBitWords * 64)
+            {
+                return false;
+            }
+
+            own = IsStrictObject(node, nodes) ? NodePlan.StrictObject : NodePlan.Object;
+        }
+        else if (node.HasType)
+        {
+            own = NodePlan.Leaf;
+        }
+
+        return true;
+    }
+
     private static bool IsStrictObject(SchemaNode node, SchemaNode[] nodes)
     {
         return node.PatternProperties is null && node.Dependencies is null && node.SeenBitCount <= 64
