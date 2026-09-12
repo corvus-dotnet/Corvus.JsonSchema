@@ -689,6 +689,16 @@ small-instance corpora is the difference between a generic loop and a per-schema
 core-library options that would narrow it further (a pre-classified name word per row, or short keys inline in the
 row) were judged not worth their parse-time cost, which every instance pays.
 
+A measurement correction that moves the table more than any single optimisation did. The Blaze CLI is run once
+per corpus; our harness ran every corpus in one process, and the JIT's dynamic profile (block layout, guarded
+devirtualisation) is shaped by whichever corpora ran first, so a small corpus late in the order reads 10 to 30%
+slower than on its own: yamllint 2.69 in the one-process take against 1.90 in its own process on the same build
+and box, jshintrc 0.28 against 0.22, importmap 1.63 against 1.40, code-climate 0.90 against 0.75. Blaze's figures
+do not move between the two. The table is now taken one process per corpus on both sides: at commit 4e98a9c on
+the healthy box (overhead 14.6 ns), fastest on 31 of 37, geometric mean 0.73; the remaining losses are
+helm-chart-lock 2.32, yamllint 1.90, ui5 1.69, importmap 1.40, ui5-manifest 1.14 and stale 1.02, with babelrc at
+0.97.
+
 ## Against Blaze (2026-09-11)
 
 Blaze is run through the Sourcemeta `jsonschema` CLI release binary (`benchmarks/.../tools/blaze-compare.py`, see
