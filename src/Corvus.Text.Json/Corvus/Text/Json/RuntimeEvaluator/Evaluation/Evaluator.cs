@@ -60,6 +60,11 @@ internal static partial class Evaluator
             root = nodes[root.ElidedTarget];
         }
 
+        if (root.Plan == NodePlan.Forward)
+        {
+            root = nodes[root.ForwardNode];
+        }
+
         return EvalChildFast<RawAccess>(root, document, index, ref state);
     }
 
@@ -482,8 +487,9 @@ internal static partial class Evaluator
             case NodePlan.SimpleArray:
                 return EvalSimpleArrayFast<TAccess>(target, doc, index, ref state);
             case NodePlan.Object:
-            case NodePlan.StrictObject:
                 return EvalObjectPlan<TAccess>(target, doc, index, ref state);
+            case NodePlan.StrictObject:
+                return EvalStrictObjectPlan<TAccess>(target, doc, index, ref state);
             case NodePlan.ArrayItems:
                 return EvalArrayItemsPlan<TAccess>(target, doc, index, ref state);
             case NodePlan.DynamicRef:
@@ -1067,9 +1073,7 @@ internal static partial class Evaluator
         }
 
         bool pushed = EnterScope(node, ref state);
-        bool ok = node.Plan == NodePlan.StrictObject
-            ? EvalStrictObjectCore<TAccess>(node, doc, index, ref state)
-            : EvalObjectPlanCore<TAccess>(node, doc, index, ref state);
+        bool ok = EvalObjectPlanCore<TAccess>(node, doc, index, ref state);
         if (pushed)
         {
             state.ScopeDepth--;
@@ -1083,7 +1087,33 @@ internal static partial class Evaluator
     /// that are not type-only leaves), unknown names rejected when additionalProperties is false, and
     /// <c>required</c> one mask test at the end.
     /// </summary>
-    private static bool EvalStrictObjectCore<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
+    private static bool EvalStrictObjectPlan<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
+        where TAccess : struct, IDocumentAccess
+    {
+        // The object plan's prologue, in the same method as the loop so that entering a strict object is one call.
+        JsonTokenType tokenType = default(TAccess).TokenType(ref state, doc, index);
+        if (tokenType != JsonTokenType.StartObject)
+        {
+            return !node.HasType || MatchesType<TAccess>(node.Type, tokenType, ref state, doc, index, (node.Flags & NodeFlags.Draft4) != 0);
+        }
+
+        if (node.HasType && (node.Type & TypeMask.Object) == 0)
+        {
+            return false;
+        }
+
+        bool pushed = EnterScope(node, ref state);
+        bool ok = EvalStrictObjectLoop<TAccess>(node, doc, index, ref state);
+        if (pushed)
+        {
+            state.ScopeDepth--;
+        }
+
+        return ok;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool EvalStrictObjectLoop<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
         where TAccess : struct, IDocumentAccess
     {
         if (node.MinProperties >= 0 || node.MaxProperties >= 0)
@@ -1383,6 +1413,11 @@ internal static partial class Evaluator
         bool pushed = EnterScope(node, ref state);
         bool ok = true;
         int end = default(TAccess).EndIndex(ref state, doc, index);
+        if (!default(TAccess).RowsAvailable(ref state, doc, end))
+        {
+            ThrowMalformedRows();
+        }
+
         int count = node.UniqueItems ? default(TAccess).Count(ref state, doc, index, JsonTokenType.StartArray) : 0;
         if (node.UniqueItems && count <= PairwiseLimit)
         {
@@ -1423,7 +1458,7 @@ internal static partial class Evaluator
         }
         else
         {
-            for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = default(TAccess).NextIndex(ref state, doc, valueIndex))
+            for (int valueIndex = index + RowSize; valueIndex < end; valueIndex = default(TAccess).NextIndexUnchecked(ref state, doc, valueIndex))
             {
                 if (!EvalChildFast<TAccess>(items!, doc, valueIndex, ref state))
                 {

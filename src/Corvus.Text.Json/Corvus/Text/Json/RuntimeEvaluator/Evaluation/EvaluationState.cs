@@ -80,6 +80,9 @@ internal interface IDocumentAccess
     /// <summary><see cref="PropertyNameRaw"/> with the name row read unchecked; only after <see cref="RowsAvailable"/> covered the row. The slice into the text stays checked.</summary>
     ReadOnlySpan<byte> PropertyNameRawUnchecked(ref EvaluationState state, IJsonDocument doc, int valueIndex, out bool escaped);
 
+    /// <summary><see cref="NextIndex"/> without the range check; only after <see cref="RowsAvailable"/> covered the row.</summary>
+    int NextIndexUnchecked(ref EvaluationState state, IJsonDocument doc, int index);
+
     /// <summary>Gets the unescaped text of a string value.</summary>
     UnescapedUtf8JsonString GetString(ref EvaluationState state, IJsonDocument doc, int index);
 
@@ -149,6 +152,14 @@ internal readonly struct RawAccess : IDocumentAccess
     }
 
     public bool RowsAvailable(ref EvaluationState state, IJsonDocument doc, int lastIndex) => lastIndex >= 0 && (long)lastIndex + RowSize <= state.RawRows.Length;
+
+    public int NextIndexUnchecked(ref EvaluationState state, IJsonDocument doc, int index)
+    {
+        uint union = Unsafe.ReadUnaligned<uint>(ref Unsafe.Add(ref MemoryMarshal.GetReference(state.RawRows), index + NumberOfRowsOffset));
+        return (union >> 28) >= (uint)JsonTokenType.PropertyName
+            ? index + RowSize
+            : index + (RowSize * (int)(union & NumberOfRowsMask)) + RowSize;
+    }
 
     public JsonTokenType TokenTypeAndNextUnchecked(ref EvaluationState state, IJsonDocument doc, int index, out int nextIndex)
     {
@@ -250,6 +261,8 @@ internal readonly struct InterfaceAccess : IDocumentAccess
     public JsonTokenType TokenTypeAndNextUnchecked(ref EvaluationState state, IJsonDocument doc, int index, out int nextIndex) => this.TokenTypeAndNext(ref state, doc, index, out nextIndex);
 
     public ReadOnlySpan<byte> PropertyNameRawUnchecked(ref EvaluationState state, IJsonDocument doc, int valueIndex, out bool escaped) => this.PropertyNameRaw(ref state, doc, valueIndex, out escaped);
+
+    public int NextIndexUnchecked(ref EvaluationState state, IJsonDocument doc, int index) => this.NextIndex(ref state, doc, index);
 
     public UnescapedUtf8JsonString GetString(ref EvaluationState state, IJsonDocument doc, int index) => doc.GetUtf8JsonString(index, JsonTokenType.String);
 

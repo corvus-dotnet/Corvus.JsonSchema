@@ -580,6 +580,18 @@ internal sealed class SchemaCompiler
 
             node.ForwardNode = target;
         }
+
+        // A forward to a node that itself forwards collapses to the final target, so a hop is always one step.
+        foreach (SchemaNode node in nodes)
+        {
+            int target = node.ForwardNode;
+            for (int hops = 0; target >= 0 && nodes[target].ForwardNode >= 0 && hops < 16; hops++)
+            {
+                target = nodes[target].ForwardNode;
+            }
+
+            node.ForwardNode = target;
+        }
     }
 
     /// <summary>
