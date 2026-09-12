@@ -751,15 +751,23 @@ its column is not measurable from outside, though its heap is flat across benchm
 | corvus-runtime-aot | 5.2 ms | 108 µs | 0.34 ms | 0 B | 22 of 37 |
 | corvus-image-jit | 108 ms | 80 µs | 26 ms | 0 B | 31 of 37 |
 | corvus-image-aot | 4.7 ms | 108 µs | 0.16 ms | 0 B | 22 of 37 |
-| corvus-generated-jit | 132 ms | 352 µs | 26 ms | 0 B | 1 of 37 |
-| corvus-generated-aot | 6.7 ms | 513 µs | 0.07 ms | 0 B | 0 of 37 |
+| corvus-generated-jit | 124 ms | 82 µs | 38 ms | 0 B | 30 of 37 |
+| corvus-generated-aot | 5.2 ms | 91 µs | 0.17 ms | 0 B | 25 of 37 |
+| corvus-generated-previous-jit | 132 ms | 352 µs | 26 ms | 0 B | 1 of 37 |
+| corvus-generated-previous-aot | 6.7 ms | 513 µs | 0.07 ms | 0 B | 0 of 37 |
 
-Two things the table settles. The runtime evaluator allocates nothing per evaluation on any corpus, under the JIT or
-AOT. And the shipping generator's validation code is 4.4 times slower than the runtime evaluator at steady state
-under the JIT (352 against 80 µs at the median) and behind Blaze on 36 of 37 corpora, where the runtime evaluator is
-ahead on 31; under AOT the generated code is slower still (513 µs), the runtime evaluator 108 µs. Cold start is the
-other way round for the JIT rows only because generated code has no schema to compile; under AOT every Corvus row
-starts in 5 to 7 ms against Blaze's 10.
+The generated rows needed a correction on the way. The benchmark model projects' C/ directories dated from August,
+before Stage 0, so their first measurement was of the previous generator's per-keyword validation code: 4.4 times
+slower than the runtime evaluator at steady state (352 against 80 µs at the median), behind Blaze on 36 of 37,
+and a profile of helm-chart-lock showed why: document access through the `IJsonDocument` interface per row, a
+generic property-matcher map running as the shared instantiation and returning a delegate per property, a
+`JsonSchemaContext` pushed and committed per child, and type-only leaves evaluated through a call. Those rows are
+kept as `corvus-generated-previous`. Regenerated with the current generator (`Regenerate-CurrentBenchmarks.ps1`),
+every model embeds a precompiled program image and validates through the runtime evaluator, and measures as the
+runtime rows plus a thin call: 82 µs under the JIT, 91 µs under AOT, ahead of Blaze on 30 and 25 of 37, agreeing
+with the runtime evaluator on every instance. What the table settles: the runtime evaluator, and now the generated
+code, allocate nothing per evaluation on any corpus; and under AOT every Corvus row starts in 5 ms against Blaze's
+10.
 
 A measurement lesson from the generated rows: their first take subtracted a clock overhead read at 140 to 480 ns
 instead of 14 on twelve corpora, a tier-0 loop in a method run once, which took a 100 µs corpus down to 25. The
