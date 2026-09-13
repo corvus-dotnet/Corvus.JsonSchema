@@ -103,6 +103,9 @@ and the shape of generated code).
 
 ## Follow-ups, not in this PR
 
+- After the 5.6 packages ship: update the Bowtie implementations for Corvus V4 and V5; the V5 harness validates
+  through `JsonSchemaEvaluator` directly and is published as native AOT so the package's profile is in play in the
+  Bowtie benchmarks.
 - A .NET 11 build and support for its native union and pattern-matching types (the next piece of work).
 - Evaluator: folding a conditional chain's discriminator test into its level's own scan (about 8% on ui5);
   inlining the string-set match's word path; a smaller evaluation state. Each is a few percent on a few corpora.
