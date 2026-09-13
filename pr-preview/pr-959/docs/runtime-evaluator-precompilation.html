@@ -1,0 +1,2028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="Round-by-round engineering notes for the runtime evaluator: program images, plans, the name lookups, cold start, native AOT profiles, and every measurement against Blaze that decided each step." />
+    <meta name="keywords" content="documentation, Corvus.Text.Json" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="Round-by-round engineering notes for the runtime evaluator: program images, plans, the name lookups, cold start, native AOT profiles, and every measurement against Blaze that decided each step." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-959/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Pre-compiled schema programs (Stage 2 design note) - Corvus.Text.Json" />
+    <meta property="article:tag" content="documentation" />
+    <meta property="article:tag" content="Corvus.Text.Json" />
+    <meta property="og:description" content="Round-by-round engineering notes for the runtime evaluator: program images, plans, the name lookups, cold start, native AOT profiles, and every measurement against Blaze that decided each step." />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-959/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Pre-compiled schema programs (Stage 2 design note) - Corvus.Text.Json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/docs/runtime-evaluator-precompilation/" />
+    <title>Pre-compiled schema programs (Stage 2 design note) - Corvus.Text.Json</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/docs/runtime-evaluator-precompilation/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/docs/runtime-evaluator-precompilation/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-959/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-959/assets/images/favicon.svg" />
+    
+</head>
+<body class="">
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-959/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-959/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-959/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-959/docs/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Documentation</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-959/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-959/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-959/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/pr-preview/pr-959/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-959/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-959/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-959/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/pr-preview/pr-959/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-959/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/json-patch.html">JSON Patch, Merge Patch &amp; Diff</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/jmes-path.html">JMESPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/yaml.html">YAML Converter</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/json-canonicalization.html">JSON Canonicalization (JCS)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/json-path.html">JSONPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/open-api.html">OpenAPI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/async-api.html">AsyncAPI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/async-api-message-resumption.html">AsyncAPI Message Resumption</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/toon.html">TOON Converter</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/runtime-evaluator.html">Runtime Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/consuming-generated-types.html">Consuming Generated Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/performance-techniques.html">Performance Techniques</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/standalone-evaluator-internals.html">Schema Evaluation Program Internals</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-959/docs/runtime-evaluator-precompilation.html">Runtime Evaluator Engineering Notes</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/docs/runtime-evaluator-measurements.html">Runtime Evaluator Measurements</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/creating-and-mutating-objects.html">Creating and Mutating Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/clone-and-freeze.html">Clone, Freeze, and Builder Snapshots</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/conditional-schemas.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/default-values.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/format-validation.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/json-patch.html">JSON Patch, Merge Patch, and Diff</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/json-logic.html">JsonLogic Rule Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/jsonata.html">JSONata Expression Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/jmespath.html">JMESPath Query Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/yaml.html">YAML Conversion</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/json-canonicalization.html">JSON Canonicalization (RFC 8785)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/json-path.html">Json Path</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/open-api-client.html">Open Api Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/open-api-server.html">Open Api Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/open-api-advanced-client.html">Open Api Advanced Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/open-api-advanced-server.html">Open Api Advanced Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/open-api-end-to-end.html">Open Api End To End</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/open-api-callback-server.html">Open Api Callback Server</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/open-api-callback-client.html">Open Api Callback Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/async-api-producer.html">Async Api Producer</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/async-api-consumer.html">Async Api Consumer</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/async-api-end-to-end.html">Async Api End To End</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/async-api-authentication.html">Async Api Authentication</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/pattern-property-matcher.html">Pattern Property Matcher</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/toon.html">TOON Conversion</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/open-api20-client.html">Open Api20Client</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-959/examples/flags-enums.html">Flags Enums from Boolean Objects</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Pre-compiled schema programs (Stage 2 design note)</h1>
+<p>Status: design and measurement spike, 2026-09-10. Nothing in this note is wired into the generators yet; the
+measurements come from <code>ProgramImage</code> (in <code>Corvus.Text.Json.RuntimeEvaluator</code>), the <code>image</code>/<code>emit</code> commands of the
+runtime-evaluator benchmark harness, the <code>write</code>/<code>image</code> modes of the cold-start harness, and a throw-away &quot;spike&quot;
+console project that compiled emitted C# against the evaluator.</p>
+<h2 id="where-stage-0-leaves-us">Where Stage 0 leaves us</h2>
+<p>After Stage 0 a generated assembly carries, per compilation, one <code>CorvusJsonSchemaProgram</code> with the schema documents
+as UTF-8 data and lazily compiled entry points. At first use the runtime evaluator parses the documents, resolves
+references, reads any custom metaschema's <code>$vocabulary</code>, builds the node graph, and constructs the regular expressions.
+Stage 2 moves everything except regular-expression construction to generation time, and hands regular expressions to
+<code>[GeneratedRegex]</code>.</p>
+<p>What Stage 2 cannot remove is JIT of the evaluation engine itself, measured earlier at roughly 40 ms floor for the
+first evaluation in a cold process and about half that with ReadyToRun. That is a consumer publish setting, not
+something the package can ship.</p>
+<h2 id="what-a-compiled-program-is">What a compiled program is</h2>
+<p>The compiler's output is a plain object graph, <code>SchemaNode[]</code>, with:</p>
+<ul>
+<li>per-node summary flags, the fused <code>NodePlan</code>, the dialect and resource id, and the schema location bytes;</li>
+<li>value keywords: a <code>TypeMask</code>, <code>const</code>/<code>enum</code> values, normalised numeric bounds and divisor, string bounds, a
+<code>PatternMatcher</code>, format and content kinds with their assertion flags;</li>
+<li>object keywords: a <code>Utf8NameMap&lt;PropertyEntry&gt;</code> (with presence bits for <code>required</code>, <code>dependentRequired</code>,
+<code>dependentSchemas</code> and <code>dependencies</code>), pattern properties, additional/unevaluated properties, property names;</li>
+<li>array keywords: prefix items, items, contains bounds, unevaluated items;</li>
+<li>in-place applicators: resolved <code>$ref</code> targets, <code>$dynamicRef</code> tables (<code>resourceId -&gt; nodeId</code>), <code>allOf</code>/<code>anyOf</code>/<code>oneOf</code>
+with their discriminators and type unions, <code>not</code>, <code>if</code>/<code>then</code>/<code>else</code>;</li>
+<li>annotation keywords as raw JSON bytes, and every child edge (<code>ChildRef</code>) with its evaluation-path segment bytes.</li>
+</ul>
+<p>Only one thing in that graph still points at a parsed schema document: <code>ConstantValue</code>, used for deep equality of
+object and array <code>const</code>/<code>enum</code> values. Everything else is bytes, integers, and small objects.</p>
+<h2 id="two-emitted-shapes">Two emitted shapes</h2>
+<h3 id="a.program-image">A. Program image</h3>
+<p><code>ProgramImage</code> serialises the graph to a versioned binary image (varints, length-prefixed byte arrays, a packed bit
+set per node) plus one JSON array holding every <code>const</code>/<code>enum</code> value. <code>JsonSchemaEvaluator.FromProgramImage</code> rebuilds
+the graph without the loader or compiler; the constants array is parsed once, which is the only parse left.
+<code>ToProgramImage</code> records every entry point compiled so far, and <code>ForEntryPoint</code> on an image resolves only those.</p>
+<p>Conformance: the entire JSON Schema Test Suite passes with every schema round-tripped through an image (the
+<code>ImageSuiteTests</code> class), and all 37 Sourcemeta corpora agree instance for instance between the compiled program and
+its image.</p>
+<p>Warm, in-process, minimum of 15 rounds, interpreted regexes (compiled regexes are cached process-wide, so warm figures
+are the same either way):</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Compile</th>
+<th>Image load</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>All 37 corpora, total</td>
+<td>45.9 ms</td>
+<td>8.6 ms</td>
+</tr>
+<tr>
+<td>Allocation, all corpora</td>
+<td>21.4 MB</td>
+<td>10.7 MB</td>
+</tr>
+<tr>
+<td>Largest (ui5-manifest, 2688 nodes)</td>
+<td>8.2 ms</td>
+<td>1.4 ms</td>
+</tr>
+<tr>
+<td>Median corpus (deno, 108 nodes)</td>
+<td>0.92 ms</td>
+<td>0.13 ms</td>
+</tr>
+</tbody>
+</table>
+<p>Process-cold, first schema in a fresh process (three runs each):</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>First load</th>
+<th>Warm</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Compile, aws-cdk (10 nodes)</td>
+<td>71 to 85 ms</td>
+<td>0.07 ms</td>
+</tr>
+<tr>
+<td>Image, aws-cdk</td>
+<td>19 to 24 ms</td>
+<td>0.01 ms</td>
+</tr>
+<tr>
+<td>Compile, cql2 (regex-heavy)</td>
+<td>35 to 39 ms</td>
+<td>2.5 to 2.8 ms</td>
+</tr>
+<tr>
+<td>Image, cql2</td>
+<td>33 to 38 ms</td>
+<td>0.4 ms</td>
+</tr>
+</tbody>
+</table>
+<p>The cql2 row is the regular-expression cost: with <code>CompileRegularExpressions</code> on (the default) the first construction
+of each <code>Regex</code> compiles it to IL, and that dominates the image load. <code>[GeneratedRegex]</code> moves exactly that cost to
+build time, so it is the case Stage 2 must handle, not a limit of the image.</p>
+<p>Image size (version 4) is about two thirds of the schema text: 1.05 MB against 1.66 MB over the corpora, down from
+2.16 MB in version 2. Three changes account for it. Byte payloads (path segments, property names, keywords, number
+text, annotation JSON) are interned in one table and referenced by index. A node's schema location is stored as the
+index of the earlier node whose location is its longest prefix on a segment boundary, plus the interned remainder,
+so the per-node JSON pointer costs a few bytes instead of the whole string (the locations were the largest single
+item: 195 KB of ui5-manifest's 525 KB). Keyword groups a node does not use (value, number, string, object, array,
+in-place applicators, annotations) are skipped under a per-node section mask instead of writing every default. What
+remains is dominated by annotation JSON (<code>title</code>, <code>description</code>, <code>default</code>, <code>examples</code> raw text, about 0.5 MB in
+total), which verbose output needs and which compresses no further without changing what is kept. Load time is
+unchanged (8.8 ms warm across the 37 corpora); the <code>breakdown</code> benchmark command reports the per-schema split.</p>
+<p>The machine was loaded during these runs (load average 8 to 25 from concurrent builds); the minimum-of-N figures are
+stable, the cold first-load figures vary by roughly a third between runs.</p>
+<h3 id="b.c-static-initialisers">B. C# static initialisers</h3>
+<p><code>StaticInitEmitter</code> (benchmark harness, <code>emit</code> command) writes the same graph as C# object initialisers, chunked into
+methods of 32 nodes, with the constants array as a UTF-8 literal, regexes constructed through <code>PatternMatcher.Create</code>
+and the <code>Build</code> method returning a <code>CompiledSchema</code> through the image constructor. The spike project compiled five
+corpora (babelrc, openapi, cmake-presets, krakend, ui5-manifest) and timed <code>Build()</code> against loading the equivalent
+image; the emitted graph is checked by writing it back to an image and comparing bytes with the compiler's image.</p>
+<p>Emitted source and compile cost (Release, five programs, one project):</p>
+<table>
+<thead>
+<tr>
+<th>Corpus</th>
+<th>Nodes</th>
+<th>Emitted C#</th>
+<th>Image</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>babelrc</td>
+<td>38</td>
+<td>80 KB</td>
+<td>8 KB</td>
+</tr>
+<tr>
+<td>openapi</td>
+<td>363</td>
+<td>698 KB</td>
+<td>52 KB</td>
+</tr>
+<tr>
+<td>cmake-presets</td>
+<td>677</td>
+<td>1.36 MB</td>
+<td>146 KB</td>
+</tr>
+<tr>
+<td>krakend</td>
+<td>1334</td>
+<td>3.10 MB</td>
+<td>489 KB</td>
+</tr>
+<tr>
+<td>ui5-manifest</td>
+<td>2688</td>
+<td>5.52 MB</td>
+<td>582 KB</td>
+</tr>
+</tbody>
+</table>
+<p>Roslyn compiled the five programs in about 10 seconds of wall time; the resulting assembly is 5.4 MB. The emitted
+graphs are byte-for-byte identical to the compiler's when written back as images.</p>
+<p>Type initialisation against image load, same process, three runs (first call includes JIT of the emitted methods;
+warm is the minimum of 20):</p>
+<table>
+<thead>
+<tr>
+<th>Corpus</th>
+<th>Build first</th>
+<th>Build warm</th>
+<th>Image first</th>
+<th>Image warm</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>babelrc</td>
+<td>21 ms</td>
+<td>0.02 ms</td>
+<td>2.4 to 3.1 ms</td>
+<td>0.04 ms</td>
+</tr>
+<tr>
+<td>openapi</td>
+<td>51 to 55 ms</td>
+<td>0.16 ms</td>
+<td>0.3 ms</td>
+<td>0.24 ms</td>
+</tr>
+<tr>
+<td>cmake-presets</td>
+<td>99 to 104 ms</td>
+<td>0.32 ms</td>
+<td>0.6 ms</td>
+<td>0.45 ms</td>
+</tr>
+<tr>
+<td>krakend</td>
+<td>245 to 256 ms</td>
+<td>0.9 ms</td>
+<td>1.3 to 1.7 ms</td>
+<td>1.1 ms</td>
+</tr>
+<tr>
+<td>ui5-manifest</td>
+<td>421 to 427 ms</td>
+<td>1.5 ms</td>
+<td>2.1 to 2.3 ms</td>
+<td>2.0 ms</td>
+</tr>
+</tbody>
+</table>
+<p>The first-call column is the decisive one: JIT of the object-initialiser methods costs roughly 0.16 ms per node,
+so a 2688-node program spends over 400 ms initialising the first time, two hundred times the image load. Once
+JIT-compiled the static form is 25 to 35 percent faster than the image reader, which is not worth the cold-start
+cost, the tenfold source size, or the public surface the emitted code would need over the node model. ReadyToRun on
+the consumer would recover some of the JIT cost, but only for consumers that opt in, and the image needs no such help.</p>
+<h2 id="where-pre-compilation-runs">Where pre-compilation runs</h2>
+<p>Two producers emit programs today: the CLI (<code>Corvus.Json.Cli</code>, a normal .NET application) and the Roslyn source
+generator (<code>Corvus.Text.Json.SourceGenerator</code>, netstandard2.0, which by design carries no binary dependencies and
+compiles the V4 analysis core and selected Corvus.Text.Json files in as sources).</p>
+<p>Pre-compiling in the CLI is straightforward: it can reference the evaluator package and call the compiler. Pre-compiling
+in the source generator needs the schema compiler and the document model it reads with (<code>ParsedJsonDocument</code>,
+<code>JsonElement</code>, <code>JsonElementHelpers</code>, <code>UnescapedUtf8JsonString</code>, <code>EcmaRegexTranslator</code>) compiled into the generator.
+Both <code>Corvus.Text.Json</code> and the evaluator already target netstandard2.0, so this is a matter of linking sources the
+way the generator links the V4 core, and of the generator's build-time cost. The alternative is for the source
+generator to keep emitting the Stage 0 form while the CLI emits pre-compiled programs; that leaves two shapes in the
+field and is not recommended.</p>
+<h2 id="engine-changes-stage-2-needs">Engine changes Stage 2 needs</h2>
+<ol>
+<li><strong>Regular-expression provider.</strong> Done (image version 2). The image carries a pattern table of every pattern that
+needs a <code>Regex</code> (prefix, length-range and trivial patterns are matched without one), in first-seen node order, and
+nodes reference patterns by index. <code>JsonSchemaEvaluatorOptions.RegexProvider</code> is asked for <code>(index, pattern)</code>
+before a regular expression is constructed, with index -1 when compiling from text; a <code>null</code> answer falls back to
+construction. <code>JsonSchemaEvaluator.GetImagePatterns</code> reads the table so an emitter can write one <code>[GeneratedRegex]</code>
+method per entry, and <code>ToDotNetPattern</code> gives the translated pattern the evaluator itself would construct, so the
+generated instance matches exactly. The emitted table belongs to the image-emission step.</li>
+<li><strong>Constants.</strong> The image carries the values as one JSON array parsed at load. Emitting them as statically
+constructed values instead requires <code>const</code>/<code>enum</code> deep equality to work against standalone values rather than a
+document and index; the load-time parse measured under 0.1 ms for every corpus, so this is an optimisation to do
+after the shape is settled, not before.</li>
+<li><strong>Image versioning.</strong> The image version is tied to the evaluator assembly. The generator and the evaluator ship
+from the same repository, and a consumer referencing mismatched packages should fail at type initialisation with a
+clear message rather than silently recompiling from schema text; keeping the text as a fallback would forfeit the
+size and start-up gains.</li>
+<li><strong>Entry points.</strong> Every entry point a generated type needs must be compiled when the image is produced; the
+generator already knows them (the program entries of Stage 0).</li>
+<li><strong>String table.</strong> Done (image version 4): interned byte payloads, prefix-encoded locations and a section mask per
+node; see the size paragraph above.</li>
+</ol>
+<h2 id="recommendation">Recommendation</h2>
+<p>Emit <strong>program images</strong>, not static initialisers. The image loads in a fifth of the compile time warm, a quarter of
+it process-cold, halves compile-time allocation, needs no schema text, keeps the node model internal, and is already
+conformance-clean. The emitted C# per compilation shrinks to a shim: the image as UTF-8 data, the entry-point table,
+the options, and a <code>[GeneratedRegex]</code> method per pattern wired in through the regular-expression provider.</p>
+<p>Order of work:</p>
+<ol>
+<li>Regular-expression provider on <code>FromProgramImage</code>, and the emitted <code>[GeneratedRegex]</code> table (the cql2 row above
+is what this buys).</li>
+<li><code>RuntimeProgramGenerator</code> emits the image and the shim instead of the schema documents; the CLI drives it first
+because it can reference the evaluator directly. Done: <code>CSharpLanguageProvider.Options.ProgramCompiler</code> takes a
+<code>SchemaProgramCompiler</code> delegate (the generator library keeps no evaluator dependency); the CLI supplies
+<code>RuntimeProgramCompiler.Compile</code>, which compiles the program exactly as the emitted code would, registers every
+entry point, and returns the image and its patterns translated to .NET syntax. The emitted class is then partial,
+carries the image as base64 UTF-8 literals decoded on first use, loads it with <code>FromProgramImage</code>, and wires one
+<code>[GeneratedRegex]</code> method per pattern through <code>RegexProvider</code> under the same framework guard the old generator
+used; the schema documents are not embedded. Without a compiler the Stage 0 form is emitted.</li>
+<li>Link the compiler into the source generator, so both producers emit the same shape. Done; see the next section.</li>
+<li>String table in the image (size only; done, image version 4), then constants as static values if the load-time
+parse ever shows up.</li>
+</ol>
+<h2 id="the-source-generator">The source generator</h2>
+<p>The source generator takes no binary dependencies: every component it uses is linked in as source files, as the
+JMESPath and JSONPath generators do, and it builds against <code>System.Text.Json</code> (<code>STJ</code> and <code>BUILDING_SOURCE_GENERATOR</code>
+are defined). The program compiler follows the same rule, so the compiler and the image writer are linked as files
+and must compile over <code>System.Text.Json</code> in that configuration; the Corvus document model is not brought in for
+their sake.</p>
+<p>The compile path already uses an element API that <code>System.Text.Json</code> shares (<code>ValueKind</code>, <code>GetString</code>,
+<code>TryGetProperty</code>, <code>ValueEquals</code>, <code>EnumerateObject</code>/<code>EnumerateArray</code>, <code>GetRawText</code>). What differs is confined to a
+few places:</p>
+<ul>
+<li><strong>Element identity.</strong> The loader and compiler identify a subschema by (document, element index), which the Corvus
+document exposes and <code>System.Text.Json</code> does not. Under <code>STJ</code> the loader assigns the index itself: every element it
+reaches (walking, resolving a pointer fragment, or an anchor) is interned by its JSON pointer, and the index is the
+intern ordinal. The node's schema location is then that pointer, which replaces <code>TryGetJsonPointer</code>, and pointer
+fragments are resolved by walking properties and array indices with the usual <code>~0</code>/<code>~1</code> decoding, which replaces
+<code>TryResolvePointer</code>.</li>
+<li><strong>Raw values.</strong> <code>GetRawSimpleValue</code> (number text) becomes <code>GetRawText</code>; <code>GetUtf8String</code> becomes the UTF-8 encoding
+of <code>GetString</code>; the token type of a constant is derived from its <code>ValueKind</code>.</li>
+<li><strong>Constants.</strong> <code>ConstantValue</code> holds the element and its (document, ordinal) identity instead of a document and
+index; the pool writes <code>GetRawText</code>.</li>
+<li><strong>Runtime-only members</strong> are compiled out under <code>STJ</code>: number comparison and <code>multipleOf</code> (they use the Corvus
+number helpers; the writer needs only the text), regular-expression matching, the message providers, the image
+reader except the pattern table, <code>CompiledSchema</code>'s constants document, and every <code>Evaluate</code> overload.</li>
+</ul>
+<p>The linked file set is the <code>Compilation</code> directory (compiler, loader, node model, fused-object analysis, name map,
+keywords, URI utilities, metaschema table, image, and the <code>System.Text.Json</code> shim), the netstandard2.0 polyfills,
+the public option, dialect, format-mode and exception types, the compile-side half of <code>JsonSchemaEvaluator</code>, the
+ECMA regex translator (already linked), and the CLI's <code>RuntimeProgramCompiler</code>, which is the
+<code>SchemaProgramCompiler</code> implementation the generator passes in its language provider options. The evaluation
+directory is not linked. The generator's embedded metaschemas already use the logical names the evaluator's
+metaschema table looks up. Because the generator applies the repository's analyzer set (StyleCop, Roslynator, the
+analyzer-banned-API rules) to linked files, the evaluator sources follow the <code>src</code> conventions (no trailing
+newline, no environment reads on the generator path: the A/B switches are constants under <code>STJ</code>).</p>
+<p>One difference from the CLI's output: the generator's program carries no <code>[GeneratedRegex]</code> table. Roslyn does not
+chain source generators, so the regular-expression generator never sees code another generator produced and the
+partial methods would have no implementation. The generator's shim therefore returns no provider and the evaluator
+constructs each expression from the image's pattern table on first use, as it does on runtimes without the regex
+generator. The image itself is identical.</p>
+<p>Version coupling is the same as today's source generator to <code>Corvus.Text.Json</code> pairing: the generator emits the image
+version of the files it was built from, and <code>FromProgramImage</code> rejects any other version at type initialisation
+with a message naming both versions. There is no schema-text fallback.</p>
+<h2 id="throughput-ceiling-emitted-evaluation-code-against-the-engine">Throughput ceiling: emitted evaluation code against the engine</h2>
+<p>The <code>ceiling</code> command of the benchmark harness times hand-written, straight-line evaluators for the micro cases (the
+best a per-schema code emitter could produce: same raw document access and helpers, no node graph, no flags, no
+generic dispatch) against the engine on the same instances, after checking they agree. Quiet machine, minimum of 40
+rounds, three runs of all cases interleaved and two runs of each case alone:</p>
+<table>
+<thead>
+<tr>
+<th>Case</th>
+<th>Engine path</th>
+<th>Engine</th>
+<th>Straight-line</th>
+<th>Ratio</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Object</td>
+<td>fused <code>Object</code> plan</td>
+<td>122 to 163 ns</td>
+<td>92 to 285 ns</td>
+<td>0.3 to 2.3 (noise)</td>
+</tr>
+<tr>
+<td>OneOf</td>
+<td>discriminator</td>
+<td>59 to 200 ns</td>
+<td>106 to 358 ns</td>
+<td>1.7 to 1.9</td>
+</tr>
+<tr>
+<td>Array</td>
+<td>array-items plan, <code>uniqueItems</code></td>
+<td>465 to 579 ns</td>
+<td>409 to 481 ns</td>
+<td>0.7 to 0.9</td>
+</tr>
+<tr>
+<td>Unevaluated</td>
+<td><code>allOf</code> × 3 with evaluated bits</td>
+<td>230 to 482 ns</td>
+<td>25 to 141 ns</td>
+<td>0.10 to 0.30</td>
+</tr>
+<tr>
+<td>DynamicRef</td>
+<td>dynamic scope, strict tree</td>
+<td>246 to 873 ns</td>
+<td>34 to 183 ns</td>
+<td>0.13 to 0.21</td>
+</tr>
+</tbody>
+</table>
+<p>Two conclusions and one caveat.</p>
+<ul>
+<li>Where the compiler already fuses the node into a plan (objects, discriminated <code>oneOf</code>, simple arrays) there is
+nothing left for emitted code to win; the discriminator beats the straight-line form because it short-circuits on
+the missing property.</li>
+<li>The general path (in-place applicators over the same instance with evaluated-bit tracking, and dynamic scope
+resolution) has three to ten times headroom, but the straight-line form does not win it by removing dispatch. It
+wins it by making one pass over the properties with a single merged switch, and by knowing the dynamic reference's
+target statically. Both are schema-level transformations the compiler can perform and the engine can execute as
+plans: fuse the property tables of <code>allOf</code>, <code>$ref</code>, <code>if</code>/<code>then</code>/<code>else</code> branches over the same object into one
+table with per-entry branch conditions, and demote a <code>$dynamicRef</code> whose anchor is defined in the entry point's root
+resource (always the outermost scope, so always the answer) to a static reference. That puts the gain into every
+program, image or compiled, and into the runtime Validator, with no emitted code.</li>
+<li>The absolute figures for cases under 300 ns move by two to three times between process configurations (the
+engine's DynamicRef case ran at 870 ns in the interleaved run and 250 ns alone; the straight-line Unevaluated case
+at 141 ns and 25 ns). That is JIT and dynamic PGO deciding differently about the same large generic methods, a
+known instability of this case. Ratios within a run are meaningful; absolute figures are not to two digits, and the
+variance is itself an argument for simpler fused plans over the general path.</li>
+</ul>
+<p>Of the 37 corpora, only ui5-manifest and cmake-presets (heavy <code>allOf</code>), openapi (<code>unevaluated*</code>) and cql2
+(<code>$dynamicRef</code>) lean on the general path; the rest sit on planned paths. The corpus comparison in the harness is still
+against the checked-in models generated by the previous generator (those projects reference only
+<code>Corvus.Text.Json</code>), which makes it an independent oracle for agreement but means its &quot;generated&quot; column is the old
+validation code, not the Stage 0 shims: geometric mean ratio 0.25 over 37 cases on this run.</p>
+<p>Decision (2026-09-10): no emitted evaluation code; do the schema-level fusion in the compiler, after the regular
+expression provider.</p>
+<h3 id="fusion-done">Fusion, done</h3>
+<p>Two compiler transformations followed, both flag-mode plans with collecting mode unchanged, and both checked by
+running the whole JSON Schema Test Suite in collecting mode (the general path) as well as flag mode (the plans):</p>
+<ul>
+<li><strong>Static <code>$dynamicRef</code> when every entry resource defines the anchor</strong> with the same target. The scope is searched
+outermost-first and its outermost entry is always the resource evaluation started in, so the target is the answer
+on every path; programs with no remaining dynamic references keep no scope at all. This is re-applied as entry points
+are added, and only the entries that can reach the reference count: a generated program registers an entry for every
+type, and entries whose resource never defines the anchor cannot block a reference they never evaluate. Two
+reachable entries that resolve differently make the reference entry-resolved rather than dynamic: since each
+entry's resource is the outermost scope on every path, the target is a function of the entry resource, kept as a
+table on the reference and read once at evaluation with no scope maintenance (image version 5). Only a reaching
+entry whose resource lacks the anchor keeps the scope. This is what makes the strict-tree micro case as fast
+generated (entry points in both resources) as through the API (one entry).</li>
+</ul>
+<p>Generated code against the API, measured on the micro cases with the fixes in (typed generated model, generated
+standalone evaluator, runtime API; quiet box, minimum of 40 rounds): object 262/258/253 ns, array 1.05/1.07/1.02 µs,
+string 83/80/76, unevaluated 245/241/238, dynamic reference 273/281/263, oneOf 68/63/63, verbose 3.09/2.82/3.06 µs.
+With tiered compilation disabled the three paths are identical to the nanosecond (oneOf 59/59/59, dynamic reference
+241/240/242): they run the same machine code.</p>
+<p>The harness had to be fixed to show this. Its quick timer warmed each workload with a hundred calls and then took the
+minimum of forty rounds; that leaves paths at tier 0 or in on-stack-replacement code during measurement, because the
+runtime's tiering delay restarts whenever new tier-0 code appears and an interleaved three-way loop keeps producing
+it. Under that warmup the same process reported oneOf at 132 against 80 ns and the string case above 200 ns, and the
+figures moved between runs. The timer now warms for a second, pauses past the tiering delay, warms again, and only
+then measures. Two other explanations were chased and ruled out on the way: dynamic PGO (the gap persisted with it
+off) and the document instance or its element type (a probe that evaluates one schema over documents of every model
+type, and over twelve identical documents in either order, shows them all within 5%; <code>docprobe</code> command). None of
+this can be measured on a loaded box: with a build running, the same document measured 198 ns in one pass and 434 in
+the next.</p>
+<p>The oneOf profile did show one engine cost worth taking: the discriminator reads its property through the document's
+by-name lookup (<code>JsonDocument.TryGetNamedPropertyValueIndexUnsafe</code>, 30% of the evaluation) rather than the raw-access
+scan the rest of the engine uses.</p>
+<ul>
+<li><strong>Fused object plan</strong> (<code>FusedObjects</code>, <code>NodePlan.FusedObject</code>) for a node with <code>unevaluatedProperties</code> whose object
+semantics spread over <code>allOf</code>, <code>$ref</code> and <code>if</code>/<code>then</code>/<code>else</code> with required-only conditions: every property name any
+branch knows is resolved at compile time to the child schemas that apply (own property, matching pattern
+properties, or the branch's <code>additionalProperties</code>), unknown names resolve per branch at evaluation, conditional
+branches are deferred to a second step over the properties they touched, and the coverage bits feed the unevaluated
+check directly. It is restricted to nodes with <code>unevaluatedProperties</code> because there the pass over every instance
+property is unavoidable; fusing branches without it doubled cmake-presets (large instances, small branches, where
+the general path's schema-driven unrolled lookups win). A fused plan applies its contributors' keywords without
+entering them as nodes, so it is withheld only from nodes that can reach a live dynamic reference; the guard was
+program-wide at first, which cost every schema in a generated program its fused plans as soon as one schema in the
+compilation used <code>$dynamicRef</code> (the unevaluated micro case ran four times slower generated than through the API).</li>
+</ul>
+<p>Micro cases after fusion (quiet-ish machine, ratio is engine after / engine before):</p>
+<table>
+<thead>
+<tr>
+<th>Case</th>
+<th>Engine before</th>
+<th>Engine after</th>
+<th>Straight-line</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Unevaluated</td>
+<td>589 ns</td>
+<td>142 to 170 ns</td>
+<td>151 to 181 ns</td>
+</tr>
+<tr>
+<td>DynamicRef (strict tree)</td>
+<td>878 ns</td>
+<td>226 to 242 ns</td>
+<td>192 to 200 ns</td>
+</tr>
+<tr>
+<td>Object, Array, OneOf</td>
+<td>unchanged</td>
+<td>unchanged</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Corpora: openapi (27 <code>unevaluated*</code>) 8.1 ms to 7.2 ms; cmake-presets unchanged after the restriction; the rest within
+noise. The general path remains the fallback for every shape the plan does not take, and <code>CORVUS_RT_NO_FUSE=1</code>
+disables it for A/B runs.</p>
+<h2 id="compile-step-optimisations-after-the-merge-2026-09-11">Compile-step optimisations after the merge (2026-09-11)</h2>
+<p>Six changes, profiled on the corpora with the least gain over the shipping generated code (sampled with
+<code>dotnet-trace</code> through the harness's <code>profile</code> command), all in the compiler and its plans: discriminators keyed on
+integer and boolean constants (cmake-presets' root is a <code>oneOf</code> of eight branches on an integer <code>version</code>);
+<code>uniqueItems</code> through a structural set that every array plan accepts (unreal-engine-uproject spent 55% of its time
+renting, zeroing and transcoding for the shared hash set); the object plan taking <code>patternProperties</code> and
+<code>dependencies</code> (draft-04 and clang-format roots were on the general path); a length-then-byte name map in place of a
+hash per instance name (17 to 28% of cypress, cmake-presets and pre-commit-hooks); one-pass property matching for
+unrolled objects and discriminators instead of by-name lookups through the document; and regex-free matchers for
+anchored ASCII class sequences and literal alternations.</p>
+<p>Measured as a pair, the commit before the six against the commit after, both harnesses run back to back on an idle
+box pinned to the performance cores (<code>taskset -c 0-11</code>; this is a hybrid i7-13800H and unpinned runs land on
+efficiency cores at random, which was the source of the bimodal noise seen earlier):</p>
+<table>
+<thead>
+<tr>
+<th>Corpus</th>
+<th>Runtime before</th>
+<th>Runtime after</th>
+<th>Speed-up</th>
+<th>Ratio to generated, before to after</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>unreal-engine-uproject</td>
+<td>3.75 ms</td>
+<td>611 µs</td>
+<td>6.1</td>
+<td>0.54 to 0.07</td>
+</tr>
+<tr>
+<td>jshintrc</td>
+<td>1.18 ms</td>
+<td>342 µs</td>
+<td>3.5</td>
+<td>1.02 to 0.41</td>
+</tr>
+<tr>
+<td>omnisharp</td>
+<td>566 µs</td>
+<td>224 µs</td>
+<td>2.5</td>
+<td>0.45 to 0.37</td>
+</tr>
+<tr>
+<td>ansible-meta</td>
+<td>331 µs</td>
+<td>133 µs</td>
+<td>2.5</td>
+<td>0.50 to 0.41</td>
+</tr>
+<tr>
+<td>clang-format</td>
+<td>84 µs</td>
+<td>34 µs</td>
+<td>2.5</td>
+<td>0.50 to 0.41</td>
+</tr>
+<tr>
+<td>babelrc, jsconfig, cypress, jasmine</td>
+<td></td>
+<td></td>
+<td>1.8 to 1.9</td>
+<td></td>
+</tr>
+<tr>
+<td>cmake-presets</td>
+<td>9.58 ms</td>
+<td>5.52 ms</td>
+<td>1.7</td>
+<td>0.72 to 0.57</td>
+</tr>
+<tr>
+<td>draft-04</td>
+<td>5.88 ms</td>
+<td>3.38 ms</td>
+<td>1.7</td>
+<td>0.60 to 0.34</td>
+</tr>
+<tr>
+<td>krakend</td>
+<td>346 µs</td>
+<td>245 µs</td>
+<td>1.4</td>
+<td></td>
+</tr>
+<tr>
+<td>openapi</td>
+<td>8.94 ms</td>
+<td>7.61 ms</td>
+<td>1.2</td>
+<td>0.59 to 0.53</td>
+</tr>
+<tr>
+<td>geometric mean over 37</td>
+<td></td>
+<td></td>
+<td></td>
+<td>0.47 to 0.39</td>
+</tr>
+</tbody>
+</table>
+<p>Corpora that read slower in the single paired run (vercel, ui5-manifest, pulumi, semantic-release) were repeated three
+times on each binary and are equal within run-to-run noise, which is up to 25% on the small ones even pinned and
+idle.</p>
+<h3 id="fused-plan-conditions-on-values-nested-conditions-dependencies-required-only-alternatives">Fused plan: conditions on values, nested conditions, dependencies, required-only alternatives</h3>
+<p>openapi barely moved under the six items because its object schemas were still on the general path: its <code>if</code>
+keywords test property values (<code>{&quot;properties&quot;: {&quot;in&quot;: {&quot;const&quot;: &quot;query&quot;}}, &quot;required&quot;: [&quot;in&quot;]}</code>, one with a
+<code>pattern</code>), <code>parameter</code> and <code>header</code> carry a <code>oneOf</code> of two required-only branches (schema or content) and a
+<code>dependentSchemas</code> whose schema holds further conditions, and <code>security-scheme</code> has six conditional <code>allOf</code>
+branches. The fused plan now takes all of these. A condition carries value tests keyed like discriminator values
+(tagged string, canonical integer and boolean constants; a <code>pattern</code> test for strings), checked as each property is
+passed. Conditions nest: each records the condition and polarity it is reached through, and a contributor applies
+only when its own condition matches and the chain above does; <code>dependentSchemas</code> and <code>dependentRequired</code> become
+presence-gated contributors the same way. A <code>oneOf</code>/<code>anyOf</code> whose branches are plain <code>required</code> lists is decided
+after the pass by counting the branches whose names were all seen. When a condition holds, the <code>if</code> schema's own
+properties count as evaluated, as the general path's annotations do. Fused plans are rebuilt on load, so the image
+format is unchanged.</p>
+<p>openapi: 24 fused object schemas instead of 19; 7.61 ms to 5.62 ms (1.59 against the pre-optimisation 8.94 ms).
+cmake-presets took a further 1.2 (5.52 to 4.52 ms) from its required-only alternatives; omnisharp and nest-cli
+gained as well. Geometric mean over the 37 corpora: 0.38 against the shipping generated code, from 0.47 before this
+round of work. Pinned, back to back with the same baseline binary as above.</p>
+<h2 id="engine-mechanics-after-the-schema-shape-work-2026-09-11-second-round">Engine mechanics after the schema-shape work (2026-09-11, second round)</h2>
+<p>With the fused plan covering openapi's shapes, the profiles of the least-improved corpora (jasmine, stale, jsconfig,
+pulumi, yamllint) pointed at the engine's per-property and per-node mechanics rather than any keyword. Six changes,
+each its own commit:</p>
+<ol>
+<li><strong>Property names from the row spans.</strong> The object loops (object plan, fused plan, unrolled objects, discriminator
+lookups) read a name's location and length from the metadata rows held as spans in the evaluation state, one
+bounds check per field, instead of slicing a <code>ReadOnlyMemory</code> and converting it to a span per property; the
+fused loop's per-name step is split out so the raw span feeds it directly, and <code>Utf8NameMap</code> keeps its per-length
+position and table in one bucket array. Alone this was worth 3% on the geometric mean: the loop was already
+tight, and the disassembly (<code>DOTNET_JitDisasm</code>) shows the remaining per-property cost is the <code>SequenceEqual</code>
+call and the child's own entry, not the access.</li>
+<li><strong>Fused plan without <code>unevaluatedProperties</code>; forward plan.</strong> The fused plan now fuses whenever its one pass
+replaces several: two or more contributors with object keywords, an <code>if</code> the seen bits decide, or required-only
+alternatives. jasmine's root (<code>allOf</code> of three object branches) and stale's (<code>type</code>, two properties, <code>allOf</code> of a
+twelve-property <code>$ref</code>) each went from three passes to one. A node whose object keywords are all its own keeps the
+object plan, dependencies included: fusing draft-04's root for its two <code>dependencies</code> alone cost 40% on that
+corpus, because the fused routine's fixed per-object cost outweighs a second pass over small objects. A node
+whose only assertion is a lone <code>allOf</code> branch or a kept <code>$ref</code> gets <code>NodePlan.Forward</code> and dispatches straight
+to the child's plan (yamllint's root). Both are derived from the graph on image load.</li>
+<li><strong>Type-dispatched <code>anyOf</code>/<code>oneOf</code>.</strong> When every branch asserts a <code>type</code> and no two accept the same token type,
+the token type selects the one branch that can match (pulumi's <code>runtime</code>: a string or an object). The branch
+keeps its own type test, so <code>integer</code> and draft 4 lexical integers need nothing special, and it marks straight
+into the parent's evaluated bits.</li>
+<li><strong>String leaves.</strong> An unescaped string is evaluated from its raw text with no wrapper to dispose, and since a
+rune is one to four bytes, <code>minLength</code> passes and <code>maxLength</code> fails from the byte length alone outside the band
+where the rune count matters. This exposed a quirk: a fixed-string document (property names) keeps the quotes on
+the one-argument raw-value overload, so the interface access path asks for them stripped explicitly.</li>
+<li><strong>Flag-mode entry.</strong> Without a collector and without a dynamic scope the scope buffer never grows, so the entry
+has no try/finally and dispatches the root (or its elided <code>$ref</code> target) on its plan. This exposed a gap: the
+array-items plan returned early for a node without <code>items</code>, skipping <code>uniqueItems</code>, which the general path had
+always covered at the root. Arrays of up to eight items are now compared pairwise, renting nothing.</li>
+<li><strong>Leftovers.</strong> The class-sequence parser flattens groups of alternatives (<code>^[Ee][Ss]2022(\.(A|B))?$</code>, jsconfig's
+case-insensitive literals with optional suffixes; <code>^[1-5](?:[0-9]{2}|XX)$</code>) into whole alternatives, a dot is a
+one-rune class, and top-level alternations stay with the regex since <code>^a|b$</code> anchors only its ends. The
+unique-items hash mixes eight bytes at a time.</li>
+</ol>
+<p>Measured on the like-for-like basis (<code>blazebasis 200</code>, pinned, idle box), baseline binary, new binary, baseline
+again, so the third run gives the noise floor (0.99 on the geometric mean, up to 8% on a single corpus, and yamllint,
+whose whole corpus is 20 µs, swings by half):</p>
+<table>
+<thead>
+<tr>
+<th>Corpus</th>
+<th>Before</th>
+<th>After</th>
+<th>After / before</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>jasmine</td>
+<td>107 µs</td>
+<td>68 µs</td>
+<td>0.63</td>
+</tr>
+<tr>
+<td>aws-cdk</td>
+<td>36 µs</td>
+<td>24 µs</td>
+<td>0.67</td>
+</tr>
+<tr>
+<td>lazygit</td>
+<td>88 µs</td>
+<td>59 µs</td>
+<td>0.68</td>
+</tr>
+<tr>
+<td>unreal-engine-uproject</td>
+<td>444 µs</td>
+<td>300 µs</td>
+<td>0.68</td>
+</tr>
+<tr>
+<td>pulumi</td>
+<td>417 µs</td>
+<td>309 µs</td>
+<td>0.74</td>
+</tr>
+<tr>
+<td>jsconfig</td>
+<td>352 µs</td>
+<td>268 µs</td>
+<td>0.76</td>
+</tr>
+<tr>
+<td>cmake-presets</td>
+<td>3.23 ms</td>
+<td>2.55 ms</td>
+<td>0.79</td>
+</tr>
+<tr>
+<td>cypress, fabric-mod, openapi, vercel</td>
+<td></td>
+<td></td>
+<td>0.80 to 0.83</td>
+</tr>
+<tr>
+<td>clang-format, ansible-meta, draft-04, stylecop, ui5</td>
+<td></td>
+<td></td>
+<td>0.84 to 0.86</td>
+</tr>
+<tr>
+<td>stale, helm-chart-lock, cql2</td>
+<td></td>
+<td></td>
+<td>within noise</td>
+</tr>
+<tr>
+<td>geometric mean over 37</td>
+<td></td>
+<td></td>
+<td>0.85</td>
+</tr>
+</tbody>
+</table>
+<p>Blaze, re-run the same afternoon (its own figures were 8% faster than in the earlier session, so both sides are
+taken from the same hour): geometric mean of our runtime over Blaze 1.06, from 1.23 for the baseline binary the same
+day. We lead on 17 corpora (ui5-manifest 0.25, jshintrc 0.40, clang-format 0.50, omnisharp 0.55, openapi 0.56, cql2
+0.64, draft-04 0.76, cypress 0.78, pre-commit-hooks 0.79, ansible-meta and tmuxinator 0.82, deno and fabric-mod
+0.85, lerna and aws-cdk 0.87, geojson 0.88, lazygit 0.92); within 20% on eleven; and still behind on the
+small-instance corpora: helm-chart-lock (5.2, unchanged), importmap (3.9), yamllint and ui5 (2.4), semantic-release
+and krakend (1.7). What remains there is the per-evaluation and per-object fixed cost, which the entry change only
+dented.</p>
+<p>Two measurement notes. The <code>quick 40</code> protocol is too noisy for changes of this size: its generated-code column, an
+identical binary on both sides, moved by a median 10% and up to 2.7x between paired runs, so a paired <code>quick</code>
+comparison cannot see a 10% change; <code>blazebasis</code> with the baseline run twice is the protocol now. And a method with
+<code>stackalloc</code> cannot use on-stack replacement, so the JIT compiles the object loops straight to full opts without
+dynamic PGO; nothing in them is virtual, so this costs little, but it is why <code>EvalObjectPlanCore</code> shows one tier in a
+disassembly.</p>
+<h2 id="strict-object-plan-and-per-property-mechanics-2026-09-11-third-round">Strict object plan and per-property mechanics (2026-09-11, third round)</h2>
+<p>helm-chart-lock is the simplest shape in the corpus (an object of three required properties with
+<code>additionalProperties: false</code>, one of them an array of such objects) and our plan for it was already the best we
+had, so what was left was the cost per property: about 13 ns against Blaze's 2.5. Three commits:</p>
+<ol>
+<li><strong>Name map keys as word loads; scratch context per call.</strong> Keys of up to sixteen bytes (the bucket guarantees
+equal length) compare as one or two overlapping word loads instead of a <code>SequenceEqual</code> call. The
+<code>JsonSchemaContext</code> the shared format helpers need is a local at its three call sites instead of a field the
+evaluation state zeroed on every entry.</li>
+<li><strong>Type-only children tested in place; <code>required</code> as a mask.</strong> A property entry, and a fused application, whose
+child is a type-only leaf carries the child's type mask, so the object plan, the fused plan and the strict loop
+test the token type without a call (and skip a child that is <code>true</code>); with at most 64 seen bits, <code>required</code> is
+one mask test. Derived from the graph at compile time and on image load.</li>
+<li><strong><code>NodePlan.StrictObject</code>.</strong> An object node with named properties only (no pattern properties, dependencies or
+additional-properties schema; <code>additionalProperties</code> absent, <code>true</code> or <code>false</code>) and at most 64 seen bits gets one
+loop: look the name up, reject an unknown name when additional properties are false, test the token type for a
+type-only child and dispatch the rest on their plan, then one mask test for <code>required</code>.</li>
+</ol>
+<p>Measured on the like-for-like basis after the box had recovered (the timer-overhead column read 13.5 ns in all
+three runs; noise floor 1.03 on the geometric mean):</p>
+<table>
+<thead>
+<tr>
+<th>Corpus</th>
+<th>Before</th>
+<th>After</th>
+<th>After / before</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>helm-chart-lock</td>
+<td>445 µs</td>
+<td>270 µs</td>
+<td>0.61</td>
+</tr>
+<tr>
+<td>gitpod-configuration</td>
+<td>125 µs</td>
+<td>77 µs</td>
+<td>0.62</td>
+</tr>
+<tr>
+<td>jshintrc</td>
+<td>187 µs</td>
+<td>131 µs</td>
+<td>0.70</td>
+</tr>
+<tr>
+<td>nest-cli</td>
+<td>109 µs</td>
+<td>76 µs</td>
+<td>0.70</td>
+</tr>
+<tr>
+<td>dependabot</td>
+<td>282 µs</td>
+<td>199 µs</td>
+<td>0.71</td>
+</tr>
+<tr>
+<td>omnisharp</td>
+<td>134 µs</td>
+<td>99 µs</td>
+<td>0.74</td>
+</tr>
+<tr>
+<td>lerna, deno, pre-commit-hooks, cmake-presets, cypress, cspell, importmap</td>
+<td></td>
+<td></td>
+<td>0.77 to 0.82</td>
+</tr>
+<tr>
+<td>ui5, semantic-release, tmuxinator, openapi</td>
+<td></td>
+<td></td>
+<td>1.04 to 1.12, inside that run's noise</td>
+</tr>
+<tr>
+<td>geometric mean over 37</td>
+<td></td>
+<td></td>
+<td>0.86</td>
+</tr>
+</tbody>
+</table>
+<p>Against the same-day Blaze run the geometric mean of our runtime over Blaze is now 0.89; we lead on 22 corpora.
+helm-chart-lock is at 70 ns per instance against Blaze's 24, importmap 3.1 times Blaze, yamllint 2.1, ui5 2.7. The
+remaining gap on those is the per-evaluation entry (state setup and the root dispatch, about 15 ns) and the
+per-object prologue of the plans; the property loop itself is now a lookup, a word compare and a token-type test.</p>
+<p>A measurement note for the record: from mid-afternoon the host ran the VM at a third of its speed (a throttled
+clock and runaway network traffic on the host), which the overhead column showed as 30 to 1,200 ns while guest load
+and memory looked normal. Every run in that window was discarded; the column is the health check before trusting
+any run.</p>
+<h2 id="in-place-plans-maps-and-inline-enums-2026-09-11-fourth-round">In-place plans, maps and inline enums (2026-09-11, fourth round)</h2>
+<p>Profiles of the corpora still behind Blaze after the strict plan pointed at three more mechanics, each its own
+commit:</p>
+<ol>
+<li><strong>Strict plan for maps and any <code>additionalProperties</code>.</strong> The unknown-name decision is precomputed on the node:
+rejected (<code>false</code>), tested in place (a type-only leaf), dispatched on its plan (any other schema) or allowed. An
+object whose only keyword is <code>additionalProperties</code> (importmap's maps of strings) skips the name lookup
+altogether.</li>
+<li><strong>Plans for nodes whose only keyword is a typed <code>anyOf</code>/<code>oneOf</code>.</strong> <code>NodePlan.TypeUnion</code> and
+<code>NodePlan.TypeDispatch</code>: the child entry tests the mask or reads the table and jumps to the branch's plan without
+the general node prologue (semantic-release's <code>plugins</code> items are a string or an array, its <code>branches</code> a string,
+an object or an array). A branch on an in-place cycle keeps the guarded general edge.</li>
+<li><strong>String enums in place; lookups without copying.</strong> A property entry or fused application whose child is a leaf
+with only an <code>enum</code> of strings carries the string set and is tested in the loops without a call, from the raw
+text when unescaped. <code>Utf8NameMap</code> gained a tagged lookup, so discriminator values and fused value tests no longer
+copy the value behind a tag byte.</li>
+</ol>
+<p>A fourth change was tried and reverted: allocating the dynamic-scope stack only for programs that need it made the
+<code>stackalloc</code> conditional, which turns it into a variable-size <code>localloc</code> and changed the entry method's frame setup
+on every call; the small-instance corpora (cypress, aws-cdk, nest-cli, stale, yamllint) lost 7 to 16% from that
+alone. The scope stack is back to a fixed frame slot.</p>
+<p>Two lessons from measuring this round. First, the box's page-reporting order had been raised from 5 to 10 during
+the afternoon, which halved guest throughput for everything (identical binaries ran 1.7 to 2.0 times slower on the
+timer-free <code>quick</code> mode, and the overhead column read 19 ns instead of 13.5); every measurement taken in that state
+was discarded once the cause was found, and the setting is back at the default. Second, the first cool-box run
+showed a group of small corpora 10 to 30% slower: the child dispatch is inlined into every loop, and the two new
+plan cases plus the inlined string-set test had doubled the strict loop's tier-1 code (3,136 to 6,042 bytes). The
+loop now resolves a property to one mask, set or child and runs one type test and one dispatch, with the new plans
+and the set test out of line (3,259 bytes).</p>
+<p>Measured three-way on the cool box (overhead column 13.4 to 13.9 ns), twice; noise floor 1.02 on the geometric mean
+and up to 10% on a single small corpus:</p>
+<table>
+<thead>
+<tr>
+<th>Corpus</th>
+<th>Before</th>
+<th>After</th>
+<th>After / before (two runs)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>semantic-release</td>
+<td>74 µs</td>
+<td>42 µs</td>
+<td>0.56, 0.57</td>
+</tr>
+<tr>
+<td>importmap</td>
+<td>45 µs</td>
+<td>27 µs</td>
+<td>0.65, 0.54</td>
+</tr>
+<tr>
+<td>fabric-mod</td>
+<td>253 µs</td>
+<td>195 µs</td>
+<td>0.78, 0.74</td>
+</tr>
+<tr>
+<td>dependabot</td>
+<td>210 µs</td>
+<td>165 µs</td>
+<td>0.82, 0.74</td>
+</tr>
+<tr>
+<td>tmuxinator</td>
+<td>36 µs</td>
+<td>28 µs</td>
+<td>0.70, 0.85</td>
+</tr>
+<tr>
+<td>pre-commit-hooks, cql2, stylecop, draft-04, cmake-presets, deno, krakend, pulumi</td>
+<td></td>
+<td></td>
+<td>0.85 to 0.94</td>
+</tr>
+<tr>
+<td>the rest</td>
+<td></td>
+<td></td>
+<td>within the noise</td>
+</tr>
+<tr>
+<td>geometric mean over 37</td>
+<td></td>
+<td></td>
+<td>0.927, 0.917</td>
+</tr>
+</tbody>
+</table>
+<p>Against the same-day Blaze run the geometric mean of our runtime over Blaze is 0.85; semantic-release is level with
+Blaze (0.93) and importmap at 1.9 from 2.9. helm-chart-lock did not move: its cost is the per-object prologue and
+the per-evaluation entry. A flag-mode entry without the scope buffer and the try/finally followed as its own
+commit and measured neutral to a few percent on the smallest corpora in an alternating A/B (five runs of each
+binary on seven corpora, medians: yamllint 1.02, cypress 0.98, aws-cdk 0.97, cspell 0.92), so the entry is not
+where the remaining fixed cost lives; the per-object prologue is the open item.</p>
+<p>A third measurement lesson, and the cause of every &quot;idle guest but slow&quot; episode of the day: Windows core parking.
+The host's power scheme had <code>CPMINCORES</code> at 4, which parked sixteen of the twenty logical processors, all six
+P-cores among them, and left the VM and everything else on four E-core threads; from inside the guest that showed
+as a run queue in the fifties with 96% idle, the same loop taking 0.12 to 0.89 s depending on which guest CPU it
+landed on, and pinning inside the guest changing nothing, since guest CPU numbers have no fixed relation to host
+cores. Setting <code>CPMINCORES</code> to 100 (<code>powercfg /setacvalueindex SCHEME_CURRENT SUB_PROCESSOR CPMINCORES 100</code>, the
+same for DC, then <code>/setactive</code>) is the fix; pinning the <code>vmmemWSL</code> process to the P-cores is a useful belt and
+braces. The harness's overhead column (13.5 ns healthy) is the check to run before trusting any measurement, and
+alternating the two binaries in short runs and comparing medians is the protocol for changes of a few percent.</p>
+<h2 id="the-strict-loops-instruction-budget-2026-09-11-late">The strict loop's instruction budget (2026-09-11, late)</h2>
+<p>With the entry shown not to be the fixed cost, the tier-1 disassembly of the strict loop was read instruction by
+instruction: about 150 per property with some twenty bounds checks, against the thirty or forty Blaze needs. Four
+of the sources were avoidable without giving up the checks that matter: the value row's header (type and row count)
+was read once for the type test and again to step to the next row; the name row's location and length were two
+checked reads where one 8-byte read serves; the key compare did six checked slice reads on spans already known to
+hold <code>n</code> bytes; and each property's entry was a class reached through a checked array load, then five field loads.
+One commit takes all four: <code>IDocumentAccess.TokenTypeAndNext</code>, a single read for the name row, the key words read
+through refs, and a value-type <code>StrictEntry</code> table parallel to the name map (<code>Utf8NameMap.TryGetIndex</code>).</p>
+<p>Alternating A/B (five runs of each binary, medians): helm-chart-lock 0.85, ui5 and krakend 0.89, vercel 0.91,
+aws-cdk 0.92, cypress, cspell, jsconfig and stale 0.95; yamllint, whose root has one named property and whose
+instances have none of it, unchanged within noise. The same recipe then went into the object plan's loop and the
+fused loop (one header read, the type handed to the inline tests, the object plan resolving through the value table
+by index): against the round's baseline, draft-04 0.77 (its root sits on the object plan for its dependencies),
+helm-chart-lock and ui5 0.88, aws-cdk 0.91, cypress 0.94, krakend 0.95. yamllint alone reads about 1.10 in both
+A/B runs, some two nanoseconds per instance on a corpus whose properties are all unknown names; the loop's
+prologue for that case is the one place left to look at there.</p>
+<p>The bounds checks were then sorted by what makes them unnecessary. Five per property are guaranteed by the name
+map's construction (the position read is within a key of the bucket's length, the table has 256 entries indexed by
+a byte, and the key, chain and entry indices came out of that table) and now go through refs; the two row reads are
+covered by one check per object that the container's rows exist; the slice into the text keeps its check, since its
+location and length come from the rows. The type test became a bit test: a strict entry carries the token types it
+accepts as one bit per token type, and only the integer case still calls out. The escaped-name lookup moved out of
+line to relieve register pressure. Against the round baseline, medians of five: helm-chart-lock 0.83 (from 0.88),
+importmap 0.55 (0.59), krakend 0.89 (0.95), stale 0.90 (0.95), vercel 0.93 (0.98), with the rest unchanged. The
+residual against Blaze on these corpora is now structural (span headers, the per-child plan switch, the JIT's
+register allocation across a large method) rather than incidental. The object plan's loop and the fused loop got
+the same treatment afterwards, worth cypress 0.84 (from 0.93) and draft-04 0.75 (0.76), the rest within noise.</p>
+<p>Two more from the profiles taken after that. The name map's lookup had stopped inlining: the bucket struct was
+nested in the generic map and the unchecked accessor was a generic method on it, so the shared instantiation needed
+a runtime type lookup and both showed up as frames. With the bucket and the accessor moved to non-generic types the
+loops inline them again, which was yamllint's unexplained 10% (0.98 from 1.10) and a further 4 to 8% on
+helm-chart-lock, stale, aws-cdk and jsconfig. And krakend spent a quarter of its time in a regex: it applies
+<code>^[@$_#]</code> as a pattern property on 128 objects, so every property of every instance went through a UTF-16 transcode
+and a regex scan. A start-anchored class sequence without a closing anchor now matches as a prefix (fixed counts
+before the last atom, the last atom's minimum count), and krakend halved (0.50 from 0.88).</p>
+<p>A last pass on the call chain between the entry and the loops: forward chains collapse to their final target at
+compile time and the entry skips a forwarding root; the strict object plan is entered in one call with its prologue
+and loop in one method; the array-items loop steps siblings unchecked after one range check. Inlining the flag-mode
+entry into <code>Evaluate</code> was tried and cost yamllint 15%, so the entry stays a call. importmap 0.49 (from 0.54), the
+rest within noise.</p>
+<p>The table taken on the healthy box before that last pass (both engines back to back, overhead column 14.6 ns): our
+runtime is fastest on 27 of 37 corpora, geometric mean 0.80 against Blaze; krakend, cypress and dependabot moved to
+our side, and only ui5-manifest (1.08), dependabot (1.11), cspell (1.13) and jsconfig (1.17) sit above parity
+besides the four structural ones: importmap 2.0, ui5 2.2, yamllint 2.3, helm-chart-lock 2.9.</p>
+<p>Two more after that table. An object with no named properties takes a map loop that reads no names: every value
+takes the additional-properties resolution (importmap 0.39 from 0.49). And on the fused plan an entry's keyed value
+tests merge into one map from tagged value to the mask of tests that allow it, so a property under several
+conditions is looked up once, while the string-set membership test takes the token type its caller already has and
+reads the value's row once (ui5 0.84 from 0.88, cspell 0.92 from 1.05, draft-04 0.74 from 0.79, jsconfig 0.88 from
+0.92).</p>
+<p>Two from the shapes of individual corpora. cspell tests its word lists with <code>^(?=[^SET]+$)(?=(.*\\w)).+$</code> (and the
+<code>!+</code> variant): a lookahead that excludes a set and one that demands a word character. That form is recognised and
+matched as one scan of the bytes, none in the set or a line terminator, at least one ASCII word character; cspell
+0.73 (from 0.92). And jsconfig's root is a oneOf of three object branches over disjoint property names, which the
+general path applied one branch at a time, each with its own pass over the instance. An unconditional oneOf or
+anyOf whose branches carry object keywords now fuses into the object pass as a contributor group: each branch is a
+contributor tagged with its group and branch index; a failed application marks the branch in a per-group bitmask
+instead of failing the object; and the group is decided after the pass, any survivor for anyOf, exactly one for
+oneOf. The group is refused when the keyword has a discriminator or type union (the general path decides those from
+one property), when the node tracks coverage, and when a property name would receive an expensive child, anything
+but a leaf, a simple array or a boolean schema, from more than one branch. That last guard came from cmake-presets,
+whose eight discriminated branches share names with large children and went 5.8 times slower on an unguarded
+version: applying every branch to every property is only cheaper than one branch at a time when the branches
+mostly reject by name. jsconfig 0.68 (from 0.88), cmake-presets unchanged.</p>
+<p>Three more tries on ui5 before the one that paid. Its root and the levels of its type-and-version decision tree
+were on the general path. Their conditions key on <code>null</code> in places, which is now a keyable value for fused
+conditions and discriminators, but that moved only two nodes: the real blocker is size, since fusing the root would
+take about 80 contributors against the limit of 64. Raising the limit fused the root and made ui5 1.5 times slower
+than the baseline: the fused pass applies every property to every gated application, and against a tree that
+mostly rejects by one property's value that costs more than walking one branch. A shallow variant, folding a
+branch whose subtree does not fit as an opaque child evaluated after the pass, was 1.17: the pass itself, with its
+deferrals and condition tables, costs more per level than the general path's one-property <code>if</code> scan. What was
+expensive was not the scans but the general path's in-place bookkeeping around each level, about a fifth of ui5's
+time in <code>EvalInPlace</code>, <code>EvalIf</code>, <code>EvalCore</code> and their callees. A node whose keywords are type and object keywords
+plus if/then/else, and which does not fuse, now takes a conditional plan: the strict or object plan for its own
+keywords, then the <code>if</code> and the branch it selects dispatched as plain children. ui5 0.72 of the round baseline
+(from 0.87), openapi 0.82 (from 0.93). A pattern of the form <code>^ES5|ES6|ES7$</code>, whose anchors bind to the first and
+last alternatives only, also matches without the regex now; jsconfig did not move, so that pattern is not on its
+hot path.</p>
+<p>The entry's fixed cost, read from the tier-1 listing of the public <code>Evaluate</code>: it inlined the whole flag-mode
+entry and with it the general entry's stack scope buffer, which the frame then zeroed on every call (the public
+class lacked <code>SkipLocalsInit</code>), and the evaluation state was built as a zeroed temporary and copied over. The
+general entry is no longer inlined, the class skips locals init, and the state is written field by field in place:
+frame 376 to 232 bytes, entry code 3061 to 2827 bytes, yamllint 0.91 of the round baseline. What remains at the
+entry is the document type check, the raw-access construction and the memory-to-span conversion for the UTF-8
+text, about twenty instructions. And ui5's bundle arrays carry <code>additionalProperties: false</code>, which applies to
+nothing on an array; plan selection now treats object keywords under a type that excludes objects, and array
+keywords under a type that excludes arrays, as absent, so those nodes take the array-items plan (ui5's general-path
+nodes 7 to 4, ui5-manifest 0.85 from 0.88).</p>
+<p>The table at the end of the day, on a healthy box (overhead 14.0 ns, both engines back to back): fastest on 30 of
+37, geometric mean 0.77. Since the morning table jsconfig (1.17 to 0.82), cspell (1.13 to 0.84) and dependabot
+(1.11 to 0.94) crossed to our side; importmap 2.02 to 1.57, ui5 2.15 to 1.72 and helm-chart-lock 2.86 to 2.38 on
+the structural gaps; yamllint 2.33. One correction to the morning table: its babelrc row (0.46) was an artefact of
+the harness's per-corpus overhead probe spiking during that run, so too much was subtracted; babelrc is about 52
+µs on every build including the round baseline, 1.13 against Blaze, and the morning's honest count was 26 of 37.
+Two lessons about measurement from the day. The host, a laptop, drops to a lower performance mode when its screen
+sleeps even while work continues over a remote session; both engines run about 35% slower and stay there, and
+nothing shows from inside the VM (no steal, same clocksource, same speed on every vCPU). Only alternating A/B pairs
+are trustworthy in that state; the overhead column of the harness's output (13 to 15 ns healthy) is the tell. And a
+single spike of that probe zeroes or inflates one corpus's row, so every row's overhead column is checked before
+a table is read.</p>
+<p>Two more on the fixed costs, taken on the healthy box. The parsed document now keeps the array behind its UTF-8
+memory when there is one and hands the evaluator its rows and text as spans in one call, so the entry no longer
+converts a memory to a span per evaluation; and the node a root's flag-mode evaluation enters is computed with the
+forwards instead of resolved on every call. And a strict-object child whose type admits objects, reached from a
+loop that already holds the value's token type, is entered at its loop directly: no second token-type read, no type
+test, no plan dispatch. yamllint 0.79 of the round baseline (from 0.91), helm-chart-lock 0.72 (from 0.78), the rest
+within noise. What remains at the entry is the document type test and the raw-access construction; what remains per
+object is the loop itself, whose per-property step is about the same work as Blaze's. The remaining gap on the
+small-instance corpora is the difference between a generic loop and a per-schema compiled closure, and the two
+core-library options that would narrow it further (a pre-classified name word per row, or short keys inline in the
+row) were judged not worth their parse-time cost, which every instance pays.</p>
+<p>A measurement correction that moves the table more than any single optimisation did. The Blaze CLI is run once
+per corpus; our harness ran every corpus in one process, and the JIT's dynamic profile (block layout, guarded
+devirtualisation) is shaped by whichever corpora ran first, so a small corpus late in the order reads 10 to 30%
+slower than on its own: yamllint 2.69 in the one-process take against 1.90 in its own process on the same build
+and box, jshintrc 0.28 against 0.22, importmap 1.63 against 1.40, code-climate 0.90 against 0.75. Blaze's figures
+do not move between the two. The table is now taken one process per corpus on both sides: at commit 4e98a9c on
+the healthy box (overhead 14.6 ns), fastest on 31 of 37, geometric mean 0.73; the remaining losses are
+helm-chart-lock 2.32, yamllint 1.90, ui5 1.69, importmap 1.40, ui5-manifest 1.14 and stale 1.02, with babelrc at
+0.97.</p>
+<h2 id="cold-start-against-blaze-2026-09-12">Cold start against Blaze (2026-09-12)</h2>
+<p>Wall time of one fresh process per corpus (median of three, pinned, healthy box): read the schema, compile it or
+load a program image, read the instances file, validate every instance once, which is what the Blaze CLI's
+<code>validate --fast</code> does. The harness's <code>cold</code> command and the <code>Corvus.Text.Json.RuntimeEvaluator.ColdRunner</code> project
+run it; the runner publishes as ReadyToRun or native AOT (<code>-p:ColdAot=true</code>). Under the JIT the run is dominated by
+start-up and JIT time: about 55 ms to reach <code>main</code> and 60 to 140 ms of JIT for the compiler before any validation,
+so every corpus takes 120 to 320 ms against Blaze's 6 to 250 ms (median ratio 14.6, geojson and openapi the only
+ones within 3x). ReadyToRun removes most of the JIT but keeps the runtime start-up: 42 to 330 ms (median ratio
+4.4). Native AOT removes both: 3.6 to 155 ms, faster than Blaze on all 37 corpora, median ratio 0.50, totals 445 ms
+against 1024 ms. Under AOT the schema compile is 0.1 to 3 ms for all but two corpora (krakend 6 ms and ui5-manifest
+10 ms, their regular expressions), and loading a program image instead brings ui5-manifest from 26 to 15 ms; the
+validation pass, parse included, is 0.5 to 12 ms for all but geojson (108 ms, large instances) and openapi (28 ms).
+Blaze's own compile is what costs it on the large schemas: ui5-manifest 165 ms and openapi 100 ms end to end.
+(The end-of-day tables that supersede this one are in <a href="/Corvus.JsonSchema/pr-preview/pr-959/docs/runtime-evaluator-measurements.html">RuntimeEvaluatorMeasurements.md</a>.)</p>
+<p>Blaze's compile can be measured on its own through its <code>compile --fast --minify</code> command (wall time in a fresh
+process less the 2.3 ms of a bare <code>--version</code>; it includes writing the template as JSON, so it slightly overstates).
+Medians over the corpora: Blaze 2.9 ms, ours under native AOT 0.34 ms, a ratio of 0.11; the large schemas are where
+it tells, ui5-manifest 207 ms against 9.9, krakend 64 against 6.3, ui5 39 against 3.0, cmake-presets 24 against 1.7.
+Blaze's templates are big (ui5-manifest's is 41 MB of JSON, cql2's 5.5 MB), so its <code>validate --template</code>, the
+analogue of our program image, is no faster than compiling on those: parsing the template costs what the compile
+did. Precompiled cold start like for like (Blaze <code>validate --template</code> against our AOT runner loading an image):
+medians 9.8 ms against 4.7 ms, a ratio of 0.49, ours faster on all 37.</p>
+<p>The warm measurement under the same three builds (the runner's <code>warm</code> command, one process per corpus, fresh Blaze
+run): the JIT's tier-1 code is fastest on 30 of 37 at a geometric mean of 0.75 against Blaze; ReadyToRun 23 of 37
+at 0.87; native AOT 23 of 37 at 0.88, about 17% behind the JIT at the median. The machine's instruction set instead
+of the x64 baseline moves AOT by 2 to 4%, so the difference is dynamic PGO (guarded devirtualisation and
+profile-driven layout), which native AOT lacks. The trade is therefore start-up against steady state: native AOT
+starts in 4 to 25 ms where the JIT takes 120 to 320 ms, and settles 15 to 20% slower per evaluation. Table:
+the end-of-day table in <a href="/Corvus.JsonSchema/pr-preview/pr-959/docs/runtime-evaluator-measurements.html">RuntimeEvaluatorMeasurements.md</a>.</p>
+<h2 id="regular-expressions-without-a-regex-2026-09-12-late">Regular expressions without a regex (2026-09-12, late)</h2>
+<p>Native AOT has no compiled regular expressions, so every <code>pattern</code> the matcher kinds did not cover ran in the
+interpreter there, and the harness's <code>patterns</code> command counted 68 such pattern nodes across the corpora (335 in
+all). The matcher's special kinds are replaced by one general form. A pattern is alternatives of atom sequences,
+each anchored where its own <code>^</code> and <code>$</code> say, so <code>^a|b|c$</code> anchors only its first alternative at the start and its
+last at the end, and unanchored ones search (with a vectorised start when the first atom is one to three ASCII
+bytes). A sequence qualifies when every variable atom but the last is followed by atoms that admit none of its
+characters, up to the first that must consume something, so its greedy run ends exactly where the regex's would;
+the atoms after the last variable one are fixed and are matched from the end. Groups of alternatives, optional
+groups and small fixed repeats flatten into whole alternatives. Classes gained negation, <code>\d \w \s</code> and their
+negations with ECMA-262's ASCII semantics (plus the non-ASCII members of <code>\s</code>, kept exactly), and literals outside
+ASCII such as <code>µ</code>. A separated-list kind takes <code>^item(sep item)*$</code> and <code>^(item sep)*item$</code> when the separator
+starts with a character the item's variable atom does not admit, with a different first or last item allowed. The
+agreement test checks every pattern, the corpus ones included, against the translated regex on every input.
+Regex-backed nodes fall from 68 to 8, the eight being backtracking shapes (<code>[a-z]+[a-z0-9]+</code>, a dot after a
+variable atom, semver) and a lookahead. Under AOT cspell, krakend, ui5-manifest and unreal-engine-uproject are 20
+to 25% faster; under the JIT, where the regex was compiled, they are 3 to 10% faster; jsconfig, whose one
+alternation was a compiled literal search, sits 10% slower under AOT than the interpreted regex did and unchanged
+under the JIT.</p>
+<h2 id="what-a-readytorun-library-and-a-static-profile-would-give-2026-09-12-late">What a ReadyToRun library and a static profile would give (2026-09-12, late)</h2>
+<p>Two experiments with the cold runner, one process per corpus, medians over the corpora. Published framework-
+dependent with <code>PublishReadyToRun</code> (the runner and the library precompiled; the shared framework already is) the
+cold run drops from 107 ms to 53, from an image 79 to 41, the compile step 56 to 24 ms and the first validation
+pass 20 to 3.9 ms: shipping the library precompiled would halve cold start for every consumer under the JIT. The
+steady-state measurement under the precompiled library read slower on the smallest corpora (yamllint 1.49x,
+helm-chart-lock 1.20x), which says the precompiled code had not been replaced by tier-1 code with a profile within
+the warm-up; to be settled before it is recommended.</p>
+<p>And the AOT gap is dynamic PGO: with <code>DOTNET_TieredPGO=0</code> the JIT's steady state is 1.14x slower at the median and
+native AOT is 1.12x, matching corpus by corpus (cspell 1.33 against 1.31, draft-04 1.27 against 1.33, helm-chart-lock
+1.16 against 1.16, yamllint 0.98 against 1.06). ILC takes a static profile (<code>--mibc</code>, the <code>MibcFile</code> item), which
+is how the framework itself is profile-optimised under AOT, so a profile of the corpus run through dotnet-pgo, built
+from the runtime repository since it is not shipped, should recover most of the gap; the listings with and without
+PGO (<code>DOTNET_JitDisasm</code> on the hot loops) are the map for the alternative of making the devirtualised sites direct
+in source.</p>
+<p>dotnet-pgo, built from the runtime repository (<code>src/coreclr/tools/dotnet-pgo</code>; the <code>clr.tools</code> restore needs the
+NuGet audit off for an unrelated project), turns an instrumented trace of the warm run over every corpus
+(<code>DOTNET_TieredPGO=1</code>, a call-count threshold of 10,000 so methods stay instrumented long enough, <code>ReadyToRun=0</code>,
+the runtime provider at keyword 0x1E000080018 level 5) into a MIBC of 2,656 methods of ours. Published with it
+(<code>MibcFile</code>, the runner's <code>ColdMibc</code> property; <code>measure.sh profile</code>), native AOT goes from 1.15x the JIT's steady
+state to 1.08x at the median: importmap 1.18 to 0.93, openapi 1.10 to 0.98, yamllint 1.09 to 1.01, jsconfig 1.27
+to 1.07, cspell 1.30 to 1.11, draft-04 1.33 to 1.16. Half the gap, from a four-second trace; the rest is what the
+static profile cannot express or ILC does not use.</p>
+<p>The ReadyToRun anomaly is real and has a different cause than expected. Forcing the JIT on the precompiled build
+(<code>DOTNET_ReadyToRun=0</code>) restores parity (yamllint 20.7 to 14.9 µs, helm-chart-lock 247 to 205). The tier listing
+(<code>DOTNET_JitDisasmSummary</code>) shows the hot methods are re-jitted from the precompiled code, through an instrumented
+tier 1 to tier 1, but the tier-1 code they end with is a quarter of the size the pure-JIT process produces
+(EvaluateFlagRaw 585 bytes against 2,420): on that path the JIT does not inline the loops into the entry, and a
+profile given to crossgen (<code>PublishReadyToRunPgoFiles</code>) changes nothing since the runtime re-jits anyway. What
+works is partial precompilation: a profile of the compile phase alone (a trace of <code>prepare</code>, which compiles every
+schema and writes its image: 1,679 of our methods, none of the evaluation loops) and crossgen's <code>--partial</code>
+(the runner's <code>ColdPartial</code> property), so the compiler is precompiled and the evaluation loops stay with the JIT.
+Cold start keeps most of the full-R2R gain (yamllint 50 ms against 49 and 84 for the JIT, helm-chart-lock 55
+against 54 and 89, ui5 113 against 88 and 159) and steady state is at JIT parity on every corpus (yamllint 14.2
+against 14.0 µs, ui5 421 against 423). That is the form to ship for JIT consumers; <code>measure.sh profile</code> produces
+both profiles.</p>
+<p>What the profile buys, in source terms, was tried and rejected. Without a profile the public <code>Evaluate</code> is a
+37-byte stub: it calls <code>Evaluator.Evaluate</code>, which calls the flag-mode entry, which dispatches the root plan, three
+calls per evaluation; with the profile the JIT inlines the chain into a 2.9 KB entry. Marking the first two links
+<code>AggressiveInlining</code> reproduces that chain everywhere, and native AOT gains 4% from it at the median (yamllint 8%),
+less than the MIBC gives (1.08 to 1.04 against the JIT). But the JIT with the attribute loses what it had gained on
+yamllint (0.79 of the pre-round baseline to 1.01): forcing the inline at the entry changes what the JIT then
+inlines inside it, the same lesson as an earlier attempt to inline the flag-mode entry. The attributes are not in
+the tree; the static profile is the route for AOT and the JIT keeps its own judgement.</p>
+<h2 id="the-entry-floor-2026-09-13">The entry floor (2026-09-13)</h2>
+<p>What an evaluation costs before it reads the instance, measured by putting synthetic schemas over yamllint's own
+instances (984 objects of about 350 bytes): the empty schema <code>{}</code>, <code>{&quot;type&quot;:&quot;object&quot;}</code>, and yamllint's root reduced
+to its one property. On the harness (per evaluation, clock overhead subtracted): the empty schema 7.5 ns, the type
+test free, the one-property root 13 ns, yamllint itself 13.5. Blaze on the same files: the empty schema under 1
+ns, the one-property root 6.9, yamllint 7.3. So the fixed cost of entering an evaluation was more than half of
+yamllint, the whole of importmap's gap and a third of helm-chart-lock's, and Blaze pays next to nothing for it: a
+compiled closure with no state to build.</p>
+<p>The tier-1 listing of the public <code>Evaluate</code> on the empty schema, about 110 instructions, showed where the 26 cycles
+went: a five-load dependent chain to reach the node the evaluation enters (program, its node array, the root, its
+flag entry, that node's plan), two bounds checks on the way, the raw-access object built from the document and
+copied into the state beside the spans, the spans spilled to the stack and reloaded, and the depth limit and entry
+resource each fetched through two more loads. The evaluator now caches the entry data (node array, entry node, its
+resource, the depth limit) in one immutable object per <code>JsonSchemaEvaluator</code>, published atomically and rebuilt
+when the program's node array changes (an entry point added), so the chain is two loads; the document writes its
+spans and its text memory straight into the state's fields through <code>out</code> parameters; and the raw-access object is
+gone from the state, the one memory-returning accessor slicing the text memory itself. The frame went from 216 to
+168 bytes (five zeroing stores from seven). Alternating A/B against the committed head: the empty schema 0.68
+(8.7 to 5.9 ns), yamllint 0.89, importmap 0.96, jsconfig 0.97, aws-cdk 0.98, cypress 0.99, the large corpora
+within noise. What remains of the floor is the frame (six callee-saved registers, the zeroing of a state that
+holds eight GC references), the exact-type checks of the document, and the state's field writes; a smaller state
+would need the scope and collector fields moved behind an indirection the general path pays for, which was not
+worth it for another nanosecond.</p>
+<h2 id="names-as-words-and-three-loops-without-a-profile-2026-09-13">Names as words, and three loops without a profile (2026-09-13)</h2>
+<p>The strict loop's tier-1 code on helm-chart-lock spends about 78 instructions on a type-only property row, 35 of
+them in the name lookup: the byte-position table needs a length-bucket load, a table load, the key with its null
+check and a two-word equality. Most property names are short. The name map now keeps its keys of at most eight
+bytes as zero-padded words grouped by length; a name of that length, with eight bytes of text readable from its
+start (checked once), is read as one word, masked to its length and compared against the keys of that length,
+three at most (a length with more keeps the table: comparing words in turn loses to it, which the first take
+showed on draft-04 and its seven seven-byte keywords). Both object loops take the name's location and length from
+its row through a document-access member and hand the map the text span, so nothing is sliced before the lookup.
+Against the head: aws-cdk 0.88, helm-chart-lock 0.90, importmap 0.92, pulumi 0.94.</p>
+<p>The first take also left draft-04 at 1.14, and the JIT's compilation summary said why. Three evaluation methods
+were compiled &quot;Tier-0 switched to FullOpts&quot;: a method with a loop and a stackalloc cannot be entered mid-way by
+on-stack replacement, so the JIT compiles it fully optimised at once and never instruments it. The general object
+loop, the fused object and the in-place anyOf had run all along without the profile-driven inlining every other
+loop is tuned by, and any code added to them was compiled by heuristics alone. The object loop and the anyOf now
+take their inline bitset from a fixed-size struct local (a span over it, no stackalloc); the fused object's seven
+buffers are allocated by a wrapper without a loop and passed in. With both changes, against the head: draft-04
+0.94, cspell 0.89, ui5-manifest 0.93, jsconfig 0.96, cmake-presets 0.97, the rest within noise. One reading to
+know about: in a process that runs many corpora, the newly profiled loops take a profile shaped by the corpora
+that ran first (geojson read 1.15 in the shared-process A/B and 1.00 in its own), which is the per-process
+measurement rule again.</p>
+<p>The same word comparison serves enum string values: the string-set match takes the value's location and length
+from its row and hands the map the text span, so an enum value of up to eight bytes (<code>&quot;3.0&quot;</code>, <code>&quot;library&quot;</code>) is one
+masked word against the keys of its length. Against the head: krakend 0.95, jsconfig 0.97, stale and ui5-manifest
+0.98, ui5 0.99. The fixed-size bitset struct's span is <code>MemoryMarshal.CreateSpan</code> on .NET and a span over the
+local's address on netstandard 2.0, which lacks it: the first gate caught that.</p>
+<h2 id="where-ui5-spends-its-time-2026-09-13">Where ui5 spends its time (2026-09-13)</h2>
+<p>A CPU sampling profile of the ui5 loop (dotnet-trace with the sample profiler, <code>report topN</code>) put 38% of the run in
+the fused object's core, 17% in the conditional plan and 8% in the string-set match. ui5's root is a chain of
+if/then/else keyed on specVersion, kind and type, and the fused objects that its branches become are large: the
+harness's plan dump now prints their sizes, and the biggest has 48 contributing branches, 16 conditions and, for
+nine property names, 74 applications: one per branch that defines the name, up to sixteen for <code>kind</code>. The deferred
+pass then applied every active branch's test to the value, and most of those tests are the same test. Applications
+with the same resolution (the same type-only test, the same string set, the same child node) are now coalesced at
+compile time into one that lists its branches and is applied once when any of them is active (a branch of an
+alternative group only merges within its branch, and the primary is an unconditional branch when there is one,
+so the row loop applies it straight away); the fused row loop also looks names up by word. ui5 0.87 against the
+head, the rest unchanged in their own processes.</p>
+<p>What the dump also showed is that many applications stay distinct because they point at different nodes with
+the same content: ui5 restates <code>kind</code>'s enum and <code>customConfiguration</code>'s schema at every version level of the
+chain as separate subschemas. The compiler can point flag-mode references at one representative of each set of
+identical subschemas (same resource, identical source text, no identifier keyword inside; collecting mode keeps
+every node with its own location and paths, and a program with a dynamic scope is left alone since a node's
+meaning there can depend on the path that reached it). On ui5's biggest fused node that takes the applications
+from 74 to 57; the copies that remain distinct differ in content from version to version. Measured on this corpus
+it is neutral at steady state (ui5 within 1% of the fused change alone, the rest within noise in their own
+processes) and free at compile time (the comparison is by resource and text length first, then bytes), so it is
+on by default (<code>CORVUS_RT_NO_CANONICAL=1</code> turns it off) for the schemas that restate subschemas more than ui5 does.
+It runs in both builds of the compiler: the runtime one reads a subschema's text from the parsed document's rows,
+the source generator's (which compiles through System.Text.Json and embeds the image, whose flag-mode references
+are stored as computed) through the element's raw text, so generated models get the same graph.</p>
+<h2 id="the-four-axis-table-2026-09-12-evening">The four-axis table (2026-09-12, evening)</h2>
+<p>One table, eight implementations by 37 corpora, four measures each (the current version of it, with a fifth measure, is <a href="/Corvus.JsonSchema/pr-preview/pr-959/docs/runtime-evaluator-measurements.html">RuntimeEvaluatorMeasurements.md</a>).
+The rows pair Blaze's two paths (compile at run time; validate from its precompiled template) with ours: the runtime
+evaluator compiling at run time, the runtime evaluator loading a program image, and the shipping generator's
+strongly typed models, each under the JIT and as native AOT. The measures: cold (one fresh process, prepare, read
+the instances, validate each once), warm (per evaluation at steady state), compile (the preparation step alone;
+for generated code, its first evaluation), and memory as bytes allocated per evaluation at steady state (the
+harness's <code>GC.GetAllocatedBytesForCurrentThread</code> over the timed loop; Blaze's binary carries its own allocator, so
+its column is not measurable from outside, though its heap is flat across benchmark loops). Medians over the corpora:</p>
+<table>
+<thead>
+<tr>
+<th>implementation</th>
+<th style="text-align: right;">cold</th>
+<th style="text-align: right;">warm</th>
+<th style="text-align: right;">compile</th>
+<th style="text-align: right;">memory</th>
+<th style="text-align: right;">warm faster than Blaze on</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>blaze-compile</td>
+<td style="text-align: right;">10.5 ms</td>
+<td style="text-align: right;">118 µs</td>
+<td style="text-align: right;">2.9 ms</td>
+<td style="text-align: right;">n/a</td>
+<td style="text-align: right;"></td>
+</tr>
+<tr>
+<td>blaze-template</td>
+<td style="text-align: right;">9.8 ms</td>
+<td style="text-align: right;">118 µs</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">n/a</td>
+<td style="text-align: right;"></td>
+</tr>
+<tr>
+<td>corvus-runtime-jit</td>
+<td style="text-align: right;">154 ms</td>
+<td style="text-align: right;">80 µs</td>
+<td style="text-align: right;">77 ms</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">31 of 37</td>
+</tr>
+<tr>
+<td>corvus-runtime-aot</td>
+<td style="text-align: right;">5.2 ms</td>
+<td style="text-align: right;">108 µs</td>
+<td style="text-align: right;">0.34 ms</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">22 of 37</td>
+</tr>
+<tr>
+<td>corvus-image-jit</td>
+<td style="text-align: right;">108 ms</td>
+<td style="text-align: right;">80 µs</td>
+<td style="text-align: right;">26 ms</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">31 of 37</td>
+</tr>
+<tr>
+<td>corvus-image-aot</td>
+<td style="text-align: right;">4.7 ms</td>
+<td style="text-align: right;">108 µs</td>
+<td style="text-align: right;">0.16 ms</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">22 of 37</td>
+</tr>
+<tr>
+<td>corvus-generated-jit</td>
+<td style="text-align: right;">124 ms</td>
+<td style="text-align: right;">82 µs</td>
+<td style="text-align: right;">38 ms</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">30 of 37</td>
+</tr>
+<tr>
+<td>corvus-generated-aot</td>
+<td style="text-align: right;">5.2 ms</td>
+<td style="text-align: right;">91 µs</td>
+<td style="text-align: right;">0.17 ms</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">25 of 37</td>
+</tr>
+<tr>
+<td>corvus-generated-previous-jit</td>
+<td style="text-align: right;">132 ms</td>
+<td style="text-align: right;">352 µs</td>
+<td style="text-align: right;">26 ms</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">1 of 37</td>
+</tr>
+<tr>
+<td>corvus-generated-previous-aot</td>
+<td style="text-align: right;">6.7 ms</td>
+<td style="text-align: right;">513 µs</td>
+<td style="text-align: right;">0.07 ms</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 of 37</td>
+</tr>
+</tbody>
+</table>
+<p>The generated rows needed a correction on the way. The benchmark model projects' C/ directories dated from August,
+before Stage 0, so their first measurement was of the previous generator's per-keyword validation code: 4.4 times
+slower than the runtime evaluator at steady state (352 against 80 µs at the median), behind Blaze on 36 of 37,
+and a profile of helm-chart-lock showed why: document access through the <code>IJsonDocument</code> interface per row, a
+generic property-matcher map running as the shared instantiation and returning a delegate per property, a
+<code>JsonSchemaContext</code> pushed and committed per child, and type-only leaves evaluated through a call. Those rows are
+kept as <code>corvus-generated-previous</code>. Regenerated with the current generator (<code>Regenerate-CurrentBenchmarks.ps1</code>),
+every model embeds a precompiled program image and validates through the runtime evaluator, and measures as the
+runtime rows plus a thin call: 82 µs under the JIT, 91 µs under AOT, ahead of Blaze on 30 and 25 of 37, agreeing
+with the runtime evaluator on every instance. What the table settles: the runtime evaluator, and now the generated
+code, allocate nothing per evaluation on any corpus; and under AOT every Corvus row starts in 5 ms against Blaze's
+10.</p>
+<p>A measurement lesson from the generated rows: their first take subtracted a clock overhead read at 140 to 480 ns
+instead of 14 on twelve corpora, a tier-0 loop in a method run once, which took a 100 µs corpus down to 25. The
+clock's cost is now taken from a warmed non-generic loop as the minimum over several batches, in both measurements.</p>
+<p>The table taken again at the end of the day with everything above in place (<code>tools/measure.sh profile</code>, <code>publish</code>,
+<code>warm</code>, <code>cold</code>, <code>table</code>; commit c44ee2b's matcher, the partial ReadyToRun with the compile-phase profile as the
+R2R row, the static profile in the native AOT rows; overhead 12.6 to 14.4 ns on every row). Medians over the corpora:</p>
+<table>
+<thead>
+<tr>
+<th>implementation</th>
+<th style="text-align: right;">cold</th>
+<th style="text-align: right;">warm</th>
+<th style="text-align: right;">compile</th>
+<th style="text-align: right;">memory</th>
+<th style="text-align: right;">warm faster than Blaze on</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>blaze-compile</td>
+<td style="text-align: right;">10.2 ms</td>
+<td style="text-align: right;">115 µs</td>
+<td style="text-align: right;">2.9 ms</td>
+<td style="text-align: right;">n/a</td>
+<td style="text-align: right;"></td>
+</tr>
+<tr>
+<td>blaze-template</td>
+<td style="text-align: right;">10.2 ms</td>
+<td style="text-align: right;">115 µs</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">n/a</td>
+<td style="text-align: right;"></td>
+</tr>
+<tr>
+<td>corvus-runtime-jit</td>
+<td style="text-align: right;">150 ms</td>
+<td style="text-align: right;">76 µs</td>
+<td style="text-align: right;">77 ms</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">31 of 37</td>
+</tr>
+<tr>
+<td>corvus-runtime-r2r (partial, profiled)</td>
+<td style="text-align: right;">60 ms</td>
+<td style="text-align: right;">79 µs</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">30 of 37</td>
+</tr>
+<tr>
+<td>corvus-runtime-aot (profiled)</td>
+<td style="text-align: right;">4.7 ms</td>
+<td style="text-align: right;">90 µs</td>
+<td style="text-align: right;">0.36 ms</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">29 of 37</td>
+</tr>
+<tr>
+<td>corvus-image-jit</td>
+<td style="text-align: right;">125 ms</td>
+<td style="text-align: right;">76 µs</td>
+<td style="text-align: right;">25 ms</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">31 of 37</td>
+</tr>
+<tr>
+<td>corvus-image-aot (profiled)</td>
+<td style="text-align: right;">4.4 ms</td>
+<td style="text-align: right;">90 µs</td>
+<td style="text-align: right;">0.15 ms</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">29 of 37</td>
+</tr>
+<tr>
+<td>corvus-generated-jit</td>
+<td style="text-align: right;">119 ms</td>
+<td style="text-align: right;">80 µs</td>
+<td style="text-align: right;">42 ms</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">31 of 37</td>
+</tr>
+<tr>
+<td>corvus-generated-aot (profiled)</td>
+<td style="text-align: right;">5.1 ms</td>
+<td style="text-align: right;">84 µs</td>
+<td style="text-align: right;">0.18 ms</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">28 of 37</td>
+</tr>
+</tbody>
+</table>
+<p>Against the morning's table the native AOT rows went from 108 to 90 µs (the matcher and the profile; 1.09 of the
+JIT at the median, from 1.35) and from 22 to 29 corpora ahead of Blaze, the generated AOT row from 91 to 84 and
+25 to 28; the JIT rows gained the matcher's share (80 to 76 µs) and the partial ReadyToRun row is new: cold start
+at 60 ms against the JIT's 150, steady state at 1.00 of the JIT's. The runtime evaluator under the JIT is fastest
+on 31 of 37 at a geometric mean of 0.75 of Blaze; the four structural losses remain (helm-chart-lock 2.4,
+yamllint 2.2, ui5 1.75, importmap 1.4), and the two others (ui5-manifest, stale) are within a few percent.</p>
+<p>The table again at the end of 2026-09-13, after the entry floor, the word lookups, the profile for the three
+loops, the fused coalescing and the canonical references (the profile re-recorded on this code; overhead 12.9 to
+14.1 ns; the table with the parse-and-evaluate measure added later that day is <a href="/Corvus.JsonSchema/pr-preview/pr-959/docs/runtime-evaluator-measurements.html">RuntimeEvaluatorMeasurements.md</a>):</p>
+<table>
+<thead>
+<tr>
+<th>implementation</th>
+<th style="text-align: right;">cold</th>
+<th style="text-align: right;">warm</th>
+<th style="text-align: right;">compile</th>
+<th style="text-align: right;">memory</th>
+<th style="text-align: right;">warm faster than Blaze on</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>blaze-compile</td>
+<td style="text-align: right;">10.1 ms</td>
+<td style="text-align: right;">116 µs</td>
+<td style="text-align: right;">2.9 ms</td>
+<td style="text-align: right;">n/a</td>
+<td style="text-align: right;"></td>
+</tr>
+<tr>
+<td>blaze-template</td>
+<td style="text-align: right;">9.7 ms</td>
+<td style="text-align: right;">116 µs</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">n/a</td>
+<td style="text-align: right;"></td>
+</tr>
+<tr>
+<td>corvus-runtime-jit</td>
+<td style="text-align: right;">150 ms</td>
+<td style="text-align: right;">77 µs</td>
+<td style="text-align: right;">82 ms</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">31 of 37</td>
+</tr>
+<tr>
+<td>corvus-runtime-r2r (partial, profiled)</td>
+<td style="text-align: right;">53 ms</td>
+<td style="text-align: right;">79 µs</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">30 of 37</td>
+</tr>
+<tr>
+<td>corvus-runtime-aot (profiled)</td>
+<td style="text-align: right;">4.5 ms</td>
+<td style="text-align: right;">86 µs</td>
+<td style="text-align: right;">0.34 ms</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">30 of 37</td>
+</tr>
+<tr>
+<td>corvus-image-jit</td>
+<td style="text-align: right;">122 ms</td>
+<td style="text-align: right;">77 µs</td>
+<td style="text-align: right;">25 ms</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">31 of 37</td>
+</tr>
+<tr>
+<td>corvus-image-aot (profiled)</td>
+<td style="text-align: right;">4.3 ms</td>
+<td style="text-align: right;">86 µs</td>
+<td style="text-align: right;">0.14 ms</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">30 of 37</td>
+</tr>
+<tr>
+<td>corvus-generated-jit</td>
+<td style="text-align: right;">115 ms</td>
+<td style="text-align: right;">76 µs</td>
+<td style="text-align: right;">36 ms</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">30 of 37</td>
+</tr>
+<tr>
+<td>corvus-generated-aot (profiled)</td>
+<td style="text-align: right;">4.8 ms</td>
+<td style="text-align: right;">85 µs</td>
+<td style="text-align: right;">0.18 ms</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">28 of 37</td>
+</tr>
+</tbody>
+</table>
+<p>Corpus by corpus against the previous evening's table the runtime evaluator is at 0.94 under the JIT and 0.93
+under native AOT at the median (yamllint, krakend, aws-cdk, clang-format and deno 0.86 to 0.88 under the JIT;
+aws-cdk, lerna, jsconfig, yamllint and importmap 0.77 to 0.80 under AOT), the generated models at 0.92 and 0.94;
+native AOT is 1.06 of the JIT at the median, from 1.09, the loops that now take a profile taking the static one
+too. Against Blaze: fastest on 31 of 37, geometric mean 0.72 (from 0.75); the structural losses are
+helm-chart-lock 2.3, yamllint 1.9, ui5 1.6 (from 1.75), importmap 1.4, with ui5-manifest and stale at parity.</p>
+<h2 id="the-parse-step-2026-09-13">The parse step (2026-09-13)</h2>
+<p>The four-axis table now carries a fifth measure, parse and evaluate once: one pass over the corpus parsing and
+evaluating every instance once at steady state, the shape of a service validating each request (<code>measure.sh warm</code>
+runs it for every build through the harness's <code>parseeval</code>; Blaze's figure is a differential of its CLI, ten copies
+of the corpus minus one instance, less the CLI's per-instance bookkeeping of 1.25 µs measured with trivial
+instances against the empty schema). Medians over the 37 corpora on 2026-09-13: Blaze 2.74 ms per corpus pass,
+Corvus runtime JIT 484 µs, ReadyToRun 505, native AOT 550, generated models 484 and 551; Corvus faster on 37 of
+37 at a geometric mean of 0.18, 5.5 to 6x per document. The rest of this section is the parse step on its own.</p>
+<p>The warm figures on both sides time evaluation of an already parsed instance; parsing is only inside the cold
+figures. Measured on its own (<code>harness parse &lt;loops&gt; &lt;corpus...&gt;</code>: each instance parsed and disposed, the sum over
+instances of the per-instance best of three batches; Blaze by difference, the CLI validating ten copies of the
+corpus against the empty schema minus one instance, per instance, which also carries the CLI's per-instance
+bookkeeping, about 2 µs), nanoseconds per instance:</p>
+<table>
+<thead>
+<tr>
+<th>corpus</th>
+<th style="text-align: right;">bytes/instance</th>
+<th style="text-align: right;">Blaze parse</th>
+<th style="text-align: right;">Corvus parse</th>
+<th style="text-align: right;">Blaze warm eval</th>
+<th style="text-align: right;">Corvus warm eval</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>jsconfig</td>
+<td style="text-align: right;">177</td>
+<td style="text-align: right;">2,040</td>
+<td style="text-align: right;">224</td>
+<td style="text-align: right;">195</td>
+<td style="text-align: right;">155</td>
+</tr>
+<tr>
+<td>helm-chart-lock</td>
+<td style="text-align: right;">342</td>
+<td style="text-align: right;">2,830</td>
+<td style="text-align: right;">221</td>
+<td style="text-align: right;">22</td>
+<td style="text-align: right;">52</td>
+</tr>
+<tr>
+<td>yamllint</td>
+<td style="text-align: right;">352</td>
+<td style="text-align: right;">4,070</td>
+<td style="text-align: right;">357</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">13</td>
+</tr>
+<tr>
+<td>importmap</td>
+<td style="text-align: right;">630</td>
+<td style="text-align: right;">3,110</td>
+<td style="text-align: right;">253</td>
+<td style="text-align: right;">17</td>
+<td style="text-align: right;">24</td>
+</tr>
+<tr>
+<td>cspell</td>
+<td style="text-align: right;">820</td>
+<td style="text-align: right;">6,120</td>
+<td style="text-align: right;">710</td>
+<td style="text-align: right;">268</td>
+<td style="text-align: right;">190</td>
+</tr>
+<tr>
+<td>ui5</td>
+<td style="text-align: right;">487</td>
+<td style="text-align: right;">4,250</td>
+<td style="text-align: right;">442</td>
+<td style="text-align: right;">262</td>
+<td style="text-align: right;">390</td>
+</tr>
+<tr>
+<td>cmake-presets</td>
+<td style="text-align: right;">2,721</td>
+<td style="text-align: right;">15,500</td>
+<td style="text-align: right;">1,760</td>
+<td style="text-align: right;">1,970</td>
+<td style="text-align: right;">1,700</td>
+</tr>
+<tr>
+<td>draft-04</td>
+<td style="text-align: right;">12,658</td>
+<td style="text-align: right;">58,600</td>
+<td style="text-align: right;">7,150</td>
+<td style="text-align: right;">5,900</td>
+<td style="text-align: right;">3,300</td>
+</tr>
+<tr>
+<td>geojson</td>
+<td style="text-align: right;">52,434</td>
+<td style="text-align: right;">360,000</td>
+<td style="text-align: right;">99,200</td>
+<td style="text-align: right;">13,700</td>
+<td style="text-align: right;">10,600</td>
+</tr>
+<tr>
+<td>openapi</td>
+<td style="text-align: right;">166,132</td>
+<td style="text-align: right;">636,000</td>
+<td style="text-align: right;">96,900</td>
+<td style="text-align: right;">58,500</td>
+<td style="text-align: right;">28,600</td>
+</tr>
+</tbody>
+</table>
+<p>Per kilobyte Corvus parses at 0.4 to 1.3 µs and Blaze at 4 to 12 (the
+small end inflated by the CLI's bookkeeping; the large instances, where parsing dominates, put it at 4 to 7),
+which is the price of the document model Blaze validates against: a tree of nodes with hashed property maps,
+built at parse time. That is where the parse-time options this project rejected would have taken us. For a
+workload that parses each document once and validates it once, the four warm losses reverse: helm-chart-lock's
+2.3x becomes 2,850 against 270 ns per document, yamllint's 1.9x 4,080 against 370, and the large corpora are 3
+to 6 times faster end to end. (A first take of this table had yamllint's parse at 862 ns: the parser is a large
+method that reaches its final tier only after sustained work, and three warm-up passes had left its escapes path
+at tier 0. The parse measurements warm for a second, pause past the tiering delay and warm again, as the
+evaluation ones do.)</p>
+<h2 id="against-blaze-2026-09-11">Against Blaze (2026-09-11)</h2>
+<p>Blaze is run through the Sourcemeta <code>jsonschema</code> CLI release binary (<code>benchmarks/.../tools/blaze-compare.py</code>, see
+its README) over the same 37 corpora with <code>--fast</code>. The CLI's benchmark mode times every evaluation of every
+instance on its own, subtracts the clock's overhead, and reports the mean over the loop with no warm-up; the
+harness's <code>blazebasis &lt;loop&gt;</code> command does exactly the same after a JIT warm-up, so the two are compared like for
+like: 200 loops each, pinned, idle box. Geometric mean of our runtime over Blaze: 1.32. We are faster on jshintrc
+(0.48), clang-format (0.53), omnisharp (0.59), cql2 (0.65), openapi (0.72), draft-04 (0.80), ansible-meta (0.85),
+fabric-mod, pre-commit-hooks, geojson and deno (0.90 to 0.96); within 40% on sixteen more; and behind by two to
+five times on helm-chart-lock (5.2), importmap (4.8), yamllint (4.1), ui5 (2.7), semantic-release (2.2) and krakend
+(2.0). At 20 loops Blaze's means on the small corpora carry its cold first iterations, so more loops favour it there:
+yamllint fell from 14 to 7.6 µs between 20 and 200 loops while ours held at 31.</p>
+<p>The corpora where Blaze leads most are the ones with the smallest instances: yamllint is 984 instances at 8 ns each
+in Blaze against 32 ns in ours, helm-chart-lock 3,888 at 26 ns against 136 ns. That is fixed cost per evaluation
+and per object, not any keyword, which is consistent with the profiles and puts the object-plan inner loop and the
+per-evaluation entry path first among the remaining optimisations. The shipping generated code is 3.9 behind Blaze on
+the same geometric mean.</p>
+<h2 id="open-decisions">Open decisions</h2>
+<ul>
+<li>Resolved: the evaluator is part of <code>Corvus.Text.Json</code> (namespace <code>Corvus.Text.Json.RuntimeEvaluator</code>, sources under
+<code>Corvus/Text/Json/RuntimeEvaluator</code>). Generated code needs no reference beyond <code>Corvus.Text.Json</code>, and code generated
+before the merge keeps compiling because the namespace and public API are unchanged; only <code>internal</code> details moved.</li>
+</ul>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-959/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-959/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-959/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-959/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-959/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-959/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>
