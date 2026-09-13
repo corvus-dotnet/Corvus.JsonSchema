@@ -98,7 +98,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/1a6b992ce6b77b209f4a9a6740f0e6a668e5cd15/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.cs#L33">ParsedJsonDocument.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/145eefd89b79242dc0a36a906fbc7d1cf68cdb88/src/Corvus.Text.Json/Corvus/Text/Json/Document/ParsedJsonDocument.cs#L34">ParsedJsonDocument.cs</a></p>
 <p>Represents the structure of a JSON value in a lightweight, read-only form.</p>
 <pre><code class="language-csharp">public sealed class ParsedJsonDocument&lt;T&gt; : JsonDocument, IJsonDocument, IDisposable
     where T : struct, IJsonElement&lt;T&gt;
@@ -173,6 +173,14 @@
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-parsedjsondocument-t.stringconstant.html#stringconstant-byte">StringConstant(byte[])</a> <code>static</code></td>
 <td>Creates a constant string instance that does not require disposal.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-parsedjsondocument-t.trygetrawaccess.html#trygetrawaccess-rawdocumentaccess">TryGetRawAccess(RawDocumentAccess)</a></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-parsedjsondocument-t.trygetrawspans.html#trygetrawspans-readonlymemory-byte-readonlyspan-byte-readonlyspan-byte">TryGetRawSpans(ReadOnlyMemory&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;)</a></td>
+<td></td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-parsedjsondocument-t.tryparsevalue.html#tryparsevalue-utf8jsonreader-parsedjsondocument-t">TryParseValue(Utf8JsonReader, ParsedJsonDocument&lt;T&gt;)</a> <code>static</code></td>

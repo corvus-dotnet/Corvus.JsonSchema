@@ -163,10 +163,22 @@
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/docs/toon.html">TOON Converter</a>
                             </li>
                             <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator.html">Runtime Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/docs/consuming-generated-types.html">Consuming Generated Types</a>
                             </li>
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/docs/performance-techniques.html">Performance Techniques</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/standalone-evaluator-internals.html">Schema Evaluation Program Internals</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator-precompilation.html">Runtime Evaluator Engineering Notes</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator-measurements.html">Runtime Evaluator Measurements</a>
                             </li>
                 </ul>
             </div>
@@ -344,7 +356,7 @@
                         </a>
                         <a class="card card--link" href="/Corvus.JsonSchema/docs/validator.html">
                             <h3 class="card__title">Dynamic Schema Validation</h3>
-                            <p class="card__body">Dynamically load, compile, and validate JSON documents against JSON Schema at runtime using Roslyn. Ideal for schema registries, configuration validation, and user-supplied schemas.</p>
+                            <p class="card__body">Dynamically load, compile, and validate JSON documents against JSON Schema at runtime with the runtime evaluator, ready in milliseconds with no code generation or Roslyn. Ideal for schema registries, configuration validation, and user-supplied schemas.</p>
                         </a>
                         <a class="card card--link" href="/Corvus.JsonSchema/docs/migrating-from-v4-to-v5.html">
                             <h3 class="card__title">Migrating from V4</h3>
@@ -410,6 +422,10 @@
                             <h3 class="card__title">TOON Converter</h3>
                             <p class="card__body">Convert between JSON and TOON (Token-Oriented Object Notation), an LLM-friendly JSON representation, with high-performance UTF-8-first converters for Corvus.Text.Json and System.Text.Json.</p>
                         </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/docs/runtime-evaluator.html">
+                            <h3 class="card__title">Runtime Evaluator</h3>
+                            <p class="card__body">How the runtime JSON Schema evaluator compiles a schema into plans and evaluates them without allocation, and what to expect when publishing an application framework-dependent, ReadyToRun or native AOT.</p>
+                        </a>
                         <a class="card card--link" href="/Corvus.JsonSchema/docs/consuming-generated-types.html">
                             <h3 class="card__title">Consuming Generated Types</h3>
                             <p class="card__body">Read and build Corvus&#x27;s generated strongly-typed models in your own code, allocation-free and without composing or parsing JSON strings. Covers Undefined-not-null optional properties, typed accessors and unions, the From and Build factories, the JsonElement.Source ref-safety trap, and cross-assembly type identity.</p>
@@ -417,6 +433,18 @@
                         <a class="card card--link" href="/Corvus.JsonSchema/docs/performance-techniques.html">
                             <h3 class="card__title">Performance Techniques</h3>
                             <p class="card__body">The UTF-8, byte-native, and allocation model that underpins Corvus.Text.Json&#x27;s high-performance JSON handling.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/docs/standalone-evaluator-internals.html">
+                            <h3 class="card__title">Schema Evaluation Program Internals</h3>
+                            <p class="card__body">The shape of the schema evaluation program that generated types and standalone evaluators carry, and how it is compiled and run by the runtime evaluator.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/docs/runtime-evaluator-precompilation.html">
+                            <h3 class="card__title">Runtime Evaluator Engineering Notes</h3>
+                            <p class="card__body">Round-by-round engineering notes for the runtime evaluator: program images, plans, the name lookups, cold start, native AOT profiles, and every measurement against Blaze that decided each step.</p>
+                        </a>
+                        <a class="card card--link" href="/Corvus.JsonSchema/docs/runtime-evaluator-measurements.html">
+                            <h3 class="card__title">Runtime Evaluator Measurements</h3>
+                            <p class="card__body">The end-of-branch measurement tables for the runtime evaluator against Blaze over the 37 Sourcemeta corpora: cold start, warm evaluation, parse and evaluate once, compile and allocations.</p>
                         </a>
             </div>
         </div>

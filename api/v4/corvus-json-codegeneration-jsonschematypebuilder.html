@@ -120,6 +120,23 @@
 </tr>
 </tbody>
 </table>
+<h2 id="properties">Properties</h2>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-jsonschematypebuilder.locatedschemas.html">LocatedSchemas</a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1"><code>IEnumerable&lt;LocatedSchema&gt;</code></a></td>
+<td>Gets every schema the builder has registered, including those that reduce away during type generation.</td>
+</tr>
+</tbody>
+</table>
 <h2 id="methods">Methods</h2>
 <table>
 <thead>
@@ -144,6 +161,10 @@
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-jsonschematypebuilder.generatecodeusing.html">GenerateCodeUsing</a></td>
 <td>Generates code for the types using the given language provider.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-jsonschematypebuilder.getschemadocuments.html#getschemadocuments">GetSchemaDocuments()</a></td>
+<td>Gets the text of every root document the builder has loaded, keyed by root document URI, in first-seen order.</td>
 </tr>
 </tbody>
 </table>

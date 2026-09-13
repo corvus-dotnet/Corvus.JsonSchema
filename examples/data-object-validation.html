@@ -173,10 +173,22 @@
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/docs/toon.html">TOON Converter</a>
                             </li>
                             <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator.html">Runtime Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/docs/consuming-generated-types.html">Consuming Generated Types</a>
                             </li>
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/docs/performance-techniques.html">Performance Techniques</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/standalone-evaluator-internals.html">Schema Evaluation Program Internals</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator-precompilation.html">Runtime Evaluator Engineering Notes</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/docs/runtime-evaluator-measurements.html">Runtime Evaluator Measurements</a>
                             </li>
                 </ul>
             </div>
@@ -403,7 +415,7 @@
 <p>These can be used as &quot;specialized&quot; versions of the primitive types on which they are based.</p>
 <p>Because <code>Height</code> has <code>&quot;format&quot;: &quot;double&quot;</code>, an implicit conversion to <code>double</code> is available (no explicit cast needed).</p>
 <h2 id="generated-code-usage">Generated Code Usage</h2>
-<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/1a6b992ce6b77b209f4a9a6740f0e6a668e5cd15/docs/ExampleRecipes/002-DataObjectValidation/Program.cs">Example code</a></p>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/145eefd89b79242dc0a36a906fbc7d1cf68cdb88/docs/ExampleRecipes/002-DataObjectValidation/Program.cs">Example code</a></p>
 <h3 id="creating-an-instance-with-invalid-data">Creating an instance with invalid data</h3>
 <pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
 using var personDoc = PersonConstraints.CreateBuilder(

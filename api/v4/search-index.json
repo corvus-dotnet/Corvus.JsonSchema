@@ -19124,6 +19124,27 @@
     "Body": "A keyword with reference semantics."
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-ischemaprogramlanguageprovider.html",
+    "Title": "ISchemaProgramLanguageProvider",
+    "Description": "A language provider that emits a schema evaluation program alongside the generated types, and therefore needs the text of every schema document the type builder loaded.",
+    "Keywords": "ISchemaProgramLanguageProvider interface Corvus.Json.CodeGeneration",
+    "Body": "A language provider that emits a schema evaluation program alongside the generated types, and therefore needs the text of every schema document the type builder loaded.\nSetSchemaDocuments: Supplies the schema documents and the fallback vocabulary before code generation.\nSetProgramRootTypes: Sets the root type declarations code is being generated for, before [`GenerateCodeFor`](/api/v4/corvus-json-codegeneration-ilanguageprovider.generatecodefor.html) is called. A root that reduces to another type (for example a root that is nothing but a `$ref`) is still the schema the generated type stands for, so its location, not the reduced target's, is the type's entry point."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-ischemaprogramlanguageprovider.setschemadocuments.html",
+    "Title": "ISchemaProgramLanguageProvider.SetSchemaDocuments",
+    "Description": "Supplies the schema documents and the fallback vocabulary before code generation.",
+    "Keywords": "ISchemaProgramLanguageProvider SetSchemaDocuments method Corvus.Json.CodeGeneration",
+    "Body": "Supplies the schema documents and the fallback vocabulary before code generation."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-ischemaprogramlanguageprovider.setprogramroottypes.html",
+    "Title": "ISchemaProgramLanguageProvider.SetProgramRootTypes",
+    "Description": "Sets the root type declarations code is being generated for, before [`GenerateCodeFor`](/api/v4/corvus-json-codegeneration-ilanguageprovider.generatecodefor.html) is called. A root that reduces to another type (for example a root that is nothing but a `$ref`) is still the schema the generated type stands for, so its location, not the reduced target's, is the type's entry point.",
+    "Keywords": "ISchemaProgramLanguageProvider SetProgramRootTypes method Corvus.Json.CodeGeneration",
+    "Body": "Sets the root type declarations code is being generated for, before [`GenerateCodeFor`](/api/v4/corvus-json-codegeneration-ilanguageprovider.generatecodefor.html) is called. A root that reduces to another type (for example a root that is nothing but a `$ref`) is still the schema the generated type stands for, so its location, not the reduced target's, is the type's entry point."
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-ischemaregistrationcustomkeyword.html",
     "Title": "ISchemaRegistrationCustomKeyword",
     "Description": "A custom keyword that is applied during schema registration phase.",
@@ -19513,7 +19534,7 @@
     "Title": "JsonSchemaRegistry",
     "Description": "Loads and manages schema with Vocabulary support.",
     "Keywords": "JsonSchemaRegistry class Corvus.Json.CodeGeneration",
-    "Body": "Loads and manages schema with Vocabulary support.\nInitializes a new instance of the [`JsonSchemaRegistry`](/api/v4/corvus-json-codegeneration-jsonschemaregistry.html) class.\nRegisterBaseSchema: Walk a JSON document and build a schema map.\nAddSchemaAndSubschema: Adds the subschema to the registry at the given location, and walks the schema, adding its subschema relative to that location.\nTryGetLocatedSchema: Tries to get the located schema for the given scope.\nResolveBaseReference: Resolves a base reference, registering any newly discovered schema if necessary.\nTryAddLocatedSchema: Add a located schema to the registry.\nTryAddLocatedSchema: Add a located schema to the registry.\nTryGetSchemaAndBaseForLocation: Try to get the subschema and its base schema for a given location.\nResolveBaseReference: Try to resolve the reference to a base.\nEnterScope: Enter a new scope."
+    "Body": "Loads and manages schema with Vocabulary support.\nInitializes a new instance of the [`JsonSchemaRegistry`](/api/v4/corvus-json-codegeneration-jsonschemaregistry.html) class.\nLocatedSchemas: Gets every schema registered so far, including those that reduce away during type generation.\nRegisterBaseSchema: Walk a JSON document and build a schema map.\nAddSchemaAndSubschema: Adds the subschema to the registry at the given location, and walks the schema, adding its subschema relative to that location.\nTryGetLocatedSchema: Tries to get the located schema for the given scope.\nResolveBaseReference: Resolves a base reference, registering any newly discovered schema if necessary.\nTryAddLocatedSchema: Add a located schema to the registry.\nTryAddLocatedSchema: Add a located schema to the registry.\nTryGetSchemaAndBaseForLocation: Try to get the subschema and its base schema for a given location.\nResolveBaseReference: Try to resolve the reference to a base.\nEnterScope: Enter a new scope."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-jsonschemaregistry.ctor.html",
@@ -19521,6 +19542,13 @@
     "Description": "Loads and manages schema with Vocabulary support.",
     "Keywords": "JsonSchemaRegistry constructor new Corvus.Json.CodeGeneration",
     "Body": "Loads and manages schema with Vocabulary support."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-jsonschemaregistry.locatedschemas.html",
+    "Title": "JsonSchemaRegistry.LocatedSchemas",
+    "Description": "Gets every schema registered so far, including those that reduce away during type generation.",
+    "Keywords": "JsonSchemaRegistry LocatedSchemas property Corvus.Json.CodeGeneration",
+    "Body": "Gets every schema registered so far, including those that reduce away during type generation."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-jsonschemaregistry.registerbaseschema.html",
@@ -19667,7 +19695,7 @@
     "Title": "JsonSchemaTypeBuilder",
     "Description": "Walks a JSON schema and builds a type map of it.",
     "Keywords": "JsonSchemaTypeBuilder class Corvus.Json.CodeGeneration",
-    "Body": "Walks a JSON schema and builds a type map of it.\nInitializes a new instance of the [`JsonSchemaTypeBuilder`](/api/v4/corvus-json-codegeneration-jsonschematypebuilder.html) class.\nAddTypeDeclarations: Walk a JSON document to build a JSON schema type declaration.\nAddTypeDeclarationsAsync: Walk a JSON document to build a JSON schema type declaration.\nGenerateCodeUsing: Generates code for the types using the given language provider.\nGenerateCodeUsing: Generates code for the types using the given language provider.\nAddDocument: Add a document to the document resolver for the type builder."
+    "Body": "Walks a JSON schema and builds a type map of it.\nInitializes a new instance of the [`JsonSchemaTypeBuilder`](/api/v4/corvus-json-codegeneration-jsonschematypebuilder.html) class.\nLocatedSchemas: Gets every schema the builder has registered, including those that reduce away during type generation.\nAddTypeDeclarations: Walk a JSON document to build a JSON schema type declaration.\nAddTypeDeclarationsAsync: Walk a JSON document to build a JSON schema type declaration.\nGenerateCodeUsing: Generates code for the types using the given language provider.\nGenerateCodeUsing: Generates code for the types using the given language provider.\nGetSchemaDocuments: Gets the text of every root document the builder has loaded, keyed by root document URI, in first-seen order.\nAddDocument: Add a document to the document resolver for the type builder."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-jsonschematypebuilder.ctor.html",
@@ -19675,6 +19703,13 @@
     "Description": "Walks a JSON schema and builds a type map of it.",
     "Keywords": "JsonSchemaTypeBuilder constructor new Corvus.Json.CodeGeneration",
     "Body": "Walks a JSON schema and builds a type map of it."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-jsonschematypebuilder.locatedschemas.html",
+    "Title": "JsonSchemaTypeBuilder.LocatedSchemas",
+    "Description": "Gets every schema the builder has registered, including those that reduce away during type generation.",
+    "Keywords": "JsonSchemaTypeBuilder LocatedSchemas property Corvus.Json.CodeGeneration",
+    "Body": "Gets every schema the builder has registered, including those that reduce away during type generation."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-jsonschematypebuilder.addtypedeclarations.html",
@@ -19696,6 +19731,13 @@
     "Description": "Generates code for the types using the given language provider.",
     "Keywords": "JsonSchemaTypeBuilder GenerateCodeUsing method Corvus.Json.CodeGeneration",
     "Body": "Generates code for the types using the given language provider. Generates code for the types using the given language provider."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-jsonschematypebuilder.getschemadocuments.html",
+    "Title": "JsonSchemaTypeBuilder.GetSchemaDocuments",
+    "Description": "Gets the text of every root document the builder has loaded, keyed by root document URI, in first-seen order.",
+    "Keywords": "JsonSchemaTypeBuilder GetSchemaDocuments method Corvus.Json.CodeGeneration",
+    "Body": "Gets the text of every root document the builder has loaded, keyed by root document URI, in first-seen order."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v4/corvus-json-codegeneration-jsonschematypebuilder.adddocument.html",

@@ -98,7 +98,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/1a6b992ce6b77b209f4a9a6740f0e6a668e5cd15/src/Corvus.Text.Json/Corvus/Text/Json/Document/Internal/JsonDocument.cs#L34">JsonDocument.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/145eefd89b79242dc0a36a906fbc7d1cf68cdb88/src/Corvus.Text.Json/Corvus/Text/Json/Document/Internal/JsonDocument.cs#L34">JsonDocument.cs</a></p>
 <p>Base class for JSON document implementations providing common functionality for parsing and accessing JSON data.</p>
 <pre><code class="language-csharp">public abstract class JsonDocument
 </code></pre>
@@ -137,6 +137,14 @@
 <tr>
 <td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsondocument.storeprebakedvalue.html#storeprebakedvalue-readonlyspan-byte">StorePrebakedValue(ReadOnlySpan&lt;byte&gt;)</a></td>
 <td>Stores a pre-baked dynamic value in the value buffer and returns its offset. The value must contain the complete encoded representation including the 4-byte header, as produced by the code generato...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsondocument.trygetrawaccess.html#trygetrawaccess-rawdocumentaccess">TryGetRawAccess(RawDocumentAccess)</a></td>
+<td>Tries to get direct access to the document's rows and UTF-8 text for documents whose rows are all local.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsondocument.trygetrawspans.html#trygetrawspans-readonlymemory-byte-readonlyspan-byte-readonlyspan-byte">TryGetRawSpans(ReadOnlyMemory&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;)</a></td>
+<td>Tries to get direct access to the document's rows and UTF-8 text as spans, for documents whose rows are all local: the spans an evaluation reads, built without going through...</td>
 </tr>
 </tbody>
 </table>

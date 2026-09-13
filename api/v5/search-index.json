@@ -3892,6 +3892,20 @@
     "Body": "Write the document into the provided writer as a JSON value."
   },
   {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-parsedjsondocument-t.trygetrawaccess.html",
+    "Title": "ParsedJsonDocument<T>.TryGetRawAccess",
+    "Description": "",
+    "Keywords": "ParsedJsonDocument<T> TryGetRawAccess method Corvus.Text.Json",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-parsedjsondocument-t.trygetrawspans.html",
+    "Title": "ParsedJsonDocument<T>.TryGetRawSpans",
+    "Description": "",
+    "Keywords": "ParsedJsonDocument<T> TryGetRawSpans method Corvus.Text.Json",
+    "Body": ""
+  },
+  {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-parsedjsondocument-t.stringconstant.html",
     "Title": "ParsedJsonDocument<T>.StringConstant",
     "Description": "Creates a constant string instance that does not require disposal.",
@@ -10784,7 +10798,7 @@
     "Title": "JsonDocument",
     "Description": "Base class for JSON document implementations providing common functionality for parsing and accessing JSON data.",
     "Keywords": "JsonDocument class Corvus.Text.Json.Internal",
-    "Body": "Base class for JSON document implementations providing common functionality for parsing and accessing JSON data.\nIsImmutable: Gets a value indicating whether the document is immutable.\nFreeze: Makes the document immutable.\nStorePrebakedValue: Stores a pre-baked dynamic value in the value buffer and returns its offset. The value must contain the complete encoded representation including the 4-byte header, as produced by the code generator for known property names."
+    "Body": "Base class for JSON document implementations providing common functionality for parsing and accessing JSON data.\nIsImmutable: Gets a value indicating whether the document is immutable.\nTryGetRawAccess: Tries to get direct access to the document's rows and UTF-8 text for documents whose rows are all local.\nTryGetRawSpans: Tries to get direct access to the document's rows and UTF-8 text as spans, for documents whose rows are all local: the spans an evaluation reads, built without going through [`ReadOnlyMemory`](https://learn.microsoft.com/dotnet/api/system.readonlymemory-1), and the text as memory for the values it hands on. Valid until the document is disposed or mutated.\nFreeze: Makes the document immutable.\nStorePrebakedValue: Stores a pre-baked dynamic value in the value buffer and returns its offset. The value must contain the complete encoded representation including the 4-byte header, as produced by the code generator for known property names."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsondocument.isimmutable.html",
@@ -10792,6 +10806,20 @@
     "Description": "Gets a value indicating whether the document is immutable.",
     "Keywords": "JsonDocument IsImmutable property Corvus.Text.Json.Internal",
     "Body": "Gets a value indicating whether the document is immutable."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsondocument.trygetrawaccess.html",
+    "Title": "JsonDocument.TryGetRawAccess",
+    "Description": "Tries to get direct access to the document's rows and UTF-8 text for documents whose rows are all local.",
+    "Keywords": "JsonDocument TryGetRawAccess method Corvus.Text.Json.Internal",
+    "Body": "Tries to get direct access to the document's rows and UTF-8 text for documents whose rows are all local."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsondocument.trygetrawspans.html",
+    "Title": "JsonDocument.TryGetRawSpans",
+    "Description": "Tries to get direct access to the document's rows and UTF-8 text as spans, for documents whose rows are all local: the spans an evaluation reads, built without going through [`ReadOnlyMemory`](https://learn.microsoft.com/dotnet/api/system.readonlymemory-1), and the text as memory for the values it hands on. Valid until the document is disposed or mutated.",
+    "Keywords": "JsonDocument TryGetRawSpans method Corvus.Text.Json.Internal",
+    "Body": "Tries to get direct access to the document's rows and UTF-8 text as spans, for documents whose rows are all local: the spans an evaluation reads, built without going through [`ReadOnlyMemory`](https://learn.microsoft.com/dotnet/api/system.readonlymemory-1), and the text as memory for the values it hands on. Valid until the document is disposed or mutated."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsondocument.freeze.html",
@@ -11372,7 +11400,7 @@
     "Title": "JsonSchemaEvaluation",
     "Description": "Support for JSON Schema matching implementations.",
     "Keywords": "JsonSchemaEvaluation class Corvus.Text.Json.Internal",
-    "Body": "Support for JSON Schema matching implementations.\nMatchTypeNull: Matches a JSON token type against the \"null\" type constraint.\nMatchTypeBoolean: Matches a JSON token type against the \"boolean\" type constraint.\nMatchRegularExpression: Validates that a string length equals the given value.\nMatchRegularExpression: Validates that a string length equals the given value.\nMatchNoopRegularExpression: Records a successful match for a noop regular expression pattern (one that always matches, such as `.*`).\nMatchNonEmptyRegularExpression: Validates that a string is non-empty, as a replacement for patterns like `.+`.\nMatchPrefixRegularExpression: Validates that a string starts with a literal prefix, as a replacement for patterns like `^prefix`.\nMatchRangeRegularExpression: Validates that a string's Unicode codepoint length is within a range, as a replacement for patterns like `^.{n,m}$`.\nMatchRangeRegularExpression: Validates that a UTF-8 byte span's Unicode codepoint length is within a range. Used for `patternProperties` matching where no context reporting is needed.\nMatchStringConstantValue: Validates that a string equals the given value.\nMatchLengthEquals: Validates that a string length equals the given value.\nMatchLengthNotEquals: Validates that a string length does not equal the given value.\nMatchLengthGreaterThan: Validates that a string length is greater than the given value.\nMatchLengthGreaterThanOrEquals: Validates that a string length is greater than or equal to the given value.\nMatchLengthLessThan: Validates that a string length is less than the given value.\nMatchLengthLessThanOrEquals: Validates that a string length is less than or equal to the given value.\nMatchDate: Validates that a string value conforms to the ISO 8601 date format.\nMatchDateTime: Validates that a string value conforms to the ISO 8601 offset date-time format.\nMatchDuration: Validates that a string value conforms to the ISO 8601 duration format.\nMatchEmail: Validates that a string value is a valid email address format.\nMatchHostname: Validates that a string value is a valid hostname format.\nMatchIdnEmail: Validates that a string value is a valid internationalized domain name (IDN) email address format.\nMatchIdnHostname: Validates that a string value is a valid internationalized domain name (IDN) hostname format.\nMatchIPV4: Validates that a string value is a valid IPv4 address format.\nMatchIPV6: Validates that a string value is a valid IPv6 address format.\nMatchIri: Validates that a string value is a valid Internationalized Resource Identifier (IRI) format.\nMatchIriReference: Validates that a string value is a valid Internationalized Resource Identifier (IRI) reference format.\nMatchJsonPointer: Validates that a string value is a valid JSON Pointer format.\nMatchRegex: Validates that a string value is a valid ECMAScript regular expression format.\nMatchRelativeJsonPointer: Validates that a string value is a valid relative JSON Pointer format.\nMatchTime: Validates that a string value conforms to the ISO 8601 offset time format.\nMatchTypeString: Matches a JSON token type against the string type constraint.\nMatchUri: Validates that a string value is a valid URI format.\nMatchUriReference: Validates that a string value is a valid URI reference format (absolute or relative URI).\nMatchUriTemplate: Validates that a string value is a valid URI template format.\nMatchUuid: Validates that a string value is a valid UUID format.\nMatchBase64String: Validates that a string value is a valid Base64-encoded string.\nMatchJsonContent: Validates that a string value contains valid JSON content.\nMatchBase64Content: Validates that a string value is a valid Base64-encoded JSON document.\nWarnDate: Validates, in warning mode, that a string value is an ISO 8601 date.\nWarnDateTime: Validates, in warning mode, that a string value is an ISO 8601 offset date-time.\nWarnDuration: Validates, in warning mode, that a string value is an ISO 8601 duration.\nWarnEmail: Validates, in warning mode, that a string value is an email address.\nWarnHostname: Validates, in warning mode, that a string value is a hostname.\nWarnIdnEmail: Validates, in warning mode, that a string value is an internationalized (IDN) email address.\nWarnIdnHostname: Validates, in warning mode, that a string value is an internationalized (IDN) hostname.\nWarnIPV4: Validates, in warning mode, that a string value is an IPv4 address.\nWarnIPV6: Validates, in warning mode, that a string value is an IPv6 address.\nWarnIri: Validates, in warning mode, that a string value is an IRI.\nWarnIriReference: Validates, in warning mode, that a string value is an IRI reference.\nWarnJsonPointer: Validates, in warning mode, that a string value is a JSON Pointer.\nWarnRegex: Validates, in warning mode, that a string value is an ECMAScript regular expression.\nWarnRelativeJsonPointer: Validates, in warning mode, that a string value is a relative JSON Pointer.\nWarnTime: Validates, in warning mode, that a string value is an ISO 8601 offset time.\nWarnUri: Validates, in warning mode, that a string value is a URI.\nWarnUriReference: Validates, in warning mode, that a string value is a URI reference.\nWarnUriTemplate: Validates, in warning mode, that a string value is a URI template.\nWarnUuid: Validates, in warning mode, that a string value is a UUID.\nWarnBase64String: Validates, in warning mode, that a string value is a Base64-encoded string.\nWarnJsonContent: Validates, in warning mode, that a string value is valid JSON content.\nWarnBase64Content: Validates, in warning mode, that a string value is a Base64-encoded JSON document.\nSchemaLocationForIndexedKeyword: Creates a schema location for an indexed keyword by appending the index to the base location.\nSchemaLocationForIndexedKeywordWithDependency: Creates a schema location for an indexed keyword by appending the index to the base location and dependency.\nTryCopyMessage: Tries to copy a message to the specified buffer.\nTryCopyPath: Tries to copy the path to the output buffer.\nExpectedType: Tries to write a message indicating the expected type for a value.\nExpectedMultipleOfDivisor: Tries to write a message indicating the expected type for a value.\nIgnoredUnrecognizedFormat: Tries to write a message indicating that the format was not recognized.\nIgnoredFormatNotAsserted: Tries to write a message indicating that the format was not asserted.\nMatchTypeArray: Matches a JSON token type against the \"array\" type constraint.\nSchemaLocationForItemIndex: Writes the schema location for an item at a specific index in an array.\nExpectedItemCountEqualsValue: Tries to write a message indicating the expected value for a item count.\nExpectedItemCountNotEqualsValue: Tries to write a message indicating the expected value for a item count.\nExpectedItemCountGreaterThanValue: Tries to write a message indicating the expected value for a item count.\nExpectedItemCountGreaterThanOrEqualsValue: Tries to write a message indicating the expected value for a item count.\nExpectedItemCountLessThanValue: Tries to write a message indicating the expected value for a item count.\nExpectedItemCountLessThanOrEqualsValue: Tries to write a message indicating the expected value for a item count.\nMatchItemCountEquals: Validates that a item count equals the given value.\nMatchItemCountNotEquals: Validates that a item count does not equal the given value.\nMatchItemCountGreaterThan: Validates that a item count is greater than the given value.\nMatchItemCountGreaterThanOrEquals: Validates that a item count is greater than or equal to the given value.\nMatchItemCountLessThan: Validates that a item count is less than the given value.\nMatchItemCountLessThanOrEquals: Validates that a item count is less than or equal to the given value.\nExpectedContainsCountEqualsValue: Tries to write a message indicating the expected value for a contains count.\nExpectedContainsCountNotEqualsValue: Tries to write a message indicating the expected value for a contains count.\nExpectedContainsCountGreaterThanValue: Tries to write a message indicating the expected value for a contains count.\nExpectedContainsCountGreaterThanOrEqualsValue: Tries to write a message indicating the expected value for a contains count.\nExpectedContainsCountLessThanValue: Tries to write a message indicating the expected value for a contains count.\nExpectedContainsCountLessThanOrEqualsValue: Tries to write a message indicating the expected value for a contains count.\nMatchContainsCountEquals: Validates that a contains count equals the given value.\nMatchContainsCountNotEquals: Validates that a contains count does not equal the given value.\nMatchContainsCountGreaterThan: Validates that a contains count is greater than the given value.\nMatchContainsCountGreaterThanOrEquals: Validates that a contains count is greater than or equal to the given value.\nMatchContainsCountLessThan: Validates that a contains count is less than the given value.\nMatchContainsCountLessThanOrEquals: Validates that a contains count is less than or equal to the given value.\nMatchTypeObject: Matches a JSON token type against the \"object\" type constraint.\nMatchPropertyCountEquals: Validates that a property count equals the given value.\nMatchPropertyCountNotEquals: Validates that a property count does not equal the given value.\nMatchPropertyCountGreaterThan: Validates that a property count is greater than the given value.\nMatchPropertyCountGreaterThanOrEquals: Validates that a property count is greater than or equal to the given value.\nMatchPropertyCountLessThan: Validates that a property count is less than the given value.\nMatchPropertyCountLessThanOrEquals: Validates that a property count is less than or equal to the given value.\nExpectedPropertyCountEqualsValue: Tries to write a message indicating the expected value for a property count.\nExpectedPropertyCountNotEqualsValue: Tries to write a message indicating the expected value for a property count.\nExpectedPropertyCountGreaterThanValue: Tries to write a message indicating the expected value for a property count.\nExpectedPropertyCountGreaterThanOrEqualsValue: Tries to write a message indicating the expected value for a property count.\nExpectedPropertyCountLessThanValue: Tries to write a message indicating the expected value for a property count.\nExpectedPropertyCountLessThanOrEqualsValue: Tries to write a message indicating the expected value for a property count.\nExpectedMatchPatternPropertySchemaValue: Tries to write a message indicating that a property name was intended to match a regular expression.\nExpectedPropertyNameMatchesRegularExpressionValue: Tries to write a message indicating that a property name was intended to match a regular expression.\nExpectedMatchesDependentSchemaValue: Tries to write a message indicating that a value was expected to match a schema because it contained a specific named property.\nRequiredPropertyNotPresent: Creates a message indicating that a required property is not present.\nRequiredPropertyPresent: Creates a message indicating that a required property is present.\nMatchMultipleOf: Matches a JSON number as a multiple of the given divisor.\nMatchEquals: Matches a JSON number equals.\nMatchNotEquals: Matches a JSON number not equals.\nMatchLessThan: Matches a JSON number less than.\nMatchLessThanOrEquals: Matches a JSON number less than or equals.\nMatchGreaterThan: Matches a JSON number greater than.\nMatchGreaterThanOrEquals: Matches a JSON number greater than or equals.\nMatchMultipleOf: Matches a JSON number as a multiple of the given divisor.\nMatchByte: Matches a JSON number against the Byte type constraint, validating it as an 8-bit unsigned integer.\nMatchDecimal: Matches a JSON number against the Decimal type constraint, validating it as a decimal floating-point number.\nMatchDouble: Matches a JSON number against the Double type constraint, validating it as a double-precision floating-point number.\nMatchHalf: Matches a JSON number against the Half type constraint, validating it as a half-precision floating-point number.\nMatchInt128: Matches a JSON number against the Int128 type constraint, validating it as a 128-bit signed integer.\nMatchInt16: Matches a JSON number against the Int16 type constraint, validating it as a 16-bit signed integer.\nMatchInt32: Matches a JSON number against the Int32 type constraint, validating it as a 32-bit signed integer.\nMatchInt64: Matches a JSON number against the Int64 type constraint, validating it as a 64-bit signed integer.\nMatchSByte: Matches a JSON number against the SByte type constraint, validating it as an 8-bit signed integer.\nMatchSingle: Matches a JSON number against the Single type constraint, validating it as a single-precision floating-point number.\nMatchTypeNumber: Matches a JSON token type against the \"number\" type constraint.\nMatchTypeInteger: Matches a JSON token type against the \"number\" type constraint.\nMatchUInt128: Matches a JSON number against the UInt128 type constraint, validating it as a 128-bit unsigned integer.\nMatchUInt16: Matches a JSON number against the UInt16 type constraint, validating it as a 16-bit unsigned integer.\nMatchUInt32: Matches a JSON number against the UInt32 type constraint, validating it as a 32-bit unsigned integer.\nMatchUInt64: Matches a JSON number against the UInt64 type constraint, validating it as a 64-bit unsigned integer."
+    "Body": "Support for JSON Schema matching implementations.\nA message provider runs every time a result is written (every keyword and child context in verbose mode), so fetching the resource string and transcoding it on each call dominated collecting-mode evaluation. The text is resolved for the culture current at first use and then reused for the life of the process.\nMatchTypeNull: Matches a JSON token type against the \"null\" type constraint.\nMatchTypeBoolean: Matches a JSON token type against the \"boolean\" type constraint.\nMatchRegularExpression: Validates that a string length equals the given value.\nMatchRegularExpression: Validates that a string length equals the given value.\nMatchNoopRegularExpression: Records a successful match for a noop regular expression pattern (one that always matches, such as `.*`).\nMatchNonEmptyRegularExpression: Validates that a string is non-empty, as a replacement for patterns like `.+`.\nMatchPrefixRegularExpression: Validates that a string starts with a literal prefix, as a replacement for patterns like `^prefix`.\nMatchRangeRegularExpression: Validates that a string's Unicode codepoint length is within a range, as a replacement for patterns like `^.{n,m}$`.\nMatchRangeRegularExpression: Validates that a UTF-8 byte span's Unicode codepoint length is within a range. Used for `patternProperties` matching where no context reporting is needed.\nMatchStringConstantValue: Validates that a string equals the given value.\nMatchLengthEquals: Validates that a string length equals the given value.\nMatchLengthNotEquals: Validates that a string length does not equal the given value.\nMatchLengthGreaterThan: Validates that a string length is greater than the given value.\nMatchLengthGreaterThanOrEquals: Validates that a string length is greater than or equal to the given value.\nMatchLengthLessThan: Validates that a string length is less than the given value.\nMatchLengthLessThanOrEquals: Validates that a string length is less than or equal to the given value.\nMatchDate: Validates that a string value conforms to the ISO 8601 date format.\nMatchDateTime: Validates that a string value conforms to the ISO 8601 offset date-time format.\nMatchDuration: Validates that a string value conforms to the ISO 8601 duration format.\nMatchEmail: Validates that a string value is a valid email address format.\nMatchHostname: Validates that a string value is a valid hostname format.\nMatchIdnEmail: Validates that a string value is a valid internationalized domain name (IDN) email address format.\nMatchIdnHostname: Validates that a string value is a valid internationalized domain name (IDN) hostname format.\nMatchIPV4: Validates that a string value is a valid IPv4 address format.\nMatchIPV6: Validates that a string value is a valid IPv6 address format.\nMatchIri: Validates that a string value is a valid Internationalized Resource Identifier (IRI) format.\nMatchIriReference: Validates that a string value is a valid Internationalized Resource Identifier (IRI) reference format.\nMatchJsonPointer: Validates that a string value is a valid JSON Pointer format.\nMatchRegex: Validates that a string value is a valid ECMAScript regular expression format.\nMatchRelativeJsonPointer: Validates that a string value is a valid relative JSON Pointer format.\nMatchTime: Validates that a string value conforms to the ISO 8601 offset time format.\nMatchTypeString: Matches a JSON token type against the string type constraint.\nMatchUri: Validates that a string value is a valid URI format.\nMatchUriReference: Validates that a string value is a valid URI reference format (absolute or relative URI).\nMatchUriTemplate: Validates that a string value is a valid URI template format.\nMatchUuid: Validates that a string value is a valid UUID format.\nMatchBase64String: Validates that a string value is a valid Base64-encoded string.\nMatchJsonContent: Validates that a string value contains valid JSON content.\nMatchBase64Content: Validates that a string value is a valid Base64-encoded JSON document.\nWarnDate: Validates, in warning mode, that a string value is an ISO 8601 date.\nWarnDateTime: Validates, in warning mode, that a string value is an ISO 8601 offset date-time.\nWarnDuration: Validates, in warning mode, that a string value is an ISO 8601 duration.\nWarnEmail: Validates, in warning mode, that a string value is an email address.\nWarnHostname: Validates, in warning mode, that a string value is a hostname.\nWarnIdnEmail: Validates, in warning mode, that a string value is an internationalized (IDN) email address.\nWarnIdnHostname: Validates, in warning mode, that a string value is an internationalized (IDN) hostname.\nWarnIPV4: Validates, in warning mode, that a string value is an IPv4 address.\nWarnIPV6: Validates, in warning mode, that a string value is an IPv6 address.\nWarnIri: Validates, in warning mode, that a string value is an IRI.\nWarnIriReference: Validates, in warning mode, that a string value is an IRI reference.\nWarnJsonPointer: Validates, in warning mode, that a string value is a JSON Pointer.\nWarnRegex: Validates, in warning mode, that a string value is an ECMAScript regular expression.\nWarnRelativeJsonPointer: Validates, in warning mode, that a string value is a relative JSON Pointer.\nWarnTime: Validates, in warning mode, that a string value is an ISO 8601 offset time.\nWarnUri: Validates, in warning mode, that a string value is a URI.\nWarnUriReference: Validates, in warning mode, that a string value is a URI reference.\nWarnUriTemplate: Validates, in warning mode, that a string value is a URI template.\nWarnUuid: Validates, in warning mode, that a string value is a UUID.\nWarnBase64String: Validates, in warning mode, that a string value is a Base64-encoded string.\nWarnJsonContent: Validates, in warning mode, that a string value is valid JSON content.\nWarnBase64Content: Validates, in warning mode, that a string value is a Base64-encoded JSON document.\nSchemaLocationForIndexedKeyword: Creates a schema location for an indexed keyword by appending the index to the base location.\nSchemaLocationForIndexedKeywordWithDependency: Creates a schema location for an indexed keyword by appending the index to the base location and dependency.\nTryCopyMessage: Tries to copy a message to the specified buffer.\nTryCopyPath: Tries to copy the path to the output buffer.\nExpectedType: Tries to write a message indicating the expected type for a value.\nExpectedMultipleOfDivisor: Tries to write a message indicating the expected type for a value.\nIgnoredUnrecognizedFormat: Tries to write a message indicating that the format was not recognized.\nIgnoredFormatNotAsserted: Tries to write a message indicating that the format was not asserted.\nMatchTypeArray: Matches a JSON token type against the \"array\" type constraint.\nSchemaLocationForItemIndex: Writes the schema location for an item at a specific index in an array.\nExpectedItemCountEqualsValue: Tries to write a message indicating the expected value for a item count.\nExpectedItemCountNotEqualsValue: Tries to write a message indicating the expected value for a item count.\nExpectedItemCountGreaterThanValue: Tries to write a message indicating the expected value for a item count.\nExpectedItemCountGreaterThanOrEqualsValue: Tries to write a message indicating the expected value for a item count.\nExpectedItemCountLessThanValue: Tries to write a message indicating the expected value for a item count.\nExpectedItemCountLessThanOrEqualsValue: Tries to write a message indicating the expected value for a item count.\nMatchItemCountEquals: Validates that a item count equals the given value.\nMatchItemCountNotEquals: Validates that a item count does not equal the given value.\nMatchItemCountGreaterThan: Validates that a item count is greater than the given value.\nMatchItemCountGreaterThanOrEquals: Validates that a item count is greater than or equal to the given value.\nMatchItemCountLessThan: Validates that a item count is less than the given value.\nMatchItemCountLessThanOrEquals: Validates that a item count is less than or equal to the given value.\nExpectedContainsCountEqualsValue: Tries to write a message indicating the expected value for a contains count.\nExpectedContainsCountNotEqualsValue: Tries to write a message indicating the expected value for a contains count.\nExpectedContainsCountGreaterThanValue: Tries to write a message indicating the expected value for a contains count.\nExpectedContainsCountGreaterThanOrEqualsValue: Tries to write a message indicating the expected value for a contains count.\nExpectedContainsCountLessThanValue: Tries to write a message indicating the expected value for a contains count.\nExpectedContainsCountLessThanOrEqualsValue: Tries to write a message indicating the expected value for a contains count.\nMatchContainsCountEquals: Validates that a contains count equals the given value.\nMatchContainsCountNotEquals: Validates that a contains count does not equal the given value.\nMatchContainsCountGreaterThan: Validates that a contains count is greater than the given value.\nMatchContainsCountGreaterThanOrEquals: Validates that a contains count is greater than or equal to the given value.\nMatchContainsCountLessThan: Validates that a contains count is less than the given value.\nMatchContainsCountLessThanOrEquals: Validates that a contains count is less than or equal to the given value.\nMatchTypeObject: Matches a JSON token type against the \"object\" type constraint.\nMatchPropertyCountEquals: Validates that a property count equals the given value.\nMatchPropertyCountNotEquals: Validates that a property count does not equal the given value.\nMatchPropertyCountGreaterThan: Validates that a property count is greater than the given value.\nMatchPropertyCountGreaterThanOrEquals: Validates that a property count is greater than or equal to the given value.\nMatchPropertyCountLessThan: Validates that a property count is less than the given value.\nMatchPropertyCountLessThanOrEquals: Validates that a property count is less than or equal to the given value.\nExpectedPropertyCountEqualsValue: Tries to write a message indicating the expected value for a property count.\nExpectedPropertyCountNotEqualsValue: Tries to write a message indicating the expected value for a property count.\nExpectedPropertyCountGreaterThanValue: Tries to write a message indicating the expected value for a property count.\nExpectedPropertyCountGreaterThanOrEqualsValue: Tries to write a message indicating the expected value for a property count.\nExpectedPropertyCountLessThanValue: Tries to write a message indicating the expected value for a property count.\nExpectedPropertyCountLessThanOrEqualsValue: Tries to write a message indicating the expected value for a property count.\nExpectedMatchPatternPropertySchemaValue: Tries to write a message indicating that a property name was intended to match a regular expression.\nExpectedPropertyNameMatchesRegularExpressionValue: Tries to write a message indicating that a property name was intended to match a regular expression.\nExpectedMatchesDependentSchemaValue: Tries to write a message indicating that a value was expected to match a schema because it contained a specific named property.\nRequiredPropertyNotPresent: Creates a message indicating that a required property is not present.\nRequiredPropertyPresent: Creates a message indicating that a required property is present.\nMatchMultipleOf: Matches a JSON number as a multiple of the given divisor.\nMatchEquals: Matches a JSON number equals.\nMatchNotEquals: Matches a JSON number not equals.\nMatchLessThan: Matches a JSON number less than.\nMatchLessThanOrEquals: Matches a JSON number less than or equals.\nMatchGreaterThan: Matches a JSON number greater than.\nMatchGreaterThanOrEquals: Matches a JSON number greater than or equals.\nMatchMultipleOf: Matches a JSON number as a multiple of the given divisor.\nMatchByte: Matches a JSON number against the Byte type constraint, validating it as an 8-bit unsigned integer.\nMatchDecimal: Matches a JSON number against the Decimal type constraint, validating it as a decimal floating-point number.\nMatchDouble: Matches a JSON number against the Double type constraint, validating it as a double-precision floating-point number.\nMatchHalf: Matches a JSON number against the Half type constraint, validating it as a half-precision floating-point number.\nMatchInt128: Matches a JSON number against the Int128 type constraint, validating it as a 128-bit signed integer.\nMatchInt16: Matches a JSON number against the Int16 type constraint, validating it as a 16-bit signed integer.\nMatchInt32: Matches a JSON number against the Int32 type constraint, validating it as a 32-bit signed integer.\nMatchInt64: Matches a JSON number against the Int64 type constraint, validating it as a 64-bit signed integer.\nMatchSByte: Matches a JSON number against the SByte type constraint, validating it as an 8-bit signed integer.\nMatchSingle: Matches a JSON number against the Single type constraint, validating it as a single-precision floating-point number.\nMatchTypeNumber: Matches a JSON token type against the \"number\" type constraint.\nMatchTypeInteger: Matches a JSON token type against the \"number\" type constraint.\nMatchUInt128: Matches a JSON number against the UInt128 type constraint, validating it as a 128-bit unsigned integer.\nMatchUInt16: Matches a JSON number against the UInt16 type constraint, validating it as a 16-bit unsigned integer.\nMatchUInt32: Matches a JSON number against the UInt32 type constraint, validating it as a 32-bit unsigned integer.\nMatchUInt64: Matches a JSON number against the UInt64 type constraint, validating it as a 64-bit unsigned integer."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-jsonschemaevaluation.matchtypenull.html",
@@ -12598,6 +12626,90 @@
     "Description": "",
     "Keywords": "PropertySchemaMatchers<T>.UnescapedNameProvider<T> EndInvoke method Corvus.Text.Json.Internal",
     "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-rawdocumentaccess.html",
+    "Title": "RawDocumentAccess",
+    "Description": "Direct, non-virtual access to the metadata rows and UTF-8 text of a document whose rows are all local (a [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html)). Obtained once per operation from [`TryGetRawAccess`](/api/v5/corvus-text-json-internal-jsondocument.trygetrawaccess.html); every accessor here is a couple of loads with no disposal check, so callers must not outlive the document.",
+    "Keywords": "RawDocumentAccess struct Corvus.Text.Json.Internal",
+    "Body": "Direct, non-virtual access to the metadata rows and UTF-8 text of a document whose rows are all local (a [`ParsedJsonDocument`](/api/v5/corvus-text-json-parsedjsondocument-t.html)). Obtained once per operation from [`TryGetRawAccess`](/api/v5/corvus-text-json-internal-jsondocument.trygetrawaccess.html); every accessor here is a couple of loads with no disposal check, so callers must not outlive the document.\nIndices are the same row indices used throughout [`IJsonDocument`](/api/v5/corvus-text-json-internal-ijsondocument.html). A simple value occupies one row; an object or array occupies [`GetNumberOfRows`](/api/v5/corvus-text-json-internal-rawdocumentaccess.getnumberofrows.html) rows followed by its end row.\nGetTokenType: Gets the token type of the element at the index.\nGetSizeOrLength: Gets the byte length of a simple value, or the number of properties/items of a container.\nIsEscaped: Gets a value indicating whether a string or property name contains escape sequences.\nGetNumberOfRows: Gets the number of rows occupied by a container, excluding its end row.\nGetNextIndex: Gets the index of the row following the element (its next sibling, or the parent's end row).\nGetEndIndex: Gets the index of a container's end row.\nGetFirstItemIndex: Gets the index of the first property value (for objects) or item (for arrays) of a container.\nGetRawValue: Gets the raw UTF-8 text of a simple value (for strings and property names, without quotes and without unescaping; check [`IsEscaped`](/api/v5/corvus-text-json-internal-rawdocumentaccess.isescaped.html)).\nGetRawValueMemory: Gets the raw UTF-8 text of a simple value as memory (see [`GetRawValue`](/api/v5/corvus-text-json-internal-rawdocumentaccess.getrawvalue.html)).\nGetPropertyNameRaw: Gets the raw property name text for a property value index (the name row precedes the value row).\nPropertyNameIsEscaped: Gets a value indicating whether the property name for a value index contains escape sequences."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-rawdocumentaccess.gettokentype.html",
+    "Title": "RawDocumentAccess.GetTokenType",
+    "Description": "Gets the token type of the element at the index.",
+    "Keywords": "RawDocumentAccess GetTokenType method Corvus.Text.Json.Internal",
+    "Body": "Gets the token type of the element at the index."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-rawdocumentaccess.getsizeorlength.html",
+    "Title": "RawDocumentAccess.GetSizeOrLength",
+    "Description": "Gets the byte length of a simple value, or the number of properties/items of a container.",
+    "Keywords": "RawDocumentAccess GetSizeOrLength method Corvus.Text.Json.Internal",
+    "Body": "Gets the byte length of a simple value, or the number of properties/items of a container."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-rawdocumentaccess.isescaped.html",
+    "Title": "RawDocumentAccess.IsEscaped",
+    "Description": "Gets a value indicating whether a string or property name contains escape sequences.",
+    "Keywords": "RawDocumentAccess IsEscaped method Corvus.Text.Json.Internal",
+    "Body": "Gets a value indicating whether a string or property name contains escape sequences."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-rawdocumentaccess.getnumberofrows.html",
+    "Title": "RawDocumentAccess.GetNumberOfRows",
+    "Description": "Gets the number of rows occupied by a container, excluding its end row.",
+    "Keywords": "RawDocumentAccess GetNumberOfRows method Corvus.Text.Json.Internal",
+    "Body": "Gets the number of rows occupied by a container, excluding its end row."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-rawdocumentaccess.getnextindex.html",
+    "Title": "RawDocumentAccess.GetNextIndex",
+    "Description": "Gets the index of the row following the element (its next sibling, or the parent's end row).",
+    "Keywords": "RawDocumentAccess GetNextIndex method Corvus.Text.Json.Internal",
+    "Body": "Gets the index of the row following the element (its next sibling, or the parent's end row)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-rawdocumentaccess.getendindex.html",
+    "Title": "RawDocumentAccess.GetEndIndex",
+    "Description": "Gets the index of a container's end row.",
+    "Keywords": "RawDocumentAccess GetEndIndex method Corvus.Text.Json.Internal",
+    "Body": "Gets the index of a container's end row."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-rawdocumentaccess.getfirstitemindex.html",
+    "Title": "RawDocumentAccess.GetFirstItemIndex",
+    "Description": "Gets the index of the first property value (for objects) or item (for arrays) of a container.",
+    "Keywords": "RawDocumentAccess GetFirstItemIndex method Corvus.Text.Json.Internal",
+    "Body": "Gets the index of the first property value (for objects) or item (for arrays) of a container."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-rawdocumentaccess.getrawvalue.html",
+    "Title": "RawDocumentAccess.GetRawValue",
+    "Description": "Gets the raw UTF-8 text of a simple value (for strings and property names, without quotes and without unescaping; check [`IsEscaped`](/api/v5/corvus-text-json-internal-rawdocumentaccess.isescaped.html)).",
+    "Keywords": "RawDocumentAccess GetRawValue method Corvus.Text.Json.Internal",
+    "Body": "Gets the raw UTF-8 text of a simple value (for strings and property names, without quotes and without unescaping; check [`IsEscaped`](/api/v5/corvus-text-json-internal-rawdocumentaccess.isescaped.html))."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-rawdocumentaccess.getrawvaluememory.html",
+    "Title": "RawDocumentAccess.GetRawValueMemory",
+    "Description": "Gets the raw UTF-8 text of a simple value as memory (see [`GetRawValue`](/api/v5/corvus-text-json-internal-rawdocumentaccess.getrawvalue.html)).",
+    "Keywords": "RawDocumentAccess GetRawValueMemory method Corvus.Text.Json.Internal",
+    "Body": "Gets the raw UTF-8 text of a simple value as memory (see [`GetRawValue`](/api/v5/corvus-text-json-internal-rawdocumentaccess.getrawvalue.html))."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-rawdocumentaccess.getpropertynameraw.html",
+    "Title": "RawDocumentAccess.GetPropertyNameRaw",
+    "Description": "Gets the raw property name text for a property value index (the name row precedes the value row).",
+    "Keywords": "RawDocumentAccess GetPropertyNameRaw method Corvus.Text.Json.Internal",
+    "Body": "Gets the raw property name text for a property value index (the name row precedes the value row)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-rawdocumentaccess.propertynameisescaped.html",
+    "Title": "RawDocumentAccess.PropertyNameIsEscaped",
+    "Description": "Gets a value indicating whether the property name for a value index contains escape sequences.",
+    "Keywords": "RawDocumentAccess PropertyNameIsEscaped method Corvus.Text.Json.Internal",
+    "Body": "Gets a value indicating whether the property name for a value index contains escape sequences."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-internal-simpletypesbacking.html",
@@ -24414,6 +24526,335 @@
     "Description": "Disposes the builder, transferring any outstanding metadata to the backing document so pooled memory is returned.",
     "Keywords": "PatchBuilder Dispose method Corvus.Text.Json.Patch",
     "Body": "Disposes the builder, transferring any outstanding metadata to the backing document so pooled memory is returned."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemacompilationexception.html",
+    "Title": "JsonSchemaCompilationException",
+    "Description": "Thrown when a schema cannot be compiled (for example, an unresolvable `$ref`).",
+    "Keywords": "JsonSchemaCompilationException class Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Thrown when a schema cannot be compiled (for example, an unresolvable `$ref`)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemacompilationexception.ctor.html",
+    "Title": "JsonSchemaCompilationException Constructor",
+    "Description": "Initializes a new instance of the [`JsonSchemaCompilationException`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemacompilationexception.html) class.",
+    "Keywords": "JsonSchemaCompilationException constructor new Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Initializes a new instance of the [`JsonSchemaCompilationException`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemacompilationexception.html) class."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemadialect.html",
+    "Title": "JsonSchemaDialect",
+    "Description": "The JSON Schema dialects supported by the runtime evaluator.",
+    "Keywords": "JsonSchemaDialect enum Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "The JSON Schema dialects supported by the runtime evaluator."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemadocumentresolver.html",
+    "Title": "JsonSchemaDocumentResolver",
+    "Description": "Resolves a schema document (as UTF-8 JSON) from an absolute URI.",
+    "Keywords": "JsonSchemaDocumentResolver delegate Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Resolves a schema document (as UTF-8 JSON) from an absolute URI."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemadocumentresolver.ctor.html",
+    "Title": "JsonSchemaDocumentResolver Constructor",
+    "Description": "",
+    "Keywords": "JsonSchemaDocumentResolver constructor new Corvus.Text.Json.RuntimeEvaluator",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemadocumentresolver.invoke.html",
+    "Title": "JsonSchemaDocumentResolver.Invoke",
+    "Description": "",
+    "Keywords": "JsonSchemaDocumentResolver Invoke method Corvus.Text.Json.RuntimeEvaluator",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemadocumentresolver.begininvoke.html",
+    "Title": "JsonSchemaDocumentResolver.BeginInvoke",
+    "Description": "",
+    "Keywords": "JsonSchemaDocumentResolver BeginInvoke method Corvus.Text.Json.RuntimeEvaluator",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemadocumentresolver.endinvoke.html",
+    "Title": "JsonSchemaDocumentResolver.EndInvoke",
+    "Description": "",
+    "Keywords": "JsonSchemaDocumentResolver EndInvoke method Corvus.Text.Json.RuntimeEvaluator",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluationexception.html",
+    "Title": "JsonSchemaEvaluationException",
+    "Description": "Thrown when evaluation cannot proceed (for example, runaway recursion through in-place applicators).",
+    "Keywords": "JsonSchemaEvaluationException class Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Thrown when evaluation cannot proceed (for example, runaway recursion through in-place applicators)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluationexception.ctor.html",
+    "Title": "JsonSchemaEvaluationException Constructor",
+    "Description": "Initializes a new instance of the [`JsonSchemaEvaluationException`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluationexception.html) class.",
+    "Keywords": "JsonSchemaEvaluationException constructor new Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Initializes a new instance of the [`JsonSchemaEvaluationException`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluationexception.html) class."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.html",
+    "Title": "JsonSchemaEvaluator",
+    "Description": "A compiled JSON Schema that can evaluate instances without generating code.",
+    "Keywords": "JsonSchemaEvaluator class Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "A compiled JSON Schema that can evaluate instances without generating code.\nCompile once with [`Compile`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.compile.html), then call [`Evaluate`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.evaluate.html) from any number of threads. Evaluation with a `null` collector is a zero-allocation flag check that fails fast; supplying a [`JsonSchemaResultsCollector`](/api/v5/corvus-text-json-jsonschemaresultscollector.html) produces basic, detailed or verbose results (and annotations via [`JsonSchemaAnnotationProducer`](/api/v5/corvus-text-json-jsonschemaannotationproducer.html)).\nNodeCount: Gets the number of compiled subschemas.\nResourceCount: Gets the number of schema resources loaded.\nUsesDynamicScope: Gets a value indicating whether the schema uses `$dynamicRef`/`$recursiveRef` that require dynamic scope tracking.\nCompile: Compiles a schema from UTF-8 JSON.\nCompile: Compiles a schema from JSON text.\nCompile: Compiles a subschema of a document, identified by a URI reference such as `#/$defs/PersonArray`.\nCompileFromUri: Compiles the schema document at a URI, retrieved through [`DocumentResolver`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.documentresolver.html), the embedded standard metaschemas, or [`FallbackDocumentResolver`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.fallbackdocumentresolver.html).\nRegisterEntryPoints: Compiles the given entry points into the program in one step, so that [`ToProgramImage`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.toprogramimage.html) records them and later [`ForEntryPoint`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.forentrypoint.html) calls find them compiled. Adding many entry points this way runs the compiler's analyses once rather than once per entry point.\nToProgramImage: Serialises the compiled program to a binary image that [`FromProgramImage`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.fromprogramimage.html) loads without the schema text, the document resolver or the compiler. Every entry point created so far (the root and any [`ForEntryPoint`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.forentrypoint.html)) is recorded in the image.\nFromProgramImage: Loads a compiled program from an image produced by [`ToProgramImage`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.toprogramimage.html). The evaluator returned is rooted at the image's root entry point; [`ForEntryPoint`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.forentrypoint.html) selects any other recorded entry point.\nGetImagePatterns: Gets the pattern table of a program image: every pattern that needs a regular expression, in the index order a [`JsonSchemaRegexProvider`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaregexprovider.html) is asked for them. Patterns are in ECMA-262 syntax as written in the schema; [`ToDotNetPattern`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.todotnetpattern.html) gives the form the evaluator itself would construct.\nToDotNetPattern: Translates a schema pattern (ECMA-262 syntax) to the .NET pattern the evaluator constructs for it, so that a generated `[GeneratedRegex]` matches exactly what the evaluator would have used. The evaluator constructs its own instances with [`CultureInvariant`](https://learn.microsoft.com/dotnet/api/system.text.regularexpressions.regexoptions).\nForEntryPoint: Gets an evaluator for another entry point of the same schema document set, sharing the loaded documents and every already-compiled subschema. Only subschemas newly reachable from the entry point are compiled.\nEvaluate: Evaluates an instance.\nEvaluate: Evaluates an instance given its document and index.\nEvaluate: Parses and evaluates UTF-8 JSON.\nEvaluate: Parses and evaluates JSON text."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.nodecount.html",
+    "Title": "JsonSchemaEvaluator.NodeCount",
+    "Description": "Gets the number of compiled subschemas.",
+    "Keywords": "JsonSchemaEvaluator NodeCount property Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Gets the number of compiled subschemas."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.resourcecount.html",
+    "Title": "JsonSchemaEvaluator.ResourceCount",
+    "Description": "Gets the number of schema resources loaded.",
+    "Keywords": "JsonSchemaEvaluator ResourceCount property Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Gets the number of schema resources loaded."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.usesdynamicscope.html",
+    "Title": "JsonSchemaEvaluator.UsesDynamicScope",
+    "Description": "Gets a value indicating whether the schema uses `$dynamicRef`/`$recursiveRef` that require dynamic scope tracking.",
+    "Keywords": "JsonSchemaEvaluator UsesDynamicScope property Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Gets a value indicating whether the schema uses `$dynamicRef`/`$recursiveRef` that require dynamic scope tracking."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.compile.html",
+    "Title": "JsonSchemaEvaluator.Compile",
+    "Description": "Compiles a schema from UTF-8 JSON.",
+    "Keywords": "JsonSchemaEvaluator Compile method Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Compiles a schema from UTF-8 JSON. Compiles a schema from JSON text. Compiles a subschema of a document, identified by a URI reference such as `#/$defs/PersonArray`."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.compilefromuri.html",
+    "Title": "JsonSchemaEvaluator.CompileFromUri",
+    "Description": "Compiles the schema document at a URI, retrieved through [`DocumentResolver`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.documentresolver.html), the embedded standard metaschemas, or [`FallbackDocumentResolver`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.fallbackdocumentresolver.html).",
+    "Keywords": "JsonSchemaEvaluator CompileFromUri method Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Compiles the schema document at a URI, retrieved through [`DocumentResolver`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.documentresolver.html), the embedded standard metaschemas, or [`FallbackDocumentResolver`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.fallbackdocumentresolver.html)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.registerentrypoints.html",
+    "Title": "JsonSchemaEvaluator.RegisterEntryPoints",
+    "Description": "Compiles the given entry points into the program in one step, so that [`ToProgramImage`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.toprogramimage.html) records them and later [`ForEntryPoint`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.forentrypoint.html) calls find them compiled. Adding many entry points this way runs the compiler's analyses once rather than once per entry point.",
+    "Keywords": "JsonSchemaEvaluator RegisterEntryPoints method Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Compiles the given entry points into the program in one step, so that [`ToProgramImage`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.toprogramimage.html) records them and later [`ForEntryPoint`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.forentrypoint.html) calls find them compiled. Adding many entry points this way runs the compiler's analyses once rather than once per entry point."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.toprogramimage.html",
+    "Title": "JsonSchemaEvaluator.ToProgramImage",
+    "Description": "Serialises the compiled program to a binary image that [`FromProgramImage`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.fromprogramimage.html) loads without the schema text, the document resolver or the compiler. Every entry point created so far (the root and any [`ForEntryPoint`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.forentrypoint.html)) is recorded in the image.",
+    "Keywords": "JsonSchemaEvaluator ToProgramImage method Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Serialises the compiled program to a binary image that [`FromProgramImage`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.fromprogramimage.html) loads without the schema text, the document resolver or the compiler. Every entry point created so far (the root and any [`ForEntryPoint`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.forentrypoint.html)) is recorded in the image."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.fromprogramimage.html",
+    "Title": "JsonSchemaEvaluator.FromProgramImage",
+    "Description": "Loads a compiled program from an image produced by [`ToProgramImage`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.toprogramimage.html). The evaluator returned is rooted at the image's root entry point; [`ForEntryPoint`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.forentrypoint.html) selects any other recorded entry point.",
+    "Keywords": "JsonSchemaEvaluator FromProgramImage method Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Loads a compiled program from an image produced by [`ToProgramImage`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.toprogramimage.html). The evaluator returned is rooted at the image's root entry point; [`ForEntryPoint`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.forentrypoint.html) selects any other recorded entry point."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.getimagepatterns.html",
+    "Title": "JsonSchemaEvaluator.GetImagePatterns",
+    "Description": "Gets the pattern table of a program image: every pattern that needs a regular expression, in the index order a [`JsonSchemaRegexProvider`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaregexprovider.html) is asked for them. Patterns are in ECMA-262 syntax as written in the schema; [`ToDotNetPattern`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.todotnetpattern.html) gives the form the evaluator itself would construct.",
+    "Keywords": "JsonSchemaEvaluator GetImagePatterns method Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Gets the pattern table of a program image: every pattern that needs a regular expression, in the index order a [`JsonSchemaRegexProvider`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaregexprovider.html) is asked for them. Patterns are in ECMA-262 syntax as written in the schema; [`ToDotNetPattern`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.todotnetpattern.html) gives the form the evaluator itself would construct."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.todotnetpattern.html",
+    "Title": "JsonSchemaEvaluator.ToDotNetPattern",
+    "Description": "Translates a schema pattern (ECMA-262 syntax) to the .NET pattern the evaluator constructs for it, so that a generated `[GeneratedRegex]` matches exactly what the evaluator would have used. The evaluator constructs its own instances with [`CultureInvariant`](https://learn.microsoft.com/dotnet/api/system.text.regularexpressions.regexoptions).",
+    "Keywords": "JsonSchemaEvaluator ToDotNetPattern method Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Translates a schema pattern (ECMA-262 syntax) to the .NET pattern the evaluator constructs for it, so that a generated `[GeneratedRegex]` matches exactly what the evaluator would have used. The evaluator constructs its own instances with [`CultureInvariant`](https://learn.microsoft.com/dotnet/api/system.text.regularexpressions.regexoptions)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.forentrypoint.html",
+    "Title": "JsonSchemaEvaluator.ForEntryPoint",
+    "Description": "Gets an evaluator for another entry point of the same schema document set, sharing the loaded documents and every already-compiled subschema. Only subschemas newly reachable from the entry point are compiled.",
+    "Keywords": "JsonSchemaEvaluator ForEntryPoint method Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Gets an evaluator for another entry point of the same schema document set, sharing the loaded documents and every already-compiled subschema. Only subschemas newly reachable from the entry point are compiled."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.evaluate.html",
+    "Title": "JsonSchemaEvaluator.Evaluate",
+    "Description": "Evaluates an instance.",
+    "Keywords": "JsonSchemaEvaluator Evaluate method Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Evaluates an instance. Evaluates an instance given its document and index. Parses and evaluates UTF-8 JSON. Parses and evaluates JSON text."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.dispose.html",
+    "Title": "JsonSchemaEvaluator.Dispose",
+    "Description": "",
+    "Keywords": "JsonSchemaEvaluator Dispose method Corvus.Text.Json.RuntimeEvaluator",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.html",
+    "Title": "JsonSchemaEvaluatorOptions",
+    "Description": "Options controlling schema compilation and evaluation.",
+    "Keywords": "JsonSchemaEvaluatorOptions class Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Options controlling schema compilation and evaluation.\nDefault: Gets the default options.\nDefaultDialect: Gets or sets the dialect used when a schema resource does not declare `$schema`.\nAssertFormat: Gets or sets a value indicating whether `format` is treated as an assertion.\nAssertFormatInLegacyDrafts: Gets or sets a value indicating whether, when [`AssertFormat`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.assertformat.html) is `null`, resources written against draft 4, 6 or 7 treat `format` as an assertion. Those drafts left the choice to the implementation; generated models have always asserted, so the programs they emit set this.\nAssertContent: Gets or sets a value indicating whether `contentEncoding`/`contentMediaType` are asserted in dialects where the specification leaves this to the implementation (Draft 7 and earlier).\nFormatModes: Gets or sets per-format overrides of the assertion decision, keyed by format name; the key `*` applies to every format that has no entry of its own. An entry overrides both [`AssertFormat`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.assertformat.html) and the dialect default for that format.\nCompileRegularExpressions: Gets or sets a value indicating whether regular expressions are compiled to IL. Defaults to `true`.\nRegexMatchTimeout: Gets or sets the match timeout for regular expressions.\nRegexProvider: Gets or sets the provider consulted before a regular expression is constructed. Only patterns that need a [`Regex`](https://learn.microsoft.com/dotnet/api/system.text.regularexpressions.regex) are offered (the evaluator matches trivial patterns such as prefixes and length ranges without one); a `null` result falls back to construction with [`CompileRegularExpressions`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.compileregularexpressions.html) and [`RegexMatchTimeout`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.regexmatchtimeout.html).\nDocumentResolver: Gets or sets the resolver used to load documents referenced by `$ref` that are not already known.\nFallbackDocumentResolver: Gets or sets the resolver consulted for documents that neither [`DocumentResolver`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.documentresolver.html) nor the embedded standard metaschemas provide; intended for file system and network retrieval.\nBaseUri: Gets or sets the base URI applied to the root schema when it has no `$id`.\nEntryPoint: Gets or sets the schema to evaluate against, as a URI reference resolved against the root document: a JSON pointer fragment such as `#/$defs/PersonArray`, a plain-name anchor such as `#person`, or the URI of another resource (loaded through [`DocumentResolver`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.documentresolver.html) if necessary). `null` (the default) evaluates against the document root, matching the generated model's ability to be rooted at any subschema.\nMaxDepth: Gets or sets the maximum nesting of in-place applicators (`$ref`, `allOf`, `anyOf`, `oneOf`, `not`, `if`/`then`/`else`, dependent schemas) before evaluation fails with [`JsonSchemaEvaluationException`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluationexception.html). Only nodes that the compiler finds on a cycle of in-place applicators are counted, so an acyclic chain of any length is never limited. Instance depth is bounded separately by the parser."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.ctor.html",
+    "Title": "JsonSchemaEvaluatorOptions Constructor",
+    "Description": "",
+    "Keywords": "JsonSchemaEvaluatorOptions constructor new Corvus.Text.Json.RuntimeEvaluator",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.default.html",
+    "Title": "JsonSchemaEvaluatorOptions.Default",
+    "Description": "Gets the default options.",
+    "Keywords": "JsonSchemaEvaluatorOptions Default property Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Gets the default options."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.defaultdialect.html",
+    "Title": "JsonSchemaEvaluatorOptions.DefaultDialect",
+    "Description": "Gets or sets the dialect used when a schema resource does not declare `$schema`.",
+    "Keywords": "JsonSchemaEvaluatorOptions DefaultDialect property Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Gets or sets the dialect used when a schema resource does not declare `$schema`."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.assertformat.html",
+    "Title": "JsonSchemaEvaluatorOptions.AssertFormat",
+    "Description": "Gets or sets a value indicating whether `format` is treated as an assertion.",
+    "Keywords": "JsonSchemaEvaluatorOptions AssertFormat property Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Gets or sets a value indicating whether `format` is treated as an assertion."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.assertformatinlegacydrafts.html",
+    "Title": "JsonSchemaEvaluatorOptions.AssertFormatInLegacyDrafts",
+    "Description": "Gets or sets a value indicating whether, when [`AssertFormat`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.assertformat.html) is `null`, resources written against draft 4, 6 or 7 treat `format` as an assertion. Those drafts left the choice to the implementation; generated models have always asserted, so the programs they emit set this.",
+    "Keywords": "JsonSchemaEvaluatorOptions AssertFormatInLegacyDrafts property Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Gets or sets a value indicating whether, when [`AssertFormat`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.assertformat.html) is `null`, resources written against draft 4, 6 or 7 treat `format` as an assertion. Those drafts left the choice to the implementation; generated models have always asserted, so the programs they emit set this."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.assertcontent.html",
+    "Title": "JsonSchemaEvaluatorOptions.AssertContent",
+    "Description": "Gets or sets a value indicating whether `contentEncoding`/`contentMediaType` are asserted in dialects where the specification leaves this to the implementation (Draft 7 and earlier).",
+    "Keywords": "JsonSchemaEvaluatorOptions AssertContent property Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Gets or sets a value indicating whether `contentEncoding`/`contentMediaType` are asserted in dialects where the specification leaves this to the implementation (Draft 7 and earlier)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.formatmodes.html",
+    "Title": "JsonSchemaEvaluatorOptions.FormatModes",
+    "Description": "Gets or sets per-format overrides of the assertion decision, keyed by format name; the key `*` applies to every format that has no entry of its own. An entry overrides both [`AssertFormat`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.assertformat.html) and the dialect default for that format.",
+    "Keywords": "JsonSchemaEvaluatorOptions FormatModes property Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Gets or sets per-format overrides of the assertion decision, keyed by format name; the key `*` applies to every format that has no entry of its own. An entry overrides both [`AssertFormat`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.assertformat.html) and the dialect default for that format."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.compileregularexpressions.html",
+    "Title": "JsonSchemaEvaluatorOptions.CompileRegularExpressions",
+    "Description": "Gets or sets a value indicating whether regular expressions are compiled to IL. Defaults to `true`.",
+    "Keywords": "JsonSchemaEvaluatorOptions CompileRegularExpressions property Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Gets or sets a value indicating whether regular expressions are compiled to IL. Defaults to `true`."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.regexmatchtimeout.html",
+    "Title": "JsonSchemaEvaluatorOptions.RegexMatchTimeout",
+    "Description": "Gets or sets the match timeout for regular expressions.",
+    "Keywords": "JsonSchemaEvaluatorOptions RegexMatchTimeout property Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Gets or sets the match timeout for regular expressions."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.regexprovider.html",
+    "Title": "JsonSchemaEvaluatorOptions.RegexProvider",
+    "Description": "Gets or sets the provider consulted before a regular expression is constructed. Only patterns that need a [`Regex`](https://learn.microsoft.com/dotnet/api/system.text.regularexpressions.regex) are offered (the evaluator matches trivial patterns such as prefixes and length ranges without one); a `null` result falls back to construction with [`CompileRegularExpressions`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.compileregularexpressions.html) and [`RegexMatchTimeout`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.regexmatchtimeout.html).",
+    "Keywords": "JsonSchemaEvaluatorOptions RegexProvider property Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Gets or sets the provider consulted before a regular expression is constructed. Only patterns that need a [`Regex`](https://learn.microsoft.com/dotnet/api/system.text.regularexpressions.regex) are offered (the evaluator matches trivial patterns such as prefixes and length ranges without one); a `null` result falls back to construction with [`CompileRegularExpressions`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.compileregularexpressions.html) and [`RegexMatchTimeout`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.regexmatchtimeout.html)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.documentresolver.html",
+    "Title": "JsonSchemaEvaluatorOptions.DocumentResolver",
+    "Description": "Gets or sets the resolver used to load documents referenced by `$ref` that are not already known.",
+    "Keywords": "JsonSchemaEvaluatorOptions DocumentResolver property Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Gets or sets the resolver used to load documents referenced by `$ref` that are not already known."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.fallbackdocumentresolver.html",
+    "Title": "JsonSchemaEvaluatorOptions.FallbackDocumentResolver",
+    "Description": "Gets or sets the resolver consulted for documents that neither [`DocumentResolver`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.documentresolver.html) nor the embedded standard metaschemas provide; intended for file system and network retrieval.",
+    "Keywords": "JsonSchemaEvaluatorOptions FallbackDocumentResolver property Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Gets or sets the resolver consulted for documents that neither [`DocumentResolver`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.documentresolver.html) nor the embedded standard metaschemas provide; intended for file system and network retrieval."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.baseuri.html",
+    "Title": "JsonSchemaEvaluatorOptions.BaseUri",
+    "Description": "Gets or sets the base URI applied to the root schema when it has no `$id`.",
+    "Keywords": "JsonSchemaEvaluatorOptions BaseUri property Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Gets or sets the base URI applied to the root schema when it has no `$id`."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.entrypoint.html",
+    "Title": "JsonSchemaEvaluatorOptions.EntryPoint",
+    "Description": "Gets or sets the schema to evaluate against, as a URI reference resolved against the root document: a JSON pointer fragment such as `#/$defs/PersonArray`, a plain-name anchor such as `#person`, or the URI of another resource (loaded through [`DocumentResolver`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.documentresolver.html) if necessary). `null` (the default) evaluates against the document root, matching the generated model's ability to be rooted at any subschema.",
+    "Keywords": "JsonSchemaEvaluatorOptions EntryPoint property Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Gets or sets the schema to evaluate against, as a URI reference resolved against the root document: a JSON pointer fragment such as `#/$defs/PersonArray`, a plain-name anchor such as `#person`, or the URI of another resource (loaded through [`DocumentResolver`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.documentresolver.html) if necessary). `null` (the default) evaluates against the document root, matching the generated model's ability to be rooted at any subschema."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.maxdepth.html",
+    "Title": "JsonSchemaEvaluatorOptions.MaxDepth",
+    "Description": "Gets or sets the maximum nesting of in-place applicators (`$ref`, `allOf`, `anyOf`, `oneOf`, `not`, `if`/`then`/`else`, dependent schemas) before evaluation fails with [`JsonSchemaEvaluationException`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluationexception.html). Only nodes that the compiler finds on a cycle of in-place applicators are counted, so an acyclic chain of any length is never limited. Instance depth is bounded separately by the parser.",
+    "Keywords": "JsonSchemaEvaluatorOptions MaxDepth property Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Gets or sets the maximum nesting of in-place applicators (`$ref`, `allOf`, `anyOf`, `oneOf`, `not`, `if`/`then`/`else`, dependent schemas) before evaluation fails with [`JsonSchemaEvaluationException`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluationexception.html). Only nodes that the compiler finds on a cycle of in-place applicators are counted, so an acyclic chain of any length is never limited. Instance depth is bounded separately by the parser."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaformatmode.html",
+    "Title": "JsonSchemaFormatMode",
+    "Description": "How a particular `format` is treated, overriding [`AssertFormat`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.assertformat.html) and the dialect default for that format.",
+    "Keywords": "JsonSchemaFormatMode enum Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "How a particular `format` is treated, overriding [`AssertFormat`](/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.assertformat.html) and the dialect default for that format."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaregexprovider.html",
+    "Title": "JsonSchemaRegexProvider",
+    "Description": "Supplies a ready-made [`Regex`](https://learn.microsoft.com/dotnet/api/system.text.regularexpressions.regex) for a schema pattern, so that a program emitted ahead of time can wire in `[GeneratedRegex]` instances instead of constructing regular expressions at load.",
+    "Keywords": "JsonSchemaRegexProvider delegate Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "Supplies a ready-made [`Regex`](https://learn.microsoft.com/dotnet/api/system.text.regularexpressions.regex) for a schema pattern, so that a program emitted ahead of time can wire in `[GeneratedRegex]` instances instead of constructing regular expressions at load."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaregexprovider.ctor.html",
+    "Title": "JsonSchemaRegexProvider Constructor",
+    "Description": "",
+    "Keywords": "JsonSchemaRegexProvider constructor new Corvus.Text.Json.RuntimeEvaluator",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaregexprovider.invoke.html",
+    "Title": "JsonSchemaRegexProvider.Invoke",
+    "Description": "",
+    "Keywords": "JsonSchemaRegexProvider Invoke method Corvus.Text.Json.RuntimeEvaluator",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaregexprovider.begininvoke.html",
+    "Title": "JsonSchemaRegexProvider.BeginInvoke",
+    "Description": "",
+    "Keywords": "JsonSchemaRegexProvider BeginInvoke method Corvus.Text.Json.RuntimeEvaluator",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemaregexprovider.endinvoke.html",
+    "Title": "JsonSchemaRegexProvider.EndInvoke",
+    "Description": "",
+    "Keywords": "JsonSchemaRegexProvider EndInvoke method Corvus.Text.Json.RuntimeEvaluator",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-runtimeevaluator-jsonschemavocabularies.html",
+    "Title": "JsonSchemaVocabularies",
+    "Description": "The vocabularies that may be enabled for a schema resource.",
+    "Keywords": "JsonSchemaVocabularies enum Corvus.Text.Json.RuntimeEvaluator",
+    "Body": "The vocabularies that may be enabled for a schema resource."
   },
   {
     "Url": "/Corvus.JsonSchema/api/v5/corvus-text-json-yaml-duplicatekeybehavior.html",
