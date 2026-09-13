@@ -713,7 +713,7 @@ against 1024 ms. Under AOT the schema compile is 0.1 to 3 ms for all but two cor
 10 ms, their regular expressions), and loading a program image instead brings ui5-manifest from 26 to 15 ms; the
 validation pass, parse included, is 0.5 to 12 ms for all but geojson (108 ms, large instances) and openapi (28 ms).
 Blaze's own compile is what costs it on the large schemas: ui5-manifest 165 ms and openapi 100 ms end to end.
-Table: `cold-start-2026-09-12.md` in the session notes.
+(The end-of-day tables that supersede this one are in `docs/measurements/2026-09-13/`.)
 
 Blaze's compile can be measured on its own through its `compile --fast --minify` command (wall time in a fresh
 process less the 2.3 ms of a bare `--version`; it includes writing the template as JSON, so it slightly overstates).
@@ -722,7 +722,7 @@ it tells, ui5-manifest 207 ms against 9.9, krakend 64 against 6.3, ui5 39 agains
 Blaze's templates are big (ui5-manifest's is 41 MB of JSON, cql2's 5.5 MB), so its `validate --template`, the
 analogue of our program image, is no faster than compiling on those: parsing the template costs what the compile
 did. Precompiled cold start like for like (Blaze `validate --template` against our AOT runner loading an image):
-medians 9.8 ms against 4.7 ms, a ratio of 0.49, ours faster on all 37. Table: `compile-2026-09-12.md`.
+medians 9.8 ms against 4.7 ms, a ratio of 0.49, ours faster on all 37.
 
 The warm measurement under the same three builds (the runner's `warm` command, one process per corpus, fresh Blaze
 run): the JIT's tier-1 code is fastest on 30 of 37 at a geometric mean of 0.75 against Blaze; ReadyToRun 23 of 37
@@ -730,7 +730,7 @@ at 0.87; native AOT 23 of 37 at 0.88, about 17% behind the JIT at the median. Th
 of the x64 baseline moves AOT by 2 to 4%, so the difference is dynamic PGO (guarded devirtualisation and
 profile-driven layout), which native AOT lacks. The trade is therefore start-up against steady state: native AOT
 starts in 4 to 25 ms where the JIT takes 120 to 320 ms, and settles 15 to 20% slower per evaluation. Table:
-`warm-2026-09-12.md`.
+the end-of-day table in `docs/measurements/2026-09-13/four-axis-table.md`.
 
 ## Regular expressions without a regex (2026-09-12, late)
 
@@ -889,7 +889,7 @@ are stored as computed) through the element's raw text, so generated models get 
 
 ## The four-axis table (2026-09-12, evening)
 
-One table, eight implementations by 37 corpora, four measures each: `summary2-2026-09-12.md` in the session notes.
+One table, eight implementations by 37 corpora, four measures each (the current version of it, with a fifth measure, is `docs/measurements/2026-09-13/four-axis-table.md`).
 The rows pair Blaze's two paths (compile at run time; validate from its precompiled template) with ours: the runtime
 evaluator compiling at run time, the runtime evaluator loading a program image, and the shipping generator's
 strongly typed models, each under the JIT and as native AOT. The measures: cold (one fresh process, prepare, read
@@ -953,7 +953,7 @@ yamllint 2.2, ui5 1.75, importmap 1.4), and the two others (ui5-manifest, stale)
 
 The table again at the end of 2026-09-13, after the entry floor, the word lookups, the profile for the three
 loops, the fused coalescing and the canonical references (the profile re-recorded on this code; overhead 12.9 to
-14.1 ns; `summary-final2-2026-09-13.md` in the session notes):
+14.1 ns; the table with the parse-and-evaluate measure added later that day is `docs/measurements/2026-09-13/four-axis-table.md`):
 
 | implementation | cold | warm | compile | memory | warm faster than Blaze on |
 |---|---:|---:|---:|---:|---:|
