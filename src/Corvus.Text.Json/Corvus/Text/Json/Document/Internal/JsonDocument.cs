@@ -555,7 +555,7 @@ public abstract partial class JsonDocument
         Debug.Assert(MaxArrayLength == Array.MaxLength);
 #endif
 
-        int newCapacity = toReturn.Length * 2;
+        int newCapacity = Math.Max(toReturn.Length * 2, v + 1);
 
         // Note that this check works even when newCapacity overflowed thanks to the (uint) cast
         if ((uint)newCapacity > MaxArrayLength) newCapacity = MaxArrayLength;
@@ -597,7 +597,9 @@ public abstract partial class JsonDocument
         Debug.Assert(MaxArrayLength == Array.MaxLength);
 #endif
 
-        int newCapacity = toReturn.Length * 2;
+        // Doubling alone is not enough when the request outruns it (a property map for an object with more
+        // entries than the buffer holds, after small ones): the new capacity must cover v itself.
+        int newCapacity = Math.Max(toReturn.Length * 2, v + 1);
 
         // Note that this check works even when newCapacity overflowed thanks to the (uint) cast
         if ((uint)newCapacity > MaxArrayLength) newCapacity = MaxArrayLength;
