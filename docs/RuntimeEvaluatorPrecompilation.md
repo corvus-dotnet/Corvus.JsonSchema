@@ -951,6 +951,29 @@ at 60 ms against the JIT's 150, steady state at 1.00 of the JIT's. The runtime e
 on 31 of 37 at a geometric mean of 0.75 of Blaze; the four structural losses remain (helm-chart-lock 2.4,
 yamllint 2.2, ui5 1.75, importmap 1.4), and the two others (ui5-manifest, stale) are within a few percent.
 
+The table again at the end of 2026-09-13, after the entry floor, the word lookups, the profile for the three
+loops, the fused coalescing and the canonical references (the profile re-recorded on this code; overhead 12.9 to
+14.1 ns; `summary-final2-2026-09-13.md` in the session notes):
+
+| implementation | cold | warm | compile | memory | warm faster than Blaze on |
+|---|---:|---:|---:|---:|---:|
+| blaze-compile | 10.1 ms | 116 µs | 2.9 ms | n/a | |
+| blaze-template | 9.7 ms | 116 µs | 0 | n/a | |
+| corvus-runtime-jit | 150 ms | 77 µs | 82 ms | 0 B | 31 of 37 |
+| corvus-runtime-r2r (partial, profiled) | 53 ms | 79 µs | | 0 B | 30 of 37 |
+| corvus-runtime-aot (profiled) | 4.5 ms | 86 µs | 0.34 ms | 0 B | 30 of 37 |
+| corvus-image-jit | 122 ms | 77 µs | 25 ms | 0 B | 31 of 37 |
+| corvus-image-aot (profiled) | 4.3 ms | 86 µs | 0.14 ms | 0 B | 30 of 37 |
+| corvus-generated-jit | 115 ms | 76 µs | 36 ms | 0 B | 30 of 37 |
+| corvus-generated-aot (profiled) | 4.8 ms | 85 µs | 0.18 ms | 0 B | 28 of 37 |
+
+Corpus by corpus against the previous evening's table the runtime evaluator is at 0.94 under the JIT and 0.93
+under native AOT at the median (yamllint, krakend, aws-cdk, clang-format and deno 0.86 to 0.88 under the JIT;
+aws-cdk, lerna, jsconfig, yamllint and importmap 0.77 to 0.80 under AOT), the generated models at 0.92 and 0.94;
+native AOT is 1.06 of the JIT at the median, from 1.09, the loops that now take a profile taking the static one
+too. Against Blaze: fastest on 31 of 37, geometric mean 0.72 (from 0.75); the structural losses are
+helm-chart-lock 2.3, yamllint 1.9, ui5 1.6 (from 1.75), importmap 1.4, with ui5-manifest and stale at parity.
+
 ## Against Blaze (2026-09-11)
 
 Blaze is run through the Sourcemeta `jsonschema` CLI release binary (`benchmarks/.../tools/blaze-compare.py`, see
