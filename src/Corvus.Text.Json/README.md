@@ -50,6 +50,14 @@ Person.Mutable root = builder.RootElement;
 root.SetAge(31);
 ```
 
+## Native AOT and ReadyToRun
+
+The library publishes as native AOT without trimming or AOT warnings, and the package carries a static optimisation profile that its targets hand to the AOT
+compiler when an application publishes with `PublishAot`, keeping schema evaluation within about 10% of the JIT's
+steady state (cold start about 5 ms). Applications that publish with `PublishReadyToRun` may prefer to exclude
+`Corvus.Text.Json.dll` from precompilation when steady-state validation speed matters more than cold start. Details
+and figures: [Publishing an application](https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/main/docs/RuntimeEvaluator.md#publishing-an-application).
+
 ## Target Frameworks
 
 - .NET 10.0, 9.0

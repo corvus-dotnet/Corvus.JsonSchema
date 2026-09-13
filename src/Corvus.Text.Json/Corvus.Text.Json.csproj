@@ -38,6 +38,10 @@
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
+  <ItemGroup Label="Static optimisation profile for native AOT (see buildTransitive/Corvus.Text.Json.targets; regenerated per release, see docs/ReleaseProcess.md)">
+    <None Include="buildTransitive\Corvus.Text.Json.targets" Pack="true" PackagePath="buildTransitive" Visible="false" />
+    <None Include="profiles\Corvus.Text.Json.mibc" Pack="true" PackagePath="profiles" Visible="false" />
+  </ItemGroup>
   <ItemGroup Label="Bundled Analyzers">
     <ProjectReference Include="..\Corvus.Text.Json.Analyzers\Corvus.Text.Json.Analyzers.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
     <None Include="..\Corvus.Text.Json.Analyzers\bin\$(Configuration)\netstandard2.0\Corvus.Text.Json.Analyzers.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
