@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The cold run (ColdRun.cs) and the warm per-evaluation measurement (BlazeBasis.cs) of a corpus, publishable as
+       native AOT or ReadyToRun for a like-for-like comparison with the Blaze CLI:
+       dotnet publish -c Release -r linux-x64 -p:ColdAot=true. `warm <loops> <corpus...>` or `<corpus> [image]`. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <IsPackable>false</IsPackable>
+    <PublishAot Condition="'$(ColdAot)' == 'true'">true</PublishAot>
+    <OptimizationPreference>Speed</OptimizationPreference>
+  </PropertyGroup>
+
+  <!-- With -p:ColdPackage=<version> the runner takes the library from the Corvus.Text.Json NuGet package of that version
+       instead of the project (a local feed through -p:RestoreConfigFile=<nuget.config>), which is how the package's own
+       optimisation profile and targets are checked. -->
+  <ItemGroup>
+    <ProjectReference Include="../../src/Corvus.Text.Json/Corvus.Text.Json.csproj" Condition="'$(ColdPackage)' == ''" />
+    <PackageReference Include="Corvus.Text.Json" VersionOverride="$(ColdPackage)" Condition="'$(ColdPackage)' != ''" />
+    <Compile Include="../Corvus.Text.Json.RuntimeEvaluator.Benchmarks/SourceMeta/SourceMetaCases.cs" Link="SourceMetaCases.cs" />
+    <Compile Include="../Corvus.Text.Json.RuntimeEvaluator.Benchmarks/SourceMeta/ColdRun.cs" Link="ColdRun.cs" />
+    <Compile Include="../Corvus.Text.Json.RuntimeEvaluator.Benchmarks/SourceMeta/SourceMetaCase.cs" Link="SourceMetaCase.cs" />
+    <Compile Include="../Corvus.Text.Json.RuntimeEvaluator.Benchmarks/SourceMeta/BlazeBasis.cs" Link="BlazeBasis.cs" />
+    <Compile Include="../Corvus.Text.Json.RuntimeEvaluator.Benchmarks/SourceMeta/ParseCost.cs" Link="ParseCost.cs" />
+  </ItemGroup>
+
+  <!-- With -p:ColdGenerated=true the runner also carries the checked-in generated models of every corpus, so the
+       shipping generator's validation code can be measured the same way (`generated warm|cold ...`). -->
+  <!-- With -p:ColdMibc=<file.mibc> a static profile (dotnet-pgo create-mibc over an instrumented trace) drives the native AOT compile and the ReadyToRun one. -->
+  <ItemGroup Condition="'$(ColdMibc)' != ''">
+    <MibcFile Include="$(ColdMibc)" />
+    <PublishReadyToRunPgoFiles Include="$(ColdMibc)" />
+  </ItemGroup>
+
+  <!-- With -p:ColdPartial=true the ReadyToRun publish precompiles only the methods in the profile: give it a profile of
+       the compile phase alone and the evaluation loops stay with the JIT, which keeps steady state at JIT parity. -->
+  <PropertyGroup Condition="'$(ColdPartial)' == 'true'">
+    <PublishReadyToRunCrossgen2ExtraArgs>$(PublishReadyToRunCrossgen2ExtraArgs);--partial</PublishReadyToRunCrossgen2ExtraArgs>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(ColdGenerated)' == 'true'">
+    <DefineConstants>$(DefineConstants);COLD_GENERATED</DefineConstants>
+    <SourceMetaModels>AnsibleMeta;AwsCdk;Babelrc;ClangFormat;CmakePresets;CodeClimate;Cql2;Cspell;Cypress;Deno;Dependabot;Draft04;FabricMod;GeoJson;GitpodConfiguration;HelmChartLock;Importmap;Jasmine;Jsconfig;Jshintrc;Krakend;Lazygit;Lerna;NestCli;Omnisharp;Openapi;PreCommitHooks;Pulumi;SemanticRelease;Stale;Stylecop;Tmuxinator;Ui5;Ui5Manifest;UnrealEngineUproject;Vercel;Yamllint</SourceMetaModels>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(ColdGenerated)' == 'true'">
+    <SourceMetaModel Include="$(SourceMetaModels)" />
+    <ProjectReference Include="@(SourceMetaModel->'../Corvus.Text.Json.%(Identity)BenchmarkModels/Corvus.Text.Json.%(Identity)BenchmarkModels.csproj')" />
+    <Compile Include="../Corvus.Text.Json.RuntimeEvaluator.Benchmarks/SourceMeta/GeneratedCases.cs" Link="GeneratedCases.cs" />
+    <Compile Include="../Corvus.Text.Json.RuntimeEvaluator.Benchmarks/SourceMeta/GeneratedRun.cs" Link="GeneratedRun.cs" />
+  </ItemGroup>
+
+</Project>

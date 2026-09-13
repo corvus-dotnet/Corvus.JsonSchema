@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Json.CodeGeneration;
-using Corvus.Text.Json.Validator;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TestUtilities;
 
@@ -46,8 +45,10 @@ public class FormatAssertionModeTests
     {
         string code = await GenerateAsync(DateTimeObject, validateFormat: true, overrides: null);
 
-        StringAssert.Contains(code, "MatchDateTime");
-        Assert.IsFalse(code.Contains("WarnDateTime"), "Default mode must not emit the warning variant.");
+        // Validation is performed by the schema evaluation program; the default mode asserts every format
+        // and emits no per-format override.
+        StringAssert.Contains(code, "AssertFormat = true");
+        Assert.IsFalse(code.Contains("FormatModes"), "Default mode must not emit format overrides.");
     }
 
     [TestMethod]
@@ -58,9 +59,7 @@ public class FormatAssertionModeTests
             validateFormat: true,
             overrides: new Dictionary<string, FormatAssertionMode> { ["date-time"] = FormatAssertionMode.Disable });
 
-        StringAssert.Contains(code, "IgnoredFormatNotAsserted");
-        Assert.IsFalse(code.Contains("MatchDateTime"), "Disabled format must not emit an assertion.");
-        Assert.IsFalse(code.Contains("WarnDateTime"), "Disabled format must not emit the warning variant.");
+        StringAssert.Contains(code, "[\"date-time\"] = JsonSchemaFormatMode.Disable");
     }
 
     [TestMethod]
@@ -71,8 +70,7 @@ public class FormatAssertionModeTests
             validateFormat: true,
             overrides: new Dictionary<string, FormatAssertionMode> { ["date-time"] = FormatAssertionMode.Warning });
 
-        StringAssert.Contains(code, "WarnDateTime");
-        Assert.IsFalse(code.Contains("MatchDateTime"), "Warning mode must replace the assertion with the warning variant.");
+        StringAssert.Contains(code, "[\"date-time\"] = JsonSchemaFormatMode.Warning");
     }
 
     [TestMethod]
@@ -84,10 +82,8 @@ public class FormatAssertionModeTests
             validateFormat: true,
             overrides: new Dictionary<string, FormatAssertionMode> { ["date-time"] = FormatAssertionMode.Warning });
 
-        StringAssert.Contains(code, "WarnDateTime");
-        StringAssert.Contains(code, "MatchUuid");
-        Assert.IsFalse(code.Contains("MatchDateTime"), "date-time should use the warning variant.");
-        Assert.IsFalse(code.Contains("WarnUuid"), "uuid should still assert.");
+        StringAssert.Contains(code, "[\"date-time\"] = JsonSchemaFormatMode.Warning");
+        Assert.IsFalse(code.Contains("[\"uuid\"]"), "uuid has no override and still asserts.");
     }
 
     [TestMethod]
@@ -100,8 +96,7 @@ public class FormatAssertionModeTests
             validateFormat: true,
             overrides: new Dictionary<string, FormatAssertionMode> { ["*"] = FormatAssertionMode.Disable });
 
-        Assert.IsFalse(code.Contains("MatchDateTime"), "Wildcard disable must not assert date-time.");
-        Assert.IsFalse(code.Contains("MatchUuid"), "Wildcard disable must not assert uuid.");
+        StringAssert.Contains(code, "[\"*\"] = JsonSchemaFormatMode.Disable");
     }
 
     [TestMethod]
@@ -113,8 +108,8 @@ public class FormatAssertionModeTests
             validateFormat: true,
             overrides: new Dictionary<string, FormatAssertionMode> { ["*"] = FormatAssertionMode.Disable, ["uuid"] = FormatAssertionMode.Assert });
 
-        Assert.IsFalse(code.Contains("MatchDateTime"), "date-time falls under the wildcard disable.");
-        StringAssert.Contains(code, "MatchUuid");
+        StringAssert.Contains(code, "[\"*\"] = JsonSchemaFormatMode.Disable");
+        StringAssert.Contains(code, "[\"uuid\"] = JsonSchemaFormatMode.Assert");
     }
 
     [TestMethod]

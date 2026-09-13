@@ -141,6 +141,45 @@ public readonly partial struct VercelSchema
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static explicit operator decimal(MinimumCacheTtlEntity value) => value._parent.TryGetValue(value._idx, out decimal result) ? result : throw new FormatException();
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator sbyte(MinimumCacheTtlEntity value) => value._parent.TryGetValue(value._idx, out sbyte result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator byte(MinimumCacheTtlEntity value) => value._parent.TryGetValue(value._idx, out byte result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator short(MinimumCacheTtlEntity value) => value._parent.TryGetValue(value._idx, out short result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator ushort(MinimumCacheTtlEntity value) => value._parent.TryGetValue(value._idx, out ushort result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator int(MinimumCacheTtlEntity value) => value._parent.TryGetValue(value._idx, out int result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator uint(MinimumCacheTtlEntity value) => value._parent.TryGetValue(value._idx, out uint result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator ulong(MinimumCacheTtlEntity value) => value._parent.TryGetValue(value._idx, out ulong result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator float(MinimumCacheTtlEntity value) => value._parent.TryGetValue(value._idx, out float result) ? result : throw new FormatException();
+
+#if NET
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator Int128(MinimumCacheTtlEntity value) => value._parent.TryGetValue(value._idx, out Int128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator UInt128(MinimumCacheTtlEntity value) => value._parent.TryGetValue(value._idx, out UInt128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator Half(MinimumCacheTtlEntity value) => value._parent.TryGetValue(value._idx, out Half result) ? result : throw new FormatException();
+#endif
+
             /// <summary>
             /// Operator ==.
             /// </summary>

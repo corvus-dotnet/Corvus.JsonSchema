@@ -146,6 +146,45 @@ public readonly partial struct ClangFormatSchema
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator decimal(IndentWidthEntity value) => value._parent.TryGetValue(value._idx, out decimal result) ? result : throw new FormatException();
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator sbyte(IndentWidthEntity value) => value._parent.TryGetValue(value._idx, out sbyte result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator byte(IndentWidthEntity value) => value._parent.TryGetValue(value._idx, out byte result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator short(IndentWidthEntity value) => value._parent.TryGetValue(value._idx, out short result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator ushort(IndentWidthEntity value) => value._parent.TryGetValue(value._idx, out ushort result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator int(IndentWidthEntity value) => value._parent.TryGetValue(value._idx, out int result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator uint(IndentWidthEntity value) => value._parent.TryGetValue(value._idx, out uint result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator ulong(IndentWidthEntity value) => value._parent.TryGetValue(value._idx, out ulong result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator float(IndentWidthEntity value) => value._parent.TryGetValue(value._idx, out float result) ? result : throw new FormatException();
+
+#if NET
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator Int128(IndentWidthEntity value) => value._parent.TryGetValue(value._idx, out Int128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator UInt128(IndentWidthEntity value) => value._parent.TryGetValue(value._idx, out UInt128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator Half(IndentWidthEntity value) => value._parent.TryGetValue(value._idx, out Half result) ? result : throw new FormatException();
+#endif
+
         /// <summary>
         /// Operator ==.
         /// </summary>

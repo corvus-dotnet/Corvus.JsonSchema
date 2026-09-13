@@ -7,10 +7,10 @@
 // https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Corvus.Json.CodeGeneration;
-using Corvus.Text.Json.CodeGeneration.ValidationHandlers;
 using Microsoft.CodeAnalysis.CSharp;
 
 namespace Corvus.Text.Json.CodeGeneration;
@@ -40,222 +40,6 @@ internal static partial class CodeGenerationExtensions
     private const string EnumValuesClassNameKey = "CSharp_JsonSchema_EnumValuesClassNameKey";
     private const string MutableClassBaseName = "Mutable";
     private const string MutableClassNameKey = "CSharp_JsonSchema_MutableClassNameKey";
-
-    public static CodeGenerator AppendPushChildContextMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
-    {
-        if (generator.IsCancellationRequested)
-        {
-            return generator;
-        }
-
-        string useEvaluatedItems = typeDeclaration.RequiresItemsEvaluationTracking() ? "true" : "false";
-        string useEvaluatedProperties = typeDeclaration.RequiresPropertyEvaluationTracking() ? "true" : "false";
-
-        generator
-            .ReserveName("PushChildContext")
-            .AppendSeparatorLine()
-            .AppendBlockIndent(
-                """
-                /// <summary>
-                /// Push the current context as a child context for schema evaluation.
-                /// </summary>
-                /// <typeparam name="TContext">The type of the context to be passed to the path providers.</typeparam>
-                /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                /// <param name="context">The current evaluation context.</param>
-                /// <param name="providerContext">The context to be passed to the path providers.</param>
-                /// <param name="schemaEvaluationPath">The (optional) path to the schema being evaluated in the child context.</param>
-                /// <param name="documentEvaluationPath">The (optional) path in the document being evaluated in the child context.</param>
-                /// <returns>The child context.</returns>
-                """)
-            .AppendLineIndent("internal static JsonSchemaContext PushChildContext<TContext>(")
-            .PushIndent()
-                .AppendLineIndent("IJsonDocument parentDocument,")
-                .AppendLineIndent("int parentDocumentIndex,")
-                .AppendLineIndent("ref JsonSchemaContext context,")
-                .AppendLineIndent("TContext providerContext,")
-                .AppendLineIndent("JsonSchemaPathProvider<TContext>? schemaEvaluationPath = null,")
-                .AppendLineIndent("JsonSchemaPathProvider<TContext>? documentEvaluationPath = null)")
-            .PopIndent()
-            .AppendLineIndent("{")
-            .PushIndent()
-                .AppendLineIndent("return")
-                .PushIndent()
-                    .AppendLineIndent("context.PushChildContext(")
-                    .PushIndent()
-                        .AppendLineIndent("parentDocument,")
-                        .AppendLineIndent("parentDocumentIndex,")
-                        .AppendLineIndent("useEvaluatedItems: ", useEvaluatedItems, ",")
-                        .AppendLineIndent("useEvaluatedProperties: ", useEvaluatedProperties, ",")
-                        .AppendLineIndent("evaluationPath: schemaEvaluationPath,")
-                        .AppendLineIndent("documentEvaluationPath: documentEvaluationPath,")
-                        .AppendLineIndent("providerContext: providerContext);")
-                    .PopIndent()
-                .PopIndent()
-            .PopIndent()
-            .AppendLineIndent("}");
-
-        generator
-            .AppendSeparatorLine()
-            .AppendBlockIndent(
-                """
-                /// <summary>
-                /// Push the current context as a child context for schema evaluation.
-                /// </summary>
-                /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                /// <param name="context">The current evaluation context.</param>
-                /// <param name="schemaEvaluationPath">The (optional) path to the schema being evaluated in the child context.</param>
-                /// <param name="documentEvaluationPath">The (optional) path in the document being evaluated in the child context.</param>
-                /// <returns>The child context.</returns>
-                """)
-            .AppendLineIndent("internal static JsonSchemaContext PushChildContext(")
-            .PushIndent()
-                .AppendLineIndent("IJsonDocument parentDocument,")
-                .AppendLineIndent("int parentDocumentIndex,")
-                .AppendLineIndent("ref JsonSchemaContext context,")
-                .AppendLineIndent("JsonSchemaPathProvider? schemaEvaluationPath = null,")
-                .AppendLineIndent("JsonSchemaPathProvider? documentEvaluationPath = null)")
-            .PopIndent()
-            .AppendLineIndent("{")
-            .PushIndent()
-                .AppendLineIndent("return")
-                .PushIndent()
-                    .AppendLineIndent("context.PushChildContext(")
-                    .PushIndent()
-                        .AppendLineIndent("parentDocument,")
-                        .AppendLineIndent("parentDocumentIndex,")
-                        .AppendLineIndent("useEvaluatedItems: ", useEvaluatedItems, ",")
-                        .AppendLineIndent("useEvaluatedProperties: ", useEvaluatedProperties, ",")
-                        .AppendLineIndent("evaluationPath: schemaEvaluationPath,")
-                        .AppendLineIndent("documentEvaluationPath: documentEvaluationPath);")
-                    .PopIndent()
-                .PopIndent()
-            .PopIndent()
-            .AppendLineIndent("}");
-
-        generator
-            .AppendSeparatorLine()
-            .AppendBlockIndent(
-                """
-                /// <summary>
-                /// Push the current context as a child context for schema evaluation of a property.
-                /// </summary>
-                /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                /// <param name="context">The current evaluation context.</param>
-                /// <param name="propertyName">The name of the property </param>
-                /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-                /// <returns>The child context.</returns>
-                """)
-            .AppendLineIndent("internal static JsonSchemaContext PushChildContext(")
-            .PushIndent()
-                .AppendLineIndent("IJsonDocument parentDocument,")
-                .AppendLineIndent("int parentDocumentIndex,")
-                .AppendLineIndent("ref JsonSchemaContext context,")
-                .AppendLineIndent("ReadOnlySpan<byte> propertyName,")
-                .AppendLineIndent("JsonSchemaPathProvider? evaluationPath = null)")
-            .PopIndent()
-            .AppendLineIndent("{")
-            .PushIndent()
-                .AppendLineIndent("return")
-                .PushIndent()
-                    .AppendLineIndent("context.PushChildContext(")
-                    .PushIndent()
-                        .AppendLineIndent("parentDocument,")
-                        .AppendLineIndent("parentDocumentIndex,")
-                        .AppendLineIndent("useEvaluatedItems: ", useEvaluatedItems, ",")
-                        .AppendLineIndent("useEvaluatedProperties: ", useEvaluatedProperties, ",")
-                        .AppendLineIndent("propertyName,")
-                        .AppendLineIndent("evaluationPath: evaluationPath,")
-                        .AppendLineIndent("schemaEvaluationPath: SchemaLocationProvider);")
-                    .PopIndent()
-                .PopIndent()
-            .PopIndent()
-            .AppendLineIndent("}");
-
-        generator
-            .AppendSeparatorLine()
-            .AppendBlockIndent(
-                """
-                /// <summary>
-                /// Push the current context as a child context for schema evaluation of a property where the property name is known to be unescaped.
-                /// </summary>
-                /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                /// <param name="context">The current evaluation context.</param>
-                /// <param name="propertyName">The name of the property </param>
-                /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-                /// <returns>The child context.</returns>
-                """)
-            .AppendLineIndent("internal static JsonSchemaContext PushChildContextUnescaped(")
-            .PushIndent()
-                .AppendLineIndent("IJsonDocument parentDocument,")
-                .AppendLineIndent("int parentDocumentIndex,")
-                .AppendLineIndent("ref JsonSchemaContext context,")
-                .AppendLineIndent("ReadOnlySpan<byte> propertyName,")
-                .AppendLineIndent("JsonSchemaPathProvider? evaluationPath = null)")
-            .PopIndent()
-            .AppendLineIndent("{")
-            .PushIndent()
-                .AppendLineIndent("return")
-                .PushIndent()
-                    .AppendLineIndent("context.PushChildContext(")
-                    .PushIndent()
-                        .AppendLineIndent("parentDocument,")
-                        .AppendLineIndent("parentDocumentIndex,")
-                        .AppendLineIndent("useEvaluatedItems: ", useEvaluatedItems, ",")
-                        .AppendLineIndent("useEvaluatedProperties: ", useEvaluatedProperties, ",")
-                        .AppendLineIndent("propertyName,")
-                        .AppendLineIndent("evaluationPath: evaluationPath,")
-                        .AppendLineIndent("schemaEvaluationPath: SchemaLocationProvider);")
-                    .PopIndent()
-                .PopIndent()
-            .PopIndent()
-            .AppendLineIndent("}");
-
-        generator
-            .AppendSeparatorLine()
-            .AppendBlockIndent(
-                """
-                /// <summary>
-                /// Push the current context as a child context for schema evaluation of an array item.
-                /// </summary>
-                /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                /// <param name="context">The current evaluation context.</param>
-                /// <param name="itemIndex">The index of the item in the array.</param>
-                /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-                /// <returns>The child context.</returns>
-                """)
-            .AppendLineIndent("internal static JsonSchemaContext PushChildContext(")
-            .PushIndent()
-                .AppendLineIndent("IJsonDocument parentDocument,")
-                .AppendLineIndent("int parentDocumentIndex,")
-                .AppendLineIndent("ref JsonSchemaContext context,")
-                .AppendLineIndent("int itemIndex,")
-                .AppendLineIndent("JsonSchemaPathProvider? evaluationPath = null)")
-            .PopIndent()
-            .AppendLineIndent("{")
-            .PushIndent()
-                .AppendLineIndent("return")
-                .PushIndent()
-                    .AppendLineIndent("context.PushChildContext(")
-                    .PushIndent()
-                        .AppendLineIndent("parentDocument,")
-                        .AppendLineIndent("parentDocumentIndex,")
-                        .AppendLineIndent("useEvaluatedItems: ", useEvaluatedItems, ",")
-                        .AppendLineIndent("useEvaluatedProperties: ", useEvaluatedProperties, ",")
-                        .AppendLineIndent("itemIndex,")
-                        .AppendLineIndent("evaluationPath: evaluationPath,")
-                        .AppendLineIndent("schemaEvaluationPath: SchemaLocationProvider);")
-                    .PopIndent()
-                .PopIndent()
-            .PopIndent()
-            .AppendLineIndent("}");
-
-        return generator;
-    }
 
     private static readonly System.Text.RegularExpressions.Regex PrefixPattern =
         new(@"^\^([a-zA-Z0-9\-_/@.]+)(\.\*)?$", System.Text.RegularExpressions.RegexOptions.Compiled);
@@ -316,62 +100,59 @@ internal static partial class CodeGenerationExtensions
         return (int.Parse(match.Groups[1].Value), int.Parse(match.Groups[2].Value));
     }
 
-    public static CodeGenerator AppendRegexValidationFields(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    /// <summary>
+    /// Gets a value indicating whether the type's <c>JsonSchema</c> class needs regular-expression fields for its
+    /// pattern properties (only full regexes need a field; prefix, range and non-empty patterns are matched inline).
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <returns><see langword="true"/> if at least one pattern property regex field is emitted.</returns>
+    public static bool HasPatternPropertyRegexFields(this TypeDeclaration typeDeclaration)
     {
-        if (generator.IsCancellationRequested)
-        {
-            return generator;
-        }
-
         if (typeDeclaration.ValidationRegularExpressions() is IReadOnlyDictionary<IValidationRegexProviderKeyword, IReadOnlyList<string>> regexes)
         {
-            // Ensure we have a got a stable ordering of the keywords.
-            foreach (KeyValuePair<IValidationRegexProviderKeyword, IReadOnlyList<string>> constant in regexes.OrderBy(k => k.Key.Keyword))
+            foreach (KeyValuePair<IValidationRegexProviderKeyword, IReadOnlyList<string>> regex in regexes)
             {
-                if (generator.IsCancellationRequested)
+                if (regex.Key is IObjectPatternPropertyValidationKeyword)
                 {
-                    return generator;
-                }
-
-                if (constant.Value.Count > 0)
-                {
-                    if (constant.Value.Count == 1)
+                    foreach (string value in regex.Value)
                     {
-                        if (ClassifyRegexPattern(constant.Value[0]) == RegexPatternCategory.FullRegex)
+                        if (ClassifyRegexPattern(value) == RegexPatternCategory.FullRegex)
                         {
-                            generator
-                                .AppendSeparatorLine()
-                                .AppendRegexValidationField(constant.Key, null);
-                        }
-                    }
-                    else
-                    {
-                        bool needsSeparator = true;
-                        int i = 1;
-                        foreach (string value in constant.Value)
-                        {
-                            if (ClassifyRegexPattern(value) == RegexPatternCategory.FullRegex)
-                            {
-                                if (needsSeparator)
-                                {
-                                    generator.AppendSeparatorLine();
-                                    needsSeparator = false;
-                                }
-
-                                generator.AppendRegexValidationField(constant.Key, i);
-                            }
-
-                            i++;
+                            return true;
                         }
                     }
                 }
             }
         }
 
-        return generator;
+        return false;
     }
 
-    public static CodeGenerator AppendRegexValidationFactoryMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    /// <summary>
+    /// Appends the static regular-expression fields backing the generated pattern-property helpers
+    /// (<c>MatchesPattern…</c>, <c>TryAsPattern…</c>). Validation itself runs in the runtime evaluator, so only the
+    /// pattern-property regexes are emitted.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendPatternPropertyRegexFields(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        return generator.AppendPatternPropertyRegexMembers(typeDeclaration, static (g, keyword, index, _) => g.AppendRegexValidationField(keyword, index));
+    }
+
+    /// <summary>
+    /// Appends the factory methods for the fields emitted by <see cref="AppendPatternPropertyRegexFields"/>.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendPatternPropertyRegexFactoryMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        return generator.AppendPatternPropertyRegexMembers(typeDeclaration, static (g, keyword, index, value) => g.AppendRegexValidationFactoryMethod(keyword, index, value));
+    }
+
+    private static CodeGenerator AppendPatternPropertyRegexMembers(this CodeGenerator generator, TypeDeclaration typeDeclaration, Func<CodeGenerator, IKeyword, int?, string, CodeGenerator> append)
     {
         if (generator.IsCancellationRequested)
         {
@@ -388,34 +169,29 @@ internal static partial class CodeGenerationExtensions
                     return generator;
                 }
 
-                if (constant.Value.Count == 1)
+                if (constant.Key is not IObjectPatternPropertyValidationKeyword || constant.Value.Count == 0)
                 {
-                    if (ClassifyRegexPattern(constant.Value[0]) == RegexPatternCategory.FullRegex)
-                    {
-                        generator
-                            .AppendSeparatorLine()
-                            .AppendRegexValidationFactoryMethod(constant.Key, null, constant.Value[0]);
-                    }
+                    continue;
                 }
-                else
-                {
-                    bool needsSeparator = true;
-                    int i = 1;
-                    foreach (string value in constant.Value)
-                    {
-                        if (ClassifyRegexPattern(value) == RegexPatternCategory.FullRegex)
-                        {
-                            if (needsSeparator)
-                            {
-                                generator.AppendSeparatorLine();
-                                needsSeparator = false;
-                            }
 
-                            generator.AppendRegexValidationFactoryMethod(constant.Key, i, value);
+                // The index suffix matches the pattern-property helpers: none for a single pattern, 1-based otherwise.
+                bool hasIndex = constant.Value.Count > 1;
+                bool needsSeparator = true;
+                int i = 1;
+                foreach (string value in constant.Value)
+                {
+                    if (ClassifyRegexPattern(value) == RegexPatternCategory.FullRegex)
+                    {
+                        if (needsSeparator)
+                        {
+                            generator.AppendSeparatorLine();
+                            needsSeparator = false;
                         }
 
-                        i++;
+                        append(generator, constant.Key, hasIndex ? i : null, value);
                     }
+
+                    i++;
                 }
             }
         }
@@ -483,6 +259,78 @@ internal static partial class CodeGenerationExtensions
     }
 
     /// <summary>
+    /// Appends the static JsonSchema Evaluate method, which evaluates the instance against this type's entry point
+    /// of the assembly's schema evaluation program.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to generate the evaluation method.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendRuntimeProgramEvaluateMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
+        var provider = (CSharpLanguageProvider)generator.LanguageProvider;
+        int entry = provider.GetProgramEntry(typeDeclaration);
+
+        generator
+            .ReserveName("Evaluator")
+            .ReserveName("Evaluate")
+            .AppendSeparatorLine();
+
+        if (entry < 0)
+        {
+            // No schema location is known for this type (a synthetic type); it accepts any instance.
+            return generator
+                .AppendLineIndent("private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator? Evaluator = null;")
+                .AppendSeparatorLine()
+                .BeginMethodDeclaration(
+                    visibilityAndModifiers: "internal static",
+                    returnType: "bool",
+                    methodName: "Evaluate",
+                    parameters: [
+                        ("IJsonDocument", "parentDocument"),
+                        ("int", "parentIndex"),
+                        ("IJsonSchemaResultsCollector?", "resultsCollector", "null")
+                    ])
+                    .AppendLineIndent("return true;")
+                .EndMethodDeclaration();
+        }
+
+        return generator
+            .AppendLineIndent(
+                "private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = ",
+                provider.ProgramClassReference,
+                ".Entry(",
+                entry.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                ");")
+            .AppendSeparatorLine()
+            .AppendBlockIndent(
+                """
+                /// <summary>
+                /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
+                /// </summary>
+                /// <param name="parentDocument">The parent document.</param>
+                /// <param name="parentIndex">The parent index.</param>
+                /// <param name="resultsCollector">The (optional) results collector.</param>
+                /// <returns><see langword="true" /> if the instance evaluates against the schema.</returns>
+                """)
+            .BeginMethodDeclaration(
+                visibilityAndModifiers: "internal static",
+                returnType: "bool",
+                methodName: "Evaluate",
+                parameters: [
+                    ("IJsonDocument", "parentDocument"),
+                    ("int", "parentIndex"),
+                    ("IJsonSchemaResultsCollector?", "resultsCollector", "null")
+                ])
+                .AppendLineIndent("return Evaluator.Evaluate(parentDocument, parentIndex, resultsCollector);")
+            .EndMethodDeclaration();
+    }
+
+    /// <summary>
     /// Appends an EvaluateSchema method to the generated type.
     /// </summary>
     /// <param name="generator">The code generator.</param>
@@ -505,120 +353,6 @@ internal static partial class CodeGenerationExtensions
                     return {{generator.JsonSchemaClassName()}}.Evaluate(_parent, _idx, resultsCollector);
                 }
                 """);
-    }
-
-    /// <summary>
-    /// Appends a static JsonSchema Evaluate method to the generated type.
-    /// </summary>
-    /// <param name="generator">The code generator.</param>
-    /// <param name="typeDeclaration">The type declaration for which to generate the evaluation method.</param>
-    /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator AppendJsonSchemaEvaluateMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration)
-    {
-        generator
-            .ReserveName("Evaluate")
-            .AppendSeparatorLine()
-            .AppendBlockIndent(
-                """
-                /// <summary>
-                /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
-                /// </summary>
-                /// <param name="parentDocument">The parent document.</param>
-                /// <param name="parentIndex">The parent index.</param>
-                /// <param name="context">A reference to the validation context, configured with the appropriate values.</param>
-                """)
-            .BeginReservedMethodDeclaration(
-                visibilityAndModifiers: "internal static",
-                returnType: "void",
-                methodName: "Evaluate",
-                parameters: [
-                    ("IJsonDocument", "parentDocument"),
-                    ("int", "parentIndex"),
-                    ("ref JsonSchemaContext", "context")
-                ])
-                .ConditionallyAppend(typeDeclaration.RequiresJsonTokenType(),
-                g => g
-                    .ReserveName("tokenType")
-                    .AppendLineIndent("JsonTokenType tokenType = parentDocument.GetJsonTokenType(parentIndex);"))
-                .AppendSeparatorLine()
-                .AppendLineIndent("// You're not allowed to ask about non-value-like entities")
-                .AppendLineIndent("Debug.Assert(parentDocument.GetJsonTokenType(parentIndex) is not")
-                .PushIndent()
-                    .AppendLineIndent("(JsonTokenType.None or")
-                    .AppendLineIndent("JsonTokenType.EndObject or")
-                    .AppendLineIndent("JsonTokenType.EndArray));")
-                .PopIndent();
-
-        // Append any setup code for each handler at the top of the method
-        foreach (KeywordValidationHandlerBase handler in typeDeclaration.OrderedValidationHandlers<KeywordValidationHandlerBase>(generator.LanguageProvider))
-        {
-            handler.AppendValidationSetup(generator, typeDeclaration);
-        }
-
-        // Then append the actual validation code beneath
-        bool needsShortcut = false;
-        foreach (KeywordValidationHandlerBase handler in typeDeclaration.OrderedValidationHandlers<KeywordValidationHandlerBase>(generator.LanguageProvider))
-        {
-            int originalLength = generator.Length;
-
-            if (needsShortcut)
-            {
-                generator.AppendNoCollectorNoMatchShortcutReturn();
-            }
-
-            int length = generator.Length;
-
-            typeDeclaration.ExecuteValidationHandler(handler, k => k.AppendValidationCode(generator, typeDeclaration));
-
-            if (length != generator.Length)
-            {
-                needsShortcut = true;
-            }
-            else
-            {
-                // Revert anything we added as a result of applying a shortcut.
-                generator.Length = originalLength;
-            }
-        }
-
-        generator
-            .EndMethodDeclaration()
-            .AppendSeparatorLine();
-
-        // Now append the utility wrapper that reutrn the boolean result derived from the context.
-        return generator
-            .BeginMethodDeclaration(
-                visibilityAndModifiers: "internal static",
-                returnType: "bool",
-                methodName: "Evaluate",
-                parameters: [
-                    ("IJsonDocument", "parentDocument"),
-                    ("int", "parentIndex"),
-                    ("IJsonSchemaResultsCollector?", "resultsCollector", "null")
-                ])
-                .AppendLineIndent("JsonSchemaContext context = JsonSchemaContext.BeginContext(")
-                .AppendLineIndent("parentDocument,")
-                .AppendLineIndent("parentIndex,")
-                .AppendLineIndent("usingEvaluatedItems: ", typeDeclaration.ExplicitUnevaluatedItemsType() is not null ? "true" : "false", ",")
-                .AppendLineIndent("usingEvaluatedProperties: ", typeDeclaration.LocalEvaluatedPropertyType() is not null || typeDeclaration.LocalAndAppliedEvaluatedPropertyType() is not null ? "true" : "false", ",")
-                .AppendLineIndent("resultsCollector: resultsCollector,")
-                .AppendLineIndent("schemaEvaluationPath: SchemaLocationProvider);")
-                .AppendSeparatorLine()
-                .AppendLineIndent("try")
-                .AppendLineIndent("{")
-                .PushIndent()
-                    .AppendLineIndent("Evaluate(parentDocument, parentIndex, ref context);")
-                    .AppendLineIndent("context.EndContext();")
-                    .AppendLineIndent("return context.IsMatch;")
-                .PopIndent()
-                .AppendLineIndent("}")
-                .AppendLineIndent("finally")
-                .AppendLineIndent("{")
-                .PushIndent()
-                .AppendLineIndent("context.Dispose();")
-                .PopIndent()
-                .AppendLineIndent("}")
-            .EndMethodDeclaration();
     }
 
     /// <summary>

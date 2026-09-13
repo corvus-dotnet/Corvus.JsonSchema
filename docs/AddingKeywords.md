@@ -197,5 +197,5 @@ To add a keyword:
 2. **Implement `IKeyword`** plus the behavioural interfaces that describe its semantics
 3. **Add it to the vocabulary** in `SchemaVocabulary.cs` for the relevant draft(s)
 4. **If it produces annotations**, implement `IAnnotationProducingKeyword`
-5. **If it needs validation code gen**, implement the appropriate validation interface and add handling in the relevant `ValidationHandler`
+5. **If it needs evaluation**, add it to the runtime evaluator (`SchemaCompiler.CompileNode` and `Evaluator`); see [ValidationHandlerGuide.md](ValidationHandlerGuide.md)
 6. **Add tests** using the JSON Schema Test Suite or custom test cases

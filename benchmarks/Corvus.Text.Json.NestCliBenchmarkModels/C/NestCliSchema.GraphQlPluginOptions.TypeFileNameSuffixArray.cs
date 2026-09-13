@@ -77,8 +77,9 @@ public readonly partial struct NestCliSchema
             /// <summary>
             /// Gets the default instance.
             /// </summary>
+            #pragma warning disable CS0618 // Type or member is obsolete
             public static TypeFileNameSuffixArray DefaultInstance { get; } = TypeFileNameSuffixArray.ParseValue("[\".input.ts\", \".args.ts\", \".entity.ts\", \".model.ts\"]"u8);
-
+            #pragma warning restore CS0618
             /// <summary>
             /// Gets the item at the given index.
             /// </summary>

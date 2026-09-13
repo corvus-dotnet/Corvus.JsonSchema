@@ -144,6 +144,11 @@ public struct MetadataDb : IDisposable
     internal bool IsInitialized => _data is not null;
 
     /// <summary>
+    /// Gets the backing row storage for direct (non-virtual) access. See <see cref="RawDocumentAccess"/>.
+    /// </summary>
+    internal byte[] RawData => _data;
+
+    /// <summary>
     /// Creates a metadata database using rented array pool memory with the specified data and length.
     /// </summary>
     /// <param name="data">The rented byte array to use as backing storage.</param>

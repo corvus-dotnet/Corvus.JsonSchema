@@ -164,6 +164,45 @@ public readonly partial struct CspellSchema
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static explicit operator decimal(CapsCostsEntity value) => value._parent.TryGetValue(value._idx, out decimal result) ? result : throw new FormatException();
 
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator sbyte(CapsCostsEntity value) => value._parent.TryGetValue(value._idx, out sbyte result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator byte(CapsCostsEntity value) => value._parent.TryGetValue(value._idx, out byte result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator short(CapsCostsEntity value) => value._parent.TryGetValue(value._idx, out short result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator ushort(CapsCostsEntity value) => value._parent.TryGetValue(value._idx, out ushort result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator int(CapsCostsEntity value) => value._parent.TryGetValue(value._idx, out int result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator uint(CapsCostsEntity value) => value._parent.TryGetValue(value._idx, out uint result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator ulong(CapsCostsEntity value) => value._parent.TryGetValue(value._idx, out ulong result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator float(CapsCostsEntity value) => value._parent.TryGetValue(value._idx, out float result) ? result : throw new FormatException();
+
+#if NET
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator Int128(CapsCostsEntity value) => value._parent.TryGetValue(value._idx, out Int128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator UInt128(CapsCostsEntity value) => value._parent.TryGetValue(value._idx, out UInt128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator Half(CapsCostsEntity value) => value._parent.TryGetValue(value._idx, out Half result) ? result : throw new FormatException();
+#endif
+
                 /// <summary>
                 /// Operator ==.
                 /// </summary>

@@ -824,63 +824,505 @@ public readonly partial struct Ui5ManifestSchema
                     public static ReadOnlySpan<byte> DateTimeValueUtf8 => Constants.Enum40;
                 }
 
-                public static partial class JsonSchema
+                /// <summary>
+                /// A native enum for the well-known values of this type.
+                /// </summary>
+                /// <remarks>
+                /// Member ordinals follow the schema declaration order. Inserting or reordering values
+                /// in the schema renumbers the ordinals, so do not persist their integer values.
+                /// </remarks>
+                public enum KnownValues
                 {
-                    private static EnumStringSet BuildEnumStringSet()
+                    /// <summary>
+                    /// Corresponds to the JSON string "date".
+                    /// </summary>
+                    Date = 0,
+                    /// <summary>
+                    /// Corresponds to the JSON string "today".
+                    /// </summary>
+                    Today = 1,
+                    /// <summary>
+                    /// Corresponds to the JSON string "yesterday".
+                    /// </summary>
+                    Yesterday = 2,
+                    /// <summary>
+                    /// Corresponds to the JSON string "tomorrow".
+                    /// </summary>
+                    Tomorrow = 3,
+                    /// <summary>
+                    /// Corresponds to the JSON string "dateRange".
+                    /// </summary>
+                    DateRange = 4,
+                    /// <summary>
+                    /// Corresponds to the JSON string "dateTimeRange".
+                    /// </summary>
+                    DateTimeRange = 5,
+                    /// <summary>
+                    /// Corresponds to the JSON string "from".
+                    /// </summary>
+                    From = 6,
+                    /// <summary>
+                    /// Corresponds to the JSON string "to".
+                    /// </summary>
+                    To = 7,
+                    /// <summary>
+                    /// Corresponds to the JSON string "fromDateTime".
+                    /// </summary>
+                    FromDateTime = 8,
+                    /// <summary>
+                    /// Corresponds to the JSON string "toDateTime".
+                    /// </summary>
+                    ToDateTime = 9,
+                    /// <summary>
+                    /// Corresponds to the JSON string "yearToDate".
+                    /// </summary>
+                    YearToDate = 10,
+                    /// <summary>
+                    /// Corresponds to the JSON string "lastDays".
+                    /// </summary>
+                    LastDays = 11,
+                    /// <summary>
+                    /// Corresponds to the JSON string "lastWeeks".
+                    /// </summary>
+                    LastWeeks = 12,
+                    /// <summary>
+                    /// Corresponds to the JSON string "lastMonths".
+                    /// </summary>
+                    LastMonths = 13,
+                    /// <summary>
+                    /// Corresponds to the JSON string "lastQuarters".
+                    /// </summary>
+                    LastQuarters = 14,
+                    /// <summary>
+                    /// Corresponds to the JSON string "lastYears".
+                    /// </summary>
+                    LastYears = 15,
+                    /// <summary>
+                    /// Corresponds to the JSON string "nextDays".
+                    /// </summary>
+                    NextDays = 16,
+                    /// <summary>
+                    /// Corresponds to the JSON string "nextWeeks".
+                    /// </summary>
+                    NextWeeks = 17,
+                    /// <summary>
+                    /// Corresponds to the JSON string "nextMonths".
+                    /// </summary>
+                    NextMonths = 18,
+                    /// <summary>
+                    /// Corresponds to the JSON string "nextQuarters".
+                    /// </summary>
+                    NextQuarters = 19,
+                    /// <summary>
+                    /// Corresponds to the JSON string "nextYears".
+                    /// </summary>
+                    NextYears = 20,
+                    /// <summary>
+                    /// Corresponds to the JSON string "todayFromTo".
+                    /// </summary>
+                    TodayFromTo = 21,
+                    /// <summary>
+                    /// Corresponds to the JSON string "thisWeek".
+                    /// </summary>
+                    ThisWeek = 22,
+                    /// <summary>
+                    /// Corresponds to the JSON string "lastWeek".
+                    /// </summary>
+                    LastWeek = 23,
+                    /// <summary>
+                    /// Corresponds to the JSON string "nextWeek".
+                    /// </summary>
+                    NextWeek = 24,
+                    /// <summary>
+                    /// Corresponds to the JSON string "specificMonth".
+                    /// </summary>
+                    SpecificMonth = 25,
+                    /// <summary>
+                    /// Corresponds to the JSON string "thisMonth".
+                    /// </summary>
+                    ThisMonth = 26,
+                    /// <summary>
+                    /// Corresponds to the JSON string "lastMonth".
+                    /// </summary>
+                    LastMonth = 27,
+                    /// <summary>
+                    /// Corresponds to the JSON string "nextMonth".
+                    /// </summary>
+                    NextMonth = 28,
+                    /// <summary>
+                    /// Corresponds to the JSON string "thisQuarter".
+                    /// </summary>
+                    ThisQuarter = 29,
+                    /// <summary>
+                    /// Corresponds to the JSON string "lastQuarter".
+                    /// </summary>
+                    LastQuarter = 30,
+                    /// <summary>
+                    /// Corresponds to the JSON string "nextQuarter".
+                    /// </summary>
+                    NextQuarter = 31,
+                    /// <summary>
+                    /// Corresponds to the JSON string "quarter1".
+                    /// </summary>
+                    Quarter1 = 32,
+                    /// <summary>
+                    /// Corresponds to the JSON string "quarter2".
+                    /// </summary>
+                    Quarter2 = 33,
+                    /// <summary>
+                    /// Corresponds to the JSON string "quarter3".
+                    /// </summary>
+                    Quarter3 = 34,
+                    /// <summary>
+                    /// Corresponds to the JSON string "quarter4".
+                    /// </summary>
+                    Quarter4 = 35,
+                    /// <summary>
+                    /// Corresponds to the JSON string "thisYear".
+                    /// </summary>
+                    ThisYear = 36,
+                    /// <summary>
+                    /// Corresponds to the JSON string "lastYear".
+                    /// </summary>
+                    LastYear = 37,
+                    /// <summary>
+                    /// Corresponds to the JSON string "nextYear".
+                    /// </summary>
+                    NextYear = 38,
+                    /// <summary>
+                    /// Corresponds to the JSON string "dateTime".
+                    /// </summary>
+                    DateTimeValue = 39,
+                }
+
+                /// <summary>
+                /// Converts a <see cref="KnownValues"/> to an instance of this type.
+                /// </summary>
+                /// <param name="value">The well-known value from which to convert.</param>
+                /// <exception cref="InvalidOperationException">The value was not a defined member of the <see cref="KnownValues"/> enumeration.</exception>
+                public static implicit operator OptionsEntity(KnownValues value)
+                {
+                    return value switch
                     {
-                        return new EnumStringSet([
-                            static () => "date"u8,
-                            static () => "today"u8,
-                            static () => "yesterday"u8,
-                            static () => "tomorrow"u8,
-                            static () => "dateRange"u8,
-                            static () => "dateTimeRange"u8,
-                            static () => "from"u8,
-                            static () => "to"u8,
-                            static () => "fromDateTime"u8,
-                            static () => "toDateTime"u8,
-                            static () => "yearToDate"u8,
-                            static () => "lastDays"u8,
-                            static () => "lastWeeks"u8,
-                            static () => "lastMonths"u8,
-                            static () => "lastQuarters"u8,
-                            static () => "lastYears"u8,
-                            static () => "nextDays"u8,
-                            static () => "nextWeeks"u8,
-                            static () => "nextMonths"u8,
-                            static () => "nextQuarters"u8,
-                            static () => "nextYears"u8,
-                            static () => "todayFromTo"u8,
-                            static () => "thisWeek"u8,
-                            static () => "lastWeek"u8,
-                            static () => "nextWeek"u8,
-                            static () => "specificMonth"u8,
-                            static () => "thisMonth"u8,
-                            static () => "lastMonth"u8,
-                            static () => "nextMonth"u8,
-                            static () => "thisQuarter"u8,
-                            static () => "lastQuarter"u8,
-                            static () => "nextQuarter"u8,
-                            static () => "quarter1"u8,
-                            static () => "quarter2"u8,
-                            static () => "quarter3"u8,
-                            static () => "quarter4"u8,
-                            static () => "thisYear"u8,
-                            static () => "lastYear"u8,
-                            static () => "nextYear"u8,
-                            static () => "dateTime"u8,
-                        ]);
+                        KnownValues.Date => Constants.EnumJson1,
+                        KnownValues.Today => Constants.EnumJson2,
+                        KnownValues.Yesterday => Constants.EnumJson3,
+                        KnownValues.Tomorrow => Constants.EnumJson4,
+                        KnownValues.DateRange => Constants.EnumJson5,
+                        KnownValues.DateTimeRange => Constants.EnumJson6,
+                        KnownValues.From => Constants.EnumJson7,
+                        KnownValues.To => Constants.EnumJson8,
+                        KnownValues.FromDateTime => Constants.EnumJson9,
+                        KnownValues.ToDateTime => Constants.EnumJson10,
+                        KnownValues.YearToDate => Constants.EnumJson11,
+                        KnownValues.LastDays => Constants.EnumJson12,
+                        KnownValues.LastWeeks => Constants.EnumJson13,
+                        KnownValues.LastMonths => Constants.EnumJson14,
+                        KnownValues.LastQuarters => Constants.EnumJson15,
+                        KnownValues.LastYears => Constants.EnumJson16,
+                        KnownValues.NextDays => Constants.EnumJson17,
+                        KnownValues.NextWeeks => Constants.EnumJson18,
+                        KnownValues.NextMonths => Constants.EnumJson19,
+                        KnownValues.NextQuarters => Constants.EnumJson20,
+                        KnownValues.NextYears => Constants.EnumJson21,
+                        KnownValues.TodayFromTo => Constants.EnumJson22,
+                        KnownValues.ThisWeek => Constants.EnumJson23,
+                        KnownValues.LastWeek => Constants.EnumJson24,
+                        KnownValues.NextWeek => Constants.EnumJson25,
+                        KnownValues.SpecificMonth => Constants.EnumJson26,
+                        KnownValues.ThisMonth => Constants.EnumJson27,
+                        KnownValues.LastMonth => Constants.EnumJson28,
+                        KnownValues.NextMonth => Constants.EnumJson29,
+                        KnownValues.ThisQuarter => Constants.EnumJson30,
+                        KnownValues.LastQuarter => Constants.EnumJson31,
+                        KnownValues.NextQuarter => Constants.EnumJson32,
+                        KnownValues.Quarter1 => Constants.EnumJson33,
+                        KnownValues.Quarter2 => Constants.EnumJson34,
+                        KnownValues.Quarter3 => Constants.EnumJson35,
+                        KnownValues.Quarter4 => Constants.EnumJson36,
+                        KnownValues.ThisYear => Constants.EnumJson37,
+                        KnownValues.LastYear => Constants.EnumJson38,
+                        KnownValues.NextYear => Constants.EnumJson39,
+                        KnownValues.DateTimeValue => Constants.EnumJson40,
+                        _ => throw new InvalidOperationException(),
+                    };
+                }
+
+                /// <summary>
+                /// Converts the value to its <see cref="KnownValues"/> equivalent.
+                /// </summary>
+                /// <param name="value">The value from which to convert.</param>
+                /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+                public static implicit operator KnownValues(OptionsEntity value)
+                {
+                    if (value.TryGetKnownValue(out KnownValues result))
+                    {
+                        return result;
                     }
 
-                    private static EnumStringSet EnumStringSet { get; } = BuildEnumStringSet();
+                    throw new InvalidOperationException();
+                }
 
+                /// <summary>
+                /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+                /// </summary>
+                /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+                /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+                public bool TryGetKnownValue(out KnownValues result)
+                {
+                    if (this.ValueEquals(Constants.Enum1))
+                    {
+                        result = KnownValues.Date;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum2))
+                    {
+                        result = KnownValues.Today;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum3))
+                    {
+                        result = KnownValues.Yesterday;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum4))
+                    {
+                        result = KnownValues.Tomorrow;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum5))
+                    {
+                        result = KnownValues.DateRange;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum6))
+                    {
+                        result = KnownValues.DateTimeRange;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum7))
+                    {
+                        result = KnownValues.From;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum8))
+                    {
+                        result = KnownValues.To;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum9))
+                    {
+                        result = KnownValues.FromDateTime;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum10))
+                    {
+                        result = KnownValues.ToDateTime;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum11))
+                    {
+                        result = KnownValues.YearToDate;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum12))
+                    {
+                        result = KnownValues.LastDays;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum13))
+                    {
+                        result = KnownValues.LastWeeks;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum14))
+                    {
+                        result = KnownValues.LastMonths;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum15))
+                    {
+                        result = KnownValues.LastQuarters;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum16))
+                    {
+                        result = KnownValues.LastYears;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum17))
+                    {
+                        result = KnownValues.NextDays;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum18))
+                    {
+                        result = KnownValues.NextWeeks;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum19))
+                    {
+                        result = KnownValues.NextMonths;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum20))
+                    {
+                        result = KnownValues.NextQuarters;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum21))
+                    {
+                        result = KnownValues.NextYears;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum22))
+                    {
+                        result = KnownValues.TodayFromTo;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum23))
+                    {
+                        result = KnownValues.ThisWeek;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum24))
+                    {
+                        result = KnownValues.LastWeek;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum25))
+                    {
+                        result = KnownValues.NextWeek;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum26))
+                    {
+                        result = KnownValues.SpecificMonth;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum27))
+                    {
+                        result = KnownValues.ThisMonth;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum28))
+                    {
+                        result = KnownValues.LastMonth;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum29))
+                    {
+                        result = KnownValues.NextMonth;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum30))
+                    {
+                        result = KnownValues.ThisQuarter;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum31))
+                    {
+                        result = KnownValues.LastQuarter;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum32))
+                    {
+                        result = KnownValues.NextQuarter;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum33))
+                    {
+                        result = KnownValues.Quarter1;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum34))
+                    {
+                        result = KnownValues.Quarter2;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum35))
+                    {
+                        result = KnownValues.Quarter3;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum36))
+                    {
+                        result = KnownValues.Quarter4;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum37))
+                    {
+                        result = KnownValues.ThisYear;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum38))
+                    {
+                        result = KnownValues.LastYear;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum39))
+                    {
+                        result = KnownValues.NextYear;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum40))
+                    {
+                        result = KnownValues.DateTimeValue;
+                        return true;
+                    }
+
+                    result = default;
+                    return false;
+                }
+
+                public static partial class JsonSchema
+                {
                     /// <summary>
                     /// Gets a provider for the schema location from which this type was generated.
                     /// </summary>
-                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/Configuration.FilterType.DateRange/properties/options/items"u8, buffer, out written);
+                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/definitions/Configuration.FilterType.DateRange/properties/options/items"u8, buffer, out written);
 
                     /// <summary>
-                    /// Gets the schema location from which this type was generated.
+                    /// Gets the schema location from which this type was generated, as a JSON Pointer within <see cref="SchemaDocument"/>.
                     /// </summary>
                     public const string SchemaLocation = "/definitions/Configuration.FilterType.DateRange/properties/options/items";
 
@@ -890,215 +1332,34 @@ public readonly partial struct Ui5ManifestSchema
                     public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/Configuration.FilterType.DateRange/properties/options/items"u8;
 
                     /// <summary>
+                    /// Gets the schema document from which this type was generated, relative to the base location for generation.
+                    /// </summary>
+                    /// <remarks>
+                    /// <see cref="SchemaLocation"/> is a JSON Pointer within this document, so <c>SchemaDocument + "#" + SchemaLocation</c>
+                    /// is a reference to the schema, even for a schema inside a <c>$id</c> sub-resource.
+                    /// </remarks>
+                    public const string SchemaDocument = "ui5-manifest-schema.json";
+
+                    /// <summary>
+                    /// Gets the schema document from which this type was generated as a UTF-8 string.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> SchemaDocumentUtf8 => "ui5-manifest-schema.json"u8;
+
+                    private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Corvus.Ui5ManifestBenchmark.Current.CorvusJsonSchemaProgram.Entry(18);
+
+                    /// <summary>
                     /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
                     /// </summary>
                     /// <param name="parentDocument">The parent document.</param>
                     /// <param name="parentIndex">The parent index.</param>
-                    /// <param name="context">A reference to the validation context, configured with the appropriate values.</param>
-                    internal static void Evaluate(
-                        IJsonDocument parentDocument,
-                        int parentIndex,
-                        ref JsonSchemaContext context)
-                    {
-                        JsonTokenType tokenType = parentDocument.GetJsonTokenType(parentIndex);
-
-                        // You're not allowed to ask about non-value-like entities
-                        Debug.Assert(parentDocument.GetJsonTokenType(parentIndex) is not
-                            (JsonTokenType.None or
-                            JsonTokenType.EndObject or
-                            JsonTokenType.EndArray));
-
-                        if (!JsonSchemaEvaluation.MatchTypeString(tokenType,"type"u8, ref context))
-                        {
-                            if (!context.HasCollector)
-                            {
-                                return;
-                            }
-                        }
-                        else
-                        {
-                            using UnescapedUtf8JsonString unescapedUtf8JsonString = parentDocument.GetUtf8JsonString(parentIndex, JsonTokenType.String);
-
-                            if (EnumStringSet.Contains(unescapedUtf8JsonString.Span))
-                            {
-                                goto enumShortCircuitSuccess;
-                            }
-
-                            context.EvaluatedKeyword(false, messageProvider: JsonSchemaEvaluation.DidNotMatchAtLeastOneConstantValue, "enum"u8);
-
-                            if (!context.HasCollector)
-                            {
-                                return;
-                            }
-
-                            goto enumAfterFailure;
-
-enumShortCircuitSuccess:
-                            context.EvaluatedKeyword(true, messageProvider: JsonSchemaEvaluation.MatchedAtLeastOneConstantValue, ", formattedKeyword, "u8);
-
-enumAfterFailure:;
-                        }
-                    }
-
+                    /// <param name="resultsCollector">The (optional) results collector.</param>
+                    /// <returns><see langword="true" /> if the instance evaluates against the schema.</returns>
                     internal static bool Evaluate(
                         IJsonDocument parentDocument,
                         int parentIndex,
                         IJsonSchemaResultsCollector? resultsCollector = null)
                     {
-                        JsonSchemaContext context = JsonSchemaContext.BeginContext(
-                        parentDocument,
-                        parentIndex,
-                        usingEvaluatedItems: false,
-                        usingEvaluatedProperties: false,
-                        resultsCollector: resultsCollector);
-
-                        try
-                        {
-                            Evaluate(parentDocument, parentIndex, ref context);
-                            context.EndContext();
-                            return context.IsMatch;
-                        }
-                        finally
-                        {
-                            context.Dispose();
-                        }
-                    }
-
-                    /// <summary>
-                    /// Push the current context as a child context for schema evaluation.
-                    /// </summary>
-                    /// <typeparam name="TContext">The type of the context to be passed to the path providers.</typeparam>
-                    /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                    /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                    /// <param name="context">The current evaluation context.</param>
-                    /// <param name="providerContext">The context to be passed to the path providers.</param>
-                    /// <param name="schemaEvaluationPath">The (optional) path to the schema being evaluated in the child context.</param>
-                    /// <param name="documentEvaluationPath">The (optional) path in the document being evaluated in the child context.</param>
-                    /// <returns>The child context.</returns>
-                    internal static JsonSchemaContext PushChildContext<TContext>(
-                        IJsonDocument parentDocument,
-                        int parentDocumentIndex,
-                        ref JsonSchemaContext context,
-                        TContext providerContext,
-                        JsonSchemaPathProvider<TContext>? schemaEvaluationPath = null,
-                        JsonSchemaPathProvider<TContext>? documentEvaluationPath = null)
-                    {
-                        return
-                            context.PushChildContext(
-                                parentDocument,
-                                parentDocumentIndex,
-                                useEvaluatedItems: false,
-                                useEvaluatedProperties: false,
-                                evaluationPath: schemaEvaluationPath,
-                                documentEvaluationPath: documentEvaluationPath,
-                                providerContext: providerContext);
-                    }
-
-                    /// <summary>
-                    /// Push the current context as a child context for schema evaluation.
-                    /// </summary>
-                    /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                    /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                    /// <param name="context">The current evaluation context.</param>
-                    /// <param name="schemaEvaluationPath">The (optional) path to the schema being evaluated in the child context.</param>
-                    /// <param name="documentEvaluationPath">The (optional) path in the document being evaluated in the child context.</param>
-                    /// <returns>The child context.</returns>
-                    internal static JsonSchemaContext PushChildContext(
-                        IJsonDocument parentDocument,
-                        int parentDocumentIndex,
-                        ref JsonSchemaContext context,
-                        JsonSchemaPathProvider? schemaEvaluationPath = null,
-                        JsonSchemaPathProvider? documentEvaluationPath = null)
-                    {
-                        return
-                            context.PushChildContext(
-                                parentDocument,
-                                parentDocumentIndex,
-                                useEvaluatedItems: false,
-                                useEvaluatedProperties: false,
-                                evaluationPath: schemaEvaluationPath,
-                                documentEvaluationPath: documentEvaluationPath);
-                    }
-
-                    /// <summary>
-                    /// Push the current context as a child context for schema evaluation of a property.
-                    /// </summary>
-                    /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                    /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                    /// <param name="context">The current evaluation context.</param>
-                    /// <param name="propertyName">The name of the property </param>
-                    /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-                    /// <returns>The child context.</returns>
-                    internal static JsonSchemaContext PushChildContext(
-                        IJsonDocument parentDocument,
-                        int parentDocumentIndex,
-                        ref JsonSchemaContext context,
-                        ReadOnlySpan<byte> propertyName,
-                        JsonSchemaPathProvider? evaluationPath = null)
-                    {
-                        return
-                            context.PushChildContext(
-                                parentDocument,
-                                parentDocumentIndex,
-                                useEvaluatedItems: false,
-                                useEvaluatedProperties: false,
-                                propertyName,
-                                evaluationPath: evaluationPath,
-                                schemaEvaluationPath: SchemaLocationProvider);
-                    }
-
-                    /// <summary>
-                    /// Push the current context as a child context for schema evaluation of a property where the property name is known to be unescaped.
-                    /// </summary>
-                    /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                    /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                    /// <param name="context">The current evaluation context.</param>
-                    /// <param name="propertyName">The name of the property </param>
-                    /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-                    /// <returns>The child context.</returns>
-                    internal static JsonSchemaContext PushChildContextUnescaped(
-                        IJsonDocument parentDocument,
-                        int parentDocumentIndex,
-                        ref JsonSchemaContext context,
-                        ReadOnlySpan<byte> propertyName,
-                        JsonSchemaPathProvider? evaluationPath = null)
-                    {
-                        return
-                            context.PushChildContext(
-                                parentDocument,
-                                parentDocumentIndex,
-                                useEvaluatedItems: false,
-                                useEvaluatedProperties: false,
-                                propertyName,
-                                evaluationPath: evaluationPath,
-                                schemaEvaluationPath: SchemaLocationProvider);
-                    }
-
-                    /// <summary>
-                    /// Push the current context as a child context for schema evaluation of an array item.
-                    /// </summary>
-                    /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                    /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                    /// <param name="context">The current evaluation context.</param>
-                    /// <param name="itemIndex">The index of the item in the array.</param>
-                    /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-                    /// <returns>The child context.</returns>
-                    internal static JsonSchemaContext PushChildContext(
-                        IJsonDocument parentDocument,
-                        int parentDocumentIndex,
-                        ref JsonSchemaContext context,
-                        int itemIndex,
-                        JsonSchemaPathProvider? evaluationPath = null)
-                    {
-                        return
-                            context.PushChildContext(
-                                parentDocument,
-                                parentDocumentIndex,
-                                useEvaluatedItems: false,
-                                useEvaluatedProperties: false,
-                                itemIndex,
-                                evaluationPath: evaluationPath,
-                                schemaEvaluationPath: SchemaLocationProvider);
+                        return Evaluator.Evaluate(parentDocument, parentIndex, resultsCollector);
                     }
                 }
             }

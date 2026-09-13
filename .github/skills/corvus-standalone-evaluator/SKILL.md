@@ -1,147 +1,77 @@
 ---
 name: corvus-standalone-evaluator
 description: >
-  Generate and use standalone schema evaluators for validation-only and annotation
-  collection scenarios without full type generation. Covers the two-pass generation
-  architecture, SubschemaInfo, property matcher infrastructure (hash-based dispatch),
-  bitmask tracking, regex pattern classification and optimization, discriminator fast
-  paths, path provider fields, and the annotation extraction pipeline.
+  Generate and use standalone schema evaluators (validation and annotation collection without
+  full type generation), and understand the schema evaluation program that every generated
+  type validates through: what RuntimeProgramGenerator emits, entry points, document keys,
+  consumer package requirements, and the annotation pipeline.
   USE FOR: generating evaluator-only code, collecting annotations from schema validation,
-  understanding the evaluator internals, debugging validation behavior.
-  DO NOT USE FOR: full type generation (use corvus-codegen), modifying keywords
-  (use corvus-keywords-and-validation).
+  understanding how generated validation reaches the runtime evaluator, debugging
+  validation behavior of generated types.
+  DO NOT USE FOR: full type generation (use corvus-codegen), keyword semantics
+  (use corvus-keywords-and-validation), the evaluator engine itself (docs/RuntimeEvaluator.md).
 ---
 
-# Standalone Schema Evaluator
+# Standalone Schema Evaluator and the Evaluation Program
 
 ## Overview
 
-The standalone evaluator validates JSON against a schema and optionally collects
-annotations — without generating full C# types. Useful for validation-only scenarios
-or when you need annotation data (e.g., `readOnly`, `writeOnly`, `deprecated`).
+Generated types and standalone evaluators no longer contain validation code. The generator emits one
+`CorvusJsonSchemaProgram` class per compilation with one entry point per generated type and evaluator
+root. Both the CLI and the Roslyn source generator pre-compile it (a program image plus `[GeneratedRegex]`
+methods, loaded by `Corvus.Text.Json.RuntimeEvaluator` on first use); the source generator links the
+compiler in as source, built over `System.Text.Json` under the `STJ` define. Every `EvaluateSchema()` /
+`Evaluate()` call runs against that graph.
 
-## Generating Evaluator Code
-
-### Via Source Generator
+## Generating an evaluator
 
 ```csharp
 [JsonSchemaTypeGenerator("schema.json", EmitEvaluator = true)]
 public partial struct MySchema;
 ```
 
-### Via CLI
-
 ```powershell
 corvusjson jsonschema schema.json --codeGenerationMode SchemaEvaluationOnly --outputPath ./Evaluator
-# Or for both types and evaluator:
 corvusjson jsonschema schema.json --codeGenerationMode Both --outputPath ./Output
 ```
 
-### Using the Generated Evaluator
+The emitted `MySchemaEvaluator` exposes `Evaluate<TElement>(in instance, collector)` and
+`Evaluate(IJsonDocument, int, collector)`. Consumers must reference `Corvus.Text.Json.RuntimeEvaluator`
+as well as `Corvus.Text.Json`.
 
-The generated evaluator exposes a static `Evaluate<T>()` method. Pass any `IJsonElement<T>` value:
-
-```csharp
-using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"name": "Alice", "age": 30}""");
-
-// Simple validation — returns true if the instance is valid
-bool isValid = MySchemaEvaluator.Evaluate(doc.RootElement);
-
-// With annotation collection
-var collector = new JsonSchemaResultsCollector();
-bool isValid2 = MySchemaEvaluator.Evaluate(doc.RootElement, collector);
-// collector now contains validation results and annotations
-```
-
-## Two-Pass Architecture
-
-### Pass 1: Schema Discovery
-Traverses the schema tree and builds a `SubschemaInfo` map:
-- Assigns a unique identifier to each subschema
-- Records which keywords are present
-- Determines property patterns, required properties, composition structure
-
-### Pass 2: Code Emission
-Generates evaluation methods using the `SubschemaInfo` map:
-- One method per subschema
-- Methods chain together via composition keywords (allOf, anyOf, oneOf, not)
-
-## Property Matchers
-
-For schemas with named properties:
-- **≤3 properties**: Sequential `if/else if` chain
-- **≥4 properties**: Hash map for O(1) dispatch
-
-Property matching uses UTF-8 byte-level comparison for zero-allocation matching.
-
-## Required Property Tracking
-
-Required properties tracked with `Span<uint>` bitmasks, stack-allocated:
+## Using it
 
 ```csharp
-Span<uint> requiredBits = stackalloc uint[bitCount];
-// Each required property sets its bit when encountered
-// After processing, check all bits are set
+using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
+bool valid = MySchemaEvaluator.Evaluate(in element, collector);
+foreach (var annotation in JsonSchemaAnnotationProducer.EnumerateAnnotations(collector)) { ... }
 ```
 
-## Regex Pattern Classification
+Flag mode (no collector) fails fast and allocates nothing; Basic/Detailed record failures; Verbose
+records every keyword and the annotations.
 
-Regex patterns are classified at code-generation time for optimal dispatch:
+## Emitted shape
 
-| Classification | When | Generated code |
-|----------------|------|----------------|
-| `Noop` | Pattern matches everything (e.g., `.*`) | Skip validation entirely |
-| `NonEmpty` | Pattern requires non-empty string | Simple length check |
-| `Prefix` | Pattern is a literal prefix | `StartsWith()` check |
-| `Range` | Character range pattern | Inline range check |
-| `FullRegex` | General pattern | Compiled `Regex` instance |
+- `RuntimeProgramGenerator.Generate` — the program: documents (file documents keyed under
+  `corvus-schema:///<relative path>`, absolute `$id`s verbatim), `TryGetDocument` resolver,
+  `Create()` compiling the root with `CompileFromUri` and `ForEntryPoint(...)` per entry, dialect and
+  `AssertFormat` options.
+- `RuntimeProgramGenerator.GenerateStandaloneEvaluator` — the evaluator shim over one entry.
+- `CodeGeneratorExtensions.JsonSchema.cs` `AppendRuntimeProgramEvaluateMethod` — the per-type shim:
+  `private static readonly JsonSchemaEvaluator Evaluator = CorvusJsonSchemaProgram.Entry(n);`.
+- `CSharpLanguageProvider.GetProgramEntry` assigns entry indices; `ISchemaProgramLanguageProvider`
+  receives the documents from `JsonSchemaTypeBuilder.GetSchemaDocuments()`.
 
-## Annotation Pipeline
+## Debugging
 
-### Collecting Annotations
-
-```csharp
-bool isValid = element.EvaluateSchema(collector);
-// collector receives annotations during validation
-```
-
-**`Verbose` mode** is required for annotation collection.
-
-### How Annotations Flow
-
-- `IAnnotationProducingKeyword` keywords (like `readOnly`, `writeOnly`, `deprecated`)
-  emit annotations during validation
-- Annotations use the **IgnoredKeyword path divergence** pattern:
-  `IgnoredKeyword` appends to the evaluation path only (not the instance path)
-- `JsonSchemaAnnotationProducer.IsAnnotation()` distinguishes annotations from
-  validation results
-
-### Composition Behavior
-
-| Keyword | Semantics |
-|---------|-----------|
-| `allOf` | AND — all subschemas must validate |
-| `anyOf` | At least one subschema must validate |
-| `oneOf` | Exactly one subschema must validate |
-| `not` | Subschema must NOT validate |
-
-Annotations from failed subschemas are discarded. In `anyOf`/`oneOf`,
-only annotations from validating subschemas are collected.
-
-## Discriminator Fast Paths
-
-When a composition has a discriminator property (common in OpenAPI), the evaluator
-generates an optimized fast path that checks the discriminator value first and
-directly dispatches to the matching subschema, avoiding evaluation of all branches.
-
-## Common Pitfalls
-
-- **Missing Verbose mode**: Annotations are only collected in `Verbose` mode. Default mode skips annotation processing.
-- **Unreduced types**: The evaluator uses unreduced type declarations to preserve the full schema structure. This differs from full type generation, which reduces trivial subschemas.
-- **Path confusion**: The evaluation path and instance path are different concepts. Annotations append to evaluation path only.
+- Dump the compiled graph for a schema with the benchmark harness:
+  `dotnet run -c Release --project benchmarks/Corvus.Text.Json.RuntimeEvaluator.Benchmarks -- dump <schema.json>`.
+- `SchemaLocation`/`SchemaDocument` constants on each type still identify its subschema; the entry
+  point string in the program is `<document key>#<SchemaLocation>`.
+- The same engine runs in `tests/Corvus.Text.Json.RuntimeEvaluator.Tests`; a failing generated-type
+  test usually reproduces there with `JsonSchemaEvaluator.Compile(schema, "#<pointer>")`.
 
 ## Cross-References
-- For annotation system details, see `docs/AnnotationSystem.md`
-- For evaluator internals, see `docs/StandaloneEvaluatorInternals.md`
-- For the keyword system, see `corvus-keywords-and-validation`
-- For code generation, see `corvus-codegen`
+
+- `docs/StandaloneEvaluatorInternals.md`, `docs/SchemaEvaluator.md`, `docs/AnnotationSystem.md`
+- `docs/RuntimeEvaluator.md` — engine design and optimisations

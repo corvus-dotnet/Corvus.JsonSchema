@@ -1,36 +1,33 @@
 // <copyright file="JsonSchema.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
-// <licensing>
-// Derived from code licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licensed this code under the MIT license.
-// https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
-// </licensing>
 
 using System.Buffers;
 using System.Collections.Concurrent;
-using System.Reflection;
-using Corvus.Json;
-using Corvus.Json.CodeGeneration;
-using Corvus.Json.CodeGeneration.DocumentResolvers;
-using Corvus.Text.Json.CodeGeneration;
-using Corvus.Text.Json.Internal;
+using System.Net.Http;
+using System.Text;
+using Corvus.Text.Json.RuntimeEvaluator;
 
 namespace Corvus.Text.Json.Validator;
 
 /// <summary>
 /// A JSON schema for validation.
 /// </summary>
+/// <remarks>
+/// Schemas are compiled by the <see cref="JsonSchemaEvaluator"/> into an in-memory evaluator: there is no code
+/// generation and no runtime compilation, so the first validation against a schema costs milliseconds rather than
+/// seconds. Compiled schemas are cached by canonical URI and <see cref="Options.AlwaysAssertFormat"/>.
+/// </remarks>
 public readonly struct JsonSchema
 {
-    private static readonly PrepopulatedDocumentResolver MetaschemaDocumentResolver = CreateMetaschemaDocumentResolver();
-    private static readonly ConcurrentDictionary<string, ValidatorPipeline> CachedSchema = [];
+    private static readonly ConcurrentDictionary<string, JsonSchemaEvaluator> CachedSchema = new(StringComparer.Ordinal);
+    private static readonly Lazy<HttpClient> SharedHttpClient = new(() => new HttpClient());
 
-    private readonly ValidatorPipeline pipeline;
+    private readonly JsonSchemaEvaluator evaluator;
 
-    private JsonSchema(ValidatorPipeline pipeline)
+    private JsonSchema(JsonSchemaEvaluator evaluator)
     {
-        this.pipeline = pipeline;
+        this.evaluator = evaluator;
     }
 
     /// <summary>
@@ -39,36 +36,13 @@ public readonly struct JsonSchema
     /// <param name="text">The text for the document.</param>
     /// <param name="canonicalUri">The canonical URI for the document. If
     /// <see langword="null"/> then an attempt will be made to find the canonical URI in the schema.</param>
-    /// <param name="options">Generation options.</param>
+    /// <param name="options">Compilation options.</param>
     /// <param name="refreshCache">If <see langword="true"/>, any cached entry for this schema will be replaced.</param>
     /// <returns>The JSON schema instance.</returns>
     /// <exception cref="InvalidOperationException">No canonical URI could be found for the schema document.</exception>
     public static JsonSchema FromText(string text, string? canonicalUri = null, Options? options = null, bool refreshCache = false)
     {
-        options ??= Options.Default;
-
-        var document = System.Text.Json.JsonDocument.Parse(text);
-
-        if (canonicalUri is null && !TryGetCanonicalUri(document, out canonicalUri))
-        {
-            throw new InvalidOperationException(SR.DocumentDoesNotHaveCanonicalUri);
-        }
-
-        string cacheKey = BuildCacheKey(canonicalUri!, options.AlwaysAssertFormat);
-
-        if (!refreshCache && CachedSchema.TryGetValue(cacheKey, out ValidatorPipeline? cached))
-        {
-            return new(cached);
-        }
-
-        if (refreshCache)
-        {
-            CachedSchema.TryRemove(cacheKey, out _);
-        }
-
-        PrepopulatedDocumentResolver documentResolver = new();
-        documentResolver.AddDocument(canonicalUri!, document);
-        return FromCore(canonicalUri!, cacheKey, CompoundWithMetaschemaResolver(documentResolver, options), options);
+        return FromUtf8(Encoding.UTF8.GetBytes(text), canonicalUri, options, refreshCache);
     }
 
     /// <summary>
@@ -77,102 +51,78 @@ public readonly struct JsonSchema
     /// <param name="stream">The stream containing the document.</param>
     /// <param name="canonicalUri">The canonical URI for the document. If
     /// <see langword="null"/> then an attempt will be made to find the canonical URI in the schema.</param>
-    /// <param name="options">Generation options.</param>
+    /// <param name="options">Compilation options.</param>
     /// <param name="refreshCache">If <see langword="true"/>, any cached entry for this schema will be replaced.</param>
     /// <returns>The JSON schema instance.</returns>
     /// <exception cref="InvalidOperationException">No canonical URI could be found for the schema document.</exception>
     public static JsonSchema FromStream(Stream stream, string? canonicalUri = null, Options? options = null, bool refreshCache = false)
     {
-        options ??= Options.Default;
-
-        var document = System.Text.Json.JsonDocument.Parse(stream);
-
-        if (canonicalUri is null && !TryGetCanonicalUri(document, out canonicalUri))
-        {
-            throw new InvalidOperationException(SR.DocumentDoesNotHaveCanonicalUri);
-        }
-
-        string cacheKey = BuildCacheKey(canonicalUri!, options.AlwaysAssertFormat);
-
-        if (!refreshCache && CachedSchema.TryGetValue(cacheKey, out ValidatorPipeline? cached))
-        {
-            return new(cached);
-        }
-
-        if (refreshCache)
-        {
-            CachedSchema.TryRemove(cacheKey, out _);
-        }
-
-        PrepopulatedDocumentResolver documentResolver = new();
-        documentResolver.AddDocument(canonicalUri!, document);
-        return FromCore(canonicalUri!, cacheKey, CompoundWithMetaschemaResolver(documentResolver, options), options);
+        using MemoryStream buffer = new();
+        stream.CopyTo(buffer);
+        return FromUtf8(buffer.ToArray(), canonicalUri, options, refreshCache);
     }
 
     /// <summary>
     /// Create an instance of a JSON schema from a file.
     /// </summary>
     /// <param name="fileName">The path to the schema file.</param>
-    /// <param name="options">Generation options.</param>
+    /// <param name="options">Compilation options.</param>
     /// <param name="refreshCache">If <see langword="true"/>, any cached entry for this schema will be replaced.</param>
     /// <returns>The JSON schema instance.</returns>
+    /// <remarks>
+    /// The file's location is the base URI for relative <c>$ref</c> references unless the schema declares an
+    /// absolute <c>$id</c>.
+    /// </remarks>
     public static JsonSchema FromFile(string fileName, Options? options = null, bool refreshCache = false)
     {
         options ??= Options.Default;
 
-        if (SchemaReferenceNormalization.TryNormalizeSchemaReference(fileName, out string? normalized))
+        string fullPath = NormalizeFilePath(fileName);
+        string cacheKey = BuildCacheKey(fullPath.Replace('\\', '/'), options.AlwaysAssertFormat);
+
+        if (TryGetCached(cacheKey, refreshCache, out JsonSchema cached))
         {
-            fileName = normalized;
+            return cached;
         }
 
-        string cacheKey = BuildCacheKey(fileName, options.AlwaysAssertFormat);
-
-        if (!refreshCache && CachedSchema.TryGetValue(cacheKey, out ValidatorPipeline? cached))
-        {
-            return new(cached);
-        }
-
-        if (refreshCache)
-        {
-            CachedSchema.TryRemove(cacheKey, out _);
-        }
-
-        PrepopulatedDocumentResolver documentResolver = new();
-        documentResolver.AddDocument(fileName, System.Text.Json.JsonDocument.Parse(File.ReadAllText(fileName)));
-        return FromCore(fileName, cacheKey, CompoundWithMetaschemaResolver(documentResolver, options), options);
+        byte[] utf8 = File.ReadAllBytes(fullPath);
+        string baseUri = new Uri(fullPath).AbsoluteUri;
+        return Compile(cacheKey, baseUri, utf8, options);
     }
 
     /// <summary>
     /// Create an instance of a JSON schema from a URI.
     /// </summary>
-    /// <param name="jsonSchemaUri">The URI of the schema.</param>
-    /// <param name="options">Generation options.</param>
+    /// <param name="jsonSchemaUri">The URI of the schema. A fragment selects a subschema within the document.</param>
+    /// <param name="options">Compilation options.</param>
     /// <param name="refreshCache">If <see langword="true"/>, any cached entry for this schema will be replaced.</param>
     /// <returns>The JSON schema instance.</returns>
+    /// <remarks>
+    /// The document is retrieved through <see cref="Options.AdditionalDocumentResolver"/>,
+    /// <see cref="Options.AdditionalSchemaFiles"/>, the embedded standard metaschemas, and then (when
+    /// <see cref="Options.AllowFileSystemAndHttpResolution"/> is set) the file system or HTTP.
+    /// </remarks>
     public static JsonSchema FromUri(string jsonSchemaUri, Options? options = null, bool refreshCache = false)
     {
         options ??= Options.Default;
 
         string cacheKey = BuildCacheKey(jsonSchemaUri, options.AlwaysAssertFormat);
 
-        if (!refreshCache && CachedSchema.TryGetValue(cacheKey, out ValidatorPipeline? cached))
+        if (TryGetCached(cacheKey, refreshCache, out JsonSchema cached))
         {
-            return new(cached);
+            return cached;
         }
 
-        if (refreshCache)
-        {
-            CachedSchema.TryRemove(cacheKey, out _);
-        }
-
-        return FromCore(jsonSchemaUri, cacheKey, CompoundWithMetaschemaResolver(null, options), options);
+        JsonSchemaEvaluatorOptions evaluatorOptions = BuildEvaluatorOptions(options, new PrepopulatedDocuments(options));
+        JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.CompileFromUri(jsonSchemaUri, evaluatorOptions);
+        return Cache(cacheKey, evaluator);
     }
 
     /// <summary>
     /// Create an instance of a JSON schema from a URI, resolving via all configured resolvers.
     /// </summary>
     /// <param name="jsonSchemaUri">The URI of the schema.</param>
-    /// <param name="options">Generation options.</param>
+    /// <param name="options">Compilation options.</param>
     /// <param name="refreshCache">If <see langword="true"/>, any cached entry for this schema will be replaced.</param>
     /// <returns>The JSON schema instance.</returns>
     public static JsonSchema From(string jsonSchemaUri, Options? options = null, bool refreshCache = false)
@@ -188,7 +138,7 @@ public readonly struct JsonSchema
     /// <returns><see langword="true"/> if the document is valid; otherwise <see langword="false"/>.</returns>
     public bool Validate(string json, IJsonSchemaResultsCollector? resultsCollector = null)
     {
-        return this.pipeline.Validate(json, resultsCollector);
+        return this.evaluator.Evaluate(json, resultsCollector);
     }
 
     /// <summary>
@@ -199,7 +149,7 @@ public readonly struct JsonSchema
     /// <returns><see langword="true"/> if the document is valid; otherwise <see langword="false"/>.</returns>
     public bool Validate(ReadOnlyMemory<byte> utf8Json, IJsonSchemaResultsCollector? resultsCollector = null)
     {
-        return this.pipeline.Validate(utf8Json, resultsCollector);
+        return this.evaluator.Evaluate(utf8Json, resultsCollector);
     }
 
     /// <summary>
@@ -210,7 +160,8 @@ public readonly struct JsonSchema
     /// <returns><see langword="true"/> if the document is valid; otherwise <see langword="false"/>.</returns>
     public bool Validate(ReadOnlyMemory<char> json, IJsonSchemaResultsCollector? resultsCollector = null)
     {
-        return this.pipeline.Validate(json, resultsCollector);
+        using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(json);
+        return this.evaluator.Evaluate(document.RootElement, resultsCollector);
     }
 
     /// <summary>
@@ -221,7 +172,8 @@ public readonly struct JsonSchema
     /// <returns><see langword="true"/> if the document is valid; otherwise <see langword="false"/>.</returns>
     public bool Validate(Stream utf8Json, IJsonSchemaResultsCollector? resultsCollector = null)
     {
-        return this.pipeline.Validate(utf8Json, resultsCollector);
+        using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(utf8Json);
+        return this.evaluator.Evaluate(document.RootElement, resultsCollector);
     }
 
     /// <summary>
@@ -232,7 +184,8 @@ public readonly struct JsonSchema
     /// <returns><see langword="true"/> if the document is valid; otherwise <see langword="false"/>.</returns>
     public bool Validate(ReadOnlySequence<byte> utf8Json, IJsonSchemaResultsCollector? resultsCollector = null)
     {
-        return this.pipeline.Validate(utf8Json, resultsCollector);
+        using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(utf8Json);
+        return this.evaluator.Evaluate(document.RootElement, resultsCollector);
     }
 
     /// <summary>
@@ -243,7 +196,63 @@ public readonly struct JsonSchema
     /// <returns><see langword="true"/> if the document is valid; otherwise <see langword="false"/>.</returns>
     public bool Validate(in JsonElement element, IJsonSchemaResultsCollector? resultsCollector = null)
     {
-        return this.pipeline.Validate(element, resultsCollector);
+        return this.evaluator.Evaluate(in element, resultsCollector);
+    }
+
+    private static JsonSchema FromUtf8(byte[] utf8, string? canonicalUri, Options? options, bool refreshCache)
+    {
+        options ??= Options.Default;
+
+        if (canonicalUri is null && !TryGetCanonicalUri(utf8, out canonicalUri))
+        {
+            throw new InvalidOperationException(SR.DocumentDoesNotHaveCanonicalUri);
+        }
+
+        string cacheKey = BuildCacheKey(canonicalUri!, options.AlwaysAssertFormat);
+
+        if (TryGetCached(cacheKey, refreshCache, out JsonSchema cached))
+        {
+            return cached;
+        }
+
+        return Compile(cacheKey, canonicalUri!, utf8, options);
+    }
+
+    private static JsonSchema Compile(string cacheKey, string baseUri, byte[] utf8, Options options)
+    {
+        PrepopulatedDocuments documents = new(options);
+        documents.Add(baseUri, utf8);
+        JsonSchemaEvaluatorOptions evaluatorOptions = BuildEvaluatorOptions(options, documents);
+        evaluatorOptions.BaseUri = baseUri;
+        JsonSchemaEvaluator evaluator = JsonSchemaEvaluator.Compile(utf8, evaluatorOptions);
+        return Cache(cacheKey, evaluator);
+    }
+
+    private static JsonSchema Cache(string cacheKey, JsonSchemaEvaluator evaluator)
+    {
+        JsonSchemaEvaluator cached = CachedSchema.GetOrAdd(cacheKey, evaluator);
+        if (!ReferenceEquals(cached, evaluator))
+        {
+            evaluator.Dispose();
+        }
+
+        return new(cached);
+    }
+
+    private static bool TryGetCached(string cacheKey, bool refreshCache, out JsonSchema schema)
+    {
+        if (refreshCache)
+        {
+            CachedSchema.TryRemove(cacheKey, out _);
+        }
+        else if (CachedSchema.TryGetValue(cacheKey, out JsonSchemaEvaluator? cached))
+        {
+            schema = new(cached);
+            return true;
+        }
+
+        schema = default;
+        return false;
     }
 
     private static string BuildCacheKey(string uri, bool alwaysAssertFormat)
@@ -251,60 +260,24 @@ public readonly struct JsonSchema
         return $"{uri}__{alwaysAssertFormat}";
     }
 
-    private static JsonSchema FromCore(string jsonSchemaUri, string cacheKey, CompoundDocumentResolver documentResolver, Options options)
+    private static JsonSchemaEvaluatorOptions BuildEvaluatorOptions(Options options, PrepopulatedDocuments documents)
     {
-        VocabularyRegistry vocabularyRegistry = RegisterVocabularies(documentResolver);
-
-        JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
-
-        TypeDeclaration rootType =
-            typeBuilder.AddTypeDeclarations(
-                new JsonReference(jsonSchemaUri),
-                options.FallbackVocabulary);
-
-        // Check for built-in types before code generation.
-        // We also check the reduced type to handle cases like $ref to a boolean schema,
-        // where the root type itself is a $ref but reduces to JsonAny or JsonNotAny.
-        TypeDeclaration reducedRootType = rootType.ReducedTypeDeclaration().ReducedType;
-
-        if (rootType.IsBuiltInJsonAnyType() || reducedRootType.IsBuiltInJsonAnyType())
+        return new JsonSchemaEvaluatorOptions
         {
-            var alwaysTruePipeline = ValidatorPipeline.Create(isAlwaysTrue: true, isAlwaysFalse: false);
-            return new(CachedSchema.GetOrAdd(cacheKey, alwaysTruePipeline));
-        }
-
-        if (rootType.IsBuiltInJsonNotAnyType() || reducedRootType.IsBuiltInJsonNotAnyType())
-        {
-            var alwaysFalsePipeline = ValidatorPipeline.Create(isAlwaysTrue: false, isAlwaysFalse: true);
-            return new(CachedSchema.GetOrAdd(cacheKey, alwaysFalsePipeline));
-        }
-
-        IReadOnlyCollection<GeneratedCodeFile> generatedCode =
-            typeBuilder.GenerateCodeUsing(
-                CSharpLanguageProvider.DefaultWithOptions(
-                    new CSharpLanguageProvider.Options(
-                        "Corvus.Text.Json.Validator.GeneratedTypes",
-                        alwaysAssertFormat: options.AlwaysAssertFormat)),
-                CancellationToken.None,
-                rootType);
-
-        string rootTypeName = CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType.ReducedTypeDeclaration().ReducedType);
-
-        Type generatedType = DynamicCompiler.CompileGeneratedType(
-            rootTypeName,
-            generatedCode,
-            options.HostAssembly);
-
-        DynamicJsonType dynamicType = new(generatedType);
-        var pipeline = ValidatorPipeline.Create(dynamicType);
-        return new(CachedSchema.GetOrAdd(cacheKey, pipeline));
+            DefaultDialect = options.DefaultDialect,
+            AssertFormat = options.AlwaysAssertFormat ? true : null,
+            DocumentResolver = documents.Resolve,
+            FallbackDocumentResolver = options.AllowFileSystemAndHttpResolution ? ResolveFromFileSystemOrHttp : null,
+        };
     }
 
-    private static bool TryGetCanonicalUri(System.Text.Json.JsonDocument document, out string? canonicalUri)
+    private static bool TryGetCanonicalUri(byte[] utf8, out string? canonicalUri)
     {
-        if (document.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object &&
-            document.RootElement.TryGetProperty("$id", out System.Text.Json.JsonElement value) &&
-            value.ValueKind == System.Text.Json.JsonValueKind.String &&
+        using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(utf8);
+        JsonElement root = document.RootElement;
+        if (root.ValueKind == JsonValueKind.Object &&
+            root.TryGetProperty("$id"u8, out JsonElement value) &&
+            value.ValueKind == JsonValueKind.String &&
             value.GetString() is string id)
         {
             canonicalUri = id;
@@ -315,89 +288,64 @@ public readonly struct JsonSchema
         return false;
     }
 
-    private static PrepopulatedDocumentResolver CreateMetaschemaDocumentResolver()
+    private static string NormalizeFilePath(string fileName)
     {
-        PrepopulatedDocumentResolver result = new();
-        result.AddMetaschema();
-        return result;
+        if (Uri.TryCreate(fileName, UriKind.Absolute, out Uri? uri) && uri.IsFile)
+        {
+            fileName = uri.LocalPath;
+        }
+
+        return Path.GetFullPath(fileName);
     }
 
-    private static VocabularyRegistry RegisterVocabularies(IDocumentResolver documentResolver)
+    private static string NormalizeUri(string uri)
     {
-        VocabularyRegistry vocabularyRegistry = new();
+        if (Uri.TryCreate(uri, UriKind.Absolute, out Uri? absolute))
+        {
+            return absolute.GetComponents(UriComponents.AbsoluteUri & ~UriComponents.Fragment, UriFormat.UriEscaped);
+        }
 
-        Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(documentResolver, vocabularyRegistry);
-        Corvus.Json.CodeGeneration.Draft201909.VocabularyAnalyser.RegisterAnalyser(documentResolver, vocabularyRegistry);
-        Corvus.Json.CodeGeneration.Draft7.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
-        Corvus.Json.CodeGeneration.Draft6.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
-        Corvus.Json.CodeGeneration.Draft4.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
-        Corvus.Json.CodeGeneration.OpenApi30.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
-        Corvus.Json.CodeGeneration.OpenApi20.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
-
-        vocabularyRegistry.RegisterVocabularies(Corvus.Json.CodeGeneration.CorvusVocabulary.SchemaVocabulary.DefaultInstance);
-        return vocabularyRegistry;
+        int hash = uri.IndexOf('#');
+        return hash < 0 ? uri : uri.Substring(0, hash);
     }
 
-    private static CompoundDocumentResolver CompoundWithMetaschemaResolver(IDocumentResolver? additionalResolver, Options options)
+    private static bool ResolveFromFileSystemOrHttp(string uri, out ReadOnlyMemory<byte> utf8Json)
     {
-        List<IDocumentResolver> resolvers = [];
-
-        if (additionalResolver is not null)
+        try
         {
-            resolvers.Add(additionalResolver);
-        }
-
-        if (options.AdditionalDocumentResolver is not null)
-        {
-            resolvers.Add(options.AdditionalDocumentResolver);
-        }
-
-        RegisterAdditionalFiles(resolvers, options);
-
-        resolvers.Add(MetaschemaDocumentResolver);
-
-        if (options.AllowFileSystemAndHttpResolution)
-        {
-            resolvers.Add(new FileSystemDocumentResolver());
-            resolvers.Add(new HttpClientDocumentResolver(new HttpClient()));
-        }
-
-        return new([.. resolvers]);
-    }
-
-    private static void RegisterAdditionalFiles(List<IDocumentResolver> resolvers, Options options)
-    {
-        if (options.AdditionalSchemaFiles is not { Count: > 0 })
-        {
-            return;
-        }
-
-        PrepopulatedDocumentResolver additionalFilesResolver = new();
-        foreach (AdditionalSchemaFile file in options.AdditionalSchemaFiles)
-        {
-            var document = System.Text.Json.JsonDocument.Parse(File.ReadAllText(file.FilePath));
-            string canonicalUri = file.CanonicalUri;
-
-            additionalFilesResolver.AddDocument(canonicalUri, document);
-
-            // Also register by $id if present and different from the canonical URI
-            if (document.RootElement.TryGetProperty("$id", out System.Text.Json.JsonElement idElement) &&
-                idElement.ValueKind == System.Text.Json.JsonValueKind.String &&
-                idElement.GetString() is string id &&
-                !string.Equals(id, canonicalUri, StringComparison.Ordinal))
+            if (Uri.TryCreate(uri, UriKind.Absolute, out Uri? absolute))
             {
-                additionalFilesResolver.AddDocument(id, document);
+                if (absolute.IsFile)
+                {
+                    return TryReadFile(absolute.LocalPath, out utf8Json);
+                }
+
+                if (absolute.Scheme == Uri.UriSchemeHttp || absolute.Scheme == Uri.UriSchemeHttps)
+                {
+                    utf8Json = SharedHttpClient.Value.GetByteArrayAsync(absolute).GetAwaiter().GetResult();
+                    return true;
+                }
             }
 
-            // Also register by the resolved file path if different
-            string resolvedPath = Path.GetFullPath(file.FilePath);
-            if (!string.Equals(resolvedPath, canonicalUri, StringComparison.Ordinal))
-            {
-                additionalFilesResolver.AddDocument(resolvedPath, document);
-            }
+            return TryReadFile(Path.Combine(Environment.CurrentDirectory, uri), out utf8Json);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or HttpRequestException or NotSupportedException)
+        {
+            utf8Json = default;
+            return false;
+        }
+    }
+
+    private static bool TryReadFile(string path, out ReadOnlyMemory<byte> utf8Json)
+    {
+        if (File.Exists(path))
+        {
+            utf8Json = File.ReadAllBytes(path);
+            return true;
         }
 
-        resolvers.Add(additionalFilesResolver);
+        utf8Json = default;
+        return false;
     }
 
     /// <summary>
@@ -409,24 +357,21 @@ public readonly struct JsonSchema
         /// Initializes a new instance of the <see cref="Options"/> class.
         /// </summary>
         /// <param name="additionalSchemaFiles">Additional schema files to preload into the document resolver.</param>
-        /// <param name="allowFileSystemAndHttpResolution">If <see langword="true"/> then FileSystem and HttpClient document resolvers will be available.</param>
-        /// <param name="fallbackVocabulary">The fallback vocabulary (defaults to <see cref="Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary"/>).</param>
-        /// <param name="alwaysAssertFormat">If <see langword="true"/>, <c>format</c> will always be asserted, even for vocabularies that usually annotate.</param>
-        /// <param name="hostAssembly">The host assembly whose compilation context provides metadata references. Defaults to the entry assembly.</param>
-        /// <param name="additionalDocumentResolver">An additional document resolver for in-memory schema resolution (e.g. a <see cref="PrepopulatedDocumentResolver"/>).</param>
+        /// <param name="allowFileSystemAndHttpResolution">If <see langword="true"/> then referenced documents may be retrieved from the file system and over HTTP.</param>
+        /// <param name="defaultDialect">The dialect applied to schemas that do not declare <c>$schema</c> (defaults to <see cref="JsonSchemaDialect.Draft202012"/>).</param>
+        /// <param name="alwaysAssertFormat">If <see langword="true"/>, <c>format</c> will always be asserted, even for dialects that usually annotate.</param>
+        /// <param name="additionalDocumentResolver">An additional document resolver for in-memory schema resolution.</param>
         public Options(
             IReadOnlyList<AdditionalSchemaFile>? additionalSchemaFiles = null,
             bool allowFileSystemAndHttpResolution = true,
-            IVocabulary? fallbackVocabulary = null,
+            JsonSchemaDialect defaultDialect = JsonSchemaDialect.Draft202012,
             bool alwaysAssertFormat = true,
-            Assembly? hostAssembly = null,
-            IDocumentResolver? additionalDocumentResolver = null)
+            JsonSchemaDocumentResolver? additionalDocumentResolver = null)
         {
             this.AdditionalSchemaFiles = additionalSchemaFiles;
             this.AllowFileSystemAndHttpResolution = allowFileSystemAndHttpResolution;
-            this.FallbackVocabulary = fallbackVocabulary ?? Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary;
+            this.DefaultDialect = defaultDialect;
             this.AlwaysAssertFormat = alwaysAssertFormat;
-            this.HostAssembly = hostAssembly ?? Assembly.GetEntryAssembly() ?? typeof(JsonSchema).Assembly;
             this.AdditionalDocumentResolver = additionalDocumentResolver;
         }
 
@@ -441,28 +386,82 @@ public readonly struct JsonSchema
         public IReadOnlyList<AdditionalSchemaFile>? AdditionalSchemaFiles { get; }
 
         /// <summary>
-        /// Gets a value indicating whether FileSystem and HttpClient document resolvers will be available.
+        /// Gets a value indicating whether referenced documents may be retrieved from the file system and over HTTP.
         /// </summary>
         public bool AllowFileSystemAndHttpResolution { get; }
 
         /// <summary>
-        /// Gets the fallback vocabulary.
+        /// Gets the dialect applied to schemas that do not declare <c>$schema</c>.
         /// </summary>
-        public IVocabulary FallbackVocabulary { get; }
+        public JsonSchemaDialect DefaultDialect { get; }
 
         /// <summary>
-        /// Gets a value indicating whether <c>format</c> will always be asserted, even for vocabularies that usually annotate.
+        /// Gets a value indicating whether <c>format</c> will always be asserted, even for dialects that usually annotate.
         /// </summary>
         public bool AlwaysAssertFormat { get; }
 
         /// <summary>
-        /// Gets the host assembly whose compilation context provides metadata references.
-        /// </summary>
-        public Assembly HostAssembly { get; }
-
-        /// <summary>
         /// Gets the additional document resolver for in-memory schema resolution.
         /// </summary>
-        public IDocumentResolver? AdditionalDocumentResolver { get; }
+        public JsonSchemaDocumentResolver? AdditionalDocumentResolver { get; }
+    }
+
+    /// <summary>
+    /// The in-memory documents consulted before any other resolution: the root document, the
+    /// <see cref="Options.AdditionalSchemaFiles"/> (registered by canonical URI, <c>$id</c> and file path), and the
+    /// <see cref="Options.AdditionalDocumentResolver"/>.
+    /// </summary>
+    private sealed class PrepopulatedDocuments
+    {
+        private readonly Dictionary<string, byte[]> documents = new(StringComparer.Ordinal);
+        private readonly JsonSchemaDocumentResolver? additionalResolver;
+
+        public PrepopulatedDocuments(Options options)
+        {
+            this.additionalResolver = options.AdditionalDocumentResolver;
+
+            if (options.AdditionalSchemaFiles is not { Count: > 0 } files)
+            {
+                return;
+            }
+
+            foreach (AdditionalSchemaFile file in files)
+            {
+                byte[] utf8 = File.ReadAllBytes(file.FilePath);
+                this.Add(file.CanonicalUri, utf8);
+
+                if (TryGetCanonicalUri(utf8, out string? id))
+                {
+                    this.Add(id!, utf8);
+                }
+
+                string fullPath = Path.GetFullPath(file.FilePath);
+                this.Add(fullPath, utf8);
+                this.Add(new Uri(fullPath).AbsoluteUri, utf8);
+            }
+        }
+
+        public void Add(string uri, byte[] utf8)
+        {
+            this.documents[uri] = utf8;
+            this.documents[NormalizeUri(uri)] = utf8;
+        }
+
+        public bool Resolve(string uri, out ReadOnlyMemory<byte> utf8Json)
+        {
+            if (this.documents.TryGetValue(uri, out byte[]? utf8) || this.documents.TryGetValue(NormalizeUri(uri), out utf8))
+            {
+                utf8Json = utf8;
+                return true;
+            }
+
+            if (this.additionalResolver is JsonSchemaDocumentResolver resolver)
+            {
+                return resolver(uri, out utf8Json);
+            }
+
+            utf8Json = default;
+            return false;
+        }
     }
 }

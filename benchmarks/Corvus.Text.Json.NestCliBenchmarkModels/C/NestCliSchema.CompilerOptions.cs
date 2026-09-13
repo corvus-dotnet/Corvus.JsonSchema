@@ -72,8 +72,9 @@ public readonly partial struct NestCliSchema
         /// <summary>
         /// Gets the default instance.
         /// </summary>
+        #pragma warning disable CS0618 // Type or member is obsolete
         public static CompilerOptions DefaultInstance { get; } = CompilerOptions.ParseValue("{}"u8);
-
+        #pragma warning restore CS0618
         /// <summary>
         /// Gets the (optional) <c>assets</c> property.
         /// </summary>

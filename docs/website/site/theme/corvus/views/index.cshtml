@@ -58,6 +58,15 @@
             <h2 class="home-features__title">Built for performance-critical .NET</h2>
             <p class="home-features__subtitle">Every feature designed around zero-allocation, pooled-memory JSON processing</p>
         </div>
+        <div class="home-features__heading">
+            <h2 class="home-features__title">Built for simplicity</h2>
+            <p class="home-features__subtitle">Just load your schema, and evaluate your instance &mdash; no code generation required.</p>
+        </div>
+        <div class="home-simple">
+            <pre><code class="language-csharp">JsonSchema schema = JsonSchema.FromFile("Schemas/person.json");
+bool valid = schema.Validate("""{"name":"Alice","age":30}"""); // true</code></pre>
+            <p class="home-simple__footnote"><a href="/docs/validator.html">Read the validator docs &rarr;</a></p>
+        </div>
         <div class="card-grid">
             <div class="card">
                 <div class="card__icon">🔧</div>

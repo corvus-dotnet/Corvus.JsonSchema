@@ -56,81 +56,13 @@ public readonly partial struct AnsibleMetaSchema
             {
                 public static partial class JsonSchema
                 {
-                    private static readonly JsonSchemaMessageProvider<int> RequiredPropertyAuthorPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("author"u8, buffer, out written);
-                    private static readonly JsonSchemaMessageProvider<int> RequiredPropertyAuthorNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("author"u8, buffer, out written);
-
-                    private const int RequiredOffsetForAuthor = 0;
-                    private const uint RequiredBitForAuthor = 0b00000000000000000000000000000001;
-
-                    private static readonly JsonSchemaMessageProvider<int> RequiredPropertyDescriptionPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("description"u8, buffer, out written);
-                    private static readonly JsonSchemaMessageProvider<int> RequiredPropertyDescriptionNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("description"u8, buffer, out written);
-
-                    private const int RequiredOffsetForDescription = 0;
-                    private const uint RequiredBitForDescription = 0b00000000000000000000000000000010;
-
-                    private static readonly JsonSchemaMessageProvider<int> RequiredPropertyLicensePresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("license"u8, buffer, out written);
-                    private static readonly JsonSchemaMessageProvider<int> RequiredPropertyLicenseNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("license"u8, buffer, out written);
-
-                    private const int RequiredOffsetForLicense = 0;
-                    private const uint RequiredBitForLicense = 0b00000000000000000000000000000100;
-
-                    private static readonly JsonSchemaMessageProvider<int> RequiredPropertyMinAnsibleVersionPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("min_ansible_version"u8, buffer, out written);
-                    private static readonly JsonSchemaMessageProvider<int> RequiredPropertyMinAnsibleVersionNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("min_ansible_version"u8, buffer, out written);
-
-                    private const int RequiredOffsetForMinAnsibleVersion = 0;
-                    private const uint RequiredBitForMinAnsibleVersion = 0b00000000000000000000000000001000;
-
-                    private const uint RequiredBitMask0 =
-                        RequiredBitForAuthor | RequiredBitForDescription | RequiredBitForLicense | RequiredBitForMinAnsibleVersion;
-
-                    private static void MatchAuthor(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
-                    {
-                        requiredBitBuffer[RequiredOffsetForAuthor] |= RequiredBitForAuthor;
-                    }
-
-                    private static void MatchDescription(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
-                    {
-                        requiredBitBuffer[RequiredOffsetForDescription] |= RequiredBitForDescription;
-                    }
-
-                    private static void MatchLicense(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
-                    {
-                        requiredBitBuffer[RequiredOffsetForLicense] |= RequiredBitForLicense;
-                    }
-
-                    private static void MatchMinAnsibleVersion(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, Span<uint> requiredBitBuffer)
-                    {
-                        requiredBitBuffer[RequiredOffsetForMinAnsibleVersion] |= RequiredBitForMinAnsibleVersion;
-                    }
-
-                    private static PropertySchemaMatchers<Corvus.AnsibleMetaBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator1> MatchersBuilder()
-                    {
-                        return new PropertySchemaMatchers<Corvus.AnsibleMetaBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator1>([
-                            (static () => JsonPropertyNames.AuthorUtf8, MatchAuthor),
-                            (static () => JsonPropertyNames.DescriptionUtf8, MatchDescription),
-                            (static () => JsonPropertyNames.LicenseUtf8, MatchLicense),
-                            (static () => JsonPropertyNames.MinAnsibleVersionUtf8, MatchMinAnsibleVersion),
-                        ]);
-                    }
-
-                    private static PropertySchemaMatchers<Corvus.AnsibleMetaBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator1> Matchers { get; } = MatchersBuilder();
-
-                    private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
-#if NET
-                    [NotNullWhen(true)]
-#endif
-                    out Corvus.AnsibleMetaBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator1? matcher)
-                    {
-                        return Matchers.TryGetNamedMatcher(span, out matcher);
-                    }
-
                     /// <summary>
                     /// Gets a provider for the schema location from which this type was generated.
                     /// </summary>
-                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/GalaxyInfoModel/allOf/0/then"u8, buffer, out written);
+                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/definitions/GalaxyInfoModel/allOf/0/then"u8, buffer, out written);
 
                     /// <summary>
-                    /// Gets the schema location from which this type was generated.
+                    /// Gets the schema location from which this type was generated, as a JSON Pointer within <see cref="SchemaDocument"/>.
                     /// </summary>
                     public const string SchemaLocation = "/definitions/GalaxyInfoModel/allOf/0/then";
 
@@ -140,268 +72,34 @@ public readonly partial struct AnsibleMetaSchema
                     public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/GalaxyInfoModel/allOf/0/then"u8;
 
                     /// <summary>
+                    /// Gets the schema document from which this type was generated, relative to the base location for generation.
+                    /// </summary>
+                    /// <remarks>
+                    /// <see cref="SchemaLocation"/> is a JSON Pointer within this document, so <c>SchemaDocument + "#" + SchemaLocation</c>
+                    /// is a reference to the schema, even for a schema inside a <c>$id</c> sub-resource.
+                    /// </remarks>
+                    public const string SchemaDocument = "ansible-meta-schema.json";
+
+                    /// <summary>
+                    /// Gets the schema document from which this type was generated as a UTF-8 string.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> SchemaDocumentUtf8 => "ansible-meta-schema.json"u8;
+
+                    private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Corvus.AnsibleMetaBenchmark.Current.CorvusJsonSchemaProgram.Entry(71);
+
+                    /// <summary>
                     /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
                     /// </summary>
                     /// <param name="parentDocument">The parent document.</param>
                     /// <param name="parentIndex">The parent index.</param>
-                    /// <param name="context">A reference to the validation context, configured with the appropriate values.</param>
-                    internal static void Evaluate(
-                        IJsonDocument parentDocument,
-                        int parentIndex,
-                        ref JsonSchemaContext context)
-                    {
-                        JsonTokenType tokenType = parentDocument.GetJsonTokenType(parentIndex);
-
-                        // You're not allowed to ask about non-value-like entities
-                        Debug.Assert(parentDocument.GetJsonTokenType(parentIndex) is not
-                            (JsonTokenType.None or
-                            JsonTokenType.EndObject or
-                            JsonTokenType.EndArray));
-
-                        if (tokenType == JsonTokenType.StartObject)
-                        {
-                            Span<uint> requiredPropertyChildHandler_seenItems = stackalloc uint[1];
-                            int objectValidation_propertyCount = 0;
-
-                            var objectValidation_enumerator = new ObjectEnumerator(parentDocument, parentIndex);
-                            while (objectValidation_enumerator.MoveNext())
-                            {
-                                int objectValidation_currentIndex = objectValidation_enumerator.CurrentIndex;
-                                using UnescapedUtf8JsonString objectValidation_unescapedPropertyName = parentDocument.GetPropertyNameUnescaped(objectValidation_currentIndex);
-
-                                if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.AnsibleMetaBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator1? validator))
-                                {
-                                    validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, requiredPropertyChildHandler_seenItems);
-
-                                    if (!context.HasCollector && !context.IsMatch)
-                                    {
-                                        return;
-                                    }
-                                }
-
-                                objectValidation_propertyCount++;
-                            }
-
-                            // Do a quick test to see if we have all of the required bits set in each element
-                            if ((~(requiredPropertyChildHandler_seenItems[0]) & RequiredBitMask0) == 0)
-                            {
-                                if (context.HasCollector)
-                                {
-                                    context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyAuthorPresent, "author"u8, "required"u8);
-                                    context.EvaluatedKeywordForProperty(true, 1, RequiredPropertyDescriptionPresent, "description"u8, "required"u8);
-                                    context.EvaluatedKeywordForProperty(true, 2, RequiredPropertyLicensePresent, "license"u8, "required"u8);
-                                    context.EvaluatedKeywordForProperty(true, 3, RequiredPropertyMinAnsibleVersionPresent, "min_ansible_version"u8, "required"u8);
-                                }
-                            }
-                            else if (!context.HasCollector)
-                            {
-                                context.EvaluatedBooleanSchema(false);
-                                return;
-                            }
-                            else
-                            {
-                                if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForAuthor] & RequiredBitForAuthor) == 0)
-                                {
-                                    context.EvaluatedKeywordForProperty(false, 0, RequiredPropertyAuthorNotPresent, "author"u8, "required"u8);
-                                }
-                                else
-                                {
-                                    context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyAuthorPresent, "author"u8, "required"u8);
-                                }
-
-                                if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForDescription] & RequiredBitForDescription) == 0)
-                                {
-                                    context.EvaluatedKeywordForProperty(false, 1, RequiredPropertyDescriptionNotPresent, "description"u8, "required"u8);
-                                }
-                                else
-                                {
-                                    context.EvaluatedKeywordForProperty(true, 1, RequiredPropertyDescriptionPresent, "description"u8, "required"u8);
-                                }
-
-                                if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForLicense] & RequiredBitForLicense) == 0)
-                                {
-                                    context.EvaluatedKeywordForProperty(false, 2, RequiredPropertyLicenseNotPresent, "license"u8, "required"u8);
-                                }
-                                else
-                                {
-                                    context.EvaluatedKeywordForProperty(true, 2, RequiredPropertyLicensePresent, "license"u8, "required"u8);
-                                }
-
-                                if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForMinAnsibleVersion] & RequiredBitForMinAnsibleVersion) == 0)
-                                {
-                                    context.EvaluatedKeywordForProperty(false, 3, RequiredPropertyMinAnsibleVersionNotPresent, "min_ansible_version"u8, "required"u8);
-                                }
-                                else
-                                {
-                                    context.EvaluatedKeywordForProperty(true, 3, RequiredPropertyMinAnsibleVersionPresent, "min_ansible_version"u8, "required"u8);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "required"u8);
-                        }
-                    }
-
+                    /// <param name="resultsCollector">The (optional) results collector.</param>
+                    /// <returns><see langword="true" /> if the instance evaluates against the schema.</returns>
                     internal static bool Evaluate(
                         IJsonDocument parentDocument,
                         int parentIndex,
                         IJsonSchemaResultsCollector? resultsCollector = null)
                     {
-                        JsonSchemaContext context = JsonSchemaContext.BeginContext(
-                        parentDocument,
-                        parentIndex,
-                        usingEvaluatedItems: false,
-                        usingEvaluatedProperties: false,
-                        resultsCollector: resultsCollector);
-
-                        try
-                        {
-                            Evaluate(parentDocument, parentIndex, ref context);
-                            context.EndContext();
-                            return context.IsMatch;
-                        }
-                        finally
-                        {
-                            context.Dispose();
-                        }
-                    }
-
-                    /// <summary>
-                    /// Push the current context as a child context for schema evaluation.
-                    /// </summary>
-                    /// <typeparam name="TContext">The type of the context to be passed to the path providers.</typeparam>
-                    /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                    /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                    /// <param name="context">The current evaluation context.</param>
-                    /// <param name="providerContext">The context to be passed to the path providers.</param>
-                    /// <param name="schemaEvaluationPath">The (optional) path to the schema being evaluated in the child context.</param>
-                    /// <param name="documentEvaluationPath">The (optional) path in the document being evaluated in the child context.</param>
-                    /// <returns>The child context.</returns>
-                    internal static JsonSchemaContext PushChildContext<TContext>(
-                        IJsonDocument parentDocument,
-                        int parentDocumentIndex,
-                        ref JsonSchemaContext context,
-                        TContext providerContext,
-                        JsonSchemaPathProvider<TContext>? schemaEvaluationPath = null,
-                        JsonSchemaPathProvider<TContext>? documentEvaluationPath = null)
-                    {
-                        return
-                            context.PushChildContext(
-                                parentDocument,
-                                parentDocumentIndex,
-                                useEvaluatedItems: false,
-                                useEvaluatedProperties: false,
-                                evaluationPath: schemaEvaluationPath,
-                                documentEvaluationPath: documentEvaluationPath,
-                                providerContext: providerContext);
-                    }
-
-                    /// <summary>
-                    /// Push the current context as a child context for schema evaluation.
-                    /// </summary>
-                    /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                    /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                    /// <param name="context">The current evaluation context.</param>
-                    /// <param name="schemaEvaluationPath">The (optional) path to the schema being evaluated in the child context.</param>
-                    /// <param name="documentEvaluationPath">The (optional) path in the document being evaluated in the child context.</param>
-                    /// <returns>The child context.</returns>
-                    internal static JsonSchemaContext PushChildContext(
-                        IJsonDocument parentDocument,
-                        int parentDocumentIndex,
-                        ref JsonSchemaContext context,
-                        JsonSchemaPathProvider? schemaEvaluationPath = null,
-                        JsonSchemaPathProvider? documentEvaluationPath = null)
-                    {
-                        return
-                            context.PushChildContext(
-                                parentDocument,
-                                parentDocumentIndex,
-                                useEvaluatedItems: false,
-                                useEvaluatedProperties: false,
-                                evaluationPath: schemaEvaluationPath,
-                                documentEvaluationPath: documentEvaluationPath);
-                    }
-
-                    /// <summary>
-                    /// Push the current context as a child context for schema evaluation of a property.
-                    /// </summary>
-                    /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                    /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                    /// <param name="context">The current evaluation context.</param>
-                    /// <param name="propertyName">The name of the property </param>
-                    /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-                    /// <returns>The child context.</returns>
-                    internal static JsonSchemaContext PushChildContext(
-                        IJsonDocument parentDocument,
-                        int parentDocumentIndex,
-                        ref JsonSchemaContext context,
-                        ReadOnlySpan<byte> propertyName,
-                        JsonSchemaPathProvider? evaluationPath = null)
-                    {
-                        return
-                            context.PushChildContext(
-                                parentDocument,
-                                parentDocumentIndex,
-                                useEvaluatedItems: false,
-                                useEvaluatedProperties: false,
-                                propertyName,
-                                evaluationPath: evaluationPath,
-                                schemaEvaluationPath: SchemaLocationProvider);
-                    }
-
-                    /// <summary>
-                    /// Push the current context as a child context for schema evaluation of a property where the property name is known to be unescaped.
-                    /// </summary>
-                    /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                    /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                    /// <param name="context">The current evaluation context.</param>
-                    /// <param name="propertyName">The name of the property </param>
-                    /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-                    /// <returns>The child context.</returns>
-                    internal static JsonSchemaContext PushChildContextUnescaped(
-                        IJsonDocument parentDocument,
-                        int parentDocumentIndex,
-                        ref JsonSchemaContext context,
-                        ReadOnlySpan<byte> propertyName,
-                        JsonSchemaPathProvider? evaluationPath = null)
-                    {
-                        return
-                            context.PushChildContext(
-                                parentDocument,
-                                parentDocumentIndex,
-                                useEvaluatedItems: false,
-                                useEvaluatedProperties: false,
-                                propertyName,
-                                evaluationPath: evaluationPath,
-                                schemaEvaluationPath: SchemaLocationProvider);
-                    }
-
-                    /// <summary>
-                    /// Push the current context as a child context for schema evaluation of an array item.
-                    /// </summary>
-                    /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                    /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                    /// <param name="context">The current evaluation context.</param>
-                    /// <param name="itemIndex">The index of the item in the array.</param>
-                    /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-                    /// <returns>The child context.</returns>
-                    internal static JsonSchemaContext PushChildContext(
-                        IJsonDocument parentDocument,
-                        int parentDocumentIndex,
-                        ref JsonSchemaContext context,
-                        int itemIndex,
-                        JsonSchemaPathProvider? evaluationPath = null)
-                    {
-                        return
-                            context.PushChildContext(
-                                parentDocument,
-                                parentDocumentIndex,
-                                useEvaluatedItems: false,
-                                useEvaluatedProperties: false,
-                                itemIndex,
-                                evaluationPath: evaluationPath,
-                                schemaEvaluationPath: SchemaLocationProvider);
+                        return Evaluator.Evaluate(parentDocument, parentIndex, resultsCollector);
                     }
                 }
             }

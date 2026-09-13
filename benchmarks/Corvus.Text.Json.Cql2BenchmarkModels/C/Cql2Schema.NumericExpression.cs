@@ -282,6 +282,45 @@ public readonly partial struct Cql2Schema
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator decimal(NumericExpression value) => value._parent.TryGetValue(value._idx, out decimal result) ? result : throw new FormatException();
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator sbyte(NumericExpression value) => value._parent.TryGetValue(value._idx, out sbyte result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator byte(NumericExpression value) => value._parent.TryGetValue(value._idx, out byte result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator short(NumericExpression value) => value._parent.TryGetValue(value._idx, out short result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator ushort(NumericExpression value) => value._parent.TryGetValue(value._idx, out ushort result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator int(NumericExpression value) => value._parent.TryGetValue(value._idx, out int result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator uint(NumericExpression value) => value._parent.TryGetValue(value._idx, out uint result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator ulong(NumericExpression value) => value._parent.TryGetValue(value._idx, out ulong result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator float(NumericExpression value) => value._parent.TryGetValue(value._idx, out float result) ? result : throw new FormatException();
+
+#if NET
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator Int128(NumericExpression value) => value._parent.TryGetValue(value._idx, out Int128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator UInt128(NumericExpression value) => value._parent.TryGetValue(value._idx, out UInt128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator Half(NumericExpression value) => value._parent.TryGetValue(value._idx, out Half result) ? result : throw new FormatException();
+#endif
+
         /// <summary>
         /// Operator ==.
         /// </summary>

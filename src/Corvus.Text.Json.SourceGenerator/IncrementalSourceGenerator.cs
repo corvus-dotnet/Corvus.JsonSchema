@@ -392,7 +392,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
                 buildParametersThreshold: BuildParametersThreshold,
                 formatModeOverrides: FormatModeOverrides,
                 emitNativeStringEnums: EmitNativeStringEnums,
-                emitNativeFlagsEnums: EmitNativeFlagsEnums);
+                emitNativeFlagsEnums: EmitNativeFlagsEnums,
+                programCompiler: global::Corvus.Json.CodeGenerator.RuntimeProgramCompiler.CompileWithoutRegexTable);
 
             return options;
         }

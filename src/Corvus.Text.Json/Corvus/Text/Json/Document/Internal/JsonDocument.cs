@@ -100,6 +100,36 @@ public abstract partial class JsonDocument
     protected MetadataDb _parsedData;
 
     /// <summary>
+    /// Tries to get direct access to the document's rows and UTF-8 text for documents whose rows are all local.
+    /// </summary>
+    /// <param name="access">The accessor, valid until the document is disposed or mutated.</param>
+    /// <returns><see langword="true"/> if direct access is available for this document type.</returns>
+    [CLSCompliant(false)]
+    public virtual bool TryGetRawAccess(out RawDocumentAccess access)
+    {
+        access = default;
+        return false;
+    }
+
+    /// <summary>
+    /// Tries to get direct access to the document's rows and UTF-8 text as spans, for documents whose rows are all
+    /// local: the spans an evaluation reads, built without going through <see cref="ReadOnlyMemory{T}"/>, and the
+    /// text as memory for the values it hands on. Valid until the document is disposed or mutated.
+    /// </summary>
+    /// <param name="utf8Memory">The UTF-8 text as memory.</param>
+    /// <param name="rows">The metadata rows.</param>
+    /// <param name="utf8">The UTF-8 text the rows index into.</param>
+    /// <returns><see langword="true"/> if direct access is available for this document type.</returns>
+    [CLSCompliant(false)]
+    public virtual bool TryGetRawSpans(out ReadOnlyMemory<byte> utf8Memory, out ReadOnlySpan<byte> rows, out ReadOnlySpan<byte> utf8)
+    {
+        utf8Memory = default;
+        rows = default;
+        utf8 = default;
+        return false;
+    }
+
+    /// <summary>
     /// Indicates whether this document instance is immutable and cannot be modified.
     /// </summary>
     [CLSCompliant(false)]
@@ -525,7 +555,7 @@ public abstract partial class JsonDocument
         Debug.Assert(MaxArrayLength == Array.MaxLength);
 #endif
 
-        int newCapacity = toReturn.Length * 2;
+        int newCapacity = Math.Max(toReturn.Length * 2, v + 1);
 
         // Note that this check works even when newCapacity overflowed thanks to the (uint) cast
         if ((uint)newCapacity > MaxArrayLength) newCapacity = MaxArrayLength;
@@ -567,7 +597,9 @@ public abstract partial class JsonDocument
         Debug.Assert(MaxArrayLength == Array.MaxLength);
 #endif
 
-        int newCapacity = toReturn.Length * 2;
+        // Doubling alone is not enough when the request outruns it (a property map for an object with more
+        // entries than the buffer holds, after small ones): the new capacity must cover v itself.
+        int newCapacity = Math.Max(toReturn.Length * 2, v + 1);
 
         // Note that this check works even when newCapacity overflowed thanks to the (uint) cast
         if ((uint)newCapacity > MaxArrayLength) newCapacity = MaxArrayLength;

@@ -314,6 +314,11 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
     }
 
     /// <summary>
+    /// Gets every schema registered so far, including those that reduce away during type generation.
+    /// </summary>
+    public IEnumerable<LocatedSchema> LocatedSchemas => this.locatedSchema.Values;
+
+    /// <summary>
     /// Tries to get the located schema for the given scope.
     /// </summary>
     /// <param name="location">The Location for which to find the schema.</param>

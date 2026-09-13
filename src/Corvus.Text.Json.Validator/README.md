@@ -1,6 +1,6 @@
 # Corvus.Text.Json.Validator
 
-Dynamically load, compile, and validate JSON documents against JSON Schema at runtime using Roslyn.
+Load and validate JSON documents against JSON Schema at runtime. Schemas are compiled into an in-memory evaluator by `Corvus.Text.Json.RuntimeEvaluator`: no code generation, no Roslyn, and a cold start measured in milliseconds.
 
 Ideal for schema registries, configuration validation, and user-supplied schemas where the schema is not known at build time.
 
@@ -39,10 +39,10 @@ Console.WriteLine(isValid);  // true
 
 ## Features
 
-- **Dynamic compilation** — schemas are compiled to Corvus.Text.Json generated types at runtime via Roslyn
+- **Runtime compilation** — schemas are compiled into an in-memory evaluator in milliseconds, with zero-allocation validation once warm
 - **Full schema support** — draft 4, 6, 7, 2019-09, and 2020-12
 - **Detailed diagnostics** — validation results include schema location, evaluation path, and error messages
-- **Caching** — compiled validators can be reused across multiple documents
+- **Caching** — compiled schemas are cached by canonical URI and reused across documents
 
 ## Related Packages
 

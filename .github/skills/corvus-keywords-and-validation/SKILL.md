@@ -1,11 +1,11 @@
 ---
 name: corvus-keywords-and-validation
 description: >
-  Implement and extend JSON Schema keywords and validation handlers in the Corvus code
-  generation system. Covers the IKeyword interface, behavioral marker interfaces,
+  Implement and extend JSON Schema keywords in the Corvus code generation system and the
+  runtime evaluator. Covers the IKeyword interface, behavioral marker interfaces,
   vocabulary registration, draft-specific keyword variations (Draft 4 through 2020-12),
-  validation handler priorities, custom keyword extension points, and the TypeDeclaration
-  data structure. USE FOR: adding new JSON Schema keywords, modifying validation behavior,
+  where assertions are implemented (SchemaCompiler/Evaluator), custom keyword extension
+  points, and the TypeDeclaration data structure. USE FOR: adding new JSON Schema keywords, modifying validation behavior,
   understanding keyword evolution across drafts, extending the code generation engine,
   understanding vocabularies. DO NOT USE FOR: using generated types (use corvus-codegen),
   standalone evaluator internals (use corvus-standalone-evaluator).
@@ -81,65 +81,25 @@ The code generation engine exposes extension points at different phases:
 7. **Format handler** — add custom format validators
 8. **Composition handler** — customize allOf/anyOf/oneOf/not processing
 
-## How Handlers and Keywords Fit Together
+## Where Validation Lives
 
-Validation handlers are **stateless singletons** registered with the `CSharpLanguageProvider`. Each handler declares which keyword marker interface it handles and optionally registers child handlers for sub-concerns.
+Validation handlers no longer exist. Keywords are declared for the type builder (so generated *types*
+reflect them), but every assertion is implemented once in the runtime evaluator
+(`src/Corvus.Text.Json/Corvus/Text/Json/RuntimeEvaluator`, namespace `Corvus.Text.Json.RuntimeEvaluator`, in the
+`Corvus.Text.Json` assembly), which generated types, standalone evaluators, the Validator and
+the CLI all use:
 
-### Handler registration
+- `Compilation/SchemaCompiler.cs` — `CompileNode` reads each keyword into a `SchemaNode` (dispatch by
+  keyword name length, then bytes), then whole-graph passes (dynamic refs, tracking, marking, `$ref`
+  elision, discriminators, plans, flags).
+- `Evaluation/Evaluator.cs` — the assertions, generic over `FastMode`/`CollectingMode` and the document
+  access type; report results with the keyword name through the collector.
+- Tests: `tests/Corvus.Text.Json.RuntimeEvaluator.Tests` (unit + JSON Schema Test Suite), plus the
+  generated suite projects, which now run the same engine through generated types.
 
-Handlers are registered in `CSharpLanguageProvider.CreateDefaultCSharpLanguageProvider()` (`src/Corvus.Text.Json.CodeGeneration/CSharpLanguageProvider.cs`):
-
-```csharp
-languageProvider.RegisterValidationHandlers(
-    TypeValidationHandler.Instance,
-    FormatValidationHandler.Instance,
-    NumberValidationHandler.Instance,
-    StringValidationHandler.Instance,
-    ConstValidationHandler.Instance,
-    CompositionAllOfValidationHandler.Instance,
-    CompositionAnyOfValidationHandler.Instance,
-    CompositionOneOfValidationHandler.Instance,
-    CompositionNotValidationHandler.Instance,
-    TernaryIfValidationHandler.Instance,
-    ObjectValidationHandler.Instance,
-    ArrayValidationHandler.Instance);
-```
-
-### Handler structure
-
-Each handler extends `KeywordValidationHandlerBase` and implements three things:
-
-```csharp
-// From StringValidationHandler.cs
-internal sealed class StringValidationHandler
-    : TypeSensitiveKeywordValidationHandlerBase, IStringKeywordValidationHandler
-{
-    public static StringValidationHandler Instance { get; } = CreateDefault();
-
-    // 1. Priority — controls execution order
-    public override uint ValidationHandlerPriority => ValidationPriorities.Default;
-
-    // 2. Keyword matching — dispatches on marker interfaces
-    public override bool HandlesKeyword(IKeyword keyword)
-    {
-        return keyword is IStringValidationKeyword;
-    }
-
-    // 3. Child handlers for sub-concerns
-    private static StringValidationHandler CreateDefault()
-    {
-        var result = new StringValidationHandler();
-        result.RegisterChildHandlers(
-            StringRegularExpressionValidationHandler.Instance,
-            StringLengthValidationHandler.Instance);
-        return result;
-    }
-}
-```
-
-### Execution flow
-
-During code generation, `typeDeclaration.OrderedValidationHandlers()` retrieves handlers from the provider and sorts by `ValidationHandlerPriority`. Each handler emits setup code and validation code into the generated `Evaluate()` method in priority order.
+The generator emits one `CorvusJsonSchemaProgram` per compilation (`RuntimeProgramGenerator.cs`) with an
+entry point per type: pre-compiled as an image when the host supplies `Options.ProgramCompiler` (the CLI),
+else holding the schema documents for compilation on first use; see `docs/StandaloneEvaluatorInternals.md`.
 
 ## TypeDeclaration
 
@@ -151,11 +111,9 @@ The central data structure representing a resolved JSON Schema as a C# type:
 ## Common Pitfalls
 
 - **Draft awareness**: Always check which draft(s) your keyword applies to. A keyword may have different semantics or not exist in certain drafts.
-- **Priority order**: Putting a handler at the wrong priority can cause it to run before its dependencies are resolved.
 - **Stateless keywords**: Keywords must be stateless singletons. State lives in `TypeDeclaration`.
 
 ## Cross-References
 - For code generation, see `corvus-codegen`
-- For the standalone evaluator's internal architecture, see `corvus-standalone-evaluator`
-- For annotation flow, see `corvus-standalone-evaluator` (annotation pipeline section)
-- Full guide: `docs/AddingKeywords.md`, `docs/ValidationHandlerGuide.md`
+- For the evaluation program and evaluator-only generation, see `corvus-standalone-evaluator`
+- Full guide: `docs/AddingKeywords.md`, `docs/ValidationHandlerGuide.md`, `docs/RuntimeEvaluator.md`

@@ -77,8 +77,9 @@ public readonly partial struct SemanticReleaseSchema
         /// <summary>
         /// Gets the default instance.
         /// </summary>
+        #pragma warning disable CS0618 // Type or member is obsolete
         public static PluginsEntityArray DefaultInstance { get; } = PluginsEntityArray.ParseValue("[\n        \"@semantic-release/commit-analyzer\",\n        \"@semantic-release/release-notes-generator\",\n        \"@semantic-release/npm\",\n        \"@semantic-release/github\"\n      ]"u8);
-
+        #pragma warning restore CS0618
         /// <summary>
         /// Gets the rank of the array.
         /// </summary>

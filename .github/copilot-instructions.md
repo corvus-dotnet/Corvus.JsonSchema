@@ -21,7 +21,7 @@ See `docs/UpstreamReview.md` for the component mapping, review process, and the 
 | `corvus-build-and-test` | Building, testing, TFM targeting, solution files |
 | `corvus-codegen` | Source generator and CLI code generation from JSON Schema |
 | `corvus-keywords-and-validation` | JSON Schema keywords, vocabularies, validation handlers |
-| `corvus-standalone-evaluator` | Validation-only evaluator generation and annotation collection |
+| `corvus-standalone-evaluator` | Evaluator-only generation, the schema evaluation program, annotation collection |
 | `corvus-parsed-documents-and-memory` | Parsing, IJsonElement, memory model, UTF-8 transcoding |
 | `corvus-mutable-documents` | JsonWorkspace, JsonDocumentBuilder, mutation, JSON Patch |
 | `corvus-buffer-and-pooling` | stackalloc/ArrayPool/ThreadStatic pooling patterns |
@@ -596,7 +596,7 @@ The `benchmarks/Corvus.Text.Json.Benchmarks/` project compares validation perfor
 | `Corvus.Text.Json.JsonLogic` | JsonLogic rule engine |
 | `Corvus.Text.Json.JsonPath` | JSONPath (RFC 9535) query evaluator |
 | `Corvus.Text.Json.Yaml` | YAML 1.2 ↔ JSON conversion (full integration) |
-| `Corvus.Text.Json.Validator` | Runtime dynamic schema validation via Roslyn compilation |
+| `Corvus.Text.Json.Validator` | Runtime schema validation over the runtime evaluator (no Roslyn) |
 | `Corvus.Text.Json.Compatibility` | Interoperability bridge between V5 types, V4 `Corvus.Json.ExtendedTypes`, and `System.Text.Json` |
 | `Corvus.Numerics` | `BigNumber`, `BigInteger` support |
 | `Corvus.NodaTimeExtensions` | NodaTime (`LocalDate`, `OffsetDateTime`, `Period`) helpers |
@@ -605,7 +605,7 @@ The `benchmarks/Corvus.Text.Json.Benchmarks/` project compares validation perfor
 
 - **`Corvus.Text.Json.Patch`** — RFC 6902 JSON Patch, JSON Merge Patch, and JSON Diff. See `docs/JsonPatch.md`.
 - **`Corvus.Text.Json.Canonicalization`** — RFC 8785 JCS lives in the core `Corvus.Text.Json` package (not a separate package). See `docs/JsonCanonicalization.md`.
-- **`Corvus.Text.Json.Validator`** — Runtime dynamic schema validation: loads schemas at runtime, compiles validators via Roslyn, caches results. Supports Draft 4–2020-12 and OpenAPI 3.0. See `docs/Validator.md`.
+- **`Corvus.Text.Json.Validator`** — Runtime schema validation: loads schemas at runtime, compiles them into an in-memory evaluator with the `Corvus.Text.Json.RuntimeEvaluator` namespace of `Corvus.Text.Json`, caches results. Supports Draft 4–2020-12. See `docs/Validator.md`.
 - **`Corvus.Text.Json.Compatibility`** — Interoperability layer that references both V5 (`Corvus.Text.Json`) and V4 (`Corvus.Json.ExtendedTypes`) plus `System.Text.Json`, providing bridge helpers for migration scenarios. Uses `EnableDefaultCompileItems=false`.
 
 ## All Benchmark Projects

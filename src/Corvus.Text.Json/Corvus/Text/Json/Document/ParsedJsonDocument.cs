@@ -14,6 +14,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using Corvus.Numerics;
 using Corvus.Text.Json.Internal;
@@ -34,6 +35,10 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
     where T : struct, IJsonElement<T>
 {
     private ReadOnlyMemory<byte> _utf8Json;
+
+    // The array behind _utf8Json when it has one, so that the evaluator's span comes from the array directly.
+    private byte[]? _utf8Array;
+    private int _utf8Start;
 
     private readonly bool _isDisposable;
 
@@ -87,6 +92,12 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
             (extraOwner != null ? 1 : 0) <= 1);
 
         _utf8Json = utf8Json;
+        if (MemoryMarshal.TryGetArray(utf8Json, out ArraySegment<byte> segment))
+        {
+            _utf8Array = segment.Array;
+            _utf8Start = segment.Offset;
+        }
+
         _parsedData = parsedData;
         _extraRentedArrayPoolBytes = extraRentedArrayPoolBytes;
         _extraPooledByteBufferWriter = extraPooledByteBufferWriter;
@@ -121,6 +132,7 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
         DisposeCore();
 
         _utf8Json = ReadOnlyMemory<byte>.Empty;
+        _utf8Array = null;
 
         if (_extraRentedArrayPoolBytes != null)
         {
@@ -353,6 +365,27 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
     protected override ReadOnlyMemory<byte> GetRawSimpleValueUnsafe(int index, bool includeQuotes)
     {
         return GetRawSimpleValueUnsafe(ref _parsedData, index, includeQuotes);
+    }
+
+    /// <inheritdoc/>
+    [CLSCompliant(false)]
+    public override bool TryGetRawAccess(out RawDocumentAccess access)
+    {
+        CheckNotDisposed();
+        access = new RawDocumentAccess(_parsedData.RawData, _utf8Json);
+        return true;
+    }
+
+    /// <inheritdoc/>
+    [CLSCompliant(false)]
+    public override bool TryGetRawSpans(out ReadOnlyMemory<byte> utf8Memory, out ReadOnlySpan<byte> rows, out ReadOnlySpan<byte> utf8)
+    {
+        CheckNotDisposed();
+        ReadOnlyMemory<byte> text = _utf8Json;
+        utf8Memory = text;
+        rows = _parsedData.RawData;
+        utf8 = _utf8Array is byte[] array ? new ReadOnlySpan<byte>(array, _utf8Start, text.Length) : text.Span;
+        return true;
     }
 
     /// <summary>

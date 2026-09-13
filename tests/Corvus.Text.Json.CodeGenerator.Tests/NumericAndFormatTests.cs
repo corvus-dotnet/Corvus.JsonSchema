@@ -68,12 +68,10 @@ public class NumericAndFormatTests : IDisposable
         string[] files = Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories);
         string allContent = string.Join("\n", files.Select(File.ReadAllText));
 
-        // Should contain range checks for minimum/maximum/exclusiveMinimum/exclusiveMaximum
-        Assert.IsTrue(
-            allContent.Contains("exclusiveMinimum", StringComparison.OrdinalIgnoreCase) ||
-            allContent.Contains("ExclusiveMinimum", StringComparison.OrdinalIgnoreCase) ||
-            allContent.Contains("> 0", StringComparison.Ordinal),
-            "Expected exclusive minimum validation code");
+        // Range checks live in the pre-compiled program: the generated types evaluate through its entry points and
+        // the program carries the compiled image rather than validation code or the schema text.
+        StringAssert.Contains(allContent, ".Entry(");
+        StringAssert.Contains(allContent, "private static ReadOnlySpan<byte> ImageBase64 =>");
     }
 
     [TestMethod]

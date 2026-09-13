@@ -176,6 +176,45 @@ public readonly partial struct JshintrcSchema
         public static explicit operator decimal(MaxNumberStatementsPerFunction value) => value._parent.TryGetValue(value._idx, out decimal result) ? result : throw new FormatException();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator sbyte(MaxNumberStatementsPerFunction value) => value._parent.TryGetValue(value._idx, out sbyte result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator byte(MaxNumberStatementsPerFunction value) => value._parent.TryGetValue(value._idx, out byte result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator short(MaxNumberStatementsPerFunction value) => value._parent.TryGetValue(value._idx, out short result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator ushort(MaxNumberStatementsPerFunction value) => value._parent.TryGetValue(value._idx, out ushort result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator int(MaxNumberStatementsPerFunction value) => value._parent.TryGetValue(value._idx, out int result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator uint(MaxNumberStatementsPerFunction value) => value._parent.TryGetValue(value._idx, out uint result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator ulong(MaxNumberStatementsPerFunction value) => value._parent.TryGetValue(value._idx, out ulong result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator float(MaxNumberStatementsPerFunction value) => value._parent.TryGetValue(value._idx, out float result) ? result : throw new FormatException();
+
+#if NET
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator Int128(MaxNumberStatementsPerFunction value) => value._parent.TryGetValue(value._idx, out Int128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator UInt128(MaxNumberStatementsPerFunction value) => value._parent.TryGetValue(value._idx, out UInt128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator Half(MaxNumberStatementsPerFunction value) => value._parent.TryGetValue(value._idx, out Half result) ? result : throw new FormatException();
+#endif
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator bool(MaxNumberStatementsPerFunction value)
         {
             JsonTokenType type = value._parent.GetJsonTokenType(value._idx);

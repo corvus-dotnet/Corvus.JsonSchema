@@ -76,8 +76,9 @@ public readonly partial struct KrakendSchema
         /// <summary>
         /// Gets the default instance.
         /// </summary>
+        #pragma warning disable CS0618 // Type or member is obsolete
         public static Endpoint DefaultInstance { get; } = Endpoint.ParseValue("{\n        \"backend\": [\n          {\n            \"url_pattern\": \"/url\"\n          }\n        ],\n        \"endpoint\": \"/foo\"\n      }"u8);
-
+        #pragma warning restore CS0618
         /// <summary>
         /// Tries to get the value of the property with the given name.
         /// </summary>

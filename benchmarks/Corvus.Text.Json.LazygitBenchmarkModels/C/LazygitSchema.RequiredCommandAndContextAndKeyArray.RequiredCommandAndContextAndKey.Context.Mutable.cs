@@ -647,6 +647,110 @@ public readonly partial struct LazygitSchema
 
                         return defaultMatch();
                     }
+
+                    /// <summary>
+                    /// Converts the value to its <see cref="KnownValues"/> equivalent.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+                    public static implicit operator KnownValues(Mutable value)
+                    {
+                        if (value.TryGetKnownValue(out KnownValues result))
+                        {
+                            return result;
+                        }
+
+                        throw new InvalidOperationException();
+                    }
+
+                    /// <summary>
+                    /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+                    /// </summary>
+                    /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+                    /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+                    public bool TryGetKnownValue(out KnownValues result)
+                    {
+                        if (this.ValueEquals(Constants.Enum1))
+                        {
+                            result = KnownValues.Status;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum2))
+                        {
+                            result = KnownValues.Files;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum3))
+                        {
+                            result = KnownValues.Worktrees;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum4))
+                        {
+                            result = KnownValues.LocalBranches;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum5))
+                        {
+                            result = KnownValues.Remotes;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum6))
+                        {
+                            result = KnownValues.RemoteBranches;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum7))
+                        {
+                            result = KnownValues.Tags;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum8))
+                        {
+                            result = KnownValues.Commits;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum9))
+                        {
+                            result = KnownValues.ReflogCommits;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum10))
+                        {
+                            result = KnownValues.SubCommits;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum11))
+                        {
+                            result = KnownValues.CommitFiles;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum12))
+                        {
+                            result = KnownValues.Stash;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum13))
+                        {
+                            result = KnownValues.Global;
+                            return true;
+                        }
+
+                        result = default;
+                        return false;
+                    }
                 }
 
                 public ref struct Source
@@ -705,6 +809,9 @@ public readonly partial struct LazygitSchema
 
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static implicit operator Source(string value) => new (value.AsSpan());
+
+                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                    public static implicit operator Source(KnownValues value) => (Context)value;
 
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);

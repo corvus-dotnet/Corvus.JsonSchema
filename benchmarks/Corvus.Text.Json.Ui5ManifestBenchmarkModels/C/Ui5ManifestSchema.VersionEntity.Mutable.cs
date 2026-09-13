@@ -1240,6 +1240,380 @@ public readonly partial struct Ui5ManifestSchema
 
                 return defaultMatch();
             }
+
+            /// <summary>
+            /// Converts the value to its <see cref="KnownValues"/> equivalent.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+            public static implicit operator KnownValues(Mutable value)
+            {
+                if (value.TryGetKnownValue(out KnownValues result))
+                {
+                    return result;
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+            /// </summary>
+            /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+            /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+            public bool TryGetKnownValue(out KnownValues result)
+            {
+                if (this.ValueEquals(Constants.Enum1))
+                {
+                    result = KnownValues.Value110;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum2))
+                {
+                    result = KnownValues.Value120;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum3))
+                {
+                    result = KnownValues.Value130;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum4))
+                {
+                    result = KnownValues.Value140;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum5))
+                {
+                    result = KnownValues.Value150;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum6))
+                {
+                    result = KnownValues.Value160;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum7))
+                {
+                    result = KnownValues.Value170;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum8))
+                {
+                    result = KnownValues.Value180;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum9))
+                {
+                    result = KnownValues.Value190;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum10))
+                {
+                    result = KnownValues.Value1100;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum11))
+                {
+                    result = KnownValues.Value1110;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum12))
+                {
+                    result = KnownValues.Value1120;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum13))
+                {
+                    result = KnownValues.Value1130;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum14))
+                {
+                    result = KnownValues.Value1140;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum15))
+                {
+                    result = KnownValues.Value1150;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum16))
+                {
+                    result = KnownValues.Value1160;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum17))
+                {
+                    result = KnownValues.Value1170;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum18))
+                {
+                    result = KnownValues.Value1180;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum19))
+                {
+                    result = KnownValues.Value1190;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum20))
+                {
+                    result = KnownValues.Value1200;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum21))
+                {
+                    result = KnownValues.Value1210;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum22))
+                {
+                    result = KnownValues.Value1220;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum23))
+                {
+                    result = KnownValues.Value1230;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum24))
+                {
+                    result = KnownValues.Value1240;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum25))
+                {
+                    result = KnownValues.Value1250;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum26))
+                {
+                    result = KnownValues.Value1260;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum27))
+                {
+                    result = KnownValues.Value1270;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum28))
+                {
+                    result = KnownValues.Value1280;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum29))
+                {
+                    result = KnownValues.Value1290;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum30))
+                {
+                    result = KnownValues.Value1300;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum31))
+                {
+                    result = KnownValues.Value1310;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum32))
+                {
+                    result = KnownValues.Value1320;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum33))
+                {
+                    result = KnownValues.Value1330;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum34))
+                {
+                    result = KnownValues.Value1340;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum35))
+                {
+                    result = KnownValues.Value1350;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum36))
+                {
+                    result = KnownValues.Value1360;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum37))
+                {
+                    result = KnownValues.Value1370;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum38))
+                {
+                    result = KnownValues.Value1380;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum39))
+                {
+                    result = KnownValues.Value1390;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum40))
+                {
+                    result = KnownValues.Value1400;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum41))
+                {
+                    result = KnownValues.Value1410;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum42))
+                {
+                    result = KnownValues.Value1420;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum43))
+                {
+                    result = KnownValues.Value1430;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum44))
+                {
+                    result = KnownValues.Value1440;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum45))
+                {
+                    result = KnownValues.Value1450;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum46))
+                {
+                    result = KnownValues.Value1460;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum47))
+                {
+                    result = KnownValues.Value1470;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum48))
+                {
+                    result = KnownValues.Value1480;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum49))
+                {
+                    result = KnownValues.Value1490;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum50))
+                {
+                    result = KnownValues.Value1500;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum51))
+                {
+                    result = KnownValues.Value1510;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum52))
+                {
+                    result = KnownValues.Value1520;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum53))
+                {
+                    result = KnownValues.Value1530;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum54))
+                {
+                    result = KnownValues.Value1540;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum55))
+                {
+                    result = KnownValues.Value1550;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum56))
+                {
+                    result = KnownValues.Value1560;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum57))
+                {
+                    result = KnownValues.Value1570;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum58))
+                {
+                    result = KnownValues.Value1580;
+                    return true;
+                }
+
+                result = default;
+                return false;
+            }
         }
 
         public ref struct Source
@@ -1298,6 +1672,9 @@ public readonly partial struct Ui5ManifestSchema
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(string value) => new (value.AsSpan());
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(KnownValues value) => (VersionEntity)value;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);

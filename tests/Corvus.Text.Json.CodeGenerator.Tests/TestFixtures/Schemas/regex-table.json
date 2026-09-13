@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "code": { "type": "string", "pattern": "^[a-z]+-[0-9]{2,4}$" },
+    "name": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9]*$" }
+  },
+  "patternProperties": {
+    "^x-[a-z]+[0-9]*$": { "type": "number" }
+  },
+  "required": ["code"]
+}

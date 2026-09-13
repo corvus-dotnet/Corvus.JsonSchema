@@ -32,7 +32,7 @@ The code generation pipeline uses a three-layer architecture to discover and act
 | `TypeDeclarationExtensions.cs` | `src-v4/.../TypeDeclarations/` | Pattern detection extension methods |
 | `TypeDeclarationExtensions.cs` | `src/Corvus.Text.Json.CodeGeneration/` | V5-specific extensions (builds on V4) |
 | `CodeGeneratorExtensions.*.cs` | `src/Corvus.Text.Json.CodeGeneration/` | V5 code emission, split by concern |
-| `StandaloneEvaluatorGenerator.cs` | `src/Corvus.Text.Json.CodeGeneration/` | Standalone validation code emission |
+| `RuntimeProgramGenerator.cs` | `src/Corvus.Text.Json.CodeGeneration/` | Schema evaluation program and standalone evaluator shim emission |
 | `Keywords/I*.cs` | `src-v4/.../Keywords/` | Keyword interface definitions (~90 interfaces) |
 
 ---
@@ -666,60 +666,16 @@ public static bool IsNumericArray(this TypeDeclaration that)
 
 ---
 
-## SubschemaInfo — Tracking What Subschemas Need
+## Validation
 
-When the `StandaloneEvaluatorGenerator` collects subschemas for validation, it wraps each in a `SubschemaInfo`:
+Validation code is no longer emitted per type. Each generated type's `JsonSchema.Evaluate` and each
+standalone evaluator delegate to the assembly's schema evaluation program, emitted by
+`RuntimeProgramGenerator` and compiled at run time by `Corvus.Text.Json.RuntimeEvaluator`. The former
+validation handlers, their priorities and `SubschemaInfo` are gone; see
+[StandaloneEvaluatorInternals.md](StandaloneEvaluatorInternals.md) and [RuntimeEvaluator.md](RuntimeEvaluator.md).
 
-```csharp
-internal sealed class SubschemaInfo
-{
-    public string MethodName { get; }           // Generated method name (e.g. "EvaluateAllOf0")
-    public string SchemaPath { get; }           // Schema path (e.g. "#/allOf/0")
-    public TypeDeclaration TypeDeclaration { get; }
-    public bool UseEvaluatedItems { get; }      // Needs items evaluation tracking
-    public bool UseEvaluatedProperties { get; } // Needs property evaluation tracking
-    public string? PathFieldName { get; set; }  // Static field for evaluation path
-    public string? SchemaPathFieldName { get; set; } // Static field for schema path
-}
-```
-
-**`UseEvaluatedItems` / `UseEvaluatedProperties`** are set from:
-
-```csharp
-typeDeclaration.RequiresItemsEvaluationTracking()
-typeDeclaration.RequiresPropertyEvaluationTracking()
-```
-
-These determine whether the generated validation code needs to pass and merge bitmasks tracking which items/properties have been evaluated — required for `unevaluatedItems` and `unevaluatedProperties` support.
-
----
-
-## Validation Handlers and Priority
-
-Validation handlers inspect `TypeDeclaration` and emit validation code. They are ordered by priority:
-
-| Priority | Name | Value | Handlers |
-|----------|------|-------|----------|
-| CoreType | 1000 | `type` keyword validation | `TypeValidationHandler` |
-| Default | `uint.MaxValue / 2` | Most validation keywords | `ConstValidationHandler`, `StringValidationHandler`, `NumberValidationHandler`, `FormatValidationHandler` |
-| Composition | Default + 1000 | Composition keywords | `AllOfSubschemaValidationHandler`, `AnyOfSubschemaValidationHandler`, `OneOfSubschemaValidationHandler`, `NotSubschemaValidationHandler`, `IfThenElseValidationHandler` |
-| AfterComposition | Composition + 1000 | Object/Array (need composition results) | `ObjectValidationHandler`, `ArrayValidationHandler` |
-| Last | `uint.MaxValue` | Unevaluated keywords (need everything) | `UnevaluatedPropertyValidationHandler`, `UnevaluatedItemsValidationHandler` |
-
-Handlers are sorted ascending by priority. Each handler queries `TypeDeclaration` to decide whether to emit code:
-
-```csharp
-// ObjectValidationHandler checks for object-related keywords
-// before emitting any validation code
-public override CodeGenerator AppendValidationCode(
-    CodeGenerator generator,
-    TypeDeclaration typeDeclaration,
-    bool validateOnly)
-{
-    // Delegates to child handlers: PropertyCountValidationHandler,
-    // PropertiesValidationHandler, PatternPropertiesValidationHandler, etc.
-}
-```
+`RequiresItemsEvaluationTracking()` / `RequiresPropertyEvaluationTracking()` remain on `TypeDeclaration`
+for the model emitters that consult them.
 
 ---
 

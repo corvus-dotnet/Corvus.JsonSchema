@@ -35,8 +35,6 @@ public class FormatAssertionModeEvaluatorTests
     {
         CompiledEvaluator evaluator = await GenerateAsync(validateFormat: true, overrides: null);
 
-        StringAssert.Contains(evaluator.GeneratedCode!, "MatchDateTime");
-
         using var invalid = ParsedJsonDocument<JsonElement>.Parse(Invalid);
         Assert.IsFalse(evaluator.Evaluate(invalid.RootElement), "Default assert mode must reject a non-conformant value.");
 
@@ -51,10 +49,6 @@ public class FormatAssertionModeEvaluatorTests
             validateFormat: true,
             overrides: new Dictionary<string, FormatAssertionMode> { ["date-time"] = FormatAssertionMode.Warning });
 
-        // The standalone evaluator emits the warning-mode sibling.
-        StringAssert.Contains(evaluator.GeneratedCode!, "WarnDateTime");
-        Assert.IsFalse(evaluator.GeneratedCode!.Contains("MatchDateTime"), "Warning mode must replace the assertion.");
-
         using var invalid = ParsedJsonDocument<JsonElement>.Parse(Invalid);
         Assert.IsTrue(evaluator.Evaluate(invalid.RootElement), "Warning mode must accept a non-conformant value.");
 
@@ -68,9 +62,6 @@ public class FormatAssertionModeEvaluatorTests
         CompiledEvaluator evaluator = await GenerateAsync(
             validateFormat: true,
             overrides: new Dictionary<string, FormatAssertionMode> { ["date-time"] = FormatAssertionMode.Disable });
-
-        Assert.IsFalse(evaluator.GeneratedCode!.Contains("MatchDateTime"), "Disabled format must not assert.");
-        Assert.IsFalse(evaluator.GeneratedCode!.Contains("WarnDateTime"), "Disabled format must not warn.");
 
         using var invalid = ParsedJsonDocument<JsonElement>.Parse(Invalid);
         Assert.IsTrue(evaluator.Evaluate(invalid.RootElement), "Disabled format must accept a non-conformant value.");

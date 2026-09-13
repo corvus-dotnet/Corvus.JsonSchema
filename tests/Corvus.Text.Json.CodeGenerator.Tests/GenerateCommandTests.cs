@@ -328,8 +328,32 @@ public class GenerateCommandTests : IDisposable
 
         Assert.AreEqual(0, asserted.ExitCode, asserted.StandardError);
         Assert.AreEqual(0, annotated.ExitCode, annotated.StandardError);
-        Assert.IsTrue(ReadAllGeneratedCode(assertDir).Contains("MatchDateTime"), "--assertFormat true must assert date-time.");
-        Assert.IsFalse(ReadAllGeneratedCode(annotateDir).Contains("MatchDateTime"), "--assertFormat false must not assert date-time.");
+        // Validation runs in the runtime evaluator; the emitted program carries the assertion setting.
+        Assert.IsTrue(ReadAllGeneratedCode(assertDir).Contains("AssertFormat = true,"), "--assertFormat true must assert date-time.");
+        Assert.IsTrue(ReadAllGeneratedCode(annotateDir).Contains("AssertFormat = null,"), "--assertFormat false must leave format to the schema's vocabulary.");
+    }
+
+    [TestMethod]
+    public async Task Generate_EmitsPrecompiledProgramImageWithGeneratedRegexTable()
+    {
+        // A schema whose patterns need a regular expression (a variable atom before another, or a variable tail after
+        // a fixed one): anchored ASCII class sequences are matched without one and would leave the table empty.
+        string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "regex-table.json");
+
+        ProcessResult result = await CodeGeneratorRunner.RunAsync(
+            $"jsonschema \"{schema}\" --rootNamespace T --outputPath \"{_outputDir}\"");
+
+        Assert.AreEqual(0, result.ExitCode, result.StandardError);
+        string code = ReadAllGeneratedCode(_outputDir);
+
+        // The CLI compiles the program when it generates: the emitted program loads an image and wires its patterns
+        // through [GeneratedRegex]; the schema documents are no longer embedded.
+        StringAssert.Contains(code, "JsonSchemaEvaluator.FromProgramImage(LoadImage(), CreateOptions())");
+        StringAssert.Contains(code, "RegexProvider = GetRegex");
+        StringAssert.Contains(code, "[GeneratedRegex(");
+        StringAssert.Contains(code, "private static ReadOnlySpan<byte> ImageBase64 =>");
+        Assert.IsFalse(code.Contains("TryGetDocument"), "The schema documents must not be embedded alongside the image.");
+        Assert.IsFalse(code.Contains("CompileFromUri"), "Nothing should compile at first use.");
     }
 
     [TestMethod]
@@ -348,8 +372,10 @@ public class GenerateCommandTests : IDisposable
 
         Assert.AreEqual(0, def.ExitCode, def.StandardError);
         Assert.AreEqual(0, disabled.ExitCode, disabled.StandardError);
-        Assert.IsTrue(ReadAllGeneratedCode(defaultDir).Contains("MatchDateTime"), "draft-07 asserts format by default.");
-        Assert.IsFalse(ReadAllGeneratedCode(disabledDir).Contains("MatchDateTime"), "--formatMode disable must produce annotation-only output.");
+        // Validation runs in the runtime evaluator; the emitted program carries the assertion setting and the mode overrides.
+        Assert.IsTrue(ReadAllGeneratedCode(defaultDir).Contains("AssertFormatInLegacyDrafts = true,"), "draft-07 asserts format by default.");
+        Assert.IsFalse(ReadAllGeneratedCode(defaultDir).Contains("JsonSchemaFormatMode.Disable"), "No override is emitted by default.");
+        Assert.IsTrue(ReadAllGeneratedCode(disabledDir).Contains("[\"*\"] = JsonSchemaFormatMode.Disable"), "--formatMode disable must produce annotation-only output.");
     }
 
     [TestMethod]

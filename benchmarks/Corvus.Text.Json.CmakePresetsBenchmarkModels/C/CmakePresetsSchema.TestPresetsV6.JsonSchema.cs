@@ -46,10 +46,10 @@ public readonly partial struct CmakePresetsSchema
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/testPresetsV6"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/definitions/testPresetsV6"u8, buffer, out written);
 
             /// <summary>
-            /// Gets the schema location from which this type was generated.
+            /// Gets the schema location from which this type was generated, as a JSON Pointer within <see cref="SchemaDocument"/>.
             /// </summary>
             public const string SchemaLocation = "/definitions/testPresetsV6";
 
@@ -57,259 +57,36 @@ public readonly partial struct CmakePresetsSchema
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
             public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/testPresetsV6"u8;
-            private static readonly JsonSchemaPathProvider AllOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/allOf/0/$ref"u8, buffer, out written);
-            private static readonly JsonSchemaPathProvider AllOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/allOf/1/$ref"u8, buffer, out written);
-            private static readonly JsonSchemaPathProvider AllOf2SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/allOf/2/$ref"u8, buffer, out written);
-            private static readonly JsonSchemaPathProvider AllOf3SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/allOf/3/$ref"u8, buffer, out written);
+
+            /// <summary>
+            /// Gets the schema document from which this type was generated, relative to the base location for generation.
+            /// </summary>
+            /// <remarks>
+            /// <see cref="SchemaLocation"/> is a JSON Pointer within this document, so <c>SchemaDocument + "#" + SchemaLocation</c>
+            /// is a reference to the schema, even for a schema inside a <c>$id</c> sub-resource.
+            /// </remarks>
+            public const string SchemaDocument = "cmake-presets-schema.json";
+
+            /// <summary>
+            /// Gets the schema document from which this type was generated as a UTF-8 string.
+            /// </summary>
+            public static ReadOnlySpan<byte> SchemaDocumentUtf8 => "cmake-presets-schema.json"u8;
+
+            private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Corvus.CmakePresetsBenchmark.Current.CorvusJsonSchemaProgram.Entry(164);
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
             /// </summary>
             /// <param name="parentDocument">The parent document.</param>
             /// <param name="parentIndex">The parent index.</param>
-            /// <param name="context">A reference to the validation context, configured with the appropriate values.</param>
-            internal static void Evaluate(
-                IJsonDocument parentDocument,
-                int parentIndex,
-                ref JsonSchemaContext context)
-            {
-                JsonTokenType tokenType = parentDocument.GetJsonTokenType(parentIndex);
-
-                // You're not allowed to ask about non-value-like entities
-                Debug.Assert(parentDocument.GetJsonTokenType(parentIndex) is not
-                    (JsonTokenType.None or
-                    JsonTokenType.EndObject or
-                    JsonTokenType.EndArray));
-
-                if (!JsonSchemaEvaluation.MatchTypeArray(tokenType,"type"u8, ref context))
-                {
-                    if (!context.HasCollector)
-                    {
-                        return;
-                    }
-                    context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeArray, "items"u8);
-                }
-
-                if (!context.HasCollector && !context.IsMatch)
-                {
-                    return;
-                }
-
-                bool allOfComposedIsMatch = true;
-
-                JsonSchemaContext allOfContext0 =
-                    Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: AllOf0SchemaEvaluationPath);
-                Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV2.JsonSchema.Evaluate(parentDocument, parentIndex, ref allOfContext0);
-                allOfComposedIsMatch = allOfComposedIsMatch && allOfContext0.IsMatch;
-                context.ApplyEvaluated(ref allOfContext0);
-                context.CommitChildContext(allOfContext0.IsMatch, ref allOfContext0);
-
-                if (!context.HasCollector && !context.IsMatch)
-                {
-                    return;
-                }
-
-                JsonSchemaContext allOfContext1 =
-                    Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV3.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: AllOf1SchemaEvaluationPath);
-                Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV3.JsonSchema.Evaluate(parentDocument, parentIndex, ref allOfContext1);
-                allOfComposedIsMatch = allOfComposedIsMatch && allOfContext1.IsMatch;
-                context.ApplyEvaluated(ref allOfContext1);
-                context.CommitChildContext(allOfContext1.IsMatch, ref allOfContext1);
-
-                if (!context.HasCollector && !context.IsMatch)
-                {
-                    return;
-                }
-
-                JsonSchemaContext allOfContext2 =
-                    Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV5.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: AllOf2SchemaEvaluationPath);
-                Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV5.JsonSchema.Evaluate(parentDocument, parentIndex, ref allOfContext2);
-                allOfComposedIsMatch = allOfComposedIsMatch && allOfContext2.IsMatch;
-                context.ApplyEvaluated(ref allOfContext2);
-                context.CommitChildContext(allOfContext2.IsMatch, ref allOfContext2);
-
-                if (!context.HasCollector && !context.IsMatch)
-                {
-                    return;
-                }
-
-                JsonSchemaContext allOfContext3 =
-                    Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV6.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: AllOf3SchemaEvaluationPath);
-                Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.TestPresetsItemsV6.JsonSchema.Evaluate(parentDocument, parentIndex, ref allOfContext3);
-                allOfComposedIsMatch = allOfComposedIsMatch && allOfContext3.IsMatch;
-                context.ApplyEvaluated(ref allOfContext3);
-                context.CommitChildContext(allOfContext3.IsMatch, ref allOfContext3);
-                context.EvaluatedKeyword(allOfComposedIsMatch, allOfComposedIsMatch  ? JsonSchemaEvaluation.MatchedAllSchema : JsonSchemaEvaluation.DidNotMatchAllSchema, "allOf"u8);
-
-                if (!context.HasCollector && !context.IsMatch)
-                {
-                    return;
-                }
-
-                if (tokenType == JsonTokenType.StartArray)
-                {
-                }
-            }
-
+            /// <param name="resultsCollector">The (optional) results collector.</param>
+            /// <returns><see langword="true" /> if the instance evaluates against the schema.</returns>
             internal static bool Evaluate(
                 IJsonDocument parentDocument,
                 int parentIndex,
                 IJsonSchemaResultsCollector? resultsCollector = null)
             {
-                JsonSchemaContext context = JsonSchemaContext.BeginContext(
-                parentDocument,
-                parentIndex,
-                usingEvaluatedItems: false,
-                usingEvaluatedProperties: false,
-                resultsCollector: resultsCollector);
-
-                try
-                {
-                    Evaluate(parentDocument, parentIndex, ref context);
-                    context.EndContext();
-                    return context.IsMatch;
-                }
-                finally
-                {
-                    context.Dispose();
-                }
-            }
-
-            /// <summary>
-            /// Push the current context as a child context for schema evaluation.
-            /// </summary>
-            /// <typeparam name="TContext">The type of the context to be passed to the path providers.</typeparam>
-            /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-            /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-            /// <param name="context">The current evaluation context.</param>
-            /// <param name="providerContext">The context to be passed to the path providers.</param>
-            /// <param name="schemaEvaluationPath">The (optional) path to the schema being evaluated in the child context.</param>
-            /// <param name="documentEvaluationPath">The (optional) path in the document being evaluated in the child context.</param>
-            /// <returns>The child context.</returns>
-            internal static JsonSchemaContext PushChildContext<TContext>(
-                IJsonDocument parentDocument,
-                int parentDocumentIndex,
-                ref JsonSchemaContext context,
-                TContext providerContext,
-                JsonSchemaPathProvider<TContext>? schemaEvaluationPath = null,
-                JsonSchemaPathProvider<TContext>? documentEvaluationPath = null)
-            {
-                return
-                    context.PushChildContext(
-                        parentDocument,
-                        parentDocumentIndex,
-                        useEvaluatedItems: false,
-                        useEvaluatedProperties: false,
-                        evaluationPath: schemaEvaluationPath,
-                        documentEvaluationPath: documentEvaluationPath,
-                        providerContext: providerContext);
-            }
-
-            /// <summary>
-            /// Push the current context as a child context for schema evaluation.
-            /// </summary>
-            /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-            /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-            /// <param name="context">The current evaluation context.</param>
-            /// <param name="schemaEvaluationPath">The (optional) path to the schema being evaluated in the child context.</param>
-            /// <param name="documentEvaluationPath">The (optional) path in the document being evaluated in the child context.</param>
-            /// <returns>The child context.</returns>
-            internal static JsonSchemaContext PushChildContext(
-                IJsonDocument parentDocument,
-                int parentDocumentIndex,
-                ref JsonSchemaContext context,
-                JsonSchemaPathProvider? schemaEvaluationPath = null,
-                JsonSchemaPathProvider? documentEvaluationPath = null)
-            {
-                return
-                    context.PushChildContext(
-                        parentDocument,
-                        parentDocumentIndex,
-                        useEvaluatedItems: false,
-                        useEvaluatedProperties: false,
-                        evaluationPath: schemaEvaluationPath,
-                        documentEvaluationPath: documentEvaluationPath);
-            }
-
-            /// <summary>
-            /// Push the current context as a child context for schema evaluation of a property.
-            /// </summary>
-            /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-            /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-            /// <param name="context">The current evaluation context.</param>
-            /// <param name="propertyName">The name of the property </param>
-            /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-            /// <returns>The child context.</returns>
-            internal static JsonSchemaContext PushChildContext(
-                IJsonDocument parentDocument,
-                int parentDocumentIndex,
-                ref JsonSchemaContext context,
-                ReadOnlySpan<byte> propertyName,
-                JsonSchemaPathProvider? evaluationPath = null)
-            {
-                return
-                    context.PushChildContext(
-                        parentDocument,
-                        parentDocumentIndex,
-                        useEvaluatedItems: false,
-                        useEvaluatedProperties: false,
-                        propertyName,
-                        evaluationPath: evaluationPath,
-                        schemaEvaluationPath: SchemaLocationProvider);
-            }
-
-            /// <summary>
-            /// Push the current context as a child context for schema evaluation of a property where the property name is known to be unescaped.
-            /// </summary>
-            /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-            /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-            /// <param name="context">The current evaluation context.</param>
-            /// <param name="propertyName">The name of the property </param>
-            /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-            /// <returns>The child context.</returns>
-            internal static JsonSchemaContext PushChildContextUnescaped(
-                IJsonDocument parentDocument,
-                int parentDocumentIndex,
-                ref JsonSchemaContext context,
-                ReadOnlySpan<byte> propertyName,
-                JsonSchemaPathProvider? evaluationPath = null)
-            {
-                return
-                    context.PushChildContext(
-                        parentDocument,
-                        parentDocumentIndex,
-                        useEvaluatedItems: false,
-                        useEvaluatedProperties: false,
-                        propertyName,
-                        evaluationPath: evaluationPath,
-                        schemaEvaluationPath: SchemaLocationProvider);
-            }
-
-            /// <summary>
-            /// Push the current context as a child context for schema evaluation of an array item.
-            /// </summary>
-            /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-            /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-            /// <param name="context">The current evaluation context.</param>
-            /// <param name="itemIndex">The index of the item in the array.</param>
-            /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-            /// <returns>The child context.</returns>
-            internal static JsonSchemaContext PushChildContext(
-                IJsonDocument parentDocument,
-                int parentDocumentIndex,
-                ref JsonSchemaContext context,
-                int itemIndex,
-                JsonSchemaPathProvider? evaluationPath = null)
-            {
-                return
-                    context.PushChildContext(
-                        parentDocument,
-                        parentDocumentIndex,
-                        useEvaluatedItems: false,
-                        useEvaluatedProperties: false,
-                        itemIndex,
-                        evaluationPath: evaluationPath,
-                        schemaEvaluationPath: SchemaLocationProvider);
+                return Evaluator.Evaluate(parentDocument, parentIndex, resultsCollector);
             }
         }
     }

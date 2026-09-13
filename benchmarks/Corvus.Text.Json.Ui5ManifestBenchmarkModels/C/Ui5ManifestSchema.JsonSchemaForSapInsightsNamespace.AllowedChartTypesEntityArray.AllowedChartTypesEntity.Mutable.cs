@@ -989,6 +989,266 @@ public readonly partial struct Ui5ManifestSchema
 
                         return defaultMatch();
                     }
+
+                    /// <summary>
+                    /// Converts the value to its <see cref="KnownValues"/> equivalent.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+                    public static implicit operator KnownValues(Mutable value)
+                    {
+                        if (value.TryGetKnownValue(out KnownValues result))
+                        {
+                            return result;
+                        }
+
+                        throw new InvalidOperationException();
+                    }
+
+                    /// <summary>
+                    /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+                    /// </summary>
+                    /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+                    /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+                    public bool TryGetKnownValue(out KnownValues result)
+                    {
+                        if (this.ValueEquals(Constants.Enum1))
+                        {
+                            result = KnownValues.Bar;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum2))
+                        {
+                            result = KnownValues.Column;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum3))
+                        {
+                            result = KnownValues.Line;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum4))
+                        {
+                            result = KnownValues.Bullet;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum5))
+                        {
+                            result = KnownValues.VerticalBullet;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum6))
+                        {
+                            result = KnownValues.Value100StackedBar;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum7))
+                        {
+                            result = KnownValues.Value100StackedColumn;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum8))
+                        {
+                            result = KnownValues.Waterfall;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum9))
+                        {
+                            result = KnownValues.HorizontalWaterfall;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum10))
+                        {
+                            result = KnownValues.Area;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum11))
+                        {
+                            result = KnownValues.Radar;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum12))
+                        {
+                            result = KnownValues.Combination;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum13))
+                        {
+                            result = KnownValues.StackedBar;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum14))
+                        {
+                            result = KnownValues.StackedColumn;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum15))
+                        {
+                            result = KnownValues.StackedCombination;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum16))
+                        {
+                            result = KnownValues.HorizontalStackedCombination;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum17))
+                        {
+                            result = KnownValues.Pie;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum18))
+                        {
+                            result = KnownValues.Donut;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum19))
+                        {
+                            result = KnownValues.DualBar;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum20))
+                        {
+                            result = KnownValues.DualColumn;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum21))
+                        {
+                            result = KnownValues.DualLine;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum22))
+                        {
+                            result = KnownValues.DualStackedBar;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum23))
+                        {
+                            result = KnownValues.DualStackedColumn;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum24))
+                        {
+                            result = KnownValues.DualCombination;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum25))
+                        {
+                            result = KnownValues.DualHorizontalCombination;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum26))
+                        {
+                            result = KnownValues.DualStackedCombination;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum27))
+                        {
+                            result = KnownValues.DualHorizontalStackedCombination;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum28))
+                        {
+                            result = KnownValues.Value100DualStackedBar;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum29))
+                        {
+                            result = KnownValues.Value100DualStackedColumn;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum30))
+                        {
+                            result = KnownValues.Scatter;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum31))
+                        {
+                            result = KnownValues.Heatmap;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum32))
+                        {
+                            result = KnownValues.TimeseriesColumn;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum33))
+                        {
+                            result = KnownValues.TimeseriesLine;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum34))
+                        {
+                            result = KnownValues.TimeseriesScatter;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum35))
+                        {
+                            result = KnownValues.TimeseriesStackedColumn;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum36))
+                        {
+                            result = KnownValues.Timeseries100StackedColumn;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum37))
+                        {
+                            result = KnownValues.TimeseriesBullet;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum38))
+                        {
+                            result = KnownValues.TimeseriesWaterfall;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum39))
+                        {
+                            result = KnownValues.TimeseriesStackedCombination;
+                            return true;
+                        }
+
+                        result = default;
+                        return false;
+                    }
                 }
 
                 public ref struct Source
@@ -1047,6 +1307,9 @@ public readonly partial struct Ui5ManifestSchema
 
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static implicit operator Source(string value) => new (value.AsSpan());
+
+                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                    public static implicit operator Source(KnownValues value) => (AllowedChartTypesEntity)value;
 
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);

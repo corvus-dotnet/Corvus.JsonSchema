@@ -1,0 +1,3 @@
+source: RuntimeEvaluator.md
+navTitle: "Runtime Evaluator"
+description: "How the runtime JSON Schema evaluator compiles a schema into plans and evaluates them without allocation, and what to expect when publishing an application framework-dependent, ReadyToRun or native AOT."

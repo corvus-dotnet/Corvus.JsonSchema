@@ -89,8 +89,9 @@ public readonly partial struct CspellSchema
         /// <summary>
         /// Gets the default instance.
         /// </summary>
+        #pragma warning disable CS0618 // Type or member is obsolete
         public static ReporterSettingsArray DefaultInstance { get; } = ReporterSettingsArray.ParseValue("[\n        \"default\"\n      ]"u8);
-
+        #pragma warning restore CS0618
         /// <summary>
         /// Gets the rank of the array.
         /// </summary>

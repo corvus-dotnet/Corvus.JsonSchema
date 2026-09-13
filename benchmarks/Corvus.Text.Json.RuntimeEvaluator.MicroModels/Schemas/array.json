@@ -1,0 +1,1 @@
+{"type": "array", "items": {"type": "integer", "minimum": 0, "maximum": 1000}, "minItems": 1, "uniqueItems": true}

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "allOf": [
+    {"properties": {"id": {"type": "integer"}, "name": {"type": "string"}}},
+    {"properties": {"email": {"type": "string"}, "tags": {"type": "array"}}},
+    {"if": {"required": ["active"]}, "then": {"properties": {"active": {"type": "boolean"}, "score": {"type": "number"}}}}
+  ],
+  "properties": {"address": {"type": "object"}},
+  "unevaluatedProperties": false
+}

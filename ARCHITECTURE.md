@@ -43,8 +43,9 @@ The schema analysis and code emission layer:
 - **Vocabularies** — keyword groups per draft (4, 6, 7, 2019-09, 2020-12)
 - **TypeDeclaration** — the central data structure representing a resolved JSON Schema as a type
 - **Type reduction** — collapses trivial subschemas into their parents for leaner generated code
-- **Validation handlers** — emit C# validation code from keyword constraints
-- **Standalone evaluator generator** — emits a single static evaluator class
+- **Schema evaluation program** — emits, once per compilation, the schema documents and entry points that
+  generated types and standalone evaluators validate through (`RuntimeProgramGenerator`); the
+  evaluation logic itself is the runtime evaluator
 
 ### Source generator (`Corvus.Text.Json.SourceGenerator`)
 
@@ -59,9 +60,19 @@ The `corvusjson` command-line tool generates C# from JSON Schema files. Used for
 
 > The legacy `generatejsonschematypes` command (package: `Corvus.Json.CodeGenerator`) still works as a shim but defaults to the V4 engine.
 
-### Validator (`Corvus.Json.Validator`)
+### Runtime evaluator (`Corvus.Text.Json.RuntimeEvaluator` namespace, in `Corvus.Text.Json`)
 
-A standalone schema validation tool that uses the standalone evaluator for command-line JSON validation.
+Compiles a schema document into an in-memory node graph at runtime (no code generation, no Roslyn) and
+evaluates any `IJsonElement<T>` against it: zero-allocation flag validation, or full results and annotations
+through `JsonSchemaResultsCollector`. Supports Draft 4 to 2020-12 including `$dynamicRef`/`$recursiveRef`, and
+evaluation rooted at any subschema. It is the engine behind `Corvus.Text.Json.Validator`, the CLI's
+`validate` command, and the validation of every generated type.
+
+### Validator (`Corvus.Text.Json.Validator`)
+
+A thin `JsonSchema` facade over the runtime evaluator: loads schemas from text, streams, files or URIs
+(with file, HTTP, additional-file and in-memory document resolution), caches compiled schemas by canonical
+URI, and validates strings, bytes, streams, sequences or parsed elements with optional results collection.
 
 ## The IJsonElement&lt;T&gt; CRTP pattern
 
@@ -173,8 +184,9 @@ finally { if (rentedArray != null) ArrayPool<byte>.Shared.Return(rentedArray); }
 | Topic | Document |
 |-------|----------|
 | Code generation patterns | [CodeGenerationPatternDiscovery.md](docs/CodeGenerationPatternDiscovery.md) |
-| Standalone evaluator | [StandaloneEvaluatorInternals.md](docs/StandaloneEvaluatorInternals.md) |
-| Validation handlers | [ValidationHandlerGuide.md](docs/ValidationHandlerGuide.md) |
+| Schema evaluation program (generated validation) | [StandaloneEvaluatorInternals.md](docs/StandaloneEvaluatorInternals.md) |
+| Runtime evaluator (no codegen) | [RuntimeEvaluator.md](docs/RuntimeEvaluator.md), [RuntimeEvaluatorResults.md](docs/RuntimeEvaluatorResults.md) |
+| Keyword evaluation (where handlers used to be) | [ValidationHandlerGuide.md](docs/ValidationHandlerGuide.md) |
 | Annotation system | [AnnotationSystem.md](docs/AnnotationSystem.md) |
 | Adding keywords | [AddingKeywords.md](docs/AddingKeywords.md) |
 | Numeric types | [NumericTypes.md](docs/NumericTypes.md) |

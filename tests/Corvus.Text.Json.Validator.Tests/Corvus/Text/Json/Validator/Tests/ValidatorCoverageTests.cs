@@ -4,6 +4,7 @@
 
 using System.Buffers;
 using System.Text;
+using Corvus.Text.Json.RuntimeEvaluator;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Validator.Tests;
@@ -20,7 +21,7 @@ public class ValidatorCoverageTests
     private const string FalseSchemaUri = "https://example.com/test/false-coverage";
 
     // -- Boolean true schema: all Validate overloads --
-    // Covers ValidatorPipeline.AlwaysTruePipeline lines 82, 84, 86, 88, 90
+    // Every Validate overload against a boolean true root.
 
     [TestMethod]
     public void BooleanTrue_Validate_ReadOnlyMemoryByte_ReturnsTrue()
@@ -62,7 +63,7 @@ public class ValidatorCoverageTests
     }
 
     // -- Boolean false schema: all Validate overloads --
-    // Covers ValidatorPipeline.AlwaysFalsePipeline lines 99, 101, 103, 105, 107
+    // Every Validate overload against a boolean false root.
 
     [TestMethod]
     public void BooleanFalse_Validate_ReadOnlyMemoryByte_ReturnsFalse()
@@ -103,11 +104,10 @@ public class ValidatorCoverageTests
         Assert.IsFalse(schema.Validate(element));
     }
 
-    // -- DynamicTypePipeline.Validate(in JsonElement) --
-    // Covers ValidatorPipeline.DynamicTypePipeline lines 143-146
+    // -- Validate(in JsonElement) --
 
     [TestMethod]
-    public void DynamicType_Validate_JsonElement_Valid()
+    public void Validate_JsonElement_Valid()
     {
         var schema = JsonSchema.FromText(
             """
@@ -125,7 +125,7 @@ public class ValidatorCoverageTests
     }
 
     [TestMethod]
-    public void DynamicType_Validate_JsonElement_Invalid()
+    public void Validate_JsonElement_Invalid()
     {
         var schema = JsonSchema.FromText(
             """
@@ -143,7 +143,6 @@ public class ValidatorCoverageTests
     }
 
     // -- FromStream cache paths --
-    // Covers JsonSchema.cs lines 97-105
 
     [TestMethod]
     public void FromStream_SecondCall_ReturnsCached()
@@ -189,7 +188,6 @@ public class ValidatorCoverageTests
     [TestMethod]
     public void FromStream_WithoutCanonicalUri_NoSchemaId_Throws()
     {
-        // Covers JsonSchema.cs lines 91-92
         string schemaWithoutId = """{ "type": "string" }""";
         using MemoryStream stream = new(Encoding.UTF8.GetBytes(schemaWithoutId));
 
@@ -197,13 +195,7 @@ public class ValidatorCoverageTests
             JsonSchema.FromStream(stream));
     }
 
-    // -- DynamicJsonType.FromElement null guard --
-    // Covers DynamicJsonType.cs lines 125-129 — this is defensive code
-    // that only triggers if a generated type's From<T> method returns null.
-    // We cannot trigger this through normal usage.
-
     // -- Round 2: FromUri and From with AdditionalDocumentResolver --
-    // Covers JsonSchema.cs lines 153-169 (FromUri), 179-181 (From), 350-352 (AdditionalDocumentResolver)
 
     [TestMethod]
     public void FromUri_WithAdditionalDocumentResolver_ValidatesCorrectly()
@@ -217,8 +209,7 @@ public class ValidatorCoverageTests
             }
             """;
 
-        var resolver = new Corvus.Json.PrepopulatedDocumentResolver();
-        resolver.AddDocument(schemaUri, System.Text.Json.JsonDocument.Parse(schemaText));
+        JsonSchemaDocumentResolver resolver = Prepopulated(schemaUri, schemaText);
 
         var options = new JsonSchema.Options(
             allowFileSystemAndHttpResolution: false,
@@ -241,8 +232,7 @@ public class ValidatorCoverageTests
             }
             """;
 
-        var resolver = new Corvus.Json.PrepopulatedDocumentResolver();
-        resolver.AddDocument(schemaUri, System.Text.Json.JsonDocument.Parse(schemaText));
+        JsonSchemaDocumentResolver resolver = Prepopulated(schemaUri, schemaText);
 
         var options = new JsonSchema.Options(
             allowFileSystemAndHttpResolution: false,
@@ -252,7 +242,7 @@ public class ValidatorCoverageTests
         var schema1 = JsonSchema.FromUri(schemaUri, options, refreshCache: true);
         Assert.IsTrue(schema1.Validate("\"hello\""));
 
-        // Second call should hit cache (L158-160)
+        // Second call should hit the cache
         var schema2 = JsonSchema.FromUri(schemaUri, options);
         Assert.IsTrue(schema2.Validate("\"hello\""));
     }
@@ -277,8 +267,7 @@ public class ValidatorCoverageTests
             }
             """;
 
-        var resolver1 = new Corvus.Json.PrepopulatedDocumentResolver();
-        resolver1.AddDocument(schemaUri, System.Text.Json.JsonDocument.Parse(stringSchema));
+        JsonSchemaDocumentResolver resolver1 = Prepopulated(schemaUri, stringSchema);
         var options1 = new JsonSchema.Options(
             allowFileSystemAndHttpResolution: false,
             additionalDocumentResolver: resolver1);
@@ -287,9 +276,8 @@ public class ValidatorCoverageTests
         var schema1 = JsonSchema.FromUri(schemaUri, options1, refreshCache: true);
         Assert.IsTrue(schema1.Validate("\"hello\""));
 
-        // Refresh with integer schema (L163-166)
-        var resolver2 = new Corvus.Json.PrepopulatedDocumentResolver();
-        resolver2.AddDocument(schemaUri, System.Text.Json.JsonDocument.Parse(intSchema));
+        // Refresh with the integer schema
+        JsonSchemaDocumentResolver resolver2 = Prepopulated(schemaUri, intSchema);
         var options2 = new JsonSchema.Options(
             allowFileSystemAndHttpResolution: false,
             additionalDocumentResolver: resolver2);
@@ -302,7 +290,6 @@ public class ValidatorCoverageTests
     [TestMethod]
     public void From_DelegatesToFromUri()
     {
-        // Covers line 179-181 (From delegates to FromUri)
         const string schemaUri = "https://example.com/test/from-delegate";
         string schemaText = """
             {
@@ -312,8 +299,7 @@ public class ValidatorCoverageTests
             }
             """;
 
-        var resolver = new Corvus.Json.PrepopulatedDocumentResolver();
-        resolver.AddDocument(schemaUri, System.Text.Json.JsonDocument.Parse(schemaText));
+        JsonSchemaDocumentResolver resolver = Prepopulated(schemaUri, schemaText);
 
         var options = new JsonSchema.Options(
             allowFileSystemAndHttpResolution: false,
@@ -322,5 +308,21 @@ public class ValidatorCoverageTests
         var schema = JsonSchema.From(schemaUri, options, refreshCache: true);
         Assert.IsTrue(schema.Validate("42"));
         Assert.IsFalse(schema.Validate("\"hello\""));
+    }
+
+    private static JsonSchemaDocumentResolver Prepopulated(string uri, string schemaText)
+    {
+        byte[] utf8 = Encoding.UTF8.GetBytes(schemaText);
+        return (string requested, out ReadOnlyMemory<byte> utf8Json) =>
+        {
+            if (requested == uri)
+            {
+                utf8Json = utf8;
+                return true;
+            }
+
+            utf8Json = default;
+            return false;
+        };
     }
 }

@@ -77,8 +77,9 @@ public readonly partial struct DenoSchema
         /// <summary>
         /// Gets the default instance.
         /// </summary>
+        #pragma warning disable CS0618 // Type or member is obsolete
         public static ScopesEntity DefaultInstance { get; } = ScopesEntity.ParseValue("{}"u8);
-
+        #pragma warning restore CS0618
         /// <summary>
         /// Gets the value of the property with the given name.
         /// </summary>

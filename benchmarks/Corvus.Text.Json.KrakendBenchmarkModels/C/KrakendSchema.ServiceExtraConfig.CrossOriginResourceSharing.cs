@@ -84,8 +84,9 @@ public readonly partial struct KrakendSchema
             /// <summary>
             /// Gets the default instance.
             /// </summary>
+            #pragma warning disable CS0618 // Type or member is obsolete
             public static CrossOriginResourceSharing DefaultInstance { get; } = CrossOriginResourceSharing.ParseValue("{\n            \"allow_methods\": [ \"POST\", \"GET\" ],\n            \"allow_origins\": [ \"http://foobar.com\" ],\n            \"max_age\": \"12h\"\n          }"u8);
-
+            #pragma warning restore CS0618
             /// <summary>
             /// Gets the value of the property with the given name.
             /// </summary>

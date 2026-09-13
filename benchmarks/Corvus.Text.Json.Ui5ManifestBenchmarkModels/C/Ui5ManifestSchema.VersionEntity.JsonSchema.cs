@@ -1151,81 +1151,703 @@ public readonly partial struct Ui5ManifestSchema
             public static ReadOnlySpan<byte> Value1580Utf8 => Constants.Enum58;
         }
 
-        public static partial class JsonSchema
+        /// <summary>
+        /// A native enum for the well-known values of this type.
+        /// </summary>
+        /// <remarks>
+        /// Member ordinals follow the schema declaration order. Inserting or reordering values
+        /// in the schema renumbers the ordinals, so do not persist their integer values.
+        /// </remarks>
+        public enum KnownValues
         {
-            private static EnumStringSet BuildEnumStringSet()
+            /// <summary>
+            /// Corresponds to the JSON string "1.1.0".
+            /// </summary>
+            Value110 = 0,
+            /// <summary>
+            /// Corresponds to the JSON string "1.2.0".
+            /// </summary>
+            Value120 = 1,
+            /// <summary>
+            /// Corresponds to the JSON string "1.3.0".
+            /// </summary>
+            Value130 = 2,
+            /// <summary>
+            /// Corresponds to the JSON string "1.4.0".
+            /// </summary>
+            Value140 = 3,
+            /// <summary>
+            /// Corresponds to the JSON string "1.5.0".
+            /// </summary>
+            Value150 = 4,
+            /// <summary>
+            /// Corresponds to the JSON string "1.6.0".
+            /// </summary>
+            Value160 = 5,
+            /// <summary>
+            /// Corresponds to the JSON string "1.7.0".
+            /// </summary>
+            Value170 = 6,
+            /// <summary>
+            /// Corresponds to the JSON string "1.8.0".
+            /// </summary>
+            Value180 = 7,
+            /// <summary>
+            /// Corresponds to the JSON string "1.9.0".
+            /// </summary>
+            Value190 = 8,
+            /// <summary>
+            /// Corresponds to the JSON string "1.10.0".
+            /// </summary>
+            Value1100 = 9,
+            /// <summary>
+            /// Corresponds to the JSON string "1.11.0".
+            /// </summary>
+            Value1110 = 10,
+            /// <summary>
+            /// Corresponds to the JSON string "1.12.0".
+            /// </summary>
+            Value1120 = 11,
+            /// <summary>
+            /// Corresponds to the JSON string "1.13.0".
+            /// </summary>
+            Value1130 = 12,
+            /// <summary>
+            /// Corresponds to the JSON string "1.14.0".
+            /// </summary>
+            Value1140 = 13,
+            /// <summary>
+            /// Corresponds to the JSON string "1.15.0".
+            /// </summary>
+            Value1150 = 14,
+            /// <summary>
+            /// Corresponds to the JSON string "1.16.0".
+            /// </summary>
+            Value1160 = 15,
+            /// <summary>
+            /// Corresponds to the JSON string "1.17.0".
+            /// </summary>
+            Value1170 = 16,
+            /// <summary>
+            /// Corresponds to the JSON string "1.18.0".
+            /// </summary>
+            Value1180 = 17,
+            /// <summary>
+            /// Corresponds to the JSON string "1.19.0".
+            /// </summary>
+            Value1190 = 18,
+            /// <summary>
+            /// Corresponds to the JSON string "1.20.0".
+            /// </summary>
+            Value1200 = 19,
+            /// <summary>
+            /// Corresponds to the JSON string "1.21.0".
+            /// </summary>
+            Value1210 = 20,
+            /// <summary>
+            /// Corresponds to the JSON string "1.22.0".
+            /// </summary>
+            Value1220 = 21,
+            /// <summary>
+            /// Corresponds to the JSON string "1.23.0".
+            /// </summary>
+            Value1230 = 22,
+            /// <summary>
+            /// Corresponds to the JSON string "1.24.0".
+            /// </summary>
+            Value1240 = 23,
+            /// <summary>
+            /// Corresponds to the JSON string "1.25.0".
+            /// </summary>
+            Value1250 = 24,
+            /// <summary>
+            /// Corresponds to the JSON string "1.26.0".
+            /// </summary>
+            Value1260 = 25,
+            /// <summary>
+            /// Corresponds to the JSON string "1.27.0".
+            /// </summary>
+            Value1270 = 26,
+            /// <summary>
+            /// Corresponds to the JSON string "1.28.0".
+            /// </summary>
+            Value1280 = 27,
+            /// <summary>
+            /// Corresponds to the JSON string "1.29.0".
+            /// </summary>
+            Value1290 = 28,
+            /// <summary>
+            /// Corresponds to the JSON string "1.30.0".
+            /// </summary>
+            Value1300 = 29,
+            /// <summary>
+            /// Corresponds to the JSON string "1.31.0".
+            /// </summary>
+            Value1310 = 30,
+            /// <summary>
+            /// Corresponds to the JSON string "1.32.0".
+            /// </summary>
+            Value1320 = 31,
+            /// <summary>
+            /// Corresponds to the JSON string "1.33.0".
+            /// </summary>
+            Value1330 = 32,
+            /// <summary>
+            /// Corresponds to the JSON string "1.34.0".
+            /// </summary>
+            Value1340 = 33,
+            /// <summary>
+            /// Corresponds to the JSON string "1.35.0".
+            /// </summary>
+            Value1350 = 34,
+            /// <summary>
+            /// Corresponds to the JSON string "1.36.0".
+            /// </summary>
+            Value1360 = 35,
+            /// <summary>
+            /// Corresponds to the JSON string "1.37.0".
+            /// </summary>
+            Value1370 = 36,
+            /// <summary>
+            /// Corresponds to the JSON string "1.38.0".
+            /// </summary>
+            Value1380 = 37,
+            /// <summary>
+            /// Corresponds to the JSON string "1.39.0".
+            /// </summary>
+            Value1390 = 38,
+            /// <summary>
+            /// Corresponds to the JSON string "1.40.0".
+            /// </summary>
+            Value1400 = 39,
+            /// <summary>
+            /// Corresponds to the JSON string "1.41.0".
+            /// </summary>
+            Value1410 = 40,
+            /// <summary>
+            /// Corresponds to the JSON string "1.42.0".
+            /// </summary>
+            Value1420 = 41,
+            /// <summary>
+            /// Corresponds to the JSON string "1.43.0".
+            /// </summary>
+            Value1430 = 42,
+            /// <summary>
+            /// Corresponds to the JSON string "1.44.0".
+            /// </summary>
+            Value1440 = 43,
+            /// <summary>
+            /// Corresponds to the JSON string "1.45.0".
+            /// </summary>
+            Value1450 = 44,
+            /// <summary>
+            /// Corresponds to the JSON string "1.46.0".
+            /// </summary>
+            Value1460 = 45,
+            /// <summary>
+            /// Corresponds to the JSON string "1.47.0".
+            /// </summary>
+            Value1470 = 46,
+            /// <summary>
+            /// Corresponds to the JSON string "1.48.0".
+            /// </summary>
+            Value1480 = 47,
+            /// <summary>
+            /// Corresponds to the JSON string "1.49.0".
+            /// </summary>
+            Value1490 = 48,
+            /// <summary>
+            /// Corresponds to the JSON string "1.50.0".
+            /// </summary>
+            Value1500 = 49,
+            /// <summary>
+            /// Corresponds to the JSON string "1.51.0".
+            /// </summary>
+            Value1510 = 50,
+            /// <summary>
+            /// Corresponds to the JSON string "1.52.0".
+            /// </summary>
+            Value1520 = 51,
+            /// <summary>
+            /// Corresponds to the JSON string "1.53.0".
+            /// </summary>
+            Value1530 = 52,
+            /// <summary>
+            /// Corresponds to the JSON string "1.54.0".
+            /// </summary>
+            Value1540 = 53,
+            /// <summary>
+            /// Corresponds to the JSON string "1.55.0".
+            /// </summary>
+            Value1550 = 54,
+            /// <summary>
+            /// Corresponds to the JSON string "1.56.0".
+            /// </summary>
+            Value1560 = 55,
+            /// <summary>
+            /// Corresponds to the JSON string "1.57.0".
+            /// </summary>
+            Value1570 = 56,
+            /// <summary>
+            /// Corresponds to the JSON string "1.58.0".
+            /// </summary>
+            Value1580 = 57,
+        }
+
+        /// <summary>
+        /// Converts a <see cref="KnownValues"/> to an instance of this type.
+        /// </summary>
+        /// <param name="value">The well-known value from which to convert.</param>
+        /// <exception cref="InvalidOperationException">The value was not a defined member of the <see cref="KnownValues"/> enumeration.</exception>
+        public static implicit operator VersionEntity(KnownValues value)
+        {
+            return value switch
             {
-                return new EnumStringSet([
-                    static () => "1.1.0"u8,
-                    static () => "1.2.0"u8,
-                    static () => "1.3.0"u8,
-                    static () => "1.4.0"u8,
-                    static () => "1.5.0"u8,
-                    static () => "1.6.0"u8,
-                    static () => "1.7.0"u8,
-                    static () => "1.8.0"u8,
-                    static () => "1.9.0"u8,
-                    static () => "1.10.0"u8,
-                    static () => "1.11.0"u8,
-                    static () => "1.12.0"u8,
-                    static () => "1.13.0"u8,
-                    static () => "1.14.0"u8,
-                    static () => "1.15.0"u8,
-                    static () => "1.16.0"u8,
-                    static () => "1.17.0"u8,
-                    static () => "1.18.0"u8,
-                    static () => "1.19.0"u8,
-                    static () => "1.20.0"u8,
-                    static () => "1.21.0"u8,
-                    static () => "1.22.0"u8,
-                    static () => "1.23.0"u8,
-                    static () => "1.24.0"u8,
-                    static () => "1.25.0"u8,
-                    static () => "1.26.0"u8,
-                    static () => "1.27.0"u8,
-                    static () => "1.28.0"u8,
-                    static () => "1.29.0"u8,
-                    static () => "1.30.0"u8,
-                    static () => "1.31.0"u8,
-                    static () => "1.32.0"u8,
-                    static () => "1.33.0"u8,
-                    static () => "1.34.0"u8,
-                    static () => "1.35.0"u8,
-                    static () => "1.36.0"u8,
-                    static () => "1.37.0"u8,
-                    static () => "1.38.0"u8,
-                    static () => "1.39.0"u8,
-                    static () => "1.40.0"u8,
-                    static () => "1.41.0"u8,
-                    static () => "1.42.0"u8,
-                    static () => "1.43.0"u8,
-                    static () => "1.44.0"u8,
-                    static () => "1.45.0"u8,
-                    static () => "1.46.0"u8,
-                    static () => "1.47.0"u8,
-                    static () => "1.48.0"u8,
-                    static () => "1.49.0"u8,
-                    static () => "1.50.0"u8,
-                    static () => "1.51.0"u8,
-                    static () => "1.52.0"u8,
-                    static () => "1.53.0"u8,
-                    static () => "1.54.0"u8,
-                    static () => "1.55.0"u8,
-                    static () => "1.56.0"u8,
-                    static () => "1.57.0"u8,
-                    static () => "1.58.0"u8,
-                ]);
+                KnownValues.Value110 => Constants.EnumJson1,
+                KnownValues.Value120 => Constants.EnumJson2,
+                KnownValues.Value130 => Constants.EnumJson3,
+                KnownValues.Value140 => Constants.EnumJson4,
+                KnownValues.Value150 => Constants.EnumJson5,
+                KnownValues.Value160 => Constants.EnumJson6,
+                KnownValues.Value170 => Constants.EnumJson7,
+                KnownValues.Value180 => Constants.EnumJson8,
+                KnownValues.Value190 => Constants.EnumJson9,
+                KnownValues.Value1100 => Constants.EnumJson10,
+                KnownValues.Value1110 => Constants.EnumJson11,
+                KnownValues.Value1120 => Constants.EnumJson12,
+                KnownValues.Value1130 => Constants.EnumJson13,
+                KnownValues.Value1140 => Constants.EnumJson14,
+                KnownValues.Value1150 => Constants.EnumJson15,
+                KnownValues.Value1160 => Constants.EnumJson16,
+                KnownValues.Value1170 => Constants.EnumJson17,
+                KnownValues.Value1180 => Constants.EnumJson18,
+                KnownValues.Value1190 => Constants.EnumJson19,
+                KnownValues.Value1200 => Constants.EnumJson20,
+                KnownValues.Value1210 => Constants.EnumJson21,
+                KnownValues.Value1220 => Constants.EnumJson22,
+                KnownValues.Value1230 => Constants.EnumJson23,
+                KnownValues.Value1240 => Constants.EnumJson24,
+                KnownValues.Value1250 => Constants.EnumJson25,
+                KnownValues.Value1260 => Constants.EnumJson26,
+                KnownValues.Value1270 => Constants.EnumJson27,
+                KnownValues.Value1280 => Constants.EnumJson28,
+                KnownValues.Value1290 => Constants.EnumJson29,
+                KnownValues.Value1300 => Constants.EnumJson30,
+                KnownValues.Value1310 => Constants.EnumJson31,
+                KnownValues.Value1320 => Constants.EnumJson32,
+                KnownValues.Value1330 => Constants.EnumJson33,
+                KnownValues.Value1340 => Constants.EnumJson34,
+                KnownValues.Value1350 => Constants.EnumJson35,
+                KnownValues.Value1360 => Constants.EnumJson36,
+                KnownValues.Value1370 => Constants.EnumJson37,
+                KnownValues.Value1380 => Constants.EnumJson38,
+                KnownValues.Value1390 => Constants.EnumJson39,
+                KnownValues.Value1400 => Constants.EnumJson40,
+                KnownValues.Value1410 => Constants.EnumJson41,
+                KnownValues.Value1420 => Constants.EnumJson42,
+                KnownValues.Value1430 => Constants.EnumJson43,
+                KnownValues.Value1440 => Constants.EnumJson44,
+                KnownValues.Value1450 => Constants.EnumJson45,
+                KnownValues.Value1460 => Constants.EnumJson46,
+                KnownValues.Value1470 => Constants.EnumJson47,
+                KnownValues.Value1480 => Constants.EnumJson48,
+                KnownValues.Value1490 => Constants.EnumJson49,
+                KnownValues.Value1500 => Constants.EnumJson50,
+                KnownValues.Value1510 => Constants.EnumJson51,
+                KnownValues.Value1520 => Constants.EnumJson52,
+                KnownValues.Value1530 => Constants.EnumJson53,
+                KnownValues.Value1540 => Constants.EnumJson54,
+                KnownValues.Value1550 => Constants.EnumJson55,
+                KnownValues.Value1560 => Constants.EnumJson56,
+                KnownValues.Value1570 => Constants.EnumJson57,
+                KnownValues.Value1580 => Constants.EnumJson58,
+                _ => throw new InvalidOperationException(),
+            };
+        }
+
+        /// <summary>
+        /// Converts the value to its <see cref="KnownValues"/> equivalent.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+        public static implicit operator KnownValues(VersionEntity value)
+        {
+            if (value.TryGetKnownValue(out KnownValues result))
+            {
+                return result;
             }
 
-            private static EnumStringSet EnumStringSet { get; } = BuildEnumStringSet();
+            throw new InvalidOperationException();
+        }
 
+        /// <summary>
+        /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+        /// </summary>
+        /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+        /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+        public bool TryGetKnownValue(out KnownValues result)
+        {
+            if (this.ValueEquals(Constants.Enum1))
+            {
+                result = KnownValues.Value110;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum2))
+            {
+                result = KnownValues.Value120;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum3))
+            {
+                result = KnownValues.Value130;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum4))
+            {
+                result = KnownValues.Value140;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum5))
+            {
+                result = KnownValues.Value150;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum6))
+            {
+                result = KnownValues.Value160;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum7))
+            {
+                result = KnownValues.Value170;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum8))
+            {
+                result = KnownValues.Value180;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum9))
+            {
+                result = KnownValues.Value190;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum10))
+            {
+                result = KnownValues.Value1100;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum11))
+            {
+                result = KnownValues.Value1110;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum12))
+            {
+                result = KnownValues.Value1120;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum13))
+            {
+                result = KnownValues.Value1130;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum14))
+            {
+                result = KnownValues.Value1140;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum15))
+            {
+                result = KnownValues.Value1150;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum16))
+            {
+                result = KnownValues.Value1160;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum17))
+            {
+                result = KnownValues.Value1170;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum18))
+            {
+                result = KnownValues.Value1180;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum19))
+            {
+                result = KnownValues.Value1190;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum20))
+            {
+                result = KnownValues.Value1200;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum21))
+            {
+                result = KnownValues.Value1210;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum22))
+            {
+                result = KnownValues.Value1220;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum23))
+            {
+                result = KnownValues.Value1230;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum24))
+            {
+                result = KnownValues.Value1240;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum25))
+            {
+                result = KnownValues.Value1250;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum26))
+            {
+                result = KnownValues.Value1260;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum27))
+            {
+                result = KnownValues.Value1270;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum28))
+            {
+                result = KnownValues.Value1280;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum29))
+            {
+                result = KnownValues.Value1290;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum30))
+            {
+                result = KnownValues.Value1300;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum31))
+            {
+                result = KnownValues.Value1310;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum32))
+            {
+                result = KnownValues.Value1320;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum33))
+            {
+                result = KnownValues.Value1330;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum34))
+            {
+                result = KnownValues.Value1340;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum35))
+            {
+                result = KnownValues.Value1350;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum36))
+            {
+                result = KnownValues.Value1360;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum37))
+            {
+                result = KnownValues.Value1370;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum38))
+            {
+                result = KnownValues.Value1380;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum39))
+            {
+                result = KnownValues.Value1390;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum40))
+            {
+                result = KnownValues.Value1400;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum41))
+            {
+                result = KnownValues.Value1410;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum42))
+            {
+                result = KnownValues.Value1420;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum43))
+            {
+                result = KnownValues.Value1430;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum44))
+            {
+                result = KnownValues.Value1440;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum45))
+            {
+                result = KnownValues.Value1450;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum46))
+            {
+                result = KnownValues.Value1460;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum47))
+            {
+                result = KnownValues.Value1470;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum48))
+            {
+                result = KnownValues.Value1480;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum49))
+            {
+                result = KnownValues.Value1490;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum50))
+            {
+                result = KnownValues.Value1500;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum51))
+            {
+                result = KnownValues.Value1510;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum52))
+            {
+                result = KnownValues.Value1520;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum53))
+            {
+                result = KnownValues.Value1530;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum54))
+            {
+                result = KnownValues.Value1540;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum55))
+            {
+                result = KnownValues.Value1550;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum56))
+            {
+                result = KnownValues.Value1560;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum57))
+            {
+                result = KnownValues.Value1570;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum58))
+            {
+                result = KnownValues.Value1580;
+                return true;
+            }
+
+            result = default;
+            return false;
+        }
+
+        public static partial class JsonSchema
+        {
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/properties/_version"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/properties/_version"u8, buffer, out written);
 
             /// <summary>
-            /// Gets the schema location from which this type was generated.
+            /// Gets the schema location from which this type was generated, as a JSON Pointer within <see cref="SchemaDocument"/>.
             /// </summary>
             public const string SchemaLocation = "/properties/_version";
 
@@ -1235,215 +1857,34 @@ public readonly partial struct Ui5ManifestSchema
             public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/properties/_version"u8;
 
             /// <summary>
+            /// Gets the schema document from which this type was generated, relative to the base location for generation.
+            /// </summary>
+            /// <remarks>
+            /// <see cref="SchemaLocation"/> is a JSON Pointer within this document, so <c>SchemaDocument + "#" + SchemaLocation</c>
+            /// is a reference to the schema, even for a schema inside a <c>$id</c> sub-resource.
+            /// </remarks>
+            public const string SchemaDocument = "ui5-manifest-schema.json";
+
+            /// <summary>
+            /// Gets the schema document from which this type was generated as a UTF-8 string.
+            /// </summary>
+            public static ReadOnlySpan<byte> SchemaDocumentUtf8 => "ui5-manifest-schema.json"u8;
+
+            private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Corvus.Ui5ManifestBenchmark.Current.CorvusJsonSchemaProgram.Entry(567);
+
+            /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
             /// </summary>
             /// <param name="parentDocument">The parent document.</param>
             /// <param name="parentIndex">The parent index.</param>
-            /// <param name="context">A reference to the validation context, configured with the appropriate values.</param>
-            internal static void Evaluate(
-                IJsonDocument parentDocument,
-                int parentIndex,
-                ref JsonSchemaContext context)
-            {
-                JsonTokenType tokenType = parentDocument.GetJsonTokenType(parentIndex);
-
-                // You're not allowed to ask about non-value-like entities
-                Debug.Assert(parentDocument.GetJsonTokenType(parentIndex) is not
-                    (JsonTokenType.None or
-                    JsonTokenType.EndObject or
-                    JsonTokenType.EndArray));
-
-                if (!JsonSchemaEvaluation.MatchTypeString(tokenType,"type"u8, ref context))
-                {
-                    if (!context.HasCollector)
-                    {
-                        return;
-                    }
-                }
-                else
-                {
-                    using UnescapedUtf8JsonString unescapedUtf8JsonString = parentDocument.GetUtf8JsonString(parentIndex, JsonTokenType.String);
-
-                    if (EnumStringSet.Contains(unescapedUtf8JsonString.Span))
-                    {
-                        goto enumShortCircuitSuccess;
-                    }
-
-                    context.EvaluatedKeyword(false, messageProvider: JsonSchemaEvaluation.DidNotMatchAtLeastOneConstantValue, "enum"u8);
-
-                    if (!context.HasCollector)
-                    {
-                        return;
-                    }
-
-                    goto enumAfterFailure;
-
-enumShortCircuitSuccess:
-                    context.EvaluatedKeyword(true, messageProvider: JsonSchemaEvaluation.MatchedAtLeastOneConstantValue, ", formattedKeyword, "u8);
-
-enumAfterFailure:;
-                }
-            }
-
+            /// <param name="resultsCollector">The (optional) results collector.</param>
+            /// <returns><see langword="true" /> if the instance evaluates against the schema.</returns>
             internal static bool Evaluate(
                 IJsonDocument parentDocument,
                 int parentIndex,
                 IJsonSchemaResultsCollector? resultsCollector = null)
             {
-                JsonSchemaContext context = JsonSchemaContext.BeginContext(
-                parentDocument,
-                parentIndex,
-                usingEvaluatedItems: false,
-                usingEvaluatedProperties: false,
-                resultsCollector: resultsCollector);
-
-                try
-                {
-                    Evaluate(parentDocument, parentIndex, ref context);
-                    context.EndContext();
-                    return context.IsMatch;
-                }
-                finally
-                {
-                    context.Dispose();
-                }
-            }
-
-            /// <summary>
-            /// Push the current context as a child context for schema evaluation.
-            /// </summary>
-            /// <typeparam name="TContext">The type of the context to be passed to the path providers.</typeparam>
-            /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-            /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-            /// <param name="context">The current evaluation context.</param>
-            /// <param name="providerContext">The context to be passed to the path providers.</param>
-            /// <param name="schemaEvaluationPath">The (optional) path to the schema being evaluated in the child context.</param>
-            /// <param name="documentEvaluationPath">The (optional) path in the document being evaluated in the child context.</param>
-            /// <returns>The child context.</returns>
-            internal static JsonSchemaContext PushChildContext<TContext>(
-                IJsonDocument parentDocument,
-                int parentDocumentIndex,
-                ref JsonSchemaContext context,
-                TContext providerContext,
-                JsonSchemaPathProvider<TContext>? schemaEvaluationPath = null,
-                JsonSchemaPathProvider<TContext>? documentEvaluationPath = null)
-            {
-                return
-                    context.PushChildContext(
-                        parentDocument,
-                        parentDocumentIndex,
-                        useEvaluatedItems: false,
-                        useEvaluatedProperties: false,
-                        evaluationPath: schemaEvaluationPath,
-                        documentEvaluationPath: documentEvaluationPath,
-                        providerContext: providerContext);
-            }
-
-            /// <summary>
-            /// Push the current context as a child context for schema evaluation.
-            /// </summary>
-            /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-            /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-            /// <param name="context">The current evaluation context.</param>
-            /// <param name="schemaEvaluationPath">The (optional) path to the schema being evaluated in the child context.</param>
-            /// <param name="documentEvaluationPath">The (optional) path in the document being evaluated in the child context.</param>
-            /// <returns>The child context.</returns>
-            internal static JsonSchemaContext PushChildContext(
-                IJsonDocument parentDocument,
-                int parentDocumentIndex,
-                ref JsonSchemaContext context,
-                JsonSchemaPathProvider? schemaEvaluationPath = null,
-                JsonSchemaPathProvider? documentEvaluationPath = null)
-            {
-                return
-                    context.PushChildContext(
-                        parentDocument,
-                        parentDocumentIndex,
-                        useEvaluatedItems: false,
-                        useEvaluatedProperties: false,
-                        evaluationPath: schemaEvaluationPath,
-                        documentEvaluationPath: documentEvaluationPath);
-            }
-
-            /// <summary>
-            /// Push the current context as a child context for schema evaluation of a property.
-            /// </summary>
-            /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-            /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-            /// <param name="context">The current evaluation context.</param>
-            /// <param name="propertyName">The name of the property </param>
-            /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-            /// <returns>The child context.</returns>
-            internal static JsonSchemaContext PushChildContext(
-                IJsonDocument parentDocument,
-                int parentDocumentIndex,
-                ref JsonSchemaContext context,
-                ReadOnlySpan<byte> propertyName,
-                JsonSchemaPathProvider? evaluationPath = null)
-            {
-                return
-                    context.PushChildContext(
-                        parentDocument,
-                        parentDocumentIndex,
-                        useEvaluatedItems: false,
-                        useEvaluatedProperties: false,
-                        propertyName,
-                        evaluationPath: evaluationPath,
-                        schemaEvaluationPath: SchemaLocationProvider);
-            }
-
-            /// <summary>
-            /// Push the current context as a child context for schema evaluation of a property where the property name is known to be unescaped.
-            /// </summary>
-            /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-            /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-            /// <param name="context">The current evaluation context.</param>
-            /// <param name="propertyName">The name of the property </param>
-            /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-            /// <returns>The child context.</returns>
-            internal static JsonSchemaContext PushChildContextUnescaped(
-                IJsonDocument parentDocument,
-                int parentDocumentIndex,
-                ref JsonSchemaContext context,
-                ReadOnlySpan<byte> propertyName,
-                JsonSchemaPathProvider? evaluationPath = null)
-            {
-                return
-                    context.PushChildContext(
-                        parentDocument,
-                        parentDocumentIndex,
-                        useEvaluatedItems: false,
-                        useEvaluatedProperties: false,
-                        propertyName,
-                        evaluationPath: evaluationPath,
-                        schemaEvaluationPath: SchemaLocationProvider);
-            }
-
-            /// <summary>
-            /// Push the current context as a child context for schema evaluation of an array item.
-            /// </summary>
-            /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-            /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-            /// <param name="context">The current evaluation context.</param>
-            /// <param name="itemIndex">The index of the item in the array.</param>
-            /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-            /// <returns>The child context.</returns>
-            internal static JsonSchemaContext PushChildContext(
-                IJsonDocument parentDocument,
-                int parentDocumentIndex,
-                ref JsonSchemaContext context,
-                int itemIndex,
-                JsonSchemaPathProvider? evaluationPath = null)
-            {
-                return
-                    context.PushChildContext(
-                        parentDocument,
-                        parentDocumentIndex,
-                        useEvaluatedItems: false,
-                        useEvaluatedProperties: false,
-                        itemIndex,
-                        evaluationPath: evaluationPath,
-                        schemaEvaluationPath: SchemaLocationProvider);
+                return Evaluator.Evaluate(parentDocument, parentIndex, resultsCollector);
             }
         }
     }

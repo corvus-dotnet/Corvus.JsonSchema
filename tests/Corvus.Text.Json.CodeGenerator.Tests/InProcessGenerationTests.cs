@@ -697,10 +697,11 @@ public class InProcessGenerationTests
 
         string allCode = string.Join("\n", files.Select(f => f.FileContent));
 
-        // Should contain const string comparison code (anyOf with string consts)
+        // Evaluation-only mode emits the schema program (carrying the schema text, so the const values are present)
+        // and a standalone evaluator over one of its entries; validation itself runs in the runtime evaluator.
         StringAssert.Contains(allCode, "active");
-        // Should contain validation method calls for the anyOf structure
-        StringAssert.Contains(allCode, "AnyOf");
+        StringAssert.Contains(allCode, "CorvusJsonSchemaProgram");
+        StringAssert.Contains(allCode, ".Entry(");
     }
 
     [TestMethod]
@@ -758,10 +759,11 @@ public class InProcessGenerationTests
 
         string allCode = string.Join("\n", files.Select(f => f.FileContent));
 
-        // Verify enum switch is generated (numeric enum with 10 values)
-        StringAssert.Contains(allCode, "switch");
-        // Verify format validation code is generated
-        StringAssert.Contains(allCode, "MatchInt32");
+        // Evaluation-only mode emits the schema program and a standalone evaluator over one of its entries; the
+        // numeric enum and the formats are evaluated by the runtime evaluator from the embedded schema text.
+        StringAssert.Contains(allCode, "CorvusJsonSchemaProgram");
+        StringAssert.Contains(allCode, ".Entry(");
+        StringAssert.Contains(allCode, "int32");
     }
 
     [TestMethod]

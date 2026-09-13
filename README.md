@@ -74,7 +74,7 @@ Most applications need `Corvus.Text.Json` plus either the source generator or th
 | JSON Schema generation | **Corvus.Text.Json.CodeGeneration** | Shared JSON Schema code-generation engine for tools and advanced extension scenarios. |
 | JSON Schema generation | **Corvus.Json.Cli** | CLI tool (`corvusjson`) for ahead-of-time JSON Schema, OpenAPI, AsyncAPI, and query-language code generation. |
 | JSON Schema generation | **Corvus.Json.CodeGenerator** | Immutable-model CLI tool (`generatejsonschematypes`). Delegates to the same engines; defaults to V4. |
-| Dynamic validation | **Corvus.Text.Json.Validator** | Dynamically load, compile, and validate JSON against JSON Schema at runtime using Roslyn. |
+| Dynamic validation | **Corvus.Text.Json.Validator** | Load and validate JSON against JSON Schema at runtime with the runtime evaluator: no code generation, millisecond cold start. |
 | Compatibility | **Corvus.Text.Json.Compatibility** | Bridge helpers for interop with V4 `Corvus.Json.ExtendedTypes` and System.Text.Json during migration. |
 | Migration | **Corvus.Text.Json.Migration.Analyzers** | Roslyn analyzers and code fixes for migrating V4 `Corvus.Json` code to V5 `Corvus.Text.Json`. |
 | OpenAPI | **Corvus.Text.Json.OpenApi** | Runtime abstractions for generated OpenAPI clients and ASP.NET Core server stubs. |
