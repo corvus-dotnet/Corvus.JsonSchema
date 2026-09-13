@@ -5,6 +5,7 @@
 using System.Buffers;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.RuntimeEvaluator.Compilation;
 
@@ -17,6 +18,30 @@ namespace Corvus.Text.Json.RuntimeEvaluator.Evaluation;
 internal static partial class Evaluator
 {
     internal const int InlineBitWords = SchemaNode.InlineBitWords;
+
+    /// <summary>
+    /// <see cref="InlineBitWords"/> words of bitset storage as a local without a stack allocation. A method with a
+    /// loop and a stackalloc cannot be entered mid-way by on-stack replacement, so the JIT compiles it fully
+    /// optimised at once and never instruments it: it misses the dynamic profile that inlines the other loops'
+    /// callees. The general object loop and the in-place anyOf take their bits from here instead; the fused
+    /// object's several buffers are allocated by a wrapper without a loop.
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential, Size = sizeof(ulong) * InlineBitWords)]
+    private struct InlineBits
+    {
+        public ulong First;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static unsafe Span<ulong> Words(ref InlineBits bits)
+    {
+#if NET
+        return MemoryMarshal.CreateSpan(ref bits.First, InlineBitWords);
+#else
+        // The struct is a local of the caller (never movable), so a span over its address is sound for that frame.
+        return new Span<ulong>(Unsafe.AsPointer(ref bits.First), InlineBitWords);
+#endif
+    }
 
     /// <summary>The size of a metadata row; the layout shared by every Corvus document (see ObjectEnumerator/ArrayEnumerator).</summary>
     internal const int RowSize = 12;
@@ -582,6 +607,21 @@ internal static partial class Evaluator
     private static bool EvalFusedObject<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state)
         where TAccess : struct, IDocumentAccess
     {
+        // The buffers are allocated here, in a method without a loop, so that the loops below are compiled through
+        // the tiers with a profile (see InlineBits).
+        Span<ulong> seenBuffer = stackalloc ulong[InlineBitWords];
+        Span<ulong> coverInline = stackalloc ulong[InlineBitWords];
+        Span<bool> failed = stackalloc bool[64];
+        Span<ulong> altFailed = stackalloc ulong[8];
+        Span<int> deferredInline = stackalloc int[3 * 16];
+        Span<bool> holds = stackalloc bool[64];
+        Span<bool> gateOk = stackalloc bool[64];
+        return EvalFusedObjectCore<TAccess>(node, doc, index, ref state, seenBuffer, coverInline, failed, altFailed, deferredInline, holds, gateOk);
+    }
+
+    private static bool EvalFusedObjectCore<TAccess>(SchemaNode node, IJsonDocument doc, int index, ref EvaluationState state, scoped Span<ulong> seenBuffer, scoped Span<ulong> coverInline, scoped Span<bool> failed, scoped Span<ulong> altFailed, scoped Span<int> deferredInline, scoped Span<bool> holds, scoped Span<bool> gateOk)
+        where TAccess : struct, IDocumentAccess
+    {
         FusedObject f = node.Fused!;
         SchemaNode[] nodes = state.Nodes;
         FusedContributor[] contributors = f.Contributors;
@@ -600,22 +640,17 @@ internal static partial class Evaluator
         }
 
         int seenWords = (f.EntryList.Length + 63) >> 6;
-        Span<ulong> seen = stackalloc ulong[InlineBitWords];
-        seen = seen[..seenWords];
+        Span<ulong> seen = seenBuffer[..seenWords];
         seen.Clear();
 
         bool trackCoverage = f.Unevaluated.IsPresent;
         int coverWords = trackCoverage ? (count + 63) >> 6 : 0;
         ulong[]? rentedCover = coverWords > InlineBitWords ? ArrayPool<ulong>.Shared.Rent(coverWords) : null;
-        Span<ulong> coverInline = stackalloc ulong[InlineBitWords];
         Span<ulong> covered = rentedCover is null ? coverInline[..coverWords] : rentedCover.AsSpan(0, coverWords);
         covered.Clear();
 
-        Span<bool> failed = stackalloc bool[64];
         failed.Clear();
-        Span<ulong> altFailed = stackalloc ulong[8];
         altFailed.Clear();
-        Span<int> deferredInline = stackalloc int[3 * 16];
         Span<int> deferred = deferredInline;
         int[]? rentedDeferred = null;
         int deferredCount = 0;
@@ -680,7 +715,6 @@ internal static partial class Evaluator
                 valueIndex = next + RowSize;
             }
 
-            Span<bool> holds = stackalloc bool[64];
             FusedCondition[] conditions = f.Conditions;
             for (int i = 0; i < conditions.Length; i++)
             {
@@ -695,7 +729,6 @@ internal static partial class Evaluator
             }
 
             // A condition under another applies only along the chain that reaches it.
-            Span<bool> gateOk = stackalloc bool[64];
             for (int i = 0; i < conditions.Length; i++)
             {
                 int gate = conditions[i].Gate;
@@ -1422,9 +1455,8 @@ internal static partial class Evaluator
         PatternPropertyEntry[]? patternProperties = node.PatternProperties;
         SchemaNode? additional = node.AdditionalProperties.IsPresent ? state.Nodes[node.AdditionalProperties.FastNode] : null;
         int words = (node.SeenBitCount + 63) >> 6;
-        Span<ulong> seen = stackalloc ulong[InlineBitWords];
-        seen = seen[..words];
-        seen.Clear();
+        InlineBits seenBits = default;
+        Span<ulong> seen = Words(ref seenBits)[..words];
 
         if (properties is not null || patternProperties is not null || additional is not null)
         {
@@ -3817,7 +3849,8 @@ internal static partial class Evaluator
         }
 
         ulong[]? rented = null;
-        Span<ulong> scratch = parentBits.Length <= InlineBitWords ? stackalloc ulong[InlineBitWords] : (rented = ArrayPool<ulong>.Shared.Rent(parentBits.Length));
+        InlineBits inline = default;
+        Span<ulong> scratch = parentBits.Length <= InlineBitWords ? Words(ref inline) : (rented = ArrayPool<ulong>.Shared.Rent(parentBits.Length));
         scratch = scratch[..parentBits.Length];
         try
         {
