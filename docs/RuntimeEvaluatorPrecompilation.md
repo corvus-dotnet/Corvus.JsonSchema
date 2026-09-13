@@ -829,6 +829,36 @@ holds eight GC references), the exact-type checks of the document, and the state
 would need the scope and collector fields moved behind an indirection the general path pays for, which was not
 worth it for another nanosecond.
 
+## Names as words, and three loops without a profile (2026-09-13)
+
+The strict loop's tier-1 code on helm-chart-lock spends about 78 instructions on a type-only property row, 35 of
+them in the name lookup: the byte-position table needs a length-bucket load, a table load, the key with its null
+check and a two-word equality. Most property names are short. The name map now keeps its keys of at most eight
+bytes as zero-padded words grouped by length; a name of that length, with eight bytes of text readable from its
+start (checked once), is read as one word, masked to its length and compared against the keys of that length,
+three at most (a length with more keeps the table: comparing words in turn loses to it, which the first take
+showed on draft-04 and its seven seven-byte keywords). Both object loops take the name's location and length from
+its row through a document-access member and hand the map the text span, so nothing is sliced before the lookup.
+Against the head: aws-cdk 0.88, helm-chart-lock 0.90, importmap 0.92, pulumi 0.94.
+
+The first take also left draft-04 at 1.14, and the JIT's compilation summary said why. Three evaluation methods
+were compiled "Tier-0 switched to FullOpts": a method with a loop and a stackalloc cannot be entered mid-way by
+on-stack replacement, so the JIT compiles it fully optimised at once and never instruments it. The general object
+loop, the fused object and the in-place anyOf had run all along without the profile-driven inlining every other
+loop is tuned by, and any code added to them was compiled by heuristics alone. The object loop and the anyOf now
+take their inline bitset from a fixed-size struct local (a span over it, no stackalloc); the fused object's seven
+buffers are allocated by a wrapper without a loop and passed in. With both changes, against the head: draft-04
+0.94, cspell 0.89, ui5-manifest 0.93, jsconfig 0.96, cmake-presets 0.97, the rest within noise. One reading to
+know about: in a process that runs many corpora, the newly profiled loops take a profile shaped by the corpora
+that ran first (geojson read 1.15 in the shared-process A/B and 1.00 in its own), which is the per-process
+measurement rule again.
+
+The same word comparison serves enum string values: the string-set match takes the value's location and length
+from its row and hands the map the text span, so an enum value of up to eight bytes (`"3.0"`, `"library"`) is one
+masked word against the keys of its length. Against the head: krakend 0.95, jsconfig 0.97, stale and ui5-manifest
+0.98, ui5 0.99. The fixed-size bitset struct's span is `MemoryMarshal.CreateSpan` on .NET and a span over the
+local's address on netstandard 2.0, which lacks it: the first gate caught that.
+
 ## The four-axis table (2026-09-12, evening)
 
 One table, eight implementations by 37 corpora, four measures each: `summary2-2026-09-12.md` in the session notes.
