@@ -974,6 +974,35 @@ native AOT is 1.06 of the JIT at the median, from 1.09, the loops that now take 
 too. Against Blaze: fastest on 31 of 37, geometric mean 0.72 (from 0.75); the structural losses are
 helm-chart-lock 2.3, yamllint 1.9, ui5 1.6 (from 1.75), importmap 1.4, with ui5-manifest and stale at parity.
 
+## The parse step (2026-09-13)
+
+The warm figures on both sides time evaluation of an already parsed instance; parsing is only inside the cold
+figures. Measured on its own (`harness parse <loops> <corpus...>`: each instance parsed and disposed, the sum over
+instances of the per-instance best of three batches; Blaze by difference, the CLI validating ten copies of the
+corpus against the empty schema minus one instance, per instance, which also carries the CLI's per-instance
+bookkeeping, about 2 µs), nanoseconds per instance:
+
+| corpus | bytes/instance | Blaze parse | Corvus parse | Blaze warm eval | Corvus warm eval |
+|---|---:|---:|---:|---:|---:|
+| jsconfig | 177 | 2,040 | 224 | 195 | 155 |
+| helm-chart-lock | 342 | 2,830 | 221 | 22 | 52 |
+| yamllint | 352 | 4,070 | 862 | 7 | 13 |
+| importmap | 630 | 3,110 | 253 | 17 | 24 |
+| cspell | 820 | 6,120 | 710 | 268 | 190 |
+| ui5 | 487 | 4,250 | 442 | 262 | 390 |
+| cmake-presets | 2,721 | 15,500 | 1,760 | 1,970 | 1,700 |
+| draft-04 | 12,658 | 58,600 | 7,150 | 5,900 | 3,300 |
+| geojson | 52,434 | 360,000 | 99,200 | 13,700 | 10,600 |
+| openapi | 166,132 | 636,000 | 96,900 | 58,500 | 28,600 |
+
+Per kilobyte Corvus parses at 0.4 to 1.3 µs (yamllint 2.5, its strings carry escapes) and Blaze at 4 to 12 (the
+small end inflated by the CLI's bookkeeping; the large instances, where parsing dominates, put it at 4 to 7),
+which is the price of the document model Blaze validates against: a tree of nodes with hashed property maps,
+built at parse time. That is where the parse-time options this project rejected would have taken us. For a
+workload that parses each document once and validates it once, the four warm losses reverse: helm-chart-lock's
+2.3x becomes 2,850 against 270 ns per document, yamllint's 1.9x 4,080 against 875, and the large corpora are 3
+to 6 times faster end to end.
+
 ## Against Blaze (2026-09-11)
 
 Blaze is run through the Sourcemeta `jsonschema` CLI release binary (`benchmarks/.../tools/blaze-compare.py`, see
