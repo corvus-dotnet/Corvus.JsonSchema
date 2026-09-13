@@ -1,13 +1,20 @@
 <Project Sdk="MSTest.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <!-- net481 as well as net10.0, like the other test projects: the pipeline's net481 test phase runs every test
+         project's net481 build and fails on one that has none. -->
+    <TargetFrameworks>net10.0;net481</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>preview</LangVersion>
     <NoWarn>$(NoWarn);CS1591;MSTEST0014;MSTEST0032;MSTEST0003</NoWarn>
+    <NoWarn Condition="'$(TargetFramework)' == 'net481'">$(NoWarn);CA1510;CA1511;CA1512;CA1513;CA1845;CA1846;CA1847</NoWarn>
     <IsPackable>false</IsPackable>
     <JsonSchemaTestSuiteRoot>$(MSBuildThisFileDirectory)..\..\JSON-Schema-Test-Suite\</JsonSchemaTestSuiteRoot>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <PackageReference Include="System.Memory" />
   </ItemGroup>
   <ItemGroup>
     <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">

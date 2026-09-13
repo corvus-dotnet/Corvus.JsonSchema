@@ -39,7 +39,7 @@ public class ResultPathTests
             """
             fail|/$defs/fooId|||The value was expected to match the subschema.
             fail|/$defs/fooId/type|/type||The value was expected to be of type 'integer'
-            """.ReplaceLineEndings("\n"),
+            """.Replace("\r\n", "\n"),
             Dump(evaluator, "\"notAnInteger\"", JsonSchemaResultsLevel.Detailed));
     }
 
@@ -52,7 +52,7 @@ public class ResultPathTests
             fail|/$defs/fooId|/properties/fooId/$ref|/fooId|The value was expected to match the subschema.
             fail|/$defs/fooId/type|/properties/fooId/$ref/type|/fooId|The value was expected to be of type 'integer'
             fail|/$defs/holder|||The value was expected to match the subschema.
-            """.ReplaceLineEndings("\n"),
+            """.Replace("\r\n", "\n"),
             Dump(evaluator, """{ "fooId": "notAnInteger" }""", JsonSchemaResultsLevel.Detailed));
     }
 
@@ -64,7 +64,7 @@ public class ResultPathTests
             """
             fail|/$defs/fooId|||The value was expected to match the subschema.
             fail|/$defs/fooId/type|/type||The value was expected to be of type 'integer'
-            """.ReplaceLineEndings("\n"),
+            """.Replace("\r\n", "\n"),
             Dump(evaluator, "\"notAnInteger\"", JsonSchemaResultsLevel.Detailed));
     }
 
