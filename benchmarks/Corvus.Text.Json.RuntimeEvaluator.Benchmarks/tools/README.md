@@ -35,3 +35,9 @@ dotnet-pgo, which is not shipped: build it from the runtime repository (`src/cor
 `./build.sh -restore -subset clr.tools /p:NuGetAudit=false`) and point `DOTNET_PGO` at its `dotnet-pgo.dll`. When the
 profile is present, `publish` passes it to the native AOT builds through the runner's `ColdMibc` property; native AOT
 without it runs 10 to 20% behind the JIT's tier-1 code, and the profile recovers most of that.
+
+The profile the package ships (`src/Corvus.Text.Json/profiles/Corvus.Text.Json.mibc`, handed to ILC by the package's
+`buildTransitive` targets) is `corvus.mibc` from that step; docs/ReleaseProcess.md has the release routine. To check a
+packed library rather than the project, publish the runner with `-p:ColdPackage=<version>` and a
+`-p:RestoreConfigFile=` naming a feed that has it: the runner then carries the package's profile through the package's
+own targets (`-p:CorvusTextJsonUseProfile=false` for the control), and `warm 200 <corpus>` on both shows the difference.

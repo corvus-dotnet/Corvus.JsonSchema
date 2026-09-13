@@ -199,3 +199,47 @@ replaced; the Validator is now a facade over this evaluator (see `docs/Validator
 
 Program images (`JsonSchemaEvaluator.ToProgramImage`/`FromProgramImage`) and the Stage 2 design and measurements are in
 [RuntimeEvaluatorPrecompilation.md](RuntimeEvaluatorPrecompilation.md).
+
+## Publishing an application
+
+Nothing is required of a consumer. The paragraphs below say what each publish mode gives and where the choices are,
+measured over the 37 Sourcemeta corpora (medians; the full table is in
+[RuntimeEvaluatorPrecompilation.md](RuntimeEvaluatorPrecompilation.md), "The four-axis table").
+
+**Framework-dependent (the default).** Cold start of a process that compiles a schema and validates one document
+is about 150 ms, most of it the JIT compiling the schema compiler; steady state is the fastest of the three modes
+(76 µs per corpus pass at the median, ahead of Blaze on 31 of 37 corpora). Loading a program image instead of
+compiling (`JsonSchemaEvaluator.FromProgramImage`) takes cold start to 125 ms; source-generated types, which embed
+their image, to 119 ms.
+
+**Native AOT (`PublishAot`).** Cold start is 4.5 to 5 ms, half of Blaze's, and there is no JIT. Steady state would
+be about 15% behind the JIT's, because the JIT's dynamic profile drives the inlining of the evaluation loops and
+native AOT has none; so the package carries a static profile of the library's evaluation paths
+(`profiles/Corvus.Text.Json.mibc`, recorded from an instrumented run over the corpora) and its
+`buildTransitive/Corvus.Text.Json.targets` hands it to the AOT compiler whenever `PublishAot` is set. With it the
+steady state is within about 10% of the JIT's (90 against 76 µs), ahead of Blaze on 29 of 37; without it, about
+15% behind the JIT. Checked against a packed library: the runner published against the package reads the same as
+the project build with the profile (1.00 at the median over 14 corpora), and with the profile opted out 5% slower
+at the median, up to 15% (krakend, draft-04). The profile
+describes the library's code, not the application's schemas, so it applies to any application. To leave it out set
+`CorvusTextJsonUseProfile` to `false`; to use a profile of your own workload (dotnet-pgo `create-mibc` over an
+instrumented trace) point `CorvusTextJsonProfile` at it.
+
+**ReadyToRun (`PublishReadyToRun`).** Precompiling the library halves cold start (150 to 60 ms) but costs steady
+state on small documents: the runtime re-jits the hot loops from the precompiled code without the profile-driven
+inlining, 1.2 to 1.5x slower on the smallest corpora (yamllint, helm-chart-lock). The partial mode that avoids
+it (precompile the schema compiler only, from a profile of the compile phase) is a global switch of the publish
+(`--partial` to crossgen2 with `PublishReadyToRunPgoFiles`), which would also strip the application's own
+assemblies of everything not in the profile, so the package does not set it. The choice is the application's:
+keep the default when cold start matters more, or exclude the library from precompilation when steady state
+does:
+
+```xml
+<ItemGroup>
+  <PublishReadyToRunExclude Include="Corvus.Text.Json.dll" />
+</ItemGroup>
+```
+
+**Source-generated types** need none of this for their schemas: they embed the program image and validate
+through the evaluator, so the compile-phase question does not arise; the native AOT profile still applies to
+their evaluation.

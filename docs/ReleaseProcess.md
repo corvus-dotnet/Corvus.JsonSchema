@@ -108,6 +108,29 @@ git push origin v5.0.1
 
 The tag push triggers the build workflow, which publishes to NuGet.org.
 
+## The native AOT profile
+
+`src/Corvus.Text.Json/profiles/Corvus.Text.Json.mibc` is the static optimisation profile the package hands to the
+native AOT compiler (see `buildTransitive/Corvus.Text.Json.targets` and docs/RuntimeEvaluator.md, "Publishing an
+application"). It is keyed by method, so a stale profile is harmless (entries for methods that changed are ignored)
+but its benefit fades as the evaluator changes. Regenerate it for a release whenever `Corvus.Text.Json`'s
+`RuntimeEvaluator` or `Document` code has changed since the last one:
+
+1. Build dotnet-pgo once (it is not shipped): clone dotnet/runtime at the release branch matching the SDK, run
+   `./build.sh -restore -subset clr.tools -c Release /p:NuGetAudit=false`, then
+   `./dotnet.sh build src/coreclr/tools/dotnet-pgo/dotnet-pgo.csproj -c Release /p:NuGetAudit=false`.
+2. From the repository root, with `dotnet-trace` installed, the Blaze CLI at `JSONSCHEMA` and `DOTNET_PGO` pointing
+   at the built `dotnet-pgo.dll`:
+   `benchmarks/Corvus.Text.Json.RuntimeEvaluator.Benchmarks/tools/measure.sh profile` (about a minute). It writes
+   `corvus.mibc` (the whole run: compile and evaluation) and `corvus-compile.mibc` under `tools/out`.
+3. Copy `corvus.mibc` over `src/Corvus.Text.Json/profiles/Corvus.Text.Json.mibc` and commit it with the release.
+4. Check it is taken up: pack the library to a local feed (docs/LocalNuGetTesting.md) and publish the cold runner
+   against the package as native AOT,
+   `dotnet publish benchmarks/Corvus.Text.Json.RuntimeEvaluator.ColdRunner -c Release -r linux-x64 -p:ColdAot=true -p:ColdPackage=<version> -p:RestoreConfigFile=<nuget.config with the feed>`;
+   the ILC response file under the runner's `obj/.../native/` must carry one `--mibc:` argument pointing into the
+   package, and `<runner> warm 200 <corpus>` should read within about 10% of the JIT harness's figure for the same
+   corpus (`tools/measure.sh warm` gives both).
+
 ## Pre-release testing
 
 Pre-release packages are published to GitHub Packages on every branch build. To test a pre-release package:
