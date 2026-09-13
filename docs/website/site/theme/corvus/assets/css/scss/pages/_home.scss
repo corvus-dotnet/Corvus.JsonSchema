@@ -38,6 +38,27 @@ body.page-home {
   }
 }
 
+// ---- Simplicity: load a schema, validate an instance ----
+
+.home-simple {
+  padding: var(--space-xl) 0;
+
+  &__example {
+    max-width: 44rem;
+    margin: 0 auto;
+
+    pre {
+      margin: 0;
+    }
+  }
+
+  &__footnote {
+    text-align: center;
+    margin-top: var(--space-sm);
+    font-size: var(--font-size-sm);
+  }
+}
+
 // ---- Code example showcase ----
 
 .home-code {
