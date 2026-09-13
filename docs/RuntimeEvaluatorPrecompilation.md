@@ -976,6 +976,14 @@ helm-chart-lock 2.3, yamllint 1.9, ui5 1.6 (from 1.75), importmap 1.4, with ui5-
 
 ## The parse step (2026-09-13)
 
+The four-axis table now carries a fifth measure, parse and evaluate once: one pass over the corpus parsing and
+evaluating every instance once at steady state, the shape of a service validating each request (`measure.sh warm`
+runs it for every build through the harness's `parseeval`; Blaze's figure is a differential of its CLI, ten copies
+of the corpus minus one instance, less the CLI's per-instance bookkeeping of 1.25 µs measured with trivial
+instances against the empty schema). Medians over the 37 corpora on 2026-09-13: Blaze 2.74 ms per corpus pass,
+Corvus runtime JIT 484 µs, ReadyToRun 505, native AOT 550, generated models 484 and 551; Corvus faster on 37 of
+37 at a geometric mean of 0.18, 5.5 to 6x per document. The rest of this section is the parse step on its own.
+
 The warm figures on both sides time evaluation of an already parsed instance; parsing is only inside the cold
 figures. Measured on its own (`harness parse <loops> <corpus...>`: each instance parsed and disposed, the sum over
 instances of the per-instance best of three batches; Blaze by difference, the CLI validating ten copies of the
@@ -986,7 +994,7 @@ bookkeeping, about 2 µs), nanoseconds per instance:
 |---|---:|---:|---:|---:|---:|
 | jsconfig | 177 | 2,040 | 224 | 195 | 155 |
 | helm-chart-lock | 342 | 2,830 | 221 | 22 | 52 |
-| yamllint | 352 | 4,070 | 862 | 7 | 13 |
+| yamllint | 352 | 4,070 | 357 | 7 | 13 |
 | importmap | 630 | 3,110 | 253 | 17 | 24 |
 | cspell | 820 | 6,120 | 710 | 268 | 190 |
 | ui5 | 487 | 4,250 | 442 | 262 | 390 |
@@ -995,13 +1003,16 @@ bookkeeping, about 2 µs), nanoseconds per instance:
 | geojson | 52,434 | 360,000 | 99,200 | 13,700 | 10,600 |
 | openapi | 166,132 | 636,000 | 96,900 | 58,500 | 28,600 |
 
-Per kilobyte Corvus parses at 0.4 to 1.3 µs (yamllint 2.5, its strings carry escapes) and Blaze at 4 to 12 (the
+Per kilobyte Corvus parses at 0.4 to 1.3 µs and Blaze at 4 to 12 (the
 small end inflated by the CLI's bookkeeping; the large instances, where parsing dominates, put it at 4 to 7),
 which is the price of the document model Blaze validates against: a tree of nodes with hashed property maps,
 built at parse time. That is where the parse-time options this project rejected would have taken us. For a
 workload that parses each document once and validates it once, the four warm losses reverse: helm-chart-lock's
-2.3x becomes 2,850 against 270 ns per document, yamllint's 1.9x 4,080 against 875, and the large corpora are 3
-to 6 times faster end to end.
+2.3x becomes 2,850 against 270 ns per document, yamllint's 1.9x 4,080 against 370, and the large corpora are 3
+to 6 times faster end to end. (A first take of this table had yamllint's parse at 862 ns: the parser is a large
+method that reaches its final tier only after sustained work, and three warm-up passes had left its escapes path
+at tier 0. The parse measurements warm for a second, pause past the tiering delay and warm again, as the
+evaluation ones do.)
 
 ## Against Blaze (2026-09-11)
 

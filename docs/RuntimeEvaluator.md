@@ -202,9 +202,19 @@ Program images (`JsonSchemaEvaluator.ToProgramImage`/`FromProgramImage`) and the
 
 ## Publishing an application
 
-Nothing is required of a consumer. The paragraphs below say what each publish mode gives and where the choices are,
-measured over the 37 Sourcemeta corpora (medians; the full table is in
-[RuntimeEvaluatorPrecompilation.md](RuntimeEvaluatorPrecompilation.md), "The four-axis table").
+Nothing is required of a consumer. The recommendation, from the measurements below: **native AOT for one-shot or
+short-lived processes** (first validation in 4.5 ms, half of Blaze's, no JIT ramp, and within 6% of the JIT per
+document once warm, on the profile the package carries); **framework-dependent, the JIT, for long-running
+processes** (the fastest steady state, because dynamic PGO tunes the evaluation loops to the application's own
+schemas and instances, and every runtime update improves the deployed binary without a rebuild; its 150 ms of
+startup is behind Blaze's after the first million or so documents of a process); and **ReadyToRun with the
+library excluded or partially precompiled** when cold start matters in a process that lives long enough to want
+the JIT's steady state. Parsing included, a document validated once at steady state costs about a fifth of what
+it costs Blaze (the parse-and-evaluate column of the four-axis table), on every corpus, under all three modes.
+
+The paragraphs below say what each publish mode gives and where the choices are, measured over the 37 Sourcemeta
+corpora (medians; the full table is in [RuntimeEvaluatorPrecompilation.md](RuntimeEvaluatorPrecompilation.md),
+"The four-axis table").
 
 **Framework-dependent (the default).** Cold start of a process that compiles a schema and validates one document
 is about 150 ms, most of it the JIT compiling the schema compiler; steady state is the fastest of the three modes
