@@ -8,6 +8,13 @@
     <Nullable>enable</Nullable>
     <PreserveCompilationContext>true</PreserveCompilationContext>
     <PackAsTool>true</PackAsTool>
+    <!-- dotnet publish -r <rid> -p:CliAot=true publishes the tool as native AOT (a global PublishAot would also reach the
+         netstandard code-generation projects it references, which cannot be AOT targets). -->
+    <PublishAot Condition="'$(CliAot)' == 'true'">true</PublishAot>
+    <!-- Spectre.Console.Cli binds command settings by reflection and reads Assembly.Location (IL3000, IL2104): an
+         experiment switch keeps those as warnings and roots the assemblies the binder reflects over. -->
+    <IlcTreatWarningsAsErrors Condition="'$(CliAotRooted)' == 'true'">false</IlcTreatWarningsAsErrors>
+    <TreatWarningsAsErrors Condition="'$(CliAotRooted)' == 'true'">false</TreatWarningsAsErrors>
     <ToolCommandName>corvusjson</ToolCommandName>
     <PackageOutputPath>./nupkg</PackageOutputPath>
     <NoWarn>$(NoWarn);NU1504;CS1591</NoWarn>
@@ -21,6 +28,11 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(CliAotRooted)' == 'true'">
+    <TrimmerRootAssembly Include="Spectre.Console.Cli" />
+    <TrimmerRootAssembly Include="Corvus.Json.Cli.Core" />
+    <TrimmerRootAssembly Include="Corvus.Json.Cli" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Json.Cli.Core\Corvus.Json.Cli.Core.csproj" />

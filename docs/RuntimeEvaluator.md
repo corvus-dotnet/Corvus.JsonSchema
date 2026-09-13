@@ -250,6 +250,13 @@ does:
 </ItemGroup>
 ```
 
+**The Corvus CLI as a native AOT tool** is the one-shot case in practice. Published with `-p:CliAot=true
+-p:CliAotRooted=true` (the second roots the assemblies Spectre.Console.Cli binds by reflection and keeps its trim
+warnings as warnings; none of the ten are in this library), `validateDocument` answers in 10.6 ms for a small
+schema and document against 182 ms framework-dependent, and in 13.1 ms for a 33 KB schema and 97 KB document
+against 214 ms; Blaze's CLI takes 2.3 and 14.2 ms on the same pairs. The binary is 29 MB with everything rooted;
+a validate-only tool would be far smaller.
+
 **Source-generated types** need none of this for their schemas: they embed the program image and validate
 through the evaluator, so the compile-phase question does not arise; the native AOT profile still applies to
 their evaluation.
