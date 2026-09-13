@@ -96,7 +96,91 @@ task PreBuild {
     Write-Host "Checking documentation code sample catalog is up to date"
     exec { & pwsh -File (Join-Path $here "docs\update-code-sample-catalog.ps1") -Check }
 }
-task PostBuild BuildWebSiteLocal
+# The native AOT profile the Corvus.Text.Json package carries (profiles/Corvus.Text.Json.mibc) is recorded from the
+# code being built: on CI in the compile phase, before the package phase packs it; locally on request
+# (BUILDVAR_GenerateAotProfile=true, or ./build.ps1 -Tasks GenerateAotProfile). Linux only: the trace needs the
+# instrumented JIT of a framework-dependent run and dotnet-pgo, which is not published as a tool for the SDK in use
+# (it is a .NET 11 tool on the dotnet-eng feed), so the task installs the .NET 11 runtime beside the build. The
+# result goes to src/Corvus.Text.Json/obj/profiles, which the package prefers to the checked-in file when present.
+$GenerateAotProfile = [Convert]::ToBoolean((property BUILDVAR_GenerateAotProfile ($env:GITHUB_ACTIONS ? $true : $false)))
+$DotnetPgoVersion = "11.0.0-preview.6.26310.106"
+$DotnetPgoFeed = "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-eng/nuget/v3/flat2"
+
+task GenerateAotProfile -If { $GenerateAotProfile -and $IsLinux } {
+    $profileDir = Join-Path $here ".zf/aot-profile"
+    $toolsDir = Join-Path $profileDir "tools"
+    New-Item -ItemType Directory -Path $toolsDir -Force | Out-Null
+
+    $dotnet11 = Join-Path $profileDir "dotnet11"
+    if (-not (Test-Path (Join-Path $dotnet11 "dotnet"))) {
+        Write-Host "Installing the .NET 11 runtime for dotnet-pgo"
+        $installScript = Join-Path $profileDir "dotnet-install.sh"
+        Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.sh" -OutFile $installScript
+        exec { & bash $installScript --channel 11.0 --quality preview --runtime dotnet --install-dir $dotnet11 }
+    }
+
+    $pgoDir = Join-Path $toolsDir "dotnet-pgo/$DotnetPgoVersion"
+    $pgoDll = Join-Path $pgoDir "tools/net11.0/any/dotnet-pgo.dll"
+    if (-not (Test-Path $pgoDll)) {
+        Write-Host "Downloading dotnet-pgo $DotnetPgoVersion"
+        New-Item -ItemType Directory -Path $pgoDir -Force | Out-Null
+        $nupkg = Join-Path $pgoDir "dotnet-pgo.zip"
+        Invoke-WebRequest -Uri "$DotnetPgoFeed/dotnet-pgo/$DotnetPgoVersion/dotnet-pgo.$DotnetPgoVersion.nupkg" -OutFile $nupkg
+        Expand-Archive -Path $nupkg -DestinationPath $pgoDir -Force
+    }
+
+    $trace = Join-Path $toolsDir "dotnet-trace"
+    if (-not (Test-Path $trace)) {
+        exec { & dotnet tool install dotnet-trace --tool-path $toolsDir }
+    }
+
+    Write-Host "Collecting the corpora"
+    $corpusDir = Join-Path $profileDir "sourcemeta"
+    New-Item -ItemType Directory -Path $corpusDir -Force | Out-Null
+    Get-ChildItem (Join-Path $here "benchmarks") -Directory -Filter "Corvus.Text.Json.*BenchmarkModels" | ForEach-Object {
+        Get-ChildItem $_.FullName -File | Where-Object { $_.Name -like "*-instances.jsonl" -or $_.Name -like "*-schema.json" } | Copy-Item -Destination $corpusDir -Force
+    }
+    $corpora = Get-ChildItem $corpusDir -Filter "*-instances.jsonl" | ForEach-Object { $_.Name -replace "-instances\.jsonl$", "" } | Sort-Object
+
+    Write-Host "Publishing the cold runner (framework-dependent)"
+    $runnerDir = Join-Path $profileDir "runner"
+    exec { & dotnet publish (Join-Path $here "benchmarks/Corvus.Text.Json.RuntimeEvaluator.ColdRunner/Corvus.Text.Json.RuntimeEvaluator.ColdRunner.csproj") -c $Configuration -r linux-x64 --self-contained false -o $runnerDir --nologo -v:minimal }
+
+    Write-Host "Tracing the instrumented warm run over $($corpora.Count) corpora"
+    $nettrace = Join-Path $profileDir "profile.nettrace"
+    $env:COLD_ROOT = $corpusDir
+    $env:DOTNET_TieredPGO = "1"
+    $env:DOTNET_TC_QuickJitForLoops = "1"
+    $env:DOTNET_TC_CallCountThreshold = "10000"
+    $env:DOTNET_ReadyToRun = "0"
+    try {
+        exec { & $trace collect --providers "Microsoft-Windows-DotNETRuntime:0x1E000080018:5" -o $nettrace -- dotnet (Join-Path $runnerDir "Corvus.Text.Json.RuntimeEvaluator.ColdRunner.dll") warm 50 @corpora }
+    }
+    finally {
+        Remove-Item Env:\COLD_ROOT, Env:\DOTNET_TieredPGO, Env:\DOTNET_TC_QuickJitForLoops, Env:\DOTNET_TC_CallCountThreshold, Env:\DOTNET_ReadyToRun -ErrorAction SilentlyContinue
+    }
+
+    Write-Host "Writing the profile"
+    $outDir = Join-Path $here "src/Corvus.Text.Json/obj/profiles"
+    New-Item -ItemType Directory -Path $outDir -Force | Out-Null
+    $mibc = Join-Path $outDir "Corvus.Text.Json.mibc"
+    $env:DOTNET_ROOT = $dotnet11
+    try {
+        exec { & (Join-Path $dotnet11 "dotnet") $pgoDll create-mibc --trace $nettrace --output $mibc }
+        $dump = Join-Path $profileDir "profile-dump.txt"
+        exec { & (Join-Path $dotnet11 "dotnet") $pgoDll dump -i $mibc -o $dump | Out-Null }
+    }
+    finally {
+        Remove-Item Env:\DOTNET_ROOT -ErrorAction SilentlyContinue
+    }
+    $methods = (Select-String -Path $dump -Pattern "Corvus\.Text\.Json" | Measure-Object).Count
+    if ((Get-Item $mibc).Length -lt 20000 -or $methods -lt 1000) {
+        throw "The AOT profile looks wrong: $((Get-Item $mibc).Length) bytes, $methods Corvus.Text.Json methods"
+    }
+    Write-Host "Profile written to $mibc ($((Get-Item $mibc).Length) bytes, $methods Corvus.Text.Json methods); the package takes it from there"
+}
+
+task PostBuild GenerateAotProfile, BuildWebSiteLocal
 task PreTest {
     # Turn down logging when running Specs to suppress ReqnRoll Given/When/Then output
     $script:LogLevelBackup = $LogLevel

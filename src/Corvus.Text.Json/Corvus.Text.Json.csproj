@@ -38,9 +38,16 @@
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
-  <ItemGroup Label="Static optimisation profile for native AOT (see buildTransitive/Corvus.Text.Json.targets; regenerated per release, see docs/ReleaseProcess.md)">
+  <!-- The static optimisation profile for native AOT (see buildTransitive/Corvus.Text.Json.targets). The build's
+       GenerateAotProfile task (CI's compile phase, or on request) records it from this code into obj/profiles, which
+       the package takes in preference to the checked-in file; see docs/ReleaseProcess.md. -->
+  <PropertyGroup>
+    <CorvusTextJsonProfileFile>profiles\Corvus.Text.Json.mibc</CorvusTextJsonProfileFile>
+    <CorvusTextJsonProfileFile Condition="Exists('$(MSBuildProjectDirectory)/obj/profiles/Corvus.Text.Json.mibc')">$(MSBuildProjectDirectory)/obj/profiles/Corvus.Text.Json.mibc</CorvusTextJsonProfileFile>
+  </PropertyGroup>
+  <ItemGroup Label="Static optimisation profile for native AOT">
     <None Include="buildTransitive\Corvus.Text.Json.targets" Pack="true" PackagePath="buildTransitive" Visible="false" />
-    <None Include="profiles\Corvus.Text.Json.mibc" Pack="true" PackagePath="profiles" Visible="false" />
+    <None Include="$(CorvusTextJsonProfileFile)" Pack="true" PackagePath="profiles" Visible="false" />
   </ItemGroup>
   <ItemGroup Label="Bundled Analyzers">
     <ProjectReference Include="..\Corvus.Text.Json.Analyzers\Corvus.Text.Json.Analyzers.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
