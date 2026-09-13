@@ -38,18 +38,14 @@ body.page-home {
   }
 }
 
-// ---- Simplicity: load a schema, validate an instance ----
+// ---- Simplicity: load a schema, validate an instance (sits above the feature cards) ----
 
 .home-simple {
-  padding: var(--space-xl) 0;
+  max-width: 44rem;
+  margin: 0 auto var(--space-xl);
 
-  &__example {
-    max-width: 44rem;
-    margin: 0 auto;
-
-    pre {
-      margin: 0;
-    }
+  pre {
+    margin: 0;
   }
 
   &__footnote {
