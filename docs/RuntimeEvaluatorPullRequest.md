@@ -72,6 +72,12 @@ Medians over the 37 corpora, each corpus in its own process, on 2026-09-13 (`mea
 Warm, Corvus is faster on 31 of 37 (geometric mean 0.72); parsing included, on 37 of 37 (0.18). Every Corvus row
 agrees with Blaze on every instance of every corpus (`harness diff`).
 
+## Version
+
+The PR is the 5.6 minor: `GitVersion.yml`'s `next-version` is 5.6 and `VERSIONHISTORY.md` carries the V5.6.0 entry
+(features, the one bug fix, and the breaking changes in `Corvus.Text.Json.CodeGeneration`, `Corvus.Text.Json.Validator`
+and the shape of generated code).
+
 ## Verification
 
 - Solution gate: `dotnet build Corvus.Text.Json.slnx` then `dotnet test --solution ... --filter
