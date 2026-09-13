@@ -163,9 +163,43 @@ task GenerateAotProfile -If { $GenerateAotProfile -and $IsLinux } {
     }
     $corpora = Get-ChildItem $corpusDir -Filter "*-instances.jsonl" | ForEach-Object { $_.Name -replace "-instances\.jsonl$", "" } | Sort-Object
 
-    Write-Host "Publishing the cold runner (framework-dependent)"
+    # Publishing the runner rebuilds Corvus.Text.Json (a project reference) into the same bin/obj the package phase
+    # packs from, and a plain `dotnet publish` knows nothing of the version the build gave the library: 5.6.0
+    # shipped a Corvus.Text.Json.dll with AssemblyVersion 1.0.0.0 that way, which no other package could bind
+    # to. So the identity of the assembly the build produced is read back and handed to the publish, and the
+    # task fails if the assembly's identity is not the same afterwards.
+    $libraryDll = Join-Path $here "src/Corvus.Text.Json/bin/$Configuration/net10.0/Corvus.Text.Json.dll"
+    if (-not (Test-Path $libraryDll)) {
+        throw "GenerateAotProfile must run after the build: $libraryDll is missing"
+    }
+    function Get-AssemblyIdentity([string] $path) {
+        $name = [Reflection.AssemblyName]::GetAssemblyName($path)
+        $info = [Diagnostics.FileVersionInfo]::GetVersionInfo($path)
+        return [pscustomobject]@{ AssemblyVersion = $name.Version.ToString(); FileVersion = $info.FileVersion; InformationalVersion = $info.ProductVersion }
+    }
+    $identity = Get-AssemblyIdentity $libraryDll
+    if ($identity.AssemblyVersion -eq "1.0.0.0") {
+        throw "The built Corvus.Text.Json.dll has the default assembly version 1.0.0.0; the build did not version it"
+    }
+    # The SDK appends "+<commit>" to InformationalVersion itself (SourceLink), so pass it without the suffix.
+    $versionWithoutMetadata = $identity.InformationalVersion -replace '\+.*$', ''
+    $versionProperties = @(
+        "-p:Version=$versionWithoutMetadata",
+        "-p:AssemblyVersion=$($identity.AssemblyVersion)",
+        "-p:FileVersion=$($identity.FileVersion)",
+        "-p:InformationalVersion=$versionWithoutMetadata"
+    )
+    Write-Host "Publishing the cold runner (framework-dependent) as $($identity.InformationalVersion)"
     $runnerDir = Join-Path $profileDir "runner"
-    exec { & dotnet publish (Join-Path $here "benchmarks/Corvus.Text.Json.RuntimeEvaluator.ColdRunner/Corvus.Text.Json.RuntimeEvaluator.ColdRunner.csproj") -c $Configuration -r linux-x64 --self-contained false -o $runnerDir --nologo -v:minimal }
+    exec { & dotnet publish (Join-Path $here "benchmarks/Corvus.Text.Json.RuntimeEvaluator.ColdRunner/Corvus.Text.Json.RuntimeEvaluator.ColdRunner.csproj") -c $Configuration -r linux-x64 --self-contained false -o $runnerDir --nologo -v:minimal @versionProperties }
+    $after = Get-AssemblyIdentity $libraryDll
+    if (($after.AssemblyVersion -ne $identity.AssemblyVersion) -or ($after.FileVersion -ne $identity.FileVersion) -or ($after.InformationalVersion -ne $identity.InformationalVersion)) {
+        throw "Publishing the cold runner changed Corvus.Text.Json.dll from $($identity.InformationalVersion) ($($identity.AssemblyVersion)) to $($after.InformationalVersion) ($($after.AssemblyVersion))"
+    }
+    $published = Get-AssemblyIdentity (Join-Path $runnerDir "Corvus.Text.Json.dll")
+    if ($published.AssemblyVersion -ne $identity.AssemblyVersion) {
+        throw "The cold runner was published against Corvus.Text.Json $($published.AssemblyVersion), not $($identity.AssemblyVersion)"
+    }
 
     Write-Host "Tracing the instrumented warm run over $($corpora.Count) corpora"
     $nettrace = Join-Path $profileDir "profile.nettrace"
