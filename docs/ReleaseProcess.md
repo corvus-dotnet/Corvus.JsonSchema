@@ -110,6 +110,12 @@ The tag push triggers the build workflow, which publishes to NuGet.org.
 
 ## The native AOT profile
 
+> **Outstanding before the runtime-evaluator branch becomes a PR:** the profile must be generated in the CI build
+> stage (the Compile phase of `build.yml`), from the code being packaged, before the NuGet phase packs it. The
+> routine below is the interim by hand. CI needs dotnet-pgo, which is not on any feed: either build the
+> dotnet/runtime `clr.tools` subset in the workflow or take a prebuilt tool artefact the repository controls.
+
+
 `src/Corvus.Text.Json/profiles/Corvus.Text.Json.mibc` is the static optimisation profile the package hands to the
 native AOT compiler (see `buildTransitive/Corvus.Text.Json.targets` and docs/RuntimeEvaluator.md, "Publishing an
 application"). It is keyed by method, so a stale profile is harmless (entries for methods that changed are ignored)
