@@ -85,14 +85,13 @@ agrees with Blaze on every instance of every corpus (`harness diff`).
 - **Experiment switches.** Ten `CORVUS_RT_*` environment variables in the compiler and evaluator turn individual
   optimisations off for A/B measurement (`CORVUS_RT_NO_CANONICAL`, `NO_DISCRIMINATOR`, `NO_ELIDE`, `NO_FUSE`,
   `NO_INTFAST`, `NO_LEAF`, `NO_ORDER`, `NO_PLANS`, `NO_UNROLL`, `REGEX_INTERPRETED`). They are read once into
-  static fields and cost nothing at run time; the source generator's build compiles them away. Keep or strip.
+  static fields and cost nothing at run time; the source generator's build compiles them away. They stay: they are
+  how a regression is bisected to one optimisation with the harness.
 - **Public surface added to `Corvus.Text.Json`**: `JsonSchemaEvaluator` and its options; `JsonDocument.TryGetRawAccess`
   and `TryGetRawSpans` (virtual), `RawDocumentAccess`; the package's `buildTransitive` targets and their two
   properties (`CorvusTextJsonUseProfile`, `CorvusTextJsonProfile`).
 - **The CI profile step** is implemented and runs locally; its first run on GitHub Actions is the check that the
   .NET 11 runtime install and the dotnet-eng download work on the runner.
-- **Two `src-v4` `packages.lock.json` files** are modified in the working tree by runtime-specific restores and are
-  not part of the branch; revert them before the PR.
 - **The CLI's native AOT publish** is opt-in (`-p:CliAot=true -p:CliAotRooted=true`); making it the shipped form
   means either a trim-clean command binder or a validate-only tool.
 
