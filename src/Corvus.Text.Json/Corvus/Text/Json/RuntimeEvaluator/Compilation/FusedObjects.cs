@@ -134,10 +134,16 @@ internal sealed class FusedAlternative
 }
 
 /// <summary>One child schema applying to a property on behalf of a branch; a node of -1 covers without evaluation.</summary>
-internal readonly struct FusedApplication(int contributor, int node, TypeMask inlineType, bool inlineLexical, Utf8NameMap<object>? inlineEnum = null)
+internal readonly struct FusedApplication(int contributor, int node, TypeMask inlineType, bool inlineLexical, Utf8NameMap<object>? inlineEnum = null, int[]? otherContributors = null)
 {
     public readonly int Contributor = contributor;
     public readonly int Node = node;
+
+    /// <summary>
+    /// The other branches whose resolution of this property is the same test (see <c>FusedObjects.Coalesce</c>):
+    /// the application is made once when any of them, or <see cref="Contributor"/>, is active. Null when none.
+    /// </summary>
+    public readonly int[]? OtherContributors = otherContributors;
 
     /// <summary>The child's type mask when it is a type-only leaf (tested in place of a call), else <see cref="TypeMask.None"/>.</summary>
     public readonly TypeMask InlineType = inlineType;
@@ -578,6 +584,7 @@ internal static class FusedObjects
                 }
             }
 
+            Coalesce(applications, built);
             var fusedEntry = new FusedEntry { Name = name, Index = i, Applications = [.. applications], AnyConditional = anyConditional };
             if (valueTestsByEntry.TryGetValue(i, out List<FusedValueTest>? entryTests))
             {
@@ -633,6 +640,99 @@ internal static class FusedObjects
         }
 
         entry.MergedAllowed = new Utf8NameMap<FusedTestMask>(pairs);
+    }
+
+    /// <summary>
+    /// Identical resolutions of a property from several branches (the same type-only test, the same string set, the
+    /// same child) become one application listing every branch, applied once when any of them is active: a chain of
+    /// conditionals that repeats a property's enum at every level tests the value once instead of once per level.
+    /// Branches of an alternative group merge only within the same branch (a failure is attributed to it). The
+    /// primary contributor is an unconditional one when there is one, so the row loop applies it at once.
+    /// </summary>
+    private static void Coalesce(List<FusedApplication> applications, FusedContributor[] built)
+    {
+        if (applications.Count < 2)
+        {
+            return;
+        }
+
+        var merged = new List<FusedApplication>(applications.Count);
+        var others = new List<int>();
+        bool[] used = new bool[applications.Count];
+        for (int i = 0; i < applications.Count; i++)
+        {
+            if (used[i])
+            {
+                continue;
+            }
+
+            others.Clear();
+            int primary = i;
+            for (int j = i + 1; j < applications.Count; j++)
+            {
+                FusedContributor a = built[applications[primary].Contributor];
+                FusedContributor b = built[applications[j].Contributor];
+                if (used[j] || !SameResolution(applications[primary], applications[j]) || a.AltGroup != b.AltGroup || a.AltBranch != b.AltBranch)
+                {
+                    continue;
+                }
+
+                used[j] = true;
+                if (a.Condition >= 0 && b.Condition < 0)
+                {
+                    others.Add(applications[primary].Contributor);
+                    primary = j;
+                }
+                else
+                {
+                    others.Add(applications[j].Contributor);
+                }
+            }
+
+            FusedApplication p = applications[primary];
+            merged.Add(others.Count == 0 ? p : new FusedApplication(p.Contributor, p.Node, p.InlineType, p.InlineLexical, p.InlineEnum, [.. others]));
+        }
+
+        applications.Clear();
+        applications.AddRange(merged);
+    }
+
+    private static bool SameResolution(in FusedApplication a, in FusedApplication b)
+    {
+        if (a.Node < 0 || b.Node < 0)
+        {
+            return a.Node < 0 && b.Node < 0;
+        }
+
+        if (a.InlineType != TypeMask.None || b.InlineType != TypeMask.None)
+        {
+            return a.InlineType == b.InlineType && a.InlineLexical == b.InlineLexical;
+        }
+
+        if (a.InlineEnum is not null || b.InlineEnum is not null)
+        {
+            return a.InlineEnum is not null && b.InlineEnum is not null && SameKeys(a.InlineEnum, b.InlineEnum);
+        }
+
+        return a.Node == b.Node;
+    }
+
+    private static bool SameKeys(Utf8NameMap<object> x, Utf8NameMap<object> y)
+    {
+        if (x.Count != y.Count)
+        {
+            return false;
+        }
+
+        foreach (byte[] key in x.Keys)
+        {
+            if (!y.TryGetIndex(key, out _))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /// <summary>A child that is <c>true</c> covers the property without a call; a type-only leaf is a token-type test.</summary>

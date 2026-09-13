@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Linq;
 using System.Text;
 using Corvus.Text.Json.RuntimeEvaluator.Compilation;
 
@@ -36,6 +37,18 @@ public static class NodeDump
             if (n.MarksProperties) sb.Append(" marksP");
             if (n.MarksItems) sb.Append(" marksI");
             if (n.Properties is not null) sb.Append($" props={n.Properties.Count}");
+            if (n.Fused is { } fused) sb.Append($" fused[entries={fused.EntryList.Length} contributors={fused.Contributors.Length} conditions={fused.Conditions.Length} alternatives={fused.Alternatives.Length} altGroups={fused.AltGroups.Length} unknownNames={fused.ResolvesUnknownNames} unevaluated={fused.Unevaluated.IsPresent} applications={fused.EntryList.Sum(e => e.Applications.Length)}]");
+            if (n.Fused is { } fused2 && Environment.GetEnvironmentVariable("DUMP_FUSED") == "1")
+            {
+                foreach (var e in fused2.EntryList)
+                {
+                    sb.Append($"\n        {System.Text.Encoding.UTF8.GetString(e.Name)}: ");
+                    foreach (var a in e.Applications)
+                    {
+                        sb.Append($"[c{a.Contributor}{(a.OtherContributors is null ? string.Empty : "+" + a.OtherContributors.Length)} n{a.Node}{(a.InlineEnum is null ? string.Empty : " enum" + a.InlineEnum.Count)}{(a.InlineType == TypeMask.None ? string.Empty : " type")}] ");
+                    }
+                }
+            }
             if (n.RequiredSeenBits is not null) sb.Append($" required={n.RequiredSeenBits.Length}");
             if (n.PatternProperties is not null) sb.Append($" patternProps={n.PatternProperties.Length}");
             if (n.AdditionalProperties.IsPresent) sb.Append($" additional->{n.AdditionalProperties.Node}/{n.AdditionalProperties.FastNode}");

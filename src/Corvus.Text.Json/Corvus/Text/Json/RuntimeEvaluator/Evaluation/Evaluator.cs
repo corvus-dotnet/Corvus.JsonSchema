@@ -666,23 +666,40 @@ internal static partial class Evaluator
             for (int valueIndex = index + (2 * RowSize); valueIndex - RowSize < end; ordinal++)
             {
                 JsonTokenType valueType = default(TAccess).TokenTypeAndNextUnchecked(ref state, doc, valueIndex, out int next);
-                ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRawUnchecked(ref state, doc, valueIndex, out bool escaped);
                 bool cover;
                 bool defer;
                 int entryIndex;
-                if (!escaped)
+
+                // Local rows: the name's location and length from its row, the lookup by word for short names.
+                int location = default(TAccess).PropertyNameLocationUnchecked(ref state, doc, valueIndex, out int length);
+                if (location >= 0 && length >= 0)
                 {
-                    if (!ApplyFusedName<TAccess>(f, raw, valueType, doc, valueIndex, ref state, seen, failed, altFailed, out cover, out defer, out entryIndex))
+                    entryIndex = f.Entries.GetIndex(state.RawUtf8, location, length);
+                    bool ok = entryIndex >= 0
+                        ? ApplyFusedEntry<TAccess>(f, f.EntryList[entryIndex], valueType, doc, valueIndex, ref state, seen, failed, altFailed, out cover, out defer)
+                        : ApplyFusedUnknown<TAccess>(f, state.RawUtf8.Slice(location, length), doc, valueIndex, ref state, altFailed, out cover, out defer);
+                    if (!ok)
                     {
                         return false;
                     }
                 }
                 else
                 {
-                    using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
-                    if (!ApplyFusedName<TAccess>(f, name.Span, valueType, doc, valueIndex, ref state, seen, failed, altFailed, out cover, out defer, out entryIndex))
+                    ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRawUnchecked(ref state, doc, valueIndex, out bool escaped);
+                    if (!escaped)
                     {
-                        return false;
+                        if (!ApplyFusedName<TAccess>(f, raw, valueType, doc, valueIndex, ref state, seen, failed, altFailed, out cover, out defer, out entryIndex))
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
+                        if (!ApplyFusedName<TAccess>(f, name.Span, valueType, doc, valueIndex, ref state, seen, failed, altFailed, out cover, out defer, out entryIndex))
+                        {
+                            return false;
+                        }
                     }
                 }
 
@@ -748,7 +765,13 @@ internal static partial class Evaluator
                     {
                         FusedApplication app = applications[a];
                         FusedContributor contributor = contributors[app.Contributor];
-                        if (contributor.Condition >= 0 && gateOk[contributor.Condition] && holds[contributor.Condition] == contributor.Polarity)
+                        if (contributor.Condition < 0)
+                        {
+                            // Applied in the row loop (the primary of a coalesced application is unconditional when any is).
+                            continue;
+                        }
+
+                        if (FusedActive(contributor, gateOk, holds) || (app.OtherContributors is int[] more && AnyFusedActive(more, contributors, gateOk, holds)))
                         {
                             if (!ApplyApplication<TAccess>(app, nodes, default(TAccess).TokenType(ref state, doc, valueIndex), doc, valueIndex, ref state))
                             {
@@ -1022,74 +1045,117 @@ internal static partial class Evaluator
     private static bool ApplyFusedName<TAccess>(FusedObject f, scoped ReadOnlySpan<byte> nameSpan, JsonTokenType valueType, IJsonDocument doc, int valueIndex, ref EvaluationState state, scoped Span<ulong> seen, scoped Span<bool> failed, scoped Span<ulong> altFailed, out bool cover, out bool defer, out int entryIndex)
         where TAccess : struct, IDocumentAccess
     {
+        if (f.Entries.TryGetValue(nameSpan, out FusedEntry? entry))
+        {
+            entryIndex = entry.Index;
+            return ApplyFusedEntry<TAccess>(f, entry, valueType, doc, valueIndex, ref state, seen, failed, altFailed, out cover, out defer);
+        }
+
+        entryIndex = -1;
+        return ApplyFusedUnknown<TAccess>(f, nameSpan, doc, valueIndex, ref state, altFailed, out cover, out defer);
+    }
+
+    /// <summary>A known name: its value tests for the conditions, then every unconditional application; conditional ones are deferred to the second pass.</summary>
+    private static bool ApplyFusedEntry<TAccess>(FusedObject f, FusedEntry entry, JsonTokenType valueType, IJsonDocument doc, int valueIndex, ref EvaluationState state, scoped Span<ulong> seen, scoped Span<bool> failed, scoped Span<ulong> altFailed, out bool cover, out bool defer)
+        where TAccess : struct, IDocumentAccess
+    {
         SchemaNode[] nodes = state.Nodes;
         FusedContributor[] contributors = f.Contributors;
         cover = false;
         defer = false;
-        entryIndex = -1;
-        if (f.Entries.TryGetValue(nameSpan, out FusedEntry? entry))
+        seen[entry.Index >> 6] |= 1UL << (entry.Index & 63);
+        if (entry.HasValueTests)
         {
-            seen[entry.Index >> 6] |= 1UL << (entry.Index & 63);
-            entryIndex = entry.Index;
-            if (entry.HasValueTests)
-            {
-                ApplyValueTests<TAccess>(entry, valueType, ref state, doc, valueIndex, failed);
-            }
-
-            FusedApplication[] applications = entry.Applications;
-            for (int a = 0; a < applications.Length; a++)
-            {
-                FusedApplication app = applications[a];
-                FusedContributor applied = contributors[app.Contributor];
-                if (applied.Condition < 0)
-                {
-                    if (!ApplyApplication<TAccess>(app, nodes, valueType, doc, valueIndex, ref state))
-                    {
-                        // A branch of an alternative group fails on its own; anything else fails the object.
-                        if (applied.AltGroup < 0)
-                        {
-                            return false;
-                        }
-
-                        altFailed[applied.AltGroup] |= 1UL << applied.AltBranch;
-                        continue;
-                    }
-
-                    cover = true;
-                }
-                else
-                {
-                    defer = true;
-                }
-            }
+            ApplyValueTests<TAccess>(entry, valueType, ref state, doc, valueIndex, failed);
         }
-        else if (f.ResolvesUnknownNames)
-        {
-            for (int c = 0; c < contributors.Length; c++)
-            {
-                FusedContributor contributor = contributors[c];
-                if (contributor.Condition >= 0)
-                {
-                    defer |= contributor.Patterns is not null || contributor.AdditionalNode >= 0 || contributor.AdditionalCoversOnly;
-                    continue;
-                }
 
-                if (!ResolveUnknownName<TAccess>(contributor, nameSpan, nodes, doc, valueIndex, ref state, out bool matched))
+        FusedApplication[] applications = entry.Applications;
+        for (int a = 0; a < applications.Length; a++)
+        {
+            FusedApplication app = applications[a];
+            FusedContributor applied = contributors[app.Contributor];
+            if (applied.Condition < 0)
+            {
+                if (!ApplyApplication<TAccess>(app, nodes, valueType, doc, valueIndex, ref state))
                 {
-                    if (contributor.AltGroup < 0)
+                    // A branch of an alternative group fails on its own; anything else fails the object.
+                    if (applied.AltGroup < 0)
                     {
                         return false;
                     }
 
-                    altFailed[contributor.AltGroup] |= 1UL << contributor.AltBranch;
+                    altFailed[applied.AltGroup] |= 1UL << applied.AltBranch;
                     continue;
                 }
 
-                cover |= matched;
+                cover = true;
+            }
+            else
+            {
+                defer = true;
             }
         }
 
         return true;
+    }
+
+    /// <summary>A name no entry knows: every unconditional branch resolves it (patterns, additionalProperties); conditional ones defer.</summary>
+    private static bool ApplyFusedUnknown<TAccess>(FusedObject f, scoped ReadOnlySpan<byte> nameSpan, IJsonDocument doc, int valueIndex, ref EvaluationState state, scoped Span<ulong> altFailed, out bool cover, out bool defer)
+        where TAccess : struct, IDocumentAccess
+    {
+        cover = false;
+        defer = false;
+        if (!f.ResolvesUnknownNames)
+        {
+            return true;
+        }
+
+        SchemaNode[] nodes = state.Nodes;
+        FusedContributor[] contributors = f.Contributors;
+        for (int c = 0; c < contributors.Length; c++)
+        {
+            FusedContributor contributor = contributors[c];
+            if (contributor.Condition >= 0)
+            {
+                defer |= contributor.Patterns is not null || contributor.AdditionalNode >= 0 || contributor.AdditionalCoversOnly;
+                continue;
+            }
+
+            if (!ResolveUnknownName<TAccess>(contributor, nameSpan, nodes, doc, valueIndex, ref state, out bool matched))
+            {
+                if (contributor.AltGroup < 0)
+                {
+                    return false;
+                }
+
+                altFailed[contributor.AltGroup] |= 1UL << contributor.AltBranch;
+                continue;
+            }
+
+            cover |= matched;
+        }
+
+        return true;
+    }
+
+    /// <summary>Whether a conditional branch applies: its condition is reachable and holds with its polarity.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool FusedActive(FusedContributor contributor, ReadOnlySpan<bool> gateOk, ReadOnlySpan<bool> holds)
+    {
+        return contributor.Condition >= 0 && gateOk[contributor.Condition] && holds[contributor.Condition] == contributor.Polarity;
+    }
+
+    private static bool AnyFusedActive(int[] more, FusedContributor[] contributors, ReadOnlySpan<bool> gateOk, ReadOnlySpan<bool> holds)
+    {
+        for (int i = 0; i < more.Length; i++)
+        {
+            if (FusedActive(contributors[more[i]], gateOk, holds))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>
