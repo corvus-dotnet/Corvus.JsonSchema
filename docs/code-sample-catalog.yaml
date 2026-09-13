@@ -1375,8 +1375,8 @@ main-docs:
     blocks:
       - {index: 0, language: yaml, lines: [18, 36]}
       - {index: 1, language: powershell, lines: [99, 107]}
-      - {index: 2, language: xml, lines: [117, 121]}
-      - {index: 3, language: xml, lines: [125, 127]}
+      - {index: 2, language: xml, lines: [144, 148]}
+      - {index: 3, language: xml, lines: [152, 154]}
   - path: "docs/RunningTests.md"
     blocks:
       - {index: 0, language: powershell, lines: [7, 10]}
@@ -1409,15 +1409,18 @@ main-docs:
       - {index: 27, language: powershell, lines: [388, 390]}
       - {index: 28, language: powershell, lines: [394, 397]}
       - {index: 29, language: powershell, lines: [415, 421]}
+  - path: "docs/RuntimeEvaluator.md"
+    blocks:
+      - {index: 0, language: xml, lines: [247, 251]}
   - path: "docs/SchemaEvaluator.md"
     blocks:
       - {index: 0, language: xml, lines: [19, 26]}
       - {index: 1, language: csharp, lines: [30, 33], category: compilable, verified: false}
       - {index: 2, language: bash, lines: [41, 53]}
-      - {index: 3, language: csharp, lines: [88, 116], category: compilable, verified: false}
-      - {index: 4, language: csharp, lines: [124, 150], category: compilable, verified: false}
-      - {index: 5, language: csharp, lines: [156, 164], category: compilable, verified: false}
-      - {index: 6, language: csharp, lines: [170, 176], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [89, 117], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [125, 151], category: compilable, verified: false}
+      - {index: 5, language: csharp, lines: [157, 165], category: compilable, verified: false}
+      - {index: 6, language: csharp, lines: [171, 177], category: compilable, verified: false}
   - path: "docs/SourceGenerator.md"
     blocks:
       - {index: 0, language: xml, lines: [15, 21]}
@@ -1434,7 +1437,7 @@ main-docs:
       - {index: 11, language: , lines: [190, 195]}
   - path: "docs/StandaloneEvaluatorInternals.md"
     blocks:
-      - {index: 0, language: csharp, lines: [40, 47], category: compilable, verified: false}
+      - {index: 0, language: csharp, lines: [46, 53], category: compilable, verified: false}
   - path: "docs/Toon.md"
     blocks:
       - {index: 0, language: json, lines: [23, 25]}
@@ -1840,9 +1843,9 @@ skills:
       - {index: 9, language: powershell, lines: [148, 166]}
   - path: ".github/skills/corvus-standalone-evaluator/SKILL.md"
     blocks:
-      - {index: 0, language: csharp, lines: [26, 29], category: compilable, verified: false}
-      - {index: 1, language: powershell, lines: [31, 34]}
-      - {index: 2, language: csharp, lines: [42, 46], category: fragment, verified: false}
+      - {index: 0, language: csharp, lines: [28, 31], category: compilable, verified: false}
+      - {index: 1, language: powershell, lines: [33, 36]}
+      - {index: 2, language: csharp, lines: [44, 48], category: fragment, verified: false}
   - path: ".github/skills/corvus-test-suite-regeneration/SKILL.md"
     blocks:
       - {index: 0, language: powershell, lines: [18, 20]}
