@@ -90,6 +90,13 @@ internal interface IDocumentAccess
     /// </summary>
     int PropertyNameLocationUnchecked(ref EvaluationState state, IJsonDocument doc, int valueIndex, out int length);
 
+    /// <summary>
+    /// The location in the UTF-8 text of a simple value's raw text and, in <paramref name="length"/>, its byte length
+    /// (negative when a string contains escapes), read from its row with the range check; -1 when the access has no
+    /// local rows (then <see cref="RawValue(ref EvaluationState, IJsonDocument, int, out bool)"/> is the way).
+    /// </summary>
+    int RawValueLocation(ref EvaluationState state, IJsonDocument doc, int index, out int length);
+
     /// <summary><see cref="NextIndex"/> without the range check; only after <see cref="RowsAvailable"/> covered the row.</summary>
     int NextIndexUnchecked(ref EvaluationState state, IJsonDocument doc, int index);
 
@@ -207,6 +214,19 @@ internal readonly struct RawAccess : IDocumentAccess
         return (JsonTokenType)tokenType;
     }
 
+    public int RawValueLocation(ref EvaluationState state, IJsonDocument doc, int index, out int length)
+    {
+        ulong pair = MemoryMarshal.Read<ulong>(state.RawRows.Slice(index, sizeof(ulong)));
+        if (BitConverter.IsLittleEndian)
+        {
+            length = (int)(pair >> 32);
+            return (int)pair & LocationMask;
+        }
+
+        length = (int)pair;
+        return (int)(pair >> 32) & LocationMask;
+    }
+
     public int PropertyNameLocationUnchecked(ref EvaluationState state, IJsonDocument doc, int valueIndex, out int length)
     {
         ulong pair = Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref MemoryMarshal.GetReference(state.RawRows), valueIndex - RowSize));
@@ -314,6 +334,12 @@ internal readonly struct InterfaceAccess : IDocumentAccess
     public bool RowsAvailable(ref EvaluationState state, IJsonDocument doc, int lastIndex) => true;
 
     public JsonTokenType TokenTypeAndNextUnchecked(ref EvaluationState state, IJsonDocument doc, int index, out int nextIndex) => this.TokenTypeAndNext(ref state, doc, index, out nextIndex);
+
+    public int RawValueLocation(ref EvaluationState state, IJsonDocument doc, int index, out int length)
+    {
+        length = 0;
+        return -1;
+    }
 
     public int PropertyNameLocationUnchecked(ref EvaluationState state, IJsonDocument doc, int valueIndex, out int length)
     {

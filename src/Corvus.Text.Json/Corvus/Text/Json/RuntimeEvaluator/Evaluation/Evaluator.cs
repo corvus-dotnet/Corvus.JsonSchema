@@ -997,6 +997,13 @@ internal static partial class Evaluator
             return false;
         }
 
+        // Local rows: the value's location and length from its row, the lookup by word for short values.
+        int location = default(TAccess).RawValueLocation(ref state, doc, index, out int length);
+        if (location >= 0 && length >= 0)
+        {
+            return allowed.GetIndex(state.RawUtf8, location, length) >= 0;
+        }
+
         ReadOnlySpan<byte> raw = default(TAccess).RawValue(ref state, doc, index, out bool escaped);
         if (!escaped)
         {
