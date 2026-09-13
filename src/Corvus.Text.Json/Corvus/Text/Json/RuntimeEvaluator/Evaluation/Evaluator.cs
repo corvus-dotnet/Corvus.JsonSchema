@@ -1335,14 +1335,25 @@ internal static partial class Evaluator
             int entryIndex = -1;
             if (properties is not null)
             {
-                ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRawUnchecked(ref state, doc, valueIndex, out bool escaped);
-                if (!escaped)
+                // Local rows: the name's location and length from its row, the lookup by word for short names.
+                int location = default(TAccess).PropertyNameLocationUnchecked(ref state, doc, valueIndex, out int length);
+                if (location >= 0)
                 {
-                    properties.TryGetIndex(raw, out entryIndex);
+                    entryIndex = length >= 0
+                        ? properties.GetIndex(state.RawUtf8, location, length)
+                        : LookupEscapedName<TAccess>(properties, ref state, doc, valueIndex);
                 }
                 else
                 {
-                    entryIndex = LookupEscapedName<TAccess>(properties, ref state, doc, valueIndex);
+                    ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRawUnchecked(ref state, doc, valueIndex, out bool escaped);
+                    if (!escaped)
+                    {
+                        properties.TryGetIndex(raw, out entryIndex);
+                    }
+                    else
+                    {
+                        entryIndex = LookupEscapedName<TAccess>(properties, ref state, doc, valueIndex);
+                    }
                 }
             }
 
@@ -1428,20 +1439,36 @@ internal static partial class Evaluator
             while (valueIndex - RowSize < end)
             {
                 JsonTokenType valueType = default(TAccess).TokenTypeAndNextUnchecked(ref state, doc, valueIndex, out int next);
-                ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRawUnchecked(ref state, doc, valueIndex, out bool escaped);
-                if (!escaped)
+
+                // Local rows: the name's location and length from its row, the lookup by word for short names.
+                int location = default(TAccess).PropertyNameLocationUnchecked(ref state, doc, valueIndex, out int length);
+                if (location >= 0 && length >= 0)
                 {
-                    if (!EvalObjectPlanProperty<TAccess>(node, properties, entries, patternProperties, additional, raw, valueType, doc, valueIndex, ref state, seen))
+                    int entryIndex = properties is null ? -1 : properties.GetIndex(state.RawUtf8, location, length);
+                    if (!EvalObjectPlanProperty<TAccess>(node, entryIndex, entries, patternProperties, additional, state.RawUtf8.Slice(location, length), valueType, doc, valueIndex, ref state, seen))
                     {
                         return false;
                     }
                 }
                 else
                 {
-                    using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
-                    if (!EvalObjectPlanProperty<TAccess>(node, properties, entries, patternProperties, additional, name.Span, valueType, doc, valueIndex, ref state, seen))
+                    ReadOnlySpan<byte> raw = default(TAccess).PropertyNameRawUnchecked(ref state, doc, valueIndex, out bool escaped);
+                    if (!escaped)
                     {
-                        return false;
+                        int entryIndex = properties is not null && properties.TryGetIndex(raw, out int found) ? found : -1;
+                        if (!EvalObjectPlanProperty<TAccess>(node, entryIndex, entries, patternProperties, additional, raw, valueType, doc, valueIndex, ref state, seen))
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        using UnescapedUtf8JsonString name = PropertyName<TAccess>(ref state, doc, valueIndex);
+                        int entryIndex = properties is not null && properties.TryGetIndex(name.Span, out int found) ? found : -1;
+                        if (!EvalObjectPlanProperty<TAccess>(node, entryIndex, entries, patternProperties, additional, name.Span, valueType, doc, valueIndex, ref state, seen))
+                        {
+                            return false;
+                        }
                     }
                 }
 
@@ -1503,11 +1530,11 @@ internal static partial class Evaluator
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool EvalObjectPlanProperty<TAccess>(SchemaNode node, Utf8NameMap<PropertyEntry>? properties, StrictEntry[] entries, PatternPropertyEntry[]? patternProperties, SchemaNode? additional, scoped ReadOnlySpan<byte> name, JsonTokenType valueType, IJsonDocument doc, int valueIndex, ref EvaluationState state, scoped Span<ulong> seen)
+    private static bool EvalObjectPlanProperty<TAccess>(SchemaNode node, int entryIndex, StrictEntry[] entries, PatternPropertyEntry[]? patternProperties, SchemaNode? additional, scoped ReadOnlySpan<byte> name, JsonTokenType valueType, IJsonDocument doc, int valueIndex, ref EvaluationState state, scoped Span<ulong> seen)
         where TAccess : struct, IDocumentAccess
     {
         bool matched = false;
-        if (properties is not null && properties.TryGetIndex(name, out int entryIndex))
+        if (entryIndex >= 0)
         {
             ref readonly StrictEntry entry = ref ArrayRef.At(entries, entryIndex);
             if (entry.SeenBit >= 0)

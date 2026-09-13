@@ -32,6 +32,16 @@ internal sealed class Utf8NameMap<T>
     private readonly Utf8NameBucket[] buckets;
     private readonly int[] next;
 
+    // Keys of at most eight bytes as zero-padded words, grouped by length (wordStart/wordCount indexed by length,
+    // 0 to 8): a name of that length read as one word from the text and masked to its length equals the key's word
+    // exactly when the bytes are equal. A length with more than MaxWordCandidates keys keeps the byte-position
+    // table (its count is -1): comparing many words in turn loses to the table. See GetIndex.
+    private const int MaxWordCandidates = 3;
+    private readonly ulong[] wordKeys;
+    private readonly int[] wordIndex;
+    private readonly int[] wordStart;
+    private readonly int[] wordCount;
+
     public Utf8NameMap(IReadOnlyList<KeyValuePair<byte[], T>> entries)
     {
         int n = entries.Count;
@@ -44,6 +54,45 @@ internal sealed class Utf8NameMap<T>
             this.keys[i] = entries[i].Key;
             this.values[i] = entries[i].Value;
             maxLength = Math.Max(maxLength, this.keys[i].Length);
+        }
+
+        this.wordStart = new int[9];
+        this.wordCount = new int[9];
+        int wordTotal = 0;
+        for (int i = 0; i < n; i++)
+        {
+            if (this.keys[i].Length <= 8)
+            {
+                this.wordCount[this.keys[i].Length]++;
+                wordTotal++;
+            }
+        }
+
+        for (int length = 1; length <= 8; length++)
+        {
+            this.wordStart[length] = this.wordStart[length - 1] + this.wordCount[length - 1];
+        }
+
+        this.wordKeys = new ulong[wordTotal];
+        this.wordIndex = new int[wordTotal];
+        Span<int> filled = stackalloc int[9];
+        for (int i = 0; i < n; i++)
+        {
+            byte[] key = this.keys[i];
+            if (key.Length <= 8)
+            {
+                int slot = this.wordStart[key.Length] + filled[key.Length]++;
+                this.wordKeys[slot] = WordOf(key);
+                this.wordIndex[slot] = i;
+            }
+        }
+
+        for (int length = 0; length <= 8; length++)
+        {
+            if (this.wordCount[length] > MaxWordCandidates)
+            {
+                this.wordCount[length] = -1;
+            }
         }
 
         int lengths = n == 0 ? 0 : maxLength + 1;
@@ -102,7 +151,43 @@ internal sealed class Utf8NameMap<T>
         }
     }
 
+    // Masks[n] keeps the first n bytes of a word in memory order (the same on either endianness, being built the
+    // way the words are).
+    private static readonly ulong[] LengthMasks = BuildLengthMasks();
+
     public int Count => this.keys.Length;
+
+    /// <summary>
+    /// The index of the key equal to the name at <paramref name="location"/> in <paramref name="text"/>, or -1. A
+    /// name of at most eight bytes with eight bytes of text readable from its start, of a length with few keys, is
+    /// compared as one masked word against the keys of its length: no byte-position table, no per-key range
+    /// checks. Otherwise the name is sliced and looked up through <see cref="TryGetIndex"/>.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public int GetIndex(ReadOnlySpan<byte> text, int location, int length)
+    {
+        if ((uint)length <= 8 && (ulong)(uint)location + 8 <= (ulong)(uint)text.Length)
+        {
+            int count = ArrayRef.At(this.wordCount, length);
+            if ((uint)count <= MaxWordCandidates)
+            {
+                ulong word = Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref MemoryMarshal.GetReference(text), (nint)(uint)location)) & ArrayRef.At(LengthMasks, length);
+                int start = ArrayRef.At(this.wordStart, length);
+                ulong[] words = this.wordKeys;
+                for (int i = start; i < start + count; i++)
+                {
+                    if (ArrayRef.At(words, i) == word)
+                    {
+                        return ArrayRef.At(this.wordIndex, i);
+                    }
+                }
+
+                return -1;
+            }
+        }
+
+        return this.TryGetIndex(text.Slice(location, length), out int index) ? index : -1;
+    }
 
     public byte[][] Keys => this.keys;
 
@@ -204,6 +289,29 @@ internal sealed class Utf8NameMap<T>
 
         result = null;
         return false;
+    }
+
+    /// <summary>The key's bytes as a word, zero padded, in memory order.</summary>
+    private static ulong WordOf(ReadOnlySpan<byte> key)
+    {
+        Span<byte> buffer = stackalloc byte[8];
+        buffer.Clear();
+        key.CopyTo(buffer);
+        return MemoryMarshal.Read<ulong>(buffer);
+    }
+
+    private static ulong[] BuildLengthMasks()
+    {
+        var masks = new ulong[9];
+        Span<byte> buffer = stackalloc byte[8];
+        for (int n = 0; n <= 8; n++)
+        {
+            buffer.Clear();
+            buffer[..n].Fill(0xFF);
+            masks[n] = MemoryMarshal.Read<ulong>(buffer);
+        }
+
+        return masks;
     }
 
     /// <summary>

@@ -83,6 +83,13 @@ internal interface IDocumentAccess
     /// <summary><see cref="PropertyNameRaw"/> with the name row read unchecked; only after <see cref="RowsAvailable"/> covered the row. The slice into the text stays checked.</summary>
     ReadOnlySpan<byte> PropertyNameRawUnchecked(ref EvaluationState state, IJsonDocument doc, int valueIndex, out bool escaped);
 
+    /// <summary>
+    /// The location in the UTF-8 text of the property name for a property value index and, in <paramref name="length"/>,
+    /// its byte length (negative when the name contains escapes), read unchecked from the name row; -1 when the
+    /// access has no local rows (then <see cref="PropertyNameRawUnchecked"/> is the way).
+    /// </summary>
+    int PropertyNameLocationUnchecked(ref EvaluationState state, IJsonDocument doc, int valueIndex, out int length);
+
     /// <summary><see cref="NextIndex"/> without the range check; only after <see cref="RowsAvailable"/> covered the row.</summary>
     int NextIndexUnchecked(ref EvaluationState state, IJsonDocument doc, int index);
 
@@ -200,6 +207,19 @@ internal readonly struct RawAccess : IDocumentAccess
         return (JsonTokenType)tokenType;
     }
 
+    public int PropertyNameLocationUnchecked(ref EvaluationState state, IJsonDocument doc, int valueIndex, out int length)
+    {
+        ulong pair = Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref MemoryMarshal.GetReference(state.RawRows), valueIndex - RowSize));
+        if (BitConverter.IsLittleEndian)
+        {
+            length = (int)(pair >> 32);
+            return (int)pair & LocationMask;
+        }
+
+        length = (int)pair;
+        return (int)(pair >> 32) & LocationMask;
+    }
+
     public ReadOnlySpan<byte> PropertyNameRawUnchecked(ref EvaluationState state, IJsonDocument doc, int valueIndex, out bool escaped)
     {
         ulong pair = Unsafe.ReadUnaligned<ulong>(ref Unsafe.Add(ref MemoryMarshal.GetReference(state.RawRows), valueIndex - RowSize));
@@ -294,6 +314,12 @@ internal readonly struct InterfaceAccess : IDocumentAccess
     public bool RowsAvailable(ref EvaluationState state, IJsonDocument doc, int lastIndex) => true;
 
     public JsonTokenType TokenTypeAndNextUnchecked(ref EvaluationState state, IJsonDocument doc, int index, out int nextIndex) => this.TokenTypeAndNext(ref state, doc, index, out nextIndex);
+
+    public int PropertyNameLocationUnchecked(ref EvaluationState state, IJsonDocument doc, int valueIndex, out int length)
+    {
+        length = 0;
+        return -1;
+    }
 
     public ReadOnlySpan<byte> PropertyNameRawUnchecked(ref EvaluationState state, IJsonDocument doc, int valueIndex, out bool escaped) => this.PropertyNameRaw(ref state, doc, valueIndex, out escaped);
 
