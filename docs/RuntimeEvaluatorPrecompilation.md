@@ -859,6 +859,34 @@ masked word against the keys of its length. Against the head: krakend 0.95, jsco
 0.98, ui5 0.99. The fixed-size bitset struct's span is `MemoryMarshal.CreateSpan` on .NET and a span over the
 local's address on netstandard 2.0, which lacks it: the first gate caught that.
 
+## Where ui5 spends its time (2026-09-13)
+
+A CPU sampling profile of the ui5 loop (dotnet-trace with the sample profiler, `report topN`) put 38% of the run in
+the fused object's core, 17% in the conditional plan and 8% in the string-set match. ui5's root is a chain of
+if/then/else keyed on specVersion, kind and type, and the fused objects that its branches become are large: the
+harness's plan dump now prints their sizes, and the biggest has 48 contributing branches, 16 conditions and, for
+nine property names, 74 applications: one per branch that defines the name, up to sixteen for `kind`. The deferred
+pass then applied every active branch's test to the value, and most of those tests are the same test. Applications
+with the same resolution (the same type-only test, the same string set, the same child node) are now coalesced at
+compile time into one that lists its branches and is applied once when any of them is active (a branch of an
+alternative group only merges within its branch, and the primary is an unconditional branch when there is one,
+so the row loop applies it straight away); the fused row loop also looks names up by word. ui5 0.87 against the
+head, the rest unchanged in their own processes.
+
+What the dump also showed is that many applications stay distinct because they point at different nodes with
+the same content: ui5 restates `kind`'s enum and `customConfiguration`'s schema at every version level of the
+chain as separate subschemas. The compiler can point flag-mode references at one representative of each set of
+identical subschemas (same resource, identical source text, no identifier keyword inside; collecting mode keeps
+every node with its own location and paths, and a program with a dynamic scope is left alone since a node's
+meaning there can depend on the path that reached it). On ui5's biggest fused node that takes the applications
+from 74 to 57; the copies that remain distinct differ in content from version to version. Measured on this corpus
+it is neutral at steady state (ui5 within 1% of the fused change alone, the rest within noise in their own
+processes) and free at compile time (the comparison is by resource and text length first, then bytes), so it is
+on by default (`CORVUS_RT_NO_CANONICAL=1` turns it off) for the schemas that restate subschemas more than ui5 does.
+It runs in both builds of the compiler: the runtime one reads a subschema's text from the parsed document's rows,
+the source generator's (which compiles through System.Text.Json and embeds the image, whose flag-mode references
+are stored as computed) through the element's raw text, so generated models get the same graph.
+
 ## The four-axis table (2026-09-12, evening)
 
 One table, eight implementations by 37 corpora, four measures each: `summary2-2026-09-12.md` in the session notes.

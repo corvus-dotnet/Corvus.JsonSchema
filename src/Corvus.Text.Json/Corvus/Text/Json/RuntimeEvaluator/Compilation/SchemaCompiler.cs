@@ -176,6 +176,7 @@ internal sealed class SchemaCompiler
     private static readonly bool DisableLeaf = false;
     private static readonly bool DisableOrdering = false;
     private static readonly bool DisablePlans = false;
+    private static readonly bool DisableCanonical = false;
 #else
     private static readonly bool DisableUnroll = Environment.GetEnvironmentVariable("CORVUS_RT_NO_UNROLL") == "1";
     private static readonly bool DisableElision = Environment.GetEnvironmentVariable("CORVUS_RT_NO_ELIDE") == "1";
@@ -183,6 +184,7 @@ internal sealed class SchemaCompiler
     private static readonly bool DisableLeaf = Environment.GetEnvironmentVariable("CORVUS_RT_NO_LEAF") == "1";
     private static readonly bool DisableOrdering = Environment.GetEnvironmentVariable("CORVUS_RT_NO_ORDER") == "1";
     private static readonly bool DisablePlans = Environment.GetEnvironmentVariable("CORVUS_RT_NO_PLANS") == "1";
+    private static readonly bool DisableCanonical = Environment.GetEnvironmentVariable("CORVUS_RT_NO_CANONICAL") == "1";
 #endif
 
     private readonly SchemaLoader loader;
@@ -427,6 +429,7 @@ internal sealed class SchemaCompiler
         this.ComputeTracking();
         this.ComputeMarking();
         this.ElidePureRefs();
+        this.CanonicalizeEquivalentNodes();
         this.ComputeDiscriminators();
         this.OrderUnrolledProperties();
         this.ComputeSimpleArrays();
@@ -613,6 +616,199 @@ internal sealed class SchemaCompiler
             node.ForwardNode = target;
         }
     }
+
+    private delegate void ChildRefVisitor(ref ChildRef child);
+
+    /// <summary>Visits every child reference of a node (the applicators, the property, pattern and dependency entries).</summary>
+    private static void VisitChildRefs(SchemaNode node, ChildRefVisitor visit)
+    {
+        void All(ChildRef[]? children)
+        {
+            if (children is null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < children.Length; i++)
+            {
+                visit(ref children[i]);
+            }
+        }
+
+        visit(ref node.Ref);
+        All(node.AllOf);
+        All(node.AnyOf);
+        All(node.OneOf);
+        visit(ref node.Not);
+        visit(ref node.If);
+        visit(ref node.Then);
+        visit(ref node.Else);
+        visit(ref node.AdditionalProperties);
+        visit(ref node.PropertyNames);
+        visit(ref node.UnevaluatedProperties);
+        visit(ref node.Items);
+        visit(ref node.Contains);
+        visit(ref node.UnevaluatedItems);
+        All(node.PrefixItems);
+        if (node.Properties is not null)
+        {
+            foreach (PropertyEntry e in node.Properties.Values)
+            {
+                visit(ref e.Schema);
+            }
+        }
+
+        if (node.PatternProperties is not null)
+        {
+            foreach (PatternPropertyEntry e in node.PatternProperties)
+            {
+                visit(ref e.Schema);
+            }
+        }
+
+        if (node.Dependencies is not null)
+        {
+            foreach (DependencyEntry e in node.Dependencies)
+            {
+                visit(ref e.Schema);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Points flag-mode references at one representative of each set of identical subschemas: the same resource,
+    /// the same source text, no identifier keyword inside. A chain of conditionals that restates a property's schema
+    /// at every level then applies one node, which a fused object tests once and the JIT compiles once. Collecting
+    /// mode keeps every node, with its own location and paths. Skipped under a dynamic scope, where what a node
+    /// means can depend on the path that reached it.
+    /// </summary>
+    private void CanonicalizeEquivalentNodes()
+    {
+        if (DisableCanonical || this.UsesDynamicScope)
+        {
+            return;
+        }
+
+        int count = this.nodes.Count;
+        int[] canonical = new int[count];
+        var groups = new Dictionary<(int Resource, int Length), List<int>>();
+        for (int i = 0; i < count; i++)
+        {
+            canonical[i] = i;
+            int length = this.RawLength(i);
+            if (length < 8)
+            {
+                continue;
+            }
+
+            (int, int) key = (this.nodes[i].ResourceId, length);
+            if (!groups.TryGetValue(key, out List<int>? group))
+            {
+                group = [];
+                groups.Add(key, group);
+            }
+
+            group.Add(i);
+        }
+
+        bool any = false;
+        foreach (List<int> group in groups.Values)
+        {
+            if (group.Count < 2)
+            {
+                continue;
+            }
+
+            for (int a = 0; a < group.Count; a++)
+            {
+                int i = group[a];
+                if (canonical[i] != i || this.HasIdentifierKeyword(i))
+                {
+                    continue;
+                }
+
+                for (int b = a + 1; b < group.Count; b++)
+                {
+                    int j = group[b];
+                    if (canonical[j] == j && this.SameRawText(i, j))
+                    {
+                        canonical[j] = i;
+                        any = true;
+                    }
+                }
+            }
+        }
+
+        if (!any)
+        {
+            return;
+        }
+
+        void Map(ref ChildRef c)
+        {
+            if (c.IsPresent)
+            {
+                c.FastNode = canonical[c.FastNode];
+            }
+        }
+
+        foreach (SchemaNode node in this.nodes)
+        {
+            VisitChildRefs(node, Map);
+            if (node.DynamicRef is not null)
+            {
+                node.DynamicRef.FallbackNode = canonical[node.DynamicRef.FallbackNode];
+                for (int i = 0; i < node.DynamicRef.NodeByResource.Length; i++)
+                {
+                    if (node.DynamicRef.NodeByResource[i] >= 0)
+                    {
+                        node.DynamicRef.NodeByResource[i] = canonical[node.DynamicRef.NodeByResource[i]];
+                    }
+                }
+            }
+        }
+    }
+
+#if STJ
+    // The source generator's build of the compiler reads a subschema's text through System.Text.Json.
+    private int RawLength(int node) => this.targets[node].Element.GetRawText().Length;
+
+    private bool SameRawText(int a, int b) => string.Equals(this.targets[a].Element.GetRawText(), this.targets[b].Element.GetRawText(), StringComparison.Ordinal);
+
+    /// <summary>Whether a subschema's text declares an identifier or anchor (then it is not shared: its copies are distinct resources or anchors).</summary>
+    private bool HasIdentifierKeyword(int node)
+    {
+        string raw = this.targets[node].Element.GetRawText();
+        return raw.Contains("\"$id\"", StringComparison.Ordinal) || raw.Contains("\"$anchor\"", StringComparison.Ordinal) || raw.Contains("\"$dynamicAnchor\"", StringComparison.Ordinal) || raw.Contains("\"$recursiveAnchor\"", StringComparison.Ordinal)
+            || (this.nodes[node].Dialect == JsonSchemaDialect.Draft4 && raw.Contains("\"id\"", StringComparison.Ordinal));
+    }
+#else
+    private int RawLength(int node)
+    {
+        SchemaTarget target = this.targets[node];
+        using RawUtf8JsonString raw = ((IJsonDocument)target.Document.Document).GetRawValue(target.Index, includeQuotes: true);
+        return raw.Span.Length;
+    }
+
+    private bool SameRawText(int a, int b)
+    {
+        SchemaTarget ta = this.targets[a];
+        SchemaTarget tb = this.targets[b];
+        using RawUtf8JsonString ra = ((IJsonDocument)ta.Document.Document).GetRawValue(ta.Index, includeQuotes: true);
+        using RawUtf8JsonString rb = ((IJsonDocument)tb.Document.Document).GetRawValue(tb.Index, includeQuotes: true);
+        return ra.Span.SequenceEqual(rb.Span);
+    }
+
+    /// <summary>Whether a subschema's text declares an identifier or anchor (then it is not shared: its copies are distinct resources or anchors).</summary>
+    private bool HasIdentifierKeyword(int node)
+    {
+        SchemaTarget target = this.targets[node];
+        using RawUtf8JsonString raw = ((IJsonDocument)target.Document.Document).GetRawValue(target.Index, includeQuotes: true);
+        ReadOnlySpan<byte> text = raw.Span;
+        return text.IndexOf("\"$id\""u8) >= 0 || text.IndexOf("\"$anchor\""u8) >= 0 || text.IndexOf("\"$dynamicAnchor\""u8) >= 0 || text.IndexOf("\"$recursiveAnchor\""u8) >= 0
+            || (this.nodes[node].Dialect == JsonSchemaDialect.Draft4 && text.IndexOf("\"id\""u8) >= 0);
+    }
+#endif
 
     /// <summary>
     /// Marks array schemas whose only content is a leaf <c>items</c> schema plus size bounds.
