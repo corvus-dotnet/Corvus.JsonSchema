@@ -115,9 +115,11 @@ The tag push triggers the build workflow, which publishes to NuGet.org.
 an application"). It is recorded from the code being packaged by the build's `GenerateAotProfile` task
 (`.zf/config.ps1`), which runs in the compile phase on CI (`PostBuild`, Linux) before the package phase packs it:
 
-1. installs the .NET 11 runtime under `.zf/aot-profile` (dotnet-pgo is published on the dotnet-eng feed as a
-   .NET 11 tool only, `dotnet-pgo` 11.0.0-preview.6; the version is pinned in the task) and unpacks the tool;
-   installs `dotnet-trace`;
+1. finds a .NET 11 runtime for dotnet-pgo (the dotnet-eng feed publishes `dotnet-pgo` as a .NET 11 tool only,
+   11.0.0-preview.6, pinned in the task): on CI the pipeline installs the 11 SDK (`additionalNetSdkVersion` in
+   `.github/workflows/build.yml`, an exact RC version since setup-dotnet resolves `11.0.x` to released builds only);
+   locally the task takes it from `dotnet`, then from `~/.dotnet`, and only otherwise installs one under
+   `.zf/aot-profile`; downloads and unpacks the tool; installs `dotnet-trace`;
 2. gathers the Sourcemeta corpora from the benchmark model projects, publishes the cold runner framework-dependent,
    and traces its instrumented warm run over every corpus (`DOTNET_TieredPGO=1`, a call-count threshold of 10,000 so
    methods stay instrumented, `ReadyToRun=0`, the runtime provider at keyword 0x1E000080018 level 5);

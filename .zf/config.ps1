@@ -99,25 +99,46 @@ task PreBuild {
 # The native AOT profile the Corvus.Text.Json package carries (profiles/Corvus.Text.Json.mibc) is recorded from the
 # code being built: on CI in the compile phase, before the package phase packs it; locally on request
 # (BUILDVAR_GenerateAotProfile=true, or ./build.ps1 -Tasks GenerateAotProfile). Linux only: the trace needs the
-# instrumented JIT of a framework-dependent run and dotnet-pgo, which is not published as a tool for the SDK in use
-# (it is a .NET 11 tool on the dotnet-eng feed), so the task installs the .NET 11 runtime beside the build. The
-# result goes to src/Corvus.Text.Json/obj/profiles, which the package prefers to the checked-in file when present.
+# instrumented JIT of a framework-dependent run and dotnet-pgo, which the dotnet-eng feed publishes as a .NET 11
+# tool only, so a .NET 11 runtime must be present: the pipeline installs the 11 SDK (additionalNetSdkVersion in
+# build.yml); locally the task takes the runtime from `dotnet`, then from ~/.dotnet, and only otherwise installs
+# one under .zf/aot-profile. The result goes to src/Corvus.Text.Json/obj/profiles, which the package prefers to
+# the checked-in file when present.
 $GenerateAotProfile = [Convert]::ToBoolean((property BUILDVAR_GenerateAotProfile ($env:GITHUB_ACTIONS ? $true : $false)))
 $DotnetPgoVersion = "11.0.0-preview.6.26310.106"
 $DotnetPgoFeed = "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-eng/nuget/v3/flat2"
+$DotnetPgoRuntimeMajor = 11
 
 task GenerateAotProfile -If { $GenerateAotProfile -and $IsLinux } {
     $profileDir = Join-Path $here ".zf/aot-profile"
     $toolsDir = Join-Path $profileDir "tools"
     New-Item -ItemType Directory -Path $toolsDir -Force | Out-Null
 
-    $dotnet11 = Join-Path $profileDir "dotnet11"
-    if (-not (Test-Path (Join-Path $dotnet11 "dotnet"))) {
-        Write-Host "Installing the .NET 11 runtime for dotnet-pgo"
-        $installScript = Join-Path $profileDir "dotnet-install.sh"
-        Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.sh" -OutFile $installScript
-        exec { & bash $installScript --channel 11.0 --quality preview --runtime dotnet --install-dir $dotnet11 }
+    # The dotnet that runs dotnet-pgo: one whose root has a .NET $DotnetPgoRuntimeMajor runtime.
+    function Test-HasRuntime([string] $dotnetExe) {
+        return (Test-Path $dotnetExe) -and ((& $dotnetExe --list-runtimes 2>$null) -match "^Microsoft\.NETCore\.App $DotnetPgoRuntimeMajor\.")
     }
+    $pgoDotnet = "dotnet"
+    $pgoDotnetRoot = $null
+    if (-not (Test-HasRuntime (Get-Command dotnet).Source)) {
+        $userDotnet = Join-Path $HOME ".dotnet/dotnet"
+        $localDotnet = Join-Path $profileDir "dotnet11/dotnet"
+        if (Test-HasRuntime $userDotnet) {
+            $pgoDotnet = $userDotnet
+        }
+        elseif (Test-HasRuntime $localDotnet) {
+            $pgoDotnet = $localDotnet
+        }
+        else {
+            Write-Host "No .NET $DotnetPgoRuntimeMajor runtime found for dotnet-pgo; installing one under $profileDir"
+            $installScript = Join-Path $profileDir "dotnet-install.sh"
+            Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.sh" -OutFile $installScript
+            exec { & bash $installScript --channel "$DotnetPgoRuntimeMajor.0" --quality preview --runtime dotnet --install-dir (Join-Path $profileDir "dotnet11") }
+            $pgoDotnet = $localDotnet
+        }
+        $pgoDotnetRoot = Split-Path $pgoDotnet -Parent
+    }
+    Write-Host "dotnet-pgo runs on $pgoDotnet"
 
     $pgoDir = Join-Path $toolsDir "dotnet-pgo/$DotnetPgoVersion"
     $pgoDll = Join-Path $pgoDir "tools/net11.0/any/dotnet-pgo.dll"
@@ -164,14 +185,14 @@ task GenerateAotProfile -If { $GenerateAotProfile -and $IsLinux } {
     $outDir = Join-Path $here "src/Corvus.Text.Json/obj/profiles"
     New-Item -ItemType Directory -Path $outDir -Force | Out-Null
     $mibc = Join-Path $outDir "Corvus.Text.Json.mibc"
-    $env:DOTNET_ROOT = $dotnet11
+    if ($pgoDotnetRoot) { $env:DOTNET_ROOT = $pgoDotnetRoot }
     try {
-        exec { & (Join-Path $dotnet11 "dotnet") $pgoDll create-mibc --trace $nettrace --output $mibc }
+        exec { & $pgoDotnet $pgoDll create-mibc --trace $nettrace --output $mibc }
         $dump = Join-Path $profileDir "profile-dump.txt"
-        exec { & (Join-Path $dotnet11 "dotnet") $pgoDll dump -i $mibc -o $dump | Out-Null }
+        exec { & $pgoDotnet $pgoDll dump -i $mibc -o $dump | Out-Null }
     }
     finally {
-        Remove-Item Env:\DOTNET_ROOT -ErrorAction SilentlyContinue
+        if ($pgoDotnetRoot) { Remove-Item Env:\DOTNET_ROOT -ErrorAction SilentlyContinue }
     }
     $methods = (Select-String -Path $dump -Pattern "Corvus\.Text\.Json" | Measure-Object).Count
     if ((Get-Item $mibc).Length -lt 20000 -or $methods -lt 1000) {
