@@ -120,8 +120,11 @@ an application"). It is recorded from the code being packaged by the build's `Ge
    `.github/workflows/build.yml`, an exact RC version since setup-dotnet resolves `11.0.x` to released builds only);
    locally the task takes it from `dotnet`, then from `~/.dotnet`, and only otherwise installs one under
    `.zf/aot-profile`; downloads and unpacks the tool; installs `dotnet-trace`;
-2. gathers the Sourcemeta corpora from the benchmark model projects, publishes the cold runner framework-dependent,
-   and traces its instrumented warm run over every corpus (`DOTNET_TieredPGO=1`, a call-count threshold of 10,000 so
+2. gathers the Sourcemeta corpora from the benchmark model projects, publishes the cold runner framework-dependent
+   with the identity (assembly, file and informational version) read back from the `Corvus.Text.Json.dll` the build
+   produced, since the publish rebuilds the library into the output the package phase packs and a plain publish would
+   give it the default 1.0.0.0 (as 5.6.0 shipped), failing if the identity changes; then traces the runner's
+   instrumented warm run over every corpus (`DOTNET_TieredPGO=1`, a call-count threshold of 10,000 so
    methods stay instrumented, `ReadyToRun=0`, the runtime provider at keyword 0x1E000080018 level 5);
 3. `create-mibc` into `src/Corvus.Text.Json/obj/profiles/Corvus.Text.Json.mibc`, which `Corvus.Text.Json.csproj`
    packs in preference to the checked-in file when it exists (`obj` travels between the pipeline's phases in the

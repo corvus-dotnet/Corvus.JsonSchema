@@ -1,6 +1,23 @@
 # Version History
 
+## V5.6.1
+
+V5.6.1 repairs the `Corvus.Text.Json` 5.6.0 package. Its `net10.0` assembly shipped with assembly version 1.0.0.0
+instead of 5.6.0.0, so on .NET 10 every package compiled against it (`Corvus.Text.Json.Validator`, `.Patch`, `.Jsonata`,
+`.JMESPath`, `.JsonPath`, `.JsonLogic`, `.Yaml`, `.Toon`, `.Compatibility`, the OpenAPI and AsyncAPI runtime
+packages) failed to load it: `FileNotFoundException: Could not load file or assembly 'Corvus.Text.Json, Version=5.6.0.0'`.
+Applications referencing only `Corvus.Text.Json` (source-generated types included), the `net9.0` and .NET Standard
+assemblies, and native AOT publishes were unaffected. **5.6.0 is withdrawn; use 5.6.1.**
+
+The cause was in the build: the `GenerateAotProfile` task that records the package's native AOT profile publishes a
+runner that references the library as a project, and that publish rebuilt `Corvus.Text.Json.dll` into the build
+output without the version the build had given it, after the build and before packaging. The task now reads the
+identity of the assembly the build produced and passes it to the publish, and fails if the assembly's identity
+changes. There are no code changes in this release.
+
 ## V5.6.0
+
+**Withdrawn: the `Corvus.Text.Json` package's `net10.0` assembly has the wrong assembly version (see V5.6.1).**
 
 V5.6.0 replaces the code-generated, per-keyword schema validation of the V5 engine with a runtime JSON Schema evaluator: a schema is compiled once into a plan graph and evaluated by a small set of loops that allocate nothing, in flag mode or with a results collector. Generated types embed the compiled program and validate through it, the `Corvus.Text.Json.Validator` package runs it directly without Roslyn or dynamic compilation, and the same evaluator is available as a public API for validating against schemas known only at run time. Measured over the 37 Sourcemeta corpora against Blaze, the runtime evaluator is faster on 31 of 37 with the instance already parsed, and on 37 of 37 (about a fifth of the cost per document) when each instance is parsed and validated once. Native AOT is a first-class target: the package carries a static optimisation profile that its build targets hand to the AOT compiler, so an application publishing with `PublishAot` starts its first validation in about 5 ms and evaluates within 6% of the JIT. See [RuntimeEvaluator.md](docs/RuntimeEvaluator.md), [SchemaEvaluator.md](docs/SchemaEvaluator.md), [Validator.md](docs/Validator.md), and [RuntimeEvaluatorPullRequest.md](docs/RuntimeEvaluatorPullRequest.md) for a map of the change.
 

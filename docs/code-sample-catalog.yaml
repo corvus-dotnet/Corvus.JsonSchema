@@ -1375,8 +1375,8 @@ main-docs:
     blocks:
       - {index: 0, language: yaml, lines: [18, 36]}
       - {index: 1, language: powershell, lines: [99, 107]}
-      - {index: 2, language: xml, lines: [144, 148]}
-      - {index: 3, language: xml, lines: [152, 154]}
+      - {index: 2, language: xml, lines: [147, 151]}
+      - {index: 3, language: xml, lines: [155, 157]}
   - path: "docs/RunningTests.md"
     blocks:
       - {index: 0, language: powershell, lines: [7, 10]}
