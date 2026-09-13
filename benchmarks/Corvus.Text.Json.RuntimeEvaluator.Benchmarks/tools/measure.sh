@@ -83,6 +83,26 @@ case $cmd in
       taskset -c $CORES $RUNNERS/aot-gen/$RUNNER generated warm 200 $c 2>/dev/null | $g >> $D/basis-genaot.log
     done
     python3 $HERE/blaze-compare.py --cli $JSONSCHEMA --corpus $C --quick $D/basis-jit.log --loop 200 --pin $CORES $(corpora) > $D/blaze-compare.log 2>&1
+    # Parse and evaluate once per instance (the shape of a service validating each request): ours timed in process;
+    # Blaze's by difference, the CLI validating ten copies of the corpus minus one instance, per instance, which also
+    # carries the CLI's per-instance bookkeeping (about 2 us).
+    for k in jit r2r aot gen genaot; do : > $D/pe-$k.log; done
+    : > $D/blaze-parseeval.log
+    first=1
+    for c in $(corpora); do
+      g=$([ $first = 1 ] && echo cat || echo "grep ^$c "); first=0
+      taskset -c $CORES dotnet $H parseeval 100 $c 2>/dev/null | $g >> $D/pe-jit.log
+      taskset -c $CORES $RUNNERS/r2r/$RUNNER parseeval 100 $c 2>/dev/null | $g >> $D/pe-r2r.log
+      taskset -c $CORES $RUNNERS/aot/$RUNNER parseeval 100 $c 2>/dev/null | $g >> $D/pe-aot.log
+      taskset -c $CORES dotnet $H generated parseeval 100 $c 2>/dev/null | $g >> $D/pe-gen.log
+      taskset -c $CORES $RUNNERS/aot-gen/$RUNNER generated parseeval 100 $c 2>/dev/null | $g >> $D/pe-genaot.log
+      s=$C/$c-schema.json; i=$C/$c-instances.jsonl; n=$(grep -c . $i)
+      head -1 $i > $D/one.jsonl; for r in 1 2 3 4 5 6 7 8 9 10; do cat $i; done > $D/ten.jsonl
+      t10=$(wall3 taskset -c $CORES $JSONSCHEMA validate --fast $s $D/ten.jsonl)
+      t1=$(wall3 taskset -c $CORES $JSONSCHEMA validate --fast $s $D/one.jsonl)
+      echo "$c $n $t10 $t1" >> $D/blaze-parseeval.log   # milliseconds, medians of three
+    done
+    rm -f $D/one.jsonl $D/ten.jsonl
     echo "warm logs in $D"
     ;;
   cold)

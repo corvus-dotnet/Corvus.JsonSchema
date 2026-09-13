@@ -41,6 +41,15 @@ for line in open(os.path.join(D, 'cold.log')):
                             genjitfirst=ms_of(m.group(17), 'first'), genaotfirst=ms_of(m.group(18), 'first'))
 
 w = {k: basis(f'basis-{k}.log') for k in ('jit', 'r2r', 'aot', 'gen', 'genaot')}
+pe = {k: basis(f'pe-{k}.log') for k in ('jit', 'r2r', 'aot', 'gen', 'genaot')}
+blaze_pe = {}
+bp = os.path.join(D, 'blaze-parseeval.log')
+if os.path.exists(bp):
+    for line in open(bp):
+        f = line.split()
+        if len(f) == 4:
+            n, t10, t1 = int(f[1]), float(f[2]), float(f[3])
+            blaze_pe[f[0]] = (t10 - t1) * 1e3 / (10 * n - 1) * n  # t10, t1 in ms; us per corpus pass, like warm_ns's basis
 corpora = sorted(k for k in cold if k in blaze and k in w['jit'])
 
 def mem(x):
@@ -49,34 +58,39 @@ def mem(x):
 rows = []
 for k in corpora:
     c = cold[k]
-    rows.append(('blaze-compile', k, c['blaze'], blaze[k], max(0.0, c['blazecompilecmd'] - c['base']), None))
-    rows.append(('blaze-template', k, c['blazetemplate'], blaze[k], 0.0, None))
+    rows.append(('blaze-compile', k, c['blaze'], blaze[k], max(0.0, c['blazecompilecmd'] - c['base']), None, blaze_pe.get(k)))
+    rows.append(('blaze-template', k, c['blazetemplate'], blaze[k], 0.0, None, blaze_pe.get(k)))
     for name, wk, coldk, compk in (('corvus-runtime-jit', 'jit', 'jit', c['jitcompile']), ('corvus-runtime-r2r', 'r2r', 'r2r', None),
                                     ('corvus-runtime-aot', 'aot', 'aot', c['aotcompile']), ('corvus-image-jit', 'jit', 'jitimage', c['jitload']),
                                     ('corvus-image-aot', 'aot', 'aotimage', c['aotload']), ('corvus-generated-jit', 'gen', 'genjit', c['genjitfirst']),
                                     ('corvus-generated-aot', 'genaot', 'genaot', c['genaotfirst'])):
         if k in w[wk]:
-            rows.append((name, k, c[coldk], w[wk][k][1], compk, w[wk][k][3]))
+            rows.append((name, k, c[coldk], w[wk][k][1], compk, w[wk][k][3], pe[wk][k][1] if k in pe[wk] else None))
 
-md = ["| implementation | corpus_name | cold_ns | warm_ns | compile_ns | memory |", "|---|---|---:|---:|---:|---:|"]
-csv = ["implementation,corpus_name,cold_ns,warm_ns,compile_ns,memory_bytes_per_eval"]
-for n, k, c, wv, cp, m in rows:
+def pev(x):
+    return 'n/a' if x is None else f"{x * 1e3:,.0f}"
+
+md = ["| implementation | corpus_name | cold_ns | warm_ns | parse_eval_ns | compile_ns | memory |", "|---|---|---:|---:|---:|---:|---:|"]
+csv = ["implementation,corpus_name,cold_ns,warm_ns,parse_eval_ns,compile_ns,memory_bytes_per_eval"]
+for n, k, c, wv, cp, m, pv in rows:
     cps = 'n/a' if cp is None else f"{cp * 1e6:,.0f}"
-    md.append(f"| {n} | {k} | {c * 1e6:,.0f} | {wv * 1e3:,.0f} | {cps} | {mem(m)} |")
-    csv.append(f"{n},{k},{c * 1e6:.0f},{wv * 1e3:.0f},{'' if cp is None else f'{cp * 1e6:.0f}'},{'' if m is None else f'{m:.0f}'}")
+    md.append(f"| {n} | {k} | {c * 1e6:,.0f} | {wv * 1e3:,.0f} | {pev(pv)} | {cps} | {mem(m)} |")
+    csv.append(f"{n},{k},{c * 1e6:.0f},{wv * 1e3:.0f},{'' if pv is None else f'{pv * 1e3:.0f}'},{'' if cp is None else f'{cp * 1e6:.0f}'},{'' if m is None else f'{m:.0f}'}")
 
 impls = []
 for r in rows:
     if r[0] not in impls:
         impls.append(r[0])
 med = statistics.median
-summ = ["| implementation | cold_ns (median) | warm_ns (median) | compile_ns (median) | memory (median B/eval) | warm faster than blaze on |", "|---|---:|---:|---:|---:|---:|"]
+summ = ["| implementation | cold_ns (median) | warm_ns (median) | parse_eval_ns (median) | compile_ns (median) | memory (median B/eval) | warm faster than blaze on | parse+eval faster than blaze on |", "|---|---:|---:|---:|---:|---:|---:|---:|"]
 for n in impls:
     rs = [r for r in rows if r[0] == n]
     wins = sum(1 for r in rs if r[3] < blaze[r[1]])
+    pwins = sum(1 for r in rs if r[6] is not None and r[1] in blaze_pe and r[6] < blaze_pe[r[1]])
     comp = [r[4] for r in rs if r[4] is not None]
     mems = [r[5] for r in rs if r[5] is not None]
-    summ.append(f"| {n} | {med(r[2] for r in rs) * 1e6:,.0f} | {med(r[3] for r in rs) * 1e3:,.0f} | {'n/a' if not comp else f'{med(comp) * 1e6:,.0f}'} | {'n/a' if not mems else f'{med(mems):.0f}'} | {wins} of {len(rs)} |")
+    pes = [r[6] for r in rs if r[6] is not None]
+    summ.append(f"| {n} | {med(r[2] for r in rs) * 1e6:,.0f} | {med(r[3] for r in rs) * 1e3:,.0f} | {'n/a' if not pes else f'{med(pes) * 1e3:,.0f}'} | {'n/a' if not comp else f'{med(comp) * 1e6:,.0f}'} | {'n/a' if not mems else f'{med(mems):.0f}'} | {wins} of {len(rs)} | {'n/a' if not pes else f'{pwins} of {len(pes)}'} |")
 
 suspect = []
 for k, d in w.items():
@@ -87,6 +101,7 @@ for k, d in w.items():
 head = ("# Corvus against Blaze: cold, warm, compile, memory\n\n"
         "cold_ns: one fresh process reading the schema, preparing it (compile, template or image load, nothing for generated code), reading the instances and validating every instance once (median of 3). "
         "warm_ns: one pass over the corpus at steady state, the sum over instances of the per-evaluation mean over 200 loops with the clock overhead subtracted, each corpus in its own process. "
+        "parse_eval_ns: one pass over the corpus parsing and evaluating each instance once (the shape of a service validating each request), the sum over instances of the per-instance mean over 100 loops with the clock overhead subtracted; Blaze's by difference, its CLI validating ten copies of the corpus minus one instance, per instance, which also carries the CLI's per-instance bookkeeping (about 2 us per instance). "
         "compile_ns: the preparation step alone (Blaze: its `compile --fast --minify` command less a bare `--version`; the in-process compile call for corvus-runtime; the image load for corvus-image; the first evaluation for the generated rows). "
         "memory: bytes allocated per evaluation at steady state; not measurable for Blaze from outside (its binary carries its own allocator; its heap is flat across loops).\n\n"
         "## Medians\n\n")

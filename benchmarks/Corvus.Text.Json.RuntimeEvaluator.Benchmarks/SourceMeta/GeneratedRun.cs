@@ -17,9 +17,13 @@ namespace Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta;
 /// </summary>
 public static class GeneratedRun
 {
+    /// <summary>Set by <c>generated parseeval</c>: each timed evaluation parses its instance first (see ParseCost.RunParseEval).</summary>
+    private static bool ParseEval;
+
     public static int Main(string[] args)
     {
         bool cold = args.Length > 0 && args[0] == "cold";
+        ParseEval = args.Length > 0 && args[0] == "parseeval";
         int loop = !cold && args.Length > 1 && int.TryParse(args[1], out int l) ? l : 200;
         string[] names = cold ? args[1..] : args[2..];
         string dir = Environment.GetEnvironmentVariable("COLD_ROOT") ?? Path.Combine(AppContext.BaseDirectory, "sourcemeta");
@@ -71,6 +75,12 @@ public static class GeneratedRun
             return;
         }
 
+        if (ParseEval)
+        {
+            RunParseEval<T>(name, lines, loop, tick);
+            return;
+        }
+
         var docs = new ParsedJsonDocument<T>[lines.Length];
         for (int i = 0; i < lines.Length; i++)
         {
@@ -113,6 +123,64 @@ public static class GeneratedRun
         {
             doc.Dispose();
         }
+    }
+
+    private static void RunParseEval<T>(string name, string[] lines, int loop, double tick)
+        where T : struct, IJsonElement<T>
+    {
+        byte[][] bytes = lines.Where(s => s.Length > 0).Select(System.Text.Encoding.UTF8.GetBytes).ToArray();
+        WarmParseEval<T>(bytes, 1000);
+        Thread.Sleep(400);
+        WarmParseEval<T>(bytes, 300);
+
+        double empty = BlazeBasis.ClockOverheadUs(loop, tick);
+        double total = 0;
+        double totalStdev = 0;
+        long allocated = GC.GetAllocatedBytesForCurrentThread();
+        foreach (byte[] line in bytes)
+        {
+            double sum = 0;
+            double squares = 0;
+            bool sink = false;
+            for (int i = 0; i < loop; i++)
+            {
+                long a = Stopwatch.GetTimestamp();
+                using (ParsedJsonDocument<T> d = ParsedJsonDocument<T>.Parse(line))
+                {
+                    sink ^= d.RootElement.EvaluateSchema();
+                }
+
+                long b = Stopwatch.GetTimestamp();
+                double delay = Math.Max(0, ((b - a) * tick) - empty);
+                sum += delay;
+                squares += delay * delay;
+            }
+
+            GC.KeepAlive(sink);
+            double mean = sum / loop;
+            total += mean;
+            totalStdev += Math.Sqrt(Math.Max(0, (squares / loop) - (mean * mean)));
+        }
+
+        double allocPerEval = (GC.GetAllocatedBytesForCurrentThread() - allocated) / (double)(loop * (long)bytes.Length);
+        Console.WriteLine($"{name,-24} {bytes.Length,9} {Format(total),14} {Format(totalStdev),14} {empty * 1000,12:F1} {allocPerEval,12:F2}");
+    }
+
+    private static void WarmParseEval<T>(byte[][] lines, int milliseconds)
+        where T : struct, IJsonElement<T>
+    {
+        long end = Stopwatch.GetTimestamp() + (long)(milliseconds / 1000.0 * Stopwatch.Frequency);
+        bool sink = false;
+        while (Stopwatch.GetTimestamp() < end)
+        {
+            foreach (byte[] line in lines)
+            {
+                using ParsedJsonDocument<T> d = ParsedJsonDocument<T>.Parse(line);
+                sink ^= d.RootElement.EvaluateSchema();
+            }
+        }
+
+        GC.KeepAlive(sink);
     }
 
     private static void Warm<T>(ParsedJsonDocument<T>[] docs, int milliseconds)

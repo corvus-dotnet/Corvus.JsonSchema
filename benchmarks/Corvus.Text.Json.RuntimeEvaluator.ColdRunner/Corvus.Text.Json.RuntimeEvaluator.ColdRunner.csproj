@@ -24,6 +24,7 @@
     <Compile Include="../Corvus.Text.Json.RuntimeEvaluator.Benchmarks/SourceMeta/ColdRun.cs" Link="ColdRun.cs" />
     <Compile Include="../Corvus.Text.Json.RuntimeEvaluator.Benchmarks/SourceMeta/SourceMetaCase.cs" Link="SourceMetaCase.cs" />
     <Compile Include="../Corvus.Text.Json.RuntimeEvaluator.Benchmarks/SourceMeta/BlazeBasis.cs" Link="BlazeBasis.cs" />
+    <Compile Include="../Corvus.Text.Json.RuntimeEvaluator.Benchmarks/SourceMeta/ParseCost.cs" Link="ParseCost.cs" />
   </ItemGroup>
 
   <!-- With -p:ColdGenerated=true the runner also carries the checked-in generated models of every corpus, so the

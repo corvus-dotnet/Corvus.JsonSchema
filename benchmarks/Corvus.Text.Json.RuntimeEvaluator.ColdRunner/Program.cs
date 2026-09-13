@@ -9,6 +9,11 @@ if (args.Length > 0 && args[0] == "generated")
 }
 #endif
 
+if (args.Length > 0 && args[0] == "parseeval")
+{
+    return Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.ParseCost.RunParseEval(args[1..]);
+}
+
 return args.Length > 0 && args[0] == "warm"
     ? Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.BlazeBasis.Run(args[1..])
     : Corvus.Text.Json.RuntimeEvaluator.Benchmarks.SourceMeta.ColdRun.Run(args);
