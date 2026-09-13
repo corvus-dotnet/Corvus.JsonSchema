@@ -31,6 +31,11 @@ public sealed class JsonSchemaEvaluator : IDisposable
     private readonly CompiledSchema program;
     private readonly int rootNode;
 
+    // The entry data of flag-mode evaluation over a parsed document, published as one object so a reader sees a
+    // consistent set; rebuilt when the program's node array changes (an entry point added). Null Entry: the program
+    // uses a dynamic scope, so every evaluation takes the general entry.
+    private FlagModeEntry? flagModeEntry;
+
     private JsonSchemaEvaluator(CompiledSchema program, int rootNode)
     {
         this.program = program;
@@ -215,7 +220,13 @@ public sealed class JsonSchemaEvaluator : IDisposable
     public bool Evaluate<T>(in T instance, IJsonSchemaResultsCollector? resultsCollector = null)
         where T : struct, IJsonElement<T>
     {
-        return Evaluator.Evaluate(this.program, this.rootNode, instance.ParentDocument, instance.ParentDocumentIndex, resultsCollector);
+        IJsonDocument document = instance.ParentDocument;
+        if (resultsCollector is null && document is JsonDocument parsed && this.FlagMode() is { Entry: SchemaNode entry } fast)
+        {
+            return Evaluator.EvaluateFlagRaw(this.program, fast.Nodes, entry, fast.EntryResource, fast.MaxDepth, parsed, document, this.rootNode, instance.ParentDocumentIndex);
+        }
+
+        return Evaluator.Evaluate(this.program, this.rootNode, document, instance.ParentDocumentIndex, resultsCollector);
     }
 #endif
 
@@ -230,6 +241,11 @@ public sealed class JsonSchemaEvaluator : IDisposable
     [CLSCompliant(false)]
     public bool Evaluate(IJsonDocument document, int index, IJsonSchemaResultsCollector? resultsCollector = null)
     {
+        if (resultsCollector is null && document is JsonDocument parsed && this.FlagMode() is { Entry: SchemaNode entry } fast)
+        {
+            return Evaluator.EvaluateFlagRaw(this.program, fast.Nodes, entry, fast.EntryResource, fast.MaxDepth, parsed, document, this.rootNode, index);
+        }
+
         return Evaluator.Evaluate(this.program, this.rootNode, document, index, resultsCollector);
     }
 #endif
@@ -266,6 +282,36 @@ public sealed class JsonSchemaEvaluator : IDisposable
     public void Dispose()
     {
         this.program.Dispose();
+    }
+
+    /// <summary>
+    /// The flag-mode entry data for the program's current node array: the cached object when it is still that
+    /// array's, otherwise rebuilt (a rare event: an entry point added to the program).
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private FlagModeEntry FlagMode()
+    {
+        FlagModeEntry? entry = this.flagModeEntry;
+        SchemaNode[] nodes = this.program.Nodes;
+        return entry is not null && ReferenceEquals(entry.Nodes, nodes) ? entry : this.RebuildFlagMode(nodes);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private FlagModeEntry RebuildFlagMode(SchemaNode[] nodes)
+    {
+        SchemaNode root = nodes[this.rootNode];
+        var entry = new FlagModeEntry(nodes, this.program.UsesDynamicScope ? null : nodes[root.FlagEntry], root.ResourceId, this.program.Options.MaxDepth);
+        this.flagModeEntry = entry;
+        return entry;
+    }
+
+    /// <summary>The entry data of flag-mode evaluation for one node array (see <see cref="FlagMode"/>).</summary>
+    private sealed class FlagModeEntry(SchemaNode[] nodes, SchemaNode? entry, int entryResource, int maxDepth)
+    {
+        public readonly SchemaNode[] Nodes = nodes;
+        public readonly SchemaNode? Entry = entry;
+        public readonly int EntryResource = entryResource;
+        public readonly int MaxDepth = maxDepth;
     }
 
     private static JsonSchemaEvaluatorOptions Clone(JsonSchemaEvaluatorOptions source)

@@ -117,7 +117,13 @@ internal readonly struct RawAccess : IDocumentAccess
         return state.RawUtf8.Slice(location, length);
     }
 
-    public ReadOnlyMemory<byte> RawValueMemory(ref EvaluationState state, IJsonDocument doc, int index) => state.Raw.GetRawValueMemory(index);
+    public ReadOnlyMemory<byte> RawValueMemory(ref EvaluationState state, IJsonDocument doc, int index)
+    {
+        ReadOnlySpan<byte> rows = state.RawRows;
+        int location = ReadInt32(rows, index) & LocationMask;
+        int length = ReadInt32(rows, index + SizeOrLengthOffset) & int.MaxValue;
+        return state.RawUtf8Memory.Slice(location, length);
+    }
 
     public bool IsEscaped(ref EvaluationState state, IJsonDocument doc, int index) => ReadInt32(state.RawRows, index + SizeOrLengthOffset) < 0;
 
@@ -229,14 +235,14 @@ internal readonly struct RawAccess : IDocumentAccess
         // Escaped strings are rare: unescape through the document; otherwise wrap the raw text without renting.
         return this.IsEscaped(ref state, doc, index)
             ? doc.GetUtf8JsonString(index, JsonTokenType.String)
-            : new UnescapedUtf8JsonString(state.Raw.GetRawValueMemory(index));
+            : new UnescapedUtf8JsonString(this.RawValueMemory(ref state, doc, index));
     }
 
     public UnescapedUtf8JsonString GetPropertyName(ref EvaluationState state, IJsonDocument doc, int valueIndex)
     {
         return this.IsEscaped(ref state, doc, valueIndex - RowSize)
             ? doc.GetPropertyNameUnescaped(valueIndex)
-            : new UnescapedUtf8JsonString(state.Raw.GetRawValueMemory(valueIndex - RowSize));
+            : new UnescapedUtf8JsonString(this.RawValueMemory(ref state, doc, valueIndex - RowSize));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -316,13 +322,13 @@ internal ref struct EvaluationState
     /// <summary>The resource evaluation started in: the outermost dynamic scope on every path.</summary>
     public int EntryResource;
 
-    /// <summary>Direct row access to the instance document, when <see cref="RawAccess"/> is in use.</summary>
-    public RawDocumentAccess Raw;
+    /// <summary>The UTF-8 text of the instance document as memory, when <see cref="RawAccess"/> is in use: for the values handed on as memory (unescaped strings).</summary>
+    public ReadOnlyMemory<byte> RawUtf8Memory;
 
-    /// <summary>The metadata rows of <see cref="Raw"/>.</summary>
+    /// <summary>The metadata rows of the instance document, when <see cref="RawAccess"/> is in use.</summary>
     public ReadOnlySpan<byte> RawRows;
 
-    /// <summary>The UTF-8 text of <see cref="Raw"/>.</summary>
+    /// <summary>The UTF-8 text the rows index into, when <see cref="RawAccess"/> is in use.</summary>
     public ReadOnlySpan<byte> RawUtf8;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

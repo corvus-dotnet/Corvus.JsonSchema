@@ -32,21 +32,31 @@ internal static partial class Evaluator
     {
         // Flag mode over a parsed document without a dynamic scope needs no scope buffer and nothing to release:
         // the common call, kept free of the stack allocation and the try/finally the general entry carries.
-        if (collector is null && !program.UsesDynamicScope && document is JsonDocument parsed && parsed.TryGetRawSpans(out RawDocumentAccess rawAccess, out ReadOnlySpan<byte> rows, out ReadOnlySpan<byte> utf8))
+        // (JsonSchemaEvaluator reaches EvaluateFlagRaw with the entry data it caches; this is the uncached form.)
+        if (collector is null && !program.UsesDynamicScope && document is JsonDocument parsed)
         {
-            return EvaluateFlagRaw(program, rootNode, document, index, rawAccess, rows, utf8);
+            SchemaNode[] nodes = program.Nodes;
+            SchemaNode root = nodes[rootNode];
+            return EvaluateFlagRaw(program, nodes, nodes[root.FlagEntry], root.ResourceId, program.Options.MaxDepth, parsed, document, rootNode, index);
         }
 
         return EvaluateGeneral(program, rootNode, document, index, collector);
     }
 
-    private static bool EvaluateFlagRaw(CompiledSchema program, int rootNode, IJsonDocument document, int index, in RawDocumentAccess raw, ReadOnlySpan<byte> rows, ReadOnlySpan<byte> utf8)
+    /// <summary>
+    /// Flag mode over a parsed document without a dynamic scope, from the entry data the caller holds: the node the
+    /// evaluation enters (the root's flag entry), its resource and the depth limit. The document writes its spans
+    /// straight into the state; a document without local rows takes the general entry.
+    /// </summary>
+    internal static bool EvaluateFlagRaw(CompiledSchema program, SchemaNode[] nodes, SchemaNode entry, int entryResource, int maxDepth, JsonDocument parsed, IJsonDocument document, int rootNode, int index)
     {
-        SchemaNode[] nodes = program.Nodes;
-        SchemaNode root = nodes[rootNode];
-
         // Every field written once, in place: an object initializer builds a zeroed temporary and copies it over.
         EvaluationState state;
+        if (!parsed.TryGetRawSpans(out state.RawUtf8Memory, out state.RawRows, out state.RawUtf8))
+        {
+            return EvaluateGeneral(program, rootNode, document, index, null);
+        }
+
         state.Program = program;
         state.Nodes = nodes;
         state.Collector = null;
@@ -54,13 +64,10 @@ internal static partial class Evaluator
         state.ScopeDepth = 0;
         state.RentedScope = null;
         state.Depth = 0;
-        state.MaxDepth = program.Options.MaxDepth;
+        state.MaxDepth = maxDepth;
         state.UsesDynamicScope = false;
-        state.EntryResource = root.ResourceId;
-        state.Raw = raw;
-        state.RawRows = rows;
-        state.RawUtf8 = utf8;
-        return EvalChildFast<RawAccess>(nodes[root.FlagEntry], document, index, ref state);
+        state.EntryResource = entryResource;
+        return EvalChildFast<RawAccess>(entry, document, index, ref state);
     }
 
     // Not inlined: its scope buffer would otherwise sit in the flag-mode entry's frame and be zeroed on every call.
@@ -82,12 +89,7 @@ internal static partial class Evaluator
         };
 
         SchemaNode root = nodes[rootNode];
-        bool raw = document is JsonDocument jsonDocument && jsonDocument.TryGetRawAccess(out state.Raw);
-        if (raw)
-        {
-            state.RawRows = state.Raw.Rows;
-            state.RawUtf8 = state.Raw.Utf8.Span;
-        }
+        bool raw = document is JsonDocument jsonDocument && jsonDocument.TryGetRawSpans(out state.RawUtf8Memory, out state.RawRows, out state.RawUtf8);
 
         // A root that is nothing but a $ref reports against its target, as a generated model rooted at a reduced
         // type does; the root context carries the target's schema location. Flag mode starts there too.

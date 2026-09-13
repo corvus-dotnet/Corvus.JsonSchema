@@ -378,13 +378,12 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
 
     /// <inheritdoc/>
     [CLSCompliant(false)]
-    public override bool TryGetRawSpans(out RawDocumentAccess access, out ReadOnlySpan<byte> rows, out ReadOnlySpan<byte> utf8)
+    public override bool TryGetRawSpans(out ReadOnlyMemory<byte> utf8Memory, out ReadOnlySpan<byte> rows, out ReadOnlySpan<byte> utf8)
     {
         CheckNotDisposed();
-        byte[] data = _parsedData.RawData;
         ReadOnlyMemory<byte> text = _utf8Json;
-        access = new RawDocumentAccess(data, text);
-        rows = data;
+        utf8Memory = text;
+        rows = _parsedData.RawData;
         utf8 = _utf8Array is byte[] array ? new ReadOnlySpan<byte>(array, _utf8Start, text.Length) : text.Span;
         return true;
     }

@@ -803,6 +803,32 @@ yamllint (0.79 of the pre-round baseline to 1.01): forcing the inline at the ent
 inlines inside it, the same lesson as an earlier attempt to inline the flag-mode entry. The attributes are not in
 the tree; the static profile is the route for AOT and the JIT keeps its own judgement.
 
+## The entry floor (2026-09-13)
+
+What an evaluation costs before it reads the instance, measured by putting synthetic schemas over yamllint's own
+instances (984 objects of about 350 bytes): the empty schema `{}`, `{"type":"object"}`, and yamllint's root reduced
+to its one property. On the harness (per evaluation, clock overhead subtracted): the empty schema 7.5 ns, the type
+test free, the one-property root 13 ns, yamllint itself 13.5. Blaze on the same files: the empty schema under 1
+ns, the one-property root 6.9, yamllint 7.3. So the fixed cost of entering an evaluation was more than half of
+yamllint, the whole of importmap's gap and a third of helm-chart-lock's, and Blaze pays next to nothing for it: a
+compiled closure with no state to build.
+
+The tier-1 listing of the public `Evaluate` on the empty schema, about 110 instructions, showed where the 26 cycles
+went: a five-load dependent chain to reach the node the evaluation enters (program, its node array, the root, its
+flag entry, that node's plan), two bounds checks on the way, the raw-access object built from the document and
+copied into the state beside the spans, the spans spilled to the stack and reloaded, and the depth limit and entry
+resource each fetched through two more loads. The evaluator now caches the entry data (node array, entry node, its
+resource, the depth limit) in one immutable object per `JsonSchemaEvaluator`, published atomically and rebuilt
+when the program's node array changes (an entry point added), so the chain is two loads; the document writes its
+spans and its text memory straight into the state's fields through `out` parameters; and the raw-access object is
+gone from the state, the one memory-returning accessor slicing the text memory itself. The frame went from 216 to
+168 bytes (five zeroing stores from seven). Alternating A/B against the committed head: the empty schema 0.68
+(8.7 to 5.9 ns), yamllint 0.89, importmap 0.96, jsconfig 0.97, aws-cdk 0.98, cypress 0.99, the large corpora
+within noise. What remains of the floor is the frame (six callee-saved registers, the zeroing of a state that
+holds eight GC references), the exact-type checks of the document, and the state's field writes; a smaller state
+would need the scope and collector fields moved behind an indirection the general path pays for, which was not
+worth it for another nanosecond.
+
 ## The four-axis table (2026-09-12, evening)
 
 One table, eight implementations by 37 corpora, four measures each: `summary2-2026-09-12.md` in the session notes.
