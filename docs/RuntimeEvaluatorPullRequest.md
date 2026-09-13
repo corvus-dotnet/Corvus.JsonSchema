@@ -14,9 +14,10 @@ and the packaging that keeps native AOT within 6% of the JIT.
 2. **[RuntimeEvaluatorPrecompilation.md](RuntimeEvaluatorPrecompilation.md)**: the engineering notes, round by
    round, with the measurements that decided each step. Long; the sections "The four-axis table", "The entry
    floor", "The parse step" and "Where ui5 spends its time" are the ones with the conclusions.
-3. **[measurements/2026-09-13](measurements/2026-09-13/)**: the end-of-branch tables. `four-axis-table.md` is the
-   whole comparison (cold, warm, parse-and-evaluate, compile, memory; nine implementations by 37 corpora);
-   `parse-and-evaluate-corvus-vs-blaze.md` is the one that describes a service validating each request once.
+3. **[RuntimeEvaluatorMeasurements.md](RuntimeEvaluatorMeasurements.md)**: the end-of-branch tables (the whole
+   comparison of cold, warm, parse-and-evaluate, compile and memory, nine implementations by 37 corpora; the
+   parse-and-evaluate table that describes a service validating each request once; the warm table). The data
+   files behind them are in `measurements/2026-09-13/`.
 4. **[ReleaseProcess.md](ReleaseProcess.md)**, "The native AOT profile": what the build does before packaging.
 
 ## The code, in reading order

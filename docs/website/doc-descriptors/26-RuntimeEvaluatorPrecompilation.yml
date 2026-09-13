@@ -1,0 +1,3 @@
+source: RuntimeEvaluatorPrecompilation.md
+navTitle: "Runtime Evaluator Engineering Notes"
+description: "Round-by-round engineering notes for the runtime evaluator: program images, plans, the name lookups, cold start, native AOT profiles, and every measurement against Blaze that decided each step."
