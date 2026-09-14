@@ -19,6 +19,9 @@
 # confined to that file is reported but does not fail the check. The committed src/Corvus.Text.Json.AsyncApi30/Generated
 # and tests/Corvus.Text.Json.Tests.MigrationModels.V5 files are regenerated on release and may lag the generator, so the
 # check compares generator-before with generator-after, and only reports how far the committed files are from fresh output.
+# Take the snapshot and the check in the same worktree: the generator's raw string literals (the emitted
+# JsonSchemaTypeGeneratorAttribute, for one) take the line endings of its source files on disk, so a worktree whose .cs files
+# are not checked out with CRLF (.gitattributes) builds a generator that emits different line endings.
 set -u
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 MODE=${1:-check}; shift || true
@@ -50,7 +53,9 @@ generate src/Corvus.Text.Json.OpenApi31/OpenApi31.json Corvus.Text.Json.OpenApi3
 for s in person:MigrationPerson nested:MigrationNested composite:MigrationComposite item-array:MigrationItemArray int-vector:MigrationIntVector status-enum:MigrationStatusEnum tuple:MigrationTuple union:MigrationUnion pattern-union:MigrationPatternUnion with-defaults:MigrationWithDefaults; do
   generate "tests/Corvus.Text.Json.Tests.MigrationSchemas/migration-${s%%:*}.json" Corvus.Text.Json.Tests.MigrationModels.V5 "${s##*:}" migration
 done
-for p in $CONSUMERS; do [ $BUILD = 1 ] && build "$p"; done
+# Clear each consumer's net10.0 intermediate folder first: Roslyn never deletes emitted files, so an emitted-files folder can
+# keep files from an older generator, and without its intermediate assembly the build cannot skip compilation.
+for p in $CONSUMERS; do [ $BUILD = 1 ] && { rm -rf "$ROOT/$p/obj/$CONFIGURATION/net10.0"; build "$p"; }; done
 
 case $MODE in
   snapshot)
