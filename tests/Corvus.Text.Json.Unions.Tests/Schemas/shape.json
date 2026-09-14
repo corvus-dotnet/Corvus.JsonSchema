@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "A shape: one of a circle, a square, a label or a list of shapes.",
+  "oneOf": [
+    { "$ref": "#/$defs/circle" },
+    { "$ref": "#/$defs/square" },
+    { "type": "string" },
+    { "type": "array", "items": { "$ref": "#" } }
+  ],
+  "$defs": {
+    "circle": {
+      "type": "object",
+      "properties": { "kind": { "const": "circle" }, "radius": { "type": "number" } },
+      "required": [ "kind", "radius" ]
+    },
+    "square": {
+      "type": "object",
+      "properties": { "kind": { "const": "square" }, "side": { "type": "number" } },
+      "required": [ "kind", "side" ]
+    }
+  }
+}

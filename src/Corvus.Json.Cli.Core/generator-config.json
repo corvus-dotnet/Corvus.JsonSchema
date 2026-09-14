@@ -83,6 +83,10 @@
             "type": "integer",
             "description": "The maximum estimated number of captured value slots an object type's property-parameter Build(...) overload may hold before it is omitted (and callers fall back to the delegate/context Build form). Defaults to 32 when unset."
         },
+        "unions": {
+            "type": "boolean",
+            "description": "If true (the default), a type whose schema is a oneOf or anyOf composition is also a C# union: with the C# 15 compiler (the .NET 11 SDK) switch and is patterns over its branch types work, on any target framework except .NET Framework (V5 engine only)."
+        },
         "nativeEnums": {
             "$ref": "#/$defs/nativeEnums",
             "description": "Controls emission of native C# enums on generated types (V5 engine only). StringEnums emits a nested enum for pure string-enum schemas; FlagsObjects emits a nested [Flags] enum for objects whose declared properties are all boolean; All (the default) emits both; None emits neither."

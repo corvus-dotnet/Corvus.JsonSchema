@@ -121,6 +121,7 @@ public sealed class CorePartial : ICodeFileBuilder
                         .PopJsonPropertyNamesPrebakedClassNameAndScope()
                         .PopJsonSchemaClassNameAndScope()
                     .EndClassStructOrEnumDeclaration()
+                    .AppendUnionPartial(typeDeclaration)
                 .EndTypeDeclarationNesting(typeDeclaration)
                 .EndNamespace()
             .EndFile(typeDeclaration, string.Empty);

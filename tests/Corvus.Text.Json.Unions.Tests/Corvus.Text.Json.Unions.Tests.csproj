@@ -1,0 +1,27 @@
+<Project Sdk="MSTest.Sdk">
+  <PropertyGroup>
+    <!-- Unions are a compiler feature (C# 15, the .NET 11 SDK), available for every target framework except .NET
+         Framework, whose compiler refuses the provider's static interface members (CS8701). The net481 target
+         compiles the same generated models (with the union partial excluded) and checks the members are absent;
+         the CI test matrix runs every test project for each framework, so the project must have both. -->
+    <TargetFrameworks>net10.0;net481</TargetFrameworks>
+    <LangVersion>preview</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.SourceGenerator\Corvus.Text.Json.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <PackageReference Include="System.Memory" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="Schemas\*.json" />
+  </ItemGroup>
+</Project>

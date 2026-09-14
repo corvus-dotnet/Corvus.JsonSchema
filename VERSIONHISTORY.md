@@ -1,5 +1,28 @@
 # Version History
 
+## V5.7.0
+
+V5.7.0 makes every generated `oneOf`/`anyOf` type a C# union, and moves the build to the .NET 11 SDK.
+
+### New features
+
+- **Generated `oneOf`/`anyOf` types are C# unions.** With the C# 15 compiler (the .NET 11 SDK or later; the project can target any target framework except .NET Framework), a `switch` or `is` pattern over the branch types works, is exhaustive without a fallback arm, and does not box:
+
+  ```csharp
+  string description = shape switch
+  {
+      Shape.Circle c => $"circle {(double)c.Radius}",
+      Shape.Square s => $"square {(double)s.Side}",
+      null => "not a shape",   // a value that matches no branch
+  };
+  ```
+
+  The type carries `[System.Runtime.CompilerServices.Union]` and a nested `IUnionMembers` provider whose static `Create` factories declare the cases (so the struct's own constructors are not cases), with `Value`, `HasValue` and one `TryGetValue(out Case)` per branch implemented explicitly: nothing new appears on the type's public surface, older compilers ignore the members, and `Match` is unchanged. The cases, their order and the probes are those of `Match`; for an `anyOf` whose branches overlap, `Value` is the first valid branch in schema order and a `switch` picks the first arm whose branch validates, as `Match` argument order does, while `MatchEvery` still visits every matching branch. A composition with a branch that accepts anything, or that reduces to the type itself, is not a union. A value matching no branch has a `null` union value and throws `SwitchExpressionException` from a `switch` without a `null` arm. For target frameworks before .NET 11 the generator emits an internal `UnionAttribute` polyfill once per assembly (`Corvus__UnionAttribute`); define `CORVUS_TEXT_JSON_NO_UNION_ATTRIBUTE_POLYFILL` if the project already has one. Off switch: `--unions false` (CLI), `<CorvusTextJsonUnions>false</CorvusTextJsonUnions>` (source generator), `"unions": false` (config file). See [#961](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/961).
+
+### Build
+
+- The build uses the .NET 11 RC SDK (`global.json`, CI), which is what compiles the union tests; the packages' target frameworks are unchanged.
+
 ## V5.6.1
 
 V5.6.1 repairs the `Corvus.Text.Json` 5.6.0 package. Its `net10.0` assembly shipped with assembly version 1.0.0.0

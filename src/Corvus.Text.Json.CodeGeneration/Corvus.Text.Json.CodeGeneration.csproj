@@ -44,6 +44,7 @@
     <Compile Include="CodeGeneratorExtensions.Builder.cs" />
     <Compile Include="CodeGeneratorExtensions.Operators.cs" />
     <Compile Include="CodeGeneratorExtensions.Conversions.cs" />
+    <Compile Include="CodeGeneratorExtensions.Unions.cs" />
     <Compile Include="CodeGeneratorExtensions.Documentation.cs" />
     <Compile Include="CodeGeneratorExtensions.MemberNames.cs" />
     <Compile Include="CodeGeneratorExtensions.NativeEnums.cs" />

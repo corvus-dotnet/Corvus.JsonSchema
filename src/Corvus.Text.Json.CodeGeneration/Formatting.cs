@@ -33,6 +33,11 @@ public static class Formatting
     /// </remarks>
     public const string GlobalDeclarationsFileName = "Corvus__GlobalDeclarations";
 
+    /// <summary>
+    /// The name of the file that carries the <c>[Union]</c> attribute polyfill for target frameworks before .NET 11.
+    /// </summary>
+    public const string UnionAttributeFileName = "Corvus__UnionAttribute";
+
     private static readonly string[] Keywords =
     [
         "abstract", "as", "base", "bool",
