@@ -1066,7 +1066,7 @@ string result = v5.Match(
     static (in MigrationUnion v) => "none");
 ```
 
-V5 only, with the .NET 11 SDK or later (any target framework): the generated type is also a C# union, so a
+V5 only, with the .NET 11 SDK or later (any target framework except .NET Framework): the generated type is also a C# union, so a
 `switch` over the variants is exhaustive and does not box. There is no V4 equivalent.
 
 ```csharp

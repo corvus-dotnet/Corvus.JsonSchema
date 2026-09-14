@@ -6,7 +6,7 @@ V5.7.0 makes every generated `oneOf`/`anyOf` type a C# union, and moves the buil
 
 ### New features
 
-- **Generated `oneOf`/`anyOf` types are C# unions.** With the C# 15 compiler (the .NET 11 SDK or later; the project can target any supported framework, netstandard2.0 included), a `switch` or `is` pattern over the branch types works, is exhaustive without a fallback arm, and does not box:
+- **Generated `oneOf`/`anyOf` types are C# unions.** With the C# 15 compiler (the .NET 11 SDK or later; the project can target any target framework except .NET Framework), a `switch` or `is` pattern over the branch types works, is exhaustive without a fallback arm, and does not box:
 
   ```csharp
   string description = shape switch

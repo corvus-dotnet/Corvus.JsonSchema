@@ -33,7 +33,7 @@ using var parsedArray = ParsedJsonDocument<DiscriminatedUnionByType>.Parse(array
 Console.WriteLine(
     ProcessDiscriminatedUnion(parsedArray.RootElement));
 
-// With the C# 15 compiler (the .NET 11 SDK or later, any target framework) the generated type is also a
+// With the C# 15 compiler (the .NET 11 SDK or later, any target framework except .NET Framework) the generated type is also a
 // C# union: a switch over the branch types is exhaustive, and it does not box. A value that matches no branch
 // has a null union value, so add a null arm when the input is untrusted.
 string ProcessWithSwitch(in DiscriminatedUnionByType value) => value switch

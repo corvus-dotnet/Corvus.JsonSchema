@@ -298,7 +298,7 @@ using JsonDocumentBuilder<Shape.Circle.Mutable> circleBuilder =
 Shape shape = circleBuilder.RootElement;
 ```
 
-Reading the union back goes through `Match`, or, with the .NET 11 SDK or later (any target framework), a
+Reading the union back goes through `Match`, or, with the .NET 11 SDK or later (any target framework except .NET Framework), a
 `switch` over the branch types, since a `oneOf`/`anyOf` type is also a C# union:
 
 ```csharp

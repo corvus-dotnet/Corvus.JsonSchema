@@ -8,7 +8,7 @@ using Corvus.Json.CodeGeneration;
 namespace Corvus.Text.Json.CodeGeneration;
 
 /// <summary>
-/// Emits the members that make a <c>oneOf</c>/<c>anyOf</c> composition type a C# union.
+/// Emits the partial declaration that makes a <c>oneOf</c>/<c>anyOf</c> composition type a C# union.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -16,48 +16,23 @@ namespace Corvus.Text.Json.CodeGeneration;
 /// whose cases are declared by the static <c>Create</c> factories of a nested <c>IUnionMembers</c> interface; a
 /// <c>switch</c> or <c>is</c> pattern over the case types is then exhaustive and, because the provider also declares
 /// the non-boxing <c>HasValue</c>/<c>TryGetValue</c> members, never boxes. The cases and the probes are the same as
-/// the type's <c>Match</c> method's: a case matches when its schema evaluates true for this element. Nothing here
-/// depends on the target framework; the attribute is polyfilled for frameworks before .NET 11
-/// (<see cref="Formatting.UnionAttributeFileName"/>). Older compilers see ordinary members.
+/// the type's <c>Match</c> method's: a case matches when its schema evaluates true for this element. The attribute is
+/// polyfilled for target frameworks before .NET 11 (<see cref="Formatting.UnionAttributeFileName"/>), and older
+/// compilers see ordinary members. The declaration is left out of .NET Framework targets, whose compiler refuses
+/// interface members with bodies (CS8701).
 /// </para>
 /// </remarks>
 internal static partial class CodeGeneratorExtensions
 {
     /// <summary>
-    /// Appends the <c>[Union]</c> attribute if the type is a union.
+    /// Appends a second partial declaration of the type that makes it a C# union, if it is one: the
+    /// <c>[Union]</c> attribute, the nested <c>IUnionMembers</c> provider and its explicit implementation, under
+    /// <c>#if !NETFRAMEWORK</c>.
     /// </summary>
     /// <param name="generator">The generator.</param>
     /// <param name="typeDeclaration">The type declaration.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator AppendUnionAttribute(this CodeGenerator generator, TypeDeclaration typeDeclaration)
-    {
-        if (generator.IsCancellationRequested || typeDeclaration.UnionCaseTypes() is null)
-        {
-            return generator;
-        }
-
-        return generator.AppendLineIndent("[global::System.Runtime.CompilerServices.Union]");
-    }
-
-    /// <summary>
-    /// Gets the union member provider interface the type implements: one entry when the type is a union, otherwise none.
-    /// </summary>
-    /// <param name="typeDeclaration">The type declaration.</param>
-    /// <returns>The interfaces to add to the type declaration.</returns>
-    public static ConditionalCodeSpecification[] UnionMembersInterfaces(this TypeDeclaration typeDeclaration)
-    {
-        return typeDeclaration.UnionCaseTypes() is null
-            ? []
-            : [new ConditionalCodeSpecification($"{typeDeclaration.DotnetTypeName()}.IUnionMembers")];
-    }
-
-    /// <summary>
-    /// Appends the union member provider and its implementation if the type is a union.
-    /// </summary>
-    /// <param name="generator">The generator.</param>
-    /// <param name="typeDeclaration">The type declaration.</param>
-    /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator AppendUnionMembers(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    public static CodeGenerator AppendUnionPartial(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
         if (generator.IsCancellationRequested)
         {
@@ -70,14 +45,22 @@ internal static partial class CodeGeneratorExtensions
         }
 
         string typeName = typeDeclaration.DotnetTypeName();
+        string accessibility = typeDeclaration.DotnetAccessibility() == GeneratedTypeAccessibility.Internal ? "internal" : "public";
 
         generator
-            .ReserveNameIfNotReserved("IUnionMembers")
             .AppendSeparatorLine()
+            .AppendLine("#if !NETFRAMEWORK")
+            .AppendLineIndent("/// <content>")
+            .AppendLineIndent("/// The type as a C# union: with a C# 15 compiler (the .NET 11 SDK or later) a <c>switch</c> or <c>is</c> pattern tests")
+            .AppendLineIndent("/// the branch types directly. Not available when targeting .NET Framework.")
+            .AppendLineIndent("/// </content>")
+            .AppendLineIndent("[global::System.Runtime.CompilerServices.Union]")
+            .AppendLineIndent(accessibility, " readonly partial struct ", typeName, " : ", typeName, ".IUnionMembers")
+            .AppendLineIndent("{")
+            .PushIndent()
             .AppendLineIndent("/// <summary>")
             .AppendLineIndent("/// The C# union members of this type: one case for each branch of the schema's composition, in schema order.")
-            .AppendLineIndent("/// With a C# 15 compiler (the .NET 11 SDK) a <c>switch</c> or <c>is</c> pattern tests the case types directly; a")
-            .AppendLineIndent("/// value that matches no case has a <see langword=\"null\"/> <see cref=\"Value\"/>, which a <c>null</c> pattern handles.")
+            .AppendLineIndent("/// A value that matches no case has a <see langword=\"null\"/> <see cref=\"Value\"/>, which a <c>null</c> pattern handles.")
             .AppendLineIndent("/// </summary>")
             .AppendLineIndent("public interface IUnionMembers")
             .AppendLineIndent("{")
@@ -194,6 +177,9 @@ internal static partial class CodeGeneratorExtensions
                 .AppendLineIndent("}");
         }
 
-        return generator;
+        return generator
+            .PopIndent()
+            .AppendLineIndent("}")
+            .AppendLine("#endif");
     }
 }

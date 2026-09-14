@@ -85,7 +85,7 @@
         },
         "unions": {
             "type": "boolean",
-            "description": "If true (the default), a type whose schema is a oneOf or anyOf composition is also a C# union: with the C# 15 compiler (the .NET 11 SDK) switch and is patterns over its branch types work, on any target framework (V5 engine only)."
+            "description": "If true (the default), a type whose schema is a oneOf or anyOf composition is also a C# union: with the C# 15 compiler (the .NET 11 SDK) switch and is patterns over its branch types work, on any target framework except .NET Framework (V5 engine only)."
         },
         "nativeEnums": {
             "$ref": "#/$defs/nativeEnums",

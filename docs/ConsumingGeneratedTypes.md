@@ -49,7 +49,7 @@ string description = shape.Match(
     static (in Shape none) => "not a shape");
 ```
 
-**.NET 11 SDK or later, any target framework:** the generated type is also a C# union, so a `switch` or `is`
+**.NET 11 SDK or later, any target framework except .NET Framework:** the generated type is also a C# union, so a `switch` or `is`
 pattern over the branch types is exhaustive without a fallback arm, and it does not box. A value that matches
 no branch has a `null` union value, so add a `null` arm when the input is untrusted, or test `HasValue` through
 the type's `IUnionMembers` interface. The requirement is the C# 15 compiler in the .NET 11 SDK; the project can

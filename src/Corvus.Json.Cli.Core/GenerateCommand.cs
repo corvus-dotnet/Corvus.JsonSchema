@@ -102,7 +102,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         public NativeEnums NativeEnums { get; init; }
 
         [CommandOption("--unions <VALUE>")]
-        [Description("Whether a generated oneOf/anyOf type is also a C# union (default true; V5 engine only). With the C# 15 compiler (the .NET 11 SDK) switch and is patterns over the branch types then work, on any target framework. Pass '--unions false' to leave the union members out.")]
+        [Description("Whether a generated oneOf/anyOf type is also a C# union (default true; V5 engine only). With the C# 15 compiler (the .NET 11 SDK) switch and is patterns over the branch types then work, on any target framework except .NET Framework. Pass '--unions false' to leave the union members out.")]
         [DefaultValue(true)]
         public bool Unions { get; init; }
 
