@@ -1,4 +1,4 @@
-// <copyright file="IncrementalSourceGenerator.cs" company="Endjin Limited">
+﻿// <copyright file="IncrementalSourceGenerator.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 // <licensing>
@@ -332,10 +332,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         IReadOnlyDictionary<string, FormatAssertionMode>? formatModeOverrides,
         bool emitNativeStringEnums,
         bool emitNativeFlagsEnums,
-        bool emitUnions) : IGlobalOptions
+        bool emitUnions) : IGlobalOptions, IEquatable<GlobalOptions>
     {
-        private readonly List<CSharpLanguageProvider.NamedType> _namedTypes = [];
-
         public IVocabulary FallbackVocabulary { get; } = fallbackVocabulary;
 
         public bool OptionalAsNullable { get; } = optionalAsNullable;
@@ -364,21 +362,84 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
 
         public bool EmitUnions { get; } = emitUnions;
 
-        public bool EmitEvaluator { get; set; }
-
-        public void SetEmitEvaluator()
+        public ILanguageProvider CreateLanguageProvider(string? defaultNamespace, IReadOnlyList<NamedTypeSpecification> namedTypes, bool emitEvaluator)
         {
-            EmitEvaluator = true;
+            var mappedNamedTypes = new CSharpLanguageProvider.NamedType[namedTypes.Count];
+            for (int i = 0; i < mappedNamedTypes.Length; i++)
+            {
+                NamedTypeSpecification namedType = namedTypes[i];
+                mappedNamedTypes[i] = new CSharpLanguageProvider.NamedType(namedType.Reference, namedType.DotnetTypeName, namedType.DotnetNamespace, GetAccessibility(namedType.Accessibility));
+            }
+
+            return CSharpLanguageProvider.DefaultWithOptions(MapOptions(defaultNamespace, mappedNamedTypes, emitEvaluator));
         }
 
-        public void AddNamedType(JsonReference schemaLocation, string typeName, string? ns, SourceGeneratorTools.GeneratedTypeAccessibility? accessibility)
+        // Value equality: the incremental pipeline compares this object to decide whether the
+        // options input changed, so two option sets read from identical build properties must
+        // compare equal or every options-provider update would regenerate the whole project.
+        public bool Equals(GlobalOptions? other)
         {
-            _namedTypes.Add(new CSharpLanguageProvider.NamedType(schemaLocation, typeName, ns, GetAccessibility(accessibility)));
+            return
+                other is not null &&
+                ReferenceEquals(FallbackVocabulary, other.FallbackVocabulary) &&
+                OptionalAsNullable == other.OptionalAsNullable &&
+                ExcludeNonNullDefaulted == other.ExcludeNonNullDefaulted &&
+                UseOptionalNameHeuristics == other.UseOptionalNameHeuristics &&
+                AlwaysAssertFormat == other.AlwaysAssertFormat &&
+                DisabledNamingHeuristics.SequenceEqual(other.DisabledNamingHeuristics, StringComparer.Ordinal) &&
+                DefaultAccessibility == other.DefaultAccessibility &&
+                AddExplicitUsings == other.AddExplicitUsings &&
+                UseImplicitOperatorString == other.UseImplicitOperatorString &&
+                BuildParametersThreshold == other.BuildParametersThreshold &&
+                FormatModeOverridesEqual(FormatModeOverrides, other.FormatModeOverrides) &&
+                EmitNativeStringEnums == other.EmitNativeStringEnums &&
+                EmitNativeFlagsEnums == other.EmitNativeFlagsEnums &&
+                EmitUnions == other.EmitUnions;
         }
 
-        public ILanguageProvider CreateLanguageProvider(string? defaultNamespace)
+        public override bool Equals(object? obj) => obj is GlobalOptions other && Equals(other);
+
+        public override int GetHashCode()
         {
-            return CSharpLanguageProvider.DefaultWithOptions(MapOptions(defaultNamespace));
+            HashCode hash = default;
+            hash.Add(FallbackVocabulary.Uri, StringComparer.Ordinal);
+            hash.Add(OptionalAsNullable);
+            hash.Add(ExcludeNonNullDefaulted);
+            hash.Add(UseOptionalNameHeuristics);
+            hash.Add(AlwaysAssertFormat);
+            hash.Add(DisabledNamingHeuristics.Length);
+            hash.Add(DefaultAccessibility);
+            hash.Add(AddExplicitUsings);
+            hash.Add(UseImplicitOperatorString);
+            hash.Add(BuildParametersThreshold);
+            hash.Add(FormatModeOverrides?.Count ?? -1);
+            hash.Add(EmitNativeStringEnums);
+            hash.Add(EmitNativeFlagsEnums);
+            hash.Add(EmitUnions);
+            return hash.ToHashCode();
+        }
+
+        private static bool FormatModeOverridesEqual(IReadOnlyDictionary<string, FormatAssertionMode>? left, IReadOnlyDictionary<string, FormatAssertionMode>? right)
+        {
+            if (ReferenceEquals(left, right))
+            {
+                return true;
+            }
+
+            if (left is null || right is null || left.Count != right.Count)
+            {
+                return false;
+            }
+
+            foreach (KeyValuePair<string, FormatAssertionMode> kvp in left)
+            {
+                if (!right.TryGetValue(kvp.Key, out FormatAssertionMode mode) || mode != kvp.Value)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private static Text.Json.CodeGeneration.GeneratedTypeAccessibility GetAccessibility(SourceGeneratorTools.GeneratedTypeAccessibility? accessibility)
@@ -392,18 +453,18 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             };
         }
 
-        private CSharpLanguageProvider.Options MapOptions(string? defaultNamespace)
+        private CSharpLanguageProvider.Options MapOptions(string? defaultNamespace, CSharpLanguageProvider.NamedType[] namedTypes, bool emitEvaluator)
         {
             CSharpLanguageProvider.Options options = new(
                 defaultNamespace ?? "GeneratedTypes",
-                [.. _namedTypes],
+                namedTypes,
                 useOptionalNameHeuristics: UseOptionalNameHeuristics,
                 alwaysAssertFormat: AlwaysAssertFormat,
                 optionalAsNullable: OptionalAsNullable,
                 disabledNamingHeuristics: [.. DisabledNamingHeuristics],
                 fileExtension: ".g.cs",
                 defaultAccessibility: DefaultAccessibility,
-                codeGenerationMode: EmitEvaluator ? CodeGenerationMode.Both : CodeGenerationMode.TypeGeneration,
+                codeGenerationMode: emitEvaluator ? CodeGenerationMode.Both : CodeGenerationMode.TypeGeneration,
                 excludeNonNullDefaulted: ExcludeNonNullDefaulted,
                 buildParametersThreshold: BuildParametersThreshold,
                 formatModeOverrides: FormatModeOverrides,

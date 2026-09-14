@@ -298,6 +298,7 @@
     <Compile Include="Corvus.UriTemplates\UriTemplateTable{TMatch}.cs" />
     <Compile Include="GeneratedTypeAccessibility.cs" />
     <Compile Include="IGlobalOptions.cs" />
+    <Compile Include="NamedTypeSpecification.cs" />
   </ItemGroup>
   <!-- YAML converter source files (linked with STJ define) -->
   <ItemGroup>

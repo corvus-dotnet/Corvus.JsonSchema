@@ -1,0 +1,19 @@
+<Project Sdk="MSTest.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+  <!-- The JSON Schema source generator is referenced as an ordinary assembly so that the tests can
+       drive it through a long-lived CSharpGeneratorDriver, the way the compiler server and the IDE do.
+       It gets its own test project because its assembly carries private copies of the
+       Corvus.Text.Json and Corvus.Json.CodeGeneration types, which would collide with the real
+       assemblies in the other test projects. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.SourceGenerator\Corvus.Text.Json.SourceGenerator.csproj" ReferenceOutputAssembly="true" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Microsoft.Bcl.HashCode" />
+  </ItemGroup>
+</Project>

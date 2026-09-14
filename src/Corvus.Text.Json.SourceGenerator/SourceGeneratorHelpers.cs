@@ -65,6 +65,10 @@ public static class SourceGeneratorHelpers
 
         List<TypeDeclaration> typeDeclarationsToGenerate = [];
         List<TypeDeclaration>? evaluatorRootTypes = null;
+
+        // Per-generation inputs. The global options are cached across generations by the
+        // incremental pipeline, so they must not accumulate state from one run to the next.
+        List<NamedTypeSpecification> namedTypes = [];
         JsonSchemaTypeBuilder typeBuilder = new(typesToGenerate.DocumentResolver, vocabularyRegistry);
 
         string? defaultNamespace = null;
@@ -113,21 +117,16 @@ public static class SourceGeneratorHelpers
             // Only add the named type if the spec.TypeName is not null or empty.
             if (!string.IsNullOrEmpty(spec.TypeName))
             {
-                typesToGenerate.GlobalOptions.AddNamedType(
+                namedTypes.Add(
+                    new NamedTypeSpecification(
                         rootType.ReducedTypeDeclaration().ReducedType.LocatedSchema.Location,
                         spec.TypeName,
                         spec.Namespace,
-                        spec.Accessibility);
+                        spec.Accessibility));
             }
         }
 
-        // If any specs request evaluator generation, configure the options before creating the language provider.
-        if (evaluatorRootTypes is not null)
-        {
-            typesToGenerate.GlobalOptions.SetEmitEvaluator();
-        }
-
-        ILanguageProvider languageProvider = typesToGenerate.GlobalOptions.CreateLanguageProvider(defaultNamespace);
+        ILanguageProvider languageProvider = typesToGenerate.GlobalOptions.CreateLanguageProvider(defaultNamespace, namedTypes, emitEvaluator: evaluatorRootTypes is not null);
 
         // Set the evaluator root types on the language provider so the evaluator generator
         // can access the unreduced type declarations.
