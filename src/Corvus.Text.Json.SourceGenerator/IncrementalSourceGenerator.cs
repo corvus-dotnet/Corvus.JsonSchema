@@ -33,7 +33,7 @@ namespace Corvus.Json.SourceGenerator;
 public class IncrementalSourceGenerator : IIncrementalGenerator
 {
     private static readonly ImmutableArray<string> DefaultDisabledNamingHeuristics = ["DocumentationNameHeuristic"];
-    private static readonly PrepopulatedDocumentResolver MetaSchemaResolver = SourceGeneratorHelpers.CreateMetaSchemaResolver();
+    private static readonly PrepopulatedDocumentResolver MetaSchemaResolver = SourceGeneratorHelpers.MetaSchemaResolver;
     private static readonly VocabularyRegistry VocabularyRegistry = SourceGeneratorHelpers.CreateVocabularyRegistry(MetaSchemaResolver);
 
     private static readonly IVocabulary Corvus202012Vocab = CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabularyWith([CodeGeneration.CorvusVocabulary.SchemaVocabulary.DefaultInstance]);
@@ -47,7 +47,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
 
         IncrementalValuesProvider<AdditionalText> jsonSourceFiles = initializationContext.AdditionalTextsProvider.Where(static p => p.Path.EndsWith(".json") || p.Path.EndsWith(".yaml") || p.Path.EndsWith(".yml"));
 
-        IncrementalValueProvider<PrepopulatedDocumentResolver> documentResolver = jsonSourceFiles.Collect().Select(SourceGeneratorHelpers.BuildDocumentResolver);
+        IncrementalValueProvider<IDocumentResolver> documentResolver = jsonSourceFiles.Collect().Select(SourceGeneratorHelpers.BuildDocumentResolver);
 
         IncrementalValueProvider<SourceGeneratorHelpers.GenerationContext<GlobalOptions>> generationContext = documentResolver.Combine(globalOptions).Select((r, c) => new SourceGeneratorHelpers.GenerationContext<GlobalOptions>(r.Left, r.Right));
 

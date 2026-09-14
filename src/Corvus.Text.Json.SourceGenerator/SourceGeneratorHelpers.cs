@@ -47,6 +47,12 @@ public static class SourceGeneratorHelpers
             isEnabledByDefault: true);
 
     /// <summary>
+    /// Gets the process-wide <see cref="PrepopulatedDocumentResolver"/> containing the
+    /// well-known JSON Schema meta-schema, parsed once per process.
+    /// </summary>
+    public static PrepopulatedDocumentResolver MetaSchemaResolver { get; } = CreateMetaSchemaResolver();
+
+    /// <summary>
     /// Generate code into a source production context.
     /// </summary>
     /// <typeparam name="TGlobalOptions">The type of the global options.</typeparam>
@@ -184,7 +190,7 @@ public static class SourceGeneratorHelpers
     /// <param name="source">The additional text source.</param>
     /// <param name="token">The cancellation token.</param>
     /// <returns>A compound document resolver containing the JSON documents registered as additional text sources.</returns>
-    public static PrepopulatedDocumentResolver BuildDocumentResolver(ImmutableArray<AdditionalText> source, CancellationToken token)
+    public static IDocumentResolver BuildDocumentResolver(ImmutableArray<AdditionalText> source, CancellationToken token)
     {
         PrepopulatedDocumentResolver newResolver = new();
         foreach (AdditionalText additionalText in source)
@@ -235,14 +241,13 @@ public static class SourceGeneratorHelpers
             }
         }
 
-        // Register the well-known metaschemas so that schemas which $ref into a
+        // Chain the process-wide metaschema resolver so that schemas which $ref into a
         // metaschema (e.g. the Swagger 2.0 metaschema's references into draft-04's
-        // definitions) resolve during generation. Registration is TryAdd-based, and
-        // this runs after the additional texts, so a user-supplied copy of a
-        // metaschema URI always takes precedence.
-        newResolver.AddMetaschema();
-
-        return newResolver;
+        // definitions) resolve during generation, without re-parsing the metaschemas for
+        // every build. The additional texts are consulted first, so a user-supplied copy of
+        // a metaschema URI still takes precedence; documents the type builder registers
+        // during generation land in the compound resolver's own table.
+        return new CompoundDocumentResolver(newResolver, new SharedDocumentResolver(MetaSchemaResolver));
     }
 
     /// <summary>
@@ -256,6 +261,25 @@ public static class SourceGeneratorHelpers
         metaSchemaResolver.AddMetaschema();
 
         return metaSchemaResolver;
+    }
+
+    /// <summary>
+    /// A read-only view over a resolver shared by every generation in the process: resolves
+    /// through the shared resolver, but never disposes, resets or adds to it.
+    /// </summary>
+    private sealed class SharedDocumentResolver(IDocumentResolver shared) : IDocumentResolver
+    {
+        public bool AddDocument(string uri, JsonDocument document) => false;
+
+        public ValueTask<JsonElement?> TryResolve(JsonReference reference) => shared.TryResolve(reference);
+
+        public void Reset()
+        {
+        }
+
+        public void Dispose()
+        {
+        }
     }
 
     /// <summary>
