@@ -67,7 +67,7 @@ public static class WellKnownTypeDeclarations
             new("corvus:/JsonNotAny"),
             doc.RootElement.Clone(),
             NullVocabulary.Instance))
-        { BuildComplete = true };
+        { BuildComplete = true, IsShared = true };
     }
 
     private static TypeDeclaration CreateJsonAnyTypeDeclaration()
@@ -77,6 +77,6 @@ public static class WellKnownTypeDeclarations
             new("corvus:/JsonAny"),
             doc.RootElement.Clone(),
             NullVocabulary.Instance))
-        { BuildComplete = true };
+        { BuildComplete = true, IsShared = true };
     }
 }

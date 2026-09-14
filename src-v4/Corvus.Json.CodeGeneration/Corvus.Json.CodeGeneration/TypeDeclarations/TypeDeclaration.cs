@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text.Json;
 using Corvus.Json.CodeGeneration.Keywords;
@@ -37,7 +36,10 @@ namespace Corvus.Json.CodeGeneration;
 public sealed class TypeDeclaration(LocatedSchema locatedSchema)
 {
     private readonly Dictionary<string, TypeDeclaration> subschemaTypeDeclarations = new(StringComparer.Ordinal);
-    private readonly ConcurrentDictionary<string, object?> metadata = new(StringComparer.Ordinal);
+
+    // Each generation owns its type declarations, so a plain dictionary serves; only the process-wide
+    // well-known declarations (IsShared) are reached by concurrent generations, and access to theirs is locked.
+    private readonly Dictionary<string, object?> metadata = new(StringComparer.Ordinal);
     private readonly Dictionary<string, PropertyDeclaration> properties = new(StringComparer.Ordinal);
     private IReadOnlyList<PropertyDeclaration>? cachedPropertyDeclarations;
     private IReadOnlyList<TypeDeclaration>? cachedOrderedSubschemaTypeDeclarations;
@@ -87,6 +89,13 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
     /// Gets a value indicating whether the type has any property declarations.
     /// </summary>
     public bool HasPropertyDeclarations => this.properties.Count > 0;
+
+    /// <summary>
+    /// Gets a value indicating whether this declaration is shared by every generation in the process
+    /// (<see cref="WellKnownTypeDeclarations.JsonAny"/> and <see cref="WellKnownTypeDeclarations.JsonNotAny"/>),
+    /// so its metadata must be synchronized.
+    /// </summary>
+    internal bool IsShared { get; init; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the basic build process is complete.
@@ -167,7 +176,18 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
     /// <param name="value">The metadata value.</param>
     public void SetMetadata<T>(string key, T value)
     {
-        this.metadata[key] = (object?)value;
+        object? boxed = MetadataValueBoxes.Box(value);
+        if (this.IsShared)
+        {
+            lock (this.metadata)
+            {
+                this.metadata[key] = boxed;
+            }
+        }
+        else
+        {
+            this.metadata[key] = boxed;
+        }
     }
 
     /// <summary>
@@ -176,7 +196,17 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
     /// <param name="key">The key for the metadata value.</param>
     public void RemoveMetadata(string key)
     {
-        this.metadata.TryRemove(key, out _);
+        if (this.IsShared)
+        {
+            lock (this.metadata)
+            {
+                this.metadata.Remove(key);
+            }
+        }
+        else
+        {
+            this.metadata.Remove(key);
+        }
     }
 
     /// <summary>
@@ -188,7 +218,20 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
     /// <returns><see langword="true"/> if the metadata value was found.</returns>
     public bool TryGetMetadata<T>(string key, out T? value)
     {
-        bool result = this.metadata.TryGetValue(key, out object? candidate);
+        bool result;
+        object? candidate;
+        if (this.IsShared)
+        {
+            lock (this.metadata)
+            {
+                result = this.metadata.TryGetValue(key, out candidate);
+            }
+        }
+        else
+        {
+            result = this.metadata.TryGetValue(key, out candidate);
+        }
+
         if (result)
         {
             value = (T?)candidate;
