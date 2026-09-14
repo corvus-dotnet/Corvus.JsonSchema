@@ -13,6 +13,9 @@ namespace Corvus.Json.CodeGeneration;
 /// </summary>
 public static class References
 {
+    private const string HasRecursiveReferencesKey = "Corvus.Json.CodeGeneration.References.HasRecursiveReferences";
+    private const string DynamicReferencesKey = "Corvus.Json.CodeGeneration.References.DynamicReferences";
+
     /// <summary>
     /// Determines if the type declaration has recursive references.
     /// </summary>
@@ -21,8 +24,23 @@ public static class References
     /// <returns><see langword="true"/> if the type declaration contains one or more recursive references.</returns>
     public static bool HasRecursiveReferences(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration)
     {
+        if (typeDeclaration.TryGetMetadata(HasRecursiveReferencesKey, out bool cached))
+        {
+            return cached;
+        }
+
         HashSet<TypeDeclaration> visitedTypes = [];
-        return HasRecursiveReferences(typeBuilderContext, typeDeclaration, visitedTypes);
+        bool allVisitedComplete = true;
+        bool result = HasRecursiveReferences(typeBuilderContext, typeDeclaration, visitedTypes, ref allVisitedComplete);
+
+        // A type whose build is complete never gains subschemas, so an answer reached through complete
+        // types only is final: remember it instead of re-walking the subgraph at every re-encounter.
+        if (allVisitedComplete)
+        {
+            typeDeclaration.SetMetadata(HasRecursiveReferencesKey, result);
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -33,9 +51,21 @@ public static class References
     /// <returns>The unique set of dynamic references.</returns>
     public static IReadOnlyCollection<string> GetDynamicReferences(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration)
     {
+        if (typeDeclaration.TryGetMetadata(DynamicReferencesKey, out IReadOnlyCollection<string>? cached) && cached is not null)
+        {
+            return cached;
+        }
+
         HashSet<string> result = [];
         HashSet<TypeDeclaration> visitedTypes = [];
-        GetDynamicReferences(typeBuilderContext, typeDeclaration, result, visitedTypes);
+
+        // As for HasRecursiveReferences: the set for a subgraph of complete types is final (and a fresh walk
+        // would insert the same names in the same order), so it is computed once per such subgraph root.
+        if (GetDynamicReferences(typeBuilderContext, typeDeclaration, result, visitedTypes))
+        {
+            typeDeclaration.SetMetadata<IReadOnlyCollection<string>>(DynamicReferencesKey, result);
+        }
+
         return result;
     }
 
@@ -346,21 +376,17 @@ public static class References
         return (baseSchemaForReferenceLocation, schemaForRefPointer);
     }
 
-    private static void GetDynamicReferences(TypeBuilderContext typeBuilderContext, TypeDeclaration type, HashSet<string> result, HashSet<TypeDeclaration> visitedTypes)
+    private static bool GetDynamicReferences(TypeBuilderContext typeBuilderContext, TypeDeclaration type, HashSet<string> result, HashSet<TypeDeclaration> visitedTypes)
     {
         if (visitedTypes.Contains(type))
         {
-            return;
+            return true;
         }
 
         visitedTypes.Add(type);
+        bool allVisitedComplete = type.BuildComplete;
 
-        var dynamicRefKeywords =
-            type.LocatedSchema.Vocabulary.Keywords
-                .OfType<IDynamicReferenceKeyword>()
-                .ToDictionary(
-                    k => (string)new JsonReference("#").AppendUnencodedPropertyNameToFragment(k.Keyword),
-                    v => v);
+        Dictionary<string, IDynamicReferenceKeyword> dynamicRefKeywords = KeywordsByPath<IDynamicReferenceKeyword>.For(type.LocatedSchema.Vocabulary);
 
         foreach (KeyValuePair<string, TypeDeclaration> prop in type.SubschemaTypeDeclarations)
         {
@@ -389,11 +415,13 @@ public static class References
                 }
             }
 
-            GetDynamicReferences(typeBuilderContext, prop.Value, result, visitedTypes);
+            allVisitedComplete &= GetDynamicReferences(typeBuilderContext, prop.Value, result, visitedTypes);
         }
+
+        return allVisitedComplete;
     }
 
-    private static bool HasRecursiveReferences(TypeBuilderContext typeBuilderContext, TypeDeclaration type, HashSet<TypeDeclaration> visitedTypes)
+    private static bool HasRecursiveReferences(TypeBuilderContext typeBuilderContext, TypeDeclaration type, HashSet<TypeDeclaration> visitedTypes, ref bool allVisitedComplete)
     {
         if (visitedTypes.Contains(type))
         {
@@ -401,13 +429,9 @@ public static class References
         }
 
         visitedTypes.Add(type);
+        allVisitedComplete &= type.BuildComplete;
 
-        var recursiveRefKeywords =
-            type.LocatedSchema.Vocabulary.Keywords
-                .OfType<IRecursiveReferenceKeyword>()
-                .ToDictionary(
-                    k => (string)new JsonReference("#").AppendUnencodedPropertyNameToFragment(k.Keyword),
-                    v => v);
+        Dictionary<string, IRecursiveReferenceKeyword> recursiveRefKeywords = KeywordsByPath<IRecursiveReferenceKeyword>.For(type.LocatedSchema.Vocabulary);
 
         foreach (KeyValuePair<string, TypeDeclaration> prop in type.SubschemaTypeDeclarations)
         {
@@ -419,13 +443,34 @@ public static class References
                 }
             }
 
-            if (HasRecursiveReferences(typeBuilderContext, prop.Value, visitedTypes))
+            if (HasRecursiveReferences(typeBuilderContext, prop.Value, visitedTypes, ref allVisitedComplete))
             {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// The keywords of a given kind in a vocabulary, keyed by their subschema path (<c>#/keyword</c>),
+    /// built once per vocabulary instead of once per visited type.
+    /// </summary>
+    private static class KeywordsByPath<TKeyword>
+        where TKeyword : IKeyword
+    {
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<IVocabulary, Dictionary<string, TKeyword>> Maps = new();
+
+        public static Dictionary<string, TKeyword> For(IVocabulary vocabulary)
+        {
+            return Maps.GetValue(
+                vocabulary,
+                static v => v.Keywords
+                    .OfType<TKeyword>()
+                    .ToDictionary(
+                        k => (string)new JsonReference("#").AppendUnencodedPropertyNameToFragment(k.Keyword),
+                        k => k));
+        }
     }
 
     private static bool TryResolvePointer(

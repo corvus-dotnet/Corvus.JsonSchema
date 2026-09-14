@@ -18,6 +18,9 @@ public class TypeBuilderContext
     // The subschema location of the scope at each depth of the stack, computed on first use after
     // that scope was pushed; a scope's location and pointer never change while it is on the stack.
     private readonly List<JsonReference?> subschemaLocations = [];
+
+    // The scope stack from the root outwards, rebuilt only after the stack changes.
+    private JsonSchemaScope[]? reversedStack;
     private readonly Dictionary<string, TypeDeclaration> locatedTypeDeclarations;
     private readonly JsonReference baseLocation;
 
@@ -74,7 +77,7 @@ public class TypeBuilderContext
     /// <summary>
     /// Gets the reversed scope stack.
     /// </summary>
-    public IEnumerable<JsonSchemaScope> ReversedStack => this.scopeStack.Reverse();
+    public IEnumerable<JsonSchemaScope> ReversedStack => this.reversedStack ??= ReverseOf(this.scopeStack);
 
     /// <summary>
     /// Gets the scope stack.
@@ -132,6 +135,7 @@ public class TypeBuilderContext
     public JsonSchemaScope LeaveScope()
     {
         JsonSchemaScope currentScope = this.scopeStack.Pop();
+        this.reversedStack = null;
 
         // As we pop the scope, put any types that were dynamically replaced with the original values.
         foreach ((JsonReference location, TypeDeclaration type) in currentScope.ReplacedDynamicTypes)
@@ -393,6 +397,7 @@ public class TypeBuilderContext
     {
         // We pop the item off the stack, update its replaced dynamic types, and push it back on.
         JsonSchemaScope currentScope = this.scopeStack.Pop();
+        this.reversedStack = null;
         this.scopeStack.Push(new(currentScope.Location, currentScope.Pointer, currentScope.LocatedSchema, currentScope.ReplacedDynamicTypes.Add((subschemaLocation, previousDeclaration))));
     }
 
@@ -516,9 +521,18 @@ public class TypeBuilderContext
         return relative;
     }
 
+    private static JsonSchemaScope[] ReverseOf(Stack<JsonSchemaScope> stack)
+    {
+        // Stack<T>.ToArray() lists the top of the stack first.
+        JsonSchemaScope[] result = stack.ToArray();
+        Array.Reverse(result);
+        return result;
+    }
+
     private void PushScope(JsonSchemaScope scope)
     {
         this.scopeStack.Push(scope);
+        this.reversedStack = null;
         int depth = this.scopeStack.Count - 1;
         if (depth < this.subschemaLocations.Count)
         {
