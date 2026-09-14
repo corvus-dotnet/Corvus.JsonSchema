@@ -30,7 +30,7 @@ public delegate void NamedTypeEmitter(CodeGenerator generator, string typeName);
 /// <remarks>
 /// Initializes a new instance of the <see cref="CSharpLanguageProvider"/> class.
 /// </remarks>
-public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProgramLanguageProvider
+public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProgramUtf8LanguageProvider
 {
     private readonly KeywordValidationHandlerRegistry validationHandlerRegistry = new();
     private readonly CodeFileBuilderRegistry codeFileBuilderRegistry = new();
@@ -46,6 +46,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
     private TypeDeclaration[]? evaluatorRootTypes;
     private IReadOnlyList<TypeDeclaration>? programRootTypes;
     private IReadOnlyList<KeyValuePair<string, string>> schemaDocuments = [];
+    private IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>>? utf8SchemaDocuments;
     private string? fallbackVocabularyUri;
     private readonly List<(string RootDocumentUri, string RootDocumentPointer)> programEntries = [];
     private readonly Dictionary<(string, string), int> programEntryIndex = new();
@@ -106,6 +107,15 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
     public void SetSchemaDocuments(IReadOnlyList<KeyValuePair<string, string>> documents, string? fallbackVocabularyUri)
     {
         this.schemaDocuments = documents;
+        this.utf8SchemaDocuments = null;
+        this.fallbackVocabularyUri = fallbackVocabularyUri;
+    }
+
+    /// <inheritdoc/>
+    public void SetSchemaDocuments(IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> documents, string? fallbackVocabularyUri)
+    {
+        this.utf8SchemaDocuments = documents;
+        this.schemaDocuments = [];
         this.fallbackVocabularyUri = fallbackVocabularyUri;
     }
 
@@ -410,12 +420,26 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
 
         if (this.programEntries.Count > 0)
         {
+            IEnumerable<string> documentUris = this.utf8SchemaDocuments is { } utf8Documents
+                ? utf8Documents.Select(d => d.Key)
+                : this.schemaDocuments.Select(d => d.Key);
             IReadOnlyDictionary<string, string> keys = RuntimeProgramGenerator.MapDocumentKeys(
-                this.schemaDocuments.Select(d => d.Key).Concat(this.programEntries.Select(e => e.RootDocumentUri)));
+                documentUris.Concat(this.programEntries.Select(e => e.RootDocumentUri)));
             List<RuntimeProgramGenerator.SchemaDocumentSource> documents = [];
-            foreach (KeyValuePair<string, string> document in this.schemaDocuments)
+            if (this.utf8SchemaDocuments is { } utf8SchemaDocumentList)
             {
-                documents.Add(new RuntimeProgramGenerator.SchemaDocumentSource(keys[document.Key], RuntimeProgramGenerator.MapReferenceDocument(document.Value, keys)));
+                // The documents stay UTF-8 from the type builder to the program compiler.
+                foreach (KeyValuePair<string, ReadOnlyMemory<byte>> document in utf8SchemaDocumentList)
+                {
+                    documents.Add(new RuntimeProgramGenerator.SchemaDocumentSource(keys[document.Key], RuntimeProgramGenerator.MapReferenceDocument(document.Value, keys)));
+                }
+            }
+            else
+            {
+                foreach (KeyValuePair<string, string> document in this.schemaDocuments)
+                {
+                    documents.Add(new RuntimeProgramGenerator.SchemaDocumentSource(keys[document.Key], RuntimeProgramGenerator.MapReferenceDocument(document.Value, keys)));
+                }
             }
 
             List<string> entryPoints = [];
@@ -427,13 +451,22 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
             string rootDocumentKey = documents.Count > 0 ? documents[0].Key : keys[this.programEntries[0].RootDocumentUri];
             string dialect = RuntimeProgramGenerator.DialectFor(this.fallbackVocabularyUri);
             List<KeyValuePair<string, string>> formatModes = options.FormatModeOverrides.OrderBy(m => m.Key, StringComparer.Ordinal).Select(m => new KeyValuePair<string, string>(m.Key, m.Value.ToString())).ToList();
-            SchemaProgramImage? image = options.ProgramCompiler?.Invoke(new SchemaProgramSource(
-                documents.Select(d => new KeyValuePair<string, string>(d.Key, d.Json)).ToList(),
-                rootDocumentKey,
-                entryPoints,
-                dialect,
-                options.AlwaysAssertFormat,
-                formatModes));
+            SchemaProgramImage? image = options.ProgramCompiler?.Invoke(
+                this.utf8SchemaDocuments is not null
+                    ? SchemaProgramSource.FromUtf8(
+                        documents.Select(d => new KeyValuePair<string, ReadOnlyMemory<byte>>(d.Key, d.Utf8Json)).ToList(),
+                        rootDocumentKey,
+                        entryPoints,
+                        dialect,
+                        options.AlwaysAssertFormat,
+                        formatModes)
+                    : new SchemaProgramSource(
+                        documents.Select(d => new KeyValuePair<string, string>(d.Key, d.Json)).ToList(),
+                        rootDocumentKey,
+                        entryPoints,
+                        dialect,
+                        options.AlwaysAssertFormat,
+                        formatModes));
             result.Add(RuntimeProgramGenerator.Generate(
                 options.DefaultNamespace,
                 ProgramClassName,

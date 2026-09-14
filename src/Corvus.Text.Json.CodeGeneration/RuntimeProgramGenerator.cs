@@ -27,13 +27,39 @@ internal static class RuntimeProgramGenerator
     /// </summary>
     /// <param name="key">The absolute URI the document is registered under.</param>
     /// <param name="json">The document text.</param>
-    public sealed class SchemaDocumentSource(string key, string json)
+    public sealed class SchemaDocumentSource
     {
-        /// <summary>Gets the absolute URI the document is registered under.</summary>
-        public string Key { get; } = key;
+        private string? json;
+        private ReadOnlyMemory<byte>? utf8Json;
 
-        /// <summary>Gets the document text.</summary>
-        public string Json { get; } = json;
+        /// <summary>Initializes a new instance of the <see cref="SchemaDocumentSource"/> class from the document text.</summary>
+        /// <param name="key">The absolute URI the document is registered under.</param>
+        /// <param name="json">The document text.</param>
+        public SchemaDocumentSource(string key, string json)
+        {
+            this.Key = key;
+            this.json = json;
+        }
+
+        /// <summary>Initializes a new instance of the <see cref="SchemaDocumentSource"/> class from the document's UTF-8 text.</summary>
+        /// <param name="key">The absolute URI the document is registered under.</param>
+        /// <param name="utf8Json">The document's UTF-8 text.</param>
+        public SchemaDocumentSource(string key, ReadOnlyMemory<byte> utf8Json)
+        {
+            this.Key = key;
+            this.utf8Json = utf8Json;
+        }
+
+        /// <summary>Gets the absolute URI the document is registered under.</summary>
+        public string Key { get; }
+
+        /// <summary>Gets the document text (decoded on first use for a UTF-8 source).</summary>
+        public string Json => this.json ??= System.Runtime.InteropServices.MemoryMarshal.TryGetArray(this.utf8Json!.Value, out ArraySegment<byte> segment)
+            ? Encoding.UTF8.GetString(segment.Array!, segment.Offset, segment.Count)
+            : Encoding.UTF8.GetString(this.utf8Json!.Value.ToArray());
+
+        /// <summary>Gets the document's UTF-8 text (encoded on first use for a text source).</summary>
+        public ReadOnlyMemory<byte> Utf8Json => this.utf8Json ??= Encoding.UTF8.GetBytes(this.json!);
     }
 
     /// <summary>
@@ -99,6 +125,69 @@ internal static class RuntimeProgramGenerator
         }
 
         return "{\"$ref\": " + System.Text.Json.JsonSerializer.Serialize(key + fragment) + "}";
+    }
+
+    /// <summary>
+    /// Re-keys a document that is only a <c>$ref</c> to another document, as <see cref="MapReferenceDocument(string, IReadOnlyDictionary{string, string})"/>
+    /// does, working on the document's UTF-8 text.
+    /// </summary>
+    /// <param name="utf8Json">The document's UTF-8 text.</param>
+    /// <param name="keys">The document keys.</param>
+    /// <returns>The document, or a re-keyed sole reference.</returns>
+    public static ReadOnlyMemory<byte> MapReferenceDocument(ReadOnlyMemory<byte> utf8Json, IReadOnlyDictionary<string, string> keys)
+    {
+        string? reference = TryGetSoleReference(utf8Json.Span);
+        if (reference is null)
+        {
+            return utf8Json;
+        }
+
+        int hash = reference.IndexOf('#');
+        string document = hash < 0 ? reference : reference.Substring(0, hash);
+        string fragment = hash < 0 ? string.Empty : reference.Substring(hash);
+        if (!TryMapDocument(document, keys, out string? key) || key == document)
+        {
+            return utf8Json;
+        }
+
+        return Encoding.UTF8.GetBytes("{\"$ref\": " + System.Text.Json.JsonSerializer.Serialize(key + fragment) + "}");
+    }
+
+    /// <summary>
+    /// The UTF-8 form of <see cref="TryGetSoleReference(string)"/>: the reference if the document is an object with a single
+    /// property, <c>$ref</c>, whose value is a string. A reader stops at the second property instead of parsing the whole
+    /// document; a document with one property is still read to its end, so an invalid one gives <see langword="null"/> as the parse did.
+    /// </summary>
+    private static string? TryGetSoleReference(ReadOnlySpan<byte> utf8Json)
+    {
+        try
+        {
+            System.Text.Json.Utf8JsonReader reader = new(utf8Json);
+            if (!reader.Read() || reader.TokenType != System.Text.Json.JsonTokenType.StartObject ||
+                !reader.Read() || reader.TokenType != System.Text.Json.JsonTokenType.PropertyName)
+            {
+                return null;
+            }
+
+            bool isReference = reader.ValueTextEquals("$ref"u8);
+            if (!reader.Read())
+            {
+                return null;
+            }
+
+            string? reference = isReference && reader.TokenType == System.Text.Json.JsonTokenType.String ? reader.GetString() : null;
+            reader.Skip();
+            if (!reader.Read() || reader.TokenType != System.Text.Json.JsonTokenType.EndObject)
+            {
+                return null;
+            }
+
+            return reader.Read() ? null : reference;
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return null;
+        }
     }
 
     private static string? TryGetSoleReference(string json)

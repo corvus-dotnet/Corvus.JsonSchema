@@ -171,7 +171,14 @@ public class JsonSchemaTypeBuilder(
         if (languageProvider is ISchemaProgramLanguageProvider programProvider)
         {
             programProvider.SetProgramRootTypes(rootTypeDeclarations);
-            programProvider.SetSchemaDocuments(this.GetSchemaDocuments(), this.lastFallbackVocabulary?.Uri);
+            if (programProvider is ISchemaProgramUtf8LanguageProvider utf8ProgramProvider)
+            {
+                utf8ProgramProvider.SetSchemaDocuments(this.GetSchemaDocumentsUtf8(), this.lastFallbackVocabulary?.Uri);
+            }
+            else
+            {
+                programProvider.SetSchemaDocuments(this.GetSchemaDocuments(), this.lastFallbackVocabulary?.Uri);
+            }
         }
 
         return languageProvider.GenerateCodeFor(typeDeclarations, cancellationToken);
@@ -184,6 +191,38 @@ public class JsonSchemaTypeBuilder(
     public IReadOnlyList<KeyValuePair<string, string>> GetSchemaDocuments()
     {
         List<KeyValuePair<string, string>> result = [];
+        foreach ((string uri, JsonElement element) in this.CollectSchemaDocumentElements())
+        {
+            result.Add(new KeyValuePair<string, string>(uri, element.GetRawText()));
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets the UTF-8 JSON text of every root document the builder has loaded, keyed by root document URI, in
+    /// first-seen order: the same documents as <see cref="GetSchemaDocuments"/>, without a string copy.
+    /// </summary>
+    /// <returns>The documents.</returns>
+    public IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> GetSchemaDocumentsUtf8()
+    {
+        List<KeyValuePair<string, ReadOnlyMemory<byte>>> result = [];
+        foreach ((string uri, JsonElement element) in this.CollectSchemaDocumentElements())
+        {
+#if NET9_0_OR_GREATER
+            // The element's own UTF-8 text, copied once out of the document's buffer.
+            result.Add(new KeyValuePair<string, ReadOnlyMemory<byte>>(uri, System.Runtime.InteropServices.JsonMarshal.GetRawUtf8Value(element).ToArray()));
+#else
+            result.Add(new KeyValuePair<string, ReadOnlyMemory<byte>>(uri, System.Text.Encoding.UTF8.GetBytes(element.GetRawText())));
+#endif
+        }
+
+        return result;
+    }
+
+    private List<(string Uri, JsonElement Element)> CollectSchemaDocumentElements()
+    {
+        List<(string Uri, JsonElement Element)> result = [];
         HashSet<string> seen = new(StringComparer.Ordinal);
         foreach (LocatedSchema located in this.schemaRegistry.LocatedSchemas)
         {
@@ -196,7 +235,7 @@ public class JsonSchemaTypeBuilder(
             JsonElement? root = documentResolver.TryResolve(new JsonReference(uri)).AsTask().GetAwaiter().GetResult();
             if (root is JsonElement element)
             {
-                result.Add(new KeyValuePair<string, string>(uri, element.GetRawText()));
+                result.Add((uri, element));
                 AddCustomMetaschemas(element);
             }
         }
@@ -232,7 +271,7 @@ public class JsonSchemaTypeBuilder(
                     return;
                 }
 
-                result.Add(new KeyValuePair<string, string>(metaschemaUri, metaschemaRoot.GetRawText()));
+                result.Add((metaschemaUri, metaschemaRoot));
                 schema = metaschemaRoot;
             }
         }
