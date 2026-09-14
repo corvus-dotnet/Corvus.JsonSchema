@@ -103,6 +103,14 @@ internal static class RuntimeProgramGenerator
 
     private static string? TryGetSoleReference(string json)
     {
+        // A document with a second top-level property is never a sole reference. Schema documents almost
+        // always show that within their first property, so detect it by scanning a few tokens rather than
+        // parsing the whole document again (this runs for every schema document of every generation).
+        if (HasSecondTopLevelProperty(json))
+        {
+            return null;
+        }
+
         try
         {
             using System.Text.Json.JsonDocument document = System.Text.Json.JsonDocument.Parse(json);
@@ -128,6 +136,91 @@ internal static class RuntimeProgramGenerator
         catch (System.Text.Json.JsonException)
         {
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Determines, without parsing the whole document, whether a JSON document is an object whose first
+    /// property (with a string or literal value) is followed by another property.
+    /// </summary>
+    /// <remarks>
+    /// Returns <see langword="false"/> whenever it cannot tell (a nested first value, anything unexpected), leaving
+    /// the answer to the full parse. It returns <see langword="true"/> only for <c>{ "name": value ,</c>, which a
+    /// valid document can only continue with a second property, so <see cref="TryGetSoleReference(string)"/> returns
+    /// <see langword="null"/> exactly as the full parse would (and an invalid document is <see langword="null"/> either way).
+    /// </remarks>
+    private static bool HasSecondTopLevelProperty(string json)
+    {
+        int i = SkipWhiteSpace(json, 0);
+        if (i >= json.Length || json[i] != '{')
+        {
+            return false;
+        }
+
+        i = SkipWhiteSpace(json, i + 1);
+        if (i >= json.Length || json[i] != '"' || (i = SkipString(json, i)) < 0)
+        {
+            return false;
+        }
+
+        i = SkipWhiteSpace(json, i);
+        if (i >= json.Length || json[i] != ':')
+        {
+            return false;
+        }
+
+        i = SkipWhiteSpace(json, i + 1);
+        if (i >= json.Length || json[i] == '{' || json[i] == '[')
+        {
+            return false;
+        }
+
+        if (json[i] == '"')
+        {
+            if ((i = SkipString(json, i)) < 0)
+            {
+                return false;
+            }
+        }
+        else
+        {
+            while (i < json.Length && json[i] != ',' && json[i] != '}' && !IsJsonWhiteSpace(json[i]))
+            {
+                i++;
+            }
+        }
+
+        i = SkipWhiteSpace(json, i);
+        return i < json.Length && json[i] == ',';
+
+        static int SkipWhiteSpace(string text, int index)
+        {
+            while (index < text.Length && IsJsonWhiteSpace(text[index]))
+            {
+                index++;
+            }
+
+            return index;
+        }
+
+        static bool IsJsonWhiteSpace(char c) => c is ' ' or '\t' or '\n' or '\r';
+
+        // Returns the index after the closing quote of the string starting at index, or -1.
+        static int SkipString(string text, int index)
+        {
+            for (int j = index + 1; j < text.Length; j++)
+            {
+                if (text[j] == '\\')
+                {
+                    j++;
+                }
+                else if (text[j] == '"')
+                {
+                    return j + 1;
+                }
+            }
+
+            return -1;
         }
     }
 
