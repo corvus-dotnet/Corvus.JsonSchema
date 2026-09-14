@@ -126,11 +126,13 @@ jobs:
           }
       compilePhaseRunnerOs: ubuntu-latest
       packagePhaseRunnerOs: ubuntu-latest
-      netSdkVersion: '10.0.x'
+      # The .NET 11 RC SDK (Go Live) is the build toolchain: the C# 15 compiler is what makes the generated union
+      # types work for consumers, and our tests use it. The earlier SDKs supply the runtimes the test matrix runs on.
+      netSdkVersion: '11.0.100-rc.1.26425.128'
       additionalNetSdkVersion: |
         8.0.x
         9.0.x
-        11.0.100-rc.1.26425.128
+        10.0.x
       # workflow_dispatch inputs are always strings, the type property is just for the UI
       forcePublish: ${{ github.event.inputs.forcePublish == 'true' }}
       skipCleanup: ${{ github.event.inputs.skipCleanup == 'true' }}
