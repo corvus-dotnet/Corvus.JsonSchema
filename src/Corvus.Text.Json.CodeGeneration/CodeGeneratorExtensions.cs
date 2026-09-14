@@ -172,29 +172,32 @@ internal static partial class CodeGeneratorExtensions
             return generator;
         }
 
-        string[] lines = NormalizeAndSplitBlockIntoLines(block);
-
-        for (int i = 0; i < lines.Length; i++)
+        int lineStart = 0;
+        while (true)
         {
             if (generator.IsCancellationRequested)
             {
                 return generator;
             }
 
-            string line = lines[i];
-            if (omitLastLineEnd && i == lines.Length - 1)
+            bool isLastLine = !TryFindLineEnd(block, lineStart, out int lineLength, out int nextLineStart);
+            if (omitLastLineEnd && isLastLine)
             {
                 generator
-                    .AppendIndent(line);
+                    .AppendIndent(block, lineStart, lineLength);
             }
             else
             {
-                generator
-                    .AppendLineIndent(line, trimWhitespaceOnlyLines);
+                AppendLineIndentRange(generator, block, lineStart, lineLength, trimWhitespaceOnlyLines);
             }
-        }
 
-        return generator;
+            if (isLastLine)
+            {
+                return generator;
+            }
+
+            lineStart = nextLineStart;
+        }
     }
 
     /// <summary>
@@ -213,18 +216,18 @@ internal static partial class CodeGeneratorExtensions
             return generator;
         }
 
-        string[] lines = NormalizeAndSplitBlockIntoLines(block);
-
-        for (int i = 0; i < lines.Length; i++)
+        int lineStart = 0;
+        while (true)
         {
             if (generator.IsCancellationRequested)
             {
                 return generator;
             }
 
-            string line = lines[i];
-            if (omitLastLineEnd && i == lines.Length - 1)
+            bool isLastLine = !TryFindLineEnd(block, lineStart, out int lineLength, out int nextLineStart);
+            if (omitLastLineEnd && isLastLine)
             {
+                string line = block.Substring(lineStart, lineLength);
                 if (line[0] == '#')
                 {
                     generator.Append(line);
@@ -237,19 +240,23 @@ internal static partial class CodeGeneratorExtensions
             }
             else
             {
-                if (line.Length > 0 && line[0] == '#')
+                if (lineLength > 0 && block[lineStart] == '#')
                 {
-                    generator.AppendLine(line);
+                    generator.Append(block, lineStart, lineLength).AppendLine();
                 }
                 else
                 {
-                    generator
-                        .AppendLineIndent(line, trimWhitespaceOnlyLines);
+                    AppendLineIndentRange(generator, block, lineStart, lineLength, trimWhitespaceOnlyLines);
                 }
             }
-        }
 
-        return generator;
+            if (isLastLine)
+            {
+                return generator;
+            }
+
+            lineStart = nextLineStart;
+        }
     }
 
     /// <summary>
@@ -266,20 +273,27 @@ internal static partial class CodeGeneratorExtensions
             return generator;
         }
 
-        string[] lines = NormalizeAndSplitBlockIntoLines(block);
-        foreach (string line in lines)
+        int lineStart = 0;
+        while (true)
         {
             if (generator.IsCancellationRequested)
             {
                 return generator;
             }
 
+            bool isLastLine = !TryFindLineEnd(block, lineStart, out int lineLength, out int nextLineStart);
             generator
                 .AppendIndent(linePrefix)
-                .AppendLine(line);
-        }
+                .Append(block, lineStart, lineLength)
+                .AppendLine();
 
-        return generator;
+            if (isLastLine)
+            {
+                return generator;
+            }
+
+            lineStart = nextLineStart;
+        }
     }
 
     /// <summary>
@@ -2209,6 +2223,64 @@ internal static partial class CodeGeneratorExtensions
 
         return generator
             .Append(SymbolDisplay.FormatLiteral(value.GetRawText(), true));
+    }
+
+    /// <summary>
+    /// Finds the end of the line that starts at <paramref name="lineStart"/> in a block of text.
+    /// </summary>
+    /// <remarks>
+    /// Enumerating a block with this yields the same lines as <c>block.Replace("\r\n", "\n").Split('\n')</c>,
+    /// without copying the block or allocating a string per line: a line ends at <c>'\n'</c>, and a
+    /// <c>'\r'</c> immediately before that <c>'\n'</c> is part of the line end.
+    /// </remarks>
+    /// <param name="block">The block of text.</param>
+    /// <param name="lineStart">The index at which the line starts.</param>
+    /// <param name="lineLength">The length of the line, excluding its line end.</param>
+    /// <param name="nextLineStart">The index at which the next line starts.</param>
+    /// <returns><see langword="true"/> if the line has a line end (so another line follows it), or
+    /// <see langword="false"/> if it is the last line of the block.</returns>
+    private static bool TryFindLineEnd(string block, int lineStart, out int lineLength, out int nextLineStart)
+    {
+        int newLine = block.IndexOf('\n', lineStart);
+        if (newLine < 0)
+        {
+            lineLength = block.Length - lineStart;
+            nextLineStart = block.Length;
+            return false;
+        }
+
+        int lineEnd = newLine > lineStart && block[newLine - 1] == '\r' ? newLine - 1 : newLine;
+        lineLength = lineEnd - lineStart;
+        nextLineStart = newLine + 1;
+        return true;
+    }
+
+    /// <summary>
+    /// Appends part of a block as an indented line, as <see cref="CodeGenerator.AppendLineIndent(string?, bool)"/> does for a whole string.
+    /// </summary>
+    private static void AppendLineIndentRange(CodeGenerator generator, string block, int start, int length, bool trimWhitespaceOnlyLines)
+    {
+        if (trimWhitespaceOnlyLines && IsWhiteSpace(block, start, length))
+        {
+            generator.AppendLine();
+        }
+        else
+        {
+            generator.AppendIndent(block, start, length).AppendLine();
+        }
+
+        static bool IsWhiteSpace(string value, int start, int length)
+        {
+            for (int i = start; i < start + length; i++)
+            {
+                if (!char.IsWhiteSpace(value[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
     }
 
     private static string[] NormalizeAndSplitBlockIntoLines(string block, bool removeBlankLines = false)

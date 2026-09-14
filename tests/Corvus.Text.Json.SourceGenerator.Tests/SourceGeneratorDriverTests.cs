@@ -46,6 +46,8 @@ public class SourceGeneratorDriverTests
         public readonly partial struct Person;
         """;
 
+    private static readonly string TestDirectory = Path.Combine(Path.GetTempPath(), "corvus-driver-tests");
+
     /// <summary>
     /// Regression test for issue #963: the second generation in the same driver (after a schema edit)
     /// must produce the same output as the first instead of failing with CS8785 because the cached
@@ -90,6 +92,71 @@ public class SourceGeneratorDriverTests
         {
             Assert.AreEqual(before.HintName, after.HintName);
             Assert.AreEqual(before.SourceText.ToString(), after.SourceText.ToString(), $"Generated file {before.HintName} changed between generations.");
+        }
+    }
+
+    /// <summary>
+    /// Adding an unrelated JSON file to the project must not break generation, and whatever the generator
+    /// does with the new input, the sources must be the same as the cold run's.
+    /// </summary>
+    [TestMethod]
+    public void UnrelatedJsonFileAdded_ProducesSameSources()
+    {
+        (GeneratorDriver driver, CSharpCompilation compilation) = CreateDriver();
+        driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out ImmutableArray<Diagnostic> coldDiagnostics);
+        GeneratorRunResult cold = driver.GetRunResult().Results[0];
+        AssertNoErrors(coldDiagnostics, cold, "cold generation");
+
+        driver = driver.AddAdditionalTexts([new InMemoryAdditionalText(Path.Combine(TestDirectory, "unrelated.json"), """{"type":"string"}""")]);
+        driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out ImmutableArray<Diagnostic> diagnostics);
+        GeneratorRunResult next = driver.GetRunResult().Results[0];
+        AssertNoErrors(diagnostics, next, "generation after adding an unrelated JSON file");
+        AssertSameSources(cold, next);
+    }
+
+    /// <summary>
+    /// A trivial edit of the file that carries the generation attribute (a comment) leaves the generation
+    /// specification unchanged, so the output must come from the incremental cache.
+    /// </summary>
+    [TestMethod]
+    public void AttributeFileCommentEdited_IsServedFromCache()
+    {
+        (GeneratorDriver driver, CSharpCompilation compilation) = CreateDriver();
+        driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out _, out ImmutableArray<Diagnostic> coldDiagnostics);
+        GeneratorRunResult cold = driver.GetRunResult().Results[0];
+        AssertNoErrors(coldDiagnostics, cold, "cold generation");
+
+        SyntaxTree edited = CSharpSyntaxTree.ParseText(Source + "// edited\n", path: Path.Combine(TestDirectory, "Person.cs"));
+        driver = driver.RunGeneratorsAndUpdateCompilation(CreateCompilation(edited), out _, out ImmutableArray<Diagnostic> diagnostics);
+        GeneratorRunResult next = driver.GetRunResult().Results[0];
+        AssertNoErrors(diagnostics, next, "generation after a comment edit of the attribute file");
+        AssertServedFromCache(next, "generation after a comment edit of the attribute file");
+        AssertSameSources(cold, next);
+    }
+
+    private static (GeneratorDriver Driver, CSharpCompilation Compilation) CreateDriver()
+    {
+        SyntaxTree tree = CSharpSyntaxTree.ParseText(Source, path: Path.Combine(TestDirectory, "Person.cs"));
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            [new IncrementalSourceGenerator().AsSourceGenerator()],
+            additionalTexts: [new InMemoryAdditionalText(Path.Combine(TestDirectory, SchemaFileName), Schema)],
+            driverOptions: new GeneratorDriverOptions(IncrementalGeneratorOutputKind.None, trackIncrementalGeneratorSteps: true));
+        return (driver, CreateCompilation(tree));
+    }
+
+    private static void AssertServedFromCache(GeneratorRunResult result, string stage)
+    {
+        IEnumerable<IncrementalStepRunReason> reasons = result.TrackedOutputSteps.SelectMany(kv => kv.Value).SelectMany(s => s.Outputs).Select(o => o.Reason);
+        Assert.IsTrue(reasons.Any() && reasons.All(r => r == IncrementalStepRunReason.Cached), $"{stage} should be served from the incremental cache, but the output steps were: {string.Join(", ", reasons)}");
+    }
+
+    private static void AssertSameSources(GeneratorRunResult expected, GeneratorRunResult actual)
+    {
+        Assert.AreEqual(expected.GeneratedSources.Length, actual.GeneratedSources.Length, "The generation should produce the same set of files.");
+        foreach ((GeneratedSourceResult before, GeneratedSourceResult after) in expected.GeneratedSources.Zip(actual.GeneratedSources))
+        {
+            Assert.AreEqual(before.HintName, after.HintName);
+            Assert.AreEqual(before.SourceText.ToString(), after.SourceText.ToString(), $"Generated file {before.HintName} differs from the cold run.");
         }
     }
 

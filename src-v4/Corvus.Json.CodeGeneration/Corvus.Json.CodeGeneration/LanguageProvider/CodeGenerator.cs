@@ -426,8 +426,13 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.scope.Push(new(scopeName, scopeType));
-        this.FullyQualifiedScope = this.BuildFullyQualifiedScope();
+        // Each scope records its fully-qualified name (the scope names in push order, joined with '.'),
+        // so entering or leaving a scope does not rebuild the name from the whole stack.
+        string fullyQualifiedScope = this.scope.Count == 0
+            ? scopeName
+            : string.Concat(this.scope.Peek().FullyQualifiedName, ".", scopeName);
+        this.scope.Push(new(scopeName, scopeType, fullyQualifiedScope));
+        this.FullyQualifiedScope = fullyQualifiedScope;
 
         return this;
     }
@@ -444,7 +449,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
         }
 
         this.scope.Pop();
-        this.FullyQualifiedScope = this.BuildFullyQualifiedScope();
+        this.FullyQualifiedScope = this.scope.Count > 0 ? this.scope.Peek().FullyQualifiedName : string.Empty;
         return this;
     }
 
@@ -2910,18 +2915,6 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
         }
     }
 
-    private string BuildFullyQualifiedScope(string? additionalScope = null)
-    {
-        IEnumerable<ScopeValue> scope = this.scope.Reverse();
-
-        if (additionalScope is string s)
-        {
-            scope = scope.Append(new(s, 0));
-        }
-
-        return string.Join(".", scope.Select(s => s.Name));
-    }
-
     /// <summary>
     /// A segment to append.
     /// </summary>
@@ -3008,10 +3001,12 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
         }
     }
 
-    private readonly struct ScopeValue(string name, int type)
+    private readonly struct ScopeValue(string name, int type, string fullyQualifiedName)
     {
         public string Name { get; } = name;
 
         public int Type { get; } = type;
+
+        public string FullyQualifiedName { get; } = fullyQualifiedName;
     }
 }
