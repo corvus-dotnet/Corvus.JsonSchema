@@ -12,6 +12,11 @@ namespace Corvus.Json.CodeGeneration.CorvusVocabulary;
 /// </summary>
 public sealed class SchemaVocabulary : IVocabulary
 {
+    private static readonly IKeyword[] KeywordsBacking =
+        [
+            DollarCorvusTypeNameKeyword.Instance,
+        ];
+
     /// <summary>
     /// Initializes a new instance of the <see cref="SchemaVocabulary"/> class.
     /// </summary>
@@ -31,10 +36,7 @@ public sealed class SchemaVocabulary : IVocabulary
     public ReadOnlySpan<byte> UriUtf8 => "https://json-schema.org/draft/2020-12/vocab/corvus-extensions"u8;
 
     /// <inheritdoc/>
-    public IEnumerable<IKeyword> Keywords =>
-        [
-            DollarCorvusTypeNameKeyword.Instance,
-        ];
+    public IEnumerable<IKeyword> Keywords => KeywordsBacking;
 
     /// <inheritdoc/>
     public JsonDocument? BuildReferenceSchemaInstance(JsonReference jsonSchemaPath)

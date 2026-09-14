@@ -1690,7 +1690,9 @@ public static class TypeDeclarationExtensions
             TypeDeclaration typeDeclaration,
             [NotNullWhen(true)] out IReadOnlyCollection<IKeyword>? keywords)
         {
-            var allKeywords = typeDeclaration.LocatedSchema.Vocabulary.Keywords.Where(typeDeclaration.HasKeyword).ToList();
+            // One pass over the schema's properties, in vocabulary order; equivalent to
+            // Vocabulary.Keywords.Where(typeDeclaration.HasKeyword) without a property scan per keyword.
+            List<IKeyword> allKeywords = VocabularyKeywordIndex.For(typeDeclaration.LocatedSchema.Vocabulary).GetPresentKeywords(typeDeclaration.LocatedSchema.Schema);
 
             if (allKeywords.Count > 0)
             {
@@ -1865,31 +1867,41 @@ public static class TypeDeclarationExtensions
 
         if (!that.TryGetMetadata(nameof(CanReduce), out bool canReduce))
         {
-            canReduce = CanReduce(that.LocatedSchema);
+            canReduce = CanReduce(that.LocatedSchema, that.Keywords());
             that.SetMetadata(nameof(CanReduce), canReduce);
         }
 
         return canReduce;
 
-        static bool CanReduce(LocatedSchema locatedSchema)
+        static bool CanReduce(LocatedSchema locatedSchema, IReadOnlyCollection<IKeyword> presentKeywords)
         {
             if (locatedSchema.IsBooleanSchema)
             {
                 return false;
             }
 
-            IKeyword? hidesSiblingsKeyword = locatedSchema.Vocabulary.Keywords
-                    .FirstOrDefault(k => k is IHidesSiblingsKeyword && locatedSchema.Schema.HasKeyword(k));
-
-            if (hidesSiblingsKeyword is IKeyword k)
+            // Only the keywords present in the schema are consulted: every keyword's CanReduce
+            // answers true when the keyword is absent, so this is the same answer as asking
+            // every keyword in the vocabulary, without a property scan per keyword.
+            foreach (IKeyword keyword in presentKeywords)
             {
-                // We have a keyword that hides its siblings
-                // is it something that blocks reduction?
-                return k.CanReduce(locatedSchema.Schema);
+                if (keyword is IHidesSiblingsKeyword)
+                {
+                    // We have a keyword that hides its siblings
+                    // is it something that blocks reduction?
+                    return keyword.CanReduce(locatedSchema.Schema);
+                }
             }
 
-            return locatedSchema.Vocabulary.Keywords.All(
-                    k => k.CanReduce(locatedSchema.Schema));
+            foreach (IKeyword keyword in presentKeywords)
+            {
+                if (!keyword.CanReduce(locatedSchema.Schema))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 

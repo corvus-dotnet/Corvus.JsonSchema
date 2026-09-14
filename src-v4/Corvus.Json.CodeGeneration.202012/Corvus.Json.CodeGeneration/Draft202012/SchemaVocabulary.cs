@@ -23,6 +23,7 @@ internal sealed class SchemaVocabulary : IVocabulary
         ];
 
     private readonly IVocabulary[] vocabularies;
+    private readonly IKeyword[] keywords;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SchemaVocabulary"/> class.
@@ -32,6 +33,9 @@ internal sealed class SchemaVocabulary : IVocabulary
         IVocabulary[] vocabularies)
     {
         this.vocabularies = vocabularies;
+
+        // Materialised once: this set is enumerated many times per schema node.
+        this.keywords = [.. vocabularies.SelectMany(v => v.Keywords).Union([DefinitionsKeyword.Instance, DependenciesKeyword.Instance])];
     }
 
     /// <summary>
@@ -46,12 +50,7 @@ internal sealed class SchemaVocabulary : IVocabulary
     public ReadOnlySpan<byte> UriUtf8 => "https://json-schema.org/draft/2020-12/schema"u8;
 
     /// <inheritdoc/>
-    public IEnumerable<IKeyword> Keywords => this.vocabularies.SelectMany(v => v.Keywords)
-        .Union(
-        [
-            DefinitionsKeyword.Instance,
-            DependenciesKeyword.Instance,
-        ]);
+    public IEnumerable<IKeyword> Keywords => this.keywords;
 
     /// <summary>
     /// Gets the default 2020-12 vocabulary with the additional specified vocabularies.
