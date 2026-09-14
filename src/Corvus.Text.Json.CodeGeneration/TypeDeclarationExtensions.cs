@@ -72,6 +72,8 @@ public static class TypeDeclarationExtensions
     private const string ExcludeNonNullDefaultedKey = "CSharp_LanguageProvider_ExcludeNonNullDefaulted";
     private const string EmitNativeStringEnumsKey = "CSharp_LanguageProvider_EmitNativeStringEnums";
     private const string EmitNativeFlagsEnumsKey = "CSharp_LanguageProvider_EmitNativeFlagsEnums";
+    private const string EmitUnionsKey = "CSharp_LanguageProvider_EmitUnions";
+    private const string UnionCaseTypesKey = "CSharp_LanguageProvider_UnionCaseTypes";
     private const string BuildParametersThresholdKey = "CSharp_LanguageProvider_BuildParametersThreshold";
     private const string ParentKey = "CSharp_LanguageProvider_Parent";
     private const string PreferredDotnetNumericTypeNameKey = "CSharp_LanguageProvider_PreferredDotnetNumericTypeName";
@@ -610,6 +612,144 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
+    /// Gets a value indicating whether the generated type is a C# union when its schema is a <c>oneOf</c> or
+    /// <c>anyOf</c> composition (see <see cref="UnionCaseTypes(TypeDeclaration)"/>).
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <returns><see langword="true"/> if union members are emitted.</returns>
+    public static bool EmitUnions(this TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.TryGetMetadata(EmitUnionsKey, out bool? emitUnions) &&
+            emitUnions is bool value)
+        {
+            return value;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Gets the case types of the generated type as a C# union, or <see langword="null"/> if the type is not a union.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <returns>The case types, in schema order, or <see langword="null"/>.</returns>
+    /// <remarks>
+    /// <para>
+    /// A type is a union when <see cref="EmitUnions(TypeDeclaration)"/> is set and its schema has exactly one
+    /// <c>oneOf</c> keyword (or, failing that, exactly one <c>anyOf</c> keyword) whose branches reduce to at least
+    /// two distinct generated types. The cases are the same branch types, in the same order, as the corresponding
+    /// <c>Match</c> method's, and the same exclusions apply: a branch that is the built-in <c>JsonAny</c> (which every
+    /// value matches, so the composition is not a union), a branch that is the built-in <c>JsonNotAny</c>, and a
+    /// branch that reduces to the type itself. A type whose schema declares a nested type named
+    /// <c>IUnionMembers</c> is not a union either, since that is the name of the member provider.
+    /// </para>
+    /// </remarks>
+    public static IReadOnlyList<TypeDeclaration>? UnionCaseTypes(this TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.TryGetMetadata(UnionCaseTypesKey, out IReadOnlyList<TypeDeclaration>? cached))
+        {
+            return cached;
+        }
+
+        // Types are named before any code is emitted; a type without a name at this point is not generated.
+        if (!typeDeclaration.HasDotnetTypeName())
+        {
+            return null;
+        }
+
+        IReadOnlyList<TypeDeclaration>? cases = ComputeUnionCaseTypes(typeDeclaration);
+        typeDeclaration.SetMetadata(UnionCaseTypesKey, cases);
+        return cases;
+    }
+
+    private static IReadOnlyList<TypeDeclaration>? ComputeUnionCaseTypes(TypeDeclaration typeDeclaration)
+    {
+        if (!typeDeclaration.EmitUnions())
+        {
+            return null;
+        }
+
+        IReadOnlyCollection<TypeDeclaration>? branches = null;
+
+        if (typeDeclaration.OneOfCompositionTypes() is IReadOnlyDictionary<IOneOfSubschemaValidationKeyword, IReadOnlyCollection<TypeDeclaration>> oneOf && oneOf.Count > 0)
+        {
+            if (oneOf.Count != 1)
+            {
+                return null;
+            }
+
+            branches = oneOf.Values.First();
+        }
+        else if (typeDeclaration.AnyOfCompositionTypes() is IReadOnlyDictionary<IAnyOfSubschemaValidationKeyword, IReadOnlyCollection<TypeDeclaration>> anyOf && anyOf.Count > 0)
+        {
+            if (anyOf.Count != 1)
+            {
+                return null;
+            }
+
+            branches = anyOf.Values.First();
+        }
+
+        if (branches is null)
+        {
+            return null;
+        }
+
+        string selfName = typeDeclaration.FullyQualifiedDotnetTypeName();
+        List<TypeDeclaration> cases = [];
+        HashSet<string> seen = [];
+
+        foreach (TypeDeclaration branch in branches)
+        {
+            TypeDeclaration caseType = branch.ReducedTypeDeclaration().ReducedType;
+
+            if (caseType.IsBuiltInJsonAnyType())
+            {
+                // Every value is a JsonAny, so this composition is not a union.
+                return null;
+            }
+
+            if (caseType.IsBuiltInJsonNotAnyType())
+            {
+                continue;
+            }
+
+            if (!caseType.HasDotnetTypeName())
+            {
+                return null;
+            }
+
+            string caseName = caseType.FullyQualifiedDotnetTypeName();
+
+            if (caseName == selfName)
+            {
+                return null;
+            }
+
+            if (seen.Add(caseName))
+            {
+                caseType.EnsureTerminatingCompositionEvaluation();
+                cases.Add(caseType);
+            }
+        }
+
+        if (cases.Count < 2)
+        {
+            return null;
+        }
+
+        foreach (TypeDeclaration child in typeDeclaration.Children())
+        {
+            if (child.HasDotnetTypeName() && child.DotnetTypeName() == "IUnionMembers")
+            {
+                return null;
+            }
+        }
+
+        return cases;
+    }
+
+    /// <summary>
     /// Gets a value indicating whether a pure string-enum schema additionally generates
     /// a nested native C# enum with conversions.
     /// </summary>
@@ -827,6 +967,7 @@ public static class TypeDeclarationExtensions
         typeDeclaration.SetMetadata(ExcludeNonNullDefaultedKey, options.ExcludeNonNullDefaulted);
         typeDeclaration.SetMetadata(EmitNativeStringEnumsKey, options.EmitNativeStringEnums);
         typeDeclaration.SetMetadata(EmitNativeFlagsEnumsKey, options.EmitNativeFlagsEnums);
+        typeDeclaration.SetMetadata(EmitUnionsKey, options.EmitUnions);
         typeDeclaration.SetMetadata(BuildParametersThresholdKey, options.BuildParametersThreshold);
         typeDeclaration.SetMetadata(UseImplicitOperatorStringKey, options.UseImplicitOperatorString);
         typeDeclaration.SetMetadata(AddExplicitUsingsKey, options.AddExplicitUsings);

@@ -18,6 +18,70 @@ public class InProcessGenerationTests
     private static readonly string SchemasDir = CodeGeneratorRunner.GetFixturePath("Schemas");
 
     [TestMethod]
+    public async Task GenerateCode_OneOf_EmitsUnionMembersAndAttributePolyfill()
+    {
+        string schemaContent = """
+            {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "object", "properties": { "kind": { "const": "a" } }, "required": [ "kind" ] },
+                { "type": "array", "items": { "type": "integer" } }
+              ]
+            }
+            """;
+
+        IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcessFromContent(schemaContent);
+        string allCode = string.Join("\n", files.Select(f => f.FileContent));
+
+        StringAssert.Contains(allCode, "[global::System.Runtime.CompilerServices.Union]");
+        StringAssert.Contains(allCode, "public interface IUnionMembers");
+        StringAssert.Contains(allCode, "object? IUnionMembers.Value");
+        StringAssert.Contains(allCode, "bool IUnionMembers.HasValue");
+        Assert.AreEqual(3, System.Text.RegularExpressions.Regex.Matches(allCode, @"static \w+ Create\([\w.]+ value\) => From\(value\);").Count, "one Create factory per branch");
+        Assert.AreEqual(3, System.Text.RegularExpressions.Regex.Matches(allCode, @"bool IUnionMembers\.TryGetValue\(out ").Count, "one TryGetValue per branch");
+        Assert.IsTrue(files.Any(f => f.FileName.StartsWith(Formatting.UnionAttributeFileName, StringComparison.Ordinal)), "the [Union] attribute polyfill file is emitted");
+        StringAssert.Contains(allCode, "#if !NET11_0_OR_GREATER && !CORVUS_TEXT_JSON_NO_UNION_ATTRIBUTE_POLYFILL");
+    }
+
+    [TestMethod]
+    public async Task GenerateCode_OneOfWithUnconstrainedBranch_IsNotAUnion()
+    {
+        string schemaContent = """
+            {
+              "oneOf": [
+                { "type": "string" },
+                { }
+              ]
+            }
+            """;
+
+        IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcessFromContent(schemaContent);
+        string allCode = string.Join("\n", files.Select(f => f.FileContent));
+
+        Assert.IsFalse(allCode.Contains("IUnionMembers", StringComparison.Ordinal));
+        Assert.IsFalse(files.Any(f => f.FileName.StartsWith(Formatting.UnionAttributeFileName, StringComparison.Ordinal)));
+    }
+
+    [TestMethod]
+    public async Task GenerateCode_UnionsDisabled_EmitsNoUnionMembers()
+    {
+        string schemaContent = """
+            {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "integer" }
+              ]
+            }
+            """;
+
+        IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcessFromContent(schemaContent, new CSharpLanguageProvider.Options(defaultNamespace: "Test", emitUnions: false));
+        string allCode = string.Join("\n", files.Select(f => f.FileContent));
+
+        Assert.IsFalse(allCode.Contains("IUnionMembers", StringComparison.Ordinal));
+        StringAssert.Contains(allCode, "public TResult Match<", "Match is still generated");
+    }
+
+    [TestMethod]
     public async Task GenerateCode_ConstProperties_ExercisesConstNameHeuristic()
     {
         // Schema with oneOf variants distinguished by a single const property
@@ -1184,7 +1248,8 @@ public class InProcessGenerationTests
 
     private static async Task<IReadOnlyCollection<GeneratedCodeFile>> GenerateInProcess(
         string schemaPath,
-        CodeGenerationMode mode = CodeGenerationMode.TypeGeneration)
+        CodeGenerationMode mode = CodeGenerationMode.TypeGeneration,
+        CSharpLanguageProvider.Options options = null)
     {
         CompoundDocumentResolver documentResolver = new(
             new FileSystemDocumentResolver(),
@@ -1204,7 +1269,7 @@ public class InProcessGenerationTests
             reference,
             Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary);
 
-        var options = new CSharpLanguageProvider.Options(
+        options ??= new CSharpLanguageProvider.Options(
             defaultNamespace: "TestGenerated",
             codeGenerationMode: mode);
 
@@ -1669,14 +1734,15 @@ public class InProcessGenerationTests
     private static string NormalizeWhitespace(string code) => Regex.Replace(code, @"\s+", " ");
 
     private static async Task<IReadOnlyCollection<GeneratedCodeFile>> GenerateInProcessFromContent(
-        string schemaContent)
+        string schemaContent,
+        CSharpLanguageProvider.Options options = null)
     {
         // Write schema to a temp file
         string tempFile = Path.Combine(Path.GetTempPath(), $"test-schema-{Guid.NewGuid():N}.json");
         try
         {
             await File.WriteAllTextAsync(tempFile, schemaContent);
-            return await GenerateInProcess(tempFile);
+            return await GenerateInProcess(tempFile, options: options);
         }
         finally
         {

@@ -153,6 +153,18 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             };
         }
 
+        bool emitUnions = true;
+
+        if (source.GlobalOptions.TryGetValue("build_property.CorvusTextJsonUnions", out string? unionsName))
+        {
+            emitUnions = unionsName switch
+            {
+                "false" or "False" => false,
+                "true" or "True" or "" => true,
+                _ => throw new InvalidOperationException($"Invalid build property value for 'CorvusTextJsonUnions': '{unionsName}'. Try 'true' or 'false'."),
+            };
+        }
+
         bool addExplicitUsings = true;
 
         if (source.GlobalOptions.TryGetValue("build_property.CorvusTextJsonAddExplicitUsings", out string? addExplicitUsingsName))
@@ -250,7 +262,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             buildParametersThreshold,
             formatModeOverrides,
             emitNativeStringEnums,
-            emitNativeFlagsEnums);
+            emitNativeFlagsEnums,
+            emitUnions);
     }
 
     private static void EmitGeneratorAttribute(IncrementalGeneratorInitializationContext initializationContext)
@@ -318,7 +331,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         int buildParametersThreshold,
         IReadOnlyDictionary<string, FormatAssertionMode>? formatModeOverrides,
         bool emitNativeStringEnums,
-        bool emitNativeFlagsEnums) : IGlobalOptions
+        bool emitNativeFlagsEnums,
+        bool emitUnions) : IGlobalOptions
     {
         private readonly List<CSharpLanguageProvider.NamedType> _namedTypes = [];
 
@@ -347,6 +361,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         public bool EmitNativeStringEnums { get; } = emitNativeStringEnums;
 
         public bool EmitNativeFlagsEnums { get; } = emitNativeFlagsEnums;
+
+        public bool EmitUnions { get; } = emitUnions;
 
         public bool EmitEvaluator { get; set; }
 
@@ -393,7 +409,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
                 formatModeOverrides: FormatModeOverrides,
                 emitNativeStringEnums: EmitNativeStringEnums,
                 emitNativeFlagsEnums: EmitNativeFlagsEnums,
-                programCompiler: global::Corvus.Json.CodeGenerator.RuntimeProgramCompiler.CompileWithoutRegexTable);
+                programCompiler: global::Corvus.Json.CodeGenerator.RuntimeProgramCompiler.CompileWithoutRegexTable,
+                emitUnions: EmitUnions);
 
             return options;
         }

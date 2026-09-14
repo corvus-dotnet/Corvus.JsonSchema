@@ -101,6 +101,11 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [DefaultValue(NativeEnums.All)]
         public NativeEnums NativeEnums { get; init; }
 
+        [CommandOption("--unions <VALUE>")]
+        [Description("Whether a generated oneOf/anyOf type is also a C# union (default true; V5 engine only). With the C# 15 compiler (the .NET 11 SDK) switch and is patterns over the branch types then work, on any target framework. Pass '--unions false' to leave the union members out.")]
+        [DefaultValue(true)]
+        public bool Unions { get; init; }
+
         [CommandOption("--useImplicitOperatorString")]
         [Description("If true, conversion operators to string are implicit, rather than explicit.")]
         [DefaultValue(false)]
@@ -164,6 +169,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             disableOptionalNameHeuristics: settings.DisableOptionalNamingHeuristics,
             optionalAsNullable: settings.OptionalAsNullable.ToString(),
             nativeEnums: settings.NativeEnums.ToString(),
+            unions: settings.Unions,
             outputMapFile: settings.OutputMapFile.AsNullableJsonString(),
             outputPath: settings.OutputPath.AsNullableJsonString(),
             useSchema: settings.UseSchema != SchemaVariant.NotSpecified ? (GeneratorConfig.UseSchema)settings.UseSchema.ToString() : default(GeneratorConfig.UseSchema?),

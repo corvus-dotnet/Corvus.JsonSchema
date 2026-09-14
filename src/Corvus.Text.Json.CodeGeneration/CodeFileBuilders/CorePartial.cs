@@ -49,6 +49,7 @@ public sealed class CorePartial : ICodeFileBuilder
                 .BeginTypeDeclarationNesting(typeDeclaration)
                     .AppendDocumentation(typeDeclaration)
                     .AppendDebuggerDisplay()
+                    .AppendUnionAttribute(typeDeclaration)
                     .BeginPartialStructDeclaration(
                         typeDeclaration.DotnetAccessibility(),
                         typeDeclaration.DotnetTypeName(),
@@ -57,6 +58,7 @@ public sealed class CorePartial : ICodeFileBuilder
                             "IFormattable",
                             new("ISpanFormattable", FrameworkType.Net80OrGreater),
                             new("IUtf8SpanFormattable", FrameworkType.Net80OrGreater),
+                            .. typeDeclaration.UnionMembersInterfaces(),
                             ])
                         .PushJsonSchemaClassNameAndScope()
                         .PushJsonPropertyNamesEscapedClassNameAndScope()
@@ -109,6 +111,7 @@ public sealed class CorePartial : ICodeFileBuilder
                         .AppendFreezeMethod(typeDeclaration)
                         .AppendTryGetAsCompositionTypeMethods(typeDeclaration)
                         .AppendMatchMethods(typeDeclaration)
+                        .AppendUnionMembers(typeDeclaration)
                         .AppendJsonPropertyNames(typeDeclaration)
                         .AppendJsonPropertyNamesEscaped(typeDeclaration)
                         .AppendJsonPropertyNamesPrebaked(typeDeclaration)

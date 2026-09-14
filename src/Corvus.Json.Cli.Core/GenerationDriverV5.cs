@@ -268,7 +268,8 @@ public static class GenerationDriverV5
             formatModeOverrides: GetFormatModeOverrides(generatorConfig),
             emitNativeStringEnums: emitNativeStringEnums,
             emitNativeFlagsEnums: emitNativeFlagsEnums,
-            programCompiler: RuntimeProgramCompiler.Compile);
+            programCompiler: RuntimeProgramCompiler.Compile,
+            emitUnions: generatorConfig.Unions ?? true);
     }
 
     private static IReadOnlyDictionary<string, FormatAssertionMode>? GetFormatModeOverrides(in GeneratorConfig generatorConfig)
