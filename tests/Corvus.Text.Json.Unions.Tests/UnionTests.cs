@@ -6,9 +6,36 @@ using Corvus.Text.Json;
 
 namespace Corvus.Text.Json.Unions.Tests;
 
+#if NETFRAMEWORK
+/// <summary>
+/// On a .NET Framework target the generated union partial is left out (the compiler refuses its static interface
+/// members, CS8701): the same models compile, and carry no union members.
+/// </summary>
+[TestClass]
+public class UnionTests
+{
+    [TestMethod]
+    public void On_dotnet_framework_the_generated_types_are_not_unions()
+    {
+        Assert.IsNull(typeof(Shape).GetNestedType("IUnionMembers"));
+        Assert.IsNull(typeof(Loose).GetNestedType("IUnionMembers"));
+        Assert.IsFalse(typeof(Shape).GetCustomAttributes(false).Any(a => a.GetType().FullName == "System.Runtime.CompilerServices.UnionAttribute"));
+
+        using var doc = ParsedJsonDocument<Shape>.Parse("""{"kind":"circle","radius":2.5}""");
+        Shape shape = doc.RootElement;
+        string viaMatch = shape.Match(
+            static (in Shape.Circle c) => "circle",
+            static (in Shape.Square s) => "square",
+            static (in JsonString l) => "label",
+            static (in Shape.ShapeArray a) => "shapes",
+            static (in Shape _) => "none");
+        Assert.AreEqual("circle", viaMatch);
+    }
+}
+#else
 /// <summary>
 /// A generated <c>oneOf</c>/<c>anyOf</c> type is a C# union: <c>switch</c> and <c>is</c> patterns over its branch
-/// types work with the C# 15 compiler, on every target framework.
+/// types work with the C# 15 compiler, on every target framework except .NET Framework.
 /// </summary>
 [TestClass]
 public class UnionTests
@@ -133,3 +160,4 @@ public class UnionTests
         Assert.IsTrue(Attribute.IsDefined(typeof(Shape), typeof(System.Runtime.CompilerServices.UnionAttribute)));
     }
 }
+#endif
