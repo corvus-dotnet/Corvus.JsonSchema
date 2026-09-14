@@ -41,6 +41,7 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
     private readonly Dictionary<string, PropertyDeclaration> properties = new(StringComparer.Ordinal);
     private IReadOnlyList<PropertyDeclaration>? cachedPropertyDeclarations;
     private IReadOnlyList<TypeDeclaration>? cachedOrderedSubschemaTypeDeclarations;
+    private Dictionary<ISubschemaProviderKeyword, IReadOnlyCollection<TypeDeclaration>>? cachedSubschemaTypeDeclarationsByKeyword;
 
     /// <summary>
     /// Gets the subschema type declarations.
@@ -102,6 +103,51 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
     }
 
     /// <summary>
+    /// Gets the subschema type declarations that a keyword provides for this type declaration.
+    /// </summary>
+    /// <param name="keyword">The keyword.</param>
+    /// <returns>The result of <see cref="ISubschemaProviderKeyword.GetSubschemaTypeDeclarations(TypeDeclaration)"/>,
+    /// computed once per keyword after the build is complete.</returns>
+    /// <remarks>
+    /// The keywords derive the collection from <see cref="SubschemaTypeDeclarations"/> (filtered by keyword path
+    /// and sorted), and the analysis asks for it many times per type; the cache is cleared whenever a subschema
+    /// type declaration is added.
+    /// </remarks>
+    internal IReadOnlyCollection<TypeDeclaration> GetSubschemaTypeDeclarationsFor(ISubschemaProviderKeyword keyword)
+    {
+        if (!this.BuildComplete)
+        {
+            return keyword.GetSubschemaTypeDeclarations(this);
+        }
+
+        Dictionary<ISubschemaProviderKeyword, IReadOnlyCollection<TypeDeclaration>>? cache = this.cachedSubschemaTypeDeclarationsByKeyword;
+        if (cache is not null)
+        {
+            lock (cache)
+            {
+                if (cache.TryGetValue(keyword, out IReadOnlyCollection<TypeDeclaration>? cached))
+                {
+                    return cached;
+                }
+            }
+        }
+
+        IReadOnlyCollection<TypeDeclaration> result = keyword.GetSubschemaTypeDeclarations(this);
+        cache = this.cachedSubschemaTypeDeclarationsByKeyword ??= [];
+        lock (cache)
+        {
+            if (cache.TryGetValue(keyword, out IReadOnlyCollection<TypeDeclaration>? cached))
+            {
+                return cached;
+            }
+
+            cache.Add(keyword, result);
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Adds a type declaration for a subschema to this type declaration.
     /// </summary>
     /// <param name="subschemaPath">The path to the subschema.</param>
@@ -109,6 +155,7 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
     public void AddSubschemaTypeDeclaration(JsonReference subschemaPath, TypeDeclaration subschemaTypeDeclaration)
     {
         this.cachedOrderedSubschemaTypeDeclarations = null;
+        this.cachedSubschemaTypeDeclarationsByKeyword = null;
         this.subschemaTypeDeclarations.Add(subschemaPath, subschemaTypeDeclaration);
     }
 

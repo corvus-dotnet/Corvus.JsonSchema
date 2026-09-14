@@ -19,7 +19,9 @@ namespace Corvus.Json.CodeGeneration;
 public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRegistry vocabularyRegistry)
 {
     private static readonly JsonReference DefaultAbsoluteLocation = new(string.Empty);
-    private readonly Dictionary<string, LocatedSchema> locatedSchema = new(StringComparer.Ordinal);
+
+    // Keyed by location without converting each lookup's JsonReference to a string.
+    private readonly Dictionary<JsonReference, LocatedSchema> locatedSchema = new(JsonReferenceContentComparer.Instance);
     private readonly Dictionary<string, string> scopeRootDocumentPointers = new(StringComparer.Ordinal);
     private readonly Dictionary<string, string> scopeRootDocuments = new(StringComparer.Ordinal);
 
@@ -374,18 +376,15 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
     /// being added based on an anchor or similar.</remarks>
     public bool TryAddLocatedSchema(JsonReference location, LocatedSchema schema)
     {
-#if NET8_0_OR_GREATER
-        return this.locatedSchema.TryAdd(location, schema);
-#else
-        string l = location;
-        if (this.locatedSchema.ContainsKey(l))
+        if (this.locatedSchema.ContainsKey(location))
         {
             return false;
         }
 
-        this.locatedSchema.Add(l, schema);
+        // The stored key gets its own string, as the string-keyed table did, so it never shares memory
+        // with the caller's reference.
+        this.locatedSchema.Add(new JsonReference(location.ToString()), schema);
         return true;
-#endif
     }
 
     /// <summary>
