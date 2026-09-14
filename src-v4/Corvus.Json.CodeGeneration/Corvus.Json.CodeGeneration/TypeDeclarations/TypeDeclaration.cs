@@ -91,11 +91,11 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
     public bool HasPropertyDeclarations => this.properties.Count > 0;
 
     /// <summary>
-    /// Gets a value indicating whether this declaration is shared by every generation in the process
+    /// Gets or sets a value indicating whether this declaration is shared by every generation in the process
     /// (<see cref="WellKnownTypeDeclarations.JsonAny"/> and <see cref="WellKnownTypeDeclarations.JsonNotAny"/>),
     /// so its metadata must be synchronized.
     /// </summary>
-    internal bool IsShared { get; init; }
+    internal bool IsShared { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the basic build process is complete.
