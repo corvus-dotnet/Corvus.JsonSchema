@@ -16,4 +16,14 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
     <PackageReference Include="Microsoft.Bcl.HashCode" />
   </ItemGroup>
+  <!-- The generator project hands its private System.Text.Json 8 (netstandard2.0) assembly to every project that
+       references it (GetDependencyTargetPaths), so that analyzer hosts can load it next to the generator. This
+       project runs on net10.0, where the framework's System.Text.Json 10 is the assembly that loads, so the
+       generator's copy is dropped before reference resolution. Keeping both made ResolveAssemblyReference see two
+       primary System.Text.Json references of different versions (MSB3243). -->
+  <Target Name="RemoveGeneratorPrivateSystemTextJson" AfterTargets="ResolveProjectReferences">
+    <ItemGroup>
+      <_ResolvedProjectReferencePaths Remove="@(_ResolvedProjectReferencePaths)" Condition="'%(Filename)' == 'System.Text.Json'" />
+    </ItemGroup>
+  </Target>
 </Project>
