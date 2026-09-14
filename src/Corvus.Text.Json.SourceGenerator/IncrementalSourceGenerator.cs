@@ -38,6 +38,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
 
     private static readonly IVocabulary Corvus202012Vocab = CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabularyWith([CodeGeneration.CorvusVocabulary.SchemaVocabulary.DefaultInstance]);
 
+    private readonly GenerationMemo generationMemo = new();
+
     /// <inheritdoc/>
     public void Initialize(IncrementalGeneratorInitializationContext initializationContext)
     {
@@ -47,9 +49,9 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
 
         IncrementalValuesProvider<AdditionalText> jsonSourceFiles = initializationContext.AdditionalTextsProvider.Where(static p => p.Path.EndsWith(".json") || p.Path.EndsWith(".yaml") || p.Path.EndsWith(".yml"));
 
-        IncrementalValueProvider<IDocumentResolver> documentResolver = jsonSourceFiles.Collect().Select(SourceGeneratorHelpers.BuildDocumentResolver);
-
-        IncrementalValueProvider<SourceGeneratorHelpers.GenerationContext<GlobalOptions>> generationContext = documentResolver.Combine(globalOptions).Select((r, c) => new SourceGeneratorHelpers.GenerationContext<GlobalOptions>(r.Left, r.Right));
+        // Each file is compared by path and content checksum, so re-reading unchanged content leaves the pipeline
+        // cached; the documents are parsed in the output step, through a cache keyed by the text.
+        IncrementalValueProvider<ImmutableArray<SchemaFile>> schemaFiles = jsonSourceFiles.Select(static (text, token) => SchemaFile.Create(text, token)).Collect();
 
         IncrementalValuesProvider<SourceGeneratorHelpers.GenerationSpecification> generationSpecifications =
             initializationContext.SyntaxProvider.ForAttributeWithMetadataName(
@@ -57,17 +59,18 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
                 IsValidAttributeTarget,
                 BuildGenerationSpecifications);
 
-        IncrementalValueProvider<SourceGeneratorHelpers.TypesToGenerate<GlobalOptions>> typesToGenerate = generationSpecifications.Collect().Combine(generationContext).Select((c, t) => new SourceGeneratorHelpers.TypesToGenerate<GlobalOptions>(c.Left, c.Right));
+        IncrementalValueProvider<(ImmutableArray<SourceGeneratorHelpers.GenerationSpecification> Specifications, (ImmutableArray<SchemaFile> Files, GlobalOptions Options) Context)> typesToGenerate =
+            generationSpecifications.Collect().Combine(schemaFiles.Combine(globalOptions));
 
-        initializationContext.RegisterSourceOutput(typesToGenerate, GenerateCode);
-    }
-
-    private static void GenerateCode(SourceProductionContext context, SourceGeneratorHelpers.TypesToGenerate<GlobalOptions> generationSource)
-    {
-        SourceGeneratorHelpers.GenerateCode(
-            context,
-            generationSource,
-            VocabularyRegistry);
+        initializationContext.RegisterSourceOutput(
+            typesToGenerate,
+            (context, source) => SourceGeneratorHelpers.GenerateCode(
+                context,
+                source.Specifications,
+                source.Context.Files,
+                source.Context.Options,
+                VocabularyRegistry,
+                this.generationMemo));
     }
 
     private static SourceGeneratorHelpers.GenerationSpecification BuildGenerationSpecifications(GeneratorAttributeSyntaxContext context, CancellationToken token)

@@ -299,6 +299,7 @@
     <Compile Include="GeneratedTypeAccessibility.cs" />
     <Compile Include="IGlobalOptions.cs" />
     <Compile Include="NamedTypeSpecification.cs" />
+    <Compile Include="GenerationInputs.cs" />
   </ItemGroup>
   <!-- YAML converter source files (linked with STJ define) -->
   <ItemGroup>

@@ -63,125 +63,7 @@ public static class SourceGeneratorHelpers
     public static List<TypeDeclaration> GenerateCode<TGlobalOptions>(SourceProductionContext context, TypesToGenerate<TGlobalOptions> typesToGenerate, VocabularyRegistry vocabularyRegistry)
         where TGlobalOptions : IGlobalOptions
     {
-        if (typesToGenerate.GenerationSpecifications.Length == 0)
-        {
-            // Nothing to generate
-            return [];
-        }
-
-        List<TypeDeclaration> typeDeclarationsToGenerate = [];
-        List<TypeDeclaration>? evaluatorRootTypes = null;
-
-        // Per-generation inputs. The global options are cached across generations by the
-        // incremental pipeline, so they must not accumulate state from one run to the next.
-        List<NamedTypeSpecification> namedTypes = [];
-        JsonSchemaTypeBuilder typeBuilder = new(typesToGenerate.DocumentResolver, vocabularyRegistry);
-
-        string? defaultNamespace = null;
-
-        foreach (GenerationSpecification spec in typesToGenerate.GenerationSpecifications)
-        {
-            if (context.CancellationToken.IsCancellationRequested)
-            {
-                return [];
-            }
-
-            string schemaFile = spec.Location;
-            JsonReference reference = new(schemaFile);
-            TypeDeclaration rootType;
-            try
-            {
-                rootType = typeBuilder.AddTypeDeclarations(reference, typesToGenerate.GlobalOptions.FallbackVocabulary, spec.RebaseToRootPath, context.CancellationToken);
-            }
-            catch (Exception ex)
-            {
-                context.ReportDiagnostic(
-                    Diagnostic.Create(
-                        Crv1000ErrorAddingTypeDeclarations,
-                        Location.None,
-                        reference,
-                        ex.Message));
-
-                return [];
-            }
-
-            typeDeclarationsToGenerate.Add(rootType);
-
-            if (spec.EmitEvaluator)
-            {
-                evaluatorRootTypes ??= [];
-                evaluatorRootTypes.Add(rootType);
-            }
-
-            // Prefer the first non-empty namespace: an empty namespace (a global-namespace
-            // target) must not capture the default used for shared generated types.
-            if (string.IsNullOrEmpty(defaultNamespace))
-            {
-                defaultNamespace = spec.Namespace;
-            }
-
-            // Only add the named type if the spec.TypeName is not null or empty.
-            if (!string.IsNullOrEmpty(spec.TypeName))
-            {
-                namedTypes.Add(
-                    new NamedTypeSpecification(
-                        rootType.ReducedTypeDeclaration().ReducedType.LocatedSchema.Location,
-                        spec.TypeName,
-                        spec.Namespace,
-                        spec.Accessibility));
-            }
-        }
-
-        ILanguageProvider languageProvider = typesToGenerate.GlobalOptions.CreateLanguageProvider(defaultNamespace, namedTypes, emitEvaluator: evaluatorRootTypes is not null);
-
-        // Set the evaluator root types on the language provider so the evaluator generator
-        // can access the unreduced type declarations.
-        if (evaluatorRootTypes is not null && languageProvider is CSharpLanguageProvider csharpProvider)
-        {
-            csharpProvider.SetEvaluatorRootTypes([.. evaluatorRootTypes]);
-        }
-
-        IReadOnlyCollection<GeneratedCodeFile> generatedCode;
-
-        try
-        {
-            generatedCode =
-                typeBuilder.GenerateCodeUsing(
-                    languageProvider,
-                    typeDeclarationsToGenerate,
-                    context.CancellationToken);
-        }
-        catch (CircularSchemaReferenceException ex)
-        {
-            context.ReportDiagnostic(
-                Diagnostic.Create(
-                    Crv1002CircularSchemaReference,
-                    Location.None,
-                    ex.ReferencingLocation,
-                    ex.ReferencedLocation));
-
-            return [];
-        }
-        catch (Exception ex)
-        {
-            context.ReportDiagnostic(
-                Diagnostic.Create(
-                    Crv1001ErrorGeneratingCSharpCode,
-                    Location.None,
-                    ex.Message));
-
-            return [];
-        }
-
-        foreach (GeneratedCodeFile codeFile in generatedCode)
-        {
-            if (!context.CancellationToken.IsCancellationRequested)
-            {
-                context.AddSource(codeFile.FileName, SourceText.From(codeFile.FileContent, Encoding.UTF8));
-            }
-        }
-
-        return typeDeclarationsToGenerate;
+        return GenerateCodeCore(context, typesToGenerate.GenerationSpecifications, typesToGenerate.DocumentResolver, typesToGenerate.GlobalOptions, vocabularyRegistry, producedSources: null, out _);
     }
 
     /// <summary>
@@ -309,6 +191,209 @@ public static class SourceGeneratorHelpers
     }
 
     /// <summary>
+    /// Chains the process-wide metaschema resolver behind a generation's resolver.
+    /// </summary>
+    /// <param name="resolver">The resolver with the generation's documents.</param>
+    /// <returns>The resolver for the generation.</returns>
+    internal static IDocumentResolver ChainMetaschemas(PrepopulatedDocumentResolver resolver)
+    {
+        return new CompoundDocumentResolver(resolver, new SharedDocumentResolver(MetaSchemaResolver));
+    }
+
+    /// <summary>
+    /// Generate code into a source production context from value-equatable pipeline inputs, reusing an earlier
+    /// generation's sources when the specifications, the options and every document it read are unchanged.
+    /// </summary>
+    /// <typeparam name="TGlobalOptions">The type of the global options.</typeparam>
+    /// <param name="context">The <see cref="SourceProductionContext"/>.</param>
+    /// <param name="generationSpecifications">The generation specifications.</param>
+    /// <param name="schemaFiles">The JSON and YAML additional texts.</param>
+    /// <param name="globalOptions">The global options.</param>
+    /// <param name="vocabularyRegistry">The vocabulary registry.</param>
+    /// <param name="memo">The outputs of recent generations.</param>
+    internal static void GenerateCode<TGlobalOptions>(SourceProductionContext context, ImmutableArray<GenerationSpecification> generationSpecifications, ImmutableArray<SchemaFile> schemaFiles, TGlobalOptions globalOptions, VocabularyRegistry vocabularyRegistry, GenerationMemo memo)
+        where TGlobalOptions : IGlobalOptions
+    {
+        if (generationSpecifications.Length == 0)
+        {
+            // Nothing to generate
+            return;
+        }
+
+        SchemaFileSet files = SchemaFileSet.Create(schemaFiles, context.CancellationToken);
+        if (context.CancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
+
+        if (memo.TryGet(generationSpecifications, globalOptions, files, out IReadOnlyList<(string HintName, SourceText Text)>? previousSources))
+        {
+            foreach ((string hintName, SourceText text) in previousSources)
+            {
+                if (context.CancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                context.AddSource(hintName, text);
+            }
+
+            return;
+        }
+
+        RecordingDocumentResolver documentResolver = new(files.CreateResolver());
+        List<(string HintName, SourceText Text)> producedSources = [];
+        GenerateCodeCore(context, generationSpecifications, documentResolver, globalOptions, vocabularyRegistry, producedSources, out bool succeeded);
+
+        // Only a complete generation that reported no diagnostics is reused.
+        if (succeeded)
+        {
+            memo.Store(generationSpecifications, globalOptions, files.GetFingerprints(documentResolver.ResolvedUris), producedSources);
+        }
+    }
+
+    /// <summary>
+    /// Generate code for the specifications with a given document resolver.
+    /// </summary>
+    /// <typeparam name="TGlobalOptions">The type of the global options.</typeparam>
+    /// <param name="context">The <see cref="SourceProductionContext"/>.</param>
+    /// <param name="generationSpecifications">The generation specifications.</param>
+    /// <param name="documentResolver">The document resolver.</param>
+    /// <param name="globalOptions">The global options.</param>
+    /// <param name="vocabularyRegistry">The vocabulary registry.</param>
+    /// <param name="producedSources">If not <see langword="null"/>, receives the sources added to the context.</param>
+    /// <param name="succeeded">Set to <see langword="true"/> if every source was added and no diagnostic was reported.</param>
+    /// <returns>The list of root type declarations that were generated.</returns>
+    private static List<TypeDeclaration> GenerateCodeCore<TGlobalOptions>(SourceProductionContext context, ImmutableArray<GenerationSpecification> generationSpecifications, IDocumentResolver documentResolver, TGlobalOptions globalOptions, VocabularyRegistry vocabularyRegistry, List<(string HintName, SourceText Text)>? producedSources, out bool succeeded)
+        where TGlobalOptions : IGlobalOptions
+    {
+        succeeded = false;
+
+        if (generationSpecifications.Length == 0)
+        {
+            // Nothing to generate
+            return [];
+        }
+
+        List<TypeDeclaration> typeDeclarationsToGenerate = [];
+        List<TypeDeclaration>? evaluatorRootTypes = null;
+
+        // Per-generation inputs. The global options are cached across generations by the
+        // incremental pipeline, so they must not accumulate state from one run to the next.
+        List<NamedTypeSpecification> namedTypes = [];
+        JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
+
+        string? defaultNamespace = null;
+
+        foreach (GenerationSpecification spec in generationSpecifications)
+        {
+            if (context.CancellationToken.IsCancellationRequested)
+            {
+                return [];
+            }
+
+            string schemaFile = spec.Location;
+            JsonReference reference = new(schemaFile);
+            TypeDeclaration rootType;
+            try
+            {
+                rootType = typeBuilder.AddTypeDeclarations(reference, globalOptions.FallbackVocabulary, spec.RebaseToRootPath, context.CancellationToken);
+            }
+            catch (Exception ex)
+            {
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        Crv1000ErrorAddingTypeDeclarations,
+                        Location.None,
+                        reference,
+                        ex.Message));
+
+                return [];
+            }
+
+            typeDeclarationsToGenerate.Add(rootType);
+
+            if (spec.EmitEvaluator)
+            {
+                evaluatorRootTypes ??= [];
+                evaluatorRootTypes.Add(rootType);
+            }
+
+            // Prefer the first non-empty namespace: an empty namespace (a global-namespace
+            // target) must not capture the default used for shared generated types.
+            if (string.IsNullOrEmpty(defaultNamespace))
+            {
+                defaultNamespace = spec.Namespace;
+            }
+
+            // Only add the named type if the spec.TypeName is not null or empty.
+            if (!string.IsNullOrEmpty(spec.TypeName))
+            {
+                namedTypes.Add(
+                    new NamedTypeSpecification(
+                        rootType.ReducedTypeDeclaration().ReducedType.LocatedSchema.Location,
+                        spec.TypeName,
+                        spec.Namespace,
+                        spec.Accessibility));
+            }
+        }
+
+        ILanguageProvider languageProvider = globalOptions.CreateLanguageProvider(defaultNamespace, namedTypes, emitEvaluator: evaluatorRootTypes is not null);
+
+        // Set the evaluator root types on the language provider so the evaluator generator
+        // can access the unreduced type declarations.
+        if (evaluatorRootTypes is not null && languageProvider is CSharpLanguageProvider csharpProvider)
+        {
+            csharpProvider.SetEvaluatorRootTypes([.. evaluatorRootTypes]);
+        }
+
+        IReadOnlyCollection<GeneratedCodeFile> generatedCode;
+
+        try
+        {
+            generatedCode =
+                typeBuilder.GenerateCodeUsing(
+                    languageProvider,
+                    typeDeclarationsToGenerate,
+                    context.CancellationToken);
+        }
+        catch (CircularSchemaReferenceException ex)
+        {
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    Crv1002CircularSchemaReference,
+                    Location.None,
+                    ex.ReferencingLocation,
+                    ex.ReferencedLocation));
+
+            return [];
+        }
+        catch (Exception ex)
+        {
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    Crv1001ErrorGeneratingCSharpCode,
+                    Location.None,
+                    ex.Message));
+
+            return [];
+        }
+
+        foreach (GeneratedCodeFile codeFile in generatedCode)
+        {
+            if (!context.CancellationToken.IsCancellationRequested)
+            {
+                SourceText text = SourceText.From(codeFile.FileContent, Encoding.UTF8);
+                context.AddSource(codeFile.FileName, text);
+                producedSources?.Add((codeFile.FileName, text));
+            }
+        }
+
+        succeeded = !context.CancellationToken.IsCancellationRequested;
+        return typeDeclarationsToGenerate;
+    }
+
+    /// <summary>
     /// Defines the types to generate and the context in which they should be generated.
     /// </summary>
     /// <typeparam name="TGlobalOptions">The type of the global options.</typeparam>
@@ -342,7 +427,7 @@ public static class SourceGeneratorHelpers
     /// <param name="typeName">The .NET name of the type. If null, the type name will be inferred.</param>
     /// <param name="accessibility">The accessibility of the type. The default is <see cref="GeneratedTypeAccessibility.Public"/>.</param>
     /// <param name="emitEvaluator">Indicates whether to emit a standalone evaluator.</param>
-    public readonly struct GenerationSpecification(string ns, string location, bool rebaseToRootPath, string? typeName = null, GeneratedTypeAccessibility accessibility = GeneratedTypeAccessibility.Public, bool emitEvaluator = false)
+    public readonly struct GenerationSpecification(string ns, string location, bool rebaseToRootPath, string? typeName = null, GeneratedTypeAccessibility accessibility = GeneratedTypeAccessibility.Public, bool emitEvaluator = false) : IEquatable<GenerationSpecification>
     {
         /// <summary>
         /// Gets the .NET name of the type.
@@ -373,6 +458,43 @@ public static class SourceGeneratorHelpers
         /// Gets a value indicating whether to emit a standalone evaluator.
         /// </summary>
         public bool EmitEvaluator { get; } = emitEvaluator;
+
+        /// <summary>
+        /// Determines whether two specifications are equal.
+        /// </summary>
+        /// <param name="left">The first specification.</param>
+        /// <param name="right">The second specification.</param>
+        /// <returns><see langword="true"/> if they are equal.</returns>
+        public static bool operator ==(GenerationSpecification left, GenerationSpecification right) => left.Equals(right);
+
+        /// <summary>
+        /// Determines whether two specifications differ.
+        /// </summary>
+        /// <param name="left">The first specification.</param>
+        /// <param name="right">The second specification.</param>
+        /// <returns><see langword="true"/> if they differ.</returns>
+        public static bool operator !=(GenerationSpecification left, GenerationSpecification right) => !left.Equals(right);
+
+        /// <inheritdoc/>
+        public bool Equals(GenerationSpecification other)
+        {
+            return
+                string.Equals(this.TypeName, other.TypeName, StringComparison.Ordinal) &&
+                string.Equals(this.Namespace, other.Namespace, StringComparison.Ordinal) &&
+                string.Equals(this.Location, other.Location, StringComparison.Ordinal) &&
+                this.RebaseToRootPath == other.RebaseToRootPath &&
+                this.Accessibility == other.Accessibility &&
+                this.EmitEvaluator == other.EmitEvaluator;
+        }
+
+        /// <inheritdoc/>
+        public override bool Equals(object? obj) => obj is GenerationSpecification other && this.Equals(other);
+
+        /// <inheritdoc/>
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(this.TypeName, this.Namespace, this.Location, this.RebaseToRootPath, this.Accessibility, this.EmitEvaluator);
+        }
     }
 
     /// <summary>
