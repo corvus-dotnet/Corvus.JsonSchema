@@ -298,6 +298,23 @@ using JsonDocumentBuilder<Shape.Circle.Mutable> circleBuilder =
 Shape shape = circleBuilder.RootElement;
 ```
 
+Reading the union back goes through `Match`, or, with the .NET 11 SDK or later (any target framework), a
+`switch` over the branch types, since a `oneOf`/`anyOf` type is also a C# union:
+
+```csharp
+string kind = shape.Match(
+    static (in Shape.Circle c) => "circle",
+    static (in Shape.Rectangle r) => "rectangle",
+    static (in Shape none) => "neither");
+
+string kind = shape switch      // C# 15: exhaustive over the branches, no boxing
+{
+    Shape.Circle c => "circle",
+    Shape.Rectangle r => "rectangle",
+    null => "neither",          // a value that matches no branch
+};
+```
+
 The same applies when *creating* a larger document: a branch can be passed straight into the
 `Build`/`CreateBuilder` of a type that contains the union. Here a `ShapeHolder` has a required `shape`
 property of the `Shape` union, and we build it from a `Circle`:

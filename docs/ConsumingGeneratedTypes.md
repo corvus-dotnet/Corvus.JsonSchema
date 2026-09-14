@@ -37,10 +37,32 @@ DateTimeOffset when = element.GetDateTimeOffset();
 To read a string value's bytes without allocating a managed `string`, use `element.GetUtf8String()` (see the UTF-8
 section of [Performance Techniques](./PerformanceTechniques.md)).
 
-### Discriminated unions: `Match`
+### Discriminated unions: `Match`, or a `switch`
 
 A `oneOf` schema generates a union. Read it with the generated `Match<TResult>(...)` (or the `IsX` / `AsX`
 accessors) rather than inspecting `ValueKind` by hand, so the compiler checks that you handled every case.
+
+```csharp
+string description = shape.Match(
+    static (in Shape.Circle c) => $"circle {(double)c.Radius}",
+    static (in Shape.Square s) => $"square {(double)s.Side}",
+    static (in Shape none) => "not a shape");
+```
+
+**.NET 11 SDK or later, any target framework:** the generated type is also a C# union, so a `switch` or `is`
+pattern over the branch types is exhaustive without a fallback arm, and it does not box. A value that matches
+no branch has a `null` union value, so add a `null` arm when the input is untrusted, or test `HasValue` through
+the type's `IUnionMembers` interface. The requirement is the C# 15 compiler in the .NET 11 SDK; the project can
+still target net9.0 or net10.0. Older compilers ignore the union members and `Match` keeps working.
+
+```csharp
+string description = shape switch
+{
+    Shape.Circle c => $"circle {(double)c.Radius}",
+    Shape.Square s => $"square {(double)s.Side}",
+    null => "not a shape",
+};
+```
 
 ### Native enums: `KnownValues` and `Flags`
 

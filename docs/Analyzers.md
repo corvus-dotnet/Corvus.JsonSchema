@@ -119,6 +119,8 @@ string result = value.Match(
 
 > **Note:** The code fix only applies the `static` modifier for non-capturing lambdas. Capturing-lambda refactoring to `Match<TContext, TResult>`, or to an accumulator-threaded `MatchEvery`, requires manual changes.
 
+> **Tip:** With the .NET 11 SDK or later (any target framework), a generated `oneOf`/`anyOf` type is also a C# union, and a `switch` over its variants has no lambdas to capture anything: `value switch { JsonString s => ..., JsonNumber n => ..., null => ... }`. The analyzer has nothing to report there.
+
 ---
 
 ## CTJ004 — Missing dispose on ParsedJsonDocument

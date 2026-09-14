@@ -242,3 +242,25 @@ Note that simple types may be reduced to global types like `JsonString` or `Json
 ### Q: What is the `defaultMatch` handler for?
 
 **A:** The `defaultMatch` handler is called when no other variant matches. In a well-validated schema this shouldn't happen, but it provides a safety net for cases where the JSON data hasn't been validated against the schema. It follows the same pattern as a `default` case in a C# `switch` expression, ensuring exhaustive handling.
+
+## With the .NET 11 SDK: a plain `switch`
+
+The generated `oneOf` type is also a C# union. When the project is compiled with the C# 15 compiler (the .NET 11 SDK
+or later; the project can still target net9.0 or net10.0), a `switch` or `is` pattern over the branch types works,
+is exhaustive over the branches without a fallback arm, and does not box:
+
+```csharp
+string ProcessWithSwitch(in DiscriminatedUnionByType value) => value switch
+{
+    JsonString s => $"It was a string: {s}",
+    JsonInt32 i => $"It was an int32: {i}",
+    PersonOpen p => $"It was a person. {p.FamilyName}, {p.GivenName}",
+    DiscriminatedUnionByType.People people => $"It was an array of people. {people.GetArrayLength()}",
+    null => throw new InvalidOperationException($"Unexpected instance {value}"),
+};
+```
+
+A value that matches no branch has a `null` union value, so the `null` arm plays the part of `Match`'s default
+handler; leave it out when the input is trusted and the compiler still considers the switch exhaustive. `Match`
+is unchanged and remains the way to write this on older compilers.
+

@@ -1066,6 +1066,20 @@ string result = v5.Match(
     static (in MigrationUnion v) => "none");
 ```
 
+V5 only, with the .NET 11 SDK or later (any target framework): the generated type is also a C# union, so a
+`switch` over the variants is exhaustive and does not box. There is no V4 equivalent.
+
+```csharp
+// V5 — C# 15 switch over the union's variants; null is the "no variant matched" case
+string result = v5 switch
+{
+    JsonString s => $"string:{(string)s}",
+    JsonInt32 n => $"number:{(int)n}",
+    JsonBoolean b => $"bool:{(bool)b}",
+    null => "none",
+};
+```
+
 Both also support `Match` with a context parameter to avoid closures:
 
 ```csharp
