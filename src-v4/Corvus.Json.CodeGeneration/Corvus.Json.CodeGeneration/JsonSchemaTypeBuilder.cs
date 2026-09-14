@@ -232,7 +232,10 @@ public class JsonSchemaTypeBuilder(
                 continue;
             }
 
-            JsonElement? root = documentResolver.TryResolve(new JsonReference(uri)).AsTask().GetAwaiter().GetResult();
+            // A rebased island or a synthetic $ref root is a virtual resource of the registry, not a resolver document.
+            JsonElement? root = this.schemaRegistry.TryGetVirtualResource(uri.AsSpan(), out JsonElement virtualRoot)
+                ? virtualRoot
+                : documentResolver.TryResolve(new JsonReference(uri)).AsTask().GetAwaiter().GetResult();
             if (root is JsonElement element)
             {
                 result.Add((uri, element));

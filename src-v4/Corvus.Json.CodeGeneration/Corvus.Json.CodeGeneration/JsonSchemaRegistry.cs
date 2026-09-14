@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text.Json;
 using Corvus.Json.CodeGeneration.DocumentResolvers;
 
@@ -24,6 +25,11 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
     private readonly Dictionary<JsonReference, LocatedSchema> locatedSchema = new(JsonReferenceContentComparer.Instance);
     private readonly Dictionary<string, string> scopeRootDocumentPointers = new(StringComparer.Ordinal);
     private readonly Dictionary<string, string> scopeRootDocuments = new(StringComparer.Ordinal);
+
+    // Schemas with no document of their own in the document resolver (rebased islands and synthetic $ref roots), by
+    // location. Their locations come from a sequence per registry, so every generation gives them the same ones.
+    private readonly Dictionary<string, JsonElement> virtualResources = new(StringComparer.Ordinal);
+    private int virtualResourceCount;
 
     /// <summary>
     /// Walk a JSON document and build a schema map.
@@ -55,7 +61,7 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
         }
 
         // Load the document
-        JsonElement? optionalDocumentRoot = await documentResolver.TryResolve(basePath) ?? throw new InvalidOperationException($"Unable to locate the root document at '{basePath}'");
+        JsonElement? optionalDocumentRoot = await this.TryResolveAsync(basePath) ?? throw new InvalidOperationException($"Unable to locate the root document at '{basePath}'");
         if (optionalDocumentRoot is not JsonElement documentRoot)
         {
             throw new InvalidOperationException($"Unable to resolve the document at {basePath}");
@@ -82,7 +88,7 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
         {
             // This is not a valid schema overall, so this must be an island in the schema
             basePath = jsonSchemaPath;
-            if (await documentResolver.TryResolve(basePath) is JsonElement island)
+            if (await this.TryResolveAsync(basePath) is JsonElement island)
             {
                 // We've loaded a new document, so we need to see if we need to override the vocabulary.
                 vocabulary = await vocabularyRegistry.AnalyseSchema(island) ?? vocabulary;
@@ -106,33 +112,6 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
 
         return (this.AddSchemaAndSubschema(basePath, documentRoot, vocabulary, cancellationToken), basePath);
 
-        async ValueTask<JsonReference> AddSchemaForUpdatedPathAndElement(JsonReference jsonSchemaPath, JsonElement newBase, IVocabulary vocabulary)
-        {
-            return await AddSchemaForUpdatedPathAndDocument(jsonSchemaPath, GetDocumentFrom(newBase), vocabulary);
-        }
-
-        async ValueTask<JsonReference> AddSchemaForUpdatedPathAndDocument(JsonReference jsonSchemaPath, JsonDocument newBase, IVocabulary vocabulary)
-        {
-            documentResolver.AddDocument(jsonSchemaPath, newBase);
-            JsonElement? resolvedBaseOptional = await documentResolver.TryResolve(jsonSchemaPath) ?? throw new InvalidOperationException($"Expected to find a rebased schema at {jsonSchemaPath}");
-            if (resolvedBaseOptional is not JsonElement resolvedBase)
-            {
-                throw new InvalidOperationException($"Unable to find the JSON schema at '{jsonSchemaPath}'.");
-            }
-
-            if (!vocabulary.ValidateSchemaInstance(resolvedBase))
-            {
-                throw new InvalidOperationException($"The JSON schema at '{jsonSchemaPath}' was not valid, according to the vocabulary {vocabulary.Uri}.");
-            }
-
-            return this.AddSchemaAndSubschema(jsonSchemaPath, resolvedBase, vocabulary, cancellationToken);
-        }
-
-        static JsonDocument GetDocumentFrom(JsonElement documentRoot)
-        {
-            return JsonDocument.Parse(documentRoot.GetRawText());
-        }
-
         async ValueTask<(JsonReference RootUri, JsonReference BaseReference)> HandleEmbeddedBaseSchema(VocabularyRegistry vocabularyRegistry, JsonReference jsonSchemaPath, IVocabulary ambientVocabulary, bool rebaseAsRoot, JsonReference basePath, JsonElement documentRoot)
         {
             JsonElement newBase = JsonPointerUtilities.ResolvePointer(documentRoot, jsonSchemaPath.Fragment);
@@ -141,12 +120,9 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
             {
                 referencedVocab = await vocabularyRegistry.AnalyseSchema(newBase) ?? ambientVocabulary;
 
-                // Switch the root to be an absolute URI
-                jsonSchemaPath = DefaultAbsoluteLocation.Apply(new JsonReference($"{Guid.NewGuid()}/Schema"));
-
-                // And add the document back to the document resolver against that root URI
-                JsonReference docref = await AddSchemaForUpdatedPathAndElement(jsonSchemaPath, newBase, referencedVocab);
-                return (docref, basePath);
+                // The island becomes the root of a virtual resource over its element in the document that is already
+                // loaded, so it is neither serialized nor parsed again.
+                return (this.AddVirtualResource(newBase, referencedVocab, cancellationToken), basePath);
             }
             else
             {
@@ -156,11 +132,15 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
                 // This is not a root path, so we need to construct a JSON document that references the root path instead.
                 // This will not actually be constructed, as it will be resolved to the reference type instead.
                 // It allows us to indirect through this reference as if it were a "root" type.
-                JsonDocument referenceSchema = referencedVocab.BuildReferenceSchemaInstance(jsonSchemaPath)
-                    ?? throw new InvalidOperationException("The vocabulary does not support referencing");
-                jsonSchemaPath = DefaultAbsoluteLocation.Apply(new JsonReference($"{Guid.NewGuid()}/Schema"));
-                JsonReference docref = await AddSchemaForUpdatedPathAndDocument(jsonSchemaPath, referenceSchema, referencedVocab);
-                return (docref, basePath);
+                JsonElement referenceSchema;
+                using (JsonDocument referenceDocument = referencedVocab.BuildReferenceSchemaInstance(jsonSchemaPath)
+                    ?? throw new InvalidOperationException("The vocabulary does not support referencing"))
+                {
+                    // The clone does not depend on the pooled document, which is returned here.
+                    referenceSchema = referenceDocument.RootElement.Clone();
+                }
+
+                return (this.AddVirtualResource(referenceSchema, referencedVocab, cancellationToken), basePath);
             }
         }
     }
@@ -483,6 +463,28 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
         return currentLocation;
     }
 
+    /// <summary>
+    /// Gets the root element of a virtual resource: a rebased island or a synthetic <c>$ref</c> root, which has no
+    /// document of its own in the document resolver.
+    /// </summary>
+    /// <param name="uri">The URI of the resource (a location without its fragment).</param>
+    /// <param name="root">The root element of the resource.</param>
+    /// <returns><see langword="true"/> if the URI is a virtual resource of this registry.</returns>
+    internal bool TryGetVirtualResource(ReadOnlySpan<char> uri, out JsonElement root)
+    {
+        if (this.virtualResources.Count == 0)
+        {
+            root = default;
+            return false;
+        }
+
+#if NET9_0_OR_GREATER
+        return this.virtualResources.GetAlternateLookup<ReadOnlySpan<char>>().TryGetValue(uri, out root);
+#else
+        return this.virtualResources.TryGetValue(uri.ToString(), out root);
+#endif
+    }
+
     private static JsonReference MakeAbsolute(JsonReference location)
     {
         if (location.HasAbsoluteUri)
@@ -548,5 +550,41 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
         }
 
         return scopeUri;
+    }
+
+    /// <summary>
+    /// Registers a schema with no document of its own in the document resolver (a rebased island, or a synthetic
+    /// <c>$ref</c> root) as a virtual resource, at the next location in this registry's sequence.
+    /// </summary>
+    /// <remarks>
+    /// The location has the shape <c>00000001.virtual/Schema</c>: one path segment and then <c>Schema</c>, so relative
+    /// references inside the resource resolve as they would against any document path. It starts with a digit, so it
+    /// sorts after every rooted path and before every URI with a scheme.
+    /// </remarks>
+    private JsonReference AddVirtualResource(JsonElement root, IVocabulary vocabulary, CancellationToken cancellationToken)
+    {
+        this.virtualResourceCount++;
+        JsonReference location = DefaultAbsoluteLocation.Apply(new JsonReference(this.virtualResourceCount.ToString("D8", CultureInfo.InvariantCulture) + ".virtual/Schema"));
+        this.virtualResources.Add(location.Uri.ToString(), root);
+
+        if (!vocabulary.ValidateSchemaInstance(root))
+        {
+            throw new InvalidOperationException($"The JSON schema at '{location}' was not valid, according to the vocabulary {vocabulary.Uri}.");
+        }
+
+        return this.AddSchemaAndSubschema(location, root, vocabulary, cancellationToken);
+    }
+
+    /// <summary>
+    /// Resolves a reference against this registry's virtual resources, then the document resolver.
+    /// </summary>
+    private ValueTask<JsonElement?> TryResolveAsync(JsonReference reference)
+    {
+        if (this.TryGetVirtualResource(reference.Uri, out JsonElement root))
+        {
+            return new ValueTask<JsonElement?>(JsonPointerUtilities.TryResolvePointer(root, reference.Fragment, out JsonElement? element) ? element : null);
+        }
+
+        return documentResolver.TryResolve(reference);
     }
 }

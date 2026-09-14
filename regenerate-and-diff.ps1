@@ -19,9 +19,12 @@
     The CLI, the generator and the consumers are built unless -NoBuild is given.
 
     Known differences that do not fail the check:
-    - CorvusJsonSchemaProgram*.g.cs embeds corvus-schema:///<guid>/ locations for rebased islands and synthetic $ref
-      roots (Guid.NewGuid() in JsonSchemaRegistry), so it differs between two builds of the same generator. A difference
-      confined to that file is reported, but it does not fail the check.
+    - A difference confined to a CorvusJsonSchemaProgram file is reported, but it does not fail the check. Generators
+      before the schema registry's virtual resources keyed rebased islands and synthetic $ref roots under
+      Guid.NewGuid() (corvus-schema:///<guid>/Schema in the program), so the program differed between two builds of the
+      same generator, and it differs between a snapshot taken with such a generator and a check with a later one
+      (whose locations are deterministic, 00000001.virtual/Schema). None of the corpora below rebase an island, which
+      would also change that island's SchemaDocument constants.
     - The committed src/Corvus.Text.Json.AsyncApi30/Generated and tests/Corvus.Text.Json.Tests.MigrationModels.V5 files
       are regenerated on release and may lag the generator. The check therefore compares generator-before with
       generator-after, and only reports how far the committed files are from fresh output.
@@ -193,7 +196,7 @@ function Compare-Output([string]$SnapshotDirectory, [string]$FreshDirectory, [st
     $otherDifferences = @($differences | Where-Object { -not $_.Contains('CorvusJsonSchemaProgram') })
     if ($otherDifferences.Count -eq 0) {
         $fileCount = @(Get-ChildItem -LiteralPath $FreshDirectory -Recurse -File -Force).Count
-        $note = if ($programDifferences.Count -gt 0) { '; program image differs only in GUID-keyed synthetic root locations' } else { '' }
+        $note = if ($programDifferences.Count -gt 0) { '; a program file differs, which does not fail the check (synthetic root locations: see the help)' } else { '' }
         Write-Host "${Label}: identical ($fileCount files$note)"
     }
     else {
