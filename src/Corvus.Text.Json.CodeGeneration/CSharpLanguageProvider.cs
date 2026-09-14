@@ -49,6 +49,8 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
     private string? fallbackVocabularyUri;
     private readonly List<(string RootDocumentUri, string RootDocumentPointer)> programEntries = [];
     private readonly Dictionary<(string, string), int> programEntryIndex = new();
+    private readonly Dictionary<string, List<TypeDeclaration>> namedTypesByFullyQualifiedName = new(StringComparer.Ordinal);
+    private IEnumerable<TypeDeclaration>? namedTypesPass;
 
     private CSharpLanguageProvider(Options? options = null)
     {
@@ -802,6 +804,18 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
         string fqdtn = typeDeclaration.FullyQualifiedDotnetTypeName();
         string baseName = typeDeclaration.DotnetTypeName();
 
+        // The declarations named so far in this naming pass are indexed by the fully-qualified
+        // name they had when they were named, instead of scanning all of them for every type.
+        // This gives the same answer as the scan: a declaration is only renamed while it is the
+        // one being named (the collision loop below), and only its own rename invalidates its
+        // cached fully-qualified name, so an indexed name stays current; the candidates found
+        // through the index are still checked against the live predicate.
+        if (!ReferenceEquals(this.namedTypesPass, existingDeclarations))
+        {
+            this.namedTypesPass = existingDeclarations;
+            this.namedTypesByFullyQualifiedName.Clear();
+        }
+
         // And now resolve any matching fully-qualified names.
         // This handles definitions containers (the original case) and also inline schemas
         // at different locations that derive the same type name from their structure — e.g.
@@ -809,12 +823,39 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
         if (!typeDeclaration.DoNotGenerate())
         {
             int index = 1;
-            while (existingDeclarations.Any(t => t != typeDeclaration && !t.DoNotGenerate() && t.HasDotnetTypeName() && t.FullyQualifiedDotnetTypeName() == fqdtn))
+            while (this.HasNamedTypeCollision(typeDeclaration, fqdtn))
             {
                 typeDeclaration.SetDotnetTypeName($"{baseName}{index++}");
                 fqdtn = typeDeclaration.FullyQualifiedDotnetTypeName();
             }
         }
+
+        if (typeDeclaration.HasDotnetTypeName())
+        {
+            if (!this.namedTypesByFullyQualifiedName.TryGetValue(fqdtn, out List<TypeDeclaration>? named))
+            {
+                named = [];
+                this.namedTypesByFullyQualifiedName.Add(fqdtn, named);
+            }
+
+            named.Add(typeDeclaration);
+        }
+    }
+
+    private bool HasNamedTypeCollision(TypeDeclaration typeDeclaration, string fqdtn)
+    {
+        if (this.namedTypesByFullyQualifiedName.TryGetValue(fqdtn, out List<TypeDeclaration>? candidates))
+        {
+            foreach (TypeDeclaration t in candidates)
+            {
+                if (t != typeDeclaration && !t.DoNotGenerate() && t.HasDotnetTypeName() && t.FullyQualifiedDotnetTypeName() == fqdtn)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private void SetTypeNameWithKeywordHeuristics(

@@ -23,9 +23,13 @@ namespace Corvus.Json.CodeGeneration;
 public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken cancellationToken, int instancesPerIndent = 4, string indentSequence = " ", string lineEndSequence = "\r\n")
 {
     private const int MaxCachedIndentLevel = 20;
+
+    // The largest generated partial averages about 150 K chars; a first chunk this size is never
+    // outgrown by a typical file, and Clear() keeps the first chunk, so one buffer serves every file.
+    private const int InitialCapacity = 256 * 1024;
     private readonly string indentSequence = string.Concat(Enumerable.Repeat(indentSequence, instancesPerIndent));
     private readonly string[] cachedIndentStrings = BuildIndentCache(string.Concat(Enumerable.Repeat(indentSequence, instancesPerIndent)), MaxCachedIndentLevel);
-    private readonly StringBuilder stringBuilder = new();
+    private readonly StringBuilder stringBuilder = new(InitialCapacity);
     private readonly Dictionary<MemberName, string> memberNames = [];
     private readonly Dictionary<string, HashSet<string>> memberNamesByScope = new(StringComparer.Ordinal);
     private readonly Stack<ScopeValue> scope = [];
