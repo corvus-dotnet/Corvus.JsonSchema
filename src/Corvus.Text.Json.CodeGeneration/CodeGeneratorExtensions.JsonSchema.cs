@@ -46,7 +46,7 @@ internal static partial class CodeGenerationExtensions
         new(@"^\^([a-zA-Z0-9\-_/@.]+)(\.\*)?$", System.Text.RegularExpressions.RegexOptions.Compiled);
 
     private static readonly System.Text.RegularExpressions.Regex RangePattern =
-        new(@"^\^\.\{(\d+),(\d+)\}\$$", System.Text.RegularExpressions.RegexOptions.Compiled);
+        new(@"^\^\.\{([0-9]+),([0-9]+)\}\$$", System.Text.RegularExpressions.RegexOptions.Compiled);
 
     /// <summary>
     /// Classifies a regular expression pattern for potential inline code generation
