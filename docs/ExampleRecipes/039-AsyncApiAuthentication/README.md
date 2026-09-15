@@ -2,7 +2,7 @@
 
 Demonstrates every **authentication provider** supported by the AsyncAPI runtime. Each section shows a different security scheme — from simple API keys to Azure AD OAuth 2.0 with token rotation.
 
-> **Note:** The Azure Identity examples (client credentials, managed identity, interactive browser, device code) require real Azure AD configuration. When run without valid credentials they will fail with an authentication error. The example wraps these sections in try/catch blocks and prints guidance on what you need to configure. All other examples run successfully with the in-memory transport.
+> **Note:** The Azure Identity sections need real Azure AD configuration to authenticate. Only the client credentials section requests a token (when it publishes), so without valid credentials it fails and prints what you need to configure. The managed identity, interactive browser and device code sections only create the credential and the producer, so they print `provider configured`; they would request a token on their first publish or subscribe. All other sections run successfully with the in-memory transport.
 
 ## What This Demonstrates
 
@@ -72,26 +72,26 @@ The generated code calls `AuthenticateAsync` before each publish or subscribe op
 dotnet run -f net10.0
 ```
 
-The Azure Identity sections (client credentials, managed identity, interactive browser, device code) will print error messages with instructions for configuring real credentials. All other sections run successfully.
+The client credentials section prints a warning with instructions for configuring real credentials, because its publish requests a token. The managed identity, interactive browser and device code sections create their providers without requesting a token, so they print `provider configured`. All other sections run successfully.
 
-Expected output (abbreviated):
+Expected output (the exception name in brackets depends on the environment):
 
 ```text
-OAuth2 (client credentials): ⚠ Requires real Azure AD credentials. ...
-OAuth2 (managed identity): ⚠ Requires Azure-hosted environment. ...
-OAuth2 (interactive browser): ⚠ Requires real Azure AD credentials. ...
-OAuth2 (device code): ⚠ Requires real Azure AD credentials. ...
-OAuth2 (static token): published to smartylighting.streetlights.1.0...
-Bearer token: published to smartylighting.streetlights.1.0...
+OAuth2 (client credentials): ⚠ Requires real Azure AD credentials. Set tenantId, clientId, and clientSecret to valid values. (AuthenticationFailedException)
+OAuth2 (managed identity): provider configured
+OAuth2 (interactive browser): provider configured
+OAuth2 (device code): provider configured
+OAuth2 (static token): published to smartylighting.streetlights.1.0.action.lamp-002.turn.on
+Bearer token: published to smartylighting.streetlights.1.0.action.lamp-003.turn.on
 Bearer token (dynamic): consumer subscribed
-API key: published to smartylighting.streetlights.1.0...
+API key: published to smartylighting.streetlights.1.0.action.lamp-004.turn.on
 API key (named): consumer subscribed
-Username/password: published to smartylighting.streetlights.1.0...
+Username/password: published to smartylighting.streetlights.1.0.action.lamp-005.turn.on
 Certificate (mTLS): provider configured
-Composite: published to smartylighting.streetlights.1.0...
-Custom provider: published to smartylighting.streetlights.1.0...
+Composite: published to smartylighting.streetlights.1.0.action.lamp-006.turn.on
+Custom provider: published to smartylighting.streetlights.1.0.action.lamp-007.turn.on
 
-Total messages published: 8
+Total messages published: 6
 ```
 
 ## Related Recipes
