@@ -315,6 +315,7 @@
     <Compile Include="JsonBase64TestData.cs" />
     <Compile Include="JsonDateTimeTestData.cs" />
     <Compile Include="CloneAsBuilderTests.cs" />
+    <Compile Include="JsonWorkspaceDocumentIndexTests.cs" />
     <Compile Include="ValuelessJsonDocumentTests.cs" />
     <Compile Include="ParsedJsonDocumentOwnerParseTests.cs" />
     <Compile Include="ParsedJsonDocumentTests.cs" />
