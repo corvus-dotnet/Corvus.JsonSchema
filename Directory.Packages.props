@@ -6,7 +6,7 @@
     <!-- Build & analysis tooling -->
     <PackageVersion Include="Endjin.RecommendedPractices.GitHub" Version="2.1.18" />
     <PackageVersion Include="Microsoft.CodeAnalysis.ResxSourceGenerator" Version="5.0.0-1.25277.114" />
-    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.203" />
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.401" />
     <PackageVersion Include="Roslynator.Analyzers" Version="4.15.0" />
     <PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" />
     <!-- Blazor / playground -->
