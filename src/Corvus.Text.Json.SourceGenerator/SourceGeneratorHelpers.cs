@@ -86,7 +86,7 @@ public static class SourceGeneratorHelpers
 
             try
             {
-                if (additionalText.Path.EndsWith(".yaml") || additionalText.Path.EndsWith(".yml"))
+                if (additionalText.Path.EndsWith(".yaml", StringComparison.Ordinal) || additionalText.Path.EndsWith(".yml", StringComparison.Ordinal))
                 {
                     string? yaml = additionalText.GetText(token)?.ToString();
                     doc = yaml is not null ? YamlDocument.Parse(yaml) : null;

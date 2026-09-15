@@ -44,6 +44,7 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
     private IReadOnlyList<PropertyDeclaration>? cachedPropertyDeclarations;
     private IReadOnlyList<TypeDeclaration>? cachedOrderedSubschemaTypeDeclarations;
     private Dictionary<ISubschemaProviderKeyword, IReadOnlyCollection<TypeDeclaration>>? cachedSubschemaTypeDeclarationsByKeyword;
+    private IComparer<string> orderingComparer = Comparer<string>.Default;
 
     /// <summary>
     /// Gets the subschema type declarations.
@@ -80,10 +81,21 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
     public string RelativeSchemaDocument { get; internal set; } = string.Empty;
 
     /// <summary>
-    /// Gets the property declarations for this type declaration.
+    /// Gets the property declarations for this type declaration, ordered by JSON property name with
+    /// <see cref="OrderingComparer"/>.
     /// </summary>
     public IReadOnlyList<PropertyDeclaration> PropertyDeclarations =>
-        this.cachedPropertyDeclarations ??= this.properties.Values.OrderBy(p => p.JsonPropertyName).ToArray();
+        this.cachedPropertyDeclarations ??= this.properties.Values.OrderBy(p => p.JsonPropertyName, this.orderingComparer).ToArray();
+
+    /// <summary>
+    /// Gets the comparer with which the names that reach generated code are ordered: <see cref="PropertyDeclarations"/>,
+    /// the subschemas that a keyword provides, and documentation keywords.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="JsonSchemaTypeBuilder"/> sets it from an <see cref="IOrderingLanguageProvider"/> before it generates
+    /// code; otherwise it is <see cref="Comparer{T}.Default"/>, which compares with the current culture.
+    /// </remarks>
+    public IComparer<string> OrderingComparer => this.orderingComparer;
 
     /// <summary>
     /// Gets a value indicating whether the type has any property declarations.
@@ -154,6 +166,25 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Sets the comparer with which the names that reach generated code are ordered.
+    /// </summary>
+    /// <param name="comparer">The comparer.</param>
+    /// <remarks>
+    /// A different comparer discards the property and subschema orders computed with the previous one.
+    /// </remarks>
+    internal void SetOrderingComparer(IComparer<string> comparer)
+    {
+        if (ReferenceEquals(this.orderingComparer, comparer))
+        {
+            return;
+        }
+
+        this.orderingComparer = comparer;
+        this.cachedPropertyDeclarations = null;
+        this.cachedSubschemaTypeDeclarationsByKeyword = null;
     }
 
     /// <summary>

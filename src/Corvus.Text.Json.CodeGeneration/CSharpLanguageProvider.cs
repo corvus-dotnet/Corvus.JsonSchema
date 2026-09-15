@@ -30,7 +30,7 @@ public delegate void NamedTypeEmitter(CodeGenerator generator, string typeName);
 /// <remarks>
 /// Initializes a new instance of the <see cref="CSharpLanguageProvider"/> class.
 /// </remarks>
-public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProgramUtf8LanguageProvider
+public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProgramUtf8LanguageProvider, IOrderingLanguageProvider
 {
     private readonly KeywordValidationHandlerRegistry validationHandlerRegistry = new();
     private readonly CodeFileBuilderRegistry codeFileBuilderRegistry = new();
@@ -62,6 +62,12 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
     /// Gets the default <see cref="CSharpLanguageProvider"/> instance.
     /// </summary>
     public static CSharpLanguageProvider Default { get; } = CreateDefaultCSharpLanguageProvider(null);
+
+    /// <summary>
+    /// Gets the comparer with which the names that reach generated code are ordered: <see cref="StringComparer.Ordinal"/>,
+    /// so that the output does not depend on the culture of the generating process.
+    /// </summary>
+    public IComparer<string> OrderingComparer => StringComparer.Ordinal;
 
     /// <summary>
     /// Gets a <see cref="CSharpLanguageProvider"/> instance with the default configuration and specified options.
@@ -226,7 +232,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
             .Select(h => (h.GetType().Name, h.IsOptional))
             .Distinct()
             .OrderBy(n => n.IsOptional)
-            .ThenBy(n => n.Name);
+            .ThenBy(n => n.Name, StringComparer.Ordinal);
     }
 
     /// <inheritdoc/>
@@ -970,12 +976,12 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
                     .OfType<IBuiltInTypeNameHeuristic>()
                     .Where(h => !options.DisabledNamingHeuristics.Contains(h.GetType().Name))
                     .OrderBy(h => h.Priority)
-                    .ThenBy(h => h.GetType().Name)
+                    .ThenBy(h => h.GetType().Name, StringComparer.Ordinal)
                 : nameHeuristicRegistry.RegisteredHeuristics
                     .OfType<IBuiltInTypeNameHeuristic>()
                     .Where(h => !h.IsOptional && !options.DisabledNamingHeuristics.Contains(h.GetType().Name))
                     .OrderBy(h => h.Priority)
-                    .ThenBy(h => h.GetType().Name)).ToArray();
+                    .ThenBy(h => h.GetType().Name, StringComparer.Ordinal)).ToArray();
     }
 
     private IReadOnlyList<INameHeuristic> GetOrderedNameBeforeSubschemaHeuristics()
@@ -987,13 +993,13 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
                     .Where(h => !options.DisabledNamingHeuristics
                     .Contains(h.GetType().Name))
                     .OrderBy(h => h.Priority)
-                    .ThenBy(h => h.GetType().Name)
+                    .ThenBy(h => h.GetType().Name, StringComparer.Ordinal)
                 : nameHeuristicRegistry.RegisteredHeuristics
                     .OfType<INameHeuristicBeforeSubschema>()
                     .Where(h => !h.IsOptional && !options.DisabledNamingHeuristics
                     .Contains(h.GetType().Name))
                     .OrderBy(h => h.Priority)
-                    .ThenBy(h => h.GetType().Name)).ToArray();
+                    .ThenBy(h => h.GetType().Name, StringComparer.Ordinal)).ToArray();
     }
 
     private IReadOnlyList<INameHeuristic> GetOrderedNameAfterSubschemaHeuristics()
@@ -1004,12 +1010,12 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
                     .OfType<INameHeuristicAfterSubschema>()
                     .Where(h => !options.DisabledNamingHeuristics.Contains(h.GetType().Name))
                     .OrderBy(h => h.Priority)
-                    .ThenBy(h => h.GetType().Name)
+                    .ThenBy(h => h.GetType().Name, StringComparer.Ordinal)
                 : nameHeuristicRegistry.RegisteredHeuristics
                     .OfType<INameHeuristicAfterSubschema>()
                     .Where(h => !h.IsOptional && !options.DisabledNamingHeuristics.Contains(h.GetType().Name))
                     .OrderBy(h => h.Priority)
-                    .ThenBy(h => h.GetType().Name)).ToArray();
+                    .ThenBy(h => h.GetType().Name, StringComparer.Ordinal)).ToArray();
     }
 
     /// <summary>

@@ -48,7 +48,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
 
         IncrementalValueProvider<GlobalOptions> globalOptions = initializationContext.AnalyzerConfigOptionsProvider.Select((provider, token) => GetGlobalOptions(VocabularyRegistry, provider, token));
 
-        IncrementalValuesProvider<AdditionalText> jsonSourceFiles = initializationContext.AdditionalTextsProvider.Where(static p => p.Path.EndsWith(".json") || p.Path.EndsWith(".yaml") || p.Path.EndsWith(".yml"));
+        IncrementalValuesProvider<AdditionalText> jsonSourceFiles = initializationContext.AdditionalTextsProvider.Where(static p => p.Path.EndsWith(".json", StringComparison.Ordinal) || p.Path.EndsWith(".yaml", StringComparison.Ordinal) || p.Path.EndsWith(".yml", StringComparison.Ordinal));
 
         // Each file is compared by path and content checksum, so re-reading unchanged content leaves the pipeline
         // cached; the documents are parsed in the output step, through a cache keyed by the text.

@@ -314,7 +314,7 @@ public static class TypeDeclarationExtensions
 
             // We don't want the root declaration in the set
             sources.Remove(rootDeclaration);
-            return [.. sources.OrderBy(t => t.FullyQualifiedDotnetTypeName())];
+            return [.. sources.OrderBy(t => t.FullyQualifiedDotnetTypeName(), StringComparer.Ordinal)];
         }
     }
 
@@ -521,7 +521,7 @@ public static class TypeDeclarationExtensions
     /// <returns><see langword="true"/> if the type is a Corvus extended JSON type.</returns>
     public static bool IsCorvusJsonExtendedType(this TypeDeclaration typeDeclaration)
     {
-        return typeDeclaration.DotnetNamespace() == "Corvus.Json" && typeDeclaration.DotnetTypeName().StartsWith("Json");
+        return typeDeclaration.DotnetNamespace() == "Corvus.Json" && typeDeclaration.DotnetTypeName().StartsWith("Json", StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -1088,7 +1088,7 @@ public static class TypeDeclarationExtensions
     {
         if (typeDeclaration.DotnetNamespace() == "Corvus.Json")
         {
-            if (typeDeclaration.DotnetTypeName().StartsWith("Json"))
+            if (typeDeclaration.DotnetTypeName().StartsWith("Json", StringComparison.Ordinal))
             {
                 extendedTypeName = typeDeclaration.DotnetTypeName();
                 return true;

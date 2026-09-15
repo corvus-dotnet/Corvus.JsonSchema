@@ -153,6 +153,20 @@ public class JsonSchemaTypeBuilder(
     /// <returns>The <see cref="GeneratedCodeFile"/> collection.</returns>
     public IReadOnlyCollection<GeneratedCodeFile> GenerateCodeUsing(ILanguageProvider languageProvider, CancellationToken cancellationToken, params TypeDeclaration[] rootTypeDeclarations)
     {
+        // The names that reach generated code (properties, subschemas, documentation keywords) are ordered with the
+        // type declaration's comparer, so the provider's comparer is applied to every declaration this builder has built
+        // before anything is ordered. The process-wide shared declarations have no properties or subschemas to order.
+        IComparer<string> orderingComparer = languageProvider is IOrderingLanguageProvider orderingProvider
+            ? orderingProvider.OrderingComparer
+            : Comparer<string>.Default;
+        foreach (TypeDeclaration typeDeclaration in this.locatedTypeDeclarations.Values)
+        {
+            if (!typeDeclaration.IsShared)
+            {
+                typeDeclaration.SetOrderingComparer(orderingComparer);
+            }
+        }
+
         IReadOnlyList<TypeDeclaration> candidateTypesToGenerate = GetCandidateTypesToGenerate(rootTypeDeclarations, cancellationToken);
 
         MarkNonGeneratedTypes(languageProvider, rootTypeDeclarations, cancellationToken);

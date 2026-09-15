@@ -78,7 +78,7 @@ internal static partial class CodeGenerationExtensions
             .AppendLineIndent("/// </summary>")
             .BeginPrivateStaticClassDeclaration(generator.ConstantsClassName());
 
-        foreach (KeyValuePair<IValidationConstantProviderKeyword, JsonElement[]> constant in requiredConstants.OrderBy(k => k.Key.Keyword))
+        foreach (KeyValuePair<IValidationConstantProviderKeyword, JsonElement[]> constant in requiredConstants.OrderBy(k => k.Key.Keyword, StringComparer.Ordinal))
         {
             if (generator.IsCancellationRequested)
             {
@@ -190,7 +190,7 @@ internal static partial class CodeGenerationExtensions
             .AppendLineIndent("/// </summary>")
             .BeginPublicStaticClassDeclaration(generator.EnumValuesClassName());
 
-        foreach (KeyValuePair<IAnyOfConstantValidationKeyword, JsonElement[]> kvp in anyOfConstants.OrderBy(k => k.Key.Keyword))
+        foreach (KeyValuePair<IAnyOfConstantValidationKeyword, JsonElement[]> kvp in anyOfConstants.OrderBy(k => k.Key.Keyword, StringComparer.Ordinal))
         {
             if (generator.IsCancellationRequested)
             {

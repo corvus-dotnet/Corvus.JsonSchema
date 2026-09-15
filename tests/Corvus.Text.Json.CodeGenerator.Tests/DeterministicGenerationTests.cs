@@ -95,6 +95,179 @@ public class DeterministicGenerationTests
         }
     }
 
+    // Property names whose ordinal (UTF-16 code unit) order differs from culture-sensitive order: upper case against
+    // lower case (Name/etag, Foo/foo, Mode/kind, Read/execute), camel-case prefixes (maxItems/maximum), and letters
+    // that particular cultures collate differently (Turkish dotless i, Danish aa and å).
+    private const string OrderingSchema =
+        """
+        {
+          "type": "object",
+          "properties": {
+            "Name": { "type": "string" },
+            "etag": { "type": "string" },
+            "_links": { "type": "string" },
+            "foo": { "type": "integer" },
+            "Foo": { "type": "string" },
+            "maxItems": { "type": "integer" },
+            "maximum": { "type": "number", "minimum": 1.5, "multipleOf": 0.25, "exclusiveMinimum": -3 },
+            "id": { "type": "string" },
+            "ı": { "type": "string" },
+            "aa": { "type": "string" },
+            "å": { "type": "string" },
+            "permissions": {
+              "type": "object",
+              "properties": {
+                "Read": { "type": "boolean" },
+                "execute": { "type": "boolean" }
+              }
+            },
+            "variant": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "required": [ "Name", "etag" ],
+                  "properties": { "Name": { "type": "string" }, "etag": { "type": "string" } }
+                },
+                {
+                  "type": "object",
+                  "properties": { "kind": { "const": "a" }, "Mode": { "const": "fast" } }
+                }
+              ]
+            }
+          }
+        }
+        """;
+
+    [TestMethod]
+    public async Task GenerateCode_IsCultureInvariant()
+    {
+        if (CultureInfo.GetCultureInfo("en-US").CompareInfo.Compare("a", "B") > 0)
+        {
+            Assert.Inconclusive("This process compares strings ordinally in every culture (globalization-invariant mode), so this test cannot show culture dependence.");
+        }
+
+        string directory = Directory.CreateTempSubdirectory("ordering-").FullName;
+        try
+        {
+            string schemaPath = Path.Combine(directory, "ordering.json");
+            await File.WriteAllTextAsync(schemaPath, OrderingSchema);
+            IReadOnlyCollection<GeneratedCodeFile> reference = await GenerateFileUnderCulture(CultureInfo.InvariantCulture, schemaPath);
+            foreach (string name in new[] { "tr-TR", "da-DK", "sv-SE", "de-DE" })
+            {
+                AssertSameFiles(name, reference, await GenerateFileUnderCulture(CultureInfo.GetCultureInfo(name), schemaPath));
+            }
+        }
+        finally
+        {
+            Directory.Delete(directory, true);
+        }
+    }
+
+    [TestMethod]
+    public async Task GenerateCode_PropertyOrder_IsOrdinal()
+    {
+        string directory = Directory.CreateTempSubdirectory("ordering-").FullName;
+        try
+        {
+            string schemaPath = Path.Combine(directory, "ordering.json");
+            await File.WriteAllTextAsync(schemaPath, OrderingSchema);
+            IReadOnlyCollection<GeneratedCodeFile> files = await GenerateFileUnderCulture(CultureInfo.InvariantCulture, schemaPath);
+            string[] lines = files.SelectMany(f => f.FileContent.Split('\n')).Select(l => l.Trim()).ToArray();
+
+            // Positional factory parameters, flag bits, which JSON name keeps the .NET name Foo, and the type names that
+            // the required-property and const-property heuristics build from property order.
+            string[] report =
+            [
+                .. lines.Where(l => l.StartsWith("public static ParsedJsonDocument<", StringComparison.Ordinal) && l.Contains(" Create(in ", StringComparison.Ordinal)),
+                .. lines.Where(l => System.Text.RegularExpressions.Regex.IsMatch(l, @"^\w+ = 1 << \d+,$")),
+                .. lines.Where(l => System.Text.RegularExpressions.Regex.IsMatch(l, @"^public const string (Foo|Foo1|Name|Etag) = ")),
+                .. files.Select(f => f.FileName).Where(n => (n.Contains("Required", StringComparison.Ordinal) || n.Contains("With", StringComparison.Ordinal)) && !n.Contains(".Mutable.", StringComparison.Ordinal) && !n.Contains(".JsonSchema.", StringComparison.Ordinal)),
+            ];
+
+            // Ordinal order puts upper case before lower case and ASCII before other letters: Foo, Name, _links, aa, etag,
+            // foo, id, maxItems, maximum, permissions, variant, å, ı. JSON Foo keeps the .NET name Foo (foo becomes Foo1),
+            // Read takes bit 0, and the heuristics name RequiredNameAndEtag and WithModeFastAndKindA.
+            AssertLines(
+                [
+                    "public static ParsedJsonDocument<Ordering> Create(in TestGenerated.JsonString.Source foo = default, in TestGenerated.JsonString.Source name = default, in TestGenerated.JsonString.Source links = default, in TestGenerated.JsonString.Source aa = default, in TestGenerated.JsonString.Source etag = default, in TestGenerated.JsonInteger.Source foo1 = default, in TestGenerated.JsonString.Source id = default, in TestGenerated.JsonInteger.Source maxItems = default, in TestGenerated.Ordering.MaximumEntity.Source maximum = default, in TestGenerated.Ordering.PermissionsEntity.Source permissions = default, in TestGenerated.Ordering.VariantEntity.Source variant = default, in TestGenerated.JsonString.Source å = default, in TestGenerated.JsonString.Source ı = default, int initialCapacity = 30)",
+                    "public static ParsedJsonDocument<PermissionsEntity> Create(in TestGenerated.JsonBoolean.Source read = default, in TestGenerated.JsonBoolean.Source execute = default, int initialCapacity = 30)",
+                    "public static ParsedJsonDocument<RequiredNameAndEtag> Create(in TestGenerated.JsonString.Source name, in TestGenerated.JsonString.Source etag, int initialCapacity = 30)",
+                    "public static ParsedJsonDocument<WithModeFastAndKindA> Create(in TestGenerated.Ordering.VariantEntity.WithModeFastAndKindA.ModeEntity.Source mode = default, in TestGenerated.Ordering.VariantEntity.WithModeFastAndKindA.KindEntity.Source kind = default, int initialCapacity = 30)",
+                    "Read = 1 << 0,",
+                    "Execute = 1 << 1,",
+                    "public const string Foo = \"Foo\";",
+                    "public const string Name = \"Name\";",
+                    "public const string Etag = \"etag\";",
+                    "public const string Foo1 = \"foo\";",
+                    "public const string Name = \"Name\";",
+                    "public const string Etag = \"etag\";",
+                    "Ordering.VariantEntity.RequiredNameAndEtag.cs",
+                    "Ordering.VariantEntity.WithModeFastAndKindA.cs",
+                    "Ordering.VariantEntity.WithModeFastAndKindA.ModeEntity.cs",
+                    "Ordering.VariantEntity.WithModeFastAndKindA.KindEntity.cs",
+                ],
+                report);
+        }
+        finally
+        {
+            Directory.Delete(directory, true);
+        }
+    }
+
+    private static async Task<IReadOnlyCollection<GeneratedCodeFile>> GenerateFileUnderCulture(CultureInfo culture, string schemaPath)
+    {
+        CultureInfo originalCulture = CultureInfo.CurrentCulture;
+        CultureInfo originalUICulture = CultureInfo.CurrentUICulture;
+        CultureInfo.CurrentCulture = culture;
+        CultureInfo.CurrentUICulture = culture;
+        try
+        {
+            return await InProcessGenerationTests.GenerateInProcess(schemaPath);
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = originalCulture;
+            CultureInfo.CurrentUICulture = originalUICulture;
+        }
+    }
+
+    private static void AssertSameFiles(string culture, IReadOnlyCollection<GeneratedCodeFile> expected, IReadOnlyCollection<GeneratedCodeFile> actual)
+    {
+        Dictionary<string, string> actualByName = actual.ToDictionary(f => f.FileName, f => f.FileContent, StringComparer.Ordinal);
+        List<string> problems = [];
+        foreach (GeneratedCodeFile file in expected)
+        {
+            if (!actualByName.TryGetValue(file.FileName, out string content))
+            {
+                problems.Add($"missing {file.FileName}");
+                continue;
+            }
+
+            if (!string.Equals(content, file.FileContent, StringComparison.Ordinal))
+            {
+                string[] e = file.FileContent.Split('\n');
+                string[] a = content.Split('\n');
+                int i = 0;
+                while (i < e.Length && i < a.Length && string.Equals(e[i], a[i], StringComparison.Ordinal))
+                {
+                    i++;
+                }
+
+                problems.Add($"{file.FileName} line {i + 1}: invariant '{(i < e.Length ? e[i].Trim() : string.Empty)}', {culture} '{(i < a.Length ? a[i].Trim() : string.Empty)}'");
+            }
+        }
+
+        foreach (string name in actualByName.Keys.Except(expected.Select(f => f.FileName), StringComparer.Ordinal))
+        {
+            problems.Add($"extra {name}");
+        }
+
+        if (problems.Count > 0)
+        {
+            Assert.Fail($"Generation under {culture} differs from generation under the invariant culture in {problems.Count} files:\n{string.Join("\n", problems.Take(20))}");
+        }
+    }
+
     private static async Task<IReadOnlyCollection<GeneratedCodeFile>> GenerateUnderCulture(
         CultureInfo culture,
         string schema,

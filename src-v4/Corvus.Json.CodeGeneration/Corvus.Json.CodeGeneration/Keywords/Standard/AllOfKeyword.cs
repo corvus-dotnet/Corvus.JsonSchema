@@ -67,7 +67,7 @@ public sealed class AllOfKeyword
     {
         foreach (TypeDeclaration subschema in
             source.SubschemaTypeDeclarations
-                .Where(kvp => kvp.Key.StartsWith(KeywordPath))
+                .Where(kvp => kvp.Key.StartsWith(KeywordPath, StringComparison.Ordinal))
                 .Select(kvp => kvp.Value))
         {
             if (cancellationToken.IsCancellationRequested)
@@ -87,7 +87,7 @@ public sealed class AllOfKeyword
     /// <inheritdoc/>
     public IReadOnlyCollection<TypeDeclaration> GetSubschemaTypeDeclarations(TypeDeclaration typeDeclaration)
     {
-        return typeDeclaration.SubschemaTypeDeclarations.Where(t => t.Key.StartsWith(KeywordPath)).OrderBy(k => k.Key).Select(t => t.Value).ToList();
+        return typeDeclaration.SubschemaTypeDeclarations.Where(t => t.Key.StartsWith(KeywordPath, StringComparison.Ordinal)).OrderBy(k => k.Key, typeDeclaration.OrderingComparer).Select(t => t.Value).ToList();
     }
 
     /// <inheritdoc />

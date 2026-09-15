@@ -77,7 +77,7 @@ public sealed class PrefixItemsKeyword
     /// <inheritdoc/>
     public IReadOnlyCollection<TypeDeclaration> GetSubschemaTypeDeclarations(TypeDeclaration typeDeclaration)
     {
-        return typeDeclaration.SubschemaTypeDeclarations.Where(t => t.Key.StartsWith(KeywordPath)).OrderBy(k => k.Key).Select(t => t.Value).ToList();
+        return typeDeclaration.SubschemaTypeDeclarations.Where(t => t.Key.StartsWith(KeywordPath, StringComparison.Ordinal)).OrderBy(k => k.Key, typeDeclaration.OrderingComparer).Select(t => t.Value).ToList();
     }
 
     /// <inheritdoc/>
@@ -87,7 +87,7 @@ public sealed class PrefixItemsKeyword
         {
             TypeDeclaration[] tupleTypes =
                 typeDeclaration.SubschemaTypeDeclarations
-                    .Where(t => t.Key.StartsWith(KeywordPath))
+                    .Where(t => t.Key.StartsWith(KeywordPath, StringComparison.Ordinal))
                     .Select(kvp => kvp.Value).ToArray();
 
             tupleType = new(tupleTypes, true, this);

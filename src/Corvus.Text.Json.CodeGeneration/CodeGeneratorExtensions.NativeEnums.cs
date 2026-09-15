@@ -363,7 +363,7 @@ internal static partial class CodeGenerationExtensions
             .AppendLineIndent("/// A native flags enum over the boolean properties of this type.")
             .AppendLineIndent("/// </summary>")
             .AppendLineIndent("/// <remarks>")
-            .AppendLineIndent("/// Bits are assigned to the properties in alphabetical order of their JSON names.")
+            .AppendLineIndent("/// Bits are assigned to the properties in ordinal (UTF-16 code unit) order of their JSON names.")
             .AppendLineIndent("/// Adding or renaming a property can reassign the bits, so do not persist the")
             .AppendLineIndent("/// integer values.")
             .AppendLineIndent("/// </remarks>")
@@ -537,7 +537,7 @@ internal static partial class CodeGenerationExtensions
 
         if (typeDeclaration.AnyOfConstantValues() is IReadOnlyDictionary<IAnyOfConstantValidationKeyword, JsonElement[]> anyOfConstants)
         {
-            foreach (KeyValuePair<IAnyOfConstantValidationKeyword, JsonElement[]> kvp in anyOfConstants.OrderBy(k => k.Key.Keyword))
+            foreach (KeyValuePair<IAnyOfConstantValidationKeyword, JsonElement[]> kvp in anyOfConstants.OrderBy(k => k.Key.Keyword, StringComparer.Ordinal))
             {
                 JsonElement[] values = kvp.Value;
                 int count = values.Length;

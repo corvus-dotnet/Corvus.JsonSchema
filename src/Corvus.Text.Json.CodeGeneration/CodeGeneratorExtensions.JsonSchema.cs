@@ -163,7 +163,7 @@ internal static partial class CodeGenerationExtensions
         if (typeDeclaration.ValidationRegularExpressions() is IReadOnlyDictionary<IValidationRegexProviderKeyword, IReadOnlyList<string>> regexes)
         {
             // Ensure we have a got a stable ordering of the keywords.
-            foreach (KeyValuePair<IValidationRegexProviderKeyword, IReadOnlyList<string>> constant in regexes.OrderBy(k => k.Key.Keyword))
+            foreach (KeyValuePair<IValidationRegexProviderKeyword, IReadOnlyList<string>> constant in regexes.OrderBy(k => k.Key.Keyword, StringComparer.Ordinal))
             {
                 if (generator.IsCancellationRequested)
                 {

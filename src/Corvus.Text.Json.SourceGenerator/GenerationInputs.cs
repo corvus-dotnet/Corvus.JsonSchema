@@ -232,7 +232,7 @@ internal sealed class SchemaFileSet
 
         try
         {
-            if (path.EndsWith(".yaml") || path.EndsWith(".yml"))
+            if (path.EndsWith(".yaml", StringComparison.Ordinal) || path.EndsWith(".yml", StringComparison.Ordinal))
             {
                 string? yaml = text.ToString();
                 doc = yaml is not null ? YamlDocument.Parse(yaml) : null;

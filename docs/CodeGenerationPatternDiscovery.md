@@ -538,7 +538,7 @@ bool isNativeStringEnum = typeDeclaration.HasNativeStringEnum();
 // Flags object: object core type only, 2..31 declared properties, every one of
 // them boolean and not constant-valued, no patternProperties, and
 // additionalProperties absent or false. Emits a nested `[Flags]` enum plus
-// conversions; bits follow the alphabetical JSON-name order of
+// conversions; bits follow the ordinal (UTF-16 code unit) JSON-name order of
 // PropertyDeclarations.
 bool isNativeFlagsEnum = typeDeclaration.HasNativeFlagsEnum();
 ```
