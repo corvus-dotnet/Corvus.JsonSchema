@@ -98,7 +98,7 @@ internal static partial class CodeGenerationExtensions
     internal static (int Min, int Max) ExtractRegexRange(string pattern)
     {
         System.Text.RegularExpressions.Match match = RangePattern.Match(pattern);
-        return (int.Parse(match.Groups[1].Value), int.Parse(match.Groups[2].Value));
+        return (int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture), int.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture));
     }
 
     /// <summary>

@@ -144,7 +144,7 @@ public static class GenerationDriverV5
         AnsiConsole.MarkupLine("[red]Error: Invalid configuration[/]");
         foreach (Corvus.Json.ValidationResult validationResult in result.Results)
         {
-            AnsiConsole.MarkupLineInterpolated($"[yellow]{validationResult.Message}[/] [white]{validationResult.Location?.ValidationLocation} {validationResult.Location?.SchemaLocation} {validationResult.Location?.DocumentLocation}[/]");
+            AnsiConsole.MarkupLineInterpolated(System.Globalization.CultureInfo.CurrentCulture, $"[yellow]{validationResult.Message}[/] [white]{validationResult.Location?.ValidationLocation} {validationResult.Location?.SchemaLocation} {validationResult.Location?.DocumentLocation}[/]");
         }
 
         return -1;
@@ -232,7 +232,7 @@ public static class GenerationDriverV5
 
         currentTask.StopTask();
         outerTask.Increment(100);
-        AnsiConsole.MarkupLineInterpolated($"Completed in: [green]{outerTask.ElapsedTime?.TotalSeconds}s[/]");
+        AnsiConsole.MarkupLineInterpolated(System.Globalization.CultureInfo.CurrentCulture, $"Completed in: [green]{outerTask.ElapsedTime?.TotalSeconds}s[/]");
         outerTask.StopTask();
     }
 

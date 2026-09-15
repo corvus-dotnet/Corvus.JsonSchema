@@ -496,7 +496,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
             }
         }
 
-        typeDeclaration.SetDotnetTypeName(Formatting.FormatTypeNameComponent(typeDeclaration, fallbackName.AsSpan(), typeNameBuffer).ToString());
+        typeDeclaration.SetDotnetTypeName(Formatting.FormatTypeNameComponent(typeDeclaration, fallbackName.AsSpan(), typeNameBuffer).ToString(System.Globalization.CultureInfo.InvariantCulture));
         typeDeclaration.SetDotnetNamespace(ns);
     }
 

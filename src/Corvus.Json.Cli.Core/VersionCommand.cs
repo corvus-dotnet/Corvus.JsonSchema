@@ -42,7 +42,7 @@ internal class VersionCommand : Command
             }
         }
 
-        AnsiConsole.MarkupLineInterpolated($"[green]Version:[/] {version ?? "Not available."} [green]Build[/]: {build ?? "Not available."}");
+        AnsiConsole.MarkupLineInterpolated(System.Globalization.CultureInfo.CurrentCulture, $"[green]Version:[/] {version ?? "Not available."} [green]Build[/]: {build ?? "Not available."}");
 
         return 1;
     }

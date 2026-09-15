@@ -941,7 +941,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
             }
         }
 
-        typeDeclaration.SetDotnetTypeName(Formatting.FormatTypeNameComponent(typeDeclaration, fallbackName.AsSpan(), typeNameBuffer).ToString());
+        typeDeclaration.SetDotnetTypeName(Formatting.FormatTypeNameComponent(typeDeclaration, fallbackName.AsSpan(), typeNameBuffer).ToString(System.Globalization.CultureInfo.InvariantCulture));
         typeDeclaration.SetDotnetNamespace(ns);
     }
 

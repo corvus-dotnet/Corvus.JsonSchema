@@ -144,7 +144,7 @@ public static class GenerationDriverV4
         AnsiConsole.MarkupLine("[red]Error: Invalid configuration[/]");
         foreach (Corvus.Json.ValidationResult validationResult in result.Results)
         {
-            AnsiConsole.MarkupLineInterpolated($"[yellow]{validationResult.Message}[/] [white]{validationResult.Location?.ValidationLocation} {validationResult.Location?.SchemaLocation} {validationResult.Location?.DocumentLocation}[/]");
+            AnsiConsole.MarkupLineInterpolated(System.Globalization.CultureInfo.CurrentCulture, $"[yellow]{validationResult.Message}[/] [white]{validationResult.Location?.ValidationLocation} {validationResult.Location?.SchemaLocation} {validationResult.Location?.DocumentLocation}[/]");
         }
 
         return -1;
@@ -224,7 +224,7 @@ public static class GenerationDriverV4
 
         currentTask.StopTask();
         outerTask.Increment(100);
-        AnsiConsole.MarkupLineInterpolated($"Completed in: [green]{outerTask.ElapsedTime?.TotalSeconds}s[/]");
+        AnsiConsole.MarkupLineInterpolated(System.Globalization.CultureInfo.CurrentCulture, $"Completed in: [green]{outerTask.ElapsedTime?.TotalSeconds}s[/]");
         outerTask.StopTask();
     }
 
@@ -403,9 +403,9 @@ public static class GenerationDriverV4
         {
             if (originalFileName != outputFile)
             {
-                AnsiConsole.MarkupLineInterpolated($"[red]The file path [/][white]{originalFileName}[/] [red]was too long.[/]");
-                AnsiConsole.MarkupLineInterpolated($"[red]It was truncated to [/][white]{outputFile}[/][red], but that file name was already in use.[/]");
-                AnsiConsole.MarkupLineInterpolated($"[red]Consider using a shallower path for your output files, or explicitly map types into a root namespace, rather than nesting in their parent.[/]");
+                AnsiConsole.MarkupLineInterpolated(System.Globalization.CultureInfo.CurrentCulture, $"[red]The file path [/][white]{originalFileName}[/] [red]was too long.[/]");
+                AnsiConsole.MarkupLineInterpolated(System.Globalization.CultureInfo.CurrentCulture, $"[red]It was truncated to [/][white]{outputFile}[/][red], but that file name was already in use.[/]");
+                AnsiConsole.MarkupLineInterpolated(System.Globalization.CultureInfo.CurrentCulture, $"[red]Consider using a shallower path for your output files, or explicitly map types into a root namespace, rather than nesting in their parent.[/]");
                 outputFile = originalFileName;
             }
             else

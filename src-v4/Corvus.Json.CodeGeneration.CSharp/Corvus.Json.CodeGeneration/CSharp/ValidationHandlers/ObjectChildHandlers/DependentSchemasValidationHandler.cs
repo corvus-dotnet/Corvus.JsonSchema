@@ -58,7 +58,7 @@ public class DependentSchemasValidationHandler : IChildObjectPropertyValidationH
                         return generator;
                     }
 
-                    string resultName = generator.GetUniqueVariableNameInScope("Result", prefix: keyword.Keyword, suffix: i.ToString());
+                    string resultName = generator.GetUniqueVariableNameInScope("Result", prefix: keyword.Keyword, suffix: i.ToString(System.Globalization.CultureInfo.InvariantCulture));
                     string quotedPropertyName = SymbolDisplay.FormatLiteral(dependentSchema.JsonPropertyName, true);
                     generator
                         .AppendSeparatorLine()

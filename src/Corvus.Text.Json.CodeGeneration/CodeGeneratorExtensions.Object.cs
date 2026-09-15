@@ -471,10 +471,10 @@ internal static partial class CodeGeneratorExtensions
                 .AppendIndent("public static ReadOnlySpan<byte> ", property.DotnetPropertyName(), " => [");
 
             // Emit header bytes (little-endian)
-            generator.Append("0x" + ((byte)(header & 0xFF)).ToString("X2"));
-            generator.Append(", 0x" + ((byte)((header >> 8) & 0xFF)).ToString("X2"));
-            generator.Append(", 0x" + ((byte)((header >> 16) & 0xFF)).ToString("X2"));
-            generator.Append(", 0x" + ((byte)((header >> 24) & 0xFF)).ToString("X2"));
+            generator.Append("0x" + ((byte)(header & 0xFF)).ToString("X2", CultureInfo.InvariantCulture));
+            generator.Append(", 0x" + ((byte)((header >> 8) & 0xFF)).ToString("X2", CultureInfo.InvariantCulture));
+            generator.Append(", 0x" + ((byte)((header >> 16) & 0xFF)).ToString("X2", CultureInfo.InvariantCulture));
+            generator.Append(", 0x" + ((byte)((header >> 24) & 0xFF)).ToString("X2", CultureInfo.InvariantCulture));
 
             // Opening quote
             generator.Append(", 0x22");
@@ -482,7 +482,7 @@ internal static partial class CodeGeneratorExtensions
             // UTF-8 name bytes
             for (int b = 0; b < utf8Bytes.Length; b++)
             {
-                generator.Append(", 0x" + utf8Bytes[b].ToString("X2"));
+                generator.Append(", 0x" + utf8Bytes[b].ToString("X2", CultureInfo.InvariantCulture));
             }
 
             // Closing quote

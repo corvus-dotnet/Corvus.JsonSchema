@@ -71,7 +71,7 @@ public class PatternPropertiesValidationHandler : IChildObjectPropertyValidation
                 generator.GetStaticReadOnlyFieldNameInScope(
                     property.Keyword.Keyword,
                     rootScope: generator.ValidationClassScope(),
-                    suffix: index?.ToString());
+                    suffix: index?.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
             generator
                 .AppendSeparatorLine()

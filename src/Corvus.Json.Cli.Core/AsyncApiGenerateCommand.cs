@@ -167,7 +167,7 @@ internal sealed class AsyncApiGenerateCommand : AsyncCommand<AsyncApiGenerateSet
 
             foreach (AsyncApiGenerationDiagnostic diagnostic in generationDiagnostics)
             {
-                AnsiConsole.MarkupLineInterpolated($"[yellow]Warning:[/] {diagnostic.Location}: {diagnostic.Message}");
+                AnsiConsole.MarkupLineInterpolated(System.Globalization.CultureInfo.CurrentCulture, $"[yellow]Warning:[/] {diagnostic.Location}: {diagnostic.Message}");
             }
 
             if (settings.Strict && generationDiagnostics.Count > 0)

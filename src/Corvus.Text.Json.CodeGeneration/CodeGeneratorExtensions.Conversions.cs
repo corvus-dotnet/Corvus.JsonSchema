@@ -1430,7 +1430,7 @@ internal static partial class CodeGeneratorExtensions
                 JsonValueKind.True => generator.GetUniqueParameterNameInScope("matchTrue", childScope: scopeName),
                 JsonValueKind.False => generator.GetUniqueParameterNameInScope("matchFalse", childScope: scopeName),
                 JsonValueKind.Null => generator.GetUniqueParameterNameInScope("matchNull", childScope: scopeName),
-                _ => throw new InvalidOperationException(SR.Format(SR.UnsupportedJsonValueKind, constValue.ValueKind)),
+                _ => throw new InvalidOperationException(SR.Format(CultureInfo.InvariantCulture, SR.UnsupportedJsonValueKind, constValue.ValueKind)),
             };
         }
 

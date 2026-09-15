@@ -84,7 +84,7 @@ public class AnyOfConstValidationHandler : IChildValidationHandler
                         generator.GetPropertyNameInScope(
                             keyword.Keyword,
                             rootScope: generator.ValidationClassScope(),
-                            suffix: count > 1 ? i.ToString() : null);
+                            suffix: count > 1 ? i.ToString(System.Globalization.CultureInfo.InvariantCulture) : null);
 
                     if (i > 1)
                     {

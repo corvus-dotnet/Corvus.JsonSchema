@@ -62,7 +62,7 @@ public sealed class VocabularyAnalyser : IVocabularyAnalyser
     /// <inheritdoc/>
     public IVocabulary? TryGetVocabulary(string iri)
     {
-        if (iri.Equals(SchemaVocabulary.DefaultInstance.Uri))
+        if (iri.Equals(SchemaVocabulary.DefaultInstance.Uri, System.StringComparison.Ordinal))
         {
             return SchemaVocabulary.DefaultInstance;
         }
