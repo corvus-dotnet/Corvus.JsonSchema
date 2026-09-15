@@ -8,6 +8,7 @@
 // </licensing>
 
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 using Corvus.Json.CodeGeneration;
@@ -1284,7 +1285,7 @@ internal static partial class CodeGeneratorExtensions
                     generator.GetStaticReadOnlyPropertyNameInScope(
                         keyword.Keyword,
                         rootScope: generator.ConstantsScope(),
-                        suffix: count > 1 ? i.ToString() : null);
+                        suffix: count > 1 ? i.ToString(CultureInfo.InvariantCulture) : null);
 
                 parameterNames[i - 1] = matchParamName;
                 constFields[i - 1] = constField;
@@ -1422,8 +1423,8 @@ internal static partial class CodeGeneratorExtensions
 
             return constValue.ValueKind switch
             {
-                JsonValueKind.Object => generator.GetUniqueParameterNameInScope("matchObjectValue", childScope: scopeName, suffix: index.ToString()),
-                JsonValueKind.Array => generator.GetUniqueParameterNameInScope("matchArrayValue", childScope: scopeName, suffix: index.ToString()),
+                JsonValueKind.Object => generator.GetUniqueParameterNameInScope("matchObjectValue", childScope: scopeName, suffix: index.ToString(CultureInfo.InvariantCulture)),
+                JsonValueKind.Array => generator.GetUniqueParameterNameInScope("matchArrayValue", childScope: scopeName, suffix: index.ToString(CultureInfo.InvariantCulture)),
                 JsonValueKind.String => generator.GetUniqueParameterNameInScope(constValue.GetString()!, childScope: scopeName, prefix: "match"),
                 JsonValueKind.Number => generator.GetUniqueParameterNameInScope(constValue.GetRawText().Replace(".", "point"), childScope: scopeName, prefix: "matchNumber"),
                 JsonValueKind.True => generator.GetUniqueParameterNameInScope("matchTrue", childScope: scopeName),

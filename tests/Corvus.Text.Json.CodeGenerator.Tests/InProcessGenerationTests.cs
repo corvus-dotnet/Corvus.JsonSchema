@@ -1246,7 +1246,7 @@ public class InProcessGenerationTests
         Assert.IsTrue((files).Any());
     }
 
-    private static async Task<IReadOnlyCollection<GeneratedCodeFile>> GenerateInProcess(
+    internal static async Task<IReadOnlyCollection<GeneratedCodeFile>> GenerateInProcess(
         string schemaPath,
         CodeGenerationMode mode = CodeGenerationMode.TypeGeneration,
         CSharpLanguageProvider.Options options = null)
@@ -1733,7 +1733,7 @@ public class InProcessGenerationTests
 
     private static string NormalizeWhitespace(string code) => Regex.Replace(code, @"\s+", " ");
 
-    private static async Task<IReadOnlyCollection<GeneratedCodeFile>> GenerateInProcessFromContent(
+    internal static async Task<IReadOnlyCollection<GeneratedCodeFile>> GenerateInProcessFromContent(
         string schemaContent,
         CSharpLanguageProvider.Options options = null)
     {

@@ -7,6 +7,7 @@
 // https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 
+using System.Globalization;
 using Corvus.Json.CodeGeneration;
 
 namespace Corvus.Text.Json.CodeGeneration;
@@ -651,14 +652,14 @@ internal static partial class CodeGeneratorExtensions
                 /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
                 /// <exception cref="InvalidOperationException">The value is not an array.</exception>
                 """)
-                .AppendLineIndent("public ", fqdtn, forMutable ? ".Mutable" : "", " Item", itemNumber.ToString())
+                .AppendLineIndent("public ", fqdtn, forMutable ? ".Mutable" : "", " Item", itemNumber.ToString(CultureInfo.InvariantCulture))
                 .AppendLineIndent("{")
                 .PushIndent()
                     .AppendLineIndent("get")
                     .AppendLineIndent("{")
                     .PushIndent()
                         .AppendLineIndent("CheckValidInstance();")
-                        .AppendLineIndent("return _parent.GetArrayIndexElement<", fqdtn, forMutable ? ".Mutable" : "", ">(_idx, ", index.ToString(), ");")
+                        .AppendLineIndent("return _parent.GetArrayIndexElement<", fqdtn, forMutable ? ".Mutable" : "", ">(_idx, ", index.ToString(CultureInfo.InvariantCulture), ");")
                     .PopIndent()
                     .AppendLineIndent("}")
                 .PopIndent()

@@ -10,6 +10,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -246,7 +247,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         if (source.GlobalOptions.TryGetValue("build_property.CorvusTextJsonBuildParametersThreshold", out string? buildParametersThresholdName) &&
             !string.IsNullOrEmpty(buildParametersThresholdName))
         {
-            if (!int.TryParse(buildParametersThresholdName, out buildParametersThreshold))
+            if (!int.TryParse(buildParametersThresholdName, NumberStyles.Integer, CultureInfo.InvariantCulture, out buildParametersThreshold))
             {
                 throw new InvalidOperationException($"Invalid build property value for 'CorvusTextJsonBuildParametersThreshold': '{buildParametersThresholdName}'. Expected an integer.");
             }

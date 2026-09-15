@@ -8,6 +8,7 @@
 // </licensing>
 
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Text.Encodings.Web;
@@ -810,7 +811,7 @@ internal static partial class CodeGeneratorExtensions
                     return generator;
                 }
 
-                string? regexIndex = hasIndex ? index.ToString() : null;
+                string? regexIndex = hasIndex ? index.ToString(CultureInfo.InvariantCulture) : null;
                 string matchesPatternName = generator.GetUniqueMethodNameInScope(declaration.ReducedPatternPropertyType.DotnetTypeName(), prefix: "MatchesPattern");
                 string tryAsPatternName = generator.GetUniqueMethodNameInScope(declaration.ReducedPatternPropertyType.DotnetTypeName(), prefix: "TryAsPattern");
                 string visitPatternName = generator.GetUniqueMethodNameInScope(declaration.ReducedPatternPropertyType.DotnetTypeName(), prefix: "VisitPattern");

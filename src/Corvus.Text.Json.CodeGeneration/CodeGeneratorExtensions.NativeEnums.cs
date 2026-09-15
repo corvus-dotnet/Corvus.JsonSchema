@@ -8,6 +8,7 @@
 // </licensing>
 
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 using Corvus.Json.CodeGeneration;
@@ -208,7 +209,7 @@ internal static partial class CodeGenerationExtensions
                 .AppendLineIndent("/// <summary>")
                 .AppendLineIndent("/// Corresponds to the JSON string ", SymbolDisplay.FormatLiteral(member.JsonString, true), ".")
                 .AppendLineIndent("/// </summary>")
-                .AppendLineIndent(member.MemberName, " = ", ordinal.ToString(), ",");
+                .AppendLineIndent(member.MemberName, " = ", ordinal.ToString(CultureInfo.InvariantCulture), ",");
 
             ordinal++;
         }
@@ -387,7 +388,7 @@ internal static partial class CodeGenerationExtensions
                 .AppendLineIndent("/// <summary>")
                 .AppendLineIndent("/// The <c>", member.JsonName, "</c> property is <see langword=\"true\"/>.")
                 .AppendLineIndent("/// </summary>")
-                .AppendLineIndent(member.MemberName, " = 1 << ", bit.ToString(), ",");
+                .AppendLineIndent(member.MemberName, " = 1 << ", bit.ToString(CultureInfo.InvariantCulture), ",");
 
             bit++;
         }
@@ -551,7 +552,7 @@ internal static partial class CodeGenerationExtensions
                 int elementIndex = 1;
                 foreach (JsonElement value in values)
                 {
-                    string? suffix = addSuffix ? elementIndex.ToString() : null;
+                    string? suffix = addSuffix ? elementIndex.ToString(CultureInfo.InvariantCulture) : null;
                     string jsonString = value.GetString()!;
                     string memberName = generator.GetUniqueStaticReadOnlyPropertyNameInScope(jsonString, rootScope: knownValuesScope);
                     string utf8FieldName = generator.GetStaticReadOnlyFieldNameInScope(keywordName, rootScope: constantsScope, suffix: suffix);

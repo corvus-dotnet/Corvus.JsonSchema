@@ -4,6 +4,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -1343,7 +1344,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.Append(value);
+#if NET8_0_OR_GREATER
+        this.stringBuilder.Append(CultureInfo.InvariantCulture, $"{value}");
+#else
+        this.stringBuilder.Append(value.ToString(CultureInfo.InvariantCulture));
+#endif
         return this;
     }
 
@@ -1359,7 +1364,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.Append(value);
+#if NET8_0_OR_GREATER
+        this.stringBuilder.Append(CultureInfo.InvariantCulture, $"{value}");
+#else
+        this.stringBuilder.Append(value.ToString(CultureInfo.InvariantCulture));
+#endif
         return this;
     }
 
@@ -1375,7 +1384,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.Append(value);
+#if NET8_0_OR_GREATER
+        this.stringBuilder.Append(CultureInfo.InvariantCulture, $"{value}");
+#else
+        this.stringBuilder.Append(value.ToString(CultureInfo.InvariantCulture));
+#endif
         return this;
     }
 
@@ -1391,7 +1404,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.Append(value);
+#if NET8_0_OR_GREATER
+        this.stringBuilder.Append(CultureInfo.InvariantCulture, $"{value}");
+#else
+        this.stringBuilder.Append(value.ToString(CultureInfo.InvariantCulture));
+#endif
         return this;
     }
 
@@ -1407,7 +1424,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.Append(value);
+#if NET8_0_OR_GREATER
+        this.stringBuilder.Append(CultureInfo.InvariantCulture, $"{value}");
+#else
+        this.stringBuilder.Append(value.ToString(CultureInfo.InvariantCulture));
+#endif
         return this;
     }
 
@@ -1423,7 +1444,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.Append(value);
+#if NET8_0_OR_GREATER
+        this.stringBuilder.Append(CultureInfo.InvariantCulture, $"{value}");
+#else
+        this.stringBuilder.Append(value.ToString(CultureInfo.InvariantCulture));
+#endif
         return this;
     }
 
@@ -1439,7 +1464,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.Append(value);
+#if NET8_0_OR_GREATER
+        this.stringBuilder.Append(CultureInfo.InvariantCulture, $"{value}");
+#else
+        this.stringBuilder.Append(value.ToString(CultureInfo.InvariantCulture));
+#endif
         return this;
     }
 
@@ -1455,7 +1484,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.Append(value);
+#if NET8_0_OR_GREATER
+        this.stringBuilder.Append(CultureInfo.InvariantCulture, $"{value}");
+#else
+        this.stringBuilder.Append(value.ToString(CultureInfo.InvariantCulture));
+#endif
         return this;
     }
 
@@ -1471,7 +1504,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.Append(value);
+#if NET8_0_OR_GREATER
+        this.stringBuilder.Append(CultureInfo.InvariantCulture, $"{value}");
+#else
+        this.stringBuilder.Append(value.ToString(CultureInfo.InvariantCulture));
+#endif
         return this;
     }
 
@@ -1487,7 +1524,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.Append(value);
+#if NET8_0_OR_GREATER
+        this.stringBuilder.Append(CultureInfo.InvariantCulture, $"{value}");
+#else
+        this.stringBuilder.Append(value.ToString(CultureInfo.InvariantCulture));
+#endif
         return this;
     }
 
@@ -1503,14 +1544,19 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.Append(value);
+#if NET8_0_OR_GREATER
+        this.stringBuilder.Append(CultureInfo.InvariantCulture, $"{value}");
+#else
+        this.stringBuilder.Append(value.ToString(CultureInfo.InvariantCulture));
+#endif
         return this;
     }
 
     /// <summary>
     /// Appends and formats a value to the builder.
     /// </summary>
-    /// <param name="value">The value to append.</param>
+    /// <param name="value">The value to append. A value that implements <see cref="IFormattable"/> is formatted with the
+    /// invariant culture.</param>
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(object? value)
     {
@@ -1519,7 +1565,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.Append(value);
+#if NET8_0_OR_GREATER
+        this.stringBuilder.Append(CultureInfo.InvariantCulture, $"{value}");
+#else
+        this.stringBuilder.Append(value is IFormattable formattable ? formattable.ToString(null, CultureInfo.InvariantCulture) : value?.ToString());
+#endif
         return this;
     }
 
@@ -2001,7 +2051,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.AppendFormat(format, arg0);
+        this.stringBuilder.AppendFormat(CultureInfo.InvariantCulture, format, arg0);
         return this;
     }
 
@@ -2019,7 +2069,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.AppendFormat(format, arg0, arg1);
+        this.stringBuilder.AppendFormat(CultureInfo.InvariantCulture, format, arg0, arg1);
         return this;
     }
 
@@ -2038,7 +2088,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.AppendFormat(format, arg0, arg1, arg2);
+        this.stringBuilder.AppendFormat(CultureInfo.InvariantCulture, format, arg0, arg1, arg2);
         return this;
     }
 
@@ -2055,7 +2105,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.AppendFormat(format, args);
+        this.stringBuilder.AppendFormat(CultureInfo.InvariantCulture, format, args);
         return this;
     }
 
@@ -2263,7 +2313,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
         }
 
         this.WriteIndent();
-        this.stringBuilder.AppendFormat(format, arg0);
+        this.stringBuilder.AppendFormat(CultureInfo.InvariantCulture, format, arg0);
         return this;
     }
 
@@ -2282,7 +2332,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
         }
 
         this.WriteIndent();
-        this.stringBuilder.AppendFormat(format, arg0, arg1);
+        this.stringBuilder.AppendFormat(CultureInfo.InvariantCulture, format, arg0, arg1);
         return this;
     }
 
@@ -2302,7 +2352,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
         }
 
         this.WriteIndent();
-        this.stringBuilder.AppendFormat(format, arg0, arg1, arg2);
+        this.stringBuilder.AppendFormat(CultureInfo.InvariantCulture, format, arg0, arg1, arg2);
         return this;
     }
 
@@ -2320,7 +2370,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
         }
 
         this.WriteIndent();
-        this.stringBuilder.AppendFormat(format, args);
+        this.stringBuilder.AppendFormat(CultureInfo.InvariantCulture, format, args);
         return this;
     }
 

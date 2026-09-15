@@ -9,6 +9,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Corvus.Json.CodeGeneration;
 using Microsoft.CodeAnalysis.CSharp;
@@ -206,7 +207,7 @@ internal static partial class CodeGenerationExtensions
             return generator;
         }
 
-        string? suffix = index?.ToString();
+        string? suffix = index?.ToString(CultureInfo.InvariantCulture);
         string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: suffix);
         string methodName = generator.GetMethodNameInScope(keyword.Keyword, prefix: "Create", suffix: suffix);
 
@@ -231,7 +232,7 @@ internal static partial class CodeGenerationExtensions
         }
 
         string translatedValue = EcmaRegexTranslator.TranslateOrFallback(value);
-        string memberName = generator.GetMethodNameInScope(keyword.Keyword, prefix: "Create", suffix: index?.ToString());
+        string memberName = generator.GetMethodNameInScope(keyword.Keyword, prefix: "Create", suffix: index?.ToString(CultureInfo.InvariantCulture));
 
         return generator
 #if BUILDING_SOURCE_GENERATOR

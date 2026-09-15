@@ -8,6 +8,7 @@
 // </licensing>
 
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 using Corvus.Json.CodeGeneration;
@@ -2275,7 +2276,7 @@ internal static partial class CodeGeneratorExtensions
             {
                 cbDocIndex++;
                 generator
-                    .AppendLineIndent("/// <param name=\"item", cbDocIndex.ToString(), "\">The source for tuple item ", cbDocIndex.ToString(), ".</param>");
+                    .AppendLineIndent("/// <param name=\"item", cbDocIndex.ToString(CultureInfo.InvariantCulture), "\">The source for tuple item ", cbDocIndex.ToString(CultureInfo.InvariantCulture), ".</param>");
             }
 
             generator
@@ -2299,7 +2300,7 @@ internal static partial class CodeGeneratorExtensions
             }
 
             generator
-                .AppendLine(", int initialCapacity = ", initialCapacity.ToString(), ")")
+                .AppendLine(", int initialCapacity = ", initialCapacity.ToString(CultureInfo.InvariantCulture), ")")
                 .AppendLineIndent("{")
                 .PushIndent()
                     .AppendIndent("return CreateBuilder(workspace, Build(");
@@ -2520,7 +2521,7 @@ internal static partial class CodeGeneratorExtensions
             }
 
             generator
-                .AppendLine(", int initialCapacity = ", initialCapacity.ToString(), ")")
+                .AppendLine(", int initialCapacity = ", initialCapacity.ToString(CultureInfo.InvariantCulture), ")")
                 .AppendLineIndent("{")
                 .PushIndent()
                     .AppendLineIndent("JsonDocumentBuilder<", generator.MutableClassName(), "> documentBuilder = workspace.CreateBuilder<", generator.MutableClassName(), ">(-1);")
@@ -2590,7 +2591,7 @@ internal static partial class CodeGeneratorExtensions
                 }
 
                 generator
-                    .AppendLine(", int initialCapacity = ", initialCapacity.ToString(), ")")
+                    .AppendLine(", int initialCapacity = ", initialCapacity.ToString(CultureInfo.InvariantCulture), ")")
                     .PushIndent()
                         .AppendLineIndent("#if NET9_0_OR_GREATER")
                         .AppendLineIndent("where TContext : allows ref struct")
@@ -2868,7 +2869,7 @@ internal static partial class CodeGeneratorExtensions
             {
                 cDocIndex++;
                 generator
-                    .AppendLineIndent("/// <param name=\"item", cDocIndex.ToString(), "\">The source for tuple item ", cDocIndex.ToString(), ".</param>");
+                    .AppendLineIndent("/// <param name=\"item", cDocIndex.ToString(CultureInfo.InvariantCulture), "\">The source for tuple item ", cDocIndex.ToString(CultureInfo.InvariantCulture), ".</param>");
             }
 
             generator
@@ -2891,7 +2892,7 @@ internal static partial class CodeGeneratorExtensions
             }
 
             generator
-                .AppendLine(", int initialCapacity = ", initialCapacity.ToString(), ")")
+                .AppendLine(", int initialCapacity = ", initialCapacity.ToString(CultureInfo.InvariantCulture), ")")
                 .AppendLineIndent("{")
                 .PushIndent()
                     .AppendIndent("return Create(Build(");
@@ -3115,7 +3116,7 @@ internal static partial class CodeGeneratorExtensions
             }
 
             generator
-                .AppendLine(", int initialCapacity = ", initialCapacity.ToString(), ")")
+                .AppendLine(", int initialCapacity = ", initialCapacity.ToString(CultureInfo.InvariantCulture), ")")
                 .AppendLineIndent("{")
                 .PushIndent()
                     .AppendLineIndent("ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();")
@@ -3195,7 +3196,7 @@ internal static partial class CodeGeneratorExtensions
                 }
 
                 generator
-                    .AppendLine(", int initialCapacity = ", initialCapacity.ToString(), ")")
+                    .AppendLine(", int initialCapacity = ", initialCapacity.ToString(CultureInfo.InvariantCulture), ")")
                     .PushIndent()
                         .AppendLineIndent("#if NET9_0_OR_GREATER")
                         .AppendLineIndent("where TContext : allows ref struct")
@@ -3388,7 +3389,7 @@ internal static partial class CodeGeneratorExtensions
             {
                 docIndex++;
                 generator
-                    .AppendLineIndent("/// <param name=\"item", docIndex.ToString(), "\">The source for tuple item ", docIndex.ToString(), ".</param>");
+                    .AppendLineIndent("/// <param name=\"item", docIndex.ToString(CultureInfo.InvariantCulture), "\">The source for tuple item ", docIndex.ToString(CultureInfo.InvariantCulture), ".</param>");
             }
 
             generator
@@ -3621,7 +3622,7 @@ internal static partial class CodeGeneratorExtensions
 
         for (int i = 1; i <= tupleType.ItemsTypes.Length; i++)
         {
-            string indexStr = i.ToString();
+            string indexStr = i.ToString(CultureInfo.InvariantCulture);
             generator
                 .AppendLineIndent("item", indexStr, ".AddAsItem(ref _builder);");
         }
@@ -3830,7 +3831,7 @@ internal static partial class CodeGeneratorExtensions
                 btDocIndex++;
                 string fqdtn = item.ReducedType.FullyQualifiedDotnetTypeName();
                 generator
-                    .AppendLineIndent("/// <param name=\"item", btDocIndex.ToString(), "\">The source for tuple item ", btDocIndex.ToString(), ".</param>");
+                    .AppendLineIndent("/// <param name=\"item", btDocIndex.ToString(CultureInfo.InvariantCulture), "\">The source for tuple item ", btDocIndex.ToString(CultureInfo.InvariantCulture), ".</param>");
             }
 
             generator
@@ -4342,7 +4343,7 @@ internal static partial class CodeGeneratorExtensions
 
                 for (int i = 1; i <= tupleTypeForCtor.ItemsTypes.Length; i++)
                 {
-                    string indexStr = i.ToString();
+                    string indexStr = i.ToString(CultureInfo.InvariantCulture);
                     generator
                         .AppendLineIndent("_tupleItem", indexStr, " = item", indexStr, ";");
                 }
@@ -4422,7 +4423,7 @@ internal static partial class CodeGeneratorExtensions
 
                     for (int i = 0; i < createArgs.Count; i++)
                     {
-                        generator.AppendLineIndent("_createArg", (i + 1).ToString(), " = arg", (i + 1).ToString(), ";");
+                        generator.AppendLineIndent("_createArg", (i + 1).ToString(CultureInfo.InvariantCulture), " = arg", (i + 1).ToString(CultureInfo.InvariantCulture), ";");
                     }
 
                     generator
@@ -4925,7 +4926,7 @@ internal static partial class CodeGeneratorExtensions
                 {
                     generator
                         .ReserveNameIfNotReserved($"_createArg{i + 1}")
-                        .AppendLineIndent("private readonly ", createArgs[i].Type, " _createArg", (i + 1).ToString(), ";");
+                        .AppendLineIndent("private readonly ", createArgs[i].Type, " _createArg", (i + 1).ToString(CultureInfo.InvariantCulture), ";");
                 }
             }
         }
@@ -4974,7 +4975,7 @@ internal static partial class CodeGeneratorExtensions
                         string fqdtn = item.ReducedType.FullyQualifiedDotnetTypeName();
                         generator
                             .ReserveNameIfNotReserved($"_tupleItem{fieldIndex}")
-                            .AppendLineIndent("private readonly ", fqdtn, ".", generator.SourceClassName(fqdtn), " _tupleItem", fieldIndex.ToString(), ";");
+                            .AppendLineIndent("private readonly ", fqdtn, ".", generator.SourceClassName(fqdtn), " _tupleItem", fieldIndex.ToString(CultureInfo.InvariantCulture), ";");
                     }
                 }
             }
@@ -5658,7 +5659,7 @@ internal static partial class CodeGeneratorExtensions
 
         for (int i = 0; i < args.Count; i++)
         {
-            generator.AppendLineIndent("/// <param name=\"arg", (i + 1).ToString(), "\">The value of the property.</param>");
+            generator.AppendLineIndent("/// <param name=\"arg", (i + 1).ToString(CultureInfo.InvariantCulture), "\">The value of the property.</param>");
         }
 
         generator
@@ -5700,7 +5701,7 @@ internal static partial class CodeGeneratorExtensions
 
             for (int i = 0; i < contextArgs.Count; i++)
             {
-                generator.AppendLineIndent("/// <param name=\"arg", (i + 1).ToString(), "\">The value of the property.</param>");
+                generator.AppendLineIndent("/// <param name=\"arg", (i + 1).ToString(CultureInfo.InvariantCulture), "\">The value of the property.</param>");
             }
 
             generator
