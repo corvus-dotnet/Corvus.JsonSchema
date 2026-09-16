@@ -29,11 +29,6 @@ public readonly partial struct JsonBoolean
         private readonly int _idx;
         private ulong _documentVersion;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Mutable"/> struct.
-        /// </summary>
-        /// <param name="parent">The document that contains the element.</param>
-        /// <param name="idx">The index of the element within the document.</param>
         internal Mutable(IJsonDocument parent, int idx)
         {
             Debug.Assert(idx >= 0);

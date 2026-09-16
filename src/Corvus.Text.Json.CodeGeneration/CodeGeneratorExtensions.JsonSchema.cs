@@ -308,16 +308,6 @@ internal static partial class CodeGenerationExtensions
                 entry.ToString(System.Globalization.CultureInfo.InvariantCulture),
                 ");")
             .AppendSeparatorLine()
-            .AppendBlockIndent(
-                """
-                /// <summary>
-                /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
-                /// </summary>
-                /// <param name="parentDocument">The parent document.</param>
-                /// <param name="parentIndex">The parent index.</param>
-                /// <param name="resultsCollector">The (optional) results collector.</param>
-                /// <returns><see langword="true" /> if the instance evaluates against the schema.</returns>
-                """)
             .BeginMethodDeclaration(
                 visibilityAndModifiers: "internal static",
                 returnType: "bool",

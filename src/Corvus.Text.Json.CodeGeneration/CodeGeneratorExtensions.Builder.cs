@@ -3676,13 +3676,6 @@ internal static partial class CodeGeneratorExtensions
                 string builderClassName = isAlsoObject ? generator.ArrayBuilderClassName(arrayItemsTypeName) : generator.BuilderClassName(arrayItemsTypeName);
                 generator
                     .AppendSeparatorLine()
-                    .AppendLineIndent("/// <summary>")
-                    .AppendLineIndent("/// Creates a tensor from the given numeric span.")
-                    .AppendLineIndent("/// </summary>")
-                    .AppendLineIndent("/// <param name=\"tensor\">The data from which to create the tensor.</param>")
-                    .AppendLineIndent("/// <param name=\"createArray\">Determines whether to create the wrapping array around the items.</param>")
-                    .AppendLineIndent("/// <returns>The number of items consumed.</returns>")
-                    .AppendLineIndent("/// <exception cref=\"ArgumentException\">The tensor did not contain the correct number of values for the array rank and dimension.</exception>")
                     .AppendLineIndent("internal int CreateTensor(ReadOnlySpan<", numericTypeName.Name, "> tensor, bool createArray)")
                     .AppendLineIndent("{")
                     .PushIndent()
@@ -3731,13 +3724,6 @@ internal static partial class CodeGeneratorExtensions
             {
                 generator
                     .AppendSeparatorLine()
-                    .AppendLineIndent("/// <summary>")
-                    .AppendLineIndent("/// Creates a tensor from the given numeric span.")
-                    .AppendLineIndent("/// </summary>")
-                    .AppendLineIndent("/// <param name=\"tensor\">The data from which to create the tensor.</param>")
-                    .AppendLineIndent("/// <param name=\"createArray\">Determines whether to create the wrapping array around the items.</param>")
-                    .AppendLineIndent("/// <returns>The number of items consumed.</returns>")
-                    .AppendLineIndent("/// <exception cref=\"ArgumentException\">The tensor did not contain the correct number of values for the array rank and dimension.</exception>")
                     .AppendLineIndent("internal int CreateTensor(ReadOnlySpan<", numericTypeName.Name, "> tensor, bool createArray)")
                     .AppendLineIndent("{")
                     .PushIndent()
@@ -3789,11 +3775,6 @@ internal static partial class CodeGeneratorExtensions
             string currentBuilderClassName = isObject ? generator.ArrayBuilderClassName() : generator.BuilderClassName();
             generator
                 .AppendSeparatorLine()
-                .AppendLineIndent("/// <summary>")
-                .AppendLineIndent("/// Builds the tensor value directly into the given complex value builder.")
-                .AppendLineIndent("/// </summary>")
-                .AppendLineIndent("/// <param name=\"tensor\">The data from which to create the tensor.</param>")
-                .AppendLineIndent("/// <param name=\"o\">The complex value builder into which to write the tensor.</param>")
                 .AppendLineIndent("internal static void BuildTensorValue(ReadOnlySpan<", numericTypeName.Name, "> tensor, ref ComplexValueBuilder o)")
                 .AppendLineIndent("{")
                 .PushIndent()
@@ -3821,21 +3802,6 @@ internal static partial class CodeGeneratorExtensions
 
             generator
                 .AppendSeparatorLine()
-                .AppendLineIndent("/// <summary>")
-                .AppendLineIndent("/// Builds the tuple value directly into the given complex value builder.")
-                .AppendLineIndent("/// </summary>");
-
-            int btDocIndex = 0;
-            foreach (ReducedTypeDeclaration item in tupleTypeForBTV.ItemsTypes)
-            {
-                btDocIndex++;
-                string fqdtn = item.ReducedType.FullyQualifiedDotnetTypeName();
-                generator
-                    .AppendLineIndent("/// <param name=\"item", btDocIndex.ToString(CultureInfo.InvariantCulture), "\">The source for tuple item ", btDocIndex.ToString(CultureInfo.InvariantCulture), ".</param>");
-            }
-
-            generator
-                .AppendLineIndent("/// <param name=\"o\">The complex value builder into which to write the tuple.</param>")
                 .AppendIndent("internal static void BuildTupleValue(");
 
             int btParamIndex = 0;
@@ -4002,9 +3968,6 @@ internal static partial class CodeGeneratorExtensions
 
         generator
                 .AppendSeparatorLine()
-            .AppendLineIndent("/// <summary>")
-            .AppendLineIndent("/// Creates an instance of a <see cref=\"", typeDeclaration.DotnetTypeName(), "\"/>.")
-            .AppendLineIndent("/// </summary>")
             .BeginReservedMethodDeclaration(
                 "internal static",
                 "void",
@@ -4041,9 +4004,6 @@ internal static partial class CodeGeneratorExtensions
 
             generator
                     .AppendSeparatorLine()
-                .AppendLineIndent("/// <summary>")
-                .AppendLineIndent("/// Creates an instance of a <see cref=\"", typeDeclaration.DotnetTypeName(), "\"/>.")
-                .AppendLineIndent("/// </summary>")
                 .BeginReservedMethodDeclaration(
                     "internal static",
                     "void",
@@ -5653,17 +5613,6 @@ internal static partial class CodeGeneratorExtensions
 
         generator
             .AppendSeparatorLine()
-            .AppendLineIndent("/// <summary>")
-            .AppendLineIndent("/// Builds the object value directly from its captured property values into the given complex value builder.")
-            .AppendLineIndent("/// </summary>");
-
-        for (int i = 0; i < args.Count; i++)
-        {
-            generator.AppendLineIndent("/// <param name=\"arg", (i + 1).ToString(CultureInfo.InvariantCulture), "\">The value of the property.</param>");
-        }
-
-        generator
-            .AppendLineIndent("/// <param name=\"o\">The complex value builder into which to write the object.</param>")
             .AppendIndent("internal static void BuildCreateValue(");
 
         AppendCreateArgDeclarations(generator, args, includeDefaults: false);
@@ -5693,19 +5642,6 @@ internal static partial class CodeGeneratorExtensions
 
             generator
                 .AppendSeparatorLine()
-                .AppendLineIndent("/// <summary>")
-                .AppendLineIndent("/// Builds the object value directly from its captured property values into the given complex value builder.")
-                .AppendLineIndent("/// </summary>")
-                .AppendLineIndent("/// <typeparam name=\"TContext\">The type of the context to pass to the builder.</typeparam>")
-                .AppendLineIndent("/// <param name=\"context\">The context to pass to the builder.</param>");
-
-            for (int i = 0; i < contextArgs.Count; i++)
-            {
-                generator.AppendLineIndent("/// <param name=\"arg", (i + 1).ToString(CultureInfo.InvariantCulture), "\">The value of the property.</param>");
-            }
-
-            generator
-                .AppendLineIndent("/// <param name=\"o\">The complex value builder into which to write the object.</param>")
                 .AppendIndent("internal static void BuildCreateValue<TContext>(scoped in TContext context");
 
             if (contextArgs.Count > 0)

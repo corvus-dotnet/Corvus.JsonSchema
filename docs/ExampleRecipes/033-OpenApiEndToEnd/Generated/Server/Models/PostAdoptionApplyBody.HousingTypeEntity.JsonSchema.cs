@@ -17,9 +17,6 @@ public readonly partial struct PostAdoptionApplyBody
     public readonly partial struct HousingTypeEntity
         : IJsonElement<HousingTypeEntity>
     {
-        /// <summary>
-        /// Provides accesors for enumerated values
-        /// </summary>
         private static class Constants
         {
             /// <summary>
@@ -203,13 +200,6 @@ public readonly partial struct PostAdoptionApplyBody
 
             private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Petstore.EndToEnd.Server.Models.CorvusJsonSchemaProgram.Entry(22);
 
-            /// <summary>
-            /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
-            /// </summary>
-            /// <param name="parentDocument">The parent document.</param>
-            /// <param name="parentIndex">The parent index.</param>
-            /// <param name="resultsCollector">The (optional) results collector.</param>
-            /// <returns><see langword="true" /> if the instance evaluates against the schema.</returns>
             internal static bool Evaluate(
                 IJsonDocument parentDocument,
                 int parentIndex,

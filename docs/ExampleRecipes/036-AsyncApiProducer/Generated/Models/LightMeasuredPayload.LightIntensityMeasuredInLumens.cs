@@ -39,11 +39,6 @@ public readonly partial struct LightMeasuredPayload
         private readonly int _idx;
 
         #pragma warning restore CS8618 // JsonDocument nullability
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LightIntensityMeasuredInLumens"/> struct.
-        /// </summary>
-        /// <param name="parent">The document that contains the element.</param>
-        /// <param name="idx">The index of the element within the document.</param>
         internal LightIntensityMeasuredInLumens(IJsonDocument parent, int idx)
         {
             Debug.Assert(idx >= 0);

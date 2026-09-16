@@ -29,11 +29,6 @@ public readonly partial struct NewPet
         private readonly int _idx;
         private ulong _documentVersion;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Mutable"/> struct.
-        /// </summary>
-        /// <param name="parent">The document that contains the element.</param>
-        /// <param name="idx">The index of the element within the document.</param>
         internal Mutable(IJsonDocument parent, int idx)
         {
             Debug.Assert(idx >= 0);
@@ -1021,9 +1016,6 @@ public readonly partial struct NewPet
             _builder = builder;
         }
 
-        /// <summary>
-        /// Creates an instance of a <see cref="NewPet"/>.
-        /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
             in Petstore.Client.Models.JsonString.Source name,
@@ -1133,12 +1125,6 @@ public readonly partial struct NewPet
             o.EndObject();
         }
 
-        /// <summary>
-        /// Builds the object value directly from its captured property values into the given complex value builder.
-        /// </summary>
-        /// <param name="arg1">The value of the property.</param>
-        /// <param name="arg2">The value of the property.</param>
-        /// <param name="o">The complex value builder into which to write the object.</param>
         internal static void BuildCreateValue(scoped in Petstore.Client.Models.JsonString.Source arg1, scoped in Petstore.Client.Models.JsonString.Source arg2, ref ComplexValueBuilder o)
         {
             o.StartObject();

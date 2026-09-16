@@ -443,12 +443,9 @@ internal static class RuntimeProgramGenerator
         Line($"    private static readonly JsonSchemaEvaluator?[] Evaluators = new JsonSchemaEvaluator?[{entryPoints.Count}];");
         Line("    private static JsonSchemaEvaluator? root;");
         Line();
-        Line("    /// <summary>");
-        Line("    /// Gets the evaluator for an entry point, compiling it on first use. Entry points share one compiled");
-        Line("    /// program, so each subschema is compiled once however many entry points reach it.");
-        Line("    /// </summary>");
-        Line("    /// <param name=\"index\">The entry point index.</param>");
-        Line("    /// <returns>The evaluator rooted at that entry point.</returns>");
+
+        // Entry points share one compiled program, so each subschema is compiled once however many entry points
+        // reach it; the evaluator for an entry point is compiled on first use.
         Line("    internal static JsonSchemaEvaluator Entry(int index)");
         Line("    {");
         Line("        return Evaluators[index] ?? Create(index);");

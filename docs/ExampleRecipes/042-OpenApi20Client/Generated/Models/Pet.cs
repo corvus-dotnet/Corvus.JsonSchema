@@ -31,11 +31,6 @@ public readonly partial struct Pet
     private readonly int _idx;
 
     #pragma warning restore CS8618 // JsonDocument nullability
-    /// <summary>
-    /// Initializes a new instance of the <see cref="Pet"/> struct.
-    /// </summary>
-    /// <param name="parent">The document that contains the element.</param>
-    /// <param name="idx">The index of the element within the document.</param>
     internal Pet(IJsonDocument parent, int idx)
     {
         Debug.Assert(idx >= 0);
@@ -680,9 +675,6 @@ public readonly partial struct Pet
         public static ReadOnlySpan<byte> TagUtf8 => "tag"u8;
     }
 
-    /// <summary>
-    /// Provides escaped UTF-8 versions of the JSON property names on the object.
-    /// </summary>
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
@@ -701,10 +693,6 @@ public readonly partial struct Pet
         public static ReadOnlySpan<byte> Tag => "tag"u8;
     }
 
-    /// <summary>
-    /// Provides pre-baked property name blobs for fast builder property storage.
-    /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
-    /// </summary>
     private static class JsonPropertyNamesPrebaked
     {
         /// <summary>

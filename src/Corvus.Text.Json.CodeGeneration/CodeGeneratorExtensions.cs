@@ -1063,13 +1063,6 @@ internal static partial class CodeGeneratorExtensions
 
         generator
             .AppendSeparatorLine()
-            .AppendLineIndent("/// <summary>")
-            .AppendIndent("/// Initializes a new instance of the ")
-            .AppendTypeAsSeeCref(forMutable ? generator.MutableClassName() : typeDeclaration.DotnetTypeName())
-            .AppendLine(" struct.")
-            .AppendLineIndent("/// </summary>")
-            .AppendLineIndent("/// <param name=\"parent\">The document that contains the element.</param>")
-            .AppendLineIndent("/// <param name=\"idx\">The index of the element within the document.</param>")
             .AppendIndent("internal ")
             .Append(forMutable ? generator.MutableClassName() : typeDeclaration.DotnetTypeName())
             .AppendLine("(IJsonDocument parent, int idx)")

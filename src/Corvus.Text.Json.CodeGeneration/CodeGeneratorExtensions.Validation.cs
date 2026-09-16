@@ -73,9 +73,6 @@ internal static partial class CodeGenerationExtensions
 
         generator
             .AppendSeparatorLine()
-            .AppendLineIndent("/// <summary>")
-            .AppendLineIndent("/// Provides accesors for enumerated values")
-            .AppendLineIndent("/// </summary>")
             .BeginPrivateStaticClassDeclaration(generator.ConstantsClassName());
 
         foreach (KeyValuePair<IValidationConstantProviderKeyword, JsonElement[]> constant in requiredConstants.OrderBy(k => k.Key.Keyword, StringComparer.Ordinal))

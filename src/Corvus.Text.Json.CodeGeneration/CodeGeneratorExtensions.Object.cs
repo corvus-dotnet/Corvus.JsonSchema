@@ -378,9 +378,6 @@ internal static partial class CodeGeneratorExtensions
 
         generator
             .AppendSeparatorLine()
-            .AppendLineIndent("/// <summary>")
-            .AppendLineIndent("/// Provides escaped UTF-8 versions of the JSON property names on the object.")
-            .AppendLineIndent("/// </summary>")
             .BeginPrivateStaticClassDeclaration(generator.JsonPropertyNamesEscapedClassName());
 
         int i = 0;
@@ -438,10 +435,6 @@ internal static partial class CodeGeneratorExtensions
 
         generator
             .AppendSeparatorLine()
-            .AppendLineIndent("/// <summary>")
-            .AppendLineIndent("/// Provides pre-baked property name blobs for fast builder property storage.")
-            .AppendLineIndent("/// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].")
-            .AppendLineIndent("/// </summary>")
             .BeginPrivateStaticClassDeclaration(generator.JsonPropertyNamesPrebakedClassName());
 
         int i = 0;

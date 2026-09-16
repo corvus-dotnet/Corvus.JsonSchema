@@ -22,12 +22,6 @@ internal static partial class CorvusJsonSchemaProgram
     private static readonly JsonSchemaEvaluator?[] Evaluators = new JsonSchemaEvaluator?[11];
     private static JsonSchemaEvaluator? root;
 
-    /// <summary>
-    /// Gets the evaluator for an entry point, compiling it on first use. Entry points share one compiled
-    /// program, so each subschema is compiled once however many entry points reach it.
-    /// </summary>
-    /// <param name="index">The entry point index.</param>
-    /// <returns>The evaluator rooted at that entry point.</returns>
     internal static JsonSchemaEvaluator Entry(int index)
     {
         return Evaluators[index] ?? Create(index);

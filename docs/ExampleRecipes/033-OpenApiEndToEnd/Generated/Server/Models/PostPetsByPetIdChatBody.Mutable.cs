@@ -29,11 +29,6 @@ public readonly partial struct PostPetsByPetIdChatBody
         private readonly int _idx;
         private ulong _documentVersion;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Mutable"/> struct.
-        /// </summary>
-        /// <param name="parent">The document that contains the element.</param>
-        /// <param name="idx">The index of the element within the document.</param>
         internal Mutable(IJsonDocument parent, int idx)
         {
             Debug.Assert(idx >= 0);
@@ -1103,9 +1098,6 @@ public readonly partial struct PostPetsByPetIdChatBody
             _builder = builder;
         }
 
-        /// <summary>
-        /// Creates an instance of a <see cref="PostPetsByPetIdChatBody"/>.
-        /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
             in Petstore.EndToEnd.Server.Models.JsonString.Source message,
@@ -1123,9 +1115,6 @@ public readonly partial struct PostPetsByPetIdChatBody
             Create(ref _builder, message, history);
         }
 
-        /// <summary>
-        /// Creates an instance of a <see cref="PostPetsByPetIdChatBody"/>.
-        /// </summary>
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
@@ -1245,12 +1234,6 @@ public readonly partial struct PostPetsByPetIdChatBody
             o.EndObject();
         }
 
-        /// <summary>
-        /// Builds the object value directly from its captured property values into the given complex value builder.
-        /// </summary>
-        /// <param name="arg1">The value of the property.</param>
-        /// <param name="arg2">The value of the property.</param>
-        /// <param name="o">The complex value builder into which to write the object.</param>
         internal static void BuildCreateValue(scoped in Petstore.EndToEnd.Server.Models.JsonString.Source arg1, scoped in Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Source arg2, ref ComplexValueBuilder o)
         {
             o.StartObject();
@@ -1258,14 +1241,6 @@ public readonly partial struct PostPetsByPetIdChatBody
             o.EndObject();
         }
 
-        /// <summary>
-        /// Builds the object value directly from its captured property values into the given complex value builder.
-        /// </summary>
-        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
-        /// <param name="context">The context to pass to the builder.</param>
-        /// <param name="arg1">The value of the property.</param>
-        /// <param name="arg2">The value of the property.</param>
-        /// <param name="o">The complex value builder into which to write the object.</param>
         internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Petstore.EndToEnd.Server.Models.JsonString.Source arg1, scoped in Petstore.EndToEnd.Server.Models.PostPetsByPetIdChatBody.RequiredContentAndRoleArray.Source<TContext> arg2, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct

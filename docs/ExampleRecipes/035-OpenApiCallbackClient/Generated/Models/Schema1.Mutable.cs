@@ -29,11 +29,6 @@ public readonly partial struct Schema1
         private readonly int _idx;
         private ulong _documentVersion;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Mutable"/> struct.
-        /// </summary>
-        /// <param name="parent">The document that contains the element.</param>
-        /// <param name="idx">The index of the element within the document.</param>
         internal Mutable(IJsonDocument parent, int idx)
         {
             Debug.Assert(idx >= 0);
@@ -1215,9 +1210,6 @@ public readonly partial struct Schema1
             _builder = builder;
         }
 
-        /// <summary>
-        /// Creates an instance of a <see cref="Schema1"/>.
-        /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
             in EventSubscription.CallbackClient.Models.JsonString.Source eventId,
@@ -1243,9 +1235,6 @@ public readonly partial struct Schema1
             Create(ref _builder, eventId, eventType, timestamp, payload);
         }
 
-        /// <summary>
-        /// Creates an instance of a <see cref="Schema1"/>.
-        /// </summary>
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
@@ -1371,14 +1360,6 @@ public readonly partial struct Schema1
             o.EndObject();
         }
 
-        /// <summary>
-        /// Builds the object value directly from its captured property values into the given complex value builder.
-        /// </summary>
-        /// <param name="arg1">The value of the property.</param>
-        /// <param name="arg2">The value of the property.</param>
-        /// <param name="arg3">The value of the property.</param>
-        /// <param name="arg4">The value of the property.</param>
-        /// <param name="o">The complex value builder into which to write the object.</param>
         internal static void BuildCreateValue(scoped in EventSubscription.CallbackClient.Models.JsonString.Source arg1, scoped in EventSubscription.CallbackClient.Models.JsonString.Source arg2, scoped in EventSubscription.CallbackClient.Models.JsonDateTime.Source arg3, scoped in EventSubscription.CallbackClient.Models.JsonObject.Source arg4, ref ComplexValueBuilder o)
         {
             o.StartObject();
@@ -1386,16 +1367,6 @@ public readonly partial struct Schema1
             o.EndObject();
         }
 
-        /// <summary>
-        /// Builds the object value directly from its captured property values into the given complex value builder.
-        /// </summary>
-        /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
-        /// <param name="context">The context to pass to the builder.</param>
-        /// <param name="arg1">The value of the property.</param>
-        /// <param name="arg2">The value of the property.</param>
-        /// <param name="arg3">The value of the property.</param>
-        /// <param name="arg4">The value of the property.</param>
-        /// <param name="o">The complex value builder into which to write the object.</param>
         internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in EventSubscription.CallbackClient.Models.JsonString.Source arg1, scoped in EventSubscription.CallbackClient.Models.JsonString.Source arg2, scoped in EventSubscription.CallbackClient.Models.JsonDateTime.Source arg3, scoped in EventSubscription.CallbackClient.Models.JsonObject.Source<TContext> arg4, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
