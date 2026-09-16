@@ -151,6 +151,13 @@ function Get-RelativeFiles([string]$Directory) {
 }
 
 function Test-SameContent([string]$Left, [string]$Right) {
+    # A corvusjson-*.lock file records when it was written and by which build (the informational version carries the
+    # commit); neither is generator output.
+    if ((Split-Path $Left -Leaf) -like 'corvusjson-*.lock') {
+        $pattern = '"(generatedAt|generatorVersion)":\s*"[^"]*"'
+        return ([System.IO.File]::ReadAllText($Left) -replace $pattern, '') -ceq ([System.IO.File]::ReadAllText($Right) -replace $pattern, '')
+    }
+
     if ((Get-Item -LiteralPath $Left).Length -ne (Get-Item -LiteralPath $Right).Length) {
         return $false
     }

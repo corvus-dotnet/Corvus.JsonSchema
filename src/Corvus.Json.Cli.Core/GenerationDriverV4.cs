@@ -24,13 +24,18 @@ namespace Corvus.Text.Json.CodeGenerator;
 /// </summary>
 public static class GenerationDriverV4
 {
-    internal static async Task<int> GenerateTypes(GeneratorConfig generatorConfig, CancellationToken cancellationToken)
+    /// <summary>Generates the code for a configuration.</summary>
+    /// <param name="generatorConfig">The configuration.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The exit code, and the files written relative to the output folder with forward slashes.</returns>
+    internal static async Task<(int Code, IReadOnlyList<string> GeneratedFiles)> GenerateTypes(GeneratorConfig generatorConfig, CancellationToken cancellationToken)
     {
+        List<string> generatedFiles = [];
         try
         {
             if (!generatorConfig.IsValid())
             {
-                return WriteValidationErrors(generatorConfig);
+                return (WriteValidationErrors(generatorConfig), generatedFiles);
             }
 
             CompoundDocumentResolver documentResolver;
@@ -60,17 +65,16 @@ public static class GenerationDriverV4
 
             await progress.StartAsync(async context =>
             {
-                await ExecuteTask(generatorConfig, context, defaultVocabulary, typeBuilder);
+                await ExecuteTask(generatorConfig, context, defaultVocabulary, typeBuilder, generatedFiles);
             });
-
         }
         catch (Exception ex)
         {
             AnsiConsole.WriteException(ex);
-            return -1;
+            return (-1, generatedFiles);
         }
 
-        return 0;
+        return (0, generatedFiles);
     }
 
     private static async Task RegisterAdditionalFiles(GeneratorConfig generatorConfig, CompoundDocumentResolver documentResolver)
@@ -150,7 +154,7 @@ public static class GenerationDriverV4
         return -1;
     }
 
-    private static async Task ExecuteTask(GeneratorConfig generatorConfig, ProgressContext context, IVocabulary defaultVocabulary, JsonSchemaTypeBuilder typeBuilder)
+    private static async Task ExecuteTask(GeneratorConfig generatorConfig, ProgressContext context, IVocabulary defaultVocabulary, JsonSchemaTypeBuilder typeBuilder, List<string> generatedFiles)
     {
         ProgressTask outerTask = context.AddTask("Generating JSON types", maxValue: generatorConfig.TypesToGenerate.GetArrayLength());
 
@@ -220,7 +224,7 @@ public static class GenerationDriverV4
             Directory.CreateDirectory(outputPath);
         }
 
-        currentTask = await WriteFiles(generatorConfig, context, generatedCode, outputPath);
+        currentTask = await WriteFiles(generatorConfig, context, generatedCode, outputPath, generatedFiles);
 
         currentTask.StopTask();
         outerTask.Increment(100);
@@ -358,7 +362,7 @@ public static class GenerationDriverV4
         }
     }
 
-    private static async Task<ProgressTask> WriteFiles(GeneratorConfig generatorConfig, ProgressContext context, IReadOnlyCollection<GeneratedCodeFile> generatedCode, string outputPath)
+    private static async Task<ProgressTask> WriteFiles(GeneratorConfig generatorConfig, ProgressContext context, IReadOnlyCollection<GeneratedCodeFile> generatedCode, string outputPath, List<string> generatedFiles)
     {
         ProgressTask currentTask = context.AddTask("Writing files", true, generatedCode.Count);
 
@@ -367,10 +371,14 @@ public static class GenerationDriverV4
         int index = 0;
 
         string? mapFile = await BeginMapFile(generatorConfig, outputPath);
+        if (!string.IsNullOrEmpty(mapFile))
+        {
+            generatedFiles.Add(JsonSchemaLockFile.ToGeneratedFile(mapFile, outputPath));
+        }
 
         foreach (GeneratedCodeFile generatedCodeFile in generatedCode)
         {
-            WriteFile(context, currentTask, outputPath, mapFile, index++, writtenFiles, generatedCodeFile);
+            WriteFile(context, currentTask, outputPath, mapFile, index++, writtenFiles, generatedCodeFile, generatedFiles);
         }
 
         await EndMapFile(mapFile);
@@ -378,7 +386,7 @@ public static class GenerationDriverV4
         return currentTask;
     }
 
-    private static void WriteFile(ProgressContext context, ProgressTask currentTask, string outputPath, string? mapFile, int index, HashSet<string> writtenFiles, GeneratedCodeFile generatedCodeFile)
+    private static void WriteFile(ProgressContext context, ProgressTask currentTask, string outputPath, string? mapFile, int index, HashSet<string> writtenFiles, GeneratedCodeFile generatedCodeFile, List<string> generatedFiles)
     {
         ProgressTask subtask = context.AddTask($"{generatedCodeFile.FileName} [green]({(generatedCodeFile.TypeDeclaration is TypeDeclaration t ? t.RelativeSchemaLocation.ToString().EscapeMarkup() : "globals")})[/]");
         currentTask.Increment(1);
@@ -387,6 +395,7 @@ public static class GenerationDriverV4
         string outputFile = TruncateFileNameIfRequired(outputPath, writtenFiles, generatedCodeFile);
 
         File.WriteAllText(outputFile, source);
+        generatedFiles.Add(JsonSchemaLockFile.ToGeneratedFile(outputFile, outputPath));
 
         WriteMapFile(mapFile, index, generatedCodeFile, outputFile);
 

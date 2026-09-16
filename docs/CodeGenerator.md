@@ -71,6 +71,7 @@ corvusjson jsonschema <schemaFile> [OPTIONS]
 | `--engine` | `V5` | Code generation engine: `V5` (Corvus.Text.Json) or `V4` (legacy Corvus.Json.ExtendedTypes) |
 | `--codeGenerationMode` | `TypeGeneration` | `TypeGeneration` (types only), `SchemaEvaluationOnly` ([standalone evaluator](SchemaEvaluator.md) only), or `Both` |
 | `--outputMapFile` | — | Write a JSON map of all generated files |
+| `--force` | `false` | Regenerate even when the output folder's lock file says nothing changed, and apply this run's options to everything the folder was generated from even when they differ from the lock's (see [Lock file and regeneration](#lock-file-and-regeneration)) |
 
 **Examples:**
 
@@ -293,6 +294,18 @@ The tool generates:
 | OpenAPI 3.0 | (custom vocabulary) | `OpenApi30` |
 
 The tool auto-detects the schema draft from the `$schema` keyword. Use `--useSchema` only as a fallback when the keyword is missing.
+
+## Lock file and regeneration
+
+Every `jsonschema` run, and every run of a [generation specification file](#config), leaves a `corvusjson-jsonschema.lock` in its output folder. The lock records the folder's whole generation specification (every schema generated into the folder with its settings, and the options they share), the hash of every local schema and additional file, the generator version, and the files written.
+
+The generated types in a folder share one `CorvusJsonSchemaProgram`, and each type refers to its entry in that program. A run into a folder that already holds generated code therefore adds its schemas to the specification the lock recorded and regenerates the whole set as one program. Ten runs with ten schemas into one folder give one consistent program; without the lock, each run would overwrite the program the earlier runs' types were wired to.
+
+- A run whose schemas and options are already in the lock, with unchanged schema content, is skipped ("Up to date"). Pass `--force` to regenerate anyway.
+- A run whose options differ from the lock's (root namespace, `--nativeEnums` and the rest, the engine, the code generation mode) fails and names the options. Use the same options, pass `--force` to apply the run's options to everything the folder was generated from, or delete the lock and the generated files to start the folder afresh. A schema with different per-schema settings (`--outputRootTypeName`, `--rootPath`) is not a conflict: the new settings replace the old ones for that schema.
+- Files an earlier run wrote that the run no longer generates (a renamed root type, for example) are deleted. Files the lock never listed are never touched.
+- Local paths are recorded relative to the output folder, so the folder can move together with its schemas. Files reached only through `$ref` are not hashed; when one of them changes, pass `--force`.
+- The lock is restored from a backup if a run fails.
 
 ## Output Map File
 

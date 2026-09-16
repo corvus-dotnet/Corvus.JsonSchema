@@ -793,16 +793,16 @@ main-docs:
       - {index: 1, language: bash, lines: [19, 22]}
       - {index: 2, language: bash, lines: [30, 34]}
       - {index: 3, language: bash, lines: [44, 46]}
-      - {index: 4, language: bash, lines: [77, 96]}
-      - {index: 5, language: bash, lines: [102, 104]}
-      - {index: 6, language: json, lines: [108, 144]}
-      - {index: 7, language: bash, lines: [208, 210]}
-      - {index: 8, language: bash, lines: [218, 220]}
-      - {index: 9, language: bash, lines: [226, 228]}
-      - {index: 10, language: json, lines: [260, 270]}
-      - {index: 11, language: bash, lines: [301, 306]}
-      - {index: 12, language: json, lines: [326, 335]}
-      - {index: 13, language: bash, lines: [364, 376]}
+      - {index: 4, language: bash, lines: [78, 97]}
+      - {index: 5, language: bash, lines: [103, 105]}
+      - {index: 6, language: json, lines: [109, 145]}
+      - {index: 7, language: bash, lines: [209, 211]}
+      - {index: 8, language: bash, lines: [219, 221]}
+      - {index: 9, language: bash, lines: [227, 229]}
+      - {index: 10, language: json, lines: [261, 271]}
+      - {index: 11, language: bash, lines: [314, 319]}
+      - {index: 12, language: json, lines: [339, 348]}
+      - {index: 13, language: bash, lines: [377, 389]}
   - path: "docs/CodeSampleCatalog.md"
     blocks:
       - {index: 0, language: powershell, lines: [13, 26]}
