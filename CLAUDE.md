@@ -28,6 +28,10 @@ Run these before **every** commit:
    file changed, run `pwsh docs/update-code-sample-catalog.ps1 -UpdateFile <path>` for each
    changed file, then `pwsh docs/update-code-sample-catalog.ps1 -Check` (must exit 0). CI
    fails on a stale catalog.
+4. **Generated-code analyzer configuration** — if `global.json`, an analyzer package version,
+   or a project's analyzer references changed, run `pwsh update-generated-code-analyzer-config.ps1`
+   and commit the result; `pwsh update-generated-code-analyzer-config.ps1 -Check` must exit 0
+   (CI runs it after the build).
 
 ## After changing a code generator
 

@@ -1,0 +1,582 @@
+# Written by update-generated-code-analyzer-config.ps1; do not edit by hand. Run the script after changing the SDK in
+# global.json or an analyzer package; CI runs it with -Check.
+#
+# The analyzers listed here analyse generated code, so they execute on every source generator tree, where an
+# .editorconfig section cannot reach them (csc gives generator trees no per-tree options). Setting each of their
+# diagnostics to none here makes the analyzer driver skip the analyzer on every tree that has no per-tree severity of
+# its own, which is exactly the generator trees; the generated region of the root .editorconfig restores the
+# severities for files on disk. Analyzers that opt out of generated code are already skipped there and need nothing.
+is_global = true
+
+# Microsoft.CodeQuality.Analyzers.ApiDesignGuidelines.DoNotCatchGeneralExceptionTypesAnalyzer (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA1031.severity = none
+
+# Microsoft.NetCore.Analyzers.InteropServices.UseValidPlatformString (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA1418.severity = none
+
+# Microsoft.NetCore.Analyzers.InteropServices.DisableRuntimeMarshallingAnalyzer (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA1420.severity = none
+
+# Microsoft.NetCore.Analyzers.InteropServices.DisableRuntimeMarshallingAnalyzer (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA1421.severity = none
+
+# Microsoft.CodeQuality.Analyzers.ApiDesignGuidelines.TypeNamesShouldNotMatchNamespacesAnalyzer (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA1724.severity = none
+
+# Microsoft.CodeQuality.CSharp.Analyzers.Maintainability.CSharpAvoidUninstantiatedInternalClasses (Microsoft.CodeAnalysis.CSharp.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA1812.severity = none
+
+# Microsoft.CodeQuality.Analyzers.Maintainability.AvoidUnusedPrivateFieldsAnalyzer (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA1823.severity = none
+
+# Microsoft.NetCore.CSharp.Analyzers.Resources.CSharpMarkAssembliesWithNeutralResourcesLanguageAnalyzer (Microsoft.CodeAnalysis.CSharp.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA1824.severity = none
+
+# Microsoft.NetCore.Analyzers.Runtime.DoNotDefineFinalizersForTypesDerivedFromMemoryManager (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2015.severity = none
+
+# Microsoft.NetCore.Analyzers.Data.ReviewSqlQueriesForSecurityVulnerabilities (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2100.severity = none
+
+# Microsoft.NetFramework.Analyzers.DoNotCatchCorruptedStateExceptionsAnalyzer (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2153.severity = none
+
+# Microsoft.NetCore.Analyzers.Runtime.DisposableFieldsShouldBeDisposed (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2213.severity = none
+
+# Microsoft.NetCore.CSharp.Analyzers.Runtime.CSharpDetectPreviewFeatureAnalyzer (Microsoft.CodeAnalysis.CSharp.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2252.severity = none
+
+# Microsoft.NetCore.Analyzers.InteropServices.DynamicInterfaceCastableImplementationAnalyzer (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2256.severity = none
+
+# Microsoft.NetCore.Analyzers.InteropServices.DynamicInterfaceCastableImplementationAnalyzer (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2257.severity = none
+
+# Microsoft.NetCore.Analyzers.InteropServices.DynamicInterfaceCastableImplementationAnalyzer (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2258.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseInsecureDeserializerBinaryFormatterMethods (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2300.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseInsecureDeserializerBinaryFormatterWithoutBinder (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2301.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseInsecureDeserializerBinaryFormatterWithoutBinder (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2302.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseInsecureDeserializerLosFormatter (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2305.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseInsecureDeserializerNetDataContractSerializerMethods (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2310.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseInsecureDeserializerNetDataContractSerializerWithoutBinder (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2311.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseInsecureDeserializerNetDataContractSerializerWithoutBinder (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2312.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseInsecureDeserializerObjectStateFormatter (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2315.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseInsecureDeserializerJavaScriptSerializerWithSimpleTypeResolver (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2321.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseInsecureDeserializerJavaScriptSerializerWithSimpleTypeResolver (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2322.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseInsecureSettingsForJsonNet (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2327.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseInsecureSettingsForJsonNet (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2328.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseInsecureDeserializerJsonNetWithoutBinder (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2329.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseInsecureDeserializerJsonNetWithoutBinder (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2330.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseDataTableReadXml (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2350.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseDataSetReadXml (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2351.severity = none
+
+# Microsoft.NetCore.CSharp.Analyzers.Security.CSharpDataSetDataTableInSerializableTypeAnalyzer (Microsoft.CodeAnalysis.CSharp.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2352.severity = none
+
+# Microsoft.NetCore.CSharp.Analyzers.Security.CSharpDataSetDataTableInSerializableTypeAnalyzer (Microsoft.CodeAnalysis.CSharp.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2353.severity = none
+
+# Microsoft.NetCore.CSharp.Analyzers.Security.CSharpDataSetDataTableInIFormatterSerializableObjectGraphAnalyzer (Microsoft.CodeAnalysis.CSharp.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2354.severity = none
+
+# Microsoft.NetCore.CSharp.Analyzers.Security.CSharpDataSetDataTableInSerializableObjectGraphAnalyzer (Microsoft.CodeAnalysis.CSharp.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2355.severity = none
+
+# Microsoft.NetCore.CSharp.Analyzers.Security.CSharpDataSetDataTableInWebSerializableObjectGraphAnalyzer (Microsoft.CodeAnalysis.CSharp.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2356.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseDataSetReadXml (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2361.severity = none
+
+# Microsoft.NetCore.CSharp.Analyzers.Security.CSharpDataSetDataTableInSerializableTypeAnalyzer (Microsoft.CodeAnalysis.CSharp.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA2362.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.ReviewCodeForSqlInjectionVulnerabilities (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA3001.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.ReviewCodeForXssVulnerabilities (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA3002.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.ReviewCodeForFilePathInjectionVulnerabilities (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA3003.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.ReviewCodeForInformationDisclosureVulnerabilities (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA3004.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.ReviewCodeForLdapInjectionVulnerabilities (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA3005.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.ReviewCodeForCommandExecutionVulnerabilities (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA3006.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.ReviewCodeForOpenRedirectVulnerabilities (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA3007.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.ReviewCodeForXPathInjectionVulnerabilities (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA3008.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.ReviewCodeForXmlInjectionVulnerabilities (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA3009.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.ReviewCodeForXamlInjectionVulnerabilities (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA3010.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.ReviewCodeForDllInjectionVulnerabilities (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA3011.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.ReviewCodeForRegexInjectionVulnerabilities (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA3012.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotAddSchemaByURL (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA3061.severity = none
+
+# Microsoft.NetFramework.Analyzers.DoNotUseInsecureDtdProcessingAnalyzer (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA3075.severity = none
+
+# Microsoft.NetFramework.Analyzers.DoNotUseInsecureXSLTScriptExecutionAnalyzer (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA3076.severity = none
+
+# Microsoft.NetFramework.Analyzers.DoNotUseInsecureDtdProcessingInApiDesignAnalyzer (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA3077.severity = none
+
+# Microsoft.NetFramework.Analyzers.MarkVerbHandlersWithValidateAntiforgeryTokenAnalyzer (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA3147.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseInsecureCryptographicAlgorithmsAnalyzer (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5350.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseInsecureCryptographicAlgorithmsAnalyzer (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5351.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.ApprovedCipherModeAnalyzer (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5358.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotDisableCertificateValidation (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5359.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotCallDangerousMethodsInDeserialization (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5360.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotSetSwitch (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5361.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.PotentialReferenceCycleInDeserializedObjectGraph (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5362.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotDisableRequestValidation (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5363.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseDeprecatedSecurityProtocols (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5364.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotDisableHTTPHeaderChecking (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5365.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.UseXmlReaderForDataSetReadXml (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5366.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotSerializeTypeWithPointerFields (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5367.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.SetViewStateUserKey (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5368.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.UseXmlReaderForDeserialize (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5369.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.UseXmlReaderForValidatingReader (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5370.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.UseXmlReaderForSchemaRead (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5371.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.UseXmlReaderForXPathDocument (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5372.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseObsoleteKDFAlgorithm (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5373.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseXslTransform (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5374.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseAccountSAS (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5375.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.UseSharedAccessProtocolHttpsOnly (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5376.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.UseContainerLevelAccessPolicy (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5377.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotSetSwitch (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5378.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseWeakKDFAlgorithm (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5379.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotInstallRootCert (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5380.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotInstallRootCert (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5381.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.UseSecureCookiesASPNetCore (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5382.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.UseSecureCookiesASPNetCore (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5383.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseDSA (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5384.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.UseRSAWithSufficientKeySize (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5385.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseDeprecatedSecurityProtocols (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5386.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseWeakKDFInsufficientIterationCount (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5387.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseWeakKDFInsufficientIterationCount (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5388.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotAddArchiveItemPathToTheTargetFileSystemPath (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5389.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotHardCodeEncryptionKey (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5390.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.UseAutoValidateAntiforgeryToken (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5391.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.UseDefaultDllImportSearchPathsAttribute (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5392.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.UseDefaultDllImportSearchPathsAttribute (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5393.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseInsecureRandomness (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5394.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.UseAutoValidateAntiforgeryToken (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5395.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.SetHttpOnlyForHttpCookie (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5396.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.SslProtocolsAnalyzer (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5397.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.SslProtocolsAnalyzer (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5398.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotDisableHttpClientCRLCheck (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5399.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotDisableHttpClientCRLCheck (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5400.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseCreateEncryptorWithNonDefaultIV (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5401.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotUseCreateEncryptorWithNonDefaultIV (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5402.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotHardCodeCertificate (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5403.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotDisableTokenValidationChecks (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5404.severity = none
+
+# Microsoft.NetCore.Analyzers.Security.DoNotAlwaysSkipTokenValidationInDelegates (Microsoft.CodeAnalysis.NetAnalyzers.dll 11.0.100.0, SDK 11.0.100-rc.1.26425.128)
+dotnet_diagnostic.CA5405.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+# ILLink.RoslynAnalyzer.RequiresUnreferencedCodeAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2026.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2032.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2041.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2043.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+# ILLink.RoslynAnalyzer.RequiresUnreferencedCodeAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2046.severity = none
+
+# ILLink.RoslynAnalyzer.COMAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2050.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+# ILLink.RoslynAnalyzer.RequiresUnreferencedCodeAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2055.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2057.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2058.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2059.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+# ILLink.RoslynAnalyzer.RequiresUnreferencedCodeAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2060.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2062.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2063.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2064.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2065.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2066.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2067.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2068.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2069.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2070.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2071.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2072.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2073.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2074.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2075.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2076.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2077.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2078.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2079.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2080.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2081.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2082.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2083.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2084.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2085.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2086.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2087.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2088.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2089.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2090.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2091.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2092.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2093.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2094.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2095.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2096.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2097.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2098.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2099.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2103.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2106.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2110.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2111.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2112.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2113.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2114.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2115.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+# ILLink.RoslynAnalyzer.RequiresUnreferencedCodeAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2116.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2122.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+# ILLink.RoslynAnalyzer.RequiresUnreferencedCodeAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2123.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2124.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+# ILLink.RoslynAnalyzer.RequiresUnreferencedCodeAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2125.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2126.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL2127.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+# ILLink.RoslynAnalyzer.RequiresAssemblyFilesAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL3000.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+# ILLink.RoslynAnalyzer.RequiresAssemblyFilesAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL3001.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+# ILLink.RoslynAnalyzer.RequiresAssemblyFilesAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL3002.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+# ILLink.RoslynAnalyzer.RequiresAssemblyFilesAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL3003.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+# ILLink.RoslynAnalyzer.RequiresAssemblyFilesAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL3004.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+# ILLink.RoslynAnalyzer.RequiresAssemblyFilesAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL3005.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+# ILLink.RoslynAnalyzer.RequiresDynamicCodeAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL3050.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+# ILLink.RoslynAnalyzer.RequiresDynamicCodeAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL3051.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+# ILLink.RoslynAnalyzer.RequiresDynamicCodeAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL3056.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+# ILLink.RoslynAnalyzer.RequiresDynamicCodeAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL3057.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+# ILLink.RoslynAnalyzer.RequiresDynamicCodeAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL3058.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL4000.severity = none
+
+# ILLink.RoslynAnalyzer.DynamicallyAccessedMembersAnalyzer (ILLink.RoslynAnalyzer.dll 10.0.14.42308, Microsoft.NET.ILLink.Tasks/10.0.12)
+dotnet_diagnostic.IL4001.severity = none
+
+# MSTest.Analyzers.PreferAssertFailOverAlwaysFalseConditionsAnalyzer (MSTest.Analyzers.dll 4.2.2.0, MSTest.Analyzers/4.2.2)
+dotnet_diagnostic.MSTEST0025.severity = none
+
+# MSTest.Analyzers.ReviewAlwaysTrueAssertConditionAnalyzer (MSTest.Analyzers.dll 4.2.2.0, MSTest.Analyzers/4.2.2)
+dotnet_diagnostic.MSTEST0032.severity = none
