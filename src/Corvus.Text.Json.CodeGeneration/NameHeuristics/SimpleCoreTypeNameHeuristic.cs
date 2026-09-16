@@ -7,7 +7,6 @@
 // https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using Corvus.Json;
@@ -52,7 +51,11 @@ internal sealed class SimpleCoreTypeNameHeuristic : IBuiltInTypeNameHeuristic
         [CoreTypes.Object] = "Object",
     };
 
-    private readonly ConcurrentDictionary<string, TypeDeclaration> firstSeen = new();
+    // Naming runs on one thread per provider instance. The set decides first sight; the list keeps the order in which
+    // the names were first seen, which is the order the shared types are emitted in (a hash-ordered collection would
+    // make that order depend on the process's string hash seed).
+    private readonly HashSet<string> firstSeenNames = new(StringComparer.Ordinal);
+    private readonly List<TypeDeclaration> firstSeen = [];
     private readonly string defaultNamespace;
 
     /// <summary>
@@ -85,8 +88,10 @@ internal sealed class SimpleCoreTypeNameHeuristic : IBuiltInTypeNameHeuristic
         typeDeclaration.SetDotnetTypeName(canonicalName);
         typeDeclaration.SetDotnetNamespace(defaultNamespace);
 
-        if (firstSeen.TryAdd(canonicalName, typeDeclaration))
+        if (firstSeenNames.Add(canonicalName))
         {
+            firstSeen.Add(typeDeclaration);
+
             // First instance: mark as global simple type so GenerateCodeFor
             // processes it in a dedicated loop (since ShouldGenerate returns false
             // for DoNotGenerate types, the framework won't include it in the
@@ -100,13 +105,13 @@ internal sealed class SimpleCoreTypeNameHeuristic : IBuiltInTypeNameHeuristic
     }
 
     /// <summary>
-    /// Gets the first-seen type declarations for each canonical name.
+    /// Gets the first-seen type declarations for each canonical name, in the order in which they were first seen.
     /// These are the types that should be generated once in the root namespace.
     /// </summary>
     /// <returns>The collection of first-seen global simple type declarations.</returns>
     public IEnumerable<TypeDeclaration> GetFirstSeenTypes()
     {
-        return firstSeen.Values;
+        return firstSeen;
     }
 
     /// <summary>

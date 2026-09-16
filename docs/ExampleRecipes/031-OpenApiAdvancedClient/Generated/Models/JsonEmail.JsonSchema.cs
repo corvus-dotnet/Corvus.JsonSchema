@@ -56,7 +56,7 @@ public readonly partial struct JsonEmail
         /// </summary>
         public static ReadOnlySpan<byte> SchemaDocumentUtf8 => ""u8;
 
-        private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Petstore.Extended.Models.CorvusJsonSchemaProgram.Entry(4);
+        private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Petstore.Extended.Models.CorvusJsonSchemaProgram.Entry(7);
 
         /// <summary>
         /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

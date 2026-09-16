@@ -11,7 +11,9 @@
     - with the CLI (dotnet src/Corvus.Json.Cli/bin/<Configuration>/net10.0/Corvus.Json.Cli.dll jsonschema ...):
       src/Corvus.Text.Json.AsyncApi30/AsyncApi30.json, src/Corvus.Text.Json.OpenApi31/OpenApi31.json and the
       tests/Corvus.Text.Json.Tests.MigrationSchemas/*.json models (the recipes from the AsyncApi30 README and
-      docs/RunningTests.md);
+      docs/RunningTests.md). Each migration schema goes to its own folder, cli/migration/<schema>: every run writes a
+      CorvusJsonSchemaProgram.cs, and the shared simple types it emits refer to that program's entries, so runs into
+      one folder would leave the earlier runs' shared types bound to the last run's program;
     - with the source generator: the obj/<Configuration>/net10.0/generated output of the in-repo consumers listed in
       $Consumers (they set EmitCompilerGeneratedFiles), by building each project. Each consumer's
       obj/<Configuration>/net10.0 folder is cleared first. Roslyn never deletes emitted files, so an emitted-files folder
@@ -128,8 +130,9 @@ function Invoke-Build([string]$Project) {
 }
 
 function Invoke-Cli([string]$Schema, [string]$RootNamespace, [string]$RootTypeName, [string]$Label) {
-    $log = Join-Path $WorkPath "cli-$Label.log"
+    $log = Join-Path $WorkPath "cli-$($Label -replace '/', '-').log"
     $outputPath = Join-Path $WorkPath "cli/$Label"
+    New-Item -ItemType Directory -Path $outputPath -Force | Out-Null
     & dotnet $Cli jsonschema (Join-Path $Root $Schema) --rootNamespace $RootNamespace --outputRootTypeName $RootTypeName --outputPath $outputPath *>> $log
     if ($LASTEXITCODE -ne 0) {
         Write-Host "CLI FAILED: $Schema"
@@ -222,7 +225,9 @@ Write-Host "--- CLI regeneration $(Get-Date -Format HH:mm:ss)"
 Invoke-Cli 'src/Corvus.Text.Json.AsyncApi30/AsyncApi30.json' 'Corvus.Text.Json.AsyncApi30' 'AsyncApiDocument' 'asyncapi30'
 Invoke-Cli 'src/Corvus.Text.Json.OpenApi31/OpenApi31.json' 'Corvus.Text.Json.OpenApi31' 'OpenApiDocument' 'openapi31'
 foreach ($entry in $MigrationSchemas.GetEnumerator()) {
-    Invoke-Cli "tests/Corvus.Text.Json.Tests.MigrationSchemas/migration-$($entry.Key).json" 'Corvus.Text.Json.Tests.MigrationModels.V5' $entry.Value 'migration'
+    # One folder per schema: each run writes its own CorvusJsonSchemaProgram.cs, and the shared simple types (JsonString
+    # and the rest) refer to entries of the program they were generated with.
+    Invoke-Cli "tests/Corvus.Text.Json.Tests.MigrationSchemas/migration-$($entry.Key).json" 'Corvus.Text.Json.Tests.MigrationModels.V5' $entry.Value "migration/$($entry.Key)"
 }
 
 if (-not $NoBuild) {

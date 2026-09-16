@@ -12,7 +12,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Corvus.Text.Json.CodeGenerator.Tests;
 
 /// <summary>
-/// Generated code must not depend on the culture of the process that generates it.
+/// Generated code must not depend on the machine that generates it: neither on the culture of the generating process
+/// nor on that process's string hash seed.
 /// </summary>
 [TestClass]
 public class DeterministicGenerationTests
@@ -45,6 +46,55 @@ public class DeterministicGenerationTests
                 """public static readonly NormalizedJsonNumber Enum3 = new(false, [.."2"u8], [..""u8], 0);""",
             ],
             constants);
+    }
+
+    [TestMethod]
+    public async Task GenerateCode_SharedSimpleTypes_AreEmittedInFirstSeenOrder()
+    {
+        const string schema =
+            """
+            {
+              "type": "object",
+              "properties": {
+                "a": { "type": "string", "format": "uuid" },
+                "b": { "type": "integer" },
+                "c": { "type": "string" },
+                "d": { "type": "boolean" },
+                "e": { "type": "number" },
+                "f": { "type": "string", "format": "date" },
+                "g": { "type": "string", "format": "uri" },
+                "h": { "type": "string", "format": "email" },
+                "i": { "type": "string", "format": "date-time" },
+                "j": { "type": "string", "format": "ipv4" },
+                "k": { "type": "string", "format": "hostname" },
+                "l": { "type": "integer", "format": "int32" },
+                "m": { "type": "string" },
+                "n": { "type": "integer" }
+              }
+            }
+            """;
+
+        // The order in which the naming pass first sees each shared type: properties in location order.
+        string[] expected =
+        [
+            "JsonUuid.cs", "JsonUuid.Mutable.cs", "JsonUuid.JsonSchema.cs",
+            "JsonInteger.cs", "JsonInteger.Mutable.cs", "JsonInteger.JsonSchema.cs",
+            "JsonString.cs", "JsonString.Mutable.cs", "JsonString.JsonSchema.cs",
+            "JsonBoolean.cs", "JsonBoolean.Mutable.cs", "JsonBoolean.JsonSchema.cs",
+            "JsonNumber.cs", "JsonNumber.Mutable.cs", "JsonNumber.JsonSchema.cs",
+            "JsonDate.cs", "JsonDate.Mutable.cs", "JsonDate.JsonSchema.cs",
+            "JsonUri.cs", "JsonUri.Mutable.cs", "JsonUri.JsonSchema.cs",
+            "JsonEmail.cs", "JsonEmail.Mutable.cs", "JsonEmail.JsonSchema.cs",
+            "JsonDateTime.cs", "JsonDateTime.Mutable.cs", "JsonDateTime.JsonSchema.cs",
+            "JsonIpV4.cs", "JsonIpV4.Mutable.cs", "JsonIpV4.JsonSchema.cs",
+            "JsonHostname.cs", "JsonHostname.Mutable.cs", "JsonHostname.JsonSchema.cs",
+            "JsonInt32.cs", "JsonInt32.Mutable.cs", "JsonInt32.JsonSchema.cs",
+        ];
+
+        // Two generations in one process see the same string hash seed, so they would agree with each other even if
+        // the order came from hashing; the comparison with the fixed first-seen order is what a hash order fails.
+        AssertLines(expected, GetSharedSimpleTypeFileNames(await InProcessGenerationTests.GenerateInProcessFromContent(schema)));
+        AssertLines(expected, GetSharedSimpleTypeFileNames(await InProcessGenerationTests.GenerateInProcessFromContent(schema)));
     }
 
     [TestMethod]
@@ -286,6 +336,14 @@ public class DeterministicGenerationTests
             CultureInfo.CurrentCulture = originalCulture;
             CultureInfo.CurrentUICulture = originalUICulture;
         }
+    }
+
+    private static string[] GetSharedSimpleTypeFileNames(IReadOnlyCollection<GeneratedCodeFile> files)
+    {
+        return files
+            .Select(f => f.FileName)
+            .Where(n => n.StartsWith("Json", StringComparison.Ordinal))
+            .ToArray();
     }
 
     private static void AssertLines(string[] expected, string[] actual)

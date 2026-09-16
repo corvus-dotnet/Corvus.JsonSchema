@@ -56,7 +56,7 @@ public readonly partial struct JsonBinary
         /// </summary>
         public static ReadOnlySpan<byte> SchemaDocumentUtf8 => ""u8;
 
-        private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Petstore.Extended.Server.Models.CorvusJsonSchemaProgram.Entry(5);
+        private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Petstore.Extended.Server.Models.CorvusJsonSchemaProgram.Entry(4);
 
         /// <summary>
         /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
