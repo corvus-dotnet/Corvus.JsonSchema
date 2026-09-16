@@ -61,6 +61,11 @@
     in MSBUILD_ARGS. A call from a PowerShell prompt ('./regenerate-and-diff.ps1 ... -MSBuildArgs "-m:4"') takes the
     value as it is.
 
+.PARAMETER Normaliser
+    A PowerShell script that defines Normalise-GeneratedText([string]$Text), applied to both sides of every .cs
+    comparison. Use it when a generator change is meant to alter something in every file (a header, say) so that a
+    snapshot taken before the change still proves that nothing else moved. Defaults to $env:CORVUS_REGEN_NORMALISER.
+
 .EXAMPLE
     ./regenerate-and-diff.ps1 snapshot -MSBuildArgs '-m:4 -nr:false -p:UseSharedCompilation=false'
     # From a PowerShell prompt, with the generator before the change.
@@ -79,10 +84,17 @@ param(
     [string]$Configuration = $(if ($env:CONFIGURATION) { $env:CONFIGURATION } else { 'Debug' }),
     [string]$SnapshotPath = $(if ($env:CORVUS_REGEN_SNAPSHOT) { $env:CORVUS_REGEN_SNAPSHOT } else { Join-Path ([System.IO.Path]::GetTempPath()) 'corvus-regenerate-and-diff' }),
     [string]$WorkPath = $(Join-Path $(if ($env:TMPDIR) { $env:TMPDIR } else { [System.IO.Path]::GetTempPath() }) 'corvus-regenerate-and-diff-work'),
-    [string]$MSBuildArgs = $env:MSBUILD_ARGS
+    [string]$MSBuildArgs = $env:MSBUILD_ARGS,
+    [string]$Normaliser = $env:CORVUS_REGEN_NORMALISER
 )
 
 $ErrorActionPreference = 'Stop'
+if ($Normaliser) {
+    . $Normaliser
+    if (-not (Get-Command Normalise-GeneratedText -ErrorAction SilentlyContinue)) {
+        throw "The normaliser script $Normaliser does not define Normalise-GeneratedText."
+    }
+}
 $env:MSBUILDDISABLENODEREUSE = '1'
 
 $Root = $PSScriptRoot
@@ -156,6 +168,10 @@ function Test-SameContent([string]$Left, [string]$Right) {
     if ((Split-Path $Left -Leaf) -like 'corvusjson-*.lock') {
         $pattern = '"(generatedAt|generatorVersion)":\s*"[^"]*"'
         return ([System.IO.File]::ReadAllText($Left) -replace $pattern, '') -ceq ([System.IO.File]::ReadAllText($Right) -replace $pattern, '')
+    }
+
+    if ($Normaliser -and [System.IO.Path]::GetExtension($Left) -eq '.cs') {
+        return (Normalise-GeneratedText ([System.IO.File]::ReadAllText($Left))) -ceq (Normalise-GeneratedText ([System.IO.File]::ReadAllText($Right)))
     }
 
     if ((Get-Item -LiteralPath $Left).Length -ne (Get-Item -LiteralPath $Right).Length) {
