@@ -2876,12 +2876,16 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
     private static string GetFileName(FileNameDescription fileNameDescription, string fileName, HashSet<string> uniqueFileNames)
     {
         string candidateName = GetBaseFileName(fileNameDescription, fileName);
-        string baseFileNameWithoutExtension = Path.GetFileNameWithoutExtension(candidateName);
-        string extension = Path.GetExtension(candidateName);
+
+        // The base name ends with the configured extension (which carries its own dot) when there is one; a colliding
+        // name takes its index between the stem and that extension. No Path call: a directory part in the base name
+        // must be kept.
+        string extension = fileNameDescription.Extension ?? string.Empty;
+        string stem = candidateName.Substring(0, candidateName.Length - extension.Length);
 
         for (int index = 1; !uniqueFileNames.Add(candidateName); index++)
         {
-            candidateName = $"{baseFileNameWithoutExtension}{index}.{extension}";
+            candidateName = $"{stem}{index}{extension}";
         }
 
         return candidateName;
