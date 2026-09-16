@@ -800,9 +800,10 @@ main-docs:
       - {index: 8, language: bash, lines: [219, 221]}
       - {index: 9, language: bash, lines: [227, 229]}
       - {index: 10, language: json, lines: [261, 271]}
-      - {index: 11, language: bash, lines: [314, 319]}
-      - {index: 12, language: json, lines: [339, 348]}
-      - {index: 13, language: bash, lines: [377, 389]}
+      - {index: 11, language: ini, lines: [289, 296]}
+      - {index: 12, language: bash, lines: [329, 334]}
+      - {index: 13, language: json, lines: [354, 363]}
+      - {index: 14, language: bash, lines: [392, 404]}
   - path: "docs/CodeSampleCatalog.md"
     blocks:
       - {index: 0, language: powershell, lines: [13, 26]}
@@ -1438,8 +1439,10 @@ main-docs:
       - {index: 7, language: xml, lines: [114, 123]}
       - {index: 8, language: xml, lines: [127, 131]}
       - {index: 9, language: xml, lines: [139, 146]}
-      - {index: 10, language: xml, lines: [183, 187]}
-      - {index: 11, language: , lines: [191, 196]}
+      - {index: 10, language: xml, lines: [184, 188]}
+      - {index: 11, language: , lines: [192, 197]}
+      - {index: 12, language: ini, lines: [216, 223]}
+      - {index: 13, language: ini, lines: [225, 232]}
   - path: "docs/StandaloneEvaluatorInternals.md"
     blocks:
       - {index: 0, language: csharp, lines: [46, 53], category: compilable, verified: false}
@@ -1780,8 +1783,8 @@ skills:
       - {index: 0, language: csharp, lines: [22, 25], category: compilable, verified: false}
       - {index: 1, language: xml, lines: [34, 38]}
       - {index: 2, language: powershell, lines: [42, 52]}
-      - {index: 3, language: json, lines: [107, 125]}
-      - {index: 4, language: powershell, lines: [129, 137]}
+      - {index: 3, language: json, lines: [108, 126]}
+      - {index: 4, language: powershell, lines: [130, 138]}
   - path: ".github/skills/corvus-ctj-handler-implementation/SKILL.md"
     blocks:
       - {index: 0, language: csharp, lines: [29, 34], category: compilable, verified: false}

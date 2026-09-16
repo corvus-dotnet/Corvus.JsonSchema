@@ -14,7 +14,8 @@ namespace Corvus.Text.Json.SourceGenerator.Tests;
 /// Locks the Roslyn behaviour that keeps analyzers off generated code: the generator's trees are classified as
 /// generated, analyzers that opt out of generated code never execute on them, and the two configuration shapes the
 /// repository uses (a section over checked-in generated folders, and a global severity of none restored per tree for
-/// files on disk) stop analyzers that opt in from executing where intended while leaving compiler diagnostics alone.
+/// files on disk) stop analyzers that opt in from executing where intended while leaving compiler diagnostics alone,
+/// and the config the package ships hides analyzer diagnostics in the generator trees of a consumer.
 /// </summary>
 [TestClass]
 public class GeneratedCodeAnalysisTests
@@ -165,6 +166,33 @@ public class GeneratedCodeAnalysisTests
         AssertNullableWarningInGeneratedTree(compilation, generated);
     }
 
+    /// <summary>
+    /// The package's build asset (P2): the shipped analyzer config, placed in the folder that holds the generator's
+    /// output paths, hides analyzer diagnostics in the generator trees and leaves the hand-written tree, and every
+    /// compiler diagnostic, reported. Execution is not affected: a bulk severity filters reporting only.
+    /// </summary>
+    [TestMethod]
+    public async Task ShippedGeneratedCodeConfig_HidesAnalyzerDiagnosticsInGeneratorTreesOnly()
+    {
+        string root = OperatingSystem.IsWindows() ? @"C:\repo" : "/repo";
+        string handWritten = Path.Combine(root, "src", "Project", "Hand.cs");
+        string intermediate = Path.Combine(root, "src", "Project", "obj", "Debug", "net10.0");
+        string generated = Path.Combine(intermediate, "Corvus.Text.Json.SourceGenerator", "Corvus.Json.SourceGenerator.IncrementalSourceGenerator", "Gen.g.cs");
+        string shipped = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Corvus.Text.Json.SourceGenerator.GeneratedCode.editorconfig"));
+        AnalyzerConfig config = AnalyzerConfig.Parse(shipped, Path.Combine(intermediate, "Corvus.Text.Json.SourceGenerator.GeneratedCode.editorconfig"));
+        AnalyzerConfigSet configSet = AnalyzerConfigSet.Create(ImmutableArray.Create(config));
+
+        SyntaxTree handTree = CSharpSyntaxTree.ParseText(HandWrittenText, path: handWritten);
+        SyntaxTree generatedTree = CSharpSyntaxTree.ParseText(GeneratedText, path: generated);
+        (CSharpCompilation compilation, AnalyzerOptions options) = CreateConfiguredCompilation(configSet, [handTree], [handTree, generatedTree]);
+        RecordingAnalyzer analyzer = new(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics, report: true);
+        ImmutableArray<Diagnostic> analyzerDiagnostics = await compilation.WithAnalyzers([analyzer], new CompilationWithAnalyzersOptions(options, onAnalyzerException: null, concurrentAnalysis: false, logAnalyzerExecutionTime: false)).GetAnalyzerDiagnosticsAsync(CancellationToken.None);
+
+        CollectionAssert.AreEquivalent(new[] { handWritten, generated }, analyzer.NodeCallbacks.Distinct().ToArray(), "A bulk severity hides reporting only: the analyzer still executes on the generator tree.");
+        CollectionAssert.AreEquivalent(new[] { handWritten }, analyzerDiagnostics.Select(d => d.Location.SourceTree?.FilePath).ToArray(), "TEST001 should be reported for the hand-written struct only.");
+        AssertNullableWarningInGeneratedTree(compilation, generated);
+    }
+
     private const string HandWrittenText = """
         namespace AnalysisTests;
 
@@ -214,7 +242,7 @@ public class GeneratedCodeAnalysisTests
             results.Add(tree, configSet.GetOptionsForSourcePath(tree.FilePath));
         }
 
-        TestSyntaxTreeOptionsProvider provider = new(results.ToImmutable(), configSet.GlobalConfigOptions);
+        TestSyntaxTreeOptionsProvider provider = new(results.ToImmutable(), configSet.GlobalConfigOptions, configSet);
         CSharpCompilation compilation = CreateCompilation(allTrees, NullableContextOptions.Enable).WithOptions(
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, nullableContextOptions: NullableContextOptions.Enable)
                 .WithSyntaxTreeOptionsProvider(provider));
@@ -239,11 +267,17 @@ public class GeneratedCodeAnalysisTests
     /// The shape csc builds: per-tree options for the trees it parsed from disk, the global options for everything,
     /// and generated_code from the per-tree analyzer options.
     /// </summary>
-    private sealed class TestSyntaxTreeOptionsProvider(ImmutableDictionary<SyntaxTree, AnalyzerConfigOptionsResult> results, AnalyzerConfigOptionsResult globalOptions) : SyntaxTreeOptionsProvider
+    private sealed class TestSyntaxTreeOptionsProvider(ImmutableDictionary<SyntaxTree, AnalyzerConfigOptionsResult> results, AnalyzerConfigOptionsResult globalOptions, AnalyzerConfigSet configSet) : SyntaxTreeOptionsProvider
     {
         public ImmutableDictionary<SyntaxTree, AnalyzerConfigOptionsResult> Results { get; } = results;
 
         public AnalyzerConfigOptionsResult GlobalOptions { get; } = globalOptions;
+
+        /// <summary>
+        /// Analyzer options (key/value settings such as the bulk severity) are looked up by path for any tree, as csc
+        /// does; only the per-tree severities are limited to the trees on disk.
+        /// </summary>
+        public AnalyzerConfigOptionsResult GetAnalyzerOptions(SyntaxTree tree) => this.Results.TryGetValue(tree, out AnalyzerConfigOptionsResult result) ? result : configSet.GetOptionsForSourcePath(tree.FilePath);
 
         public override GeneratedKind IsGenerated(SyntaxTree tree, CancellationToken cancellationToken)
         {
@@ -276,12 +310,7 @@ public class GeneratedCodeAnalysisTests
     {
         public override AnalyzerConfigOptions GlobalOptions { get; } = new DictionaryAnalyzerConfigOptions(provider.GlobalOptions.AnalyzerOptions);
 
-        public override AnalyzerConfigOptions GetOptions(SyntaxTree tree)
-        {
-            return provider.Results.TryGetValue(tree, out AnalyzerConfigOptionsResult result)
-                ? new DictionaryAnalyzerConfigOptions(result.AnalyzerOptions)
-                : new DictionaryAnalyzerConfigOptions(ImmutableDictionary<string, string>.Empty);
-        }
+        public override AnalyzerConfigOptions GetOptions(SyntaxTree tree) => new DictionaryAnalyzerConfigOptions(provider.GetAnalyzerOptions(tree).AnalyzerOptions);
 
         public override AnalyzerConfigOptions GetOptions(AdditionalText textFile) => new DictionaryAnalyzerConfigOptions(ImmutableDictionary<string, string>.Empty);
     }

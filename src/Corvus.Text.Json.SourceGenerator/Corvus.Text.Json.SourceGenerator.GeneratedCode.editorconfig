@@ -1,0 +1,10 @@
+# Corvus.Text.Json.SourceGenerator: analyzer diagnostics in the code this generator produces are not reported.
+# The package's build targets copy this file into the folder that holds the generator's output paths and pass it to the
+# compiler with the project's other analyzer config files. The section covers only this generator's trees; the bulk
+# severity key hides analyzer diagnostics there and never applies to compiler diagnostics (nullable warnings, CS1591
+# and the like still report). Analyzers still execute on those trees: stopping them needs a per-diagnostic
+# severity that only the project's own configuration can restore for its hand-written files.
+# Set <CorvusTextJsonSuppressAnalyzerDiagnosticsInGeneratedCode>false</CorvusTextJsonSuppressAnalyzerDiagnosticsInGeneratedCode>
+# in the project to leave analyzer diagnostics in generated code reported.
+[Corvus.Text.Json.SourceGenerator/**.g.cs]
+dotnet_analyzer_diagnostic.severity = none

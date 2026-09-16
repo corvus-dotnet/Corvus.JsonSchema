@@ -16,6 +16,10 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
     <PackageReference Include="Microsoft.Bcl.HashCode" />
   </ItemGroup>
+  <!-- The analyzer config the package ships for generated code, so that the test reads the exact text consumers get. -->
+  <ItemGroup>
+    <None Include="..\..\src\Corvus.Text.Json.SourceGenerator\Corvus.Text.Json.SourceGenerator.GeneratedCode.editorconfig" Link="Corvus.Text.Json.SourceGenerator.GeneratedCode.editorconfig" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
   <!-- The generator project hands its private System.Text.Json 8 (netstandard2.0) assembly to every project that
        references it (GetDependencyTargetPaths), so that analyzer hosts can load it next to the generator. This
        project runs on net10.0, where the framework's System.Text.Json 10 is the assembly that loads, so the

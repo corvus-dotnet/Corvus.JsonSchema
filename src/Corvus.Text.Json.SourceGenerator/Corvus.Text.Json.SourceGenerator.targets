@@ -1,0 +1,30 @@
+<Project>
+
+  <!--
+    Analyzer diagnostics located in this generator's output are not reported unless the project opts out.
+    Corvus.Text.Json.SourceGenerator.GeneratedCode.editorconfig is copied next to the generator's output paths (the
+    compiler's output directory, or CompilerGeneratedFilesOutputPath when generated files are emitted) so that its
+    section is scoped to those paths, and it is passed to the compiler with the project's other analyzer config
+    files. This hides analyzer diagnostics only; compiler diagnostics in generated code are still reported, and
+    analyzers still execute there.
+  -->
+  <PropertyGroup>
+    <CorvusTextJsonSuppressAnalyzerDiagnosticsInGeneratedCode Condition="'$(CorvusTextJsonSuppressAnalyzerDiagnosticsInGeneratedCode)' == ''">true</CorvusTextJsonSuppressAnalyzerDiagnosticsInGeneratedCode>
+  </PropertyGroup>
+
+  <Target Name="CorvusTextJsonAddGeneratedCodeAnalyzerConfig"
+          BeforeTargets="CoreCompile"
+          Condition="'$(CorvusTextJsonSuppressAnalyzerDiagnosticsInGeneratedCode)' == 'true' and '$(Language)' == 'C#' and '$(IntermediateOutputPath)' != ''">
+    <PropertyGroup>
+      <_CorvusTextJsonGeneratedCodeConfigDirectory>$(IntermediateOutputPath)</_CorvusTextJsonGeneratedCodeConfigDirectory>
+      <_CorvusTextJsonGeneratedCodeConfigDirectory Condition="'$(EmitCompilerGeneratedFiles)' == 'true' and '$(CompilerGeneratedFilesOutputPath)' != ''">$(CompilerGeneratedFilesOutputPath)</_CorvusTextJsonGeneratedCodeConfigDirectory>
+      <_CorvusTextJsonGeneratedCodeConfigFile>$([MSBuild]::EnsureTrailingSlash('$(_CorvusTextJsonGeneratedCodeConfigDirectory)'))Corvus.Text.Json.SourceGenerator.GeneratedCode.editorconfig</_CorvusTextJsonGeneratedCodeConfigFile>
+    </PropertyGroup>
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)Corvus.Text.Json.SourceGenerator.GeneratedCode.editorconfig" DestinationFiles="$(_CorvusTextJsonGeneratedCodeConfigFile)" SkipUnchangedFiles="true" />
+    <ItemGroup>
+      <EditorConfigFiles Include="$(_CorvusTextJsonGeneratedCodeConfigFile)" />
+      <FileWrites Include="$(_CorvusTextJsonGeneratedCodeConfigFile)" />
+    </ItemGroup>
+  </Target>
+
+</Project>
