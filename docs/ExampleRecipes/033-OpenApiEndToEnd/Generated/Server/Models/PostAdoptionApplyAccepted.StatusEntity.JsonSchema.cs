@@ -12,15 +12,8 @@ using global::Corvus.Text.Json.Internal;
 
 namespace Petstore.EndToEnd.Server.Models;
 
-/// <summary>
-/// Generated from JSON Schema.
-/// </summary>
 public readonly partial struct PostAdoptionApplyAccepted
 {
-    /// <summary>
-    /// Generated from JSON Schema.
-    /// </summary>
-    [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public readonly partial struct StatusEntity
         : IJsonElement<StatusEntity>
     {

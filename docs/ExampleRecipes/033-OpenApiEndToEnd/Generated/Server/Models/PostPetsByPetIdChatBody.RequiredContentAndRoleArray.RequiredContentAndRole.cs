@@ -12,14 +12,8 @@ using global::Corvus.Text.Json.Internal;
 
 namespace Petstore.EndToEnd.Server.Models;
 
-/// <summary>
-/// Generated from JSON Schema.
-/// </summary>
 public readonly partial struct PostPetsByPetIdChatBody
 {
-    /// <summary>
-    /// Generated from JSON Schema.
-    /// </summary>
     public readonly partial struct RequiredContentAndRoleArray
     {
         /// <summary>

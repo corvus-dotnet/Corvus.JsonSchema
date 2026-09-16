@@ -12,15 +12,8 @@ using global::Corvus.Text.Json.Internal;
 
 namespace Petstore.V2.Client.Models;
 
-/// <summary>
-/// Generated from JSON Schema.
-/// </summary>
 public readonly partial struct UpdatePetWithFormFormBody
 {
-    /// <summary>
-    /// Generated from JSON Schema.
-    /// </summary>
-    [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public readonly partial struct StatusEntity
         : IJsonElement<StatusEntity>
     {

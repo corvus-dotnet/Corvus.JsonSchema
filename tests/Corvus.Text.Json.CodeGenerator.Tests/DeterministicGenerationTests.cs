@@ -356,6 +356,27 @@ public class DeterministicGenerationTests
 
     private static void AssertCompiles(IReadOnlyCollection<GeneratedCodeFile> files)
     {
+        CSharpCompilation compilation = CreateCompilation(files);
+
+        // CS8795: [GeneratedRegex] partial methods are implemented by the regex source generator in a consuming
+        // project's build, which this compilation does not run.
+        string[] errors = compilation.GetDiagnostics()
+            .Where(d => d.Severity == DiagnosticSeverity.Error && d.Id != "CS8795")
+            .Select(d => d.ToString())
+            .ToArray();
+
+        if (errors.Length > 0)
+        {
+            Assert.Fail($"The generated code has {errors.Length} compilation errors:\n{string.Join("\n", errors.Take(25))}");
+        }
+    }
+
+    /// <summary>
+    /// Compiles generated files in memory, as an SDK project with implicit usings would, so that tests can inspect
+    /// the symbols, attributes and documentation of the generated types.
+    /// </summary>
+    internal static CSharpCompilation CreateCompilation(IReadOnlyCollection<GeneratedCodeFile> files)
+    {
         CSharpParseOptions parseOptions = CSharpParseOptions.Default
             .WithLanguageVersion(LanguageVersion.Preview)
             .WithPreprocessorSymbols(GeneratedDocumentationTests.ReadCompilationDefines());
@@ -378,24 +399,12 @@ public class DeterministicGenerationTests
             parseOptions,
             path: "ImplicitUsings.cs"));
 
-        CSharpCompilation compilation = CSharpCompilation.Create(
+        return CSharpCompilation.Create(
             "DeterministicGenerationCheck",
             trees,
             GeneratedDocumentationTests.BuildReferences(),
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
                 .WithNullableContextOptions(NullableContextOptions.Enable)
                 .WithAllowUnsafe(true));
-
-        // CS8795: [GeneratedRegex] partial methods are implemented by the regex source generator in a consuming
-        // project's build, which this compilation does not run.
-        string[] errors = compilation.GetDiagnostics()
-            .Where(d => d.Severity == DiagnosticSeverity.Error && d.Id != "CS8795")
-            .Select(d => d.ToString())
-            .ToArray();
-
-        if (errors.Length > 0)
-        {
-            Assert.Fail($"The generated code has {errors.Length} compilation errors:\n{string.Join("\n", errors.Take(25))}");
-        }
     }
 }

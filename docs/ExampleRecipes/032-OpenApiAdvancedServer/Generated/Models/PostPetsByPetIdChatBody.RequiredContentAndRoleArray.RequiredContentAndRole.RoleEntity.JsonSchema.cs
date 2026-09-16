@@ -12,25 +12,12 @@ using global::Corvus.Text.Json.Internal;
 
 namespace Petstore.Extended.Server.Models;
 
-/// <summary>
-/// Generated from JSON Schema.
-/// </summary>
 public readonly partial struct PostPetsByPetIdChatBody
 {
-    /// <summary>
-    /// Generated from JSON Schema.
-    /// </summary>
     public readonly partial struct RequiredContentAndRoleArray
     {
-        /// <summary>
-        /// Generated from JSON Schema.
-        /// </summary>
         public readonly partial struct RequiredContentAndRole
         {
-            /// <summary>
-            /// Generated from JSON Schema.
-            /// </summary>
-            [DebuggerDisplay("{DebuggerDisplay,nq}")]
             public readonly partial struct RoleEntity
                 : IJsonElement<RoleEntity>
             {

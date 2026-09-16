@@ -12,20 +12,8 @@ using global::Corvus.Text.Json.Internal;
 
 namespace Streetlights.Client.Models;
 
-/// <summary>
-/// Generated from JSON Schema.
-/// </summary>
 public readonly partial struct TurnOnOffPayload
 {
-    /// <summary>
-    /// Generated from JSON Schema.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Whether to turn on or off the light.
-    /// </para>
-    /// </remarks>
-    [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public readonly partial struct WhetherToTurnOnOrOffTheLight
     {
         public partial struct Mutable

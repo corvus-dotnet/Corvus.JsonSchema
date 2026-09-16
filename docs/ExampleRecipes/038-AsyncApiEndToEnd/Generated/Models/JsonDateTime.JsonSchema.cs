@@ -11,15 +11,6 @@ using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
 namespace Streetlights.Client.Models;
-/// <summary>
-/// Generated from JSON Schema.
-/// </summary>
-/// <remarks>
-/// <para>
-/// Date and time when the message was sent.
-/// </para>
-/// </remarks>
-[DebuggerDisplay("{DebuggerDisplay,nq}")]
 public readonly partial struct JsonDateTime
     : IJsonElement<JsonDateTime>
 {

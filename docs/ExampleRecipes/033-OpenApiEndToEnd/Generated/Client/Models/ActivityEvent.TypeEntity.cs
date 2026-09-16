@@ -12,9 +12,6 @@ using global::Corvus.Text.Json.Internal;
 
 namespace Petstore.EndToEnd.Client.Models;
 
-/// <summary>
-/// Generated from JSON Schema.
-/// </summary>
 public readonly partial struct ActivityEvent
 {
     /// <summary>

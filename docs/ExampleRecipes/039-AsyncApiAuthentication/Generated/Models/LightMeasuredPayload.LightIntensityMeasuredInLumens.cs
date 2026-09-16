@@ -12,9 +12,6 @@ using global::Corvus.Text.Json.Internal;
 
 namespace Streetlights.Client.Models;
 
-/// <summary>
-/// Generated from JSON Schema.
-/// </summary>
 public readonly partial struct LightMeasuredPayload
 {
     /// <summary>

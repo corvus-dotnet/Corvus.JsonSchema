@@ -12,15 +12,8 @@ using global::Corvus.Text.Json.Internal;
 
 namespace Petstore.EndToEnd.Client.Models;
 
-/// <summary>
-/// Generated from JSON Schema.
-/// </summary>
 public readonly partial struct NewPet
 {
-    /// <summary>
-    /// Generated from JSON Schema.
-    /// </summary>
-    [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public readonly partial struct JsonStringArray
         : IJsonElement<JsonStringArray>
     {

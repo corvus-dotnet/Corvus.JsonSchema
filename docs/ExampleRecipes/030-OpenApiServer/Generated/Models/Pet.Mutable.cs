@@ -11,10 +11,6 @@ using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
 namespace Petstore.Server.Models;
-/// <summary>
-/// Generated from JSON Schema.
-/// </summary>
-[DebuggerDisplay("{DebuggerDisplay,nq}")]
 public readonly partial struct Pet
 {
     public partial struct Mutable

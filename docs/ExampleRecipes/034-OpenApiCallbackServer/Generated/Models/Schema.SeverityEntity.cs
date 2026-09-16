@@ -12,9 +12,6 @@ using global::Corvus.Text.Json.Internal;
 
 namespace EventSubscription.CallbackServer.Models;
 
-/// <summary>
-/// Generated from JSON Schema.
-/// </summary>
 public readonly partial struct Schema
 {
     /// <summary>

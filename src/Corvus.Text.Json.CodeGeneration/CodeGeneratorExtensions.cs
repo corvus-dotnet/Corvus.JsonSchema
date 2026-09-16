@@ -350,9 +350,11 @@ internal static partial class CodeGeneratorExtensions
                 isFirst = false;
             }
 
+            // A generated parent is documented once, in its own Core partial. A parent that is not generated has no
+            // file of its own, so its documentation goes on the nesting declaration.
             generator
                 .AppendSeparatorLine()
-                .AppendDocumentation(parent)
+                .ConditionallyAppend(parent.DoNotGenerate(), g => g.AppendDocumentation(parent))
                 .BeginPartialStructDeclaration(
                     parent.DotnetAccessibility(),
                     parent.DotnetTypeName());

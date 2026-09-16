@@ -12,15 +12,8 @@ using global::Corvus.Text.Json.Internal;
 
 namespace EventSubscription.CallbackServer.Models;
 
-/// <summary>
-/// Generated from JSON Schema.
-/// </summary>
 public readonly partial struct Schema
 {
-    /// <summary>
-    /// Generated from JSON Schema.
-    /// </summary>
-    [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public readonly partial struct SeverityEntity
     {
         public partial struct Mutable

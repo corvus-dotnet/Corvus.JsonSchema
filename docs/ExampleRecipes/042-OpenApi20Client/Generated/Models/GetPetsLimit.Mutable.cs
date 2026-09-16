@@ -11,15 +11,6 @@ using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
 namespace Petstore.V2.Client.Models;
-/// <summary>
-/// Generated from JSON Schema.
-/// </summary>
-/// <remarks>
-/// <para>
-/// How many items to return at one time (max 100)
-/// </para>
-/// </remarks>
-[DebuggerDisplay("{DebuggerDisplay,nq}")]
 public readonly partial struct GetPetsLimit
 {
     public partial struct Mutable
