@@ -71,7 +71,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The enum name.</returns>
     public static string KnownValuesEnumName(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(KnownValuesEnumNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(KnownValuesEnumNameKey, out (string, string) value) &&
             value is (string enumName, string _))
         {
             return enumName;
@@ -87,7 +87,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The fully-qualified enum scope.</returns>
     public static string KnownValuesEnumScope(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(KnownValuesEnumNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(KnownValuesEnumNameKey, out (string, string) value) &&
             value is (string _, string scope))
         {
             return scope;
@@ -139,7 +139,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The enum name.</returns>
     public static string FlagsEnumName(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(FlagsEnumNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(FlagsEnumNameKey, out (string, string) value) &&
             value is (string enumName, string _))
         {
             return enumName;
@@ -155,7 +155,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The fully-qualified enum scope.</returns>
     public static string FlagsEnumScope(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(FlagsEnumNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(FlagsEnumNameKey, out (string, string) value) &&
             value is (string _, string scope))
         {
             return scope;

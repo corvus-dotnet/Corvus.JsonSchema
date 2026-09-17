@@ -360,7 +360,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The class name.</returns>
     public static string ArrayBuilderClassName(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(BuilderClassNameKey, out (string, string, string, string)? value) &&
+        if (generator.TryPeekMetadata(BuilderClassNameKey, out (string, string, string, string) value) &&
             value is (string _, string arrayClassName, string _, string _))
         {
             return arrayClassName;
@@ -387,7 +387,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The class name.</returns>
     public static string BuilderClassName(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(BuilderClassNameKey, out (string, string, string, string)? value) &&
+        if (generator.TryPeekMetadata(BuilderClassNameKey, out (string, string, string, string) value) &&
             value is (string className, string _, string _, string _))
         {
             return className;
@@ -403,7 +403,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The fully-qualified class scope.</returns>
     public static string BuilderScope(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(BuilderClassNameKey, out (string, string, string, string)? value) &&
+        if (generator.TryPeekMetadata(BuilderClassNameKey, out (string, string, string, string) value) &&
             value is (string _, string _, string _, string scope))
         {
             return scope;
@@ -419,7 +419,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The class name.</returns>
     public static string JsonPropertyNamesClassName(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(JsonPropertyNamesClassNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(JsonPropertyNamesClassNameKey, out (string, string) value) &&
             value is (string className, string _))
         {
             return className;
@@ -435,7 +435,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The class name.</returns>
     public static string JsonPropertyNamesEscapedClassName(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(JsonPropertyNamesEscapedClassNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(JsonPropertyNamesEscapedClassNameKey, out (string, string) value) &&
             value is (string className, string _))
         {
             return className;
@@ -451,7 +451,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The fully-qualified class scope.</returns>
     public static string JsonPropertyNamesEscapedScope(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(JsonPropertyNamesEscapedClassNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(JsonPropertyNamesEscapedClassNameKey, out (string, string) value) &&
             value is (string _, string scope))
         {
             return scope;
@@ -467,7 +467,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The class name.</returns>
     public static string JsonPropertyNamesPrebakedClassName(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(JsonPropertyNamesPrebakedClassNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(JsonPropertyNamesPrebakedClassNameKey, out (string, string) value) &&
             value is (string className, string _))
         {
             return className;
@@ -483,7 +483,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The fully-qualified class scope.</returns>
     public static string JsonPropertyNamesScope(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(JsonPropertyNamesClassNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(JsonPropertyNamesClassNameKey, out (string, string) value) &&
             value is (string _, string scope))
         {
             return scope;
@@ -499,7 +499,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The validation class name.</returns>
     public static string JsonSchemaClassName(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(JsonSchemaClassNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(JsonSchemaClassNameKey, out (string, string) value) &&
             value is (string className, string _))
         {
             return className;
@@ -526,7 +526,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The fully-qualified validation class scope.</returns>
     public static string JsonSchemaClassScope(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(JsonSchemaClassNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(JsonSchemaClassNameKey, out (string, string) value) &&
             value is (string _, string scope))
         {
             return scope;
@@ -553,7 +553,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The class name.</returns>
     public static string ObjectBuilderClassName(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(BuilderClassNameKey, out (string, string, string, string)? value) &&
+        if (generator.TryPeekMetadata(BuilderClassNameKey, out (string, string, string, string) value) &&
             value is (string _, string _, string objectClassName, string _))
         {
             return objectClassName;
@@ -903,7 +903,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The class name.</returns>
     public static string SourceClassName(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(SourceClassNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(SourceClassNameKey, out (string, string) value) &&
             value is (string className, string _))
         {
             return className;
@@ -919,7 +919,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The fully-qualified class scope.</returns>
     public static string SourceScope(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(SourceClassNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(SourceClassNameKey, out (string, string) value) &&
             value is (string _, string scope))
         {
             return scope;
@@ -946,7 +946,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The class name.</returns>
     public static string MutableClassName(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(MutableClassNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(MutableClassNameKey, out (string, string) value) &&
             value is (string className, string _))
         {
             return className;
@@ -962,7 +962,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The fully-qualified class scope.</returns>
     public static string MutableScope(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(MutableClassNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(MutableClassNameKey, out (string, string) value) &&
             value is (string _, string scope))
         {
             return scope;
@@ -978,7 +978,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The class name.</returns>
     public static string ConstantsClassName(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(ConstantsClassNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(ConstantsClassNameKey, out (string, string) value) &&
             value is (string className, string _))
         {
             return className;
@@ -994,7 +994,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The fully-qualified class scope.</returns>
     public static string ConstantsScope(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(ConstantsClassNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(ConstantsClassNameKey, out (string, string) value) &&
             value is (string _, string scope))
         {
             return scope;
@@ -1010,7 +1010,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The class name.</returns>
     public static string EnumValuesClassName(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(EnumValuesClassNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(EnumValuesClassNameKey, out (string, string) value) &&
             value is (string className, string _))
         {
             return className;
@@ -1026,7 +1026,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The fully-qualified class scope.</returns>
     public static string EnumValuesScope(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(EnumValuesClassNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(EnumValuesClassNameKey, out (string, string) value) &&
             value is (string _, string scope))
         {
             return scope;

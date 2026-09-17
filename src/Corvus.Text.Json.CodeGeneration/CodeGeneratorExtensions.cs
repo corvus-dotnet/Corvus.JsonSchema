@@ -155,14 +155,14 @@ internal static partial class CodeGeneratorExtensions
         ConditionalCodeSpecification.AppendConditionalsInOrder(
             generator,
             namespaces,
-            static (g, a, _) => Append(g, a));
+            static (g, spec, _) => Append(g, spec));
 
         return generator;
 
-        static void Append(CodeGenerator generator, Action<CodeGenerator> action)
+        static void Append(CodeGenerator generator, ConditionalCodeSpecification spec)
         {
             generator.Append("using ");
-            action(generator);
+            spec.Append(generator);
             generator.AppendLine(";");
         }
     }
@@ -594,7 +594,7 @@ internal static partial class CodeGeneratorExtensions
             .ReserveNameIfNotReserved(dotnetTypeName) // Reserve the name of the containing scope in its own scope
             .PushIndent();
 
-        static void AppendInterface(CodeGenerator generator, Action<CodeGenerator> appendFunction, int elementIndexInConditionalBlock)
+        static void AppendInterface(CodeGenerator generator, ConditionalCodeSpecification spec, int elementIndexInConditionalBlock)
         {
             if (generator.IsCancellationRequested)
             {
@@ -604,14 +604,14 @@ internal static partial class CodeGeneratorExtensions
             if (elementIndexInConditionalBlock == 0)
             {
                 generator.AppendIndent(": ");
-                appendFunction(generator);
+                spec.Append(generator);
             }
             else
             {
                 generator
                     .AppendLine(",")
                     .AppendIndent("  "); // Align with the ": "
-                appendFunction(generator);
+                spec.Append(generator);
             }
         }
     }

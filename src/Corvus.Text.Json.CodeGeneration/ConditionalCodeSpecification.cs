@@ -122,6 +122,22 @@ public readonly struct ConditionalCodeSpecification
     ConditionalCodeSpecification[] conditionalSpecifications,
     Action<CodeGenerator, Action<CodeGenerator>, int> appendCallback)
     {
+        AppendConditionalsGroupingBlocks(generator, conditionalSpecifications, (g, spec, index) => appendCallback(g, spec.Append, index));
+    }
+
+    /// <summary>
+    /// Appends the conditional code specifications, grouping them into conditional blocks, passing each
+    /// specification to the callback so that no delegate over the specification is created.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="conditionalSpecifications">The conditional specifications to append.</param>
+    /// <param name="appendCallback">The callback, passed the generator, the specification to append (call its
+    /// <see cref="Append(CodeGenerator)"/>) and the index of the item in its conditional block.</param>
+    public static void AppendConditionalsGroupingBlocks(
+    CodeGenerator generator,
+    ConditionalCodeSpecification[] conditionalSpecifications,
+    Action<CodeGenerator, ConditionalCodeSpecification, int> appendCallback)
+    {
         if (generator.IsCancellationRequested)
         {
             return;
@@ -154,7 +170,7 @@ public readonly struct ConditionalCodeSpecification
                 }
 
                 ConditionalCodeSpecification spec = all[i];
-                appendCallback(generator, spec.Append, i);
+                appendCallback(generator, spec, i);
             }
 
             generator.AppendLine();
@@ -179,7 +195,7 @@ public readonly struct ConditionalCodeSpecification
                     return;
                 }
 
-                appendCallback(generator, spec.Append, i);
+                appendCallback(generator, spec, i);
                 i++;
             }
         }
@@ -201,7 +217,7 @@ public readonly struct ConditionalCodeSpecification
                     return;
                 }
 
-                appendCallback(generator, spec.Append, i);
+                appendCallback(generator, spec, i);
                 i++;
             }
         }
@@ -235,7 +251,7 @@ public readonly struct ConditionalCodeSpecification
                     return;
                 }
 
-                appendCallback(generator, spec.Append, i);
+                appendCallback(generator, spec, i);
                 i++;
             }
         }
@@ -253,7 +269,7 @@ public readonly struct ConditionalCodeSpecification
                     return;
                 }
 
-                appendCallback(generator, spec.Append, i);
+                appendCallback(generator, spec, i);
                 i++;
             }
         }
@@ -286,6 +302,22 @@ public readonly struct ConditionalCodeSpecification
         CodeGenerator generator,
         ConditionalCodeSpecification[] conditionalSpecifications,
         Action<CodeGenerator, Action<CodeGenerator>, int> appendCallback)
+    {
+        AppendConditionalsInOrder(generator, conditionalSpecifications, (g, spec, index) => appendCallback(g, spec.Append, index));
+    }
+
+    /// <summary>
+    /// Appends the conditional code specifications in order, passing each specification to the callback so that no
+    /// delegate over the specification is created.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="conditionalSpecifications">The conditional specifications to append.</param>
+    /// <param name="appendCallback">The callback, passed the generator, the specification to append (call its
+    /// <see cref="Append(CodeGenerator)"/>) and the index of the item in its conditional block.</param>
+    public static void AppendConditionalsInOrder(
+        CodeGenerator generator,
+        ConditionalCodeSpecification[] conditionalSpecifications,
+        Action<CodeGenerator, ConditionalCodeSpecification, int> appendCallback)
     {
         if (generator.IsCancellationRequested)
         {
@@ -323,7 +355,7 @@ public readonly struct ConditionalCodeSpecification
                 }
             }
 
-            appendCallback(generator, spec.Append, i++);
+            appendCallback(generator, spec, i++);
 
             lastFrameworkType = spec.condition;
         }

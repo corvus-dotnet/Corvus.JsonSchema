@@ -78,7 +78,7 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <returns>The validation class name.</returns>
     public static string ValidationClassName(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(ValidationClassNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(ValidationClassNameKey, out (string, string) value) &&
             value is (string className, string _))
         {
             return className;
@@ -94,7 +94,7 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <returns>The fully-qualified validation class scope.</returns>
     public static string ValidationClassScope(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(ValidationClassNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(ValidationClassNameKey, out (string, string) value) &&
             value is (string _, string scope))
         {
             return scope;
@@ -110,7 +110,7 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <returns>The validation class name.</returns>
     public static string JsonPropertyNamesClassName(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(JsonPropertyNamesClassNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(JsonPropertyNamesClassNameKey, out (string, string) value) &&
             value is (string className, string _))
         {
             return className;
@@ -126,7 +126,7 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <returns>The fully-qualified validation class scope.</returns>
     public static string JsonPropertyNamesClassScope(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(JsonPropertyNamesClassNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(JsonPropertyNamesClassNameKey, out (string, string) value) &&
             value is (string _, string scope))
         {
             return scope;

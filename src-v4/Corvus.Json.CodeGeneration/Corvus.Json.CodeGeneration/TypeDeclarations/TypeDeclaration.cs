@@ -37,9 +37,11 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
 {
     private readonly Dictionary<string, TypeDeclaration> subschemaTypeDeclarations = new(StringComparer.Ordinal);
 
-    // Each generation owns its type declarations, so a plain dictionary serves; only the process-wide
-    // well-known declarations (IsShared) are reached by concurrent generations, and access to theirs is locked.
-    private readonly Dictionary<string, object?> metadata = new(StringComparer.Ordinal);
+    // Each generation owns its type declarations, so a plain dictionary serves. The process-wide well-known
+    // declarations (IsShared) are reached by concurrent generations: their metadata dictionary is never mutated once
+    // published, a write copies it and publishes the copy under the lock, and reads take no lock (the metadata is
+    // read on every type-name lookup, so a lock there was a measurable share of generation time).
+    private Dictionary<string, object?> metadata = new(StringComparer.Ordinal);
     private readonly Dictionary<string, PropertyDeclaration> properties = new(StringComparer.Ordinal);
     private IReadOnlyList<PropertyDeclaration>? cachedPropertyDeclarations;
     private IReadOnlyList<TypeDeclaration>? cachedOrderedSubschemaTypeDeclarations;
@@ -141,31 +143,27 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
             return keyword.GetSubschemaTypeDeclarations(this);
         }
 
-        Dictionary<ISubschemaProviderKeyword, IReadOnlyCollection<TypeDeclaration>>? cache = this.cachedSubschemaTypeDeclarationsByKeyword;
-        if (cache is not null)
+        // The cache is copy-on-write: a published dictionary is never mutated, so readers need no lock.
+        Dictionary<ISubschemaProviderKeyword, IReadOnlyCollection<TypeDeclaration>>? cache = Volatile.Read(ref this.cachedSubschemaTypeDeclarationsByKeyword);
+        if (cache is not null && cache.TryGetValue(keyword, out IReadOnlyCollection<TypeDeclaration>? cached))
         {
-            lock (cache)
-            {
-                if (cache.TryGetValue(keyword, out IReadOnlyCollection<TypeDeclaration>? cached))
-                {
-                    return cached;
-                }
-            }
+            return cached;
         }
 
         IReadOnlyCollection<TypeDeclaration> result = keyword.GetSubschemaTypeDeclarations(this);
-        cache = this.cachedSubschemaTypeDeclarationsByKeyword ??= [];
-        lock (cache)
+        lock (this.subschemaTypeDeclarations)
         {
-            if (cache.TryGetValue(keyword, out IReadOnlyCollection<TypeDeclaration>? cached))
+            cache = this.cachedSubschemaTypeDeclarationsByKeyword;
+            if (cache is not null && cache.TryGetValue(keyword, out cached))
             {
                 return cached;
             }
 
-            cache.Add(keyword, result);
+            Dictionary<ISubschemaProviderKeyword, IReadOnlyCollection<TypeDeclaration>> updated = cache is null ? [] : new(cache);
+            updated.Add(keyword, result);
+            Volatile.Write(ref this.cachedSubschemaTypeDeclarationsByKeyword, updated);
+            return result;
         }
-
-        return result;
     }
 
     /// <summary>
@@ -210,9 +208,13 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
         object? boxed = MetadataValueBoxes.Box(value);
         if (this.IsShared)
         {
-            lock (this.metadata)
+            lock (this.subschemaTypeDeclarations)
             {
-                this.metadata[key] = boxed;
+                Dictionary<string, object?> updated = new(this.metadata, StringComparer.Ordinal)
+                {
+                    [key] = boxed,
+                };
+                Volatile.Write(ref this.metadata, updated);
             }
         }
         else
@@ -229,9 +231,11 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
     {
         if (this.IsShared)
         {
-            lock (this.metadata)
+            lock (this.subschemaTypeDeclarations)
             {
-                this.metadata.Remove(key);
+                Dictionary<string, object?> updated = new(this.metadata, StringComparer.Ordinal);
+                updated.Remove(key);
+                Volatile.Write(ref this.metadata, updated);
             }
         }
         else
@@ -249,21 +253,9 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
     /// <returns><see langword="true"/> if the metadata value was found.</returns>
     public bool TryGetMetadata<T>(string key, out T? value)
     {
-        bool result;
-        object? candidate;
-        if (this.IsShared)
-        {
-            lock (this.metadata)
-            {
-                result = this.metadata.TryGetValue(key, out candidate);
-            }
-        }
-        else
-        {
-            result = this.metadata.TryGetValue(key, out candidate);
-        }
-
-        if (result)
+        // A shared declaration's dictionary is replaced, never mutated, so a read needs the reference only.
+        Dictionary<string, object?> current = this.IsShared ? Volatile.Read(ref this.metadata) : this.metadata;
+        if (current.TryGetValue(key, out object? candidate))
         {
             value = (T?)candidate;
             return true;
