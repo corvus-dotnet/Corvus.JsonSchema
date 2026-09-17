@@ -177,6 +177,8 @@ For each `[JsonSchemaTypeGenerator]` attribute, the generator produces a complet
 
 All generated types are `readonly struct` values — they are lightweight indexes into pooled JSON data, not heap-allocated objects.
 
+Members that mirror a `JsonElement` member (`TryGetProperty`, the indexers, `EnumerateObject`, `ParseValue`, `Clone`, `Freeze`, the equality operators, the mutable partial's `SetProperty` and `RemoveProperty`) are documented with `<inheritdoc cref="global::Corvus.Text.Json.JsonElement..."/>`; IntelliSense resolves the reference from the `Corvus.Text.Json.xml` file in the package. Members without a runtime counterpart keep their own documentation.
+
 ## Inspecting Generated Code
 
 By default, generated code exists only in memory. To write it to disk for inspection:

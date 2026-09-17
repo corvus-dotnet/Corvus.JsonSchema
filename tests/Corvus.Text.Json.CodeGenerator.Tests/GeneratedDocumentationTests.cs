@@ -104,7 +104,7 @@ public class GeneratedDocumentationTests
         AssertNoDocumentationMismatchDiagnostics(_outputDir);
     }
 
-    private static void AssertNoDocumentationMismatchDiagnostics(string outputDir)
+    internal static void AssertNoDocumentationMismatchDiagnostics(string outputDir)
     {
         string[] files = Directory.GetFiles(outputDir, "*.cs", SearchOption.AllDirectories);
         Assert.IsTrue(files.Length > 0, $"Expected generated .cs files in {outputDir}");

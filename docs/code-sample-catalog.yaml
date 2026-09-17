@@ -800,10 +800,10 @@ main-docs:
       - {index: 8, language: bash, lines: [219, 221]}
       - {index: 9, language: bash, lines: [227, 229]}
       - {index: 10, language: json, lines: [261, 271]}
-      - {index: 11, language: ini, lines: [289, 296]}
-      - {index: 12, language: bash, lines: [329, 334]}
-      - {index: 13, language: json, lines: [354, 363]}
-      - {index: 14, language: bash, lines: [392, 404]}
+      - {index: 11, language: ini, lines: [291, 298]}
+      - {index: 12, language: bash, lines: [331, 336]}
+      - {index: 13, language: json, lines: [356, 365]}
+      - {index: 14, language: bash, lines: [394, 406]}
   - path: "docs/CodeSampleCatalog.md"
     blocks:
       - {index: 0, language: powershell, lines: [13, 26]}
@@ -1439,10 +1439,10 @@ main-docs:
       - {index: 7, language: xml, lines: [114, 123]}
       - {index: 8, language: xml, lines: [127, 131]}
       - {index: 9, language: xml, lines: [139, 146]}
-      - {index: 10, language: xml, lines: [184, 188]}
-      - {index: 11, language: , lines: [192, 197]}
-      - {index: 12, language: ini, lines: [216, 223]}
-      - {index: 13, language: ini, lines: [225, 232]}
+      - {index: 10, language: xml, lines: [186, 190]}
+      - {index: 11, language: , lines: [194, 199]}
+      - {index: 12, language: ini, lines: [218, 225]}
+      - {index: 13, language: ini, lines: [227, 234]}
   - path: "docs/StandaloneEvaluatorInternals.md"
     blocks:
       - {index: 0, language: csharp, lines: [46, 53], category: compilable, verified: false}

@@ -23,6 +23,51 @@ namespace Corvus.Text.Json.CodeGeneration;
 internal static partial class CodeGeneratorExtensions
 {
     /// <summary>
+    /// The cref of the runtime element type whose members the generated members mirror.
+    /// </summary>
+    private const string JsonElementCref = "global::Corvus.Text.Json.JsonElement";
+
+    /// <summary>
+    /// Appends an <c>inheritdoc</c> comment naming the runtime member a generated member mirrors, so that the
+    /// generated code carries one line instead of a copy of the runtime's documentation.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="member">The member of <c>JsonElement</c> (or of its Mutable partial when <paramref name="forMutable"/> is true) in cref form, for example <c>GetPropertyCount()</c>.</param>
+    /// <param name="forMutable">Whether the mirrored member is on the mutable partial.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    internal static CodeGenerator AppendInheritDoc(this CodeGenerator generator, string member, bool forMutable = false)
+    {
+        return generator
+            .AppendIndent("/// <inheritdoc cref=\"")
+            .Append(JsonElementCref)
+            .Append(forMutable ? ".Mutable." : ".")
+            .Append(member)
+            .AppendLine("\"/>");
+    }
+
+    /// <summary>
+    /// Appends an <c>inheritdoc</c> comment naming a runtime member whose cref is built from three parts, so that a
+    /// parameter type can be substituted without allocating the whole cref.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="memberPrefix">The member name and the opening of its parameter list, for example <c>TryGetProperty(</c>.</param>
+    /// <param name="parameterType">The parameter type in cref form, for example <c>ReadOnlySpan{byte}</c>.</param>
+    /// <param name="memberSuffix">The rest of the parameter list, for example <c>, out JsonElement)</c>.</param>
+    /// <param name="forMutable">Whether the mirrored member is on the mutable partial.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    internal static CodeGenerator AppendInheritDoc(this CodeGenerator generator, string memberPrefix, string parameterType, string memberSuffix, bool forMutable = false)
+    {
+        return generator
+            .AppendIndent("/// <inheritdoc cref=\"")
+            .Append(JsonElementCref)
+            .Append(forMutable ? ".Mutable." : ".")
+            .Append(memberPrefix)
+            .Append(parameterType)
+            .Append(memberSuffix)
+            .AppendLine("\"/>");
+    }
+
+    /// <summary>
     /// The first line of every generated file. Roslyn and the analyzers that skip generated code recognise a leading
     /// comment containing <c>&lt;auto-generated</c>; this is the form Roslyn's own generators write.
     /// </summary>
@@ -1422,16 +1467,8 @@ internal static partial class CodeGeneratorExtensions
         return generator
             .ReserveName("From")
             .AppendSeparatorLine()
-            .AppendBlockIndent(
-                """
-                /// <summary>
-                /// Gets an instance of the JSON value from another element.
-                /// </summary>
-                /// <typeparam name="T">The type of the <see cref="IJsonElement{T}"/> from which to instantiate the instance.</typeparam>
-                /// <param name="instance">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
-                /// <returns>An instance of this type, initialized from the JSON element.</returns>
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                """)
+            .AppendInheritDoc("From{T}(in T)", forMutable)
+            .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
             .AppendLineIndent("public static ", forMutable ? generator.MutableClassName() : typeDeclaration.DotnetTypeName(), " From<T>(in T instance)")
             .PushIndent()
                 .AppendLineIndent(forMutable ? "where T : struct, IMutableJsonElement<T>" : "where T : struct, IJsonElement<T>")
@@ -1453,28 +1490,9 @@ internal static partial class CodeGeneratorExtensions
         return generator
             .ReserveName("ParseValue")
             .AppendSeparatorLine()
-            .AppendBlockIndent(
-                """
-                /// <summary>
-                ///   Parses one JSON value (including objects or arrays) from the provided span.
-                /// </summary>
-                /// <param name="utf8Json">The span to read.</param>
-                /// <param name="options">The <see cref="JsonDocumentOptions"/> for reading.</param>
-                /// <returns>
-                ///   An instance representing the value (and nested values) read from the span.
-                /// </returns>
-                /// <remarks>
-                ///   <para>
-                ///     This method makes a copy of the data the reader acted on, so there is no caller
-                ///     requirement to maintain data integrity beyond the return of this method.
-                ///   </para>
-                /// </remarks>
-                /// <exception cref="JsonException">
-                ///   A value could not be read from the span.
-                /// </exception>
-                [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                """)
+            .AppendInheritDoc("ParseValue(ReadOnlySpan{byte}, JsonDocumentOptions)")
+            .AppendLineIndent("[Obsolete(\"Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.\")]")
+            .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
             .AppendLineIndent("public static ", typeDeclaration.DotnetTypeName(), " ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)")
             .AppendLineIndent("{")
             .PushIndent()
@@ -1484,28 +1502,9 @@ internal static partial class CodeGeneratorExtensions
             .PopIndent()
             .AppendLineIndent("}")
             .AppendSeparatorLine()
-            .AppendBlockIndent(
-                """
-                /// <summary>
-                ///   Parses one JSON value (including objects or arrays) from the provided span.
-                /// </summary>
-                /// <param name="json">The span to read.</param>
-                /// <param name="options">The <see cref="JsonDocumentOptions"/> for reading.</param>
-                /// <returns>
-                ///   An instance representing the value (and nested values) read from the span.
-                /// </returns>
-                /// <remarks>
-                ///   <para>
-                ///     This method makes a copy of the data the reader acted on, so there is no caller
-                ///     requirement to maintain data integrity beyond the return of this method.
-                ///   </para>
-                /// </remarks>
-                /// <exception cref="JsonException">
-                ///   A value could not be read from the span.
-                /// </exception>
-                [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                """)
+            .AppendInheritDoc("ParseValue(ReadOnlySpan{char}, JsonDocumentOptions)")
+            .AppendLineIndent("[Obsolete(\"Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.\")]")
+            .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
             .AppendLineIndent("public static ", typeDeclaration.DotnetTypeName(), " ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)")
             .AppendLineIndent("{")
             .PushIndent()
@@ -1515,28 +1514,9 @@ internal static partial class CodeGeneratorExtensions
             .PopIndent()
             .AppendLineIndent("}")
             .AppendSeparatorLine()
-            .AppendBlockIndent(
-                """
-                /// <summary>
-                ///   Parses one JSON value (including objects or arrays) from the provided text.
-                /// </summary>
-                /// <param name="json">The text to read.</param>
-                /// <param name="options">The <see cref="JsonDocumentOptions"/> for reading.</param>
-                /// <returns>
-                ///   An instance representing the value (and nested values) read from the text.
-                /// </returns>
-                /// <remarks>
-                ///   <para>
-                ///     This method makes a copy of the data the reader acted on, so there is no caller
-                ///     requirement to maintain data integrity beyond the return of this method.
-                ///   </para>
-                /// </remarks>
-                /// <exception cref="JsonException">
-                ///   A value could not be read from the text.
-                /// </exception>
-                [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                """)
+            .AppendInheritDoc("ParseValue(string, JsonDocumentOptions)")
+            .AppendLineIndent("[Obsolete(\"Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.\")]")
+            .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
             .AppendLineIndent("public static ", typeDeclaration.DotnetTypeName(), " ParseValue(string json, JsonDocumentOptions options = default)")
             .AppendLineIndent("{")
             .PushIndent()
@@ -1546,45 +1526,8 @@ internal static partial class CodeGeneratorExtensions
             .PopIndent()
             .AppendLineIndent("}")
             .AppendSeparatorLine()
-            .AppendBlockIndent(
-                """
-                /// <summary>
-                ///   Parses one JSON value (including objects or arrays) from the provided reader.
-                /// </summary>
-                /// <param name="reader">The reader to read.</param>
-                /// <returns>
-                ///   An instance representing the value (and nested values) read from the reader.
-                /// </returns>
-                /// <remarks>
-                ///   <para>
-                ///     If the <see cref="Utf8JsonReader.TokenType"/> property of <paramref name="reader"/>
-                ///     is <see cref="JsonTokenType.PropertyName"/> or <see cref="JsonTokenType.None"/>, the
-                ///     reader will be advanced by one call to <see cref="Utf8JsonReader.Read"/> to determine
-                ///     the start of the value.
-                ///   </para>
-                ///
-                ///   <para>
-                ///     Upon completion of this method, <paramref name="reader"/> will be positioned at the
-                ///     final token in the JSON value. If an exception is thrown, the reader is reset to
-                ///     the state it was in when the method was called.
-                ///   </para>
-                ///
-                ///   <para>
-                ///     This method makes a copy of the data the reader acted on, so there is no caller
-                ///     requirement to maintain data integrity beyond the return of this method.
-                ///   </para>
-                /// </remarks>
-                /// <exception cref="ArgumentException">
-                ///   <paramref name="reader"/> is using unsupported options.
-                /// </exception>
-                /// <exception cref="ArgumentException">
-                ///   The current <paramref name="reader"/> token does not start or represent a value.
-                /// </exception>
-                /// <exception cref="JsonException">
-                ///   A value could not be read from the reader.
-                /// </exception>
-                [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-                """)
+            .AppendInheritDoc("ParseValue(ref Utf8JsonReader)")
+            .AppendLineIndent("[Obsolete(\"Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.\")]")
             .AppendLineIndent("public static ", typeDeclaration.DotnetTypeName(), " ParseValue(ref Utf8JsonReader reader)")
             .AppendLineIndent("{")
             .PushIndent()
@@ -1594,47 +1537,7 @@ internal static partial class CodeGeneratorExtensions
             .PopIndent()
             .AppendLineIndent("}")
             .AppendSeparatorLine()
-            .AppendBlockIndent(
-                """
-                /// <summary>
-                ///   Attempts to parse one JSON value (including objects or arrays) from the provided reader.
-                /// </summary>
-                /// <param name="reader">The reader to read.</param>
-                /// <param name="result">Receives the parsed element.</param>
-                /// <returns>
-                ///   <see langword="true"/> if a value was read and parsed into a JsonElement;
-                ///   <see langword="false"/> if the reader ran out of data while parsing.
-                ///   All other situations result in an exception being thrown.
-                /// </returns>
-                /// <remarks>
-                ///   <para>
-                ///     If the <see cref="Utf8JsonReader.TokenType"/> property of <paramref name="reader"/>
-                ///     is <see cref="JsonTokenType.PropertyName"/> or <see cref="JsonTokenType.None"/>, the
-                ///     reader will be advanced by one call to <see cref="Utf8JsonReader.Read"/> to determine
-                ///     the start of the value.
-                ///   </para>
-                ///
-                ///   <para>
-                ///     Upon completion of this method, <paramref name="reader"/> will be positioned at the
-                ///     final token in the JSON value.  If an exception is thrown, or <see langword="false"/>
-                ///     is returned, the reader is reset to the state it was in when the method was called.
-                ///   </para>
-                ///
-                ///   <para>
-                ///     This method makes a copy of the data the reader acted on, so there is no caller
-                ///     requirement to maintain data integrity beyond the return of this method.
-                ///   </para>
-                /// </remarks>
-                /// <exception cref="ArgumentException">
-                ///   <paramref name="reader"/> is using unsupported options.
-                /// </exception>
-                /// <exception cref="ArgumentException">
-                ///   The current <paramref name="reader"/> token does not start or represent a value.
-                /// </exception>
-                /// <exception cref="JsonException">
-                ///   A value could not be read from the reader.
-                /// </exception>
-                """)
+            .AppendInheritDoc("TryParseValue(ref Utf8JsonReader, out JsonElement?)")
             .AppendLineIndent("public static bool TryParseValue(ref Utf8JsonReader reader, out ", typeDeclaration.DotnetTypeName(), "? result)")
             .AppendLineIndent("{")
             .PushIndent()
@@ -1819,12 +1722,8 @@ internal static partial class CodeGeneratorExtensions
                         (obj is null && this.IsNull());
                 }
 
-                /// <summary>
-                /// Equality comparison.
-                /// </summary>
-                /// <param name="other">The other item with which to compare.</param>
-                /// <returns><see langword="true"/> if the values were equal.</returns>
                 """)
+            .AppendInheritDoc("Equals{T}(T)")
             .AppendLineIndent("public bool Equals<T>(in T other)")
             .PushIndent()
                 .AppendLineIndent("where T : struct, IJsonElement")
@@ -1895,11 +1794,7 @@ internal static partial class CodeGeneratorExtensions
                 .AppendSeparatorLine()
                 .AppendBlockIndent(
                     """
-                    /// <summary>
-                    /// Compare with a UTF-8 string.
-                    /// </summary>
-                    /// <param ref="utf8Text">The UTF-8 text to compare with.</param>
-                    /// <returns><see langword="true"/> if the values are equal.</returns>
+                    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.ValueEquals(ReadOnlySpan{byte})"/>
                     public bool ValueEquals(ReadOnlySpan<byte> utf8Text)
                     {
                         CheckValidInstance();
@@ -1915,11 +1810,7 @@ internal static partial class CodeGeneratorExtensions
                 .AppendSeparatorLine()
                 .AppendBlockIndent(
                     """
-                    /// <summary>
-                    /// Compare with a string.
-                    /// </summary>
-                    /// <param ref="utf8Text">The text to compare with.</param>
-                    /// <returns><see langword="true"/> if the values are equal.</returns>
+                    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.ValueEquals(ReadOnlySpan{char})"/>
                     public bool ValueEquals(ReadOnlySpan<char> text)
                     {
                         CheckValidInstance();
@@ -1935,11 +1826,7 @@ internal static partial class CodeGeneratorExtensions
                 .AppendSeparatorLine()
                 .AppendBlockIndent(
                     """
-                    /// <summary>
-                    /// Compare with a string.
-                    /// </summary>
-                    /// <param ref="utf8Text">The text to compare with.</param>
-                    /// <returns><see langword="true"/> if the values are equal.</returns>
+                    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.ValueEquals(string)"/>
                     public bool ValueEquals(string text)
                     {
                         CheckValidInstance();

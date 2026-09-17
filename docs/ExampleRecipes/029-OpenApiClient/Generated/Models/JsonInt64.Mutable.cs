@@ -97,53 +97,25 @@ public readonly partial struct JsonInt64
         public static explicit operator Half(Mutable value) => value._parent.TryGetValue(value._idx, out Half result) ? result : throw new FormatException();
 #endif
 
-        /// <summary>
-        /// Operator ==.
-        /// </summary>
-        /// <param name="left">The lhs of the operator.</param>
-        /// <param name="right">The rhs of the operator.</param>
-        /// <returns>
-        /// <c>True</c> if the values are equal.
-        /// </returns>
+        /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.operator ==(JsonElement, JsonElement)"/>
         public static bool operator ==(in Mutable left, in Mutable right)
         {
             return left.Equals(right);
         }
 
-        /// <summary>
-        /// Operator !=.
-        /// </summary>
-        /// <param name="left">The lhs of the operator.</param>
-        /// <param name="right">The rhs of the operator.</param>
-        /// <returns>
-        /// <c>True</c> if the values are not equal.
-        /// </returns>
+        /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.operator !=(JsonElement, JsonElement)"/>
         public static bool operator !=(in Mutable left, in Mutable right)
         {
             return !left.Equals(right);
         }
 
-        /// <summary>
-        /// Operator ==.
-        /// </summary>
-        /// <param name="left">The lhs of the operator.</param>
-        /// <param name="right">The rhs of the operator.</param>
-        /// <returns>
-        /// <c>True</c> if the values are equal.
-        /// </returns>
+        /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.operator ==(JsonElement, JsonElement)"/>
         public static bool operator ==(in Mutable left, in JsonElement right)
         {
             return left.Equals(right);
         }
 
-        /// <summary>
-        /// Operator !=.
-        /// </summary>
-        /// <param name="left">The lhs of the operator.</param>
-        /// <param name="right">The rhs of the operator.</param>
-        /// <returns>
-        /// <c>True</c> if the values are not equal.
-        /// </returns>
+        /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.operator !=(JsonElement, JsonElement)"/>
         public static bool operator !=(in Mutable left, in JsonElement right)
         {
             return !left.Equals(right);
@@ -188,12 +160,7 @@ public readonly partial struct JsonInt64
             return new(instance._parent, instance._idx);
         }
 
-        /// <summary>
-        /// Gets an instance of the JSON value from another element.
-        /// </summary>
-        /// <typeparam name="T">The type of the <see cref="IJsonElement{T}"/> from which to instantiate the instance.</typeparam>
-        /// <param name="instance">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the JSON element.</returns>
+        /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Mutable.From{T}(in T)"/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Mutable From<T>(in T instance)
             where T : struct, IMutableJsonElement<T>
@@ -212,11 +179,7 @@ public readonly partial struct JsonInt64
                 (obj is null && this.IsNull());
         }
 
-        /// <summary>
-        /// Equality comparison.
-        /// </summary>
-        /// <param name="other">The other item with which to compare.</param>
-        /// <returns><see langword="true"/> if the values were equal.</returns>
+        /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Equals{T}(T)"/>
         public bool Equals<T>(in T other)
             where T : struct, IJsonElement
         {
@@ -305,11 +268,7 @@ public readonly partial struct JsonInt64
             return _parent.ToString(_idx);
         }
 
-        /// <summary>
-        /// Evaluate this instance against the JSON Schema for this type.
-        /// </summary>
-        /// <params name="resultsCollector">The (optional) results collector.</params>
-        /// <returns><see langword="true" /> if the instance evaluates against the schema.</returns>
+        /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.EvaluateSchema(IJsonSchemaResultsCollector)"/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool EvaluateSchema(IJsonSchemaResultsCollector? resultsCollector = null)
         {
@@ -351,42 +310,14 @@ public readonly partial struct JsonInt64
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         JsonValueKind IJsonElement.ValueKind => ValueKind;
 
-        /// <summary>
-        /// Gets a <see cref="JsonInt64"/> which can be safely stored beyond the lifetime of the
-        /// original document.
-        /// </summary>
-        /// <returns>
-        /// A <see cref="JsonInt64"/> which can be safely stored beyond the lifetime of the
-        /// original document.
-        /// </returns>
-        /// <remarks>
-        /// <para>
-        /// This serializes the element and re-parses it into a standalone heap-allocated
-        /// document. The result is independent of the workspace.
-        /// </para>
-        /// </remarks>
+        /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Mutable.Clone()"/>
         public readonly JsonInt64 Clone()
         {
             CheckValidInstance();
             return _parent.CloneElement<JsonInt64>(_idx);
         }
 
-        /// <summary>
-        /// Creates a frozen (immutable) copy of this element, backed by a new
-        /// document builder registered in the same workspace.
-        /// </summary>
-        /// <returns>
-        /// An immutable <see cref="JsonInt64"/> that lives for the lifetime of its
-        /// workspace and its associated documents.
-        /// </returns>
-        /// <remarks>
-        /// <para>
-        /// Unlike <see cref="Clone()"/>, which serializes the element and re-parses it
-        /// into a standalone heap-allocated document, <c>Freeze()</c> performs a cheap
-        /// blit of the metadata and value backing arrays. The resulting element is
-        /// immutable but is only valid for the lifetime of the workspace.
-        /// </para>
-        /// </remarks>
+        /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Mutable.Freeze()"/>
         public readonly JsonInt64 Freeze()
         {
             CheckValidInstance();
@@ -409,9 +340,7 @@ public readonly partial struct JsonInt64
         private readonly ReadOnlySpan<byte> _utf8Backing;
         private readonly SimpleTypesBacking _simpleTypeBacking;
 
-        /// <summary>
-        /// Gets a value indicating whether this Source is undefined (uninitialized).
-        /// </summary>
+        /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Source.IsUndefined"/>
         public bool IsUndefined => _kind == Kind.Unknown;
 
         private Source(JsonElement jsonElement)
@@ -562,11 +491,7 @@ public readonly partial struct JsonInt64
         return documentBuilder;
     }
 
-    /// <summary>
-    /// Creates and initializes a mutable document from this instance.
-    /// </summary>
-    /// <param name="workspace">The JSON workspace.</param>
-    /// <returns>An instance of a mutable document initialized with this instance.</returns>
+    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.CreateBuilder(JsonWorkspace)"/>
     public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
     {
         return workspace.CreateBuilder<JsonInt64, Mutable>(this);

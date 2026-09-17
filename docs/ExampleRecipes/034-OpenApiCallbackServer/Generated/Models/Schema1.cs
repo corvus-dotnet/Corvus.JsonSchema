@@ -43,12 +43,7 @@ public readonly partial struct Schema1
     /// </summary>
     public static Schema1 DefaultInstance { get; }
 
-    /// <summary>
-    /// Gets the value of the property with the given name.
-    /// </summary>
-    /// <param name="propertyName">The name of the property.</param>
-    /// <returns>The value of the property with the given name.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.this[ReadOnlySpan{byte}]"/>
     public JsonElement this[ReadOnlySpan<byte> propertyName]
     {
         get
@@ -63,12 +58,7 @@ public readonly partial struct Schema1
         }
     }
 
-    /// <summary>
-    /// Gets the value of the property with the given name.
-    /// </summary>
-    /// <param name="propertyName">The name of the property.</param>
-    /// <returns>The value of the property with the given name.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.this[ReadOnlySpan{char}]"/>
     public JsonElement this[ReadOnlySpan<char> propertyName]
     {
         get
@@ -83,12 +73,7 @@ public readonly partial struct Schema1
         }
     }
 
-    /// <summary>
-    /// Gets the value of the property with the given name.
-    /// </summary>
-    /// <param name="propertyName">The name of the property.</param>
-    /// <returns>The value of the property with the given name.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.this[string]"/>
     public JsonElement this[string propertyName]
     {
         get
@@ -103,39 +88,21 @@ public readonly partial struct Schema1
         }
     }
 
-    /// <summary>
-    /// Tries to get the value of the property with the given name.
-    /// </summary>
-    /// <param name="propertyName">The name of the property.</param>
-    /// <param name="value">The value of the property, if present.</param>
-    /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.TryGetProperty(ReadOnlySpan{byte}, out JsonElement)"/>
     public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out JsonElement value)
     {
         CheckValidInstance();
         return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
     }
 
-    /// <summary>
-    /// Tries to get the value of the property with the given name.
-    /// </summary>
-    /// <param name="propertyName">The name of the property.</param>
-    /// <param name="value">The value of the property, if present.</param>
-    /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.TryGetProperty(ReadOnlySpan{char}, out JsonElement)"/>
     public bool TryGetProperty(ReadOnlySpan<char> propertyName, out JsonElement value)
     {
         CheckValidInstance();
         return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
     }
 
-    /// <summary>
-    /// Tries to get the value of the property with the given name.
-    /// </summary>
-    /// <param name="propertyName">The name of the property.</param>
-    /// <param name="value">The value of the property, if present.</param>
-    /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.TryGetProperty(string, out JsonElement)"/>
     public bool TryGetProperty(string propertyName, out JsonElement value)
     {
         CheckValidInstance();
@@ -221,20 +188,14 @@ public readonly partial struct Schema1
         }
     }
 
-    /// <summary>
-    /// Gets the number of properties in the object.
-    /// </summary>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.GetPropertyCount()"/>
     public int GetPropertyCount()
     {
         CheckValidInstance();
         return _parent.GetPropertyCount(_idx);
     }
 
-    /// <summary>
-    /// Enumerates the object.
-    /// </summary>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.EnumerateObject()"/>
     public ObjectEnumerator<JsonElement> EnumerateObject()
     {
         CheckValidInstance();
@@ -247,53 +208,25 @@ public readonly partial struct Schema1
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
-    /// <summary>
-    /// Operator ==.
-    /// </summary>
-    /// <param name="left">The lhs of the operator.</param>
-    /// <param name="right">The rhs of the operator.</param>
-    /// <returns>
-    /// <c>True</c> if the values are equal.
-    /// </returns>
+    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.operator ==(JsonElement, JsonElement)"/>
     public static bool operator ==(in Schema1 left, in Schema1 right)
     {
         return left.Equals(right);
     }
 
-    /// <summary>
-    /// Operator !=.
-    /// </summary>
-    /// <param name="left">The lhs of the operator.</param>
-    /// <param name="right">The rhs of the operator.</param>
-    /// <returns>
-    /// <c>True</c> if the values are not equal.
-    /// </returns>
+    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.operator !=(JsonElement, JsonElement)"/>
     public static bool operator !=(in Schema1 left, in Schema1 right)
     {
         return !left.Equals(right);
     }
 
-    /// <summary>
-    /// Operator ==.
-    /// </summary>
-    /// <param name="left">The lhs of the operator.</param>
-    /// <param name="right">The rhs of the operator.</param>
-    /// <returns>
-    /// <c>True</c> if the values are equal.
-    /// </returns>
+    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.operator ==(JsonElement, JsonElement)"/>
     public static bool operator ==(in Schema1 left, in JsonElement right)
     {
         return left.Equals(right);
     }
 
-    /// <summary>
-    /// Operator !=.
-    /// </summary>
-    /// <param name="left">The lhs of the operator.</param>
-    /// <param name="right">The rhs of the operator.</param>
-    /// <returns>
-    /// <c>True</c> if the values are not equal.
-    /// </returns>
+    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.operator !=(JsonElement, JsonElement)"/>
     public static bool operator !=(in Schema1 left, in JsonElement right)
     {
         return !left.Equals(right);
@@ -321,12 +254,7 @@ public readonly partial struct Schema1
         return Schema1.From(instance);
     }
 
-    /// <summary>
-    /// Gets an instance of the JSON value from another element.
-    /// </summary>
-    /// <typeparam name="T">The type of the <see cref="IJsonElement{T}"/> from which to instantiate the instance.</typeparam>
-    /// <param name="instance">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the JSON element.</returns>
+    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.From{T}(in T)"/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Schema1 From<T>(in T instance)
         where T : struct, IJsonElement<T>
@@ -334,23 +262,7 @@ public readonly partial struct Schema1
         return new(instance.ParentDocument, instance.ParentDocumentIndex);
     }
 
-    /// <summary>
-    ///   Parses one JSON value (including objects or arrays) from the provided span.
-    /// </summary>
-    /// <param name="utf8Json">The span to read.</param>
-    /// <param name="options">The <see cref="JsonDocumentOptions"/> for reading.</param>
-    /// <returns>
-    ///   An instance representing the value (and nested values) read from the span.
-    /// </returns>
-    /// <remarks>
-    ///   <para>
-    ///     This method makes a copy of the data the reader acted on, so there is no caller
-    ///     requirement to maintain data integrity beyond the return of this method.
-    ///   </para>
-    /// </remarks>
-    /// <exception cref="JsonException">
-    ///   A value could not be read from the span.
-    /// </exception>
+    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.ParseValue(ReadOnlySpan{byte}, JsonDocumentOptions)"/>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Schema1 ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
@@ -360,23 +272,7 @@ public readonly partial struct Schema1
         #pragma warning restore CS0618
     }
 
-    /// <summary>
-    ///   Parses one JSON value (including objects or arrays) from the provided span.
-    /// </summary>
-    /// <param name="json">The span to read.</param>
-    /// <param name="options">The <see cref="JsonDocumentOptions"/> for reading.</param>
-    /// <returns>
-    ///   An instance representing the value (and nested values) read from the span.
-    /// </returns>
-    /// <remarks>
-    ///   <para>
-    ///     This method makes a copy of the data the reader acted on, so there is no caller
-    ///     requirement to maintain data integrity beyond the return of this method.
-    ///   </para>
-    /// </remarks>
-    /// <exception cref="JsonException">
-    ///   A value could not be read from the span.
-    /// </exception>
+    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.ParseValue(ReadOnlySpan{char}, JsonDocumentOptions)"/>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Schema1 ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
@@ -386,23 +282,7 @@ public readonly partial struct Schema1
         #pragma warning restore CS0618
     }
 
-    /// <summary>
-    ///   Parses one JSON value (including objects or arrays) from the provided text.
-    /// </summary>
-    /// <param name="json">The text to read.</param>
-    /// <param name="options">The <see cref="JsonDocumentOptions"/> for reading.</param>
-    /// <returns>
-    ///   An instance representing the value (and nested values) read from the text.
-    /// </returns>
-    /// <remarks>
-    ///   <para>
-    ///     This method makes a copy of the data the reader acted on, so there is no caller
-    ///     requirement to maintain data integrity beyond the return of this method.
-    ///   </para>
-    /// </remarks>
-    /// <exception cref="JsonException">
-    ///   A value could not be read from the text.
-    /// </exception>
+    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.ParseValue(string, JsonDocumentOptions)"/>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Schema1 ParseValue(string json, JsonDocumentOptions options = default)
@@ -412,41 +292,7 @@ public readonly partial struct Schema1
         #pragma warning restore CS0618
     }
 
-    /// <summary>
-    ///   Parses one JSON value (including objects or arrays) from the provided reader.
-    /// </summary>
-    /// <param name="reader">The reader to read.</param>
-    /// <returns>
-    ///   An instance representing the value (and nested values) read from the reader.
-    /// </returns>
-    /// <remarks>
-    ///   <para>
-    ///     If the <see cref="Utf8JsonReader.TokenType"/> property of <paramref name="reader"/>
-    ///     is <see cref="JsonTokenType.PropertyName"/> or <see cref="JsonTokenType.None"/>, the
-    ///     reader will be advanced by one call to <see cref="Utf8JsonReader.Read"/> to determine
-    ///     the start of the value.
-    ///   </para>
-    ///
-    ///   <para>
-    ///     Upon completion of this method, <paramref name="reader"/> will be positioned at the
-    ///     final token in the JSON value. If an exception is thrown, the reader is reset to
-    ///     the state it was in when the method was called.
-    ///   </para>
-    ///
-    ///   <para>
-    ///     This method makes a copy of the data the reader acted on, so there is no caller
-    ///     requirement to maintain data integrity beyond the return of this method.
-    ///   </para>
-    /// </remarks>
-    /// <exception cref="ArgumentException">
-    ///   <paramref name="reader"/> is using unsupported options.
-    /// </exception>
-    /// <exception cref="ArgumentException">
-    ///   The current <paramref name="reader"/> token does not start or represent a value.
-    /// </exception>
-    /// <exception cref="JsonException">
-    ///   A value could not be read from the reader.
-    /// </exception>
+    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.ParseValue(ref Utf8JsonReader)"/>
     [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
     public static Schema1 ParseValue(ref Utf8JsonReader reader)
     {
@@ -455,44 +301,7 @@ public readonly partial struct Schema1
         #pragma warning restore CS0618
     }
 
-    /// <summary>
-    ///   Attempts to parse one JSON value (including objects or arrays) from the provided reader.
-    /// </summary>
-    /// <param name="reader">The reader to read.</param>
-    /// <param name="result">Receives the parsed element.</param>
-    /// <returns>
-    ///   <see langword="true"/> if a value was read and parsed into a JsonElement;
-    ///   <see langword="false"/> if the reader ran out of data while parsing.
-    ///   All other situations result in an exception being thrown.
-    /// </returns>
-    /// <remarks>
-    ///   <para>
-    ///     If the <see cref="Utf8JsonReader.TokenType"/> property of <paramref name="reader"/>
-    ///     is <see cref="JsonTokenType.PropertyName"/> or <see cref="JsonTokenType.None"/>, the
-    ///     reader will be advanced by one call to <see cref="Utf8JsonReader.Read"/> to determine
-    ///     the start of the value.
-    ///   </para>
-    ///
-    ///   <para>
-    ///     Upon completion of this method, <paramref name="reader"/> will be positioned at the
-    ///     final token in the JSON value.  If an exception is thrown, or <see langword="false"/>
-    ///     is returned, the reader is reset to the state it was in when the method was called.
-    ///   </para>
-    ///
-    ///   <para>
-    ///     This method makes a copy of the data the reader acted on, so there is no caller
-    ///     requirement to maintain data integrity beyond the return of this method.
-    ///   </para>
-    /// </remarks>
-    /// <exception cref="ArgumentException">
-    ///   <paramref name="reader"/> is using unsupported options.
-    /// </exception>
-    /// <exception cref="ArgumentException">
-    ///   The current <paramref name="reader"/> token does not start or represent a value.
-    /// </exception>
-    /// <exception cref="JsonException">
-    ///   A value could not be read from the reader.
-    /// </exception>
+    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.TryParseValue(ref Utf8JsonReader, out JsonElement?)"/>
     public static bool TryParseValue(ref Utf8JsonReader reader, out Schema1? result)
     {
         return JsonElementHelpers.TryParseValue<Schema1>(ref reader, out result);
@@ -506,11 +315,7 @@ public readonly partial struct Schema1
             (obj is null && this.IsNull());
     }
 
-    /// <summary>
-    /// Equality comparison.
-    /// </summary>
-    /// <param name="other">The other item with which to compare.</param>
-    /// <returns><see langword="true"/> if the values were equal.</returns>
+    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Equals{T}(T)"/>
     public bool Equals<T>(in T other)
         where T : struct, IJsonElement
     {
@@ -569,11 +374,7 @@ public readonly partial struct Schema1
         return _parent.ToString(_idx);
     }
 
-    /// <summary>
-    /// Evaluate this instance against the JSON Schema for this type.
-    /// </summary>
-    /// <params name="resultsCollector">The (optional) results collector.</params>
-    /// <returns><see langword="true" /> if the instance evaluates against the schema.</returns>
+    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.EvaluateSchema(IJsonSchemaResultsCollector)"/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool EvaluateSchema(IJsonSchemaResultsCollector? resultsCollector = null)
     {
@@ -610,45 +411,14 @@ public readonly partial struct Schema1
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     JsonValueKind IJsonElement.ValueKind => ValueKind;
 
-    /// <summary>
-    /// Gets a <see cref="Schema1"/> which can be safely stored beyond the lifetime of the
-    /// original document.
-    /// </summary>
-    /// <returns>
-    /// A <see cref="Schema1"/> which can be safely stored beyond the lifetime of the
-    /// original document.
-    /// </returns>
-    /// <remarks>
-    /// <para>
-    /// If this instance is already a clone (its backing document is not disposable),
-    /// this method returns the same instance without additional allocation.
-    /// </para>
-    /// </remarks>
+    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Clone()"/>
     public Schema1 Clone()
     {
         CheckValidInstance();
         return _parent.CloneElement<Schema1>(_idx);
     }
 
-    /// <summary>
-    /// Creates a frozen (immutable) copy of this element if it is backed by a mutable document,
-    /// or returns this instance if it is already immutable.
-    /// </summary>
-    /// <returns>
-    /// An immutable <see cref="Schema1"/> that lives for the lifetime of its
-    /// workspace and its associated documents.
-    /// </returns>
-    /// <remarks>
-    /// <para>
-    /// Unlike <see cref="Clone()"/>, which serializes the element and re-parses it
-    /// into a standalone heap-allocated document, <c>Freeze()</c> performs a cheap
-    /// blit of the metadata and value backing arrays. The resulting element is
-    /// immutable but is only valid for the lifetime of the workspace.
-    /// </para>
-    /// <para>
-    /// If this instance is already backed by an immutable document, it is returned as-is.
-    /// </para>
-    /// </remarks>
+    /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Freeze()"/>
     public Schema1 Freeze()
     {
         CheckValidInstance();

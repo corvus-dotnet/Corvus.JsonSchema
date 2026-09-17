@@ -2326,11 +2326,7 @@ internal static partial class CodeGeneratorExtensions
 
         return generator
             .AppendSeparatorLine()
-            .AppendLineIndent("/// <summary>")
-            .AppendLineIndent("/// Creates and initializes a mutable document from this instance.")
-            .AppendLineIndent("/// </summary>")
-            .AppendLineIndent("/// <param name=\"workspace\">The JSON workspace.</param>")
-            .AppendLineIndent("/// <returns>An instance of a mutable document initialized with this instance.</returns>")
+            .AppendInheritDoc("CreateBuilder(JsonWorkspace)")
             .AppendLineIndent("public JsonDocumentBuilder<", generator.MutableClassName(), "> CreateBuilder(JsonWorkspace workspace)")
             .AppendLineIndent("{")
             .PushIndent()
@@ -5007,9 +5003,7 @@ internal static partial class CodeGeneratorExtensions
 
         generator
             .AppendSeparatorLine()
-            .AppendLineIndent("/// <summary>")
-            .AppendLineIndent("/// Gets a value indicating whether this Source is undefined (uninitialized).")
-            .AppendLineIndent("/// </summary>")
+            .AppendInheritDoc("Source.IsUndefined")
             .AppendLineIndent("public bool IsUndefined => _kind == Kind.Unknown;");
 
         return generator;

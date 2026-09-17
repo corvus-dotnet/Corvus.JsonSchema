@@ -570,16 +570,7 @@ internal static partial class CodeGeneratorExtensions
 
         generator
                 .AppendSeparatorLine()
-                .AppendBlockIndent(
-                """
-                /// <summary>
-                /// Gets the item at the given index.
-                /// </summary>
-                /// <param name="index">The index at which to retrieve the item.</param>
-                /// <returns>The item at the given index.</returns>
-                /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
-                /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-                """)
+                .AppendInheritDoc("this[int]", forMutable)
                 .AppendLineIndent("public ", fqdtn, forMutable ? ".Mutable" : "", " this[int index]")
                 .AppendLineIndent("{")
                 .PushIndent()
@@ -792,10 +783,7 @@ internal static partial class CodeGeneratorExtensions
         return generator
             .AppendSeparatorLine()
             .ReserveName("EnumerateArray")
-            .AppendLineIndent("/// <summary>")
-            .AppendLineIndent("/// Enumerates the array.")
-            .AppendLineIndent("/// </summary>")
-            .AppendLineIndent("/// <exception cref=\"InvalidOperationException\">The value is not an array.</exception>")
+            .AppendInheritDoc("EnumerateArray()", forMutable)
             .AppendLineIndent("public ArrayEnumerator<", fqdtn, "> EnumerateArray()")
             .AppendLineIndent("{")
             .PushIndent()
@@ -826,10 +814,7 @@ internal static partial class CodeGeneratorExtensions
         return generator
             .AppendSeparatorLine()
             .ReserveName("GetArrayLength")
-            .AppendLineIndent("/// <summary>")
-            .AppendLineIndent("/// Gets the array length.")
-            .AppendLineIndent("/// </summary>")
-            .AppendLineIndent("/// <exception cref=\"InvalidOperationException\">The value is not an array.</exception>")
+            .AppendInheritDoc("GetArrayLength()")
             .AppendLineIndent("public int GetArrayLength()")
             .AppendLineIndent("{")
             .PushIndent()

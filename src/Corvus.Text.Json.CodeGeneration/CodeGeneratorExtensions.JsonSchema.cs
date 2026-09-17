@@ -333,11 +333,7 @@ internal static partial class CodeGenerationExtensions
             .AppendSeparatorLine()
             .AppendBlockIndent(
                 $$"""
-                /// <summary>
-                /// Evaluate this instance against the JSON Schema for this type.
-                /// </summary>
-                /// <params name="resultsCollector">The (optional) results collector.</params>
-                /// <returns><see langword="true" /> if the instance evaluates against the schema.</returns>
+                /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.EvaluateSchema(IJsonSchemaResultsCollector)"/>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public bool EvaluateSchema(IJsonSchemaResultsCollector? resultsCollector = null)
                 {

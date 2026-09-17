@@ -25,15 +25,13 @@ internal static partial class CodeGeneratorExtensions
     /// <param name="returnType">The return type of the operator.</param>
     /// <param name="operatorSymbol">The symbol to inject for the operator.</param>
     /// <param name="operatorBody">The body to inject for the operator.</param>
-    /// <param name="returnValueDocumentation">The return value documentation.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendBinaryOperator(
         this CodeGenerator generator,
         TypeDeclaration typeDeclaration,
         string returnType,
         string operatorSymbol,
-        string operatorBody,
-        string returnValueDocumentation)
+        string operatorBody)
     {
         if (generator.IsCancellationRequested)
         {
@@ -42,16 +40,7 @@ internal static partial class CodeGeneratorExtensions
 
         return generator
             .AppendSeparatorLine()
-            .AppendLineIndent("/// <summary>")
-            .AppendIndent("/// Operator ")
-            .Append(operatorSymbol)
-            .AppendLine(".")
-            .AppendLineIndent("/// </summary>")
-            .AppendLineIndent("/// <param name=\"left\">The lhs of the operator.</param>")
-            .AppendLineIndent("/// <param name=\"right\">The rhs of the operator.</param>")
-            .AppendLineIndent("/// <returns>")
-            .AppendBlockIndentWithPrefix(returnValueDocumentation, "/// ")
-            .AppendLineIndent("/// </returns>")
+            .AppendInheritDoc("operator ", operatorSymbol, "(JsonElement, JsonElement)")
             .AppendIndent("public static ")
             .Append(returnType)
             .Append(" operator ")
@@ -78,7 +67,6 @@ internal static partial class CodeGeneratorExtensions
     /// <param name="returnType">The return type of the operator.</param>
     /// <param name="operatorSymbol">The symbol to inject for the operator.</param>
     /// <param name="operatorBody">The body to inject for the operator.</param>
-    /// <param name="returnValueDocumentation">The return value documentation.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendBinaryOperator(
         this CodeGenerator generator,
@@ -86,8 +74,7 @@ internal static partial class CodeGeneratorExtensions
         string rightType,
         string returnType,
         string operatorSymbol,
-        string operatorBody,
-        string returnValueDocumentation)
+        string operatorBody)
     {
         if (generator.IsCancellationRequested)
         {
@@ -96,16 +83,7 @@ internal static partial class CodeGeneratorExtensions
 
         return generator
             .AppendSeparatorLine()
-            .AppendLineIndent("/// <summary>")
-            .AppendIndent("/// Operator ")
-            .Append(operatorSymbol)
-            .AppendLine(".")
-            .AppendLineIndent("/// </summary>")
-            .AppendLineIndent("/// <param name=\"left\">The lhs of the operator.</param>")
-            .AppendLineIndent("/// <param name=\"right\">The rhs of the operator.</param>")
-            .AppendLineIndent("/// <returns>")
-            .AppendBlockIndentWithPrefix(returnValueDocumentation, "/// ")
-            .AppendLineIndent("/// </returns>")
+            .AppendInheritDoc("operator ", operatorSymbol, "(JsonElement, JsonElement)")
             .AppendIndent("public static ")
             .Append(returnType)
             .Append(" operator ")
@@ -132,7 +110,6 @@ internal static partial class CodeGeneratorExtensions
     /// <param name="returnType">The return type of the operator.</param>
     /// <param name="operatorSymbol">The symbol to inject for the operator.</param>
     /// <param name="operatorBody">The body to inject for the operator.</param>
-    /// <param name="returnValueDocumentation">The return value documentation.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendBinaryOperator(
         this CodeGenerator generator,
@@ -140,8 +117,7 @@ internal static partial class CodeGeneratorExtensions
         string rightType,
         string returnType,
         string operatorSymbol,
-        string operatorBody,
-        string returnValueDocumentation)
+        string operatorBody)
     {
         if (generator.IsCancellationRequested)
         {
@@ -150,16 +126,7 @@ internal static partial class CodeGeneratorExtensions
 
         return generator
             .AppendSeparatorLine()
-            .AppendLineIndent("/// <summary>")
-            .AppendIndent("/// Operator ")
-            .Append(operatorSymbol)
-            .AppendLine(".")
-            .AppendLineIndent("/// </summary>")
-            .AppendLineIndent("/// <param name=\"left\">The lhs of the operator.</param>")
-            .AppendLineIndent("/// <param name=\"right\">The rhs of the operator.</param>")
-            .AppendLineIndent("/// <returns>")
-            .AppendBlockIndentWithPrefix(returnValueDocumentation, "/// ")
-            .AppendLineIndent("/// </returns>")
+            .AppendInheritDoc("operator ", operatorSymbol, "(JsonElement, JsonElement)")
             .AppendIndent("public static ")
             .Append(returnType)
             .Append(" operator ")
