@@ -150,6 +150,49 @@ public class JsonSchemaLockFileCliTests
         StringAssert.Contains(refused.StandardOutput, "engine");
     }
 
+    [TestMethod]
+    public async Task ARunWithAnotherCodeGenerationModeIsAConflictUnlessForced()
+    {
+        await this.GenerateAsync("a.json", "A");
+
+        ProcessResult refused = await this.RunAsync("a.json", "A", "--codeGenerationMode SchemaEvaluationOnly");
+
+        Assert.AreEqual(1, refused.ExitCode, refused.CombinedOutput);
+        StringAssert.Contains(refused.StandardOutput, "codeGenerationMode");
+
+        await this.GenerateAsync("a.json", "A", "--codeGenerationMode SchemaEvaluationOnly --force");
+
+        Assert.IsTrue(JsonSchemaLockFile.TryLoad(this.Output, out JsonSchemaLockFileModel lockFile));
+        Assert.AreEqual("SchemaEvaluationOnly", lockFile.CodeGenerationMode.GetString());
+    }
+
+    [TestMethod]
+    public async Task AFailedRunPutsTheLockBackAndKeepsWhatTheFolderHad()
+    {
+        await this.GenerateAsync("a.json", "A", "--engine V4");
+        File.WriteAllText(Path.Combine(this.root, "schemas", "broken.json"), "{ \"type\": ");
+
+        ProcessResult failed = await this.RunAsync("broken.json", "Broken", "--engine V4");
+
+        Assert.AreNotEqual(0, failed.ExitCode, failed.CombinedOutput);
+        StringAssert.Contains(failed.StandardOutput, "restored from backup");
+        Assert.IsTrue(JsonSchemaLockFile.TryLoad(this.Output, out JsonSchemaLockFileModel lockFile));
+        Assert.AreEqual(1, lockFile.Specification.As<GeneratorConfig>().TypesToGenerate.GetArrayLength(), "the lock still describes the first run only");
+        Assert.IsFalse(File.Exists(this.LockPath + ".bak"), "the backup was moved back");
+        Assert.IsTrue(File.Exists(Path.Combine(this.Output, "A.cs")));
+    }
+
+    [TestMethod]
+    public async Task TheV4EngineRecordsTheMapFileItWrites()
+    {
+        string mapFile = Path.Combine(this.root, "generated.map.json");
+
+        await this.GenerateAsync("a.json", "A", $"--engine V4 --outputMapFile \"{mapFile}\"");
+
+        Assert.IsTrue(File.Exists(mapFile));
+        StringAssert.Contains(File.ReadAllText(this.LockPath), "generated.map.json", "the map file is one of the run's generated files");
+    }
+
     private string[] EntryPoints()
     {
         string program = File.ReadAllText(Path.Combine(this.Output, "CorvusJsonSchemaProgram.cs"));

@@ -294,6 +294,46 @@ public class JsonSchemaLockFileTests
         Assert.IsTrue(File.Exists(Path.Combine(this.root, "Outside.cs")), "outside the folder");
     }
 
+    [TestMethod]
+    public void GetOutputPath_IsTheCurrentDirectoryForASchemaNamedWithoutAFolder()
+    {
+        string bareName = "corvusjson-lock-test-" + Guid.NewGuid().ToString("N") + ".json";
+        File.WriteAllText(bareName, "{}");
+        try
+        {
+            GeneratorConfig bare = this.Config(bareName, "A").RemoveProperty("outputPath");
+
+            Assert.AreEqual(Environment.CurrentDirectory, JsonSchemaLockFile.GetOutputPath(bare));
+        }
+        finally
+        {
+            File.Delete(bareName);
+        }
+    }
+
+    [TestMethod]
+    public void DeleteStaleFiles_AcceptsAnOutputPathWithATrailingSeparator()
+    {
+        File.WriteAllText(Path.Combine(this.Output, "Old.cs"), string.Empty);
+        GeneratorConfig spec = this.Recorded(this.A, "A");
+        JsonSchemaLockFileModel previous = JsonSchemaLockFile.Create(spec, Engine.V5, CodeGenerationMode.TypeGeneration, JsonSchemaLockFile.ComputeHashes(spec, this.Output), ["Old.cs"]);
+
+        IReadOnlyList<string> deleted = JsonSchemaLockFile.DeleteStaleFiles(in previous, [], this.Output + Path.DirectorySeparatorChar);
+
+        CollectionAssert.AreEqual(new[] { "Old.cs" }, deleted.ToArray());
+        Assert.IsFalse(File.Exists(Path.Combine(this.Output, "Old.cs")));
+    }
+
+    [TestMethod]
+    public void Merge_ReportsAnOptionWithoutADefaultThatOnlyOneSideSets()
+    {
+        GeneratorConfig recorded = this.Recorded(this.A, "A").RemoveProperty("rootNamespace");
+
+        JsonSchemaLockFile.MergeResult merged = JsonSchemaLockFile.Merge(recorded, this.Recorded(this.B, "B"));
+
+        CollectionAssert.AreEqual(new[] { "rootNamespace" }, merged.Conflicts.ToArray(), "rootNamespace has no default, so a side without it differs from a side with it");
+    }
+
     private static string SchemaFile(GeneratorConfig config, int index)
     {
         return SchemaFiles(config)[index];
