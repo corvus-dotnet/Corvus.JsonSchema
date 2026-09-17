@@ -145,6 +145,29 @@ public class JsonSchemaTypeBuilder(
     }
 
     /// <summary>
+    /// Generates code for the root type declarations, handing each file to the sink as it is completed when the
+    /// provider streams (<see cref="IStreamingLanguageProvider"/>), and feeding the sink from the collection otherwise.
+    /// </summary>
+    /// <param name="languageProvider">The language provider.</param>
+    /// <param name="rootTypeDeclarations">The root type declarations.</param>
+    /// <param name="sink">The sink that receives each file.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    public void GenerateCodeUsing(ILanguageProvider languageProvider, IEnumerable<TypeDeclaration> rootTypeDeclarations, IGeneratedCodeFileSink sink, CancellationToken cancellationToken)
+    {
+        IEnumerable<TypeDeclaration> typeDeclarations = this.PrepareGeneration(languageProvider, rootTypeDeclarations.ToArray(), cancellationToken);
+        if (languageProvider is IStreamingLanguageProvider streamingProvider)
+        {
+            streamingProvider.GenerateCodeFor(typeDeclarations, sink, cancellationToken);
+            return;
+        }
+
+        foreach (GeneratedCodeFile file in languageProvider.GenerateCodeFor(typeDeclarations, cancellationToken))
+        {
+            sink.Add(file);
+        }
+    }
+
+    /// <summary>
     /// Generates code for the types using the given language provider.
     /// </summary>
     /// <param name="languageProvider">The <see cref="ILanguageProvider"/> for which to generate code.</param>
@@ -152,6 +175,13 @@ public class JsonSchemaTypeBuilder(
     /// <param name="rootTypeDeclarations">The root type declarations for which to generate types.</param>
     /// <returns>The <see cref="GeneratedCodeFile"/> collection.</returns>
     public IReadOnlyCollection<GeneratedCodeFile> GenerateCodeUsing(ILanguageProvider languageProvider, CancellationToken cancellationToken, params TypeDeclaration[] rootTypeDeclarations)
+    {
+        return languageProvider.GenerateCodeFor(this.PrepareGeneration(languageProvider, rootTypeDeclarations, cancellationToken), cancellationToken);
+    }
+
+    // The passes every generation runs before a provider emits: ordering comparer, candidates, non-generated
+    // types, parents, names, and the schema program set-up.
+    private IEnumerable<TypeDeclaration> PrepareGeneration(ILanguageProvider languageProvider, TypeDeclaration[] rootTypeDeclarations, CancellationToken cancellationToken)
     {
         // The names that reach generated code (properties, subschemas, documentation keywords) are ordered with the
         // type declaration's comparer, so the provider's comparer is applied to every declaration this builder has built
@@ -195,7 +225,7 @@ public class JsonSchemaTypeBuilder(
             }
         }
 
-        return languageProvider.GenerateCodeFor(typeDeclarations, cancellationToken);
+        return typeDeclarations;
     }
 
     /// <summary>

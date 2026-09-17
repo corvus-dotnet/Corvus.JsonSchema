@@ -218,14 +218,6 @@ public static class GenerationDriverV5
             languageProvider.SetEvaluatorRootTypes([.. typesToGenerate]);
         }
 
-        IReadOnlyCollection<GeneratedCodeFile> generatedCode =
-            typeBuilder.GenerateCodeUsing(
-                languageProvider,
-                typesToGenerate,
-                CancellationToken.None);
-        currentTask.Increment(100);
-        currentTask.StopTask();
-
         string outputPath = generatorConfig.OutputPath?.GetString() ?? fallbackOutputPath ?? Environment.CurrentDirectory;
 
         if (!string.IsNullOrEmpty(outputPath))
@@ -233,9 +225,37 @@ public static class GenerationDriverV5
             Directory.CreateDirectory(outputPath);
         }
 
-        currentTask = await WriteFiles(generatorConfig, context, generatedCode, outputPath, generatedFiles);
+        string? mapFile = await BeginMapFile(generatorConfig, outputPath);
+        if (!string.IsNullOrEmpty(mapFile))
+        {
+            generatedFiles.Add(JsonSchemaLockFile.ToGeneratedFile(mapFile, outputPath));
+        }
 
+        // Each file is written as it ends, into a staging directory that replaces the output only when the whole
+        // generation has succeeded, so the output never holds every file at once and a failure changes nothing.
+        ProgressTask writeTask = context.AddTask("Writing files", autoStart: true, maxValue: 1);
+        StagingFileSink sink = new(outputPath, (index, file, outputFile) =>
+        {
+            context.AddTask($"{file.FileName} [green]({(file.TypeDeclaration is TypeDeclaration t ? t.RelativeSchemaLocation.ToString().EscapeMarkup() : "globals")})[/]", autoStart: true, maxValue: 1).Increment(1);
+            WriteMapFile(mapFile, index, file, outputFile);
+        });
+        try
+        {
+            typeBuilder.GenerateCodeUsing(languageProvider, typesToGenerate, sink, CancellationToken.None);
+            sink.Commit();
+        }
+        catch
+        {
+            sink.Discard();
+            throw;
+        }
+
+        generatedFiles.AddRange(sink.GeneratedFiles);
+        currentTask.Increment(100);
         currentTask.StopTask();
+        await EndMapFile(mapFile);
+        writeTask.Increment(1);
+        writeTask.StopTask();
         outerTask.Increment(100);
         AnsiConsole.MarkupLineInterpolated(System.Globalization.CultureInfo.CurrentCulture, $"Completed in: [green]{outerTask.ElapsedTime?.TotalSeconds}s[/]");
         outerTask.StopTask();
@@ -383,46 +403,7 @@ public static class GenerationDriverV5
         }
     }
 
-    private static async Task<ProgressTask> WriteFiles(GeneratorConfig generatorConfig, ProgressContext context, IReadOnlyCollection<GeneratedCodeFile> generatedCode, string outputPath, List<string> generatedFiles)
-    {
-        ProgressTask currentTask = context.AddTask("Writing files", true, generatedCode.Count);
-
-        HashSet<string> writtenFiles = new(StringComparer.OrdinalIgnoreCase);
-
-        int index = 0;
-
-        string? mapFile = await BeginMapFile(generatorConfig, outputPath);
-        if (!string.IsNullOrEmpty(mapFile))
-        {
-            generatedFiles.Add(JsonSchemaLockFile.ToGeneratedFile(mapFile, outputPath));
-        }
-
-        foreach (GeneratedCodeFile generatedCodeFile in generatedCode)
-        {
-            WriteFile(context, currentTask, outputPath, mapFile, index++, writtenFiles, generatedCodeFile, generatedFiles);
-        }
-
-        await EndMapFile(mapFile);
-
-        return currentTask;
-    }
-
-    private static void WriteFile(ProgressContext context, ProgressTask currentTask, string outputPath, string? mapFile, int index, HashSet<string> writtenFiles, GeneratedCodeFile generatedCodeFile, List<string> generatedFiles)
-    {
-        ProgressTask subtask = context.AddTask($"{generatedCodeFile.FileName} [green]({(generatedCodeFile.TypeDeclaration is TypeDeclaration t ? t.RelativeSchemaLocation.ToString().EscapeMarkup() : "globals")})[/]");
-        currentTask.Increment(1);
-        string outputFile = TruncateFileNameIfRequired(outputPath, writtenFiles, generatedCodeFile);
-
-        GeneratedFileWriter.Write(generatedCodeFile, outputFile);
-        generatedFiles.Add(JsonSchemaLockFile.ToGeneratedFile(outputFile, outputPath));
-
-        WriteMapFile(mapFile, index, generatedCodeFile, outputFile);
-
-        subtask.Increment(100);
-        subtask.StopTask();
-    }
-
-    private static string TruncateFileNameIfRequired(string outputPath, HashSet<string> writtenFiles, GeneratedCodeFile generatedCodeFile)
+    internal static string TruncateFileNameIfRequired(string outputPath, HashSet<string> writtenFiles, GeneratedCodeFile generatedCodeFile)
     {
         string outputFile = Path.Combine(outputPath, generatedCodeFile.FileName);
         string originalFileName = PathTruncator.NormalizePath(outputFile);
@@ -448,7 +429,7 @@ public static class GenerationDriverV5
         return outputFile;
     }
 
-    private static void WriteMapFile(string? mapFile, int index, GeneratedCodeFile generatedCodeFile, string outputFile)
+    internal static void WriteMapFile(string? mapFile, int index, GeneratedCodeFile generatedCodeFile, string outputFile)
     {
         if (!string.IsNullOrEmpty(mapFile))
         {

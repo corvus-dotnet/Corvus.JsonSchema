@@ -38,9 +38,13 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
     private readonly Dictionary<string, Stack<object?>> metadata = new(StringComparer.Ordinal);
     private readonly Dictionary<TypeDeclaration, Dictionary<string, ReadOnlyMemory<char>[]>> generatedFiles = [];
     private readonly CancellationToken cancellationToken = cancellationToken;
+    private readonly HashSet<string> sinkFileNames = new(StringComparer.OrdinalIgnoreCase);
     private int indentationLevel = 0;
     private string? currentFileBuilderName;
     private TypeDeclaration? currentTypeDeclaration;
+    private IGeneratedCodeFileSink? fileSink;
+    private Func<TypeDeclaration, FileNameDescription>? sinkFileNameDescription;
+    private FileNameDescription? currentFileNameDescription;
 
     // We pass this dictionary off to the language provider (indirectly)
     // so we create a new one each type we start a TypeDeclaration.
@@ -206,6 +210,20 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
     }
 
     /// <summary>
+    /// Hands each file to a sink as soon as it ends, named as <see cref="GetGeneratedCodeFiles"/> would name it,
+    /// instead of keeping it until <see cref="GetGeneratedCodeFiles"/> is called (which then returns nothing).
+    /// </summary>
+    /// <param name="sink">The sink.</param>
+    /// <param name="getFileNameDescription">A function which produces a <see cref="FileNameDescription"/> for a <see cref="TypeDeclaration"/>.</param>
+    /// <returns>A reference to this instance after the operation has completed.</returns>
+    public CodeGenerator SetFileSink(IGeneratedCodeFileSink sink, Func<TypeDeclaration, FileNameDescription> getFileNameDescription)
+    {
+        this.fileSink = sink;
+        this.sinkFileNameDescription = getFileNameDescription;
+        return this;
+    }
+
+    /// <summary>
     /// Begin a new type declaration.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration for which to generate code.</param>
@@ -224,6 +242,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
 
         // Set the current type declaration
         this.currentTypeDeclaration = typeDeclaration;
+        this.currentFileNameDescription = null;
 
         // Clear the string builder.
         this.stringBuilder.Clear();
@@ -300,7 +319,21 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
         Debug.Assert(this.currentFileBuilderName == fileSuffix, $"A file has been ended out-of-sequence: {fileSuffix} {currentFileBuilderName}.");
         ////Debug.Assert(this.indentationLevel == 0, $"Mismatched indents in file: {this.indentationLevel}.");
 
-        this.currentTypeDeclarationFiles.Add(this.currentFileBuilderName, this.CaptureChunks());
+        ReadOnlyMemory<char>[] chunks = this.CaptureChunks();
+        if (this.fileSink is { } sink)
+        {
+            // The file is named now, in the order GetGeneratedCodeFiles would have named it (types and their files
+            // end in insertion order), so the names are the same; the dictionary keeps the suffix for the
+            // out-of-sequence checks only.
+            FileNameDescription description = this.currentFileNameDescription ??= this.sinkFileNameDescription!(typeDeclaration);
+            sink.Add(new GeneratedCodeFile(GetFileName(description, this.currentFileBuilderName, this.sinkFileNames), chunks, typeDeclaration));
+            this.currentTypeDeclarationFiles.Add(this.currentFileBuilderName, []);
+        }
+        else
+        {
+            this.currentTypeDeclarationFiles.Add(this.currentFileBuilderName, chunks);
+        }
+
         return this;
     }
 
@@ -2886,7 +2919,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
     /// <returns>The collection of generated code files.</returns>
     public IReadOnlyCollection<GeneratedCodeFile> GetGeneratedCodeFiles(Func<TypeDeclaration, FileNameDescription> getFileNameDescription)
     {
-        if (this.cancellationToken.IsCancellationRequested)
+        if (this.cancellationToken.IsCancellationRequested || this.fileSink is not null)
         {
             return [];
         }
