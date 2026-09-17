@@ -312,7 +312,7 @@ internal sealed class AsyncApiGenerateCommand : AsyncCommand<AsyncApiGenerateSet
                 while (!writtenFiles.Add(outputFile) && counter < 1000);
             }
 
-            await File.WriteAllTextAsync(outputFile, codeFile.FileContent, cancellationToken)
+            await GeneratedFileWriter.WriteAsync(codeFile, outputFile, cancellationToken)
                 .ConfigureAwait(false);
             AnsiConsole.MarkupLine($"  [cyan]Schema type:[/] {outputFile}");
             schemaFileNames.Add(Path.GetFileName(outputFile));

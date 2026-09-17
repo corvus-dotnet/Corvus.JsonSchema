@@ -365,7 +365,7 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
         foreach (GeneratedCodeFile codeFile in generatedCode)
         {
             string filePath = TruncateFileNameIfRequired(outputPath, writtenFiles, codeFile);
-            await File.WriteAllTextAsync(filePath, codeFile.FileContent, cancellationToken)
+            await GeneratedFileWriter.WriteAsync(codeFile, filePath, cancellationToken)
                 .ConfigureAwait(false);
             AnsiConsole.MarkupLine($"  [cyan]Schema type:[/] {filePath}");
             schemaFileNames.Add(Path.GetFileName(filePath));

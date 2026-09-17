@@ -285,7 +285,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
 #if DEBUG
         Dictionary<string, TypeDeclaration> namesSeen = new(StringComparer.Ordinal);
 #endif
-        CodeGenerator generator = new(this, cancellationToken, lineEndSequence: options.LineEndSequence);
+        CodeGenerator generator = new(this, cancellationToken, lineEndSequence: options.LineEndSequence, storeFilesAsStrings: options.StoreFilesAsStrings);
 
         // Generate global simple types first. These have DoNotGenerate=true (so
         // ShouldGenerate returns false and the framework sets their parent to null),
@@ -1122,9 +1122,17 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
         bool emitNativeStringEnums = true,
         bool emitNativeFlagsEnums = true,
         SchemaProgramCompiler? programCompiler = null,
-        bool emitUnions = true)
+        bool emitUnions = true,
+        bool storeFilesAsStrings = false)
     {
         internal bool EmitUnions { get; } = emitUnions;
+
+        /// <summary>
+        /// Gets a value indicating whether each generated file is captured as one string rather than as chunks below
+        /// the large object heap. A host that keeps every file's text alive (the source generator) retains less that
+        /// way; a host that writes files and drops them (the CLI) does better with chunks.
+        /// </summary>
+        internal bool StoreFilesAsStrings { get; } = storeFilesAsStrings;
 
         /// <summary>
         /// Gets the ahead-of-time program compiler, or <see langword="null"/> to emit the schema documents and compile

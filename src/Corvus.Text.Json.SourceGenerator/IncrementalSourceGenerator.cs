@@ -476,7 +476,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
                 emitNativeStringEnums: EmitNativeStringEnums,
                 emitNativeFlagsEnums: EmitNativeFlagsEnums,
                 programCompiler: global::Corvus.Json.CodeGenerator.RuntimeProgramCompiler.CompileWithoutRegexTable,
-                emitUnions: EmitUnions);
+                emitUnions: EmitUnions,
+                storeFilesAsStrings: true);
 
             return options;
         }

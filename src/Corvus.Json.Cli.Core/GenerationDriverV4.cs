@@ -390,11 +390,9 @@ public static class GenerationDriverV4
     {
         ProgressTask subtask = context.AddTask($"{generatedCodeFile.FileName} [green]({(generatedCodeFile.TypeDeclaration is TypeDeclaration t ? t.RelativeSchemaLocation.ToString().EscapeMarkup() : "globals")})[/]");
         currentTask.Increment(1);
-        string source = generatedCodeFile.FileContent;
-
         string outputFile = TruncateFileNameIfRequired(outputPath, writtenFiles, generatedCodeFile);
 
-        File.WriteAllText(outputFile, source);
+        GeneratedFileWriter.Write(generatedCodeFile, outputFile);
         generatedFiles.Add(JsonSchemaLockFile.ToGeneratedFile(outputFile, outputPath));
 
         WriteMapFile(mapFile, index, generatedCodeFile, outputFile);

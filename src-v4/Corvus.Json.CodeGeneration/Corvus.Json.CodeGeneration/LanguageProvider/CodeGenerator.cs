@@ -21,7 +21,8 @@ namespace Corvus.Json.CodeGeneration;
 /// <param name="instancesPerIndent">The instances of the indent character sequence, per indent (defaults to 4).</param>
 /// <param name="indentSequence">The indent character sequence (defaults to ' ' (space).</param>
 /// <param name="lineEndSequence">The line end sequence.</param>
-public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken cancellationToken, int instancesPerIndent = 4, string indentSequence = " ", string lineEndSequence = "\r\n")
+/// <param name="storeFilesAsStrings">Whether each file is captured as one string (for a host that keeps every file alive) rather than as chunks below the large object heap.</param>
+public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken cancellationToken, int instancesPerIndent = 4, string indentSequence = " ", string lineEndSequence = "\r\n", bool storeFilesAsStrings = false)
 {
     private const int MaxCachedIndentLevel = 20;
 
@@ -35,7 +36,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
     private readonly Dictionary<string, HashSet<string>> memberNamesByScope = new(StringComparer.Ordinal);
     private readonly Stack<ScopeValue> scope = [];
     private readonly Dictionary<string, Stack<object?>> metadata = new(StringComparer.Ordinal);
-    private readonly Dictionary<TypeDeclaration, Dictionary<string, string>> generatedFiles = [];
+    private readonly Dictionary<TypeDeclaration, Dictionary<string, ReadOnlyMemory<char>[]>> generatedFiles = [];
     private readonly CancellationToken cancellationToken = cancellationToken;
     private int indentationLevel = 0;
     private string? currentFileBuilderName;
@@ -43,7 +44,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
 
     // We pass this dictionary off to the language provider (indirectly)
     // so we create a new one each type we start a TypeDeclaration.
-    private Dictionary<string, string>? currentTypeDeclarationFiles;
+    private Dictionary<string, ReadOnlyMemory<char>[]>? currentTypeDeclarationFiles;
 
     /// <summary>
     /// Gets or sets the capacity of the <see cref="CodeGenerator"/>.
@@ -299,8 +300,44 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
         Debug.Assert(this.currentFileBuilderName == fileSuffix, $"A file has been ended out-of-sequence: {fileSuffix} {currentFileBuilderName}.");
         ////Debug.Assert(this.indentationLevel == 0, $"Mismatched indents in file: {this.indentationLevel}.");
 
-        this.currentTypeDeclarationFiles.Add(this.currentFileBuilderName, this.ToString());
+        this.currentTypeDeclarationFiles.Add(this.currentFileBuilderName, this.CaptureChunks());
         return this;
+    }
+
+    /// <summary>
+    /// Copies the builder into chunks of at most <see cref="GeneratedCodeFile.ChunkSize"/> characters, so that a
+    /// file never becomes one large-object-heap string unless a consumer asks for
+    /// <see cref="GeneratedCodeFile.FileContent"/>; or, when the host asked for strings (a host that keeps every
+    /// file's text for the process lifetime, such as the source generator, retains less with one string per file than
+    /// with chunks that the collector promotes), into one string, which <see cref="GeneratedCodeFile.FileContent"/>
+    /// then returns without a copy.
+    /// </summary>
+    /// <returns>The chunks, in order.</returns>
+    private ReadOnlyMemory<char>[] CaptureChunks()
+    {
+        int length = this.stringBuilder.Length;
+        if (length == 0)
+        {
+            return [];
+        }
+
+        if (storeFilesAsStrings)
+        {
+            return [this.stringBuilder.ToString().AsMemory()];
+        }
+
+        int chunkCount = (length + GeneratedCodeFile.ChunkSize - 1) / GeneratedCodeFile.ChunkSize;
+        ReadOnlyMemory<char>[] chunks = new ReadOnlyMemory<char>[chunkCount];
+        for (int i = 0; i < chunkCount; i++)
+        {
+            int start = i * GeneratedCodeFile.ChunkSize;
+            int count = Math.Min(GeneratedCodeFile.ChunkSize, length - start);
+            char[] buffer = new char[count];
+            this.stringBuilder.CopyTo(start, buffer, 0, count);
+            chunks[i] = buffer;
+        }
+
+        return chunks;
     }
 
     /// <summary>
@@ -2857,10 +2894,10 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
         List<GeneratedCodeFile> generatedCode = [];
         HashSet<string> uniqueFileNames = new(StringComparer.OrdinalIgnoreCase);
 
-        foreach (KeyValuePair<TypeDeclaration, Dictionary<string, string>> kvp in this.generatedFiles)
+        foreach (KeyValuePair<TypeDeclaration, Dictionary<string, ReadOnlyMemory<char>[]>> kvp in this.generatedFiles)
         {
             FileNameDescription fileNameDescription = getFileNameDescription(kvp.Key);
-            foreach (KeyValuePair<string, string> fileAndContent in kvp.Value)
+            foreach (KeyValuePair<string, ReadOnlyMemory<char>[]> fileAndContent in kvp.Value)
             {
                 generatedCode.Add(
                     new(
