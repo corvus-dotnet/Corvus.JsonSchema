@@ -53,7 +53,7 @@ public static class TypeDeclarationExtensions
     /// <returns><see langword="true"/> if the type is a Corvus extended JSON type.</returns>
     public static bool IsCorvusJsonExtendedType(this TypeDeclaration typeDeclaration)
     {
-        return typeDeclaration.DotnetNamespace() == "Corvus.Json" && typeDeclaration.DotnetTypeName().StartsWith("Json");
+        return typeDeclaration.DotnetNamespace() == "Corvus.Json" && typeDeclaration.DotnetTypeName().StartsWith("Json", System.StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -66,7 +66,7 @@ public static class TypeDeclarationExtensions
     {
         if (typeDeclaration.DotnetNamespace() == "Corvus.Json")
         {
-            if (typeDeclaration.DotnetTypeName().StartsWith("Json"))
+            if (typeDeclaration.DotnetTypeName().StartsWith("Json", System.StringComparison.Ordinal))
             {
                 extendedTypeName = typeDeclaration.DotnetTypeName();
                 return true;

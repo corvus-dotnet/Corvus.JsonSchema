@@ -10,6 +10,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -72,12 +73,9 @@ internal static partial class CodeGenerationExtensions
 
         generator
             .AppendSeparatorLine()
-            .AppendLineIndent("/// <summary>")
-            .AppendLineIndent("/// Provides accesors for enumerated values")
-            .AppendLineIndent("/// </summary>")
             .BeginPrivateStaticClassDeclaration(generator.ConstantsClassName());
 
-        foreach (KeyValuePair<IValidationConstantProviderKeyword, JsonElement[]> constant in requiredConstants.OrderBy(k => k.Key.Keyword))
+        foreach (KeyValuePair<IValidationConstantProviderKeyword, JsonElement[]> constant in requiredConstants.OrderBy(k => k.Key.Keyword, StringComparer.Ordinal))
         {
             if (generator.IsCancellationRequested)
             {
@@ -189,7 +187,7 @@ internal static partial class CodeGenerationExtensions
             .AppendLineIndent("/// </summary>")
             .BeginPublicStaticClassDeclaration(generator.EnumValuesClassName());
 
-        foreach (KeyValuePair<IAnyOfConstantValidationKeyword, JsonElement[]> kvp in anyOfConstants.OrderBy(k => k.Key.Keyword))
+        foreach (KeyValuePair<IAnyOfConstantValidationKeyword, JsonElement[]> kvp in anyOfConstants.OrderBy(k => k.Key.Keyword, StringComparer.Ordinal))
         {
             if (generator.IsCancellationRequested)
             {
@@ -214,7 +212,7 @@ internal static partial class CodeGenerationExtensions
                     return generator;
                 }
 
-                string? suffix = addSuffix ? elementIndex.ToString() : null;
+                string? suffix = addSuffix ? elementIndex.ToString(CultureInfo.InvariantCulture) : null;
 
                 AppendEnumValueProperty(generator, typeDeclaration, value, keywordName, suffix, constantsClassName, constantsScope, enumValuesScope, dotnetTypeName);
 
@@ -401,7 +399,7 @@ internal static partial class CodeGenerationExtensions
 
         Debug.Assert(value.ValueKind == JsonValueKind.Array, "The value must be an array.");
 
-        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
+        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString(CultureInfo.InvariantCulture));
 
         // The constant is materialised by calling the generated type's own ParseValue, which
         // is emitted with [Obsolete] to steer consumers towards pooled parsing. This use is
@@ -434,7 +432,7 @@ internal static partial class CodeGenerationExtensions
 
         Debug.Assert(value.ValueKind == JsonValueKind.Object, "The value must be an object.");
 
-        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
+        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString(CultureInfo.InvariantCulture));
 
         // The constant is materialised by calling the generated type's own ParseValue, which
         // is emitted with [Obsolete] to steer consumers towards pooled parsing. This use is
@@ -467,7 +465,7 @@ internal static partial class CodeGenerationExtensions
 
         Debug.Assert(value.ValueKind == JsonValueKind.Null, "The value must be null.");
 
-        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
+        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString(CultureInfo.InvariantCulture));
 
         generator
             .AppendLineIndent("/// <summary>")
@@ -489,7 +487,7 @@ internal static partial class CodeGenerationExtensions
 
         Debug.Assert(value.ValueKind == JsonValueKind.True || value.ValueKind == JsonValueKind.False, "The value must be a boolean.");
 
-        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
+        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString(CultureInfo.InvariantCulture));
 
         generator
             .AppendLineIndent("/// <summary>")
@@ -511,8 +509,8 @@ internal static partial class CodeGenerationExtensions
 
         Debug.Assert(value.ValueKind == JsonValueKind.String, "The value must be a string.");
 
-        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
-        string jsonMemberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: $"Json{index?.ToString()}");
+        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString(CultureInfo.InvariantCulture));
+        string jsonMemberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: $"Json{index?.ToString(CultureInfo.InvariantCulture)}");
 
         generator
             .AppendLineIndent("/// <summary>")
@@ -542,8 +540,8 @@ internal static partial class CodeGenerationExtensions
 
         Debug.Assert(value.ValueKind == JsonValueKind.Number, "The value must be a number.");
 
-        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
-        string jsonMemberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: $"Json{index?.ToString()}");
+        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString(CultureInfo.InvariantCulture));
+        string jsonMemberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: $"Json{index?.ToString(CultureInfo.InvariantCulture)}");
 
 #if BUILDING_SOURCE_GENERATOR
         JsonElementHelpers.ParseNumber(Encoding.UTF8.GetBytes(value.GetRawText()), out bool isNegative, out ReadOnlySpan<byte> integral, out ReadOnlySpan<byte> fractional, out int exponent);
@@ -556,7 +554,7 @@ internal static partial class CodeGenerationExtensions
             .AppendLineIndent("/// </summary>")
             .AppendIndent("public static readonly NormalizedJsonNumber ")
             .Append(memberName)
-            .AppendLine(" = new(", isNegative ? "true" : "false", ", [..\"", Encoding.UTF8.GetString(integral.ToArray()), "\"u8], [..\"", Encoding.UTF8.GetString(fractional.ToArray()), "\"u8], ", exponent.ToString(), ");");
+            .AppendLine(" = new(", isNegative ? "true" : "false", ", [..\"", Encoding.UTF8.GetString(integral.ToArray()), "\"u8], [..\"", Encoding.UTF8.GetString(fractional.ToArray()), "\"u8], ", exponent.ToString(CultureInfo.InvariantCulture), ");");
 
         generator
             .AppendLineIndent("/// <summary>")

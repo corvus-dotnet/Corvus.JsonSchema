@@ -14,6 +14,13 @@ namespace Corvus.Json.CodeGeneration;
 public class TypeBuilderContext
 {
     private readonly Stack<JsonSchemaScope> scopeStack = new();
+
+    // The subschema location of the scope at each depth of the stack, computed on first use after
+    // that scope was pushed; a scope's location and pointer never change while it is on the stack.
+    private readonly List<JsonReference?> subschemaLocations = [];
+
+    // The scope stack from the root outwards, rebuilt only after the stack changes.
+    private JsonSchemaScope[]? reversedStack;
     private readonly Dictionary<string, TypeDeclaration> locatedTypeDeclarations;
     private readonly JsonReference baseLocation;
 
@@ -30,7 +37,7 @@ public class TypeBuilderContext
         LocatedSchema rootLocatedSchema,
         JsonReference baseLocation)
     {
-        this.scopeStack.Push((rootLocatedSchema.Location, new JsonReference("#"), rootLocatedSchema, ImmutableList<(JsonReference Location, TypeDeclaration Type)>.Empty));
+        this.PushScope((rootLocatedSchema.Location, new JsonReference("#"), rootLocatedSchema, ImmutableList<(JsonReference Location, TypeDeclaration Type)>.Empty));
         this.SchemaRegistry = schemaRegistry;
         this.RootLocatedSchema = rootLocatedSchema;
         this.locatedTypeDeclarations = locatedTypeDeclarations;
@@ -45,7 +52,22 @@ public class TypeBuilderContext
     /// <summary>
     /// Gets the document location for the given subschema.
     /// </summary>
-    public JsonReference SubschemaLocation => this.Scope.Location.Apply(this.Scope.Pointer);
+    public JsonReference SubschemaLocation
+    {
+        get
+        {
+            int depth = this.scopeStack.Count - 1;
+            if (this.subschemaLocations[depth] is JsonReference cached)
+            {
+                return cached;
+            }
+
+            JsonSchemaScope scope = this.scopeStack.Peek();
+            JsonReference location = scope.Location.Apply(scope.Pointer);
+            this.subschemaLocations[depth] = location;
+            return location;
+        }
+    }
 
     /// <summary>
     /// Gets the root schema for the context.
@@ -55,7 +77,7 @@ public class TypeBuilderContext
     /// <summary>
     /// Gets the reversed scope stack.
     /// </summary>
-    public IEnumerable<JsonSchemaScope> ReversedStack => this.scopeStack.Reverse();
+    public IEnumerable<JsonSchemaScope> ReversedStack => this.reversedStack ??= ReverseOf(this.scopeStack);
 
     /// <summary>
     /// Gets the scope stack.
@@ -113,6 +135,7 @@ public class TypeBuilderContext
     public JsonSchemaScope LeaveScope()
     {
         JsonSchemaScope currentScope = this.scopeStack.Pop();
+        this.reversedStack = null;
 
         // As we pop the scope, put any types that were dynamically replaced with the original values.
         foreach ((JsonReference location, TypeDeclaration type) in currentScope.ReplacedDynamicTypes)
@@ -132,7 +155,7 @@ public class TypeBuilderContext
         Debug.Assert(!pointer.HasUri, "The pointer must not have a URI.");
         Debug.Assert(pointer.HasFragment, "The pointer must have a fragment.");
         JsonSchemaScope currentScope = this.scopeStack.Peek();
-        this.scopeStack.Push((currentScope.Location, pointer, currentScope.LocatedSchema, ImmutableList<(JsonReference Location, TypeDeclaration Type)>.Empty));
+        this.PushScope((currentScope.Location, pointer, currentScope.LocatedSchema, ImmutableList<(JsonReference Location, TypeDeclaration Type)>.Empty));
     }
 
     /// <summary>
@@ -172,7 +195,7 @@ public class TypeBuilderContext
         }
 
         JsonReference currentLocation = this.SubschemaLocation;
-        this.scopeStack.Push(
+        this.PushScope(
             (newScopeLocation,
             newScopePath,
             typeDeclaration.LocatedSchema,
@@ -216,7 +239,7 @@ public class TypeBuilderContext
     /// <param name="subschemaPointer">The pointer to the subschema.</param>
     public void EnterReferenceScope(JsonReference referenceBaseLocation, LocatedSchema baseSchema, JsonReference subschemaPointer)
     {
-        this.scopeStack.Push((referenceBaseLocation, subschemaPointer, baseSchema, ImmutableList<(JsonReference Location, TypeDeclaration Type)>.Empty));
+        this.PushScope((referenceBaseLocation, subschemaPointer, baseSchema, ImmutableList<(JsonReference Location, TypeDeclaration Type)>.Empty));
     }
 
     /// <summary>
@@ -302,8 +325,9 @@ public class TypeBuilderContext
     /// <param name="typeDeclaration">The type declaration with which to replace it.</param>
     public void ReplaceLocatedTypeDeclaration(JsonReference location, TypeDeclaration typeDeclaration)
     {
-        this.locatedTypeDeclarations.Remove(location);
-        this.locatedTypeDeclarations.Add(location, typeDeclaration);
+        string key = location;
+        this.locatedTypeDeclarations.Remove(key);
+        this.locatedTypeDeclarations.Add(key, typeDeclaration);
     }
 
     /// <summary>
@@ -314,7 +338,11 @@ public class TypeBuilderContext
     /// <returns>The located type declaration.</returns>
     public bool TryGetLocatedTypeDeclaration(JsonReference location, [NotNullWhen(true)] out TypeDeclaration? typeDeclaration)
     {
+#if NET9_0_OR_GREATER
+        return this.FindOrRemoveLocatedTypeDeclaration(location, remove: false, out typeDeclaration);
+#else
         return this.locatedTypeDeclarations.TryGetValue(location, out typeDeclaration);
+#endif
     }
 
     /// <summary>
@@ -353,7 +381,11 @@ public class TypeBuilderContext
     /// <param name="subschemaLocation">The subschema location at which to remove the type declaration.</param>
     public void RemoveLocatedTypeDeclaration(JsonReference subschemaLocation)
     {
+#if NET9_0_OR_GREATER
+        this.FindOrRemoveLocatedTypeDeclaration(subschemaLocation, remove: true, out _);
+#else
         this.locatedTypeDeclarations.Remove(subschemaLocation);
+#endif
     }
 
     /// <summary>
@@ -365,6 +397,7 @@ public class TypeBuilderContext
     {
         // We pop the item off the stack, update its replaced dynamic types, and push it back on.
         JsonSchemaScope currentScope = this.scopeStack.Pop();
+        this.reversedStack = null;
         this.scopeStack.Push(new(currentScope.Location, currentScope.Pointer, currentScope.LocatedSchema, currentScope.ReplacedDynamicTypes.Add((subschemaLocation, previousDeclaration))));
     }
 
@@ -487,6 +520,79 @@ public class TypeBuilderContext
 
         return relative;
     }
+
+    private static JsonSchemaScope[] ReverseOf(Stack<JsonSchemaScope> stack)
+    {
+        // Stack<T>.ToArray() lists the top of the stack first.
+        JsonSchemaScope[] result = stack.ToArray();
+        Array.Reverse(result);
+        return result;
+    }
+
+    private void PushScope(JsonSchemaScope scope)
+    {
+        this.scopeStack.Push(scope);
+        this.reversedStack = null;
+        int depth = this.scopeStack.Count - 1;
+        if (depth < this.subschemaLocations.Count)
+        {
+            this.subschemaLocations[depth] = null;
+        }
+        else
+        {
+            this.subschemaLocations.Add(null);
+        }
+    }
+
+#if NET9_0_OR_GREATER
+    /// <summary>
+    /// Finds (or removes) a located type declaration through the string-keyed table's span lookup, so the
+    /// lookup does not allocate a string for the location.
+    /// </summary>
+    private bool FindOrRemoveLocatedTypeDeclaration(JsonReference location, bool remove, [NotNullWhen(true)] out TypeDeclaration? typeDeclaration)
+    {
+        if (!this.locatedTypeDeclarations.TryGetAlternateLookup(out Dictionary<string, TypeDeclaration>.AlternateLookup<ReadOnlySpan<char>> lookup))
+        {
+            string key = location;
+            return remove
+                ? this.locatedTypeDeclarations.Remove(key, out typeDeclaration)
+                : this.locatedTypeDeclarations.TryGetValue(key, out typeDeclaration);
+        }
+
+        // The URI (everything before the '#') and the fragment (from the '#') together are the whole reference.
+        ReadOnlySpan<char> uri = location.Uri;
+        ReadOnlySpan<char> fragment = location.Fragment;
+        if (fragment.IsEmpty)
+        {
+            return remove
+                ? lookup.Remove(uri, out _, out typeDeclaration)
+                : lookup.TryGetValue(uri, out typeDeclaration);
+        }
+
+        const int StackBufferLength = 256;
+        int length = uri.Length + fragment.Length;
+        char[]? rented = null;
+        Span<char> buffer = length <= StackBufferLength
+            ? stackalloc char[StackBufferLength]
+            : (rented = System.Buffers.ArrayPool<char>.Shared.Rent(length));
+        try
+        {
+            uri.CopyTo(buffer);
+            fragment.CopyTo(buffer[uri.Length..]);
+            ReadOnlySpan<char> key = buffer[..length];
+            return remove
+                ? lookup.Remove(key, out _, out typeDeclaration)
+                : lookup.TryGetValue(key, out typeDeclaration);
+        }
+        finally
+        {
+            if (rented is not null)
+            {
+                System.Buffers.ArrayPool<char>.Shared.Return(rented);
+            }
+        }
+    }
+#endif
 
     /// <summary>
     /// Gets reference for the target location relative to the base location.

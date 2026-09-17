@@ -27,13 +27,39 @@ internal static class RuntimeProgramGenerator
     /// </summary>
     /// <param name="key">The absolute URI the document is registered under.</param>
     /// <param name="json">The document text.</param>
-    public sealed class SchemaDocumentSource(string key, string json)
+    public sealed class SchemaDocumentSource
     {
-        /// <summary>Gets the absolute URI the document is registered under.</summary>
-        public string Key { get; } = key;
+        private string? json;
+        private ReadOnlyMemory<byte>? utf8Json;
 
-        /// <summary>Gets the document text.</summary>
-        public string Json { get; } = json;
+        /// <summary>Initializes a new instance of the <see cref="SchemaDocumentSource"/> class from the document text.</summary>
+        /// <param name="key">The absolute URI the document is registered under.</param>
+        /// <param name="json">The document text.</param>
+        public SchemaDocumentSource(string key, string json)
+        {
+            this.Key = key;
+            this.json = json;
+        }
+
+        /// <summary>Initializes a new instance of the <see cref="SchemaDocumentSource"/> class from the document's UTF-8 text.</summary>
+        /// <param name="key">The absolute URI the document is registered under.</param>
+        /// <param name="utf8Json">The document's UTF-8 text.</param>
+        public SchemaDocumentSource(string key, ReadOnlyMemory<byte> utf8Json)
+        {
+            this.Key = key;
+            this.utf8Json = utf8Json;
+        }
+
+        /// <summary>Gets the absolute URI the document is registered under.</summary>
+        public string Key { get; }
+
+        /// <summary>Gets the document text (decoded on first use for a UTF-8 source).</summary>
+        public string Json => this.json ??= System.Runtime.InteropServices.MemoryMarshal.TryGetArray(this.utf8Json!.Value, out ArraySegment<byte> segment)
+            ? Encoding.UTF8.GetString(segment.Array!, segment.Offset, segment.Count)
+            : Encoding.UTF8.GetString(this.utf8Json!.Value.ToArray());
+
+        /// <summary>Gets the document's UTF-8 text (encoded on first use for a text source).</summary>
+        public ReadOnlyMemory<byte> Utf8Json => this.utf8Json ??= Encoding.UTF8.GetBytes(this.json!);
     }
 
     /// <summary>
@@ -101,8 +127,79 @@ internal static class RuntimeProgramGenerator
         return "{\"$ref\": " + System.Text.Json.JsonSerializer.Serialize(key + fragment) + "}";
     }
 
+    /// <summary>
+    /// Re-keys a document that is only a <c>$ref</c> to another document, as <see cref="MapReferenceDocument(string, IReadOnlyDictionary{string, string})"/>
+    /// does, working on the document's UTF-8 text.
+    /// </summary>
+    /// <param name="utf8Json">The document's UTF-8 text.</param>
+    /// <param name="keys">The document keys.</param>
+    /// <returns>The document, or a re-keyed sole reference.</returns>
+    public static ReadOnlyMemory<byte> MapReferenceDocument(ReadOnlyMemory<byte> utf8Json, IReadOnlyDictionary<string, string> keys)
+    {
+        string? reference = TryGetSoleReference(utf8Json.Span);
+        if (reference is null)
+        {
+            return utf8Json;
+        }
+
+        int hash = reference.IndexOf('#');
+        string document = hash < 0 ? reference : reference.Substring(0, hash);
+        string fragment = hash < 0 ? string.Empty : reference.Substring(hash);
+        if (!TryMapDocument(document, keys, out string? key) || key == document)
+        {
+            return utf8Json;
+        }
+
+        return Encoding.UTF8.GetBytes("{\"$ref\": " + System.Text.Json.JsonSerializer.Serialize(key + fragment) + "}");
+    }
+
+    /// <summary>
+    /// The UTF-8 form of <see cref="TryGetSoleReference(string)"/>: the reference if the document is an object with a single
+    /// property, <c>$ref</c>, whose value is a string. A reader stops at the second property instead of parsing the whole
+    /// document; a document with one property is still read to its end, so an invalid one gives <see langword="null"/> as the parse did.
+    /// </summary>
+    private static string? TryGetSoleReference(ReadOnlySpan<byte> utf8Json)
+    {
+        try
+        {
+            System.Text.Json.Utf8JsonReader reader = new(utf8Json);
+            if (!reader.Read() || reader.TokenType != System.Text.Json.JsonTokenType.StartObject ||
+                !reader.Read() || reader.TokenType != System.Text.Json.JsonTokenType.PropertyName)
+            {
+                return null;
+            }
+
+            bool isReference = reader.ValueTextEquals("$ref"u8);
+            if (!reader.Read())
+            {
+                return null;
+            }
+
+            string? reference = isReference && reader.TokenType == System.Text.Json.JsonTokenType.String ? reader.GetString() : null;
+            reader.Skip();
+            if (!reader.Read() || reader.TokenType != System.Text.Json.JsonTokenType.EndObject)
+            {
+                return null;
+            }
+
+            return reader.Read() ? null : reference;
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return null;
+        }
+    }
+
     private static string? TryGetSoleReference(string json)
     {
+        // A document with a second top-level property is never a sole reference. Schema documents almost
+        // always show that within their first property, so detect it by scanning a few tokens rather than
+        // parsing the whole document again (this runs for every schema document of every generation).
+        if (HasSecondTopLevelProperty(json))
+        {
+            return null;
+        }
+
         try
         {
             using System.Text.Json.JsonDocument document = System.Text.Json.JsonDocument.Parse(json);
@@ -128,6 +225,91 @@ internal static class RuntimeProgramGenerator
         catch (System.Text.Json.JsonException)
         {
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Determines, without parsing the whole document, whether a JSON document is an object whose first
+    /// property (with a string or literal value) is followed by another property.
+    /// </summary>
+    /// <remarks>
+    /// Returns <see langword="false"/> whenever it cannot tell (a nested first value, anything unexpected), leaving
+    /// the answer to the full parse. It returns <see langword="true"/> only for <c>{ "name": value ,</c>, which a
+    /// valid document can only continue with a second property, so <see cref="TryGetSoleReference(string)"/> returns
+    /// <see langword="null"/> exactly as the full parse would (and an invalid document is <see langword="null"/> either way).
+    /// </remarks>
+    private static bool HasSecondTopLevelProperty(string json)
+    {
+        int i = SkipWhiteSpace(json, 0);
+        if (i >= json.Length || json[i] != '{')
+        {
+            return false;
+        }
+
+        i = SkipWhiteSpace(json, i + 1);
+        if (i >= json.Length || json[i] != '"' || (i = SkipString(json, i)) < 0)
+        {
+            return false;
+        }
+
+        i = SkipWhiteSpace(json, i);
+        if (i >= json.Length || json[i] != ':')
+        {
+            return false;
+        }
+
+        i = SkipWhiteSpace(json, i + 1);
+        if (i >= json.Length || json[i] == '{' || json[i] == '[')
+        {
+            return false;
+        }
+
+        if (json[i] == '"')
+        {
+            if ((i = SkipString(json, i)) < 0)
+            {
+                return false;
+            }
+        }
+        else
+        {
+            while (i < json.Length && json[i] != ',' && json[i] != '}' && !IsJsonWhiteSpace(json[i]))
+            {
+                i++;
+            }
+        }
+
+        i = SkipWhiteSpace(json, i);
+        return i < json.Length && json[i] == ',';
+
+        static int SkipWhiteSpace(string text, int index)
+        {
+            while (index < text.Length && IsJsonWhiteSpace(text[index]))
+            {
+                index++;
+            }
+
+            return index;
+        }
+
+        static bool IsJsonWhiteSpace(char c) => c is ' ' or '\t' or '\n' or '\r';
+
+        // Returns the index after the closing quote of the string starting at index, or -1.
+        static int SkipString(string text, int index)
+        {
+            for (int j = index + 1; j < text.Length; j++)
+            {
+                if (text[j] == '\\')
+                {
+                    j++;
+                }
+                else if (text[j] == '"')
+                {
+                    return j + 1;
+                }
+            }
+
+            return -1;
         }
     }
 
@@ -220,14 +402,7 @@ internal static class RuntimeProgramGenerator
             sb.Append(text).Append(lineEnd);
         }
 
-        Line("//------------------------------------------------------------------------------");
-        Line("// <auto-generated>");
-        Line("//     This code was generated by a tool.");
-        Line("//");
-        Line("//     Changes to this file may cause incorrect behavior and will be lost if");
-        Line("//     the code is regenerated.");
-        Line("// </auto-generated>");
-        Line("//------------------------------------------------------------------------------");
+        Line(CodeGeneratorExtensions.AutoGeneratedHeader);
         Line("#nullable enable");
         Line("#pragma warning disable");
         Line();
@@ -268,12 +443,9 @@ internal static class RuntimeProgramGenerator
         Line($"    private static readonly JsonSchemaEvaluator?[] Evaluators = new JsonSchemaEvaluator?[{entryPoints.Count}];");
         Line("    private static JsonSchemaEvaluator? root;");
         Line();
-        Line("    /// <summary>");
-        Line("    /// Gets the evaluator for an entry point, compiling it on first use. Entry points share one compiled");
-        Line("    /// program, so each subschema is compiled once however many entry points reach it.");
-        Line("    /// </summary>");
-        Line("    /// <param name=\"index\">The entry point index.</param>");
-        Line("    /// <returns>The evaluator rooted at that entry point.</returns>");
+
+        // Entry points share one compiled program, so each subschema is compiled once however many entry points
+        // reach it; the evaluator for an entry point is compiled on first use.
         Line("    internal static JsonSchemaEvaluator Entry(int index)");
         Line("    {");
         Line("        return Evaluators[index] ?? Create(index);");
@@ -496,14 +668,7 @@ internal static class RuntimeProgramGenerator
             sb.Append(text).Append(lineEnd);
         }
 
-        Line("//------------------------------------------------------------------------------");
-        Line("// <auto-generated>");
-        Line("//     This code was generated by a tool.");
-        Line("//");
-        Line("//     Changes to this file may cause incorrect behavior and will be lost if");
-        Line("//     the code is regenerated.");
-        Line("// </auto-generated>");
-        Line("//------------------------------------------------------------------------------");
+        Line(CodeGeneratorExtensions.AutoGeneratedHeader);
         Line("#nullable enable");
         Line("#pragma warning disable");
         Line();

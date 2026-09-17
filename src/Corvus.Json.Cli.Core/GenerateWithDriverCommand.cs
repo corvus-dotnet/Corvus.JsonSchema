@@ -32,7 +32,7 @@ internal class GenerateWithDriverCommand : AsyncCommand<GenerateWithDriverComman
             config = config.SetProperty("defaultAccessibility", new JsonString(defaultAccessibility.ToString()));
         }
 
-        return GenerationDriver.GenerateTypes(config, engine, settings.CodeGenerationMode, cancellationToken);
+        return GenerationDriver.GenerateTypes(config, engine, settings.CodeGenerationMode, settings.Force, cancellationToken);
     }
 
     /// <summary>
@@ -57,5 +57,10 @@ internal class GenerateWithDriverCommand : AsyncCommand<GenerateWithDriverComman
         [CommandOption("--defaultAccessibility")]
         [Description("Overrides the default accessibility for generated top-level types. Supported values: Public, Internal.")]
         public CodeGeneration.GeneratedTypeAccessibility? DefaultAccessibility { get; init; }
+
+        [CommandOption("--force")]
+        [Description("Regenerate even when the output folder's corvusjson-jsonschema.lock says nothing changed, and apply this run's options to everything the folder was generated from even when they differ from the lock's.")]
+        [DefaultValue(false)]
+        public bool Force { get; init; }
     }
 }

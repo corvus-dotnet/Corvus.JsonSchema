@@ -138,6 +138,11 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [CommandOption("--codeGenerationMode")]
         [DefaultValue(CodeGenerationMode.TypeGeneration)]
         public CodeGenerationMode CodeGenerationMode { get; init; }
+
+        [CommandOption("--force")]
+        [Description("Regenerate even when the output folder's corvusjson-jsonschema.lock says nothing changed, and apply this run's options to everything the folder was generated from even when they differ from the lock's.")]
+        [DefaultValue(false)]
+        public bool Force { get; init; }
     }
 
     /// <inheritdoc/>
@@ -197,7 +202,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             }
         }
 
-        return GenerationDriver.GenerateTypes(config, engine, settings.CodeGenerationMode, cancellationToken);
+        return GenerationDriver.GenerateTypes(config, engine, settings.CodeGenerationMode, settings.Force, cancellationToken);
     }
 
     private static string FormatModeToString(FormatAssertionMode mode) => mode switch

@@ -47,7 +47,7 @@ internal sealed class OpenApiShowCommand : AsyncCommand<OpenApiSettings>
             return Task.FromResult(1);
         }
 
-        byte[] specBytes = File.ReadAllBytes(settings.SpecFile);
+        byte[] specBytes = SpecDocumentReader.ReadAsJson(settings.SpecFile, SpecDocumentReader.UseYaml(null, settings.SpecFile));
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(specBytes);
         JsonElement specRoot = doc.RootElement;
 

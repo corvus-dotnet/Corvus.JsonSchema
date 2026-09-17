@@ -40,7 +40,7 @@ grafting a flags API onto the JSON struct types.
    C# layer (`CSharpMemberName`), not the shared `MemberName` machinery.
 6. **Ordinal and bit stability is documented, not enforced.** String-enum ordinals
    follow schema declaration order; inserting a value mid-array renumbers them. Flag
-   bits follow the alphabetical order of the JSON property names (the model does not
+   bits follow the ordinal (UTF-16 code unit) order of the JSON property names (the model does not
    preserve property declaration order), so reordering properties is stable but adding
    or renaming one can reassign bits. The wire format (strings, property names) is
    unaffected. Anyone persisting the raw integer values is warned in the docs.
@@ -150,7 +150,7 @@ The `.Mutable` variant mirrors the struct-to-enum operator and `TryGetFlags`.
   `buildParametersThreshold` low enough to suppress it also suppresses the operator.
 - `None` is always emitted first as `0`. A schema property that mangles to `None`
   gets a suffixed member via the scope machinery.
-- Bits are assigned in the alphabetical JSON-name order of `PropertyDeclarations`
+- Bits are assigned in the ordinal (UTF-16 code unit) JSON-name order of `PropertyDeclarations`
   (declaration order is not preserved by the model); see decision 6.
 
 ### Usage after the change

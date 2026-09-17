@@ -17,23 +17,15 @@ public interface IGlobalOptions
     IVocabulary FallbackVocabulary { get; }
 
     /// <summary>
-    /// Add a named type to the global options.
-    /// </summary>
-    /// <param name="reference">The canonical schema location for the type.</param>
-    /// <param name="dotnetTypeName">The .NET type name.</param>
-    /// <param name="dotnetNamespace">The .NET namespace.</param>
-    /// <param name="accessibility">The accessibility for the type.</param>
-    void AddNamedType(JsonReference reference, string dotnetTypeName, string? dotnetNamespace = null, GeneratedTypeAccessibility? accessibility = null);
-
-    /// <summary>
-    /// Signals that at least one generation specification requested evaluator emission.
-    /// </summary>
-    void SetEmitEvaluator();
-
-    /// <summary>
-    /// Creates a language provider from the Global Options.
+    /// Creates a language provider from the Global Options and the inputs of a single generation.
     /// </summary>
     /// <param name="defaultNamespace">The default namespace to use for the language provider, or <see langword="null"/> if no language provider is specified.</param>
+    /// <param name="namedTypes">The named types requested by this generation.</param>
+    /// <param name="emitEvaluator">Whether at least one generation specification requested evaluator emission.</param>
     /// <returns>An instance of the language provider created from the global options.</returns>
-    ILanguageProvider CreateLanguageProvider(string? defaultNamespace);
+    /// <remarks>
+    /// The global options are cached by the incremental pipeline and shared by every generation
+    /// in the lifetime of the generator driver, so per-generation state must not be stored in them.
+    /// </remarks>
+    ILanguageProvider CreateLanguageProvider(string? defaultNamespace, IReadOnlyList<NamedTypeSpecification> namedTypes, bool emitEvaluator);
 }

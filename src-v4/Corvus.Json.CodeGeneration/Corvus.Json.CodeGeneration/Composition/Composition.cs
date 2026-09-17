@@ -62,7 +62,7 @@ public static class Composition
     {
         CoreTypes result = currentCoreTypes;
 
-        foreach (TypeDeclaration subschemaTypeDeclaration in typeDeclaration.SubschemaTypeDeclarations.Where(k => k.Key.StartsWith(keywordPath)).Select(kvp => kvp.Value))
+        foreach (TypeDeclaration subschemaTypeDeclaration in typeDeclaration.SubschemaTypeDeclarations.Where(k => k.Key.StartsWith(keywordPath, StringComparison.Ordinal)).Select(kvp => kvp.Value))
         {
             result |= subschemaTypeDeclaration.ReducedTypeDeclaration().ReducedType.ImpliedCoreTypes();
         }

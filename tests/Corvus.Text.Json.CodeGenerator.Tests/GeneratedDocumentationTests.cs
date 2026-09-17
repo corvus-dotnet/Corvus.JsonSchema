@@ -104,7 +104,7 @@ public class GeneratedDocumentationTests
         AssertNoDocumentationMismatchDiagnostics(_outputDir);
     }
 
-    private static void AssertNoDocumentationMismatchDiagnostics(string outputDir)
+    internal static void AssertNoDocumentationMismatchDiagnostics(string outputDir)
     {
         string[] files = Directory.GetFiles(outputDir, "*.cs", SearchOption.AllDirectories);
         Assert.IsTrue(files.Length > 0, $"Expected generated .cs files in {outputDir}");
@@ -169,7 +169,7 @@ public class GeneratedDocumentationTests
         }
     }
 
-    private static string[] ReadCompilationDefines()
+    internal static string[] ReadCompilationDefines()
     {
         // Generated code carries #if NET8_0_OR_GREATER (and friends) blocks, so it must be
         // parsed with the same defines a consuming net10.0 project would have. The preserved
@@ -197,7 +197,7 @@ public class GeneratedDocumentationTests
         return [.. result];
     }
 
-    private static List<MetadataReference> BuildReferences()
+    internal static List<MetadataReference> BuildReferences()
     {
         // The project preserves its compilation context, which copies the framework reference
         // assemblies to a 'refs' folder next to the test. Those facades plus the library

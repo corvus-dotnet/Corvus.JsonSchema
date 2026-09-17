@@ -20,11 +20,12 @@ public static class Documentation
     /// or <see langword="null"/> if no short form documentation was found.</param>
     /// <returns><see langword="true"/> if the short form documentation was found.</returns>
     /// <remarks>
-    /// If multiple such keywords are present, the first alphabetically by keyword name will be used.
+    /// If multiple such keywords are present, the first by keyword name in the order of
+    /// <see cref="TypeDeclaration.OrderingComparer"/> will be used.
     /// </remarks>
     public static bool TryGetShortDocumentation(TypeDeclaration typeDeclaration, [NotNullWhen(true)] out string? shortDocumentation)
     {
-        foreach (IShortDocumentationProviderKeyword keyword in typeDeclaration.Keywords().OfType<IShortDocumentationProviderKeyword>().OrderBy(k => k.Keyword))
+        foreach (IShortDocumentationProviderKeyword keyword in typeDeclaration.Keywords().OfType<IShortDocumentationProviderKeyword>().OrderBy(k => k.Keyword, typeDeclaration.OrderingComparer))
         {
             if (keyword.TryGetShortDocumentation(typeDeclaration, out shortDocumentation))
             {
@@ -45,12 +46,13 @@ public static class Documentation
     /// <returns><see langword="true"/> if the long form documentation was found.</returns>
     /// <remarks>
     /// Long form documentation is expected to be a multi-line string. If multiple long-form provider keywords are present,
-    /// then the results are joined in alphabetical order by keyword, to help with stability.
+    /// then the results are joined in the order of <see cref="TypeDeclaration.OrderingComparer"/> by keyword, to help with
+    /// stability.
     /// </remarks>
     public static bool TryGetLongDocumentation(TypeDeclaration typeDeclaration, [NotNullWhen(true)] out string? longDocumentation)
     {
         StringBuilder builder = new();
-        foreach (ILongDocumentationProviderKeyword keyword in typeDeclaration.Keywords().OfType<ILongDocumentationProviderKeyword>().OrderBy(k => k.Keyword))
+        foreach (ILongDocumentationProviderKeyword keyword in typeDeclaration.Keywords().OfType<ILongDocumentationProviderKeyword>().OrderBy(k => k.Keyword, typeDeclaration.OrderingComparer))
         {
             if (keyword.TryGetLongDocumentation(typeDeclaration, out string? docs))
             {
@@ -87,13 +89,14 @@ public static class Documentation
     /// <returns><see langword="true"/> if the long form documentation was found.</returns>
     /// <remarks>
     /// Examples documentation is expected to be a multi-line string. If multiple long-form provider keywords are present,
-    /// then the results will be appended in alphabetical order by keyword, to help with stability.
+    /// then the results will be appended in the order of <see cref="TypeDeclaration.OrderingComparer"/> by keyword, to help
+    /// with stability.
     /// </remarks>
     public static bool TryGetExamples(TypeDeclaration typeDeclaration, [NotNullWhen(true)] out string[]? examples)
     {
         List<string> result = [];
 
-        foreach (IExamplesProviderKeyword keyword in typeDeclaration.Keywords().OfType<IExamplesProviderKeyword>().OrderBy(k => k.Keyword))
+        foreach (IExamplesProviderKeyword keyword in typeDeclaration.Keywords().OfType<IExamplesProviderKeyword>().OrderBy(k => k.Keyword, typeDeclaration.OrderingComparer))
         {
             if (keyword.TryGetExamples(typeDeclaration, out string[]? docs))
             {

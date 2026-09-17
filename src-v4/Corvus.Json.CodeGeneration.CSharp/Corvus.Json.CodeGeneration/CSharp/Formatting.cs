@@ -197,7 +197,7 @@ public static class Formatting
     public static int ApplySuffix(int value, Span<char> buffer)
     {
 #if NET8_0_OR_GREATER
-        value.TryFormat(buffer, out int written);
+        value.TryFormat(buffer, out int written, default, System.Globalization.CultureInfo.InvariantCulture);
         return written;
 #else
         if (value < 0)

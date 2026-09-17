@@ -297,10 +297,17 @@ public class JsonWorkspace : IDisposable
     /// <returns>The index of the document in the workspace.</returns>
     internal int GetDocumentIndex(IJsonDocument document)
     {
-        // Fast path: document remembers its index from its first registration.
+        // Fast path: document remembers its index from its first registration. The three cached values are written
+        // separately and a document can be shared between workspaces, so the index is used only when it is in range and
+        // names this document. A torn or stale cache, or a wrapper that shares its inner document's cache, takes the
+        // lookup below instead.
         if (ReferenceEquals(document.CachedWorkspace, this) && document.CachedWorkspaceGeneration == _generation)
         {
-            return document.CachedWorkspaceDocumentIndex;
+            int cachedIndex = document.CachedWorkspaceDocumentIndex;
+            if ((uint)cachedIndex < (uint)_length && ReferenceEquals(_documents[cachedIndex], document))
+            {
+                return cachedIndex;
+            }
         }
 
         // When a dictionary exists (large workspace), use O(1) lookup.

@@ -235,7 +235,14 @@ task GenerateAotProfile -If { $GenerateAotProfile -and $IsLinux } {
     Write-Host "Profile written to $mibc ($((Get-Item $mibc).Length) bytes, $methods Corvus.Text.Json methods); the package takes it from there"
 }
 
-task PostBuild GenerateAotProfile, BuildWebSiteLocal
+# The generated-code analyzer configuration (analyzers/generated-code.globalconfig and the generated region of
+# .editorconfig) is derived from the analyzers in use; a stale copy would let an analyzer run on generated code unnoticed.
+# It needs the restored solution, so it runs after the build.
+task CheckGeneratedCodeAnalyzerConfig {
+    Write-Host "Checking the generated-code analyzer configuration is up to date"
+    exec { & pwsh -File (Join-Path $here "update-generated-code-analyzer-config.ps1") -Check }
+}
+task PostBuild CheckGeneratedCodeAnalyzerConfig, GenerateAotProfile, BuildWebSiteLocal
 task PreTest {
     # Turn down logging when running Specs to suppress ReqnRoll Given/When/Then output
     $script:LogLevelBackup = $LogLevel

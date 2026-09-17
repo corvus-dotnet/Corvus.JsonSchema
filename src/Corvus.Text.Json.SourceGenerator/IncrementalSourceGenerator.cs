@@ -1,4 +1,4 @@
-// <copyright file="IncrementalSourceGenerator.cs" company="Endjin Limited">
+﻿// <copyright file="IncrementalSourceGenerator.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 // <licensing>
@@ -10,6 +10,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -33,10 +34,12 @@ namespace Corvus.Json.SourceGenerator;
 public class IncrementalSourceGenerator : IIncrementalGenerator
 {
     private static readonly ImmutableArray<string> DefaultDisabledNamingHeuristics = ["DocumentationNameHeuristic"];
-    private static readonly PrepopulatedDocumentResolver MetaSchemaResolver = SourceGeneratorHelpers.CreateMetaSchemaResolver();
+    private static readonly PrepopulatedDocumentResolver MetaSchemaResolver = SourceGeneratorHelpers.MetaSchemaResolver;
     private static readonly VocabularyRegistry VocabularyRegistry = SourceGeneratorHelpers.CreateVocabularyRegistry(MetaSchemaResolver);
 
     private static readonly IVocabulary Corvus202012Vocab = CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabularyWith([CodeGeneration.CorvusVocabulary.SchemaVocabulary.DefaultInstance]);
+
+    private readonly GenerationMemo generationMemo = new();
 
     /// <inheritdoc/>
     public void Initialize(IncrementalGeneratorInitializationContext initializationContext)
@@ -45,11 +48,11 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
 
         IncrementalValueProvider<GlobalOptions> globalOptions = initializationContext.AnalyzerConfigOptionsProvider.Select((provider, token) => GetGlobalOptions(VocabularyRegistry, provider, token));
 
-        IncrementalValuesProvider<AdditionalText> jsonSourceFiles = initializationContext.AdditionalTextsProvider.Where(static p => p.Path.EndsWith(".json") || p.Path.EndsWith(".yaml") || p.Path.EndsWith(".yml"));
+        IncrementalValuesProvider<AdditionalText> jsonSourceFiles = initializationContext.AdditionalTextsProvider.Where(static p => p.Path.EndsWith(".json", StringComparison.Ordinal) || p.Path.EndsWith(".yaml", StringComparison.Ordinal) || p.Path.EndsWith(".yml", StringComparison.Ordinal));
 
-        IncrementalValueProvider<PrepopulatedDocumentResolver> documentResolver = jsonSourceFiles.Collect().Select(SourceGeneratorHelpers.BuildDocumentResolver);
-
-        IncrementalValueProvider<SourceGeneratorHelpers.GenerationContext<GlobalOptions>> generationContext = documentResolver.Combine(globalOptions).Select((r, c) => new SourceGeneratorHelpers.GenerationContext<GlobalOptions>(r.Left, r.Right));
+        // Each file is compared by path and content checksum, so re-reading unchanged content leaves the pipeline
+        // cached; the documents are parsed in the output step, through a cache keyed by the text.
+        IncrementalValueProvider<ImmutableArray<SchemaFile>> schemaFiles = jsonSourceFiles.Select(static (text, token) => SchemaFile.Create(text, token)).Collect();
 
         IncrementalValuesProvider<SourceGeneratorHelpers.GenerationSpecification> generationSpecifications =
             initializationContext.SyntaxProvider.ForAttributeWithMetadataName(
@@ -57,17 +60,18 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
                 IsValidAttributeTarget,
                 BuildGenerationSpecifications);
 
-        IncrementalValueProvider<SourceGeneratorHelpers.TypesToGenerate<GlobalOptions>> typesToGenerate = generationSpecifications.Collect().Combine(generationContext).Select((c, t) => new SourceGeneratorHelpers.TypesToGenerate<GlobalOptions>(c.Left, c.Right));
+        IncrementalValueProvider<(ImmutableArray<SourceGeneratorHelpers.GenerationSpecification> Specifications, (ImmutableArray<SchemaFile> Files, GlobalOptions Options) Context)> typesToGenerate =
+            generationSpecifications.Collect().Combine(schemaFiles.Combine(globalOptions));
 
-        initializationContext.RegisterSourceOutput(typesToGenerate, GenerateCode);
-    }
-
-    private static void GenerateCode(SourceProductionContext context, SourceGeneratorHelpers.TypesToGenerate<GlobalOptions> generationSource)
-    {
-        SourceGeneratorHelpers.GenerateCode(
-            context,
-            generationSource,
-            VocabularyRegistry);
+        initializationContext.RegisterSourceOutput(
+            typesToGenerate,
+            (context, source) => SourceGeneratorHelpers.GenerateCode(
+                context,
+                source.Specifications,
+                source.Context.Files,
+                source.Context.Options,
+                VocabularyRegistry,
+                this.generationMemo));
     }
 
     private static SourceGeneratorHelpers.GenerationSpecification BuildGenerationSpecifications(GeneratorAttributeSyntaxContext context, CancellationToken token)
@@ -243,7 +247,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         if (source.GlobalOptions.TryGetValue("build_property.CorvusTextJsonBuildParametersThreshold", out string? buildParametersThresholdName) &&
             !string.IsNullOrEmpty(buildParametersThresholdName))
         {
-            if (!int.TryParse(buildParametersThresholdName, out buildParametersThreshold))
+            if (!int.TryParse(buildParametersThresholdName, NumberStyles.Integer, CultureInfo.InvariantCulture, out buildParametersThreshold))
             {
                 throw new InvalidOperationException($"Invalid build property value for 'CorvusTextJsonBuildParametersThreshold': '{buildParametersThresholdName}'. Expected an integer.");
             }
@@ -274,6 +278,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
                 "JsonSchemaTypeGeneratorAttribute.g.cs",
                 SourceText.From(
                     """
+                    // <auto-generated/>
                     using System;
 
                     namespace Corvus.Text.Json;
@@ -332,10 +337,8 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
         IReadOnlyDictionary<string, FormatAssertionMode>? formatModeOverrides,
         bool emitNativeStringEnums,
         bool emitNativeFlagsEnums,
-        bool emitUnions) : IGlobalOptions
+        bool emitUnions) : IGlobalOptions, IEquatable<GlobalOptions>
     {
-        private readonly List<CSharpLanguageProvider.NamedType> _namedTypes = [];
-
         public IVocabulary FallbackVocabulary { get; } = fallbackVocabulary;
 
         public bool OptionalAsNullable { get; } = optionalAsNullable;
@@ -364,21 +367,84 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
 
         public bool EmitUnions { get; } = emitUnions;
 
-        public bool EmitEvaluator { get; set; }
-
-        public void SetEmitEvaluator()
+        public ILanguageProvider CreateLanguageProvider(string? defaultNamespace, IReadOnlyList<NamedTypeSpecification> namedTypes, bool emitEvaluator)
         {
-            EmitEvaluator = true;
+            var mappedNamedTypes = new CSharpLanguageProvider.NamedType[namedTypes.Count];
+            for (int i = 0; i < mappedNamedTypes.Length; i++)
+            {
+                NamedTypeSpecification namedType = namedTypes[i];
+                mappedNamedTypes[i] = new CSharpLanguageProvider.NamedType(namedType.Reference, namedType.DotnetTypeName, namedType.DotnetNamespace, GetAccessibility(namedType.Accessibility));
+            }
+
+            return CSharpLanguageProvider.DefaultWithOptions(MapOptions(defaultNamespace, mappedNamedTypes, emitEvaluator));
         }
 
-        public void AddNamedType(JsonReference schemaLocation, string typeName, string? ns, SourceGeneratorTools.GeneratedTypeAccessibility? accessibility)
+        // Value equality: the incremental pipeline compares this object to decide whether the
+        // options input changed, so two option sets read from identical build properties must
+        // compare equal or every options-provider update would regenerate the whole project.
+        public bool Equals(GlobalOptions? other)
         {
-            _namedTypes.Add(new CSharpLanguageProvider.NamedType(schemaLocation, typeName, ns, GetAccessibility(accessibility)));
+            return
+                other is not null &&
+                ReferenceEquals(FallbackVocabulary, other.FallbackVocabulary) &&
+                OptionalAsNullable == other.OptionalAsNullable &&
+                ExcludeNonNullDefaulted == other.ExcludeNonNullDefaulted &&
+                UseOptionalNameHeuristics == other.UseOptionalNameHeuristics &&
+                AlwaysAssertFormat == other.AlwaysAssertFormat &&
+                DisabledNamingHeuristics.SequenceEqual(other.DisabledNamingHeuristics, StringComparer.Ordinal) &&
+                DefaultAccessibility == other.DefaultAccessibility &&
+                AddExplicitUsings == other.AddExplicitUsings &&
+                UseImplicitOperatorString == other.UseImplicitOperatorString &&
+                BuildParametersThreshold == other.BuildParametersThreshold &&
+                FormatModeOverridesEqual(FormatModeOverrides, other.FormatModeOverrides) &&
+                EmitNativeStringEnums == other.EmitNativeStringEnums &&
+                EmitNativeFlagsEnums == other.EmitNativeFlagsEnums &&
+                EmitUnions == other.EmitUnions;
         }
 
-        public ILanguageProvider CreateLanguageProvider(string? defaultNamespace)
+        public override bool Equals(object? obj) => obj is GlobalOptions other && Equals(other);
+
+        public override int GetHashCode()
         {
-            return CSharpLanguageProvider.DefaultWithOptions(MapOptions(defaultNamespace));
+            HashCode hash = default;
+            hash.Add(FallbackVocabulary.Uri, StringComparer.Ordinal);
+            hash.Add(OptionalAsNullable);
+            hash.Add(ExcludeNonNullDefaulted);
+            hash.Add(UseOptionalNameHeuristics);
+            hash.Add(AlwaysAssertFormat);
+            hash.Add(DisabledNamingHeuristics.Length);
+            hash.Add(DefaultAccessibility);
+            hash.Add(AddExplicitUsings);
+            hash.Add(UseImplicitOperatorString);
+            hash.Add(BuildParametersThreshold);
+            hash.Add(FormatModeOverrides?.Count ?? -1);
+            hash.Add(EmitNativeStringEnums);
+            hash.Add(EmitNativeFlagsEnums);
+            hash.Add(EmitUnions);
+            return hash.ToHashCode();
+        }
+
+        private static bool FormatModeOverridesEqual(IReadOnlyDictionary<string, FormatAssertionMode>? left, IReadOnlyDictionary<string, FormatAssertionMode>? right)
+        {
+            if (ReferenceEquals(left, right))
+            {
+                return true;
+            }
+
+            if (left is null || right is null || left.Count != right.Count)
+            {
+                return false;
+            }
+
+            foreach (KeyValuePair<string, FormatAssertionMode> kvp in left)
+            {
+                if (!right.TryGetValue(kvp.Key, out FormatAssertionMode mode) || mode != kvp.Value)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private static Text.Json.CodeGeneration.GeneratedTypeAccessibility GetAccessibility(SourceGeneratorTools.GeneratedTypeAccessibility? accessibility)
@@ -392,25 +458,26 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             };
         }
 
-        private CSharpLanguageProvider.Options MapOptions(string? defaultNamespace)
+        private CSharpLanguageProvider.Options MapOptions(string? defaultNamespace, CSharpLanguageProvider.NamedType[] namedTypes, bool emitEvaluator)
         {
             CSharpLanguageProvider.Options options = new(
                 defaultNamespace ?? "GeneratedTypes",
-                [.. _namedTypes],
+                namedTypes,
                 useOptionalNameHeuristics: UseOptionalNameHeuristics,
                 alwaysAssertFormat: AlwaysAssertFormat,
                 optionalAsNullable: OptionalAsNullable,
                 disabledNamingHeuristics: [.. DisabledNamingHeuristics],
                 fileExtension: ".g.cs",
                 defaultAccessibility: DefaultAccessibility,
-                codeGenerationMode: EmitEvaluator ? CodeGenerationMode.Both : CodeGenerationMode.TypeGeneration,
+                codeGenerationMode: emitEvaluator ? CodeGenerationMode.Both : CodeGenerationMode.TypeGeneration,
                 excludeNonNullDefaulted: ExcludeNonNullDefaulted,
                 buildParametersThreshold: BuildParametersThreshold,
                 formatModeOverrides: FormatModeOverrides,
                 emitNativeStringEnums: EmitNativeStringEnums,
                 emitNativeFlagsEnums: EmitNativeFlagsEnums,
                 programCompiler: global::Corvus.Json.CodeGenerator.RuntimeProgramCompiler.CompileWithoutRegexTable,
-                emitUnions: EmitUnions);
+                emitUnions: EmitUnions,
+                storeFilesAsStrings: true);
 
             return options;
         }

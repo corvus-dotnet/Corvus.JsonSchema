@@ -41,7 +41,7 @@ The generated `FeatureFlags` type gains a nested enum with `None = 0` and one bi
 FeatureFlags.Flags enabled = FeatureFlags.Flags.DarkMode | FeatureFlags.Flags.Telemetry;
 ```
 
-Bits are assigned to the properties in alphabetical order of their JSON names. Adding or renaming a property can reassign the bits, so do not persist the integer values; the JSON wire format is unaffected.
+Bits are assigned to the properties in ordinal (UTF-16 code unit) order of their JSON names. Adding or renaming a property can reassign the bits, so do not persist the integer values; the JSON wire format is unaffected.
 
 ### Creating documents from flags
 
@@ -107,4 +107,4 @@ dotnet run
 
 ### Q: Can I persist the integer value of the flags?
 
-**A:** No. Bits follow the alphabetical order of the JSON property names, so adding or renaming a property can renumber them. Persist the JSON instead; it is stable under those changes.
+**A:** No. Bits follow the ordinal (UTF-16 code unit) order of the JSON property names, so adding or renaming a property can renumber them. Persist the JSON instead; it is stable under those changes.

@@ -25,7 +25,7 @@ public static class PublicCodeGeneratorExtensions
         int? constantIndex = null)
     {
         generator.ValidationClassName();
-        return generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, rootScope: generator.ValidationClassScope(), suffix: constantIndex is int index ? index.ToString() : null);
+        return generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, rootScope: generator.ValidationClassScope(), suffix: constantIndex is int index ? index.ToString(System.Globalization.CultureInfo.InvariantCulture) : null);
     }
 
     /// <summary>

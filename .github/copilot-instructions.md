@@ -107,7 +107,14 @@ The catalog tracks line numbers of code blocks in documentation, instructions, a
 
 See the `corvus-build-and-test` skill for TFM targeting, test project mapping, and common build failure diagnosis.
 
-4. **Allocation & honest-decision self-audit.** The commit is where multi-turn work converges, so this gate lives here, not as a per-edit hope. Scan your own diff and **report** (under a `Decisions & deferrals` heading in your message, never buried in a code comment or a design-doc tier) every: (a) managed `string` / `List<string>` / `Dictionary` introduced on a path where bytes are available; (b) non-`static` builder lambda (a closure) where a `static` + `TContext` form exists; (c) reflection-based dispatch; (d) work deferred, skipped, or abandoned; (e) fix that *moved* a cost (a transcode/allocation) elsewhere rather than removing it — give the before/after `file:line`. The words **"genuine leaf"**, **"marginal"**, **"admin-rare"**, **"low-frequency"**, **"pragmatic"** require the two-ended proof in the `corvus-bytes-to-bytes` skill before they may justify a string — they are red flags for work being avoided, not justifications. Prove every warm-path allocation claim with a BenchmarkDotNet `[MemoryDiagnoser]` baseline-vs-new benchmark. "Admin-rare" is not a licence to allocate.
+4. **Generated-code analyzer configuration**: if `global.json`, an analyzer package version, or a project's analyzer references changed, regenerate and verify the configuration that keeps analyzers off generated code (see the `corvus-build-and-test` skill):
+
+```powershell
+.\update-generated-code-analyzer-config.ps1          # rewrites analyzers/generated-code.globalconfig and the generated region of .editorconfig
+.\update-generated-code-analyzer-config.ps1 -Check   # must exit 0; CI runs it after the build
+```
+
+5. **Allocation & honest-decision self-audit.** The commit is where multi-turn work converges, so this gate lives here, not as a per-edit hope. Scan your own diff and **report** (under a `Decisions & deferrals` heading in your message, never buried in a code comment or a design-doc tier) every: (a) managed `string` / `List<string>` / `Dictionary` introduced on a path where bytes are available; (b) non-`static` builder lambda (a closure) where a `static` + `TContext` form exists; (c) reflection-based dispatch; (d) work deferred, skipped, or abandoned; (e) fix that *moved* a cost (a transcode/allocation) elsewhere rather than removing it — give the before/after `file:line`. The words **"genuine leaf"**, **"marginal"**, **"admin-rare"**, **"low-frequency"**, **"pragmatic"** require the two-ended proof in the `corvus-bytes-to-bytes` skill before they may justify a string — they are red flags for work being avoided, not justifications. Prove every warm-path allocation claim with a BenchmarkDotNet `[MemoryDiagnoser]` baseline-vs-new benchmark. "Admin-rare" is not a licence to allocate.
 
 ### Diagnostic discipline
 

@@ -30,7 +30,7 @@ public delegate void NamedTypeEmitter(CodeGenerator generator, string typeName);
 /// <remarks>
 /// Initializes a new instance of the <see cref="CSharpLanguageProvider"/> class.
 /// </remarks>
-public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProgramLanguageProvider
+public class CSharpLanguageProvider : IHierarchicalLanguageProvider, IStreamingLanguageProvider, ISchemaProgramUtf8LanguageProvider, IOrderingLanguageProvider
 {
     private readonly KeywordValidationHandlerRegistry validationHandlerRegistry = new();
     private readonly CodeFileBuilderRegistry codeFileBuilderRegistry = new();
@@ -46,9 +46,12 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
     private TypeDeclaration[]? evaluatorRootTypes;
     private IReadOnlyList<TypeDeclaration>? programRootTypes;
     private IReadOnlyList<KeyValuePair<string, string>> schemaDocuments = [];
+    private IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>>? utf8SchemaDocuments;
     private string? fallbackVocabularyUri;
     private readonly List<(string RootDocumentUri, string RootDocumentPointer)> programEntries = [];
     private readonly Dictionary<(string, string), int> programEntryIndex = new();
+    private readonly Dictionary<string, List<TypeDeclaration>> namedTypesByFullyQualifiedName = new(StringComparer.Ordinal);
+    private IEnumerable<TypeDeclaration>? namedTypesPass;
 
     private CSharpLanguageProvider(Options? options = null)
     {
@@ -59,6 +62,12 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
     /// Gets the default <see cref="CSharpLanguageProvider"/> instance.
     /// </summary>
     public static CSharpLanguageProvider Default { get; } = CreateDefaultCSharpLanguageProvider(null);
+
+    /// <summary>
+    /// Gets the comparer with which the names that reach generated code are ordered: <see cref="StringComparer.Ordinal"/>,
+    /// so that the output does not depend on the culture of the generating process.
+    /// </summary>
+    public IComparer<string> OrderingComparer => StringComparer.Ordinal;
 
     /// <summary>
     /// Gets a <see cref="CSharpLanguageProvider"/> instance with the default configuration and specified options.
@@ -75,7 +84,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
     /// </summary>
     /// <remarks>
     /// <para>
-    /// This must be called before <see cref="GenerateCodeFor"/> when the code generation mode
+    /// This must be called before <see cref="GenerateCodeFor(IEnumerable{TypeDeclaration}, CancellationToken)"/> when the code generation mode
     /// includes evaluator generation. The pipeline's <c>GetCandidateTypesToGenerate</c> replaces
     /// reducible types (e.g., annotation-only schemas) with their reduced targets, losing the
     /// original type information needed by the evaluator. By storing the original roots here,
@@ -104,6 +113,15 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
     public void SetSchemaDocuments(IReadOnlyList<KeyValuePair<string, string>> documents, string? fallbackVocabularyUri)
     {
         this.schemaDocuments = documents;
+        this.utf8SchemaDocuments = null;
+        this.fallbackVocabularyUri = fallbackVocabularyUri;
+    }
+
+    /// <inheritdoc/>
+    public void SetSchemaDocuments(IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> documents, string? fallbackVocabularyUri)
+    {
+        this.utf8SchemaDocuments = documents;
+        this.schemaDocuments = [];
         this.fallbackVocabularyUri = fallbackVocabularyUri;
     }
 
@@ -214,7 +232,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
             .Select(h => (h.GetType().Name, h.IsOptional))
             .Distinct()
             .OrderBy(n => n.IsOptional)
-            .ThenBy(n => n.Name);
+            .ThenBy(n => n.Name, StringComparer.Ordinal);
     }
 
     /// <inheritdoc/>
@@ -261,13 +279,22 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
     /// <inheritdoc/>
     public IReadOnlyCollection<GeneratedCodeFile> GenerateCodeFor(IEnumerable<TypeDeclaration> typeDeclarations, CancellationToken cancellationToken)
     {
+        List<GeneratedCodeFile> result = [];
+        this.GenerateCodeFor(typeDeclarations, new CollectingSink(result), cancellationToken);
+        return cancellationToken.IsCancellationRequested ? [] : result;
+    }
+
+    /// <inheritdoc/>
+    public void GenerateCodeFor(IEnumerable<TypeDeclaration> typeDeclarations, IGeneratedCodeFileSink sink, CancellationToken cancellationToken)
+    {
         bool generateTypes = options.CodeGenerationMode is CodeGenerationMode.TypeGeneration or CodeGenerationMode.Both;
         bool generateEvaluator = options.CodeGenerationMode is CodeGenerationMode.SchemaEvaluationOnly or CodeGenerationMode.Both;
 
 #if DEBUG
         Dictionary<string, TypeDeclaration> namesSeen = new(StringComparer.Ordinal);
 #endif
-        CodeGenerator generator = new(this, cancellationToken, lineEndSequence: options.LineEndSequence);
+        CodeGenerator generator = new(this, cancellationToken, lineEndSequence: options.LineEndSequence, storeFilesAsStrings: options.StoreFilesAsStrings);
+        generator.SetFileSink(sink, t => new(t.DotnetTypeNameWithoutNamespace(), options.FileExtension));
 
         // Generate global simple types first. These have DoNotGenerate=true (so
         // ShouldGenerate returns false and the framework sets their parent to null),
@@ -278,7 +305,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    return [];
+                    return;
                 }
 
 #if DEBUG
@@ -300,7 +327,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
                     {
                         if (cancellationToken.IsCancellationRequested)
                         {
-                            return [];
+                            return;
                         }
 
                         codeFileBuilder.EmitFile(generator, globalType);
@@ -308,7 +335,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
 
                     if (cancellationToken.IsCancellationRequested)
                     {
-                        return [];
+                        return;
                     }
 
                     generator.EndTypeDeclaration(globalType);
@@ -322,7 +349,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    return [];
+                    return;
                 }
 
 #if DEBUG
@@ -342,7 +369,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
                     {
                         if (cancellationToken.IsCancellationRequested)
                         {
-                            return [];
+                            return;
                         }
 
                         codeFileBuilder.EmitFile(generator, typeDeclaration);
@@ -350,7 +377,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
 
                     if (cancellationToken.IsCancellationRequested)
                     {
-                        return [];
+                        return;
                     }
 
                     generator.EndTypeDeclaration(typeDeclaration);
@@ -358,20 +385,16 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
             }
         }
 
-        List<GeneratedCodeFile> result = [];
-
         if (generateTypes)
         {
-            result.AddRange(generator.GetGeneratedCodeFiles(t => new(t.DotnetTypeNameWithoutNamespace(), options.FileExtension)));
-
             if (rootNamespaceGenerator is not null)
             {
-                result.Add(new GeneratedCodeFile($"{Formatting.GlobalDeclarationsFileName}{options.FileExtension}", rootNamespaceGenerator.ToString()));
+                sink.Add(new GeneratedCodeFile($"{Formatting.GlobalDeclarationsFileName}{options.FileExtension}", rootNamespaceGenerator.ToString()));
             }
 
             if (options.EmitUnions && typeDeclarations.Any(t => t.UnionCaseTypes() is not null))
             {
-                result.Add(new GeneratedCodeFile($"{Formatting.UnionAttributeFileName}{options.FileExtension}", UnionAttributePolyfill(options.LineEndSequence)));
+                sink.Add(new GeneratedCodeFile($"{Formatting.UnionAttributeFileName}{options.FileExtension}", UnionAttributePolyfill(options.LineEndSequence)));
             }
         }
 
@@ -384,7 +407,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
                 int entry = this.GetProgramEntry(rootType);
                 if (entry >= 0)
                 {
-                    result.Add(RuntimeProgramGenerator.GenerateStandaloneEvaluator(
+                    sink.Add(RuntimeProgramGenerator.GenerateStandaloneEvaluator(
                         options.GetNamespace(rootType),
                         RuntimeProgramGenerator.GetEvaluatorClassName(rootType),
                         this.ProgramClassReference,
@@ -396,7 +419,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
                 {
                     // A boolean root reduces to the built-in any/not-any type, which has no document of its own
                     // and therefore no program entry; the shim compiles the constant schema itself.
-                    result.Add(RuntimeProgramGenerator.GenerateBooleanStandaloneEvaluator(
+                    sink.Add(RuntimeProgramGenerator.GenerateBooleanStandaloneEvaluator(
                         options.GetNamespace(rootType),
                         RuntimeProgramGenerator.GetEvaluatorClassName(rootType),
                         rootType.LocatedSchema.Schema.ValueKind == System.Text.Json.JsonValueKind.True,
@@ -408,12 +431,26 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
 
         if (this.programEntries.Count > 0)
         {
+            IEnumerable<string> documentUris = this.utf8SchemaDocuments is { } utf8Documents
+                ? utf8Documents.Select(d => d.Key)
+                : this.schemaDocuments.Select(d => d.Key);
             IReadOnlyDictionary<string, string> keys = RuntimeProgramGenerator.MapDocumentKeys(
-                this.schemaDocuments.Select(d => d.Key).Concat(this.programEntries.Select(e => e.RootDocumentUri)));
+                documentUris.Concat(this.programEntries.Select(e => e.RootDocumentUri)));
             List<RuntimeProgramGenerator.SchemaDocumentSource> documents = [];
-            foreach (KeyValuePair<string, string> document in this.schemaDocuments)
+            if (this.utf8SchemaDocuments is { } utf8SchemaDocumentList)
             {
-                documents.Add(new RuntimeProgramGenerator.SchemaDocumentSource(keys[document.Key], RuntimeProgramGenerator.MapReferenceDocument(document.Value, keys)));
+                // The documents stay UTF-8 from the type builder to the program compiler.
+                foreach (KeyValuePair<string, ReadOnlyMemory<byte>> document in utf8SchemaDocumentList)
+                {
+                    documents.Add(new RuntimeProgramGenerator.SchemaDocumentSource(keys[document.Key], RuntimeProgramGenerator.MapReferenceDocument(document.Value, keys)));
+                }
+            }
+            else
+            {
+                foreach (KeyValuePair<string, string> document in this.schemaDocuments)
+                {
+                    documents.Add(new RuntimeProgramGenerator.SchemaDocumentSource(keys[document.Key], RuntimeProgramGenerator.MapReferenceDocument(document.Value, keys)));
+                }
             }
 
             List<string> entryPoints = [];
@@ -425,14 +462,23 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
             string rootDocumentKey = documents.Count > 0 ? documents[0].Key : keys[this.programEntries[0].RootDocumentUri];
             string dialect = RuntimeProgramGenerator.DialectFor(this.fallbackVocabularyUri);
             List<KeyValuePair<string, string>> formatModes = options.FormatModeOverrides.OrderBy(m => m.Key, StringComparer.Ordinal).Select(m => new KeyValuePair<string, string>(m.Key, m.Value.ToString())).ToList();
-            SchemaProgramImage? image = options.ProgramCompiler?.Invoke(new SchemaProgramSource(
-                documents.Select(d => new KeyValuePair<string, string>(d.Key, d.Json)).ToList(),
-                rootDocumentKey,
-                entryPoints,
-                dialect,
-                options.AlwaysAssertFormat,
-                formatModes));
-            result.Add(RuntimeProgramGenerator.Generate(
+            SchemaProgramImage? image = options.ProgramCompiler?.Invoke(
+                this.utf8SchemaDocuments is not null
+                    ? SchemaProgramSource.FromUtf8(
+                        documents.Select(d => new KeyValuePair<string, ReadOnlyMemory<byte>>(d.Key, d.Utf8Json)).ToList(),
+                        rootDocumentKey,
+                        entryPoints,
+                        dialect,
+                        options.AlwaysAssertFormat,
+                        formatModes)
+                    : new SchemaProgramSource(
+                        documents.Select(d => new KeyValuePair<string, string>(d.Key, d.Json)).ToList(),
+                        rootDocumentKey,
+                        entryPoints,
+                        dialect,
+                        options.AlwaysAssertFormat,
+                        formatModes));
+            sink.Add(RuntimeProgramGenerator.Generate(
                 options.DefaultNamespace,
                 ProgramClassName,
                 documents,
@@ -445,8 +491,6 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
                 options.LineEndSequence,
                 image));
         }
-
-        return result;
     }
 
     /// <inheritdoc/>
@@ -658,14 +702,7 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
     private static string UnionAttributePolyfill(string lineEndSequence)
     {
         const string text = """
-            //------------------------------------------------------------------------------
-            // <auto-generated>
-            //     This code was generated by a tool.
-            //
-            //     Changes to this file may cause incorrect behavior and will be lost if
-            //     the code is regenerated.
-            // </auto-generated>
-            //------------------------------------------------------------------------------
+            // <auto-generated/>
 
             #if !NET11_0_OR_GREATER && !CORVUS_TEXT_JSON_NO_UNION_ATTRIBUTE_POLYFILL
             namespace System.Runtime.CompilerServices
@@ -802,6 +839,18 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
         string fqdtn = typeDeclaration.FullyQualifiedDotnetTypeName();
         string baseName = typeDeclaration.DotnetTypeName();
 
+        // The declarations named so far in this naming pass are indexed by the fully-qualified
+        // name they had when they were named, instead of scanning all of them for every type.
+        // This gives the same answer as the scan: a declaration is only renamed while it is the
+        // one being named (the collision loop below), and only its own rename invalidates its
+        // cached fully-qualified name, so an indexed name stays current; the candidates found
+        // through the index are still checked against the live predicate.
+        if (!ReferenceEquals(this.namedTypesPass, existingDeclarations))
+        {
+            this.namedTypesPass = existingDeclarations;
+            this.namedTypesByFullyQualifiedName.Clear();
+        }
+
         // And now resolve any matching fully-qualified names.
         // This handles definitions containers (the original case) and also inline schemas
         // at different locations that derive the same type name from their structure — e.g.
@@ -809,12 +858,39 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
         if (!typeDeclaration.DoNotGenerate())
         {
             int index = 1;
-            while (existingDeclarations.Any(t => t != typeDeclaration && !t.DoNotGenerate() && t.HasDotnetTypeName() && t.FullyQualifiedDotnetTypeName() == fqdtn))
+            while (this.HasNamedTypeCollision(typeDeclaration, fqdtn))
             {
                 typeDeclaration.SetDotnetTypeName($"{baseName}{index++}");
                 fqdtn = typeDeclaration.FullyQualifiedDotnetTypeName();
             }
         }
+
+        if (typeDeclaration.HasDotnetTypeName())
+        {
+            if (!this.namedTypesByFullyQualifiedName.TryGetValue(fqdtn, out List<TypeDeclaration>? named))
+            {
+                named = [];
+                this.namedTypesByFullyQualifiedName.Add(fqdtn, named);
+            }
+
+            named.Add(typeDeclaration);
+        }
+    }
+
+    private bool HasNamedTypeCollision(TypeDeclaration typeDeclaration, string fqdtn)
+    {
+        if (this.namedTypesByFullyQualifiedName.TryGetValue(fqdtn, out List<TypeDeclaration>? candidates))
+        {
+            foreach (TypeDeclaration t in candidates)
+            {
+                if (t != typeDeclaration && !t.DoNotGenerate() && t.HasDotnetTypeName() && t.FullyQualifiedDotnetTypeName() == fqdtn)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private void SetTypeNameWithKeywordHeuristics(
@@ -861,7 +937,8 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
             }
         }
 
-        typeDeclaration.SetDotnetTypeName(Formatting.FormatTypeNameComponent(typeDeclaration, fallbackName.AsSpan(), typeNameBuffer).ToString());
+        int formatted = Formatting.FormatTypeNameComponent(typeDeclaration, fallbackName.AsSpan(), typeNameBuffer);
+        typeDeclaration.SetDotnetTypeName(typeNameBuffer[..formatted].ToString());
         typeDeclaration.SetDotnetNamespace(ns);
     }
 
@@ -896,12 +973,12 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
                     .OfType<IBuiltInTypeNameHeuristic>()
                     .Where(h => !options.DisabledNamingHeuristics.Contains(h.GetType().Name))
                     .OrderBy(h => h.Priority)
-                    .ThenBy(h => h.GetType().Name)
+                    .ThenBy(h => h.GetType().Name, StringComparer.Ordinal)
                 : nameHeuristicRegistry.RegisteredHeuristics
                     .OfType<IBuiltInTypeNameHeuristic>()
                     .Where(h => !h.IsOptional && !options.DisabledNamingHeuristics.Contains(h.GetType().Name))
                     .OrderBy(h => h.Priority)
-                    .ThenBy(h => h.GetType().Name)).ToArray();
+                    .ThenBy(h => h.GetType().Name, StringComparer.Ordinal)).ToArray();
     }
 
     private IReadOnlyList<INameHeuristic> GetOrderedNameBeforeSubschemaHeuristics()
@@ -913,13 +990,13 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
                     .Where(h => !options.DisabledNamingHeuristics
                     .Contains(h.GetType().Name))
                     .OrderBy(h => h.Priority)
-                    .ThenBy(h => h.GetType().Name)
+                    .ThenBy(h => h.GetType().Name, StringComparer.Ordinal)
                 : nameHeuristicRegistry.RegisteredHeuristics
                     .OfType<INameHeuristicBeforeSubschema>()
                     .Where(h => !h.IsOptional && !options.DisabledNamingHeuristics
                     .Contains(h.GetType().Name))
                     .OrderBy(h => h.Priority)
-                    .ThenBy(h => h.GetType().Name)).ToArray();
+                    .ThenBy(h => h.GetType().Name, StringComparer.Ordinal)).ToArray();
     }
 
     private IReadOnlyList<INameHeuristic> GetOrderedNameAfterSubschemaHeuristics()
@@ -930,12 +1007,12 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
                     .OfType<INameHeuristicAfterSubschema>()
                     .Where(h => !options.DisabledNamingHeuristics.Contains(h.GetType().Name))
                     .OrderBy(h => h.Priority)
-                    .ThenBy(h => h.GetType().Name)
+                    .ThenBy(h => h.GetType().Name, StringComparer.Ordinal)
                 : nameHeuristicRegistry.RegisteredHeuristics
                     .OfType<INameHeuristicAfterSubschema>()
                     .Where(h => !h.IsOptional && !options.DisabledNamingHeuristics.Contains(h.GetType().Name))
                     .OrderBy(h => h.Priority)
-                    .ThenBy(h => h.GetType().Name)).ToArray();
+                    .ThenBy(h => h.GetType().Name, StringComparer.Ordinal)).ToArray();
     }
 
     /// <summary>
@@ -1006,6 +1083,11 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
         internal string DotnetNamespace { get; } = dotnetNamespace;
     }
 
+    private sealed class CollectingSink(List<GeneratedCodeFile> files) : IGeneratedCodeFileSink
+    {
+        public void Add(GeneratedCodeFile file) => files.Add(file);
+    }
+
     /// <summary>
     /// Options for the <see cref="CSharpLanguageProvider"/>.
     /// </summary>
@@ -1048,9 +1130,17 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider, ISchemaProg
         bool emitNativeStringEnums = true,
         bool emitNativeFlagsEnums = true,
         SchemaProgramCompiler? programCompiler = null,
-        bool emitUnions = true)
+        bool emitUnions = true,
+        bool storeFilesAsStrings = false)
     {
         internal bool EmitUnions { get; } = emitUnions;
+
+        /// <summary>
+        /// Gets a value indicating whether each generated file is captured as one string rather than as chunks below
+        /// the large object heap. A host that keeps every file's text alive (the source generator) retains less that
+        /// way; a host that writes files and drops them (the CLI) does better with chunks.
+        /// </summary>
+        internal bool StoreFilesAsStrings { get; } = storeFilesAsStrings;
 
         /// <summary>
         /// Gets the ahead-of-time program compiler, or <see langword="null"/> to emit the schema documents and compile

@@ -34,5 +34,9 @@ public interface IKeyword
     /// </summary>
     /// <param name="schemaValue">The schema value containing the keyword.</param>
     /// <returns><see langword="true"/> if the schema can be reduced when this keyword is present.</returns>
+    /// <remarks>
+    /// Implementations must answer <see langword="true"/> when the keyword is absent from
+    /// <paramref name="schemaValue"/>: the type builder only consults the keywords present in a schema.
+    /// </remarks>
     public bool CanReduce(in JsonElement schemaValue);
 }

@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Text;
 using Corvus.Text.Json.CodeGeneration;
 using Corvus.Text.Json.RuntimeEvaluator;
 
@@ -39,10 +38,11 @@ public static class RuntimeProgramCompiler
 
     private static SchemaProgramImage Compile(SchemaProgramSource source, bool emitRegexTable)
     {
-        var documents = new Dictionary<string, byte[]>(StringComparer.Ordinal);
-        foreach (KeyValuePair<string, string> document in source.Documents)
+        // The documents' UTF-8 text goes to the evaluator as it is (for a source created from strings it is encoded once).
+        var documents = new Dictionary<string, ReadOnlyMemory<byte>>(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, ReadOnlyMemory<byte>> document in source.Utf8Documents)
         {
-            documents[document.Key] = Encoding.UTF8.GetBytes(document.Value);
+            documents[document.Key] = document.Value;
         }
 
         Dictionary<string, JsonSchemaFormatMode>? formatModes = null;
@@ -64,7 +64,7 @@ public static class RuntimeProgramCompiler
             CompileRegularExpressions = false,
             DocumentResolver = (string uri, out ReadOnlyMemory<byte> utf8Json) =>
             {
-                if (documents.TryGetValue(uri, out byte[]? bytes))
+                if (documents.TryGetValue(uri, out ReadOnlyMemory<byte> bytes))
                 {
                     utf8Json = bytes;
                     return true;

@@ -4,6 +4,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -20,25 +21,34 @@ namespace Corvus.Json.CodeGeneration;
 /// <param name="instancesPerIndent">The instances of the indent character sequence, per indent (defaults to 4).</param>
 /// <param name="indentSequence">The indent character sequence (defaults to ' ' (space).</param>
 /// <param name="lineEndSequence">The line end sequence.</param>
-public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken cancellationToken, int instancesPerIndent = 4, string indentSequence = " ", string lineEndSequence = "\r\n")
+/// <param name="storeFilesAsStrings">Whether each file is captured as one string (for a host that keeps every file alive) rather than as chunks below the large object heap.</param>
+public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken cancellationToken, int instancesPerIndent = 4, string indentSequence = " ", string lineEndSequence = "\r\n", bool storeFilesAsStrings = false)
 {
     private const int MaxCachedIndentLevel = 20;
+
+    // The largest generated partial averages about 150 K chars; a first chunk this size is never
+    // outgrown by a typical file, and Clear() keeps the first chunk, so one buffer serves every file.
+    private const int InitialCapacity = 256 * 1024;
     private readonly string indentSequence = string.Concat(Enumerable.Repeat(indentSequence, instancesPerIndent));
     private readonly string[] cachedIndentStrings = BuildIndentCache(string.Concat(Enumerable.Repeat(indentSequence, instancesPerIndent)), MaxCachedIndentLevel);
-    private readonly StringBuilder stringBuilder = new();
+    private readonly StringBuilder stringBuilder = new(InitialCapacity);
     private readonly Dictionary<MemberName, string> memberNames = [];
     private readonly Dictionary<string, HashSet<string>> memberNamesByScope = new(StringComparer.Ordinal);
     private readonly Stack<ScopeValue> scope = [];
     private readonly Dictionary<string, Stack<object?>> metadata = new(StringComparer.Ordinal);
-    private readonly Dictionary<TypeDeclaration, Dictionary<string, string>> generatedFiles = [];
+    private readonly Dictionary<TypeDeclaration, Dictionary<string, ReadOnlyMemory<char>[]>> generatedFiles = [];
     private readonly CancellationToken cancellationToken = cancellationToken;
+    private readonly HashSet<string> sinkFileNames = new(StringComparer.OrdinalIgnoreCase);
     private int indentationLevel = 0;
     private string? currentFileBuilderName;
     private TypeDeclaration? currentTypeDeclaration;
+    private IGeneratedCodeFileSink? fileSink;
+    private Func<TypeDeclaration, FileNameDescription>? sinkFileNameDescription;
+    private FileNameDescription? currentFileNameDescription;
 
     // We pass this dictionary off to the language provider (indirectly)
     // so we create a new one each type we start a TypeDeclaration.
-    private Dictionary<string, string>? currentTypeDeclarationFiles;
+    private Dictionary<string, ReadOnlyMemory<char>[]>? currentTypeDeclarationFiles;
 
     /// <summary>
     /// Gets or sets the capacity of the <see cref="CodeGenerator"/>.
@@ -200,6 +210,20 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
     }
 
     /// <summary>
+    /// Hands each file to a sink as soon as it ends, named as <see cref="GetGeneratedCodeFiles"/> would name it,
+    /// instead of keeping it until <see cref="GetGeneratedCodeFiles"/> is called (which then returns nothing).
+    /// </summary>
+    /// <param name="sink">The sink.</param>
+    /// <param name="getFileNameDescription">A function which produces a <see cref="FileNameDescription"/> for a <see cref="TypeDeclaration"/>.</param>
+    /// <returns>A reference to this instance after the operation has completed.</returns>
+    public CodeGenerator SetFileSink(IGeneratedCodeFileSink sink, Func<TypeDeclaration, FileNameDescription> getFileNameDescription)
+    {
+        this.fileSink = sink;
+        this.sinkFileNameDescription = getFileNameDescription;
+        return this;
+    }
+
+    /// <summary>
     /// Begin a new type declaration.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration for which to generate code.</param>
@@ -218,6 +242,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
 
         // Set the current type declaration
         this.currentTypeDeclaration = typeDeclaration;
+        this.currentFileNameDescription = null;
 
         // Clear the string builder.
         this.stringBuilder.Clear();
@@ -294,8 +319,58 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
         Debug.Assert(this.currentFileBuilderName == fileSuffix, $"A file has been ended out-of-sequence: {fileSuffix} {currentFileBuilderName}.");
         ////Debug.Assert(this.indentationLevel == 0, $"Mismatched indents in file: {this.indentationLevel}.");
 
-        this.currentTypeDeclarationFiles.Add(this.currentFileBuilderName, this.ToString());
+        ReadOnlyMemory<char>[] chunks = this.CaptureChunks();
+        if (this.fileSink is { } sink)
+        {
+            // The file is named now, in the order GetGeneratedCodeFiles would have named it (types and their files
+            // end in insertion order), so the names are the same; the dictionary keeps the suffix for the
+            // out-of-sequence checks only.
+            FileNameDescription description = this.currentFileNameDescription ??= this.sinkFileNameDescription!(typeDeclaration);
+            sink.Add(new GeneratedCodeFile(GetFileName(description, this.currentFileBuilderName, this.sinkFileNames), chunks, typeDeclaration));
+            this.currentTypeDeclarationFiles.Add(this.currentFileBuilderName, []);
+        }
+        else
+        {
+            this.currentTypeDeclarationFiles.Add(this.currentFileBuilderName, chunks);
+        }
+
         return this;
+    }
+
+    /// <summary>
+    /// Copies the builder into chunks of at most <see cref="GeneratedCodeFile.ChunkSize"/> characters, so that a
+    /// file never becomes one large-object-heap string unless a consumer asks for
+    /// <see cref="GeneratedCodeFile.FileContent"/>; or, when the host asked for strings (a host that keeps every
+    /// file's text for the process lifetime, such as the source generator, retains less with one string per file than
+    /// with chunks that the collector promotes), into one string, which <see cref="GeneratedCodeFile.FileContent"/>
+    /// then returns without a copy.
+    /// </summary>
+    /// <returns>The chunks, in order.</returns>
+    private ReadOnlyMemory<char>[] CaptureChunks()
+    {
+        int length = this.stringBuilder.Length;
+        if (length == 0)
+        {
+            return [];
+        }
+
+        if (storeFilesAsStrings)
+        {
+            return [this.stringBuilder.ToString().AsMemory()];
+        }
+
+        int chunkCount = (length + GeneratedCodeFile.ChunkSize - 1) / GeneratedCodeFile.ChunkSize;
+        ReadOnlyMemory<char>[] chunks = new ReadOnlyMemory<char>[chunkCount];
+        for (int i = 0; i < chunkCount; i++)
+        {
+            int start = i * GeneratedCodeFile.ChunkSize;
+            int count = Math.Min(GeneratedCodeFile.ChunkSize, length - start);
+            char[] buffer = new char[count];
+            this.stringBuilder.CopyTo(start, buffer, 0, count);
+            chunks[i] = buffer;
+        }
+
+        return chunks;
     }
 
     /// <summary>
@@ -422,8 +497,13 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.scope.Push(new(scopeName, scopeType));
-        this.FullyQualifiedScope = this.BuildFullyQualifiedScope();
+        // Each scope records its fully-qualified name (the scope names in push order, joined with '.'),
+        // so entering or leaving a scope does not rebuild the name from the whole stack.
+        string fullyQualifiedScope = this.scope.Count == 0
+            ? scopeName
+            : string.Concat(this.scope.Peek().FullyQualifiedName, ".", scopeName);
+        this.scope.Push(new(scopeName, scopeType, fullyQualifiedScope));
+        this.FullyQualifiedScope = fullyQualifiedScope;
 
         return this;
     }
@@ -440,7 +520,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
         }
 
         this.scope.Pop();
-        this.FullyQualifiedScope = this.BuildFullyQualifiedScope();
+        this.FullyQualifiedScope = this.scope.Count > 0 ? this.scope.Peek().FullyQualifiedName : string.Empty;
         return this;
     }
 
@@ -1334,7 +1414,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.Append(value);
+#if NET8_0_OR_GREATER
+        this.stringBuilder.Append(CultureInfo.InvariantCulture, $"{value}");
+#else
+        this.stringBuilder.Append(value.ToString(CultureInfo.InvariantCulture));
+#endif
         return this;
     }
 
@@ -1350,7 +1434,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.Append(value);
+#if NET8_0_OR_GREATER
+        this.stringBuilder.Append(CultureInfo.InvariantCulture, $"{value}");
+#else
+        this.stringBuilder.Append(value.ToString(CultureInfo.InvariantCulture));
+#endif
         return this;
     }
 
@@ -1366,7 +1454,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.Append(value);
+#if NET8_0_OR_GREATER
+        this.stringBuilder.Append(CultureInfo.InvariantCulture, $"{value}");
+#else
+        this.stringBuilder.Append(value.ToString(CultureInfo.InvariantCulture));
+#endif
         return this;
     }
 
@@ -1382,7 +1474,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.Append(value);
+#if NET8_0_OR_GREATER
+        this.stringBuilder.Append(CultureInfo.InvariantCulture, $"{value}");
+#else
+        this.stringBuilder.Append(value.ToString(CultureInfo.InvariantCulture));
+#endif
         return this;
     }
 
@@ -1398,7 +1494,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.Append(value);
+#if NET8_0_OR_GREATER
+        this.stringBuilder.Append(CultureInfo.InvariantCulture, $"{value}");
+#else
+        this.stringBuilder.Append(value.ToString(CultureInfo.InvariantCulture));
+#endif
         return this;
     }
 
@@ -1414,7 +1514,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.Append(value);
+#if NET8_0_OR_GREATER
+        this.stringBuilder.Append(CultureInfo.InvariantCulture, $"{value}");
+#else
+        this.stringBuilder.Append(value.ToString(CultureInfo.InvariantCulture));
+#endif
         return this;
     }
 
@@ -1430,7 +1534,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.Append(value);
+#if NET8_0_OR_GREATER
+        this.stringBuilder.Append(CultureInfo.InvariantCulture, $"{value}");
+#else
+        this.stringBuilder.Append(value.ToString(CultureInfo.InvariantCulture));
+#endif
         return this;
     }
 
@@ -1446,7 +1554,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.Append(value);
+#if NET8_0_OR_GREATER
+        this.stringBuilder.Append(CultureInfo.InvariantCulture, $"{value}");
+#else
+        this.stringBuilder.Append(value.ToString(CultureInfo.InvariantCulture));
+#endif
         return this;
     }
 
@@ -1462,7 +1574,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.Append(value);
+#if NET8_0_OR_GREATER
+        this.stringBuilder.Append(CultureInfo.InvariantCulture, $"{value}");
+#else
+        this.stringBuilder.Append(value.ToString(CultureInfo.InvariantCulture));
+#endif
         return this;
     }
 
@@ -1478,7 +1594,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.Append(value);
+#if NET8_0_OR_GREATER
+        this.stringBuilder.Append(CultureInfo.InvariantCulture, $"{value}");
+#else
+        this.stringBuilder.Append(value.ToString(CultureInfo.InvariantCulture));
+#endif
         return this;
     }
 
@@ -1494,14 +1614,19 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.Append(value);
+#if NET8_0_OR_GREATER
+        this.stringBuilder.Append(CultureInfo.InvariantCulture, $"{value}");
+#else
+        this.stringBuilder.Append(value.ToString(CultureInfo.InvariantCulture));
+#endif
         return this;
     }
 
     /// <summary>
     /// Appends and formats a value to the builder.
     /// </summary>
-    /// <param name="value">The value to append.</param>
+    /// <param name="value">The value to append. A value that implements <see cref="IFormattable"/> is formatted with the
+    /// invariant culture.</param>
     /// <returns>A reference to this instance after the operation has completed.</returns>
     public CodeGenerator Append(object? value)
     {
@@ -1510,7 +1635,11 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.Append(value);
+#if NET8_0_OR_GREATER
+        this.stringBuilder.Append(CultureInfo.InvariantCulture, $"{value}");
+#else
+        this.stringBuilder.Append(value is IFormattable formattable ? formattable.ToString(null, CultureInfo.InvariantCulture) : value?.ToString());
+#endif
         return this;
     }
 
@@ -1992,7 +2121,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.AppendFormat(format, arg0);
+        this.stringBuilder.AppendFormat(CultureInfo.InvariantCulture, format, arg0);
         return this;
     }
 
@@ -2010,7 +2139,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.AppendFormat(format, arg0, arg1);
+        this.stringBuilder.AppendFormat(CultureInfo.InvariantCulture, format, arg0, arg1);
         return this;
     }
 
@@ -2029,7 +2158,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.AppendFormat(format, arg0, arg1, arg2);
+        this.stringBuilder.AppendFormat(CultureInfo.InvariantCulture, format, arg0, arg1, arg2);
         return this;
     }
 
@@ -2046,7 +2175,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
             return this;
         }
 
-        this.stringBuilder.AppendFormat(format, args);
+        this.stringBuilder.AppendFormat(CultureInfo.InvariantCulture, format, args);
         return this;
     }
 
@@ -2254,7 +2383,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
         }
 
         this.WriteIndent();
-        this.stringBuilder.AppendFormat(format, arg0);
+        this.stringBuilder.AppendFormat(CultureInfo.InvariantCulture, format, arg0);
         return this;
     }
 
@@ -2273,7 +2402,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
         }
 
         this.WriteIndent();
-        this.stringBuilder.AppendFormat(format, arg0, arg1);
+        this.stringBuilder.AppendFormat(CultureInfo.InvariantCulture, format, arg0, arg1);
         return this;
     }
 
@@ -2293,7 +2422,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
         }
 
         this.WriteIndent();
-        this.stringBuilder.AppendFormat(format, arg0, arg1, arg2);
+        this.stringBuilder.AppendFormat(CultureInfo.InvariantCulture, format, arg0, arg1, arg2);
         return this;
     }
 
@@ -2311,7 +2440,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
         }
 
         this.WriteIndent();
-        this.stringBuilder.AppendFormat(format, args);
+        this.stringBuilder.AppendFormat(CultureInfo.InvariantCulture, format, args);
         return this;
     }
 
@@ -2790,7 +2919,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
     /// <returns>The collection of generated code files.</returns>
     public IReadOnlyCollection<GeneratedCodeFile> GetGeneratedCodeFiles(Func<TypeDeclaration, FileNameDescription> getFileNameDescription)
     {
-        if (this.cancellationToken.IsCancellationRequested)
+        if (this.cancellationToken.IsCancellationRequested || this.fileSink is not null)
         {
             return [];
         }
@@ -2798,10 +2927,10 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
         List<GeneratedCodeFile> generatedCode = [];
         HashSet<string> uniqueFileNames = new(StringComparer.OrdinalIgnoreCase);
 
-        foreach (KeyValuePair<TypeDeclaration, Dictionary<string, string>> kvp in this.generatedFiles)
+        foreach (KeyValuePair<TypeDeclaration, Dictionary<string, ReadOnlyMemory<char>[]>> kvp in this.generatedFiles)
         {
             FileNameDescription fileNameDescription = getFileNameDescription(kvp.Key);
-            foreach (KeyValuePair<string, string> fileAndContent in kvp.Value)
+            foreach (KeyValuePair<string, ReadOnlyMemory<char>[]> fileAndContent in kvp.Value)
             {
                 generatedCode.Add(
                     new(
@@ -2817,12 +2946,16 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
     private static string GetFileName(FileNameDescription fileNameDescription, string fileName, HashSet<string> uniqueFileNames)
     {
         string candidateName = GetBaseFileName(fileNameDescription, fileName);
-        string baseFileNameWithoutExtension = Path.GetFileNameWithoutExtension(candidateName);
-        string extension = Path.GetExtension(candidateName);
+
+        // The base name ends with the configured extension (which carries its own dot) when there is one; a colliding
+        // name takes its index between the stem and that extension. No Path call: a directory part in the base name
+        // must be kept.
+        string extension = fileNameDescription.Extension ?? string.Empty;
+        string stem = candidateName.Substring(0, candidateName.Length - extension.Length);
 
         for (int index = 1; !uniqueFileNames.Add(candidateName); index++)
         {
-            candidateName = $"{baseFileNameWithoutExtension}{index}.{extension}";
+            candidateName = $"{stem}{index}{extension}";
         }
 
         return candidateName;
@@ -2904,18 +3037,6 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
                 this.stringBuilder.Append(this.indentSequence);
             }
         }
-    }
-
-    private string BuildFullyQualifiedScope(string? additionalScope = null)
-    {
-        IEnumerable<ScopeValue> scope = this.scope.Reverse();
-
-        if (additionalScope is string s)
-        {
-            scope = scope.Append(new(s, 0));
-        }
-
-        return string.Join(".", scope.Select(s => s.Name));
     }
 
     /// <summary>
@@ -3004,10 +3125,12 @@ public class CodeGenerator(ILanguageProvider languageProvider, CancellationToken
         }
     }
 
-    private readonly struct ScopeValue(string name, int type)
+    private readonly struct ScopeValue(string name, int type, string fullyQualifiedName)
     {
         public string Name { get; } = name;
 
         public int Type { get; } = type;
+
+        public string FullyQualifiedName { get; } = fullyQualifiedName;
     }
 }

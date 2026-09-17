@@ -49,8 +49,6 @@ public sealed class JsonSchemaPartial : ICodeFileBuilder
                     "global::Corvus.Text.Json.Internal")
                 .AppendLine()
                 .BeginTypeDeclarationNesting(typeDeclaration)
-                    .AppendDocumentation(typeDeclaration)
-                    .AppendDebuggerDisplay()
                     .BeginPartialStructDeclaration(
                         typeDeclaration.DotnetAccessibility(),
                         typeDeclaration.DotnetTypeName(),

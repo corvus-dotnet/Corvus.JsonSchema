@@ -69,8 +69,9 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
         string outputPath = settings.OutputPath ?? Path.Combine(Directory.GetCurrentDirectory(), "Generated");
         string specFilePath = Path.GetFullPath(settings.SpecFile);
 
-        // Read and parse the spec
-        byte[] specBytes = await File.ReadAllBytesAsync(settings.SpecFile, cancellationToken)
+        // Read and parse the spec (YAML when --yaml says so, or when the extension is .yaml or .yml)
+        bool useYaml = SpecDocumentReader.UseYaml(settings.Yaml, settings.SpecFile);
+        byte[] specBytes = await SpecDocumentReader.ReadAsJsonAsync(settings.SpecFile, useYaml, cancellationToken)
             .ConfigureAwait(false);
 
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(specBytes);
@@ -121,7 +122,7 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
             IReadOnlySet<string>? contextBodies = null;
             if (schemaRefs.Length > 0)
             {
-                (schemaTypeMap, contextBodies, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken, syntheticDocuments)
+                (schemaTypeMap, contextBodies, modelFileNames) = await GenerateSchemaTypesAsync(useYaml, specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken, syntheticDocuments)
                     .ConfigureAwait(false);
             }
 
@@ -149,7 +150,7 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
             IReadOnlySet<string>? contextBodies = null;
             if (schemaRefs.Length > 0)
             {
-                (schemaTypeMap, contextBodies, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken)
+                (schemaTypeMap, contextBodies, modelFileNames) = await GenerateSchemaTypesAsync(useYaml, specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken)
                     .ConfigureAwait(false);
             }
 
@@ -180,7 +181,7 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
             IReadOnlySet<string>? contextBodies = null;
             if (schemaRefs.Length > 0)
             {
-                (schemaTypeMap, contextBodies, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken)
+                (schemaTypeMap, contextBodies, modelFileNames) = await GenerateSchemaTypesAsync(useYaml, specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken)
                     .ConfigureAwait(false);
             }
 
@@ -208,7 +209,7 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
             IReadOnlySet<string>? contextBodies = null;
             if (schemaRefs.Length > 0)
             {
-                (schemaTypeMap, contextBodies, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken)
+                (schemaTypeMap, contextBodies, modelFileNames) = await GenerateSchemaTypesAsync(useYaml, specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken)
                     .ConfigureAwait(false);
             }
 
@@ -256,6 +257,7 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
     }
 
     private static async Task<(Dictionary<string, string> SchemaTypeMap, IReadOnlySet<string> ContextSourceBodyPointers, IReadOnlyList<string> GeneratedFileNames)> GenerateSchemaTypesAsync(
+        bool useYaml,
         string specFile,
         string specVersion,
         string rootNamespace,
@@ -279,14 +281,7 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
             }
         }
 
-        CompoundDocumentResolver documentResolver = syntheticResolver is not null
-            ? new(
-                syntheticResolver,
-                new FileSystemDocumentResolver(),
-                new HttpClientDocumentResolver(new HttpClient()))
-            : new(
-                new FileSystemDocumentResolver(),
-                new HttpClientDocumentResolver(new HttpClient()));
+        CompoundDocumentResolver documentResolver = SpecDocumentReader.CreateDocumentResolver(useYaml, syntheticResolver);
 
         documentResolver.AddMetaschema();
 
@@ -370,7 +365,7 @@ internal sealed class OpenApiServerCommand : AsyncCommand<OpenApiGenerateSetting
         foreach (GeneratedCodeFile codeFile in generatedCode)
         {
             string filePath = TruncateFileNameIfRequired(outputPath, writtenFiles, codeFile);
-            await File.WriteAllTextAsync(filePath, codeFile.FileContent, cancellationToken)
+            await GeneratedFileWriter.WriteAsync(codeFile, filePath, cancellationToken)
                 .ConfigureAwait(false);
             AnsiConsole.MarkupLine($"  [cyan]Schema type:[/] {filePath}");
             schemaFileNames.Add(Path.GetFileName(filePath));

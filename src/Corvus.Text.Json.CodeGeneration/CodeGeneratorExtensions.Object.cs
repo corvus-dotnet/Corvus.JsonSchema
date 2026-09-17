@@ -8,6 +8,7 @@
 // </licensing>
 
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Text.Encodings.Web;
@@ -228,10 +229,7 @@ internal static partial class CodeGeneratorExtensions
         return generator
             .AppendSeparatorLine()
             .ReserveName("EnumerateObject")
-            .AppendLineIndent("/// <summary>")
-            .AppendLineIndent("/// Enumerates the object.")
-            .AppendLineIndent("/// </summary>")
-            .AppendLineIndent("/// <exception cref=\"InvalidOperationException\">The value is not an object.</exception>")
+            .AppendInheritDoc("EnumerateObject()", forMutable)
             .AppendLineIndent("public ObjectEnumerator<", fqdtn, "> EnumerateObject()")
             .AppendLineIndent("{")
             .PushIndent()
@@ -262,10 +260,7 @@ internal static partial class CodeGeneratorExtensions
         return generator
             .AppendSeparatorLine()
             .ReserveName("GetPropertyCount")
-            .AppendLineIndent("/// <summary>")
-            .AppendLineIndent("/// Gets the number of properties in the object.")
-            .AppendLineIndent("/// </summary>")
-            .AppendLineIndent("/// <exception cref=\"InvalidOperationException\">The value is not an object.</exception>")
+            .AppendInheritDoc("GetPropertyCount()")
             .AppendLineIndent("public int GetPropertyCount()")
             .AppendLineIndent("{")
             .PushIndent()
@@ -377,9 +372,6 @@ internal static partial class CodeGeneratorExtensions
 
         generator
             .AppendSeparatorLine()
-            .AppendLineIndent("/// <summary>")
-            .AppendLineIndent("/// Provides escaped UTF-8 versions of the JSON property names on the object.")
-            .AppendLineIndent("/// </summary>")
             .BeginPrivateStaticClassDeclaration(generator.JsonPropertyNamesEscapedClassName());
 
         int i = 0;
@@ -437,10 +429,6 @@ internal static partial class CodeGeneratorExtensions
 
         generator
             .AppendSeparatorLine()
-            .AppendLineIndent("/// <summary>")
-            .AppendLineIndent("/// Provides pre-baked property name blobs for fast builder property storage.")
-            .AppendLineIndent("/// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].")
-            .AppendLineIndent("/// </summary>")
             .BeginPrivateStaticClassDeclaration(generator.JsonPropertyNamesPrebakedClassName());
 
         int i = 0;
@@ -470,10 +458,10 @@ internal static partial class CodeGeneratorExtensions
                 .AppendIndent("public static ReadOnlySpan<byte> ", property.DotnetPropertyName(), " => [");
 
             // Emit header bytes (little-endian)
-            generator.Append("0x" + ((byte)(header & 0xFF)).ToString("X2"));
-            generator.Append(", 0x" + ((byte)((header >> 8) & 0xFF)).ToString("X2"));
-            generator.Append(", 0x" + ((byte)((header >> 16) & 0xFF)).ToString("X2"));
-            generator.Append(", 0x" + ((byte)((header >> 24) & 0xFF)).ToString("X2"));
+            generator.Append("0x" + ((byte)(header & 0xFF)).ToString("X2", CultureInfo.InvariantCulture));
+            generator.Append(", 0x" + ((byte)((header >> 8) & 0xFF)).ToString("X2", CultureInfo.InvariantCulture));
+            generator.Append(", 0x" + ((byte)((header >> 16) & 0xFF)).ToString("X2", CultureInfo.InvariantCulture));
+            generator.Append(", 0x" + ((byte)((header >> 24) & 0xFF)).ToString("X2", CultureInfo.InvariantCulture));
 
             // Opening quote
             generator.Append(", 0x22");
@@ -481,7 +469,7 @@ internal static partial class CodeGeneratorExtensions
             // UTF-8 name bytes
             for (int b = 0; b < utf8Bytes.Length; b++)
             {
-                generator.Append(", 0x" + utf8Bytes[b].ToString("X2"));
+                generator.Append(", 0x" + utf8Bytes[b].ToString("X2", CultureInfo.InvariantCulture));
             }
 
             // Closing quote
@@ -548,23 +536,15 @@ internal static partial class CodeGeneratorExtensions
             fqdtn = WellKnownTypeDeclarations.JsonAny.DotnetTypeName();
         }
 
-        AppendPropertyIndexer(generator, fqdtn, "ReadOnlySpan<byte>", forMutable);
-        AppendPropertyIndexer(generator, fqdtn, "ReadOnlySpan<char>", forMutable);
-        AppendPropertyIndexer(generator, fqdtn, "string", forMutable);
+        AppendPropertyIndexer(generator, fqdtn, "ReadOnlySpan<byte>", "ReadOnlySpan{byte}", forMutable);
+        AppendPropertyIndexer(generator, fqdtn, "ReadOnlySpan<char>", "ReadOnlySpan{char}", forMutable);
+        AppendPropertyIndexer(generator, fqdtn, "string", "string", forMutable);
 
         return generator;
 
-        static void AppendPropertyIndexer(CodeGenerator generator, string fqdtn, string propertyNameType, bool forMutable) => generator
+        static void AppendPropertyIndexer(CodeGenerator generator, string fqdtn, string propertyNameType, string crefPropertyNameType, bool forMutable) => generator
                             .AppendSeparatorLine()
-                            .AppendBlockIndent(
-                            """
-                            /// <summary>
-                            /// Gets the value of the property with the given name.
-                            /// </summary>
-                            /// <param name="propertyName">The name of the property.</param>
-                            /// <returns>The value of the property with the given name.</returns>
-                            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-                            """)
+                            .AppendInheritDoc("this[", crefPropertyNameType, "]", forMutable)
                             .AppendLineIndent("public ", fqdtn, forMutable ? ".Mutable" : "", " this[", propertyNameType, " propertyName]")
                             .AppendLineIndent("{")
                             .PushIndent()
@@ -669,24 +649,15 @@ internal static partial class CodeGeneratorExtensions
             fqdtn = WellKnownTypeDeclarations.JsonAny.DotnetTypeName();
         }
 
-        AppendTryGetPropertyMethod(generator, fqdtn, "ReadOnlySpan<byte>", forMutable);
-        AppendTryGetPropertyMethod(generator, fqdtn, "ReadOnlySpan<char>", forMutable);
-        AppendTryGetPropertyMethod(generator, fqdtn, "string", forMutable);
+        AppendTryGetPropertyMethod(generator, fqdtn, "ReadOnlySpan<byte>", "ReadOnlySpan{byte}", forMutable);
+        AppendTryGetPropertyMethod(generator, fqdtn, "ReadOnlySpan<char>", "ReadOnlySpan{char}", forMutable);
+        AppendTryGetPropertyMethod(generator, fqdtn, "string", "string", forMutable);
 
         return generator;
 
-        static void AppendTryGetPropertyMethod(CodeGenerator generator, string fqdtn, string propertyNameType, bool forMutable) => generator
+        static void AppendTryGetPropertyMethod(CodeGenerator generator, string fqdtn, string propertyNameType, string crefPropertyNameType, bool forMutable) => generator
                             .AppendSeparatorLine()
-                            .AppendBlockIndent(
-                            """
-                            /// <summary>
-                            /// Tries to get the value of the property with the given name.
-                            /// </summary>
-                            /// <param name="propertyName">The name of the property.</param>
-                            /// <param name="value">The value of the property, if present.</param>
-                            /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
-                            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-                            """)
+                            .AppendInheritDoc("TryGetProperty(", crefPropertyNameType, forMutable ? ", out JsonElement.Mutable)" : ", out JsonElement)", forMutable)
                             .AppendLineIndent("public bool TryGetProperty(", propertyNameType, " propertyName, out ", fqdtn, forMutable ? ".Mutable" : "", " value)")
                             .AppendLineIndent("{")
                             .PushIndent()
@@ -810,7 +781,7 @@ internal static partial class CodeGeneratorExtensions
                     return generator;
                 }
 
-                string? regexIndex = hasIndex ? index.ToString() : null;
+                string? regexIndex = hasIndex ? index.ToString(CultureInfo.InvariantCulture) : null;
                 string matchesPatternName = generator.GetUniqueMethodNameInScope(declaration.ReducedPatternPropertyType.DotnetTypeName(), prefix: "MatchesPattern");
                 string tryAsPatternName = generator.GetUniqueMethodNameInScope(declaration.ReducedPatternPropertyType.DotnetTypeName(), prefix: "TryAsPattern");
                 string visitPatternName = generator.GetUniqueMethodNameInScope(declaration.ReducedPatternPropertyType.DotnetTypeName(), prefix: "VisitPattern");
@@ -1323,24 +1294,7 @@ internal static partial class CodeGeneratorExtensions
         generator
             .ReserveNameIfNotReserved("SetProperty")
             .AppendSeparatorLine()
-            .AppendLineIndent("/// <summary>")
-            .AppendLineIndent("///   Sets a property on this JSON object element.")
-            .AppendLineIndent("/// </summary>")
-            .AppendLineIndent("/// <param name=\"propertyName\">The name of the property to set.</param>")
-            .AppendLineIndent("/// <param name=\"value\">The value of the property to set.</param>")
-            .AppendLineIndent("/// <exception cref=\"InvalidOperationException\">")
-            .AppendLineIndent("///   This element's <see cref=\"ValueKind\"/> is not <see cref=\"JsonValueKind.Object\"/>,")
-            .AppendLineIndent("///   or the element reference is stale due to document mutations.")
-            .AppendLineIndent("/// </exception>")
-            .AppendLineIndent("/// <exception cref=\"ObjectDisposedException\">")
-            .AppendLineIndent("///   The parent <see cref=\"JsonDocument\"/> has been disposed.")
-            .AppendLineIndent("/// </exception>")
-            .AppendLineIndent("/// <remarks>")
-            .AppendLineIndent("///   <para>")
-            .AppendLineIndent("///     If the property already exists, its value will be replaced.")
-            .AppendLineIndent("///     If the property doesn't exist, it will be added to the object.")
-            .AppendLineIndent("///   </para>")
-            .AppendLineIndent("/// </remarks>")
+            .AppendInheritDoc("SetProperty(string, in JsonElement.Source)", forMutable: true)
             .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
             .AppendLineIndent("public void SetProperty(string propertyName, scoped in ", fqdtn, ".", generator.SourceClassName(fqdtn), " value)")
             .AppendLineIndent("{")
@@ -1352,24 +1306,7 @@ internal static partial class CodeGeneratorExtensions
         // SetProperty(ReadOnlySpan<char>) - full implementation
         generator
             .AppendSeparatorLine()
-            .AppendLineIndent("/// <summary>")
-            .AppendLineIndent("///   Sets a property on this JSON object element.")
-            .AppendLineIndent("/// </summary>")
-            .AppendLineIndent("/// <param name=\"propertyName\">The name of the property to set.</param>")
-            .AppendLineIndent("/// <param name=\"value\">The value of the property to set.</param>")
-            .AppendLineIndent("/// <exception cref=\"InvalidOperationException\">")
-            .AppendLineIndent("///   This element's <see cref=\"ValueKind\"/> is not <see cref=\"JsonValueKind.Object\"/>,")
-            .AppendLineIndent("///   or the element reference is stale due to document mutations.")
-            .AppendLineIndent("/// </exception>")
-            .AppendLineIndent("/// <exception cref=\"ObjectDisposedException\">")
-            .AppendLineIndent("///   The parent <see cref=\"JsonDocument\"/> has been disposed.")
-            .AppendLineIndent("/// </exception>")
-            .AppendLineIndent("/// <remarks>")
-            .AppendLineIndent("///   <para>")
-            .AppendLineIndent("///     If the property already exists, its value will be replaced.")
-            .AppendLineIndent("///     If the property doesn't exist, it will be added to the object.")
-            .AppendLineIndent("///   </para>")
-            .AppendLineIndent("/// </remarks>")
+            .AppendInheritDoc("SetProperty(ReadOnlySpan{char}, in JsonElement.Source, int)", forMutable: true)
             .AppendLineIndent("public void SetProperty(ReadOnlySpan<char> propertyName, scoped in ", fqdtn, ".", generator.SourceClassName(fqdtn), " value)")
             .AppendLineIndent("{")
             .PushIndent()
@@ -1410,24 +1347,7 @@ internal static partial class CodeGeneratorExtensions
         // SetProperty(ReadOnlySpan<byte>) - UTF-8 implementation
         generator
             .AppendSeparatorLine()
-            .AppendLineIndent("/// <summary>")
-            .AppendLineIndent("///   Sets a property on this JSON object element.")
-            .AppendLineIndent("/// </summary>")
-            .AppendLineIndent("/// <param name=\"propertyName\">The UTF-8 encoded name of the property to set.</param>")
-            .AppendLineIndent("/// <param name=\"value\">The value of the property to set.</param>")
-            .AppendLineIndent("/// <exception cref=\"InvalidOperationException\">")
-            .AppendLineIndent("///   This element's <see cref=\"ValueKind\"/> is not <see cref=\"JsonValueKind.Object\"/>,")
-            .AppendLineIndent("///   or the element reference is stale due to document mutations.")
-            .AppendLineIndent("/// </exception>")
-            .AppendLineIndent("/// <exception cref=\"ObjectDisposedException\">")
-            .AppendLineIndent("///   The parent <see cref=\"JsonDocument\"/> has been disposed.")
-            .AppendLineIndent("/// </exception>")
-            .AppendLineIndent("/// <remarks>")
-            .AppendLineIndent("///   <para>")
-            .AppendLineIndent("///     If the property already exists, its value will be replaced.")
-            .AppendLineIndent("///     If the property doesn't exist, it will be added to the object.")
-            .AppendLineIndent("///   </para>")
-            .AppendLineIndent("/// </remarks>")
+            .AppendInheritDoc("SetProperty(ReadOnlySpan{byte}, in JsonElement.Source, int)", forMutable: true)
             .AppendLineIndent("public void SetProperty(ReadOnlySpan<byte> propertyName, scoped in ", fqdtn, ".", generator.SourceClassName(fqdtn), " value)")
             .AppendLineIndent("{")
             .PushIndent()
@@ -1469,18 +1389,7 @@ internal static partial class CodeGeneratorExtensions
         generator
             .ReserveNameIfNotReserved("RemoveProperty")
             .AppendSeparatorLine()
-            .AppendLineIndent("/// <summary>")
-            .AppendLineIndent("///   Removes the property with the given name, if present.")
-            .AppendLineIndent("/// </summary>")
-            .AppendLineIndent("/// <param name=\"propertyName\">The property name to remove.</param>")
-            .AppendLineIndent("/// <returns><see langword=\"true\"/> if the property was found and removed; otherwise, <see langword=\"false\"/>.</returns>")
-            .AppendLineIndent("/// <exception cref=\"InvalidOperationException\">")
-            .AppendLineIndent("///   This element's <see cref=\"ValueKind\"/> is not <see cref=\"JsonValueKind.Object\"/>,")
-            .AppendLineIndent("///   or the element reference is stale due to document mutations.")
-            .AppendLineIndent("/// </exception>")
-            .AppendLineIndent("/// <exception cref=\"ObjectDisposedException\">")
-            .AppendLineIndent("///   The parent <see cref=\"JsonDocument\"/> has been disposed.")
-            .AppendLineIndent("/// </exception>")
+            .AppendInheritDoc("RemoveProperty(string)", forMutable: true)
             .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
             .AppendLineIndent("public bool RemoveProperty(string propertyName)")
             .AppendLineIndent("{")
@@ -1492,18 +1401,7 @@ internal static partial class CodeGeneratorExtensions
         // RemoveProperty(ReadOnlySpan<char>)
         generator
             .AppendSeparatorLine()
-            .AppendLineIndent("/// <summary>")
-            .AppendLineIndent("///   Removes the property with the given name, if present.")
-            .AppendLineIndent("/// </summary>")
-            .AppendLineIndent("/// <param name=\"propertyName\">The property name to remove.</param>")
-            .AppendLineIndent("/// <returns><see langword=\"true\"/> if the property was found and removed; otherwise, <see langword=\"false\"/>.</returns>")
-            .AppendLineIndent("/// <exception cref=\"InvalidOperationException\">")
-            .AppendLineIndent("///   This element's <see cref=\"ValueKind\"/> is not <see cref=\"JsonValueKind.Object\"/>,")
-            .AppendLineIndent("///   or the element reference is stale due to document mutations.")
-            .AppendLineIndent("/// </exception>")
-            .AppendLineIndent("/// <exception cref=\"ObjectDisposedException\">")
-            .AppendLineIndent("///   The parent <see cref=\"JsonDocument\"/> has been disposed.")
-            .AppendLineIndent("/// </exception>")
+            .AppendInheritDoc("RemoveProperty(ReadOnlySpan{char})", forMutable: true)
             .AppendLineIndent("public bool RemoveProperty(ReadOnlySpan<char> propertyName)")
             .AppendLineIndent("{")
             .PushIndent()
@@ -1517,18 +1415,7 @@ internal static partial class CodeGeneratorExtensions
         // RemoveProperty(ReadOnlySpan<byte>)
         generator
             .AppendSeparatorLine()
-            .AppendLineIndent("/// <summary>")
-            .AppendLineIndent("///   Removes the property with the given name, if present.")
-            .AppendLineIndent("/// </summary>")
-            .AppendLineIndent("/// <param name=\"propertyName\">The UTF-8 encoded property name to remove.</param>")
-            .AppendLineIndent("/// <returns><see langword=\"true\"/> if the property was found and removed; otherwise, <see langword=\"false\"/>.</returns>")
-            .AppendLineIndent("/// <exception cref=\"InvalidOperationException\">")
-            .AppendLineIndent("///   This element's <see cref=\"ValueKind\"/> is not <see cref=\"JsonValueKind.Object\"/>,")
-            .AppendLineIndent("///   or the element reference is stale due to document mutations.")
-            .AppendLineIndent("/// </exception>")
-            .AppendLineIndent("/// <exception cref=\"ObjectDisposedException\">")
-            .AppendLineIndent("///   The parent <see cref=\"JsonDocument\"/> has been disposed.")
-            .AppendLineIndent("/// </exception>")
+            .AppendInheritDoc("RemoveProperty(ReadOnlySpan{byte})", forMutable: true)
             .AppendLineIndent("public bool RemoveProperty(ReadOnlySpan<byte> propertyName)")
             .AppendLineIndent("{")
             .PushIndent()

@@ -1,0 +1,30 @@
+<Project>
+
+  <!--
+    Analyzers that analyse generated code (GeneratedCodeAnalysisFlags.Analyze, the default for an analyzer that never
+    calls ConfigureGeneratedCodeAnalysis) execute on every source generator tree, where an .editorconfig section cannot
+    reach them: csc gives generator trees no per-tree options. analyzers/generated-code.globalconfig sets each of their
+    diagnostics to none, which makes the analyzer driver skip those analyzers on the generator trees, and the generated
+    region of the root .editorconfig restores the severities for files on disk. The file is passed here rather than
+    discovered as a .globalconfig because discovery walks every directory above a project, and a checkout nested in
+    another (a git worktree) would then see two copies and report the keys as conflicting.
+    update-generated-code-analyzer-config.ps1 writes both files; CI checks that they are current.
+  -->
+  <ItemGroup Condition="'$(CorvusGeneratedCodeAnalyzerConfig)' != 'false'">
+    <EditorConfigFiles Include="$(MSBuildThisFileDirectory)analyzers/generated-code.globalconfig" />
+  </ItemGroup>
+
+  <!--
+    Microsoft.CodeAnalysis.Analyzers (the RS rules for analyzer authors) is a dependency of Microsoft.CodeAnalysis and so
+    reaches every project that uses Roslyn as a library, directly or through a project reference, and every consumer
+    of those. Its analyzers analyse generated code and cost seconds per build in the model projects. A PackageReference
+    with ExcludeAssets cannot keep them out: NuGet unions the asset flags of every path to a package, and the transitive
+    path keeps the analyzers. They are removed here from every project that is not itself a Roslyn component.
+  -->
+  <Target Name="RemoveRoslynMetaAnalyzers" AfterTargets="ResolveLockFileAnalyzers" BeforeTargets="CoreCompile" Condition="'$(IsRoslynComponent)' != 'true' and '$(CorvusKeepRoslynMetaAnalyzers)' != 'true'">
+    <ItemGroup>
+      <Analyzer Remove="@(Analyzer)" Condition="'%(Filename)' == 'Microsoft.CodeAnalysis.Analyzers' or '%(Filename)' == 'Microsoft.CodeAnalysis.CSharp.Analyzers'" />
+    </ItemGroup>
+  </Target>
+
+</Project>

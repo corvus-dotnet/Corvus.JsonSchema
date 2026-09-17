@@ -1,5 +1,8 @@
 <Project>
 
+  <!-- The repository-wide targets (the generated-code analyzer configuration). -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.targets', '$(MSBuildThisFileDirectory)../'))" />
+
   <!--
     Endjin.RecommendedPractices.targets injects StyleCop.Analyzers and Roslynator.Analyzers
     with explicit Version attributes. Under CPM (ManagePackageVersionsCentrally=true), any
