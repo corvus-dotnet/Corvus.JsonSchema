@@ -35,7 +35,7 @@ public readonly partial struct PositiveIntegerDefault0
                 result = result.UsingStack();
             }
 
-            result = result.PushSchemaLocation("/definitions/positiveIntegerDefault0");
+            result = result.PushSchemaLocation("http://json-schema.org/draft-04/schema#/definitions/positiveIntegerDefault0");
         }
 
         result = CorvusValidation.CompositionAllOfValidationHandler(this, result, level);

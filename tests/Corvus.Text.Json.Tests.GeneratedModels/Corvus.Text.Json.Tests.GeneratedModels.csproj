@@ -6,12 +6,15 @@
     <Nullable>enable</Nullable>
     <LangVersion>Preview</LangVersion>
     <NoWarn>$(NoWarn);CS8500;CS8969;CS8618;IDE0065;IDE0290;IDE0079;IDE0130;IDE1006;IDE0130</NoWarn>
+    <!-- Every type in this project is generated code (the hand-written files are attribute stubs at most); analyzers have nothing to check here and this saves their whole cost. -->
+    <RunAnalyzers>false</RunAnalyzers>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
     <AdditionalFiles Include="inline-evaluated-buffer-2020-12.json" />
+    <AdditionalFiles Include="issue957-schema-location-2020-12.json" />
     <AdditionalFiles Include="format-types-2020-12.json" />
     <AdditionalFiles Include="shape-discriminated-2020-12.json" />
     <AdditionalFiles Include="shape-holder-2020-12.json" />

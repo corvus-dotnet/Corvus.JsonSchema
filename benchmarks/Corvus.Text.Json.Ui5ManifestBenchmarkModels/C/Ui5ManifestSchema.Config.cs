@@ -360,6 +360,45 @@ public readonly partial struct Ui5ManifestSchema
         public static explicit operator decimal(Config value) => value._parent.TryGetValue(value._idx, out decimal result) ? result : throw new FormatException();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator sbyte(Config value) => value._parent.TryGetValue(value._idx, out sbyte result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator byte(Config value) => value._parent.TryGetValue(value._idx, out byte result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator short(Config value) => value._parent.TryGetValue(value._idx, out short result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator ushort(Config value) => value._parent.TryGetValue(value._idx, out ushort result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator int(Config value) => value._parent.TryGetValue(value._idx, out int result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator uint(Config value) => value._parent.TryGetValue(value._idx, out uint result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator ulong(Config value) => value._parent.TryGetValue(value._idx, out ulong result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator float(Config value) => value._parent.TryGetValue(value._idx, out float result) ? result : throw new FormatException();
+
+#if NET
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator Int128(Config value) => value._parent.TryGetValue(value._idx, out Int128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator UInt128(Config value) => value._parent.TryGetValue(value._idx, out UInt128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator Half(Config value) => value._parent.TryGetValue(value._idx, out Half result) ? result : throw new FormatException();
+#endif
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator bool(Config value)
         {
             JsonTokenType type = value._parent.GetJsonTokenType(value._idx);

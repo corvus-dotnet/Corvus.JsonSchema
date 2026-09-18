@@ -576,51 +576,373 @@ public readonly partial struct CspellSchema
             public static ReadOnlySpan<byte> EverythingUtf8 => Constants.Enum28;
         }
 
-        public static partial class JsonSchema
+        /// <summary>
+        /// A native enum for the well-known values of this type.
+        /// </summary>
+        /// <remarks>
+        /// Member ordinals follow the schema declaration order. Inserting or reordering values
+        /// in the schema renumbers the ordinals, so do not persist their integer values.
+        /// </remarks>
+        public enum KnownValues
         {
-            private static EnumStringSet BuildEnumStringSet()
+            /// <summary>
+            /// Corresponds to the JSON string "Base64".
+            /// </summary>
+            Base64 = 0,
+            /// <summary>
+            /// Corresponds to the JSON string "Base64MultiLine".
+            /// </summary>
+            Base64MultiLine = 1,
+            /// <summary>
+            /// Corresponds to the JSON string "Base64SingleLine".
+            /// </summary>
+            Base64SingleLine = 2,
+            /// <summary>
+            /// Corresponds to the JSON string "CStyleComment".
+            /// </summary>
+            CStyleComment = 3,
+            /// <summary>
+            /// Corresponds to the JSON string "CStyleHexValue".
+            /// </summary>
+            CStyleHexValue = 4,
+            /// <summary>
+            /// Corresponds to the JSON string "CSSHexValue".
+            /// </summary>
+            CssHexValue = 5,
+            /// <summary>
+            /// Corresponds to the JSON string "CommitHash".
+            /// </summary>
+            CommitHash = 6,
+            /// <summary>
+            /// Corresponds to the JSON string "CommitHashLink".
+            /// </summary>
+            CommitHashLink = 7,
+            /// <summary>
+            /// Corresponds to the JSON string "Email".
+            /// </summary>
+            Email = 8,
+            /// <summary>
+            /// Corresponds to the JSON string "EscapeCharacters".
+            /// </summary>
+            EscapeCharacters = 9,
+            /// <summary>
+            /// Corresponds to the JSON string "HexValues".
+            /// </summary>
+            HexValues = 10,
+            /// <summary>
+            /// Corresponds to the JSON string "href".
+            /// </summary>
+            Href = 11,
+            /// <summary>
+            /// Corresponds to the JSON string "PhpHereDoc".
+            /// </summary>
+            PhpHereDoc = 12,
+            /// <summary>
+            /// Corresponds to the JSON string "PublicKey".
+            /// </summary>
+            PublicKey = 13,
+            /// <summary>
+            /// Corresponds to the JSON string "RsaCert".
+            /// </summary>
+            RsaCert = 14,
+            /// <summary>
+            /// Corresponds to the JSON string "SshRsa".
+            /// </summary>
+            SshRsa = 15,
+            /// <summary>
+            /// Corresponds to the JSON string "SHA".
+            /// </summary>
+            Sha = 16,
+            /// <summary>
+            /// Corresponds to the JSON string "HashStrings".
+            /// </summary>
+            HashStrings = 17,
+            /// <summary>
+            /// Corresponds to the JSON string "SpellCheckerDisable".
+            /// </summary>
+            SpellCheckerDisable = 18,
+            /// <summary>
+            /// Corresponds to the JSON string "SpellCheckerDisableBlock".
+            /// </summary>
+            SpellCheckerDisableBlock = 19,
+            /// <summary>
+            /// Corresponds to the JSON string "SpellCheckerDisableLine".
+            /// </summary>
+            SpellCheckerDisableLine = 20,
+            /// <summary>
+            /// Corresponds to the JSON string "SpellCheckerDisableNext".
+            /// </summary>
+            SpellCheckerDisableNext = 21,
+            /// <summary>
+            /// Corresponds to the JSON string "SpellCheckerIgnoreInDocSetting".
+            /// </summary>
+            SpellCheckerIgnoreInDocSetting = 22,
+            /// <summary>
+            /// Corresponds to the JSON string "string".
+            /// </summary>
+            StringValue = 23,
+            /// <summary>
+            /// Corresponds to the JSON string "UnicodeRef".
+            /// </summary>
+            UnicodeRef = 24,
+            /// <summary>
+            /// Corresponds to the JSON string "Urls".
+            /// </summary>
+            Urls = 25,
+            /// <summary>
+            /// Corresponds to the JSON string "UUID".
+            /// </summary>
+            Uuid = 26,
+            /// <summary>
+            /// Corresponds to the JSON string "Everything".
+            /// </summary>
+            Everything = 27,
+        }
+
+        /// <summary>
+        /// Converts a <see cref="KnownValues"/> to an instance of this type.
+        /// </summary>
+        /// <param name="value">The well-known value from which to convert.</param>
+        /// <exception cref="InvalidOperationException">The value was not a defined member of the <see cref="KnownValues"/> enumeration.</exception>
+        public static implicit operator PredefinedPatterns(KnownValues value)
+        {
+            return value switch
             {
-                return new EnumStringSet([
-                    static () => "Base64"u8,
-                    static () => "Base64MultiLine"u8,
-                    static () => "Base64SingleLine"u8,
-                    static () => "CStyleComment"u8,
-                    static () => "CStyleHexValue"u8,
-                    static () => "CSSHexValue"u8,
-                    static () => "CommitHash"u8,
-                    static () => "CommitHashLink"u8,
-                    static () => "Email"u8,
-                    static () => "EscapeCharacters"u8,
-                    static () => "HexValues"u8,
-                    static () => "href"u8,
-                    static () => "PhpHereDoc"u8,
-                    static () => "PublicKey"u8,
-                    static () => "RsaCert"u8,
-                    static () => "SshRsa"u8,
-                    static () => "SHA"u8,
-                    static () => "HashStrings"u8,
-                    static () => "SpellCheckerDisable"u8,
-                    static () => "SpellCheckerDisableBlock"u8,
-                    static () => "SpellCheckerDisableLine"u8,
-                    static () => "SpellCheckerDisableNext"u8,
-                    static () => "SpellCheckerIgnoreInDocSetting"u8,
-                    static () => "string"u8,
-                    static () => "UnicodeRef"u8,
-                    static () => "Urls"u8,
-                    static () => "UUID"u8,
-                    static () => "Everything"u8,
-                ]);
+                KnownValues.Base64 => Constants.EnumJson1,
+                KnownValues.Base64MultiLine => Constants.EnumJson2,
+                KnownValues.Base64SingleLine => Constants.EnumJson3,
+                KnownValues.CStyleComment => Constants.EnumJson4,
+                KnownValues.CStyleHexValue => Constants.EnumJson5,
+                KnownValues.CssHexValue => Constants.EnumJson6,
+                KnownValues.CommitHash => Constants.EnumJson7,
+                KnownValues.CommitHashLink => Constants.EnumJson8,
+                KnownValues.Email => Constants.EnumJson9,
+                KnownValues.EscapeCharacters => Constants.EnumJson10,
+                KnownValues.HexValues => Constants.EnumJson11,
+                KnownValues.Href => Constants.EnumJson12,
+                KnownValues.PhpHereDoc => Constants.EnumJson13,
+                KnownValues.PublicKey => Constants.EnumJson14,
+                KnownValues.RsaCert => Constants.EnumJson15,
+                KnownValues.SshRsa => Constants.EnumJson16,
+                KnownValues.Sha => Constants.EnumJson17,
+                KnownValues.HashStrings => Constants.EnumJson18,
+                KnownValues.SpellCheckerDisable => Constants.EnumJson19,
+                KnownValues.SpellCheckerDisableBlock => Constants.EnumJson20,
+                KnownValues.SpellCheckerDisableLine => Constants.EnumJson21,
+                KnownValues.SpellCheckerDisableNext => Constants.EnumJson22,
+                KnownValues.SpellCheckerIgnoreInDocSetting => Constants.EnumJson23,
+                KnownValues.StringValue => Constants.EnumJson24,
+                KnownValues.UnicodeRef => Constants.EnumJson25,
+                KnownValues.Urls => Constants.EnumJson26,
+                KnownValues.Uuid => Constants.EnumJson27,
+                KnownValues.Everything => Constants.EnumJson28,
+                _ => throw new InvalidOperationException(),
+            };
+        }
+
+        /// <summary>
+        /// Converts the value to its <see cref="KnownValues"/> equivalent.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+        public static implicit operator KnownValues(PredefinedPatterns value)
+        {
+            if (value.TryGetKnownValue(out KnownValues result))
+            {
+                return result;
             }
 
-            private static EnumStringSet EnumStringSet { get; } = BuildEnumStringSet();
+            throw new InvalidOperationException();
+        }
 
+        /// <summary>
+        /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+        /// </summary>
+        /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+        /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+        public bool TryGetKnownValue(out KnownValues result)
+        {
+            if (this.ValueEquals(Constants.Enum1))
+            {
+                result = KnownValues.Base64;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum2))
+            {
+                result = KnownValues.Base64MultiLine;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum3))
+            {
+                result = KnownValues.Base64SingleLine;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum4))
+            {
+                result = KnownValues.CStyleComment;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum5))
+            {
+                result = KnownValues.CStyleHexValue;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum6))
+            {
+                result = KnownValues.CssHexValue;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum7))
+            {
+                result = KnownValues.CommitHash;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum8))
+            {
+                result = KnownValues.CommitHashLink;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum9))
+            {
+                result = KnownValues.Email;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum10))
+            {
+                result = KnownValues.EscapeCharacters;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum11))
+            {
+                result = KnownValues.HexValues;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum12))
+            {
+                result = KnownValues.Href;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum13))
+            {
+                result = KnownValues.PhpHereDoc;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum14))
+            {
+                result = KnownValues.PublicKey;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum15))
+            {
+                result = KnownValues.RsaCert;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum16))
+            {
+                result = KnownValues.SshRsa;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum17))
+            {
+                result = KnownValues.Sha;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum18))
+            {
+                result = KnownValues.HashStrings;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum19))
+            {
+                result = KnownValues.SpellCheckerDisable;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum20))
+            {
+                result = KnownValues.SpellCheckerDisableBlock;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum21))
+            {
+                result = KnownValues.SpellCheckerDisableLine;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum22))
+            {
+                result = KnownValues.SpellCheckerDisableNext;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum23))
+            {
+                result = KnownValues.SpellCheckerIgnoreInDocSetting;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum24))
+            {
+                result = KnownValues.StringValue;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum25))
+            {
+                result = KnownValues.UnicodeRef;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum26))
+            {
+                result = KnownValues.Urls;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum27))
+            {
+                result = KnownValues.Uuid;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum28))
+            {
+                result = KnownValues.Everything;
+                return true;
+            }
+
+            result = default;
+            return false;
+        }
+
+        public static partial class JsonSchema
+        {
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/PredefinedPatterns"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/definitions/PredefinedPatterns"u8, buffer, out written);
 
             /// <summary>
-            /// Gets the schema location from which this type was generated.
+            /// Gets the schema location from which this type was generated, as a JSON Pointer within <see cref="SchemaDocument"/>.
             /// </summary>
             public const string SchemaLocation = "/definitions/PredefinedPatterns";
 
@@ -630,215 +952,34 @@ public readonly partial struct CspellSchema
             public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/PredefinedPatterns"u8;
 
             /// <summary>
+            /// Gets the schema document from which this type was generated, relative to the base location for generation.
+            /// </summary>
+            /// <remarks>
+            /// <see cref="SchemaLocation"/> is a JSON Pointer within this document, so <c>SchemaDocument + "#" + SchemaLocation</c>
+            /// is a reference to the schema, even for a schema inside a <c>$id</c> sub-resource.
+            /// </remarks>
+            public const string SchemaDocument = "cspell-schema.json";
+
+            /// <summary>
+            /// Gets the schema document from which this type was generated as a UTF-8 string.
+            /// </summary>
+            public static ReadOnlySpan<byte> SchemaDocumentUtf8 => "cspell-schema.json"u8;
+
+            private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Corvus.CspellBenchmark.Current.CorvusJsonSchemaProgram.Entry(117);
+
+            /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
             /// </summary>
             /// <param name="parentDocument">The parent document.</param>
             /// <param name="parentIndex">The parent index.</param>
-            /// <param name="context">A reference to the validation context, configured with the appropriate values.</param>
-            internal static void Evaluate(
-                IJsonDocument parentDocument,
-                int parentIndex,
-                ref JsonSchemaContext context)
-            {
-                JsonTokenType tokenType = parentDocument.GetJsonTokenType(parentIndex);
-
-                // You're not allowed to ask about non-value-like entities
-                Debug.Assert(parentDocument.GetJsonTokenType(parentIndex) is not
-                    (JsonTokenType.None or
-                    JsonTokenType.EndObject or
-                    JsonTokenType.EndArray));
-
-                if (!JsonSchemaEvaluation.MatchTypeString(tokenType,"type"u8, ref context))
-                {
-                    if (!context.HasCollector)
-                    {
-                        return;
-                    }
-                }
-                else
-                {
-                    using UnescapedUtf8JsonString unescapedUtf8JsonString = parentDocument.GetUtf8JsonString(parentIndex, JsonTokenType.String);
-
-                    if (EnumStringSet.Contains(unescapedUtf8JsonString.Span))
-                    {
-                        goto enumShortCircuitSuccess;
-                    }
-
-                    context.EvaluatedKeyword(false, messageProvider: JsonSchemaEvaluation.DidNotMatchAtLeastOneConstantValue, "enum"u8);
-
-                    if (!context.HasCollector)
-                    {
-                        return;
-                    }
-
-                    goto enumAfterFailure;
-
-enumShortCircuitSuccess:
-                    context.EvaluatedKeyword(true, messageProvider: JsonSchemaEvaluation.MatchedAtLeastOneConstantValue, ", formattedKeyword, "u8);
-
-enumAfterFailure:;
-                }
-            }
-
+            /// <param name="resultsCollector">The (optional) results collector.</param>
+            /// <returns><see langword="true" /> if the instance evaluates against the schema.</returns>
             internal static bool Evaluate(
                 IJsonDocument parentDocument,
                 int parentIndex,
                 IJsonSchemaResultsCollector? resultsCollector = null)
             {
-                JsonSchemaContext context = JsonSchemaContext.BeginContext(
-                parentDocument,
-                parentIndex,
-                usingEvaluatedItems: false,
-                usingEvaluatedProperties: false,
-                resultsCollector: resultsCollector);
-
-                try
-                {
-                    Evaluate(parentDocument, parentIndex, ref context);
-                    context.EndContext();
-                    return context.IsMatch;
-                }
-                finally
-                {
-                    context.Dispose();
-                }
-            }
-
-            /// <summary>
-            /// Push the current context as a child context for schema evaluation.
-            /// </summary>
-            /// <typeparam name="TContext">The type of the context to be passed to the path providers.</typeparam>
-            /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-            /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-            /// <param name="context">The current evaluation context.</param>
-            /// <param name="providerContext">The context to be passed to the path providers.</param>
-            /// <param name="schemaEvaluationPath">The (optional) path to the schema being evaluated in the child context.</param>
-            /// <param name="documentEvaluationPath">The (optional) path in the document being evaluated in the child context.</param>
-            /// <returns>The child context.</returns>
-            internal static JsonSchemaContext PushChildContext<TContext>(
-                IJsonDocument parentDocument,
-                int parentDocumentIndex,
-                ref JsonSchemaContext context,
-                TContext providerContext,
-                JsonSchemaPathProvider<TContext>? schemaEvaluationPath = null,
-                JsonSchemaPathProvider<TContext>? documentEvaluationPath = null)
-            {
-                return
-                    context.PushChildContext(
-                        parentDocument,
-                        parentDocumentIndex,
-                        useEvaluatedItems: false,
-                        useEvaluatedProperties: false,
-                        evaluationPath: schemaEvaluationPath,
-                        documentEvaluationPath: documentEvaluationPath,
-                        providerContext: providerContext);
-            }
-
-            /// <summary>
-            /// Push the current context as a child context for schema evaluation.
-            /// </summary>
-            /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-            /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-            /// <param name="context">The current evaluation context.</param>
-            /// <param name="schemaEvaluationPath">The (optional) path to the schema being evaluated in the child context.</param>
-            /// <param name="documentEvaluationPath">The (optional) path in the document being evaluated in the child context.</param>
-            /// <returns>The child context.</returns>
-            internal static JsonSchemaContext PushChildContext(
-                IJsonDocument parentDocument,
-                int parentDocumentIndex,
-                ref JsonSchemaContext context,
-                JsonSchemaPathProvider? schemaEvaluationPath = null,
-                JsonSchemaPathProvider? documentEvaluationPath = null)
-            {
-                return
-                    context.PushChildContext(
-                        parentDocument,
-                        parentDocumentIndex,
-                        useEvaluatedItems: false,
-                        useEvaluatedProperties: false,
-                        evaluationPath: schemaEvaluationPath,
-                        documentEvaluationPath: documentEvaluationPath);
-            }
-
-            /// <summary>
-            /// Push the current context as a child context for schema evaluation of a property.
-            /// </summary>
-            /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-            /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-            /// <param name="context">The current evaluation context.</param>
-            /// <param name="propertyName">The name of the property </param>
-            /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-            /// <returns>The child context.</returns>
-            internal static JsonSchemaContext PushChildContext(
-                IJsonDocument parentDocument,
-                int parentDocumentIndex,
-                ref JsonSchemaContext context,
-                ReadOnlySpan<byte> propertyName,
-                JsonSchemaPathProvider? evaluationPath = null)
-            {
-                return
-                    context.PushChildContext(
-                        parentDocument,
-                        parentDocumentIndex,
-                        useEvaluatedItems: false,
-                        useEvaluatedProperties: false,
-                        propertyName,
-                        evaluationPath: evaluationPath,
-                        schemaEvaluationPath: SchemaLocationProvider);
-            }
-
-            /// <summary>
-            /// Push the current context as a child context for schema evaluation of a property where the property name is known to be unescaped.
-            /// </summary>
-            /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-            /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-            /// <param name="context">The current evaluation context.</param>
-            /// <param name="propertyName">The name of the property </param>
-            /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-            /// <returns>The child context.</returns>
-            internal static JsonSchemaContext PushChildContextUnescaped(
-                IJsonDocument parentDocument,
-                int parentDocumentIndex,
-                ref JsonSchemaContext context,
-                ReadOnlySpan<byte> propertyName,
-                JsonSchemaPathProvider? evaluationPath = null)
-            {
-                return
-                    context.PushChildContext(
-                        parentDocument,
-                        parentDocumentIndex,
-                        useEvaluatedItems: false,
-                        useEvaluatedProperties: false,
-                        propertyName,
-                        evaluationPath: evaluationPath,
-                        schemaEvaluationPath: SchemaLocationProvider);
-            }
-
-            /// <summary>
-            /// Push the current context as a child context for schema evaluation of an array item.
-            /// </summary>
-            /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-            /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-            /// <param name="context">The current evaluation context.</param>
-            /// <param name="itemIndex">The index of the item in the array.</param>
-            /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-            /// <returns>The child context.</returns>
-            internal static JsonSchemaContext PushChildContext(
-                IJsonDocument parentDocument,
-                int parentDocumentIndex,
-                ref JsonSchemaContext context,
-                int itemIndex,
-                JsonSchemaPathProvider? evaluationPath = null)
-            {
-                return
-                    context.PushChildContext(
-                        parentDocument,
-                        parentDocumentIndex,
-                        useEvaluatedItems: false,
-                        useEvaluatedProperties: false,
-                        itemIndex,
-                        evaluationPath: evaluationPath,
-                        schemaEvaluationPath: SchemaLocationProvider);
+                return Evaluator.Evaluate(parentDocument, parentIndex, resultsCollector);
             }
         }
     }

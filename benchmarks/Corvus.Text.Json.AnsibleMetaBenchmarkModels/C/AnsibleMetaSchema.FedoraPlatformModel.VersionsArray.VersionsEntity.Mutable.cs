@@ -792,6 +792,176 @@ public readonly partial struct AnsibleMetaSchema
 
                         return defaultMatch();
                     }
+
+                    /// <summary>
+                    /// Converts the value to its <see cref="KnownValues"/> equivalent.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+                    public static implicit operator KnownValues(Mutable value)
+                    {
+                        if (value.TryGetKnownValue(out KnownValues result))
+                        {
+                            return result;
+                        }
+
+                        throw new InvalidOperationException();
+                    }
+
+                    /// <summary>
+                    /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+                    /// </summary>
+                    /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+                    /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+                    public bool TryGetKnownValue(out KnownValues result)
+                    {
+                        if (this.ValueEquals(Constants.Enum1))
+                        {
+                            result = KnownValues.Value16;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum2))
+                        {
+                            result = KnownValues.Value17;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum3))
+                        {
+                            result = KnownValues.Value18;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum4))
+                        {
+                            result = KnownValues.Value19;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum5))
+                        {
+                            result = KnownValues.Value20;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum6))
+                        {
+                            result = KnownValues.Value21;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum7))
+                        {
+                            result = KnownValues.Value22;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum8))
+                        {
+                            result = KnownValues.Value23;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum9))
+                        {
+                            result = KnownValues.Value24;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum10))
+                        {
+                            result = KnownValues.Value25;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum11))
+                        {
+                            result = KnownValues.Value26;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum12))
+                        {
+                            result = KnownValues.Value27;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum13))
+                        {
+                            result = KnownValues.Value28;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum14))
+                        {
+                            result = KnownValues.Value29;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum15))
+                        {
+                            result = KnownValues.Value30;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum16))
+                        {
+                            result = KnownValues.Value31;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum17))
+                        {
+                            result = KnownValues.Value32;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum18))
+                        {
+                            result = KnownValues.Value33;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum19))
+                        {
+                            result = KnownValues.Value34;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum20))
+                        {
+                            result = KnownValues.Value35;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum21))
+                        {
+                            result = KnownValues.Value36;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum22))
+                        {
+                            result = KnownValues.Value37;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum23))
+                        {
+                            result = KnownValues.Value38;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum24))
+                        {
+                            result = KnownValues.All;
+                            return true;
+                        }
+
+                        result = default;
+                        return false;
+                    }
                 }
 
                 public ref struct Source
@@ -850,6 +1020,9 @@ public readonly partial struct AnsibleMetaSchema
 
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static implicit operator Source(string value) => new (value.AsSpan());
+
+                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                    public static implicit operator Source(KnownValues value) => (VersionsEntity)value;
 
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);

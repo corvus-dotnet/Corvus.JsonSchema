@@ -92,7 +92,7 @@ public readonly partial struct Type
     /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
-    public static string SchemaLocation { get; } = "/properties/type";
+    public static string SchemaLocation { get; } = "http://json-schema.org/draft-04/schema#/properties/type";
 
     /// <summary>
     /// Gets a Null instance.
@@ -968,6 +968,40 @@ public readonly partial struct Type
         }
 
         return defaultMatch(this);
+    }
+
+    /// <summary>
+    /// Matches the value against the composed values, calling the provided match function for every match found, in declaration order, threading an accumulator through the calls.
+    /// </summary>
+    /// <typeparam name="TAccumulator">The type of the accumulator threaded through the match functions.</typeparam>
+    /// <param name="accumulator">The seed accumulator to pass to the first match function called.</param>
+    /// <param name="matchSimpleTypes">Match a <see cref="Corvus.Json.JsonSchema.OpenApi20.SimpleTypes"/>.</param>
+    /// <param name="matchSimpleTypesArray">Match a <see cref="Corvus.Json.JsonSchema.OpenApi20.Type.SimpleTypesArray"/>.</param>
+    /// <param name="defaultMatch">Match any other value. Called only when no other match function was called.</param>
+    /// <returns>The accumulator returned by the last match function called.</returns>
+    public TAccumulator MatchEvery<TAccumulator>(
+        TAccumulator accumulator,
+        Matcher<Corvus.Json.JsonSchema.OpenApi20.SimpleTypes, TAccumulator, TAccumulator> matchSimpleTypes,
+        Matcher<Corvus.Json.JsonSchema.OpenApi20.Type.SimpleTypesArray, TAccumulator, TAccumulator> matchSimpleTypesArray,
+        Matcher<Corvus.Json.JsonSchema.OpenApi20.Type, TAccumulator, TAccumulator> defaultMatch)
+    {
+        bool matched = false;
+
+        Corvus.Json.JsonSchema.OpenApi20.SimpleTypes matchSimpleTypesValue = this.As<Corvus.Json.JsonSchema.OpenApi20.SimpleTypes>();
+        if (matchSimpleTypesValue.IsValid())
+        {
+            matched = true;
+            accumulator = matchSimpleTypes(matchSimpleTypesValue, accumulator);
+        }
+
+        Corvus.Json.JsonSchema.OpenApi20.Type.SimpleTypesArray matchSimpleTypesArrayValue = this.As<Corvus.Json.JsonSchema.OpenApi20.Type.SimpleTypesArray>();
+        if (matchSimpleTypesArrayValue.IsValid())
+        {
+            matched = true;
+            accumulator = matchSimpleTypesArray(matchSimpleTypesArrayValue, accumulator);
+        }
+
+        return matched ? accumulator : defaultMatch(this, accumulator);
     }
 
     /// <summary>

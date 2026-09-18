@@ -48,7 +48,7 @@ internal static partial class Strings
 #if SYSTEM_PRIVATE_CORELIB || NATIVEAOT
                 InternalGetResourceString(resourceKey);
 #else
-                ResourceManager.GetString(resourceKey);
+                ResourceManager.GetString(resourceKey, System.Globalization.CultureInfo.CurrentUICulture);
 #endif
         }
         catch (MissingManifestResourceException) { }
@@ -75,7 +75,7 @@ internal static partial class Strings
             return string.Join(", ", resourceFormat, p1);
         }
 
-        return string.Format(resourceFormat, p1);
+        return string.Format(System.Globalization.CultureInfo.CurrentCulture, resourceFormat, p1);
     }
 
     internal static string Format(string resourceFormat, object? p1, object? p2)
@@ -85,7 +85,7 @@ internal static partial class Strings
             return string.Join(", ", resourceFormat, p1, p2);
         }
 
-        return string.Format(resourceFormat, p1, p2);
+        return string.Format(System.Globalization.CultureInfo.CurrentCulture, resourceFormat, p1, p2);
     }
 
     internal static string Format(string resourceFormat, object? p1, object? p2, object? p3)
@@ -95,7 +95,7 @@ internal static partial class Strings
             return string.Join(", ", resourceFormat, p1, p2, p3);
         }
 
-        return string.Format(resourceFormat, p1, p2, p3);
+        return string.Format(System.Globalization.CultureInfo.CurrentCulture, resourceFormat, p1, p2, p3);
     }
 
     internal static string Format(string resourceFormat, params object?[]? args)
@@ -107,7 +107,7 @@ internal static partial class Strings
                 return resourceFormat + ", " + string.Join(", ", args);
             }
 
-            return string.Format(resourceFormat, args);
+            return string.Format(System.Globalization.CultureInfo.CurrentCulture, resourceFormat, args);
         }
 
         return resourceFormat;

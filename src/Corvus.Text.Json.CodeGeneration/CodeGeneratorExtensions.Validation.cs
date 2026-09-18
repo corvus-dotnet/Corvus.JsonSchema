@@ -10,6 +10,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -44,418 +45,6 @@ internal static partial class CodeGenerationExtensions
     private const string HoistedAllOfBranchesKeyPrefix = "HoistedAllOf.Branches.";
     private const int MinEnumValuesForHashSet = 3;
 
-    public static CodeGenerator AppendNormalizedJsonNumberIfNotAppended(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool includeTokenTypeCheck = true)
-    {
-        if (typeDeclaration.TryGetMetadata(NormalizedJsonNumberAppendedKey, out bool? _))
-        {
-            return generator;
-        }
-
-        typeDeclaration.SetMetadata(NormalizedJsonNumberAppendedKey, true);
-        typeDeclaration.SetMetadata(NormalizedJsonNumberAppendedInScopeKey, generator.FullyQualifiedScope);
-
-        return generator
-            .AppendGetRawSimpleValueIfNotAppended(typeDeclaration, includeTokenTypeCheck)
-            .AppendSeparatorLine()
-            .ReserveName("isNegative")
-            .ReserveName("integral")
-            .ReserveName("fractional")
-            .ReserveName("exponent")
-            .AppendLineIndent("JsonElementHelpers.TryParseNumber(rawSimpleValue.Span, out bool isNegative,out ReadOnlySpan<byte> integral, out ReadOnlySpan<byte> fractional, out int exponent);");
-    }
-
-    public static CodeGenerator AppendStringLengthIfNotAppended(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool includeTokenTypeCheck = true)
-    {
-        if (typeDeclaration.TryGetMetadata(StringLengthAppendedKey, out bool? _))
-        {
-            return generator;
-        }
-
-        typeDeclaration.SetMetadata(StringLengthAppendedKey, true);
-        typeDeclaration.SetMetadata(StringLengthAppendedInScopeKey, generator.FullyQualifiedScope);
-
-        return generator
-            .AppendUnescapedUtf8JsonStringIfNotAppended(typeDeclaration, includeTokenTypeCheck)
-            .AppendSeparatorLine()
-            .ReserveName("stringLength")
-            .AppendLineIndent("int stringLength = JsonElementHelpers.CountRunes(unescapedUtf8JsonString.Span);");
-    }
-
-    public static CodeGenerator PopStringLengthIfAppendedInScope(this CodeGenerator generator, TypeDeclaration typeDeclaration)
-    {
-        if (typeDeclaration.TryGetMetadata(StringLengthAppendedInScopeKey, out string? scope)
-            && scope == generator.FullyQualifiedScope)
-        {
-            typeDeclaration.RemoveMetadata(StringLengthAppendedInScopeKey);
-            typeDeclaration.RemoveMetadata(StringLengthAppendedKey);
-        }
-
-        return generator
-            .PopUnescapedUtf8JsonStringIfAppendedInScope(typeDeclaration);
-    }
-
-    public static CodeGenerator AppendUnescapedUtf8JsonStringIfNotAppended(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool includeTokenTypeCheck = true)
-    {
-        if (typeDeclaration.TryGetMetadata(UnescapedUtf8JsonStringAppendedKey, out bool? _))
-        {
-            // If the variable was declared in the current scope, it is still
-            // accessible — skip re-declaration.
-            if (typeDeclaration.TryGetMetadata(UnescapedUtf8JsonStringAppendedInScopeKey, out string? scope)
-                && scope == generator.FullyQualifiedScope)
-            {
-                return generator;
-            }
-
-            // The variable was declared in a different scope that may no longer
-            // be active (e.g. a type-check else clause that has since closed).
-            // Clear the stale metadata so we can re-declare in the current scope.
-            typeDeclaration.RemoveMetadata(UnescapedUtf8JsonStringAppendedKey);
-            typeDeclaration.RemoveMetadata(UnescapedUtf8JsonStringAppendedInScopeKey);
-        }
-
-        typeDeclaration.SetMetadata(UnescapedUtf8JsonStringAppendedKey, true);
-        typeDeclaration.SetMetadata(UnescapedUtf8JsonStringAppendedInScopeKey, generator.FullyQualifiedScope);
-
-        generator
-            .AppendSeparatorLine()
-            .ReserveName("unescapedUtf8JsonString");
-
-        if (includeTokenTypeCheck)
-        {
-            generator
-                .AppendLineIndent("using UnescapedUtf8JsonString unescapedUtf8JsonString = tokenType is JsonTokenType.String ? parentDocument.GetUtf8JsonString(parentIndex, JsonTokenType.String) : default;");
-        }
-        else
-        {
-            generator
-                .AppendLineIndent("using UnescapedUtf8JsonString unescapedUtf8JsonString = parentDocument.GetUtf8JsonString(parentIndex, JsonTokenType.String);");
-        }
-
-        return generator;
-    }
-
-    public static CodeGenerator PopUnescapedUtf8JsonStringIfAppendedInScope(this CodeGenerator generator, TypeDeclaration typeDeclaration)
-    {
-        if (typeDeclaration.TryGetMetadata(UnescapedUtf8JsonStringAppendedInScopeKey, out string? scope)
-            && scope == generator.FullyQualifiedScope)
-        {
-            typeDeclaration.RemoveMetadata(UnescapedUtf8JsonStringAppendedInScopeKey);
-            typeDeclaration.RemoveMetadata(UnescapedUtf8JsonStringAppendedKey);
-        }
-
-        return generator;
-    }
-
-    public static CodeGenerator PopNormalizedJsonNumberIfAppendedInScope(this CodeGenerator generator, TypeDeclaration typeDeclaration)
-    {
-        if (typeDeclaration.TryGetMetadata(NormalizedJsonNumberAppendedInScopeKey, out string? scope)
-            && scope == generator.FullyQualifiedScope)
-        {
-            typeDeclaration.RemoveMetadata(NormalizedJsonNumberAppendedInScopeKey);
-            typeDeclaration.RemoveMetadata(NormalizedJsonNumberAppendedKey);
-        }
-
-        return generator
-            .PopGetRawSimpleValueIfAppendedInScope(typeDeclaration);
-    }
-
-    public static CodeGenerator AppendGetRawSimpleValueIfNotAppended(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool includeTokenTypeCheck = true)
-    {
-        if (typeDeclaration.TryGetMetadata(GetRawSimpleValueAppendedKey, out bool? _))
-        {
-            return generator;
-        }
-
-        typeDeclaration.SetMetadata(GetRawSimpleValueAppendedKey, true);
-        typeDeclaration.SetMetadata(GetRawSimpleValueAppendedInScopeKey, generator.FullyQualifiedScope);
-
-        generator
-            .AppendSeparatorLine()
-            .ReserveName("rawSimpleValue");
-
-        if (includeTokenTypeCheck)
-        {
-            generator
-                .AppendLineIndent("ReadOnlyMemory<byte> rawSimpleValue = tokenType is JsonTokenType.Number or JsonTokenType.String ? parentDocument.GetRawSimpleValue(parentIndex) : default;");
-        }
-        else
-        {
-            generator
-                .AppendLineIndent("ReadOnlyMemory<byte> rawSimpleValue = parentDocument.GetRawSimpleValue(parentIndex);");
-        }
-
-        return generator;
-    }
-
-    public static CodeGenerator PopGetRawSimpleValueIfAppendedInScope(this CodeGenerator generator, TypeDeclaration typeDeclaration)
-    {
-        if (typeDeclaration.TryGetMetadata(GetRawSimpleValueAppendedInScopeKey, out string? scope)
-            && scope == generator.FullyQualifiedScope)
-        {
-            typeDeclaration.RemoveMetadata(GetRawSimpleValueAppendedKey);
-            typeDeclaration.RemoveMetadata(GetRawSimpleValueAppendedInScopeKey);
-        }
-
-        return generator;
-    }
-
-    /// <summary>
-    /// Appends the code to shortcut the return from validation if there is no collector.
-    /// </summary>
-    /// <param name="generator">The code generator.</param>
-    /// <param name="contextName">The name to use for the context (defaults to 'context').</param>
-    /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator AppendNoCollectorShortcutReturn(this CodeGenerator generator, string contextName = "context")
-    {
-        return generator
-            .AppendSeparatorLine()
-            .AppendLineIndent("if (!", contextName, ".HasCollector)")
-            .AppendLineIndent("{")
-            .PushIndent()
-                .AppendLineIndent("return;")
-            .PopIndent()
-            .AppendLineIndent("}");
-    }
-
-    /// <summary>
-    /// Appends the code to shortcut the return from validation if there is no collector.
-    /// </summary>
-    /// <param name="generator">The code generator.</param>
-    /// <param name="contextName">The name to use for the context (defaults to 'context').</param>
-    /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator AppendNoCollectorBooleanFalseShortcutReturn(this CodeGenerator generator, string contextName = "context")
-    {
-        return generator
-            .AppendSeparatorLine()
-            .AppendLineIndent("if (!", contextName, ".HasCollector)")
-            .AppendLineIndent("{")
-            .PushIndent()
-                .AppendLineIndent(contextName, ".EvaluatedBooleanSchema(false);")
-                .AppendLineIndent("return;")
-            .PopIndent()
-            .AppendLineIndent("}");
-    }
-
-    /// <summary>
-    /// Appends the code to shortcut the return from validation if there is no collector.
-    /// </summary>
-    /// <param name="generator">The code generator.</param>
-    /// <param name="contextName">The name to use for the context (defaults to 'context').</param>
-    /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator AppendNoCollectorNoMatchShortcutReturn(this CodeGenerator generator, string contextName = "context")
-    {
-        return generator
-            .AppendSeparatorLine()
-            .AppendLineIndent("if (!", contextName, ".HasCollector && !", contextName, ".IsMatch)")
-            .AppendLineIndent("{")
-            .PushIndent()
-                .AppendLineIndent("return;")
-            .PopIndent()
-            .AppendLineIndent("}");
-    }
-
-    /// <summary>
-    /// Appends the code to shortcut the return from validation if there is no collector.
-    /// </summary>
-    /// <param name="generator">The code generator.</param>
-    /// <param name="contextName">The name to use for the context (defaults to 'context').</param>
-    /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator AppendConditionalNoCollectorNoMatchShortcutReturn(this CodeGenerator generator, TypeDeclaration typeDeclaration, IKeywordValidationHandler handler, string contextName = "context")
-    {
-        bool hasMoreHandlers = typeDeclaration
-            .OrderedValidationHandlers(generator.LanguageProvider)
-            .TakeWhile(h => h != handler)
-            .Skip(1)
-            .Any();
-
-        if (hasMoreHandlers)
-        {
-            return AppendNoCollectorNoMatchShortcutReturn(generator, contextName);
-        }
-
-        return generator;
-    }
-
-    /// <summary>
-    /// Prepend validation setup code for children.
-    /// </summary>
-    /// <param name="generator">The code generator.</param>
-    /// <param name="typeDeclaration">The type declaration which requires validation.</param>
-    /// <param name="children">The child handlers for the <see cref="IKeywordValidationHandler"/>.</param>
-    /// <param name="parentHandlerPriority">The parent validation handler priority.</param>
-    /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator PrependChildValidationSetup(
-        this CodeGenerator generator,
-        TypeDeclaration typeDeclaration,
-        IReadOnlyCollection<IChildValidationHandler> children,
-        uint parentHandlerPriority)
-    {
-        if (generator.IsCancellationRequested)
-        {
-            return generator;
-        }
-
-        foreach (IChildValidationHandler child in children
-            .Where(c => c.ValidationHandlerPriority <= parentHandlerPriority)
-            .OrderBy(c => c.ValidationHandlerPriority))
-        {
-            if (generator.IsCancellationRequested)
-            {
-                return generator;
-            }
-
-            child.AppendValidationSetup(generator, typeDeclaration);
-        }
-
-        return generator;
-    }
-
-    /// <summary>
-    /// Append validation setup code for children.
-    /// </summary>
-    /// <param name="generator">The code generator.</param>
-    /// <param name="typeDeclaration">The type declaration which requires validation.</param>
-    /// <param name="children">The child handlers for the <see cref="IKeywordValidationHandler"/>.</param>
-    /// <param name="parentHandlerPriority">The parent validation handler priority.</param>
-    /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator AppendChildValidationSetup(
-        this CodeGenerator generator,
-        TypeDeclaration typeDeclaration,
-        IReadOnlyCollection<IChildValidationHandler> children,
-        uint parentHandlerPriority)
-    {
-        if (generator.IsCancellationRequested)
-        {
-            return generator;
-        }
-
-        foreach (IChildValidationHandler child in children
-            .Where(c => c.ValidationHandlerPriority > parentHandlerPriority)
-            .OrderBy(c => c.ValidationHandlerPriority))
-        {
-            if (generator.IsCancellationRequested)
-            {
-                return generator;
-            }
-
-            child.AppendValidationSetup(generator, typeDeclaration);
-        }
-
-        return generator;
-    }
-
-    /// <summary>
-    /// Prepend validation code for appropriate children.
-    /// </summary>
-    /// <param name="generator">The code generator.</param>
-    /// <param name="typeDeclaration">The type declaration which requires validation.</param>
-    /// <param name="children">The child handlers for the <see cref="IKeywordValidationHandler"/>.</param>
-    /// <param name="parentHandlerPriority">The parent validation handler priority.</param>
-    /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator PrependChildValidationCode(
-        this CodeGenerator generator,
-        TypeDeclaration typeDeclaration,
-        IReadOnlyCollection<IChildValidationHandler> children,
-        uint parentHandlerPriority)
-    {
-        if (generator.IsCancellationRequested)
-        {
-            return generator;
-        }
-
-        bool appendShortcut = false;
-
-        foreach (IChildValidationHandler child in children
-            .Where(c => c.ValidationHandlerPriority <= parentHandlerPriority)
-            .OrderBy(c => c.ValidationHandlerPriority))
-        {
-            if (generator.IsCancellationRequested)
-            {
-                return generator;
-            }
-
-            int initialLength = generator.Length;
-
-            if (appendShortcut)
-            {
-                generator.AppendNoCollectorNoMatchShortcutReturn();
-            }
-
-            int length = generator.Length;
-
-            child.AppendValidationCode(generator, typeDeclaration);
-
-            if (length != generator.Length)
-            {
-                appendShortcut = true;
-            }
-            else
-            {
-                // Trim off the shortcut we appended
-                // if we didn't append any validation code
-                generator.Length = initialLength;
-            }
-        }
-
-        return generator;
-    }
-
-    /// <summary>
-    /// Append validation code for appropriate children.
-    /// </summary>
-    /// <param name="generator">The code generator.</param>
-    /// <param name="typeDeclaration">The type declaration which requires validation.</param>
-    /// <param name="children">The child handlers for the <see cref="IKeywordValidationHandler"/>.</param>
-    /// <param name="parentHandlerPriority">The parent validation handler priority.</param>
-    /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator AppendChildValidationCode(
-        this CodeGenerator generator,
-        TypeDeclaration typeDeclaration,
-        IReadOnlyCollection<IChildValidationHandler> children,
-        uint parentHandlerPriority)
-    {
-        if (generator.IsCancellationRequested)
-        {
-            return generator;
-        }
-
-        bool appendShortcut = false;
-
-        foreach (IChildValidationHandler child in children
-            .Where(c => c.ValidationHandlerPriority > parentHandlerPriority)
-            .OrderBy(c => c.ValidationHandlerPriority))
-        {
-            if (generator.IsCancellationRequested)
-            {
-                return generator;
-            }
-
-            int initialLength = generator.Length;
-
-            if (appendShortcut)
-            {
-                generator.AppendNoCollectorNoMatchShortcutReturn();
-            }
-
-            int length = generator.Length;
-
-            child.AppendValidationCode(generator, typeDeclaration);
-
-            if (length != generator.Length)
-            {
-                appendShortcut = true;
-            }
-            else
-            {
-                // Trim off the shortcut we appended
-                // if we didn't append any validation code
-                generator.Length = initialLength;
-            }
-        }
-
-        return generator;
-    }
-
     /// <summary>
     /// Appends the contants nested class containing property name constants.
     /// </summary>
@@ -484,12 +73,9 @@ internal static partial class CodeGenerationExtensions
 
         generator
             .AppendSeparatorLine()
-            .AppendLineIndent("/// <summary>")
-            .AppendLineIndent("/// Provides accesors for enumerated values")
-            .AppendLineIndent("/// </summary>")
             .BeginPrivateStaticClassDeclaration(generator.ConstantsClassName());
 
-        foreach (KeyValuePair<IValidationConstantProviderKeyword, JsonElement[]> constant in requiredConstants.OrderBy(k => k.Key.Keyword))
+        foreach (KeyValuePair<IValidationConstantProviderKeyword, JsonElement[]> constant in requiredConstants.OrderBy(k => k.Key.Keyword, StringComparer.Ordinal))
         {
             if (generator.IsCancellationRequested)
             {
@@ -601,7 +187,7 @@ internal static partial class CodeGenerationExtensions
             .AppendLineIndent("/// </summary>")
             .BeginPublicStaticClassDeclaration(generator.EnumValuesClassName());
 
-        foreach (KeyValuePair<IAnyOfConstantValidationKeyword, JsonElement[]> kvp in anyOfConstants.OrderBy(k => k.Key.Keyword))
+        foreach (KeyValuePair<IAnyOfConstantValidationKeyword, JsonElement[]> kvp in anyOfConstants.OrderBy(k => k.Key.Keyword, StringComparer.Ordinal))
         {
             if (generator.IsCancellationRequested)
             {
@@ -626,7 +212,7 @@ internal static partial class CodeGenerationExtensions
                     return generator;
                 }
 
-                string? suffix = addSuffix ? elementIndex.ToString() : null;
+                string? suffix = addSuffix ? elementIndex.ToString(CultureInfo.InvariantCulture) : null;
 
                 AppendEnumValueProperty(generator, typeDeclaration, value, keywordName, suffix, constantsClassName, constantsScope, enumValuesScope, dotnetTypeName);
 
@@ -804,143 +390,6 @@ internal static partial class CodeGenerationExtensions
             IArrayLengthConstantValidationKeyword or IArrayContainsCountConstantValidationKeyword;
     }
 
-    public static CodeGenerator AppendIgnoredCoreTypeStringFormatKeywords(
-    this CodeGenerator generator,
-    TypeDeclaration typeDeclaration,
-    string ignoredMessageProviderName)
-    {
-        return AppendIgnoredCoreTypeFormatKeywords(generator, typeDeclaration, ignoredMessageProviderName, CoreTypes.String);
-    }
-
-    public static CodeGenerator AppendIgnoredCoreTypeNumberFormatKeywords(
-        this CodeGenerator generator,
-        TypeDeclaration typeDeclaration,
-        string ignoredMessageProviderName)
-    {
-        return generator
-            .AppendIgnoredCoreTypeFormatKeywords(typeDeclaration, ignoredMessageProviderName, CoreTypes.Number | CoreTypes.Integer);
-    }
-
-    public static CodeGenerator ElseAppendIgnoredCoreTypeStringFormatKeywords(
-        this CodeGenerator generator,
-        TypeDeclaration typeDeclaration,
-        string ignoredMessageProviderName)
-    {
-        return AppendIgnoredCoreTypeFormatKeywords(generator, typeDeclaration, ignoredMessageProviderName, CoreTypes.String, includeElse: true);
-    }
-
-    public static CodeGenerator ElseAppendIgnoredCoreTypeNumberFormatKeywords(
-        this CodeGenerator generator,
-        TypeDeclaration typeDeclaration,
-        string ignoredMessageProviderName)
-    {
-        return generator
-            .AppendIgnoredCoreTypeFormatKeywords(typeDeclaration, ignoredMessageProviderName, CoreTypes.Number | CoreTypes.Integer, includeElse: true);
-    }
-
-    public static CodeGenerator AppendIgnoredCoreTypeFormatKeywords(this CodeGenerator generator, TypeDeclaration typeDeclaration, string ignoredMessageProviderName, CoreTypes coreType, bool includeElse = false)
-    {
-        IEnumerable<IFormatProviderKeyword> ignoredKeywords =
-            typeDeclaration
-                .Keywords()
-                .OfType<IFormatProviderKeyword>();
-
-        bool hasElse = false;
-
-        foreach (IFormatProviderKeyword keyword in ignoredKeywords)
-        {
-            if (((keyword.ImpliesCoreTypes(typeDeclaration) & coreType) != 0))
-            {
-                typeDeclaration.AddIgnoredKeyword(keyword);
-
-                if (includeElse && !hasElse)
-                {
-                    hasElse = true;
-                    generator
-                        .AppendLineIndent("else")
-                        .AppendLineIndent("{")
-                        .PushIndent();
-                }
-
-                generator
-                    .AppendLineIndent("context.IgnoredKeyword(", ignoredMessageProviderName, ", ", SymbolDisplay.FormatLiteral(keyword.Keyword, true), "u8);");
-            }
-        }
-
-        if (hasElse)
-        {
-            generator
-                .PopIndent()
-                .AppendLineIndent("}");
-        }
-
-        return generator;
-    }
-
-    public static CodeGenerator AppendIgnoredCoreTypeKeywords<T>(
-        this CodeGenerator generator,
-        TypeDeclaration typeDeclaration,
-        string ignoredMessageProviderName)
-            where T : IValidationKeyword
-    {
-        IEnumerable<T> keywordsToIgnore =
-            typeDeclaration
-                .Keywords()
-                .OfType<T>();
-
-        foreach (T keyword in keywordsToIgnore)
-        {
-            if (typeDeclaration.AddIgnoredKeyword(keyword))
-            {
-                generator
-                    .AppendLineIndent("context.IgnoredKeyword(", ignoredMessageProviderName, ", ", SymbolDisplay.FormatLiteral(keyword.Keyword, true), "u8);");
-            }
-        }
-
-        return generator;
-    }
-
-    public static bool HasIgnoredCoreTypeKeywords<T>(
-        this CodeGenerator generator,
-        TypeDeclaration typeDeclaration)
-    {
-        return typeDeclaration
-        .Keywords()
-        .OfType<T>()
-        .Any();
-    }
-
-    public static CodeGenerator TryAppendIgnoredCoreTypeKeywords<T>(
-        this CodeGenerator generator,
-        TypeDeclaration typeDeclaration,
-        string ignoredMessageProviderName,
-        Action<CodeGenerator, TypeDeclaration>? preAppendAction,
-        ref bool appended)
-        where T : IValidationKeyword
-    {
-        IEnumerable<T> keywordsToIgnore =
-            typeDeclaration
-                .Keywords()
-                .OfType<T>();
-
-        foreach (T keyword in keywordsToIgnore)
-        {
-            if (typeDeclaration.AddIgnoredKeyword(keyword))
-            {
-                if (!appended)
-                {
-                    preAppendAction?.Invoke(generator, typeDeclaration);
-                }
-
-                generator
-                    .AppendLineIndent("context.IgnoredKeyword(", ignoredMessageProviderName, ", ", SymbolDisplay.FormatLiteral(keyword.Keyword, true), "u8);");
-                appended |= true;
-            }
-        }
-
-        return generator;
-    }
-
     private static CodeGenerator AppendArrayValidationConstantField(this CodeGenerator generator, TypeDeclaration typeDeclaration, IKeyword keyword, int? index, in JsonElement value)
     {
         if (generator.IsCancellationRequested)
@@ -950,7 +399,7 @@ internal static partial class CodeGenerationExtensions
 
         Debug.Assert(value.ValueKind == JsonValueKind.Array, "The value must be an array.");
 
-        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
+        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString(CultureInfo.InvariantCulture));
 
         // The constant is materialised by calling the generated type's own ParseValue, which
         // is emitted with [Obsolete] to steer consumers towards pooled parsing. This use is
@@ -983,7 +432,7 @@ internal static partial class CodeGenerationExtensions
 
         Debug.Assert(value.ValueKind == JsonValueKind.Object, "The value must be an object.");
 
-        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
+        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString(CultureInfo.InvariantCulture));
 
         // The constant is materialised by calling the generated type's own ParseValue, which
         // is emitted with [Obsolete] to steer consumers towards pooled parsing. This use is
@@ -1016,7 +465,7 @@ internal static partial class CodeGenerationExtensions
 
         Debug.Assert(value.ValueKind == JsonValueKind.Null, "The value must be null.");
 
-        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
+        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString(CultureInfo.InvariantCulture));
 
         generator
             .AppendLineIndent("/// <summary>")
@@ -1038,7 +487,7 @@ internal static partial class CodeGenerationExtensions
 
         Debug.Assert(value.ValueKind == JsonValueKind.True || value.ValueKind == JsonValueKind.False, "The value must be a boolean.");
 
-        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
+        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString(CultureInfo.InvariantCulture));
 
         generator
             .AppendLineIndent("/// <summary>")
@@ -1060,8 +509,8 @@ internal static partial class CodeGenerationExtensions
 
         Debug.Assert(value.ValueKind == JsonValueKind.String, "The value must be a string.");
 
-        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
-        string jsonMemberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: $"Json{index?.ToString()}");
+        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString(CultureInfo.InvariantCulture));
+        string jsonMemberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: $"Json{index?.ToString(CultureInfo.InvariantCulture)}");
 
         generator
             .AppendLineIndent("/// <summary>")
@@ -1091,8 +540,8 @@ internal static partial class CodeGenerationExtensions
 
         Debug.Assert(value.ValueKind == JsonValueKind.Number, "The value must be a number.");
 
-        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
-        string jsonMemberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: $"Json{index?.ToString()}");
+        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString(CultureInfo.InvariantCulture));
+        string jsonMemberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: $"Json{index?.ToString(CultureInfo.InvariantCulture)}");
 
 #if BUILDING_SOURCE_GENERATOR
         JsonElementHelpers.ParseNumber(Encoding.UTF8.GetBytes(value.GetRawText()), out bool isNegative, out ReadOnlySpan<byte> integral, out ReadOnlySpan<byte> fractional, out int exponent);
@@ -1105,7 +554,7 @@ internal static partial class CodeGenerationExtensions
             .AppendLineIndent("/// </summary>")
             .AppendIndent("public static readonly NormalizedJsonNumber ")
             .Append(memberName)
-            .AppendLine(" = new(", isNegative ? "true" : "false", ", [..\"", Encoding.UTF8.GetString(integral.ToArray()), "\"u8], [..\"", Encoding.UTF8.GetString(fractional.ToArray()), "\"u8], ", exponent.ToString(), ");");
+            .AppendLine(" = new(", isNegative ? "true" : "false", ", [..\"", Encoding.UTF8.GetString(integral.ToArray()), "\"u8], [..\"", Encoding.UTF8.GetString(fractional.ToArray()), "\"u8], ", exponent.ToString(CultureInfo.InvariantCulture), ");");
 
         generator
             .AppendLineIndent("/// <summary>")
@@ -1116,324 +565,6 @@ internal static partial class CodeGenerationExtensions
             .AppendLine(" = ParsedJsonDocument<", typeDeclaration.DotnetTypeName(), ">.NumberConstant([..", SymbolDisplay.FormatLiteral(value.GetRawText(), true), "u8]);");
 
         return generator;
-    }
-
-    /// <summary>
-    /// Emits a static <c>EnumStringMap</c> field for oneOf discriminator-based dispatch
-    /// when a discriminator property has been detected for the given type declaration.
-    /// </summary>
-    /// <param name="generator">The code generator.</param>
-    /// <param name="typeDeclaration">The type declaration for which to emit the fields.</param>
-    /// <returns>A reference to the generator having completed the operation.</returns>
-    /// <remarks>
-    /// <para>
-    /// This is called at JsonSchema class scope so the emitted field is a class-level static.
-    /// The field name, discriminator property name, and discriminator values are stored in type
-    /// metadata so that the oneOf validation handler can reference them.
-    /// </para>
-    /// </remarks>
-    public static CodeGenerator AppendOneOfDiscriminatorMapFields(this CodeGenerator generator, TypeDeclaration typeDeclaration)
-    {
-        if (generator.IsCancellationRequested)
-        {
-            return generator;
-        }
-
-        if (typeDeclaration.OneOfCompositionTypes() is not { } oneOf)
-        {
-            return generator;
-        }
-
-        foreach (KeyValuePair<IOneOfSubschemaValidationKeyword, IReadOnlyCollection<TypeDeclaration>> kvp in oneOf)
-        {
-            if (generator.IsCancellationRequested)
-            {
-                return generator;
-            }
-
-            IOneOfSubschemaValidationKeyword keyword = kvp.Key;
-            IReadOnlyCollection<TypeDeclaration> subschemaTypes = kvp.Value;
-
-            if (!TryGetOneOfDiscriminator(subschemaTypes, out string? discriminatorPropertyName, out List<(string Value, int BranchIndex)>? discriminatorValues, out JsonValueKind discriminatorValueKind))
-            {
-                continue;
-            }
-
-            // Store discriminator metadata for the validation handler to use
-            typeDeclaration.SetMetadata(OneOfDiscriminatorPropertyNameKeyPrefix + keyword.Keyword, discriminatorPropertyName);
-            typeDeclaration.SetMetadata(OneOfDiscriminatorValuesKeyPrefix + keyword.Keyword, discriminatorValues);
-            typeDeclaration.SetMetadata(OneOfDiscriminatorValueKindKeyPrefix + keyword.Keyword, discriminatorValueKind);
-
-            // Only emit a hash map field when there are enough string branches to justify it.
-            // Numeric discriminators use sequential comparison (CompareNormalizedJsonNumbers).
-            if (discriminatorValueKind == JsonValueKind.String && discriminatorValues.Count > MinEnumValuesForHashSet)
-            {
-                string fieldName = generator.GetUniqueStaticReadOnlyPropertyNameInScope("OneOfDiscriminatorMap");
-                string builderName = generator.GetUniqueStaticReadOnlyPropertyNameInScope("BuildOneOfDiscriminatorMap");
-
-                generator
-                    .AppendSeparatorLine()
-                    .AppendLineIndent("private static EnumStringMap ", builderName, "()")
-                    .AppendLineIndent("{")
-                    .PushIndent()
-                        .AppendLineIndent("return new EnumStringMap([")
-                        .PushIndent();
-
-                foreach ((string value, _) in discriminatorValues)
-                {
-                    string quotedValue = SymbolDisplay.FormatLiteral(value, true);
-                    generator
-                        .AppendLineIndent("static () => ", quotedValue, "u8,");
-                }
-
-                generator
-                        .PopIndent()
-                        .AppendLineIndent("]);")
-                    .PopIndent()
-                    .AppendLineIndent("}")
-                    .AppendSeparatorLine()
-                    .AppendLineIndent("private static EnumStringMap ", fieldName, " { get; } = ", builderName, "();");
-
-                typeDeclaration.SetMetadata(OneOfDiscriminatorMapFieldNameKeyPrefix + keyword.Keyword, fieldName);
-            }
-        }
-
-        return generator;
-    }
-
-    /// <summary>
-    /// Tries to get the discriminator metadata for a oneOf keyword.
-    /// </summary>
-    /// <param name="typeDeclaration">The type declaration.</param>
-    /// <param name="keywordName">The keyword name (e.g. "oneOf").</param>
-    /// <param name="discriminatorPropertyName">When successful, the JSON property name of the discriminator.</param>
-    /// <param name="discriminatorValues">When successful, the list of (value, branchIndex) pairs.</param>
-    /// <param name="discriminatorValueKind">When successful, the <see cref="JsonValueKind"/> of the discriminator values.</param>
-    /// <param name="mapFieldName">When successful and a hash map was emitted, the field name; otherwise <see langword="null"/>.</param>
-    /// <returns><see langword="true"/> if discriminator metadata was found; otherwise, <see langword="false"/>.</returns>
-    public static bool TryGetOneOfDiscriminatorMetadata(
-        this TypeDeclaration typeDeclaration,
-        string keywordName,
-        [NotNullWhen(true)] out string? discriminatorPropertyName,
-        [NotNullWhen(true)] out List<(string Value, int BranchIndex)>? discriminatorValues,
-        out JsonValueKind discriminatorValueKind,
-        out string? mapFieldName)
-    {
-        discriminatorPropertyName = null;
-        discriminatorValues = null;
-        discriminatorValueKind = default;
-        mapFieldName = null;
-
-        if (!typeDeclaration.TryGetMetadata(OneOfDiscriminatorPropertyNameKeyPrefix + keywordName, out string? propName) ||
-            propName is null ||
-            !typeDeclaration.TryGetMetadata(OneOfDiscriminatorValuesKeyPrefix + keywordName, out List<(string Value, int BranchIndex)>? values) ||
-            values is null)
-        {
-            return false;
-        }
-
-        discriminatorPropertyName = propName;
-        discriminatorValues = values;
-        typeDeclaration.TryGetMetadata(OneOfDiscriminatorValueKindKeyPrefix + keywordName, out discriminatorValueKind);
-        typeDeclaration.TryGetMetadata(OneOfDiscriminatorMapFieldNameKeyPrefix + keywordName, out mapFieldName);
-        return true;
-    }
-
-    /// <summary>
-    /// Emits static <see cref="EnumStringMap"/> fields for anyOf discriminator-based dispatch.
-    /// </summary>
-    /// <param name="generator">The code generator.</param>
-    /// <param name="typeDeclaration">The type declaration for which to emit the fields.</param>
-    /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator AppendAnyOfDiscriminatorMapFields(this CodeGenerator generator, TypeDeclaration typeDeclaration)
-    {
-        if (generator.IsCancellationRequested)
-        {
-            return generator;
-        }
-
-        if (typeDeclaration.AnyOfCompositionTypes() is not { } anyOf)
-        {
-            return generator;
-        }
-
-        foreach (KeyValuePair<IAnyOfSubschemaValidationKeyword, IReadOnlyCollection<TypeDeclaration>> kvp in anyOf)
-        {
-            if (generator.IsCancellationRequested)
-            {
-                return generator;
-            }
-
-            IAnyOfSubschemaValidationKeyword keyword = kvp.Key;
-            IReadOnlyCollection<TypeDeclaration> subschemaTypes = kvp.Value;
-
-            if (!TryGetOneOfDiscriminator(subschemaTypes, out string? discriminatorPropertyName, out List<(string Value, int BranchIndex)>? discriminatorValues, out JsonValueKind discriminatorValueKind, requireRequired: false, allowPartial: true))
-            {
-                continue;
-            }
-
-            typeDeclaration.SetMetadata(AnyOfDiscriminatorPropertyNameKeyPrefix + keyword.Keyword, discriminatorPropertyName);
-            typeDeclaration.SetMetadata(AnyOfDiscriminatorValuesKeyPrefix + keyword.Keyword, discriminatorValues);
-            typeDeclaration.SetMetadata(AnyOfDiscriminatorValueKindKeyPrefix + keyword.Keyword, discriminatorValueKind);
-
-            // Only emit a hash map field when there are enough string branches to justify it.
-            // Numeric discriminators use sequential comparison (CompareNormalizedJsonNumbers).
-            if (discriminatorValueKind == JsonValueKind.String && discriminatorValues.Count > MinEnumValuesForHashSet)
-            {
-                string fieldName = generator.GetUniqueStaticReadOnlyPropertyNameInScope("AnyOfDiscriminatorMap");
-                string builderName = generator.GetUniqueStaticReadOnlyPropertyNameInScope("BuildAnyOfDiscriminatorMap");
-
-                generator
-                    .AppendSeparatorLine()
-                    .AppendLineIndent("private static EnumStringMap ", builderName, "()")
-                    .AppendLineIndent("{")
-                    .PushIndent()
-                        .AppendLineIndent("return new EnumStringMap([")
-                        .PushIndent();
-
-                foreach ((string value, _) in discriminatorValues)
-                {
-                    string quotedValue = SymbolDisplay.FormatLiteral(value, true);
-                    generator
-                        .AppendLineIndent("static () => ", quotedValue, "u8,");
-                }
-
-                generator
-                        .PopIndent()
-                        .AppendLineIndent("]);")
-                    .PopIndent()
-                    .AppendLineIndent("}")
-                    .AppendSeparatorLine()
-                    .AppendLineIndent("private static EnumStringMap ", fieldName, " { get; } = ", builderName, "();");
-
-                typeDeclaration.SetMetadata(AnyOfDiscriminatorMapFieldNameKeyPrefix + keyword.Keyword, fieldName);
-            }
-        }
-
-        return generator;
-    }
-
-    /// <summary>
-    /// Tries to get the discriminator metadata for an anyOf keyword.
-    /// </summary>
-    /// <param name="typeDeclaration">The type declaration.</param>
-    /// <param name="keywordName">The keyword name (e.g. "anyOf").</param>
-    /// <param name="discriminatorPropertyName">When successful, the JSON property name of the discriminator.</param>
-    /// <param name="discriminatorValues">When successful, the list of (value, branchIndex) pairs.</param>
-    /// <param name="discriminatorValueKind">When successful, the <see cref="JsonValueKind"/> of the discriminator values.</param>
-    /// <param name="mapFieldName">When successful and a hash map was emitted, the field name; otherwise <see langword="null"/>.</param>
-    /// <returns><see langword="true"/> if discriminator metadata was found; otherwise, <see langword="false"/>.</returns>
-    public static bool TryGetAnyOfDiscriminatorMetadata(
-        this TypeDeclaration typeDeclaration,
-        string keywordName,
-        [NotNullWhen(true)] out string? discriminatorPropertyName,
-        [NotNullWhen(true)] out List<(string Value, int BranchIndex)>? discriminatorValues,
-        out JsonValueKind discriminatorValueKind,
-        out string? mapFieldName)
-    {
-        discriminatorPropertyName = null;
-        discriminatorValues = null;
-        discriminatorValueKind = default;
-        mapFieldName = null;
-
-        if (!typeDeclaration.TryGetMetadata(AnyOfDiscriminatorPropertyNameKeyPrefix + keywordName, out string? propName) ||
-            propName is null ||
-            !typeDeclaration.TryGetMetadata(AnyOfDiscriminatorValuesKeyPrefix + keywordName, out List<(string Value, int BranchIndex)>? values) ||
-            values is null)
-        {
-            return false;
-        }
-
-        discriminatorPropertyName = propName;
-        discriminatorValues = values;
-        typeDeclaration.TryGetMetadata(AnyOfDiscriminatorValueKindKeyPrefix + keywordName, out discriminatorValueKind);
-        typeDeclaration.TryGetMetadata(AnyOfDiscriminatorMapFieldNameKeyPrefix + keywordName, out mapFieldName);
-        return true;
-    }
-
-    /// <summary>
-    /// Emits static <see cref="EnumStringSet"/> fields for any-of constant validation keywords
-    /// that have more than <see cref="MinEnumValuesForHashSet"/> string enum values.
-    /// </summary>
-    /// <param name="generator">The code generator.</param>
-    /// <param name="typeDeclaration">The type declaration for which to emit the fields.</param>
-    /// <returns>A reference to the generator having completed the operation.</returns>
-    /// <remarks>
-    /// This is called at JsonSchema class scope so the emitted fields are class-level statics.
-    /// The field names are stored in type metadata so that the validation code can reference them.
-    /// </remarks>
-    public static CodeGenerator AppendEnumStringSetFields(this CodeGenerator generator, TypeDeclaration typeDeclaration)
-    {
-        if (generator.IsCancellationRequested)
-        {
-            return generator;
-        }
-
-        if (typeDeclaration.AnyOfConstantValues() is not IReadOnlyDictionary<IAnyOfConstantValidationKeyword, JsonElement[]> constDictionary)
-        {
-            return generator;
-        }
-
-        foreach (KeyValuePair<IAnyOfConstantValidationKeyword, JsonElement[]> entry in constDictionary)
-        {
-            if (generator.IsCancellationRequested)
-            {
-                return generator;
-            }
-
-            IAnyOfConstantValidationKeyword keyword = entry.Key;
-            JsonElement[] elements = entry.Value;
-
-            JsonElement[] stringValues = elements.Where(e => e.ValueKind == JsonValueKind.String).ToArray();
-
-            if (stringValues.Length <= MinEnumValuesForHashSet)
-            {
-                continue;
-            }
-
-            string fieldName = generator.GetUniqueStaticReadOnlyPropertyNameInScope("EnumStringSet");
-            string builderName = generator.GetUniqueStaticReadOnlyPropertyNameInScope("BuildEnumStringSet");
-
-            generator
-                .AppendSeparatorLine()
-                .AppendLineIndent("private static EnumStringSet ", builderName, "()")
-                .AppendLineIndent("{")
-                .PushIndent()
-                    .AppendLineIndent("return new EnumStringSet([")
-                    .PushIndent();
-
-            foreach (JsonElement value in stringValues)
-            {
-                string quotedValue = SymbolDisplay.FormatLiteral(value.GetString()!, true);
-                generator
-                    .AppendLineIndent("static () => ", quotedValue, "u8,");
-            }
-
-            generator
-                    .PopIndent()
-                    .AppendLineIndent("]);")
-                .PopIndent()
-                .AppendLineIndent("}")
-                .AppendSeparatorLine()
-                .AppendLineIndent("private static EnumStringSet ", fieldName, " { get; } = ", builderName, "();");
-
-            typeDeclaration.SetMetadata(EnumStringSetFieldNameKeyPrefix + keyword.Keyword, fieldName);
-        }
-
-        return generator;
-    }
-
-    /// <summary>
-    /// Tries to get the name of the <see cref="EnumStringSet"/> field that was emitted for the
-    /// given keyword, if one was generated.
-    /// </summary>
-    /// <param name="typeDeclaration">The type declaration.</param>
-    /// <param name="keywordName">The keyword name (e.g. "enum").</param>
-    /// <param name="fieldName">When this method returns <see langword="true"/>, contains the field name.</param>
-    /// <returns><see langword="true"/> if a hash set field was emitted; otherwise <see langword="false"/>.</returns>
-    public static bool TryGetEnumStringSetFieldName(this TypeDeclaration typeDeclaration, string keywordName, [NotNullWhen(true)] out string? fieldName)
-    {
-        return typeDeclaration.TryGetMetadata(EnumStringSetFieldNameKeyPrefix + keywordName, out fieldName);
     }
 
     /// <summary>
@@ -1623,34 +754,6 @@ internal static partial class CodeGenerationExtensions
         return null;
     }
 
-    /// <summary>
-    /// Determines whether a composition branch's validation can be hoisted into a parent's
-    /// property enumeration loop instead of being called as an opaque <c>Evaluate()</c>.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// A type declaration is hoistable if its validation consists entirely of:
-    /// <list type="bullet">
-    ///   <item>Core type checks (must allow object)</item>
-    ///   <item>Object property validation keywords (properties, patternProperties,
-    ///         additionalProperties, propertyNames, required, minProperties, maxProperties,
-    ///         dependentRequired, dependentSchemas)</item>
-    ///   <item>Composition keywords (allOf, anyOf, oneOf) where ALL sub-branches are
-    ///         themselves hoistable (recursive check)</item>
-    /// </list>
-    /// </para>
-    /// <para>
-    /// Keywords that block hoisting include: const, enum, string, number, array, format,
-    /// if/then/else, and not.
-    /// </para>
-    /// </remarks>
-    /// <param name="typeDeclaration">The type declaration to check.</param>
-    /// <returns><see langword="true"/> if the type can be hoisted; otherwise, <see langword="false"/>.</returns>
-    public static bool IsHoistableObjectSubschema(TypeDeclaration typeDeclaration)
-    {
-        return IsHoistableObjectSubschemaCore(typeDeclaration, []);
-    }
-
     private static bool IsHoistableObjectSubschemaCore(TypeDeclaration typeDeclaration, HashSet<TypeDeclaration> visited)
     {
         // Guard against circular references
@@ -1761,34 +864,5 @@ internal static partial class CodeGenerationExtensions
 
         /// <summary>Gets the name of the evaluation path property in the parent scope.</summary>
         public string EvalPathPropertyName { get; }
-    }
-
-    /// <summary>
-    /// Stores hoisted allOf branch info as metadata on the type declaration.
-    /// </summary>
-    public static void SetHoistedAllOfBranches(
-        TypeDeclaration typeDeclaration,
-        string keywordName,
-        List<HoistedAllOfBranchInfo> branches)
-    {
-        typeDeclaration.SetMetadata(HoistedAllOfBranchesKeyPrefix + keywordName, branches);
-    }
-
-    /// <summary>
-    /// Tries to retrieve hoisted allOf branch info from the type declaration's metadata.
-    /// </summary>
-    public static bool TryGetHoistedAllOfBranches(
-        TypeDeclaration typeDeclaration,
-        string keywordName,
-        [NotNullWhen(true)] out List<HoistedAllOfBranchInfo>? branches)
-    {
-        if (typeDeclaration.TryGetMetadata(HoistedAllOfBranchesKeyPrefix + keywordName, out branches) &&
-            branches is not null)
-        {
-            return true;
-        }
-
-        branches = null;
-        return false;
     }
 }

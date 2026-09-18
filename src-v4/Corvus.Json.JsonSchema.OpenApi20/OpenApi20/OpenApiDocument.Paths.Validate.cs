@@ -47,7 +47,7 @@ public readonly partial struct OpenApiDocument
                     result = result.UsingStack();
                 }
 
-                result = result.PushSchemaLocation("/definitions/paths");
+                result = result.PushSchemaLocation("http://swagger.io/v2/schema.json#/definitions/paths");
             }
 
             JsonValueKind valueKind = this.ValueKind;
@@ -152,7 +152,7 @@ public readonly partial struct OpenApiDocument
                             result = result.PushValidationLocationReducedPathModifierAndProperty(new JsonReference("#/patternProperties/^~1/$ref"), propertyNameAsString);
                         }
 
-                        result = property.Value.As<Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.PathItem>().Validate(result, level);
+                        result = property.Value.As<Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.VendorExtension>().Validate(result, level);
 
                         if (level > ValidationLevel.Basic)
                         {
@@ -174,7 +174,7 @@ public readonly partial struct OpenApiDocument
                             result = result.PushValidationLocationReducedPathModifierAndProperty(new JsonReference("#/patternProperties/^x-/$ref"), propertyNameAsString);
                         }
 
-                        result = property.Value.As<Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.VendorExtension>().Validate(result, level);
+                        result = property.Value.As<Corvus.Json.JsonSchema.OpenApi20.OpenApiDocument.PathItem>().Validate(result, level);
 
                         if (level > ValidationLevel.Basic)
                         {

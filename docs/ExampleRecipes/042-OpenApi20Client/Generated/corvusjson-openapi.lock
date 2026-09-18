@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-09-01T10:37:14.9962304\u002B00:00",
+  "generatedAt": "2026-09-16T23:14:19.1838446\u002B00:00",
   "generatedFiles": [
     "ListPetsRequest.cs",
     "ListPetsResponse.cs",
@@ -12,12 +12,12 @@
     "UpdatePetWithFormResponse.cs",
     "IApiPetsClient.cs",
     "ApiPetsClient.cs",
-    "Models/JsonInt64.cs",
-    "Models/JsonInt64.Mutable.cs",
-    "Models/JsonInt64.JsonSchema.cs",
     "Models/JsonString.cs",
     "Models/JsonString.Mutable.cs",
     "Models/JsonString.JsonSchema.cs",
+    "Models/JsonInt64.cs",
+    "Models/JsonInt64.Mutable.cs",
+    "Models/JsonInt64.JsonSchema.cs",
     "Models/JsonInt32.cs",
     "Models/JsonInt32.Mutable.cs",
     "Models/JsonInt32.JsonSchema.cs",
@@ -45,9 +45,9 @@
     "Models/UpdatePetWithFormFormBody.StatusEntity.cs",
     "Models/UpdatePetWithFormFormBody.StatusEntity.Mutable.cs",
     "Models/UpdatePetWithFormFormBody.StatusEntity.JsonSchema.cs",
-    "Models/Corvus__GlobalDeclarations.cs"
+    "Models/CorvusJsonSchemaProgram.cs"
   ],
-  "generatorVersion": "1.0.0\u002Bf1a0ee50254fde0e0fd85b6629a3dc0b525510e8",
+  "generatorVersion": "1.0.0\u002Be024ff905f691e52c12c93f7274ef4018e091747",
   "includePaths": [],
   "rootNamespace": "Petstore.V2.Client",
   "specFileHash": "10cc3488325cfb61d4a68bc721ede20dcd9b93cb9533a03071189478971208ca",

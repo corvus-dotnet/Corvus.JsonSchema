@@ -280,7 +280,7 @@ internal static partial class CodeGeneratorExtensions
             /// </summary>
             """)
             .AppendIndent("public static string SchemaLocation { get; } = ")
-            .Append(SymbolDisplay.FormatLiteral(typeDeclaration.LocatedSchema.RootDocumentPointer, true))
+            .Append(SymbolDisplay.FormatLiteral(typeDeclaration.RelativeSchemaLocation, true))
             .AppendLine(";");
     }
 
@@ -517,23 +517,23 @@ internal static partial class CodeGeneratorExtensions
             switch (constantValue.ValueKind)
             {
                 case JsonValueKind.String:
-                    AppendStringProperties(generator, typeDeclaration, keyword, requiresIndex ? (i + 1).ToString() : null, constantValue);
+                    AppendStringProperties(generator, typeDeclaration, keyword, requiresIndex ? (i + 1).ToString(System.Globalization.CultureInfo.InvariantCulture) : null, constantValue);
                     break;
                 case JsonValueKind.Number:
-                    AppendNumberProperties(generator, typeDeclaration, keyword, requiresIndex ? (i + 1).ToString() : null, constantValue);
+                    AppendNumberProperties(generator, typeDeclaration, keyword, requiresIndex ? (i + 1).ToString(System.Globalization.CultureInfo.InvariantCulture) : null, constantValue);
                     break;
                 case JsonValueKind.True:
                 case JsonValueKind.False:
-                    AppendBooleanProperties(generator, typeDeclaration, keyword, requiresIndex ? (i + 1).ToString() : null, constantValue);
+                    AppendBooleanProperties(generator, typeDeclaration, keyword, requiresIndex ? (i + 1).ToString(System.Globalization.CultureInfo.InvariantCulture) : null, constantValue);
                     break;
                 case JsonValueKind.Object:
-                    AppendObjectProperties(generator, typeDeclaration, keyword, requiresIndex ? (i + 1).ToString() : null, constantValue);
+                    AppendObjectProperties(generator, typeDeclaration, keyword, requiresIndex ? (i + 1).ToString(System.Globalization.CultureInfo.InvariantCulture) : null, constantValue);
                     break;
                 case JsonValueKind.Array:
-                    AppendArrayProperties(generator, typeDeclaration, keyword, requiresIndex ? (i + 1).ToString() : null, constantValue);
+                    AppendArrayProperties(generator, typeDeclaration, keyword, requiresIndex ? (i + 1).ToString(System.Globalization.CultureInfo.InvariantCulture) : null, constantValue);
                     break;
                 case JsonValueKind.Null:
-                    AppendNullProperties(generator, typeDeclaration, requiresIndex ? (i + 1).ToString() : null, constantValue);
+                    AppendNullProperties(generator, typeDeclaration, requiresIndex ? (i + 1).ToString(System.Globalization.CultureInfo.InvariantCulture) : null, constantValue);
                     break;
             }
         }
@@ -1943,7 +1943,7 @@ internal static partial class CodeGeneratorExtensions
                 }
                 else
                 {
-                    currentPropertyName = generator.GetPropertyNameInScope(propertyNameAs, suffix: pnIndex.ToString());
+                    currentPropertyName = generator.GetPropertyNameInScope(propertyNameAs, suffix: pnIndex.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 }
 
                 pnIndex++;
@@ -1967,7 +1967,7 @@ internal static partial class CodeGeneratorExtensions
                 }
                 else
                 {
-                    currentPropertyName = generator.GetPropertyNameInScope(propertyNameIs, suffix: pnIndex.ToString());
+                    currentPropertyName = generator.GetPropertyNameInScope(propertyNameIs, suffix: pnIndex.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 }
 
                 pnIndex++;
@@ -5559,7 +5559,7 @@ internal static partial class CodeGeneratorExtensions
                     generator.GetPropertyNameInScope(
                         keyword.Keyword,
                         rootScope: generator.ValidationClassScope(),
-                        suffix: count > 1 ? i.ToString() : null);
+                        suffix: count > 1 ? i.ToString(System.Globalization.CultureInfo.InvariantCulture) : null);
 
                 parameterNames[i - 1] = matchParamName;
                 constFields[i - 1] = constField;
@@ -5648,8 +5648,8 @@ internal static partial class CodeGeneratorExtensions
 
             return constValue.ValueKind switch
             {
-                JsonValueKind.Object => generator.GetUniqueParameterNameInScope("matchObjectValue", childScope: scopeName, suffix: index.ToString()),
-                JsonValueKind.Array => generator.GetUniqueParameterNameInScope("matchArrayValue", childScope: scopeName, suffix: index.ToString()),
+                JsonValueKind.Object => generator.GetUniqueParameterNameInScope("matchObjectValue", childScope: scopeName, suffix: index.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+                JsonValueKind.Array => generator.GetUniqueParameterNameInScope("matchArrayValue", childScope: scopeName, suffix: index.ToString(System.Globalization.CultureInfo.InvariantCulture)),
                 JsonValueKind.String => generator.GetUniqueParameterNameInScope(constValue.GetString()!, childScope: scopeName, prefix: "match"),
                 JsonValueKind.Number => generator.GetUniqueParameterNameInScope(constValue.GetRawText().Replace(".", "point"), childScope: scopeName, prefix: "matchNumber"),
                 JsonValueKind.True => generator.GetUniqueParameterNameInScope("matchTrue", childScope: scopeName),

@@ -638,6 +638,122 @@ public readonly partial struct Cql2Schema
 
                     return defaultMatch();
                 }
+
+                /// <summary>
+                /// Converts the value to its <see cref="KnownValues"/> equivalent.
+                /// </summary>
+                /// <param name="value">The value from which to convert.</param>
+                /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+                public static implicit operator KnownValues(Mutable value)
+                {
+                    if (value.TryGetKnownValue(out KnownValues result))
+                    {
+                        return result;
+                    }
+
+                    throw new InvalidOperationException();
+                }
+
+                /// <summary>
+                /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+                /// </summary>
+                /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+                /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+                public bool TryGetKnownValue(out KnownValues result)
+                {
+                    if (this.ValueEquals(Constants.Enum1))
+                    {
+                        result = KnownValues.TAfter;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum2))
+                    {
+                        result = KnownValues.TBefore;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum3))
+                    {
+                        result = KnownValues.TContains;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum4))
+                    {
+                        result = KnownValues.TDisjoint;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum5))
+                    {
+                        result = KnownValues.TDuring;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum6))
+                    {
+                        result = KnownValues.TEquals;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum7))
+                    {
+                        result = KnownValues.TFinishedBy;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum8))
+                    {
+                        result = KnownValues.TFinishes;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum9))
+                    {
+                        result = KnownValues.TIntersects;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum10))
+                    {
+                        result = KnownValues.TMeets;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum11))
+                    {
+                        result = KnownValues.TMetBy;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum12))
+                    {
+                        result = KnownValues.TOverlappedBy;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum13))
+                    {
+                        result = KnownValues.TOverlaps;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum14))
+                    {
+                        result = KnownValues.TStartedBy;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum15))
+                    {
+                        result = KnownValues.TStarts;
+                        return true;
+                    }
+
+                    result = default;
+                    return false;
+                }
             }
 
             public ref struct Source
@@ -696,6 +812,9 @@ public readonly partial struct Cql2Schema
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(string value) => new (value.AsSpan());
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(KnownValues value) => (OpEntity)value;
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);

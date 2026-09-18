@@ -67,6 +67,7 @@
     <Compile Include="InlineEvaluatedBufferOverflowTests.cs" />
     <Compile Include="PropertySchemaMatchersHashCollisionTests.cs" />
     <Compile Include="SchemaLocationEncodingTests.cs" />
+    <Compile Include="SchemaLocationRootContextTests.cs" />
     <Compile Include="JsonStringUnescaperTests.cs" />
     <Compile Include="JsonMarshalRefreshUnsafeTests.cs" />
     <Compile Include="MigrationEquivalenceTests\AllOfConversionEquivalenceTests.cs" />
@@ -302,6 +303,7 @@
     <Compile Include="StringMaxLengthEnumTests.cs" />
     <Compile Include="OneOfDiscriminatorValidationTests.cs" />
     <Compile Include="AnyOfDiscriminatorValidationTests.cs" />
+    <Compile Include="CompileToAssemblyBytesTests.cs" />
     <Compile Include="AnyOfPartialDiscriminatorValidationTests.cs" />
     <Compile Include="OneOfNumericDiscriminatorValidationTests.cs" />
     <Compile Include="NoopRegexOptimizationTests.cs" />
@@ -313,6 +315,7 @@
     <Compile Include="JsonBase64TestData.cs" />
     <Compile Include="JsonDateTimeTestData.cs" />
     <Compile Include="CloneAsBuilderTests.cs" />
+    <Compile Include="JsonWorkspaceDocumentIndexTests.cs" />
     <Compile Include="ValuelessJsonDocumentTests.cs" />
     <Compile Include="ParsedJsonDocumentOwnerParseTests.cs" />
     <Compile Include="ParsedJsonDocumentTests.cs" />

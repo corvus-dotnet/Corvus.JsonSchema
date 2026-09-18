@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "fooId": {
+      "title": "Foo identifier",
+      "type": "integer",
+      "minimum": 0
+    },
+    "holder": {
+      "type": "object",
+      "properties": {
+        "fooId": { "$ref": "#/$defs/fooId" }
+      }
+    },
+    "sub": {
+      "$id": "https://example.com/issue957/sub-resource.json",
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

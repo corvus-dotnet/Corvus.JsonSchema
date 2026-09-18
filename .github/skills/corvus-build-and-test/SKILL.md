@@ -288,6 +288,28 @@ Common pitfalls that cause this mismatch:
 - JSON Patch copy operations where source is inside the destination array may not trigger overlap detection branches if the internal row layout doesn't straddle the insertion point
 - Generated types have their own `Source<TContext>` that delegates to the base `JsonElement.Source<TContext>` — test through the generated type's `CreateBuilder<TContext>` to cover the base type
 
+## Analyzers and generated code
+
+Generated code is most of what the compiler sees in the model projects (source generator trees in the OpenAPI model projects and the recipes, checked-in `Generated`, `B` and `C` folders elsewhere), and analyzer time was most of those builds. Three settings keep analyzers off it; none of them touches compiler diagnostics (nullable warnings, CS0618 and so on still report in generated files).
+
+| Setting | Where | What it does |
+|---------|-------|--------------|
+| `<RunAnalyzers>false</RunAnalyzers>` | projects whose every type is generated (`tests/Corvus.Text.Json.Tests.GeneratedModels*`, `src/Corvus.Text.Json.AsyncApi26`, `src/Corvus.Text.Json.AsyncApi30`, `tests/Corvus.Text.Json.Tests.MigrationModels.V5`) | no analyzer runs at all; generators still run |
+| `analyzers/generated-code.globalconfig` (passed to every project by the root `Directory.Build.targets`) plus the generated `[*.cs]` region of `.editorconfig` | repository-wide | analyzers that analyse generated code (`GeneratedCodeAnalysisFlags.Analyze`, the default for an analyzer that never configures it: CA2252, CA1418, CA1420, CA1421 and the rest) get every diagnostic set to `none` globally, which makes the analyzer driver skip them on source generator trees (csc gives those trees no per-tree options), and restored to its effective severity for files on disk, so hand-written code keeps exactly the analysis it had. Analyzers that opt out of generated code (StyleCop, Roslynator, most NetAnalyzers, every Corvus analyzer) are already skipped on generated trees and need nothing. |
+| the generated `[{docs/ExampleRecipes/*/Generated,...}/**.cs]` section of `.editorconfig` | checked-in generator output inside hand-written projects | every analyzer diagnostic hidden, and the analyzers above skipped per tree (not `generated_code = true`: that also switches off the project nullable context for a file without the auto-generated header, which three hand-maintained V4 core-type files are) |
+| the `RemoveRoslynMetaAnalyzers` target in the root `Directory.Build.targets` | every project without `IsRoslynComponent` | removes the Roslyn meta-analyzers (RS rules for analyzer authors, which analyse generated code) that `Microsoft.CodeAnalysis.Analyzers` brings into every consumer of `Microsoft.CodeAnalysis`, directly or through a project reference. A `PackageReference` with `ExcludeAssets` cannot do this: NuGet unions the asset flags of every path to a package, and the transitive path keeps the analyzers. |
+
+`update-generated-code-analyzer-config.ps1` writes the global config and the `.editorconfig` region from the analyzers actually in use: the SDK's NetAnalyzers (the SDK `global.json` selects) and every analyzer package in the restore graph of a project that references the source generator or owns a generated folder. It runs `analyzers/AnalyzerProbe.cs` (a file-based C# app, so the analyzers load on the Roslyn version they were built for) to read each analyzer's generated-code flags and descriptors. Run it after changing `global.json`, an analyzer package version or a project's analyzer references, and commit the result:
+
+```powershell
+.\update-generated-code-analyzer-config.ps1          # needs the main solution restored
+.\update-generated-code-analyzer-config.ps1 -Check   # the gate: exit 1 when the files are stale (CI runs it after the build)
+```
+
+The script fails on purpose when a directory named `Generated`, `B`, `C` or `GeneratedCoreTypes` holding C# files matches none of its folder globs (add the folder to `$GeneratedFolderGlobs`), and when a restored diagnostic is also configured by hand in an `.editorconfig` (decide which setting wins and remove one). Remaining analyzer work on generated code, by design: compilation start and end actions run once per compilation for every analyzer; symbol-start analyzers and analyzers with a non-configurable diagnostic cannot be skipped per tree (the script warns about the active ones); the IDE ignores `.editorconfig` for source-generated documents, so opt-in analyzers still analyse them live.
+
+To see what a build spends on analyzers, build one project with `-p:ReportAnalyzer=true -v:d` after touching its schema and read the "Total analyzer execution time" table in the log.
+
 ## Common Pitfalls
 
 ### Stale bin directories

@@ -56,7 +56,7 @@ public readonly partial struct OpenApiDocument
                         result = result.UsingStack();
                     }
 
-                    result = result.PushSchemaLocation("/definitions/xml/properties/wrapped");
+                    result = result.PushSchemaLocation("http://swagger.io/v2/schema.json#/definitions/xml/properties/wrapped");
                 }
 
                 JsonValueKind valueKind = this.ValueKind;

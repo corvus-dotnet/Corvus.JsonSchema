@@ -55,13 +55,11 @@ Most keywords return `CoreTypes.None` (applies to all types) and `true` for prec
 
 ### Step 1: Evaluator emission
 
-At code generation time, `StandaloneEvaluatorGenerator.EmitAnnotations()` processes each `IAnnotationProducingKeyword` on a type declaration and emits `IgnoredKeyword` calls:
+When the runtime evaluator compiles a schema, `SchemaCompiler` records each annotation keyword's raw JSON value on the node (`SchemaNode.Annotations`). In collecting mode the evaluator reports them as `IgnoredKeyword` results after the node's assertions:
 
 ```csharp
-// Generated code (simplified):
-context.IgnoredKeyword(
-    JsonSchemaMessageProviders.AnnotationMessageProvider("\"Person\""),
-    "title"u8);
+// Evaluator.EvalCore (simplified):
+state.Collector.IgnoredKeyword(annotation.RawJson, Providers.RawJson, annotation.Keyword);
 ```
 
 ### Step 2: Results collection
@@ -181,7 +179,8 @@ public readonly ref struct Annotation
     // Convenience methods to get string representations:
     public string GetInstanceLocationText();
     public string GetKeywordText();
-    public string GetSchemaLocationText();
+    public string GetSchemaLocationText();          // JSON Pointer, e.g. "/$defs/foo"
+    public string GetSchemaLocationFragmentText();  // URI fragment, e.g. "#/$defs/foo"
     public string GetValueText();
 }
 ```
@@ -201,11 +200,7 @@ Annotations are only collected in `Verbose` mode. The other levels skip the `Ign
 
 ## Type-based vs standalone evaluator
 
-| Feature | Type-based | Standalone evaluator |
-|---------|-----------|---------------------|
-| Validation keywords | ✅ Full support | ✅ Full support |
-| Annotation keywords | ❌ Not emitted | ✅ Full collection |
-| Annotation compliance | N/A | Conforms to JSON Schema test suite |
-| Performance | Optimised (skips annotations) | Slightly slower (records annotations) |
-
-The type-based code generator (`element.EvaluateSchema()`) does not emit annotation collection code. To collect annotations, use the standalone evaluator via `SchemaEvaluator.Evaluate()` with a `Verbose` results collector.
+Both evaluate through the same schema evaluation program, so annotation collection is identical: run
+either `element.EvaluateSchema(collector)` on a generated type or `<Name>Evaluator.Evaluate(in element, collector)`
+with a `Verbose` results collector, then use `JsonSchemaAnnotationProducer`. The other results levels skip
+the `IgnoredKeyword` calls entirely, and flag mode (no collector) skips all reporting.

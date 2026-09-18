@@ -45,7 +45,7 @@ public readonly partial struct ExclusiveMinimum
                 result = result.UsingStack();
             }
 
-            result = result.PushSchemaLocation("/properties/exclusiveMinimum");
+            result = result.PushSchemaLocation("http://json-schema.org/draft-04/schema#/properties/exclusiveMinimum");
         }
 
         JsonValueKind valueKind = this.ValueKind;

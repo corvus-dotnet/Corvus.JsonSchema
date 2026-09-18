@@ -35,7 +35,7 @@ public readonly partial struct StringArray
                 result = result.UsingStack();
             }
 
-            result = result.PushSchemaLocation("/definitions/stringArray");
+            result = result.PushSchemaLocation("http://json-schema.org/draft-04/schema#/definitions/stringArray");
         }
 
         JsonValueKind valueKind = this.ValueKind;

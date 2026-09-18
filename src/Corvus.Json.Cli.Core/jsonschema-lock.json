@@ -1,0 +1,53 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "JsonSchemaLockFile",
+    "description": "Records what a folder of generated code was generated from: the folder's whole generation specification, the hash of every schema it was generated from, and the files written. A later run into the folder adds its schemas to that specification and regenerates the whole set as one program, so the folder never holds types wired to a program that another run overwrote; a run that changes nothing is skipped.",
+    "type": "object",
+    "required": [
+        "generatorVersion",
+        "generatedAt",
+        "engine",
+        "codeGenerationMode",
+        "specification",
+        "schemaHashes",
+        "generatedFiles"
+    ],
+    "properties": {
+        "generatorVersion": {
+            "type": "string",
+            "description": "The generator assembly version."
+        },
+        "generatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The UTC timestamp of generation."
+        },
+        "engine": {
+            "type": "string",
+            "enum": [ "V4", "V5" ],
+            "description": "The code generation engine the folder was generated with."
+        },
+        "codeGenerationMode": {
+            "type": "string",
+            "enum": [ "TypeGeneration", "SchemaEvaluationOnly", "Both" ],
+            "description": "The code generation mode the folder was generated with."
+        },
+        "specification": {
+            "$ref": "./generator-config.json",
+            "description": "The folder's effective generation specification: every schema generated into the folder with its settings, and the options they share. Local schema and additional file paths are relative to the folder, with forward slashes; outputPath is not recorded."
+        },
+        "schemaHashes": {
+            "type": "object",
+            "description": "For each local schema file and additional file in the specification, keyed as recorded there, the SHA-256 hash of the RFC 8785 canonical form of its content.",
+            "additionalProperties": {
+                "type": "string"
+            }
+        },
+        "generatedFiles": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "The files the last run wrote, relative to the folder with forward slashes, in ordinal order."
+        }
+    },
+    "additionalProperties": false
+}

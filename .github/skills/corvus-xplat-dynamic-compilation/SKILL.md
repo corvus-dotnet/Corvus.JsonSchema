@@ -24,7 +24,7 @@ See `docs/CrossPlatformDynamicCompilation.md` for the full writeup including fai
 
 | File | Context |
 |------|---------|
-| `src/Corvus.Text.Json.Validator/.../DynamicCompiler.cs` | Production: runtime schema validation |
+| `src/Corvus.Text.Json.Arazzo.Generation/DynamicCompiler.cs` | Production: the Arazzo workflow executor bake |
 | `tests/Corvus.Text.Json.JMESPath.CodeGeneration.Tests/CodeGenConformanceFixture.cs` | Test fixture |
 | `tests/Corvus.Text.Json.Jsonata.CodeGeneration.Tests/CodeGenConformanceFixture.cs` | Test fixture |
 | `tests/Corvus.Text.Json.JsonLogic.CodeGeneration.Tests/CodeGenConformanceFixture.cs` | Test fixture |
@@ -114,11 +114,11 @@ After AppDomain assemblies:
 
 ## DynamicCompiler Differences
 
-The production `DynamicCompiler` in `Corvus.Text.Json.Validator` has extra complexity beyond the test fixtures:
+The production `DynamicCompiler` in `Corvus.Text.Json.Arazzo.Generation` (the workflow executor bake; runtime schema validation stopped compiling in 5.6.0) has extra complexity beyond the test fixtures:
 
 - Takes a `hostAssembly` parameter (the assembly whose schema types are being validated)
-- Caches `(MetadataReferences, Defines)` per host assembly via `ConcurrentDictionary`
-- On .NET 8+, uses a collectible `AssemblyLoadContext` to avoid memory leaks
+- Caches `(MetadataReferences, Defines)` per `(hostAssembly, portable)` pair under a lock
+- Emits assembly bytes for storage and never loads them; `portable: true` resolves against reference assemblies only so the artifact recompiles under native AOT (ADR 0055)
 - Falls back to `hostAssembly.Location` directory if `BaseDirectory` is unavailable (shadow-copy scenarios)
 - Has a separate `ResolveTransitiveReferences` method using a `Queue<AssemblyName>` BFS
 

@@ -22,6 +22,7 @@ public class JsonSchemaTypeBuilder(
     private readonly Dictionary<string, TypeDeclaration> locatedTypeDeclarations = new(StringComparer.Ordinal);
     private readonly JsonSchemaRegistry schemaRegistry = new(documentResolver, vocabularyRegistry);
     private readonly HashSet<TypeDeclaration> propertiesCollected = [];
+    private IVocabulary? lastFallbackVocabulary;
 
     /// <summary>
     /// Walk a JSON document to build a JSON schema type declaration.
@@ -53,6 +54,7 @@ public class JsonSchemaTypeBuilder(
         bool rebaseAsRoot = false,
         CancellationToken? cancellationToken = null)
     {
+        this.lastFallbackVocabulary = fallbackVocabulary;
         ValueTask<TypeDeclaration> task = this.AddTypeDeclarationsAsync(documentPath, fallbackVocabulary, rebaseAsRoot, cancellationToken);
 
         if (!task.IsCompleted)
@@ -83,6 +85,7 @@ public class JsonSchemaTypeBuilder(
         bool rebaseAsRoot = false,
         CancellationToken? cancellationToken = null)
     {
+        this.lastFallbackVocabulary = fallbackVocabulary;
         CancellationToken ct = cancellationToken ?? CancellationToken.None;
 
         // First we do a document "load" - this enables us to build the map of the schema, anchors etc.
@@ -142,6 +145,29 @@ public class JsonSchemaTypeBuilder(
     }
 
     /// <summary>
+    /// Generates code for the root type declarations, handing each file to the sink as it is completed when the
+    /// provider streams (<see cref="IStreamingLanguageProvider"/>), and feeding the sink from the collection otherwise.
+    /// </summary>
+    /// <param name="languageProvider">The language provider.</param>
+    /// <param name="rootTypeDeclarations">The root type declarations.</param>
+    /// <param name="sink">The sink that receives each file.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    public void GenerateCodeUsing(ILanguageProvider languageProvider, IEnumerable<TypeDeclaration> rootTypeDeclarations, IGeneratedCodeFileSink sink, CancellationToken cancellationToken)
+    {
+        IEnumerable<TypeDeclaration> typeDeclarations = this.PrepareGeneration(languageProvider, rootTypeDeclarations.ToArray(), cancellationToken);
+        if (languageProvider is IStreamingLanguageProvider streamingProvider)
+        {
+            streamingProvider.GenerateCodeFor(typeDeclarations, sink, cancellationToken);
+            return;
+        }
+
+        foreach (GeneratedCodeFile file in languageProvider.GenerateCodeFor(typeDeclarations, cancellationToken))
+        {
+            sink.Add(file);
+        }
+    }
+
+    /// <summary>
     /// Generates code for the types using the given language provider.
     /// </summary>
     /// <param name="languageProvider">The <see cref="ILanguageProvider"/> for which to generate code.</param>
@@ -150,6 +176,27 @@ public class JsonSchemaTypeBuilder(
     /// <returns>The <see cref="GeneratedCodeFile"/> collection.</returns>
     public IReadOnlyCollection<GeneratedCodeFile> GenerateCodeUsing(ILanguageProvider languageProvider, CancellationToken cancellationToken, params TypeDeclaration[] rootTypeDeclarations)
     {
+        return languageProvider.GenerateCodeFor(this.PrepareGeneration(languageProvider, rootTypeDeclarations, cancellationToken), cancellationToken);
+    }
+
+    // The passes every generation runs before a provider emits: ordering comparer, candidates, non-generated
+    // types, parents, names, and the schema program set-up.
+    private IEnumerable<TypeDeclaration> PrepareGeneration(ILanguageProvider languageProvider, TypeDeclaration[] rootTypeDeclarations, CancellationToken cancellationToken)
+    {
+        // The names that reach generated code (properties, subschemas, documentation keywords) are ordered with the
+        // type declaration's comparer, so the provider's comparer is applied to every declaration this builder has built
+        // before anything is ordered. The process-wide shared declarations have no properties or subschemas to order.
+        IComparer<string> orderingComparer = languageProvider is IOrderingLanguageProvider orderingProvider
+            ? orderingProvider.OrderingComparer
+            : Comparer<string>.Default;
+        foreach (TypeDeclaration typeDeclaration in this.locatedTypeDeclarations.Values)
+        {
+            if (!typeDeclaration.IsShared)
+            {
+                typeDeclaration.SetOrderingComparer(orderingComparer);
+            }
+        }
+
         IReadOnlyList<TypeDeclaration> candidateTypesToGenerate = GetCandidateTypesToGenerate(rootTypeDeclarations, cancellationToken);
 
         MarkNonGeneratedTypes(languageProvider, rootTypeDeclarations, cancellationToken);
@@ -165,8 +212,122 @@ public class JsonSchemaTypeBuilder(
 
         IEnumerable<TypeDeclaration> typeDeclarations = candidateTypesToGenerate.Where(languageProvider.ShouldGenerate);
 
-        return languageProvider.GenerateCodeFor(typeDeclarations, cancellationToken);
+        if (languageProvider is ISchemaProgramLanguageProvider programProvider)
+        {
+            programProvider.SetProgramRootTypes(rootTypeDeclarations);
+            if (programProvider is ISchemaProgramUtf8LanguageProvider utf8ProgramProvider)
+            {
+                utf8ProgramProvider.SetSchemaDocuments(this.GetSchemaDocumentsUtf8(), this.lastFallbackVocabulary?.Uri);
+            }
+            else
+            {
+                programProvider.SetSchemaDocuments(this.GetSchemaDocuments(), this.lastFallbackVocabulary?.Uri);
+            }
+        }
+
+        return typeDeclarations;
     }
+
+    /// <summary>
+    /// Gets the text of every root document the builder has loaded, keyed by root document URI, in first-seen order.
+    /// </summary>
+    /// <returns>The documents.</returns>
+    public IReadOnlyList<KeyValuePair<string, string>> GetSchemaDocuments()
+    {
+        List<KeyValuePair<string, string>> result = [];
+        foreach ((string uri, JsonElement element) in this.CollectSchemaDocumentElements())
+        {
+            result.Add(new KeyValuePair<string, string>(uri, element.GetRawText()));
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets the UTF-8 JSON text of every root document the builder has loaded, keyed by root document URI, in
+    /// first-seen order: the same documents as <see cref="GetSchemaDocuments"/>, without a string copy.
+    /// </summary>
+    /// <returns>The documents.</returns>
+    public IReadOnlyList<KeyValuePair<string, ReadOnlyMemory<byte>>> GetSchemaDocumentsUtf8()
+    {
+        List<KeyValuePair<string, ReadOnlyMemory<byte>>> result = [];
+        foreach ((string uri, JsonElement element) in this.CollectSchemaDocumentElements())
+        {
+#if NET9_0_OR_GREATER
+            // The element's own UTF-8 text, copied once out of the document's buffer.
+            result.Add(new KeyValuePair<string, ReadOnlyMemory<byte>>(uri, System.Runtime.InteropServices.JsonMarshal.GetRawUtf8Value(element).ToArray()));
+#else
+            result.Add(new KeyValuePair<string, ReadOnlyMemory<byte>>(uri, System.Text.Encoding.UTF8.GetBytes(element.GetRawText())));
+#endif
+        }
+
+        return result;
+    }
+
+    private List<(string Uri, JsonElement Element)> CollectSchemaDocumentElements()
+    {
+        List<(string Uri, JsonElement Element)> result = [];
+        HashSet<string> seen = new(StringComparer.Ordinal);
+        foreach (LocatedSchema located in this.schemaRegistry.LocatedSchemas)
+        {
+            string uri = located.RootDocumentUri;
+            if (uri.Length == 0 || !seen.Add(uri))
+            {
+                continue;
+            }
+
+            // A rebased island or a synthetic $ref root is a virtual resource of the registry, not a resolver document.
+            JsonElement? root = this.schemaRegistry.TryGetVirtualResource(uri.AsSpan(), out JsonElement virtualRoot)
+                ? virtualRoot
+                : documentResolver.TryResolve(new JsonReference(uri)).AsTask().GetAwaiter().GetResult();
+            if (root is JsonElement element)
+            {
+                result.Add((uri, element));
+                AddCustomMetaschemas(element);
+            }
+        }
+
+        return result;
+
+        // A schema whose $schema is not one of the standard metaschemas needs that metaschema at evaluation time to
+        // discover its $vocabulary; the standard ones are built into the evaluator.
+        void AddCustomMetaschemas(JsonElement schema)
+        {
+            while (schema.ValueKind == JsonValueKind.Object &&
+                   schema.TryGetProperty("$schema", out JsonElement metaschemaElement) &&
+                   metaschemaElement.ValueKind == JsonValueKind.String &&
+                   metaschemaElement.GetString() is string metaschemaUri)
+            {
+                int fragment = metaschemaUri.IndexOf('#');
+                if (fragment >= 0)
+                {
+                    metaschemaUri = metaschemaUri.Substring(0, fragment);
+                }
+
+                if (metaschemaUri.Length == 0 ||
+                    metaschemaUri.StartsWith("http://json-schema.org/", StringComparison.Ordinal) ||
+                    metaschemaUri.StartsWith("https://json-schema.org/", StringComparison.Ordinal) ||
+                    !seen.Add(metaschemaUri))
+                {
+                    return;
+                }
+
+                JsonElement? metaschema = documentResolver.TryResolve(new JsonReference(metaschemaUri)).AsTask().GetAwaiter().GetResult();
+                if (metaschema is not JsonElement metaschemaRoot)
+                {
+                    return;
+                }
+
+                result.Add((metaschemaUri, metaschemaRoot));
+                schema = metaschemaRoot;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets every schema the builder has registered, including those that reduce away during type generation.
+    /// </summary>
+    public IEnumerable<LocatedSchema> LocatedSchemas => this.schemaRegistry.LocatedSchemas;
 
     /// <summary>
     /// Add a document to the document resolver for the type builder.

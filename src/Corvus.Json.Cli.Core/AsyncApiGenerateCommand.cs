@@ -66,20 +66,10 @@ internal sealed class AsyncApiGenerateCommand : AsyncCommand<AsyncApiGenerateSet
         string rootNamespace = settings.RootNamespace ?? "GeneratedAsyncApi";
         string specFilePath = Path.GetFullPath(settings.SpecFile);
 
-        byte[] specBytes = await File.ReadAllBytesAsync(settings.SpecFile, cancellationToken)
+        // YAML when --yaml says so, or when the extension is .yaml or .yml
+        bool useYaml = SpecDocumentReader.UseYaml(settings.SupportYaml, settings.SpecFile);
+        byte[] specBytes = await SpecDocumentReader.ReadAsJsonAsync(settings.SpecFile, useYaml, cancellationToken)
             .ConfigureAwait(false);
-
-        // Pre-process YAML if needed (auto-detect from extension or explicit --yaml flag)
-        bool useYaml = settings.SupportYaml ?? IsYamlFile(settings.SpecFile);
-        if (useYaml)
-        {
-            YamlPreProcessor yamlPreProcessor = new();
-            using MemoryStream inputStream = new(specBytes);
-            using Stream processedStream = yamlPreProcessor.Process(inputStream);
-            using MemoryStream outputStream = new();
-            processedStream.CopyTo(outputStream);
-            specBytes = outputStream.ToArray();
-        }
 
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(specBytes);
         JsonElement specRoot = doc.RootElement;
@@ -167,7 +157,7 @@ internal sealed class AsyncApiGenerateCommand : AsyncCommand<AsyncApiGenerateSet
 
             foreach (AsyncApiGenerationDiagnostic diagnostic in generationDiagnostics)
             {
-                AnsiConsole.MarkupLineInterpolated($"[yellow]Warning:[/] {diagnostic.Location}: {diagnostic.Message}");
+                AnsiConsole.MarkupLineInterpolated(System.Globalization.CultureInfo.CurrentCulture, $"[yellow]Warning:[/] {diagnostic.Location}: {diagnostic.Message}");
             }
 
             if (settings.Strict && generationDiagnostics.Count > 0)
@@ -254,17 +244,7 @@ internal sealed class AsyncApiGenerateCommand : AsyncCommand<AsyncApiGenerateSet
         bool useYaml,
         CancellationToken cancellationToken)
     {
-        CompoundDocumentResolver documentResolver;
-
-        if (useYaml)
-        {
-            YamlPreProcessor preProcessor = new();
-            documentResolver = new(new FileSystemDocumentResolver(preProcessor), new HttpClientDocumentResolver(new HttpClient(), preProcessor));
-        }
-        else
-        {
-            documentResolver = new(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient()));
-        }
+        CompoundDocumentResolver documentResolver = SpecDocumentReader.CreateDocumentResolver(useYaml);
 
         documentResolver.AddMetaschema();
 
@@ -300,7 +280,7 @@ internal sealed class AsyncApiGenerateCommand : AsyncCommand<AsyncApiGenerateSet
 
         AnsiConsole.MarkupLine($"[yellow]Registered {typesToGenerate.Count} type declarations, generating code...[/]");
 
-        CSharpLanguageProvider.Options options = new(rootNamespace + ".Models");
+        CSharpLanguageProvider.Options options = new(rootNamespace + ".Models", programCompiler: global::Corvus.Json.CodeGenerator.RuntimeProgramCompiler.Compile);
         CSharpLanguageProvider languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
         languageProvider.RegisterNameHeuristics(AsyncApiSchemaNameHeuristic.Instance);
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =
@@ -332,7 +312,7 @@ internal sealed class AsyncApiGenerateCommand : AsyncCommand<AsyncApiGenerateSet
                 while (!writtenFiles.Add(outputFile) && counter < 1000);
             }
 
-            await File.WriteAllTextAsync(outputFile, codeFile.FileContent, cancellationToken)
+            await GeneratedFileWriter.WriteAsync(codeFile, outputFile, cancellationToken)
                 .ConfigureAwait(false);
             AnsiConsole.MarkupLine($"  [cyan]Schema type:[/] {outputFile}");
             schemaFileNames.Add(Path.GetFileName(outputFile));
@@ -408,13 +388,6 @@ internal sealed class AsyncApiGenerateCommand : AsyncCommand<AsyncApiGenerateSet
         }
 
         return null;
-    }
-
-    private static bool IsYamlFile(string path)
-    {
-        string ext = Path.GetExtension(path);
-        return ext.Equals(".yaml", StringComparison.OrdinalIgnoreCase)
-            || ext.Equals(".yml", StringComparison.OrdinalIgnoreCase);
     }
 }
 

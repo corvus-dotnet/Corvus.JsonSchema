@@ -235,7 +235,7 @@ public static class JsonSchemaAnnotationProducer
         {
             string instanceLocation = annotation.GetInstanceLocationText();
             string keyword = annotation.GetKeywordText();
-            string schemaLocation = annotation.GetSchemaLocationText();
+            string schemaLocation = annotation.GetSchemaLocationFragmentText();
             string annotationValue = annotation.GetValueText();
 
             var key = (instanceLocation, keyword);
@@ -365,10 +365,28 @@ public static class JsonSchemaAnnotationProducer
         }
 
         /// <summary>
-        /// Gets the schema location as a string, with the '#' prefix.
+        /// Gets the schema location as a string.
         /// </summary>
-        /// <returns>The schema location text, URI-fragment encoded.</returns>
+        /// <returns>The schema location as a JSON Pointer from the root of the schema document, without the '#' prefix.</returns>
+        /// <remarks>
+        /// This is the same JSON Pointer as <see cref="SchemaLocation"/>, and the same shape as
+        /// <see cref="JsonSchemaResultsCollector.Result.GetSchemaEvaluationLocationText"/>. Use
+        /// <see cref="GetSchemaLocationFragmentText"/> for the URI-fragment form with the '#' prefix.
+        /// </remarks>
         public string GetSchemaLocationText()
+        {
+            return JsonReaderHelper.GetTextFromUtf8(this.schemaLocation);
+        }
+
+        /// <summary>
+        /// Gets the schema location as a URI fragment, with the '#' prefix.
+        /// </summary>
+        /// <returns>The schema location text, URI-fragment encoded and prefixed with '#'.</returns>
+        /// <remarks>
+        /// This is the form used for the property names written by <see cref="WriteSchemaLocationPropertyTo"/>
+        /// and <see cref="WriteAnnotationsTo"/>.
+        /// </remarks>
+        public string GetSchemaLocationFragmentText()
         {
             int encodedLength = GetUriFragmentEncodedLength(this.schemaLocation);
 

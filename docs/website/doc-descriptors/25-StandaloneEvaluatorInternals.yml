@@ -1,0 +1,3 @@
+source: StandaloneEvaluatorInternals.md
+navTitle: "Schema Evaluation Program Internals"
+description: "The shape of the schema evaluation program that generated types and standalone evaluators carry, and how it is compiled and run by the runtime evaluator."

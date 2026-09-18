@@ -101,6 +101,11 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [DefaultValue(NativeEnums.All)]
         public NativeEnums NativeEnums { get; init; }
 
+        [CommandOption("--unions <VALUE>")]
+        [Description("Whether a generated oneOf/anyOf type is also a C# union (default true; V5 engine only). With the C# 15 compiler (the .NET 11 SDK) switch and is patterns over the branch types then work, on any target framework except .NET Framework. Pass '--unions false' to leave the union members out.")]
+        [DefaultValue(true)]
+        public bool Unions { get; init; }
+
         [CommandOption("--useImplicitOperatorString")]
         [Description("If true, conversion operators to string are implicit, rather than explicit.")]
         [DefaultValue(false)]
@@ -133,6 +138,11 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [CommandOption("--codeGenerationMode")]
         [DefaultValue(CodeGenerationMode.TypeGeneration)]
         public CodeGenerationMode CodeGenerationMode { get; init; }
+
+        [CommandOption("--force")]
+        [Description("Regenerate even when the output folder's corvusjson-jsonschema.lock says nothing changed, and apply this run's options to everything the folder was generated from even when they differ from the lock's.")]
+        [DefaultValue(false)]
+        public bool Force { get; init; }
     }
 
     /// <inheritdoc/>
@@ -164,6 +174,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             disableOptionalNameHeuristics: settings.DisableOptionalNamingHeuristics,
             optionalAsNullable: settings.OptionalAsNullable.ToString(),
             nativeEnums: settings.NativeEnums.ToString(),
+            unions: settings.Unions,
             outputMapFile: settings.OutputMapFile.AsNullableJsonString(),
             outputPath: settings.OutputPath.AsNullableJsonString(),
             useSchema: settings.UseSchema != SchemaVariant.NotSpecified ? (GeneratorConfig.UseSchema)settings.UseSchema.ToString() : default(GeneratorConfig.UseSchema?),
@@ -191,7 +202,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             }
         }
 
-        return GenerationDriver.GenerateTypes(config, engine, settings.CodeGenerationMode, cancellationToken);
+        return GenerationDriver.GenerateTypes(config, engine, settings.CodeGenerationMode, settings.Force, cancellationToken);
     }
 
     private static string FormatModeToString(FormatAssertionMode mode) => mode switch

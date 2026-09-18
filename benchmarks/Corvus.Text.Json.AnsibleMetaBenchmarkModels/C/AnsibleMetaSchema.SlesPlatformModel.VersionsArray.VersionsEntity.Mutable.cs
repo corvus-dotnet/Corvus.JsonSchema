@@ -736,6 +736,152 @@ public readonly partial struct AnsibleMetaSchema
 
                         return defaultMatch();
                     }
+
+                    /// <summary>
+                    /// Converts the value to its <see cref="KnownValues"/> equivalent.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+                    public static implicit operator KnownValues(Mutable value)
+                    {
+                        if (value.TryGetKnownValue(out KnownValues result))
+                        {
+                            return result;
+                        }
+
+                        throw new InvalidOperationException();
+                    }
+
+                    /// <summary>
+                    /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+                    /// </summary>
+                    /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+                    /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+                    public bool TryGetKnownValue(out KnownValues result)
+                    {
+                        if (this.ValueEquals(Constants.Enum1))
+                        {
+                            result = KnownValues.Value10Sp3;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum2))
+                        {
+                            result = KnownValues.Value10Sp4;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum3))
+                        {
+                            result = KnownValues.Value11;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum4))
+                        {
+                            result = KnownValues.Value11Sp1;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum5))
+                        {
+                            result = KnownValues.Value11Sp2;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum6))
+                        {
+                            result = KnownValues.Value11Sp3;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum7))
+                        {
+                            result = KnownValues.Value11Sp4;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum8))
+                        {
+                            result = KnownValues.Value12;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum9))
+                        {
+                            result = KnownValues.Value12Sp1;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum10))
+                        {
+                            result = KnownValues.Value12Sp2;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum11))
+                        {
+                            result = KnownValues.Value12Sp3;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum12))
+                        {
+                            result = KnownValues.Value12Sp4;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum13))
+                        {
+                            result = KnownValues.Value12Sp5;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum14))
+                        {
+                            result = KnownValues.Value15;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum15))
+                        {
+                            result = KnownValues.Value15Sp1;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum16))
+                        {
+                            result = KnownValues.Value15Sp2;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum17))
+                        {
+                            result = KnownValues.Value15Sp3;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum18))
+                        {
+                            result = KnownValues.Value15Sp4;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum19))
+                        {
+                            result = KnownValues.Value15Sp5;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum20))
+                        {
+                            result = KnownValues.All;
+                            return true;
+                        }
+
+                        result = default;
+                        return false;
+                    }
                 }
 
                 public ref struct Source
@@ -794,6 +940,9 @@ public readonly partial struct AnsibleMetaSchema
 
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static implicit operator Source(string value) => new (value.AsSpan());
+
+                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                    public static implicit operator Source(KnownValues value) => (VersionsEntity)value;
 
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);

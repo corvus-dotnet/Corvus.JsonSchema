@@ -597,6 +597,98 @@ public readonly partial struct UnrealEngineUprojectSchema
 
                     return defaultMatch();
                 }
+
+                /// <summary>
+                /// Converts the value to its <see cref="KnownValues"/> equivalent.
+                /// </summary>
+                /// <param name="value">The value from which to convert.</param>
+                /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+                public static implicit operator KnownValues(Mutable value)
+                {
+                    if (value.TryGetKnownValue(out KnownValues result))
+                    {
+                        return result;
+                    }
+
+                    throw new InvalidOperationException();
+                }
+
+                /// <summary>
+                /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+                /// </summary>
+                /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+                /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+                public bool TryGetKnownValue(out KnownValues result)
+                {
+                    if (this.ValueEquals(Constants.Enum1))
+                    {
+                        result = KnownValues.EarliestPossible;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum2))
+                    {
+                        result = KnownValues.PostConfigInit;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum3))
+                    {
+                        result = KnownValues.PostSplashScreen;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum4))
+                    {
+                        result = KnownValues.PreEarlyLoadingScreen;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum5))
+                    {
+                        result = KnownValues.PreLoadingScreen;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum6))
+                    {
+                        result = KnownValues.PreDefault;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum7))
+                    {
+                        result = KnownValues.Default;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum8))
+                    {
+                        result = KnownValues.PostDefault;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum9))
+                    {
+                        result = KnownValues.PostEngineInit;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum10))
+                    {
+                        result = KnownValues.None;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum11))
+                    {
+                        result = KnownValues.Max;
+                        return true;
+                    }
+
+                    result = default;
+                    return false;
+                }
             }
 
             public ref struct Source
@@ -655,6 +747,9 @@ public readonly partial struct UnrealEngineUprojectSchema
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(string value) => new (value.AsSpan());
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(KnownValues value) => (LoadingPhaseEntity)value;
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);

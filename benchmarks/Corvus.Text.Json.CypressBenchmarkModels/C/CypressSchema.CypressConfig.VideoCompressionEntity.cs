@@ -181,6 +181,45 @@ public readonly partial struct CypressSchema
             public static explicit operator decimal(VideoCompressionEntity value) => value._parent.TryGetValue(value._idx, out decimal result) ? result : throw new FormatException();
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator sbyte(VideoCompressionEntity value) => value._parent.TryGetValue(value._idx, out sbyte result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator byte(VideoCompressionEntity value) => value._parent.TryGetValue(value._idx, out byte result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator short(VideoCompressionEntity value) => value._parent.TryGetValue(value._idx, out short result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator ushort(VideoCompressionEntity value) => value._parent.TryGetValue(value._idx, out ushort result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator int(VideoCompressionEntity value) => value._parent.TryGetValue(value._idx, out int result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator uint(VideoCompressionEntity value) => value._parent.TryGetValue(value._idx, out uint result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator ulong(VideoCompressionEntity value) => value._parent.TryGetValue(value._idx, out ulong result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator float(VideoCompressionEntity value) => value._parent.TryGetValue(value._idx, out float result) ? result : throw new FormatException();
+
+#if NET
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator Int128(VideoCompressionEntity value) => value._parent.TryGetValue(value._idx, out Int128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator UInt128(VideoCompressionEntity value) => value._parent.TryGetValue(value._idx, out UInt128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator Half(VideoCompressionEntity value) => value._parent.TryGetValue(value._idx, out Half result) ? result : throw new FormatException();
+#endif
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static explicit operator bool(VideoCompressionEntity value)
             {
                 JsonTokenType type = value._parent.GetJsonTokenType(value._idx);

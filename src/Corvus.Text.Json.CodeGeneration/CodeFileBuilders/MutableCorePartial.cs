@@ -47,8 +47,6 @@ public sealed class MutableCorePartial : ICodeFileBuilder
                     "global::Corvus.Text.Json.Internal")
                 .AppendLine()
                 .BeginTypeDeclarationNesting(typeDeclaration)
-                    .AppendDocumentation(typeDeclaration)
-                    .AppendDebuggerDisplay()
                     .BeginPartialStructDeclaration(
                         typeDeclaration.DotnetAccessibility(),
                         typeDeclaration.DotnetTypeName())
@@ -81,10 +79,10 @@ public sealed class MutableCorePartial : ICodeFileBuilder
                             .AppendTokenTypeProperty()
                             .AppendConversionToCompositionTypes(typeDeclaration, forMutable: true)
                             .AppendCoreTypeAndFormatConversionOperators(typeDeclaration, forMutable: true)
-                            .AppendBinaryOperator(generator.MutableClassName(), generator.MutableClassName(), "bool", "==", "return left.Equals(right);", "<c>True</c> if the values are equal.")
-                            .AppendBinaryOperator(generator.MutableClassName(), generator.MutableClassName(), "bool", "!=", "return !left.Equals(right);", "<c>True</c> if the values are not equal.")
-                            .AppendBinaryOperator(generator.MutableClassName(), "JsonElement", "bool", "==", "return left.Equals(right);", "<c>True</c> if the values are equal.")
-                            .AppendBinaryOperator(generator.MutableClassName(), "JsonElement", "bool", "!=", "return !left.Equals(right);", "<c>True</c> if the values are not equal.")
+                            .AppendBinaryOperator(generator.MutableClassName(), generator.MutableClassName(), "bool", "==", "return left.Equals(right);")
+                            .AppendBinaryOperator(generator.MutableClassName(), generator.MutableClassName(), "bool", "!=", "return !left.Equals(right);")
+                            .AppendBinaryOperator(generator.MutableClassName(), "JsonElement", "bool", "==", "return left.Equals(right);")
+                            .AppendBinaryOperator(generator.MutableClassName(), "JsonElement", "bool", "!=", "return !left.Equals(right);")
                             .AppendJsonElementConversionOperator(typeDeclaration, forMutable: true)
                             .AppendMutableConversionOperators(typeDeclaration)
                             .AppendFromFactoryMethod(typeDeclaration, forMutable: true)

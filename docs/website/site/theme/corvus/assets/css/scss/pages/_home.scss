@@ -38,6 +38,23 @@ body.page-home {
   }
 }
 
+// ---- Simplicity: load a schema, validate an instance (sits above the feature cards) ----
+
+.home-simple {
+  max-width: 44rem;
+  margin: 0 auto var(--space-xl);
+
+  pre {
+    margin: 0;
+  }
+
+  &__footnote {
+    text-align: center;
+    margin-top: var(--space-sm);
+    font-size: var(--font-size-sm);
+  }
+}
+
 // ---- Code example showcase ----
 
 .home-code {

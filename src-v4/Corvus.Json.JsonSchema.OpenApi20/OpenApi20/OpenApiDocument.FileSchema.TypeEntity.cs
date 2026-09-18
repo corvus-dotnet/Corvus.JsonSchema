@@ -89,7 +89,7 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public static string SchemaLocation { get; } = "/definitions/fileSchema/properties/type";
+            public static string SchemaLocation { get; } = "http://swagger.io/v2/schema.json#/definitions/fileSchema/properties/type";
 
             /// <summary>
             /// Gets a Null instance.

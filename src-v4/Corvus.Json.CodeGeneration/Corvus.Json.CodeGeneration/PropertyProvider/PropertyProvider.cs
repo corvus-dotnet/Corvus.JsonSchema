@@ -29,7 +29,7 @@ public static class PropertyProvider
     {
         foreach (KeyValuePair<string, TypeDeclaration> subschema in
                     source.SubschemaTypeDeclarations
-                    .Where(kvp => kvp.Key.StartsWith(keywordPath)))
+                    .Where(kvp => kvp.Key.StartsWith(keywordPath, StringComparison.Ordinal)))
         {
             if (cancellationToken.IsCancellationRequested)
             {

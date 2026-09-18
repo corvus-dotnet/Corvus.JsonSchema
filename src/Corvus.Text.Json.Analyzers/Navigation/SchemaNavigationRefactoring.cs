@@ -369,14 +369,24 @@ public sealed class SchemaNavigationRefactoring : CodeRefactoringProvider
     }
 
     /// <summary>
-    /// Extracts the JSON pointer fragment from a SchemaLocation value.
+    /// Extracts the JSON pointer from a SchemaLocation value.
     /// Returns <c>null</c> if no pointer is present.
     /// </summary>
+    /// <remarks>
+    /// The generator emits the pointer from the root of the schema document with no <c>#</c>
+    /// (e.g. <c>/properties/name</c>, or an empty string for the document root). The
+    /// <c>file#/pointer</c> and <c>https://host/id#/pointer</c> shapes are also accepted.
+    /// </remarks>
     private static string? ExtractJsonPointer(string? schemaLocation)
     {
         if (schemaLocation is null)
         {
             return null;
+        }
+
+        if (schemaLocation.Length > 0 && schemaLocation[0] == '/')
+        {
+            return schemaLocation;
         }
 
         int hashIndex = schemaLocation.IndexOf('#');

@@ -35,7 +35,7 @@ public readonly partial struct Type
                 result = result.UsingStack();
             }
 
-            result = result.PushSchemaLocation("/properties/type");
+            result = result.PushSchemaLocation("http://json-schema.org/draft-04/schema#/properties/type");
         }
 
         result = CorvusValidation.CompositionAnyOfValidationHandler(this, result, level);

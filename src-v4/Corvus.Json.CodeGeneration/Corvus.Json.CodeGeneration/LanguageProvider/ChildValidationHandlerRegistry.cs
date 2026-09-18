@@ -30,7 +30,7 @@ public sealed class ChildValidationHandlerRegistry
             {
                 if (l.ValidationHandlerPriority == r.ValidationHandlerPriority)
                 {
-                    return l.GetType().Name.CompareTo(r.GetType().Name);
+                    return string.CompareOrdinal(l.GetType().Name, r.GetType().Name);
                 }
 
                 return l.ValidationHandlerPriority.CompareTo(r.ValidationHandlerPriority);

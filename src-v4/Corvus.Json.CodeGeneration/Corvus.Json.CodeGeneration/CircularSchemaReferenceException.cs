@@ -42,6 +42,6 @@ public sealed class CircularSchemaReferenceException : Exception
 
     private static string BuildMessage(JsonReference referencingLocation, JsonReference referencedLocation)
     {
-        return string.Format(MessageFormat, referencingLocation, referencedLocation);
+        return string.Format(System.Globalization.CultureInfo.InvariantCulture, MessageFormat, referencingLocation, referencedLocation);
     }
 }

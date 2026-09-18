@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text.Json;
 using Corvus.Json.CodeGeneration.Keywords;
@@ -37,10 +36,17 @@ namespace Corvus.Json.CodeGeneration;
 public sealed class TypeDeclaration(LocatedSchema locatedSchema)
 {
     private readonly Dictionary<string, TypeDeclaration> subschemaTypeDeclarations = new(StringComparer.Ordinal);
-    private readonly ConcurrentDictionary<string, object?> metadata = new(StringComparer.Ordinal);
+
+    // Each generation owns its type declarations, so a plain dictionary serves. The process-wide well-known
+    // declarations (IsShared) are reached by concurrent generations: their metadata dictionary is never mutated once
+    // published, a write copies it and publishes the copy under the lock, and reads take no lock (the metadata is
+    // read on every type-name lookup, so a lock there was a measurable share of generation time).
+    private Dictionary<string, object?> metadata = new(StringComparer.Ordinal);
     private readonly Dictionary<string, PropertyDeclaration> properties = new(StringComparer.Ordinal);
     private IReadOnlyList<PropertyDeclaration>? cachedPropertyDeclarations;
     private IReadOnlyList<TypeDeclaration>? cachedOrderedSubschemaTypeDeclarations;
+    private Dictionary<ISubschemaProviderKeyword, IReadOnlyCollection<TypeDeclaration>>? cachedSubschemaTypeDeclarationsByKeyword;
+    private IComparer<string> orderingComparer = Comparer<string>.Default;
 
     /// <summary>
     /// Gets the subschema type declarations.
@@ -66,15 +72,44 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
     public JsonReference RelativeSchemaLocation { get; internal set; }
 
     /// <summary>
-    /// Gets the property declarations for this type declaration.
+    /// Gets the root document from which this type was generated, relative to the base location
+    /// for generation (for example <c>schema.json</c>), with no fragment.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="LocatedSchema.RootDocumentPointer"/> is a JSON Pointer within this document, so
+    /// <c>RelativeSchemaDocument + "#" + LocatedSchema.RootDocumentPointer</c> locates the schema in the
+    /// document from which it was generated, even for a schema inside a <c>$id</c> sub-resource.
+    /// </remarks>
+    public string RelativeSchemaDocument { get; internal set; } = string.Empty;
+
+    /// <summary>
+    /// Gets the property declarations for this type declaration, ordered by JSON property name with
+    /// <see cref="OrderingComparer"/>.
     /// </summary>
     public IReadOnlyList<PropertyDeclaration> PropertyDeclarations =>
-        this.cachedPropertyDeclarations ??= this.properties.Values.OrderBy(p => p.JsonPropertyName).ToArray();
+        this.cachedPropertyDeclarations ??= this.properties.Values.OrderBy(p => p.JsonPropertyName, this.orderingComparer).ToArray();
+
+    /// <summary>
+    /// Gets the comparer with which the names that reach generated code are ordered: <see cref="PropertyDeclarations"/>,
+    /// the subschemas that a keyword provides, and documentation keywords.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="JsonSchemaTypeBuilder"/> sets it from an <see cref="IOrderingLanguageProvider"/> before it generates
+    /// code; otherwise it is <see cref="Comparer{T}.Default"/>, which compares with the current culture.
+    /// </remarks>
+    public IComparer<string> OrderingComparer => this.orderingComparer;
 
     /// <summary>
     /// Gets a value indicating whether the type has any property declarations.
     /// </summary>
     public bool HasPropertyDeclarations => this.properties.Count > 0;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether this declaration is shared by every generation in the process
+    /// (<see cref="WellKnownTypeDeclarations.JsonAny"/> and <see cref="WellKnownTypeDeclarations.JsonNotAny"/>),
+    /// so its metadata must be synchronized.
+    /// </summary>
+    internal bool IsShared { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the basic build process is complete.
@@ -91,6 +126,66 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
     }
 
     /// <summary>
+    /// Gets the subschema type declarations that a keyword provides for this type declaration.
+    /// </summary>
+    /// <param name="keyword">The keyword.</param>
+    /// <returns>The result of <see cref="ISubschemaProviderKeyword.GetSubschemaTypeDeclarations(TypeDeclaration)"/>,
+    /// computed once per keyword after the build is complete.</returns>
+    /// <remarks>
+    /// The keywords derive the collection from <see cref="SubschemaTypeDeclarations"/> (filtered by keyword path
+    /// and sorted), and the analysis asks for it many times per type; the cache is cleared whenever a subschema
+    /// type declaration is added.
+    /// </remarks>
+    internal IReadOnlyCollection<TypeDeclaration> GetSubschemaTypeDeclarationsFor(ISubschemaProviderKeyword keyword)
+    {
+        if (!this.BuildComplete)
+        {
+            return keyword.GetSubschemaTypeDeclarations(this);
+        }
+
+        // The cache is copy-on-write: a published dictionary is never mutated, so readers need no lock.
+        Dictionary<ISubschemaProviderKeyword, IReadOnlyCollection<TypeDeclaration>>? cache = Volatile.Read(ref this.cachedSubschemaTypeDeclarationsByKeyword);
+        if (cache is not null && cache.TryGetValue(keyword, out IReadOnlyCollection<TypeDeclaration>? cached))
+        {
+            return cached;
+        }
+
+        IReadOnlyCollection<TypeDeclaration> result = keyword.GetSubschemaTypeDeclarations(this);
+        lock (this.subschemaTypeDeclarations)
+        {
+            cache = this.cachedSubschemaTypeDeclarationsByKeyword;
+            if (cache is not null && cache.TryGetValue(keyword, out cached))
+            {
+                return cached;
+            }
+
+            Dictionary<ISubschemaProviderKeyword, IReadOnlyCollection<TypeDeclaration>> updated = cache is null ? [] : new(cache);
+            updated.Add(keyword, result);
+            Volatile.Write(ref this.cachedSubschemaTypeDeclarationsByKeyword, updated);
+            return result;
+        }
+    }
+
+    /// <summary>
+    /// Sets the comparer with which the names that reach generated code are ordered.
+    /// </summary>
+    /// <param name="comparer">The comparer.</param>
+    /// <remarks>
+    /// A different comparer discards the property and subschema orders computed with the previous one.
+    /// </remarks>
+    internal void SetOrderingComparer(IComparer<string> comparer)
+    {
+        if (ReferenceEquals(this.orderingComparer, comparer))
+        {
+            return;
+        }
+
+        this.orderingComparer = comparer;
+        this.cachedPropertyDeclarations = null;
+        this.cachedSubschemaTypeDeclarationsByKeyword = null;
+    }
+
+    /// <summary>
     /// Adds a type declaration for a subschema to this type declaration.
     /// </summary>
     /// <param name="subschemaPath">The path to the subschema.</param>
@@ -98,6 +193,7 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
     public void AddSubschemaTypeDeclaration(JsonReference subschemaPath, TypeDeclaration subschemaTypeDeclaration)
     {
         this.cachedOrderedSubschemaTypeDeclarations = null;
+        this.cachedSubschemaTypeDeclarationsByKeyword = null;
         this.subschemaTypeDeclarations.Add(subschemaPath, subschemaTypeDeclaration);
     }
 
@@ -109,7 +205,22 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
     /// <param name="value">The metadata value.</param>
     public void SetMetadata<T>(string key, T value)
     {
-        this.metadata[key] = (object?)value;
+        object? boxed = MetadataValueBoxes.Box(value);
+        if (this.IsShared)
+        {
+            lock (this.subschemaTypeDeclarations)
+            {
+                Dictionary<string, object?> updated = new(this.metadata, StringComparer.Ordinal)
+                {
+                    [key] = boxed,
+                };
+                Volatile.Write(ref this.metadata, updated);
+            }
+        }
+        else
+        {
+            this.metadata[key] = boxed;
+        }
     }
 
     /// <summary>
@@ -118,7 +229,19 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
     /// <param name="key">The key for the metadata value.</param>
     public void RemoveMetadata(string key)
     {
-        this.metadata.TryRemove(key, out _);
+        if (this.IsShared)
+        {
+            lock (this.subschemaTypeDeclarations)
+            {
+                Dictionary<string, object?> updated = new(this.metadata, StringComparer.Ordinal);
+                updated.Remove(key);
+                Volatile.Write(ref this.metadata, updated);
+            }
+        }
+        else
+        {
+            this.metadata.Remove(key);
+        }
     }
 
     /// <summary>
@@ -130,8 +253,9 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
     /// <returns><see langword="true"/> if the metadata value was found.</returns>
     public bool TryGetMetadata<T>(string key, out T? value)
     {
-        bool result = this.metadata.TryGetValue(key, out object? candidate);
-        if (result)
+        // A shared declaration's dictionary is replaced, never mutated, so a read needs the reference only.
+        Dictionary<string, object?> current = this.IsShared ? Volatile.Read(ref this.metadata) : this.metadata;
+        if (current.TryGetValue(key, out object? candidate))
         {
             value = (T?)candidate;
             return true;

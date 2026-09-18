@@ -41,7 +41,7 @@ public readonly partial struct Type
                     result = result.UsingStack();
                 }
 
-                result = result.PushSchemaLocation("/properties/type/anyOf/1");
+                result = result.PushSchemaLocation("http://json-schema.org/draft-04/schema#/properties/type/anyOf/1");
             }
 
             JsonValueKind valueKind = this.ValueKind;

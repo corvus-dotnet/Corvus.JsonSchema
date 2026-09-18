@@ -35,7 +35,7 @@ public readonly partial struct PositiveInteger
                 result = result.UsingStack();
             }
 
-            result = result.PushSchemaLocation("/definitions/positiveInteger");
+            result = result.PushSchemaLocation("http://json-schema.org/draft-04/schema#/definitions/positiveInteger");
         }
 
         JsonValueKind valueKind = this.ValueKind;

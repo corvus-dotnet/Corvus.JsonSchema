@@ -2,7 +2,7 @@
 
 ## Overview
 
-Several test fixtures and the `Corvus.Text.Json.Validator` package dynamically compile C# code at runtime using Roslyn (`Microsoft.CodeAnalysis.CSharp`). The CI pipeline builds on Ubuntu Linux, caches the build artifacts, and then runs the test matrix across multiple platforms:
+Several test fixtures dynamically compile C# code at runtime using Roslyn (`Microsoft.CodeAnalysis.CSharp`). (The `Corvus.Text.Json.Validator` package no longer does: it validates through the runtime evaluator, which needs no compiler.) The CI pipeline builds on Ubuntu Linux, caches the build artifacts, and then runs the test matrix across multiple platforms:
 
 - **Ubuntu** — `net10.0`
 - **Windows** — `net10.0` and `net481`
@@ -15,7 +15,7 @@ Six locations in the codebase perform dynamic Roslyn compilation:
 
 | Location | Context |
 |----------|---------|
-| `src/Corvus.Text.Json.Validator/.../DynamicCompiler.cs` | Production: runtime schema validation |
+| `Common/tests/TestUtilities/DynamicCompiler.cs` | Test: compiles generated models for the schema test suites |
 | `tests/Corvus.Text.Json.JMESPath.CodeGeneration.Tests/CodeGenConformanceFixture.cs` | Test: JMESPath code-gen conformance |
 | `tests/Corvus.Text.Json.Jsonata.CodeGeneration.Tests/CodeGenConformanceFixture.cs` | Test: JSONata code-gen conformance |
 | `tests/Corvus.Text.Json.JsonLogic.CodeGeneration.Tests/CodeGenConformanceFixture.cs` | Test: JsonLogic code-gen conformance |
@@ -158,7 +158,7 @@ The unconditional supplement with AppDomain-wins-duplicates semantics handles al
 
 - **Native DLL filtering** — the directory scan uses `AssemblyName.GetAssemblyName()` to validate each DLL is managed before adding it as a metadata reference. Native DLLs (e.g., `msdia140.dll`, coverage instrumentation DLLs) pass `MetadataReference.CreateFromFile()` but cause `CS0009 "PE image doesn't contain managed metadata"` at compile time.
 
-- **DynamicCompiler specifics** — the production `DynamicCompiler` in `Corvus.Text.Json.Validator` has additional complexity: a `hostAssembly` parameter, per-host-assembly caching of metadata references, and on .NET 8+ a collectible `AssemblyLoadContext` for loading compiled assemblies without leaking memory.
+- **DynamicCompiler specifics** — the `DynamicCompiler` in `TestUtilities` has additional complexity: a `hostAssembly` parameter, per-host-assembly caching of metadata references, and on .NET 8+ a collectible `AssemblyLoadContext` for loading compiled assemblies without leaking memory.
 
 ## Testing the Cross-OS Scenario Locally
 

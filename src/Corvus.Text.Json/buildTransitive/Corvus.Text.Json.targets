@@ -1,0 +1,27 @@
+<Project>
+  <!--
+    The library's static optimisation profile for native AOT.
+
+    Corvus.Text.Json's JSON Schema evaluator gets most of its steady-state speed from the JIT's dynamic profile
+    (profile-driven inlining of its evaluation loops). Native AOT has no dynamic profile, so the package carries a
+    static one, recorded from an instrumented run of the evaluator over a corpus of real-world schemas and handed to
+    the AOT compiler (ILC) here. With it, native AOT runs the evaluator within about 10% of the JIT's steady state;
+    without it, 15 to 20% behind. The profile describes the library's own code paths, not the application's schemas,
+    so it applies to any application that publishes with PublishAot.
+
+    Opt out with <CorvusTextJsonUseProfile>false</CorvusTextJsonUseProfile>, or point CorvusTextJsonProfile at a
+    profile of your own (dotnet-pgo create-mibc over an instrumented trace of your workload).
+
+    ReadyToRun is deliberately not covered: precompiling the whole library makes its steady state slower on small
+    documents (the runtime's re-jitted code loses the inlining), and the partial mode that avoids that is a global
+    switch of the publish. See docs/RuntimeEvaluator.md, "Publishing an application".
+  -->
+  <PropertyGroup>
+    <CorvusTextJsonUseProfile Condition="'$(CorvusTextJsonUseProfile)' == ''">true</CorvusTextJsonUseProfile>
+    <CorvusTextJsonProfile Condition="'$(CorvusTextJsonProfile)' == ''">$(MSBuildThisFileDirectory)../profiles/Corvus.Text.Json.mibc</CorvusTextJsonProfile>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(CorvusTextJsonUseProfile)' == 'true' and '$(PublishAot)' == 'true' and Exists('$(CorvusTextJsonProfile)')">
+    <MibcFile Include="$(CorvusTextJsonProfile)" />
+  </ItemGroup>
+</Project>

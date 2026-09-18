@@ -62,6 +62,7 @@ corvusjson jsonschema <schemaFile> [OPTIONS]
 | `--formatMode` | — | Format assertion mode overrides as comma-separated entries, where `mode` is `assert`, `disable`, or `warning`. Use `format=mode` for one format (e.g. `date-time=disable,time=warning`), or a bare `mode` (equivalently `*=mode`) to set the default for **all** formats — e.g. `--formatMode disable` for annotation-only output across every draft, which overrides even a vocabulary that asserts `format`. Repeatable. A per-format override takes precedence over the `*` default, `--assertFormat`, and the vocabulary. Warning mode applies to string formats only. |
 | `--optionalAsNullable` | `None` | How to handle optional properties: `None` or `NullOrUndefined` |
 | `--useImplicitOperatorString` | `false` | Use implicit (vs explicit) conversion to `string` |
+| `--unions` | `true` | Make each `oneOf`/`anyOf` type a C# union as well as giving it `Match`: with the C# 15 compiler (the .NET 11 SDK or later, any target framework except .NET Framework) `switch` and `is` patterns over the branch types work. Pass `--unions false` to leave the union members out. |
 | `--disableOptionalNamingHeuristics` | `false` | Disable all optional naming heuristics at once (see [Naming Heuristics](#naming-heuristics)) |
 | `--disableNamingHeuristic` | — | Disable a specific naming heuristic by name (repeatable; see [Naming Heuristics](#naming-heuristics)) |
 | `--useUnixLineEndings` | `false` | Use Unix line endings (`\n`) instead of Windows (`\r\n`) in generated files |
@@ -70,6 +71,7 @@ corvusjson jsonschema <schemaFile> [OPTIONS]
 | `--engine` | `V5` | Code generation engine: `V5` (Corvus.Text.Json) or `V4` (legacy Corvus.Json.ExtendedTypes) |
 | `--codeGenerationMode` | `TypeGeneration` | `TypeGeneration` (types only), `SchemaEvaluationOnly` ([standalone evaluator](SchemaEvaluator.md) only), or `Both` |
 | `--outputMapFile` | — | Write a JSON map of all generated files |
+| `--force` | `false` | Regenerate even when the output folder's lock file says nothing changed, and apply this run's options to everything the folder was generated from even when they differ from the lock's (see [Lock file and regeneration](#lock-file-and-regeneration)) |
 
 **Examples:**
 
@@ -154,6 +156,7 @@ The `config` command is ideal when you have multiple schemas to generate from, s
 | `outputMapFile` | No | — | Path for a JSON manifest listing every generated file, useful for build systems that need to track outputs. |
 | `useSchema` | No | `Draft202012` | Fallback schema draft when vocabulary analysis cannot determine the draft from the `$schema` keyword. Values: `Draft4`, `Draft6`, `Draft7`, `Draft201909`, `Draft202012`, `OpenApi30`. |
 | `assertFormat` | No | `true` | When `true`, the `format` keyword is enforced as a validation assertion. When `false`, `format` is treated as an annotation only (per the JSON Schema specification). |
+| `unions` | No | `true` | When `true`, a `oneOf`/`anyOf` type is also a C# union (`switch` and `is` patterns over its branch types with the C# 15 compiler, the .NET 11 SDK or later, any target framework except .NET Framework). Set to `false` to leave the union members out. |
 | `formatMode` | No | — | A dictionary of format assertion mode overrides. Keys are format names (e.g. `date-time`); values are `assert`, `disable`, or `warning`. The wildcard key `*` sets the default for **all** formats (e.g. `{ "*": "disable" }` for annotation-only output across every draft). A specific per-format override takes precedence over the `*` default, `assertFormat`, and the vocabulary's format-assertion behaviour. `assert` validates and fails on a non-conformant value; `disable` makes the format annotation-only; `warning` validates but always succeeds, emitting a `WARNING` annotation on a mismatch. Warning mode applies to string formats only; for a numeric format it falls back to `assert`. |
 | `optionalAsNullable` | No | `None` | Controls how optional properties are represented in generated types. `None`: optional properties use the same type as required properties — you check for `Undefined` explicitly. `NullOrUndefined`: optional properties generate as .NET nullable types (`T?`), and both JSON `null` and missing properties map to C# `null`. |
 | `additionalFiles` | No | — | Pre-load external schema files so `$ref` references can resolve without network access (see below). |
@@ -275,7 +278,26 @@ The tool generates:
 - **Mutable builder**: `person.CreateBuilder(workspace)` creates a mutable copy
 - **Immutable document factory**: `Person.Create(...)` builds a self-contained `ParsedJsonDocument<Person>` in a single pass, with no workspace and no serialization round trip
 - **Pattern matching**: `Match()` methods for `oneOf`/`anyOf` discriminated unions, plus `MatchEvery()` on `anyOf` compositions to visit every matching subschema, threading an accumulator through the calls
+- **C# unions** (.NET 11 SDK or later, any target framework except .NET Framework): a `oneOf`/`anyOf` type is also a C# union, so `shape switch { Shape.Circle c => ..., Shape.Square s => ..., null => ... }` and `shape is Shape.Circle c` work, exhaustively and without boxing. Turn it off with `--unions false` (CLI), `<CorvusTextJsonUnions>false</CorvusTextJsonUnions>` (source generator) or `"unions": false` (config file)
 - **Serialization**: `WriteTo(Utf8JsonWriter)` for zero-allocation output
+- **Schema provenance**: `Person.JsonSchema.SchemaDocument` is the schema document the type was generated from, relative to the generation base (for example `person.json`), and `Person.JsonSchema.SchemaLocation` is the JSON Pointer to the schema within that document (for example `/$defs/person`). Together they form the reference `person.json#/$defs/person`. A schema inside a `$id` sub-resource still reports the containing document and the pointer from its root. Validation results and annotations report the same pointer shape.
+
+Generated members that mirror a `JsonElement` member (`TryGetProperty`, the indexers, `EnumerateObject`, `ParseValue`, `Clone`, `Freeze`, the equality operators and the mutable partial's `SetProperty` and `RemoveProperty`, among others) carry `/// <inheritdoc cref="global::Corvus.Text.Json.JsonElement..."/>` instead of a copy of the runtime's documentation. IntelliSense and documentation tools resolve the reference from the `Corvus.Text.Json.xml` file shipped in the package, so the text you see is the runtime's; a consuming project's own XML documentation file carries the `inheritdoc` element as written. Members that have no runtime counterpart (property accessors, the `Create` and `Build` factories, schema constants) keep their own documentation, and non-public members carry none.
+
+## Analyzers and the generated folder
+
+Every generated file starts with `// <auto-generated/>`, so analyzers that skip generated code (StyleCop, Roslynator, the Corvus analyzers and most of the .NET SDK's NetAnalyzers) never execute on it. A few analyzers analyse generated code regardless (in the .NET 10 SDK: CA2252, CA1418, CA1420, CA1421, and the Roslyn meta-analyzers that come with a `Microsoft.CodeAnalysis` reference); `-p:ReportAnalyzer=true -v:d` on a build shows what each costs. Because the output is checked in, an `.editorconfig` section over the folder both hides every analyzer diagnostic there and stops those analyzers executing on those files, without touching compiler diagnostics:
+
+```ini
+[Generated/**.cs]
+dotnet_analyzer_diagnostic.severity = none
+dotnet_diagnostic.CA2252.severity = none
+dotnet_diagnostic.CA1418.severity = none
+dotnet_diagnostic.CA1420.severity = none
+dotnet_diagnostic.CA1421.severity = none
+```
+
+Do not add `generated_code = true` to such a section for files that lack the header: it also switches off the project's nullable context for them. A project that holds nothing but generated code can set `<RunAnalyzers>false</RunAnalyzers>` instead.
 
 ## Schema Draft Support
 
@@ -289,6 +311,18 @@ The tool generates:
 | OpenAPI 3.0 | (custom vocabulary) | `OpenApi30` |
 
 The tool auto-detects the schema draft from the `$schema` keyword. Use `--useSchema` only as a fallback when the keyword is missing.
+
+## Lock file and regeneration
+
+Every `jsonschema` run, and every run of a [generation specification file](#config), leaves a `corvusjson-jsonschema.lock` in its output folder. The lock records the folder's whole generation specification (every schema generated into the folder with its settings, and the options they share), the hash of every local schema and additional file, the generator version, and the files written.
+
+The generated types in a folder share one `CorvusJsonSchemaProgram`, and each type refers to its entry in that program. A run into a folder that already holds generated code therefore adds its schemas to the specification the lock recorded and regenerates the whole set as one program. Ten runs with ten schemas into one folder give one consistent program; without the lock, each run would overwrite the program the earlier runs' types were wired to.
+
+- A run whose schemas and options are already in the lock, with unchanged schema content, is skipped ("Up to date"). Pass `--force` to regenerate anyway.
+- A run whose options differ from the lock's (root namespace, `--nativeEnums` and the rest, the engine, the code generation mode) fails and names the options. Use the same options, pass `--force` to apply the run's options to everything the folder was generated from, or delete the lock and the generated files to start the folder afresh. A schema with different per-schema settings (`--outputRootTypeName`, `--rootPath`) is not a conflict: the new settings replace the old ones for that schema.
+- Files an earlier run wrote that the run no longer generates (a renamed root type, for example) are deleted. Files the lock never listed are never touched.
+- Local paths are recorded relative to the output folder, so the folder can move together with its schemas. Files reached only through `$ref` are not hashed; when one of them changes, pass `--force`.
+- The lock is restored from a backup if a run fails.
 
 ## Output Map File
 

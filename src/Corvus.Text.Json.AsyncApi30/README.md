@@ -33,3 +33,14 @@ foreach (var op in root.Operations.EnumerateObject())
 ## License
 
 Apache-2.0
+
+## Regenerating
+
+Build the CLI in Release, then run from the repository root:
+
+```powershell
+dotnet build src/Corvus.Json.Cli -f net10.0 -c Release
+dotnet src/Corvus.Json.Cli/bin/Release/net10.0/Corvus.Json.Cli.dll jsonschema src/Corvus.Text.Json.AsyncApi30/AsyncApi30.json --rootNamespace Corvus.Text.Json.AsyncApi30 --outputRootTypeName AsyncApiDocument --outputPath src/Corvus.Text.Json.AsyncApi30/Generated
+```
+
+Delete the contents of `Generated/` first so that files the generator no longer produces are removed.

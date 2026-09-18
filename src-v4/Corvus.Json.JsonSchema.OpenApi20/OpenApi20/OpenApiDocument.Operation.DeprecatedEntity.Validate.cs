@@ -56,7 +56,7 @@ public readonly partial struct OpenApiDocument
                         result = result.UsingStack();
                     }
 
-                    result = result.PushSchemaLocation("/definitions/operation/properties/deprecated");
+                    result = result.PushSchemaLocation("http://swagger.io/v2/schema.json#/definitions/operation/properties/deprecated");
                 }
 
                 JsonValueKind valueKind = this.ValueKind;

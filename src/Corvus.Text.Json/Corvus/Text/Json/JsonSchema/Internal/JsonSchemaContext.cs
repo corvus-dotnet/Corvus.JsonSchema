@@ -261,16 +261,23 @@ public struct JsonSchemaContext
     /// <param name="usingEvaluatedItems">A value indicating whether to track evaluated items.</param>
     /// <param name="usingEvaluatedProperties">A value indicating whether to track evaluated properties.</param>
     /// <param name="resultsCollector">An optional results collector for gathering evaluation results.</param>
+    /// <param name="schemaEvaluationPath">An optional provider for the location of the root schema, as a JSON Pointer from the root of the schema document.</param>
     /// <returns>A new <see cref="JsonSchemaContext"/> for the evaluation.</returns>
+    /// <remarks>
+    /// A generated type passes its <c>SchemaLocationProvider</c> so that results reported against the
+    /// root schema carry the same schema location as they would when the same schema is reached
+    /// through a child context (for example, <c>/$defs/foo/type</c> rather than <c>/type</c>).
+    /// </remarks>
     public static JsonSchemaContext BeginContext<T>(
         T parentDocument,
         int parentDocumentIndex,
         bool usingEvaluatedItems,
         bool usingEvaluatedProperties,
-        IJsonSchemaResultsCollector? resultsCollector = null)
+        IJsonSchemaResultsCollector? resultsCollector = null,
+        JsonSchemaPathProvider? schemaEvaluationPath = null)
         where T : IJsonDocument
     {
-        int sequenceNumber = resultsCollector?.BeginChildContext(0) ?? 0;
+        int sequenceNumber = resultsCollector?.BeginChildContext(0, schemaEvaluationPath: schemaEvaluationPath) ?? 0;
 
         uint usingFeatures = usingEvaluatedProperties ? (uint)UsingFeatures.EvaluatedProperties : 0;
         usingFeatures |= usingEvaluatedItems ? (uint)UsingFeatures.EvaluatedItems : 0;

@@ -119,6 +119,8 @@ string result = value.Match(
 
 > **Note:** The code fix only applies the `static` modifier for non-capturing lambdas. Capturing-lambda refactoring to `Match<TContext, TResult>`, or to an accumulator-threaded `MatchEvery`, requires manual changes.
 
+> **Tip:** With the .NET 11 SDK or later (any target framework except .NET Framework), a generated `oneOf`/`anyOf` type is also a C# union, and a `switch` over its variants has no lambdas to capture anything: `value switch { JsonString s => ..., JsonNumber n => ..., null => ... }`. The analyzer has nothing to report there.
+
 ---
 
 ## CTJ004 — Missing dispose on ParsedJsonDocument
@@ -328,7 +330,7 @@ For example, given `order.Customer` where `CustomerEntity` has its own schema, y
 The refactoring resolves schema files using three strategies (in order):
 
 1. **Attribute-based** — Finds `[JsonSchemaTypeGenerator("path/to/schema.json")]` on the type or its containing types, then matches the path to an `AdditionalFiles` entry.
-2. **`$id`-based** — Reads the type's `SchemaLocation` constant (e.g., `"https://example.com/order#/properties/total"`), extracts the base URL, and searches `AdditionalFiles` for a schema whose `$id` matches.
+2. **`$id`-based** — Reads the type's `SchemaLocation` constant. The generator emits this as a JSON Pointer from the root of the schema document with no `#` (e.g., `"/properties/total"`). If the value is a full URL with a fragment instead (e.g., `"https://example.com/order#/properties/total"`), the base URL is extracted and `AdditionalFiles` is searched for a schema whose `$id` matches.
 3. **Property fallback** — If a property's type is a project-global type (e.g., `JsonString`) with no schema of its own, falls back to the containing type's schema and appends `/properties/{jsonPropertyName}`.
 
 ### Cursor positioning

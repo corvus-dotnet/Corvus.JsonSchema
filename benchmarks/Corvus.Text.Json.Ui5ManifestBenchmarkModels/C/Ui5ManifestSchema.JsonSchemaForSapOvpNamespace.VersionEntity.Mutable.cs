@@ -578,6 +578,92 @@ public readonly partial struct Ui5ManifestSchema
 
                     return defaultMatch();
                 }
+
+                /// <summary>
+                /// Converts the value to its <see cref="KnownValues"/> equivalent.
+                /// </summary>
+                /// <param name="value">The value from which to convert.</param>
+                /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+                public static implicit operator KnownValues(Mutable value)
+                {
+                    if (value.TryGetKnownValue(out KnownValues result))
+                    {
+                        return result;
+                    }
+
+                    throw new InvalidOperationException();
+                }
+
+                /// <summary>
+                /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+                /// </summary>
+                /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+                /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+                public bool TryGetKnownValue(out KnownValues result)
+                {
+                    if (this.ValueEquals(Constants.Enum1))
+                    {
+                        result = KnownValues.Value110;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum2))
+                    {
+                        result = KnownValues.Value120;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum3))
+                    {
+                        result = KnownValues.Value130;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum4))
+                    {
+                        result = KnownValues.Value140;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum5))
+                    {
+                        result = KnownValues.Value150;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum6))
+                    {
+                        result = KnownValues.Value160;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum7))
+                    {
+                        result = KnownValues.Value170;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum8))
+                    {
+                        result = KnownValues.Value180;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum9))
+                    {
+                        result = KnownValues.Value190;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum10))
+                    {
+                        result = KnownValues.Value1100;
+                        return true;
+                    }
+
+                    result = default;
+                    return false;
+                }
             }
 
             public ref struct Source
@@ -636,6 +722,9 @@ public readonly partial struct Ui5ManifestSchema
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(string value) => new (value.AsSpan());
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(KnownValues value) => (VersionEntity)value;
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);

@@ -177,6 +177,47 @@ namespace TestApp
     }
 
     [TestMethod]
+    public async Task TypeWithBarePointerSchemaLocation_ShowsPointerInTitle()
+    {
+        // The generator emits SchemaLocation as a JSON Pointer from the root of the schema
+        // document with no '#' (issue #957). The pointer must still be resolved to a position.
+        const string code = AttributeAndInterfaceStubs + @"
+namespace TestApp
+{
+    [Corvus.Text.Json.JsonSchemaTypeGenerator(""Schemas/widget.json"")]
+    public readonly partial struct Widget : Corvus.Text.Json.Internal.IJsonElement<Widget>
+    {
+        public readonly partial struct NameEntity : Corvus.Text.Json.Internal.IJsonElement<NameEntity>
+        {
+            public static partial class JsonSchema
+            {
+                public const string SchemaLocation = ""/properties/name"";
+            }
+        }
+    }
+
+    class Test
+    {
+        void M()
+        {
+            Widget.NameEntity n = default;
+        }
+    }
+}";
+
+        List<CodeAction> actions = await GetRefactoringsForIdentifier(
+            code,
+            "NameEntity",
+            useLastIdentifier: true,
+            additionalFilePath: "Schemas/widget.json",
+            additionalFileContent: SimpleSchemaJson);
+
+        Assert.IsTrue((actions).Any());
+        StringAssert.Contains(actions[0].Title, "#/properties/name");
+        StringAssert.Contains(actions[0].Title, "(line ");
+    }
+
+    [TestMethod]
     public async Task TopLevelType_NoPointerInTitle()
     {
         // Top-level types have SchemaLocation like "widget.json" with no pointer fragment.

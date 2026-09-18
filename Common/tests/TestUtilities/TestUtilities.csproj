@@ -112,6 +112,9 @@
     <Compile Include="TestEvaluatorHelper.cs" />
     <Compile Include="AnnotationTestHelper.cs" />
     <Compile Include="TestJsonSchemaCodeGenerator.cs" />
+    <Compile Include="DynamicCompiler.cs" />
+    <Compile Include="DynamicJsonElement.cs" />
+    <Compile Include="DynamicJsonType.cs" />
   </ItemGroup>
   <!-- Windows imports -->
   <!--
@@ -166,7 +169,11 @@
     <ProjectReference Include="..\..\..\src-v4\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
     <ProjectReference Include="..\..\..\src-v4\Corvus.Json.SourceGenerator\Corvus.Json.SourceGenerator.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
     <PackageReference Include="Microsoft.Bcl.Memory" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
     <PackageReference Include="Microsoft.DotNet.RemoteExecutor" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" />
+    <PackageReference Include="System.Collections.Immutable" />
+    <PackageReference Include="System.Reflection.Metadata" />
     <PackageReference Include="MSTest.TestFramework" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
@@ -174,7 +181,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.CodeGeneration\Corvus.Text.Json.CodeGeneration.csproj" />
-    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Validator\Corvus.Text.Json.Validator.csproj" />
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
   </ItemGroup>
   <ItemGroup>

@@ -144,6 +144,7 @@
     <Project Path="tests/Corvus.Text.Json.OpenApi30.Tests/Corvus.Text.Json.OpenApi30.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.OpenApi31.Tests/Corvus.Text.Json.OpenApi31.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Patch.Tests/Corvus.Text.Json.Patch.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.SourceGenerator.Tests/Corvus.Text.Json.SourceGenerator.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Tests.GeneratedModels.NativeEnums.Disabled/Corvus.Text.Json.Tests.GeneratedModels.NativeEnums.Disabled.csproj" />
     <Project Path="tests/Corvus.Text.Json.Tests.GeneratedModels.NativeEnums/Corvus.Text.Json.Tests.GeneratedModels.NativeEnums.csproj" />
     <Project Path="tests/Corvus.Text.Json.Tests.GeneratedModels.OptionalAsNullable/Corvus.Text.Json.Tests.GeneratedModels.OptionalAsNullable.csproj" />
@@ -153,6 +154,8 @@
     <Project Path="tests/Corvus.Text.Json.Tests/Corvus.Text.Json.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.SchemaTestSuite.Tests/Corvus.Text.Json.SchemaTestSuite.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.EvaluatorTestSuite.Tests/Corvus.Text.Json.EvaluatorTestSuite.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.RuntimeEvaluator.Tests/Corvus.Text.Json.RuntimeEvaluator.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Unions.Tests/Corvus.Text.Json.Unions.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Validator.Tests/Corvus.Text.Json.Validator.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Toon.Tests/Corvus.Text.Json.Toon.Tests.csproj" />
     <Project Path="tests/Corvus.Toon.SystemTextJson.Tests/Corvus.Toon.SystemTextJson.Tests.csproj" />

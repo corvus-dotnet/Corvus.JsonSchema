@@ -71,21 +71,10 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
         string specFilePath = Path.GetFullPath(settings.SpecFile);
 
         // Read and parse the spec
-        byte[] specBytes = await File.ReadAllBytesAsync(settings.SpecFile, cancellationToken)
+        // YAML when --yaml says so, or when the extension is .yaml or .yml
+        bool useYaml = SpecDocumentReader.UseYaml(settings.Yaml, settings.SpecFile);
+        byte[] specBytes = await SpecDocumentReader.ReadAsJsonAsync(settings.SpecFile, useYaml, cancellationToken)
             .ConfigureAwait(false);
-
-        // Pre-process YAML if needed (auto-detect from extension, or explicit --yaml flag)
-        bool useYaml = settings.Yaml ?? IsYamlFile(settings.SpecFile);
-
-        if (useYaml)
-        {
-            YamlPreProcessor yamlPreProcessor = new();
-            using MemoryStream inputStream = new(specBytes);
-            using Stream processedStream = yamlPreProcessor.Process(inputStream);
-            using MemoryStream outputStream = new();
-            processedStream.CopyTo(outputStream);
-            specBytes = outputStream.ToArray();
-        }
 
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(specBytes);
         JsonElement specRoot = doc.RootElement;
@@ -319,19 +308,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
             }
         }
 
-        if (useYaml)
-        {
-            YamlPreProcessor preProcessor = new();
-            documentResolver = syntheticResolver is not null
-                ? new(syntheticResolver, new FileSystemDocumentResolver(preProcessor), new HttpClientDocumentResolver(new HttpClient(), preProcessor))
-                : new(new FileSystemDocumentResolver(preProcessor), new HttpClientDocumentResolver(new HttpClient(), preProcessor));
-        }
-        else
-        {
-            documentResolver = syntheticResolver is not null
-                ? new(syntheticResolver, new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient()))
-                : new(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient()));
-        }
+        documentResolver = SpecDocumentReader.CreateDocumentResolver(useYaml, syntheticResolver);
 
         documentResolver.AddMetaschema();
 
@@ -411,7 +388,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
         AnsiConsole.MarkupLine($"[yellow]Registered {typesToGenerate.Count} type declarations, generating code...[/]");
 
         // Generate code — register OpenAPI naming heuristic for contextual inline schema names
-        CSharpLanguageProvider.Options options = new(rootNamespace + ".Models");
+        CSharpLanguageProvider.Options options = new(rootNamespace + ".Models", programCompiler: global::Corvus.Json.CodeGenerator.RuntimeProgramCompiler.Compile);
         CSharpLanguageProvider languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
         languageProvider.RegisterNameHeuristics(new OpenApiSchemaNameHeuristic(parameterNames));
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =
@@ -427,7 +404,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
         foreach (GeneratedCodeFile codeFile in generatedCode)
         {
             string filePath = TruncateFileNameIfRequired(outputPath, writtenFiles, codeFile);
-            await File.WriteAllTextAsync(filePath, codeFile.FileContent, cancellationToken)
+            await GeneratedFileWriter.WriteAsync(codeFile, filePath, cancellationToken)
                 .ConfigureAwait(false);
             AnsiConsole.MarkupLine($"  [cyan]Schema type:[/] {filePath}");
             schemaFileNames.Add(Path.GetFileName(filePath));
@@ -555,13 +532,6 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
         }
 
         return outputFile;
-    }
-
-    private static bool IsYamlFile(string path)
-    {
-        string ext = Path.GetExtension(path);
-        return ext.Equals(".yaml", StringComparison.OrdinalIgnoreCase)
-            || ext.Equals(".yml", StringComparison.OrdinalIgnoreCase);
     }
 }
 

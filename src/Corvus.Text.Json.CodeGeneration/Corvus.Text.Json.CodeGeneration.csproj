@@ -29,7 +29,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EcmaRegexTranslator.cs" />
-    <Compile Include="StandaloneEvaluatorGenerator.cs" />
+    <Compile Include="RuntimeProgramGenerator.cs" />
+    <Compile Include="SchemaProgramCompiler.cs" />
     <Compile Include="CodeGenerationMode.cs" />
     <Compile Include="RegexPatternCategory.cs" />
     <Compile Include="CodeFileBuilders\JsonSchemaPartial.cs" />
@@ -43,6 +44,7 @@
     <Compile Include="CodeGeneratorExtensions.Builder.cs" />
     <Compile Include="CodeGeneratorExtensions.Operators.cs" />
     <Compile Include="CodeGeneratorExtensions.Conversions.cs" />
+    <Compile Include="CodeGeneratorExtensions.Unions.cs" />
     <Compile Include="CodeGeneratorExtensions.Documentation.cs" />
     <Compile Include="CodeGeneratorExtensions.MemberNames.cs" />
     <Compile Include="CodeGeneratorExtensions.NativeEnums.cs" />
@@ -80,45 +82,6 @@
     <Compile Include="SimpleTypeAndFormatterAndKind.cs" />
     <Compile Include="ThrowHelper.cs" />
     <Compile Include="TypeDeclarationExtensions.cs" />
-    <Compile Include="ValidationHandlers\AllOfChildHandlers\AllOfSubschemaValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\AnyOfChildHandlers\AnyOfConstValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\AnyOfChildHandlers\AnyOfSubschemaValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\ArrayChildHandlers\UniqueItemsValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\ArrayChildHandlers\ItemCountValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\ArrayChildHandlers\ContainsValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\ArrayChildHandlers\ItemsValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\CompositionNotValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\IJsonSchemaClassSetup.cs" />
-    <Compile Include="ValidationHandlers\ObjectChildHandlers\IChildArrayItemValidationHandler2.cs" />
-    <Compile Include="ValidationHandlers\ObjectChildHandlers\IChildObjectPropertyValidationHandler2.cs" />
-    <Compile Include="ValidationHandlers\ObjectChildHandlers\HoistedAllOfPropertyValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\ObjectChildHandlers\NamedPropertyChildHandlers\INamedPropertyChildHandler.cs" />
-    <Compile Include="ValidationHandlers\ObjectChildHandlers\PatternPropertiesValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\ObjectChildHandlers\PropertiesValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\ObjectChildHandlers\NamedPropertyChildHandlers\DependentSchemasChildHandler.cs" />
-    <Compile Include="ValidationHandlers\ObjectChildHandlers\NamedPropertyChildHandlers\RequiredPropertyChildHandler.cs" />
-    <Compile Include="ValidationHandlers\ObjectChildHandlers\NamedPropertyChildHandlers\PropertySubschemaChildHandler.cs" />
-    <Compile Include="ValidationHandlers\ObjectChildHandlers\UnevaluatedPropertyValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\ObjectChildHandlers\PropertyNamesValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\ObjectChildHandlers\PropertyCountValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\ObjectChildHandlers\NamedPropertyChildHandlers\ObjectPropertyValidatorParameter.cs" />
-    <Compile Include="ValidationHandlers\ArrayValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\ObjectValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\TernaryIfValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\CompositionOneOfValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\CompositionAnyOfValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\CompositionAllOfValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\NumberChildHandlers\NumberRangeValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\OneOfChildHandlers\OneOfSubschemaValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\StringChildHandlers\StringRegularExpressionValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\StringChildHandlers\StringLengthValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\ConstValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\StringValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\NumberValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\ITypeSensitiveKeywordValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\KeywordValidationHandlerBase.cs" />
-    <Compile Include="ValidationHandlers\FormatValidationHandler.cs" />
-    <Compile Include="ValidationHandlers\TypeValidationHandler.cs" />
   </ItemGroup>
   <ItemGroup>
     <!-- DateTimeParsing -->

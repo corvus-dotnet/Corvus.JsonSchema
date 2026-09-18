@@ -85,8 +85,8 @@ public class AnyOfSubschemaValidationHandler : IChildValidationHandler
 
                     ReducedTypeDeclaration reducedType = subschemaType.ReducedTypeDeclaration();
                     string pathModifier = keyword.GetPathModifier(reducedType, i);
-                    string contextName = generator.GetUniqueVariableNameInScope("ChildContext", prefix: keyword.Keyword, suffix: i.ToString());
-                    string resultName = generator.GetUniqueVariableNameInScope("Result", prefix: keyword.Keyword, suffix: i.ToString());
+                    string contextName = generator.GetUniqueVariableNameInScope("ChildContext", prefix: keyword.Keyword, suffix: i.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                    string resultName = generator.GetUniqueVariableNameInScope("Result", prefix: keyword.Keyword, suffix: i.ToString(System.Globalization.CultureInfo.InvariantCulture));
                     generator
                         .AppendSeparatorLine()
                         .AppendLineIndent("ValidationContext ", contextName, " = validationContext.CreateChildContext();")

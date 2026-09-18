@@ -46,7 +46,7 @@ public readonly partial struct OpenApiDocument
                     result = result.UsingStack();
                 }
 
-                result = result.PushSchemaLocation("/definitions/definitions");
+                result = result.PushSchemaLocation("http://swagger.io/v2/schema.json#/definitions/definitions");
             }
 
             JsonValueKind valueKind = this.ValueKind;

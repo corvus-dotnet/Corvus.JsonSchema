@@ -188,6 +188,45 @@ public readonly partial struct Ui5ManifestSchema
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static explicit operator decimal(TheValueOfTheThreshold value) => value._parent.TryGetValue(value._idx, out decimal result) ? result : throw new FormatException();
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator sbyte(TheValueOfTheThreshold value) => value._parent.TryGetValue(value._idx, out sbyte result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator byte(TheValueOfTheThreshold value) => value._parent.TryGetValue(value._idx, out byte result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator short(TheValueOfTheThreshold value) => value._parent.TryGetValue(value._idx, out short result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator ushort(TheValueOfTheThreshold value) => value._parent.TryGetValue(value._idx, out ushort result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator int(TheValueOfTheThreshold value) => value._parent.TryGetValue(value._idx, out int result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator uint(TheValueOfTheThreshold value) => value._parent.TryGetValue(value._idx, out uint result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator ulong(TheValueOfTheThreshold value) => value._parent.TryGetValue(value._idx, out ulong result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator float(TheValueOfTheThreshold value) => value._parent.TryGetValue(value._idx, out float result) ? result : throw new FormatException();
+
+#if NET
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator Int128(TheValueOfTheThreshold value) => value._parent.TryGetValue(value._idx, out Int128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator UInt128(TheValueOfTheThreshold value) => value._parent.TryGetValue(value._idx, out UInt128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator Half(TheValueOfTheThreshold value) => value._parent.TryGetValue(value._idx, out Half result) ? result : throw new FormatException();
+#endif
+
             /// <summary>
             /// Operator ==.
             /// </summary>

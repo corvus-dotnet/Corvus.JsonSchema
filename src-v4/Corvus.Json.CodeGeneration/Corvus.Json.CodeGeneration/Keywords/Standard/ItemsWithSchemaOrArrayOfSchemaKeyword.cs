@@ -104,7 +104,7 @@ public sealed class ItemsWithSchemaOrArrayOfSchemaKeyword
         {
             TypeDeclaration[] tupleTypes =
                 typeDeclaration.SubschemaTypeDeclarations
-                    .Where(t => t.Key.StartsWith(KeywordPath))
+                    .Where(t => t.Key.StartsWith(KeywordPath, StringComparison.Ordinal))
                     .Select(kvp => kvp.Value).ToArray();
 
             tupleType = new(tupleTypes, true, this);

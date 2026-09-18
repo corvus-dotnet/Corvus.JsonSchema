@@ -1,0 +1,14 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {"type": "integer", "minimum": 0},
+    "name": {"type": "string", "minLength": 1, "maxLength": 100},
+    "email": {"type": "string"},
+    "tags": {"type": "array", "items": {"type": "string"}},
+    "active": {"type": "boolean"},
+    "score": {"type": "number", "maximum": 100},
+    "address": {"type": "object", "properties": {"city": {"type": "string"}, "zip": {"type": "string"}}, "required": ["city"]}
+  },
+  "required": ["id", "name"],
+  "additionalProperties": false
+}

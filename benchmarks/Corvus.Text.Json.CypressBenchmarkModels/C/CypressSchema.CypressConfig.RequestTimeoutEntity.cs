@@ -154,6 +154,45 @@ public readonly partial struct CypressSchema
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static explicit operator decimal(RequestTimeoutEntity value) => value._parent.TryGetValue(value._idx, out decimal result) ? result : throw new FormatException();
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator sbyte(RequestTimeoutEntity value) => value._parent.TryGetValue(value._idx, out sbyte result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator byte(RequestTimeoutEntity value) => value._parent.TryGetValue(value._idx, out byte result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator short(RequestTimeoutEntity value) => value._parent.TryGetValue(value._idx, out short result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator ushort(RequestTimeoutEntity value) => value._parent.TryGetValue(value._idx, out ushort result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator int(RequestTimeoutEntity value) => value._parent.TryGetValue(value._idx, out int result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator uint(RequestTimeoutEntity value) => value._parent.TryGetValue(value._idx, out uint result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator ulong(RequestTimeoutEntity value) => value._parent.TryGetValue(value._idx, out ulong result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator float(RequestTimeoutEntity value) => value._parent.TryGetValue(value._idx, out float result) ? result : throw new FormatException();
+
+#if NET
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator Int128(RequestTimeoutEntity value) => value._parent.TryGetValue(value._idx, out Int128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator UInt128(RequestTimeoutEntity value) => value._parent.TryGetValue(value._idx, out UInt128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator Half(RequestTimeoutEntity value) => value._parent.TryGetValue(value._idx, out Half result) ? result : throw new FormatException();
+#endif
+
             /// <summary>
             /// Operator ==.
             /// </summary>

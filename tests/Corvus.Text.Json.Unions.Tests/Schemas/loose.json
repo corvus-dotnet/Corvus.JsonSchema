@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "An anyOf whose branches overlap: an object with a name, or an object with an id.",
+  "anyOf": [
+    { "type": "object", "properties": { "name": { "type": "string" } }, "required": [ "name" ] },
+    { "type": "object", "properties": { "id": { "type": "integer" } }, "required": [ "id" ] },
+    { "type": "boolean" }
+  ]
+}

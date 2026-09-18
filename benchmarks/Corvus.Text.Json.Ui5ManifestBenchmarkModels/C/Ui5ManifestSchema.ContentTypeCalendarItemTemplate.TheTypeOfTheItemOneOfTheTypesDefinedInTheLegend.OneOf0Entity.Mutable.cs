@@ -743,6 +743,152 @@ public readonly partial struct Ui5ManifestSchema
 
                         return defaultMatch();
                     }
+
+                    /// <summary>
+                    /// Converts the value to its <see cref="KnownValues"/> equivalent.
+                    /// </summary>
+                    /// <param name="value">The value from which to convert.</param>
+                    /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+                    public static implicit operator KnownValues(Mutable value)
+                    {
+                        if (value.TryGetKnownValue(out KnownValues result))
+                        {
+                            return result;
+                        }
+
+                        throw new InvalidOperationException();
+                    }
+
+                    /// <summary>
+                    /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+                    /// </summary>
+                    /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+                    /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+                    public bool TryGetKnownValue(out KnownValues result)
+                    {
+                        if (this.ValueEquals(Constants.Enum1))
+                        {
+                            result = KnownValues.Type01;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum2))
+                        {
+                            result = KnownValues.Type02;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum3))
+                        {
+                            result = KnownValues.Type03;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum4))
+                        {
+                            result = KnownValues.Type04;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum5))
+                        {
+                            result = KnownValues.Type05;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum6))
+                        {
+                            result = KnownValues.Type06;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum7))
+                        {
+                            result = KnownValues.Type07;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum8))
+                        {
+                            result = KnownValues.Type08;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum9))
+                        {
+                            result = KnownValues.Type09;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum10))
+                        {
+                            result = KnownValues.Type10;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum11))
+                        {
+                            result = KnownValues.Type11;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum12))
+                        {
+                            result = KnownValues.Type12;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum13))
+                        {
+                            result = KnownValues.Type13;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum14))
+                        {
+                            result = KnownValues.Type14;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum15))
+                        {
+                            result = KnownValues.Type15;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum16))
+                        {
+                            result = KnownValues.Type16;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum17))
+                        {
+                            result = KnownValues.Type17;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum18))
+                        {
+                            result = KnownValues.Type18;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum19))
+                        {
+                            result = KnownValues.Type19;
+                            return true;
+                        }
+
+                        if (this.ValueEquals(Constants.Enum20))
+                        {
+                            result = KnownValues.Type20;
+                            return true;
+                        }
+
+                        result = default;
+                        return false;
+                    }
                 }
 
                 public ref struct Source
@@ -801,6 +947,9 @@ public readonly partial struct Ui5ManifestSchema
 
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static implicit operator Source(string value) => new (value.AsSpan());
+
+                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                    public static implicit operator Source(KnownValues value) => (OneOf0Entity)value;
 
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
                     public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);

@@ -96,7 +96,153 @@ task PreBuild {
     Write-Host "Checking documentation code sample catalog is up to date"
     exec { & pwsh -File (Join-Path $here "docs\update-code-sample-catalog.ps1") -Check }
 }
-task PostBuild BuildWebSiteLocal
+# The native AOT profile the Corvus.Text.Json package carries (profiles/Corvus.Text.Json.mibc) is recorded from the
+# code being built: on CI in the compile phase, before the package phase packs it; locally on request
+# (BUILDVAR_GenerateAotProfile=true, or ./build.ps1 -Tasks GenerateAotProfile). Linux only: the trace needs the
+# instrumented JIT of a framework-dependent run and dotnet-pgo, which the dotnet-eng feed publishes as a .NET 11
+# tool only, so a .NET 11 runtime must be present: the pipeline installs the 11 SDK (additionalNetSdkVersion in
+# build.yml); locally the task takes the runtime from `dotnet`, then from ~/.dotnet, and only otherwise installs
+# one under .zf/aot-profile. The result goes to src/Corvus.Text.Json/obj/profiles, which the package prefers to
+# the checked-in file when present.
+$GenerateAotProfile = [Convert]::ToBoolean((property BUILDVAR_GenerateAotProfile ($env:GITHUB_ACTIONS ? $true : $false)))
+$DotnetPgoVersion = "11.0.0-preview.6.26310.106"
+$DotnetPgoFeed = "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-eng/nuget/v3/flat2"
+$DotnetPgoRuntimeMajor = 11
+
+task GenerateAotProfile -If { $GenerateAotProfile -and $IsLinux } {
+    $profileDir = Join-Path $here ".zf/aot-profile"
+    $toolsDir = Join-Path $profileDir "tools"
+    New-Item -ItemType Directory -Path $toolsDir -Force | Out-Null
+
+    # The dotnet that runs dotnet-pgo: one whose root has a .NET $DotnetPgoRuntimeMajor runtime.
+    function Test-HasRuntime([string] $dotnetExe) {
+        return (Test-Path $dotnetExe) -and ((& $dotnetExe --list-runtimes 2>$null) -match "^Microsoft\.NETCore\.App $DotnetPgoRuntimeMajor\.")
+    }
+    $pgoDotnet = "dotnet"
+    $pgoDotnetRoot = $null
+    if (-not (Test-HasRuntime (Get-Command dotnet).Source)) {
+        $userDotnet = Join-Path $HOME ".dotnet/dotnet"
+        $localDotnet = Join-Path $profileDir "dotnet11/dotnet"
+        if (Test-HasRuntime $userDotnet) {
+            $pgoDotnet = $userDotnet
+        }
+        elseif (Test-HasRuntime $localDotnet) {
+            $pgoDotnet = $localDotnet
+        }
+        else {
+            Write-Host "No .NET $DotnetPgoRuntimeMajor runtime found for dotnet-pgo; installing one under $profileDir"
+            $installScript = Join-Path $profileDir "dotnet-install.sh"
+            Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.sh" -OutFile $installScript
+            exec { & bash $installScript --channel "$DotnetPgoRuntimeMajor.0" --quality preview --runtime dotnet --install-dir (Join-Path $profileDir "dotnet11") }
+            $pgoDotnet = $localDotnet
+        }
+        $pgoDotnetRoot = Split-Path $pgoDotnet -Parent
+    }
+    Write-Host "dotnet-pgo runs on $pgoDotnet"
+
+    $pgoDir = Join-Path $toolsDir "dotnet-pgo/$DotnetPgoVersion"
+    $pgoDll = Join-Path $pgoDir "tools/net11.0/any/dotnet-pgo.dll"
+    if (-not (Test-Path $pgoDll)) {
+        Write-Host "Downloading dotnet-pgo $DotnetPgoVersion"
+        New-Item -ItemType Directory -Path $pgoDir -Force | Out-Null
+        $nupkg = Join-Path $pgoDir "dotnet-pgo.zip"
+        Invoke-WebRequest -Uri "$DotnetPgoFeed/dotnet-pgo/$DotnetPgoVersion/dotnet-pgo.$DotnetPgoVersion.nupkg" -OutFile $nupkg
+        Expand-Archive -Path $nupkg -DestinationPath $pgoDir -Force
+    }
+
+    $trace = Join-Path $toolsDir "dotnet-trace"
+    if (-not (Test-Path $trace)) {
+        exec { & dotnet tool install dotnet-trace --tool-path $toolsDir }
+    }
+
+    Write-Host "Collecting the corpora"
+    $corpusDir = Join-Path $profileDir "sourcemeta"
+    New-Item -ItemType Directory -Path $corpusDir -Force | Out-Null
+    Get-ChildItem (Join-Path $here "benchmarks") -Directory -Filter "Corvus.Text.Json.*BenchmarkModels" | ForEach-Object {
+        Get-ChildItem $_.FullName -File | Where-Object { $_.Name -like "*-instances.jsonl" -or $_.Name -like "*-schema.json" } | Copy-Item -Destination $corpusDir -Force
+    }
+    $corpora = Get-ChildItem $corpusDir -Filter "*-instances.jsonl" | ForEach-Object { $_.Name -replace "-instances\.jsonl$", "" } | Sort-Object
+
+    # Publishing the runner rebuilds Corvus.Text.Json (a project reference) into the same bin/obj the package phase
+    # packs from, and a plain `dotnet publish` knows nothing of the version the build gave the library: 5.6.0
+    # shipped a Corvus.Text.Json.dll with AssemblyVersion 1.0.0.0 that way, which no other package could bind
+    # to. So the identity of the assembly the build produced is read back and handed to the publish, and the
+    # task fails if the assembly's identity is not the same afterwards.
+    $libraryDll = Join-Path $here "src/Corvus.Text.Json/bin/$Configuration/net10.0/Corvus.Text.Json.dll"
+    if (-not (Test-Path $libraryDll)) {
+        throw "GenerateAotProfile must run after the build: $libraryDll is missing"
+    }
+    function Get-AssemblyIdentity([string] $path) {
+        $name = [Reflection.AssemblyName]::GetAssemblyName($path)
+        $info = [Diagnostics.FileVersionInfo]::GetVersionInfo($path)
+        return [pscustomobject]@{ AssemblyVersion = $name.Version.ToString(); FileVersion = $info.FileVersion; InformationalVersion = $info.ProductVersion }
+    }
+    $identity = Get-AssemblyIdentity $libraryDll
+    if ($identity.AssemblyVersion -eq "1.0.0.0") {
+        throw "The built Corvus.Text.Json.dll has the default assembly version 1.0.0.0; the build did not version it"
+    }
+    # The SDK appends "+<commit>" to InformationalVersion itself (SourceLink), so pass it without the suffix.
+    $versionWithoutMetadata = $identity.InformationalVersion -replace '\+.*$', ''
+    $versionProperties = @(
+        "-p:Version=$versionWithoutMetadata",
+        "-p:AssemblyVersion=$($identity.AssemblyVersion)",
+        "-p:FileVersion=$($identity.FileVersion)",
+        "-p:InformationalVersion=$versionWithoutMetadata"
+    )
+    Write-Host "Publishing the cold runner (framework-dependent) as $($identity.InformationalVersion)"
+    $runnerDir = Join-Path $profileDir "runner"
+    exec { & dotnet publish (Join-Path $here "benchmarks/Corvus.Text.Json.RuntimeEvaluator.ColdRunner/Corvus.Text.Json.RuntimeEvaluator.ColdRunner.csproj") -c $Configuration -r linux-x64 --self-contained false -o $runnerDir --nologo -v:minimal @versionProperties }
+    $after = Get-AssemblyIdentity $libraryDll
+    if (($after.AssemblyVersion -ne $identity.AssemblyVersion) -or ($after.FileVersion -ne $identity.FileVersion) -or ($after.InformationalVersion -ne $identity.InformationalVersion)) {
+        throw "Publishing the cold runner changed Corvus.Text.Json.dll from $($identity.InformationalVersion) ($($identity.AssemblyVersion)) to $($after.InformationalVersion) ($($after.AssemblyVersion))"
+    }
+    $published = Get-AssemblyIdentity (Join-Path $runnerDir "Corvus.Text.Json.dll")
+    if ($published.AssemblyVersion -ne $identity.AssemblyVersion) {
+        throw "The cold runner was published against Corvus.Text.Json $($published.AssemblyVersion), not $($identity.AssemblyVersion)"
+    }
+
+    Write-Host "Tracing the instrumented warm run over $($corpora.Count) corpora"
+    $nettrace = Join-Path $profileDir "profile.nettrace"
+    $env:COLD_ROOT = $corpusDir
+    $env:DOTNET_TieredPGO = "1"
+    $env:DOTNET_TC_QuickJitForLoops = "1"
+    $env:DOTNET_TC_CallCountThreshold = "10000"
+    $env:DOTNET_ReadyToRun = "0"
+    try {
+        exec { & $trace collect --providers "Microsoft-Windows-DotNETRuntime:0x1E000080018:5" -o $nettrace -- dotnet (Join-Path $runnerDir "Corvus.Text.Json.RuntimeEvaluator.ColdRunner.dll") warm 50 @corpora }
+    }
+    finally {
+        Remove-Item Env:\COLD_ROOT, Env:\DOTNET_TieredPGO, Env:\DOTNET_TC_QuickJitForLoops, Env:\DOTNET_TC_CallCountThreshold, Env:\DOTNET_ReadyToRun -ErrorAction SilentlyContinue
+    }
+
+    Write-Host "Writing the profile"
+    $outDir = Join-Path $here "src/Corvus.Text.Json/obj/profiles"
+    New-Item -ItemType Directory -Path $outDir -Force | Out-Null
+    $mibc = Join-Path $outDir "Corvus.Text.Json.mibc"
+    if ($pgoDotnetRoot) { $env:DOTNET_ROOT = $pgoDotnetRoot }
+    try {
+        exec { & $pgoDotnet $pgoDll create-mibc --trace $nettrace --output $mibc }
+        $dump = Join-Path $profileDir "profile-dump.txt"
+        exec { & $pgoDotnet $pgoDll dump -i $mibc -o $dump | Out-Null }
+    }
+    finally {
+        if ($pgoDotnetRoot) { Remove-Item Env:\DOTNET_ROOT -ErrorAction SilentlyContinue }
+    }
+    $methods = (Select-String -Path $dump -Pattern "Corvus\.Text\.Json" | Measure-Object).Count
+    if ((Get-Item $mibc).Length -lt 20000 -or $methods -lt 1000) {
+        throw "The AOT profile looks wrong: $((Get-Item $mibc).Length) bytes, $methods Corvus.Text.Json methods"
+    }
+    Write-Host "Profile written to $mibc ($((Get-Item $mibc).Length) bytes, $methods Corvus.Text.Json methods); the package takes it from there"
+}
+
+# The generated-code analyzer configuration (analyzers/generated-code.globalconfig and the generated region of
+# .editorconfig) is derived from the analyzers in use; a stale copy would let an analyzer run on generated code unnoticed.
+# It needs the restored solution, so it runs after the build.
+task CheckGeneratedCodeAnalyzerConfig {
+    Write-Host "Checking the generated-code analyzer configuration is up to date"
+    exec { & pwsh -File (Join-Path $here "update-generated-code-analyzer-config.ps1") -Check }
+}
+task PostBuild CheckGeneratedCodeAnalyzerConfig, GenerateAotProfile, BuildWebSiteLocal
 task PreTest {
     # Turn down logging when running Specs to suppress ReqnRoll Given/When/Then output
     $script:LogLevelBackup = $LogLevel

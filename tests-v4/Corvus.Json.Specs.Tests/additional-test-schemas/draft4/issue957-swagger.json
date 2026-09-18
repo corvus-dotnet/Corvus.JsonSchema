@@ -1,0 +1,16 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Example",
+        "version": "1.0.0"
+    },
+    "paths": {},
+    "parameters": {
+        "FooId": {
+            "name": "FooId",
+            "in": "path",
+            "type": "integer",
+            "required": true
+        }
+    }
+}

@@ -53,7 +53,7 @@ public class AllOfSubschemaValidationHandler : IChildValidationHandler
 
                     ReducedTypeDeclaration reducedType = subschemaType.ReducedTypeDeclaration();
                     string pathModifier = keyword.GetPathModifier(reducedType, i);
-                    string resultName = generator.GetUniqueVariableNameInScope("Result", prefix: keyword.Keyword, suffix: i.ToString());
+                    string resultName = generator.GetUniqueVariableNameInScope("Result", prefix: keyword.Keyword, suffix: i.ToString(System.Globalization.CultureInfo.InvariantCulture));
                     generator
                         .AppendSeparatorLine()
                         .AppendLineIndent("ValidationContext ", resultName, " = childContextBase.CreateChildContext();")

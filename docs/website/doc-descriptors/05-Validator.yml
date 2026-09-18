@@ -1,3 +1,3 @@
 source: Validator.md
 navTitle: "Dynamic Schema Validation"
-description: "Dynamically load, compile, and validate JSON documents against JSON Schema at runtime using Roslyn. Ideal for schema registries, configuration validation, and user-supplied schemas."
+description: "Dynamically load, compile, and validate JSON documents against JSON Schema at runtime with the runtime evaluator, ready in milliseconds with no code generation or Roslyn. Ideal for schema registries, configuration validation, and user-supplied schemas."

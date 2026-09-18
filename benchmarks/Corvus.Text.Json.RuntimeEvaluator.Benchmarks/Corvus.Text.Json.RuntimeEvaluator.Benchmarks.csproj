@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>Preview</LangVersion>
+    <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);CS1591;CA1822</NoWarn>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+    <CorvusBenchmarks>$(MSBuildThisFileDirectory)..\</CorvusBenchmarks>
+    <!-- Semicolon-separated list of Sourcemeta benchmark names to include (PascalCase project names). -->
+    <SourceMetaModels Condition="'$(SourceMetaModels)' == ''">AnsibleMeta;AwsCdk;Babelrc;ClangFormat;CmakePresets;CodeClimate;Cql2;Cspell;Cypress;Deno;Dependabot;Draft04;FabricMod;GeoJson;GitpodConfiguration;HelmChartLock;Importmap;Jasmine;Jsconfig;Jshintrc;Krakend;Lazygit;Lerna;NestCli;Omnisharp;Openapi;PreCommitHooks;Pulumi;SemanticRelease;Stale;Stylecop;Tmuxinator;Ui5;Ui5Manifest;UnrealEngineUproject;Vercel;Yamllint</SourceMetaModels>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" />
+    <ProjectReference Include="..\Corvus.Text.Json.RuntimeEvaluator.MicroModels\Corvus.Text.Json.RuntimeEvaluator.MicroModels.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <SourceMetaModel Include="$(SourceMetaModels)" />
+    <ProjectReference Include="@(SourceMetaModel->'$(CorvusBenchmarks)Corvus.Text.Json.%(Identity)BenchmarkModels\Corvus.Text.Json.%(Identity)BenchmarkModels.csproj')" />
+    <Content Include="$(CorvusBenchmarks)Corvus.Text.Json.*BenchmarkModels\*-instances.jsonl" Link="sourcemeta\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\Corvus.Text.Json.RuntimeEvaluator.MicroModels\Schemas\*.json" Link="micro-schemas\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(CorvusBenchmarks)Corvus.Text.Json.*BenchmarkModels\*-schema.json" Link="sourcemeta\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

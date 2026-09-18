@@ -45,7 +45,7 @@ public readonly partial struct UniqueItems
                 result = result.UsingStack();
             }
 
-            result = result.PushSchemaLocation("/properties/uniqueItems");
+            result = result.PushSchemaLocation("http://json-schema.org/draft-04/schema#/properties/uniqueItems");
         }
 
         JsonValueKind valueKind = this.ValueKind;

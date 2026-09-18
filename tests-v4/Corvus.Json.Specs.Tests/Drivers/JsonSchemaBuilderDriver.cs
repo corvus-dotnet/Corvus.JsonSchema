@@ -412,6 +412,7 @@ public class JsonSchemaBuilderDriver : IDisposable
     /// <param name="validateFormat">If true, the format keyword will be validated.</param>
     /// <param name="optionalAsNullable">If true, optional properties are generated as nullable.</param>
     /// <param name="useImplicitOperatorString">If true, conversion operators to string are implicit rather than explicit.</param>
+    /// <param name="rebaseAsRoot">If true, the schema at <paramref name="schemaPath"/> is rebased as the root of its document.</param>
     /// <returns>The generated code.</returns>
     public async ValueTask<IReadOnlyCollection<GeneratedCodeFile>> GenerateCodeForJsonSchemaTestSuite(
         string filename,
@@ -420,12 +421,13 @@ public class JsonSchemaBuilderDriver : IDisposable
         string scenarioName,
         bool validateFormat,
         bool optionalAsNullable,
-        bool useImplicitOperatorString)
+        bool useImplicitOperatorString,
+        bool rebaseAsRoot = true)
     {
         string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
         string path = Path.Combine(baseDirectory, filename) + schemaPath;
 
-        TypeDeclaration rootType = await this.builder.AddTypeDeclarationsAsync(new(path), this.defaultVocabulary, true);
+        TypeDeclaration rootType = await this.builder.AddTypeDeclarationsAsync(new(path), this.defaultVocabulary, rebaseAsRoot);
 
         var options = new CSharpLanguageProvider.Options(
             $"{featureName}Feature.{scenarioName}",
@@ -451,6 +453,7 @@ public class JsonSchemaBuilderDriver : IDisposable
     /// <param name="validateFormat">If true, the format keyword will be validated.</param>
     /// <param name="optionalAsNullable">If true, optional properties are generated as nullable.</param>
     /// <param name="useImplicitOperatorString">If true, conversion operators to string are implicit rather than explicit.</param>
+    /// <param name="rebaseAsRoot">If true, the schema at <paramref name="schemaPath"/> is rebased as the root of its document.</param>
     /// <returns>The fully qualified type name of the entity we have generated.</returns>
     public async ValueTask<Type> GenerateTypeForJsonSchemaTestSuite(
         string filename,
@@ -459,12 +462,13 @@ public class JsonSchemaBuilderDriver : IDisposable
         string scenarioName,
         bool validateFormat,
         bool optionalAsNullable,
-        bool useImplicitOperatorString)
+        bool useImplicitOperatorString,
+        bool rebaseAsRoot = true)
     {
         string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
         string path = Path.Combine(baseDirectory, filename) + schemaPath;
 
-        TypeDeclaration rootType = await this.builder.AddTypeDeclarationsAsync(new(path), this.defaultVocabulary, true);
+        TypeDeclaration rootType = await this.builder.AddTypeDeclarationsAsync(new(path), this.defaultVocabulary, rebaseAsRoot);
 
         var options = new CSharpLanguageProvider.Options(
             $"{featureName}Feature.{scenarioName}",

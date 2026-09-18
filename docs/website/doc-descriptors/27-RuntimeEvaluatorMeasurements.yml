@@ -1,0 +1,3 @@
+source: RuntimeEvaluatorMeasurements.md
+navTitle: "Runtime Evaluator Measurements"
+description: "The end-of-branch measurement tables for the runtime evaluator against Blaze over the 37 Sourcemeta corpora: cold start, warm evaluation, parse and evaluate once, compile and allocations."

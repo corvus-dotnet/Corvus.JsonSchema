@@ -49,8 +49,6 @@ public sealed class JsonSchemaPartial : ICodeFileBuilder
                     "global::Corvus.Text.Json.Internal")
                 .AppendLine()
                 .BeginTypeDeclarationNesting(typeDeclaration)
-                    .AppendDocumentation(typeDeclaration)
-                    .AppendDebuggerDisplay()
                     .BeginPartialStructDeclaration(
                         typeDeclaration.DotnetAccessibility(),
                         typeDeclaration.DotnetTypeName(),
@@ -76,13 +74,10 @@ public sealed class JsonSchemaPartial : ICodeFileBuilder
                         .AppendFlagsConversions(typeDeclaration)
                         .AppendSeparatorLine()
                         .BeginPublicStaticPartialClassDeclaration(generator.JsonSchemaClassName())
-                            .AppendJsonSchemaClassSetup(typeDeclaration)
-                            .AppendRegexValidationFields(typeDeclaration)
+                            .AppendPatternPropertyRegexFields(typeDeclaration)
                             .AppendSchemaLocationStaticProperty(typeDeclaration)
-                            .AppendSubschemaEvaluationPathStaticProperties(typeDeclaration)
-                            .AppendJsonSchemaEvaluateMethod(typeDeclaration)
-                            .AppendRegexValidationFactoryMethods(typeDeclaration)
-                            .AppendPushChildContextMethods(typeDeclaration)
+                            .AppendRuntimeProgramEvaluateMethod(typeDeclaration)
+                            .AppendPatternPropertyRegexFactoryMethods(typeDeclaration)
                         .EndClassStructOrEnumDeclaration()
                         .PopMutableClassNameAndScope()
                         .PopFlagsEnumNameAndScope()
@@ -105,6 +100,6 @@ public sealed class JsonSchemaPartial : ICodeFileBuilder
 
     private static bool RequiresRegularExpressions(TypeDeclaration typeDeclaration)
     {
-        return typeDeclaration.ValidationRegularExpressions() is IReadOnlyDictionary<IValidationRegexProviderKeyword, IReadOnlyList<string>> regexes && regexes.Count != 0;
+        return typeDeclaration.HasPatternPropertyRegexFields();
     }
 }

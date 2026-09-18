@@ -29,7 +29,7 @@ internal class ListNamingHeuristicsCommand : Command
                 return -1;
             }
 
-            AnsiConsole.MarkupLineInterpolated($"[yellow]{name}[/]{(isOptional ? " (optional)" : string.Empty)}");
+            AnsiConsole.MarkupLineInterpolated(System.Globalization.CultureInfo.CurrentCulture, $"[yellow]{name}[/]{(isOptional ? " (optional)" : string.Empty)}");
         }
 
         return 1;

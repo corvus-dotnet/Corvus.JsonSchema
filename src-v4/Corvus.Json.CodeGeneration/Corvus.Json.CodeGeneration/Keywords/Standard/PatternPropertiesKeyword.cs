@@ -101,7 +101,7 @@ public sealed class PatternPropertiesKeyword
     /// <inheritdoc/>
     public IReadOnlyCollection<TypeDeclaration> GetSubschemaTypeDeclarations(TypeDeclaration typeDeclaration)
     {
-        return typeDeclaration.SubschemaTypeDeclarations.Where(t => t.Key.StartsWith(KeywordPath)).OrderBy(k => k.Key, StringComparer.Ordinal).Select(t => t.Value).ToList();
+        return typeDeclaration.SubschemaTypeDeclarations.Where(t => t.Key.StartsWith(KeywordPath, System.StringComparison.Ordinal)).OrderBy(k => k.Key, StringComparer.Ordinal).Select(t => t.Value).ToList();
     }
 
     /// <inheritdoc/>

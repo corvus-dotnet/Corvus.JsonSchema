@@ -35,7 +35,7 @@ public readonly partial struct MultipleOf
                 result = result.UsingStack();
             }
 
-            result = result.PushSchemaLocation("/properties/multipleOf");
+            result = result.PushSchemaLocation("http://json-schema.org/draft-04/schema#/properties/multipleOf");
         }
 
         JsonValueKind valueKind = this.ValueKind;

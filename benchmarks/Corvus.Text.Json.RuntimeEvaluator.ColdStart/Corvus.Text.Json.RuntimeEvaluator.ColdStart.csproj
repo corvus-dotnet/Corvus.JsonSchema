@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>Preview</LangVersion>
+    <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <CorvusBenchmarks>$(MSBuildThisFileDirectory)..\</CorvusBenchmarks>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.Validator\Corvus.Text.Json.Validator.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="$(CorvusBenchmarks)Corvus.Text.Json.*BenchmarkModels\*-schema.json" Link="sourcemeta\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

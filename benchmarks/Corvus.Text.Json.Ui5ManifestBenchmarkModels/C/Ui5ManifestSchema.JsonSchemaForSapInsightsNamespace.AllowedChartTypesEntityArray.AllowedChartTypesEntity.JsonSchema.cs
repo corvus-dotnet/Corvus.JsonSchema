@@ -805,62 +805,494 @@ public readonly partial struct Ui5ManifestSchema
                     public static ReadOnlySpan<byte> TimeseriesStackedCombinationUtf8 => Constants.Enum39;
                 }
 
-                public static partial class JsonSchema
+                /// <summary>
+                /// A native enum for the well-known values of this type.
+                /// </summary>
+                /// <remarks>
+                /// Member ordinals follow the schema declaration order. Inserting or reordering values
+                /// in the schema renumbers the ordinals, so do not persist their integer values.
+                /// </remarks>
+                public enum KnownValues
                 {
-                    private static EnumStringSet BuildEnumStringSet()
+                    /// <summary>
+                    /// Corresponds to the JSON string "bar".
+                    /// </summary>
+                    Bar = 0,
+                    /// <summary>
+                    /// Corresponds to the JSON string "column".
+                    /// </summary>
+                    Column = 1,
+                    /// <summary>
+                    /// Corresponds to the JSON string "line".
+                    /// </summary>
+                    Line = 2,
+                    /// <summary>
+                    /// Corresponds to the JSON string "bullet".
+                    /// </summary>
+                    Bullet = 3,
+                    /// <summary>
+                    /// Corresponds to the JSON string "vertical_bullet".
+                    /// </summary>
+                    VerticalBullet = 4,
+                    /// <summary>
+                    /// Corresponds to the JSON string "100_stacked_bar".
+                    /// </summary>
+                    Value100StackedBar = 5,
+                    /// <summary>
+                    /// Corresponds to the JSON string "100_stacked_column".
+                    /// </summary>
+                    Value100StackedColumn = 6,
+                    /// <summary>
+                    /// Corresponds to the JSON string "waterfall".
+                    /// </summary>
+                    Waterfall = 7,
+                    /// <summary>
+                    /// Corresponds to the JSON string "horizontal_waterfall".
+                    /// </summary>
+                    HorizontalWaterfall = 8,
+                    /// <summary>
+                    /// Corresponds to the JSON string "area".
+                    /// </summary>
+                    Area = 9,
+                    /// <summary>
+                    /// Corresponds to the JSON string "radar".
+                    /// </summary>
+                    Radar = 10,
+                    /// <summary>
+                    /// Corresponds to the JSON string "combination".
+                    /// </summary>
+                    Combination = 11,
+                    /// <summary>
+                    /// Corresponds to the JSON string "stacked_bar".
+                    /// </summary>
+                    StackedBar = 12,
+                    /// <summary>
+                    /// Corresponds to the JSON string "stacked_column".
+                    /// </summary>
+                    StackedColumn = 13,
+                    /// <summary>
+                    /// Corresponds to the JSON string "stacked_combination".
+                    /// </summary>
+                    StackedCombination = 14,
+                    /// <summary>
+                    /// Corresponds to the JSON string "horizontal_stacked_combination".
+                    /// </summary>
+                    HorizontalStackedCombination = 15,
+                    /// <summary>
+                    /// Corresponds to the JSON string "pie".
+                    /// </summary>
+                    Pie = 16,
+                    /// <summary>
+                    /// Corresponds to the JSON string "donut".
+                    /// </summary>
+                    Donut = 17,
+                    /// <summary>
+                    /// Corresponds to the JSON string "dual_bar".
+                    /// </summary>
+                    DualBar = 18,
+                    /// <summary>
+                    /// Corresponds to the JSON string "dual_column".
+                    /// </summary>
+                    DualColumn = 19,
+                    /// <summary>
+                    /// Corresponds to the JSON string "dual_line".
+                    /// </summary>
+                    DualLine = 20,
+                    /// <summary>
+                    /// Corresponds to the JSON string "dual_stacked_bar".
+                    /// </summary>
+                    DualStackedBar = 21,
+                    /// <summary>
+                    /// Corresponds to the JSON string "dual_stacked_column".
+                    /// </summary>
+                    DualStackedColumn = 22,
+                    /// <summary>
+                    /// Corresponds to the JSON string "dual_combination".
+                    /// </summary>
+                    DualCombination = 23,
+                    /// <summary>
+                    /// Corresponds to the JSON string "dual_horizontal_combination".
+                    /// </summary>
+                    DualHorizontalCombination = 24,
+                    /// <summary>
+                    /// Corresponds to the JSON string "dual_stacked_combination".
+                    /// </summary>
+                    DualStackedCombination = 25,
+                    /// <summary>
+                    /// Corresponds to the JSON string "dual_horizontal_stacked_combination".
+                    /// </summary>
+                    DualHorizontalStackedCombination = 26,
+                    /// <summary>
+                    /// Corresponds to the JSON string "100_dual_stacked_bar".
+                    /// </summary>
+                    Value100DualStackedBar = 27,
+                    /// <summary>
+                    /// Corresponds to the JSON string "100_dual_stacked_column".
+                    /// </summary>
+                    Value100DualStackedColumn = 28,
+                    /// <summary>
+                    /// Corresponds to the JSON string "scatter".
+                    /// </summary>
+                    Scatter = 29,
+                    /// <summary>
+                    /// Corresponds to the JSON string "heatmap".
+                    /// </summary>
+                    Heatmap = 30,
+                    /// <summary>
+                    /// Corresponds to the JSON string "timeseries_column".
+                    /// </summary>
+                    TimeseriesColumn = 31,
+                    /// <summary>
+                    /// Corresponds to the JSON string "timeseries_line".
+                    /// </summary>
+                    TimeseriesLine = 32,
+                    /// <summary>
+                    /// Corresponds to the JSON string "timeseries_scatter".
+                    /// </summary>
+                    TimeseriesScatter = 33,
+                    /// <summary>
+                    /// Corresponds to the JSON string "timeseries_stacked_column".
+                    /// </summary>
+                    TimeseriesStackedColumn = 34,
+                    /// <summary>
+                    /// Corresponds to the JSON string "timeseries_100_stacked_column".
+                    /// </summary>
+                    Timeseries100StackedColumn = 35,
+                    /// <summary>
+                    /// Corresponds to the JSON string "timeseries_bullet".
+                    /// </summary>
+                    TimeseriesBullet = 36,
+                    /// <summary>
+                    /// Corresponds to the JSON string "timeseries_waterfall".
+                    /// </summary>
+                    TimeseriesWaterfall = 37,
+                    /// <summary>
+                    /// Corresponds to the JSON string "timeseries_stacked_combination".
+                    /// </summary>
+                    TimeseriesStackedCombination = 38,
+                }
+
+                /// <summary>
+                /// Converts a <see cref="KnownValues"/> to an instance of this type.
+                /// </summary>
+                /// <param name="value">The well-known value from which to convert.</param>
+                /// <exception cref="InvalidOperationException">The value was not a defined member of the <see cref="KnownValues"/> enumeration.</exception>
+                public static implicit operator AllowedChartTypesEntity(KnownValues value)
+                {
+                    return value switch
                     {
-                        return new EnumStringSet([
-                            static () => "bar"u8,
-                            static () => "column"u8,
-                            static () => "line"u8,
-                            static () => "bullet"u8,
-                            static () => "vertical_bullet"u8,
-                            static () => "100_stacked_bar"u8,
-                            static () => "100_stacked_column"u8,
-                            static () => "waterfall"u8,
-                            static () => "horizontal_waterfall"u8,
-                            static () => "area"u8,
-                            static () => "radar"u8,
-                            static () => "combination"u8,
-                            static () => "stacked_bar"u8,
-                            static () => "stacked_column"u8,
-                            static () => "stacked_combination"u8,
-                            static () => "horizontal_stacked_combination"u8,
-                            static () => "pie"u8,
-                            static () => "donut"u8,
-                            static () => "dual_bar"u8,
-                            static () => "dual_column"u8,
-                            static () => "dual_line"u8,
-                            static () => "dual_stacked_bar"u8,
-                            static () => "dual_stacked_column"u8,
-                            static () => "dual_combination"u8,
-                            static () => "dual_horizontal_combination"u8,
-                            static () => "dual_stacked_combination"u8,
-                            static () => "dual_horizontal_stacked_combination"u8,
-                            static () => "100_dual_stacked_bar"u8,
-                            static () => "100_dual_stacked_column"u8,
-                            static () => "scatter"u8,
-                            static () => "heatmap"u8,
-                            static () => "timeseries_column"u8,
-                            static () => "timeseries_line"u8,
-                            static () => "timeseries_scatter"u8,
-                            static () => "timeseries_stacked_column"u8,
-                            static () => "timeseries_100_stacked_column"u8,
-                            static () => "timeseries_bullet"u8,
-                            static () => "timeseries_waterfall"u8,
-                            static () => "timeseries_stacked_combination"u8,
-                        ]);
+                        KnownValues.Bar => Constants.EnumJson1,
+                        KnownValues.Column => Constants.EnumJson2,
+                        KnownValues.Line => Constants.EnumJson3,
+                        KnownValues.Bullet => Constants.EnumJson4,
+                        KnownValues.VerticalBullet => Constants.EnumJson5,
+                        KnownValues.Value100StackedBar => Constants.EnumJson6,
+                        KnownValues.Value100StackedColumn => Constants.EnumJson7,
+                        KnownValues.Waterfall => Constants.EnumJson8,
+                        KnownValues.HorizontalWaterfall => Constants.EnumJson9,
+                        KnownValues.Area => Constants.EnumJson10,
+                        KnownValues.Radar => Constants.EnumJson11,
+                        KnownValues.Combination => Constants.EnumJson12,
+                        KnownValues.StackedBar => Constants.EnumJson13,
+                        KnownValues.StackedColumn => Constants.EnumJson14,
+                        KnownValues.StackedCombination => Constants.EnumJson15,
+                        KnownValues.HorizontalStackedCombination => Constants.EnumJson16,
+                        KnownValues.Pie => Constants.EnumJson17,
+                        KnownValues.Donut => Constants.EnumJson18,
+                        KnownValues.DualBar => Constants.EnumJson19,
+                        KnownValues.DualColumn => Constants.EnumJson20,
+                        KnownValues.DualLine => Constants.EnumJson21,
+                        KnownValues.DualStackedBar => Constants.EnumJson22,
+                        KnownValues.DualStackedColumn => Constants.EnumJson23,
+                        KnownValues.DualCombination => Constants.EnumJson24,
+                        KnownValues.DualHorizontalCombination => Constants.EnumJson25,
+                        KnownValues.DualStackedCombination => Constants.EnumJson26,
+                        KnownValues.DualHorizontalStackedCombination => Constants.EnumJson27,
+                        KnownValues.Value100DualStackedBar => Constants.EnumJson28,
+                        KnownValues.Value100DualStackedColumn => Constants.EnumJson29,
+                        KnownValues.Scatter => Constants.EnumJson30,
+                        KnownValues.Heatmap => Constants.EnumJson31,
+                        KnownValues.TimeseriesColumn => Constants.EnumJson32,
+                        KnownValues.TimeseriesLine => Constants.EnumJson33,
+                        KnownValues.TimeseriesScatter => Constants.EnumJson34,
+                        KnownValues.TimeseriesStackedColumn => Constants.EnumJson35,
+                        KnownValues.Timeseries100StackedColumn => Constants.EnumJson36,
+                        KnownValues.TimeseriesBullet => Constants.EnumJson37,
+                        KnownValues.TimeseriesWaterfall => Constants.EnumJson38,
+                        KnownValues.TimeseriesStackedCombination => Constants.EnumJson39,
+                        _ => throw new InvalidOperationException(),
+                    };
+                }
+
+                /// <summary>
+                /// Converts the value to its <see cref="KnownValues"/> equivalent.
+                /// </summary>
+                /// <param name="value">The value from which to convert.</param>
+                /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+                public static implicit operator KnownValues(AllowedChartTypesEntity value)
+                {
+                    if (value.TryGetKnownValue(out KnownValues result))
+                    {
+                        return result;
                     }
 
-                    private static EnumStringSet EnumStringSet { get; } = BuildEnumStringSet();
+                    throw new InvalidOperationException();
+                }
 
+                /// <summary>
+                /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+                /// </summary>
+                /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+                /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+                public bool TryGetKnownValue(out KnownValues result)
+                {
+                    if (this.ValueEquals(Constants.Enum1))
+                    {
+                        result = KnownValues.Bar;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum2))
+                    {
+                        result = KnownValues.Column;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum3))
+                    {
+                        result = KnownValues.Line;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum4))
+                    {
+                        result = KnownValues.Bullet;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum5))
+                    {
+                        result = KnownValues.VerticalBullet;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum6))
+                    {
+                        result = KnownValues.Value100StackedBar;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum7))
+                    {
+                        result = KnownValues.Value100StackedColumn;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum8))
+                    {
+                        result = KnownValues.Waterfall;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum9))
+                    {
+                        result = KnownValues.HorizontalWaterfall;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum10))
+                    {
+                        result = KnownValues.Area;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum11))
+                    {
+                        result = KnownValues.Radar;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum12))
+                    {
+                        result = KnownValues.Combination;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum13))
+                    {
+                        result = KnownValues.StackedBar;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum14))
+                    {
+                        result = KnownValues.StackedColumn;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum15))
+                    {
+                        result = KnownValues.StackedCombination;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum16))
+                    {
+                        result = KnownValues.HorizontalStackedCombination;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum17))
+                    {
+                        result = KnownValues.Pie;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum18))
+                    {
+                        result = KnownValues.Donut;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum19))
+                    {
+                        result = KnownValues.DualBar;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum20))
+                    {
+                        result = KnownValues.DualColumn;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum21))
+                    {
+                        result = KnownValues.DualLine;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum22))
+                    {
+                        result = KnownValues.DualStackedBar;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum23))
+                    {
+                        result = KnownValues.DualStackedColumn;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum24))
+                    {
+                        result = KnownValues.DualCombination;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum25))
+                    {
+                        result = KnownValues.DualHorizontalCombination;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum26))
+                    {
+                        result = KnownValues.DualStackedCombination;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum27))
+                    {
+                        result = KnownValues.DualHorizontalStackedCombination;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum28))
+                    {
+                        result = KnownValues.Value100DualStackedBar;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum29))
+                    {
+                        result = KnownValues.Value100DualStackedColumn;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum30))
+                    {
+                        result = KnownValues.Scatter;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum31))
+                    {
+                        result = KnownValues.Heatmap;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum32))
+                    {
+                        result = KnownValues.TimeseriesColumn;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum33))
+                    {
+                        result = KnownValues.TimeseriesLine;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum34))
+                    {
+                        result = KnownValues.TimeseriesScatter;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum35))
+                    {
+                        result = KnownValues.TimeseriesStackedColumn;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum36))
+                    {
+                        result = KnownValues.Timeseries100StackedColumn;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum37))
+                    {
+                        result = KnownValues.TimeseriesBullet;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum38))
+                    {
+                        result = KnownValues.TimeseriesWaterfall;
+                        return true;
+                    }
+
+                    if (this.ValueEquals(Constants.Enum39))
+                    {
+                        result = KnownValues.TimeseriesStackedCombination;
+                        return true;
+                    }
+
+                    result = default;
+                    return false;
+                }
+
+                public static partial class JsonSchema
+                {
                     /// <summary>
                     /// Gets a provider for the schema location from which this type was generated.
                     /// </summary>
-                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/properties/sap.insights/properties/allowedChartTypes/items"u8, buffer, out written);
+                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/properties/sap.insights/properties/allowedChartTypes/items"u8, buffer, out written);
 
                     /// <summary>
-                    /// Gets the schema location from which this type was generated.
+                    /// Gets the schema location from which this type was generated, as a JSON Pointer within <see cref="SchemaDocument"/>.
                     /// </summary>
                     public const string SchemaLocation = "/properties/sap.insights/properties/allowedChartTypes/items";
 
@@ -870,215 +1302,34 @@ public readonly partial struct Ui5ManifestSchema
                     public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/properties/sap.insights/properties/allowedChartTypes/items"u8;
 
                     /// <summary>
+                    /// Gets the schema document from which this type was generated, relative to the base location for generation.
+                    /// </summary>
+                    /// <remarks>
+                    /// <see cref="SchemaLocation"/> is a JSON Pointer within this document, so <c>SchemaDocument + "#" + SchemaLocation</c>
+                    /// is a reference to the schema, even for a schema inside a <c>$id</c> sub-resource.
+                    /// </remarks>
+                    public const string SchemaDocument = "ui5-manifest-schema.json";
+
+                    /// <summary>
+                    /// Gets the schema document from which this type was generated as a UTF-8 string.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> SchemaDocumentUtf8 => "ui5-manifest-schema.json"u8;
+
+                    private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Corvus.Ui5ManifestBenchmark.Current.CorvusJsonSchemaProgram.Entry(710);
+
+                    /// <summary>
                     /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
                     /// </summary>
                     /// <param name="parentDocument">The parent document.</param>
                     /// <param name="parentIndex">The parent index.</param>
-                    /// <param name="context">A reference to the validation context, configured with the appropriate values.</param>
-                    internal static void Evaluate(
-                        IJsonDocument parentDocument,
-                        int parentIndex,
-                        ref JsonSchemaContext context)
-                    {
-                        JsonTokenType tokenType = parentDocument.GetJsonTokenType(parentIndex);
-
-                        // You're not allowed to ask about non-value-like entities
-                        Debug.Assert(parentDocument.GetJsonTokenType(parentIndex) is not
-                            (JsonTokenType.None or
-                            JsonTokenType.EndObject or
-                            JsonTokenType.EndArray));
-
-                        if (!JsonSchemaEvaluation.MatchTypeString(tokenType,"type"u8, ref context))
-                        {
-                            if (!context.HasCollector)
-                            {
-                                return;
-                            }
-                        }
-                        else
-                        {
-                            using UnescapedUtf8JsonString unescapedUtf8JsonString = parentDocument.GetUtf8JsonString(parentIndex, JsonTokenType.String);
-
-                            if (EnumStringSet.Contains(unescapedUtf8JsonString.Span))
-                            {
-                                goto enumShortCircuitSuccess;
-                            }
-
-                            context.EvaluatedKeyword(false, messageProvider: JsonSchemaEvaluation.DidNotMatchAtLeastOneConstantValue, "enum"u8);
-
-                            if (!context.HasCollector)
-                            {
-                                return;
-                            }
-
-                            goto enumAfterFailure;
-
-enumShortCircuitSuccess:
-                            context.EvaluatedKeyword(true, messageProvider: JsonSchemaEvaluation.MatchedAtLeastOneConstantValue, ", formattedKeyword, "u8);
-
-enumAfterFailure:;
-                        }
-                    }
-
+                    /// <param name="resultsCollector">The (optional) results collector.</param>
+                    /// <returns><see langword="true" /> if the instance evaluates against the schema.</returns>
                     internal static bool Evaluate(
                         IJsonDocument parentDocument,
                         int parentIndex,
                         IJsonSchemaResultsCollector? resultsCollector = null)
                     {
-                        JsonSchemaContext context = JsonSchemaContext.BeginContext(
-                        parentDocument,
-                        parentIndex,
-                        usingEvaluatedItems: false,
-                        usingEvaluatedProperties: false,
-                        resultsCollector: resultsCollector);
-
-                        try
-                        {
-                            Evaluate(parentDocument, parentIndex, ref context);
-                            context.EndContext();
-                            return context.IsMatch;
-                        }
-                        finally
-                        {
-                            context.Dispose();
-                        }
-                    }
-
-                    /// <summary>
-                    /// Push the current context as a child context for schema evaluation.
-                    /// </summary>
-                    /// <typeparam name="TContext">The type of the context to be passed to the path providers.</typeparam>
-                    /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                    /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                    /// <param name="context">The current evaluation context.</param>
-                    /// <param name="providerContext">The context to be passed to the path providers.</param>
-                    /// <param name="schemaEvaluationPath">The (optional) path to the schema being evaluated in the child context.</param>
-                    /// <param name="documentEvaluationPath">The (optional) path in the document being evaluated in the child context.</param>
-                    /// <returns>The child context.</returns>
-                    internal static JsonSchemaContext PushChildContext<TContext>(
-                        IJsonDocument parentDocument,
-                        int parentDocumentIndex,
-                        ref JsonSchemaContext context,
-                        TContext providerContext,
-                        JsonSchemaPathProvider<TContext>? schemaEvaluationPath = null,
-                        JsonSchemaPathProvider<TContext>? documentEvaluationPath = null)
-                    {
-                        return
-                            context.PushChildContext(
-                                parentDocument,
-                                parentDocumentIndex,
-                                useEvaluatedItems: false,
-                                useEvaluatedProperties: false,
-                                evaluationPath: schemaEvaluationPath,
-                                documentEvaluationPath: documentEvaluationPath,
-                                providerContext: providerContext);
-                    }
-
-                    /// <summary>
-                    /// Push the current context as a child context for schema evaluation.
-                    /// </summary>
-                    /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                    /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                    /// <param name="context">The current evaluation context.</param>
-                    /// <param name="schemaEvaluationPath">The (optional) path to the schema being evaluated in the child context.</param>
-                    /// <param name="documentEvaluationPath">The (optional) path in the document being evaluated in the child context.</param>
-                    /// <returns>The child context.</returns>
-                    internal static JsonSchemaContext PushChildContext(
-                        IJsonDocument parentDocument,
-                        int parentDocumentIndex,
-                        ref JsonSchemaContext context,
-                        JsonSchemaPathProvider? schemaEvaluationPath = null,
-                        JsonSchemaPathProvider? documentEvaluationPath = null)
-                    {
-                        return
-                            context.PushChildContext(
-                                parentDocument,
-                                parentDocumentIndex,
-                                useEvaluatedItems: false,
-                                useEvaluatedProperties: false,
-                                evaluationPath: schemaEvaluationPath,
-                                documentEvaluationPath: documentEvaluationPath);
-                    }
-
-                    /// <summary>
-                    /// Push the current context as a child context for schema evaluation of a property.
-                    /// </summary>
-                    /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                    /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                    /// <param name="context">The current evaluation context.</param>
-                    /// <param name="propertyName">The name of the property </param>
-                    /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-                    /// <returns>The child context.</returns>
-                    internal static JsonSchemaContext PushChildContext(
-                        IJsonDocument parentDocument,
-                        int parentDocumentIndex,
-                        ref JsonSchemaContext context,
-                        ReadOnlySpan<byte> propertyName,
-                        JsonSchemaPathProvider? evaluationPath = null)
-                    {
-                        return
-                            context.PushChildContext(
-                                parentDocument,
-                                parentDocumentIndex,
-                                useEvaluatedItems: false,
-                                useEvaluatedProperties: false,
-                                propertyName,
-                                evaluationPath: evaluationPath,
-                                schemaEvaluationPath: SchemaLocationProvider);
-                    }
-
-                    /// <summary>
-                    /// Push the current context as a child context for schema evaluation of a property where the property name is known to be unescaped.
-                    /// </summary>
-                    /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                    /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                    /// <param name="context">The current evaluation context.</param>
-                    /// <param name="propertyName">The name of the property </param>
-                    /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-                    /// <returns>The child context.</returns>
-                    internal static JsonSchemaContext PushChildContextUnescaped(
-                        IJsonDocument parentDocument,
-                        int parentDocumentIndex,
-                        ref JsonSchemaContext context,
-                        ReadOnlySpan<byte> propertyName,
-                        JsonSchemaPathProvider? evaluationPath = null)
-                    {
-                        return
-                            context.PushChildContext(
-                                parentDocument,
-                                parentDocumentIndex,
-                                useEvaluatedItems: false,
-                                useEvaluatedProperties: false,
-                                propertyName,
-                                evaluationPath: evaluationPath,
-                                schemaEvaluationPath: SchemaLocationProvider);
-                    }
-
-                    /// <summary>
-                    /// Push the current context as a child context for schema evaluation of an array item.
-                    /// </summary>
-                    /// <param name="parentDocument">The parent document of the instance for which to push the child context.</param>
-                    /// <param name="parentDocumentIndex">The index in the parent document of the instance for which to push the child context.</param>
-                    /// <param name="context">The current evaluation context.</param>
-                    /// <param name="itemIndex">The index of the item in the array.</param>
-                    /// <param name="evaluationPath">The (optional) reduced evaluation path in the child context.</param>
-                    /// <returns>The child context.</returns>
-                    internal static JsonSchemaContext PushChildContext(
-                        IJsonDocument parentDocument,
-                        int parentDocumentIndex,
-                        ref JsonSchemaContext context,
-                        int itemIndex,
-                        JsonSchemaPathProvider? evaluationPath = null)
-                    {
-                        return
-                            context.PushChildContext(
-                                parentDocument,
-                                parentDocumentIndex,
-                                useEvaluatedItems: false,
-                                useEvaluatedProperties: false,
-                                itemIndex,
-                                evaluationPath: evaluationPath,
-                                schemaEvaluationPath: SchemaLocationProvider);
+                        return Evaluator.Evaluate(parentDocument, parentIndex, resultsCollector);
                     }
                 }
             }

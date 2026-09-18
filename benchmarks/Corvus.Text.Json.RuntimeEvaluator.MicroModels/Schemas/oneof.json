@@ -1,0 +1,8 @@
+{
+  "oneOf": [
+    {"type": "object", "required": ["kind"], "properties": {"kind": {"const": "a"}, "id": {"type": "integer"}}},
+    {"type": "object", "required": ["kind"], "properties": {"kind": {"const": "b"}, "id": {"type": "integer"}}},
+    {"type": "object", "required": ["kind"], "properties": {"kind": {"const": "c"}, "id": {"type": "integer"}}},
+    {"type": "object", "required": ["kind"], "properties": {"kind": {"const": "d"}, "id": {"type": "integer"}}}
+  ]
+}

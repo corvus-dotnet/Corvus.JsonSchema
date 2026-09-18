@@ -8,6 +8,7 @@
 // </licensing>
 
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 using Corvus.Json.CodeGeneration;
@@ -70,7 +71,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The enum name.</returns>
     public static string KnownValuesEnumName(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(KnownValuesEnumNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(KnownValuesEnumNameKey, out (string, string) value) &&
             value is (string enumName, string _))
         {
             return enumName;
@@ -86,7 +87,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The fully-qualified enum scope.</returns>
     public static string KnownValuesEnumScope(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(KnownValuesEnumNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(KnownValuesEnumNameKey, out (string, string) value) &&
             value is (string _, string scope))
         {
             return scope;
@@ -138,7 +139,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The enum name.</returns>
     public static string FlagsEnumName(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(FlagsEnumNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(FlagsEnumNameKey, out (string, string) value) &&
             value is (string enumName, string _))
         {
             return enumName;
@@ -154,7 +155,7 @@ internal static partial class CodeGenerationExtensions
     /// <returns>The fully-qualified enum scope.</returns>
     public static string FlagsEnumScope(this CodeGenerator generator)
     {
-        if (generator.TryPeekMetadata(FlagsEnumNameKey, out (string, string)? value) &&
+        if (generator.TryPeekMetadata(FlagsEnumNameKey, out (string, string) value) &&
             value is (string _, string scope))
         {
             return scope;
@@ -208,7 +209,7 @@ internal static partial class CodeGenerationExtensions
                 .AppendLineIndent("/// <summary>")
                 .AppendLineIndent("/// Corresponds to the JSON string ", SymbolDisplay.FormatLiteral(member.JsonString, true), ".")
                 .AppendLineIndent("/// </summary>")
-                .AppendLineIndent(member.MemberName, " = ", ordinal.ToString(), ",");
+                .AppendLineIndent(member.MemberName, " = ", ordinal.ToString(CultureInfo.InvariantCulture), ",");
 
             ordinal++;
         }
@@ -362,7 +363,7 @@ internal static partial class CodeGenerationExtensions
             .AppendLineIndent("/// A native flags enum over the boolean properties of this type.")
             .AppendLineIndent("/// </summary>")
             .AppendLineIndent("/// <remarks>")
-            .AppendLineIndent("/// Bits are assigned to the properties in alphabetical order of their JSON names.")
+            .AppendLineIndent("/// Bits are assigned to the properties in ordinal (UTF-16 code unit) order of their JSON names.")
             .AppendLineIndent("/// Adding or renaming a property can reassign the bits, so do not persist the")
             .AppendLineIndent("/// integer values.")
             .AppendLineIndent("/// </remarks>")
@@ -387,7 +388,7 @@ internal static partial class CodeGenerationExtensions
                 .AppendLineIndent("/// <summary>")
                 .AppendLineIndent("/// The <c>", member.JsonName, "</c> property is <see langword=\"true\"/>.")
                 .AppendLineIndent("/// </summary>")
-                .AppendLineIndent(member.MemberName, " = 1 << ", bit.ToString(), ",");
+                .AppendLineIndent(member.MemberName, " = 1 << ", bit.ToString(CultureInfo.InvariantCulture), ",");
 
             bit++;
         }
@@ -536,7 +537,7 @@ internal static partial class CodeGenerationExtensions
 
         if (typeDeclaration.AnyOfConstantValues() is IReadOnlyDictionary<IAnyOfConstantValidationKeyword, JsonElement[]> anyOfConstants)
         {
-            foreach (KeyValuePair<IAnyOfConstantValidationKeyword, JsonElement[]> kvp in anyOfConstants.OrderBy(k => k.Key.Keyword))
+            foreach (KeyValuePair<IAnyOfConstantValidationKeyword, JsonElement[]> kvp in anyOfConstants.OrderBy(k => k.Key.Keyword, StringComparer.Ordinal))
             {
                 JsonElement[] values = kvp.Value;
                 int count = values.Length;
@@ -551,7 +552,7 @@ internal static partial class CodeGenerationExtensions
                 int elementIndex = 1;
                 foreach (JsonElement value in values)
                 {
-                    string? suffix = addSuffix ? elementIndex.ToString() : null;
+                    string? suffix = addSuffix ? elementIndex.ToString(CultureInfo.InvariantCulture) : null;
                     string jsonString = value.GetString()!;
                     string memberName = generator.GetUniqueStaticReadOnlyPropertyNameInScope(jsonString, rootScope: knownValuesScope);
                     string utf8FieldName = generator.GetStaticReadOnlyFieldNameInScope(keywordName, rootScope: constantsScope, suffix: suffix);

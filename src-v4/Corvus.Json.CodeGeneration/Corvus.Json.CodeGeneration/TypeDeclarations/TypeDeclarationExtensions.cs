@@ -239,7 +239,7 @@ public static class TypeDeclarationExtensions
                 {
                     List<PatternPropertyDeclaration> list = [];
                     int i = 0;
-                    foreach (TypeDeclaration typeDeclaration in keyword.GetSubschemaTypeDeclarations(that))
+                    foreach (TypeDeclaration typeDeclaration in that.GetSubschemaTypeDeclarationsFor(keyword))
                     {
                         list.Add(new(keyword, typeDeclaration, patterns[i]));
                         ++i;
@@ -286,7 +286,7 @@ public static class TypeDeclarationExtensions
             {
                 foreach (IReferenceKeyword refKeyword in baseType.Keywords().OfType<IReferenceKeyword>())
                 {
-                    if (refKeyword.GetSubschemaTypeDeclarations(baseType).FirstOrDefault() is TypeDeclaration referencedTypeDeclaration)
+                    if (baseType.GetSubschemaTypeDeclarationsFor(refKeyword).FirstOrDefault() is TypeDeclaration referencedTypeDeclaration)
                     {
                         JsonReference updatedPathModifier = currentPathModifier.AppendUnencodedPropertyNameToFragment(refKeyword.Keyword);
                         ReducedTypeDeclaration declaration = referencedTypeDeclaration.ReducedTypeDeclaration();
@@ -514,7 +514,7 @@ public static class TypeDeclarationExtensions
 
             foreach (IAllOfSubschemaValidationKeyword keyword in that.Keywords().OfType<IAllOfSubschemaValidationKeyword>())
             {
-                result[keyword] = keyword.GetSubschemaTypeDeclarations(that);
+                result[keyword] = that.GetSubschemaTypeDeclarationsFor(keyword);
             }
 
             return result;
@@ -542,7 +542,7 @@ public static class TypeDeclarationExtensions
 
             foreach (IAnyOfSubschemaValidationKeyword keyword in that.Keywords().OfType<IAnyOfSubschemaValidationKeyword>())
             {
-                result[keyword] = keyword.GetSubschemaTypeDeclarations(that);
+                result[keyword] = that.GetSubschemaTypeDeclarationsFor(keyword);
             }
 
             return result;
@@ -606,7 +606,7 @@ public static class TypeDeclarationExtensions
 
             foreach (IOneOfSubschemaValidationKeyword keyword in that.Keywords().OfType<IOneOfSubschemaValidationKeyword>())
             {
-                result[keyword] = keyword.GetSubschemaTypeDeclarations(that);
+                result[keyword] = that.GetSubschemaTypeDeclarationsFor(keyword);
             }
 
             return result;
@@ -964,7 +964,7 @@ public static class TypeDeclarationExtensions
                 // Now go through all the allOf union types and see if we can find one
                 foreach (IAllOfSubschemaValidationKeyword keyword in typeDeclaration.Keywords().OfType<IAllOfSubschemaValidationKeyword>())
                 {
-                    foreach (TypeDeclaration t in keyword.GetSubschemaTypeDeclarations(typeDeclaration).Select(t => t.ReducedTypeDeclaration().ReducedType))
+                    foreach (TypeDeclaration t in typeDeclaration.GetSubschemaTypeDeclarationsFor(keyword).Select(t => t.ReducedTypeDeclaration().ReducedType))
                     {
                         if (GetArrayDimension(t) is int referencedArrayDimension)
                         {
@@ -1525,7 +1525,7 @@ public static class TypeDeclarationExtensions
 
             foreach (ISubschemaProviderKeyword keyword in that.Keywords().OfType<ICompositionKeyword>().OfType<ISubschemaProviderKeyword>())
             {
-                foreach (TypeDeclaration subschema in keyword.GetSubschemaTypeDeclarations(that))
+                foreach (TypeDeclaration subschema in that.GetSubschemaTypeDeclarationsFor(keyword))
                 {
                     result.Add(subschema.ReducedTypeDeclaration().ReducedType);
                 }
@@ -1690,7 +1690,9 @@ public static class TypeDeclarationExtensions
             TypeDeclaration typeDeclaration,
             [NotNullWhen(true)] out IReadOnlyCollection<IKeyword>? keywords)
         {
-            var allKeywords = typeDeclaration.LocatedSchema.Vocabulary.Keywords.Where(typeDeclaration.HasKeyword).ToList();
+            // One pass over the schema's properties, in vocabulary order; equivalent to
+            // Vocabulary.Keywords.Where(typeDeclaration.HasKeyword) without a property scan per keyword.
+            List<IKeyword> allKeywords = VocabularyKeywordIndex.For(typeDeclaration.LocatedSchema.Vocabulary).GetPresentKeywords(typeDeclaration.LocatedSchema.Schema);
 
             if (allKeywords.Count > 0)
             {
@@ -1865,31 +1867,41 @@ public static class TypeDeclarationExtensions
 
         if (!that.TryGetMetadata(nameof(CanReduce), out bool canReduce))
         {
-            canReduce = CanReduce(that.LocatedSchema);
+            canReduce = CanReduce(that.LocatedSchema, that.Keywords());
             that.SetMetadata(nameof(CanReduce), canReduce);
         }
 
         return canReduce;
 
-        static bool CanReduce(LocatedSchema locatedSchema)
+        static bool CanReduce(LocatedSchema locatedSchema, IReadOnlyCollection<IKeyword> presentKeywords)
         {
             if (locatedSchema.IsBooleanSchema)
             {
                 return false;
             }
 
-            IKeyword? hidesSiblingsKeyword = locatedSchema.Vocabulary.Keywords
-                    .FirstOrDefault(k => k is IHidesSiblingsKeyword && locatedSchema.Schema.HasKeyword(k));
-
-            if (hidesSiblingsKeyword is IKeyword k)
+            // Only the keywords present in the schema are consulted: every keyword's CanReduce
+            // answers true when the keyword is absent, so this is the same answer as asking
+            // every keyword in the vocabulary, without a property scan per keyword.
+            foreach (IKeyword keyword in presentKeywords)
             {
-                // We have a keyword that hides its siblings
-                // is it something that blocks reduction?
-                return k.CanReduce(locatedSchema.Schema);
+                if (keyword is IHidesSiblingsKeyword)
+                {
+                    // We have a keyword that hides its siblings
+                    // is it something that blocks reduction?
+                    return keyword.CanReduce(locatedSchema.Schema);
+                }
             }
 
-            return locatedSchema.Vocabulary.Keywords.All(
-                    k => k.CanReduce(locatedSchema.Schema));
+            foreach (IKeyword keyword in presentKeywords)
+            {
+                if (!keyword.CanReduce(locatedSchema.Schema))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 
@@ -2291,7 +2303,7 @@ public static class TypeDeclarationExtensions
         // Now go through all the allOf union types and see if we can find one
         foreach (IAllOfSubschemaValidationKeyword keyword in typeDeclaration.Keywords().OfType<IAllOfSubschemaValidationKeyword>())
         {
-            foreach (TypeDeclaration t in keyword.GetSubschemaTypeDeclarations(typeDeclaration).Select(t => t.ReducedTypeDeclaration().ReducedType))
+            foreach (TypeDeclaration t in typeDeclaration.GetSubschemaTypeDeclarationsFor(keyword).Select(t => t.ReducedTypeDeclaration().ReducedType))
             {
                 if (t.SingleConstantValue() is JsonElement constantValue &&
                     constantValue.ValueKind != JsonValueKind.Undefined)
@@ -2370,7 +2382,7 @@ public static class TypeDeclarationExtensions
         // Now go through all the allOf union types and see if we can find one
         foreach (IAllOfSubschemaValidationKeyword keyword in typeDeclaration.Keywords().OfType<IAllOfSubschemaValidationKeyword>())
         {
-            foreach (TypeDeclaration t in keyword.GetSubschemaTypeDeclarations(typeDeclaration).Select(t => t.ReducedTypeDeclaration().ReducedType))
+            foreach (TypeDeclaration t in typeDeclaration.GetSubschemaTypeDeclarationsFor(keyword).Select(t => t.ReducedTypeDeclaration().ReducedType))
             {
                 if (t.Format() is string format)
                 {
@@ -2541,7 +2553,7 @@ public static class TypeDeclarationExtensions
             // Now go through all the allOf union types and see if we can find one
             foreach (IAllOfSubschemaValidationKeyword keyword in typeDeclaration.Keywords().OfType<IAllOfSubschemaValidationKeyword>())
             {
-                foreach (TypeDeclaration t in keyword.GetSubschemaTypeDeclarations(typeDeclaration).Select(t => t.ReducedTypeDeclaration().ReducedType))
+                foreach (TypeDeclaration t in typeDeclaration.GetSubschemaTypeDeclarationsFor(keyword).Select(t => t.ReducedTypeDeclaration().ReducedType))
                 {
                     if (childAccessor(t) is ArrayItemsTypeDeclaration referencedArrayItemsTypeDeclaration)
                     {
@@ -2617,7 +2629,7 @@ public static class TypeDeclarationExtensions
             // Now go through all the allOf union types and see if we can find one
             foreach (IAllOfSubschemaValidationKeyword keyword in typeDeclaration.Keywords().OfType<IAllOfSubschemaValidationKeyword>())
             {
-                foreach (TypeDeclaration t in keyword.GetSubschemaTypeDeclarations(typeDeclaration).Select(t => t.ReducedTypeDeclaration().ReducedType))
+                foreach (TypeDeclaration t in typeDeclaration.GetSubschemaTypeDeclarationsFor(keyword).Select(t => t.ReducedTypeDeclaration().ReducedType))
                 {
                     TupleTypeDeclaration? tupleType = t.TupleType() ?? t.ExplicitTupleType() ?? t.ImplicitTupleType();
                     if (tupleType is TupleTypeDeclaration referencedTupleTypeDeclaration)
@@ -2760,7 +2772,7 @@ public static class TypeDeclarationExtensions
             // Now go through all the allOf union types and see if we can find one
             foreach (IAllOfSubschemaValidationKeyword keyword in typeDeclaration.Keywords().OfType<IAllOfSubschemaValidationKeyword>())
             {
-                foreach (TypeDeclaration t in keyword.GetSubschemaTypeDeclarations(typeDeclaration).Select(t => t.ReducedTypeDeclaration().ReducedType))
+                foreach (TypeDeclaration t in typeDeclaration.GetSubschemaTypeDeclarationsFor(keyword).Select(t => t.ReducedTypeDeclaration().ReducedType))
                 {
                     if (childAccessor(t) is FallbackObjectPropertyType referencedObjectPropertyTypeDeclaration)
                     {

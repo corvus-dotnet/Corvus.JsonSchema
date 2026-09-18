@@ -174,6 +174,45 @@ public readonly partial struct StylecopSchema
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static explicit operator decimal(SpecifiesTheTabWidth value) => value._parent.TryGetValue(value._idx, out decimal result) ? result : throw new FormatException();
 
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator sbyte(SpecifiesTheTabWidth value) => value._parent.TryGetValue(value._idx, out sbyte result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator byte(SpecifiesTheTabWidth value) => value._parent.TryGetValue(value._idx, out byte result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator short(SpecifiesTheTabWidth value) => value._parent.TryGetValue(value._idx, out short result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator ushort(SpecifiesTheTabWidth value) => value._parent.TryGetValue(value._idx, out ushort result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator int(SpecifiesTheTabWidth value) => value._parent.TryGetValue(value._idx, out int result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator uint(SpecifiesTheTabWidth value) => value._parent.TryGetValue(value._idx, out uint result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator ulong(SpecifiesTheTabWidth value) => value._parent.TryGetValue(value._idx, out ulong result) ? result : throw new FormatException();
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator float(SpecifiesTheTabWidth value) => value._parent.TryGetValue(value._idx, out float result) ? result : throw new FormatException();
+
+#if NET
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator Int128(SpecifiesTheTabWidth value) => value._parent.TryGetValue(value._idx, out Int128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator UInt128(SpecifiesTheTabWidth value) => value._parent.TryGetValue(value._idx, out UInt128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static explicit operator Half(SpecifiesTheTabWidth value) => value._parent.TryGetValue(value._idx, out Half result) ? result : throw new FormatException();
+#endif
+
                 /// <summary>
                 /// Operator ==.
                 /// </summary>

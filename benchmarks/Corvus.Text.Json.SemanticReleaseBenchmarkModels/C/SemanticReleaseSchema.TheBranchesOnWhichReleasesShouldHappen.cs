@@ -85,8 +85,9 @@ public readonly partial struct SemanticReleaseSchema
         /// <summary>
         /// Gets the default instance.
         /// </summary>
+        #pragma warning disable CS0618 // Type or member is obsolete
         public static TheBranchesOnWhichReleasesShouldHappen DefaultInstance { get; } = TheBranchesOnWhichReleasesShouldHappen.ParseValue("[\n        \"+([0-9])?(.{+([0-9]),x}).x\",\n        \"master\",\n        \"next\",\n        \"next-major\",\n        {\n          \"name\": \"beta\",\n          \"prerelease\": true\n        },\n        {\n          \"name\": \"alpha\",\n          \"prerelease\": true\n        }\n      ]"u8);
-
+        #pragma warning restore CS0618
         /// <summary>
         /// Gets the item at the given index.
         /// </summary>

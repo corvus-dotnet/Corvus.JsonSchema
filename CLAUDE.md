@@ -14,6 +14,8 @@ ones before working. Do not infer conventions from surrounding code. If anything
 3. If any file under `.github/`, `docs/`, or a skill/instruction file changed, run
    `pwsh docs/update-code-sample-catalog.ps1 -UpdateFile <path>` for each changed file, then
    `-Check` (must exit 0). CI fails on a stale catalog.
+4. If `global.json`, an analyzer package version, or a project's analyzer references changed, run
+   `pwsh update-generated-code-analyzer-config.ps1` and commit the result; `-Check` must exit 0 (CI runs it after the build).
 
 ## After changing a code generator
 

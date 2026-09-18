@@ -90,8 +90,9 @@ public readonly partial struct NestCliSchema
             /// <summary>
             /// Gets the default instance.
             /// </summary>
+            #pragma warning disable CS0618 // Type or member is obsolete
             public static AssetsOptionsArray DefaultInstance { get; } = AssetsOptionsArray.ParseValue("[]"u8);
-
+            #pragma warning restore CS0618
             /// <summary>
             /// Gets the rank of the array.
             /// </summary>

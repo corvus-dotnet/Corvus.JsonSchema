@@ -38,3 +38,5 @@ https://learn\.microsoft\.com
 # www.asyncapi.com resets the connection ("Connection reset by peer") for the
 # automated checker in CI, though the tutorial links resolve fine in a browser.
 https://www\.asyncapi\.com
+# AutoMapper docs: TLS handshake fails from the link checker (fatal alert: HandshakeFailure)
+https://docs\.automapper\.org

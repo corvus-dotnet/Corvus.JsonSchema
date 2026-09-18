@@ -165,6 +165,45 @@ public readonly partial struct KrakendSchema
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static explicit operator decimal(MaximumMessageSize value) => value._parent.TryGetValue(value._idx, out decimal result) ? result : throw new FormatException();
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator sbyte(MaximumMessageSize value) => value._parent.TryGetValue(value._idx, out sbyte result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator byte(MaximumMessageSize value) => value._parent.TryGetValue(value._idx, out byte result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator short(MaximumMessageSize value) => value._parent.TryGetValue(value._idx, out short result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator ushort(MaximumMessageSize value) => value._parent.TryGetValue(value._idx, out ushort result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator int(MaximumMessageSize value) => value._parent.TryGetValue(value._idx, out int result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator uint(MaximumMessageSize value) => value._parent.TryGetValue(value._idx, out uint result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator ulong(MaximumMessageSize value) => value._parent.TryGetValue(value._idx, out ulong result) ? result : throw new FormatException();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator float(MaximumMessageSize value) => value._parent.TryGetValue(value._idx, out float result) ? result : throw new FormatException();
+
+#if NET
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator Int128(MaximumMessageSize value) => value._parent.TryGetValue(value._idx, out Int128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator UInt128(MaximumMessageSize value) => value._parent.TryGetValue(value._idx, out UInt128 result) ? result : throw new FormatException();
+#endif
+
+#if NET
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator Half(MaximumMessageSize value) => value._parent.TryGetValue(value._idx, out Half result) ? result : throw new FormatException();
+#endif
+
             /// <summary>
             /// Operator ==.
             /// </summary>

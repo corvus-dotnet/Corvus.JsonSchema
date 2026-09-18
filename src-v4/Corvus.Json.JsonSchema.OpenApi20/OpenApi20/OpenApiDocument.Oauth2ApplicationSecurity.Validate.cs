@@ -42,7 +42,7 @@ public readonly partial struct OpenApiDocument
                     result = result.UsingStack();
                 }
 
-                result = result.PushSchemaLocation("/definitions/oauth2ApplicationSecurity");
+                result = result.PushSchemaLocation("http://swagger.io/v2/schema.json#/definitions/oauth2ApplicationSecurity");
             }
 
             JsonValueKind valueKind = this.ValueKind;

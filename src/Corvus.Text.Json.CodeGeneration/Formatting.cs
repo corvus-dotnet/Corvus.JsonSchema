@@ -33,6 +33,11 @@ public static class Formatting
     /// </remarks>
     public const string GlobalDeclarationsFileName = "Corvus__GlobalDeclarations";
 
+    /// <summary>
+    /// The name of the file that carries the <c>[Union]</c> attribute polyfill for target frameworks before .NET 11.
+    /// </summary>
+    public const string UnionAttributeFileName = "Corvus__UnionAttribute";
+
     private static readonly string[] Keywords =
     [
         "abstract", "as", "base", "bool",
@@ -214,7 +219,7 @@ public static class Formatting
     public static int ApplySuffix(int value, Span<char> buffer)
     {
 #if NET8_0_OR_GREATER
-        value.TryFormat(buffer, out int written);
+        value.TryFormat(buffer, out int written, default, System.Globalization.CultureInfo.InvariantCulture);
         return written;
 #else
         if (value < 0)

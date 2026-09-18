@@ -587,6 +587,98 @@ public readonly partial struct ClangFormatSchema
 
                 return defaultMatch();
             }
+
+            /// <summary>
+            /// Converts the value to its <see cref="KnownValues"/> equivalent.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+            public static implicit operator KnownValues(Mutable value)
+            {
+                if (value.TryGetKnownValue(out KnownValues result))
+                {
+                    return result;
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+            /// </summary>
+            /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+            /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+            public bool TryGetKnownValue(out KnownValues result)
+            {
+                if (this.ValueEquals(Constants.Enum1))
+                {
+                    result = KnownValues.None;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum2))
+                {
+                    result = KnownValues.Cpp;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum3))
+                {
+                    result = KnownValues.ObjC;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum4))
+                {
+                    result = KnownValues.CSharp;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum5))
+                {
+                    result = KnownValues.Java;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum6))
+                {
+                    result = KnownValues.JavaScript;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum7))
+                {
+                    result = KnownValues.Json;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum8))
+                {
+                    result = KnownValues.Proto;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum9))
+                {
+                    result = KnownValues.TableGen;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum10))
+                {
+                    result = KnownValues.TextProto;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum11))
+                {
+                    result = KnownValues.Verilog;
+                    return true;
+                }
+
+                result = default;
+                return false;
+            }
         }
 
         public ref struct Source
@@ -645,6 +737,9 @@ public readonly partial struct ClangFormatSchema
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(string value) => new (value.AsSpan());
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(KnownValues value) => (ClangFormat35LanguageThisFormatStyleIsTargetedAt)value;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);

@@ -38,12 +38,76 @@
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
+  <!-- The static optimisation profile for native AOT (see buildTransitive/Corvus.Text.Json.targets). The build's
+       GenerateAotProfile task (CI's compile phase, or on request) records it from this code into obj/profiles, which
+       the package takes in preference to the checked-in file; see docs/ReleaseProcess.md. -->
+  <PropertyGroup>
+    <CorvusTextJsonProfileFile>profiles\Corvus.Text.Json.mibc</CorvusTextJsonProfileFile>
+    <CorvusTextJsonProfileFile Condition="Exists('$(MSBuildProjectDirectory)/obj/profiles/Corvus.Text.Json.mibc')">$(MSBuildProjectDirectory)/obj/profiles/Corvus.Text.Json.mibc</CorvusTextJsonProfileFile>
+  </PropertyGroup>
+  <ItemGroup Label="Static optimisation profile for native AOT">
+    <None Include="buildTransitive\Corvus.Text.Json.targets" Pack="true" PackagePath="buildTransitive" Visible="false" />
+    <None Include="$(CorvusTextJsonProfileFile)" Pack="true" PackagePath="profiles" Visible="false" />
+  </ItemGroup>
   <ItemGroup Label="Bundled Analyzers">
     <ProjectReference Include="..\Corvus.Text.Json.Analyzers\Corvus.Text.Json.Analyzers.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
     <None Include="..\Corvus.Text.Json.Analyzers\bin\$(Configuration)\netstandard2.0\Corvus.Text.Json.Analyzers.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Corvus.Text.Json.Tests" />
+    <InternalsVisibleTo Include="Corvus.Text.Json.RuntimeEvaluator.Tests" />
+    <InternalsVisibleTo Include="Corvus.Text.Json.RuntimeEvaluator.Benchmarks" />
+  </ItemGroup>
+  <ItemGroup Label="Runtime JSON Schema evaluator">
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Compilation\AsciiChar.cs" />
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Compilation\Elements.cs" />
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Compilation\FusedObjects.cs" />
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Compilation\Metaschemas.cs" />
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Compilation\ProgramImage.cs" />
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Compilation\SchemaCompiler.cs" />
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Compilation\SchemaKeywords.cs" />
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Compilation\SchemaLoader.cs" />
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Compilation\SchemaNode.cs" />
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Compilation\StjDocumentModel.cs" />
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Compilation\UriUtilities.cs" />
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Compilation\Utf8NameMap.cs" />
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Evaluation\EvaluationState.cs" />
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Evaluation\Evaluator.cs" />
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Evaluation\Evaluator.UniqueItems.cs" />
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Exceptions.cs" />
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\JsonSchemaDialect.cs" />
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\JsonSchemaEvaluator.cs" />
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\JsonSchemaEvaluatorOptions.cs" />
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\JsonSchemaFormatMode.cs" />
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Polyfills\NetStandardExtensions.cs" />
+    <Compile Include="Corvus\Text\Json\RuntimeEvaluator\Polyfills\SkipLocalsInitAttribute.cs" />
+    <!-- Shared source: the ECMA-262 to .NET regex translator from the code generator. -->
+    <Compile Include="..\Corvus.Text.Json.CodeGeneration\EcmaRegexTranslator.cs" Link="Corvus\Text\Json\RuntimeEvaluator\Shared\EcmaRegexTranslator.cs" />
+  </ItemGroup>
+  <ItemGroup Label="Embedded metaschemas for the runtime evaluator">
+    <EmbeddedResource Include="metaschema\corvus\meta\corvus-extensions.json" LogicalName="metaschema.corvus.meta.corvus-extensions.json" />
+    <EmbeddedResource Include="metaschema\corvus\schema.json" LogicalName="metaschema.corvus.schema.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\applicator.json" LogicalName="metaschema.draft2019-09.meta.applicator.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\content.json" LogicalName="metaschema.draft2019-09.meta.content.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\core.json" LogicalName="metaschema.draft2019-09.meta.core.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\format.json" LogicalName="metaschema.draft2019-09.meta.format.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\hyper-schema.json" LogicalName="metaschema.draft2019-09.meta.hyper-schema.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\meta-data.json" LogicalName="metaschema.draft2019-09.meta.meta-data.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\meta\validation.json" LogicalName="metaschema.draft2019-09.meta.validation.json" />
+    <EmbeddedResource Include="metaschema\draft2019-09\schema.json" LogicalName="metaschema.draft2019-09.schema.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\applicator.json" LogicalName="metaschema.draft2020-12.meta.applicator.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\content.json" LogicalName="metaschema.draft2020-12.meta.content.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\core.json" LogicalName="metaschema.draft2020-12.meta.core.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\format-annotation.json" LogicalName="metaschema.draft2020-12.meta.format-annotation.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\format-assertion.json" LogicalName="metaschema.draft2020-12.meta.format-assertion.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\hyper-schema.json" LogicalName="metaschema.draft2020-12.meta.hyper-schema.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\meta-data.json" LogicalName="metaschema.draft2020-12.meta.meta-data.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\unevaluated.json" LogicalName="metaschema.draft2020-12.meta.unevaluated.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\meta\validation.json" LogicalName="metaschema.draft2020-12.meta.validation.json" />
+    <EmbeddedResource Include="metaschema\draft2020-12\schema.json" LogicalName="metaschema.draft2020-12.schema.json" />
+    <EmbeddedResource Include="metaschema\draft4\schema.json" LogicalName="metaschema.draft4.schema.json" />
+    <EmbeddedResource Include="metaschema\draft6\schema.json" LogicalName="metaschema.draft6.schema.json" />
+    <EmbeddedResource Include="metaschema\draft7\schema.json" LogicalName="metaschema.draft7.schema.json" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="System" />
@@ -219,12 +283,14 @@
     <Compile Include="Corvus\Text\Json\Document\JsonElementExtensions.cs" />
     <Compile Include="Corvus\Text\Json\Document\JsonElementExtensions.JsonPointer.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\JsonSchemaEvaluation.Null.cs" />
+    <Compile Include="Corvus\Text\Json\JsonSchema\Internal\JsonSchemaEvaluation.Messages.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\JsonSchemaEvaluation.Boolean.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\JsonSchemaMatcher.cs" />
     <Compile Include="Corvus\Text\Json\Document\DescendantPropertyEnumerator.cs" />
     <Compile Include="Corvus\Text\Json\Document\ObjectEnumerator{T}.cs" />
     <Compile Include="Corvus\Text\Json\Document\Internal\ObjectEnumerator.cs" />
     <Compile Include="Corvus\Text\Json\Document\ParsedJsonDocument.cs" />
+    <Compile Include="Corvus\Text\Json\Document\RawDocumentAccess.cs" />
     <Compile Include="Corvus\Text\Json\Document\ParsedJsonDocument.Parse.cs" />
     <Compile Include="Corvus\Text\Json\Document\ParsedJsonDocument.SourceLocation.cs" />
     <Compile Include="Corvus\Text\Json\Document\ParsedJsonDocument.JsonPointer.cs" />

@@ -115,8 +115,9 @@ public readonly partial struct LazygitSchema
                 /// <summary>
                 /// Gets the default instance.
                 /// </summary>
+                #pragma warning disable CS0618 // Type or member is obsolete
                 public static JumpToBlock DefaultInstance { get; } = JumpToBlock.ParseValue("[\n                \"1\",\n                \"2\",\n                \"3\",\n                \"4\",\n                \"5\"\n              ]"u8);
-
+                #pragma warning restore CS0618
                 /// <summary>
                 /// Gets the item at the given index.
                 /// </summary>

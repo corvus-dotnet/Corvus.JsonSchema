@@ -381,6 +381,7 @@ FodyWeavers.xsd
 # Ignore build outputs
 .zf/.cache/
 .zf/extensions/
+.zf/aot-profile/
 _codeCoverage/
 _packages/
 *.sbom.*

@@ -45,7 +45,7 @@ public readonly partial struct ExclusiveMaximum
                 result = result.UsingStack();
             }
 
-            result = result.PushSchemaLocation("/properties/exclusiveMaximum");
+            result = result.PushSchemaLocation("http://json-schema.org/draft-04/schema#/properties/exclusiveMaximum");
         }
 
         JsonValueKind valueKind = this.ValueKind;

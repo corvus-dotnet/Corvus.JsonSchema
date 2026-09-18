@@ -108,6 +108,36 @@ git push origin v5.0.1
 
 The tag push triggers the build workflow, which publishes to NuGet.org.
 
+## The native AOT profile
+
+`profiles/Corvus.Text.Json.mibc` in the `Corvus.Text.Json` package is the static optimisation profile its
+`buildTransitive/Corvus.Text.Json.targets` hands to the native AOT compiler (docs/RuntimeEvaluator.md, "Publishing
+an application"). It is recorded from the code being packaged by the build's `GenerateAotProfile` task
+(`.zf/config.ps1`), which runs in the compile phase on CI (`PostBuild`, Linux) before the package phase packs it:
+
+1. finds a .NET 11 runtime for dotnet-pgo (the dotnet-eng feed publishes `dotnet-pgo` as a .NET 11 tool only,
+   11.0.0-preview.6, pinned in the task): on CI the pipeline installs the 11 SDK (`additionalNetSdkVersion` in
+   `.github/workflows/build.yml`, an exact RC version since setup-dotnet resolves `11.0.x` to released builds only);
+   locally the task takes it from `dotnet`, then from `~/.dotnet`, and only otherwise installs one under
+   `.zf/aot-profile`; downloads and unpacks the tool; installs `dotnet-trace`;
+2. gathers the Sourcemeta corpora from the benchmark model projects, publishes the cold runner framework-dependent
+   with the identity (assembly, file and informational version) read back from the `Corvus.Text.Json.dll` the build
+   produced, since the publish rebuilds the library into the output the package phase packs and a plain publish would
+   give it the default 1.0.0.0 (as 5.6.0 shipped), failing if the identity changes; then traces the runner's
+   instrumented warm run over every corpus (`DOTNET_TieredPGO=1`, a call-count threshold of 10,000 so
+   methods stay instrumented, `ReadyToRun=0`, the runtime provider at keyword 0x1E000080018 level 5);
+3. `create-mibc` into `src/Corvus.Text.Json/obj/profiles/Corvus.Text.Json.mibc`, which `Corvus.Text.Json.csproj`
+   packs in preference to the checked-in file when it exists (`obj` travels between the pipeline's phases in the
+   build cache), and fails the build if the result is small or names fewer than 1,000 of the library's methods.
+
+The checked-in `src/Corvus.Text.Json/profiles/Corvus.Text.Json.mibc` is the fallback for local packs and is refreshed
+when the evaluator changes: `BUILDVAR_GenerateAotProfile=true ./build.ps1 -Tasks GenerateAotProfile`, then copy the
+`obj/profiles` file over it and commit. To check a packed library picks the profile up, publish the cold runner
+against the package (docs/LocalNuGetTesting.md for the feed):
+`dotnet publish benchmarks/Corvus.Text.Json.RuntimeEvaluator.ColdRunner -c Release -r linux-x64 -p:ColdAot=true -p:ColdPackage=<version> -p:RestoreConfigFile=<nuget.config>`;
+the ILC response file under the runner's `obj/.../native/` carries one `--mibc:` argument pointing into the package,
+and `<runner> warm 200 <corpus>` reads within about 10% of the JIT harness's figure (`tools/measure.sh warm`).
+
 ## Pre-release testing
 
 Pre-release packages are published to GitHub Packages on every branch build. To test a pre-release package:

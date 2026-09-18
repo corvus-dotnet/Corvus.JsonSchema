@@ -34,17 +34,17 @@ public sealed class FormatHandlerRegistry
     /// <summary>
     /// Gets all format handlers.
     /// </summary>
-    public IReadOnlyList<IFormatHandler> FormatHandlers => cachedFormatHandlers ??= handlers.OrderBy(h => h.Priority).ThenBy(h => h.GetType().Name).ToArray();
+    public IReadOnlyList<IFormatHandler> FormatHandlers => cachedFormatHandlers ??= handlers.OrderBy(h => h.Priority).ThenBy(h => h.GetType().Name, StringComparer.Ordinal).ToArray();
 
     /// <summary>
     /// Gets all numeric type format handlers.
     /// </summary>
-    public IReadOnlyList<INumberFormatHandler> NumberFormatHandlers => cachedNumberFormatHandlers ??= handlers.OfType<INumberFormatHandler>().OrderBy(h => h.Priority).ThenBy(h => h.GetType().Name).ToArray();
+    public IReadOnlyList<INumberFormatHandler> NumberFormatHandlers => cachedNumberFormatHandlers ??= handlers.OfType<INumberFormatHandler>().OrderBy(h => h.Priority).ThenBy(h => h.GetType().Name, StringComparer.Ordinal).ToArray();
 
     /// <summary>
     /// Gets all string type format handlers.
     /// </summary>
-    public IReadOnlyList<IStringFormatHandler> StringFormatHandlers => cachedStringFormatHandlers ??= handlers.OfType<IStringFormatHandler>().OrderBy(h => h.Priority).ThenBy(h => h.GetType().Name).ToArray();
+    public IReadOnlyList<IStringFormatHandler> StringFormatHandlers => cachedStringFormatHandlers ??= handlers.OfType<IStringFormatHandler>().OrderBy(h => h.Priority).ThenBy(h => h.GetType().Name, StringComparer.Ordinal).ToArray();
 
     /// <summary>
     /// Register a type format handler.

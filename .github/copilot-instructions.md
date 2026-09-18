@@ -15,7 +15,7 @@ The low-level reader/writer/document types derive from dotnet/runtime's `System.
 | `corvus-build-and-test` | Building, testing, TFM targeting, coverage methodology, test transcode helpers |
 | `corvus-codegen` | Source generator and CLI code generation from JSON Schema |
 | `corvus-keywords-and-validation` | JSON Schema keywords, vocabularies, validation handlers |
-| `corvus-standalone-evaluator` | Validation-only evaluator generation and annotation collection |
+| `corvus-standalone-evaluator` | Evaluator-only generation, the schema evaluation program, annotation collection |
 | `corvus-parsed-documents-and-memory` | Parsing, IJsonElement, memory model, UTF-8 transcoding |
 | `corvus-mutable-documents` | JsonWorkspace, JsonDocumentBuilder, mutation, JSON Patch |
 | `corvus-buffer-and-pooling` | stackalloc/ArrayPool/ThreadStatic pooling patterns |
@@ -66,7 +66,14 @@ dotnet test --solution Corvus.Text.Json.slnx --filter "FullyQualifiedName~Parsed
    ```
 
    This applies however the files changed (you, the user, accumulation across turns); CI fails on a stale catalog. Full workflow, triage rules, and script flags: `docs/CodeSampleCatalog.md`.
-4. **Allocation & decision self-audit**: scan your diff and report, under a `Decisions & deferrals` heading in your message, every (a) managed `string`/`List<string>`/`Dictionary` on a path where bytes are available, (b) non-`static` builder lambda where a `static` + `TContext` form exists, (c) reflection-based dispatch, (d) work deferred or abandoned, (e) fix that moved a cost rather than removing it (before/after `file:line`). "Genuine leaf" / "marginal" / "admin-rare" / "low-frequency" / "pragmatic" are red flags requiring the two-ended proof in `corvus-bytes-to-bytes` — never justifications. Prove warm-path allocation claims with a `[MemoryDiagnoser]` baseline-vs-new benchmark.
+4. **Generated-code analyzer configuration**: if `global.json`, an analyzer package version, or a project's analyzer references changed, regenerate and verify the configuration that keeps analyzers off generated code (see the `corvus-build-and-test` skill):
+
+   ```powershell
+   .\update-generated-code-analyzer-config.ps1          # rewrites analyzers/generated-code.globalconfig and the generated region of .editorconfig
+   .\update-generated-code-analyzer-config.ps1 -Check   # must exit 0; CI runs it after the build
+   ```
+
+5. **Allocation & decision self-audit**: scan your diff and report, under a `Decisions & deferrals` heading in your message, every (a) managed `string`/`List<string>`/`Dictionary` on a path where bytes are available, (b) non-`static` builder lambda where a `static` + `TContext` form exists, (c) reflection-based dispatch, (d) work deferred or abandoned, (e) fix that moved a cost rather than removing it (before/after `file:line`). "Genuine leaf" / "marginal" / "admin-rare" / "low-frequency" / "pragmatic" are red flags requiring the two-ended proof in `corvus-bytes-to-bytes` — never justifications. Prove warm-path allocation claims with a `[MemoryDiagnoser]` baseline-vs-new benchmark.
 
 ### Diagnostic discipline
 
@@ -162,7 +169,7 @@ Always `using`; prefer `JsonWorkspace.Create()` (thread-local rented) over `Crea
 | `Corvus.Text.Json.Patch` | RFC 6902 JSON Patch, Merge Patch, Diff (`docs/JsonPatch.md`) |
 | `Corvus.Text.Json.Jsonata` / `.JMESPath` / `.JsonLogic` / `.JsonPath` | Query/rule evaluators |
 | `Corvus.Text.Json.Yaml` | YAML 1.2 ↔ JSON conversion |
-| `Corvus.Text.Json.Validator` | Runtime dynamic schema validation via Roslyn (`docs/Validator.md`) |
+| `Corvus.Text.Json.Validator` | Runtime schema validation over the runtime evaluator, no Roslyn (`docs/Validator.md`) |
 | `Corvus.Text.Json.Compatibility` | V5 ↔ V4 ↔ `System.Text.Json` bridge for migration |
 | `Corvus.Numerics` | `BigNumber`, `BigInteger` |
 | `Corvus.NodaTimeExtensions` | NodaTime helpers |

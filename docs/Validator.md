@@ -2,13 +2,14 @@
 
 ## Overview
 
-`Corvus.Text.Json.Validator` is a library for dynamically loading, compiling, and validating JSON documents against JSON Schema at runtime. Unlike the build-time source generator, the Validator compiles schemas on the fly using Roslyn, making it ideal for scenarios where schemas are not known at compile time — such as schema registries, configuration validation, or user-supplied schemas.
+`Corvus.Text.Json.Validator` is a library for loading and validating JSON documents against JSON Schema at runtime. Unlike the build-time source generator, the Validator compiles schemas into an in-memory evaluator with the [runtime evaluator](./RuntimeEvaluator.md) — no code generation and no Roslyn — making it ideal for scenarios where schemas are not known at compile time, such as schema registries, configuration validation, or user-supplied schemas.
 
-It supports all major JSON Schema drafts (Draft 4, 6, 7, 2019-09, and 2020-12), plus OpenAPI 3.0 and Corvus custom vocabulary extensions.
+It supports all major JSON Schema drafts (Draft 4, 6, 7, 2019-09, and 2020-12), including custom metaschemas that declare their vocabularies with `$vocabulary`.
 
 ## Key Features
 
-- **Runtime Schema Compilation**: Dynamically generates and compiles strongly-typed validators from JSON Schema using Roslyn
+- **Millisecond Cold Start**: Schemas compile into an in-memory evaluator in milliseconds, with no code generation and no compiler in the process
+- **Zero-Allocation Validation**: Once warm, pass/fail validation of a parsed document allocates nothing
 - **Multiple Schema Drafts**: Supports Draft 4, 6, 7, 2019-09, and 2020-12 with automatic draft detection
 - **Schema Caching**: Compiled schemas are cached so repeated validations against the same schema are fast
 - **Multiple Input Formats**: Validate from strings, byte arrays, streams, `ReadOnlyMemory`, `ReadOnlySequence`, or pre-parsed `JsonElement`
@@ -45,7 +46,7 @@ bool isValid = schema.Validate("""{"name": "Alice", "age": 30}""");
 JsonSchema schema = JsonSchema.FromFile("path/to/schema.json");
 ```
 
-The file's directory is used as the base for resolving relative `$ref` references. The canonical URI is extracted from the `$id` property in the schema.
+The file's location is the base URI for resolving relative `$ref` references unless the schema declares an absolute `$id`. The schema is cached under its normalised file path.
 
 ### From a String
 
@@ -81,13 +82,16 @@ JsonSchema schema = JsonSchema.FromStream(stream);
 
 ### From a URI
 
-Resolve a schema by its canonical URI. The schema is fetched from the file system or via HTTP, depending on the URI scheme:
+Resolve a schema by its canonical URI. The document is retrieved through the `additionalDocumentResolver`, the `additionalSchemaFiles`, the embedded standard metaschemas, and then the file system or HTTP, depending on the URI scheme. A fragment selects a subschema within the document:
 
 ```csharp
 JsonSchema schema = JsonSchema.FromUri("https://example.com/schemas/person.json");
 
 // Or use the shorthand alias
 JsonSchema schema = JsonSchema.From("file:///C:/schemas/person.json");
+
+// Validate against a subschema of the document
+JsonSchema address = JsonSchema.FromUri("https://example.com/schemas/person.json#/$defs/address");
 ```
 
 ## Validating Documents
@@ -138,12 +142,11 @@ if (!valid)
 
 | Level | What It Collects |
 |-------|-----------------|
-| `Flag` | Pass/fail only — no diagnostic details |
 | `Basic` | Failure messages without location information |
 | `Detailed` | Failure messages with schema location and evaluation path |
 | `Verbose` | All evaluation steps, including successful validations |
 
-Use `Flag` for maximum performance when you only need a boolean result. Use `Detailed` or `Verbose` when diagnosing schema violations.
+Omit the collector for maximum performance when you only need a boolean result: flag validation fails fast and allocates nothing. Use `Detailed` or `Verbose` when diagnosing schema violations.
 
 ## Configuration Options
 
@@ -153,7 +156,7 @@ Pass a `JsonSchema.Options` instance to any factory method to control schema com
 var options = new JsonSchema.Options(
     alwaysAssertFormat: true,
     allowFileSystemAndHttpResolution: true,
-    fallbackVocabulary: null,
+    defaultDialect: JsonSchemaDialect.Draft202012,
     additionalSchemaFiles: new[]
     {
         new AdditionalSchemaFile(
@@ -170,9 +173,9 @@ JsonSchema schema = JsonSchema.FromFile("person.json", options: options);
 |--------|---------|-------------|
 | `alwaysAssertFormat` | `true` | When `true`, the `format` keyword is enforced as a validation assertion. When `false`, it is treated as an annotation only (per the JSON Schema specification). |
 | `allowFileSystemAndHttpResolution` | `true` | Enable resolution of `$ref` references via `file://` and `http://`/`https://` URIs. Set to `false` to restrict resolution to pre-loaded schemas only. |
-| `fallbackVocabulary` | Draft 2020-12 | The JSON Schema vocabulary to use when the schema does not include a `$schema` keyword. |
-| `additionalSchemaFiles` | `null` | Pre-load external schema files for `$ref` resolution. Each entry maps a canonical URI to a local file path. |
-| `hostAssembly` | Entry assembly | The assembly context used for resolving metadata references during dynamic compilation. |
+| `defaultDialect` | `JsonSchemaDialect.Draft202012` | The JSON Schema dialect to use when the schema does not include a `$schema` keyword. |
+| `additionalSchemaFiles` | `null` | Pre-load external schema files for `$ref` resolution. Each entry maps a canonical URI to a local file path; the file is also registered under its `$id` and its full path. |
+| `additionalDocumentResolver` | `null` | A `JsonSchemaDocumentResolver` delegate that supplies referenced documents from memory, consulted before the file system and HTTP. |
 
 ## Pre-loading Referenced Schemas
 
@@ -200,10 +203,10 @@ This avoids network calls for referenced schemas and ensures deterministic build
 Compiled schemas are cached automatically by their canonical URI and `alwaysAssertFormat` flag. Subsequent calls to any `From*` method with the same URI return the cached validator without recompilation:
 
 ```csharp
-// First call: compiles the schema (~100ms)
+// First call: compiles the schema (milliseconds)
 JsonSchema schema1 = JsonSchema.FromFile("person.json");
 
-// Second call: returns cached validator (sub-millisecond)
+// Second call: returns the cached evaluator
 JsonSchema schema2 = JsonSchema.FromFile("person.json");
 ```
 
@@ -215,26 +218,13 @@ JsonSchema schema = JsonSchema.FromFile("person.json", refreshCache: true);
 
 ## How It Works
 
-Under the hood, the Validator uses the same code generation engine as the source generator and CLI tool:
+The Validator is a thin wrapper over the [runtime evaluator](./RuntimeEvaluator.md):
 
-1. **Parse** the JSON Schema document
-2. **Resolve** all `$ref` references using registered document resolvers
-3. **Generate** C# source code for strongly-typed validators (identical output to the `corvusjson` CLI tool)
-4. **Compile** the generated code using Roslyn (`Microsoft.CodeAnalysis.CSharp`) into an in-memory assembly
-5. **Load** the compiled assembly and create a validation pipeline
-6. **Cache** the pipeline for subsequent validations against the same schema
+1. **Load** the JSON Schema document and any documents it references, using the registered resolvers
+2. **Compile** the schema graph into an in-memory evaluator: every `$ref` is resolved at compile time, regular expressions are compiled, and flag-mode fast paths (discriminators, type unions, unrolled objects) are precomputed
+3. **Cache** the evaluator by canonical URI and `alwaysAssertFormat` for subsequent validations against the same schema
 
-This means the Validator produces the exact same validation logic as build-time source generation — the only difference is that compilation happens at runtime.
-
-### Hosting requirement: preserve the compilation context
-
-Because compilation happens at runtime, the Roslyn compiler reads the host application's reference assemblies and preprocessor symbols from its `.deps.json`. Any application or test project that hosts the Validator must set `PreserveCompilationContext` in its project file. Without it, the first validation throws, reporting that the generated validator does not implement its expected interface, because the runtime compilation ran against an incomplete reference set.
-
-```xml
-<PropertyGroup>
-  <PreserveCompilationContext>true</PreserveCompilationContext>
-</PropertyGroup>
-```
+Validation walks the parsed document once against the compiled graph. It shares the format, number, and string helpers used by generated code, so it agrees with source-generated models instance for instance, and it produces the same results-collector output and annotations. No hosting configuration is required: the Validator has no dependency on Roslyn or on the host's compilation context.
 
 ## Supported JSON Schema Drafts
 
@@ -246,7 +236,7 @@ Because compilation happens at runtime, the Roslyn compiler reads the host appli
 | Draft 2019-09 | `https://json-schema.org/draft/2019-09/schema` |
 | Draft 2020-12 | `https://json-schema.org/draft/2020-12/schema` |
 
-The Validator also supports OpenAPI 3.0 schema vocabulary and Corvus custom extensions.
+Custom metaschemas are supported when they declare their vocabularies with `$vocabulary`; metaschemas without `$vocabulary` (Draft 7 and earlier) fall back to the dialect selected by `$schema` or `defaultDialect`.
 
 ## Use Cases
 

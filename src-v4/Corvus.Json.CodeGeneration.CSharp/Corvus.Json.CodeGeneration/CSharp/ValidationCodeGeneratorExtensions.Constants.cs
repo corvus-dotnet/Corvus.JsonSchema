@@ -151,7 +151,7 @@ public static partial class ValidationCodeGeneratorExtensions
 
         Debug.Assert(value.ValueKind == JsonValueKind.Number, "The value must be a number.");
 
-        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
+        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
         generator
             .AppendLineIndent("/// <summary>")
@@ -175,7 +175,7 @@ public static partial class ValidationCodeGeneratorExtensions
 
         Debug.Assert(value.ValueKind == JsonValueKind.Number, "The value must be a number.");
 
-        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
+        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
         generator
             .AppendLineIndent("/// <summary>")
@@ -199,7 +199,7 @@ public static partial class ValidationCodeGeneratorExtensions
 
         Debug.Assert(definition.Value.ValueKind == JsonValueKind.String, "The value must be a string.");
 
-        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
+        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
         FormatHandlerRegistry.Instance.FormatHandlers.AppendFormatConstant(generator, keyword, definition.Format, memberName, definition.Value);
 
@@ -215,7 +215,7 @@ public static partial class ValidationCodeGeneratorExtensions
 
         Debug.Assert(value.ValueKind == JsonValueKind.String, "The value must be a string.");
 
-        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
+        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
         generator
             .AppendLineIndent("/// <summary>")
@@ -239,7 +239,7 @@ public static partial class ValidationCodeGeneratorExtensions
 
         Debug.Assert(value.ValueKind == JsonValueKind.Null, "The value must be null.");
 
-        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
+        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
         generator
             .AppendLineIndent("/// <summary>")
@@ -261,7 +261,7 @@ public static partial class ValidationCodeGeneratorExtensions
 
         Debug.Assert(value.ValueKind == JsonValueKind.True || value.ValueKind == JsonValueKind.False, "The value must be a boolean.");
 
-        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
+        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
         generator
             .AppendLineIndent("/// <summary>")
@@ -285,7 +285,7 @@ public static partial class ValidationCodeGeneratorExtensions
 
         Debug.Assert(value.ValueKind == JsonValueKind.Object, "The value must be an object.");
 
-        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
+        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
         generator
             .AppendLineIndent("/// <summary>")
@@ -309,7 +309,7 @@ public static partial class ValidationCodeGeneratorExtensions
 
         Debug.Assert(value.ValueKind == JsonValueKind.Array, "The value must be an array.");
 
-        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
+        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
         generator
             .AppendLineIndent("/// <summary>")
@@ -333,7 +333,7 @@ public static partial class ValidationCodeGeneratorExtensions
 
         Debug.Assert(value.ValueKind == JsonValueKind.String, "The value must be a string.");
 
-        string memberName = generator.GetPropertyNameInScope(keyword.Keyword, suffix: index?.ToString());
+        string memberName = generator.GetPropertyNameInScope(keyword.Keyword, suffix: index?.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
         generator
             .AppendLineIndent("/// <summary>")
@@ -356,7 +356,7 @@ public static partial class ValidationCodeGeneratorExtensions
             return generator;
         }
 
-        string? suffix = index?.ToString();
+        string? suffix = index?.ToString(System.Globalization.CultureInfo.InvariantCulture);
         string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: suffix);
         string methodName = generator.GetMethodNameInScope(keyword.Keyword, prefix: "Create", suffix: suffix);
 
@@ -381,7 +381,7 @@ public static partial class ValidationCodeGeneratorExtensions
         }
 
         string translatedValue = EcmaRegexTranslator.TranslateOrFallback(value);
-        string memberName = generator.GetMethodNameInScope(keyword.Keyword, prefix: "Create", suffix: index?.ToString());
+        string memberName = generator.GetMethodNameInScope(keyword.Keyword, prefix: "Create", suffix: index?.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
         return generator
 #if BUILDING_SOURCE_GENERATOR
