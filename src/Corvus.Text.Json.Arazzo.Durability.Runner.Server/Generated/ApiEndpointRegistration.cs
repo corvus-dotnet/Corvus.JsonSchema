@@ -29,10 +29,11 @@ public static class ApiEndpointRegistration
     /// <param name="leasesHandler">The handler for ApiLeases operations.</param>
     /// <param name="checkpointsHandler">The handler for ApiCheckpoints operations.</param>
     /// <param name="catalogHandler">The handler for ApiCatalog operations.</param>
+    /// <param name="serverOptions">Optional registration-time server options (request body limits, etc.). When <see langword="null"/>, defaults are used.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiClaimsHandler claimsHandler, IApiLeasesHandler leasesHandler, IApiCheckpointsHandler checkpointsHandler, IApiCatalogHandler catalogHandler)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiClaimsHandler claimsHandler, IApiLeasesHandler leasesHandler, IApiCheckpointsHandler checkpointsHandler, IApiCatalogHandler catalogHandler, ApiServerOptions? serverOptions = null)
     {
-        return MapApiEndpoints(app, claimsHandler, leasesHandler, checkpointsHandler, catalogHandler, configureEndpoint: null);
+        return MapApiEndpoints(app, claimsHandler, leasesHandler, checkpointsHandler, catalogHandler, configureEndpoint: null, serverOptions: serverOptions);
     }
 
     /// <summary>
@@ -44,9 +45,11 @@ public static class ApiEndpointRegistration
     /// <param name="checkpointsHandler">The handler for ApiCheckpoints operations.</param>
     /// <param name="catalogHandler">The handler for ApiCatalog operations.</param>
     /// <param name="configureEndpoint">An optional callback invoked once per generated endpoint, after the route is mapped, to apply per-endpoint conventions (authorization, naming, tags, output caching, rate limiting, etc.). May be <see langword="null"/>.</param>
+    /// <param name="serverOptions">Optional registration-time server options (request body limits, etc.). When <see langword="null"/>, defaults are used.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiClaimsHandler claimsHandler, IApiLeasesHandler leasesHandler, IApiCheckpointsHandler checkpointsHandler, IApiCatalogHandler catalogHandler, ConfigureEndpoint? configureEndpoint)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiClaimsHandler claimsHandler, IApiLeasesHandler leasesHandler, IApiCheckpointsHandler checkpointsHandler, IApiCatalogHandler catalogHandler, ConfigureEndpoint? configureEndpoint, ApiServerOptions? serverOptions = null)
     {
+        serverOptions ??= new ApiServerOptions();
 
         IEndpointConventionBuilder __ClaimRunEndpoint = app.MapPost("/claims", async (HttpContext context) =>
         {
@@ -57,6 +60,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.ClaimRequest>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
@@ -141,6 +148,10 @@ public static class ApiEndpointRegistration
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.TimerClaimRequest>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
                 catch
                 {
                     context.Response.StatusCode = 400;
@@ -223,6 +234,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
@@ -376,6 +391,10 @@ public static class ApiEndpointRegistration
                     try
                     {
                         bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.LeaseRenewal>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
                     }
                     catch
                     {

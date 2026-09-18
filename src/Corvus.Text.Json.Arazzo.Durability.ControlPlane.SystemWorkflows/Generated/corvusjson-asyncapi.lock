@@ -1,13 +1,17 @@
 {
   "excludeChannels": [],
-  "generatedAt": "2026-07-19T12:36:34.6979800\u002B00:00",
+  "generatedAt": "2026-09-18T12:45:33.8317099\u002B00:00",
   "generatedFiles": [
     "PublishAccessNotificationProducer.cs",
     "PublishAccessDecisionProducer.cs",
     "IReceiveAccessNotificationHandler.cs",
     "ReceiveAccessNotificationConsumer.cs",
+    "IReceiveAccessNotificationWithDeliveryContextHandler.cs",
+    "ReceiveAccessNotificationWithDeliveryContextConsumer.cs",
     "IReceiveAccessDecisionHandler.cs",
     "ReceiveAccessDecisionConsumer.cs",
+    "IReceiveAccessDecisionWithDeliveryContextHandler.cs",
+    "ReceiveAccessDecisionWithDeliveryContextConsumer.cs",
     "PublishAccessNotificationAccessNotificationMessage.cs",
     "PublishAccessDecisionAccessDecisionMessage.cs",
     "ReceiveAccessNotificationAccessNotificationMessage.cs",
@@ -30,13 +34,13 @@
     "Models/AccessNotificationPayload.JsonStringArray.cs",
     "Models/AccessNotificationPayload.JsonStringArray.Mutable.cs",
     "Models/AccessNotificationPayload.JsonStringArray.JsonSchema.cs",
-    "Models/Corvus__GlobalDeclarations.cs"
+    "Models/CorvusJsonSchemaProgram.cs"
   ],
-  "generatorVersion": "1.0.0\u002B43c1379fbb8f49fd3a81d4ca4c3668718434f510",
+  "generatorVersion": "1.0.0\u002B32eda52f63230a0c10c87a1d6639ee1a582d6c61",
   "includeChannels": [],
   "mode": "both",
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.SystemWorkflows",
-  "specFileHash": "caa570cede52eb04d417eaaea91948db820b28c21f215aa025463cbe671aae9b",
+  "specFileHash": "72acb2a20c36d2b9ccdd265fa55ecfccab593b32bad6ee6e0c8bb45094486a84",
   "specVersion": "3.0",
   "tags": []
 }

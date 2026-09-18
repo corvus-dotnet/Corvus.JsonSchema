@@ -83,6 +83,34 @@ public sealed class ApiCheckpointsClient : IApiCheckpointsClient
         return SendWithStreamBodyAsyncCore<SaveCheckpointRequest, SaveCheckpointResponse>(workspace, request, body, "application/octet-stream", responseValidationMode, cancellationToken);
     }
 
+    /// <summary>
+    /// Save a run's checkpoint
+    /// </summary>
+    /// <remarks>
+    /// <para>Replaces the run's single row under compare-and-swap. The runner proposes a sequence and the server accepts **only** the persisted sequence plus one; it validates rather than assigns, so the value is predictable to the writer at the moment it authors the checkpoint and authoritative in the store afterwards.</para><para>The store-level compare-and-swap is the etag **and** the persisted sequence together, but the runner supplies only the sequence: the server holds the etag it last wrote and threads it, so a runner carrying one as well would be carrying a second predicate that can never disagree with the first. A save that loses the predicate answers `409` carrying the accepted sequence, and **never** `204`: a superseded save reported as success is indistinguishable from a durable write, which would leave a runner's anchor committed to a checkpoint the store does not have. That is the one failure this operation exists to make impossible.</para><para>The environment claimed in the route is validated against the principal's bindings before anything is read or written, refusing `409` exactly as a lost lease does.</para><para>A retry is a byte-identical resend of the same sequence, not a fresh authoring. The response is `204` rather than the stored document, because the runner already holds the bytes it sent and returning them would double the cost of the hottest operation in the system.</para>
+    /// </remarks>
+    /// <param name="environment">The environment parameter.</param>
+    /// <param name="runId">The runId parameter.</param>
+    /// <param name="xArazzoLease">The X-Arazzo-Lease parameter.</param>
+    /// <param name="xArazzoCheckpointSeq">The X-Arazzo-Checkpoint-Seq parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
+    public ValueTask<SaveCheckpointResponse> SaveCheckpointAsync(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName.Source environment, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId.Source runId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken.Source xArazzoLease, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.CheckpointSequence.Source xArazzoCheckpointSeq, Func<Stream, CancellationToken, ValueTask> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName EnvironmentValue = Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName.CreateBuilder(workspace, environment, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId RunIdValue = Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RunId.CreateBuilder(workspace, runId, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken XArazzoLeaseValue = Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.LeaseToken.CreateBuilder(workspace, xArazzoLease, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.CheckpointSequence XArazzoCheckpointSeqValue = Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.CheckpointSequence.CreateBuilder(workspace, xArazzoCheckpointSeq, 30).RootElement;
+        SaveCheckpointRequest request = new(EnvironmentValue, RunIdValue, XArazzoLeaseValue, XArazzoCheckpointSeqValue);
+
+        request.Validate(validationMode);
+
+        return SendWithBodyWriterAsyncCore<SaveCheckpointRequest, SaveCheckpointResponse>(workspace, request, body, "application/octet-stream", responseValidationMode, cancellationToken);
+    }
+
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => default;
 
@@ -119,6 +147,28 @@ public sealed class ApiCheckpointsClient : IApiCheckpointsClient
         try
         {
             TResponse response = await this.transport.SendAsync<TRequest, TResponse>(in request, body, contentType, cancellationToken).ConfigureAwait(false);
+            response.Validate(responseValidationMode);
+            return response;
+        }
+        finally
+        {
+            workspace.Dispose();
+        }
+    }
+
+    private async ValueTask<TResponse> SendWithBodyWriterAsyncCore<TRequest, TResponse>(
+        JsonWorkspace workspace,
+        TRequest request,
+        Func<Stream, CancellationToken, ValueTask> bodyWriter,
+        string contentType,
+        ValidationMode responseValidationMode,
+        CancellationToken cancellationToken)
+        where TRequest : struct, IApiRequest<TRequest>
+        where TResponse : struct, IApiResponse<TResponse>
+    {
+        try
+        {
+            TResponse response = await this.transport.SendAsync<TRequest, TResponse>(in request, bodyWriter, contentType, cancellationToken).ConfigureAwait(false);
             response.Validate(responseValidationMode);
             return response;
         }

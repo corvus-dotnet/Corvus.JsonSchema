@@ -42,18 +42,26 @@ public sealed class PublishKycVerdictProducer
     public ValueTask PublishKycVerdictAsync(Corvus.Text.Json.Arazzo.Samples.Notifications.Models.KycVerdictPayload.Source payload, CancellationToken cancellationToken = default)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Corvus.Text.Json.Arazzo.Samples.Notifications.Models.KycVerdictPayload payloadValue = Corvus.Text.Json.Arazzo.Samples.Notifications.Models.KycVerdictPayload.CreateBuilder(workspace, payload, 30).RootElement;
-
-        if (this.validationMode != ValidationMode.None)
+        try
         {
-            ValidatePayload(payloadValue, this.validationMode);
+            Corvus.Text.Json.Arazzo.Samples.Notifications.Models.KycVerdictPayload payloadValue = Corvus.Text.Json.Arazzo.Samples.Notifications.Models.KycVerdictPayload.CreateBuilder(workspace, payload, 30).RootElement;
+
+            if (this.validationMode != ValidationMode.None)
+            {
+                ValidatePayload(payloadValue, this.validationMode);
+            }
+
+            MessageContext context = new()
+            {
+                ContentType = "application/json",
+            };
+            return PublishAsyncCore(workspace, ChannelAddressUtf8, null, payloadValue, default, context, cancellationToken);
         }
-
-        MessageContext context = new()
+        catch
         {
-            ContentType = "application/json",
-        };
-        return PublishAsyncCore(workspace, ChannelAddressUtf8, null, payloadValue, default, context, cancellationToken);
+            workspace.Dispose();
+            throw;
+        }
     }
 
     private async ValueTask PublishAsyncCore<TPayload>(JsonWorkspace workspace, ReadOnlyMemory<byte> channelUtf8, byte[]? channelRental, TPayload payload, Corvus.Text.Json.JsonElement headers, MessageContext context, CancellationToken cancellationToken)

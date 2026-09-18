@@ -26,10 +26,11 @@ public static class ApiEndpointRegistration
     /// </summary>
     /// <param name="app">The endpoint route builder.</param>
     /// <param name="defaultHandler">The handler for ApiDefault operations.</param>
+    /// <param name="serverOptions">Optional registration-time server options (request body limits, etc.). When <see langword="null"/>, defaults are used.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiDefaultHandler defaultHandler)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiDefaultHandler defaultHandler, ApiServerOptions? serverOptions = null)
     {
-        return MapApiEndpoints(app, defaultHandler, configureEndpoint: null);
+        return MapApiEndpoints(app, defaultHandler, configureEndpoint: null, serverOptions: serverOptions);
     }
 
     /// <summary>
@@ -38,9 +39,11 @@ public static class ApiEndpointRegistration
     /// <param name="app">The endpoint route builder.</param>
     /// <param name="defaultHandler">The handler for ApiDefault operations.</param>
     /// <param name="configureEndpoint">An optional callback invoked once per generated endpoint, after the route is mapped, to apply per-endpoint conventions (authorization, naming, tags, output caching, rate limiting, etc.). May be <see langword="null"/>.</param>
+    /// <param name="serverOptions">Optional registration-time server options (request body limits, etc.). When <see langword="null"/>, defaults are used.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiDefaultHandler defaultHandler, ConfigureEndpoint? configureEndpoint)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiDefaultHandler defaultHandler, ConfigureEndpoint? configureEndpoint, ApiServerOptions? serverOptions = null)
     {
+        serverOptions ??= new ApiServerOptions();
 
         IEndpointConventionBuilder __VerifyIdentityEndpoint = app.MapPost("/accounts/{accountId}/identity", async (HttpContext context) =>
         {
@@ -78,6 +81,10 @@ public static class ApiEndpointRegistration
                     try
                     {
                         bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Samples.Kyc.Models.IdentityRequest>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
                     }
                     catch
                     {
@@ -352,6 +359,10 @@ public static class ApiEndpointRegistration
                     try
                     {
                         bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Samples.Kyc.Models.VerdictRequest>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
                     }
                     catch
                     {

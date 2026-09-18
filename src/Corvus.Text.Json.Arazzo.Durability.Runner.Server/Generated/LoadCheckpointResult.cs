@@ -64,7 +64,7 @@ public readonly struct LoadCheckpointResult
     /// <returns>A <see cref="LoadCheckpointResult"/> with status 200.</returns>
     public static LoadCheckpointResult Ok(ReadOnlyMemory<byte> body, JsonWorkspace workspace, string? contentType = "application/octet-stream", Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq.Source xArazzoCheckpointSeq = default) => new(200, default, contentType, xArazzoCheckpointSeq: xArazzoCheckpointSeq.IsUndefined ? default : Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.GetEnvironmentsByEnvironmentRunsByRunIdCheckpointOkXArazzoCheckpointSeq.CreateBuilder(workspace, xArazzoCheckpointSeq, 30).RootElement, hasBinaryBody: true, binaryWriter: (stream, cancellationToken) => stream.WriteAsync(body, cancellationToken));
 
-    /// <summary>Creates a 200 Ok result whose body is streamed directly to the response.</summary>
+    /// <summary>Creates a Ok result whose body is streamed directly to the response.</summary>
     /// <param name="writeBody">A callback that writes the response body to the supplied stream.</param>
     /// <param name="contentType">The content type for the response body.</param>
     /// <param name="workspace">The workspace for building header values.</param>
