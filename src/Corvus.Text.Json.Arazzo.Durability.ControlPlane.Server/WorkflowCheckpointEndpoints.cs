@@ -144,6 +144,13 @@ public static class WorkflowCheckpointEndpoints
                     return;
                 }
 
+                // ADR 0068: a save past the run's budget answers 409 too, naming the limit; the function stops.
+                if (result.Outcome == CheckpointSaveOutcome.BudgetExceeded)
+                {
+                    await WriteBudgetExhaustedAsync(context, result).ConfigureAwait(false);
+                    return;
+                }
+
                 // ADR 0065 decision 6: a superseded save answers 409 carrying the accepted sequence, never a 204. The
                 // two used to be the same response on the grounds that both "succeed from the caller's view", which is
                 // exactly the confusion the ADR forbids — a caller told its write is durable when it was dropped
@@ -293,6 +300,21 @@ public static class WorkflowCheckpointEndpoints
             $"{{\"type\":\"https://corvus-oss.org/arazzo/runner/problems/checkpoint-superseded\"," +
             $"\"title\":\"Checkpoint superseded\",\"status\":409," +
             $"\"detail\":\"The proposed sequence was not the persisted sequence plus one. Nothing was written.\"," +
+            $"\"acceptedSequence\":{result.AcceptedSequence.ToString(CultureInfo.InvariantCulture)}}}",
+            context.RequestAborted);
+    }
+
+    private static Task WriteBudgetExhaustedAsync(HttpContext context, CheckpointSaveResult result)
+    {
+        context.Response.StatusCode = StatusCodes.Status409Conflict;
+        context.Response.ContentType = "application/problem+json";
+
+        // The fault error is one of the fixed ExecutionBudgetFault names and the sequence is an integer, so this
+        // document needs no JSON escaping.
+        return context.Response.WriteAsync(
+            $"{{\"type\":\"https://corvus-oss.org/arazzo/runner/problems/budget-exhausted\"," +
+            $"\"title\":\"Execution budget exhausted\",\"status\":409," +
+            $"\"detail\":\"The run is past its execution budget and has been recorded as faulted with '{result.FaultError ?? ExecutionBudgetFault.Fuel}'. Nothing was written.\"," +
             $"\"acceptedSequence\":{result.AcceptedSequence.ToString(CultureInfo.InvariantCulture)}}}",
             context.RequestAborted);
     }

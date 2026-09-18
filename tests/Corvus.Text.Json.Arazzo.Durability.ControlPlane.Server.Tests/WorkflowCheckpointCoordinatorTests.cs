@@ -174,23 +174,229 @@ public sealed class WorkflowCheckpointCoordinatorTests
     }
 
     [TestMethod]
+    public async Task A_save_past_the_fuel_is_refused_and_the_run_is_recorded_as_faulted_on_fuel()
+    {
+        // ADR 0068, the authoritative half: the runner's save is not applied, and the last durable checkpoint (not the
+        // runner's over-budget body) is rewritten as faulted, consuming the sequence the runner proposed.
+        var time = new ControlledTimeProvider();
+        var store = new InMemoryWorkflowStateStore();
+        byte[] stored = Checkpoint(journalEntries: 2, sequence: 1, TwoSteps, T0);
+        await store.SaveAsync(Address, stored, WorkflowCheckpointSerializer.ProjectIndex(stored), WorkflowEtag.None, default);
+        var coordinator = new WorkflowCheckpointCoordinator(store, time);
+
+        byte[] overBudget = Checkpoint(journalEntries: 3, sequence: 2, TwoSteps, T0);
+        CheckpointSaveResult result = await coordinator.SaveAsync(Address, overBudget, WorkflowCheckpointSerializer.ProjectIndex(overBudget), "development", 2, default);
+
+        result.Outcome.ShouldBe(CheckpointSaveOutcome.BudgetExceeded);
+        result.FaultError.ShouldBe(ExecutionBudgetFault.Fuel);
+        result.AcceptedSequence.ShouldBe(3);
+
+        WorkflowCheckpoint row = (await store.LoadAsync(Address, default))!.Value;
+        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex(row.Utf8);
+        index.Status.ShouldBe(WorkflowRunStatus.Faulted);
+        index.ErrorType.ShouldBe(ExecutionBudgetFault.Fuel);
+        WorkflowCheckpointSerializer.TryReadSequence(row.Utf8, out long sequence).ShouldBeTrue();
+        sequence.ShouldBe(2);
+        WorkflowCheckpointSerializer.TryReadBudgetFacts(row.Utf8, out CheckpointBudgetFacts facts).ShouldBeTrue();
+        facts.JournalCount.ShouldBe(2);
+    }
+
+    [TestMethod]
+    public async Task A_save_from_a_run_older_than_its_wall_clock_is_refused_and_the_run_is_recorded_as_faulted_on_deadline()
+    {
+        var time = new ControlledTimeProvider();
+        var store = new InMemoryWorkflowStateStore();
+        byte[] stored = Checkpoint(journalEntries: 0, sequence: 1, OneHour, T0);
+        await store.SaveAsync(Address, stored, WorkflowCheckpointSerializer.ProjectIndex(stored), WorkflowEtag.None, default);
+        var coordinator = new WorkflowCheckpointCoordinator(store, time);
+
+        time.UtcNow = T0 + TimeSpan.FromHours(2);
+        byte[] late = Checkpoint(journalEntries: 1, sequence: 2, OneHour, T0);
+        CheckpointSaveResult result = await coordinator.SaveAsync(Address, late, WorkflowCheckpointSerializer.ProjectIndex(late), "development", 2, default);
+
+        result.Outcome.ShouldBe(CheckpointSaveOutcome.BudgetExceeded);
+        result.FaultError.ShouldBe(ExecutionBudgetFault.Deadline);
+        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex((await store.LoadAsync(Address, default))!.Value.Utf8);
+        index.Status.ShouldBe(WorkflowRunStatus.Faulted);
+        index.ErrorType.ShouldBe(ExecutionBudgetFault.Deadline);
+        index.UpdatedAt.ShouldBe(time.UtcNow);
+    }
+
+    [TestMethod]
+    public async Task A_save_within_budget_is_applied_and_a_run_without_a_budget_is_unbounded()
+    {
+        var time = new ControlledTimeProvider();
+        var store = new InMemoryWorkflowStateStore();
+        var coordinator = new WorkflowCheckpointCoordinator(store, time);
+
+        byte[] first = Checkpoint(journalEntries: 1, sequence: 1, TwoSteps, T0);
+        (await coordinator.SaveAsync(Address, first, WorkflowCheckpointSerializer.ProjectIndex(first), "development", 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
+        time.UtcNow = T0 + TimeSpan.FromMinutes(59);
+        byte[] atTheLimit = Checkpoint(journalEntries: 2, sequence: 2, TwoSteps, T0, WorkflowRunStatus.Completed);
+        (await coordinator.SaveAsync(Address, atTheLimit, WorkflowCheckpointSerializer.ProjectIndex(atTheLimit), "development", 2, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
+
+        // A checkpoint from before budgets existed carries none, and nothing bounds it here.
+        var legacy = new WorkflowRunAddress("development", new WorkflowRunId("run-legacy"));
+        byte[] unbounded = Checkpoint(journalEntries: 40, sequence: 1, null, T0 - TimeSpan.FromDays(30));
+        (await coordinator.SaveAsync(legacy, unbounded, WorkflowCheckpointSerializer.ProjectIndex(unbounded), "development", 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
+    }
+
+    [TestMethod]
+    public async Task A_save_that_widens_drops_or_moves_the_budget_or_the_creation_time_is_rejected()
+    {
+        // The budget and the creation time are frozen with the identity: a runner cannot extend its own bound.
+        var store = new InMemoryWorkflowStateStore();
+        byte[] stored = Checkpoint(journalEntries: 0, sequence: 1, TwoSteps, T0);
+        await store.SaveAsync(Address, stored, WorkflowCheckpointSerializer.ProjectIndex(stored), WorkflowEtag.None, default);
+        var coordinator = new WorkflowCheckpointCoordinator(store, new ControlledTimeProvider());
+
+        byte[] widened = Checkpoint(journalEntries: 1, sequence: 2, new ExecutionBudget(5, TimeSpan.FromHours(1), 8, TimeSpan.Zero), T0);
+        (await coordinator.SaveAsync(Address, widened, WorkflowCheckpointSerializer.ProjectIndex(widened), "development", 2, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Rejected);
+
+        byte[] dropped = Checkpoint(journalEntries: 1, sequence: 2, null, T0);
+        (await coordinator.SaveAsync(Address, dropped, WorkflowCheckpointSerializer.ProjectIndex(dropped), "development", 2, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Rejected);
+
+        byte[] younger = Checkpoint(journalEntries: 1, sequence: 2, TwoSteps, T0 + TimeSpan.FromHours(3));
+        (await coordinator.SaveAsync(Address, younger, WorkflowCheckpointSerializer.ProjectIndex(younger), "development", 2, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Rejected);
+
+        // Nothing was written, and the honest save still lands.
+        byte[] honest = Checkpoint(journalEntries: 1, sequence: 2, TwoSteps, T0);
+        (await coordinator.SaveAsync(Address, honest, WorkflowCheckpointSerializer.ProjectIndex(honest), "development", 2, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
+    }
+
+    [TestMethod]
+    public async Task The_first_accepted_save_freezes_the_budget()
+    {
+        var store = new InMemoryWorkflowStateStore();
+        var coordinator = new WorkflowCheckpointCoordinator(store, new ControlledTimeProvider());
+
+        byte[] first = Checkpoint(journalEntries: 0, sequence: 1, TwoSteps, T0);
+        (await coordinator.SaveAsync(Address, first, WorkflowCheckpointSerializer.ProjectIndex(first), "development", 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
+
+        byte[] widened = Checkpoint(journalEntries: 1, sequence: 2, ExecutionBudget.Default, T0);
+        (await coordinator.SaveAsync(Address, widened, WorkflowCheckpointSerializer.ProjectIndex(widened), "development", 2, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Rejected);
+    }
+
+    [TestMethod]
+    public async Task A_stale_over_budget_arrival_is_superseded_rather_than_acted_on()
+    {
+        // The budget is judged only on the save that would otherwise be applied; a race stays reported as a race.
+        var store = new InMemoryWorkflowStateStore();
+        byte[] stored = Checkpoint(journalEntries: 1, sequence: 1, TwoSteps, T0);
+        await store.SaveAsync(Address, stored, WorkflowCheckpointSerializer.ProjectIndex(stored), WorkflowEtag.None, default);
+        var coordinator = new WorkflowCheckpointCoordinator(store, new ControlledTimeProvider());
+
+        byte[] stale = Checkpoint(journalEntries: 3, sequence: 1, TwoSteps, T0);
+        CheckpointSaveResult result = await coordinator.SaveAsync(Address, stale, WorkflowCheckpointSerializer.ProjectIndex(stale), "development", 1, default);
+
+        result.Outcome.ShouldBe(CheckpointSaveOutcome.Superseded);
+        (await store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(stored);
+    }
+
+    [TestMethod]
+    public async Task After_exhaustion_a_resend_is_superseded_and_a_further_over_budget_save_churns_nothing()
+    {
+        var store = new InMemoryWorkflowStateStore();
+        byte[] stored = Checkpoint(journalEntries: 2, sequence: 1, TwoSteps, T0);
+        await store.SaveAsync(Address, stored, WorkflowCheckpointSerializer.ProjectIndex(stored), WorkflowEtag.None, default);
+        var coordinator = new WorkflowCheckpointCoordinator(store, new ControlledTimeProvider());
+
+        byte[] overBudget = Checkpoint(journalEntries: 3, sequence: 2, TwoSteps, T0);
+        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex(overBudget);
+        (await coordinator.SaveAsync(Address, overBudget, index, "development", 2, default)).Outcome.ShouldBe(CheckpointSaveOutcome.BudgetExceeded);
+        WorkflowCheckpoint faulted = (await store.LoadAsync(Address, default))!.Value;
+
+        // The resend of the refused sequence: the control plane consumed it, so this is an ordinary superseded save.
+        CheckpointSaveResult resend = await coordinator.SaveAsync(Address, overBudget, index, "development", 2, default);
+        resend.Outcome.ShouldBe(CheckpointSaveOutcome.Superseded);
+        resend.AcceptedSequence.ShouldBe(3);
+
+        // A runner that presses on is refused again, and the faulted row is not rewritten.
+        byte[] next = Checkpoint(journalEntries: 4, sequence: 3, TwoSteps, T0);
+        CheckpointSaveResult again = await coordinator.SaveAsync(Address, next, WorkflowCheckpointSerializer.ProjectIndex(next), "development", 3, default);
+        again.Outcome.ShouldBe(CheckpointSaveOutcome.BudgetExceeded);
+        again.AcceptedSequence.ShouldBe(3);
+        WorkflowCheckpoint after = (await store.LoadAsync(Address, default))!.Value;
+        after.Etag.ShouldBe(faulted.Etag);
+        after.Utf8.ToArray().ShouldBe(faulted.Utf8.ToArray());
+    }
+
+    [TestMethod]
+    public async Task A_truncated_journal_is_over_any_budget()
+    {
+        var store = new InMemoryWorkflowStateStore();
+        byte[] stored = Checkpoint(journalEntries: 0, sequence: 1, ExecutionBudget.Default, T0);
+        await store.SaveAsync(Address, stored, WorkflowCheckpointSerializer.ProjectIndex(stored), WorkflowEtag.None, default);
+        var coordinator = new WorkflowCheckpointCoordinator(store, new ControlledTimeProvider());
+
+        byte[] truncated = Checkpoint(journalEntries: 1, sequence: 2, ExecutionBudget.Default, T0, truncated: true);
+        CheckpointSaveResult result = await coordinator.SaveAsync(Address, truncated, WorkflowCheckpointSerializer.ProjectIndex(truncated), "development", 2, default);
+
+        result.Outcome.ShouldBe(CheckpointSaveOutcome.BudgetExceeded);
+        result.FaultError.ShouldBe(ExecutionBudgetFault.Fuel);
+    }
+
+    [TestMethod]
     public void Rejects_a_null_store()
     {
         Should.Throw<ArgumentNullException>(() => new WorkflowCheckpointCoordinator(null!));
     }
 
+    private static readonly DateTimeOffset T0 = new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+    private static readonly ExecutionBudget TwoSteps = new(2, TimeSpan.FromHours(1), 8, TimeSpan.Zero);
+    private static readonly ExecutionBudget OneHour = new(ExecutionBudget.MaxStepsCeiling, TimeSpan.FromHours(1), 8, TimeSpan.Zero);
+
     private static byte[] Bytes(byte marker) => [marker, marker, marker];
 
     private static WorkflowRunIndexEntry Index(WorkflowRunStatus status) => new("wf", status, default, default);
 
+    // A real checkpoint document of run-1 in the development environment, with the given journal length and budget.
+    private static byte[] Checkpoint(int journalEntries, long sequence, ExecutionBudget? budget, DateTimeOffset createdAt, WorkflowRunStatus status = WorkflowRunStatus.Running, bool truncated = false)
+    {
+        using PooledUtf8Map<int> retryCounters = PooledUtf8Map<int>.Rent(0);
+        using PooledUtf8Map<JsonElement> stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
+        var journal = new List<WorkflowStepJournalEntry>(journalEntries);
+        for (int i = 1; i <= journalEntries; i++)
+        {
+            journal.Add(new WorkflowStepJournalEntry($"s{i}", WorkflowStepStatus.Succeeded, 1, createdAt.AddSeconds(i), createdAt.AddSeconds(i + 1)));
+        }
+
+        return WorkflowCheckpointSerializer.Serialize(
+            Run,
+            "wf",
+            status,
+            cursor: journalEntries,
+            sequence,
+            createdAt,
+            retryCounters,
+            new Dictionary<string, byte[]>(),
+            inputs: default,
+            stepOutputs,
+            outputs: default,
+            environment: "development",
+            updatedAt: createdAt,
+            stepJournal: journal,
+            journalTruncated: truncated,
+            budget: budget);
+    }
+
     // A TimeProvider whose timestamp only advances when the test tells it to, so the idle sweep is deterministic. It
     // keeps the base TimestampFrequency, so GetElapsedTime converts the advanced ticks back to the intended interval.
+    // Its wall clock is set by the test too, so the budget's deadline is judged against a known age.
     private sealed class ControlledTimeProvider : TimeProvider
     {
         private long timestamp;
 
+        public DateTimeOffset UtcNow { get; set; } = T0;
+
         public override long GetTimestamp() => this.timestamp;
 
-        public void Advance(TimeSpan by) => this.timestamp += (long)(by.TotalSeconds * this.TimestampFrequency);
+        public override DateTimeOffset GetUtcNow() => this.UtcNow;
+
+        public void Advance(TimeSpan by)
+        {
+            this.timestamp += (long)(by.TotalSeconds * this.TimestampFrequency);
+            this.UtcNow += by;
+        }
     }
 }

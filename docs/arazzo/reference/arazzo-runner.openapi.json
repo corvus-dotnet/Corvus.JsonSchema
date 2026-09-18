@@ -683,7 +683,7 @@
         }
       },
       "CheckpointWriteRefused": {
-        "description": "The save was not applied, for one of the two reasons a save is refused: the presented lease is not current, or the proposed sequence is not the persisted sequence plus one. The two are told apart by `type`, and the accepted sequence is carried on the second so the runner can tell a duplicate resend from a genuine divergence without a second round trip. Nothing was written either way.",
+        "description": "The save was not applied, for one of the three reasons a save is refused: the presented lease is not current; the proposed sequence is not the persisted sequence plus one; or the run is past its execution budget (ADR 0068), in which case the control plane has recorded the run as terminally faulted on the limit it hit and the runner should stop advancing it. The three are told apart by `type` (`lease-lost`, `checkpoint-superseded`, `budget-exhausted`), and the accepted sequence is carried on the last two so the runner can tell a duplicate resend from a genuine divergence without a second round trip. Nothing from the save was written in any case.",
         "content": {
           "application/problem+json": {
             "schema": {

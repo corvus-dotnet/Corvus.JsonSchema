@@ -34,6 +34,14 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// </description></item>
 /// </list>
 /// <para>
+/// The coordinator is also where the execution budget is verified (ADR 0068). The budget and the creation time are
+/// part of the run's frozen identity, and on every in-turn save the journal length and the run's age, read from the
+/// body the caller already projected, are compared against them; a save past either limit is not applied. Instead
+/// the coordinator itself rewrites the last durable checkpoint as terminally faulted on the limit that was hit and
+/// reports <see cref="CheckpointSaveOutcome.BudgetExceeded"/>, so a runner that does not honour the budget cannot
+/// persist the run past it.
+/// </para>
+/// <para>
 /// The per-run state is in-memory and reconstructed from the store on demand, so it is bounded by an idle sweep rather
 /// than kept for a run's whole life. It is not evicted when a run reaches a terminal status: a late interim save could
 /// still arrive after the terminal one under the fire-and-forget race, and the retained sequence is what drops it.
@@ -153,7 +161,12 @@ public sealed class WorkflowCheckpointCoordinator
                 return new CheckpointSaveResult(CheckpointSaveOutcome.Rejected, slot.LastAppliedSequence + 1);
             }
 
-            if (slot.IdentityEstablished && !slot.Identity.Matches(index))
+            // The budget and the creation time join the first-write-pinned identity (ADR 0068): a later save that widens
+            // the budget, drops it, or moves the run's creation forward is a save no well-behaved writer produces, and
+            // either would let the runner extend its own bound. Read from the same bytes the caller projected, in one
+            // forward scan that also yields the journal facts the verification below needs.
+            WorkflowCheckpointSerializer.TryReadBudgetFacts(checkpointUtf8, out CheckpointBudgetFacts facts);
+            if (slot.IdentityEstablished && !slot.Identity.Matches(index, facts.Budget))
             {
                 return new CheckpointSaveResult(CheckpointSaveOutcome.Rejected, slot.LastAppliedSequence + 1);
             }
@@ -166,6 +179,16 @@ public sealed class WorkflowCheckpointCoordinator
                 return new CheckpointSaveResult(CheckpointSaveOutcome.Superseded, accepted);
             }
 
+            // ADR 0068: the authoritative half of the budget. Decided after the sequence rule so only the save that
+            // would otherwise be applied is judged (a stale or out-of-order arrival is refused as the race it is, not
+            // acted on), and against the identity's frozen budget and creation time, never the body's claim of them.
+            if (slot.IdentityEstablished
+                && slot.Identity.Budget is { } budget
+                && ExecutionBudgetFault.Find(budget, facts, slot.Identity.CreatedAt, this.timeProvider.GetUtcNow()) is { } exceeded)
+            {
+                return await this.FaultExhaustedAsync(address, slot, accepted, exceeded, cancellationToken).ConfigureAwait(false);
+            }
+
             try
             {
                 slot.Etag = await this.store.SaveAsync(address, checkpointUtf8, index, slot.Etag, cancellationToken).ConfigureAwait(false);
@@ -174,7 +197,7 @@ public sealed class WorkflowCheckpointCoordinator
                 // A run with no stored row has no identity to preserve, so its first accepted save is what sets one.
                 if (!slot.IdentityEstablished)
                 {
-                    slot.Identity = RunIdentity.From(index);
+                    slot.Identity = RunIdentity.From(index, facts.Budget);
                     slot.IdentityEstablished = true;
                 }
 
@@ -193,6 +216,41 @@ public sealed class WorkflowCheckpointCoordinator
         finally
         {
             slot.Gate.Release();
+        }
+    }
+
+    // Records the budget fault the control plane decided: the last durable checkpoint is rewritten as terminally
+    // faulted on the limit that was hit, under the slot's etag (the coordinator is the sole writer), consuming the
+    // sequence the refused save proposed so the runner's resend of it is superseded rather than re-judged. A row that
+    // already carries a budget fault is left as it is, so a runner that keeps resending after the refusal churns
+    // nothing. Called under the slot's gate.
+    private async ValueTask<CheckpointSaveResult> FaultExhaustedAsync(WorkflowRunAddress address, RunSlot slot, long accepted, string error, CancellationToken cancellationToken)
+    {
+        WorkflowCheckpoint? stored = await this.store.LoadAsync(address, cancellationToken).ConfigureAwait(false);
+        if (stored is not { } row)
+        {
+            // The row went away under an established identity: the sole-writer invariant is broken, and the slot
+            // can no longer be trusted.
+            slot.Seeded = false;
+            return new CheckpointSaveResult(CheckpointSaveOutcome.Conflict, accepted);
+        }
+
+        if (WorkflowCheckpointSerializer.TryReadBudgetFacts(row.Utf8, out CheckpointBudgetFacts storedFacts) && storedFacts.BudgetFaulted)
+        {
+            return new CheckpointSaveResult(CheckpointSaveOutcome.BudgetExceeded, accepted, error);
+        }
+
+        byte[] faulted = WorkflowCheckpointSerializer.RewriteFaulted(row.Utf8.Span, accepted, error, this.timeProvider.GetUtcNow());
+        try
+        {
+            slot.Etag = await this.store.SaveAsync(address, faulted, WorkflowCheckpointSerializer.ProjectIndex(faulted), slot.Etag, cancellationToken).ConfigureAwait(false);
+            slot.LastAppliedSequence = accepted;
+            return new CheckpointSaveResult(CheckpointSaveOutcome.BudgetExceeded, accepted + 1, error);
+        }
+        catch (WorkflowConflictException)
+        {
+            slot.Seeded = false;
+            return new CheckpointSaveResult(CheckpointSaveOutcome.Conflict, accepted);
         }
     }
 
@@ -256,24 +314,29 @@ public sealed class WorkflowCheckpointCoordinator
     {
         if (WorkflowCheckpointSerializer.TryProjectIndex(checkpointUtf8, out WorkflowRunIndexEntry stored))
         {
-            slot.Identity = RunIdentity.From(stored);
+            WorkflowCheckpointSerializer.TryReadBudgetFacts(checkpointUtf8, out CheckpointBudgetFacts facts);
+            slot.Identity = RunIdentity.From(stored, facts.Budget);
             slot.IdentityEstablished = true;
         }
     }
 
     /// <summary>
     /// The part of a run's index the writer does not own and that a first save legitimately states once: which
-    /// workflow it is of, and the tags that decide who can see and claim it. The run's environment is NOT here —
-    /// it is the address itself, checked structurally against the route on every save (ADR 0065 decision 9).
+    /// workflow it is of, the tags that decide who can see and claim it, and (ADR 0068) the execution budget the
+    /// control plane resolved at start together with the creation time the budget's wall clock runs from. The run's
+    /// environment is NOT here — it is the address itself, checked structurally against the route on every save
+    /// (ADR 0065 decision 9).
     /// </summary>
-    private readonly record struct RunIdentity(string WorkflowId, SecurityTagSet SecurityTags)
+    private readonly record struct RunIdentity(string WorkflowId, SecurityTagSet SecurityTags, ExecutionBudget? Budget, DateTimeOffset CreatedAt)
     {
-        public static RunIdentity From(in WorkflowRunIndexEntry index)
-            => new(index.WorkflowId, index.SecurityTags);
+        public static RunIdentity From(in WorkflowRunIndexEntry index, ExecutionBudget? budget)
+            => new(index.WorkflowId, index.SecurityTags, budget, index.CreatedAt);
 
-        public bool Matches(in WorkflowRunIndexEntry index)
+        public bool Matches(in WorkflowRunIndexEntry index, ExecutionBudget? budget)
             => string.Equals(this.WorkflowId, index.WorkflowId, StringComparison.Ordinal)
-            && this.SecurityTags.SetEquals(index.SecurityTags);
+            && this.SecurityTags.SetEquals(index.SecurityTags)
+            && Nullable.Equals(this.Budget, budget)
+            && this.CreatedAt == index.CreatedAt;
     }
 
     private sealed class RunSlot
@@ -305,7 +368,9 @@ public readonly record struct CheckpointLoad(ReadOnlyMemory<byte> Checkpoint, Wo
 /// <param name="AcceptedSequence">The sequence the store will accept next, which is its persisted sequence plus one.
 /// Carried on every outcome so a refused caller can tell a duplicate resend from a genuine divergence without a second
 /// round trip.</param>
-public readonly record struct CheckpointSaveResult(CheckpointSaveOutcome Outcome, long AcceptedSequence);
+/// <param name="FaultError">On <see cref="CheckpointSaveOutcome.BudgetExceeded"/>, the budget fault the run was
+/// recorded with (one of <see cref="ExecutionBudgetFault"/>); otherwise <see langword="null"/>.</param>
+public readonly record struct CheckpointSaveResult(CheckpointSaveOutcome Outcome, long AcceptedSequence, string? FaultError = null);
 
 /// <summary>The outcome of terminating a checkpoint save.</summary>
 public enum CheckpointSaveOutcome
@@ -330,4 +395,12 @@ public enum CheckpointSaveOutcome
     /// rather than a lost lease.
     /// </summary>
     Rejected,
+
+    /// <summary>
+    /// The save was past the run's execution budget (ADR 0068): its journal is longer than the fuel or truncated at
+    /// the cap, or the run is older than its wall clock. The proposed checkpoint was not written. The control plane
+    /// instead recorded the run as terminally faulted on the limit it hit (<see cref="CheckpointSaveResult.FaultError"/>),
+    /// consuming the proposed sequence, so nothing resumes or reclaims it. The caller should stop advancing the run.
+    /// </summary>
+    BudgetExceeded,
 }

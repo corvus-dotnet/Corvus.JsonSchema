@@ -233,9 +233,19 @@ a depth of eight and an hour). An environment may carry an `executionBudget` ove
 the ceiling with a 400, and an update that omits the override leaves it unchanged. The effective budget is resolved
 on every start path through the management seam and recorded in the run's checkpoint, so a later change to the
 environment does not move a running run's bound. Fuel is bounded by the per-step journal cap (500), because the
-journal is the counter the checkpoint coordinator verifies against. The coordinator's verification, the runner's
-own enforcement, the per-step transport bounds and the CLI and console surfacing are landing in the pieces that
-follow this one.
+journal is the counter the checkpoint coordinator verifies against.
+
+The control plane verifies the budget itself. The checkpoint coordinator freezes the budget and the run's creation
+time with the run's identity on its first save, and on every in-turn save compares the journal length against the
+fuel and the run's age against the wall clock. A save past either is not applied: the coordinator rewrites the last
+durable checkpoint as terminally faulted (`budget-fuel` or `budget-deadline`, recorded against the last journaled
+step), consumes the sequence the refused save proposed, and both checkpoint surfaces answer `409` with the
+`budget-exhausted` problem type; the runner client raises `RunBudgetExhaustedException` and the advance ends,
+releasing the lease. The runner API applies the same predicate at claim time, so a run whose wall clock ran out
+while it waited is faulted and handed back rather than resumed. A budget-faulted run cannot be resumed in any mode:
+the runs API answers `409` with the `budget-exhausted` problem type, and the management seam refuses before any
+resume mutation touches the run. The runner's own enforcement, the per-step transport bounds and the CLI and
+console surfacing are landing in the pieces that follow this one.
 
 ## The trigger surface
 

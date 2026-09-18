@@ -18,6 +18,116 @@ public sealed class WorkflowCheckpointSerializerTests
     private static readonly DateTimeOffset CreatedAt = new(2026, 3, 4, 5, 6, 7, TimeSpan.Zero);
 
     [TestMethod]
+    public void The_budget_facts_are_read_from_the_bytes_without_parsing_the_document()
+    {
+        // ADR 0068: the coordinator reads these on every save, so they come from a forward scan of the same bytes the
+        // caller projected, not from a materialized run.
+        var budget = new ExecutionBudget(3, TimeSpan.FromMinutes(30), 2, TimeSpan.FromSeconds(5));
+        byte[] bytes = BudgetCheckpoint(journalEntries: 2, budget: budget, truncated: true, fault: new WorkflowFault("s2", 2, ExecutionBudgetFault.Fuel, CreatedAt));
+
+        WorkflowCheckpointSerializer.TryReadBudgetFacts(bytes, out CheckpointBudgetFacts facts).ShouldBeTrue();
+        facts.Budget.ShouldBe(budget);
+        facts.JournalCount.ShouldBe(2);
+        facts.JournalTruncated.ShouldBeTrue();
+        facts.BudgetFaulted.ShouldBeTrue();
+
+        // A run faulted on a step error is not budget-faulted, and a checkpoint from before budgets carries none.
+        WorkflowCheckpointSerializer.TryReadBudgetFacts(BudgetCheckpoint(journalEntries: 1, budget: budget, fault: new WorkflowFault("s1", 1, "boom", CreatedAt)), out facts).ShouldBeTrue();
+        facts.BudgetFaulted.ShouldBeFalse();
+        WorkflowCheckpointSerializer.TryReadBudgetFacts(BudgetCheckpoint(journalEntries: 0, budget: null), out facts).ShouldBeTrue();
+        facts.ShouldBe(new CheckpointBudgetFacts(null, 0, false, false));
+
+        WorkflowCheckpointSerializer.TryReadBudgetFacts(new byte[] { 1, 2, 3 }, out _).ShouldBeFalse();
+        WorkflowCheckpointSerializer.TryReadBudgetFacts("[]"u8.ToArray(), out _).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public void A_budget_fault_is_recorded_at_the_last_journaled_step_and_the_run_is_neither_waiting_nor_resumable()
+    {
+        var budget = new ExecutionBudget(2, TimeSpan.FromMinutes(30), 2, TimeSpan.FromSeconds(5));
+        byte[] source = BudgetCheckpoint(journalEntries: 3, budget: budget, sequence: 4, wait: WorkflowWait.Timer(CreatedAt.AddMinutes(5)), resumeRequestedAt: CreatedAt.AddMinutes(1));
+        DateTimeOffset at = CreatedAt.AddMinutes(10);
+
+        byte[] faulted = WorkflowCheckpointSerializer.RewriteFaulted(source, sequence: 5, ExecutionBudgetFault.Deadline, at);
+
+        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(faulted);
+        state.Status.ShouldBe(WorkflowRunStatus.Faulted);
+        state.Sequence.ShouldBe(5);
+        state.Wait.ShouldBeNull();
+        state.ResumeRequestedAt.ShouldBeNull();
+        state.UpdatedAt.ShouldBe(at);
+        state.Fault.ShouldNotBeNull();
+        state.Fault!.Value.StepId.ShouldBe("s3");
+        state.Fault.Value.Attempt.ShouldBe(3);
+        state.Fault.Value.Error.ShouldBe(ExecutionBudgetFault.Deadline);
+        state.Fault.Value.At.ShouldBe(at);
+
+        // The working state is the last durable checkpoint's, so the run stays inspectable.
+        state.Budget.ShouldBe(budget);
+        state.StepJournal.Count.ShouldBe(3);
+        state.CreatedAt.ShouldBe(CreatedAt);
+        state.Environment.ShouldBe("development");
+
+        WorkflowCheckpointSerializer.ProjectIndex(faulted).ErrorType.ShouldBe(ExecutionBudgetFault.Deadline);
+        WorkflowCheckpointSerializer.TryReadSequence(faulted, out long sequence).ShouldBeTrue();
+        sequence.ShouldBe(5);
+        WorkflowCheckpointSerializer.TryReadBudgetFacts(faulted, out CheckpointBudgetFacts facts).ShouldBeTrue();
+        facts.BudgetFaulted.ShouldBeTrue();
+    }
+
+    [TestMethod]
+    public void A_budget_fault_on_a_run_with_no_journal_names_no_step_and_replaces_an_earlier_fault()
+    {
+        byte[] source = BudgetCheckpoint(journalEntries: 0, budget: ExecutionBudget.Default, fault: new WorkflowFault("s1", 1, "boom", CreatedAt));
+
+        byte[] faulted = WorkflowCheckpointSerializer.RewriteFaulted(source, sequence: 2, ExecutionBudgetFault.Fuel, CreatedAt.AddMinutes(1));
+
+        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(faulted);
+        state.Fault!.Value.StepId.ShouldBe(string.Empty);
+        state.Fault.Value.Attempt.ShouldBe(0);
+        state.Fault.Value.Error.ShouldBe(ExecutionBudgetFault.Fuel);
+    }
+
+    private static byte[] BudgetCheckpoint(
+        int journalEntries,
+        ExecutionBudget? budget,
+        long sequence = 1,
+        bool truncated = false,
+        WorkflowFault? fault = null,
+        WorkflowWait? wait = null,
+        DateTimeOffset? resumeRequestedAt = null)
+    {
+        using var retryCounters = PooledUtf8Map<int>.Rent(1);
+        using var stepOutputs = PooledUtf8Map<JsonElement>.Rent(1);
+        var journal = new List<WorkflowStepJournalEntry>(journalEntries);
+        for (int i = 1; i <= journalEntries; i++)
+        {
+            journal.Add(new WorkflowStepJournalEntry($"s{i}", WorkflowStepStatus.Succeeded, i, CreatedAt.AddSeconds(i), CreatedAt.AddSeconds(i + 1)));
+        }
+
+        return WorkflowCheckpointSerializer.Serialize(
+            new WorkflowRunId("run-1"),
+            "wf",
+            fault is null ? WorkflowRunStatus.Running : WorkflowRunStatus.Faulted,
+            cursor: journalEntries,
+            sequence,
+            CreatedAt,
+            retryCounters,
+            new Dictionary<string, byte[]>(StringComparer.Ordinal),
+            inputs: default,
+            stepOutputs,
+            outputs: default,
+            wait: wait,
+            fault: fault,
+            environment: "development",
+            resumeRequestedAt: resumeRequestedAt,
+            updatedAt: CreatedAt,
+            stepJournal: journal,
+            journalTruncated: truncated,
+            budget: budget);
+    }
+
+    [TestMethod]
     public void The_write_sequence_round_trips_through_the_document()
     {
         // ADR 0065 decision 6: the server accepts only the persisted sequence plus one, so the persisted sequence has

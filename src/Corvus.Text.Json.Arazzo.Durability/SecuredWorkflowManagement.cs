@@ -396,6 +396,14 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
 
         try
         {
+            // ADR 0068: a run that faulted on its execution budget is not resumed in any mode, and is refused before
+            // any mutation touches it.
+            if (await this.IsBudgetExhaustedAsync(address, cancellationToken).ConfigureAwait(false))
+            {
+                activity?.SetTag(ArazzoTelemetry.OutcomeTag, "budget-exhausted");
+                return false;
+            }
+
             // For every mode but a plain retry, mutate the checkpoint (cursor/state) under optimistic concurrency
             // before re-entering: rewind the cursor, skip past the faulted step, or apply a state patch. The run
             // stays Faulted, so the re-entered executor still clears the fault on its first checkpoint.
@@ -478,6 +486,13 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
 
         try
         {
+            // ADR 0068: a run that faulted on its execution budget is never handed back to a runner.
+            if (await this.IsBudgetExhaustedAsync(address, cancellationToken).ConfigureAwait(false))
+            {
+                activity?.SetTag(ArazzoTelemetry.OutcomeTag, "budget-exhausted");
+                return false;
+            }
+
             // For every mode but a plain retry, mutate the checkpoint (cursor/state) under optimistic concurrency
             // before handing off: rewind the cursor, skip past the faulted step, or apply a state patch.
             if (options.Mode != ResumeMode.RetryFaultedStep &&
@@ -506,6 +521,16 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
     }
 
     /// <inheritdoc/>
+    // Whether the run's stored fault record is a budget fault (ADR 0068), read from the row's bytes without
+    // materializing the run. Called under the lease, so the answer is the one the resume would act on.
+    private async ValueTask<bool> IsBudgetExhaustedAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
+    {
+        WorkflowCheckpoint? row = await this.store.LoadAsync(address, cancellationToken).ConfigureAwait(false);
+        return row is { } stored
+            && WorkflowCheckpointSerializer.TryReadBudgetFacts(stored.Utf8, out CheckpointBudgetFacts facts)
+            && facts.BudgetFaulted;
+    }
+
     public async ValueTask<bool> CancelAsync(WorkflowRunId id, string reason, AccessContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(reason);

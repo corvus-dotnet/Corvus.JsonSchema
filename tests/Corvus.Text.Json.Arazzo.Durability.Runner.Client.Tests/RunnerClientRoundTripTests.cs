@@ -92,6 +92,33 @@ public sealed class RunnerClientRoundTripTests
     }
 
     [TestMethod]
+    public async Task A_save_past_the_budget_is_raised_as_exhausted_and_the_run_is_recorded_as_faulted()
+    {
+        // ADR 0068 over the wire: the control plane refuses the save with the budget-exhausted problem type, the client
+        // raises it as its own exception (not as a superseded save the runner would resend), and the store holds the
+        // faulted run the control plane authored.
+        await using Fixture fixture = await Fixture.StartAsync();
+        var oneStep = new ExecutionBudget(1, TimeSpan.FromHours(1), 8, TimeSpan.Zero);
+        await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending, budget: oneStep);
+        RunnerClaim claimed = (await fixture.Client.TryClaimAsync([Version]))!.Value;
+
+        byte[] overBudget = Fixture.Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2, budget: oneStep, journalEntries: 2);
+        RunBudgetExhaustedException refused = await Should.ThrowAsync<RunBudgetExhaustedException>(
+            async () => await fixture.Client.Checkpoints.SaveAsync(claimed.Address, overBudget, WorkflowCheckpointSerializer.ProjectIndex(overBudget), WorkflowEtag.None, default));
+
+        refused.RunId.ShouldBe(new WorkflowRunId(Run1));
+        refused.Message.ShouldContain(ExecutionBudgetFault.Fuel);
+
+        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex((await fixture.Store.LoadAsync(claimed.Address, default))!.Value.Utf8);
+        index.Status.ShouldBe(WorkflowRunStatus.Faulted);
+        index.ErrorType.ShouldBe(ExecutionBudgetFault.Fuel);
+
+        // The lease is still the client's to hand back, and the faulted run is offered to nobody afterwards.
+        await fixture.Client.ReleaseAsync(claimed.Address, default);
+        (await fixture.PeerClient.TryClaimAsync([Version])).ShouldBeNull();
+    }
+
+    [TestMethod]
     public async Task A_lease_renews_and_keeps_its_epoch()
     {
         await using Fixture fixture = await Fixture.StartAsync();

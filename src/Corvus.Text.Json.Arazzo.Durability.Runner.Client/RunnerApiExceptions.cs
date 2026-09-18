@@ -86,6 +86,26 @@ public sealed class RunnerQuotaExhaustedException : RunnerApiException
 /// sequence the store will accept next: a runner can tell its own duplicate resend (the accepted sequence is one past
 /// what it sent) from a genuine divergence without another round trip.
 /// </remarks>
+/// <summary>
+/// The control plane refused a checkpoint because the run is past its execution budget (ADR 0068) and recorded the run
+/// as terminally faulted on the limit it hit. Nothing from the save was written; the runner should stop advancing the
+/// run and release its lease. The run is not resumed; an operator starts a new run under a considered budget.
+/// </summary>
+public sealed class RunBudgetExhaustedException : RunnerApiException
+{
+    /// <summary>Initializes a new instance of the <see cref="RunBudgetExhaustedException"/> class.</summary>
+    /// <param name="runId">The run whose budget is exhausted.</param>
+    /// <param name="detail">The problem detail the control plane answered with, if any.</param>
+    public RunBudgetExhaustedException(WorkflowRunId runId, string? detail)
+        : base(HttpStatusCode.Conflict, detail ?? $"Run '{runId.Value}' is past its execution budget and has been recorded as faulted; nothing was written.")
+    {
+        this.RunId = runId;
+    }
+
+    /// <summary>Gets the run whose budget is exhausted.</summary>
+    public WorkflowRunId RunId { get; }
+}
+
 public sealed class CheckpointSupersededException : RunnerApiException
 {
     /// <summary>Initializes a new instance of the <see cref="CheckpointSupersededException"/> class.</summary>

@@ -23,6 +23,7 @@ public sealed class RunnerRunCoordinatorTests
     private const string Version = "adopt-v3";
 
     private static readonly DateTimeOffset T0 = new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+    private static readonly ExecutionBudget OneHour = new(ExecutionBudget.MaxStepsCeiling, TimeSpan.FromHours(1), 8, TimeSpan.Zero);
 
     [TestMethod]
     public async Task A_pending_run_is_claimed_with_its_workflow_environment_and_lease()
@@ -38,6 +39,49 @@ public sealed class RunnerRunCoordinatorTests
         claimed.Value.Lease.Token.ShouldNotBeNullOrEmpty();
         claimed.Value.Lease.Epoch.ShouldBeGreaterThan(0);
         claimed.Value.Lease.ExpiresAt.ShouldBe(T0 + TimeSpan.FromMinutes(1));
+    }
+
+    [TestMethod]
+    public async Task A_run_past_its_wall_clock_is_not_claimed_and_is_recorded_as_faulted()
+    {
+        // ADR 0068 at claim time: a run whose budget ran out while it sat in the store is not handed to a runner that
+        // would advance it past the bound. It is faulted from its last durable checkpoint and the lease handed back.
+        var fixture = await Fixture.EmptyAsync();
+        await fixture.SeedAsync("run-1", WorkflowRunStatus.Pending, Production, budget: OneHour);
+        fixture.Clock.Advance(TimeSpan.FromHours(2));
+
+        (await fixture.Coordinator.TryClaimAsync(Runner, [Version], null, default)).ShouldBeNull();
+
+        var address = new WorkflowRunAddress(Production, new WorkflowRunId("run-1"));
+        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex((await fixture.Store.LoadAsync(address, default))!.Value.Utf8);
+        index.Status.ShouldBe(WorkflowRunStatus.Faulted);
+        index.ErrorType.ShouldBe(ExecutionBudgetFault.Deadline);
+        (await fixture.Store.AcquireLeaseAsync(address, Peer, TimeSpan.FromMinutes(1), default)).ShouldNotBeNull();
+    }
+
+    [TestMethod]
+    public async Task A_waiting_run_past_its_wall_clock_is_faulted_rather_than_resumed()
+    {
+        var fixture = await Fixture.EmptyAsync();
+        await fixture.SeedWaitingAsync("run-1", Production, WorkflowWait.Timer(T0 + TimeSpan.FromMinutes(1)), budget: OneHour);
+        fixture.Clock.Advance(TimeSpan.FromHours(2));
+
+        (await fixture.Coordinator.ClaimDueAsync(Runner, [Version], null, null, default)).ShouldBeEmpty();
+
+        var address = new WorkflowRunAddress(Production, new WorkflowRunId("run-1"));
+        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex((await fixture.Store.LoadAsync(address, default))!.Value.Utf8);
+        index.Status.ShouldBe(WorkflowRunStatus.Faulted);
+        index.ErrorType.ShouldBe(ExecutionBudgetFault.Deadline);
+    }
+
+    [TestMethod]
+    public async Task A_run_within_its_budget_is_claimed()
+    {
+        var fixture = await Fixture.EmptyAsync();
+        await fixture.SeedAsync("run-1", WorkflowRunStatus.Pending, Production, budget: OneHour);
+        fixture.Clock.Advance(TimeSpan.FromMinutes(30));
+
+        (await fixture.Coordinator.TryClaimAsync(Runner, [Version], null, default)).ShouldNotBeNull();
     }
 
     [TestMethod]
@@ -542,9 +586,9 @@ public sealed class RunnerRunCoordinatorTests
             return fixture;
         }
 
-        public async ValueTask SeedWaitingAsync(string runId, string environment, WorkflowWait wait)
+        public async ValueTask SeedWaitingAsync(string runId, string environment, WorkflowWait wait, ExecutionBudget? budget = null)
         {
-            byte[] checkpoint = Checkpoint(runId, WorkflowRunStatus.Suspended, environment, null, wait);
+            byte[] checkpoint = Checkpoint(runId, WorkflowRunStatus.Suspended, environment, null, wait, budget);
             await this.Store.SaveAsync(
                 new WorkflowRunAddress(environment, new WorkflowRunId(runId)),
                 checkpoint,
@@ -553,10 +597,10 @@ public sealed class RunnerRunCoordinatorTests
                 default);
         }
 
-        public async ValueTask SeedAsync(string runId, WorkflowRunStatus status, string environment, bool resumeRequested = false)
+        public async ValueTask SeedAsync(string runId, WorkflowRunStatus status, string environment, bool resumeRequested = false, ExecutionBudget? budget = null)
         {
             DateTimeOffset resumeRequestedAt = this.Clock.GetUtcNow();
-            byte[] checkpoint = Checkpoint(runId, status, environment, resumeRequested ? resumeRequestedAt : null);
+            byte[] checkpoint = Checkpoint(runId, status, environment, resumeRequested ? resumeRequestedAt : null, budget: budget);
             await this.Store.SaveAsync(
                 new WorkflowRunAddress(environment, new WorkflowRunId(runId)),
                 checkpoint,
@@ -565,7 +609,7 @@ public sealed class RunnerRunCoordinatorTests
                 default);
         }
 
-        private static byte[] Checkpoint(string runId, WorkflowRunStatus status, string environment, DateTimeOffset? resumeRequestedAt, WorkflowWait? wait = null)
+        private static byte[] Checkpoint(string runId, WorkflowRunStatus status, string environment, DateTimeOffset? resumeRequestedAt, WorkflowWait? wait = null, ExecutionBudget? budget = null)
         {
             using PooledUtf8Map<int> retryCounters = PooledUtf8Map<int>.Rent(0);
             using PooledUtf8Map<JsonElement> stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
@@ -584,7 +628,8 @@ public sealed class RunnerRunCoordinatorTests
                 wait: wait,
                 environment: environment,
                 resumeRequestedAt: resumeRequestedAt,
-                updatedAt: T0);
+                updatedAt: T0,
+                budget: budget);
         }
     }
 }

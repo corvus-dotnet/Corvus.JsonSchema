@@ -424,8 +424,45 @@ public sealed class RunnerRunCoordinator
             return null;
         }
 
+        if (await this.TryFaultExhaustedAsync(held.Address, row, entry, cancellationToken).ConfigureAwait(false))
+        {
+            return null;
+        }
+
         var grant = new RunnerLeaseGrant(RunnerLeaseToken.Issue(held.Epoch, held.Token), held.ExpiresAt, held.Epoch);
         return new ClaimedRunRecord(held.RunId, entry.WorkflowId, held.Address.Environment, grant);
+    }
+
+    // ADR 0068, decided at claim time: a run whose budget is already spent (a wall clock that ran out while it waited,
+    // or a journal past its fuel) is not handed to a runner that would advance it past the bound. It is recorded as
+    // faulted under the lease this caller holds, from the last durable checkpoint, and the claim is declined so the
+    // caller hands the lease back. The store's etag guards the write: a peer that advanced the row meanwhile wins,
+    // and the claim is declined either way.
+    private async ValueTask<bool> TryFaultExhaustedAsync(WorkflowRunAddress address, WorkflowCheckpoint row, WorkflowRunIndexEntry entry, CancellationToken cancellationToken)
+    {
+        if (!WorkflowCheckpointSerializer.TryReadBudgetFacts(row.Utf8, out CheckpointBudgetFacts facts) || facts.Budget is not { } budget)
+        {
+            return false;
+        }
+
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        if (ExecutionBudgetFault.Find(budget, facts, entry.CreatedAt, now) is not { } exceeded)
+        {
+            return false;
+        }
+
+        long sequence = WorkflowCheckpointSerializer.TryReadSequence(row.Utf8, out long persisted) ? persisted + 1 : 1;
+        byte[] faulted = WorkflowCheckpointSerializer.RewriteFaulted(row.Utf8.Span, sequence, exceeded, now);
+        try
+        {
+            await this.store.SaveAsync(address, faulted, WorkflowCheckpointSerializer.ProjectIndex(faulted), row.Etag, cancellationToken).ConfigureAwait(false);
+        }
+        catch (WorkflowConflictException)
+        {
+            // Another writer moved the row under this lease; whatever it wrote is judged on its own next save.
+        }
+
+        return true;
     }
 
     private async ValueTask<ClaimedRunRecord?> ProjectClaimAsync(WorkflowLease held, HashSet<string> hostedVersions, CancellationToken cancellationToken)
@@ -443,6 +480,11 @@ public sealed class RunnerRunCoordinator
         bool claimable = entry.Status is WorkflowRunStatus.Pending or WorkflowRunStatus.Running
             || (entry.ResumeRequestedAt is not null && entry.Status is WorkflowRunStatus.Suspended or WorkflowRunStatus.Faulted);
         if (!claimable || !hostedVersions.Contains(entry.WorkflowId))
+        {
+            return null;
+        }
+
+        if (await this.TryFaultExhaustedAsync(held.Address, row, entry, cancellationToken).ConfigureAwait(false))
         {
             return null;
         }

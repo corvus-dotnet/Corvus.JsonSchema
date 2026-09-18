@@ -98,6 +98,25 @@ public sealed class ControlPlaneCheckpointSurfaceTests
     }
 
     [TestMethod]
+    public async Task A_save_past_the_budget_answers_409_budget_exhausted()
+    {
+        // ADR 0068 on the serverless surface: the same refusal the runner API gives, so a baked function stops too.
+        await using Host host = await Host.StartAsync(Secret);
+        var oneStep = new ExecutionBudget(1, TimeSpan.FromHours(1), 8, TimeSpan.Zero);
+        byte[] initial = RealCheckpoint(budget: oneStep);
+        await host.Store.SaveAsync(Address, initial, WorkflowCheckpointSerializer.ProjectIndex(initial), WorkflowEtag.None, default);
+        string token = CheckpointToken.Issue(Secret, Address, DateTimeOffset.UtcNow.AddMinutes(10));
+
+        HttpResponseMessage response = await host.PostCheckpointAsync(Run.Value, RealCheckpoint(cursor: 2, sequence: 2, budget: oneStep, journalEntries: 2), sequence: 2, token: token);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        using System.Text.Json.JsonDocument problem = System.Text.Json.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        problem.RootElement.GetProperty("type").GetString().ShouldBe("https://corvus-oss.org/arazzo/runner/problems/budget-exhausted");
+        problem.RootElement.GetProperty("acceptedSequence").GetInt64().ShouldBe(3);
+        WorkflowCheckpointSerializer.ProjectIndex((await host.Store.LoadAsync(Address, default))!.Value.Utf8).ErrorType.ShouldBe(ExecutionBudgetFault.Fuel);
+    }
+
+    [TestMethod]
     public async Task Without_a_secret_the_surface_is_absent_rather_than_open()
     {
         // ADR 0016 forbids an insecure-by-omission posture, and ADR 0062 names the unwired surface as the gap to close.
@@ -147,10 +166,17 @@ public sealed class ControlPlaneCheckpointSurfaceTests
         store.Loads.ShouldBe(loadsAfterSeeding);
     }
 
-    private static byte[] RealCheckpoint(int cursor = 0, long sequence = 1)
+    private static byte[] RealCheckpoint(int cursor = 0, long sequence = 1, ExecutionBudget? budget = null, int journalEntries = 0)
     {
         using PooledUtf8Map<int> retryCounters = PooledUtf8Map<int>.Rent(0);
         using PooledUtf8Map<JsonElement> stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
+        var createdAt = new DateTimeOffset(2026, 3, 4, 5, 6, 7, TimeSpan.Zero);
+        var journal = new List<WorkflowStepJournalEntry>(journalEntries);
+        for (int i = 1; i <= journalEntries; i++)
+        {
+            journal.Add(new WorkflowStepJournalEntry($"s{i}", WorkflowStepStatus.Succeeded, 1, createdAt.AddSeconds(i), createdAt.AddSeconds(i + 1)));
+        }
+
         return WorkflowCheckpointSerializer.Serialize(
             Run,
             "petWorkflow",
@@ -164,7 +190,9 @@ public sealed class ControlPlaneCheckpointSurfaceTests
             stepOutputs,
             outputs: default,
             environment: Env,
-            updatedAt: new DateTimeOffset(2026, 3, 4, 5, 10, 0, TimeSpan.Zero));
+            updatedAt: new DateTimeOffset(2026, 3, 4, 5, 10, 0, TimeSpan.Zero),
+            stepJournal: journal,
+            budget: budget);
     }
 
     // Counts the store reads the coordinator makes, which is what distinguishes a seeded slot from a fresh one.

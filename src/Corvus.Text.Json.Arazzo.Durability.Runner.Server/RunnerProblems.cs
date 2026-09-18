@@ -21,6 +21,8 @@ internal static class RunnerProblems
     /// <summary>The problem type for a request a quota refused.</summary>
     internal const string QuotaExceededType = "https://corvus-oss.org/arazzo/runner/problems/quota-exceeded";
 
+    internal const string BudgetExhaustedType = "https://corvus-oss.org/arazzo/runner/problems/budget-exhausted";
+
     /// <summary>
     /// The refusal for a lease that is not current. A run outside the principal's bindings, one held by another runner,
     /// and one that does not exist all produce exactly this, which is what keeps them indistinguishable.
@@ -135,6 +137,14 @@ internal static class RunnerProblems
     /// current says nothing about which sequence the store would take.
     /// </summary>
     /// <returns>The problem body.</returns>
+    internal static CheckpointWriteProblem.Source BudgetExhausted(string faultError, long acceptedSequence)
+        => CheckpointWriteProblem.Build(
+            acceptedSequence: acceptedSequence,
+            detail: $"The run is past its execution budget and has been recorded as faulted with '{faultError}'. Nothing from this save was written; stop advancing the run. A run that exceeded its budget is not resumed; start a new run under a considered budget.",
+            status: 409,
+            title: "Execution budget exhausted",
+            type: BudgetExhaustedType);
+
     internal static CheckpointWriteProblem.Source LeaseLostOnWrite()
         => CheckpointWriteProblem.Build(
             detail: "The lease presented for this run is not current. It may have expired, been released, or been revoked, and the run may already be held by another runner.",

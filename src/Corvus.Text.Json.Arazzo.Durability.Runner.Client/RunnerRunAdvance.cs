@@ -53,6 +53,12 @@ internal static class RunnerRunAdvance
             // nothing to undo, and the runner that holds the lease will carry it from the last durable checkpoint.
             return false;
         }
+        catch (RunBudgetExhaustedException)
+        {
+            // The control plane refused the checkpoint and recorded the run as faulted on its budget (ADR 0068). The
+            // run is over, not lost: nothing here is retried, and the release below hands back the lease.
+            return false;
+        }
         finally
         {
             // Deliberately not the caller's token. Cancellation is how a runner shuts down, and that is precisely when

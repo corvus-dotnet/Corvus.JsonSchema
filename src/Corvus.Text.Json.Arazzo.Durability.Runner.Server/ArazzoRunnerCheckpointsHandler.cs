@@ -169,6 +169,10 @@ public sealed class ArazzoRunnerCheckpointsHandler : IApiCheckpointsHandler
                 // runner's anchor committed to a checkpoint the store does not have. That is the one failure this
                 // operation exists to make impossible, so it is a refusal carrying the sequence that would be accepted.
                 CheckpointSaveOutcome.Superseded => SaveCheckpointResult.Conflict(RunnerProblems.Superseded(result.AcceptedSequence), workspace),
+
+                // ADR 0068: the coordinator refused the save and recorded the run as faulted on its budget. The runner
+                // learns which limit, and that the run is over: its lease is still its own to release.
+                CheckpointSaveOutcome.BudgetExceeded => SaveCheckpointResult.Conflict(RunnerProblems.BudgetExhausted(result.FaultError ?? ExecutionBudgetFault.Fuel, result.AcceptedSequence), workspace),
                 _ => SaveCheckpointResult.Conflict(RunnerProblems.WriterConflict(result.AcceptedSequence), workspace),
             };
         }

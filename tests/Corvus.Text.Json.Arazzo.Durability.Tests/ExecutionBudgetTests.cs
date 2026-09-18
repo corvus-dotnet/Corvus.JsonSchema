@@ -13,6 +13,33 @@ namespace Corvus.Text.Json.Arazzo.Durability.Tests;
 public sealed class ExecutionBudgetTests
 {
     [TestMethod]
+    public void A_budget_fault_is_recognised_by_its_error_type()
+    {
+        ExecutionBudgetFault.IsBudgetFault(ExecutionBudgetFault.Fuel).ShouldBeTrue();
+        ExecutionBudgetFault.IsBudgetFault(ExecutionBudgetFault.Deadline).ShouldBeTrue();
+        ExecutionBudgetFault.IsBudgetFault(ExecutionBudgetFault.Depth).ShouldBeTrue();
+        ExecutionBudgetFault.IsBudgetFault("boom").ShouldBeFalse();
+        ExecutionBudgetFault.IsBudgetFault((string?)null).ShouldBeFalse();
+
+        ExecutionBudgetFault.IsBudgetFault("budget-deadline"u8).ShouldBeTrue();
+        ExecutionBudgetFault.IsBudgetFault("budget-deadlines"u8).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public void The_predicate_finds_fuel_before_the_deadline_and_nothing_within_budget()
+    {
+        // ADR 0068: fuel is decided first, and a truncated journal is over any admissible budget by definition.
+        var budget = new ExecutionBudget(3, TimeSpan.FromHours(1), 8, TimeSpan.Zero);
+        var createdAt = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+
+        ExecutionBudgetFault.Find(budget, new CheckpointBudgetFacts(budget, 3, false, false), createdAt, createdAt + TimeSpan.FromHours(1)).ShouldBeNull();
+        ExecutionBudgetFault.Find(budget, new CheckpointBudgetFacts(budget, 4, false, false), createdAt, createdAt).ShouldBe(ExecutionBudgetFault.Fuel);
+        ExecutionBudgetFault.Find(budget, new CheckpointBudgetFacts(budget, 1, true, false), createdAt, createdAt).ShouldBe(ExecutionBudgetFault.Fuel);
+        ExecutionBudgetFault.Find(budget, new CheckpointBudgetFacts(budget, 4, false, false), createdAt, createdAt + TimeSpan.FromHours(2)).ShouldBe(ExecutionBudgetFault.Fuel);
+        ExecutionBudgetFault.Find(budget, new CheckpointBudgetFacts(budget, 1, false, false), createdAt, createdAt + TimeSpan.FromHours(1) + TimeSpan.FromTicks(1)).ShouldBe(ExecutionBudgetFault.Deadline);
+    }
+
+    [TestMethod]
     public void The_default_is_the_journal_cap_a_day_the_depth_cap_and_an_hour()
     {
         ExecutionBudget budget = ExecutionBudget.Default;

@@ -132,10 +132,16 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
         return new RunnerApiFixture(app, store, catalog, availability, clock, runnerHttp, runnerTransport, runner, peerHttp, peerTransport, peer, strangerHttp, strangerTransport, stranger);
     }
 
-    public static byte[] Checkpoint(string runId, WorkflowRunStatus status, long sequence, WorkflowWait? wait = null, string? workflowId = null)
+    public static byte[] Checkpoint(string runId, WorkflowRunStatus status, long sequence, WorkflowWait? wait = null, string? workflowId = null, ExecutionBudget? budget = null, int journalEntries = 0)
     {
         using PooledUtf8Map<int> retryCounters = PooledUtf8Map<int>.Rent(0);
         using PooledUtf8Map<JsonElement> stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
+        var journal = new List<WorkflowStepJournalEntry>(journalEntries);
+        for (int i = 1; i <= journalEntries; i++)
+        {
+            journal.Add(new WorkflowStepJournalEntry($"s{i}", WorkflowStepStatus.Succeeded, 1, T0.AddSeconds(i), T0.AddSeconds(i + 1)));
+        }
+
         return WorkflowCheckpointSerializer.Serialize(
             new WorkflowRunId(runId),
             workflowId ?? Version,
@@ -150,16 +156,18 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
             outputs: default,
             wait: wait,
             environment: Production,
-            updatedAt: T0);
+            updatedAt: T0,
+            stepJournal: journal,
+            budget: budget);
     }
 
     /// <summary>Seeds a run suspended on a wait, which is the only state a timer or a message can resume.</summary>
     public ValueTask SeedWaitingAsync(string runId, WorkflowWait wait, string? workflowId = null)
         => this.SaveAsync(runId, Checkpoint(runId, WorkflowRunStatus.Suspended, sequence: 1, wait, workflowId));
 
-    public async ValueTask SeedAsync(string runId, WorkflowRunStatus status)
+    public async ValueTask SeedAsync(string runId, WorkflowRunStatus status, ExecutionBudget? budget = null)
     {
-        byte[] checkpoint = Checkpoint(runId, status, sequence: 1);
+        byte[] checkpoint = Checkpoint(runId, status, sequence: 1, budget: budget);
         await this.Store.SaveAsync(
             new WorkflowRunAddress(Production, new WorkflowRunId(runId)),
             checkpoint,

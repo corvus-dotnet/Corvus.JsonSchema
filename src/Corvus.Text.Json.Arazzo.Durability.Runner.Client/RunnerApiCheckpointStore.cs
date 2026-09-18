@@ -126,6 +126,13 @@ internal sealed class RunnerApiCheckpointStore : IWorkflowCheckpointStore
                     throw new RunnerLeaseLostException(id);
                 }
 
+                // ADR 0068: the control plane refused the save and recorded the run as faulted on its budget. The run is
+                // over; the lease is still this client's to release, which the advance does on its way out.
+                if (problem.IsNotUndefined() && problem.Type.IsNotUndefined() && problem.Type.ValueEquals(RunnerProblemTypes.BudgetExhausted))
+                {
+                    throw new RunBudgetExhaustedException(id, problem.Detail.IsNotUndefined() ? (string)problem.Detail : null);
+                }
+
                 long accepted = problem.IsNotUndefined() && problem.AcceptedSequence.IsNotUndefined()
                     ? (long)problem.AcceptedSequence
                     : 0;
@@ -217,4 +224,7 @@ internal static class RunnerProblemTypes
 {
     /// <summary>The problem type for a lease that is no longer current.</summary>
     internal static ReadOnlySpan<byte> LeaseLost => "https://corvus-oss.org/arazzo/runner/problems/lease-lost"u8;
+
+    /// <summary>The problem type for a save past the run's execution budget (ADR 0068).</summary>
+    internal static ReadOnlySpan<byte> BudgetExhausted => "https://corvus-oss.org/arazzo/runner/problems/budget-exhausted"u8;
 }

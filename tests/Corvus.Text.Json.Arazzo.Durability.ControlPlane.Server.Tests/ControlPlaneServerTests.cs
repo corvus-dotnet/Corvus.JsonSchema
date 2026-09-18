@@ -302,6 +302,29 @@ public sealed class ControlPlaneServerTests
     }
 
     [TestMethod]
+    public async Task Resume_of_a_run_that_exhausted_its_budget_returns_409_budget_exhausted()
+    {
+        // ADR 0068: a budget fault is terminal; the remedy is a new run under a considered budget, not a retry.
+        Host host = await StartAsync();
+        await using (host.App)
+        {
+            using (WorkflowRun run = WorkflowRun.CreateNew(host.Store, R1, "wf", default, "development", host.Clock))
+            {
+                await run.FaultAsync("step1", attempt: 1, ExecutionBudgetFault.Fuel, default);
+            }
+
+            HttpResponseMessage response = await host.Client.PostAsync($"/runs/{R1}/resume", Json("""{"mode":"RetryFaultedStep"}"""));
+
+            response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+            using Stj.JsonDocument doc = await ReadJsonAsync(response);
+            doc.RootElement.GetProperty("type").GetString()!.ShouldEndWith("budget-exhausted");
+
+            using Stj.JsonDocument after = await ReadJsonAsync(await host.Client.GetAsync($"/runs/{R1}"));
+            after.RootElement.GetProperty("status").GetString().ShouldBe("Faulted");
+        }
+    }
+
+    [TestMethod]
     public async Task Resume_of_a_non_faulted_run_returns_409()
     {
         Host host = await StartAsync();

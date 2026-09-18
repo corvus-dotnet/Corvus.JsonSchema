@@ -127,6 +127,41 @@ public sealed class SecuredWorkflowManagementTests
     }
 
     [TestMethod]
+    public async Task Resume_refuses_a_run_that_exhausted_its_budget_in_every_mode()
+    {
+        // ADR 0068: a budget fault is terminal. Neither the in-process resume nor the hand-off to a runner touches it,
+        // and no mutation (rewind, skip) is applied on the way to the refusal.
+        var store = new InMemoryWorkflowStateStore();
+        using (WorkflowRun run = WorkflowRun.CreateNew(store, "r1", "wf", default, "development"))
+        {
+            await run.CheckpointAsync(2, default);
+            await run.FaultAsync("step2", attempt: 1, ExecutionBudgetFault.Deadline, default);
+        }
+
+        bool resumerInvoked = false;
+        ValueTask<WorkflowRunResultKind> Resumer(WorkflowRun run, CancellationToken ct)
+        {
+            resumerInvoked = true;
+            return ValueTask.FromResult(WorkflowRunResultKind.Completed);
+        }
+
+        var client = new SecuredWorkflowManagement(store, owner: "ops", resumer: Resumer);
+
+        (await client.ResumeAsync("r1", ResumeOptions.RetryFaultedStep, AccessContext.System, default)).ShouldBeFalse();
+        (await client.ResumeAsync("r1", ResumeOptions.Rewind(0), AccessContext.System, default)).ShouldBeFalse();
+        (await client.RequestFaultedResumeAsync("r1", ResumeOptions.RetryFaultedStep, AccessContext.System, default)).ShouldBeFalse();
+
+        resumerInvoked.ShouldBeFalse();
+        WorkflowRunDetail detail = (await client.GetAsync("r1", AccessContext.System, default))!.Value;
+        detail.Status.ShouldBe(WorkflowRunStatus.Faulted);
+        detail.Fault!.Value.Error.ShouldBe(ExecutionBudgetFault.Deadline);
+        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex((await store.LoadAsync(new WorkflowRunAddress("development", new WorkflowRunId("r1")), default))!.Value.Utf8);
+        index.ResumeRequestedAt.ShouldBeNull();
+        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize((await store.LoadAsync(new WorkflowRunAddress("development", new WorkflowRunId("r1")), default))!.Value.Utf8);
+        state.Cursor.ShouldBe(2);
+    }
+
+    [TestMethod]
     public async Task Resume_does_not_invoke_the_resumer_for_a_non_faulted_run()
     {
         var store = new InMemoryWorkflowStateStore();

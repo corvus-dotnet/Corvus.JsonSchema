@@ -528,6 +528,261 @@ public static class WorkflowCheckpointSerializer
     private static ReadOnlySpan<byte> SequenceUtf8 => "sequence"u8;
 
     /// <summary>
+    /// Reads the facts the execution-budget predicate needs (ADR 0068) from a checkpoint's bytes: the run's frozen
+    /// budget, the journal's length and truncation flag, and whether the run already faulted on its budget. A
+    /// forward-only scan like <see cref="TryReadSequence"/>: it runs on every checkpoint save, so it parses nothing
+    /// and allocates nothing; the journal is walked entry by entry to count it, and every other value is skipped.
+    /// </summary>
+    /// <param name="checkpointUtf8">The checkpoint document to read.</param>
+    /// <param name="facts">The facts read; <see langword="default"/> when the bytes are not a checkpoint.</param>
+    /// <returns><see langword="true"/> when the document is a JSON object the facts could be read from.</returns>
+    public static bool TryReadBudgetFacts(ReadOnlyMemory<byte> checkpointUtf8, out CheckpointBudgetFacts facts)
+    {
+        ExecutionBudget? budget = null;
+        int journalCount = 0;
+        bool truncated = false;
+        bool budgetFaulted = false;
+        try
+        {
+            var reader = new Utf8JsonReader(checkpointUtf8.Span);
+            if (!reader.Read() || reader.TokenType != JsonTokenType.StartObject)
+            {
+                facts = default;
+                return false;
+            }
+
+            while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+            {
+                int which = reader.ValueTextEquals(ExecutionBudget.JsonPropertyNames.BudgetUtf8) ? 0
+                    : reader.ValueTextEquals("stepJournal"u8) ? 1
+                    : reader.ValueTextEquals("journalTruncated"u8) ? 2
+                    : reader.ValueTextEquals("fault"u8) ? 3
+                    : -1;
+                if (!reader.Read())
+                {
+                    break;
+                }
+
+                switch (which)
+                {
+                    case 0:
+                        budget = ExecutionBudget.TryRead(ref reader, out ExecutionBudget read) ? read : null;
+                        break;
+                    case 1:
+                        journalCount = reader.TokenType == JsonTokenType.StartArray ? CountArray(ref reader) : 0;
+                        break;
+                    case 2:
+                        truncated = reader.TokenType == JsonTokenType.True;
+                        break;
+                    case 3:
+                        budgetFaulted = reader.TokenType == JsonTokenType.StartObject && FaultIsBudgetFault(ref reader);
+                        break;
+                    default:
+                        reader.Skip();
+                        break;
+                }
+            }
+
+            facts = new CheckpointBudgetFacts(budget, journalCount, truncated, budgetFaulted);
+            return true;
+        }
+        catch (Exception ex) when (ex is Corvus.Text.Json.JsonException or System.Text.Json.JsonException or FormatException or InvalidOperationException)
+        {
+            // Bytes that are not a checkpoint carry no facts; the caller asked a question it is entitled to get "no" for.
+            facts = default;
+            return false;
+        }
+
+        // Counts an array's elements, skipping each one whole. Leaves the reader on the array's end token.
+        static int CountArray(ref Utf8JsonReader reader)
+        {
+            int count = 0;
+            while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+            {
+                reader.Skip();
+                count++;
+            }
+
+            return count;
+        }
+
+        // Reads a fault object's error type and compares it against the budget faults without materializing it.
+        // Leaves the reader on the object's end token.
+        static bool FaultIsBudgetFault(ref Utf8JsonReader reader)
+        {
+            bool result = false;
+            while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+            {
+                bool isError = reader.ValueTextEquals("error"u8);
+                if (!reader.Read())
+                {
+                    break;
+                }
+
+                if (isError && reader.TokenType == JsonTokenType.String)
+                {
+                    result = !reader.ValueIsEscaped && ExecutionBudgetFault.IsBudgetFault(reader.ValueSpan);
+                }
+                else
+                {
+                    reader.Skip();
+                }
+            }
+
+            return result;
+        }
+    }
+
+    /// <summary>
+    /// Rewrites a checkpoint as terminally faulted on its execution budget (ADR 0068), authored by the control plane
+    /// rather than the runner: the status becomes <see cref="WorkflowRunStatus.Faulted"/>, the wait and any
+    /// resume-requested marker are dropped (a budget-faulted run is neither resumable nor claimable), the write
+    /// sequence is replaced with the one the control plane consumed for this write, the update time is stamped, and
+    /// the fault record names the limit that was hit at the last journaled step. Every other property is copied
+    /// verbatim as <see cref="RewriteStatus"/> does, so the run's working state stays inspectable.
+    /// </summary>
+    /// <param name="source">The current (last durable) checkpoint document.</param>
+    /// <param name="sequence">The write sequence the rewritten document carries.</param>
+    /// <param name="error">The budget fault's error type, one of <see cref="ExecutionBudgetFault"/>.</param>
+    /// <param name="at">When the fault was decided.</param>
+    /// <returns>The rewritten checkpoint document.</returns>
+    public static byte[] RewriteFaulted(ReadOnlySpan<byte> source, long sequence, string error, DateTimeOffset at)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(error);
+
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter buffer);
+        try
+        {
+            string stepId = string.Empty;
+            int attempt = 0;
+            bool updatedAtWritten = false;
+
+            var reader = new Utf8JsonReader(source);
+            reader.Read(); // the root StartObject
+            writer.WriteStartObject();
+            while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+            {
+                if (reader.ValueTextEquals("status"u8))
+                {
+                    reader.Read();
+                    writer.WriteString("status"u8, StatusName(WorkflowRunStatus.Faulted));
+                }
+                else if (reader.ValueTextEquals(SequenceUtf8))
+                {
+                    reader.Read();
+                    writer.WriteNumber(SequenceUtf8, sequence);
+                }
+                else if (reader.ValueTextEquals("updatedAt"u8))
+                {
+                    reader.Read();
+                    writer.WriteString("updatedAt"u8, at);
+                    updatedAtWritten = true;
+                }
+                else if (reader.ValueTextEquals("wait"u8) || reader.ValueTextEquals("resumeRequestedAt"u8) || reader.ValueTextEquals("fault"u8))
+                {
+                    reader.Read();
+                    reader.Skip();
+                }
+                else if (reader.ValueTextEquals("stepJournal"u8))
+                {
+                    // Copied verbatim like every other subtree, after a pass over its entries to find the step the
+                    // fault is recorded against: the last one journaled, which is where the run was when its budget
+                    // ran out. Only that entry's id is materialized.
+                    reader.Read();
+                    int valueStart = (int)reader.TokenStartIndex;
+                    if (reader.TokenType == JsonTokenType.StartArray)
+                    {
+                        (stepId, attempt) = ReadLastJournalStep(ref reader, source);
+                    }
+                    else
+                    {
+                        reader.Skip();
+                    }
+
+                    writer.WritePropertyName("stepJournal"u8);
+                    writer.WriteRawValue(source[valueStart..(int)reader.BytesConsumed], skipInputValidation: true);
+                }
+                else
+                {
+                    ReadOnlySpan<byte> name = reader.ValueSpan;
+                    reader.Read();
+                    int valueStart = (int)reader.TokenStartIndex;
+                    reader.Skip();
+                    writer.WritePropertyName(name);
+                    writer.WriteRawValue(source[valueStart..(int)reader.BytesConsumed], skipInputValidation: true);
+                }
+            }
+
+            if (!updatedAtWritten)
+            {
+                writer.WriteString("updatedAt"u8, at);
+            }
+
+            writer.WriteStartObject("fault"u8);
+            writer.WriteString("stepId"u8, stepId);
+            writer.WriteNumber("attempt"u8, attempt);
+            writer.WriteString("error"u8, error);
+            writer.WriteString("at"u8, at);
+            writer.WriteEndObject();
+
+            writer.WriteEndObject();
+            writer.Flush();
+            return buffer.WrittenSpan.ToArray();
+        }
+        finally
+        {
+            workspace.ReturnWriterAndBuffer(writer, buffer);
+        }
+
+        // Walks the journal array to its end, remembering where the last entry's step id and attempt sit, and
+        // materializes only those. Leaves the reader on the array's end token.
+        static (string StepId, int Attempt) ReadLastJournalStep(ref Utf8JsonReader reader, ReadOnlySpan<byte> source)
+        {
+            int idStart = -1;
+            int idLength = 0;
+            int attempt = 0;
+            while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+            {
+                if (reader.TokenType != JsonTokenType.StartObject)
+                {
+                    reader.Skip();
+                    continue;
+                }
+
+                while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+                {
+                    bool isStepId = reader.ValueTextEquals("stepId"u8);
+                    bool isAttempt = reader.ValueTextEquals("attempt"u8);
+                    reader.Read();
+                    if (isStepId && reader.TokenType == JsonTokenType.String)
+                    {
+                        idStart = (int)reader.TokenStartIndex;
+                        idLength = (int)(reader.BytesConsumed - reader.TokenStartIndex);
+                    }
+                    else if (isAttempt && reader.TokenType == JsonTokenType.Number && reader.TryGetInt32(out int read))
+                    {
+                        attempt = read;
+                    }
+                    else
+                    {
+                        reader.Skip();
+                    }
+                }
+            }
+
+            if (idStart < 0)
+            {
+                return (string.Empty, attempt);
+            }
+
+            // The token slice includes its quotes; a fresh reader over it unescapes the same way GetString would.
+            var idReader = new Utf8JsonReader(source.Slice(idStart, idLength));
+            return (idReader.Read() ? idReader.GetString() ?? string.Empty : string.Empty, attempt);
+        }
+    }
+
+    /// <summary>
     /// Projects a checkpoint's <see cref="WorkflowRunIndexEntry"/> directly from its bytes, without materializing the
     /// run's working state. The runner's checkpoint surface calls this to re-index a checkpoint a serverless function
     /// checked in as opaque bytes (design §5.5): every index field is a top-level scalar or tag set, so this reads

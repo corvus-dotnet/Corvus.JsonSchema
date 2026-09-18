@@ -2,6 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json;
+using Corvus.Text.Json.Internal;
+
 namespace Corvus.Text.Json.Arazzo.Durability;
 
 /// <summary>
@@ -138,6 +141,66 @@ public readonly record struct ExecutionBudget
     /// <param name="value">The element.</param>
     /// <param name="integer">The integer read.</param>
     /// <returns><see langword="true"/> if the element is an integral number.</returns>
+    /// <summary>
+    /// Reads a budget from a forward-only reader positioned on the budget object's start, for the checkpoint
+    /// serializer's facts scan (which never parses the document). Applies the same admissibility rules as
+    /// <see cref="TryRead(in JsonElement, out ExecutionBudget)"/>; an inadmissible or incomplete object reads as no
+    /// budget. The reader is left on the object's end token either way.
+    /// </summary>
+    /// <param name="reader">The reader, positioned on <see cref="JsonTokenType.StartObject"/>.</param>
+    /// <param name="budget">The budget read.</param>
+    /// <returns><see langword="true"/> when the object is an admissible budget.</returns>
+    internal static bool TryRead(ref Utf8JsonReader reader, out ExecutionBudget budget)
+    {
+        long maxSteps = -1;
+        long wallClockMs = -1;
+        long maxDepth = -1;
+        long retryMs = -1;
+        bool wellFormed = reader.TokenType == JsonTokenType.StartObject;
+        while (wellFormed && reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+        {
+            int which = reader.ValueTextEquals(JsonPropertyNames.MaxStepsUtf8) ? 0
+                : reader.ValueTextEquals(JsonPropertyNames.WallClockMsUtf8) ? 1
+                : reader.ValueTextEquals(JsonPropertyNames.MaxSubWorkflowDepthUtf8) ? 2
+                : reader.ValueTextEquals(JsonPropertyNames.RetryAfterCeilingMsUtf8) ? 3
+                : -1;
+            if (!reader.Read())
+            {
+                break;
+            }
+
+            if (which < 0)
+            {
+                reader.Skip();
+                continue;
+            }
+
+            if (reader.TokenType != JsonTokenType.Number || !reader.TryGetInt64(out long value))
+            {
+                wellFormed = false;
+                reader.Skip();
+                continue;
+            }
+
+            switch (which)
+            {
+                case 0: maxSteps = value; break;
+                case 1: wallClockMs = value; break;
+                case 2: maxDepth = value; break;
+                default: retryMs = value; break;
+            }
+        }
+
+        if (wellFormed && maxSteps >= 1 && maxSteps <= MaxStepsCeiling && wallClockMs > 0 && maxDepth >= 0 && maxDepth <= int.MaxValue && retryMs >= 0)
+        {
+            budget = new ExecutionBudget((int)maxSteps, TimeSpan.FromMilliseconds(wallClockMs), (int)maxDepth, TimeSpan.FromMilliseconds(retryMs));
+            return true;
+        }
+
+        budget = default;
+        return false;
+    }
+
     internal static bool TryReadInteger(in JsonElement value, out long integer)
     {
         if (value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out integer))

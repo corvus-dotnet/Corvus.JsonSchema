@@ -312,6 +312,15 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
             return ResumeRunResult.Forbidden(ForbiddenProblem(runId), workspace);
         }
 
+        // ADR 0068: a run that exceeded its execution budget is terminal. Told apart from the ordinary not-resumable
+        // refusal because the remedy differs: not a retry or a rewind, but a new run under a considered budget.
+        if (pre.Fault is { } fault && ExecutionBudgetFault.IsBudgetFault(fault.Error))
+        {
+            return ResumeRunResult.Conflict(
+                Problem("budget-exhausted", "Run exhausted its execution budget", 409, $"Run '{runId}' faulted with '{fault.Error}' and cannot be resumed; a run that exceeded its budget is terminal. Start a new run under a considered budget."),
+                workspace);
+        }
+
         ResumeOptions options = ToResumeOptions(parameters.Body);
         if (await this.management.ResumeAsync(runId, options, ctx, cancellationToken).ConfigureAwait(false))
         {
