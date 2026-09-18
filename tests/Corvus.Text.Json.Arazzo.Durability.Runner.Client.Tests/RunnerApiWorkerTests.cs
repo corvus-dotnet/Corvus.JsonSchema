@@ -156,6 +156,36 @@ public sealed class RunnerApiWorkerTests
     }
 
     [TestMethod]
+    public async Task A_sweep_that_is_cut_short_gives_back_the_claims_it_never_reached()
+    {
+        // Every claim in a sweep is leased from the moment it is claimed. An advance that throws ends the sweep, and
+        // the claims after it would otherwise sit leased and unadvanced until the lease lapsed.
+        await using Fixture fixture = await Fixture.StartAsync();
+        await fixture.SeedWaitingAsync(Run1, WorkflowWait.Message(Channel, null));
+        await fixture.SeedWaitingAsync(Run2, WorkflowWait.Message(Channel, null));
+        await fixture.SeedWaitingAsync(Run3, WorkflowWait.Message(Channel, null));
+        var worker = new RunnerApiWorker(fixture.Client);
+        using ParsedJsonDocument<JsonElement> payload = NewPayload();
+        int advances = 0;
+
+        IOException thrown = await Should.ThrowAsync<IOException>(async () => await worker.DeliverMessageAsync(
+            Channel,
+            null,
+            payload.RootElement,
+            [Version],
+            (_, _) => ++advances == 2 ? throw new IOException("the store went away") : ValueTask.FromResult(WorkflowRunResultKind.Suspended),
+            default));
+
+        // The failure that ended the sweep is the one reported, and the run after it was never advanced.
+        thrown.Message.ShouldBe("the store went away");
+        advances.ShouldBe(2);
+
+        // All three are claimable again with no clock advance: the two that were advanced released themselves, and the
+        // one the sweep never reached was handed back, not left to its lease.
+        (await fixture.PeerClient.ClaimAwaitingMessageAsync(Channel, null, [Version])).Count.ShouldBe(3);
+    }
+
+    [TestMethod]
     public async Task A_run_that_is_no_longer_waiting_is_not_resumed()
     {
         // The wait index says a message matched, but the run may have been advanced since. Re-entering it would take

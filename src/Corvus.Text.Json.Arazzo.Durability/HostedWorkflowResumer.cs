@@ -105,8 +105,7 @@ public sealed class HostedWorkflowResumer : IRunExecutionBackend
             return await scheduler.RunAsync(ImmutableDictionary<string, IApiTransport>.Empty, WorkflowTransports.NoMessageTransports, scheduleWorkspace, run.Inputs, run, cancellationToken).ConfigureAwait(false);
         }
 
-        IHostedWorkflow hosted = await this.resolver.ResolveAsync(run, cancellationToken).ConfigureAwait(false);
-        return await HostedWorkflowExecution.RunAsync(hosted, this.transportBinder, run, cancellationToken).ConfigureAwait(false);
+        return await HostedWorkflowExecution.ResolveAndRunAsync(this.resolver, this.transportBinder, run, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>

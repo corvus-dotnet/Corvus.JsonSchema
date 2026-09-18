@@ -246,6 +246,99 @@ public sealed class WorkflowRunBudgetTests
     }
 
     [TestMethod]
+    public async Task The_execution_seam_faults_a_run_whose_executor_is_refused_and_keeps_the_refusal_off_the_record()
+    {
+        // Resolution is before the executor, so before anything the executor's own net catches. A refusal is the same
+        // answer on every attempt: left to propagate, the run stays live and is claimed and refused again every poll.
+        var store = new InMemoryWorkflowStateStore();
+        using WorkflowRun run = NewRun(store, new TestTimeProvider(T0), ExecutionBudget.Default);
+        var resolver = new ThrowingResolver(new WorkflowExecutorUnresolvableException("version 7 of 'wf' has stored hash abc and recomputed hash def"));
+
+        WorkflowRunResultKind outcome = await HostedWorkflowExecution.ResolveAndRunAsync(resolver, NoTransports, run, default);
+
+        outcome.ShouldBe(WorkflowRunResultKind.Faulted);
+        run.Fault!.Value.Error.ShouldBe(WorkflowExecutorFault.Unresolvable);
+
+        // Durable, so the host that would have claimed it next finds it finished.
+        using WorkflowRun? reloaded = await WorkflowRun.ResumeAsync(store, run.Address, default);
+        reloaded!.Status.ShouldBe(WorkflowRunStatus.Faulted);
+        reloaded.Fault!.Value.Error.ShouldBe("executor-unresolvable");
+    }
+
+    [TestMethod]
+    public async Task The_execution_seam_treats_the_loaders_verification_failure_as_a_refusal()
+    {
+        var store = new InMemoryWorkflowStateStore();
+        using WorkflowRun run = NewRun(store, new TestTimeProvider(T0), ExecutionBudget.Default);
+
+        await HostedWorkflowExecution.ResolveAndRunAsync(new ThrowingResolver(new WorkflowExecutorLoadException("assembly digest mismatch")), NoTransports, run, default);
+
+        run.Fault!.Value.Error.ShouldBe(WorkflowExecutorFault.Unresolvable);
+    }
+
+    [TestMethod]
+    public async Task The_execution_seam_lets_an_artifact_source_failure_through_and_leaves_the_run_live()
+    {
+        // A catalog that cannot be reached is not a refusal. It may pass, so the run is not ended over it.
+        var store = new InMemoryWorkflowStateStore();
+        using WorkflowRun run = NewRun(store, new TestTimeProvider(T0), ExecutionBudget.Default);
+
+        await Should.ThrowAsync<HttpRequestException>(async () => await HostedWorkflowExecution.ResolveAndRunAsync(
+            new ThrowingResolver(new HttpRequestException("the catalog is unreachable")), NoTransports, run, default));
+
+        run.Fault.ShouldBeNull();
+        (await store.LoadAsync(run.Address, default)).ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task The_execution_seam_lets_a_refusal_through_when_the_caller_is_cancelling()
+    {
+        var store = new InMemoryWorkflowStateStore();
+        using WorkflowRun run = NewRun(store, new TestTimeProvider(T0), ExecutionBudget.Default);
+        using var cancelled = new CancellationTokenSource();
+        cancelled.Cancel();
+
+        await Should.ThrowAsync<WorkflowExecutorUnresolvableException>(async () => await HostedWorkflowExecution.ResolveAndRunAsync(
+            new ThrowingResolver(new WorkflowExecutorUnresolvableException("refused")), NoTransports, run, cancelled.Token));
+
+        run.Fault.ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task The_execution_seam_does_not_overwrite_a_finished_run_with_a_refusal()
+    {
+        var store = new InMemoryWorkflowStateStore();
+        using WorkflowRun run = NewRun(store, new TestTimeProvider(T0), ExecutionBudget.Default);
+        await run.FaultAsync("step", attempt: 1, "the first fault", default);
+
+        await Should.ThrowAsync<WorkflowExecutorUnresolvableException>(async () => await HostedWorkflowExecution.ResolveAndRunAsync(
+            new ThrowingResolver(new WorkflowExecutorUnresolvableException("refused")), NoTransports, run, default));
+
+        run.Fault!.Value.Error.ShouldBe("the first fault");
+    }
+
+    [TestMethod]
+    public async Task The_execution_seam_faults_a_run_whose_transports_cannot_be_bound()
+    {
+        // Binding is before the executor too. A source with no binding is refused the same way on every attempt.
+        var store = new InMemoryWorkflowStateStore();
+        using WorkflowRun run = NewRun(store, new TestTimeProvider(T0), ExecutionBudget.Default);
+        var hosted = new SeenTransports();
+
+        WorkflowRunResultKind outcome = await HostedWorkflowExecution.RunAsync(
+            hosted,
+            (_, _) => throw new WorkflowTransportBindingException("workflow 'wf' calls source 'pets', which has no binding in 'production'"),
+            run,
+            default);
+
+        outcome.ShouldBe(WorkflowRunResultKind.Faulted);
+        hosted.Transports.ShouldBeNull();
+        using WorkflowRun? reloaded = await WorkflowRun.ResumeAsync(store, run.Address, default);
+        reloaded!.Status.ShouldBe(WorkflowRunStatus.Faulted);
+        reloaded.Fault!.Value.Error.ShouldBe("transport-unbound");
+    }
+
+    [TestMethod]
     public async Task The_execution_seam_bounds_every_transport_a_binder_returns_with_the_runs_budget()
     {
         // ADR 0068 piece 4: applied here and not by the binder, because there are many binders and every run comes
@@ -336,6 +429,14 @@ public sealed class WorkflowRunBudgetTests
             await run.BeginStepAsync("call", cancellationToken);
             throw failure;
         }
+    }
+
+    // A resolver that fails the way the named cause does, and would on every attempt.
+    private sealed class ThrowingResolver(Exception failure) : IHostedWorkflowResolver
+    {
+        public ValueTask<IHostedWorkflow> ResolveAsync(WorkflowRun run, CancellationToken cancellationToken) => throw failure;
+
+        public ValueTask PrepareAsync(string baseWorkflowId, int versionNumber, CancellationToken cancellationToken) => ValueTask.CompletedTask;
     }
 
     // An executor that does nothing but checkpoint, so the only thing that can fail is the save.

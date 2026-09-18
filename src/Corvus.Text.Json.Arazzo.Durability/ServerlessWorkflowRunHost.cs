@@ -80,8 +80,7 @@ public sealed class ServerlessWorkflowRunHost
             return null;
         }
 
-        IHostedWorkflow hosted = await this.resolver.ResolveAsync(run, cancellationToken).ConfigureAwait(false);
-        WorkflowRunResultKind kind = await HostedWorkflowExecution.RunAsync(hosted, this.transportBinder, run, cancellationToken).ConfigureAwait(false);
+        WorkflowRunResultKind kind = await HostedWorkflowExecution.ResolveAndRunAsync(this.resolver, this.transportBinder, run, cancellationToken).ConfigureAwait(false);
 
         // If the store defers its checkpoint writes (the serverless HTTP store's fire-and-forget saves), force the
         // terminal checkpoint to land before the outcome is reported — otherwise the runner would be told the run

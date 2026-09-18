@@ -167,7 +167,7 @@ public class HostedWorkflowResumerTests
     }
 
     [TestMethod]
-    public async Task Throws_when_the_version_is_not_runnable()
+    public async Task A_version_that_is_not_runnable_faults_the_run_and_is_not_claimed_again_for_ever()
     {
         // No executor provider → the catalogued version carries no executor.
         var catalog = new InMemoryWorkflowCatalogStore();
@@ -182,7 +182,16 @@ public class HostedWorkflowResumerTests
         using var loader = new WorkflowExecutorLoader();
         var resumer = new HostedWorkflowResumer(catalog, loader, (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)new MockApiTransport(), System.StringComparer.Ordinal), WorkflowTransports.NoMessageTransports));
 
-        await Should.ThrowAsync<InvalidOperationException>(async () => await resumer.AdvanceAsync(run, default));
+        // The catalog refuses the same way on every attempt. Thrown to the host, the run stays live, its lease is
+        // released, and it is claimed and refused again on every poll, outside its fuel (ADR 0068). So it ends here.
+        WorkflowRunResultKind kind = await resumer.AdvanceAsync(run, default);
+
+        kind.ShouldBe(WorkflowRunResultKind.Faulted);
+
+        // Durable, and with the fixed error type: the refusal's own message names the version and stays off the record.
+        using WorkflowRun? reloaded = await WorkflowRun.ResumeAsync(runStore, run.Address, default);
+        reloaded!.Status.ShouldBe(WorkflowRunStatus.Faulted);
+        reloaded.Fault!.Value.Error.ShouldBe("executor-unresolvable");
     }
 
     // A workflow whose step projects a NESTED (object + array) response-body value as its output — unlike the

@@ -102,14 +102,48 @@ public sealed class RunnerApiWorker
     private async ValueTask<int> AdvanceAllAsync(IReadOnlyList<RunnerClaim> claims, WorkflowResumer resume, JsonElement payload, JsonElement headers, bool hasMessage, CancellationToken cancellationToken)
     {
         int resumed = 0;
-        foreach (RunnerClaim claim in claims)
+        int next = 0;
+        try
         {
-            if (await RunnerRunAdvance.AdvanceAsync(this.client, claim, resume, payload, headers, hasMessage, cancellationToken).ConfigureAwait(false))
+            while (next < claims.Count)
             {
-                resumed++;
+                // Counted as taken before it is advanced: an advance releases its own claim however it ends.
+                RunnerClaim claim = claims[next++];
+                if (await RunnerRunAdvance.AdvanceAsync(this.client, claim, resume, payload, headers, hasMessage, cancellationToken).ConfigureAwait(false))
+                {
+                    resumed++;
+                }
+            }
+
+            return resumed;
+        }
+        catch
+        {
+            // What escapes an advance is the runner shutting down or the infrastructure failing, so the sweep ends
+            // here and does not press on through the batch. Every claim after the one that threw is already leased
+            // and would otherwise sit unadvanced until its lease lapsed, so each is handed back first.
+            await this.ReleaseRemainingAsync(claims, next).ConfigureAwait(false);
+            throw;
+        }
+    }
+
+    private async ValueTask ReleaseRemainingAsync(IReadOnlyList<RunnerClaim> claims, int from)
+    {
+        for (int i = from; i < claims.Count; i++)
+        {
+            try
+            {
+                // Not the caller's token, for the reason RunnerRunAdvance gives: cancellation is exactly when
+                // releasing matters.
+                await this.client.ReleaseAsync(claims[i].Address, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception releaseFailure)
+            {
+                // The failure that ended the sweep is the one to report, so this one goes to the trace and no further.
+                // A claim that cannot be handed back during the same outage lapses with its lease, and must not stop
+                // the rest being released.
+                System.Diagnostics.Activity.Current?.AddException(releaseFailure);
             }
         }
-
-        return resumed;
     }
 }

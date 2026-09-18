@@ -52,7 +52,7 @@ public class BakedHostedWorkflowResolverTests
 
         // A run for a different version reached this baked host by a routing fault; returning the baked executor
         // would silently run the wrong workflow, so it must throw rather than resolve.
-        await Should.ThrowAsync<InvalidOperationException>(async () => await resolver.ResolveAsync(otherVersion, default));
+        await Should.ThrowAsync<WorkflowExecutorUnresolvableException>(async () => await resolver.ResolveAsync(otherVersion, default));
     }
 
     [TestMethod]

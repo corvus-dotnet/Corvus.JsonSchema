@@ -99,15 +99,30 @@ public class ServerlessWorkflowRunHostTests
     }
 
     [TestMethod]
-    public async Task A_run_misrouted_from_a_different_version_surfaces_the_baked_routing_fault()
+    public async Task A_run_misrouted_from_a_different_version_is_faulted_and_not_invoked_again_for_ever()
     {
-        var store = new InMemoryWorkflowStateStore();
-        await SeedPendingRun(store, "run-1", "wf-other");
-        var host = new ServerlessWorkflowRunHost(store, new BakedHostedWorkflowResolver(new RecordingHostedWorkflow("wf", WorkflowRunResultKind.Completed)), NoTransports, Time);
+        var inner = new InMemoryWorkflowStateStore();
+        await SeedPendingRun(inner, "run-1", "wf-other");
+        var store = new FlushCountingStore(inner);
+        var baked = new RecordingHostedWorkflow("wf", WorkflowRunResultKind.Completed);
+        var host = new ServerlessWorkflowRunHost(store, new BakedHostedWorkflowResolver(baked), NoTransports, Time);
 
-        // The run is dispatchable, so it reaches the resolver — which is baked for a different version and fails fast
-        // rather than silently running the wrong workflow.
-        await Should.ThrowAsync<InvalidOperationException>(async () => await host.InvokeAsync(TestAddresses.Dev("run-1"), default));
+        // The run is dispatchable, so it reaches the resolver, which is baked for a different version and refuses it
+        // rather than silently running the wrong workflow. The refusal is the same on every invocation, so it ends the
+        // run. Thrown to the dispatching runner instead, the run stays Pending and is dispatched here again each poll.
+        WorkflowRunResultKind? kind = await host.InvokeAsync(TestAddresses.Dev("run-1"), default);
+
+        kind.ShouldBe(WorkflowRunResultKind.Faulted);
+        baked.Ran.ShouldBeFalse();
+
+        // The fault is what the runner is told about, so a deferring store has landed it before the outcome returns.
+        store.Flushes.ShouldBe(1);
+        using WorkflowRun? reloaded = await WorkflowRun.ResumeAsync(inner, TestAddresses.Dev("run-1"), Time, default);
+        reloaded!.Status.ShouldBe(WorkflowRunStatus.Faulted);
+        reloaded.Fault!.Value.Error.ShouldBe("executor-unresolvable");
+
+        // And the run is no longer dispatchable: a second invocation is the guarded no-op.
+        (await host.InvokeAsync(TestAddresses.Dev("run-1"), default)).ShouldBeNull();
     }
 
     [TestMethod]
@@ -138,6 +153,24 @@ public class ServerlessWorkflowRunHostTests
         if (resumeRequested)
         {
             await run.RequestResumeAsync(null, default);
+        }
+    }
+
+    // A store that counts the flushes asked of it, standing in for the serverless HTTP store's deferred saves.
+    private sealed class FlushCountingStore(IWorkflowCheckpointStore inner) : IWorkflowCheckpointStore, IWorkflowCheckpointFlush
+    {
+        public int Flushes { get; private set; }
+
+        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+            => inner.SaveAsync(address, checkpointUtf8, index, expected, cancellationToken);
+
+        public ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
+            => inner.LoadAsync(address, cancellationToken);
+
+        public ValueTask FlushAsync(CancellationToken cancellationToken)
+        {
+            this.Flushes++;
+            return ValueTask.CompletedTask;
         }
     }
 

@@ -317,7 +317,7 @@ internal static class ThrowHelper
     [DoesNotReturn]
     [StackTraceHidden]
     public static void ThrowBakedHostWorkflowMismatch(string bakedWorkflowId, string runWorkflowId)
-        => throw new InvalidOperationException(SR.Format(SR.BakedHostWorkflowMismatch, bakedWorkflowId, runWorkflowId));
+        => throw new WorkflowExecutorUnresolvableException(SR.Format(SR.BakedHostWorkflowMismatch, bakedWorkflowId, runWorkflowId));
 
     [DoesNotReturn]
     [StackTraceHidden]
@@ -325,19 +325,19 @@ internal static class ThrowHelper
         => throw new ArgumentException(SR.Format(SR.UserTagUsesReservedInternalPrefix, tagKey, internalPrefix), "userTags");
 
     // ── Hosted-workflow resolution ──────────────────────────────────────────────────────────────────────────────────
-    public static InvalidOperationException GetWorkflowIdNotVersionedException(string workflowId)
+    public static WorkflowExecutorUnresolvableException GetWorkflowIdNotVersionedException(string workflowId)
         => new(SR.Format(SR.WorkflowIdNotVersioned, workflowId));
 
-    public static InvalidOperationException GetVersionNotInCatalogException(int versionNumber, string baseWorkflowId)
+    public static WorkflowExecutorUnresolvableException GetVersionNotInCatalogException(int versionNumber, string baseWorkflowId)
         => new(SR.Format(SR.VersionNotInCatalog, versionNumber, baseWorkflowId));
 
-    public static InvalidOperationException GetStoredContentHashDivergesException(string baseWorkflowId, int versionNumber, string storedHash, string recomputedHash)
+    public static WorkflowExecutorUnresolvableException GetStoredContentHashDivergesException(string baseWorkflowId, int versionNumber, string storedHash, string recomputedHash)
         => new(SR.Format(SR.StoredContentHashDiverges, versionNumber, baseWorkflowId, storedHash, recomputedHash));
 
-    public static InvalidOperationException GetVersionNotRunnableException(int versionNumber, string baseWorkflowId)
+    public static WorkflowExecutorUnresolvableException GetVersionNotRunnableException(int versionNumber, string baseWorkflowId)
         => new(SR.Format(SR.VersionNotRunnable, versionNumber, baseWorkflowId));
 
-    public static InvalidOperationException GetVersionHasNoManifestException(int versionNumber, string baseWorkflowId)
+    public static WorkflowExecutorUnresolvableException GetVersionHasNoManifestException(int versionNumber, string baseWorkflowId)
         => new(SR.Format(SR.VersionHasNoManifest, versionNumber, baseWorkflowId));
 
     // ── Catalog package ─────────────────────────────────────────────────────────────────────────────────────────────

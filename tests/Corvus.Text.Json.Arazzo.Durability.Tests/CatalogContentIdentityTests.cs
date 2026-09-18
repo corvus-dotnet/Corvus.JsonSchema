@@ -75,7 +75,7 @@ public sealed class CatalogContentIdentityTests
         var artifacts = new StubArtifactSource(WorkflowVariantA, SourceVariantA, contentHash: new string('f', 64));
         var resolver = new LoaderHostedWorkflowResolver(artifacts, new WorkflowExecutorLoader());
 
-        InvalidOperationException refusal = await Should.ThrowAsync<InvalidOperationException>(
+        WorkflowExecutorUnresolvableException refusal = await Should.ThrowAsync<WorkflowExecutorUnresolvableException>(
             async () => await resolver.ResolveAsync(NewRun("identity-flow-v1"), default));
         refusal.Message.ShouldContain("diverges");
     }
@@ -92,7 +92,7 @@ public sealed class CatalogContentIdentityTests
         var artifacts = new StubArtifactSource(WorkflowVariantA, SourceVariantA, genuine);
         var resolver = new LoaderHostedWorkflowResolver(artifacts, new WorkflowExecutorLoader());
 
-        InvalidOperationException refusal = await Should.ThrowAsync<InvalidOperationException>(
+        WorkflowExecutorUnresolvableException refusal = await Should.ThrowAsync<WorkflowExecutorUnresolvableException>(
             async () => await resolver.ResolveAsync(NewRun("identity-flow-v1"), default));
         refusal.Message.ShouldContain("not runnable");
     }
