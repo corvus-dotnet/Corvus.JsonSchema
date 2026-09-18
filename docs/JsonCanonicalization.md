@@ -55,6 +55,7 @@ JCS requires input to conform to [I-JSON (RFC 7493)](https://datatracker.ietf.or
 
 - **No duplicate property names** — `TryCanonicalize` throws `InvalidOperationException` if duplicates are detected.
 - **Numbers must be IEEE 754 double-precision representable** — `TryCanonicalize` throws `InvalidOperationException` for numbers that cannot be converted to `double`, or for `NaN`/`Infinity` values.
+- **Strings must be valid Unicode** — `TryCanonicalize` throws `InvalidOperationException` for an unpaired surrogate escape (such as `"\ud83d"`), and for a string or property name that is not valid UTF-8. Neither can be written as UTF-8, which the canonical form requires.
 
 ## API Reference
 

@@ -69,6 +69,7 @@
     <Compile Include="SchemaLocationEncodingTests.cs" />
     <Compile Include="SchemaLocationRootContextTests.cs" />
     <Compile Include="JsonStringUnescaperTests.cs" />
+    <Compile Include="UnpairedSurrogateUtf8StringTests.cs" />
     <Compile Include="JsonMarshalRefreshUnsafeTests.cs" />
     <Compile Include="MigrationEquivalenceTests\AllOfConversionEquivalenceTests.cs" />
     <Compile Include="MigrationEquivalenceTests\ArrayEquivalenceTests.cs" />

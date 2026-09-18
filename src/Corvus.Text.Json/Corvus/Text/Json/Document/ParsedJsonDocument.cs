@@ -544,6 +544,7 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
             catch
             {
                 ArrayPool<byte>.Shared.Return(rentedBytes);
+                throw;
             }
         }
 
