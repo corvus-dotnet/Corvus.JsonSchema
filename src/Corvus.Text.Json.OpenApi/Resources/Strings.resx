@@ -107,6 +107,12 @@
   <data name="RequestBodyTooLarge" xml:space="preserve">
     <value>The request body exceeded the configured maximum buffered size of {0} bytes.</value>
   </data>
+  <data name="ApiResponseTooLarge" xml:space="preserve">
+    <value>The response body exceeded the configured maximum size of {0} bytes.</value>
+  </data>
+  <data name="ApiTransportTimeout" xml:space="preserve">
+    <value>The request did not complete within the configured timeout of {0}.</value>
+  </data>
   <data name="MultipartOrderingViolation" xml:space="preserve">
     <value>A non-binary multipart part arrived after a binary part. Streaming endpoints with the RequireBinaryLast policy need binary parts after all non-binary parts.</value>
   </data>

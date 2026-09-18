@@ -43,6 +43,16 @@ namespace Corvus.Text.Json.OpenApi.HttpTransport;
 /// Pass <c>disposeClient: true</c> to the constructor if the transport should dispose
 /// the client when it is itself disposed.
 /// </para>
+/// <para>
+/// A transport is unbounded unless it is constructed with a request timeout, a maximum
+/// response length, or both. The timeout spans the whole exchange, including the read of the
+/// response body that produces the response: <see cref="HttpClient.Timeout"/> cannot do that
+/// here, because the transport completes the send as soon as the response headers arrive, which
+/// is where that timeout stops applying. A bounded request costs one linked
+/// <see cref="CancellationTokenSource"/>, disposed with the request rather than pooled so that a
+/// response which keeps its token can never observe another request's timeout. A bounded
+/// response costs one stream wrapper. An unbounded transport allocates neither.
+/// </para>
 /// </remarks>
 public sealed class HttpClientTransport : IApiTransport
 {
@@ -56,6 +66,8 @@ public sealed class HttpClientTransport : IApiTransport
     private readonly IHttpAuthenticationProvider? authenticationProvider;
     private readonly bool disposeClient;
     private readonly Func<CancellationToken, ValueTask<Uri?>>? baseUrlOverride;
+    private readonly TimeSpan? requestTimeout;
+    private readonly long? maxResponseLength;
     private Uri? resolvedBaseUrlOverride;
     private bool baseUrlOverrideResolved;
 
@@ -86,6 +98,54 @@ public sealed class HttpClientTransport : IApiTransport
         this.authenticationProvider = authenticationProvider;
         this.disposeClient = disposeClient;
         this.baseUrlOverride = baseUrlOverride;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HttpClientTransport"/> class that bounds
+    /// each request in time, each response in size, or both.
+    /// </summary>
+    /// <param name="httpClient">The <see cref="HttpClient"/> to use for sending requests.</param>
+    /// <param name="requestTimeout">
+    /// The longest a single request may take, from the start of the send to the response having
+    /// been produced from its body, or <see langword="null"/> for no bound. A request that runs
+    /// past it fails with an <see cref="ApiTransportTimeoutException"/>. Set
+    /// <see cref="HttpClient.Timeout"/> above this value, so that this bound is the one that fires.
+    /// </param>
+    /// <param name="maxResponseLength">
+    /// The largest response body, in bytes, the transport will read, or <see langword="null"/>
+    /// for no bound. A response that declares or delivers more fails with an
+    /// <see cref="ApiResponseTooLargeException"/>.
+    /// </param>
+    /// <param name="authenticationProvider">An optional authentication provider that is
+    /// called to mutate each <see cref="HttpRequestMessage"/> before it is sent.</param>
+    /// <param name="disposeClient">
+    /// <see langword="true"/> to dispose <paramref name="httpClient"/> when this transport
+    /// is disposed; <see langword="false"/> (the default) to leave it to the caller.
+    /// </param>
+    /// <param name="baseUrlOverride">An optional resolver for a per-transport base URL override.</param>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="requestTimeout"/> or
+    /// <paramref name="maxResponseLength"/> is present and not positive.</exception>
+    public HttpClientTransport(
+        HttpClient httpClient,
+        TimeSpan? requestTimeout,
+        long? maxResponseLength,
+        IHttpAuthenticationProvider? authenticationProvider = null,
+        bool disposeClient = false,
+        Func<CancellationToken, ValueTask<Uri?>>? baseUrlOverride = null)
+        : this(httpClient, authenticationProvider, disposeClient, baseUrlOverride)
+    {
+        if (requestTimeout is { } timeout)
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(timeout, TimeSpan.Zero, nameof(requestTimeout));
+        }
+
+        if (maxResponseLength is { } length)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(length, nameof(maxResponseLength));
+        }
+
+        this.requestTimeout = requestTimeout;
+        this.maxResponseLength = maxResponseLength;
     }
 
     /// <inheritdoc/>
@@ -254,7 +314,40 @@ public sealed class HttpClientTransport : IApiTransport
         return Encoding.UTF8.GetString(writer.WrittenSpan);
     }
 
-    private async ValueTask<TResponse> SendCoreAsync<TResponse>(
+    private ValueTask<TResponse> SendCoreAsync<TResponse>(
+        HttpRequestMessage httpRequest,
+        CancellationToken cancellationToken)
+        where TResponse : struct, IApiResponse<TResponse>
+    {
+        return this.requestTimeout is { } timeout
+            ? this.SendWithTimeoutAsync<TResponse>(httpRequest, timeout, cancellationToken)
+            : this.SendUntimedAsync<TResponse>(httpRequest, cancellationToken);
+    }
+
+    private async ValueTask<TResponse> SendWithTimeoutAsync<TResponse>(
+        HttpRequestMessage httpRequest,
+        TimeSpan timeout,
+        CancellationToken cancellationToken)
+        where TResponse : struct, IApiResponse<TResponse>
+    {
+        // Linked rather than pooled. A response may keep the token it was created with (a streamed body reads
+        // on after this method returns), and a source handed back to a pool would let that old response see a
+        // later request's timeout. A disposed source's token never fires again.
+        using CancellationTokenSource timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutSource.CancelAfter(timeout);
+
+        try
+        {
+            return await this.SendUntimedAsync<TResponse>(httpRequest, timeoutSource.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException ex) when (timeoutSource.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+        {
+            // Our clock ran out and the caller did not cancel, so this is a timeout and not a cancellation.
+            throw ThrowHelper.GetApiTransportTimeoutException(timeout, ex);
+        }
+    }
+
+    private async ValueTask<TResponse> SendUntimedAsync<TResponse>(
         HttpRequestMessage httpRequest,
         CancellationToken cancellationToken)
         where TResponse : struct, IApiResponse<TResponse>
@@ -284,9 +377,22 @@ public sealed class HttpClientTransport : IApiTransport
 
         try
         {
+            if (this.maxResponseLength is { } maxLength && httpResponse.Content.Headers.ContentLength > maxLength)
+            {
+                // The response says up front that it is too large, so refuse it without reading a byte.
+                ThrowHelper.ThrowApiResponseTooLarge(maxLength);
+            }
+
             Stream contentStream = await httpResponse.Content
                 .ReadAsStreamAsync(cancellationToken)
                 .ConfigureAwait(false);
+
+            if (this.maxResponseLength is { } maxRead)
+            {
+                // Content-Length is absent on a chunked response and is only a claim on any other, so the read
+                // itself is counted too.
+                contentStream = new BoundedResponseStream(contentStream, maxRead);
+            }
 
             string? contentType = httpResponse.Content.Headers.ContentType?.MediaType;
 

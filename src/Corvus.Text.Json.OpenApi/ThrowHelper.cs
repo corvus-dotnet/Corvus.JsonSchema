@@ -214,6 +214,30 @@ public static class ThrowHelper
     }
 
     /// <summary>
+    /// Throws an <see cref="ApiResponseTooLargeException"/> indicating that the
+    /// response body exceeded the transport's configured maximum size.
+    /// </summary>
+    /// <param name="maxResponseLength">The configured maximum response length in bytes.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowApiResponseTooLarge(long maxResponseLength)
+    {
+        throw new ApiResponseTooLargeException(SR.Format(SR.ApiResponseTooLarge, maxResponseLength), maxResponseLength);
+    }
+
+    /// <summary>
+    /// Gets an <see cref="ApiTransportTimeoutException"/> indicating that the request did not
+    /// complete within the transport's configured timeout.
+    /// </summary>
+    /// <param name="timeout">The configured timeout.</param>
+    /// <param name="innerException">The cancellation that the elapsed timeout raised.</param>
+    /// <returns>The exception to throw.</returns>
+    public static ApiTransportTimeoutException GetApiTransportTimeoutException(TimeSpan timeout, Exception? innerException)
+    {
+        return new ApiTransportTimeoutException(SR.Format(SR.ApiTransportTimeout, timeout), timeout, innerException);
+    }
+
+    /// <summary>
     /// Throws a <see cref="MultipartOrderingException"/> indicating that a non-binary
     /// part arrived after a binary part under the RequireBinaryLast policy.
     /// </summary>

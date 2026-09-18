@@ -33,4 +33,13 @@ public sealed class HttpClientApiTransportFactory : IApiTransportFactory
     /// <inheritdoc/>
     public IApiTransport CreateTransport()
         => new HttpClientTransport(this.httpClient, this.authenticationProvider, disposeClient: false, baseUrlOverride: this.baseUrlOverride);
+
+    /// <summary>
+    /// Creates a transport over the shared client that bounds each request in time, each response in size, or both.
+    /// </summary>
+    /// <param name="requestTimeout">The longest a single request may take, or <see langword="null"/> for no bound.</param>
+    /// <param name="maxResponseLength">The largest response body, in bytes, the transport will read, or <see langword="null"/> for no bound.</param>
+    /// <returns>The bounded transport. It leaves the shared client open when disposed.</returns>
+    public IApiTransport CreateTransport(TimeSpan? requestTimeout, long? maxResponseLength)
+        => new HttpClientTransport(this.httpClient, requestTimeout, maxResponseLength, this.authenticationProvider, disposeClient: false, baseUrlOverride: this.baseUrlOverride);
 }
