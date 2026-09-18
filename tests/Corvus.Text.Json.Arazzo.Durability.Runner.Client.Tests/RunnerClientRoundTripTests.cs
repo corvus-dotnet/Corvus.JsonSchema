@@ -92,6 +92,35 @@ public sealed class RunnerClientRoundTripTests
     }
 
     [TestMethod]
+    public async Task A_run_that_honours_its_budget_faults_itself_over_the_wire_and_is_never_refused()
+    {
+        // ADR 0068, the cooperative half over the real API: a run driven through the runner's checkpoint store spends
+        // its one unit of fuel, then faults itself before the next attempt. The control plane applies that save (the
+        // journal is inside the fuel), so the runner sees its own budget signal and never the 409.
+        await using Fixture fixture = await Fixture.StartAsync();
+        var oneStep = new ExecutionBudget(1, TimeSpan.FromHours(1), 8, TimeSpan.Zero);
+        await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending, budget: oneStep);
+        RunnerClaim claimed = (await fixture.Client.TryClaimAsync([Version]))!.Value;
+
+        // The run reads the fixture's clock, so its age is judged against the seeded creation time and only fuel is in play.
+        using WorkflowRun run = (await WorkflowRun.ResumeAsync(fixture.Client.Checkpoints, claimed.Address, new RunnerApiFixture.TestClock(Fixture.T0)))!;
+        await run.BeginStepAsync("only", default);
+        run.RecordStep("only", WorkflowStepStatus.Succeeded, 1, Fixture.T0, Fixture.T0);
+        await run.CheckpointAsync(0, default);
+
+        Exception unwound = await Should.ThrowAsync<Exception>(async () => await run.BeginStepAsync("only", default));
+        unwound.ShouldNotBeOfType<RunBudgetExhaustedException>();
+        unwound.GetType().Name.ShouldBe("WorkflowBudgetExhaustedException");
+
+        WorkflowCheckpoint stored = (await fixture.Store.LoadAsync(claimed.Address, default))!.Value;
+        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex(stored.Utf8);
+        index.Status.ShouldBe(WorkflowRunStatus.Faulted);
+        index.ErrorType.ShouldBe(ExecutionBudgetFault.Fuel);
+        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(stored.Utf8);
+        state.StepJournal!.Count.ShouldBe(1);
+    }
+
+    [TestMethod]
     public async Task A_save_past_the_budget_is_raised_as_exhausted_and_the_run_is_recorded_as_faulted()
     {
         // ADR 0068 over the wire: the control plane refuses the save with the budget-exhausted problem type, the client

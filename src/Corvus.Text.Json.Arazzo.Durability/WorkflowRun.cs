@@ -53,6 +53,12 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     private readonly List<WorkflowStepJournalEntry> stepJournal;
     private bool journalTruncated;
 
+    // ADR 0068: attempts announced (BeginStepAsync) and not yet journaled. Each one has been granted a unit of fuel
+    // its journal entry will spend, so the fuel check counts them with the journal: a step that invokes a sub-workflow
+    // is open while the child's steps are attempted, and its own entry must still fit when it settles. In-memory
+    // only, because an advance never suspends with an attempt it will not re-announce on resume.
+    private int openAttempts;
+
     private WorkflowRun(
         IWorkflowCheckpointStore store,
         WorkflowRunId id,
@@ -333,6 +339,11 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     public void RecordStep(string stepId, WorkflowStepStatus status, int attempt, DateTimeOffset startedAt, DateTimeOffset endedAt)
     {
         this.stepJournal.Add(new WorkflowStepJournalEntry(stepId, status, attempt, startedAt, endedAt));
+        if (this.openAttempts > 0)
+        {
+            this.openAttempts--;
+        }
+
         if (this.stepJournal.Count > JournalCap)
         {
             // Keep the most recent JournalCap entries: drop the oldest and mark the journal truncated (ADR 0050).
@@ -421,7 +432,82 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     public IWorkflowRunRecorder? Recorder { get; set; }
 
     /// <inheritdoc/>
-    public IWorkflowRun? BeginSubWorkflow(string stepId, string subWorkflowId) => this.Recorder?.BeginSubWorkflow(stepId, subWorkflowId);
+    public IWorkflowRun? BeginSubWorkflow(string stepId, string subWorkflowId)
+    {
+        IWorkflowRun? recording = this.Recorder?.BeginSubWorkflow(stepId, subWorkflowId);
+
+        // ADR 0068: a budgeted run meters its sub-workflows, so a child's attempts spend the root's fuel and nesting
+        // is capped. A run without a budget keeps the untracked (or recording-only) child it always had.
+        return this.Budget is null ? recording : new BudgetMeteringScope(this, stepId, depth: 1, recording);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask BeginStepAsync(string stepId, CancellationToken cancellationToken)
+        => this.BeginMeteredStepAsync(stepId, cancellationToken);
+
+    /// <summary>
+    /// The runner's cooperative half of the execution budget (ADR 0068), decided before every attempt. Every attempt
+    /// is journaled once, so the journal plus the attempts announced and not yet journaled is the fuel already
+    /// committed: a run with none left for this attempt, or whose journal was truncated, faults
+    /// <see cref="ExecutionBudgetFault.Fuel"/>; otherwise a run older than its wall clock faults
+    /// <see cref="ExecutionBudgetFault.Deadline"/>. The journal therefore never grows past the fuel, which is the
+    /// coordinator's predicate, so a run that honours its budget never proposes a save the coordinator refuses on fuel.
+    /// </summary>
+    /// <param name="journalStepId">The id the attempt would be journaled under (a sub-workflow's step carries its
+    /// invoking path).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes when the attempt may proceed.</returns>
+    internal ValueTask BeginMeteredStepAsync(string journalStepId, CancellationToken cancellationToken)
+    {
+        if (this.Budget is not { } budget)
+        {
+            return default;
+        }
+
+        if (this.journalTruncated || this.stepJournal.Count + this.openAttempts >= budget.MaxSteps)
+        {
+            return this.FaultOnBudgetAsync(ExecutionBudgetFault.Fuel, null, journalStepId, cancellationToken);
+        }
+
+        if (this.timeProvider.GetUtcNow() - this.createdAt > budget.WallClock)
+        {
+            return this.FaultOnBudgetAsync(ExecutionBudgetFault.Deadline, null, journalStepId, cancellationToken);
+        }
+
+        this.openAttempts++;
+        return default;
+    }
+
+    /// <summary>
+    /// Records a budget fault and unwinds the advance (ADR 0068). The fault is recorded against
+    /// <paramref name="atStepId"/> when the limit names a step (the depth cap names the invoking step), otherwise
+    /// against the last journaled step, which is the shape the control plane's own rewrite uses
+    /// (<see cref="WorkflowCheckpointSerializer.RewriteFaulted"/>), or the step being entered when nothing is
+    /// journaled yet. The debug recorder is not told: no step faulted, the run ran out of budget.
+    /// </summary>
+    /// <param name="error">The budget fault, one of <see cref="ExecutionBudgetFault"/>.</param>
+    /// <param name="atStepId">The step the limit names, or <see langword="null"/> to use the last journaled step.</param>
+    /// <param name="enteringStepId">The step whose attempt was refused.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>Never completes normally: throws the budget-exhausted signal once the fault is durable.</returns>
+    internal async ValueTask FaultOnBudgetAsync(string error, string? atStepId, string enteringStepId, CancellationToken cancellationToken)
+    {
+        string stepId = atStepId ?? enteringStepId;
+        int attempt = 0;
+        if (atStepId is null && this.stepJournal.Count > 0)
+        {
+            WorkflowStepJournalEntry last = this.stepJournal[^1];
+            stepId = last.StepId;
+            attempt = last.Attempt;
+        }
+
+        this.Status = WorkflowRunStatus.Faulted;
+        this.wait = null;
+        this.resumeRequestedAt = null;
+        this.fault = new WorkflowFault(stepId, attempt, error, this.timeProvider.GetUtcNow());
+        await this.PersistAsync(default, cancellationToken).ConfigureAwait(false);
+        throw new WorkflowBudgetExhaustedException(error);
+    }
 
     /// <inheritdoc/>
     public ValueTask CheckpointAsync(int cursor, CancellationToken cancellationToken)
@@ -487,6 +573,14 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         this.Cursor = cursor;
         this.Status = WorkflowRunStatus.Suspended;
         this.fault = null;
+
+        // ADR 0068: a timer the workflow or a source asked for is clamped to the budget's ceiling, so a retryAfter
+        // cannot park a run (and the capacity it holds) for longer than the deployment allows.
+        if (this.Budget is { } budget && delay > budget.RetryAfterCeiling)
+        {
+            delay = budget.RetryAfterCeiling;
+        }
+
         var w = WorkflowWait.Timer(this.timeProvider.GetUtcNow() + delay);
         this.wait = w;
         await this.PersistAsync(default, cancellationToken).ConfigureAwait(false);

@@ -94,9 +94,11 @@ export function seedRuns() {
       createdAt: iso(-2 * day), updatedAt: iso(-2 * day + 5 * min), etag: nextEtag(),
       correlationId: '0a5512cd6e7f8a9b0c1d2e3f4a5b6c7d', tags: ['tenant-42'],
       // The checkpoint's step journal (recording order): what GET /runs/{id}/steps projects. Every executed step
-      // carries its status, the attempt it settled on, and its start/end timestamps; reservePayment retried once.
+      // carries its status, its attempt, and its start/end timestamps. The journal holds one entry per attempt
+      // (ADR 0068): reservePayment failed once and was retried, so it has a Retrying entry and the one it settled on.
       stepOutputs: [
         { stepId: 'findPet', status: 'Succeeded', attempt: 1, startedAt: iso(-2 * day), endedAt: iso(-2 * day + 142), outputs: { petId: 'pet-77', name: 'Luna' } },
+        { stepId: 'reservePayment', status: 'Retrying', attempt: 1, startedAt: iso(-2 * day + 150), endedAt: iso(-2 * day + 150 + 120) },
         { stepId: 'reservePayment', status: 'Succeeded', attempt: 2, startedAt: iso(-2 * day + 300), endedAt: iso(-2 * day + 300 + 890), outputs: { reservationId: 'rsv-9001' } },
         { stepId: 'submitAdoption', status: 'Succeeded', attempt: 1, startedAt: iso(-2 * day + 1300), endedAt: iso(-2 * day + 1300 + 1210), outputs: { applicationId: 'app-3141' } },
         { stepId: 'confirmAdoption', status: 'Succeeded', attempt: 1, startedAt: iso(-2 * day + 2600), endedAt: iso(-2 * day + 2600 + 340), outputs: { confirmed: true, receipt: 'rcpt-2718' } },

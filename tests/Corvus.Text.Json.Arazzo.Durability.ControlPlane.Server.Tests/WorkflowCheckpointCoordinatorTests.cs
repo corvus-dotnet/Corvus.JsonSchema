@@ -223,6 +223,55 @@ public sealed class WorkflowCheckpointCoordinatorTests
     }
 
     [TestMethod]
+    public async Task A_runner_authored_deadline_fault_arriving_past_the_wall_clock_is_applied_as_the_terminal_record()
+    {
+        // A runner that honours its budget faults the run itself, and that save necessarily arrives after the deadline
+        // it reports. It is the record the control plane would otherwise write, so it is applied, not refused.
+        var time = new ControlledTimeProvider();
+        var store = new InMemoryWorkflowStateStore();
+        byte[] stored = Checkpoint(journalEntries: 0, sequence: 1, OneHour, T0);
+        await store.SaveAsync(Address, stored, WorkflowCheckpointSerializer.ProjectIndex(stored), WorkflowEtag.None, default);
+        var coordinator = new WorkflowCheckpointCoordinator(store, time);
+
+        time.UtcNow = T0 + TimeSpan.FromHours(2);
+        var fault = new WorkflowFault("s1", 1, ExecutionBudgetFault.Deadline, time.UtcNow);
+        byte[] selfFaulted = Checkpoint(journalEntries: 1, sequence: 2, OneHour, T0, WorkflowRunStatus.Faulted, fault: fault);
+        CheckpointSaveResult result = await Save(coordinator, Address, selfFaulted, 2);
+
+        result.Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
+        (await store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(selfFaulted);
+    }
+
+    [TestMethod]
+    public async Task A_budget_fault_record_does_not_excuse_a_save_that_is_not_terminal_or_is_over_fuel()
+    {
+        // The waiver is for the terminal record alone. A body that carries a budget fault record but leaves the run
+        // Running is a runner keeping itself alive past its deadline, and a journal past the fuel is never the save of
+        // a runner that honoured the budget: both are refused and the control plane authors the fault.
+        var time = new ControlledTimeProvider();
+        var store = new InMemoryWorkflowStateStore();
+        byte[] stored = Checkpoint(journalEntries: 0, sequence: 1, TwoSteps, T0);
+        await store.SaveAsync(Address, stored, WorkflowCheckpointSerializer.ProjectIndex(stored), WorkflowEtag.None, default);
+        var coordinator = new WorkflowCheckpointCoordinator(store, time);
+
+        var fuelFault = new WorkflowFault("s3", 1, ExecutionBudgetFault.Fuel, T0);
+        byte[] overFuel = Checkpoint(journalEntries: 3, sequence: 2, TwoSteps, T0, WorkflowRunStatus.Faulted, fault: fuelFault);
+        CheckpointSaveResult refusedOnFuel = await Save(coordinator, Address, overFuel, 2);
+        refusedOnFuel.Outcome.ShouldBe(CheckpointSaveOutcome.BudgetExceeded);
+        refusedOnFuel.FaultError.ShouldBe(ExecutionBudgetFault.Fuel);
+
+        var lateStore = new InMemoryWorkflowStateStore();
+        await lateStore.SaveAsync(Address, stored, WorkflowCheckpointSerializer.ProjectIndex(stored), WorkflowEtag.None, default);
+        var lateCoordinator = new WorkflowCheckpointCoordinator(lateStore, time);
+        time.UtcNow = T0 + TimeSpan.FromHours(2);
+        var deadlineFault = new WorkflowFault("s1", 1, ExecutionBudgetFault.Deadline, time.UtcNow);
+        byte[] stillRunning = Checkpoint(journalEntries: 1, sequence: 2, TwoSteps, T0, WorkflowRunStatus.Running, fault: deadlineFault);
+        CheckpointSaveResult refusedOnDeadline = await Save(lateCoordinator, Address, stillRunning, 2);
+        refusedOnDeadline.Outcome.ShouldBe(CheckpointSaveOutcome.BudgetExceeded);
+        refusedOnDeadline.FaultError.ShouldBe(ExecutionBudgetFault.Deadline);
+    }
+
+    [TestMethod]
     public async Task A_save_within_budget_is_applied_and_a_run_without_a_budget_is_unbounded()
     {
         var time = new ControlledTimeProvider();
@@ -357,7 +406,7 @@ public sealed class WorkflowCheckpointCoordinatorTests
     }
 
     // A real checkpoint document of run-1 in the development environment, with the given journal length and budget.
-    private static byte[] Checkpoint(int journalEntries, long sequence, ExecutionBudget? budget, DateTimeOffset createdAt, WorkflowRunStatus status = WorkflowRunStatus.Running, bool truncated = false)
+    private static byte[] Checkpoint(int journalEntries, long sequence, ExecutionBudget? budget, DateTimeOffset createdAt, WorkflowRunStatus status = WorkflowRunStatus.Running, bool truncated = false, WorkflowFault? fault = null)
     {
         using PooledUtf8Map<int> retryCounters = PooledUtf8Map<int>.Rent(0);
         using PooledUtf8Map<JsonElement> stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
@@ -379,6 +428,7 @@ public sealed class WorkflowCheckpointCoordinatorTests
             inputs: default,
             stepOutputs,
             outputs: default,
+            fault: fault,
             environment: "development",
             updatedAt: createdAt,
             stepJournal: journal,

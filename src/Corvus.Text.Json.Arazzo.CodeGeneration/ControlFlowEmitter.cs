@@ -129,6 +129,10 @@ internal static class ControlFlowEmitter
             if (options.Durable)
             {
                 loop.Append("            DateTimeOffset ").Append(StepStartLocal(steps[i].StepId)).AppendLine(" = (timeProvider ?? TimeProvider.System).GetUtcNow();");
+
+                // ADR 0068: every attempt announces itself before it reaches a source (the case re-enters here on a
+                // retry and on a resumed wait), so a budgeted run with no fuel or time left faults without making it.
+                loop.Append("            if (__meter is not null) { await __meter.BeginStepAsync(").Append(EmitText.Quote(steps[i].StepId)).AppendLine(", cancellationToken).ConfigureAwait(false); }");
             }
 
             if (steps[i].SubWorkflowId is not null)
@@ -208,11 +212,11 @@ internal static class ControlFlowEmitter
             WorkflowExecutorEmitter.AppendIndented(gate, outputCode.Statements, 4);
         }
 
-        EmitDispatch(gate, step.OnSuccess, isFailure: false, camel, prefix, responseVar, new CriterionSources(bindBodyLocal), stepIndex, fields, auxiliaryTypes, operation.Operation.ResponseHeaders, requestContext, stepOutputLocals, options, selection);
+        EmitDispatch(gate, step.OnSuccess, isFailure: false, step, camel, prefix, responseVar, new CriterionSources(bindBodyLocal), stepIndex, fields, auxiliaryTypes, operation.Operation.ResponseHeaders, requestContext, stepOutputLocals, options, selection);
         gate.AppendLine("}");
         gate.AppendLine("else");
         gate.AppendLine("{");
-        EmitDispatch(gate, step.OnFailure, isFailure: true, camel, prefix, responseVar, new CriterionSources(bindBodyLocal), stepIndex, fields, auxiliaryTypes, operation.Operation.ResponseHeaders, requestContext, stepOutputLocals, options, selection);
+        EmitDispatch(gate, step.OnFailure, isFailure: true, step, camel, prefix, responseVar, new CriterionSources(bindBodyLocal), stepIndex, fields, auxiliaryTypes, operation.Operation.ResponseHeaders, requestContext, stepOutputLocals, options, selection);
         gate.AppendLine("}");
 
         string gateText = gate.ToString();
@@ -258,7 +262,7 @@ internal static class ControlFlowEmitter
             // routes to the step's onFailure dispatch, evaluated without response context — there is no
             // response — so only $inputs/$steps criteria (typically an unconditional retry/goto) apply.
             var timeoutFailure = new StringBuilder();
-            EmitDispatch(timeoutFailure, step.OnFailure, isFailure: true, camel, $"{prefix}to_", string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options, selection);
+            EmitDispatch(timeoutFailure, step.OnFailure, isFailure: true, step, camel, $"{prefix}to_", string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options, selection);
 
             c.Append("    ").Append(operation.Operation.ResponseTypeName).Append(' ').Append(responseVar).AppendLine(" = default;");
             c.Append("    bool ").Append(camel).AppendLine("Got = false;");
@@ -324,7 +328,11 @@ internal static class ControlFlowEmitter
         string checkpoint = BuildCheckpoint(step, durable);
         string staging = BuildStaging(step, durable);
         string indexLiteral = index.ToString(CultureInfo.InvariantCulture);
-        string attempt = NeedsRetryCounter(step) ? RetryCounter(step.StepId) : "1";
+
+        // The journal's attempt number is 1-based. The retry counter holds the retries taken so far, so the attempt a
+        // step settles on is one more than it; a retry entry is recorded after the counter moved, so there the counter
+        // is already the number of the attempt that failed.
+        string attempt = NeedsRetryCounter(step) ? $"({RetryCounter(step.StepId)} + 1)" : "1";
         string failMessage = EmitText.Quote($"Step '{step.StepId}' did not satisfy its success criteria.");
         string throwStatement = $"throw new WorkflowStepFailedException({EmitText.Quote(step.StepId)}, {failMessage});";
 
@@ -333,10 +341,13 @@ internal static class ControlFlowEmitter
         {
             c.Append("    if (").Append(camel).AppendLine("Fail)");
             c.AppendLine("    {");
+
+            // Journaled through the meter ahead of the run check, so a metered sub-workflow (whose run is null) still
+            // counts the attempt it failed on.
+            c.Append("        ").AppendLine(RecordStepCall(step, "Faulted", attempt));
             c.AppendLine("        if (run is not null)");
             c.AppendLine("        {");
             WorkflowExecutorEmitter.AppendIndented(c, staging, 12);
-            c.Append("            ").AppendLine(RecordStepCall(step, "Faulted", attempt, conditional: false));
             c.Append("            WorkflowFault ").Append(camel).Append("Fault = await run.FaultAsync(")
                 .Append(EmitText.Quote(step.StepId)).Append(", ").Append(attempt).Append(", ").Append(failMessage)
                 .AppendLine(", cancellationToken).ConfigureAwait(false);");
@@ -356,7 +367,7 @@ internal static class ControlFlowEmitter
         {
             c.Append("    if (").Append(camel).AppendLine("End)");
             c.AppendLine("    {");
-            c.Append("        ").AppendLine(RecordStepCall(step, "Succeeded", attempt, conditional: true));
+            c.Append("        ").AppendLine(RecordStepCall(step, "Succeeded", attempt));
             c.AppendLine("        goto __workflowOutputs;");
             c.AppendLine("    }");
         }
@@ -371,6 +382,15 @@ internal static class ControlFlowEmitter
         c.AppendLine("        ArazzoTelemetry.StepRetries.Add(1);");
         if (durable)
         {
+            // ADR 0068: a failed attempt that is retried is journaled like any other, so the journal counts attempts
+            // (each one a request to a source) and the budget's fuel bounds a retry loop the way it bounds a goto loop.
+            // Recorded before the checkpoint or the timer suspend below, so the entry is persisted with it. Only a step
+            // that declares a retry action has a counter, and only such a step can take this branch.
+            if (NeedsRetryCounter(step))
+            {
+                c.Append("        ").AppendLine(RecordStepCall(step, "Retrying", RetryCounter(step.StepId)));
+            }
+
             c.Append("        __state = ").Append(indexLiteral).AppendLine(";");
             c.AppendLine("        if (run is not null)");
             c.AppendLine("        {");
@@ -404,7 +424,7 @@ internal static class ControlFlowEmitter
         c.Append("    __state = ").Append(camel).AppendLine("Next;");
         if (durable)
         {
-            c.Append("    ").AppendLine(RecordStepCall(step, "Succeeded", attempt, conditional: true));
+            c.Append("    ").AppendLine(RecordStepCall(step, "Succeeded", attempt));
         }
 
         WorkflowExecutorEmitter.AppendIndented(c, checkpoint, 4);
@@ -560,9 +580,9 @@ internal static class ControlFlowEmitter
                 "inputs", stepOutputLocals, options.InputAccessors, null, default, options.Namespace);
 
         var successDispatch = new StringBuilder();
-        EmitDispatch(successDispatch, step.OnSuccess, isFailure: false, camel, prefix, string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options, selection);
+        EmitDispatch(successDispatch, step.OnSuccess, isFailure: false, step, camel, prefix, string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options, selection);
         var failureDispatch = new StringBuilder();
-        EmitDispatch(failureDispatch, step.OnFailure, isFailure: true, camel, prefix, string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options, selection);
+        EmitDispatch(failureDispatch, step.OnFailure, isFailure: true, step, camel, prefix, string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options, selection);
 
         var inputs = new StringBuilder();
         string builderVariable = SubWorkflowStepEmitter.BuildInputs(fields, inputs, step.StepId, step.Arguments, stepOutputLocals, "inputs", options.InputAccessors, out IReadOnlyDictionary<string, string> inputValueLocals);
@@ -595,11 +615,12 @@ internal static class ControlFlowEmitter
         {
             // A durable target returns the tri-state WorkflowRunResult (not a bare outputs element) and takes an
             // IWorkflowRun? child scope before the cancellation token — so the unthreaded call would drop the token
-            // into the run slot (CS1503) and mis-assign the result. Begin a child scope (null today ⇒ the
-            // sub-workflow runs untracked, exactly as before the seam) and thread the time provider, then unwrap:
+            // into the run slot (CS1503) and mis-assign the result. Begin a child scope through the meter (null for an
+            // unbudgeted production run, a metering scope for a budgeted one, a recorder for a traced or debug run)
+            // and thread the time provider, then unwrap:
             // Suspended ⇒ the parent bubbles the wait and itself suspends; Faulted ⇒ the onFailure path runs;
             // Completed ⇒ the outputs flow on.
-            c.Append("    IWorkflowRun? ").Append(camel).Append("Scope = run?.BeginSubWorkflow(")
+            c.Append("    IWorkflowRun? ").Append(camel).Append("Scope = __meter?.BeginSubWorkflow(")
                 .Append(EmitText.Quote(step.StepId)).Append(", ").Append(EmitText.Quote(subWorkflowId)).AppendLine(");");
             c.AppendLine("    try");
             c.AppendLine("    {");
@@ -712,9 +733,9 @@ internal static class ControlFlowEmitter
 
         // Dispatch runs after the step; for a channel step it has no response/request/message context.
         var successDispatch = new StringBuilder();
-        EmitDispatch(successDispatch, step.OnSuccess, isFailure: false, camel, prefix, string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options, selection);
+        EmitDispatch(successDispatch, step.OnSuccess, isFailure: false, step, camel, prefix, string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options, selection);
         var failureDispatch = new StringBuilder();
-        EmitDispatch(failureDispatch, step.OnFailure, isFailure: true, camel, prefix, string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options, selection);
+        EmitDispatch(failureDispatch, step.OnFailure, isFailure: true, step, camel, prefix, string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options, selection);
 
         var c = new StringBuilder();
         c.AppendLine("{");
@@ -1012,6 +1033,7 @@ internal static class ControlFlowEmitter
         StringBuilder target,
         IReadOnlyList<StepActionInfo> actions,
         bool isFailure,
+        in ControlFlowStep step,
         string camel,
         string prefix,
         string responseVar,
@@ -1044,7 +1066,7 @@ internal static class ControlFlowEmitter
                 action.Criteria, fields, target, auxiliaryTypes, actionPrefix, "context", responseVar, sources,
                 "inputs", stepOutputLocals, options.InputAccessors, responseHeaders, requestContext, options.Namespace);
 
-            resolved.Add((expression, BuildApply(action, camel, stepIndex, options, selection)));
+            resolved.Add((expression, BuildApply(action, step, camel, stepIndex, options, selection)));
             if (action.Criteria.Count == 0)
             {
                 break;
@@ -1100,7 +1122,7 @@ internal static class ControlFlowEmitter
         // Success with no matching action falls through to the default next state (already set).
     }
 
-    private static string BuildApply(in StepActionInfo action, string camel, IReadOnlyDictionary<string, int> stepIndex, in WorkflowExecutorOptions options, TransportSelection selection)
+    private static string BuildApply(in StepActionInfo action, in ControlFlowStep step, string camel, IReadOnlyDictionary<string, int> stepIndex, in WorkflowExecutorOptions options, TransportSelection selection)
     {
         switch (action.Kind)
         {
@@ -1120,9 +1142,12 @@ internal static class ControlFlowEmitter
                     {
                         // A durable target returns a WorkflowRunResult (this executor's own return type) and takes an
                         // IWorkflowRun? child scope before the token — so the unthreaded call drops the token into the
-                        // run slot (CS1503). Thread a child scope (null today ⇒ untracked) and the time provider; the
+                        // run slot (CS1503). Thread a child scope through the meter and the time provider; the
                         // transferred run's tri-state result becomes this run's result directly.
-                        return $"ArazzoTelemetry.Gotos.Add(1); return await {gotoTarget}.ExecuteAsync({selection.SubWorkflowArgument}, workspace, (JsonElement)inputs, run?.BeginSubWorkflow({EmitText.Quote(targetWorkflow)}, {EmitText.Quote(targetWorkflow)}), cancellationToken, timeProvider).ConfigureAwait(false);\n";
+                        // ADR 0068: the transferring step settles here and never reaches the journal call its ordinary
+                        // exits make, so it is journaled before control leaves. Every announced attempt is journaled once.
+                        string transferAttempt = NeedsRetryCounter(step) ? $"({RetryCounter(step.StepId)} + 1)" : "1";
+                        return $"ArazzoTelemetry.Gotos.Add(1); {RecordStepCall(step, "Succeeded", transferAttempt)} return await {gotoTarget}.ExecuteAsync({selection.SubWorkflowArgument}, workspace, (JsonElement)inputs, __meter?.BeginSubWorkflow({EmitText.Quote(targetWorkflow)}, {EmitText.Quote(targetWorkflow)}), cancellationToken, timeProvider).ConfigureAwait(false);\n";
                     }
 
                     return $"ArazzoTelemetry.Gotos.Add(1); return await {gotoTarget}.ExecuteAsync({selection.SubWorkflowArgument}, workspace, (JsonElement)inputs, cancellationToken).ConfigureAwait(false);\n";
@@ -1166,10 +1191,10 @@ internal static class ControlFlowEmitter
     private static string StepStartLocal(string stepId) => $"__{EmitText.ToCamelCase(EmitText.SanitizeIdentifier(stepId))}Started";
 
     // ADR 0050: emits the run's per-step journal record for a step's terminal outcome. Payload-free (stepId, status,
-    // attempt, and the start/end window). `conditional` uses `run?.` where the run may be null (the durable executor's
-    // null-run fallback); the fault path is already inside `if (run is not null)` and passes false.
-    private static string RecordStepCall(in ControlFlowStep step, string status, string attempt, bool conditional) =>
-        $"{(conditional ? "run?" : "run")}.RecordStep({EmitText.Quote(step.StepId)}, WorkflowStepStatus.{status}, {attempt}, {StepStartLocal(step.StepId)}, (timeProvider ?? TimeProvider.System).GetUtcNow());";
+    // attempt, and the start/end window). Recorded through the meter, which is null in the durable executor's
+    // null-run fallback and is the metering scope in a production sub-workflow (ADR 0068).
+    private static string RecordStepCall(in ControlFlowStep step, string status, string attempt) =>
+        $"__meter?.RecordStep({EmitText.Quote(step.StepId)}, WorkflowStepStatus.{status}, {attempt}, {StepStartLocal(step.StepId)}, (timeProvider ?? TimeProvider.System).GetUtcNow());";
 
     private static string RetryCounterFromCamel(string camel) => $"{camel}RetryCount";
 }

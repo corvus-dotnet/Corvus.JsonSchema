@@ -244,7 +244,38 @@ step), consumes the sequence the refused save proposed, and both checkpoint surf
 releasing the lease. The runner API applies the same predicate at claim time, so a run whose wall clock ran out
 while it waited is faulted and handed back rather than resumed. A budget-faulted run cannot be resumed in any mode:
 the runs API answers `409` with the `budget-exhausted` problem type, and the management seam refuses before any
-resume mutation touches the run. The runner's own enforcement, the per-step transport bounds and the CLI and
+resume mutation touches the run.
+
+The runner enforces the same budget cooperatively, so a runaway run faults fast and without a round trip. The
+generated durable executor announces every attempt at a step before it reaches a source
+(`IWorkflowRun.BeginStepAsync`), on a first visit, on a retry and on a resumed wait alike. The run counts its journal
+together with the attempts it has announced and not yet journaled, and when there is no fuel for the attempt, or the
+run is older than its wall clock, it records the budget fault itself and unwinds the advance. The execution seam
+(`HostedWorkflowExecution`) reports that as a clean `Faulted`, the way it reports a debugger pause as `Suspended`.
+Because the run stops with its journal at the fuel and never past it, a runner that honours the budget never proposes
+a save the coordinator refuses on fuel. Its own deadline fault necessarily arrives after the deadline, so the
+coordinator applies a save that is itself the terminal budget fault and waives only the deadline objection for it. A
+body that carries a budget fault record but leaves the run running, or a journal past the fuel, is still refused.
+
+The journal holds one entry per attempt, which is what makes fuel a bound on requests. A failed attempt that a
+`retry` action runs again is journaled with the status `Retrying` and its attempt number, and the attempt the step
+settles on follows it. `retryLimit` is the workflow author's and has no cap, so without this a single step with a
+large limit and a `retryAfter` of zero could send requests for the whole wall clock on one unit of fuel, unseen by
+the coordinator. With it, a retry loop spends fuel exactly as a `goto` loop does.
+
+A sub-workflow spends the root's fuel. A budgeted run hands each sub-workflow a metering scope. The child's
+attempts are decided by the root's budget and journaled into the root's journal under the invoking step's path
+(`callChild/getPet`, nested the same way at every level), so the coordinator verifies them from the same journal.
+The scope only meters: the child otherwise executes exactly as it always has in production, with no run of its own,
+so its retry delays stay in-process, its receives block, and its faults propagate to the root. Nesting past the
+budget's depth cap, by a `workflowId` step or a `goto` to a workflow, faults the run `budget-depth` at the invoking
+step before the child makes an attempt. A retry timer is clamped to the budget's `retryAfter` ceiling when the run
+suspends on it.
+
+The built-in scheduler run carries no budget. It is the platform's own run and lives as long as its schedule,
+suspended on its cadence timer, so a wall clock would fault every schedule a day after it was created and the
+`retryAfter` ceiling would cut any cadence longer than it. It reaches no source itself, and every run it fires
+starts through the management seam and is budgeted like any other. The per-step transport bounds and the CLI and
 console surfacing are landing in the pieces that follow this one.
 
 ## The trigger surface

@@ -1036,6 +1036,7 @@ public static class WorkflowCheckpointSerializer
         WorkflowStepStatus.Succeeded => nameof(WorkflowStepStatus.Succeeded),
         WorkflowStepStatus.Faulted => nameof(WorkflowStepStatus.Faulted),
         WorkflowStepStatus.Skipped => nameof(WorkflowStepStatus.Skipped),
+        WorkflowStepStatus.Retrying => nameof(WorkflowStepStatus.Retrying),
         _ => nameof(WorkflowStepStatus.Succeeded),
     };
 

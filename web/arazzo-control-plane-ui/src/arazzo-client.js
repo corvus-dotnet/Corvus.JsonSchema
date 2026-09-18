@@ -165,14 +165,14 @@ export class ArazzoControlPlaneClient {
   /**
    * `getRunSteps` — the run's recorded step journal (`GET /runs/{runId}/steps`): each executed step,
    * in recording order, from the authoritative checkpoint. Every entry carries the step's `status`
-   * (`Succeeded`/`Faulted`/`Skipped`), the `attempt` it settled on, and its `startedAt`/`endedAt`
+   * (`Succeeded`/`Faulted`/`Skipped`, or `Retrying` for a failed attempt that was retried: one entry per attempt), its 1-based `attempt`, and its `startedAt`/`endedAt`
    * timestamps; `outputs` are included where the step produced them, and are `redacted` at the lower
    * disclosure tier. `truncated` is `true` when a long-running loop drove the journal past its cap and
    * the oldest entries were dropped. Runs recorded before per-step journaling fall back to
    * outputs-only entries with no status or timing.
    * @param {string} runId
    * @param {{ signal?: AbortSignal }} [opts]
-   * @returns {Promise<{ runId: string, truncated?: boolean, steps: Array<{ stepId: string, status?: ('Succeeded'|'Faulted'|'Skipped'), attempt?: number, startedAt?: string, endedAt?: string, outputs?: any, redacted?: boolean }> }>}
+   * @returns {Promise<{ runId: string, truncated?: boolean, steps: Array<{ stepId: string, status?: ('Succeeded'|'Faulted'|'Skipped'|'Retrying'), attempt?: number, startedAt?: string, endedAt?: string, outputs?: any, redacted?: boolean }> }>}
    */
   getRunSteps(runId, opts = {}) {
     return this._request('GET', `/runs/${encodeURIComponent(runId)}/steps`, { signal: opts.signal });

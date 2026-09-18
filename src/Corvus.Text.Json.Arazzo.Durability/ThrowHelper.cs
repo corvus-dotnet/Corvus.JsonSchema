@@ -260,6 +260,9 @@ internal static class ThrowHelper
     public static InvalidOperationException GetCheckpointMissingEnvironmentException(string runId)
         => new(SR.Format(SR.CheckpointMissingEnvironment, runId));
 
+    public static InvalidOperationException GetMeteringScopeHoldsNoRunStateException()
+        => new(SR.MeteringScopeHoldsNoRunState);
+
     public static NotSupportedException GetStartNamedNotSupportedException()
         => new(SR.StartNamedNotSupported);
 

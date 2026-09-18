@@ -184,7 +184,8 @@ public sealed class WorkflowCheckpointCoordinator
             // acted on), and against the identity's frozen budget and creation time, never the body's claim of them.
             if (slot.IdentityEstablished
                 && slot.Identity.Budget is { } budget
-                && ExecutionBudgetFault.Find(budget, facts, slot.Identity.CreatedAt, this.timeProvider.GetUtcNow()) is { } exceeded)
+                && ExecutionBudgetFault.Find(budget, facts, slot.Identity.CreatedAt, this.timeProvider.GetUtcNow()) is { } exceeded
+                && !IsRunnerAuthoredBudgetFault(exceeded, index, facts))
             {
                 return await this.FaultExhaustedAsync(address, slot, accepted, exceeded, cancellationToken).ConfigureAwait(false);
             }
@@ -218,6 +219,16 @@ public sealed class WorkflowCheckpointCoordinator
             slot.Gate.Release();
         }
     }
+
+    // A runner that honours its budget faults the run itself, and that save necessarily arrives after the deadline it
+    // reports. It is the terminal record the control plane would otherwise write, so it is applied rather than refused:
+    // the run ends Faulted on its budget either way, nothing resumes it, and any later save is judged as usual. Only a
+    // deadline objection is waived. A journal past the fuel is never the save of a runner that honoured the budget, so
+    // the control plane still authors that fault over the last durable row.
+    private static bool IsRunnerAuthoredBudgetFault(string exceeded, in WorkflowRunIndexEntry index, in CheckpointBudgetFacts facts)
+        => exceeded == ExecutionBudgetFault.Deadline
+        && index.Status == WorkflowRunStatus.Faulted
+        && facts.BudgetFaulted;
 
     // Records the budget fault the control plane decided: the last durable checkpoint is rewritten as terminally
     // faulted on the limit that was hit, under the slot's etag (the coordinator is the sole writer), consuming the

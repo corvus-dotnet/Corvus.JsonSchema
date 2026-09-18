@@ -303,6 +303,7 @@ public readonly partial struct WorkflowRunStepRecord
             /// <param name="matchSucceeded">Match 1st item.</param>
             /// <param name="matchFaulted">Match 2nd item.</param>
             /// <param name="matchSkipped">Match 3rd item.</param>
+            /// <param name="matchRetrying">Match 4th item.</param>
             /// <param name="defaultMatch">Match any other value.</param>
             /// <returns>An instance of the value returned by the match function.</returns>
             public TResult Match<TContext, TResult>(
@@ -310,6 +311,7 @@ public readonly partial struct WorkflowRunStepRecord
                 Func<TContext, TResult> matchSucceeded,
                 Func<TContext, TResult> matchFaulted,
                 Func<TContext, TResult> matchSkipped,
+                Func<TContext, TResult> matchRetrying,
                 Func<TContext, TResult> defaultMatch)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
@@ -330,6 +332,11 @@ public readonly partial struct WorkflowRunStepRecord
                     return matchSkipped(context);
                 }
 
+                if (this.ValueEquals(Constants.Enum4))
+                {
+                    return matchRetrying(context);
+                }
+
                 return defaultMatch(context);
             }
 
@@ -340,12 +347,14 @@ public readonly partial struct WorkflowRunStepRecord
             /// <param name="matchSucceeded">Match 1st item.</param>
             /// <param name="matchFaulted">Match 2nd item.</param>
             /// <param name="matchSkipped">Match 3rd item.</param>
+            /// <param name="matchRetrying">Match 4th item.</param>
             /// <param name="defaultMatch">Match any other value.</param>
             /// <returns>An instance of the value returned by the match function.</returns>
             public TResult Match<TResult>(
                 Func<TResult> matchSucceeded,
                 Func<TResult> matchFaulted,
                 Func<TResult> matchSkipped,
+                Func<TResult> matchRetrying,
                 Func<TResult> defaultMatch)
             {
                 if (this.ValueEquals(Constants.Enum1))
@@ -361,6 +370,11 @@ public readonly partial struct WorkflowRunStepRecord
                 if (this.ValueEquals(Constants.Enum3))
                 {
                     return matchSkipped();
+                }
+
+                if (this.ValueEquals(Constants.Enum4))
+                {
+                    return matchRetrying();
                 }
 
                 return defaultMatch();
@@ -403,6 +417,12 @@ public readonly partial struct WorkflowRunStepRecord
                 if (this.ValueEquals(Constants.Enum3))
                 {
                     result = KnownValues.Skipped;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum4))
+                {
+                    result = KnownValues.Retrying;
                     return true;
                 }
 

@@ -40,6 +40,29 @@ public sealed class SecuredWorkflowManagementTests
     }
 
     [TestMethod]
+    public async Task The_built_in_scheduler_run_carries_no_budget_and_the_runs_it_fires_do()
+    {
+        // ADR 0068, the system-run exemption: the scheduler run lives as long as its schedule and suspends on its own
+        // cadence timer, so a wall clock would fault every schedule a day after it was created and the retryAfter
+        // ceiling would cut a cadence longer than it. The runs it fires start through the same seam and are budgeted.
+        var ceiling = new ExecutionBudget(200, TimeSpan.FromHours(2), 4, TimeSpan.FromMinutes(10));
+        var management = new SecuredWorkflowManagement(new InMemoryWorkflowStateStore(), "ops", executionBudget: ceiling);
+
+        IdempotentStartResult scheduler = await management.StartNamedAsync(
+            new WorkflowRunId("0123456789abcdef0123456789abcdef"), ScheduleHostedWorkflow.ScheduleWorkflowId, default, "production");
+        using (WorkflowCheckpointState? state = await management.LoadStateAsync(scheduler.RunId, AccessContext.System, default))
+        {
+            state!.Budget.ShouldBeNull();
+        }
+
+        WorkflowRunId fired = await management.StartAsync("wf-v1", default, null, default, default, "production", default);
+        using (WorkflowCheckpointState? state = await management.LoadStateAsync(fired, AccessContext.System, default))
+        {
+            state!.Budget.ShouldBe(ceiling);
+        }
+    }
+
+    [TestMethod]
     public async Task Start_records_the_execution_budget_resolved_from_the_ceiling_and_the_environments_override()
     {
         // ADR 0068: the effective budget is the deployment ceiling tightened by the environment's override, resolved at

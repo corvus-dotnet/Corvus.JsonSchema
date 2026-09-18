@@ -43,6 +43,14 @@ public readonly partial struct WorkflowRunStepRecord
             /// A constant for the <c>enum</c> keyword.
             /// </summary>
             public static readonly StatusEntity EnumJson3 = ParsedJsonDocument<StatusEntity>.StringConstant([.."\"Skipped\""u8]);
+            /// <summary>
+            /// A constant for the <c>enum</c> keyword.
+            /// </summary>
+            public static readonly byte[] Enum4 = "Retrying"u8.ToArray();
+            /// <summary>
+            /// A constant for the <c>enum</c> keyword.
+            /// </summary>
+            public static readonly StatusEntity EnumJson4 = ParsedJsonDocument<StatusEntity>.StringConstant([.."\"Retrying\""u8]);
         }
 
         /// <summary>
@@ -82,6 +90,17 @@ public readonly partial struct WorkflowRunStepRecord
             /// as a UTF8 byte array.
             /// </summary>
             public static ReadOnlySpan<byte> SkippedUtf8 => Constants.Enum3;
+
+            /// <summary>
+            /// Gets the string "Retrying"
+            /// as a <see cref="StatusEntity"/>.
+            /// </summary>
+            public static StatusEntity Retrying { get; } = Constants.EnumJson4;
+            /// <summary>
+            /// Gets the string "Retrying"
+            /// as a UTF8 byte array.
+            /// </summary>
+            public static ReadOnlySpan<byte> RetryingUtf8 => Constants.Enum4;
         }
 
         /// <summary>
@@ -105,6 +124,10 @@ public readonly partial struct WorkflowRunStepRecord
             /// Corresponds to the JSON string "Skipped".
             /// </summary>
             Skipped = 2,
+            /// <summary>
+            /// Corresponds to the JSON string "Retrying".
+            /// </summary>
+            Retrying = 3,
         }
 
         /// <summary>
@@ -119,6 +142,7 @@ public readonly partial struct WorkflowRunStepRecord
                 KnownValues.Succeeded => Constants.EnumJson1,
                 KnownValues.Faulted => Constants.EnumJson2,
                 KnownValues.Skipped => Constants.EnumJson3,
+                KnownValues.Retrying => Constants.EnumJson4,
                 _ => throw new InvalidOperationException(),
             };
         }
@@ -160,6 +184,12 @@ public readonly partial struct WorkflowRunStepRecord
             if (this.ValueEquals(Constants.Enum3))
             {
                 result = KnownValues.Skipped;
+                return true;
+            }
+
+            if (this.ValueEquals(Constants.Enum4))
+            {
+                result = KnownValues.Retrying;
                 return true;
             }
 

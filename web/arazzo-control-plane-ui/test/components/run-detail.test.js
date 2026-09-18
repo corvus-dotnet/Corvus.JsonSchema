@@ -250,6 +250,28 @@ describe('<arazzo-run-detail> enriched step journal (#885)', () => {
     ok(!el.shadowRoot.textContent.includes('881-22-9034'), 'while the sensitive payload is not disclosed');
   });
 
+  it('shows a step whose last attempt failed and is being retried', async () => {
+    // ADR 0068: the journal holds one entry per attempt and a row shows its step's latest, so a run parked on a
+    // retry timer ends on a Retrying entry.
+    const mock = createMockControlPlane({ latencyMs: 0 });
+    const fetch = async (url, opts) => {
+      const res = await mock.fetch(url, opts);
+      if (/\/runs\/run-0a5512cd\/steps/.test(String(url))) {
+        const body = await res.json();
+        const steps = body.steps.filter((s) => !(s.stepId === 'reservePayment' && s.status === 'Succeeded'));
+        return new Response(JSON.stringify({ ...body, steps }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+      return res;
+    };
+    el = document.createElement('arazzo-run-detail');
+    el.setAttribute('runid', 'run-0a5512cd');
+    el.client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch });
+    mount(el);
+    const glyph = await waitFor(() => el.shadowRoot.querySelector('.jst.retry'));
+    ok(glyph.getAttribute('title').includes('retried'), 'the retrying glyph explains itself');
+    ok(el.shadowRoot.querySelector('.progress').textContent.includes('attempt 1'), 'and names the attempt that failed');
+  });
+
   it('flags a capped journal when the server marks it truncated', async () => {
     const mock = createMockControlPlane({ latencyMs: 0 });
     const fetch = async (url, opts) => {

@@ -548,6 +548,9 @@
   <data name="CheckpointMissingEnvironment" xml:space="preserve">
     <value>The checkpoint for run '{0}' carries no environment. Every run is pinned to its (environment, runId) address at creation (ADR 0065 decision 9), so a checkpoint without one is corrupt; refusing to resume it.</value>
   </data>
+  <data name="MeteringScopeHoldsNoRunState" xml:space="preserve">
+    <value>A metering sub-workflow scope holds no run state (ADR 0068). The durable executor meters through it and otherwise executes with no run; nothing else may drive it.</value>
+  </data>
   <data name="StartNamedNotSupported" xml:space="preserve">
     <value>This management implementation does not support named starts.</value>
   </data>

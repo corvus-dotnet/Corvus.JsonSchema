@@ -163,6 +163,7 @@ class ArazzoRunDetail extends ArazzoElement {
         .jst.ok { color: var(--arazzo-status-completed, #2a8a4a); }
         .jst.bad { color: var(--arazzo-status-faulted, #d4351c); }
         .jst.skip { color: var(--_muted); }
+        .jst.retry { color: var(--arazzo-status-suspended, #b58105); }
         .jmeta { font-size: 11px; color: var(--_muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
         .prog-note { margin: 4px 0 0; font-size: 11.5px; color: var(--arazzo-status-suspended, #b45309); }
         .pos-line { font-size: 13px; }
@@ -328,12 +329,16 @@ class ArazzoRunDetail extends ArazzoElement {
         case 'Succeeded': return '<span class="jst ok" title="Succeeded">✓</span>';
         case 'Faulted': return '<span class="jst bad" title="Faulted">✗</span>';
         case 'Skipped': return '<span class="jst skip" title="Skipped without executing the step">⏭</span>';
+        // The journal holds one entry per attempt (ADR 0068) and a step's row shows its latest, so this is a step
+        // whose last attempt failed and is being retried: mid-retry, or parked on its retry timer.
+        case 'Retrying': return '<span class="jst retry" title="The last attempt failed and the step is being retried">↻</span>';
         default: return ''; // a run recorded before per-step journaling attests no status
       }
     };
     const stepMeta = (rec) => {
       const bits = [];
-      if (rec.attempt > 1) bits.push(`<span class="jmeta" title="settled on attempt ${escapeHtml(String(rec.attempt))}">↻${escapeHtml(String(rec.attempt))}</span>`);
+      if (rec.status === 'Retrying') bits.push(`<span class="jmeta" title="attempt ${escapeHtml(String(rec.attempt))} failed">attempt ${escapeHtml(String(rec.attempt))}</span>`);
+      else if (rec.attempt > 1) bits.push(`<span class="jmeta" title="settled on attempt ${escapeHtml(String(rec.attempt))}">↻${escapeHtml(String(rec.attempt))}</span>`);
       const ms = rec.startedAt && rec.endedAt ? Date.parse(rec.endedAt) - Date.parse(rec.startedAt) : NaN;
       if (Number.isFinite(ms) && ms >= 0) {
         const dur = ms < 1000 ? `${ms}ms` : ms < 60000 ? `${(ms / 1000).toFixed(1)}s` : `${Math.floor(ms / 60000)}m${Math.round((ms % 60000) / 1000)}s`;

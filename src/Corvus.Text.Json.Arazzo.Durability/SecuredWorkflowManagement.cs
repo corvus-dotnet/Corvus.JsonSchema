@@ -86,7 +86,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         ArgumentException.ThrowIfNullOrEmpty(environment);
 
         var id = new WorkflowRunId(Guid.NewGuid().ToString("n", System.Globalization.CultureInfo.InvariantCulture));
-        ExecutionBudget budget = await this.ResolveBudgetAsync(environment, cancellationToken).ConfigureAwait(false);
+        ExecutionBudget? budget = await this.ResolveBudgetAsync(workflowId, environment, cancellationToken).ConfigureAwait(false);
         using WorkflowRun run = WorkflowRun.CreateNew(this.store, id, workflowId, inputs, environment, this.timeProvider, correlationId, tags, securityTags, budget);
         await run.EnqueueAsync(cancellationToken).ConfigureAwait(false);
         return id;
@@ -121,7 +121,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
 
         try
         {
-            ExecutionBudget budget = await this.ResolveBudgetAsync(environment, cancellationToken).ConfigureAwait(false);
+            ExecutionBudget? budget = await this.ResolveBudgetAsync(workflowId, environment, cancellationToken).ConfigureAwait(false);
             using WorkflowRun run = WorkflowRun.CreateNew(this.store, runId, workflowId, inputs, environment, this.timeProvider, correlationId, tags, securityTags, budget);
             await run.EnqueueAsync(cancellationToken).ConfigureAwait(false);
             return new IdempotentStartResult(runId, Created: true);
@@ -155,8 +155,19 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
     // ADR 0068: the run's effective execution budget, the deployment ceiling tightened by the environment's override.
     // Resolved once at start and recorded with the run, so a later change to the environment does not move a run's
     // bound under it; without an environment registry every run carries the ceiling.
-    private async ValueTask<ExecutionBudget> ResolveBudgetAsync(string environment, CancellationToken cancellationToken)
+    //
+    // The system-run exemption: the built-in scheduler run carries no budget. It is the platform's own run, not a
+    // tenant's workflow: it lives for as long as its schedule does and suspends on its own cadence timer, so a wall
+    // clock would fault every schedule a day after it was created and the retryAfter ceiling would cut any cadence
+    // longer than it. It reaches no source itself, and every run it fires starts through this same seam and is
+    // budgeted like any other.
+    private async ValueTask<ExecutionBudget?> ResolveBudgetAsync(string workflowId, string environment, CancellationToken cancellationToken)
     {
+        if (string.Equals(workflowId, ScheduleHostedWorkflow.ScheduleWorkflowId, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
         if (this.environments is not { } registry)
         {
             return this.budgetCeiling;
@@ -337,6 +348,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         WorkflowStepStatus.Succeeded => "Succeeded"u8,
         WorkflowStepStatus.Faulted => "Faulted"u8,
         WorkflowStepStatus.Skipped => "Skipped"u8,
+        WorkflowStepStatus.Retrying => "Retrying"u8,
         _ => "Succeeded"u8,
     };
 

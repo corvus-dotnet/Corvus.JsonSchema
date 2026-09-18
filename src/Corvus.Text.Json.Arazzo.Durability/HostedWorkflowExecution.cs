@@ -20,7 +20,9 @@ public static class HostedWorkflowExecution
     /// <summary>
     /// Binds the resolved workflow's transports and starts or resumes the run, returning the tri-state outcome. A
     /// debugger pause unwinds to a clean <see cref="WorkflowRunResultKind.Suspended"/> (the checkpoint already
-    /// persisted the run as suspended). The transports are disposed after the run.
+    /// persisted the run as suspended), and a run that ran out of its execution budget unwinds to a clean
+    /// <see cref="WorkflowRunResultKind.Faulted"/> (ADR 0068: the run already persisted its own budget fault). The
+    /// transports are disposed after the run.
     /// </summary>
     /// <param name="hosted">The resolved workflow to run.</param>
     /// <param name="transportBinder">Binds the workflow's descriptor to the transports the run executes through.</param>
@@ -50,6 +52,12 @@ public static class HostedWorkflowExecution
             // Suspended with a Pause wait (no wake trigger), so this is a clean suspend — report the same tri-state
             // Suspended a timer or message suspend returns; the finally still disposes the transports.
             return WorkflowRunResultKind.Suspended;
+        }
+        catch (WorkflowBudgetExhaustedException)
+        {
+            // ADR 0068: the run had no fuel or time for the attempt it was about to make, or nested past the depth
+            // cap. It already persisted itself Faulted with the budget fault, so this is a clean terminal fault.
+            return WorkflowRunResultKind.Faulted;
         }
         finally
         {

@@ -78,6 +78,27 @@ public interface IWorkflowRun
         // Default: a run that keeps no journal records nothing.
     }
 
+    /// <summary>
+    /// Announces that an attempt at a step is about to begin (ADR 0068). The durable executor calls it at the entry
+    /// of every step, on every attempt and on every resumed re-entry, before the step reaches a source. A run that
+    /// carries an execution budget decides here whether it has fuel and time for the attempt, and when it does not it
+    /// records the budget fault and unwinds the advance, so the attempt is never made. The default does nothing, so a
+    /// run without a budget pays one completed call.
+    /// </summary>
+    /// <param name="stepId">The id of the step about to be attempted.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes when the attempt may proceed.</returns>
+    ValueTask BeginStepAsync(string stepId, CancellationToken cancellationToken) => default;
+
+    /// <summary>
+    /// Gets a value indicating whether this scope only meters (ADR 0068): it answers <see cref="BeginStepAsync"/>,
+    /// <see cref="RecordStep"/> and <see cref="BeginSubWorkflow"/> and holds no run state. The durable executor
+    /// treats such a scope as its meter and otherwise executes as it does with no run at all, so a production
+    /// sub-workflow is counted against its root's budget without its execution semantics changing. The default is
+    /// <see langword="false"/>: a run, a recorder and a tracer are all full scopes.
+    /// </summary>
+    bool MetersOnly => false;
+
     /// <summary>Persists the run's current state at <paramref name="cursor"/> (called after a step completes).</summary>
     /// <param name="cursor">The state index of the next step to run on resume.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
@@ -153,10 +174,12 @@ public interface IWorkflowRun
     /// Begins a child scope for a sub-workflow invocation (a <c>workflowId</c>-bound step or a
     /// <c>goto</c>-workflow transfer), returning the run the durable executor threads into the sub-workflow's
     /// <c>ExecuteAsync</c>. The default returns <see langword="null"/> — the sub-workflow runs untracked, exactly
-    /// as an unthreaded call would (no checkpoints, no nested recording), which is the correct behaviour for a
-    /// production durable run whose child never checkpoints. A tracing or recording run overrides this to return a
-    /// child recorder that shares the parent's step budget, virtual clock, stop conditions, and exchange cursor
-    /// and collects the sub-workflow's step records as the parent step's nested trace.
+    /// as an unthreaded call would (no checkpoints, no nested recording). A tracing or recording run overrides this
+    /// to return a child recorder that shares the parent's step budget, virtual clock, stop conditions, and exchange
+    /// cursor and collects the sub-workflow's step records as the parent step's nested trace. A production durable
+    /// run that carries an execution budget returns a scope that only meters (<see cref="MetersOnly"/>, ADR 0068):
+    /// the child never checkpoints and executes as an untracked one does, and its attempts are counted against the
+    /// root's budget.
     /// </summary>
     /// <param name="stepId">The parent step invoking the sub-workflow (the goto action's target for a transfer).</param>
     /// <param name="subWorkflowId">The invoked workflow's id.</param>

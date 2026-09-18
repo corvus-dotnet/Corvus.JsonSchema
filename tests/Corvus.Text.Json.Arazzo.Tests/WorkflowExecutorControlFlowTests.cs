@@ -328,10 +328,15 @@ public partial class WorkflowExecutorEndToEndTests
         checkpoint.ShouldNotBeNull();
         using Durability.WorkflowCheckpointState state = Durability.WorkflowCheckpointSerializer.Deserialize(checkpoint.Value.Utf8);
 
-        state.StepJournal.ShouldNotBeEmpty();
-        state.StepJournal.ShouldAllBe(e => e.Status == WorkflowStepStatus.Succeeded);
+        // ADR 0068: the journal holds one entry per attempt, numbered from one. The failed attempt that was retried
+        // and the attempt the step settled on are both there.
+        state.StepJournal.ShouldNotBeNull();
+        state.StepJournal.Select(e => (e.StepId, e.Status, e.Attempt)).ShouldBe(
+        [
+            ("getPet", WorkflowStepStatus.Retrying, 1),
+            ("getPet", WorkflowStepStatus.Succeeded, 2),
+        ]);
         state.StepJournal.ShouldAllBe(e => e.EndedAt >= e.StartedAt);
-        state.StepJournal.ShouldContain(e => e.Attempt >= 1);
     }
 
     /// <summary>A <see cref="TimeProvider"/> that fires every timer immediately and records how many it

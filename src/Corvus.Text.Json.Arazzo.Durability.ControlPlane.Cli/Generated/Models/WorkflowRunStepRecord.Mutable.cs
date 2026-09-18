@@ -185,7 +185,7 @@ public readonly partial struct WorkflowRunStepRecord
         /// </summary>
         /// <remarks>
         /// <para>
-        /// The attempt the step settled on (consistent with a fault&#39;s attempt number). Absent for a pre-journal step.
+        /// The 1-based number of the attempt this entry records: the attempt the step settled on, or for a `Retrying` entry the attempt that failed (consistent with a fault&#39;s attempt number). Absent for a pre-journal step.
         /// </para>
         /// </remarks>
         public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInteger.Mutable Attempt
@@ -290,7 +290,7 @@ public readonly partial struct WorkflowRunStepRecord
         /// </summary>
         /// <remarks>
         /// <para>
-        /// The step&#39;s recorded outcome (ADR 0050). Absent for a step from a checkpoint that predates the journal.
+        /// The step&#39;s recorded outcome (ADR 0050). `Retrying` records an attempt that failed and was retried: the journal holds one entry per attempt, which is the unit the execution budget&#39;s fuel counts (ADR 0068), so a retried step appears once per failed attempt and once more for the attempt it settled on. Absent for a step from a checkpoint that predates the journal.
         /// </para>
         /// </remarks>
         public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStepRecord.StatusEntity.Mutable Status

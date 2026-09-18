@@ -1288,6 +1288,17 @@ public static class WorkflowExecutorEmitter
 
         writer.AppendLine("        ArgumentNullException.ThrowIfNull(workspace);");
 
+        if (options.Durable)
+        {
+            // ADR 0068: the run is metered through its own local. A sub-workflow of a production run is handed a scope
+            // that only meters (it counts the child's attempts against the root's budget and journals them into the
+            // root), so the run itself is dropped to null there and the child executes exactly as an untracked one
+            // does: in-process retry delays, blocking receives, faults that propagate to the root. Every budget,
+            // journal and nesting call goes through the meter; everything that touches run state goes through the run.
+            writer.AppendLine("        IWorkflowRun? __meter = run;");
+            writer.AppendLine("        if (run is { MetersOnly: true }) { run = null; }");
+        }
+
         // Hoist one transport local per API source this workflow's operation steps use (multi-source only),
         // selected from the map; each operation step then uses its source's transport.
         if (selection.MultiSource)
