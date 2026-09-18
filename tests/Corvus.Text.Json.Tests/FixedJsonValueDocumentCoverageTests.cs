@@ -1279,4 +1279,66 @@ public class FixedJsonValueDocumentCoverageTests
         JsonElement root = doc.RootElement;
         Assert.AreEqual(new string('\\', 100), root.GetString());
     }
+
+    // --- ValueIsEscaped reports what the document holds (#971) ---
+
+    [TestMethod]
+    public void ValueIsEscaped_IsTrue_ForAStringEscapedOnConstruction_FromChars()
+    {
+        // ForUnescapedString stores JSON text, so the plus is held as \u002B. The document must say so: every
+        // consumer that trusts the answer (schema evaluation, deep equality) otherwise reads the escaped text as the value.
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForUnescapedString("2026-01-01T01:00:00+00:00".AsSpan());
+        IJsonDocument d = doc;
+        Assert.IsTrue(d.GetRawSimpleValue(0, includeQuotes: false).Span.IndexOf((byte)'\\') >= 0, "the construction escaped the plus");
+        Assert.IsTrue(d.ValueIsEscaped(0, isPropertyName: false));
+    }
+
+    [TestMethod]
+    public void ValueIsEscaped_IsTrue_ForAStringEscapedOnConstruction_FromUtf8()
+    {
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForUnescapedString("a+b"u8);
+        IJsonDocument d = doc;
+        Assert.IsTrue(d.ValueIsEscaped(0, isPropertyName: false));
+    }
+
+    [TestMethod]
+    public void ValueIsEscaped_IsTrue_ForQuotedTextThatCarriesAnEscape()
+    {
+        byte[] raw = Encoding.UTF8.GetBytes("\"a\\u002Bb\"");
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForString(raw);
+        IJsonDocument d = doc;
+        Assert.IsTrue(d.ValueIsEscaped(0, isPropertyName: false));
+    }
+
+    [TestMethod]
+    public void ValueIsEscaped_IsFalse_ForPlainStringsAndNumbers()
+    {
+        using FixedJsonValueDocument<JsonElement> text = FixedJsonValueDocument<JsonElement>.ForUnescapedString("hello".AsSpan());
+        Assert.IsFalse(((IJsonDocument)text).ValueIsEscaped(0, isPropertyName: false));
+
+        using FixedJsonValueDocument<JsonElement> number = FixedJsonValueDocument<JsonElement>.ForNumber("42"u8.ToArray());
+        Assert.IsFalse(((IJsonDocument)number).ValueIsEscaped(0, isPropertyName: false));
+    }
+
+    [TestMethod]
+    public void ValueIsEscaped_IsRecomputed_WhenAPooledInstanceIsReused()
+    {
+        // The pool hands the same instance back, so an answer remembered for one value must not leak into the next.
+        using (FixedJsonValueDocument<JsonElement> escaped = FixedJsonValueDocument<JsonElement>.ForUnescapedString("a+b".AsSpan()))
+        {
+            Assert.IsTrue(((IJsonDocument)escaped).ValueIsEscaped(0, isPropertyName: false));
+        }
+
+        using FixedJsonValueDocument<JsonElement> plain = FixedJsonValueDocument<JsonElement>.ForUnescapedString("ab".AsSpan());
+        Assert.IsFalse(((IJsonDocument)plain).ValueIsEscaped(0, isPropertyName: false));
+    }
+
+    [TestMethod]
+    public void AnEscapedFixedString_EqualsTheSameStringParsedUnescaped()
+    {
+        using FixedJsonValueDocument<JsonElement> fixedDoc = FixedJsonValueDocument<JsonElement>.ForUnescapedString("a+b".AsSpan());
+        using ParsedJsonDocument<JsonElement> parsed = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("\"a+b\""));
+        Assert.IsTrue(fixedDoc.RootElement.Equals(parsed.RootElement));
+        Assert.IsTrue(parsed.RootElement.Equals(fixedDoc.RootElement));
+    }
 }

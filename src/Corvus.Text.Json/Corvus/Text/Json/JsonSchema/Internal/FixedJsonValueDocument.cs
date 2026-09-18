@@ -1159,8 +1159,12 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument, IWorkspaceManaged
     {
         Debug.Assert(index == 0);
 
-        // Values produced by the VM never contain escape sequences
-        return false;
+        // The document holds JSON text, and the text of a string may carry escapes: ForUnescapedString escapes on
+        // construction (a '+' is held as +), and the quoted-text factories take whatever their caller hands them.
+        // Consumers that trust this answer read the raw text as the value when it is false (schema evaluation of every
+        // string keyword, deep equality), so it has to be what the text holds, decided the way this document's own
+        // string accessors decide it. In JSON text a backslash is only ever the start of an escape.
+        return _tokenType == JsonTokenType.String && _rawValue.Span.IndexOf((byte)'\\') >= 0;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
