@@ -16,7 +16,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// An environment&#39;s execution-budget override (ADR 0068). Each limit named here tightens the deployment ceiling for runs pinned to the environment; a limit omitted is the ceiling&#39;s. An override may only tighten: a limit wider than the deployment ceiling is refused (400). The effective budget is resolved into every run at start and recorded with it, so a later change here does not move a running run&#39;s bound.
+/// An environment&#39;s execution-budget override (ADR 0068). Each limit named here tightens the deployment ceiling for runs pinned to the environment; a limit omitted is the ceiling&#39;s. Fuel, the wall clock and the depth cap bound the run, and the step timeout and the response size bound a single step. An override may only tighten: a limit wider than the deployment ceiling is refused (400). The effective budget is resolved into every run at start and recorded with it, so a later change here does not move a running run&#39;s bound.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -115,6 +115,27 @@ public readonly partial struct ExecutionBudget
     }
 
     /// <summary>
+    /// Gets the (optional) <c>maxResponseBytes</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The largest response body a single step may read, in bytes. A step whose response is larger has failed, and its onFailure actions apply.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ExecutionBudget.MaxResponseBytesEntity MaxResponseBytes
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxResponseBytesUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ExecutionBudget.MaxResponseBytesEntity value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the (optional) <c>maxSteps</c> property.
     /// </summary>
     /// <remarks>
@@ -169,6 +190,27 @@ public readonly partial struct ExecutionBudget
         get
         {
             if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RetryAfterCeilingSecondsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ExecutionBudget.RetryAfterCeilingSecondsEntity value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>stepTimeoutSeconds</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The longest a single step&#39;s request may take, in seconds, from the send to the response having been read. A step that runs past it has failed, and its onFailure actions apply. No deployment may set it above ten minutes.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ExecutionBudget.StepTimeoutSecondsEntity StepTimeoutSeconds
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StepTimeoutSecondsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ExecutionBudget.StepTimeoutSecondsEntity value))
             {
                 return value;
             }
@@ -446,6 +488,11 @@ public readonly partial struct ExecutionBudget
     public static class JsonPropertyNames
     {
         /// <summary>
+        /// Gets the JSON property name for <see cref="MaxResponseBytes"/>.
+        /// </summary>
+        public const string MaxResponseBytes = "maxResponseBytes";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="MaxSteps"/>.
         /// </summary>
         public const string MaxSteps = "maxSteps";
@@ -461,9 +508,19 @@ public readonly partial struct ExecutionBudget
         public const string RetryAfterCeilingSeconds = "retryAfterCeilingSeconds";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="StepTimeoutSeconds"/>.
+        /// </summary>
+        public const string StepTimeoutSeconds = "stepTimeoutSeconds";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="WallClockSeconds"/>.
         /// </summary>
         public const string WallClockSeconds = "wallClockSeconds";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="MaxResponseBytes"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> MaxResponseBytesUtf8 => "maxResponseBytes"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="MaxSteps"/>.
@@ -481,6 +538,11 @@ public readonly partial struct ExecutionBudget
         public static ReadOnlySpan<byte> RetryAfterCeilingSecondsUtf8 => "retryAfterCeilingSeconds"u8;
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="StepTimeoutSeconds"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> StepTimeoutSecondsUtf8 => "stepTimeoutSeconds"u8;
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="WallClockSeconds"/>.
         /// </summary>
         public static ReadOnlySpan<byte> WallClockSecondsUtf8 => "wallClockSeconds"u8;
@@ -488,6 +550,11 @@ public readonly partial struct ExecutionBudget
 
     private static class JsonPropertyNamesEscaped
     {
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="MaxResponseBytes"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> MaxResponseBytes => "maxResponseBytes"u8;
+
         /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="MaxSteps"/>.
         /// </summary>
@@ -504,6 +571,11 @@ public readonly partial struct ExecutionBudget
         public static ReadOnlySpan<byte> RetryAfterCeilingSeconds => "retryAfterCeilingSeconds"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="StepTimeoutSeconds"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> StepTimeoutSeconds => "stepTimeoutSeconds"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="WallClockSeconds"/>.
         /// </summary>
         public static ReadOnlySpan<byte> WallClockSeconds => "wallClockSeconds"u8;
@@ -511,6 +583,11 @@ public readonly partial struct ExecutionBudget
 
     private static class JsonPropertyNamesPrebaked
     {
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="MaxResponseBytes"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> MaxResponseBytes => [0x25, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x78, 0x52, 0x65, 0x73, 0x70, 0x6F, 0x6E, 0x73, 0x65, 0x42, 0x79, 0x74, 0x65, 0x73, 0x22];
+
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="MaxSteps"/>.
         /// </summary>
@@ -525,6 +602,11 @@ public readonly partial struct ExecutionBudget
         /// Gets the pre-baked property name blob for <see cref="RetryAfterCeilingSeconds"/>.
         /// </summary>
         public static ReadOnlySpan<byte> RetryAfterCeilingSeconds => [0xA5, 0x01, 0x00, 0x00, 0x22, 0x72, 0x65, 0x74, 0x72, 0x79, 0x41, 0x66, 0x74, 0x65, 0x72, 0x43, 0x65, 0x69, 0x6C, 0x69, 0x6E, 0x67, 0x53, 0x65, 0x63, 0x6F, 0x6E, 0x64, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="StepTimeoutSeconds"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> StepTimeoutSeconds => [0x45, 0x01, 0x00, 0x00, 0x22, 0x73, 0x74, 0x65, 0x70, 0x54, 0x69, 0x6D, 0x65, 0x6F, 0x75, 0x74, 0x53, 0x65, 0x63, 0x6F, 0x6E, 0x64, 0x73, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="WallClockSeconds"/>.

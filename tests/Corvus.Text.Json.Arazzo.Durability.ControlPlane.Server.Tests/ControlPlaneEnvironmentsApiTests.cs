@@ -217,6 +217,43 @@ public sealed class ControlPlaneEnvironmentsApiTests
     }
 
     [TestMethod]
+    public async Task The_transport_bounds_of_an_override_are_validated_recorded_and_read_back()
+    {
+        await using Scoped host = await StartAsync(new TenantPolicy());
+
+        // ADR 0068 piece 4: a step timeout above the deployment ceiling's (the default hundred seconds here) is refused,
+        // as is a response size above the ceiling's sixteen mebibytes, before anything is written.
+        HttpResponseMessage slower = await host.SendJsonAsync(
+            HttpMethod.Post, "/environments", """{"name":"production","executionBudget":{"stepTimeoutSeconds":101}}""", Write);
+        slower.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        HttpResponseMessage larger = await host.SendJsonAsync(
+            HttpMethod.Post, "/environments", """{"name":"production","executionBudget":{"maxResponseBytes":16777217}}""", Write);
+        larger.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        HttpResponseMessage zero = await host.SendJsonAsync(
+            HttpMethod.Post, "/environments", """{"name":"production","executionBudget":{"stepTimeoutSeconds":0}}""", Write);
+        zero.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await host.SendAsync(HttpMethod.Get, "/environments/production", Read)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        // Tightening bounds are recorded, and read back from the store rather than echoed from the request.
+        HttpResponseMessage created = await host.SendJsonAsync(
+            HttpMethod.Post, "/environments", """{"name":"production","executionBudget":{"stepTimeoutSeconds":5,"maxResponseBytes":4096}}""", Write);
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/environments/production", Read)))
+        {
+            doc.RootElement.GetProperty("executionBudget").GetProperty("stepTimeoutSeconds").GetInt32().ShouldBe(5);
+            doc.RootElement.GetProperty("executionBudget").GetProperty("maxResponseBytes").GetInt64().ShouldBe(4096);
+        }
+
+        // An update that widens one is refused, and the stored override stands.
+        HttpResponseMessage widened = await host.SendJsonAsync(HttpMethod.Put, "/environments/production", """{"executionBudget":{"stepTimeoutSeconds":601}}""", Write);
+        widened.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/environments/production", Read)))
+        {
+            doc.RootElement.GetProperty("executionBudget").GetProperty("stepTimeoutSeconds").GetInt32().ShouldBe(5);
+        }
+    }
+
+    [TestMethod]
     public async Task The_execution_budget_override_only_tightens_the_deployment_ceiling_and_round_trips()
     {
         await using Scoped host = await StartAsync(new TenantPolicy());

@@ -36,7 +36,7 @@ namespace Corvus.Text.Json.OpenApi;
 /// </code>
 /// </para>
 /// </remarks>
-public sealed class InstrumentedApiTransport : IApiTransport
+public sealed class InstrumentedApiTransport : IBoundableApiTransport
 {
     private readonly IApiTransport inner;
 
@@ -108,6 +108,10 @@ public sealed class InstrumentedApiTransport : IApiTransport
             ct => this.inner.SendAsync<TRequest, TResponse>(in requestCopy, bodyWriter, contentType, ct),
             cancellationToken);
     }
+
+    /// <inheritdoc/>
+    public IApiTransport WithBounds(TimeSpan? requestTimeout, long? maxResponseLength)
+        => new InstrumentedApiTransport(ApiTransportBounds.Apply(this.inner, requestTimeout, maxResponseLength));
 
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => this.inner.DisposeAsync();

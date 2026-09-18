@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-09-18T09:12:49.9541843\u002B00:00",
+  "generatedAt": "2026-09-18T14:32:02.7622443\u002B00:00",
   "generatedFiles": [
     "GetAccessGrantsRequest.cs",
     "GetAccessGrantsResponse.cs",
@@ -814,6 +814,9 @@
     "Models/ExecutionBudget.cs",
     "Models/ExecutionBudget.Mutable.cs",
     "Models/ExecutionBudget.JsonSchema.cs",
+    "Models/ExecutionBudget.MaxResponseBytesEntity.cs",
+    "Models/ExecutionBudget.MaxResponseBytesEntity.Mutable.cs",
+    "Models/ExecutionBudget.MaxResponseBytesEntity.JsonSchema.cs",
     "Models/ExecutionBudget.MaxStepsEntity.cs",
     "Models/ExecutionBudget.MaxStepsEntity.Mutable.cs",
     "Models/ExecutionBudget.MaxStepsEntity.JsonSchema.cs",
@@ -823,6 +826,9 @@
     "Models/ExecutionBudget.RetryAfterCeilingSecondsEntity.cs",
     "Models/ExecutionBudget.RetryAfterCeilingSecondsEntity.Mutable.cs",
     "Models/ExecutionBudget.RetryAfterCeilingSecondsEntity.JsonSchema.cs",
+    "Models/ExecutionBudget.StepTimeoutSecondsEntity.cs",
+    "Models/ExecutionBudget.StepTimeoutSecondsEntity.Mutable.cs",
+    "Models/ExecutionBudget.StepTimeoutSecondsEntity.JsonSchema.cs",
     "Models/ExecutionBudget.TheMaximumAgeOfARunFromCreationInSeconds.cs",
     "Models/ExecutionBudget.TheMaximumAgeOfARunFromCreationInSeconds.Mutable.cs",
     "Models/ExecutionBudget.TheMaximumAgeOfARunFromCreationInSeconds.JsonSchema.cs",
@@ -1633,9 +1639,9 @@
     "Models/Corvus__UnionAttribute.cs",
     "Models/CorvusJsonSchemaProgram.cs"
   ],
-  "generatorVersion": "1.0.0\u002B3d0d14529bac8fd55612cf6525ad68040dd3697d",
+  "generatorVersion": "1.0.0\u002B32eda52f63230a0c10c87a1d6639ee1a582d6c61",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "eea1d9ac7c35509132f19fed93c01299d21422749a329fdb89db16b5758ea9d9",
+  "specFileHash": "8eeffacdc061da874197042bedec35f53cfb9110a9fe17655ced939298877d25",
   "specVersion": "3.2"
 }

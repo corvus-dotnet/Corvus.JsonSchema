@@ -169,6 +169,10 @@ public static class SourceCredentialTransports
             client = new HttpClient(new RedirectHardeningHandler(new SocketsHttpHandler { AllowAutoRedirect = false }, allowInsecureHttp), disposeHandler: true);
         }
 
+        // The client is shared by every run and step, so it cannot carry a run's step timeout. It carries the backstop,
+        // and the run's own bound is applied per request when the run's transports are bound (ADR 0068).
+        client.Timeout = ExecutionBudget.TransportClientTimeout;
+
         if (baseAddress is not null)
         {
             client.BaseAddress = baseAddress;
@@ -187,7 +191,11 @@ public static class SourceCredentialTransports
     /// <returns>The host-owned client; disposing it disposes the handler.</returns>
     public static HttpClient CreateSourceHttpClient(Uri? baseAddress = null, bool allowInsecureHttp = false)
     {
-        var client = new HttpClient(new RedirectHardeningHandler(new SocketsHttpHandler { AllowAutoRedirect = false }, allowInsecureHttp), disposeHandler: true);
+        var client = new HttpClient(new RedirectHardeningHandler(new SocketsHttpHandler { AllowAutoRedirect = false }, allowInsecureHttp), disposeHandler: true)
+        {
+            // Shared by every run and step, so it carries the backstop and not a run's step timeout (ADR 0068).
+            Timeout = ExecutionBudget.TransportClientTimeout,
+        };
         if (baseAddress is not null)
         {
             client.BaseAddress = baseAddress;

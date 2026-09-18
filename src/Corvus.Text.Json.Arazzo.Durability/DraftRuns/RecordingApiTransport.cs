@@ -41,7 +41,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// run has finished.
 /// </para>
 /// </remarks>
-public sealed class RecordingApiTransport : IApiTransport
+public sealed class RecordingApiTransport : IBoundableApiTransport
 {
     private readonly IApiTransport inner;
     private readonly DraftRunRecording recording;
@@ -96,6 +96,10 @@ public sealed class RecordingApiTransport : IApiTransport
         string path = ResolvePath(in request);
         return this.RecordAsync<TResponse>(TRequest.Method, path, this.inner.SendAsync<TRequest, TResponse>(in request, bodyWriter, contentType, cancellationToken));
     }
+
+    /// <inheritdoc/>
+    public IApiTransport WithBounds(TimeSpan? requestTimeout, long? maxResponseLength)
+        => new RecordingApiTransport(ApiTransportBounds.Apply(this.inner, requestTimeout, maxResponseLength), this.recording);
 
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => this.inner.DisposeAsync();

@@ -86,7 +86,9 @@
         "maxSteps": { "type": "integer", "minimum": 1, "description": "Fuel: the maximum number of step executions a run may make, retries and revisits counted. Cannot exceed the deployment ceiling, itself bounded by the per-step journal cap." },
         "wallClockSeconds": { "type": "integer", "minimum": 1, "description": "The maximum age of a run from creation, in seconds." },
         "maxSubWorkflowDepth": { "type": "integer", "minimum": 0, "description": "The sub-workflow nesting depth cap." },
-        "retryAfterCeilingSeconds": { "type": "integer", "minimum": 0, "description": "The ceiling a step's declared retryAfter delay is clamped to, in seconds." }
+        "retryAfterCeilingSeconds": { "type": "integer", "minimum": 0, "description": "The ceiling a step's declared retryAfter delay is clamped to, in seconds." },
+        "stepTimeoutSeconds": { "type": "integer", "minimum": 1, "maximum": 600, "description": "The longest a single step's request may take, in seconds, from the send to the response having been read. A step that runs past it has failed, and its onFailure actions apply." },
+        "maxResponseBytes": { "type": "integer", "minimum": 1, "description": "The largest response body a single step may read, in bytes. A step whose response is larger has failed, and its onFailure actions apply." }
       },
       "additionalProperties": false
     },

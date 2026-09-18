@@ -8584,12 +8584,14 @@
       },
       "ExecutionBudget": {
         "type": "object",
-        "description": "An environment's execution-budget override (ADR 0068). Each limit named here tightens the deployment ceiling for runs pinned to the environment; a limit omitted is the ceiling's. An override may only tighten: a limit wider than the deployment ceiling is refused (400). The effective budget is resolved into every run at start and recorded with it, so a later change here does not move a running run's bound.",
+        "description": "An environment's execution-budget override (ADR 0068). Each limit named here tightens the deployment ceiling for runs pinned to the environment; a limit omitted is the ceiling's. Fuel, the wall clock and the depth cap bound the run, and the step timeout and the response size bound a single step. An override may only tighten: a limit wider than the deployment ceiling is refused (400). The effective budget is resolved into every run at start and recorded with it, so a later change here does not move a running run's bound.",
         "properties": {
           "maxSteps": { "type": "integer", "minimum": 1, "description": "Fuel: the maximum number of step executions a run may make, retries and revisits counted. The deployment ceiling is itself bounded by the per-step journal cap (500)." },
           "wallClockSeconds": { "type": "integer", "minimum": 1, "description": "The maximum age of a run from creation, in seconds." },
           "maxSubWorkflowDepth": { "type": "integer", "minimum": 0, "description": "The sub-workflow nesting depth cap." },
-          "retryAfterCeilingSeconds": { "type": "integer", "minimum": 0, "description": "The ceiling a step's declared retryAfter delay is clamped to, in seconds." }
+          "retryAfterCeilingSeconds": { "type": "integer", "minimum": 0, "description": "The ceiling a step's declared retryAfter delay is clamped to, in seconds." },
+          "stepTimeoutSeconds": { "type": "integer", "minimum": 1, "maximum": 600, "description": "The longest a single step's request may take, in seconds, from the send to the response having been read. A step that runs past it has failed, and its onFailure actions apply. No deployment may set it above ten minutes." },
+          "maxResponseBytes": { "type": "integer", "minimum": 1, "description": "The largest response body a single step may read, in bytes. A step whose response is larger has failed, and its onFailure actions apply." }
         }
       },
       "EnvironmentCreate": {

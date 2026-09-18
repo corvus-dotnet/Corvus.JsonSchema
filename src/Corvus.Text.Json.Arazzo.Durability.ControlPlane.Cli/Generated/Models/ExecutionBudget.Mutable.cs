@@ -181,6 +181,27 @@ public readonly partial struct ExecutionBudget
         }
 
         /// <summary>
+        /// Gets the (optional) <c>maxResponseBytes</c> property.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The largest response body a single step may read, in bytes. A step whose response is larger has failed, and its onFailure actions apply.
+        /// </para>
+        /// </remarks>
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxResponseBytesEntity.Mutable MaxResponseBytes
+        {
+            get
+            {
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxResponseBytesUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxResponseBytesEntity.Mutable value))
+                {
+                    return value;
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
         /// Gets the (optional) <c>maxSteps</c> property.
         /// </summary>
         /// <remarks>
@@ -244,6 +265,27 @@ public readonly partial struct ExecutionBudget
         }
 
         /// <summary>
+        /// Gets the (optional) <c>stepTimeoutSeconds</c> property.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The longest a single step&#39;s request may take, in seconds, from the send to the response having been read. A step that runs past it has failed, and its onFailure actions apply. No deployment may set it above ten minutes.
+        /// </para>
+        /// </remarks>
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.StepTimeoutSecondsEntity.Mutable StepTimeoutSeconds
+        {
+            get
+            {
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StepTimeoutSecondsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.StepTimeoutSecondsEntity.Mutable value))
+                {
+                    return value;
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
         /// Gets the (optional) <c>wallClockSeconds</c> property.
         /// </summary>
         /// <remarks>
@@ -291,6 +333,51 @@ public readonly partial struct ExecutionBudget
             where T : struct, IJsonElement
         {
             return JsonElementHelpers.DeepEquals(this, other);
+        }
+
+        /// <summary>
+        /// Set the <c>maxResponseBytes</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetMaxResponseBytes(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxResponseBytesEntity.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.MaxResponseBytesUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxResponseBytesUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxResponseBytes, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Remove the <c>maxResponseBytes</c> property, if present.
+        /// </summary>
+        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+        public bool RemoveMaxResponseBytes()
+        {
+            CheckValidInstance();
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.MaxResponseBytesUtf8);
+            _documentVersion = _parent.Version;
+            return result;
         }
 
         /// <summary>
@@ -424,6 +511,51 @@ public readonly partial struct ExecutionBudget
         {
             CheckValidInstance();
             bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.RetryAfterCeilingSecondsUtf8);
+            _documentVersion = _parent.Version;
+            return result;
+        }
+
+        /// <summary>
+        /// Set the <c>stepTimeoutSeconds</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetStepTimeoutSeconds(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.StepTimeoutSecondsEntity.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.StepTimeoutSecondsUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StepTimeoutSecondsUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StepTimeoutSeconds, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Remove the <c>stepTimeoutSeconds</c> property, if present.
+        /// </summary>
+        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+        public bool RemoveStepTimeoutSeconds()
+        {
+            CheckValidInstance();
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.StepTimeoutSecondsUtf8);
             _documentVersion = _parent.Version;
             return result;
         }
@@ -687,10 +819,12 @@ public readonly partial struct ExecutionBudget
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxStepsEntity.Source _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheSubWorkflowNestingDepthCap.Source _createArg2;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.RetryAfterCeilingSecondsEntity.Source _createArg3;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheMaximumAgeOfARunFromCreationInSeconds.Source _createArg4;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxResponseBytesEntity.Source _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxStepsEntity.Source _createArg2;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheSubWorkflowNestingDepthCap.Source _createArg3;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.RetryAfterCeilingSecondsEntity.Source _createArg4;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.StepTimeoutSecondsEntity.Source _createArg5;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheMaximumAgeOfARunFromCreationInSeconds.Source _createArg6;
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Source.IsUndefined"/>
         public bool IsUndefined => _kind == Kind.Unknown;
@@ -703,12 +837,14 @@ public readonly partial struct ExecutionBudget
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxStepsEntity.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheSubWorkflowNestingDepthCap.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.RetryAfterCeilingSecondsEntity.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheMaximumAgeOfARunFromCreationInSeconds.Source arg4)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxResponseBytesEntity.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxStepsEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheSubWorkflowNestingDepthCap.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.RetryAfterCeilingSecondsEntity.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.StepTimeoutSecondsEntity.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheMaximumAgeOfARunFromCreationInSeconds.Source arg6)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
             _createArg3 = arg3;
             _createArg4 = arg4;
+            _createArg5 = arg5;
+            _createArg6 = arg6;
             _kind = Kind.Create;
         }
 
@@ -729,7 +865,7 @@ public readonly partial struct ExecutionBudget
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -754,7 +890,7 @@ public readonly partial struct ExecutionBudget
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -779,7 +915,7 @@ public readonly partial struct ExecutionBudget
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -804,7 +940,7 @@ public readonly partial struct ExecutionBudget
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -829,7 +965,7 @@ public readonly partial struct ExecutionBudget
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -977,14 +1113,18 @@ public readonly partial struct ExecutionBudget
 
         internal static void Create(
             ref ComplexValueBuilder builder,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxResponseBytesEntity.Source maxResponseBytes = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxStepsEntity.Source maxSteps = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheSubWorkflowNestingDepthCap.Source maxSubWorkflowDepth = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.RetryAfterCeilingSecondsEntity.Source retryAfterCeilingSeconds = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.StepTimeoutSecondsEntity.Source stepTimeoutSeconds = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheMaximumAgeOfARunFromCreationInSeconds.Source wallClockSeconds = default)
         {
+            maxResponseBytes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxResponseBytes, ref builder);
             maxSteps.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxSteps, ref builder);
             maxSubWorkflowDepth.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxSubWorkflowDepth, ref builder);
             retryAfterCeilingSeconds.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RetryAfterCeilingSeconds, ref builder);
+            stepTimeoutSeconds.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StepTimeoutSeconds, ref builder);
             wallClockSeconds.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WallClockSeconds, ref builder);
         }
 
@@ -992,12 +1132,14 @@ public readonly partial struct ExecutionBudget
         /// Creates an instance of a <see cref="ExecutionBudget"/>.
         /// </summary>
         public void Create(
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxResponseBytesEntity.Source maxResponseBytes = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxStepsEntity.Source maxSteps = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheSubWorkflowNestingDepthCap.Source maxSubWorkflowDepth = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.RetryAfterCeilingSecondsEntity.Source retryAfterCeilingSeconds = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.StepTimeoutSecondsEntity.Source stepTimeoutSeconds = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheMaximumAgeOfARunFromCreationInSeconds.Source wallClockSeconds = default)
         {
-            Create(ref _builder, maxSteps, maxSubWorkflowDepth, retryAfterCeilingSeconds, wallClockSeconds);
+            Create(ref _builder, maxResponseBytes, maxSteps, maxSubWorkflowDepth, retryAfterCeilingSeconds, stepTimeoutSeconds, wallClockSeconds);
         }
 
         /// <summary>
@@ -1092,10 +1234,10 @@ public readonly partial struct ExecutionBudget
             o.EndObject();
         }
 
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxStepsEntity.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheSubWorkflowNestingDepthCap.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.RetryAfterCeilingSecondsEntity.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheMaximumAgeOfARunFromCreationInSeconds.Source arg4, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxResponseBytesEntity.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxStepsEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheSubWorkflowNestingDepthCap.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.RetryAfterCeilingSecondsEntity.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.StepTimeoutSecondsEntity.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheMaximumAgeOfARunFromCreationInSeconds.Source arg6, ref ComplexValueBuilder o)
         {
             o.StartObject();
-            Create(ref o, arg1, arg2, arg3, arg4);
+            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
             o.EndObject();
         }
     }
@@ -1132,14 +1274,16 @@ public readonly partial struct ExecutionBudget
     /// <summary>
     /// Build an instance of the value directly from its property values.
     /// </summary>
+    /// <param name="maxResponseBytes">The value of the <c>"maxResponseBytes"</c> property.</param>
     /// <param name="maxSteps">The value of the <c>"maxSteps"</c> property.</param>
     /// <param name="maxSubWorkflowDepth">The value of the <c>"maxSubWorkflowDepth"</c> property.</param>
     /// <param name="retryAfterCeilingSeconds">The value of the <c>"retryAfterCeilingSeconds"</c> property.</param>
+    /// <param name="stepTimeoutSeconds">The value of the <c>"stepTimeoutSeconds"</c> property.</param>
     /// <param name="wallClockSeconds">The value of the <c>"wallClockSeconds"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxStepsEntity.Source maxSteps = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheSubWorkflowNestingDepthCap.Source maxSubWorkflowDepth = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.RetryAfterCeilingSecondsEntity.Source retryAfterCeilingSeconds = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheMaximumAgeOfARunFromCreationInSeconds.Source wallClockSeconds = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxResponseBytesEntity.Source maxResponseBytes = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxStepsEntity.Source maxSteps = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheSubWorkflowNestingDepthCap.Source maxSubWorkflowDepth = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.RetryAfterCeilingSecondsEntity.Source retryAfterCeilingSeconds = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.StepTimeoutSecondsEntity.Source stepTimeoutSeconds = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheMaximumAgeOfARunFromCreationInSeconds.Source wallClockSeconds = default)
     {
-        return new Source(maxSteps, maxSubWorkflowDepth, retryAfterCeilingSeconds, wallClockSeconds);
+        return new Source(maxResponseBytes, maxSteps, maxSubWorkflowDepth, retryAfterCeilingSeconds, stepTimeoutSeconds, wallClockSeconds);
     }
 
     /// <summary>
@@ -1235,19 +1379,21 @@ public readonly partial struct ExecutionBudget
     /// Creates and initializes a mutable document from the given property values.
     /// </summary>
     /// <param name="workspace">The JSON workspace.</param>
+    /// <param name="maxResponseBytes">The value of the property.</param>
     /// <param name="maxSteps">The value of the property.</param>
     /// <param name="maxSubWorkflowDepth">The value of the property.</param>
     /// <param name="retryAfterCeilingSeconds">The value of the property.</param>
+    /// <param name="stepTimeoutSeconds">The value of the property.</param>
     /// <param name="wallClockSeconds">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxStepsEntity.Source maxSteps = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheSubWorkflowNestingDepthCap.Source maxSubWorkflowDepth = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.RetryAfterCeilingSecondsEntity.Source retryAfterCeilingSeconds = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheMaximumAgeOfARunFromCreationInSeconds.Source wallClockSeconds = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxResponseBytesEntity.Source maxResponseBytes = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxStepsEntity.Source maxSteps = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheSubWorkflowNestingDepthCap.Source maxSubWorkflowDepth = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.RetryAfterCeilingSecondsEntity.Source retryAfterCeilingSeconds = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.StepTimeoutSecondsEntity.Source stepTimeoutSeconds = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheMaximumAgeOfARunFromCreationInSeconds.Source wallClockSeconds = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(maxSteps, maxSubWorkflowDepth, retryAfterCeilingSeconds, wallClockSeconds);
+        ovb.Create(maxResponseBytes, maxSteps, maxSubWorkflowDepth, retryAfterCeilingSeconds, stepTimeoutSeconds, wallClockSeconds);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1344,13 +1490,15 @@ public readonly partial struct ExecutionBudget
     /// <summary>
     /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
     /// </summary>
+    /// <param name="maxResponseBytes">The value of the property.</param>
     /// <param name="maxSteps">The value of the property.</param>
     /// <param name="maxSubWorkflowDepth">The value of the property.</param>
     /// <param name="retryAfterCeilingSeconds">The value of the property.</param>
+    /// <param name="stepTimeoutSeconds">The value of the property.</param>
     /// <param name="wallClockSeconds">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<ExecutionBudget> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxStepsEntity.Source maxSteps = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheSubWorkflowNestingDepthCap.Source maxSubWorkflowDepth = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.RetryAfterCeilingSecondsEntity.Source retryAfterCeilingSeconds = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheMaximumAgeOfARunFromCreationInSeconds.Source wallClockSeconds = default, int initialCapacity = 30)
+    public static ParsedJsonDocument<ExecutionBudget> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxResponseBytesEntity.Source maxResponseBytes = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxStepsEntity.Source maxSteps = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheSubWorkflowNestingDepthCap.Source maxSubWorkflowDepth = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.RetryAfterCeilingSecondsEntity.Source retryAfterCeilingSeconds = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.StepTimeoutSecondsEntity.Source stepTimeoutSeconds = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheMaximumAgeOfARunFromCreationInSeconds.Source wallClockSeconds = default, int initialCapacity = 30)
     {
         ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
         try
@@ -1358,7 +1506,7 @@ public readonly partial struct ExecutionBudget
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             cvb.StartObject();
             Builder ovb = new(cvb);
-            ovb.Create(maxSteps, maxSubWorkflowDepth, retryAfterCeilingSeconds, wallClockSeconds);
+            ovb.Create(maxResponseBytes, maxSteps, maxSubWorkflowDepth, retryAfterCeilingSeconds, stepTimeoutSeconds, wallClockSeconds);
             cvb = ovb._builder;
             cvb.EndObject();
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);

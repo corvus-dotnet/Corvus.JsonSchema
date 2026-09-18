@@ -23,7 +23,7 @@ public sealed class RunnerRunCoordinatorTests
     private const string Version = "adopt-v3";
 
     private static readonly DateTimeOffset T0 = new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
-    private static readonly ExecutionBudget OneHour = new(ExecutionBudget.MaxStepsCeiling, TimeSpan.FromHours(1), 8, TimeSpan.Zero);
+    private static readonly ExecutionBudget OneHour = new(ExecutionBudget.MaxStepsCeiling, TimeSpan.FromHours(1), 8, TimeSpan.Zero, ExecutionBudget.DefaultStepTimeout, ExecutionBudget.DefaultMaxResponseBytes);
 
     [TestMethod]
     public async Task A_pending_run_is_claimed_with_its_workflow_environment_and_lease()

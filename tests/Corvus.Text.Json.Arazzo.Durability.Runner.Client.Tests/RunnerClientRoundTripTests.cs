@@ -98,7 +98,7 @@ public sealed class RunnerClientRoundTripTests
         // its one unit of fuel, then faults itself before the next attempt. The control plane applies that save (the
         // journal is inside the fuel), so the runner sees its own budget signal and never the 409.
         await using Fixture fixture = await Fixture.StartAsync();
-        var oneStep = new ExecutionBudget(1, TimeSpan.FromHours(1), 8, TimeSpan.Zero);
+        var oneStep = new ExecutionBudget(1, TimeSpan.FromHours(1), 8, TimeSpan.Zero, ExecutionBudget.DefaultStepTimeout, ExecutionBudget.DefaultMaxResponseBytes);
         await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending, budget: oneStep);
         RunnerClaim claimed = (await fixture.Client.TryClaimAsync([Version]))!.Value;
 
@@ -127,7 +127,7 @@ public sealed class RunnerClientRoundTripTests
         // raises it as its own exception (not as a superseded save the runner would resend), and the store holds the
         // faulted run the control plane authored.
         await using Fixture fixture = await Fixture.StartAsync();
-        var oneStep = new ExecutionBudget(1, TimeSpan.FromHours(1), 8, TimeSpan.Zero);
+        var oneStep = new ExecutionBudget(1, TimeSpan.FromHours(1), 8, TimeSpan.Zero, ExecutionBudget.DefaultStepTimeout, ExecutionBudget.DefaultMaxResponseBytes);
         await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending, budget: oneStep);
         RunnerClaim claimed = (await fixture.Client.TryClaimAsync([Version]))!.Value;
 

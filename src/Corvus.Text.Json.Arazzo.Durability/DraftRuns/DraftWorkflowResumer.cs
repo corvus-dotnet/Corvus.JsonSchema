@@ -83,7 +83,9 @@ public sealed class DraftWorkflowResumer : IRunExecutionBackend, IDisposable
         }
 
         IHostedWorkflow hosted = await this.ResolveAsync(run.Id, cancellationToken).ConfigureAwait(false);
-        return await HostedWorkflowExecution.RunAsync(hosted, this.transportBinder, run, cancellationToken).ConfigureAwait(false);
+
+        // A draft run's reader is the workflow's author, debugging it: the failure's own message is the point.
+        return await HostedWorkflowExecution.RunAsync(hosted, this.transportBinder, run, discloseUnhandledError: true, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>

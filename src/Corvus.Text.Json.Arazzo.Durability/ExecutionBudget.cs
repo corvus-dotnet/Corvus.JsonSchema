@@ -9,7 +9,8 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 
 /// <summary>
 /// The limits every production run carries (ADR 0068): fuel, the maximum number of step executions; a wall clock, the
-/// maximum age from creation; the sub-workflow depth cap; and the ceiling on a step's declared <c>retryAfter</c>.
+/// maximum age from creation; the sub-workflow depth cap; the ceiling on a step's declared <c>retryAfter</c>; and the
+/// transport bounds on a single step, the longest its request may take and the largest response it may read.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -23,11 +24,33 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// verifies against, it is exact only up to <see cref="MaxStepsCeiling"/>, and a truncated journal is over any
 /// admissible budget by definition. A budget cannot be constructed above the ceiling.
 /// </para>
+/// <para>
+/// The transport bounds limit one step where fuel limits how many. The runner enforces them on the request it sends,
+/// and nothing in a checkpoint lets the control plane verify them, so unlike fuel and the wall clock they are not
+/// budget faults: a step that breaches one has failed, and its <c>onFailure</c> actions decide what happens next. The
+/// step timeout is bounded by <see cref="StepTimeoutCeiling"/> so that the run-path clients can carry a fixed backstop
+/// timeout above it.
+/// </para>
 /// </remarks>
 public readonly record struct ExecutionBudget
 {
     /// <summary>The largest fuel any budget may carry: the per-step journal cap, which is the counter the coordinator verifies against.</summary>
     public const int MaxStepsCeiling = 500;
+
+    /// <summary>Gets the longest step timeout any budget may carry, ten minutes. The run-path HTTP clients set their own
+    /// timeout above this, so the budget's bound is always the one that fires.</summary>
+    public static readonly TimeSpan StepTimeoutCeiling = TimeSpan.FromMinutes(10);
+
+    /// <summary>Gets the timeout a run-path HTTP client carries, fifteen minutes: a finite backstop set above
+    /// <see cref="StepTimeoutCeiling"/>, so that the budget's step timeout is always the bound that fires and a client is
+    /// still never left to wait without limit.</summary>
+    public static readonly TimeSpan TransportClientTimeout = TimeSpan.FromMinutes(15);
+
+    /// <summary>Gets the default step timeout, one hundred seconds.</summary>
+    public static readonly TimeSpan DefaultStepTimeout = TimeSpan.FromSeconds(100);
+
+    /// <summary>The default largest response a step may read, sixteen mebibytes.</summary>
+    public const long DefaultMaxResponseBytes = 16L * 1024 * 1024;
 
     /// <summary>Gets the default wall clock, twenty-four hours from creation.</summary>
     public static readonly TimeSpan DefaultWallClock = TimeSpan.FromHours(24);
@@ -40,8 +63,10 @@ public readonly record struct ExecutionBudget
     /// <param name="wallClock">The maximum age of the run from creation, positive.</param>
     /// <param name="maxSubWorkflowDepth">The sub-workflow nesting depth cap, zero or more.</param>
     /// <param name="retryAfterCeiling">The ceiling a step's declared <c>retryAfter</c> delay is clamped to, zero or more.</param>
+    /// <param name="stepTimeout">The longest a single step's request may take, positive and no more than <see cref="StepTimeoutCeiling"/>.</param>
+    /// <param name="maxResponseBytes">The largest response body a single step may read, in bytes, positive.</param>
     /// <exception cref="ArgumentOutOfRangeException">A limit is outside its admissible range.</exception>
-    public ExecutionBudget(int maxSteps, TimeSpan wallClock, int maxSubWorkflowDepth, TimeSpan retryAfterCeiling)
+    public ExecutionBudget(int maxSteps, TimeSpan wallClock, int maxSubWorkflowDepth, TimeSpan retryAfterCeiling, TimeSpan stepTimeout, long maxResponseBytes)
     {
         if (maxSteps < 1 || maxSteps > MaxStepsCeiling)
         {
@@ -63,15 +88,28 @@ public readonly record struct ExecutionBudget
             throw ThrowHelper.GetExecutionBudgetOutOfRangeException(JsonPropertyNames.RetryAfterCeilingSeconds, (long)retryAfterCeiling.TotalSeconds, 0, long.MaxValue, nameof(retryAfterCeiling));
         }
 
+        if (stepTimeout <= TimeSpan.Zero || stepTimeout > StepTimeoutCeiling)
+        {
+            throw ThrowHelper.GetExecutionBudgetOutOfRangeException(JsonPropertyNames.StepTimeoutSeconds, (long)stepTimeout.TotalSeconds, 1, (long)StepTimeoutCeiling.TotalSeconds, nameof(stepTimeout));
+        }
+
+        if (maxResponseBytes < 1)
+        {
+            throw ThrowHelper.GetExecutionBudgetOutOfRangeException(JsonPropertyNames.MaxResponseBytes, maxResponseBytes, 1, long.MaxValue, nameof(maxResponseBytes));
+        }
+
         this.MaxSteps = maxSteps;
         this.WallClock = wallClock;
         this.MaxSubWorkflowDepth = maxSubWorkflowDepth;
         this.RetryAfterCeiling = retryAfterCeiling;
+        this.StepTimeout = stepTimeout;
+        this.MaxResponseBytes = maxResponseBytes;
     }
 
     /// <summary>Gets the deployment default: the journal cap's worth of fuel, a day of wall clock, the depth cap every
-    /// tracking run surface already honours, and an hour's retry-after ceiling.</summary>
-    public static ExecutionBudget Default => new(MaxStepsCeiling, DefaultWallClock, IWorkflowRun.MaxSubWorkflowDepth, DefaultRetryAfterCeiling);
+    /// tracking run surface already honours, an hour's retry-after ceiling, a hundred-second step timeout and a
+    /// sixteen-mebibyte response.</summary>
+    public static ExecutionBudget Default => new(MaxStepsCeiling, DefaultWallClock, IWorkflowRun.MaxSubWorkflowDepth, DefaultRetryAfterCeiling, DefaultStepTimeout, DefaultMaxResponseBytes);
 
     /// <summary>Gets fuel: the maximum number of step executions.</summary>
     public int MaxSteps { get; }
@@ -84,6 +122,12 @@ public readonly record struct ExecutionBudget
 
     /// <summary>Gets the ceiling a step's declared <c>retryAfter</c> delay is clamped to.</summary>
     public TimeSpan RetryAfterCeiling { get; }
+
+    /// <summary>Gets the longest a single step's request may take, from the send to the response having been read.</summary>
+    public TimeSpan StepTimeout { get; }
+
+    /// <summary>Gets the largest response body a single step may read, in bytes.</summary>
+    public long MaxResponseBytes { get; }
 
     /// <summary>Resolves the effective budget for a run: the ceiling, tightened by an environment's override where one is present.</summary>
     /// <param name="ceiling">The deployment ceiling.</param>
@@ -100,7 +144,9 @@ public readonly record struct ExecutionBudget
             over.MaxSteps is { } steps ? Math.Min(steps, this.MaxSteps) : this.MaxSteps,
             over.WallClock is { } clock && clock < this.WallClock ? clock : this.WallClock,
             over.MaxSubWorkflowDepth is { } depth ? Math.Min(depth, this.MaxSubWorkflowDepth) : this.MaxSubWorkflowDepth,
-            over.RetryAfterCeiling is { } retry && retry < this.RetryAfterCeiling ? retry : this.RetryAfterCeiling);
+            over.RetryAfterCeiling is { } retry && retry < this.RetryAfterCeiling ? retry : this.RetryAfterCeiling,
+            over.StepTimeout is { } timeout && timeout < this.StepTimeout ? timeout : this.StepTimeout,
+            over.MaxResponseBytes is { } bytes ? Math.Min(bytes, this.MaxResponseBytes) : this.MaxResponseBytes);
 
     /// <summary>Writes the budget as the checkpoint's <c>budget</c> object.</summary>
     /// <param name="writer">The writer, positioned where a property may be written.</param>
@@ -112,6 +158,8 @@ public readonly record struct ExecutionBudget
         writer.WriteNumber(JsonPropertyNames.WallClockMsUtf8, (long)this.WallClock.TotalMilliseconds);
         writer.WriteNumber(JsonPropertyNames.MaxSubWorkflowDepthUtf8, this.MaxSubWorkflowDepth);
         writer.WriteNumber(JsonPropertyNames.RetryAfterCeilingMsUtf8, (long)this.RetryAfterCeiling.TotalMilliseconds);
+        writer.WriteNumber(JsonPropertyNames.StepTimeoutMsUtf8, (long)this.StepTimeout.TotalMilliseconds);
+        writer.WriteNumber(JsonPropertyNames.MaxResponseBytesUtf8, this.MaxResponseBytes);
         writer.WriteEndObject();
     }
 
@@ -126,9 +174,11 @@ public readonly record struct ExecutionBudget
             && element.TryGetProperty(JsonPropertyNames.WallClockMsUtf8, out JsonElement clock) && TryReadInteger(clock, out long wallClockMs)
             && element.TryGetProperty(JsonPropertyNames.MaxSubWorkflowDepthUtf8, out JsonElement depth) && TryReadInteger(depth, out long maxDepth)
             && element.TryGetProperty(JsonPropertyNames.RetryAfterCeilingMsUtf8, out JsonElement retry) && TryReadInteger(retry, out long retryMs)
-            && maxSteps >= 1 && maxSteps <= MaxStepsCeiling && wallClockMs > 0 && maxDepth >= 0 && maxDepth <= int.MaxValue && retryMs >= 0)
+            && element.TryGetProperty(JsonPropertyNames.StepTimeoutMsUtf8, out JsonElement timeout) && TryReadInteger(timeout, out long timeoutMs)
+            && element.TryGetProperty(JsonPropertyNames.MaxResponseBytesUtf8, out JsonElement bytes) && TryReadInteger(bytes, out long maxBytes)
+            && IsAdmissible(maxSteps, wallClockMs, maxDepth, retryMs, timeoutMs, maxBytes))
         {
-            budget = new ExecutionBudget((int)maxSteps, TimeSpan.FromMilliseconds(wallClockMs), (int)maxDepth, TimeSpan.FromMilliseconds(retryMs));
+            budget = new ExecutionBudget((int)maxSteps, TimeSpan.FromMilliseconds(wallClockMs), (int)maxDepth, TimeSpan.FromMilliseconds(retryMs), TimeSpan.FromMilliseconds(timeoutMs), maxBytes);
             return true;
         }
 
@@ -156,6 +206,8 @@ public readonly record struct ExecutionBudget
         long wallClockMs = -1;
         long maxDepth = -1;
         long retryMs = -1;
+        long timeoutMs = -1;
+        long maxBytes = -1;
         bool wellFormed = reader.TokenType == JsonTokenType.StartObject;
         while (wellFormed && reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
         {
@@ -163,6 +215,8 @@ public readonly record struct ExecutionBudget
                 : reader.ValueTextEquals(JsonPropertyNames.WallClockMsUtf8) ? 1
                 : reader.ValueTextEquals(JsonPropertyNames.MaxSubWorkflowDepthUtf8) ? 2
                 : reader.ValueTextEquals(JsonPropertyNames.RetryAfterCeilingMsUtf8) ? 3
+                : reader.ValueTextEquals(JsonPropertyNames.StepTimeoutMsUtf8) ? 4
+                : reader.ValueTextEquals(JsonPropertyNames.MaxResponseBytesUtf8) ? 5
                 : -1;
             if (!reader.Read())
             {
@@ -187,19 +241,29 @@ public readonly record struct ExecutionBudget
                 case 0: maxSteps = value; break;
                 case 1: wallClockMs = value; break;
                 case 2: maxDepth = value; break;
-                default: retryMs = value; break;
+                case 3: retryMs = value; break;
+                case 4: timeoutMs = value; break;
+                default: maxBytes = value; break;
             }
         }
 
-        if (wellFormed && maxSteps >= 1 && maxSteps <= MaxStepsCeiling && wallClockMs > 0 && maxDepth >= 0 && maxDepth <= int.MaxValue && retryMs >= 0)
+        if (wellFormed && IsAdmissible(maxSteps, wallClockMs, maxDepth, retryMs, timeoutMs, maxBytes))
         {
-            budget = new ExecutionBudget((int)maxSteps, TimeSpan.FromMilliseconds(wallClockMs), (int)maxDepth, TimeSpan.FromMilliseconds(retryMs));
+            budget = new ExecutionBudget((int)maxSteps, TimeSpan.FromMilliseconds(wallClockMs), (int)maxDepth, TimeSpan.FromMilliseconds(retryMs), TimeSpan.FromMilliseconds(timeoutMs), maxBytes);
             return true;
         }
 
         budget = default;
         return false;
     }
+
+    private static bool IsAdmissible(long maxSteps, long wallClockMs, long maxDepth, long retryMs, long timeoutMs, long maxBytes)
+        => maxSteps >= 1 && maxSteps <= MaxStepsCeiling
+            && wallClockMs > 0
+            && maxDepth >= 0 && maxDepth <= int.MaxValue
+            && retryMs >= 0
+            && timeoutMs > 0 && timeoutMs <= (long)StepTimeoutCeiling.TotalMilliseconds
+            && maxBytes >= 1;
 
     internal static bool TryReadInteger(in JsonElement value, out long integer)
     {
@@ -236,6 +300,15 @@ public readonly record struct ExecutionBudget
         /// <summary>The retry-after ceiling on the override, in seconds.</summary>
         public const string RetryAfterCeilingSeconds = "retryAfterCeilingSeconds";
 
+        /// <summary>The step timeout on the checkpoint, in milliseconds.</summary>
+        public const string StepTimeoutMs = "stepTimeoutMs";
+
+        /// <summary>The step timeout on the override, in seconds.</summary>
+        public const string StepTimeoutSeconds = "stepTimeoutSeconds";
+
+        /// <summary>The largest response a step may read, in bytes, on both the checkpoint and the override.</summary>
+        public const string MaxResponseBytes = "maxResponseBytes";
+
         /// <summary>Gets <see cref="Budget"/> as UTF-8.</summary>
         public static ReadOnlySpan<byte> BudgetUtf8 => "budget"u8;
 
@@ -256,6 +329,15 @@ public readonly record struct ExecutionBudget
 
         /// <summary>Gets <see cref="RetryAfterCeilingSeconds"/> as UTF-8.</summary>
         public static ReadOnlySpan<byte> RetryAfterCeilingSecondsUtf8 => "retryAfterCeilingSeconds"u8;
+
+        /// <summary>Gets <see cref="StepTimeoutMs"/> as UTF-8.</summary>
+        public static ReadOnlySpan<byte> StepTimeoutMsUtf8 => "stepTimeoutMs"u8;
+
+        /// <summary>Gets <see cref="StepTimeoutSeconds"/> as UTF-8.</summary>
+        public static ReadOnlySpan<byte> StepTimeoutSecondsUtf8 => "stepTimeoutSeconds"u8;
+
+        /// <summary>Gets <see cref="MaxResponseBytes"/> as UTF-8.</summary>
+        public static ReadOnlySpan<byte> MaxResponseBytesUtf8 => "maxResponseBytes"u8;
     }
 }
 
@@ -267,7 +349,9 @@ public readonly record struct ExecutionBudget
 /// <param name="WallClock">The wall clock, or <see langword="null"/> to keep the ceiling's.</param>
 /// <param name="MaxSubWorkflowDepth">The depth cap, or <see langword="null"/> to keep the ceiling's.</param>
 /// <param name="RetryAfterCeiling">The retry-after ceiling, or <see langword="null"/> to keep the ceiling's.</param>
-public readonly record struct ExecutionBudgetOverride(int? MaxSteps, TimeSpan? WallClock, int? MaxSubWorkflowDepth, TimeSpan? RetryAfterCeiling)
+/// <param name="StepTimeout">The step timeout, or <see langword="null"/> to keep the ceiling's.</param>
+/// <param name="MaxResponseBytes">The largest response a step may read, or <see langword="null"/> to keep the ceiling's.</param>
+public readonly record struct ExecutionBudgetOverride(int? MaxSteps, TimeSpan? WallClock, int? MaxSubWorkflowDepth, TimeSpan? RetryAfterCeiling, TimeSpan? StepTimeout, long? MaxResponseBytes)
 {
     /// <summary>Reads an override from an environment record's <c>executionBudget</c> element, refusing nothing: a
     /// malformed or out-of-range limit reads as no override at all, so a stored record can only tighten.</summary>
@@ -286,7 +370,9 @@ public readonly record struct ExecutionBudgetOverride(int? MaxSteps, TimeSpan? W
         TimeSpan? wallClock = element.TryGetProperty(ExecutionBudget.JsonPropertyNames.WallClockSecondsUtf8, out JsonElement clock) && ExecutionBudget.TryReadInteger(clock, out long c) && c >= 1 ? TimeSpan.FromSeconds(c) : null;
         int? depth = element.TryGetProperty(ExecutionBudget.JsonPropertyNames.MaxSubWorkflowDepthUtf8, out JsonElement d) && ExecutionBudget.TryReadInteger(d, out long dv) && dv >= 0 && dv <= int.MaxValue ? (int)dv : null;
         TimeSpan? retry = element.TryGetProperty(ExecutionBudget.JsonPropertyNames.RetryAfterCeilingSecondsUtf8, out JsonElement r) && ExecutionBudget.TryReadInteger(r, out long rv) && rv >= 0 ? TimeSpan.FromSeconds(rv) : null;
-        over = new ExecutionBudgetOverride(maxSteps, wallClock, depth, retry);
+        TimeSpan? timeout = element.TryGetProperty(ExecutionBudget.JsonPropertyNames.StepTimeoutSecondsUtf8, out JsonElement t) && ExecutionBudget.TryReadInteger(t, out long tv) && tv >= 1 && tv <= (long)ExecutionBudget.StepTimeoutCeiling.TotalSeconds ? TimeSpan.FromSeconds(tv) : null;
+        long? bytes = element.TryGetProperty(ExecutionBudget.JsonPropertyNames.MaxResponseBytesUtf8, out JsonElement b) && ExecutionBudget.TryReadInteger(b, out long bv) && bv >= 1 ? bv : null;
+        over = new ExecutionBudgetOverride(maxSteps, wallClock, depth, retry, timeout, bytes);
         return true;
     }
 
@@ -306,6 +392,8 @@ public readonly record struct ExecutionBudgetOverride(int? MaxSteps, TimeSpan? W
         RequireWithin(element, ExecutionBudget.JsonPropertyNames.WallClockSecondsUtf8, ExecutionBudget.JsonPropertyNames.WallClockSeconds, 1, (long)ceiling.WallClock.TotalSeconds);
         RequireWithin(element, ExecutionBudget.JsonPropertyNames.MaxSubWorkflowDepthUtf8, ExecutionBudget.JsonPropertyNames.MaxSubWorkflowDepth, 0, ceiling.MaxSubWorkflowDepth);
         RequireWithin(element, ExecutionBudget.JsonPropertyNames.RetryAfterCeilingSecondsUtf8, ExecutionBudget.JsonPropertyNames.RetryAfterCeilingSeconds, 0, (long)ceiling.RetryAfterCeiling.TotalSeconds);
+        RequireWithin(element, ExecutionBudget.JsonPropertyNames.StepTimeoutSecondsUtf8, ExecutionBudget.JsonPropertyNames.StepTimeoutSeconds, 1, (long)ceiling.StepTimeout.TotalSeconds);
+        RequireWithin(element, ExecutionBudget.JsonPropertyNames.MaxResponseBytesUtf8, ExecutionBudget.JsonPropertyNames.MaxResponseBytes, 1, ceiling.MaxResponseBytes);
     }
 
     private static void RequireWithin(in JsonElement element, ReadOnlySpan<byte> nameUtf8, string name, long minimum, long maximum)

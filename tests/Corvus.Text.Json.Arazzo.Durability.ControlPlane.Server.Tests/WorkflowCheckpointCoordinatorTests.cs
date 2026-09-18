@@ -299,7 +299,7 @@ public sealed class WorkflowCheckpointCoordinatorTests
         await store.SaveAsync(Address, stored, WorkflowCheckpointSerializer.ProjectIndex(stored), WorkflowEtag.None, default);
         var coordinator = new WorkflowCheckpointCoordinator(store, new ControlledTimeProvider());
 
-        byte[] widened = Checkpoint(journalEntries: 1, sequence: 2, new ExecutionBudget(5, TimeSpan.FromHours(1), 8, TimeSpan.Zero), T0);
+        byte[] widened = Checkpoint(journalEntries: 1, sequence: 2, new ExecutionBudget(5, TimeSpan.FromHours(1), 8, TimeSpan.Zero, ExecutionBudget.DefaultStepTimeout, ExecutionBudget.DefaultMaxResponseBytes), T0);
         (await Save(coordinator, Address, widened, 2)).Outcome.ShouldBe(CheckpointSaveOutcome.Rejected);
 
         byte[] dropped = Checkpoint(journalEntries: 1, sequence: 2, null, T0);
@@ -391,8 +391,8 @@ public sealed class WorkflowCheckpointCoordinatorTests
     }
 
     private static readonly DateTimeOffset T0 = new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
-    private static readonly ExecutionBudget TwoSteps = new(2, TimeSpan.FromHours(1), 8, TimeSpan.Zero);
-    private static readonly ExecutionBudget OneHour = new(ExecutionBudget.MaxStepsCeiling, TimeSpan.FromHours(1), 8, TimeSpan.Zero);
+    private static readonly ExecutionBudget TwoSteps = new(2, TimeSpan.FromHours(1), 8, TimeSpan.Zero, ExecutionBudget.DefaultStepTimeout, ExecutionBudget.DefaultMaxResponseBytes);
+    private static readonly ExecutionBudget OneHour = new(ExecutionBudget.MaxStepsCeiling, TimeSpan.FromHours(1), 8, TimeSpan.Zero, ExecutionBudget.DefaultStepTimeout, ExecutionBudget.DefaultMaxResponseBytes);
 
     private static byte[] Bytes(byte marker) => [marker, marker, marker];
 

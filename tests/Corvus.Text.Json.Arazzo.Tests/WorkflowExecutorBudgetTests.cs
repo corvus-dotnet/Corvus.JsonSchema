@@ -89,7 +89,7 @@ public partial class WorkflowExecutorEndToEndTests
         transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 500, "{}");
 
         var store = new Durability.InMemoryWorkflowStateStore();
-        var budget = new Durability.ExecutionBudget(5, TimeSpan.FromHours(1), 8, TimeSpan.Zero);
+        var budget = new Durability.ExecutionBudget(5, TimeSpan.FromHours(1), 8, TimeSpan.Zero, Durability.ExecutionBudget.DefaultStepTimeout, Durability.ExecutionBudget.DefaultMaxResponseBytes);
         using var workspace = JsonWorkspace.CreateUnrented();
         using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
         JsonElement inputs = inputsDocument.RootElement;
@@ -130,7 +130,7 @@ public partial class WorkflowExecutorEndToEndTests
         using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
         JsonElement inputs = inputsDocument.RootElement;
         using var run = Durability.WorkflowRun.CreateNew(
-            store, "exact-1", "gotoAdopt", inputs, "development", budget: new Durability.ExecutionBudget(2, TimeSpan.FromHours(1), 8, TimeSpan.Zero));
+            store, "exact-1", "gotoAdopt", inputs, "development", budget: new Durability.ExecutionBudget(2, TimeSpan.FromHours(1), 8, TimeSpan.Zero, Durability.ExecutionBudget.DefaultStepTimeout, Durability.ExecutionBudget.DefaultMaxResponseBytes));
 
         WorkflowRunResult<JsonElement> result = await execute(transport, workspace, inputs, run, default, null);
 
@@ -153,7 +153,7 @@ public partial class WorkflowExecutorEndToEndTests
         using var workspace = JsonWorkspace.CreateUnrented();
         using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
         using var run = Durability.WorkflowRun.CreateNew(
-            store, "sub-1", "parent", inputsDocument.RootElement, "development", budget: new Durability.ExecutionBudget(10, TimeSpan.FromHours(1), 8, TimeSpan.Zero));
+            store, "sub-1", "parent", inputsDocument.RootElement, "development", budget: new Durability.ExecutionBudget(10, TimeSpan.FromHours(1), 8, TimeSpan.Zero, Durability.ExecutionBudget.DefaultStepTimeout, Durability.ExecutionBudget.DefaultMaxResponseBytes));
 
         var pending = (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, run, default(CancellationToken), null])!;
         WorkflowRunResult<JsonElement> result = await pending;
@@ -184,7 +184,7 @@ public partial class WorkflowExecutorEndToEndTests
         using var workspace = JsonWorkspace.CreateUnrented();
         using var inputsDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
         using var run = Durability.WorkflowRun.CreateNew(
-            store, "depth-1", "parent", inputsDocument.RootElement, "development", budget: new Durability.ExecutionBudget(100, TimeSpan.FromHours(1), 2, TimeSpan.Zero));
+            store, "depth-1", "parent", inputsDocument.RootElement, "development", budget: new Durability.ExecutionBudget(100, TimeSpan.FromHours(1), 2, TimeSpan.Zero, Durability.ExecutionBudget.DefaultStepTimeout, Durability.ExecutionBudget.DefaultMaxResponseBytes));
 
         Exception unwound = await Should.ThrowAsync<Exception>(async () =>
             await (ValueTask<WorkflowRunResult<JsonElement>>)execute.Invoke(null, [transport, workspace, inputsDocument.RootElement, run, default(CancellationToken), null])!);

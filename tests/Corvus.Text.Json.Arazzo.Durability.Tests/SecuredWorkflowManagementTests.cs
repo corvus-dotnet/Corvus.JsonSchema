@@ -45,7 +45,7 @@ public sealed class SecuredWorkflowManagementTests
         // ADR 0068, the system-run exemption: the scheduler run lives as long as its schedule and suspends on its own
         // cadence timer, so a wall clock would fault every schedule a day after it was created and the retryAfter
         // ceiling would cut a cadence longer than it. The runs it fires start through the same seam and are budgeted.
-        var ceiling = new ExecutionBudget(200, TimeSpan.FromHours(2), 4, TimeSpan.FromMinutes(10));
+        var ceiling = new ExecutionBudget(200, TimeSpan.FromHours(2), 4, TimeSpan.FromMinutes(10), ExecutionBudget.DefaultStepTimeout, ExecutionBudget.DefaultMaxResponseBytes);
         var management = new SecuredWorkflowManagement(new InMemoryWorkflowStateStore(), "ops", executionBudget: ceiling);
 
         IdempotentStartResult scheduler = await management.StartNamedAsync(
@@ -81,13 +81,13 @@ public sealed class SecuredWorkflowManagementTests
             (await environments.AddAsync(plain.RootElement, "ops", default)).Dispose();
         }
 
-        var ceiling = new ExecutionBudget(200, TimeSpan.FromHours(2), 4, TimeSpan.FromMinutes(10));
+        var ceiling = new ExecutionBudget(200, TimeSpan.FromHours(2), 4, TimeSpan.FromMinutes(10), ExecutionBudget.DefaultStepTimeout, ExecutionBudget.DefaultMaxResponseBytes);
         var management = new SecuredWorkflowManagement(new InMemoryWorkflowStateStore(), "ops", environments: environments, executionBudget: ceiling);
 
         WorkflowRunId tightened = await management.StartAsync("wf-v1", default, null, default, default, "production", default);
         using (WorkflowCheckpointState? state = await management.LoadStateAsync(tightened, AccessContext.System, default))
         {
-            state!.Budget.ShouldBe(new ExecutionBudget(25, TimeSpan.FromHours(1), 4, TimeSpan.FromMinutes(10)));
+            state!.Budget.ShouldBe(new ExecutionBudget(25, TimeSpan.FromHours(1), 4, TimeSpan.FromMinutes(10), ExecutionBudget.DefaultStepTimeout, ExecutionBudget.DefaultMaxResponseBytes));
         }
 
         WorkflowRunId atCeiling = await management.StartAsync("wf-v1", default, null, default, default, "staging", default);

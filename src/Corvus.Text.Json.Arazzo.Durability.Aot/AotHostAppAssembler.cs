@@ -47,7 +47,7 @@ public sealed class AotHostAppAssembler
                     && entry.Value is string url && url.Length > 0
                     && Uri.TryCreate(url, UriKind.Absolute, out Uri? baseAddress))
                 {
-                    apiTransports[key.Substring(prefix.Length)] = new HttpClientTransport(new HttpClient { BaseAddress = baseAddress });
+                    apiTransports[key.Substring(prefix.Length)] = new HttpClientTransport(new HttpClient { BaseAddress = baseAddress, Timeout = ExecutionBudget.TransportClientTimeout });
                 }
             }
 

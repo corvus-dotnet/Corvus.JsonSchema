@@ -102,7 +102,7 @@ public sealed class ControlPlaneCheckpointSurfaceTests
     {
         // ADR 0068 on the serverless surface: the same refusal the runner API gives, so a baked function stops too.
         await using Host host = await Host.StartAsync(Secret);
-        var oneStep = new ExecutionBudget(1, TimeSpan.FromHours(1), 8, TimeSpan.Zero);
+        var oneStep = new ExecutionBudget(1, TimeSpan.FromHours(1), 8, TimeSpan.Zero, ExecutionBudget.DefaultStepTimeout, ExecutionBudget.DefaultMaxResponseBytes);
         byte[] initial = RealCheckpoint(budget: oneStep);
         await host.Store.SaveAsync(Address, initial, WorkflowCheckpointSerializer.ProjectIndex(initial), WorkflowEtag.None, default);
         string token = CheckpointToken.Issue(Secret, Address, DateTimeOffset.UtcNow.AddMinutes(10));

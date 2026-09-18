@@ -5,6 +5,7 @@
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Execution;
+using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.AsyncApi;
 using Corvus.Text.Json.OpenApi;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -27,7 +28,7 @@ public sealed class WorkflowRunBudgetTests
     {
         var store = new InMemoryWorkflowStateStore();
         var time = new TestTimeProvider(T0);
-        using WorkflowRun run = NewRun(store, time, new ExecutionBudget(2, TimeSpan.FromHours(1), 8, TimeSpan.Zero));
+        using WorkflowRun run = NewRun(store, time, new ExecutionBudget(2, TimeSpan.FromHours(1), 8, TimeSpan.Zero, ExecutionBudget.DefaultStepTimeout, ExecutionBudget.DefaultMaxResponseBytes));
 
         await Attempt(run, "a", time);
         await Attempt(run, "b", time);
@@ -61,7 +62,7 @@ public sealed class WorkflowRunBudgetTests
         // parent holds it, so the child's first attempt is refused before it reaches a source: granting both would
         // journal two entries against a fuel of one.
         var store = new InMemoryWorkflowStateStore();
-        using WorkflowRun run = NewRun(store, new TestTimeProvider(T0), new ExecutionBudget(1, TimeSpan.FromHours(1), 8, TimeSpan.Zero));
+        using WorkflowRun run = NewRun(store, new TestTimeProvider(T0), new ExecutionBudget(1, TimeSpan.FromHours(1), 8, TimeSpan.Zero, ExecutionBudget.DefaultStepTimeout, ExecutionBudget.DefaultMaxResponseBytes));
 
         await run.BeginStepAsync("callChild", default);
         IWorkflowRun child = run.BeginSubWorkflow("callChild", "child")!;
@@ -75,7 +76,7 @@ public sealed class WorkflowRunBudgetTests
     {
         var store = new InMemoryWorkflowStateStore();
         var time = new TestTimeProvider(T0);
-        using WorkflowRun run = NewRun(store, time, new ExecutionBudget(10, TimeSpan.FromHours(1), 8, TimeSpan.Zero));
+        using WorkflowRun run = NewRun(store, time, new ExecutionBudget(10, TimeSpan.FromHours(1), 8, TimeSpan.Zero, ExecutionBudget.DefaultStepTimeout, ExecutionBudget.DefaultMaxResponseBytes));
 
         await Attempt(run, "a", time);
         time.Advance(TimeSpan.FromHours(2));
@@ -92,7 +93,7 @@ public sealed class WorkflowRunBudgetTests
     {
         var store = new InMemoryWorkflowStateStore();
         var time = new TestTimeProvider(T0);
-        using WorkflowRun run = NewRun(store, time, new ExecutionBudget(10, TimeSpan.FromHours(1), 8, TimeSpan.Zero));
+        using WorkflowRun run = NewRun(store, time, new ExecutionBudget(10, TimeSpan.FromHours(1), 8, TimeSpan.Zero, ExecutionBudget.DefaultStepTimeout, ExecutionBudget.DefaultMaxResponseBytes));
 
         await run.BeginStepAsync("callChild", default);
         IWorkflowRun child = run.BeginSubWorkflow("callChild", "child")!;
@@ -117,7 +118,7 @@ public sealed class WorkflowRunBudgetTests
     public async Task Nesting_past_the_depth_cap_faults_the_run_at_the_invoking_step_before_the_child_attempts_anything()
     {
         var store = new InMemoryWorkflowStateStore();
-        using WorkflowRun run = NewRun(store, new TestTimeProvider(T0), new ExecutionBudget(10, TimeSpan.FromHours(1), 1, TimeSpan.Zero));
+        using WorkflowRun run = NewRun(store, new TestTimeProvider(T0), new ExecutionBudget(10, TimeSpan.FromHours(1), 1, TimeSpan.Zero, ExecutionBudget.DefaultStepTimeout, ExecutionBudget.DefaultMaxResponseBytes));
 
         await run.BeginStepAsync("a", default);
         IWorkflowRun child = run.BeginSubWorkflow("a", "w")!;
@@ -137,7 +138,7 @@ public sealed class WorkflowRunBudgetTests
     {
         var store = new InMemoryWorkflowStateStore();
         var time = new TestTimeProvider(T0);
-        using WorkflowRun run = NewRun(store, time, new ExecutionBudget(10, TimeSpan.FromDays(7), 8, TimeSpan.FromHours(1)));
+        using WorkflowRun run = NewRun(store, time, new ExecutionBudget(10, TimeSpan.FromDays(7), 8, TimeSpan.FromHours(1), ExecutionBudget.DefaultStepTimeout, ExecutionBudget.DefaultMaxResponseBytes));
 
         WorkflowWait wait = await run.SuspendForTimerAsync(0, TimeSpan.FromHours(5), default);
         wait.DueAt.ShouldBe(T0 + TimeSpan.FromHours(1));
@@ -168,7 +169,7 @@ public sealed class WorkflowRunBudgetTests
     public async Task The_execution_seam_reports_a_budget_exhausted_advance_as_a_clean_fault()
     {
         var store = new InMemoryWorkflowStateStore();
-        using WorkflowRun run = NewRun(store, new TestTimeProvider(T0), new ExecutionBudget(1, TimeSpan.FromHours(1), 8, TimeSpan.Zero));
+        using WorkflowRun run = NewRun(store, new TestTimeProvider(T0), new ExecutionBudget(1, TimeSpan.FromHours(1), 8, TimeSpan.Zero, ExecutionBudget.DefaultStepTimeout, ExecutionBudget.DefaultMaxResponseBytes));
 
         WorkflowRunResultKind outcome = await HostedWorkflowExecution.RunAsync(
             new LoopingHostedWorkflow(),
@@ -179,6 +180,114 @@ public sealed class WorkflowRunBudgetTests
         outcome.ShouldBe(WorkflowRunResultKind.Faulted);
         run.Fault!.Value.Error.ShouldBe(ExecutionBudgetFault.Fuel);
     }
+
+    [TestMethod]
+    public async Task The_execution_seam_faults_a_run_whose_executor_throws_and_keeps_the_message_off_the_record()
+    {
+        // Left to propagate, the exception reaches the host with the run still live: the lease is released, the run is
+        // claimed again and the same step throws again. The attempt was announced and never journaled, so that loop is
+        // outside the run's fuel and nothing ends it.
+        var store = new InMemoryWorkflowStateStore();
+        using WorkflowRun run = NewRun(store, new TestTimeProvider(T0), ExecutionBudget.Default);
+
+        WorkflowRunResultKind outcome = await HostedWorkflowExecution.RunAsync(
+            new ThrowingHostedWorkflow(new InvalidOperationException("db-host-17.internal refused the connection")),
+            NoTransports,
+            run,
+            default);
+
+        outcome.ShouldBe(WorkflowRunResultKind.Faulted);
+        run.Status.ShouldBe(WorkflowRunStatus.Faulted);
+        run.Fault!.Value.Error.ShouldBe(WorkflowExecutorFault.Unhandled);
+
+        // Durable, not just in memory: the host that claims the run next sees it finished.
+        using WorkflowRun? reloaded = await WorkflowRun.ResumeAsync(store, run.Address, default);
+        reloaded!.Status.ShouldBe(WorkflowRunStatus.Faulted);
+        reloaded.Fault!.Value.Error.ShouldBe("executor-unhandled");
+    }
+
+    [TestMethod]
+    public async Task The_execution_seam_discloses_the_message_only_when_asked_as_a_draft_run_does()
+    {
+        var store = new InMemoryWorkflowStateStore();
+        using WorkflowRun run = NewRun(store, new TestTimeProvider(T0), ExecutionBudget.Default);
+
+        await HostedWorkflowExecution.RunAsync(new ThrowingHostedWorkflow(new InvalidOperationException("the reason")), NoTransports, run, discloseUnhandledError: true, default);
+
+        run.Fault!.Value.Error.ShouldBe("the reason");
+    }
+
+    [TestMethod]
+    public async Task The_execution_seam_lets_the_callers_cancellation_through_and_leaves_the_run_live()
+    {
+        // Cancellation is how a host shuts down. The run is not at fault and resumes elsewhere.
+        var store = new InMemoryWorkflowStateStore();
+        using WorkflowRun run = NewRun(store, new TestTimeProvider(T0), ExecutionBudget.Default);
+        using var cancelled = new CancellationTokenSource();
+        cancelled.Cancel();
+
+        await Should.ThrowAsync<OperationCanceledException>(async () => await HostedWorkflowExecution.RunAsync(
+            new ThrowingHostedWorkflow(new OperationCanceledException(cancelled.Token)), NoTransports, run, cancelled.Token));
+
+        run.Fault.ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task The_execution_seam_lets_a_persistence_failure_through_and_does_not_try_to_persist_a_fault()
+    {
+        // A lost lease, a refused checkpoint or a store outage cannot be answered by saving a fault. It is the host's to
+        // retry from the last durable checkpoint.
+        var store = new FailingSaveStore(new InMemoryWorkflowStateStore());
+        using WorkflowRun run = WorkflowRun.CreateNew(store, "0123456789abcdef0123456789abcdef", "wf", default, TestAddresses.Development, new TestTimeProvider(T0), budget: ExecutionBudget.Default);
+
+        await Should.ThrowAsync<IOException>(async () => await HostedWorkflowExecution.RunAsync(new CheckpointingHostedWorkflow(), NoTransports, run, default));
+
+        store.Saves.ShouldBe(1);
+    }
+
+    [TestMethod]
+    public async Task The_execution_seam_bounds_every_transport_a_binder_returns_with_the_runs_budget()
+    {
+        // ADR 0068 piece 4: applied here and not by the binder, because there are many binders and every run comes
+        // through this seam. The bounded transport replaces the binder's, so it is the one run through and disposed.
+        var store = new InMemoryWorkflowStateStore();
+        var budget = new ExecutionBudget(10, TimeSpan.FromHours(1), 8, TimeSpan.Zero, TimeSpan.FromSeconds(7), 2048);
+        using WorkflowRun run = NewRun(store, new TestTimeProvider(T0), budget);
+        var original = new BoundableTransport();
+        var seen = new SeenTransports();
+
+        await HostedWorkflowExecution.RunAsync(
+            seen,
+            (_, _) => new WorkflowTransports(new Dictionary<string, IApiTransport> { ["pets"] = original }, new Dictionary<string, IMessageTransport>()),
+            run,
+            default);
+
+        original.RequestedTimeout.ShouldBe(TimeSpan.FromSeconds(7));
+        original.RequestedMaxResponseLength.ShouldBe(2048);
+        seen.Transports!["pets"].ShouldBeSameAs(original.Bounded);
+        original.Bounded!.Disposed.ShouldBeTrue();
+    }
+
+    [TestMethod]
+    public async Task The_execution_seam_bounds_an_unbudgeted_run_with_the_default_budget()
+    {
+        // The scheduler's run carries no budget. Its requests are still never unbounded.
+        var store = new InMemoryWorkflowStateStore();
+        using WorkflowRun run = NewRun(store, new TestTimeProvider(T0), budget: null);
+        var original = new BoundableTransport();
+
+        await HostedWorkflowExecution.RunAsync(
+            new SeenTransports(),
+            (_, _) => new WorkflowTransports(new Dictionary<string, IApiTransport> { ["pets"] = original }, new Dictionary<string, IMessageTransport>()),
+            run,
+            default);
+
+        original.RequestedTimeout.ShouldBe(ExecutionBudget.DefaultStepTimeout);
+        original.RequestedMaxResponseLength.ShouldBe(ExecutionBudget.DefaultMaxResponseBytes);
+    }
+
+    private static WorkflowTransports NoTransports(WorkflowDescriptor descriptor, SecurityTagSet runTags)
+        => new(new Dictionary<string, IApiTransport>(), new Dictionary<string, IMessageTransport>());
 
     private static WorkflowRun NewRun(InMemoryWorkflowStateStore store, TimeProvider time, ExecutionBudget? budget)
         => WorkflowRun.CreateNew(store, "0123456789abcdef0123456789abcdef", "wf", default, TestAddresses.Development, time, budget: budget);
@@ -208,6 +317,123 @@ public sealed class WorkflowRunBudgetTests
                 run.RecordStep("loop", WorkflowStepStatus.Succeeded, 1, T0, T0);
                 await run.CheckpointAsync(0, cancellationToken);
             }
+        }
+    }
+
+    // An executor that announces an attempt and then fails in a way nothing in the workflow handles.
+    private sealed class ThrowingHostedWorkflow(Exception failure) : IHostedWorkflow
+    {
+        public WorkflowDescriptor Descriptor { get; } = new("wf", [], []);
+
+        public async ValueTask<WorkflowRunResultKind> RunAsync(
+            IReadOnlyDictionary<string, IApiTransport> apiTransports,
+            IReadOnlyDictionary<string, IMessageTransport> messageTransports,
+            JsonWorkspace workspace,
+            JsonElement inputs,
+            IWorkflowRun run,
+            CancellationToken cancellationToken)
+        {
+            await run.BeginStepAsync("call", cancellationToken);
+            throw failure;
+        }
+    }
+
+    // An executor that does nothing but checkpoint, so the only thing that can fail is the save.
+    private sealed class CheckpointingHostedWorkflow : IHostedWorkflow
+    {
+        public WorkflowDescriptor Descriptor { get; } = new("wf", [], []);
+
+        public async ValueTask<WorkflowRunResultKind> RunAsync(
+            IReadOnlyDictionary<string, IApiTransport> apiTransports,
+            IReadOnlyDictionary<string, IMessageTransport> messageTransports,
+            JsonWorkspace workspace,
+            JsonElement inputs,
+            IWorkflowRun run,
+            CancellationToken cancellationToken)
+        {
+            await run.CheckpointAsync(0, cancellationToken);
+            return WorkflowRunResultKind.Completed;
+        }
+    }
+
+    // A store whose every save fails the way an outage does, counting the attempts made on it.
+    private sealed class FailingSaveStore(IWorkflowCheckpointStore inner) : IWorkflowCheckpointStore
+    {
+        public int Saves { get; private set; }
+
+        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+        {
+            this.Saves++;
+            throw new IOException("the store is unreachable");
+        }
+
+        public ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
+            => inner.LoadAsync(address, cancellationToken);
+    }
+
+    // An executor that completes at once, keeping the transports it was handed.
+    private sealed class SeenTransports : IHostedWorkflow
+    {
+        public WorkflowDescriptor Descriptor { get; } = new("wf", ["pets"], []);
+
+        public IReadOnlyDictionary<string, IApiTransport>? Transports { get; private set; }
+
+        public ValueTask<WorkflowRunResultKind> RunAsync(
+            IReadOnlyDictionary<string, IApiTransport> apiTransports,
+            IReadOnlyDictionary<string, IMessageTransport> messageTransports,
+            JsonWorkspace workspace,
+            JsonElement inputs,
+            IWorkflowRun run,
+            CancellationToken cancellationToken)
+        {
+            this.Transports = apiTransports;
+            return new(WorkflowRunResultKind.Completed);
+        }
+    }
+
+    // A transport that records the bounds it was asked for and hands back a distinct bounded instance.
+    private sealed class BoundableTransport : IBoundableApiTransport
+    {
+        public TimeSpan? RequestedTimeout { get; private set; }
+
+        public long? RequestedMaxResponseLength { get; private set; }
+
+        public BoundableTransport? Bounded { get; private set; }
+
+        public bool Disposed { get; private set; }
+
+        public IApiTransport WithBounds(TimeSpan? requestTimeout, long? maxResponseLength)
+        {
+            this.RequestedTimeout = requestTimeout;
+            this.RequestedMaxResponseLength = maxResponseLength;
+            return this.Bounded = new BoundableTransport();
+        }
+
+        public ValueTask<TResponse> SendAsync<TRequest, TResponse>(in TRequest request, CancellationToken cancellationToken = default)
+            where TRequest : struct, IApiRequest<TRequest>
+            where TResponse : struct, IApiResponse<TResponse>
+            => throw new NotSupportedException();
+
+        public ValueTask<TResponse> SendAsync<TRequest, TBody, TResponse>(in TRequest request, in TBody body, CancellationToken cancellationToken = default)
+            where TRequest : struct, IApiRequest<TRequest>
+            where TBody : struct, IJsonElement<TBody>
+            where TResponse : struct, IApiResponse<TResponse>
+            => throw new NotSupportedException();
+
+        public ValueTask<TResponse> SendAsync<TRequest, TResponse>(in TRequest request, Stream body, string contentType, CancellationToken cancellationToken = default)
+            where TRequest : struct, IApiRequest<TRequest>
+            where TResponse : struct, IApiResponse<TResponse>
+            => throw new NotSupportedException();
+
+        public ValueTask<TResponse> SendAsync<TRequest, TResponse>(in TRequest request, Func<Stream, CancellationToken, ValueTask> bodyWriter, string contentType, CancellationToken cancellationToken = default)
+            where TRequest : struct, IApiRequest<TRequest>
+            where TResponse : struct, IApiResponse<TResponse>
+            => throw new NotSupportedException();
+
+        public ValueTask DisposeAsync()
+        {
+            this.Disposed = true;
+            return default;
         }
     }
 }

@@ -45,7 +45,7 @@ namespace Corvus.Text.Json.OpenApi.Polly;
 /// silently sending a truncated body.
 /// </para>
 /// </remarks>
-public sealed class ResilientApiTransport : IApiTransport
+public sealed class ResilientApiTransport : IBoundableApiTransport
 {
     private readonly IApiTransport inner;
     private readonly ResiliencePipeline pipeline;
@@ -142,6 +142,11 @@ public sealed class ResilientApiTransport : IApiTransport
             static (state, token) => state.inner.SendAsync<TRequest, TResponse>(in state.request, state.bodyWriter, state.contentType, token),
             (inner: this.inner, request, bodyWriter, contentType),
             cancellationToken);
+
+    /// <inheritdoc/>
+    /// <remarks>The bounds apply to each attempt the pipeline makes, not to the pipeline as a whole.</remarks>
+    public IApiTransport WithBounds(TimeSpan? requestTimeout, long? maxResponseLength)
+        => new ResilientApiTransport(ApiTransportBounds.Apply(this.inner, requestTimeout, maxResponseLength), this.pipeline);
 
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => this.inner.DisposeAsync();

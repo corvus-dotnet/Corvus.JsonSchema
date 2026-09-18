@@ -25,7 +25,7 @@ namespace Corvus.Text.Json.Arazzo.SourceCredentials.Http;
 /// <para>401/403 is a heuristic for "the source rejected the credential"; a 403 that is really resource-level
 /// authorization will also fault, but the fault is resumable, so it is recoverable.</para>
 /// </remarks>
-public sealed class SourceCredentialApiTransport : IApiTransport
+public sealed class SourceCredentialApiTransport : IBoundableApiTransport
 {
     private readonly IApiTransport inner;
     private readonly SourceCredentialCache cache;
@@ -78,6 +78,10 @@ public sealed class SourceCredentialApiTransport : IApiTransport
         where TRequest : struct, IApiRequest<TRequest>
         where TResponse : struct, IApiResponse<TResponse>
         => this.CheckAsync(this.inner.SendAsync<TRequest, TResponse>(request, bodyWriter, contentType, cancellationToken), cancellationToken);
+
+    /// <inheritdoc/>
+    public IApiTransport WithBounds(TimeSpan? requestTimeout, long? maxResponseLength)
+        => new SourceCredentialApiTransport(ApiTransportBounds.Apply(this.inner, requestTimeout, maxResponseLength), this.cache, this.sourceName, this.environment, this.runTags);
 
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => this.inner.DisposeAsync();

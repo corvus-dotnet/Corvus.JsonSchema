@@ -152,6 +152,9 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     /// <summary>Gets the fault record if the run is faulted.</summary>
     public WorkflowFault? Fault => this.fault;
 
+    /// <summary>Gets a value indicating whether a checkpoint save has thrown during this advance.</summary>
+    internal bool PersistenceFailed { get; private set; }
+
     /// <summary>Gets a value indicating whether the control plane has marked this run resume-claimable via
     /// <see cref="RequestResumeAsync"/> (design §18) and a runner has not yet consumed the marker. Only meaningful
     /// together with a stopped <see cref="Status"/> (<see cref="WorkflowRunStatus.Suspended"/> for a paused run,
@@ -738,7 +741,19 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             this.resumeRequestedAt);
 
         long startedAt = Stopwatch.GetTimestamp();
-        this.etag = await this.store.SaveAsync(this.address, checkpoint, index, this.etag, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            this.etag = await this.store.SaveAsync(this.address, checkpoint, index, this.etag, cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Whatever the store threw, the run could not be persisted. The execution seam reads this so that it never
+            // answers a persistence failure by trying to persist a fault: a lost lease, a refused checkpoint and a
+            // store outage all belong to the host, which retries the run from its last durable checkpoint.
+            this.PersistenceFailed = true;
+            throw;
+        }
+
         ArazzoTelemetry.CheckpointDuration.Record(
             Stopwatch.GetElapsedTime(startedAt).TotalSeconds,
             new KeyValuePair<string, object?>(ArazzoTelemetry.WorkflowIdTag, this.WorkflowId),

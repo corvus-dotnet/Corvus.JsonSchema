@@ -255,59 +255,51 @@ internal static class ControlFlowEmitter
         c.Append("    bool ").Append(camel).AppendLine("Retry = false;");
         c.Append("    double ").Append(camel).AppendLine("RetryDelay = 0;");
 
+        // Hoist the response so the call sits in its own try. An exchange that fails has no response, so it
+        // routes to the step's onFailure dispatch evaluated without response context: only $inputs/$steps
+        // criteria (typically an unconditional retry/goto) apply. Two things end an exchange that way. The
+        // transport failed: the request ran past the run's step timeout, the response was larger than the run
+        // admits, the connection failed, or the body was not what it claimed (ADR 0068). Or, for a step that
+        // declares a timeout, an OperationCanceledException raised by that timeout and not by the caller's
+        // cancellation. Each retry is an attempt and so is fuel, which is what bounds a source that never answers.
+        var noResponseFailure = new StringBuilder();
+        EmitDispatch(noResponseFailure, step.OnFailure, isFailure: true, step, camel, $"{prefix}to_", string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options, selection);
+
+        c.Append("    ").Append(operation.Operation.ResponseTypeName).Append(' ').Append(responseVar).AppendLine(" = default;");
+        c.Append("    bool ").Append(camel).AppendLine("Got = false;");
+        c.AppendLine("    try");
+        c.AppendLine("    {");
+        c.Append("        ").Append(responseVar).Append(" = await ").Append(clientVar).Append('.')
+            .Append(operation.Operation.ClientMethodName).Append('(').Append(string.Join(", ", callArguments)).AppendLine(").ConfigureAwait(false);");
+        c.Append("        ").Append(camel).AppendLine("Got = true;");
+        c.AppendLine("    }");
+        c.AppendLine("    catch (Exception __transportFailure) when (global::Corvus.Text.Json.Arazzo.ApiTransportFailure.IsTransportFailure(__transportFailure))");
+        c.AppendLine("    {");
+        c.AppendLine("    }");
         if (step.TimeoutMs.HasValue)
         {
-            // Timed step: hoist the response so the timed call sits in its own try. An
-            // OperationCanceledException raised by the step timeout (and not by the caller's cancellation)
-            // routes to the step's onFailure dispatch, evaluated without response context — there is no
-            // response — so only $inputs/$steps criteria (typically an unconditional retry/goto) apply.
-            var timeoutFailure = new StringBuilder();
-            EmitDispatch(timeoutFailure, step.OnFailure, isFailure: true, step, camel, $"{prefix}to_", string.Empty, default, stepIndex, fields, auxiliaryTypes, null, default, stepOutputLocals, options, selection);
-
-            c.Append("    ").Append(operation.Operation.ResponseTypeName).Append(' ').Append(responseVar).AppendLine(" = default;");
-            c.Append("    bool ").Append(camel).AppendLine("Got = false;");
-            c.AppendLine("    try");
-            c.AppendLine("    {");
-            c.Append("        ").Append(responseVar).Append(" = await ").Append(clientVar).Append('.')
-                .Append(operation.Operation.ClientMethodName).Append('(').Append(string.Join(", ", callArguments)).AppendLine(").ConfigureAwait(false);");
-            c.Append("        ").Append(camel).AppendLine("Got = true;");
-            c.AppendLine("    }");
             c.AppendLine("    catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)");
             c.AppendLine("    {");
             c.AppendLine("    }");
-            WorkflowExecutorEmitter.AppendIndented(c, request.Cleanup, 4);
-
-            c.Append("    if (").Append(camel).AppendLine("Got)");
-            c.AppendLine("    {");
-            c.AppendLine("        try");
-            c.AppendLine("        {");
-            WorkflowExecutorEmitter.AppendIndented(c, gateBody, 12);
-            c.AppendLine("        }");
-            c.AppendLine("        finally");
-            c.AppendLine("        {");
-            c.Append("            await ").Append(responseVar).AppendLine(".DisposeAsync().ConfigureAwait(false);");
-            c.AppendLine("        }");
-            c.AppendLine("    }");
-            c.AppendLine("    else");
-            c.AppendLine("    {");
-            WorkflowExecutorEmitter.AppendIndented(c, timeoutFailure.ToString(), 8);
-            c.AppendLine("    }");
         }
-        else
-        {
-            c.Append("    var ").Append(responseVar).Append(" = await ").Append(clientVar).Append('.')
-                .Append(operation.Operation.ClientMethodName).Append('(').Append(string.Join(", ", callArguments)).AppendLine(").ConfigureAwait(false);");
-            WorkflowExecutorEmitter.AppendIndented(c, request.Cleanup, 4);
 
-            c.AppendLine("    try");
-            c.AppendLine("    {");
-            WorkflowExecutorEmitter.AppendIndented(c, gateBody, 8);
-            c.AppendLine("    }");
-            c.AppendLine("    finally");
-            c.AppendLine("    {");
-            c.Append("        await ").Append(responseVar).AppendLine(".DisposeAsync().ConfigureAwait(false);");
-            c.AppendLine("    }");
-        }
+        WorkflowExecutorEmitter.AppendIndented(c, request.Cleanup, 4);
+
+        c.Append("    if (").Append(camel).AppendLine("Got)");
+        c.AppendLine("    {");
+        c.AppendLine("        try");
+        c.AppendLine("        {");
+        WorkflowExecutorEmitter.AppendIndented(c, gateBody, 12);
+        c.AppendLine("        }");
+        c.AppendLine("        finally");
+        c.AppendLine("        {");
+        c.Append("            await ").Append(responseVar).AppendLine(".DisposeAsync().ConfigureAwait(false);");
+        c.AppendLine("        }");
+        c.AppendLine("    }");
+        c.AppendLine("    else");
+        c.AppendLine("    {");
+        WorkflowExecutorEmitter.AppendIndented(c, noResponseFailure.ToString(), 8);
+        c.AppendLine("    }");
 
         // Apply the captured control-flow decision now the response is disposed.
         AppendApply(c, step, index, camel, options);
@@ -1029,6 +1021,29 @@ internal static class ControlFlowEmitter
     private static string SubWorkflowInputVar(string stepId, string parameterName)
         => EmitText.ToCamelCase(EmitText.SanitizeIdentifier(stepId)) + "Input_" + EmitText.SanitizeIdentifier(parameterName) + "Value";
 
+    // True when any criterion reads the exchange (its status, response, request, URL, method or message) and not only
+    // the workflow's own state.
+    private static bool ReadsTheExchange(IReadOnlyList<StepCriterion> criteria)
+    {
+        foreach (StepCriterion criterion in criteria)
+        {
+            if (Reads(criterion.Condition) || (criterion.Context is { } context && Reads(context)))
+            {
+                return true;
+            }
+        }
+
+        return false;
+
+        static bool Reads(string expression)
+            => expression.Contains("$statusCode", StringComparison.Ordinal)
+                || expression.Contains("$response", StringComparison.Ordinal)
+                || expression.Contains("$request", StringComparison.Ordinal)
+                || expression.Contains("$url", StringComparison.Ordinal)
+                || expression.Contains("$method", StringComparison.Ordinal)
+                || expression.Contains("$message", StringComparison.Ordinal);
+    }
+
     private static void EmitDispatch(
         StringBuilder target,
         IReadOnlyList<StepActionInfo> actions,
@@ -1057,6 +1072,14 @@ internal static class ControlFlowEmitter
             if (action.Kind == StepActionKind.Retry && !isFailure)
             {
                 // retry is a failure action only; ignore it on the success path.
+                continue;
+            }
+
+            if (responseVar.Length == 0 && ReadsTheExchange(action.Criteria))
+            {
+                // A dispatch with no response (the exchange failed, or the step's timeout elapsed) has nothing for a
+                // criterion over the exchange to read, so such an action cannot match and is not emitted. First-match
+                // still holds among the actions that can: the ones with no criteria, or criteria over $inputs/$steps.
                 continue;
             }
 

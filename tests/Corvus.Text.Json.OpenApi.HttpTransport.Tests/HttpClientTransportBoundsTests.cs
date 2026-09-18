@@ -4,6 +4,7 @@
 
 using System.Buffers;
 using System.Net;
+using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.HttpTransport;
 
@@ -153,6 +154,52 @@ public class HttpClientTransportBoundsTests
             async () => await transport.SendAsync<GetRequest, DrainingResponse>(default));
     }
 
+    [TestMethod]
+    public async Task Apply_BoundableTransport_BoundsItselfWithBothBounds()
+    {
+        using HttpClient client = CreateClient((_, _) => Task.FromResult(Respond(new LengthlessContent(new CountingStream(length: 1024)))));
+        HttpClientTransport unbounded = new(client);
+
+        await using IApiTransport bounded = ApiTransportBounds.Apply(unbounded, TimeSpan.FromMinutes(5), 100);
+
+        Assert.AreNotSame(unbounded, bounded);
+        await Assert.ThrowsExactlyAsync<ApiResponseTooLargeException>(
+            async () => await bounded.SendAsync<GetRequest, DrainingResponse>(default));
+    }
+
+    [TestMethod]
+    public async Task Apply_ThroughADecorator_ReachesTheTransportThatReadsTheBody()
+    {
+        using HttpClient client = CreateClient((_, _) => Task.FromResult(Respond(new LengthlessContent(new CountingStream(length: 1024)))));
+        InstrumentedApiTransport decorated = new(new HttpClientTransport(client));
+
+        await using IApiTransport bounded = ApiTransportBounds.Apply(decorated, null, 100);
+
+        Assert.IsInstanceOfType<InstrumentedApiTransport>(bounded);
+        await Assert.ThrowsExactlyAsync<ApiResponseTooLargeException>(
+            async () => await bounded.SendAsync<GetRequest, DrainingResponse>(default));
+    }
+
+    [TestMethod]
+    [Timeout(20_000)]
+    public async Task Apply_TransportThatCannotBoundItself_IsStillBoundedInTime()
+    {
+        await using IApiTransport bounded = ApiTransportBounds.Apply(new StallingTransport(), ShortTimeout, 100);
+
+        ApiTransportTimeoutException ex = await Assert.ThrowsExactlyAsync<ApiTransportTimeoutException>(
+            async () => await bounded.SendAsync<GetRequest, DrainingResponse>(default));
+
+        Assert.AreEqual(ShortTimeout, ex.Timeout);
+    }
+
+    [TestMethod]
+    public void Apply_NoBounds_ReturnsTheSameTransport()
+    {
+        StallingTransport transport = new();
+
+        Assert.AreSame(transport, ApiTransportBounds.Apply(transport, null, null));
+    }
+
     private static HttpClient CreateClient(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> respond)
         => new(new DelegateHandler(respond)) { BaseAddress = new Uri("http://localhost") };
 
@@ -257,6 +304,39 @@ public class HttpClientTransportBoundsTests
         public override void SetLength(long value) => throw new NotSupportedException();
 
         public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
+
+    /// <summary>A transport with no network body to bound, whose sends never complete until cancelled.</summary>
+    private sealed class StallingTransport : IApiTransport
+    {
+        public ValueTask<TResponse> SendAsync<TRequest, TResponse>(in TRequest request, CancellationToken cancellationToken = default)
+            where TRequest : struct, IApiRequest<TRequest>
+            where TResponse : struct, IApiResponse<TResponse>
+            => StallAsync<TResponse>(cancellationToken);
+
+        public ValueTask<TResponse> SendAsync<TRequest, TBody, TResponse>(in TRequest request, in TBody body, CancellationToken cancellationToken = default)
+            where TRequest : struct, IApiRequest<TRequest>
+            where TBody : struct, IJsonElement<TBody>
+            where TResponse : struct, IApiResponse<TResponse>
+            => StallAsync<TResponse>(cancellationToken);
+
+        public ValueTask<TResponse> SendAsync<TRequest, TResponse>(in TRequest request, Stream body, string contentType, CancellationToken cancellationToken = default)
+            where TRequest : struct, IApiRequest<TRequest>
+            where TResponse : struct, IApiResponse<TResponse>
+            => StallAsync<TResponse>(cancellationToken);
+
+        public ValueTask<TResponse> SendAsync<TRequest, TResponse>(in TRequest request, Func<Stream, CancellationToken, ValueTask> bodyWriter, string contentType, CancellationToken cancellationToken = default)
+            where TRequest : struct, IApiRequest<TRequest>
+            where TResponse : struct, IApiResponse<TResponse>
+            => StallAsync<TResponse>(cancellationToken);
+
+        public ValueTask DisposeAsync() => default;
+
+        private static async ValueTask<TResponse> StallAsync<TResponse>(CancellationToken cancellationToken)
+        {
+            await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
+            return default!;
+        }
     }
 
     /// <summary>Drains the body with the token it was given, as a generated response does.</summary>

@@ -1039,12 +1039,12 @@ public sealed class ControlPlaneServerTests
         var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
         var environmentStore = new Corvus.Text.Json.Arazzo.Durability.Environments.InMemoryEnvironmentStore(clock);
         var availabilityStore = new Corvus.Text.Json.Arazzo.Durability.Availability.InMemoryAvailabilityStore(clock);
-        var ceiling = new ExecutionBudget(200, TimeSpan.FromHours(2), 4, TimeSpan.FromMinutes(10));
+        var ceiling = new ExecutionBudget(200, TimeSpan.FromHours(2), 4, TimeSpan.FromMinutes(10), ExecutionBudget.DefaultStepTimeout, ExecutionBudget.DefaultMaxResponseBytes);
         var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock, runDerivation: TestDerivation, environments: environmentStore, executionBudget: ceiling);
         var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
         await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
         using (Corvus.Text.Json.ParsedJsonDocument<Corvus.Text.Json.JsonElement> seed = Corvus.Text.Json.ParsedJsonDocument<Corvus.Text.Json.JsonElement>.Parse(
-            Encoding.UTF8.GetBytes("""{"name":"prod","executionBudget":{"maxSteps":25,"maxSubWorkflowDepth":1}}""")))
+            Encoding.UTF8.GetBytes("""{"name":"prod","executionBudget":{"maxSteps":25,"maxSubWorkflowDepth":1,"stepTimeoutSeconds":7,"maxResponseBytes":2048}}""")))
         using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Environments.Environment> draft = Corvus.Text.Json.Arazzo.Durability.Environments.Environment.Draft(
             seed.RootElement.GetProperty("name"u8), default, default, default, executionBudget: seed.RootElement.GetProperty("executionBudget"u8)))
         {
@@ -1072,7 +1072,7 @@ public sealed class ControlPlaneServerTests
 
         using (WorkflowCheckpointState? state = await management.LoadStateAsync(runId, AccessContext.System, default))
         {
-            state!.Budget.ShouldBe(new ExecutionBudget(25, TimeSpan.FromHours(2), 1, TimeSpan.FromMinutes(10)));
+            state!.Budget.ShouldBe(new ExecutionBudget(25, TimeSpan.FromHours(2), 1, TimeSpan.FromMinutes(10), TimeSpan.FromSeconds(7), 2048));
         }
 
         await app.DisposeAsync();

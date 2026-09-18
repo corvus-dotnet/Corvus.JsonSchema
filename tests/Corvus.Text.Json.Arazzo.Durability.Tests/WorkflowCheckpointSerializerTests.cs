@@ -22,7 +22,7 @@ public sealed class WorkflowCheckpointSerializerTests
     {
         // ADR 0068: the coordinator reads these on every save, so they come from a forward scan of the same bytes the
         // caller projected, not from a materialized run.
-        var budget = new ExecutionBudget(3, TimeSpan.FromMinutes(30), 2, TimeSpan.FromSeconds(5));
+        var budget = new ExecutionBudget(3, TimeSpan.FromMinutes(30), 2, TimeSpan.FromSeconds(5), ExecutionBudget.DefaultStepTimeout, ExecutionBudget.DefaultMaxResponseBytes);
         byte[] bytes = BudgetCheckpoint(journalEntries: 2, budget: budget, truncated: true, fault: new WorkflowFault("s2", 2, ExecutionBudgetFault.Fuel, CreatedAt));
 
         WorkflowCheckpointSerializer.TryReadBudgetFacts(bytes, out CheckpointBudgetFacts facts).ShouldBeTrue();
@@ -45,7 +45,7 @@ public sealed class WorkflowCheckpointSerializerTests
     public void One_projection_yields_the_index_the_environment_the_sequence_and_the_budget_facts()
     {
         // The checkpoint surfaces read a posted body exactly once; everything the save needs comes from that parse.
-        var budget = new ExecutionBudget(3, TimeSpan.FromMinutes(30), 2, TimeSpan.FromSeconds(5));
+        var budget = new ExecutionBudget(3, TimeSpan.FromMinutes(30), 2, TimeSpan.FromSeconds(5), ExecutionBudget.DefaultStepTimeout, ExecutionBudget.DefaultMaxResponseBytes);
         byte[] bytes = BudgetCheckpoint(journalEntries: 2, budget: budget, sequence: 7, truncated: true, fault: new WorkflowFault("s2", 2, ExecutionBudgetFault.Fuel, CreatedAt));
 
         WorkflowCheckpointSerializer.TryProject(bytes, out CheckpointProjection projection).ShouldBeTrue();
@@ -66,7 +66,7 @@ public sealed class WorkflowCheckpointSerializerTests
     [TestMethod]
     public void A_budget_fault_is_recorded_at_the_last_journaled_step_and_the_run_is_neither_waiting_nor_resumable()
     {
-        var budget = new ExecutionBudget(2, TimeSpan.FromMinutes(30), 2, TimeSpan.FromSeconds(5));
+        var budget = new ExecutionBudget(2, TimeSpan.FromMinutes(30), 2, TimeSpan.FromSeconds(5), ExecutionBudget.DefaultStepTimeout, ExecutionBudget.DefaultMaxResponseBytes);
         byte[] source = BudgetCheckpoint(journalEntries: 3, budget: budget, sequence: 4, wait: WorkflowWait.Timer(CreatedAt.AddMinutes(5)), resumeRequestedAt: CreatedAt.AddMinutes(1));
         DateTimeOffset at = CreatedAt.AddMinutes(10);
 
@@ -292,7 +292,7 @@ public sealed class WorkflowCheckpointSerializerTests
     {
         using var retryCounters = PooledUtf8Map<int>.Rent(0);
         using var stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
-        var budget = new ExecutionBudget(120, TimeSpan.FromMinutes(5), 3, TimeSpan.FromSeconds(30));
+        var budget = new ExecutionBudget(120, TimeSpan.FromMinutes(5), 3, TimeSpan.FromSeconds(30), ExecutionBudget.DefaultStepTimeout, ExecutionBudget.DefaultMaxResponseBytes);
 
         byte[] withBudget = WorkflowCheckpointSerializer.Serialize(
             "run-1", "petWorkflow", WorkflowRunStatus.Running, cursor: 1, sequence: 1, CreatedAt, retryCounters, new Dictionary<string, byte[]>(),

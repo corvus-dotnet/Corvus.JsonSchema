@@ -54,7 +54,7 @@ namespace Corvus.Text.Json.OpenApi.HttpTransport;
 /// response costs one stream wrapper. An unbounded transport allocates neither.
 /// </para>
 /// </remarks>
-public sealed class HttpClientTransport : IApiTransport
+public sealed class HttpClientTransport : IBoundableApiTransport
 {
     [ThreadStatic]
     private static ArrayBufferWriter<byte>? t_uriWriter;
@@ -201,6 +201,20 @@ public sealed class HttpClientTransport : IApiTransport
         httpRequest.Content = new DelegatingContent(bodyWriter, contentType);
         return SendCoreAsync<TResponse>(httpRequest, cancellationToken);
     }
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// The bounded transport sends through the same client, authenticates the same way and resolves the same base URL
+    /// override. A bound passed as <see langword="null"/> keeps the one this transport already has.
+    /// </remarks>
+    public IApiTransport WithBounds(TimeSpan? requestTimeout, long? maxResponseLength)
+        => new HttpClientTransport(
+            this.httpClient,
+            requestTimeout ?? this.requestTimeout,
+            maxResponseLength ?? this.maxResponseLength,
+            this.authenticationProvider,
+            this.disposeClient,
+            this.baseUrlOverride);
 
     /// <inheritdoc/>
     public ValueTask DisposeAsync()
