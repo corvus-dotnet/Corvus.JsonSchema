@@ -23,7 +23,19 @@ public static class WebSocketClose
     /// <param name="webSocket">The socket to close.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A task that completes when the close has been attempted.</returns>
-    public static async ValueTask CloseBestEffortAsync(System.Net.WebSockets.WebSocket webSocket, CancellationToken cancellationToken = default)
+    public static ValueTask CloseBestEffortAsync(System.Net.WebSockets.WebSocket webSocket, CancellationToken cancellationToken = default)
+        => CloseBestEffortAsync(webSocket, WebSocketCloseStatus.NormalClosure, "Disposing", cancellationToken);
+
+    /// <summary>
+    /// Sends a close frame carrying the given status if the socket can still take one, tolerating a peer that has
+    /// already gone away.
+    /// </summary>
+    /// <param name="webSocket">The socket to close.</param>
+    /// <param name="closeStatus">The status the close frame carries.</param>
+    /// <param name="statusDescription">The reason the close frame carries.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes when the close frame has been sent, or could not be.</returns>
+    public static async ValueTask CloseBestEffortAsync(System.Net.WebSockets.WebSocket webSocket, WebSocketCloseStatus closeStatus, string statusDescription, CancellationToken cancellationToken = default)
     {
         if (webSocket.State is not (WebSocketState.Open or WebSocketState.CloseReceived))
         {
@@ -37,8 +49,8 @@ public static class WebSocketClose
             using CancellationTokenSource timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeoutCts.CancelAfter(TimeSpan.FromSeconds(5));
             await webSocket.CloseOutputAsync(
-                WebSocketCloseStatus.NormalClosure,
-                "Disposing",
+                closeStatus,
+                statusDescription,
                 timeoutCts.Token).ConfigureAwait(false);
         }
         catch (WebSocketException)

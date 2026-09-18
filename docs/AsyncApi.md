@@ -498,6 +498,18 @@ WebSocketTransportOptions options = new()
 await using WebSocketMessageTransport transport = await WebSocketMessageTransport.CreateAsync(options);
 ```
 
+The transport buffers a whole message before dispatching it, and a WebSocket message is a run of frames that ends only when the peer says so. The other transports sit behind a broker that bounds a message itself. A WebSocket peer is whoever answered the connection, so when you do not control it, set `MaxMessageSize`:
+
+```csharp
+WebSocketTransportOptions options = new()
+{
+    ServerUri = "wss://ws.example.com/events",
+    MaxMessageSize = 1024 * 1024,
+};
+```
+
+The limit is in bytes, on the message as received (the envelope: channel, headers and payload together), counted across its frames. It is off by default. A message that would exceed it is not read to its end. The transport closes the connection with status 1009 (message too big), and every request awaiting a reply fails with `WebSocketMessageTooLargeException`, since the connection that would have carried the reply is gone.
+
 ### Azure Service Bus
 
 ```csharp

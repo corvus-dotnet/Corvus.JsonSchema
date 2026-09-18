@@ -65,6 +65,12 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
         WebSocketTransportOptions options,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(options);
+        if (options.MaxMessageSize is <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(options), options.MaxMessageSize, "MaxMessageSize must be greater than zero, or null for no limit.");
+        }
+
         ClientWebSocket ws = new();
         await ws.ConnectAsync(new Uri(options.ServerUri), cancellationToken).ConfigureAwait(false);
 
@@ -370,6 +376,16 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
                         return;
                     }
 
+                    // Counted across the frames, before the frame is kept: a message is refused at the frame that
+                    // would take it over the limit, and the rest of it is never read. Draining it to stay connected
+                    // would read without bound from the peer the limit exists to bound.
+                    if (this.options.MaxMessageSize is long maxMessageSize &&
+                        (long)messageBuffer.WrittenCount + result.Count > maxMessageSize)
+                    {
+                        await this.RefuseOversizedMessageAsync(maxMessageSize).ConfigureAwait(false);
+                        return;
+                    }
+
                     messageBuffer.Write(buffer.AsSpan(0, result.Count));
                 }
                 while (!result.EndOfMessage);
@@ -385,6 +401,22 @@ public sealed class WebSocketMessageTransport : IMessageDeliveryContextTransport
         {
             // Connection dropped
         }
+    }
+
+    // The connection is given up, so nothing more arrives on it. A requester parked on a reply is failed now with the
+    // reason, and not left to its own timeout. The close frame carries 1009, the protocol's answer to a message too
+    // big to process, and is best effort: a peer sending without end may never read it.
+    private async ValueTask RefuseOversizedMessageAsync(long maxMessageSize)
+    {
+        foreach (string correlationId in this.pendingReplies.Keys)
+        {
+            if (this.pendingReplies.TryRemove(correlationId, out TaskCompletionSource<byte[]>? pendingReply))
+            {
+                pendingReply.TrySetException(new WebSocketMessageTooLargeException(maxMessageSize));
+            }
+        }
+
+        await Internal.WebSocketClose.CloseBestEffortAsync(this.webSocket, WebSocketCloseStatus.MessageTooBig, "Message exceeds the maximum size").ConfigureAwait(false);
     }
 
     private async Task DispatchEnvelopeAsync(ReadOnlyMemory<byte> envelopeBytes, CancellationToken cancellationToken)
