@@ -46,10 +46,11 @@ public static class ApiEndpointRegistration
     /// <param name="accessRequestsHandler">The handler for ApiAccessRequests operations.</param>
     /// <param name="availabilityRequestsHandler">The handler for ApiAvailabilityRequests operations.</param>
     /// <param name="identityHandler">The handler for ApiIdentity operations.</param>
+    /// <param name="serverOptions">Optional registration-time server options (request body limits, etc.). When <see langword="null"/>, defaults are used.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiSecurityHandler securityHandler, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler, IApiAvailabilityHandler availabilityHandler, IApiNativeBuildsHandler nativeBuildsHandler, IApiDeploymentsHandler deploymentsHandler, IApiCredentialsHandler credentialsHandler, IApiWorkspaceHandler workspaceHandler, IApiGithubHandler githubHandler, IApiDebugRunsHandler debugRunsHandler, IApiSourcesHandler sourcesHandler, IApiEnvironmentsHandler environmentsHandler, IApiRunnerAuthorizationsHandler runnerAuthorizationsHandler, IApiEnvironmentKeysHandler environmentKeysHandler, IApiSchedulesHandler schedulesHandler, IApiAdministratorsHandler administratorsHandler, IApiProvidersHandler providersHandler, IApiAccessRequestsHandler accessRequestsHandler, IApiAvailabilityRequestsHandler availabilityRequestsHandler, IApiIdentityHandler identityHandler)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiSecurityHandler securityHandler, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler, IApiAvailabilityHandler availabilityHandler, IApiNativeBuildsHandler nativeBuildsHandler, IApiDeploymentsHandler deploymentsHandler, IApiCredentialsHandler credentialsHandler, IApiWorkspaceHandler workspaceHandler, IApiGithubHandler githubHandler, IApiDebugRunsHandler debugRunsHandler, IApiSourcesHandler sourcesHandler, IApiEnvironmentsHandler environmentsHandler, IApiRunnerAuthorizationsHandler runnerAuthorizationsHandler, IApiEnvironmentKeysHandler environmentKeysHandler, IApiSchedulesHandler schedulesHandler, IApiAdministratorsHandler administratorsHandler, IApiProvidersHandler providersHandler, IApiAccessRequestsHandler accessRequestsHandler, IApiAvailabilityRequestsHandler availabilityRequestsHandler, IApiIdentityHandler identityHandler, ApiServerOptions? serverOptions = null)
     {
-        return MapApiEndpoints(app, securityHandler, runsHandler, runnersHandler, catalogHandler, availabilityHandler, nativeBuildsHandler, deploymentsHandler, credentialsHandler, workspaceHandler, githubHandler, debugRunsHandler, sourcesHandler, environmentsHandler, runnerAuthorizationsHandler, environmentKeysHandler, schedulesHandler, administratorsHandler, providersHandler, accessRequestsHandler, availabilityRequestsHandler, identityHandler, configureEndpoint: null);
+        return MapApiEndpoints(app, securityHandler, runsHandler, runnersHandler, catalogHandler, availabilityHandler, nativeBuildsHandler, deploymentsHandler, credentialsHandler, workspaceHandler, githubHandler, debugRunsHandler, sourcesHandler, environmentsHandler, runnerAuthorizationsHandler, environmentKeysHandler, schedulesHandler, administratorsHandler, providersHandler, accessRequestsHandler, availabilityRequestsHandler, identityHandler, configureEndpoint: null, serverOptions: serverOptions);
     }
 
     /// <summary>
@@ -78,9 +79,11 @@ public static class ApiEndpointRegistration
     /// <param name="availabilityRequestsHandler">The handler for ApiAvailabilityRequests operations.</param>
     /// <param name="identityHandler">The handler for ApiIdentity operations.</param>
     /// <param name="configureEndpoint">An optional callback invoked once per generated endpoint, after the route is mapped, to apply per-endpoint conventions (authorization, naming, tags, output caching, rate limiting, etc.). May be <see langword="null"/>.</param>
+    /// <param name="serverOptions">Optional registration-time server options (request body limits, etc.). When <see langword="null"/>, defaults are used.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiSecurityHandler securityHandler, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler, IApiAvailabilityHandler availabilityHandler, IApiNativeBuildsHandler nativeBuildsHandler, IApiDeploymentsHandler deploymentsHandler, IApiCredentialsHandler credentialsHandler, IApiWorkspaceHandler workspaceHandler, IApiGithubHandler githubHandler, IApiDebugRunsHandler debugRunsHandler, IApiSourcesHandler sourcesHandler, IApiEnvironmentsHandler environmentsHandler, IApiRunnerAuthorizationsHandler runnerAuthorizationsHandler, IApiEnvironmentKeysHandler environmentKeysHandler, IApiSchedulesHandler schedulesHandler, IApiAdministratorsHandler administratorsHandler, IApiProvidersHandler providersHandler, IApiAccessRequestsHandler accessRequestsHandler, IApiAvailabilityRequestsHandler availabilityRequestsHandler, IApiIdentityHandler identityHandler, ConfigureEndpoint? configureEndpoint)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiSecurityHandler securityHandler, IApiRunsHandler runsHandler, IApiRunnersHandler runnersHandler, IApiCatalogHandler catalogHandler, IApiAvailabilityHandler availabilityHandler, IApiNativeBuildsHandler nativeBuildsHandler, IApiDeploymentsHandler deploymentsHandler, IApiCredentialsHandler credentialsHandler, IApiWorkspaceHandler workspaceHandler, IApiGithubHandler githubHandler, IApiDebugRunsHandler debugRunsHandler, IApiSourcesHandler sourcesHandler, IApiEnvironmentsHandler environmentsHandler, IApiRunnerAuthorizationsHandler runnerAuthorizationsHandler, IApiEnvironmentKeysHandler environmentKeysHandler, IApiSchedulesHandler schedulesHandler, IApiAdministratorsHandler administratorsHandler, IApiProvidersHandler providersHandler, IApiAccessRequestsHandler accessRequestsHandler, IApiAvailabilityRequestsHandler availabilityRequestsHandler, IApiIdentityHandler identityHandler, ConfigureEndpoint? configureEndpoint, ApiServerOptions? serverOptions = null)
     {
+        serverOptions ??= new ApiServerOptions();
 
         IEndpointConventionBuilder __GetAccessGrantsEndpoint = app.MapGet("/access/grants", async (HttpContext context) =>
         {
@@ -729,6 +732,10 @@ public static class ApiEndpointRegistration
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleCreate>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
                 catch
                 {
                     context.Response.StatusCode = 400;
@@ -909,6 +916,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityRuleUpdate>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
@@ -1243,6 +1254,10 @@ public static class ApiEndpointRegistration
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
                 catch
                 {
                     context.Response.StatusCode = 400;
@@ -1423,6 +1438,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SecurityBindingWrite>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
@@ -2156,6 +2175,10 @@ public static class ApiEndpointRegistration
                     {
                         bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResumeRequest>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                     }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
                     catch
                     {
                         context.Response.StatusCode = 400;
@@ -2259,6 +2282,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CancelRequest>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
@@ -2857,15 +2884,36 @@ public static class ApiEndpointRegistration
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody>? bodyDoc = null;
+            OwnedMultipartBody<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody>? __bodyOwner = null;
             try
             {
-                byte[]? __binary_package = null;
+                int __binary_package_offset = -1;
+                int __binary_package_length = 0;
+                if (context.Request.ContentLength is long __contentLength && __contentLength > serverOptions.MaxBufferedRequestBodyLength)
+                {
+                    context.Response.StatusCode = 413;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Payload Too Large\",\"status\":413,\"detail\":\"The request body exceeded the configured maximum buffered size.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
                 try
                 {
-                    bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody>(context.Request.Body, context.Request.ContentType, binaryPartCallback: part =>
+                    __bodyOwner = await MultipartFormDataSerializer.DeserializeOwnedAsync<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostCatalogBody>(context.Request.Body, context.Request.ContentType, binaryPartCallback: part =>
                     {
-                        if (part.Name.SequenceEqual("package"u8)) { __binary_package = part.Data.ToArray(); }
-                    }, cancellationToken: context.RequestAborted).ConfigureAwait(false);
+                        if (part.Name.SequenceEqual("package"u8)) { __binary_package_offset = part.BodyOffset; __binary_package_length = part.Data.Length; }
+                    }, maxBodyLength: serverOptions.MaxBufferedRequestBodyLength, cancellationToken: context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (RequestBodyTooLargeException)
+                {
+                    context.Response.StatusCode = 413;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Payload Too Large\",\"status\":413,\"detail\":\"The request body exceeded the configured maximum buffered size.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
                 }
                 catch
                 {
@@ -2877,8 +2925,8 @@ public static class ApiEndpointRegistration
 
                 AddCatalogVersionParams parameters = new()
                 {
-                    Body = bodyDoc!.RootElement,
-                    Package = __binary_package ?? ReadOnlyMemory<byte>.Empty,
+                    Body = __bodyOwner!.Value.Document.RootElement,
+                    Package = __binary_package_offset >= 0 ? __bodyOwner!.Value.BodyBytes.Slice(__binary_package_offset, __binary_package_length) : ReadOnlyMemory<byte>.Empty,
                 }
                 ;
 
@@ -2914,6 +2962,7 @@ public static class ApiEndpointRegistration
             {
                 workspace.Dispose();
                 bodyDoc?.Dispose();
+                __bodyOwner?.Dispose();
             }
         }
         );
@@ -3346,6 +3395,10 @@ public static class ApiEndpointRegistration
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CatalogMetadataPatch>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
                 catch
                 {
                     context.Response.StatusCode = 400;
@@ -3576,6 +3629,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulateRequest>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
@@ -4212,6 +4269,10 @@ public static class ApiEndpointRegistration
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ValidationRequest>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
                 catch
                 {
                     context.Response.StatusCode = 400;
@@ -4372,6 +4433,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonObject>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
@@ -5608,6 +5673,10 @@ public static class ApiEndpointRegistration
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.NativeBuildEnqueue>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
                 catch
                 {
                     context.Response.StatusCode = 400;
@@ -6444,6 +6513,10 @@ public static class ApiEndpointRegistration
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingCreate>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
                 catch
                 {
                     context.Response.StatusCode = 400;
@@ -6667,6 +6740,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CredentialBindingUpdate>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
@@ -6990,6 +7067,10 @@ public static class ApiEndpointRegistration
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyCreate>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
                 catch
                 {
                     context.Response.StatusCode = 400;
@@ -7170,6 +7251,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.WorkingCopyUpdate>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
@@ -7611,6 +7696,10 @@ public static class ApiEndpointRegistration
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.Scenario>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
                 catch
                 {
                     context.Response.StatusCode = 400;
@@ -7917,6 +8006,10 @@ public static class ApiEndpointRegistration
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostWorkspaceWorkflowsByIdPublishBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
                 catch
                 {
                     context.Response.StatusCode = 400;
@@ -8098,6 +8191,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SimulateRequest>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
@@ -8402,6 +8499,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AttachSourceRequest>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
@@ -8762,6 +8863,10 @@ public static class ApiEndpointRegistration
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostWorkspaceWorkflowsByIdGitPullBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
                 catch
                 {
                     context.Response.StatusCode = 400;
@@ -8864,6 +8969,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.PostWorkspaceWorkflowsByIdGitCommitBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
@@ -9352,6 +9461,10 @@ public static class ApiEndpointRegistration
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GitHubBranchCreate>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
                 catch
                 {
                     context.Response.StatusCode = 400;
@@ -9828,6 +9941,10 @@ public static class ApiEndpointRegistration
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.DebugRunStart>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
                 catch
                 {
                     context.Response.StatusCode = 400;
@@ -10158,6 +10275,10 @@ public static class ApiEndpointRegistration
                     {
                         bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.DebugRunResume>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                     }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
                     catch
                     {
                         context.Response.StatusCode = 400;
@@ -10385,6 +10506,10 @@ public static class ApiEndpointRegistration
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.DebugRunMessageInjection>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
                 catch
                 {
                     context.Response.StatusCode = 400;
@@ -10544,6 +10669,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.FetchSourceRequest>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
@@ -10710,6 +10839,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceCreate>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
@@ -10891,6 +11024,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.SourceUpdate>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
@@ -11191,6 +11328,10 @@ public static class ApiEndpointRegistration
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentCreate>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
                 catch
                 {
                     context.Response.StatusCode = 400;
@@ -11371,6 +11512,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentUpdate>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
@@ -11633,6 +11778,10 @@ public static class ApiEndpointRegistration
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
                 catch
                 {
                     context.Response.StatusCode = 400;
@@ -11735,6 +11884,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
@@ -12117,6 +12270,10 @@ public static class ApiEndpointRegistration
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerRegistrationRequest>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
                 catch
                 {
                     context.Response.StatusCode = 400;
@@ -12343,6 +12500,10 @@ public static class ApiEndpointRegistration
                     {
                         bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerAuthorizationGrant>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                     }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
                     catch
                     {
                         context.Response.StatusCode = 400;
@@ -12476,6 +12637,10 @@ public static class ApiEndpointRegistration
                     try
                     {
                         bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerAuthorizationDecisionNote>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
                     }
                     catch
                     {
@@ -12707,6 +12872,10 @@ public static class ApiEndpointRegistration
                     try
                     {
                         bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunnerAuthorizationDecisionNote>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
                     }
                     catch
                     {
@@ -13141,6 +13310,10 @@ public static class ApiEndpointRegistration
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRegistration>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
                 catch
                 {
                     context.Response.StatusCode = 400;
@@ -13268,6 +13441,10 @@ public static class ApiEndpointRegistration
                     try
                     {
                         bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentKeyRetirementNote>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
                     }
                     catch
                     {
@@ -13452,6 +13629,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ScheduleCreate>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
@@ -13871,6 +14052,10 @@ public static class ApiEndpointRegistration
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
                 catch
                 {
                     context.Response.StatusCode = 400;
@@ -13973,6 +14158,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
@@ -14623,6 +14812,10 @@ public static class ApiEndpointRegistration
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestSubmit>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
                 catch
                 {
                     context.Response.StatusCode = 400;
@@ -14910,6 +15103,10 @@ public static class ApiEndpointRegistration
                     {
                         bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestDecisionNote>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                     }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
                     catch
                     {
                         context.Response.StatusCode = 400;
@@ -15017,6 +15214,10 @@ public static class ApiEndpointRegistration
                     try
                     {
                         bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestEligibilityNote>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
                     }
                     catch
                     {
@@ -15126,6 +15327,10 @@ public static class ApiEndpointRegistration
                     {
                         bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestDecisionNote>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                     }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
                     catch
                     {
                         context.Response.StatusCode = 400;
@@ -15233,6 +15438,10 @@ public static class ApiEndpointRegistration
                     try
                     {
                         bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestDecisionNote>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
                     }
                     catch
                     {
@@ -15342,6 +15551,10 @@ public static class ApiEndpointRegistration
                     {
                         bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestDecisionNote>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                     }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
                     catch
                     {
                         context.Response.StatusCode = 400;
@@ -15449,6 +15662,10 @@ public static class ApiEndpointRegistration
                     try
                     {
                         bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestDecisionNote>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
                     }
                     catch
                     {
@@ -15558,6 +15775,10 @@ public static class ApiEndpointRegistration
                     {
                         bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestDecisionNote>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                     }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
                     catch
                     {
                         context.Response.StatusCode = 400;
@@ -15661,6 +15882,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AccessRequestSettlement>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
@@ -15873,6 +16098,10 @@ public static class ApiEndpointRegistration
                 try
                 {
                     bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestSubmit>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch
                 {
@@ -16161,6 +16390,10 @@ public static class ApiEndpointRegistration
                     {
                         bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestDecisionNote>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                     }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
                     catch
                     {
                         context.Response.StatusCode = 400;
@@ -16269,6 +16502,10 @@ public static class ApiEndpointRegistration
                     {
                         bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestDecisionNote>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                     }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
                     catch
                     {
                         context.Response.StatusCode = 400;
@@ -16376,6 +16613,10 @@ public static class ApiEndpointRegistration
                     try
                     {
                         bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AvailabilityRequestDecisionNote>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
                     }
                     catch
                     {
