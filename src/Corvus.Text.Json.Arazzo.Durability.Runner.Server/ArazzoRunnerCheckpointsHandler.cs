@@ -139,12 +139,13 @@ public sealed class ArazzoRunnerCheckpointsHandler : IApiCheckpointsHandler
                 return SaveCheckpointResult.TooManyRequests(RunnerProblems.QuotaExceeded(tooMuch), workspace, RunnerQuotaGate.RetryAfterSeconds(tooMuch));
             }
 
-            // Project (and thereby validate) the index from the received bytes here, so a malformed body is a clean 400
+            // Project (and thereby validate) the received bytes here, in ONE parse, so a malformed body is a clean 400
             // and the coordinator only ever handles a well-formed checkpoint. The same bytes are stored verbatim. The
-            // one projection also reports the environment the body claims, which the coordinator checks against the
-            // address on every save (ADR 0065 decision 9) — a body claiming another environment is refused below.
+            // projection reports everything the save needs: the index, the environment the body claims (checked
+            // against the address on every save, ADR 0065 decision 9), the sequence it carries and the budget facts
+            // (ADR 0068), so the body is read exactly once on this, the hottest write in the system.
             ReadOnlyMemory<byte> checkpointUtf8 = rented.AsMemory(0, length);
-            if (!WorkflowCheckpointSerializer.TryProjectIndex(checkpointUtf8, out WorkflowRunIndexEntry index, out string? claimedEnvironment))
+            if (!WorkflowCheckpointSerializer.TryProject(checkpointUtf8, out CheckpointProjection projection))
             {
                 return SaveCheckpointResult.BadRequest(RunnerProblems.MalformedCheckpoint(), workspace);
             }
@@ -155,12 +156,12 @@ public sealed class ArazzoRunnerCheckpointsHandler : IApiCheckpointsHandler
             // the store: a body omitting the sequence re-seeds to zero (accepting header 1 forever, an in-place
             // rewrite), and a body carrying long.MaxValue re-seeds to an overflowed negative that no positive header
             // can match (bricking the run). The body must carry the sequence and it must equal the header.
-            if (!WorkflowCheckpointSerializer.TryReadSequence(checkpointUtf8, out long bodySequence) || bodySequence != sequence)
+            if (projection.Sequence != sequence)
             {
                 return SaveCheckpointResult.BadRequest(RunnerProblems.MalformedCheckpoint(), workspace);
             }
 
-            CheckpointSaveResult result = await this.checkpoints.SaveAsync(new WorkflowRunAddress(environment, id), checkpointUtf8, index, claimedEnvironment, sequence, cancellationToken).ConfigureAwait(false);
+            CheckpointSaveResult result = await this.checkpoints.SaveAsync(new WorkflowRunAddress(environment, id), checkpointUtf8, projection.Index, projection.Environment, projection.Facts, sequence, cancellationToken).ConfigureAwait(false);
             return result.Outcome switch
             {
                 CheckpointSaveOutcome.Applied => SaveCheckpointResult.NoContent(workspace, xArazzoCheckpointSeq: sequence),

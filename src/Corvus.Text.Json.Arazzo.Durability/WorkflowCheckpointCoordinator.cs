@@ -94,10 +94,7 @@ public sealed class WorkflowCheckpointCoordinator
             // from the state the function just loaded. The applied sequence carries across advances on this runner so a
             // reused function instance keeps stamping monotonically.
             slot.Etag = checkpoint.Value.Etag;
-            slot.LastAppliedSequence = WorkflowCheckpointSerializer.TryReadSequence(checkpoint.Value.Utf8, out long persisted)
-                ? persisted
-                : 0;
-            CaptureIdentity(slot, checkpoint.Value.Utf8);
+            SeedFromStored(slot, checkpoint.Value.Utf8);
             slot.Seeded = true;
             appliedSequence = slot.LastAppliedSequence;
         }
@@ -121,10 +118,13 @@ public sealed class WorkflowCheckpointCoordinator
     /// projection of the same bytes (<see cref="WorkflowCheckpointSerializer.ProjectIndex(ReadOnlyMemory{byte}, out string?)"/>).
     /// A body claiming an environment other than <paramref name="address"/>'s — or claiming none — is refused on
     /// EVERY save (ADR 0065 decision 9): the environment is the run's address, and no save may re-home it.</param>
+    /// <param name="facts">The execution-budget facts the caller's one projection of the same bytes reports
+    /// (<see cref="CheckpointProjection.Facts"/>): the budget the body carries, which joins the frozen identity, and
+    /// the journal length and truncation the budget is verified against (ADR 0068).</param>
     /// <param name="sequence">The save's monotonic per-run write-sequence.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The outcome, and the sequence the store will accept next.</returns>
-    public async ValueTask<CheckpointSaveResult> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointUtf8, WorkflowRunIndexEntry index, string? claimedEnvironment, long sequence, CancellationToken cancellationToken)
+    public async ValueTask<CheckpointSaveResult> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointUtf8, WorkflowRunIndexEntry index, string? claimedEnvironment, CheckpointBudgetFacts facts, long sequence, CancellationToken cancellationToken)
     {
         RunSlot slot = this.GetSlot(address);
         await slot.Gate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -138,12 +138,13 @@ public sealed class WorkflowCheckpointCoordinator
                 // process-local counter that a restart reset to zero.
                 WorkflowCheckpoint? existing = await this.store.LoadAsync(address, cancellationToken).ConfigureAwait(false);
                 slot.Etag = existing?.Etag ?? WorkflowEtag.None;
-                slot.LastAppliedSequence = existing is { } row && WorkflowCheckpointSerializer.TryReadSequence(row.Utf8, out long persisted)
-                    ? persisted
-                    : 0;
-                if (existing is { } identityRow)
+                if (existing is { } row)
                 {
-                    CaptureIdentity(slot, identityRow.Utf8);
+                    SeedFromStored(slot, row.Utf8);
+                }
+                else
+                {
+                    slot.LastAppliedSequence = 0;
                 }
 
                 slot.Seeded = true;
@@ -163,9 +164,8 @@ public sealed class WorkflowCheckpointCoordinator
 
             // The budget and the creation time join the first-write-pinned identity (ADR 0068): a later save that widens
             // the budget, drops it, or moves the run's creation forward is a save no well-behaved writer produces, and
-            // either would let the runner extend its own bound. Read from the same bytes the caller projected, in one
-            // forward scan that also yields the journal facts the verification below needs.
-            WorkflowCheckpointSerializer.TryReadBudgetFacts(checkpointUtf8, out CheckpointBudgetFacts facts);
+            // either would let the runner extend its own bound. The facts come from the caller's one projection of the
+            // same bytes, so the coordinator reads the body no further.
             if (slot.IdentityEstablished && !slot.Identity.Matches(index, facts.Budget))
             {
                 return new CheckpointSaveResult(CheckpointSaveOutcome.Rejected, slot.LastAppliedSequence + 1);
@@ -307,16 +307,21 @@ public sealed class WorkflowCheckpointCoordinator
         }
     }
 
-    // Reads the run's identity out of a stored checkpoint. A row that does not project is left alone rather than
-    // treated as identity-less: the runner API refuses a malformed body before it is ever stored, so an unprojectable
-    // row is a different problem, and inventing an empty identity for it would turn that problem into a free rewrite.
-    private static void CaptureIdentity(RunSlot slot, ReadOnlyMemory<byte> checkpointUtf8)
+    // Seeds the slot's persisted sequence and the run's identity from a stored checkpoint, in one parse. A row that
+    // does not project is left identity-less rather than given an empty identity: the runner API refuses a malformed
+    // body before it is ever stored, so an unprojectable row is a different problem, and inventing an identity for it
+    // would turn that problem into a free rewrite. Its sequence reads as zero, as a row carrying none does.
+    private static void SeedFromStored(RunSlot slot, ReadOnlyMemory<byte> checkpointUtf8)
     {
-        if (WorkflowCheckpointSerializer.TryProjectIndex(checkpointUtf8, out WorkflowRunIndexEntry stored))
+        if (WorkflowCheckpointSerializer.TryProject(checkpointUtf8, out CheckpointProjection stored))
         {
-            WorkflowCheckpointSerializer.TryReadBudgetFacts(checkpointUtf8, out CheckpointBudgetFacts facts);
-            slot.Identity = RunIdentity.From(stored, facts.Budget);
+            slot.LastAppliedSequence = stored.Sequence ?? 0;
+            slot.Identity = RunIdentity.From(stored.Index, stored.Facts.Budget);
             slot.IdentityEstablished = true;
+        }
+        else
+        {
+            slot.LastAppliedSequence = 0;
         }
     }
 

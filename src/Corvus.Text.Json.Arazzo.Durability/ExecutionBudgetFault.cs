@@ -41,6 +41,13 @@ public static class ExecutionBudgetFault
         || errorTypeUtf8.SequenceEqual("budget-deadline"u8)
         || errorTypeUtf8.SequenceEqual("budget-depth"u8);
 
+    /// <summary>Whether a parsed fault record's error type is one of the budget faults, compared without materializing it.</summary>
+    /// <param name="errorType">The fault record's <c>error</c> element.</param>
+    /// <returns><see langword="true"/> for <see cref="Fuel"/>, <see cref="Deadline"/> or <see cref="Depth"/>.</returns>
+    public static bool IsBudgetFault(in JsonElement errorType)
+        => errorType.ValueKind == JsonValueKind.String
+        && (errorType.ValueEquals("budget-fuel"u8) || errorType.ValueEquals("budget-deadline"u8) || errorType.ValueEquals("budget-depth"u8));
+
     /// <summary>
     /// Decides whether a run's recorded facts are past its budget, and which limit it hit. Fuel is decided first: a
     /// journal longer than the fuel, or one truncated at the cap (which is over any admissible budget by definition),

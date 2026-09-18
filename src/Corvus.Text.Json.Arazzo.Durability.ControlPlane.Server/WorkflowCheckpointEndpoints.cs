@@ -112,12 +112,13 @@ public static class WorkflowCheckpointEndpoints
                     return;
                 }
 
-                // Project (and thereby validate) the index from the received bytes here, so a malformed body is a clean
+                // Project (and thereby validate) the received bytes here, in ONE parse, so a malformed body is a clean
                 // 400 and the coordinator only ever handles a well-formed checkpoint. The same bytes are saved verbatim.
-                // The one projection also reports the environment the body claims, which the coordinator checks against
-                // the address on every save (ADR 0065 decision 9).
+                // The projection reports everything the save needs: the index, the environment the body claims (checked
+                // against the address on every save, ADR 0065 decision 9), the sequence it carries and the budget facts
+                // (ADR 0068), so the body is read exactly once.
                 ReadOnlyMemory<byte> checkpointUtf8 = rented.AsMemory(0, length);
-                if (!WorkflowCheckpointSerializer.TryProjectIndex(checkpointUtf8, out WorkflowRunIndexEntry index, out string? claimedEnvironment))
+                if (!WorkflowCheckpointSerializer.TryProject(checkpointUtf8, out CheckpointProjection projection))
                 {
                     await WriteProblemAsync(context, StatusCodes.Status400BadRequest, "The request body is not a valid checkpoint document.").ConfigureAwait(false);
                     return;
@@ -130,13 +131,13 @@ public static class WorkflowCheckpointEndpoints
                 // in-place rewrite), and a body carrying long.MaxValue re-seeds to an overflowed negative that no
                 // positive header can match (bricking the run). The body must carry the sequence and it must equal
                 // the header.
-                if (!WorkflowCheckpointSerializer.TryReadSequence(checkpointUtf8, out long bodySequence) || bodySequence != sequence)
+                if (projection.Sequence != sequence)
                 {
                     await WriteProblemAsync(context, StatusCodes.Status400BadRequest, "The checkpoint body's sequence is missing or does not match the request header.").ConfigureAwait(false);
                     return;
                 }
 
-                CheckpointSaveResult result = await coordinator.SaveAsync(address, checkpointUtf8, index, claimedEnvironment, sequence, context.RequestAborted).ConfigureAwait(false);
+                CheckpointSaveResult result = await coordinator.SaveAsync(address, checkpointUtf8, projection.Index, projection.Environment, projection.Facts, sequence, context.RequestAborted).ConfigureAwait(false);
                 context.Response.Headers[WriteSequenceHeader] = result.AcceptedSequence.ToString(CultureInfo.InvariantCulture);
                 if (result.Outcome == CheckpointSaveOutcome.Applied)
                 {

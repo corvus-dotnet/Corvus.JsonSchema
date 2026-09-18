@@ -530,8 +530,11 @@ public static class WorkflowCheckpointSerializer
     /// <summary>
     /// Reads the facts the execution-budget predicate needs (ADR 0068) from a checkpoint's bytes: the run's frozen
     /// budget, the journal's length and truncation flag, and whether the run already faulted on its budget. A
-    /// forward-only scan like <see cref="TryReadSequence"/>: it runs on every checkpoint save, so it parses nothing
-    /// and allocates nothing; the journal is walked entry by entry to count it, and every other value is skipped.
+    /// forward-only scan like <see cref="TryReadSequence"/>, for a caller that holds a stored row and wants these
+    /// facts alone (the resume refusal, the coordinator's already-faulted check): it parses nothing and allocates
+    /// nothing; the journal is walked entry by entry to count it, and every other value is skipped. A caller that
+    /// parses the body anyway takes the facts from <see cref="Project"/> instead, where the journal's length is a
+    /// metadata read.
     /// </summary>
     /// <param name="checkpointUtf8">The checkpoint document to read.</param>
     /// <param name="facts">The facts read; <see langword="default"/> when the bytes are not a checkpoint.</param>
@@ -783,29 +786,20 @@ public static class WorkflowCheckpointSerializer
     }
 
     /// <summary>
-    /// Projects a checkpoint's <see cref="WorkflowRunIndexEntry"/> directly from its bytes, without materializing the
-    /// run's working state. The runner's checkpoint surface calls this to re-index a checkpoint a serverless function
-    /// checked in as opaque bytes (design §5.5): every index field is a top-level scalar or tag set, so this reads
-    /// just those — and the small <c>wait</c>/<c>fault</c> value objects — and skips the retry counters, correlation
-    /// tokens, step outputs, inputs, outputs and journal that <see cref="Deserialize"/> rents pooled maps and builds
-    /// collections for. The returned entry owns its tag copies, so the parsed document is disposed before return. It
-    /// is identical to the entry <see cref="WorkflowRun"/> stamped when it wrote these bytes, because both build it
-    /// through <see cref="WorkflowRunIndexEntry.Project(string, WorkflowRunStatus, DateTimeOffset, DateTimeOffset, WorkflowWait?, WorkflowFault?, string?, TagSet, SecurityTagSet, DateTimeOffset?)"/>.
+    /// Projects everything the checkpoint surfaces read from a posted body, in one parse: the
+    /// <see cref="WorkflowRunIndexEntry"/>, the environment the body claims (ADR 0065 decision 9), the write sequence
+    /// it carries (decision 6) and the execution-budget facts (ADR 0068). The runner API and the serverless surface
+    /// call this once per save and hand the parts to the coordinator, which then reads the body no further. Every
+    /// part is a top-level scalar, a small value object or an array whose length the parsed document already knows,
+    /// so this reads just those and skips the retry counters, correlation tokens, step outputs, inputs, outputs and
+    /// journal entries that <see cref="Deserialize"/> rents pooled maps and builds collections for. The index owns its
+    /// tag copies, so the parsed document is disposed before return. The index is identical to the entry
+    /// <see cref="WorkflowRun"/> stamped when it wrote these bytes, because both build it through
+    /// <see cref="WorkflowRunIndexEntry.Project(string, WorkflowRunStatus, DateTimeOffset, DateTimeOffset, WorkflowWait?, WorkflowFault?, string?, TagSet, SecurityTagSet, DateTimeOffset?)"/>.
     /// </summary>
     /// <param name="checkpointUtf8">The serialized checkpoint document (UTF-8 JSON).</param>
-    /// <returns>The index entry the checkpoint projects to.</returns>
-    public static WorkflowRunIndexEntry ProjectIndex(ReadOnlyMemory<byte> checkpointUtf8)
-        => ProjectIndex(checkpointUtf8, out _);
-
-    /// <summary>
-    /// As <see cref="ProjectIndex(ReadOnlyMemory{byte})"/>, additionally reporting the environment the checkpoint
-    /// BODY claims — the input to the coordinator's every-save structural check (ADR 0065 decision 9): a body
-    /// claiming an environment other than the addressed one is refused, so no save can re-home a run.
-    /// </summary>
-    /// <param name="checkpointUtf8">The serialized checkpoint document (UTF-8 JSON).</param>
-    /// <param name="environment">The environment the body claims, or <see langword="null"/> when it claims none.</param>
-    /// <returns>The index entry the checkpoint projects to.</returns>
-    public static WorkflowRunIndexEntry ProjectIndex(ReadOnlyMemory<byte> checkpointUtf8, out string? environment)
+    /// <returns>The projection.</returns>
+    public static CheckpointProjection Project(ReadOnlyMemory<byte> checkpointUtf8)
     {
         using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(checkpointUtf8);
         JsonElement root = document.RootElement;
@@ -823,7 +817,14 @@ public static class WorkflowCheckpointSerializer
             : createdAt;
 
         string? correlationId = root.TryGetProperty("correlationId"u8, out JsonElement correlationIdElement) ? correlationIdElement.GetString() : null;
-        environment = root.TryGetProperty("environment"u8, out JsonElement environmentElement) ? environmentElement.GetString() : null;
+        string? environment = root.TryGetProperty("environment"u8, out JsonElement environmentElement) ? environmentElement.GetString() : null;
+
+        // Absence stays distinguishable from zero (a genesis row's legitimate sequence), as TryReadSequence keeps it.
+        long? sequence = root.TryGetProperty("sequence"u8, out JsonElement sequenceElement)
+            && sequenceElement.ValueKind == JsonValueKind.Number
+            && sequenceElement.TryGetInt64(out long persistedSequence)
+            ? persistedSequence
+            : null;
 
         TagSet tags = root.TryGetProperty("tags"u8, out JsonElement tagsElement) && tagsElement.ValueKind == JsonValueKind.Array
             ? TagSet.CopyFrom(tagsElement)
@@ -845,12 +846,15 @@ public static class WorkflowCheckpointSerializer
         }
 
         WorkflowFault? fault = null;
+        bool budgetFaulted = false;
         if (root.TryGetProperty("fault"u8, out JsonElement faultElement))
         {
+            JsonElement errorElement = faultElement.GetProperty("error"u8);
+            budgetFaulted = ExecutionBudgetFault.IsBudgetFault(errorElement);
             fault = new WorkflowFault(
                 faultElement.GetProperty("stepId"u8).GetString() ?? string.Empty,
                 faultElement.GetProperty("attempt"u8).GetInt32(),
-                faultElement.GetProperty("error"u8).GetString() ?? string.Empty,
+                errorElement.GetString() ?? string.Empty,
                 faultElement.GetProperty("at"u8).GetDateTimeOffset());
         }
 
@@ -858,24 +862,83 @@ public static class WorkflowCheckpointSerializer
             ? DateTimeOffset.FromUnixTimeMilliseconds(resumeRequestedAtElement.GetInt64())
             : null;
 
-        return WorkflowRunIndexEntry.Project(
-            workflowId,
-            status,
-            createdAt,
-            updatedAt,
-            wait,
-            fault,
-            correlationId,
-            tags,
-            securityTags,
-            resumeRequestedAt);
+        // ADR 0068: the budget facts. The journal's length is a metadata read on the parsed document, not a walk.
+        ExecutionBudget? budget = root.TryGetProperty(ExecutionBudget.JsonPropertyNames.BudgetUtf8, out JsonElement budgetElement) && ExecutionBudget.TryRead(budgetElement, out ExecutionBudget readBudget)
+            ? readBudget
+            : null;
+        int journalCount = root.TryGetProperty("stepJournal"u8, out JsonElement journalElement) && journalElement.ValueKind == JsonValueKind.Array
+            ? journalElement.GetArrayLength()
+            : 0;
+        bool journalTruncated = root.TryGetProperty("journalTruncated"u8, out JsonElement journalTruncatedElement) && journalTruncatedElement.ValueKind == JsonValueKind.True;
+
+        return new CheckpointProjection(
+            WorkflowRunIndexEntry.Project(
+                workflowId,
+                status,
+                createdAt,
+                updatedAt,
+                wait,
+                fault,
+                correlationId,
+                tags,
+                securityTags,
+                resumeRequestedAt),
+            environment,
+            sequence,
+            new CheckpointBudgetFacts(budget, journalCount, journalTruncated, budgetFaulted));
+    }
+
+    /// <summary>
+    /// Attempts <see cref="Project"/>, returning <see langword="false"/> instead of throwing when the bytes are not a
+    /// well-formed checkpoint document. The checkpoint surfaces use this as the validation boundary for a posted body,
+    /// so a malformed body is a clean rejection rather than an unhandled fault.
+    /// </summary>
+    /// <param name="checkpointUtf8">The bytes to project.</param>
+    /// <param name="projection">The projection, or <see langword="default"/> when the bytes are not a checkpoint.</param>
+    /// <returns><see langword="true"/> if the bytes projected; otherwise <see langword="false"/>.</returns>
+    public static bool TryProject(ReadOnlyMemory<byte> checkpointUtf8, out CheckpointProjection projection)
+    {
+        try
+        {
+            projection = Project(checkpointUtf8);
+            return true;
+        }
+        catch (Exception ex) when (ex is Corvus.Text.Json.JsonException or System.Text.Json.JsonException or FormatException or InvalidOperationException or ArgumentException or KeyNotFoundException)
+        {
+            // Malformed JSON (Corvus.Text.Json's own reader exception, or System.Text.Json's), a non-object root, a
+            // missing required property, or a bad scalar (enum/number/date) — the bytes are not a checkpoint. Every
+            // other exception (e.g. cancellation, out-of-memory) still propagates.
+            projection = default;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Projects a checkpoint's <see cref="WorkflowRunIndexEntry"/> directly from its bytes, without materializing the
+    /// run's working state: the index part of <see cref="Project"/>, for callers that need nothing else.
+    /// </summary>
+    /// <param name="checkpointUtf8">The serialized checkpoint document (UTF-8 JSON).</param>
+    /// <returns>The index entry the checkpoint projects to.</returns>
+    public static WorkflowRunIndexEntry ProjectIndex(ReadOnlyMemory<byte> checkpointUtf8)
+        => Project(checkpointUtf8).Index;
+
+    /// <summary>
+    /// As <see cref="ProjectIndex(ReadOnlyMemory{byte})"/>, additionally reporting the environment the checkpoint
+    /// BODY claims (ADR 0065 decision 9).
+    /// </summary>
+    /// <param name="checkpointUtf8">The serialized checkpoint document (UTF-8 JSON).</param>
+    /// <param name="environment">The environment the body claims, or <see langword="null"/> when it claims none.</param>
+    /// <returns>The index entry the checkpoint projects to.</returns>
+    public static WorkflowRunIndexEntry ProjectIndex(ReadOnlyMemory<byte> checkpointUtf8, out string? environment)
+    {
+        CheckpointProjection projection = Project(checkpointUtf8);
+        environment = projection.Environment;
+        return projection.Index;
     }
 
     /// <summary>
     /// Attempts <see cref="ProjectIndex(ReadOnlyMemory{byte})"/>, returning <see langword="false"/> instead of throwing
-    /// when the bytes are not a well-formed checkpoint document. The runner's checkpoint surface uses this as the
-    /// validation boundary for a function's posted bytes, so a malformed body is a clean rejection rather than an
-    /// unhandled fault.
+    /// when the bytes are not a well-formed checkpoint document.
     /// </summary>
     /// <param name="checkpointUtf8">The bytes to project.</param>
     /// <param name="index">The projected index entry, or <see langword="default"/> when the bytes are not a checkpoint.</param>
@@ -885,7 +948,7 @@ public static class WorkflowCheckpointSerializer
 
     /// <summary>
     /// As <see cref="TryProjectIndex(ReadOnlyMemory{byte}, out WorkflowRunIndexEntry)"/>, additionally reporting
-    /// the environment the checkpoint body claims (see <see cref="ProjectIndex(ReadOnlyMemory{byte}, out string?)"/>).
+    /// the environment the checkpoint body claims.
     /// </summary>
     /// <param name="checkpointUtf8">The bytes to project.</param>
     /// <param name="index">The projected index entry, or <see langword="default"/> when the bytes are not a checkpoint.</param>
@@ -893,20 +956,10 @@ public static class WorkflowCheckpointSerializer
     /// <returns><see langword="true"/> if the bytes projected to an index entry; otherwise <see langword="false"/>.</returns>
     public static bool TryProjectIndex(ReadOnlyMemory<byte> checkpointUtf8, out WorkflowRunIndexEntry index, out string? environment)
     {
-        try
-        {
-            index = ProjectIndex(checkpointUtf8, out environment);
-            return true;
-        }
-        catch (Exception ex) when (ex is Corvus.Text.Json.JsonException or System.Text.Json.JsonException or FormatException or InvalidOperationException or ArgumentException or KeyNotFoundException)
-        {
-            // Malformed JSON (Corvus.Text.Json's own reader exception, or System.Text.Json's), a non-object root, a
-            // missing required property, or a bad scalar (enum/number/date) — the bytes are not a checkpoint. Every
-            // other exception (e.g. cancellation, out-of-memory) still propagates.
-            index = default;
-            environment = null;
-            return false;
-        }
+        bool projected = TryProject(checkpointUtf8, out CheckpointProjection projection);
+        index = projection.Index;
+        environment = projection.Environment;
+        return projected;
     }
 
     /// <summary>
@@ -1005,3 +1058,12 @@ public static class WorkflowCheckpointSerializer
         _ => kind.ToString(),
     };
 }
+
+/// <summary>
+/// Everything a checkpoint surface reads from a posted body, from one parse (<see cref="WorkflowCheckpointSerializer.Project"/>).
+/// </summary>
+/// <param name="Index">The index entry the checkpoint projects to.</param>
+/// <param name="Environment">The environment the body claims, or <see langword="null"/> when it claims none (ADR 0065 decision 9).</param>
+/// <param name="Sequence">The write sequence the body carries, or <see langword="null"/> when it carries none (ADR 0065 decision 6).</param>
+/// <param name="Facts">The execution-budget facts (ADR 0068).</param>
+public readonly record struct CheckpointProjection(WorkflowRunIndexEntry Index, string? Environment, long? Sequence, CheckpointBudgetFacts Facts);

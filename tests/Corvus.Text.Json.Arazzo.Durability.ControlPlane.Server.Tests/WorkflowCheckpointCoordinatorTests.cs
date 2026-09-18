@@ -49,7 +49,7 @@ public sealed class WorkflowCheckpointCoordinatorTests
         var store = new InMemoryWorkflowStateStore();
         var coordinator = new WorkflowCheckpointCoordinator(store);
 
-        CheckpointSaveResult outcome = await coordinator.SaveAsync(Address, Bytes(7), Index(WorkflowRunStatus.Running), "development", 1, default);
+        CheckpointSaveResult outcome = await coordinator.SaveAsync(Address, Bytes(7), Index(WorkflowRunStatus.Running), "development", default, 1, default);
 
         outcome.Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
         (await store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(7));
@@ -61,9 +61,9 @@ public sealed class WorkflowCheckpointCoordinatorTests
         var store = new InMemoryWorkflowStateStore();
         var coordinator = new WorkflowCheckpointCoordinator(store);
 
-        (await coordinator.SaveAsync(Address, Bytes(1), Index(WorkflowRunStatus.Running), "development", 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
-        (await coordinator.SaveAsync(Address, Bytes(2), Index(WorkflowRunStatus.Running), "development", 2, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
-        (await coordinator.SaveAsync(Address, Bytes(3), Index(WorkflowRunStatus.Completed), "development", 3, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
+        (await coordinator.SaveAsync(Address, Bytes(1), Index(WorkflowRunStatus.Running), "development", default, 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
+        (await coordinator.SaveAsync(Address, Bytes(2), Index(WorkflowRunStatus.Running), "development", default, 2, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
+        (await coordinator.SaveAsync(Address, Bytes(3), Index(WorkflowRunStatus.Completed), "development", default, 3, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
 
         // No conflict despite the store's strict etag concurrency, because the coordinator threads the returned etag.
         (await store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(3));
@@ -75,11 +75,11 @@ public sealed class WorkflowCheckpointCoordinatorTests
         var store = new InMemoryWorkflowStateStore();
         var coordinator = new WorkflowCheckpointCoordinator(store);
 
-        await coordinator.SaveAsync(Address, Bytes(1), Index(WorkflowRunStatus.Running), "development", 1, default);
+        await coordinator.SaveAsync(Address, Bytes(1), Index(WorkflowRunStatus.Running), "development", default, 1, default);
 
         // A resend of a sequence already persisted. It is refused, and told the sequence that would be accepted, so a
         // caller can tell its own duplicate from a genuine divergence.
-        CheckpointSaveResult outcome = await coordinator.SaveAsync(Address, Bytes(9), Index(WorkflowRunStatus.Running), "development", 1, default);
+        CheckpointSaveResult outcome = await coordinator.SaveAsync(Address, Bytes(9), Index(WorkflowRunStatus.Running), "development", default, 1, default);
 
         outcome.Outcome.ShouldBe(CheckpointSaveOutcome.Superseded);
         outcome.AcceptedSequence.ShouldBe(2);
@@ -92,9 +92,9 @@ public sealed class WorkflowCheckpointCoordinatorTests
         var store = new InMemoryWorkflowStateStore();
         var coordinator = new WorkflowCheckpointCoordinator(store);
 
-        await coordinator.SaveAsync(Address, Bytes(1), Index(WorkflowRunStatus.Running), "development", 1, default);
+        await coordinator.SaveAsync(Address, Bytes(1), Index(WorkflowRunStatus.Running), "development", default, 1, default);
 
-        (await coordinator.SaveAsync(Address, Bytes(9), Index(WorkflowRunStatus.Running), "development", 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Superseded);
+        (await coordinator.SaveAsync(Address, Bytes(9), Index(WorkflowRunStatus.Running), "development", default, 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Superseded);
         (await store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(1));
     }
 
@@ -107,15 +107,15 @@ public sealed class WorkflowCheckpointCoordinatorTests
         var store = new InMemoryWorkflowStateStore();
         var coordinator = new WorkflowCheckpointCoordinator(store);
 
-        (await coordinator.SaveAsync(Address, Bytes(1), Index(WorkflowRunStatus.Running), "development", 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
+        (await coordinator.SaveAsync(Address, Bytes(1), Index(WorkflowRunStatus.Running), "development", default, 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
 
-        CheckpointSaveResult ahead = await coordinator.SaveAsync(Address, Bytes(3), Index(WorkflowRunStatus.Running), "development", 3, default);
+        CheckpointSaveResult ahead = await coordinator.SaveAsync(Address, Bytes(3), Index(WorkflowRunStatus.Running), "development", default, 3, default);
         ahead.Outcome.ShouldBe(CheckpointSaveOutcome.Superseded);
         ahead.AcceptedSequence.ShouldBe(2);
         (await store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(1));
 
         // The delayed sequence 2 is what the store was waiting for, so it lands.
-        (await coordinator.SaveAsync(Address, Bytes(2), Index(WorkflowRunStatus.Running), "development", 2, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
+        (await coordinator.SaveAsync(Address, Bytes(2), Index(WorkflowRunStatus.Running), "development", default, 2, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
         (await store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(2));
     }
 
@@ -133,7 +133,7 @@ public sealed class WorkflowCheckpointCoordinatorTests
         await store.SaveAsync(Address, Bytes(2), Index(WorkflowRunStatus.Running), seeded.Etag, default);
 
         // The coordinator's next save carries the now-stale seeded etag, so the store rejects it.
-        (await coordinator.SaveAsync(Address, Bytes(3), Index(WorkflowRunStatus.Running), "development", 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Conflict);
+        (await coordinator.SaveAsync(Address, Bytes(3), Index(WorkflowRunStatus.Running), "development", default, 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Conflict);
         (await store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(2));
     }
 
@@ -145,10 +145,10 @@ public sealed class WorkflowCheckpointCoordinatorTests
         var store = new InMemoryWorkflowStateStore();
         var coordinator = new WorkflowCheckpointCoordinator(store);
 
-        await coordinator.SaveAsync(Address, Bytes(1), Index(WorkflowRunStatus.Running), "development", 1, default);
-        await coordinator.SaveAsync(Address, Bytes(2), Index(WorkflowRunStatus.Completed), "development", sequence: 2, default);
+        await coordinator.SaveAsync(Address, Bytes(1), Index(WorkflowRunStatus.Running), "development", default, 1, default);
+        await coordinator.SaveAsync(Address, Bytes(2), Index(WorkflowRunStatus.Completed), "development", default, sequence: 2, default);
 
-        (await coordinator.SaveAsync(Address, Bytes(1), Index(WorkflowRunStatus.Running), "development", 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Superseded);
+        (await coordinator.SaveAsync(Address, Bytes(1), Index(WorkflowRunStatus.Running), "development", default, 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Superseded);
         (await store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(2));
     }
 
@@ -161,13 +161,13 @@ public sealed class WorkflowCheckpointCoordinatorTests
         var store = new InMemoryWorkflowStateStore();
         var coordinator = new WorkflowCheckpointCoordinator(store, time);
 
-        await coordinator.SaveAsync(Address, Bytes(5), Index(WorkflowRunStatus.Running), "development", 5, default);
+        await coordinator.SaveAsync(Address, Bytes(5), Index(WorkflowRunStatus.Running), "development", default, 5, default);
 
         // Idle past the slot TTL, then touch a different run to trigger the opportunistic sweep of run-1's stale slot.
         time.Advance(TimeSpan.FromMinutes(20));
-        await coordinator.SaveAsync(new WorkflowRunAddress("development", new WorkflowRunId("run-2")), Bytes(1), Index(WorkflowRunStatus.Running), "development", 1, default);
+        await coordinator.SaveAsync(new WorkflowRunAddress("development", new WorkflowRunId("run-2")), Bytes(1), Index(WorkflowRunStatus.Running), "development", default, 1, default);
 
-        CheckpointSaveResult afterSweep = await coordinator.SaveAsync(Address, Bytes(8), Index(WorkflowRunStatus.Running), "development", 1, default);
+        CheckpointSaveResult afterSweep = await coordinator.SaveAsync(Address, Bytes(8), Index(WorkflowRunStatus.Running), "development", default, 1, default);
 
         afterSweep.Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
         (await store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(Bytes(8));
@@ -185,7 +185,7 @@ public sealed class WorkflowCheckpointCoordinatorTests
         var coordinator = new WorkflowCheckpointCoordinator(store, time);
 
         byte[] overBudget = Checkpoint(journalEntries: 3, sequence: 2, TwoSteps, T0);
-        CheckpointSaveResult result = await coordinator.SaveAsync(Address, overBudget, WorkflowCheckpointSerializer.ProjectIndex(overBudget), "development", 2, default);
+        CheckpointSaveResult result = await Save(coordinator, Address, overBudget, 2);
 
         result.Outcome.ShouldBe(CheckpointSaveOutcome.BudgetExceeded);
         result.FaultError.ShouldBe(ExecutionBudgetFault.Fuel);
@@ -212,7 +212,7 @@ public sealed class WorkflowCheckpointCoordinatorTests
 
         time.UtcNow = T0 + TimeSpan.FromHours(2);
         byte[] late = Checkpoint(journalEntries: 1, sequence: 2, OneHour, T0);
-        CheckpointSaveResult result = await coordinator.SaveAsync(Address, late, WorkflowCheckpointSerializer.ProjectIndex(late), "development", 2, default);
+        CheckpointSaveResult result = await Save(coordinator, Address, late, 2);
 
         result.Outcome.ShouldBe(CheckpointSaveOutcome.BudgetExceeded);
         result.FaultError.ShouldBe(ExecutionBudgetFault.Deadline);
@@ -230,15 +230,15 @@ public sealed class WorkflowCheckpointCoordinatorTests
         var coordinator = new WorkflowCheckpointCoordinator(store, time);
 
         byte[] first = Checkpoint(journalEntries: 1, sequence: 1, TwoSteps, T0);
-        (await coordinator.SaveAsync(Address, first, WorkflowCheckpointSerializer.ProjectIndex(first), "development", 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
+        (await Save(coordinator, Address, first, 1)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
         time.UtcNow = T0 + TimeSpan.FromMinutes(59);
         byte[] atTheLimit = Checkpoint(journalEntries: 2, sequence: 2, TwoSteps, T0, WorkflowRunStatus.Completed);
-        (await coordinator.SaveAsync(Address, atTheLimit, WorkflowCheckpointSerializer.ProjectIndex(atTheLimit), "development", 2, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
+        (await Save(coordinator, Address, atTheLimit, 2)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
 
         // A checkpoint from before budgets existed carries none, and nothing bounds it here.
         var legacy = new WorkflowRunAddress("development", new WorkflowRunId("run-legacy"));
         byte[] unbounded = Checkpoint(journalEntries: 40, sequence: 1, null, T0 - TimeSpan.FromDays(30));
-        (await coordinator.SaveAsync(legacy, unbounded, WorkflowCheckpointSerializer.ProjectIndex(unbounded), "development", 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
+        (await Save(coordinator, legacy, unbounded, 1)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
     }
 
     [TestMethod]
@@ -251,17 +251,17 @@ public sealed class WorkflowCheckpointCoordinatorTests
         var coordinator = new WorkflowCheckpointCoordinator(store, new ControlledTimeProvider());
 
         byte[] widened = Checkpoint(journalEntries: 1, sequence: 2, new ExecutionBudget(5, TimeSpan.FromHours(1), 8, TimeSpan.Zero), T0);
-        (await coordinator.SaveAsync(Address, widened, WorkflowCheckpointSerializer.ProjectIndex(widened), "development", 2, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Rejected);
+        (await Save(coordinator, Address, widened, 2)).Outcome.ShouldBe(CheckpointSaveOutcome.Rejected);
 
         byte[] dropped = Checkpoint(journalEntries: 1, sequence: 2, null, T0);
-        (await coordinator.SaveAsync(Address, dropped, WorkflowCheckpointSerializer.ProjectIndex(dropped), "development", 2, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Rejected);
+        (await Save(coordinator, Address, dropped, 2)).Outcome.ShouldBe(CheckpointSaveOutcome.Rejected);
 
         byte[] younger = Checkpoint(journalEntries: 1, sequence: 2, TwoSteps, T0 + TimeSpan.FromHours(3));
-        (await coordinator.SaveAsync(Address, younger, WorkflowCheckpointSerializer.ProjectIndex(younger), "development", 2, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Rejected);
+        (await Save(coordinator, Address, younger, 2)).Outcome.ShouldBe(CheckpointSaveOutcome.Rejected);
 
         // Nothing was written, and the honest save still lands.
         byte[] honest = Checkpoint(journalEntries: 1, sequence: 2, TwoSteps, T0);
-        (await coordinator.SaveAsync(Address, honest, WorkflowCheckpointSerializer.ProjectIndex(honest), "development", 2, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
+        (await Save(coordinator, Address, honest, 2)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
     }
 
     [TestMethod]
@@ -271,10 +271,10 @@ public sealed class WorkflowCheckpointCoordinatorTests
         var coordinator = new WorkflowCheckpointCoordinator(store, new ControlledTimeProvider());
 
         byte[] first = Checkpoint(journalEntries: 0, sequence: 1, TwoSteps, T0);
-        (await coordinator.SaveAsync(Address, first, WorkflowCheckpointSerializer.ProjectIndex(first), "development", 1, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
+        (await Save(coordinator, Address, first, 1)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
 
         byte[] widened = Checkpoint(journalEntries: 1, sequence: 2, ExecutionBudget.Default, T0);
-        (await coordinator.SaveAsync(Address, widened, WorkflowCheckpointSerializer.ProjectIndex(widened), "development", 2, default)).Outcome.ShouldBe(CheckpointSaveOutcome.Rejected);
+        (await Save(coordinator, Address, widened, 2)).Outcome.ShouldBe(CheckpointSaveOutcome.Rejected);
     }
 
     [TestMethod]
@@ -287,7 +287,7 @@ public sealed class WorkflowCheckpointCoordinatorTests
         var coordinator = new WorkflowCheckpointCoordinator(store, new ControlledTimeProvider());
 
         byte[] stale = Checkpoint(journalEntries: 3, sequence: 1, TwoSteps, T0);
-        CheckpointSaveResult result = await coordinator.SaveAsync(Address, stale, WorkflowCheckpointSerializer.ProjectIndex(stale), "development", 1, default);
+        CheckpointSaveResult result = await Save(coordinator, Address, stale, 1);
 
         result.Outcome.ShouldBe(CheckpointSaveOutcome.Superseded);
         (await store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(stored);
@@ -302,18 +302,17 @@ public sealed class WorkflowCheckpointCoordinatorTests
         var coordinator = new WorkflowCheckpointCoordinator(store, new ControlledTimeProvider());
 
         byte[] overBudget = Checkpoint(journalEntries: 3, sequence: 2, TwoSteps, T0);
-        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex(overBudget);
-        (await coordinator.SaveAsync(Address, overBudget, index, "development", 2, default)).Outcome.ShouldBe(CheckpointSaveOutcome.BudgetExceeded);
+        (await Save(coordinator, Address, overBudget, 2)).Outcome.ShouldBe(CheckpointSaveOutcome.BudgetExceeded);
         WorkflowCheckpoint faulted = (await store.LoadAsync(Address, default))!.Value;
 
         // The resend of the refused sequence: the control plane consumed it, so this is an ordinary superseded save.
-        CheckpointSaveResult resend = await coordinator.SaveAsync(Address, overBudget, index, "development", 2, default);
+        CheckpointSaveResult resend = await Save(coordinator, Address, overBudget, 2);
         resend.Outcome.ShouldBe(CheckpointSaveOutcome.Superseded);
         resend.AcceptedSequence.ShouldBe(3);
 
         // A runner that presses on is refused again, and the faulted row is not rewritten.
         byte[] next = Checkpoint(journalEntries: 4, sequence: 3, TwoSteps, T0);
-        CheckpointSaveResult again = await coordinator.SaveAsync(Address, next, WorkflowCheckpointSerializer.ProjectIndex(next), "development", 3, default);
+        CheckpointSaveResult again = await Save(coordinator, Address, next, 3);
         again.Outcome.ShouldBe(CheckpointSaveOutcome.BudgetExceeded);
         again.AcceptedSequence.ShouldBe(3);
         WorkflowCheckpoint after = (await store.LoadAsync(Address, default))!.Value;
@@ -330,7 +329,7 @@ public sealed class WorkflowCheckpointCoordinatorTests
         var coordinator = new WorkflowCheckpointCoordinator(store, new ControlledTimeProvider());
 
         byte[] truncated = Checkpoint(journalEntries: 1, sequence: 2, ExecutionBudget.Default, T0, truncated: true);
-        CheckpointSaveResult result = await coordinator.SaveAsync(Address, truncated, WorkflowCheckpointSerializer.ProjectIndex(truncated), "development", 2, default);
+        CheckpointSaveResult result = await Save(coordinator, Address, truncated, 2);
 
         result.Outcome.ShouldBe(CheckpointSaveOutcome.BudgetExceeded);
         result.FaultError.ShouldBe(ExecutionBudgetFault.Fuel);
@@ -349,6 +348,13 @@ public sealed class WorkflowCheckpointCoordinatorTests
     private static byte[] Bytes(byte marker) => [marker, marker, marker];
 
     private static WorkflowRunIndexEntry Index(WorkflowRunStatus status) => new("wf", status, default, default);
+
+    // Saves a real checkpoint the way the surfaces do: one projection of the bytes, its parts handed to the coordinator.
+    private static ValueTask<CheckpointSaveResult> Save(WorkflowCheckpointCoordinator coordinator, WorkflowRunAddress address, byte[] checkpoint, long sequence)
+    {
+        CheckpointProjection projection = WorkflowCheckpointSerializer.Project(checkpoint);
+        return coordinator.SaveAsync(address, checkpoint, projection.Index, projection.Environment, projection.Facts, sequence, default);
+    }
 
     // A real checkpoint document of run-1 in the development environment, with the given journal length and budget.
     private static byte[] Checkpoint(int journalEntries, long sequence, ExecutionBudget? budget, DateTimeOffset createdAt, WorkflowRunStatus status = WorkflowRunStatus.Running, bool truncated = false)

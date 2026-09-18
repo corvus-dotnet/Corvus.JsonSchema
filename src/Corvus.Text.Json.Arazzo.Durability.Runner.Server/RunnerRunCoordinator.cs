@@ -414,17 +414,18 @@ public sealed class RunnerRunCoordinator
         // a row can only come back in the environment the sweep queried, and the old post-load environment
         // comparison has nothing left to compare.
         WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(held.Address, cancellationToken).ConfigureAwait(false);
-        if (checkpoint is not { } row || !WorkflowCheckpointSerializer.TryProjectIndex(row.Utf8, out WorkflowRunIndexEntry entry))
+        if (checkpoint is not { } row || !WorkflowCheckpointSerializer.TryProject(row.Utf8, out CheckpointProjection projection))
         {
             return null;
         }
 
+        WorkflowRunIndexEntry entry = projection.Index;
         if (entry.Status != WorkflowRunStatus.Suspended || !hostedVersions.Contains(entry.WorkflowId))
         {
             return null;
         }
 
-        if (await this.TryFaultExhaustedAsync(held.Address, row, entry, cancellationToken).ConfigureAwait(false))
+        if (await this.TryFaultExhaustedAsync(held.Address, row, projection, cancellationToken).ConfigureAwait(false))
         {
             return null;
         }
@@ -438,20 +439,20 @@ public sealed class RunnerRunCoordinator
     // faulted under the lease this caller holds, from the last durable checkpoint, and the claim is declined so the
     // caller hands the lease back. The store's etag guards the write: a peer that advanced the row meanwhile wins,
     // and the claim is declined either way.
-    private async ValueTask<bool> TryFaultExhaustedAsync(WorkflowRunAddress address, WorkflowCheckpoint row, WorkflowRunIndexEntry entry, CancellationToken cancellationToken)
+    private async ValueTask<bool> TryFaultExhaustedAsync(WorkflowRunAddress address, WorkflowCheckpoint row, CheckpointProjection projection, CancellationToken cancellationToken)
     {
-        if (!WorkflowCheckpointSerializer.TryReadBudgetFacts(row.Utf8, out CheckpointBudgetFacts facts) || facts.Budget is not { } budget)
+        if (projection.Facts.Budget is not { } budget)
         {
             return false;
         }
 
         DateTimeOffset now = this.timeProvider.GetUtcNow();
-        if (ExecutionBudgetFault.Find(budget, facts, entry.CreatedAt, now) is not { } exceeded)
+        if (ExecutionBudgetFault.Find(budget, projection.Facts, projection.Index.CreatedAt, now) is not { } exceeded)
         {
             return false;
         }
 
-        long sequence = WorkflowCheckpointSerializer.TryReadSequence(row.Utf8, out long persisted) ? persisted + 1 : 1;
+        long sequence = (projection.Sequence ?? 0) + 1;
         byte[] faulted = WorkflowCheckpointSerializer.RewriteFaulted(row.Utf8.Span, sequence, exceeded, now);
         try
         {
@@ -470,10 +471,12 @@ public sealed class RunnerRunCoordinator
         // The load is by the lease's full address (ADR 0065 decision 9), so the run's environment is structural:
         // a row can only come back in the environment the claim queried.
         WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(held.Address, cancellationToken).ConfigureAwait(false);
-        if (checkpoint is not { } row || !WorkflowCheckpointSerializer.TryProjectIndex(row.Utf8, out WorkflowRunIndexEntry entry))
+        if (checkpoint is not { } row || !WorkflowCheckpointSerializer.TryProject(row.Utf8, out CheckpointProjection projection))
         {
             return null;
         }
+
+        WorkflowRunIndexEntry entry = projection.Index;
 
         // Claimable is a fresh run, an orphan whose holder crashed, or one the control plane marked resume-claimable
         // (design §18) — never a terminal one, whatever a lingering marker says.
@@ -484,7 +487,7 @@ public sealed class RunnerRunCoordinator
             return null;
         }
 
-        if (await this.TryFaultExhaustedAsync(held.Address, row, entry, cancellationToken).ConfigureAwait(false))
+        if (await this.TryFaultExhaustedAsync(held.Address, row, projection, cancellationToken).ConfigureAwait(false))
         {
             return null;
         }

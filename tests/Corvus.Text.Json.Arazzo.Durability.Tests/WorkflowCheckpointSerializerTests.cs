@@ -42,6 +42,28 @@ public sealed class WorkflowCheckpointSerializerTests
     }
 
     [TestMethod]
+    public void One_projection_yields_the_index_the_environment_the_sequence_and_the_budget_facts()
+    {
+        // The checkpoint surfaces read a posted body exactly once; everything the save needs comes from that parse.
+        var budget = new ExecutionBudget(3, TimeSpan.FromMinutes(30), 2, TimeSpan.FromSeconds(5));
+        byte[] bytes = BudgetCheckpoint(journalEntries: 2, budget: budget, sequence: 7, truncated: true, fault: new WorkflowFault("s2", 2, ExecutionBudgetFault.Fuel, CreatedAt));
+
+        WorkflowCheckpointSerializer.TryProject(bytes, out CheckpointProjection projection).ShouldBeTrue();
+        projection.Index.ShouldBe(WorkflowCheckpointSerializer.ProjectIndex(bytes));
+        projection.Index.ErrorType.ShouldBe(ExecutionBudgetFault.Fuel);
+        projection.Environment.ShouldBe("development");
+        projection.Sequence.ShouldBe(7);
+        WorkflowCheckpointSerializer.TryReadBudgetFacts(bytes, out CheckpointBudgetFacts scanned).ShouldBeTrue();
+        projection.Facts.ShouldBe(scanned);
+
+        // Absence of a sequence is reported, not folded into zero; malformed bytes do not project.
+        WorkflowCheckpointSerializer.TryProject("{\"runId\":\"run-1\",\"workflowId\":\"wf\",\"status\":\"Running\",\"cursor\":0}"u8.ToArray(), out projection).ShouldBeTrue();
+        projection.Sequence.ShouldBeNull();
+        projection.Facts.ShouldBe(default(CheckpointBudgetFacts));
+        WorkflowCheckpointSerializer.TryProject(new byte[] { 1, 2, 3 }, out _).ShouldBeFalse();
+    }
+
+    [TestMethod]
     public void A_budget_fault_is_recorded_at_the_last_journaled_step_and_the_run_is_neither_waiting_nor_resumable()
     {
         var budget = new ExecutionBudget(2, TimeSpan.FromMinutes(30), 2, TimeSpan.FromSeconds(5));

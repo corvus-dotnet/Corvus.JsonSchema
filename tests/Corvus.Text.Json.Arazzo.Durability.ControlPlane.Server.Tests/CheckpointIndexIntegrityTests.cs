@@ -164,8 +164,8 @@ public sealed class CheckpointIndexIntegrityTests
     // One projection serves the index and the body's environment claim, exactly as the handlers make it.
     private static ValueTask<CheckpointSaveResult> SaveAsync(WorkflowCheckpointCoordinator coordinator, byte[] checkpoint, long sequence)
     {
-        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex(checkpoint, out string? claimedEnvironment);
-        return coordinator.SaveAsync(Address, checkpoint, index, claimedEnvironment, sequence, default);
+        CheckpointProjection projection = WorkflowCheckpointSerializer.Project(checkpoint);
+        return coordinator.SaveAsync(Address, checkpoint, projection.Index, projection.Environment, projection.Facts, sequence, default);
     }
 
     private static SecurityTagSet Tags(string key, string value)
