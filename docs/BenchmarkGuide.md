@@ -191,3 +191,28 @@ The `Program.cs` configures:
 - **Logger:** Console output
 
 To benchmark against multiple runtimes, uncomment the additional `AddJob()` lines in `Program.cs`.
+
+## The .NET version-over-version series
+
+With each .NET release we measure what the new runtime gives us "for free" and publish the result in the [JSON Schema Performance blog series](https://endjin.com/blog/how-dotnet-10-boosted-json-schema-performance-by-18-percent). Both series validate the same array of 10,000 small person documents, and run one BenchmarkDotNet job per runtime from a single host, so the runtime is the only variable.
+
+| Series | Project | Runtimes |
+|--------|---------|----------|
+| V4 engine | `src-v4/Corvus.Json.Benchmarking` (`ValidateLargeArrayCorvusV4`) | .NET 8.0, 9.0, 10.0, 11.0 |
+| V5 engine | `benchmarks/Corvus.Text.Json.DotNetVersions.Benchmarks` | .NET 10.0, 11.0 |
+
+The V5 project measures the generated types (`EvaluateSchema()`), the generated standalone evaluator, and the dynamic validator. It is built once for `net10.0` and the same binaries run on each runtime.
+
+```powershell
+# V4 series
+cd src-v4/Corvus.Json.Benchmarking
+dotnet run -c Release -f net10.0 -- --filter '*ValidateLargeDocumentCorvusOnly.ValidateLargeArrayCorvusV4'
+
+# V5 series
+cd benchmarks/Corvus.Text.Json.DotNetVersions.Benchmarks
+dotnet run -c Release -f net10.0 -- --filter '*'
+```
+
+Every runtime in the series must be installed alongside the SDK that `global.json` pins. BenchmarkDotNet 0.15.8 has no .NET 11 runtime moniker, so the .NET 11.0 job names its toolchain directly. The summary table's `Runtime` column reports the host's runtime for that job. The `Job` column and the legend above the table carry the runtime that actually ran.
+
+When a new .NET version ships, add a job for it to each `Program.cs`. Only the relative figures matter, but they need a quiet machine to be stable.
