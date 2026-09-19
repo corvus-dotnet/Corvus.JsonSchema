@@ -80,20 +80,20 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
     public WorkflowRunDerivation? RunDerivation => this.runDerivation;
 
     /// <inheritdoc/>
-    public async ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, SecurityTagSet securityTags, string environment, CancellationToken cancellationToken)
+    public async ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, SecurityTagSet securityTags, string environment, CancellationToken cancellationToken, string? rerunOf = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(workflowId);
         ArgumentException.ThrowIfNullOrEmpty(environment);
 
         var id = new WorkflowRunId(Guid.NewGuid().ToString("n", System.Globalization.CultureInfo.InvariantCulture));
         ExecutionBudget? budget = await this.ResolveBudgetAsync(workflowId, environment, cancellationToken).ConfigureAwait(false);
-        using WorkflowRun run = WorkflowRun.CreateNew(this.store, id, workflowId, inputs, environment, this.timeProvider, correlationId, tags, securityTags, budget);
+        using WorkflowRun run = WorkflowRun.CreateNew(this.store, id, workflowId, inputs, environment, this.timeProvider, correlationId, tags, securityTags, budget, rerunOf);
         await run.EnqueueAsync(cancellationToken).ConfigureAwait(false);
         return id;
     }
 
     /// <inheritdoc/>
-    public async ValueTask<IdempotentStartResult> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default)
+    public async ValueTask<IdempotentStartResult> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default, string? rerunOf = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(workflowId);
         ArgumentException.ThrowIfNullOrEmpty(idempotencyKey);
@@ -106,11 +106,11 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
 
         string? ownerGroup = await this.ResolveOwnerGroupAsync(environment, cancellationToken).ConfigureAwait(false);
         WorkflowRunId id = derivation.IdempotentStart(ownerGroup, environment, workflowId, idempotencyKey);
-        return await this.StartNamedAsync(id, workflowId, inputs, environment, correlationId, tags, securityTags, cancellationToken).ConfigureAwait(false);
+        return await this.StartNamedAsync(id, workflowId, inputs, environment, correlationId, tags, securityTags, cancellationToken, rerunOf).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public async ValueTask<IdempotentStartResult> StartNamedAsync(WorkflowRunId runId, string workflowId, JsonElement inputs, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default)
+    public async ValueTask<IdempotentStartResult> StartNamedAsync(WorkflowRunId runId, string workflowId, JsonElement inputs, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default, string? rerunOf = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(workflowId);
         ArgumentException.ThrowIfNullOrEmpty(environment);
@@ -122,7 +122,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         try
         {
             ExecutionBudget? budget = await this.ResolveBudgetAsync(workflowId, environment, cancellationToken).ConfigureAwait(false);
-            using WorkflowRun run = WorkflowRun.CreateNew(this.store, runId, workflowId, inputs, environment, this.timeProvider, correlationId, tags, securityTags, budget);
+            using WorkflowRun run = WorkflowRun.CreateNew(this.store, runId, workflowId, inputs, environment, this.timeProvider, correlationId, tags, securityTags, budget, rerunOf);
             await run.EnqueueAsync(cancellationToken).ConfigureAwait(false);
             return new IdempotentStartResult(runId, Created: true);
         }
@@ -267,7 +267,13 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         }
 
         using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(cp.Utf8);
-        return new WorkflowRunDetail(state.RunId, state.WorkflowId, state.Status, state.Cursor, state.CreatedAt, state.Wait, state.Fault, cp.Etag, state.CorrelationId, state.Tags, state.SecurityTags, state.Environment, state.UpdatedAt, state.Budget);
+
+        // A run faulted on its budget says whether it can be rescued, by the rule a resume applies (ADR 0068), so no
+        // reader of the run re-derives that rule. It costs one environment read, and only for such a run.
+        RunRebudget? rebudget = state.Status == WorkflowRunStatus.Faulted && state.Fault is { } fault && ExecutionBudgetFault.IsBudgetFault(fault.Error)
+            ? await this.AssessRebudgetAsync(state, fault.Error, cancellationToken).ConfigureAwait(false)
+            : null;
+        return new WorkflowRunDetail(state.RunId, state.WorkflowId, state.Status, state.Cursor, state.CreatedAt, state.Wait, state.Fault, cp.Etag, state.CorrelationId, state.Tags, state.SecurityTags, state.Environment, state.UpdatedAt, state.Budget, state.RerunOf, rebudget);
     }
 
     /// <inheritdoc/>
@@ -411,11 +417,10 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
 
         try
         {
-            // ADR 0068: a run that faulted on its execution budget is not resumed in any mode, and is refused before
-            // any mutation touches it.
-            if (await this.IsBudgetExhaustedAsync(address, cancellationToken).ConfigureAwait(false))
+            // ADR 0068: a run that faulted on its execution budget is resumed only if it can be re-budgeted, which is
+            // decided, and written, before any other mutation touches it.
+            if (!await this.TryRebudgetAsync(address, activity, cancellationToken).ConfigureAwait(false))
             {
-                activity?.SetTag(ArazzoTelemetry.OutcomeTag, "budget-exhausted");
                 return false;
             }
 
@@ -501,10 +506,10 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
 
         try
         {
-            // ADR 0068: a run that faulted on its execution budget is never handed back to a runner.
-            if (await this.IsBudgetExhaustedAsync(address, cancellationToken).ConfigureAwait(false))
+            // ADR 0068: a run that faulted on its execution budget is handed back to a runner only if it can be
+            // re-budgeted, decided and written before any other mutation, exactly as the in-process resume does.
+            if (!await this.TryRebudgetAsync(address, activity: null, cancellationToken).ConfigureAwait(false))
             {
-                activity?.SetTag(ArazzoTelemetry.OutcomeTag, "budget-exhausted");
                 return false;
             }
 
@@ -535,17 +540,75 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         }
     }
 
-    /// <inheritdoc/>
-    // Whether the run's stored fault record is a budget fault (ADR 0068), read from the row's bytes without
-    // materializing the run. Called under the lease, so the answer is the one the resume would act on.
-    private async ValueTask<bool> IsBudgetExhaustedAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
+    // ADR 0068, re-budget on resume. A run faulted on its budget is rescued only by re-resolving its budget as a start
+    // would (the ceiling, tightened by the environment's CURRENT override) and finding the run inside the result. The
+    // new budget is then frozen into the run by this, the control plane's own write: the coordinator re-seeds a run's
+    // identity from the stored row on the claiming runner's load, so the runner resumes under the new budget, and a
+    // runner still cannot widen a budget itself. Called under the lease. A run that is not budget-faulted is left
+    // alone, so its frozen budget stands however its environment has changed. Returns false when the run is
+    // budget-faulted and cannot be rescued, or the write lost a race.
+    private async ValueTask<bool> TryRebudgetAsync(WorkflowRunAddress address, Activity? activity, CancellationToken cancellationToken)
     {
         WorkflowCheckpoint? row = await this.store.LoadAsync(address, cancellationToken).ConfigureAwait(false);
-        return row is { } stored
-            && WorkflowCheckpointSerializer.TryReadBudgetFacts(stored.Utf8, out CheckpointBudgetFacts facts)
-            && facts.BudgetFaulted;
+        if (row is not { } stored
+            || !WorkflowCheckpointSerializer.TryReadBudgetFacts(stored.Utf8, out CheckpointBudgetFacts facts)
+            || !facts.BudgetFaulted)
+        {
+            return true;
+        }
+
+        byte[] rebudgeted;
+        WorkflowRunIndexEntry indexEntry;
+        using (WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(stored.Utf8))
+        {
+            if (state.Fault is not { } fault
+                || await this.AssessRebudgetAsync(state, fault.Error, cancellationToken).ConfigureAwait(false) is not { Resumable: true } assessment)
+            {
+                activity?.SetTag(ArazzoTelemetry.OutcomeTag, "budget-exhausted");
+                return false;
+            }
+
+            DateTimeOffset at = this.timeProvider.GetUtcNow();
+            rebudgeted = WorkflowCheckpointSerializer.RewriteForRemediation(stored.Utf8.Span, new CheckpointRemediation(state.Cursor, at, Budget: assessment.Effective));
+            indexEntry = new WorkflowRunIndexEntry(
+                state.WorkflowId,
+                WorkflowRunStatus.Faulted,
+                state.CreatedAt,
+                at,
+                ErrorType: fault.Error,
+                CorrelationId: state.CorrelationId,
+                Tags: state.Tags,
+                SecurityTags: state.SecurityTags);
+        }
+
+        try
+        {
+            await this.store.SaveAsync(address, rebudgeted, indexEntry, stored.Etag, cancellationToken).ConfigureAwait(false);
+            activity?.SetTag("arazzo.run.rebudgeted", true);
+            return true;
+        }
+        catch (WorkflowConflictException)
+        {
+            activity?.SetTag(ArazzoTelemetry.OutcomeTag, "conflict");
+            return false;
+        }
     }
 
+    // What a re-budget would give a budget-faulted run now, and whether the run is inside it. The one rule, used by the
+    // resume paths and by the run's own detail.
+    private async ValueTask<RunRebudget?> AssessRebudgetAsync(WorkflowCheckpointState state, string faultError, CancellationToken cancellationToken)
+    {
+        if (state.Budget is not { } frozen
+            || await this.ResolveBudgetAsync(state.WorkflowId, state.Environment ?? string.Empty, cancellationToken).ConfigureAwait(false) is not { } effective)
+        {
+            return null;
+        }
+
+        var facts = new CheckpointBudgetFacts(frozen, state.StepJournal.Count, state.JournalTruncated, BudgetFaulted: true);
+        return new RunRebudget(effective, ExecutionBudgetFault.CanResumeUnder(effective, frozen, faultError, facts, state.CreatedAt, this.timeProvider.GetUtcNow()));
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<bool> CancelAsync(WorkflowRunId id, string reason, AccessContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(reason);

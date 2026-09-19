@@ -66,6 +66,15 @@ public interface IApiRunsHandler
     ValueTask<GetRunStepsResult> HandleGetRunStepsAsync(GetRunStepsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Handles POST /runs/{runId}/rerun — Start a new run of the same workflow version, in the same environment, with the same inputs
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<RerunRunResult> HandleRerunRunAsync(RerunRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Handles POST /runs/{runId}/resume — Resume a faulted run
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>

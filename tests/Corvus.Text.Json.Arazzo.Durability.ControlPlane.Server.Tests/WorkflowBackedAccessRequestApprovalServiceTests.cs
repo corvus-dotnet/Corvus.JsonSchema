@@ -166,13 +166,13 @@ public sealed class WorkflowBackedAccessRequestApprovalServiceTests
 
         public ExecutionBudget ExecutionBudgetCeiling => ExecutionBudget.Default;
 
-        public ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, SecurityTagSet securityTags, string environment, CancellationToken cancellationToken)
+        public ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, SecurityTagSet securityTags, string environment, CancellationToken cancellationToken, string? rerunOf = null)
         {
             this.Starts.Add((workflowId, environment, inputs.ToString() ?? string.Empty, securityTags));
             return new ValueTask<WorkflowRunId>(new WorkflowRunId("run-" + this.Starts.Count));
         }
 
-        public ValueTask<IdempotentStartResult> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public ValueTask<IdempotentStartResult> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default, string? rerunOf = null) => throw new NotSupportedException();
 
         public ValueTask<WorkflowRunPage> ListAsync(WorkflowQuery query, AccessContext context, CancellationToken cancellationToken) => throw new NotSupportedException();
 

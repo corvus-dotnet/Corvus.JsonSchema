@@ -207,8 +207,10 @@ public sealed class SecuredWorkflowManagementTests
     [TestMethod]
     public async Task Resume_refuses_a_run_that_exhausted_its_budget_in_every_mode()
     {
-        // ADR 0068: a budget fault is terminal. Neither the in-process resume nor the hand-off to a runner touches it,
-        // and no mutation (rewind, skip) is applied on the way to the refusal.
+        // ADR 0068: a run faulted on its budget is resumed only by re-budgeting it, and this run carries no budget to
+        // resolve again, so it cannot be. Neither the in-process resume nor the hand-off to a runner touches it, and
+        // no mutation (rewind, skip) is applied on the way to the refusal. The rescue itself is proved in
+        // SecuredWorkflowManagementRebudgetTests.
         var store = new InMemoryWorkflowStateStore();
         using (WorkflowRun run = WorkflowRun.CreateNew(store, "r1", "wf", default, "development"))
         {

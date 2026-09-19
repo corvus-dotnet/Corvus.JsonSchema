@@ -81,8 +81,10 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         WorkflowCheckpointState? resumedState,
         WorkflowPauseConfig? pause = null,
         DateTimeOffset? resumeRequestedAt = null,
-        ExecutionBudget? budget = null)
+        ExecutionBudget? budget = null,
+        string? rerunOf = null)
     {
+        this.RerunOf = rerunOf;
         this.store = store;
         this.Id = id;
         this.WorkflowId = workflowId;
@@ -171,6 +173,10 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     /// <summary>Gets the run-wide telemetry correlation id (the W3C trace id captured at creation), if any.</summary>
     public string? CorrelationId => this.correlationId;
 
+    /// <summary>Gets the id of the run this run re-runs, or <see langword="null"/> for a run started in its own right.
+    /// Set once at creation and written with every checkpoint.</summary>
+    public string? RerunOf { get; }
+
     /// <summary>Gets the deployment environment the run is pinned to (design §5.5) — its credential set and the
     /// runners it can be dispatched to. Half the run's address (ADR 0065 decision 9); never absent.</summary>
     public string Environment => this.address.Environment;
@@ -207,7 +213,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         string? correlationId = null,
         TagSet tags = default,
         SecurityTagSet securityTags = default,
-        ExecutionBudget? budget = null)
+        ExecutionBudget? budget = null,
+        string? rerunOf = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(workflowId);
@@ -238,7 +245,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             wait: null,
             fault: null,
             resumedState: null,
-            budget: budget);
+            budget: budget,
+            rerunOf: rerunOf);
     }
 
     /// <summary>Builds a run from a loaded checkpoint, ready to be re-entered by the executor.</summary>
@@ -283,7 +291,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             resumedState: state,
             pause: state.Pause,
             resumeRequestedAt: state.ResumeRequestedAt,
-            budget: state.Budget);
+            budget: state.Budget,
+            rerunOf: state.RerunOf);
     }
 
     /// <summary>Loads a run's checkpoint from the store and builds a resumed run from it.</summary>
@@ -726,7 +735,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             updatedAt,
             this.stepJournal,
             this.journalTruncated,
-            this.Budget);
+            this.Budget,
+            this.RerunOf);
 
         WorkflowRunIndexEntry index = WorkflowRunIndexEntry.Project(
             this.WorkflowId,

@@ -340,11 +340,15 @@ public static class ControlPlaneEndpointExtensions
 
         var schedulesHandler = new ArazzoControlPlaneSchedulesHandler(management, catalog, runners, access, availabilityStore, environmentStore, scheduleRegistry, auditLogger: auditLogger);
 
+        // One instance, because it is also the admission a re-run goes through (IRunStartAdmission): the catalog's start
+        // and the run's re-run must be one chain, and handing the runs handler this handler is what makes them so.
+        var catalogHandler = new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access, environmentStore, availabilityStore, workflowSimulator, auditLogger, deploymentStore, capacityGuard);
+
         endpoints.MapApiEndpoints(
             securityHandler,
-            new ArazzoControlPlaneHandler(management, access, catalog, auditLogger),
+            new ArazzoControlPlaneHandler(management, access, catalog, auditLogger, catalogHandler),
             new ArazzoControlPlaneRunnersHandler(runners, access),
-            new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access, environmentStore, availabilityStore, workflowSimulator, auditLogger, deploymentStore, capacityGuard),
+            catalogHandler,
             availabilityHandler,
             nativeBuildsHandler,
             deploymentsHandler,

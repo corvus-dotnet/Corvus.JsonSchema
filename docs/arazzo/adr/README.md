@@ -86,6 +86,7 @@ The template to follow for a full, fork-bearing ADR is
 | [0065](0065-control-plane-owns-store-runners-encrypt-payload.md) | The control plane owns the store and fronts all checkpointing; runners encrypt the checkpoint payload | Accepted |
 | [0066](0066-runner-api-rate-and-capacity-limiting.md) | Rate and capacity limiting: two scopes and in-process buckets for rates, store-measured standing magnitudes for capacity | Accepted |
 | [0068](0068-execution-budget-fuel-wall-clock-depth.md) | Execution budget: fuel, wall clock and depth, set per deployment and per environment, enforced by the runner and verified by the coordinator | Accepted, not yet implemented |
+| [0072](0072-rerun-a-run-server-side.md) | Re-running a run is a server-side operation through the one start admission | Accepted |
 | [0029](0029-native-heartbeat-partial-update.md) | Native server-side partial update for the hot heartbeat path | Accepted |
 
 ### Catalog

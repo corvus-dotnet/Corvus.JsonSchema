@@ -75,7 +75,8 @@ public static class WorkflowCheckpointSerializer
         DateTimeOffset? updatedAt = null,
         IReadOnlyList<WorkflowStepJournalEntry>? stepJournal = null,
         bool journalTruncated = false,
-        ExecutionBudget? budget = null)
+        ExecutionBudget? budget = null,
+        string? rerunOf = null)
     {
         ArgumentNullException.ThrowIfNull(workflowId);
         ArgumentNullException.ThrowIfNull(retryCounters);
@@ -116,6 +117,11 @@ public static class WorkflowCheckpointSerializer
             if (environment is { } env)
             {
                 writer.WriteString("environment"u8, env);
+            }
+
+            if (rerunOf is { } original)
+            {
+                writer.WriteString("rerunOf"u8, original);
             }
 
             if (!tags.IsEmpty)
@@ -429,6 +435,8 @@ public static class WorkflowCheckpointSerializer
                 ? readBudget
                 : null;
 
+            string? rerunOf = root.TryGetProperty("rerunOf"u8, out JsonElement rerunOfElement) ? rerunOfElement.GetString() : null;
+
             List<WorkflowStepJournalEntry>? journalEntries = null;
             if (root.TryGetProperty("stepJournal"u8, out JsonElement journalElement) && journalElement.ValueKind == JsonValueKind.Array)
             {
@@ -446,7 +454,7 @@ public static class WorkflowCheckpointSerializer
 
             bool journalTruncated = root.TryGetProperty("journalTruncated"u8, out JsonElement journalTruncatedElement) && journalTruncatedElement.GetBoolean();
 
-            return new WorkflowCheckpointState(document, runId, workflowId, status, cursor, sequence, createdAt, retryCounters, correlationTokens, inputs, stepOutputs, outputs, wait, fault, correlationId, tags, securityTags, environment, pause, resumeRequestedAt, updatedAt, journalEntries, journalTruncated, budget);
+            return new WorkflowCheckpointState(document, runId, workflowId, status, cursor, sequence, createdAt, retryCounters, correlationTokens, inputs, stepOutputs, outputs, wait, fault, correlationId, tags, securityTags, environment, pause, resumeRequestedAt, updatedAt, journalEntries, journalTruncated, budget, rerunOf);
         }
         catch
         {

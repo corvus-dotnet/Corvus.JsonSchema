@@ -39,7 +39,8 @@ public sealed class WorkflowCheckpointState : IDisposable
         DateTimeOffset? updatedAt = null,
         IReadOnlyList<WorkflowStepJournalEntry>? stepJournal = null,
         bool journalTruncated = false,
-        ExecutionBudget? budget = null)
+        ExecutionBudget? budget = null,
+        string? rerunOf = null)
     {
         this.document = document;
         this.RunId = runId;
@@ -65,6 +66,7 @@ public sealed class WorkflowCheckpointState : IDisposable
         this.StepJournal = stepJournal ?? [];
         this.JournalTruncated = journalTruncated;
         this.Budget = budget;
+        this.RerunOf = rerunOf;
     }
 
     /// <summary>Gets the run id.</summary>
@@ -95,6 +97,9 @@ public sealed class WorkflowCheckpointState : IDisposable
 
     /// <summary>Gets a value indicating whether the journal was capped and its oldest entries dropped.</summary>
     public bool JournalTruncated { get; }
+
+    /// <summary>Gets the id of the run this run re-runs, or <see langword="null"/> for a run that was started in its own right.</summary>
+    public string? RerunOf { get; }
 
     /// <summary>Gets the run's effective execution budget (ADR 0068), or <see langword="null"/> on a checkpoint written before budgets existed.</summary>
     public ExecutionBudget? Budget { get; }

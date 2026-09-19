@@ -366,6 +366,30 @@
         }
       }
     },
+    "/runs/{runId}/rerun": {
+      "parameters": [{ "$ref": "#/components/parameters/RunIdPath" }],
+      "post": {
+        "operationId": "rerunRun",
+        "security": [{ "oauth2": ["runs:write"] }, { "openIdConnect": ["runs:write"] }, { "mtls": [] }],
+        "tags": ["runs"],
+        "summary": "Start a new run of the same workflow version, in the same environment, with the same inputs",
+        "description": "Re-runs a run from the beginning, as a new run. The server reads the original run's workflow version, environment, inputs and tags from its checkpoint, so a run's inputs are never returned by this API to be sent back. The new run goes through the same admission as any start (the version must still be available in the environment and hosted by a runner, the inputs must still validate, and the tenant must have capacity), is given a fresh execution budget resolved from the environment as it is now, a new correlation id, and records the original as its `rerunOf`. Any run the caller can read may be re-run, whatever its status. It is the remedy when a run cannot or should not be resumed: a run that exhausted its budget for reasons outside the workflow, or one whose completed work should not be trusted. An `Idempotency-Key` makes the re-run idempotent, so a repeated request starts one run.",
+        "parameters": [{ "$ref": "#/components/parameters/IdempotencyKeyHeader" }],
+        "responses": {
+          "202": {
+            "description": "The new run was accepted and is pending execution on a hosting runner.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WorkflowRunAccepted" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/CapacityExceeded" },
+          "422": {
+            "description": "The original run's inputs no longer validate against the version's baked inputs schema.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ValidationResult" } } }
+          }
+        }
+      }
+    },
     "/runs/{runId}/resume": {
       "parameters": [{ "$ref": "#/components/parameters/RunIdPath" }],
       "post": {
@@ -377,7 +401,7 @@
         ],
         "tags": ["runs"],
         "summary": "Resume a faulted run",
-        "description": "Resumes a faulted run, re-executing it from its last checkpoint (the faulted step). Only a run in the `Faulted` state can be resumed. Returns the run's new detail on success (200); a run that does not exist or is out of read reach is 404, a readable run outside write reach is 403, and a run that is not in the `Faulted` state conflicts (409).",
+        "description": "Resumes a faulted run, re-executing it from its last checkpoint (the faulted step). Only a run in the `Faulted` state can be resumed. Returns the run's new detail on success (200); a run that does not exist or is out of read reach is 404, a readable run outside write reach is 403, and a run that is not in the `Faulted` state conflicts (409). A run faulted on its execution budget is re-budgeted by the resume (ADR 0068): its budget is resolved again from its environment as it is now, and the resume proceeds only if the run is inside the result, conflicting with 409 `budget-exhausted` otherwise. The run's `rebudget` says which in advance.",
         "requestBody": {
           "required": false,
           "content": {
@@ -5933,7 +5957,7 @@
         "properties": {
           "stepId": { "type": "string", "description": "The step that faulted." },
           "attempt": { "type": "integer", "description": "The attempt count at the fault." },
-          "error": { "type": "string", "description": "The fault's error type. The platform records these fixed values itself, and any other value is a step's own failure, recorded as it happened: `budget-fuel` (the run made as many step attempts as its budget's max steps allows), `budget-deadline` (the run outlived its budget's wall clock), `budget-depth` (the run nested sub-workflows past its budget's depth limit), `executor-unhandled` (the executor failed in a way nothing in the workflow handled; the failure is in the executor's trace and not on the run), `executor-unresolvable` (the workflow version's executor was refused: missing, not runnable, or failed verification), `transport-unbound` (a source the workflow calls has no usable binding in the run's environment). The three budget faults are terminal and a resume is refused with 409; the other three can be resumed once their cause is fixed." },
+          "error": { "type": "string", "description": "The fault's error type. The platform records these fixed values itself, and any other value is a step's own failure, recorded as it happened: `budget-fuel` (the run made as many step attempts as its budget's max steps allows), `budget-deadline` (the run outlived its budget's wall clock), `budget-depth` (the run nested sub-workflows past its budget's depth limit), `executor-unhandled` (the executor failed in a way nothing in the workflow handled; the failure is in the executor's trace and not on the run), `executor-unresolvable` (the workflow version's executor was refused: missing, not runnable, or failed verification), `transport-unbound` (a source the workflow calls has no usable binding in the run's environment). A run faulted on its budget is resumed by raising its environment's limit and resuming, which re-budgets the run (see `rebudget` on the run), and is refused with 409 `budget-exhausted` while the run is still outside the budget it would be given; the other three are resumed once their cause is fixed. Any run can instead be re-run (`rerunRun`)." },
           "at": { "type": "string", "format": "date-time", "description": "When the fault occurred." }
         },
         "required": ["stepId", "attempt", "error", "at"]
@@ -5965,7 +5989,7 @@
           "dueAt": { "type": "string", "format": "date-time" },
           "awaitingChannel": { "type": "string" },
           "awaitingCorrelationId": { "type": "string" },
-          "errorType": { "type": "string", "description": "The fault's error type, if the run is or was faulted. The platform records these fixed values itself, and any other value is a step's own failure, recorded as it happened: `budget-fuel` (the run made as many step attempts as its budget's max steps allows), `budget-deadline` (the run outlived its budget's wall clock), `budget-depth` (the run nested sub-workflows past its budget's depth limit), `executor-unhandled` (the executor failed in a way nothing in the workflow handled; the failure is in the executor's trace and not on the run), `executor-unresolvable` (the workflow version's executor was refused: missing, not runnable, or failed verification), `transport-unbound` (a source the workflow calls has no usable binding in the run's environment). The three budget faults are terminal and a resume is refused with 409; the other three can be resumed once their cause is fixed." },
+          "errorType": { "type": "string", "description": "The fault's error type, if the run is or was faulted. The platform records these fixed values itself, and any other value is a step's own failure, recorded as it happened: `budget-fuel` (the run made as many step attempts as its budget's max steps allows), `budget-deadline` (the run outlived its budget's wall clock), `budget-depth` (the run nested sub-workflows past its budget's depth limit), `executor-unhandled` (the executor failed in a way nothing in the workflow handled; the failure is in the executor's trace and not on the run), `executor-unresolvable` (the workflow version's executor was refused: missing, not runnable, or failed verification), `transport-unbound` (a source the workflow calls has no usable binding in the run's environment). A run faulted on its budget is resumed by raising its environment's limit and resuming, which re-budgets the run (see `rebudget` on the run), and is refused with 409 `budget-exhausted` while the run is still outside the budget it would be given; the other three are resumed once their cause is fixed. Any run can instead be re-run (`rerunRun`)." },
           "correlationId": { "type": "string", "description": "The run-wide telemetry correlation id set at creation (the value stamped on the run's `corvus.arazzo.correlation_id` spans), if any." },
           "tags": { "type": "array", "items": { "type": "string" }, "description": "The free-form tags applied to the run at creation." }
         },
@@ -6036,7 +6060,9 @@
           "etag": { "type": "string", "description": "The optimistic-concurrency token the checkpoint was read at." },
           "correlationId": { "type": "string", "description": "The run-wide telemetry correlation id set at creation (the value stamped on the run's `corvus.arazzo.correlation_id` spans), if any." },
           "tags": { "type": "array", "items": { "type": "string" }, "description": "The free-form tags applied to the run at creation." },
-          "budget": { "$ref": "#/components/schemas/ResolvedExecutionBudget", "description": "The execution budget resolved into the run when it started and frozen with it (ADR 0068): the limits this run is held to, whatever its environment's budget has become since. Absent on a run that carries none, which is the scheduler's." }
+          "budget": { "$ref": "#/components/schemas/ResolvedExecutionBudget", "description": "The execution budget frozen into the run (ADR 0068): the limits this run is held to, whatever its environment's budget has become since. It is resolved when the run starts, and again only by a resume that re-budgets a run faulted on its budget. Absent on a run that carries none, which is the scheduler's." },
+          "rebudget": { "$ref": "#/components/schemas/RunRebudget", "description": "Present only on a run faulted on its budget: what a resume would do for it now." },
+          "rerunOf": { "$ref": "#/components/schemas/RunId", "description": "The run this run re-runs (see `rerunRun`). Absent on a run started in its own right." }
         },
         "required": ["id", "workflowId", "status", "cursor", "createdAt", "etag"]
       },
@@ -8608,7 +8634,7 @@
       "BudgetMaxResponseBytes": { "type": "integer", "minimum": 1, "description": "An execution-budget limit (ADR 0068). A response body size, in bytes." },
       "ExecutionBudget": {
         "type": "object",
-        "description": "An environment's execution-budget override (ADR 0068). Each limit named here tightens the deployment ceiling for runs pinned to the environment; a limit omitted is the ceiling's. Fuel, the wall clock and the depth cap bound the run, and the step timeout and the response size bound a single step. An override may only tighten: a limit wider than the deployment ceiling is refused (400). The effective budget is resolved into every run at start and recorded with it, so a later change here does not move a running run's bound.",
+        "description": "An environment's execution-budget override (ADR 0068). Each limit named here tightens the deployment ceiling for runs pinned to the environment; a limit omitted is the ceiling's. Fuel, the wall clock and the depth cap bound the run, and the step timeout and the response size bound a single step. An override may only tighten: a limit wider than the deployment ceiling is refused (400). The effective budget is resolved into every run at start and recorded with it, so a later change here does not move a running run's bound. The one exception is deliberate: a run that faulted on its budget is re-budgeted from the override as it is now when it is resumed.",
         "properties": {
           "maxSteps": { "$ref": "#/components/schemas/BudgetMaxSteps", "description": "Fuel: the maximum number of step executions a run may make, retries and revisits counted. The deployment ceiling is itself bounded by the per-step journal cap (500)." },
           "wallClockSeconds": { "$ref": "#/components/schemas/BudgetWallClockSeconds", "description": "The maximum age of a run from creation, in seconds." },
@@ -8630,6 +8656,15 @@
           "maxResponseBytes": { "$ref": "#/components/schemas/BudgetMaxResponseBytes", "description": "The largest response body a single step may read, in bytes." }
         },
         "required": ["maxSteps", "wallClockSeconds", "maxSubWorkflowDepth", "retryAfterCeilingSeconds", "stepTimeoutSeconds", "maxResponseBytes"]
+      },
+      "RunRebudget": {
+        "type": "object",
+        "description": "What a resume would do for a run that faulted on its execution budget (ADR 0068). A resume of such a run re-resolves its budget as a start would (the deployment's ceiling, tightened by the environment's current override) and proceeds only if the run is inside the result. So the remedy for a budget fault is to raise the environment's limit and resume, which keeps the work already done, or to re-run.",
+        "properties": {
+          "effective": { "$ref": "#/components/schemas/ResolvedExecutionBudget", "description": "The budget a resume would freeze into the run now." },
+          "resumable": { "type": "boolean", "description": "Whether the run is inside `effective`, so that a resume would proceed. When false, raising the environment's limit may change it, up to the deployment's ceiling. A run that made as many step attempts as the journal holds (500), or that is older than the ceiling's wall clock, can never be resumed and can only be re-run." }
+        },
+        "required": ["effective", "resumable"]
       },
       "EnvironmentExecutionBudget": {
         "type": "object",

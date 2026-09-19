@@ -27,6 +27,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
     private readonly ControlPlaneAccess access;
     private readonly ISecuredWorkflowCatalog? catalog;
     private readonly ILogger? auditLogger;
+    private readonly IRunStartAdmission? startAdmission;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneHandler"/> class (unscoped: full access).</summary>
     /// <param name="management">The control-plane client the endpoints delegate to.</param>
@@ -45,8 +46,11 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
     /// <param name="auditLogger">The logger for the §860 step-journal read-access audit (who read which run's journal, at
     /// which disclosure tier); when <see langword="null"/>, only the audit span is emitted (no structured log). The read
     /// audit is emitted regardless of this — the span rides the always-registered <see cref="ArazzoTelemetry.ActivitySource"/>.</param>
-    internal ArazzoControlPlaneHandler(ISecuredWorkflowManagement management, ControlPlaneAccess access, ISecuredWorkflowCatalog? catalog = null, ILogger? auditLogger = null)
+    /// <param name="startAdmission">The admission every run start goes through, which a re-run is. When
+    /// <see langword="null"/> (a host that maps no catalog) a re-run is refused.</param>
+    internal ArazzoControlPlaneHandler(ISecuredWorkflowManagement management, ControlPlaneAccess access, ISecuredWorkflowCatalog? catalog = null, ILogger? auditLogger = null, IRunStartAdmission? startAdmission = null)
     {
+        this.startAdmission = startAdmission;
         ArgumentNullException.ThrowIfNull(management);
         ArgumentNullException.ThrowIfNull(access);
         this.management = management;
@@ -294,6 +298,56 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
     }
 
     /// <inheritdoc/>
+    public async ValueTask<RerunRunResult> HandleRerunRunAsync(RerunRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string runId = (string)parameters.RunId;
+        AccessContext ctx = this.access.Current();
+
+        // The original is read within the caller's read reach (§14.2): a run they cannot see is not one they can
+        // re-run, and is answered as not found. Its inputs are read here, on the server, and go nowhere else.
+        using WorkflowCheckpointState? original = await this.management.LoadStateAsync(runId, ctx, cancellationToken).ConfigureAwait(false);
+        if (original is null)
+        {
+            return RerunRunResult.NotFound(NotFoundProblem(runId), workspace);
+        }
+
+        // A draft run is a debug session over a working copy, and the scheduler's run is the platform's own. Neither
+        // is a run of a catalogued version, which is what a re-run starts.
+        if (this.startAdmission is not { } admission
+            || DraftRuns.IsDraftRun(original.WorkflowId)
+            || !TryParseVersionedId(original.WorkflowId, out string baseWorkflowId, out int versionNumber))
+        {
+            return RerunRunResult.Conflict(
+                Problem("not-rerunnable", "Run cannot be re-run", 409, $"Run '{runId}' is not a run of a catalogued workflow version, so there is nothing to re-run it from."), workspace);
+        }
+
+        // Through the same admission as any start, as the caller: the version still available and hosted, the inputs
+        // still valid, capacity, and a fresh budget resolved from the environment as it is now.
+        var request = new RunStartRequest(
+            baseWorkflowId,
+            versionNumber,
+            original.Environment,
+            original.Inputs,
+            parameters.IdempotencyKey.IsNotUndefined() ? (string)parameters.IdempotencyKey : null,
+            original.Tags,
+            RerunOf: runId,
+            AuditAction: "run.rerun");
+        RunStartOutcome outcome = await admission.AdmitAndStartAsync(request, cancellationToken).ConfigureAwait(false);
+        return outcome.Kind switch
+        {
+            RunStartOutcomeKind.Accepted => RerunRunResult.Accepted(RunStartOutcome.AcceptedBody(outcome), workspace),
+            RunStartOutcomeKind.InvalidInputs => RerunRunResult.UnprocessableEntity(ArazzoControlPlaneCatalogHandler.BuildValidationResult(false, outcome.Errors!), workspace),
+            RunStartOutcomeKind.CapacityExceeded => RerunRunResult.TooManyRequests(ArazzoControlPlaneCatalogHandler.CapacityProblem(outcome.Capacity!.Value), workspace, ArazzoControlPlaneCatalogHandler.CapacityRetryAfter()),
+
+            // The run is in the caller's reach and its version is not (or is gone). That is a reason this run cannot
+            // be re-run, not a missing run, so it is a conflict and names no more than the caller already knew.
+            RunStartOutcomeKind.VersionNotFound => RerunRunResult.Conflict(
+                Problem("not-rerunnable", "Run cannot be re-run", 409, $"The workflow version run '{runId}' executed is no longer in the catalog, or is outside your reach."), workspace),
+            _ => RerunRunResult.Conflict(Problem(outcome.ProblemType!, outcome.Title!, 409, outcome.Detail!), workspace),
+        };
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<ResumeRunResult> HandleResumeRunAsync(ResumeRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string runId = (string)parameters.RunId;
@@ -312,18 +366,26 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
             return ResumeRunResult.Forbidden(ForbiddenProblem(runId), workspace);
         }
 
-        // ADR 0068: a run that exceeded its execution budget is terminal. Told apart from the ordinary not-resumable
-        // refusal because the remedy differs: not a retry or a rewind, but a new run under a considered budget.
-        if (pre.Fault is { } fault && ExecutionBudgetFault.IsBudgetFault(fault.Error))
+        // ADR 0068: a run faulted on its budget is resumed by re-budgeting it, which the management seam decides and
+        // writes under the run's lease. What is known here, before it, is whether that can succeed, so a run that is
+        // still outside the budget it would be given is refused without being touched, and told apart from the
+        // ordinary not-resumable refusal because the remedy differs.
+        bool budgetFaulted = pre.Fault is { } budgetFault && ExecutionBudgetFault.IsBudgetFault(budgetFault.Error);
+        if (budgetFaulted && pre.Rebudget is not { Resumable: true })
         {
-            return ResumeRunResult.Conflict(
-                Problem("budget-exhausted", "Run exhausted its execution budget", 409, $"Run '{runId}' faulted with '{fault.Error}' and cannot be resumed; a run that exceeded its budget is terminal. Start a new run under a considered budget."),
-                workspace);
+            return ResumeRunResult.Conflict(BudgetExhaustedProblem(runId, pre), workspace);
         }
 
         ResumeOptions options = ToResumeOptions(parameters.Body);
         if (await this.management.ResumeAsync(runId, options, ctx, cancellationToken).ConfigureAwait(false))
         {
+            if (budgetFaulted && pre.Budget is { } was && pre.Rebudget is { } rebudget)
+            {
+                // A re-budget widens what a run may cost, so it is a governed act of its own (ADR 0068), recorded with
+                // who did it and what the run was and is now held to.
+                GovernanceAudit.Mutation(this.auditLogger, "run.rebudget", this.AuditActor(), RunTargetKind, runId, $"rebudgeted: {Limits(was)} -> {Limits(rebudget.Effective)}");
+            }
+
             GovernanceAudit.Mutation(this.auditLogger, "run.resume", this.AuditActor(), RunTargetKind, runId, "resumed");
             WorkflowRunDetail? resumed = await this.management.GetAsync(runId, ctx, cancellationToken).ConfigureAwait(false);
             return resumed is { } d
@@ -332,6 +394,12 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         }
 
         WorkflowRunDetail? current = await this.management.GetAsync(runId, ctx, cancellationToken).ConfigureAwait(false);
+        if (current is { Fault: { } stillFaulted } stillBudgeted && ExecutionBudgetFault.IsBudgetFault(stillFaulted.Error))
+        {
+            // The environment's budget moved between the read above and the lease, and the run is outside it again.
+            return ResumeRunResult.Conflict(BudgetExhaustedProblem(runId, stillBudgeted), workspace);
+        }
+
         return current is { } existing
             ? ResumeRunResult.Conflict(Problem("not-resumable", "Run is not resumable", 409, $"Run '{runId}' is {existing.Status}; only a Faulted run can be resumed (it may also be held by another owner)."), workspace)
             : ResumeRunResult.NotFound(NotFoundProblem(runId), workspace);
@@ -450,6 +518,19 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
                 budget = ExecutionBudgetModels.Resolved(frozen);
             }
 
+            // On a run faulted on its budget: what a resume would give it now, and whether it would then run.
+            Models.RunRebudget.Source rebudget = default;
+            if (d.Rebudget is { } assessed)
+            {
+                rebudget = Models.RunRebudget.Build(effective: ExecutionBudgetModels.Resolved(assessed.Effective), resumable: assessed.Resumable);
+            }
+
+            Models.RunId.Source rerunOf = default;
+            if (d.RerunOf is { } original)
+            {
+                rerunOf = original;
+            }
+
             b.Create(
                 createdAt: d.CreatedAt,
                 cursor: d.Cursor,
@@ -461,6 +542,8 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
                 correlationId: correlationId,
                 environment: environment,
                 fault: fault,
+                rebudget: rebudget,
+                rerunOf: rerunOf,
                 tags: tags,
                 updatedAt: d.UpdatedAt is { } updated ? (Models.JsonDateTime.Source)updated : default,
                 wait: wait);
@@ -572,6 +655,19 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
 
             b.Create(kind: w.Kind.ToString(), channel: channel, correlationId: correlationId, dueAt: dueAt);
         });
+
+    // Why a run faulted on its budget is not resumable now, said in terms of what would change it (ADR 0068).
+    private static Models.ProblemDetails.Source BudgetExhaustedProblem(string runId, in WorkflowRunDetail run)
+    {
+        string error = run.Fault?.Error ?? ExecutionBudgetFault.Fuel;
+        string remedy = run.Rebudget is { } rebudget
+            ? $"A resume would hold it to {Limits(rebudget.Effective)}, which it is still outside. Raise the limit on environment '{run.Environment}' (up to the deployment's ceiling) and resume, or re-run it."
+            : "It carries no budget to resolve again. Re-run it.";
+        return Problem("budget-exhausted", "Run exhausted its execution budget", 409, $"Run '{runId}' faulted with '{error}'. {remedy}");
+    }
+
+    private static string Limits(in ExecutionBudget budget)
+        => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"maxSteps={budget.MaxSteps}, wallClockSeconds={(long)budget.WallClock.TotalSeconds}, maxSubWorkflowDepth={budget.MaxSubWorkflowDepth}");
 
     private static Models.ProblemDetails.Source NotFoundProblem(string runId)
         => Problem("run-not-found", "Run not found", 404, $"No run with id '{runId}' exists.");

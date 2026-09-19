@@ -170,10 +170,36 @@ public sealed class ApiRunsClient : IApiRunsClient
     }
 
     /// <summary>
+    /// Start a new run of the same workflow version, in the same environment, with the same inputs
+    /// </summary>
+    /// <remarks>
+    /// Re-runs a run from the beginning, as a new run. The server reads the original run's workflow version, environment, inputs and tags from its checkpoint, so a run's inputs are never returned by this API to be sent back. The new run goes through the same admission as any start (the version must still be available in the environment and hosted by a runner, the inputs must still validate, and the tenant must have capacity), is given a fresh execution budget resolved from the environment as it is now, a new correlation id, and records the original as its `rerunOf`. Any run the caller can read may be re-run, whatever its status. It is the remedy when a run cannot or should not be resumed: a run that exhausted its budget for reasons outside the workflow, or one whose completed work should not be trusted. An `Idempotency-Key` makes the re-run idempotent, so a repeated request starts one run.
+    /// </remarks>
+    /// <param name="runId">The runId parameter.</param>
+    /// <param name="idempotencyKey">The Idempotency-Key parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
+    public ValueTask<RerunRunResponse> RerunRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source runId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source idempotencyKey = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId RunIdValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.CreateBuilder(workspace, runId, 30).RootElement;
+        RerunRunRequest request = new(RunIdValue)
+        {
+            IdempotencyKey = idempotencyKey.IsUndefined ? default : (Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString)Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.CreateBuilder(workspace, idempotencyKey, 30).RootElement,
+        }
+        ;
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<RerunRunRequest, RerunRunResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// Resume a faulted run
     /// </summary>
     /// <remarks>
-    /// Resumes a faulted run, re-executing it from its last checkpoint (the faulted step). Only a run in the `Faulted` state can be resumed. Returns the run's new detail on success (200); a run that does not exist or is out of read reach is 404, a readable run outside write reach is 403, and a run that is not in the `Faulted` state conflicts (409).
+    /// Resumes a faulted run, re-executing it from its last checkpoint (the faulted step). Only a run in the `Faulted` state can be resumed. Returns the run's new detail on success (200); a run that does not exist or is out of read reach is 404, a readable run outside write reach is 403, and a run that is not in the `Faulted` state conflicts (409). A run faulted on its execution budget is re-budgeted by the resume (ADR 0068): its budget is resolved again from its environment as it is now, and the resume proceeds only if the run is inside the result, conflicting with 409 `budget-exhausted` otherwise. The run's `rebudget` says which in advance.
     /// </remarks>
     /// <param name="runId">The runId parameter.</param>
     /// <param name="body">The request body..</param>
@@ -218,7 +244,7 @@ public sealed class ApiRunsClient : IApiRunsClient
     /// Resume a faulted run
     /// </summary>
     /// <remarks>
-    /// Resumes a faulted run, re-executing it from its last checkpoint (the faulted step). Only a run in the `Faulted` state can be resumed. Returns the run's new detail on success (200); a run that does not exist or is out of read reach is 404, a readable run outside write reach is 403, and a run that is not in the `Faulted` state conflicts (409).
+    /// Resumes a faulted run, re-executing it from its last checkpoint (the faulted step). Only a run in the `Faulted` state can be resumed. Returns the run's new detail on success (200); a run that does not exist or is out of read reach is 404, a readable run outside write reach is 403, and a run that is not in the `Faulted` state conflicts (409). A run faulted on its execution budget is re-budgeted by the resume (ADR 0068): its budget is resolved again from its environment as it is now, and the resume proceeds only if the run is inside the result, conflicting with 409 `budget-exhausted` otherwise. The run's `rebudget` says which in advance.
     /// </remarks>
     /// <param name="runId">The runId parameter.</param>
     /// <param name="body">The request body..</param>

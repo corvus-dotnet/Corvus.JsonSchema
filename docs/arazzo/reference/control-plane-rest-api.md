@@ -94,14 +94,22 @@ A faulted run's `fault.error` (and `errorType` on a run summary) is an open stri
 
 | Error type | Meaning | What to do |
 | --- | --- | --- |
-| `budget-fuel` | The run made as many step attempts as its budget's `maxSteps` allows. | Terminal. Start a new run, under a raised budget if the work needs more attempts. |
-| `budget-deadline` | The run outlived its budget's `wallClockSeconds`. | Terminal. Start a new run, under a raised budget if the work needs longer. |
-| `budget-depth` | The run nested sub-workflows past its budget's `maxSubWorkflowDepth`. | Terminal. Flatten the workflow, or start a new run under a raised depth limit. |
+| `budget-fuel` | The run made as many step attempts as its budget's `maxSteps` allows. | Raise the environment's `maxSteps` and resume, or re-run. A run that made 500 attempts, the journal's cap, can only be re-run. |
+| `budget-deadline` | The run outlived its budget's `wallClockSeconds`. | Raise the environment's `wallClockSeconds` and resume, or re-run. A run older than the deployment's ceiling allows can only be re-run. |
+| `budget-depth` | The run nested sub-workflows past its budget's `maxSubWorkflowDepth`. | Raise the environment's `maxSubWorkflowDepth` and resume, or flatten the workflow and re-run. |
 | `executor-unhandled` | The workflow's executor failed in a way nothing in the workflow handled. The failure itself is in the executor's trace and is kept off the run. | Fix the cause, then resume the run. |
 | `executor-unresolvable` | The workflow version's executor was refused: it is missing, not runnable, or failed verification. | Republish or repair the version in the catalog, then resume the run. |
 | `transport-unbound` | A source the workflow calls has no usable binding in the run's environment. | Add the source's credential binding for the environment, then resume the run. |
 
-A resume of a run faulted on its budget is refused with 409 and the problem type `budget-exhausted`.
+## Recovering a run
+
+There are three ways to recover a faulted run, and which applies depends on why it faulted.
+
+**Resume** (`POST /runs/{runId}/resume`) re-enters the run from its last checkpoint and keeps the work it has done. It is the remedy for a fault whose cause has been fixed: a repaired source, a republished version, a credential binding added.
+
+**Re-budget, then resume.** A run faulted on its budget is resumed the same way, and the resume re-budgets it: the budget is resolved again from the run's environment as it is now, and the resume proceeds only if the run is inside the result. So the remedy is to raise the environment's limit and resume. The run says in advance whether a resume would run, in `rebudget` on its detail (`effective`, the budget it would be given, and `resumable`). While it would not, the resume is refused with 409 and the problem type `budget-exhausted`. The ceiling bounds it: no override can take a run past the deployment's ceiling, a run that made 500 attempts can never be resumed, and the wall clock counts from the run's creation.
+
+**Re-run** (`POST /runs/{runId}/rerun`) starts a new run from the beginning: the same workflow version, environment, inputs and tags, a fresh budget, a new correlation id, and `rerunOf` naming the original. The server reads the inputs from the original, so they are never returned by this API. It goes through the same admission as any start and is refused where a start would be. It is the remedy when a run cannot be resumed, or should not be because its completed work is not to be trusted. Any run the caller can read can be re-run, whatever its status. See [ADR 0072](../adr/0072-rerun-a-run-server-side.md).
 
 ## Authentication
 

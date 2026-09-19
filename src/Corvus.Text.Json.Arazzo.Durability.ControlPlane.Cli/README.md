@@ -16,8 +16,9 @@ arazzo-runs <command> [args] --server <url> [--token <bearer>]
 | Command | Description |
 |---------|-------------|
 | `list [--status <s>] [--workflow-id <id>] [--limit <n>] [--page-token <t>] [--output table\|json]` | List runs (default a table, with a faulted run's error type in the Error column; `--output json` for piping). Follow `nextPageToken` to page. |
-| `get <runId> [--output json\|detail]` | Show a run's management detail. The default is the run as the API returns it, which includes the `budget` frozen into it at start. `--output detail` lays the run out to read, with its budget, and explains a platform fault type (`budget-fuel`, `executor-unresolvable` and the rest): what happened and what to do. |
+| `get <runId> [--output json\|detail]` | Show a run's management detail. The default is the run as the API returns it, which includes the `budget` frozen into it at start. `--output detail` lays the run out to read, with its budget, and explains a platform fault type (`budget-fuel`, `executor-unresolvable` and the rest): what happened and what to do. On a run faulted on its budget it shows whether a `resume` would run now, and the budget the resume would give it. It shows `rerunOf` on a re-run. |
 | `resume <runId> --mode <mode> …` | Resume a faulted run. `--mode` is `RetryFaultedStep` (default), `Rewind` (`--target-cursor`), `Skip` (`--target-cursor`, `--skip-outputs-file <path>`), or `StatePatch` (`--patch-file <path>`, validated against RFC 6902 before sending). JSON-valued inputs are read from files, not passed on the command line. |
+| `rerun <runId> [--idempotency-key <key>]` | Start a new run of the same workflow version, in the same environment, with the same inputs, which the server reads from the original. The remedy when a run cannot or should not be resumed. Prints the new run's id. |
 | `cancel <runId> --reason <text>` | Cancel a non-terminal run. |
 | `delete <runId>` | Permanently delete a single run. |
 | `purge --older-than <rfc3339> [--limit <n>]` | Reap old terminal runs in bulk. |

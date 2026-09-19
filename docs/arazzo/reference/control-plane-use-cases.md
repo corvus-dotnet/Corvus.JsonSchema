@@ -23,7 +23,7 @@ requester, author, and auditor.
 | U-RUN-7 | operator | housekeeping | purge old terminal runs by rule | keep the store lean without hand-picking rows |
 | U-RUN-8 | operator | correlating with telemetry | copy a run's correlation id | pivot to traces and logs |
 | U-RUN-9 | anyone | filtering | narrow by status, workflow, tags, time | find the runs I mean quickly |
-| U-RUN-10 | operator | triaging a faulted run | see what the run's budget was, and read a platform fault type as what happened and what to do | tell a run that hit its budget (start again) from one I can repair and resume |
+| U-RUN-10 | operator | triaging a faulted run | see what the run's budget was, and read a platform fault type as what happened and what to do | choose between raising the environment's limit and resuming, which keeps the work done, and re-running from the beginning |
 
 ## Catalog (U-CAT)
 

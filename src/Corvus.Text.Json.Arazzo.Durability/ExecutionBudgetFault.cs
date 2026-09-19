@@ -67,6 +67,28 @@ public static class ExecutionBudgetFault
 
         return now - createdAt > budget.WallClock ? Deadline : null;
     }
+
+    /// <summary>
+    /// Whether a run that faulted on its budget could resume under a newly resolved one: it is inside every limit of
+    /// the new budget, and the new budget is wider in the limit it hit.
+    /// </summary>
+    /// <param name="effective">The budget a re-budget would give the run.</param>
+    /// <param name="frozen">The budget the run faulted under.</param>
+    /// <param name="faultError">The budget fault the run was recorded with.</param>
+    /// <param name="facts">The run's journal facts.</param>
+    /// <param name="createdAt">When the run was created, which its wall clock counts from.</param>
+    /// <param name="now">The current time.</param>
+    /// <returns><see langword="true"/> if a resume under <paramref name="effective"/> would make progress.</returns>
+    /// <remarks>
+    /// Fuel needs room for at least one more attempt, which is the test a run applies before each one. A truncated
+    /// journal has lost the count, and the journal's cap is the most fuel any budget may carry, so such a run is
+    /// never resumable. Depth is not recorded on the run, so a depth fault needs a deeper cap than the one it hit.
+    /// </remarks>
+    public static bool CanResumeUnder(in ExecutionBudget effective, in ExecutionBudget frozen, string faultError, in CheckpointBudgetFacts facts, DateTimeOffset createdAt, DateTimeOffset now)
+        => !facts.JournalTruncated
+        && facts.JournalCount < effective.MaxSteps
+        && now - createdAt <= effective.WallClock
+        && (faultError != Depth || effective.MaxSubWorkflowDepth > frozen.MaxSubWorkflowDepth);
 }
 
 /// <summary>

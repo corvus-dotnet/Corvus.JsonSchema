@@ -37,7 +37,7 @@ public interface ISecuredWorkflowManagement
     /// <param name="environment">The deployment environment the run is pinned to (design §5.5) — <strong>required</strong>: it selects the credential set and constrains dispatch to runners serving it. A run cannot be started without one.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The id of the newly created pending run.</returns>
-    ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, SecurityTagSet securityTags, string environment, CancellationToken cancellationToken);
+    ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, SecurityTagSet securityTags, string environment, CancellationToken cancellationToken, string? rerunOf = null);
 
     /// <summary>Gets the deployment's run-id derivation (ADR 0065 §9), when configured. It is exposed here so every
     /// surface that re-derives a deterministic run id (for example the schedules surface addressing its scheduler
@@ -63,7 +63,7 @@ public interface ISecuredWorkflowManagement
     /// <returns>The run id and whether this call created the run (<c>Created: false</c> is the idempotent
     /// convergence on the pre-existing run). A run occupying the derived id that is <em>not</em> this logical start
     /// is refused with a collision error rather than reported as this run.</returns>
-    ValueTask<IdempotentStartResult> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default);
+    ValueTask<IdempotentStartResult> StartIdempotentAsync(string workflowId, JsonElement inputs, string idempotencyKey, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default, string? rerunOf = null);
 
     /// <summary>
     /// Starts a run under a caller-derived id (ADR 0065 §9's initiator-names-the-run shape): the id must be inside
@@ -81,7 +81,7 @@ public interface ISecuredWorkflowManagement
     /// <param name="securityTags">Optional security tags (KVP labels) for row authorization (§14.2); distinct from <paramref name="tags"/>.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The run id and whether this call created the run.</returns>
-    ValueTask<IdempotentStartResult> StartNamedAsync(WorkflowRunId runId, string workflowId, JsonElement inputs, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default)
+    ValueTask<IdempotentStartResult> StartNamedAsync(WorkflowRunId runId, string workflowId, JsonElement inputs, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default, string? rerunOf = null)
         => throw ThrowHelper.GetStartNamedNotSupportedException();
 
     /// <summary>Lists runs matching a visibility query (filter by status / workflow id, paged), scoped to the
@@ -202,6 +202,8 @@ public readonly record struct IdempotentStartResult(WorkflowRunId RunId, bool Cr
 /// <param name="SecurityTags">The security tags (KVP labels) applied to the run at creation, if any (§14.2), distinct from the free-form <paramref name="Tags"/>.</param>
 /// <param name="Environment">The deployment environment the run is pinned to (design §5.5), if any — its credential set and the runners it can be dispatched to; absent on a run created before run→environment pinning.</param>
 /// <param name="UpdatedAt">When the run's checkpoint was last written, if the writer stamped it (absent on a checkpoint written before the stamp existed).</param>
+/// <param name="RerunOf">The id of the run this run re-runs, or <see langword="null"/> for a run started in its own right.</param>
+/// <param name="Rebudget">On a run faulted on its budget, what a re-budget would do for it; otherwise <see langword="null"/>.</param>
 /// <param name="Budget">The execution budget resolved into the run at start and frozen on its checkpoint (ADR 0068), or <see langword="null"/> for a run that carries none (the scheduler's).</param>
 public readonly record struct WorkflowRunDetail(
     WorkflowRunId Id,
@@ -217,7 +219,20 @@ public readonly record struct WorkflowRunDetail(
     SecurityTagSet SecurityTags = default,
     string? Environment = null,
     DateTimeOffset? UpdatedAt = null,
-    ExecutionBudget? Budget = null);
+    ExecutionBudget? Budget = null,
+    string? RerunOf = null,
+    RunRebudget? Rebudget = null);
+
+/// <summary>
+/// What a re-budget would do for a run that faulted on its execution budget (ADR 0068): the budget the run would be
+/// given now, and whether it would be inside it.
+/// </summary>
+/// <param name="Effective">The budget a resume would freeze into the run: the deployment's ceiling, tightened by the
+/// run's environment's current override.</param>
+/// <param name="Resumable">Whether the run is inside <paramref name="Effective"/>, so that a resume would proceed.
+/// When <see langword="false"/>, raising the environment's limit may change it, up to the deployment's ceiling, and a
+/// run that made as many attempts as the journal holds can never be resumed.</param>
+public readonly record struct RunRebudget(ExecutionBudget Effective, bool Resumable);
 
 /// <summary>How to resume a faulted run (plan §11). Each mode loads the checkpoint, mutates status/cursor/state
 /// under optimistic concurrency, then re-enters the executor.</summary>

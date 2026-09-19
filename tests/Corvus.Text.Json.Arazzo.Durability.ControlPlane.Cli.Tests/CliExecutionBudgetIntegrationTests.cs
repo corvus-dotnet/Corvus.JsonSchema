@@ -112,12 +112,15 @@ public sealed partial class CliIntegrationTests
             detail.RootElement.GetProperty("budget").GetProperty("wallClockSeconds").GetInt64().ShouldBe(7200);
         }
 
-        // Laid out to read, the fault type is explained and the remedy is the right one: a budget fault is terminal.
+        // Laid out to read, the fault type is explained with its remedies, and the server's answer to "would a resume
+        // run now" is shown. This host has no environment registry, so a resume would give the run the deployment's
+        // ceiling, which it is well inside.
         (int exit, string stdout, _) = await RunAsync(host, "get", Budgeted1, "--output", "detail");
         exit.ShouldBe(0);
         stdout.ShouldContain("budget-fuel");
         stdout.ShouldContain("max steps");
-        stdout.ShouldContain("Start a new run");
+        stdout.ShouldContain("resume the run, or re-run it");
+        stdout.ShouldContain("Resumable now");
         stdout.ShouldContain("7200s (2h)");
 
         // And the list says why a run is Faulted without opening it.
@@ -139,6 +142,41 @@ public sealed partial class CliIntegrationTests
         stdout.ShouldContain("boom");
         stdout.ShouldNotContain("Start a new run");
         stdout.ShouldNotContain("resume the run");
+    }
+
+    [TestMethod]
+    public async Task A_budget_faulted_run_is_resumed_from_the_cli_once_a_resume_would_run()
+    {
+        // The re-budget is the resume: no new option, the same command an operator already knows.
+        await using Host host = await StartAsync();
+        var budget = new ExecutionBudget(3, TimeSpan.FromHours(2), 1, TimeSpan.FromMinutes(10), TimeSpan.FromSeconds(7), 2048);
+        using (WorkflowRun run = WorkflowRun.CreateNew(host.Store, Budgeted1, "wf", default, "development", host.Clock, budget: budget))
+        {
+            await run.FaultAsync("step1", attempt: 1, ExecutionBudgetFault.Fuel, default);
+        }
+
+        (int exit, string stdout, _) = await RunAsync(host, "resume", Budgeted1);
+
+        exit.ShouldBe(0);
+        using Stj.JsonDocument resumed = Stj.JsonDocument.Parse(stdout);
+        resumed.RootElement.GetProperty("status").GetString().ShouldBe("Completed");
+        resumed.RootElement.GetProperty("budget").GetProperty("maxSteps").GetInt32().ShouldBe(ExecutionBudget.Default.MaxSteps);
+    }
+
+    [TestMethod]
+    public async Task Rerun_of_a_run_that_is_not_of_a_catalogued_version_is_refused_and_a_missing_run_is_not_found()
+    {
+        // The accepting path is proved against a host with a catalog, an environment and a runner, in the server's own
+        // tests. What the CLI owes is the command, its argument, and the refusals said plainly.
+        await using Host host = await StartAsync();
+        await FaultRunAsync(host.Store, R1, host.Clock);
+
+        (int exit, _, string stderr) = await RunAsync(host, "rerun", R1);
+        exit.ShouldNotBe(0);
+        stderr.ShouldContain("not-rerunnable");
+
+        (int missingExit, _, _) = await RunAsync(host, "rerun", "ffffffffffffffffffffffffffffffff", "--idempotency-key", "k1");
+        missingExit.ShouldNotBe(0);
     }
 
     private static async Task<Stj.JsonDocument> BudgetAsync(Host host)

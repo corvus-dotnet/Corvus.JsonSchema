@@ -28,9 +28,9 @@ public static class WorkflowRunFaultTypes
     {
         description = error switch
         {
-            ExecutionBudgetFault.Fuel => new("the run made as many step attempts as its budget allows (max steps)", "Budget faults are terminal. Start a new run, under a raised budget if the work needs more attempts."),
-            ExecutionBudgetFault.Deadline => new("the run outlived its budget's wall clock", "Budget faults are terminal. Start a new run, under a raised budget if the work needs longer."),
-            ExecutionBudgetFault.Depth => new("the run nested sub-workflows past its budget's depth limit", "Budget faults are terminal. Flatten the workflow, or start a new run under a raised depth limit."),
+            ExecutionBudgetFault.Fuel => new("the run made as many step attempts as its budget allows (max steps)", "Raise the environment's max steps and resume the run, or re-run it. A run that made as many attempts as the journal holds (500) cannot be resumed."),
+            ExecutionBudgetFault.Deadline => new("the run outlived its budget's wall clock", "Raise the environment's wall clock and resume the run, or re-run it. A run older than the deployment's ceiling allows cannot be resumed."),
+            ExecutionBudgetFault.Depth => new("the run nested sub-workflows past its budget's depth limit", "Raise the environment's sub-workflow depth and resume the run, or flatten the workflow and re-run it."),
             WorkflowExecutorFault.Unhandled => new("the workflow's executor failed in a way nothing in the workflow handled", "The failure itself is in the executor's trace, not on the run. Fix the cause, then resume the run."),
             WorkflowExecutorFault.Unresolvable => new("the workflow version's executor was refused: it is missing, not runnable, or failed verification", "Republish or repair the version in the catalog, then resume the run."),
             WorkflowExecutorFault.TransportUnbound => new("a source the workflow calls has no usable binding in the run's environment", "Add the source's credential binding for the environment, then resume the run."),

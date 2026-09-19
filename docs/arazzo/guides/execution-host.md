@@ -289,7 +289,12 @@ An operator reads a budget in two places. `GET /environments/{name}/executionBud
 <name>`) returns the environment's authored override beside the deployment's ceiling and the effective budget
 resolved from the two, by the same rule a run start applies, so it is what a run started now would be frozen with.
 A run's own `budget` (`GET /runs/{runId}`, CLI: `runs get <runId> --output detail`) is what that run is held to,
-whatever its environment's budget has become since. A faulted run's error type says which limit it hit, and the
+whatever its environment's budget has become since. A run that faulted on its budget is not lost: a resume
+re-budgets it, resolving its budget again from its environment as it is now and proceeding only if the run is inside
+the result, so an environment administrator raises the limit and an operator resumes (the run's `rebudget` says in
+advance whether that would work, and the ceiling and the journal's cap of 500 attempts bound it). Any run can
+instead be re-run from the beginning (`POST /runs/{runId}/rerun`, CLI: `runs rerun <runId>`), with its inputs read
+on the server. A faulted run's error type says which limit it hit, and the
 [REST reference](../reference/control-plane-rest-api.md#fault-error-types) lists the fixed values with what each
 means and what to do about it.
 

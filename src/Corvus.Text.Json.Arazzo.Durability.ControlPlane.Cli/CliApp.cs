@@ -23,6 +23,7 @@ public static class CliApp
                 .WithDescription("List runs (filter by status / workflow id, paged).");
             c.AddCommand<GetCommand>("get")
                 .WithDescription("Show a run's management detail.");
+            c.AddCommand<RerunCommand>("rerun").WithDescription("Start a new run of the same version, in the same environment, with the same inputs (--idempotency-key). The remedy when a run cannot or should not be resumed.");
             c.AddCommand<ResumeCommand>("resume")
                 .WithDescription("Resume a faulted run (RetryFaultedStep / Rewind / Skip / StatePatch).");
             c.AddCommand<CancelCommand>("cancel")

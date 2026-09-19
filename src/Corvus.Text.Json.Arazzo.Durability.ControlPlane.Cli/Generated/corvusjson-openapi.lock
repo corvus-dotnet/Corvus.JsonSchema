@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-09-19T05:07:20.8274749\u002B00:00",
+  "generatedAt": "2026-09-19T07:15:33.2704991\u002B00:00",
   "generatedFiles": [
     "GetAccessGrantsRequest.cs",
     "GetAccessGrantsResponse.cs",
@@ -20,6 +20,8 @@
     "DeleteRunResponse.cs",
     "GetRunStepsRequest.cs",
     "GetRunStepsResponse.cs",
+    "RerunRunRequest.cs",
+    "RerunRunResponse.cs",
     "ResumeRunRequest.cs",
     "ResumeRunResponse.cs",
     "CancelRunRequest.cs",
@@ -1050,6 +1052,9 @@
     "Models/RunId.cs",
     "Models/RunId.Mutable.cs",
     "Models/RunId.JsonSchema.cs",
+    "Models/RunRebudget.cs",
+    "Models/RunRebudget.Mutable.cs",
+    "Models/RunRebudget.JsonSchema.cs",
     "Models/Runner.cs",
     "Models/Runner.Mutable.cs",
     "Models/Runner.JsonSchema.cs",
@@ -1650,6 +1655,6 @@
   "generatorVersion": "1.0.0\u002B32eda52f63230a0c10c87a1d6639ee1a582d6c61",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "4c2c0beb4369dbaca5916584aa97d69214436f44d4faef4c1828ed56ca746fdb",
+  "specFileHash": "e241e37e781e5c50dfd8c7327be2c2feb1ab2e8ae96abe04e1c8ae238a1af99b",
   "specVersion": "3.2"
 }

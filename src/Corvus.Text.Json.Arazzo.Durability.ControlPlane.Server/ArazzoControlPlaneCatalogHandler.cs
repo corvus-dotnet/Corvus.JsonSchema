@@ -23,7 +23,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// metadata records into the generated response models. The package and its individual documents are returned
 /// as their stored JSON; the version-metadata responses carry the HATEOAS links the contract declares.
 /// </summary>
-public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
+public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler, IRunStartAdmission
 {
     private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
 
@@ -530,7 +530,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         return ledger is { } l && l.RootElement.OwnerGroupCount > 0;
     }
 
-    private static Models.QuotaProblem.Source CapacityProblem(in Capacity.ControlPlaneCapacityRejection rejection)
+    internal static Models.QuotaProblem.Source CapacityProblem(in Capacity.ControlPlaneCapacityRejection rejection)
         => Models.QuotaProblem.Build(
             counter: rejection.Counter,
             detail: $"The limit '{rejection.Quota}' for '{rejection.Counter}' is reached ({rejection.Observed} of {rejection.Limit}). This is a standing limit: release capacity rather than waiting.",
@@ -541,24 +541,52 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
 
     // Advisory only. A standing limit clears by releasing capacity, never by waiting, so a longer interval here would
     // imply a promise the limit cannot keep.
-    private static Models.RetryAfterSeconds.Source CapacityRetryAfter() => (Models.RetryAfterSeconds.Source)60L;
+    internal static Models.RetryAfterSeconds.Source CapacityRetryAfter() => (Models.RetryAfterSeconds.Source)60L;
 
     public async ValueTask<StartCatalogWorkflowRunResult> HandleStartCatalogWorkflowRunAsync(StartCatalogWorkflowRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
         int versionNumber = (int)parameters.VersionNumber;
+        var request = new RunStartRequest(
+            baseWorkflowId,
+            versionNumber,
+            parameters.Environment.IsNotUndefined() ? (string)parameters.Environment : null,
+            parameters.Body,
+            parameters.IdempotencyKey.IsNotUndefined() ? (string)parameters.IdempotencyKey : null);
+
+        RunStartOutcome outcome = await this.AdmitAndStartAsync(request, cancellationToken).ConfigureAwait(false);
+        return outcome.Kind switch
+        {
+            RunStartOutcomeKind.Accepted => StartCatalogWorkflowRunResult.Accepted(RunStartOutcome.AcceptedBody(outcome), workspace),
+            RunStartOutcomeKind.VersionNotFound => StartCatalogWorkflowRunResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace),
+            RunStartOutcomeKind.InvalidInputs => StartCatalogWorkflowRunResult.UnprocessableEntity(BuildValidationResult(false, outcome.Errors!), workspace),
+            RunStartOutcomeKind.CapacityExceeded => StartCatalogWorkflowRunResult.TooManyRequests(CapacityProblem(outcome.Capacity!.Value), workspace, CapacityRetryAfter()),
+            _ when outcome.Status == 404 => StartCatalogWorkflowRunResult.NotFound(Problem(outcome.ProblemType!, outcome.Title!, 404, outcome.Detail!), workspace),
+            _ => StartCatalogWorkflowRunResult.Conflict(Problem(outcome.ProblemType!, outcome.Title!, 409, outcome.Detail!), workspace),
+        };
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// The whole of what stands between a request and a run: the version and the environment in the caller's reach,
+    /// the tenancy agreement between them, a runnable version, inputs that validate, availability in the environment,
+    /// a runner that hosts it at the environment's isolation, a live serverless deployment where one is required, and
+    /// the tenant's capacity, checked last and closest to the write. It is one method because every way of starting a
+    /// run owes every one of these, and a second copy is how a start path comes to skip one.
+    /// </remarks>
+    public async ValueTask<RunStartOutcome> AdmitAndStartAsync(RunStartRequest request, CancellationToken cancellationToken)
+    {
+        string baseWorkflowId = request.BaseWorkflowId;
+        int versionNumber = request.VersionNumber;
         AccessContext ctx = this.access.Current();
 
         // §5.5: a run MUST be pinned to a deployment environment. The OpenAPI marks `environment` required (the generated
         // server 400s without it), so this fail-closed guard is defence-in-depth against a direct/internal call — refuse
         // rather than create an environment-less run.
-        if (!parameters.Environment.IsNotUndefined())
+        if (request.Environment is not { Length: > 0 } environment)
         {
-            return StartCatalogWorkflowRunResult.Conflict(
-                Problem("environment-required", "Environment required", 409, "A run must be pinned to a deployment environment (§5.5)."), workspace);
+            return RunStartOutcome.Refused(409, "environment-required", "Environment required", "A run must be pinned to a deployment environment (§5.5).");
         }
-
-        string environment = (string)parameters.Environment;
 
         // Gated by read reach (§14.2): a version outside it reads back null → 404 (triggering is gated by it). The
         // pooled document is held (its fields — runnable/workflowId/securityTags — are owned copies) until the run is
@@ -566,7 +594,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         using ParsedJsonDocument<CatalogVersion>? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, ctx, cancellationToken).ConfigureAwait(false);
         if (version is not { } catalogVersionDoc)
         {
-            return StartCatalogWorkflowRunResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace);
+            return RunStartOutcome.VersionNotFound();
         }
 
         // The pinned environment must exist and be in the caller's reach (non-disclosing 404) when an environment
@@ -582,8 +610,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
             using var environmentDoc = await envStore.GetAsync(environment, ctx, cancellationToken).ConfigureAwait(false);
             if (environmentDoc is null)
             {
-                return StartCatalogWorkflowRunResult.NotFound(
-                    Problem("environment-not-found", "Environment not found", 404, $"Environment '{environment}' does not exist or is outside your reach."), workspace);
+                return RunStartOutcome.Refused(404, "environment-not-found", "Environment not found", $"Environment '{environment}' does not exist or is outside your reach.");
             }
 
             requiredIsolation = environmentDoc.RootElement.RequiredIsolationValue;
@@ -601,22 +628,16 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
             // owner group, and the counter is the environment's.
             if (!OwnerGroupTag.Agrees(catalogVersionDoc.RootElement.SecurityTagsValue, environmentDoc.RootElement, this.access.OwnerGroupTagKeyUtf8))
             {
-                GovernanceAudit.Mutation(this.auditLogger, "run.start", this.AuditActor(), RunTargetKind, (string)catalogVersionDoc.RootElement.WorkflowId, TenancyAgreement.RefusedOutcome, environment);
-                return StartCatalogWorkflowRunResult.Conflict(
-                    Problem(
-                        TenancyAgreement.ProblemType,
-                        TenancyAgreement.Title,
-                        409,
-                        TenancyAgreement.Detail(baseWorkflowId, versionNumber, catalogVersionDoc.RootElement.SecurityTagsValue, environment, environmentDoc.RootElement, this.access.OwnerGroupTagKeyUtf8)),
-                    workspace);
+                GovernanceAudit.Mutation(this.auditLogger, request.AuditAction, this.AuditActor(), RunTargetKind, (string)catalogVersionDoc.RootElement.WorkflowId, TenancyAgreement.RefusedOutcome, environment);
+                return RunStartOutcome.Refused(409, TenancyAgreement.ProblemType, TenancyAgreement.Title,
+                        TenancyAgreement.Detail(baseWorkflowId, versionNumber, catalogVersionDoc.RootElement.SecurityTagsValue, environment, environmentDoc.RootElement, this.access.OwnerGroupTagKeyUtf8));
             }
         }
 
         CatalogVersion catalogVersion = catalogVersionDoc.RootElement;
         if (!(bool)catalogVersion.Runnable)
         {
-            return StartCatalogWorkflowRunResult.Conflict(
-                Problem("not-runnable", "Version not runnable", 409, $"Version {versionNumber} of '{baseWorkflowId}' carries no compiled executor; it cannot be run."), workspace);
+            return RunStartOutcome.Refused(409, "not-runnable", "Version not runnable", $"Version {versionNumber} of '{baseWorkflowId}' carries no compiled executor; it cannot be run.");
         }
 
         // Validate the inputs against the version's baked inputs schema (when it declares one).
@@ -625,13 +646,13 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         string cacheKey = $"{baseWorkflowId}/{versionNumber}/inputs/{workflowId}//";
         (SchemaResolution resolution, ValidatorSchema schema) = await this.ResolveSchemaAsync(baseWorkflowId, versionNumber, target, cacheKey, ctx, cancellationToken).ConfigureAwait(false);
 
-        Corvus.Text.Json.JsonElement inputs = parameters.Body;
+        Corvus.Text.Json.JsonElement inputs = request.Inputs;
         if (resolution == SchemaResolution.Resolved)
         {
             (bool valid, IReadOnlyList<(string InstancePath, string Message, string SchemaLocation)> errors) = Validate(schema, in inputs);
             if (!valid)
             {
-                return StartCatalogWorkflowRunResult.UnprocessableEntity(BuildValidationResult(valid, errors), workspace);
+                return RunStartOutcome.InvalidInputs(errors);
             }
         }
 
@@ -641,8 +662,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
             using var availabilityEntry = await availStore.GetAsync(baseWorkflowId, versionNumber, environment, cancellationToken).ConfigureAwait(false);
             if (availabilityEntry is null)
             {
-                return StartCatalogWorkflowRunResult.Conflict(
-                    Problem("not-available", "Version not available in environment", 409, $"Version {versionNumber} of '{baseWorkflowId}' is not available in environment '{environment}' (§7.8); make it available and retry."), workspace);
+                return RunStartOutcome.Refused(409, "not-available", "Version not available in environment", $"Version {versionNumber} of '{baseWorkflowId}' is not available in environment '{environment}' (§7.8); make it available and retry.");
             }
         }
 
@@ -650,10 +670,9 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         // a run accepted with no runner to execute it would sit Pending indefinitely, so refuse it up front with a 409.
         if (!await this.runners.IsVersionHostedAsync(baseWorkflowId, versionNumber, requiredIsolation, cancellationToken).ConfigureAwait(false))
         {
-            return StartCatalogWorkflowRunResult.Conflict(
-                Problem("no-runner", "No hosting runner", 409, requiredIsolation == RunIsolationModel.Isolated
+            return RunStartOutcome.Refused(409, "no-runner", "No hosting runner", requiredIsolation == RunIsolationModel.Isolated
                     ? $"No registered runner currently hosts version {versionNumber} of '{baseWorkflowId}' with the {requiredIsolation} isolation environment '{environment}' requires; start an isolated-backend runner that hosts it and retry."
-                    : $"No registered runner currently hosts version {versionNumber} of '{baseWorkflowId}'; start a runner that hosts it and retry."), workspace);
+                    : $"No registered runner currently hosts version {versionNumber} of '{baseWorkflowId}'; start a runner that hosts it and retry.");
         }
 
         // Dispatch-ready gate (ADR 0055, ADR 0059): an Isolated environment runs a version through a serverless function
@@ -666,8 +685,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
         if (requiredIsolation == RunIsolationModel.Isolated && this.deployments is { } deploymentStore
             && !await deploymentStore.IsDeployedAsync(baseWorkflowId, versionNumber, environment, requiredRuntimeIdentifier, cancellationToken).ConfigureAwait(false))
         {
-            return StartCatalogWorkflowRunResult.Conflict(
-                Problem("not-deployed", "Serverless function not deployed", 409, $"Version {versionNumber} of '{baseWorkflowId}' has no deployed {requiredRuntimeIdentifier} serverless function for environment '{environment}' (ADR 0059); its build or deploy is queued, in progress, or failed. Retry once it is deployed."), workspace);
+            return RunStartOutcome.Refused(409, "not-deployed", "Serverless function not deployed", $"Version {versionNumber} of '{baseWorkflowId}' has no deployed {requiredRuntimeIdentifier} serverless function for environment '{environment}' (ADR 0059); its build or deploy is queued, in progress, or failed. Retry once it is deployed.");
         }
 
         // A version with no inputs schema (SchemaMissing) accepts any inputs. The run inherits the version's
@@ -706,9 +724,8 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
                 // admitted any owner group that is every environment and the deployment counter is the aggregate; once
                 // it has, charging such a run to the shared counter would let it escape the per-tenant bound, so the
                 // start fails closed.
-                GovernanceAudit.Mutation(this.auditLogger, "run.start", this.AuditActor(), RunTargetKind, workflowId, "refused-tenancy-unresolvable", environment);
-                return StartCatalogWorkflowRunResult.Conflict(
-                    Problem("tenancy-unresolvable", "Tenant unresolvable", 409, $"Environment '{environment}' carries no owner group in a tenant-aware deployment, so a run there cannot be charged to a tenant."), workspace);
+                GovernanceAudit.Mutation(this.auditLogger, request.AuditAction, this.AuditActor(), RunTargetKind, workflowId, "refused-tenancy-unresolvable", environment);
+                return RunStartOutcome.Refused(409, "tenancy-unresolvable", "Tenant unresolvable", $"Environment '{environment}' carries no owner group in a tenant-aware deployment, so a run there cannot be charged to a tenant.");
             }
             else
             {
@@ -720,18 +737,18 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
             // it in preference to the storage limit points the caller at the one that will clear.
             if (await guard.TryAdmitAsync(Capacity.ControlPlaneCapacityKind.ConcurrentRuns, counter, countScope, cancellationToken).ConfigureAwait(false) is { } busy)
             {
-                return StartCatalogWorkflowRunResult.TooManyRequests(CapacityProblem(busy), workspace, CapacityRetryAfter());
+                return RunStartOutcome.CapacityExceeded(busy);
             }
 
             if (await guard.TryAdmitAsync(Capacity.ControlPlaneCapacityKind.StoredRuns, counter, countScope, cancellationToken).ConfigureAwait(false) is { } full)
             {
-                return StartCatalogWorkflowRunResult.TooManyRequests(CapacityProblem(full), workspace, CapacityRetryAfter());
+                return RunStartOutcome.CapacityExceeded(full);
             }
         }
 
         WorkflowRunId runId;
         string outcome = "started";
-        if (parameters.IdempotencyKey.IsNotUndefined() && (string)parameters.IdempotencyKey is { Length: > 0 } idempotencyKey)
+        if (request.IdempotencyKey is { Length: > 0 } idempotencyKey)
         {
             try
             {
@@ -743,24 +760,18 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
             {
                 // The derived id is occupied by a run that is not this start (ADR 0065 §9). Answering success with
                 // that run's id is exactly the substitution the keyed derivation exists to prevent, so refuse.
-                return StartCatalogWorkflowRunResult.Conflict(
-                    Problem("idempotency-collision", "Idempotency key collision", 409, "The run id derived for this idempotency key is occupied by a run that is not this start. Retry with a different key."), workspace);
+                return RunStartOutcome.Refused(409, "idempotency-collision", "Idempotency key collision", "The run id derived for this idempotency key is occupied by a run that is not this start. Retry with a different key.");
             }
         }
         else
         {
-            runId = await this.management.StartAsync(workflowId, inputs, correlationId: null, tags: default, securityTags: catalogVersion.SecurityTagsValue, environment: environment, cancellationToken).ConfigureAwait(false);
+            runId = await this.management.StartAsync(workflowId, inputs, correlationId: null, tags: request.Tags, securityTags: catalogVersion.SecurityTagsValue, environment: environment, cancellationToken, request.RerunOf).ConfigureAwait(false);
         }
 
         // Starting a run is a governed action (ADR 0038): audited with the starting actor and the environment the run is
         // pinned to; an idempotent start that found its run already running audits as reused.
-        GovernanceAudit.Mutation(this.auditLogger, "run.start", this.AuditActor(), RunTargetKind, runId.Value, outcome, environment);
-        return StartCatalogWorkflowRunResult.Accepted(
-            new Models.WorkflowRunAccepted.Source((ref Models.WorkflowRunAccepted.Builder b) => b.Create(
-                runId: runId.Value,
-                status: WorkflowRunStatus.Pending.ToString(),
-                workflowId: workflowId)),
-            workspace);
+        GovernanceAudit.Mutation(this.auditLogger, request.AuditAction, this.AuditActor(), RunTargetKind, request.RerunOf is { } original ? $"{runId.Value} (rerun of {original})" : runId.Value, outcome, environment);
+        return RunStartOutcome.Accepted(runId, workflowId);
     }
 
     /// <summary>How a target schema resolved from a version's package.</summary>
@@ -870,7 +881,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
     // The outcome threads itself through as the build context so none of the three levels captures. A validation
     // response carries up to 200 errors, and the closure form allocated a display class for the result, one for the
     // array, and one more per error.
-    private static Models.ValidationResult.Source<ValidationOutcome> BuildValidationResult(bool valid, IReadOnlyList<(string InstancePath, string Message, string SchemaLocation)> errors)
+    internal static Models.ValidationResult.Source<ValidationOutcome> BuildValidationResult(bool valid, IReadOnlyList<(string InstancePath, string Message, string SchemaLocation)> errors)
         => Models.ValidationResult.Build(new ValidationOutcome(valid, errors), BuildValidationResultValue);
 
     private static void BuildValidationResultValue(in ValidationOutcome outcome, ref Models.ValidationResult.Builder b)
@@ -1111,7 +1122,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler
             type: ProblemBase + type);
 
     /// <summary>A validation verdict and its errors, as the context a validation response builds from.</summary>
-    private readonly record struct ValidationOutcome(
+    internal readonly record struct ValidationOutcome(
         bool Valid,
         IReadOnlyList<(string InstancePath, string Message, string SchemaLocation)> Errors);
 }

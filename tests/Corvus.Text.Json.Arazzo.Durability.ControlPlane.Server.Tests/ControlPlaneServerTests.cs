@@ -304,7 +304,9 @@ public sealed class ControlPlaneServerTests
     [TestMethod]
     public async Task Resume_of_a_run_that_exhausted_its_budget_returns_409_budget_exhausted()
     {
-        // ADR 0068: a budget fault is terminal; the remedy is a new run under a considered budget, not a retry.
+        // ADR 0068: a run faulted on its budget and still outside the budget a resume would give it is refused, and
+        // told apart from the ordinary not-resumable refusal because the remedy differs. This run carries no budget
+        // to resolve again. The re-budgeting resume is proved in ResumeRun_re_budgets_a_run_faulted_on_its_budget.
         Host host = await StartAsync();
         await using (host.App)
         {
@@ -1132,6 +1134,229 @@ public sealed class ControlPlaneServerTests
         }
 
         await app.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task RerunRun_starts_a_new_run_of_the_same_version_environment_and_inputs_without_disclosing_them()
+    {
+        await using RerunHost host = await RerunHost.StartAsync();
+        string original = await host.StartRunAsync();
+
+        HttpResponseMessage rerun = await host.Client.PostAsync($"/runs/{original}/rerun", null);
+
+        rerun.StatusCode.ShouldBe(HttpStatusCode.Accepted);
+        string body = await rerun.Content.ReadAsStringAsync();
+        string rerunId;
+        using (Stj.JsonDocument accepted = Stj.JsonDocument.Parse(body))
+        {
+            rerunId = accepted.RootElement.GetProperty("runId").GetString()!;
+            accepted.RootElement.GetProperty("workflowId").GetString().ShouldBe("flow-v1");
+        }
+
+        rerunId.ShouldNotBe(original);
+
+        // The inputs were read on the server and went nowhere else: not in the acknowledgement, not on either run.
+        body.ShouldNotContain("petId");
+        string detail = await (await host.Client.GetAsync($"/runs/{rerunId}")).Content.ReadAsStringAsync();
+        detail.ShouldNotContain("petId");
+        using (Stj.JsonDocument run = Stj.JsonDocument.Parse(detail))
+        {
+            run.RootElement.GetProperty("rerunOf").GetString().ShouldBe(original);
+            run.RootElement.GetProperty("environment").GetString().ShouldBe("prod");
+        }
+
+        // And they are the same inputs, on a run of its own: a new correlation, a fresh budget.
+        using WorkflowCheckpointState? first = await host.Management.LoadStateAsync(original, AccessContext.System, default);
+        using WorkflowCheckpointState? second = await host.Management.LoadStateAsync(rerunId, AccessContext.System, default);
+        second!.Inputs.GetProperty("petId"u8).GetInt32().ShouldBe(5);
+        second.WorkflowId.ShouldBe(first!.WorkflowId);
+        second.RerunOf.ShouldBe(original);
+        first.RerunOf.ShouldBeNull();
+        second.Budget.ShouldNotBeNull();
+    }
+
+    [TestMethod]
+    public async Task RerunRun_goes_through_the_same_admission_as_a_start()
+    {
+        // The version is withdrawn from the environment after the original ran. A start would be refused, so a re-run
+        // is: one chain, not a second copy that forgot a gate.
+        await using RerunHost host = await RerunHost.StartAsync();
+        string original = await host.StartRunAsync();
+        (await host.Availability.WithdrawAsync("flow", 1, "prod", default)).ShouldBeTrue();
+
+        HttpResponseMessage rerun = await host.Client.PostAsync($"/runs/{original}/rerun", null);
+
+        rerun.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        using Stj.JsonDocument problem = await ReadJsonAsync(rerun);
+        problem.RootElement.GetProperty("type").GetString()!.ShouldEndWith("not-available");
+    }
+
+    [TestMethod]
+    public async Task RerunRun_is_idempotent_under_an_Idempotency_Key_header()
+    {
+        await using RerunHost host = await RerunHost.StartAsync();
+        string original = await host.StartRunAsync();
+
+        string first = await RerunWithKeyAsync(host.Client, original, "again-1");
+        string second = await RerunWithKeyAsync(host.Client, original, "again-1");
+
+        second.ShouldBe(first);
+
+        static async Task<string> RerunWithKeyAsync(HttpClient client, string runId, string key)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"/runs/{runId}/rerun");
+            request.Headers.Add("Idempotency-Key", key);
+            HttpResponseMessage response = await client.SendAsync(request);
+            response.StatusCode.ShouldBe(HttpStatusCode.Accepted);
+            using Stj.JsonDocument accepted = await ReadJsonAsync(response);
+            return accepted.RootElement.GetProperty("runId").GetString()!;
+        }
+    }
+
+    [TestMethod]
+    public async Task RerunRun_refuses_a_run_that_is_not_of_a_catalogued_version_and_a_run_that_is_not_there()
+    {
+        await using RerunHost host = await RerunHost.StartAsync();
+        using (WorkflowRun bare = WorkflowRun.CreateNew(host.RunStore, "0123456789abcdef0123456789abcdef", "not-versioned", default, "prod"))
+        {
+            await bare.EnqueueAsync(default);
+        }
+
+        HttpResponseMessage notVersioned = await host.Client.PostAsync("/runs/0123456789abcdef0123456789abcdef/rerun", null);
+        notVersioned.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        using (Stj.JsonDocument problem = await ReadJsonAsync(notVersioned))
+        {
+            problem.RootElement.GetProperty("type").GetString()!.ShouldEndWith("not-rerunnable");
+        }
+
+        (await host.Client.PostAsync("/runs/ffffffffffffffffffffffffffffffff/rerun", null)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [TestMethod]
+    public async Task ResumeRun_re_budgets_a_run_faulted_on_its_budget_and_refuses_while_it_is_still_outside_it()
+    {
+        await using RerunHost host = await RerunHost.StartAsync(budgetJson: """{"maxSteps":2}""");
+        const string RunId = "abcdefabcdefabcdefabcdefabcdefab";
+        using (WorkflowRun run = WorkflowRun.CreateNew(host.RunStore, RunId, "flow-v1", default, "prod", host.Clock, budget: new ExecutionBudget(2, TimeSpan.FromHours(24), 8, TimeSpan.FromHours(1), ExecutionBudget.DefaultStepTimeout, ExecutionBudget.DefaultMaxResponseBytes)))
+        {
+            await run.BeginStepAsync("a", default);
+            run.RecordStep("a", WorkflowStepStatus.Succeeded, 1, T0, T0);
+            await run.BeginStepAsync("b", default);
+            run.RecordStep("b", WorkflowStepStatus.Succeeded, 1, T0, T0);
+            await run.CheckpointAsync(2, default);
+            await Should.ThrowAsync<Exception>(async () => await run.BeginStepAsync("c", default));
+        }
+
+        // The run says in advance that a resume would not run, and the resume is refused as budget-exhausted.
+        using (Stj.JsonDocument before = await ReadJsonAsync(await host.Client.GetAsync($"/runs/{RunId}")))
+        {
+            before.RootElement.GetProperty("rebudget").GetProperty("resumable").GetBoolean().ShouldBeFalse();
+            before.RootElement.GetProperty("rebudget").GetProperty("effective").GetProperty("maxSteps").GetInt32().ShouldBe(2);
+        }
+
+        HttpResponseMessage refused = await host.Client.PostAsync($"/runs/{RunId}/resume", new StringContent("""{"mode":"RetryFaultedStep"}""", Encoding.UTF8, "application/json"));
+        refused.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        using (Stj.JsonDocument problem = await ReadJsonAsync(refused))
+        {
+            problem.RootElement.GetProperty("type").GetString()!.ShouldEndWith("budget-exhausted");
+            problem.RootElement.GetProperty("detail").GetString()!.ShouldContain("environment 'prod'");
+        }
+
+        // The environment's limit is raised. The run now says it is resumable, and the resume runs it on.
+        await host.SetBudgetAsync("""{"maxSteps":10}""");
+        using (Stj.JsonDocument after = await ReadJsonAsync(await host.Client.GetAsync($"/runs/{RunId}")))
+        {
+            after.RootElement.GetProperty("rebudget").GetProperty("resumable").GetBoolean().ShouldBeTrue();
+        }
+
+        HttpResponseMessage resumed = await host.Client.PostAsync($"/runs/{RunId}/resume", new StringContent("""{"mode":"RetryFaultedStep"}""", Encoding.UTF8, "application/json"));
+        resumed.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument run = await ReadJsonAsync(resumed))
+        {
+            run.RootElement.GetProperty("status").GetString().ShouldBe("Completed");
+            run.RootElement.GetProperty("budget").GetProperty("maxSteps").GetInt32().ShouldBe(10);
+            run.RootElement.TryGetProperty("rebudget", out _).ShouldBeFalse();
+        }
+    }
+
+    // A control plane over in-memory stores with one runnable version, available in one environment, hosted by a runner.
+    private sealed class RerunHost : IAsyncDisposable
+    {
+        private readonly WebApplication app;
+        private readonly Corvus.Text.Json.Arazzo.Durability.Environments.InMemoryEnvironmentStore environments;
+
+        private RerunHost(WebApplication app, HttpClient client, SecuredWorkflowManagement management, InMemoryWorkflowStateStore runStore, Corvus.Text.Json.Arazzo.Durability.Availability.InMemoryAvailabilityStore availability, Corvus.Text.Json.Arazzo.Durability.Environments.InMemoryEnvironmentStore environments, MutableClock clock)
+        {
+            this.app = app;
+            this.Client = client;
+            this.Management = management;
+            this.RunStore = runStore;
+            this.Availability = availability;
+            this.environments = environments;
+            this.Clock = clock;
+        }
+
+        public HttpClient Client { get; }
+
+        public SecuredWorkflowManagement Management { get; }
+
+        public InMemoryWorkflowStateStore RunStore { get; }
+
+        public Corvus.Text.Json.Arazzo.Durability.Availability.InMemoryAvailabilityStore Availability { get; }
+
+        public MutableClock Clock { get; }
+
+        public static async Task<RerunHost> StartAsync(string budgetJson = """{"maxSteps":25}""")
+        {
+            var clock = new MutableClock(T0);
+            var runStore = new InMemoryWorkflowStateStore(clock);
+            var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
+            var environments = new Corvus.Text.Json.Arazzo.Durability.Environments.InMemoryEnvironmentStore(clock);
+            var availability = new Corvus.Text.Json.Arazzo.Durability.Availability.InMemoryAvailabilityStore(clock);
+            var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock, runDerivation: TestDerivation, environments: environments);
+            var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
+            await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
+
+            WebApplicationBuilder builder = WebApplication.CreateBuilder();
+            builder.WebHost.UseTestServer();
+            builder.Logging.ClearProviders();
+            WebApplication app = builder.Build();
+            var runners = new InMemoryRunnerRegistry();
+            app.MapArazzoControlPlane(management, catalog, runners, ControlPlaneSecurityMode.Open, environmentStore: environments, availabilityStore: availability);
+            await app.StartAsync();
+            await runners.RegisterAsync(Runner("flow", 1), default);
+
+            var host = new RerunHost(app, app.GetTestClient(), management, runStore, availability, environments, clock);
+            await host.SetBudgetAsync(budgetJson, add: true);
+            (await availability.MakeAvailableAsync("flow", 1, "prod", "ops", default)).Entry.Dispose();
+            return host;
+        }
+
+        public async Task<string> StartRunAsync()
+        {
+            HttpResponseMessage accepted = await ControlPlaneServerTests.StartAsync(this.Client, "flow", "prod");
+            accepted.StatusCode.ShouldBe(HttpStatusCode.Accepted);
+            using Stj.JsonDocument doc = await ReadJsonAsync(accepted);
+            return doc.RootElement.GetProperty("runId").GetString()!;
+        }
+
+        public async Task SetBudgetAsync(string budgetJson, bool add = false)
+        {
+            using Corvus.Text.Json.ParsedJsonDocument<Corvus.Text.Json.JsonElement> seed = Corvus.Text.Json.ParsedJsonDocument<Corvus.Text.Json.JsonElement>.Parse(
+                Encoding.UTF8.GetBytes("{\"name\":\"prod\",\"executionBudget\":" + budgetJson + "}"));
+            using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Environments.Environment> draft = Corvus.Text.Json.Arazzo.Durability.Environments.Environment.Draft(
+                seed.RootElement.GetProperty("name"u8), default, default, default, executionBudget: seed.RootElement.GetProperty("executionBudget"u8));
+            if (add)
+            {
+                (await this.environments.AddAsync(draft.RootElement, "ops", default)).Dispose();
+            }
+            else
+            {
+                (await this.environments.UpdateAsync("prod", draft.RootElement, WorkflowEtag.None, "ops", AccessContext.System, default))!.Dispose();
+            }
+        }
+
+        public async ValueTask DisposeAsync() => await this.app.DisposeAsync();
     }
 
     private static (int MaxSteps, long WallClockSeconds, int Depth, long RetryAfterCeilingSeconds, long StepTimeoutSeconds, long MaxResponseBytes) BudgetOf(Stj.JsonElement budget)

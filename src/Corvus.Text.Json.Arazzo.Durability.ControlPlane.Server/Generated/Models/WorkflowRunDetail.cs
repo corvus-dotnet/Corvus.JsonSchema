@@ -119,7 +119,7 @@ public readonly partial struct WorkflowRunDetail
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The execution budget resolved into the run when it started and frozen with it (ADR 0068): the limits this run is held to, whatever its environment&#39;s budget has become since. Absent on a run that carries none, which is the scheduler&#39;s.
+    /// The execution budget frozen into the run (ADR 0068): the limits this run is held to, whatever its environment&#39;s budget has become since. It is resolved when the run starts, and again only by a resume that re-budgets a run faulted on its budget. Absent on a run that carries none, which is the scheduler&#39;s.
     /// </para>
     /// <para>
     /// An execution budget with every limit decided (ADR 0068): a deployment&#39;s ceiling, the budget in effect for an environment, or the budget frozen into a run. The limits are those of `ExecutionBudget`, in the same units, and all six are always present.
@@ -289,6 +289,54 @@ public readonly partial struct WorkflowRunDetail
         get
         {
             if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>rebudget</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Present only on a run faulted on its budget: what a resume would do for it now.
+    /// </para>
+    /// <para>
+    /// What a resume would do for a run that faulted on its execution budget (ADR 0068). A resume of such a run re-resolves its budget as a start would (the deployment&#39;s ceiling, tightened by the environment&#39;s current override) and proceeds only if the run is inside the result. So the remedy for a budget fault is to raise the environment&#39;s limit and resume, which keeps the work already done, or to re-run.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunRebudget Rebudget
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RebudgetUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunRebudget value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>rerunOf</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The run this run re-runs (see `rerunRun`). Absent on a run started in its own right.
+    /// </para>
+    /// <para>
+    /// A run id: exactly 32 lowercase hexadecimal characters (ADR 0065 &#167;9), validated at every ingress before any store touch. The grammar makes 128 bits of entropy structurally provable, satisfies every backend&#39;s key constraint by construction, and bounds the covert-channel width to the id&#39;s own entropy. Debug runs are runs, so a debug-run id carries the same grammar.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId RerunOf
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RerunOfUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.RunId value))
             {
                 return value;
             }
@@ -696,6 +744,16 @@ public readonly partial struct WorkflowRunDetail
         public const string Id = "id";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="Rebudget"/>.
+        /// </summary>
+        public const string Rebudget = "rebudget";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="RerunOf"/>.
+        /// </summary>
+        public const string RerunOf = "rerunOf";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Status"/>.
         /// </summary>
         public const string Status = "status";
@@ -759,6 +817,16 @@ public readonly partial struct WorkflowRunDetail
         /// Gets the JSON property name for <see cref="Id"/>.
         /// </summary>
         public static ReadOnlySpan<byte> IdUtf8 => "id"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Rebudget"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RebudgetUtf8 => "rebudget"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="RerunOf"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RerunOfUtf8 => "rerunOf"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Status"/>.
@@ -829,6 +897,16 @@ public readonly partial struct WorkflowRunDetail
         public static ReadOnlySpan<byte> Id => "id"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Rebudget"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Rebudget => "rebudget"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="RerunOf"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RerunOf => "rerunOf"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Status"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Status => "status"u8;
@@ -895,6 +973,16 @@ public readonly partial struct WorkflowRunDetail
         /// Gets the pre-baked property name blob for <see cref="Id"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Id => [0x45, 0x00, 0x00, 0x00, 0x22, 0x69, 0x64, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Rebudget"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Rebudget => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x62, 0x75, 0x64, 0x67, 0x65, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="RerunOf"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RerunOf => [0x95, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x72, 0x75, 0x6E, 0x4F, 0x66, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Status"/>.

@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client;
 /// <summary>
 /// Request type for the ResumeRun operation.
 /// </summary>
-/// <remarks>Resumes a faulted run, re-executing it from its last checkpoint (the faulted step). Only a run in the `Faulted` state can be resumed. Returns the run's new detail on success (200); a run that does not exist or is out of read reach is 404, a readable run outside write reach is 403, and a run that is not in the `Faulted` state conflicts (409).</remarks>
+/// <remarks>Resumes a faulted run, re-executing it from its last checkpoint (the faulted step). Only a run in the `Faulted` state can be resumed. Returns the run's new detail on success (200); a run that does not exist or is out of read reach is 404, a readable run outside write reach is 403, and a run that is not in the `Faulted` state conflicts (409). A run faulted on its execution budget is re-budgeted by the resume (ADR 0068): its budget is resolved again from its environment as it is now, and the resume proceeds only if the run is inside the result, conflicting with 409 `budget-exhausted` otherwise. The run's `rebudget` says which in advance.</remarks>
 public readonly struct ResumeRunRequest : IApiRequest<ResumeRunRequest>
 {
 

@@ -514,6 +514,30 @@ internal sealed class ListCommand : AsyncCommand<ListSettings>
     }
 }
 
+internal sealed class RerunSettings : RunIdSettings
+{
+    [CommandOption("--idempotency-key <KEY>")]
+    [Description("Makes the re-run idempotent: a repeat with the same key starts one run.")]
+    public string? IdempotencyKey { get; init; }
+}
+
+/// <summary>Re-runs a run from the beginning, as a new run of the same version, in the same environment, with the same
+/// inputs. The server reads the inputs from the original, so they never pass through the CLI.</summary>
+internal sealed class RerunCommand : AsyncCommand<RerunSettings>
+{
+    protected override async Task<int> ExecuteAsync(CommandContext context, RerunSettings settings, CancellationToken cancellationToken)
+    {
+        (HttpClient http, HttpClientTransport transport, ApiRunsClient client) = await settings.CreateClientAsync(cancellationToken);
+        using (http)
+        await using (transport)
+        {
+            Models.JsonString.Source key = settings.IdempotencyKey is { Length: > 0 } k ? (Models.JsonString.Source)k : default;
+            await using RerunRunResponse response = await client.RerunRunAsync(settings.RunId, key, cancellationToken);
+            return response.MatchResult(accepted => Output.Print(accepted.ToString()), Output.Problem, Output.Problem, Output.Quota, Output.Validation, Output.Unexpected);
+        }
+    }
+}
+
 internal sealed class GetCommand : AsyncCommand<GetSettings>
 {
     protected override async Task<int> ExecuteAsync(CommandContext context, GetSettings settings, CancellationToken cancellationToken)
@@ -549,6 +573,11 @@ internal sealed class GetCommand : AsyncCommand<GetSettings>
             run.AddRow("Environment", Markup.Escape((string)detail.Environment));
         }
 
+        if (detail.RerunOf.IsNotUndefined())
+        {
+            run.AddRow("Re-run of", Markup.Escape((string)detail.RerunOf));
+        }
+
         run.AddRow("Cursor", Markup.Escape(((long)detail.Cursor).ToString(System.Globalization.CultureInfo.InvariantCulture)));
         run.AddRow("Created", Markup.Escape((string)detail.CreatedAt));
         console.Write(run);
@@ -562,12 +591,30 @@ internal sealed class GetCommand : AsyncCommand<GetSettings>
                 console.MarkupLine($"  {Markup.Escape(error)}: {Markup.Escape(description.Meaning)}.");
                 console.MarkupLine($"  {Markup.Escape(description.Remedy)}");
             }
+
+            // On a budget fault the server says whether a resume would now run, by the rule the resume applies.
+            if (detail.Rebudget.IsNotUndefined())
+            {
+                console.MarkupLine((bool)detail.Rebudget.Resumable
+                    ? "  [green]Resumable now[/]: a resume re-budgets this run from its environment's current budget, shown below as the budget it would be given."
+                    : "  [yellow]Not resumable yet[/]: the run is still outside the budget a resume would give it, shown below. Raise the environment's limit, or re-run.");
+                BudgetLimits offered = BudgetLimits.From(detail.Rebudget.Effective);
+                var offer = new Table().Border(TableBorder.Rounded).Title("Budget a resume would give");
+                offer.AddColumn("Limit");
+                offer.AddColumn("Value");
+                foreach (BudgetLimits.Row row in BudgetLimits.Rows)
+                {
+                    offer.AddRow(row.Label, Markup.Escape(row.Format(offered)));
+                }
+
+                console.Write(offer);
+            }
         }
 
         if (detail.Budget.IsNotUndefined())
         {
             BudgetLimits budget = BudgetLimits.From(detail.Budget);
-            var table = new Table().Border(TableBorder.Rounded).Title("Budget (frozen at start)");
+            var table = new Table().Border(TableBorder.Rounded).Title("Budget (frozen into the run)");
             table.AddColumn("Limit");
             table.AddColumn("Value");
             foreach (BudgetLimits.Row row in BudgetLimits.Rows)
@@ -861,6 +908,12 @@ internal static class Output
     public static int Unexpected(int statusCode)
     {
         Console.Error.WriteLine($"Unexpected response status {statusCode}.");
+        return 1;
+    }
+
+    public static int Quota(Models.QuotaProblem quota)
+    {
+        Console.Error.WriteLine(quota.ToString());
         return 1;
     }
 

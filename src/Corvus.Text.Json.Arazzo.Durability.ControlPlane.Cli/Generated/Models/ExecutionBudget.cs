@@ -16,7 +16,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// An environment&#39;s execution-budget override (ADR 0068). Each limit named here tightens the deployment ceiling for runs pinned to the environment; a limit omitted is the ceiling&#39;s. Fuel, the wall clock and the depth cap bound the run, and the step timeout and the response size bound a single step. An override may only tighten: a limit wider than the deployment ceiling is refused (400). The effective budget is resolved into every run at start and recorded with it, so a later change here does not move a running run&#39;s bound.
+/// An environment&#39;s execution-budget override (ADR 0068). Each limit named here tightens the deployment ceiling for runs pinned to the environment; a limit omitted is the ceiling&#39;s. Fuel, the wall clock and the depth cap bound the run, and the step timeout and the response size bound a single step. An override may only tighten: a limit wider than the deployment ceiling is refused (400). The effective budget is resolved into every run at start and recorded with it, so a later change here does not move a running run&#39;s bound. The one exception is deliberate: a run that faulted on its budget is re-budgeted from the override as it is now when it is resumed.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
