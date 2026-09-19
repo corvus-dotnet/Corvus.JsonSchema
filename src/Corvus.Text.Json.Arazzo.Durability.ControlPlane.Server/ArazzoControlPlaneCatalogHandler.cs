@@ -649,7 +649,10 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler, IRunS
         Corvus.Text.Json.JsonElement inputs = request.Inputs;
         if (resolution == SchemaResolution.Resolved)
         {
-            (bool valid, IReadOnlyList<(string InstancePath, string Message, string SchemaLocation)> errors) = Validate(schema, in inputs);
+            // A start with no inputs at all (a schedule that stores none) is validated as the empty object it amounts
+            // to, so a version that requires inputs refuses it and one that does not admits it.
+            Corvus.Text.Json.JsonElement validated = inputs.ValueKind == Corvus.Text.Json.JsonValueKind.Undefined ? NoInputs.RootElement : inputs;
+            (bool valid, IReadOnlyList<(string InstancePath, string Message, string SchemaLocation)> errors) = Validate(schema, in validated);
             if (!valid)
             {
                 return RunStartOutcome.InvalidInputs(errors);
@@ -775,6 +778,9 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler, IRunS
     }
 
     /// <summary>How a target schema resolved from a version's package.</summary>
+    // Held for the life of the process: what absent inputs are validated as.
+    private static readonly ParsedJsonDocument<Corvus.Text.Json.JsonElement> NoInputs = ParsedJsonDocument<Corvus.Text.Json.JsonElement>.Parse("{}"u8.ToArray());
+
     private enum SchemaResolution
     {
         /// <summary>The catalog version does not exist.</summary>

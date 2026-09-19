@@ -48,7 +48,7 @@ public static class DeployedFunctionUrlResolver
 
         // Map the run to its deploy target. The workflow id is the versioned id the catalog assigns and the in-process
         // resolver parses; a non-versioned id cannot name a deployment (a serverless run always carries one).
-        if (!TryParseVersionedId(run.WorkflowId, out string baseWorkflowId, out int versionNumber))
+        if (!WorkflowVersionId.TryParse(run.WorkflowId, out string baseWorkflowId, out int versionNumber))
         {
             ServerThrowHelper.ThrowRunWorkflowIdNotVersioned(run.Id.Value, run.WorkflowId);
         }
@@ -82,21 +82,5 @@ public static class DeployedFunctionUrlResolver
         }
 
         return new Uri(functionUrl);
-    }
-
-    // Splits the versioned workflow id {baseWorkflowId}-v{versionNumber} into its parts, matching the in-process resolver's
-    // convention. Returns false (rather than throwing) so the caller throws through ServerThrowHelper.
-    private static bool TryParseVersionedId(string workflowId, out string baseWorkflowId, out int versionNumber)
-    {
-        int suffix = workflowId.LastIndexOf("-v", StringComparison.Ordinal);
-        if (suffix > 0 && int.TryParse(workflowId.AsSpan(suffix + 2), out versionNumber))
-        {
-            baseWorkflowId = workflowId[..suffix];
-            return true;
-        }
-
-        baseWorkflowId = string.Empty;
-        versionNumber = 0;
-        return false;
     }
 }

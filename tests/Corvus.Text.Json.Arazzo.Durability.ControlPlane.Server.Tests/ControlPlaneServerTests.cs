@@ -1007,7 +1007,8 @@ public sealed class ControlPlaneServerTests
         using HttpClient client = app.GetTestClient();
         await runnerRegistry.RegisterAsync(Runner("flow", 1, environment: "prod", servesSchedules: true), default);
 
-        const string create = """{"scheduleId":"nightly","environment":"prod","targetBaseWorkflowId":"flow","targetVersionNumber":1,"cron":"0 9 * * *"}""";
+        // The target requires a petId. A run-now is a start and validates its inputs, so the schedule carries valid ones.
+        const string create = """{"scheduleId":"nightly","environment":"prod","targetBaseWorkflowId":"flow","targetVersionNumber":1,"cron":"0 9 * * *","targetInputs":{"petId":5}}""";
         (await client.PostAsync("/schedules", new StringContent(create, Encoding.UTF8, "application/json"))).StatusCode.ShouldBe(HttpStatusCode.Created);
         (await client.PostAsync("/schedules/nightly/run-now", new StringContent(string.Empty))).StatusCode.ShouldBe(HttpStatusCode.Accepted);
 
@@ -1173,6 +1174,13 @@ public sealed class ControlPlaneServerTests
         second.RerunOf.ShouldBe(original);
         first.RerunOf.ShouldBeNull();
         second.Budget.ShouldNotBeNull();
+
+        // A re-run repeats the workflow's effects on its sources, so it is a governed act: recorded with both runs.
+        AuditRecord rerunAudit = host.Audit.Records.Single(r => r.Action == "run.rerun");
+        rerunAudit.TargetId.ShouldContain(rerunId);
+        rerunAudit.TargetId.ShouldContain(original);
+        rerunAudit.Outcome.ShouldBe("started");
+        rerunAudit.Environment.ShouldBe("prod");
     }
 
     [TestMethod]
@@ -1277,6 +1285,151 @@ public sealed class ControlPlaneServerTests
             run.RootElement.GetProperty("budget").GetProperty("maxSteps").GetInt32().ShouldBe(10);
             run.RootElement.TryGetProperty("rebudget", out _).ShouldBeFalse();
         }
+
+        // A re-budget widens what a run may cost, so it is recorded as its own act, with what the run was held to and
+        // what it is held to now. The refused resume re-budgeted nothing and recorded nothing.
+        AuditRecord rebudgetAudit = host.Audit.Records.Single(r => r.Action == "run.rebudget");
+        rebudgetAudit.TargetId.ShouldBe(RunId);
+        rebudgetAudit.Outcome.ShouldContain("maxSteps=2,");
+        rebudgetAudit.Outcome.ShouldContain("-> maxSteps=10,");
+        host.Audit.Records.Count(r => r.Action == "run.resume").ShouldBe(1);
+    }
+
+    [TestMethod]
+    public async Task RunScheduleNow_is_refused_at_the_tenants_capacity_as_any_start_is()
+    {
+        // H45: run-now had its own shorter copy of the start checks, with no capacity check in it, so a tenant at its
+        // limit could keep starting runs through a schedule.
+        await using ScheduleHost host = await ScheduleHost.StartAsync(new Capacity.ControlPlaneCapacityOptions { ConcurrentRunsPerTenant = 3 });
+        await host.CreateScheduleAsync("""{"petId":5}""");
+
+        // Fill the tenant's capacity through ordinary starts, however much of it the schedule's own run already holds.
+        HttpStatusCode last = HttpStatusCode.Accepted;
+        for (int i = 0; i < 10 && last == HttpStatusCode.Accepted; i++)
+        {
+            last = (await StartAsync(host.Client, "flow", "development")).StatusCode;
+        }
+
+        last.ShouldBe(HttpStatusCode.TooManyRequests);
+
+        HttpResponseMessage ranNow = await host.Client.PostAsync("/schedules/nightly/run-now", new StringContent(string.Empty));
+        ranNow.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+    }
+
+    [TestMethod]
+    public async Task RunScheduleNow_refuses_stored_inputs_the_target_would_refuse()
+    {
+        await using ScheduleHost host = await ScheduleHost.StartAsync();
+        await host.CreateScheduleAsync("""{"petId":0}""");
+
+        HttpResponseMessage ranNow = await host.Client.PostAsync("/schedules/nightly/run-now", new StringContent(string.Empty));
+
+        ranNow.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+    }
+
+    [TestMethod]
+    public async Task RunScheduleNow_needs_a_runner_at_the_isolation_the_environment_requires()
+    {
+        // The copy assumed in-process isolation. The only runner here is in-process, and the environment requires
+        // isolated execution, so a start is refused and a run-now must be.
+        await using ScheduleHost host = await ScheduleHost.StartAsync(environmentJson: """{"name":"development","requiredIsolation":"Isolated"}""");
+        await host.CreateScheduleAsync("""{"petId":5}""");
+
+        (await StartAsync(host.Client, "flow", "development")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        HttpResponseMessage ranNow = await host.Client.PostAsync("/schedules/nightly/run-now", new StringContent(string.Empty));
+
+        ranNow.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        using Stj.JsonDocument problem = await ReadJsonAsync(ranNow);
+        problem.RootElement.GetProperty("type").GetString()!.ShouldEndWith("no-runner");
+    }
+
+    // A control plane serving schedules, with one runnable version available in one environment.
+    private sealed class ScheduleHost : IAsyncDisposable
+    {
+        private readonly WebApplication app;
+
+        private ScheduleHost(WebApplication app, HttpClient client)
+        {
+            this.app = app;
+            this.Client = client;
+        }
+
+        public HttpClient Client { get; }
+
+        public static async Task<ScheduleHost> StartAsync(Capacity.ControlPlaneCapacityOptions? capacity = null, string environmentJson = """{"name":"development"}""")
+        {
+            var clock = new MutableClock(T0);
+            var runStore = new InMemoryWorkflowStateStore(clock);
+            var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
+            var environments = new Corvus.Text.Json.Arazzo.Durability.Environments.InMemoryEnvironmentStore(clock);
+            var availability = new Corvus.Text.Json.Arazzo.Durability.Availability.InMemoryAvailabilityStore(clock);
+            var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock, runDerivation: TestDerivation, environments: environments);
+            var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
+            await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
+            using (Corvus.Text.Json.ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Environments.Environment> draft =
+                Corvus.Text.Json.ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Environments.Environment>.Parse(Encoding.UTF8.GetBytes(environmentJson)))
+            {
+                (await environments.AddAsync(draft.RootElement, "ops", default)).Dispose();
+            }
+
+            (await availability.MakeAvailableAsync("flow", 1, "development", "ops", default)).Entry.Dispose();
+
+            WebApplicationBuilder builder = WebApplication.CreateBuilder();
+            builder.WebHost.UseTestServer();
+            builder.Logging.ClearProviders();
+            WebApplication app = builder.Build();
+            var runners = new InMemoryRunnerRegistry();
+            app.MapArazzoControlPlane(
+                management, catalog, runners, ControlPlaneSecurityMode.Open,
+                environmentStore: environments, availabilityStore: availability,
+                scheduleRegistry: new Schedules.InMemoryScheduleRegistry(), capacityOptions: capacity);
+            await app.StartAsync();
+            await runners.RegisterAsync(Runner("flow", 1, environment: "development", servesSchedules: true), default);
+            return new ScheduleHost(app, app.GetTestClient());
+        }
+
+        public async Task CreateScheduleAsync(string targetInputsJson)
+        {
+            string body = "{\"scheduleId\":\"nightly\",\"environment\":\"development\",\"targetBaseWorkflowId\":\"flow\",\"targetVersionNumber\":1,\"cron\":\"0 9 * * *\",\"targetInputs\":" + targetInputsJson + "}";
+            HttpResponseMessage created = await this.Client.PostAsync("/schedules", new StringContent(body, Encoding.UTF8, "application/json"));
+            created.StatusCode.ShouldBe(HttpStatusCode.Created);
+        }
+
+        public async ValueTask DisposeAsync() => await this.app.DisposeAsync();
+    }
+
+    // One governance-audit record, as the control plane logs it (GovernanceAudit.Mutation).
+    private sealed record AuditRecord(string Action, string TargetKind, string TargetId, string Outcome, string Environment);
+
+    // Captures the control plane's audit log, which it writes to the "Corvus.Arazzo.Audit" category.
+    private sealed class AuditCapture : ILoggerProvider
+    {
+        private readonly System.Collections.Concurrent.ConcurrentQueue<AuditRecord> records = new();
+
+        public IReadOnlyList<AuditRecord> Records => [.. this.records];
+
+        public ILogger CreateLogger(string categoryName) => categoryName == "Corvus.Arazzo.Audit" ? new Sink(this.records) : Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
+
+        public void Dispose()
+        {
+        }
+
+        private sealed class Sink(System.Collections.Concurrent.ConcurrentQueue<AuditRecord> records) : ILogger
+        {
+            public IDisposable? BeginScope<TState>(TState state)
+                where TState : notnull => null;
+
+            public bool IsEnabled(LogLevel logLevel) => true;
+
+            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+            {
+                if (state is IReadOnlyList<KeyValuePair<string, object?>> values)
+                {
+                    string Value(string name) => values.FirstOrDefault(v => v.Key == name).Value?.ToString() ?? string.Empty;
+                    records.Enqueue(new AuditRecord(Value("Action"), Value("TargetKind"), Value("TargetId"), Value("Outcome"), Value("Environment")));
+                }
+            }
+        }
     }
 
     // A control plane over in-memory stores with one runnable version, available in one environment, hosted by a runner.
@@ -1306,6 +1459,8 @@ public sealed class ControlPlaneServerTests
 
         public MutableClock Clock { get; }
 
+        public AuditCapture Audit { get; private init; } = new();
+
         public static async Task<RerunHost> StartAsync(string budgetJson = """{"maxSteps":25}""")
         {
             var clock = new MutableClock(T0);
@@ -1317,16 +1472,18 @@ public sealed class ControlPlaneServerTests
             var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
             await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default);
 
+            var audit = new AuditCapture();
             WebApplicationBuilder builder = WebApplication.CreateBuilder();
             builder.WebHost.UseTestServer();
             builder.Logging.ClearProviders();
+            builder.Logging.AddProvider(audit);
             WebApplication app = builder.Build();
             var runners = new InMemoryRunnerRegistry();
             app.MapArazzoControlPlane(management, catalog, runners, ControlPlaneSecurityMode.Open, environmentStore: environments, availabilityStore: availability);
             await app.StartAsync();
             await runners.RegisterAsync(Runner("flow", 1), default);
 
-            var host = new RerunHost(app, app.GetTestClient(), management, runStore, availability, environments, clock);
+            var host = new RerunHost(app, app.GetTestClient(), management, runStore, availability, environments, clock) { Audit = audit };
             await host.SetBudgetAsync(budgetJson, add: true);
             (await availability.MakeAvailableAsync("flow", 1, "prod", "ops", default)).Entry.Dispose();
             return host;
@@ -1668,9 +1825,10 @@ public sealed class ControlPlaneServerTests
             doc.RootElement.GetProperty("targetWorkflowId").GetString().ShouldBe("flow-v1");
         }
 
-        // It reads back by its scheduleId, and run-now still fires the target even with no inputs.
+        // It reads back by its scheduleId. Its target requires a petId, so a run-now with no inputs is refused as any
+        // start of that version with no inputs is. It used to be accepted, because run-now validated nothing (H45).
         (await client.GetAsync("/schedules/nightly")).StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await client.PostAsync("/schedules/nightly/run-now", new StringContent(string.Empty))).StatusCode.ShouldBe(HttpStatusCode.Accepted);
+        (await client.PostAsync("/schedules/nightly/run-now", new StringContent(string.Empty))).StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
 
         await app.StopAsync();
     }

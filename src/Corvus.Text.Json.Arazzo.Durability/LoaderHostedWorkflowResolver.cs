@@ -54,16 +54,11 @@ public sealed class LoaderHostedWorkflowResolver : IHostedWorkflowResolver
         _ = await this.ResolveByIdAsync($"{baseWorkflowId}-v{versionNumber}", cancellationToken).ConfigureAwait(false);
     }
 
+    // A run whose workflow id names no version is refused, the same answer on every attempt (WorkflowExecutorFault).
     private static (string BaseWorkflowId, int VersionNumber) ParseVersionedId(string workflowId)
-    {
-        int suffix = workflowId.LastIndexOf("-v", StringComparison.Ordinal);
-        if (suffix > 0 && int.TryParse(workflowId.AsSpan(suffix + 2), out int version))
-        {
-            return (workflowId[..suffix], version);
-        }
-
-        throw ThrowHelper.GetWorkflowIdNotVersionedException(workflowId);
-    }
+        => WorkflowVersionId.TryParse(workflowId, out string baseWorkflowId, out int versionNumber)
+            ? (baseWorkflowId, versionNumber)
+            : throw ThrowHelper.GetWorkflowIdNotVersionedException(workflowId);
 
     [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The in-process resolver loads the version's IL executor through the loader by design, and runs only in in-process (non-AOT, non-trimmed) runner hosts. AOT execution backends use a baked resolver that has the executor at build time (ADR 0055).")]
     [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("AOT", "IL3050", Justification = "The in-process resolver loads the version's IL executor through the loader by design, and runs only in in-process (non-AOT) runner hosts. AOT execution backends use a baked resolver that has the executor at build time (ADR 0055).")]

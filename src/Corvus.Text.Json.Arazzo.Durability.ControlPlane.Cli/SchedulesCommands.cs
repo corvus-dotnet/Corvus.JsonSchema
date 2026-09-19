@@ -239,6 +239,7 @@ internal sealed class SchedulesRunNowCommand : AsyncCommand<ScheduleIdSettings>
                 accepted => Output.Print(accepted.ToString()),
                 Output.Problem,
                 Output.Problem,
+                Output.Quota,
                 Output.Validation,
                 Output.Unexpected);
         }

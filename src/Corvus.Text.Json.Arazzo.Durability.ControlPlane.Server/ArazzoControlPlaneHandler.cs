@@ -193,28 +193,13 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
     // version → not sensitive (the baseline scope and field-level redaction still apply).
     private async ValueTask<bool> IsOutputsSensitiveVersionAsync(string workflowId, CancellationToken cancellationToken)
     {
-        if (this.catalog is null || !TryParseVersionedId(workflowId, out string baseWorkflowId, out int versionNumber))
+        if (this.catalog is null || !WorkflowVersionId.TryParse(workflowId, out string baseWorkflowId, out int versionNumber))
         {
             return false;
         }
 
         using ParsedJsonDocument<CatalogVersion>? version = await this.catalog.GetAsync(baseWorkflowId, versionNumber, AccessContext.System, cancellationToken).ConfigureAwait(false);
         return version is { } v && v.RootElement.IsOutputsSensitive;
-    }
-
-    // Split a versioned workflow id ("{base}-v{n}") into its base id and version number (mirrors HostedWorkflowResumer).
-    private static bool TryParseVersionedId(string workflowId, out string baseWorkflowId, out int versionNumber)
-    {
-        int suffix = workflowId.LastIndexOf("-v", StringComparison.Ordinal);
-        if (suffix > 0 && int.TryParse(workflowId.AsSpan(suffix + 2), out versionNumber))
-        {
-            baseWorkflowId = workflowId[..suffix];
-            return true;
-        }
-
-        baseWorkflowId = string.Empty;
-        versionNumber = 0;
-        return false;
     }
 
     // Rewrite the step journal withholding every step's outputs: each record keeps its stepId and is marked redacted, the
@@ -315,7 +300,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         // is a run of a catalogued version, which is what a re-run starts.
         if (this.startAdmission is not { } admission
             || DraftRuns.IsDraftRun(original.WorkflowId)
-            || !TryParseVersionedId(original.WorkflowId, out string baseWorkflowId, out int versionNumber))
+            || !WorkflowVersionId.TryParse(original.WorkflowId, out string baseWorkflowId, out int versionNumber))
         {
             return RerunRunResult.Conflict(
                 Problem("not-rerunnable", "Run cannot be re-run", 409, $"Run '{runId}' is not a run of a catalogued workflow version, so there is nothing to re-run it from."), workspace);

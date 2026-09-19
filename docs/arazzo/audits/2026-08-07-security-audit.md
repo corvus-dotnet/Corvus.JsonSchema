@@ -439,8 +439,8 @@ item you cannot see directly in the code.
 > scheduled and run only in an environment its own owner group holds, so the population counted is the
 > population charged (ADR 0065). See the
 > [findings ledger](../reference/threat-model.md#12-findings-ledger) (H41). The sibling sweep found
-> that schedule run-now bypasses the operator start's admission entirely, recorded as H45. The finding
-> text is left as measured.
+> that schedule run-now bypasses the operator start's admission entirely, recorded as H45 and since
+> closed: run-now goes through the one start admission (ADR 0072). The finding text is left as measured.
 - **Where:** `RunnerQuotaGate.cs:54-55`; `RunnerAuthorizationBindings.cs:145-155`; `TokenBucketRunnerQuotaGuard.cs:14-20, 31, 132-135`; `StoreControlPlaneCapacityGuard.cs:84, 88-104`; `ControlPlaneRowSecurity.cs:485-489`
 - **Divergence:** ADR 0066 specifies per-tenant quotas. Buckets key on `resolved.Tenant`, read from the environment record's owner-group tag, which is `null` for every runner when environments carry none, putting **every tenant on one counter**. `buckets.Clear()` at 4096 counters forgives every tenant's deficit at once. Capacity counts pass the caller's `AccessContext`, so in `ScopesOnly` and `Open` they count the whole deployment.
 - **Impact:** `UO-8`. One tenant exhausts the shared rate, or trips a deployment-wide cap that refuses starts for everyone. Each admission also costs up to three bounded counts walking up to `limit` rows.

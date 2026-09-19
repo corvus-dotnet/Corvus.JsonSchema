@@ -57,6 +57,8 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
     /// schedules surface is not configured and refuses.</param>
     /// <param name="timeProvider">The clock used to compute each schedule's next occurrence; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="auditLogger">The governance-audit sink for schedule mutations.</param>
+    /// <param name="startAdmission">The admission every run start goes through, which a run-now is. When
+    /// <see langword="null"/> a run-now is refused.</param>
     internal ArazzoControlPlaneSchedulesHandler(
         ISecuredWorkflowManagement management,
         ISecuredWorkflowCatalog catalog,
@@ -66,8 +68,10 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
         IEnvironmentStore? environmentStore = null,
         Schedules.IScheduleRegistry? scheduleRegistry = null,
         TimeProvider? timeProvider = null,
-        ILogger? auditLogger = null)
+        ILogger? auditLogger = null,
+        IRunStartAdmission? startAdmission = null)
     {
+        this.startAdmission = startAdmission;
         ArgumentNullException.ThrowIfNull(management);
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(runners);
@@ -82,6 +86,8 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
         this.timeProvider = timeProvider ?? TimeProvider.System;
         this.auditLogger = auditLogger;
     }
+
+    private readonly IRunStartAdmission? startAdmission;
 
     private AuditSubject AuditActor() => this.access.AuditSubject();
 
@@ -397,72 +403,38 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
 
         WorkflowScheduleInput spec = WorkflowScheduleInput.From(state.Inputs);
         string targetWorkflowId = spec.TargetWorkflowIdValue;
-        string environment = state.Environment ?? string.Empty;
-        (string targetBase, int targetVersion) = ParseVersionedId(targetWorkflowId);
-
-        using ParsedJsonDocument<CatalogVersion>? version = await this.catalog.GetAsync(targetBase, targetVersion, ctx, cancellationToken).ConfigureAwait(false);
-        if (version is not { } versionDoc)
+        if (this.startAdmission is not { } admission || !WorkflowVersionId.TryParse(targetWorkflowId, out string targetBase, out int targetVersion))
         {
-            return RunScheduleNowResult.NotFound(
-                Problem("target-not-found", "Target not found", 404, $"Version {targetVersion} of '{targetBase}' does not exist or is outside your reach."), workspace);
+            return RunScheduleNowResult.Conflict(Problem("not-runnable", "Target not runnable", 409, $"Schedule '{scheduleId}' targets '{targetWorkflowId}', which is not a version this control plane can start."), workspace);
         }
 
-        CatalogVersion catalogVersion = versionDoc.RootElement;
-        if (!(bool)catalogVersion.Runnable)
-        {
-            return RunScheduleNowResult.Conflict(Problem("not-runnable", "Target not runnable", 409, $"Version {targetVersion} of '{targetBase}' carries no compiled executor."), workspace);
-        }
-
-        // Re-checked rather than trusted from create: owner groups are immutable on a live environment, but one deleted
-        // and re-created under another owner group keeps the schedule's name while changing hands (ADR 0065).
-        if (this.environmentStore is { } envStore)
-        {
-            using var environmentDoc = await envStore.GetAsync(environment, ctx, cancellationToken).ConfigureAwait(false);
-            if (environmentDoc is null)
-            {
-                return RunScheduleNowResult.NotFound(
-                    Problem("environment-not-found", "Environment not found", 404, $"Environment '{environment}' does not exist or is outside your reach."), workspace);
-            }
-
-            if (!OwnerGroupTag.Agrees(catalogVersion.SecurityTagsValue, environmentDoc.RootElement, this.access.OwnerGroupTagKeyUtf8))
-            {
-                GovernanceAudit.Mutation(this.auditLogger, "schedule.run-now", this.AuditActor(), TargetKind, scheduleId, TenancyAgreement.RefusedOutcome);
-                return RunScheduleNowResult.Conflict(
-                    Problem(
-                        TenancyAgreement.ProblemType,
-                        TenancyAgreement.Title,
-                        409,
-                        TenancyAgreement.Detail(targetBase, targetVersion, catalogVersion.SecurityTagsValue, environment, environmentDoc.RootElement, this.access.OwnerGroupTagKeyUtf8)),
-                    workspace);
-            }
-        }
-
-        if (this.availabilityStore is { } availStore)
-        {
-            using var availabilityEntry = await availStore.GetAsync(targetBase, targetVersion, environment, cancellationToken).ConfigureAwait(false);
-            if (availabilityEntry is null)
-            {
-                return RunScheduleNowResult.Conflict(Problem("not-available", "Target not available in environment", 409, $"Version {targetVersion} of '{targetBase}' is not available in environment '{environment}' (§7.8)."), workspace);
-            }
-        }
-
-        if (!await this.runners.IsVersionHostedAsync(targetBase, targetVersion, RunIsolationModel.InProcess, cancellationToken).ConfigureAwait(false))
-        {
-            return RunScheduleNowResult.Conflict(Problem("no-runner", "No hosting runner", 409, $"No registered runner currently hosts version {targetVersion} of '{targetBase}'."), workspace);
-        }
-
+        // A run-now is a start, so it owes everything a start owes and goes through the one admission (ADR 0072):
+        // the target and the environment in the caller's reach, tenancy agreement, a runnable version, inputs that
+        // still validate, availability, a runner at the ENVIRONMENT'S isolation, a live deployment where one is
+        // required, and the tenant's capacity. It had its own shorter copy of that chain, which checked no capacity,
+        // validated no inputs, and assumed in-process isolation. Only the scheduled firing came through the real one.
         JsonElement targetInputs = spec.TargetInputs.IsNotUndefined() ? (JsonElement)spec.TargetInputs : default;
-        WorkflowRunId runId = await this.management.StartAsync(
-            targetWorkflowId, targetInputs, correlationId: null, tags: default, securityTags: catalogVersion.SecurityTagsValue, environment: environment, cancellationToken).ConfigureAwait(false);
+        RunStartOutcome outcome = await admission.AdmitAndStartAsync(new RunStartRequest(targetBase, targetVersion, state.Environment, targetInputs), cancellationToken).ConfigureAwait(false);
+        switch (outcome.Kind)
+        {
+            case RunStartOutcomeKind.Accepted:
+                break;
+            case RunStartOutcomeKind.VersionNotFound:
+                return RunScheduleNowResult.NotFound(
+                    Problem("target-not-found", "Target not found", 404, $"Version {targetVersion} of '{targetBase}' does not exist or is outside your reach."), workspace);
+            case RunStartOutcomeKind.InvalidInputs:
+                return RunScheduleNowResult.UnprocessableEntity(ArazzoControlPlaneCatalogHandler.BuildValidationResult(false, outcome.Errors!), workspace);
+            case RunStartOutcomeKind.CapacityExceeded:
+                return RunScheduleNowResult.TooManyRequests(ArazzoControlPlaneCatalogHandler.CapacityProblem(outcome.Capacity!.Value), workspace, ArazzoControlPlaneCatalogHandler.CapacityRetryAfter());
+            default:
+                return outcome.Status == 404
+                    ? RunScheduleNowResult.NotFound(Problem(outcome.ProblemType!, outcome.Title!, 404, outcome.Detail!), workspace)
+                    : RunScheduleNowResult.Conflict(Problem(outcome.ProblemType!, outcome.Title!, 409, outcome.Detail!), workspace);
+        }
 
+        // The admission audits the run it started (run.start). This records the act on the schedule.
         GovernanceAudit.Mutation(this.auditLogger, "schedule.run-now", this.AuditActor(), TargetKind, scheduleId, "started");
-
-        return RunScheduleNowResult.Accepted(
-            new Models.WorkflowRunAccepted.Source((ref Models.WorkflowRunAccepted.Builder b) => b.Create(
-                runId: runId.Value,
-                status: WorkflowRunStatus.Pending.ToString(),
-                workflowId: targetWorkflowId)),
-            workspace);
+        return RunScheduleNowResult.Accepted(RunStartOutcome.AcceptedBody(outcome), workspace);
     }
 
     // ── projection ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -563,16 +535,9 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
            && state.Status is not (WorkflowRunStatus.Cancelled or WorkflowRunStatus.Completed);
 
     // ── helpers ────────────────────────────────────────────────────────────────────────────────────────────────────
+    // For projecting a stored schedule: a target that is not a versioned id is shown whole, as version zero.
     private static (string BaseWorkflowId, int VersionNumber) ParseVersionedId(string workflowId)
-    {
-        int suffix = workflowId.LastIndexOf("-v", StringComparison.Ordinal);
-        if (suffix > 0 && int.TryParse(workflowId.AsSpan(suffix + 2), NumberStyles.None, CultureInfo.InvariantCulture, out int version))
-        {
-            return (workflowId[..suffix], version);
-        }
-
-        return (workflowId, 0);
-    }
+        => WorkflowVersionId.TryParse(workflowId, out string baseWorkflowId, out int versionNumber) ? (baseWorkflowId, versionNumber) : (workflowId, 0);
 
     // The schedules surface derives its scheduler-run addresses under the deployment's run-derivation key
     // (ADR 0065 §9); without one no schedule can be addressed, so the surface reports itself unconfigured.

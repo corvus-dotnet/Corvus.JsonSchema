@@ -338,11 +338,12 @@ public static class ControlPlaneEndpointExtensions
         // broker lists an empty registry and refuses the auth operations.
         var providersHandler = new ArazzoControlPlaneProvidersHandler(providerBroker, access, httpContextAccessor, accessRequestSubjectClaimType);
 
-        var schedulesHandler = new ArazzoControlPlaneSchedulesHandler(management, catalog, runners, access, availabilityStore, environmentStore, scheduleRegistry, auditLogger: auditLogger);
-
-        // One instance, because it is also the admission a re-run goes through (IRunStartAdmission): the catalog's start
-        // and the run's re-run must be one chain, and handing the runs handler this handler is what makes them so.
+        // One instance, because it is also the admission every other start goes through (IRunStartAdmission): the catalog's
+        // start, a run's re-run and a schedule's run-now must be one chain, and handing those handlers this one is what
+        // makes them so.
         var catalogHandler = new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access, environmentStore, availabilityStore, workflowSimulator, auditLogger, deploymentStore, capacityGuard);
+
+        var schedulesHandler = new ArazzoControlPlaneSchedulesHandler(management, catalog, runners, access, availabilityStore, environmentStore, scheduleRegistry, auditLogger: auditLogger, startAdmission: catalogHandler);
 
         endpoints.MapApiEndpoints(
             securityHandler,

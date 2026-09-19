@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-09-19T07:15:33.2704991\u002B00:00",
+  "generatedAt": "2026-09-19T13:32:03.0327959\u002B00:00",
   "generatedFiles": [
     "GetAccessGrantsRequest.cs",
     "GetAccessGrantsResponse.cs",
@@ -1655,6 +1655,6 @@
   "generatorVersion": "1.0.0\u002B32eda52f63230a0c10c87a1d6639ee1a582d6c61",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "e241e37e781e5c50dfd8c7327be2c2feb1ab2e8ae96abe04e1c8ae238a1af99b",
+  "specFileHash": "5bff827dd3ee8bec465018ed8cdd6b15f315e33f4a865b5385dafba9e5303876",
   "specVersion": "3.2"
 }
