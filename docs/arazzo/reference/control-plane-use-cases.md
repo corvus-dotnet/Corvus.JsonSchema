@@ -23,6 +23,7 @@ requester, author, and auditor.
 | U-RUN-7 | operator | housekeeping | purge old terminal runs by rule | keep the store lean without hand-picking rows |
 | U-RUN-8 | operator | correlating with telemetry | copy a run's correlation id | pivot to traces and logs |
 | U-RUN-9 | anyone | filtering | narrow by status, workflow, tags, time | find the runs I mean quickly |
+| U-RUN-10 | operator | triaging a faulted run | see what the run's budget was, and read a platform fault type as what happened and what to do | tell a run that hit its budget (start again) from one I can repair and resume |
 
 ## Catalog (U-CAT)
 
@@ -48,6 +49,7 @@ requester, author, and auditor.
 | U-ENV-4 | environment admin | auditing | see which workflow versions are available here | know what can run in my environment |
 | U-ENV-5 | workflow owner | delivering | request promotion of a version into an environment I cannot write | move toward production through governance |
 | U-ENV-6 | environment admin | deciding | approve or deny promotion requests for my environments | control what lands where, with reasons recorded |
+| U-ENV-7 | environment admin | governing | see and set the execution budget my environment's runs are held to, beside what the deployment allows | bound what a run here can cost without guessing at a limit I left unset |
 
 ## Sources and credentials (U-SRC)
 

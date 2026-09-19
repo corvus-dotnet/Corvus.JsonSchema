@@ -270,6 +270,14 @@ internal class RunIdSettings : RunsSettings
     public string RunId { get; init; } = string.Empty;
 }
 
+internal sealed class GetSettings : RunIdSettings
+{
+    [CommandOption("--output <FORMAT>")]
+    [Description("Output format: json (default, the run as the API returns it) or detail (the run laid out to read, with its budget and its fault explained).")]
+    [DefaultValue("json")]
+    public string Output { get; init; } = "json";
+}
+
 internal sealed class ListSettings : RunsSettings
 {
     [CommandOption("--status <STATUS>")]
@@ -463,6 +471,7 @@ internal sealed class ListCommand : AsyncCommand<ListSettings>
         table.AddColumn("Status");
         table.AddColumn("Workflow");
         table.AddColumn("Updated");
+        table.AddColumn("Error");
         table.AddColumn("Correlation");
         table.AddColumn("Tags");
 
@@ -489,6 +498,7 @@ internal sealed class ListCommand : AsyncCommand<ListSettings>
                 Markup.Escape((string)summary.Status),
                 Markup.Escape((string)summary.WorkflowId),
                 Markup.Escape((string)summary.UpdatedAt),
+                Markup.Escape(summary.ErrorType.IsNotUndefined() ? (string)summary.ErrorType : "—"),
                 Markup.Escape(correlationId),
                 Markup.Escape(tags));
         }
@@ -504,20 +514,75 @@ internal sealed class ListCommand : AsyncCommand<ListSettings>
     }
 }
 
-internal sealed class GetCommand : AsyncCommand<RunIdSettings>
+internal sealed class GetCommand : AsyncCommand<GetSettings>
 {
-    protected override async Task<int> ExecuteAsync(CommandContext context, RunIdSettings settings, CancellationToken cancellationToken)
+    protected override async Task<int> ExecuteAsync(CommandContext context, GetSettings settings, CancellationToken cancellationToken)
     {
+        bool detailed = string.Equals(settings.Output, "detail", StringComparison.OrdinalIgnoreCase);
         (HttpClient http, HttpClientTransport transport, ApiRunsClient client) = await settings.CreateClientAsync(cancellationToken);
         using (http)
         await using (transport)
         {
             await using GetRunResponse response = await client.GetRunAsync(settings.RunId, cancellationToken);
             return response.MatchResult(
-                detail => Output.Print(detail.ToString()),
+                detail => detailed ? RenderDetail(detail) : Output.Print(detail.ToString()),
                 Output.Problem,
                 Output.Unexpected);
         }
+    }
+
+    // The run laid out to read. The two things JSON leaves the reader to work out are said here: what the run is held
+    // to (the budget frozen into it at start, ADR 0068), and, for one of the platform's own fault types, what the
+    // error means and what to do about it. Any other error is a step's own failure and is shown as recorded.
+    private static int RenderDetail(Models.WorkflowRunDetail detail)
+    {
+        IAnsiConsole console = OperatorCommandHelpers.CreateConsole();
+
+        var run = new Table().Border(TableBorder.Rounded).HideHeaders();
+        run.AddColumn("Field");
+        run.AddColumn("Value");
+        run.AddRow("Id", Markup.Escape((string)detail.Id));
+        run.AddRow("Workflow", Markup.Escape((string)detail.WorkflowId));
+        run.AddRow("Status", Markup.Escape((string)detail.Status));
+        if (detail.Environment.IsNotUndefined())
+        {
+            run.AddRow("Environment", Markup.Escape((string)detail.Environment));
+        }
+
+        run.AddRow("Cursor", Markup.Escape(((long)detail.Cursor).ToString(System.Globalization.CultureInfo.InvariantCulture)));
+        run.AddRow("Created", Markup.Escape((string)detail.CreatedAt));
+        console.Write(run);
+
+        if (detail.Fault.IsNotUndefined())
+        {
+            string error = (string)detail.Fault.Error;
+            console.MarkupLine($"[bold]Fault[/] at step {Markup.Escape((string)detail.Fault.StepId)}, attempt {(long)detail.Fault.Attempt}: [red]{Markup.Escape(error)}[/]");
+            if (WorkflowRunFaultTypes.TryDescribe(error, out WorkflowRunFaultDescription description))
+            {
+                console.MarkupLine($"  {Markup.Escape(error)}: {Markup.Escape(description.Meaning)}.");
+                console.MarkupLine($"  {Markup.Escape(description.Remedy)}");
+            }
+        }
+
+        if (detail.Budget.IsNotUndefined())
+        {
+            BudgetLimits budget = BudgetLimits.From(detail.Budget);
+            var table = new Table().Border(TableBorder.Rounded).Title("Budget (frozen at start)");
+            table.AddColumn("Limit");
+            table.AddColumn("Value");
+            foreach (BudgetLimits.Row row in BudgetLimits.Rows)
+            {
+                table.AddRow(row.Label, Markup.Escape(row.Format(budget)));
+            }
+
+            console.Write(table);
+        }
+        else
+        {
+            console.MarkupLine("[dim]No budget: this run carries none (a system run).[/]");
+        }
+
+        return 0;
     }
 }
 

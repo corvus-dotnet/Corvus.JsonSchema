@@ -111,6 +111,47 @@ public readonly record struct ExecutionBudget
     /// sixteen-mebibyte response.</summary>
     public static ExecutionBudget Default => new(MaxStepsCeiling, DefaultWallClock, IWorkflowRun.MaxSubWorkflowDepth, DefaultRetryAfterCeiling, DefaultStepTimeout, DefaultMaxResponseBytes);
 
+    /// <summary>
+    /// Builds a deployment's ceiling from the limits it configures: each limit named replaces the default's, and a
+    /// limit left <see langword="null"/> keeps it.
+    /// </summary>
+    /// <param name="maxSteps">Fuel, from 1 to <see cref="MaxStepsCeiling"/>.</param>
+    /// <param name="wallClockSeconds">The wall clock in whole seconds, positive.</param>
+    /// <param name="maxSubWorkflowDepth">The sub-workflow depth cap, zero or more.</param>
+    /// <param name="retryAfterCeilingSeconds">The retry-after ceiling in whole seconds, zero or more.</param>
+    /// <param name="stepTimeoutSeconds">The step timeout in whole seconds, positive and no more than <see cref="StepTimeoutCeiling"/>.</param>
+    /// <param name="maxResponseBytes">The largest response a step may read, in bytes, positive.</param>
+    /// <returns>The ceiling.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">A configured limit is outside its admissible range. A deployment
+    /// that configures a limit it cannot have must not start on a different one.</exception>
+    /// <remarks>
+    /// <para>
+    /// A ceiling is not an override: it may be wider than <see cref="Default"/> wherever the platform has no hard
+    /// limit of its own (the wall clock, the depth, the retry-after ceiling and the response size). The limits are in
+    /// whole seconds, as an environment's override is, so every budget resolved from them is in whole seconds too.
+    /// </para>
+    /// <para>
+    /// A host builds one ceiling and hands it to its <see cref="SecuredWorkflowManagement"/>. The control plane reads
+    /// it back from there (<see cref="ISecuredWorkflowManagement.ExecutionBudgetCeiling"/>), so the ceiling an
+    /// override is validated against cannot differ from the one a run is resolved against.
+    /// </para>
+    /// </remarks>
+    public static ExecutionBudget CeilingFrom(int? maxSteps = null, long? wallClockSeconds = null, int? maxSubWorkflowDepth = null, long? retryAfterCeilingSeconds = null, long? stepTimeoutSeconds = null, long? maxResponseBytes = null)
+    {
+        ExecutionBudget fallback = Default;
+        return new(
+            maxSteps ?? fallback.MaxSteps,
+            wallClockSeconds is { } clock ? SecondsOrOutOfRange(clock) : fallback.WallClock,
+            maxSubWorkflowDepth ?? fallback.MaxSubWorkflowDepth,
+            retryAfterCeilingSeconds is { } retry ? SecondsOrOutOfRange(retry) : fallback.RetryAfterCeiling,
+            stepTimeoutSeconds is { } timeout ? SecondsOrOutOfRange(timeout) : fallback.StepTimeout,
+            maxResponseBytes ?? fallback.MaxResponseBytes);
+
+        // A value no TimeSpan can hold is left negative, so the constructor refuses it by the limit's own name.
+        static TimeSpan SecondsOrOutOfRange(long seconds)
+            => seconds >= 0 && seconds <= (long)TimeSpan.MaxValue.TotalSeconds ? TimeSpan.FromSeconds(seconds) : TimeSpan.FromSeconds(-1);
+    }
+
     /// <summary>Gets fuel: the maximum number of step executions.</summary>
     public int MaxSteps { get; }
 

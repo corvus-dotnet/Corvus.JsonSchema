@@ -28,9 +28,43 @@ internal sealed class EnvironmentListSettings : RunsSettings
     public string Output { get; init; } = "table";
 }
 
+/// <summary>
+/// The environment's execution-budget override (ADR 0068): each limit named tightens the deployment's ceiling for runs
+/// in the environment, and a limit left out is the ceiling's. The server refuses a limit wider than the ceiling.
+/// </summary>
+internal class EnvironmentBudgetSettings : EnvironmentNameSettings
+{
+    [CommandOption("--max-steps <COUNT>")]
+    [Description("Budget: the most step attempts a run may make, retries and revisits counted.")]
+    public long? MaxSteps { get; init; }
+
+    [CommandOption("--wall-clock-seconds <SECONDS>")]
+    [Description("Budget: the longest a run may live from creation, in seconds.")]
+    public long? WallClockSeconds { get; init; }
+
+    [CommandOption("--max-sub-workflow-depth <DEPTH>")]
+    [Description("Budget: how deep sub-workflows may nest.")]
+    public long? MaxSubWorkflowDepth { get; init; }
+
+    [CommandOption("--retry-after-ceiling-seconds <SECONDS>")]
+    [Description("Budget: the ceiling a step's declared retryAfter delay is clamped to, in seconds.")]
+    public long? RetryAfterCeilingSeconds { get; init; }
+
+    [CommandOption("--step-timeout-seconds <SECONDS>")]
+    [Description("Budget: the longest a single step's request may take, in seconds.")]
+    public long? StepTimeoutSeconds { get; init; }
+
+    [CommandOption("--max-response-bytes <BYTES>")]
+    [Description("Budget: the largest response body a single step may read, in bytes.")]
+    public long? MaxResponseBytes { get; init; }
+
+    /// <summary>Gets the limits these settings name.</summary>
+    public BudgetLimits Limits => new(this.MaxSteps, this.WallClockSeconds, this.MaxSubWorkflowDepth, this.RetryAfterCeilingSeconds, this.StepTimeoutSeconds, this.MaxResponseBytes);
+}
+
 /// <summary>Settings for creating a governed environment. The deployment stamps the creator's internal tenant tag onto
 /// managementTags and grants the creator administration (§7.7).</summary>
-internal sealed class EnvironmentCreateSettings : EnvironmentNameSettings
+internal sealed class EnvironmentCreateSettings : EnvironmentBudgetSettings
 {
     [CommandOption("--display-name <TEXT>")]
     [Description("An optional human-friendly display name (defaults to the name).")]
@@ -47,8 +81,12 @@ internal sealed class EnvironmentCreateSettings : EnvironmentNameSettings
 
 /// <summary>Settings for updating an environment's mutable metadata. Only the supplied fields change (a PATCH-style
 /// merge); the name and created-* audit are immutable. An administrator may re-tag the managementTags reach scope.</summary>
-internal sealed class EnvironmentUpdateSettings : EnvironmentNameSettings
+internal sealed class EnvironmentUpdateSettings : EnvironmentBudgetSettings
 {
+    [CommandOption("--clear-budget")]
+    [Description("Remove the environment's budget override, so its runs take the deployment's ceiling. Budget options given with it start from nothing.")]
+    public bool ClearBudget { get; init; }
+
     [CommandOption("--display-name <TEXT>")]
     [Description("Replace the display name (preserved if omitted).")]
     public string? DisplayName { get; init; }
@@ -145,6 +183,53 @@ internal sealed class EnvironmentGetCommand : AsyncCommand<EnvironmentNameSettin
     }
 }
 
+/// <summary>Settings for showing an environment's execution budget.</summary>
+internal sealed class EnvironmentBudgetShowSettings : EnvironmentNameSettings
+{
+    [CommandOption("--output <FORMAT>")]
+    [Description("Output format: table (default) or json.")]
+    [DefaultValue("table")]
+    public string Output { get; init; } = "table";
+}
+
+internal sealed class EnvironmentBudgetCommand : AsyncCommand<EnvironmentBudgetShowSettings>
+{
+    protected override async Task<int> ExecuteAsync(CommandContext context, EnvironmentBudgetShowSettings settings, CancellationToken cancellationToken)
+    {
+        (HttpClient http, HttpClientTransport transport, ApiEnvironmentsClient client) = await settings.CreateEnvironmentsClientAsync(cancellationToken);
+        using (http)
+        await using (transport)
+        {
+            await using GetEnvironmentExecutionBudgetResponse response = await client.GetEnvironmentExecutionBudgetAsync(settings.Name, cancellationToken);
+            bool json = string.Equals(settings.Output, "json", StringComparison.OrdinalIgnoreCase);
+            return response.MatchResult(budget => json ? Output.Print(budget.ToString()) : RenderTable(budget), Output.Problem, Output.Unexpected);
+        }
+    }
+
+    // One row per limit: what the environment authored, what a run started now is held to, and what the deployment
+    // allows. An empty Override cell is a limit the environment leaves to the ceiling.
+    private static int RenderTable(Models.EnvironmentExecutionBudget budget)
+    {
+        IAnsiConsole console = OperatorCommandHelpers.CreateConsole();
+        BudgetLimits authored = BudgetLimits.From(budget.Override);
+        BudgetLimits effective = BudgetLimits.From(budget.Effective);
+        BudgetLimits ceiling = BudgetLimits.From(budget.Ceiling);
+
+        var table = new Table().Border(TableBorder.Rounded);
+        table.AddColumn("Limit");
+        table.AddColumn("Override");
+        table.AddColumn("Effective");
+        table.AddColumn("Ceiling");
+        foreach (BudgetLimits.Row row in BudgetLimits.Rows)
+        {
+            table.AddRow(row.Label, Markup.Escape(row.Format(authored)), Markup.Escape(row.Format(effective)), Markup.Escape(row.Format(ceiling)));
+        }
+
+        console.Write(table);
+        return 0;
+    }
+}
+
 internal sealed class EnvironmentCreateCommand : AsyncCommand<EnvironmentCreateSettings>
 {
     protected override async Task<int> ExecuteAsync(CommandContext context, EnvironmentCreateSettings settings, CancellationToken cancellationToken)
@@ -169,7 +254,7 @@ internal sealed class EnvironmentUpdateCommand : AsyncCommand<EnvironmentUpdateS
         {
             // PATCH-style: read the current environment and overlay only the supplied fields, so the operator names just
             // what moved. The server's update is a full replace of the mutable metadata, so the merge happens here.
-            (string? DisplayName, string? Description) snapshot;
+            (string? DisplayName, string? Description, BudgetLimits Budget) snapshot;
             await using (GetEnvironmentResponse current = await client.GetEnvironmentAsync(settings.Name, cancellationToken))
             {
                 if (current.StatusCode != 200)
@@ -180,7 +265,8 @@ internal sealed class EnvironmentUpdateCommand : AsyncCommand<EnvironmentUpdateS
                 snapshot = current.MatchResult(
                     summary => (
                         summary.DisplayName.IsNotUndefined() ? (string)summary.DisplayName : null,
-                        summary.Description.IsNotUndefined() ? (string)summary.Description : null),
+                        summary.Description.IsNotUndefined() ? (string)summary.Description : null,
+                        BudgetLimits.From(summary.ExecutionBudget)),
                     _ => default,
                     _ => default);
             }
@@ -190,7 +276,15 @@ internal sealed class EnvironmentUpdateCommand : AsyncCommand<EnvironmentUpdateS
 
             // managementTags carry forward server-side when omitted (a re-tag replaces them), so unlike display
             // name / description it needs no snapshot merge — send it only when --manage is supplied.
-            Models.EnvironmentUpdate.Source body = EnvironmentCommandHelpers.BuildUpdate(displayName, description, settings.ManagementTags);
+            //
+            // The budget is replace-or-carry on the server: omitted, the stored override stands; supplied, it replaces
+            // the override whole. So naming one limit must not drop the others, and the limits named here are laid
+            // over the ones already authored. --clear-budget starts from nothing, and an override with no limits is
+            // how the API says there is none.
+            BudgetLimits? budget = settings.ClearBudget
+                ? settings.Limits
+                : settings.Limits.IsEmpty ? null : settings.Limits.Over(snapshot.Budget);
+            Models.EnvironmentUpdate.Source body = EnvironmentCommandHelpers.BuildUpdate(displayName, description, settings.ManagementTags, budget);
             await using UpdateEnvironmentResponse response = await client.UpdateEnvironmentAsync(settings.Name, body, cancellationToken);
             return response.MatchResult(summary => Output.Print(summary.ToString()), Output.Problem, Output.Problem, Output.Problem, Output.Problem, Output.Unexpected);
         }
@@ -333,15 +427,20 @@ internal static class EnvironmentCommandHelpers
                 name: s.Name,
                 description: description,
                 displayName: displayName,
+                executionBudget: s.Limits.IsEmpty ? default(Models.ExecutionBudget.Source) : s.Limits.ToSource(),
                 managementTags: WriteManagementTags(s.ManagementTags));
         });
 
-    public static Models.EnvironmentUpdate.Source BuildUpdate(string? displayName, string? description, ILookup<string, string>? managementTags)
+    public static Models.EnvironmentUpdate.Source BuildUpdate(string? displayName, string? description, ILookup<string, string>? managementTags, BudgetLimits? budget = null)
         => new((ref Models.EnvironmentUpdate.Builder b) =>
         {
             Models.JsonString.Source displayNameSource = displayName is { } d ? (Models.JsonString.Source)d : default;
             Models.JsonString.Source descriptionSource = description is { } desc ? (Models.JsonString.Source)desc : default;
-            b.Create(description: descriptionSource, displayName: displayNameSource, managementTags: WriteUpdateManagementTags(managementTags));
+            b.Create(
+                description: descriptionSource,
+                displayName: displayNameSource,
+                executionBudget: budget is { } limits ? limits.ToSource() : default(Models.ExecutionBudget.Source),
+                managementTags: WriteUpdateManagementTags(managementTags));
         });
 
     private static Models.EnvironmentCreate.EnvironmentSecurityTagArray.Source WriteManagementTags(ILookup<string, string>? tags)

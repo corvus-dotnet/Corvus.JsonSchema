@@ -3287,6 +3287,23 @@
         }
       }
     },
+    "/environments/{name}/executionBudget": {
+      "get": {
+        "operationId": "getEnvironmentExecutionBudget",
+        "security": [{ "oauth2": ["environments:read"] }, { "openIdConnect": ["environments:read"] }, { "mtls": [] }],
+        "tags": ["environments"],
+        "summary": "Get an environment's execution budget: its override, the deployment ceiling, and the budget in effect",
+        "description": "An environment stores only the override it authored, so the environment itself cannot say what a limit it leaves out will be. This returns the override beside the deployment's ceiling and the effective budget resolved from the two, which is what a run started in the environment now would be frozen with (ADR 0068). A run already started keeps the budget it was given: see the run's own `budget`.",
+        "parameters": [{ "$ref": "#/components/parameters/EnvironmentNamePath" }],
+        "responses": {
+          "200": {
+            "description": "The environment's execution budget.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EnvironmentExecutionBudget" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
     "/environments/{name}/administrators": {
       "get": {
         "operationId": "listEnvironmentAdministrators",
@@ -5916,7 +5933,7 @@
         "properties": {
           "stepId": { "type": "string", "description": "The step that faulted." },
           "attempt": { "type": "integer", "description": "The attempt count at the fault." },
-          "error": { "type": "string", "description": "The error type/message." },
+          "error": { "type": "string", "description": "The fault's error type. The platform records these fixed values itself, and any other value is a step's own failure, recorded as it happened: `budget-fuel` (the run made as many step attempts as its budget's max steps allows), `budget-deadline` (the run outlived its budget's wall clock), `budget-depth` (the run nested sub-workflows past its budget's depth limit), `executor-unhandled` (the executor failed in a way nothing in the workflow handled; the failure is in the executor's trace and not on the run), `executor-unresolvable` (the workflow version's executor was refused: missing, not runnable, or failed verification), `transport-unbound` (a source the workflow calls has no usable binding in the run's environment). The three budget faults are terminal and a resume is refused with 409; the other three can be resumed once their cause is fixed." },
           "at": { "type": "string", "format": "date-time", "description": "When the fault occurred." }
         },
         "required": ["stepId", "attempt", "error", "at"]
@@ -5948,7 +5965,7 @@
           "dueAt": { "type": "string", "format": "date-time" },
           "awaitingChannel": { "type": "string" },
           "awaitingCorrelationId": { "type": "string" },
-          "errorType": { "type": "string", "description": "The fault error, if the run is/was faulted." },
+          "errorType": { "type": "string", "description": "The fault's error type, if the run is or was faulted. The platform records these fixed values itself, and any other value is a step's own failure, recorded as it happened: `budget-fuel` (the run made as many step attempts as its budget's max steps allows), `budget-deadline` (the run outlived its budget's wall clock), `budget-depth` (the run nested sub-workflows past its budget's depth limit), `executor-unhandled` (the executor failed in a way nothing in the workflow handled; the failure is in the executor's trace and not on the run), `executor-unresolvable` (the workflow version's executor was refused: missing, not runnable, or failed verification), `transport-unbound` (a source the workflow calls has no usable binding in the run's environment). The three budget faults are terminal and a resume is refused with 409; the other three can be resumed once their cause is fixed." },
           "correlationId": { "type": "string", "description": "The run-wide telemetry correlation id set at creation (the value stamped on the run's `corvus.arazzo.correlation_id` spans), if any." },
           "tags": { "type": "array", "items": { "type": "string" }, "description": "The free-form tags applied to the run at creation." }
         },
@@ -6018,7 +6035,8 @@
           },
           "etag": { "type": "string", "description": "The optimistic-concurrency token the checkpoint was read at." },
           "correlationId": { "type": "string", "description": "The run-wide telemetry correlation id set at creation (the value stamped on the run's `corvus.arazzo.correlation_id` spans), if any." },
-          "tags": { "type": "array", "items": { "type": "string" }, "description": "The free-form tags applied to the run at creation." }
+          "tags": { "type": "array", "items": { "type": "string" }, "description": "The free-form tags applied to the run at creation." },
+          "budget": { "$ref": "#/components/schemas/ResolvedExecutionBudget", "description": "The execution budget resolved into the run when it started and frozen with it (ADR 0068): the limits this run is held to, whatever its environment's budget has become since. Absent on a run that carries none, which is the scheduler's." }
         },
         "required": ["id", "workflowId", "status", "cursor", "createdAt", "etag"]
       },
@@ -8582,17 +8600,46 @@
         },
         "required": ["key", "value"]
       },
+      "BudgetMaxSteps": { "type": "integer", "minimum": 1, "description": "An execution-budget limit (ADR 0068). A count of step executions." },
+      "BudgetWallClockSeconds": { "type": "integer", "minimum": 1, "description": "An execution-budget limit (ADR 0068). A run age, in whole seconds." },
+      "BudgetMaxSubWorkflowDepth": { "type": "integer", "minimum": 0, "description": "An execution-budget limit (ADR 0068). A sub-workflow nesting depth." },
+      "BudgetRetryAfterCeilingSeconds": { "type": "integer", "minimum": 0, "description": "An execution-budget limit (ADR 0068). A retry delay, in whole seconds." },
+      "BudgetStepTimeoutSeconds": { "type": "integer", "minimum": 1, "maximum": 600, "description": "An execution-budget limit (ADR 0068). A step request duration, in whole seconds, at most the platform's ten minutes." },
+      "BudgetMaxResponseBytes": { "type": "integer", "minimum": 1, "description": "An execution-budget limit (ADR 0068). A response body size, in bytes." },
       "ExecutionBudget": {
         "type": "object",
         "description": "An environment's execution-budget override (ADR 0068). Each limit named here tightens the deployment ceiling for runs pinned to the environment; a limit omitted is the ceiling's. Fuel, the wall clock and the depth cap bound the run, and the step timeout and the response size bound a single step. An override may only tighten: a limit wider than the deployment ceiling is refused (400). The effective budget is resolved into every run at start and recorded with it, so a later change here does not move a running run's bound.",
         "properties": {
-          "maxSteps": { "type": "integer", "minimum": 1, "description": "Fuel: the maximum number of step executions a run may make, retries and revisits counted. The deployment ceiling is itself bounded by the per-step journal cap (500)." },
-          "wallClockSeconds": { "type": "integer", "minimum": 1, "description": "The maximum age of a run from creation, in seconds." },
-          "maxSubWorkflowDepth": { "type": "integer", "minimum": 0, "description": "The sub-workflow nesting depth cap." },
-          "retryAfterCeilingSeconds": { "type": "integer", "minimum": 0, "description": "The ceiling a step's declared retryAfter delay is clamped to, in seconds." },
-          "stepTimeoutSeconds": { "type": "integer", "minimum": 1, "maximum": 600, "description": "The longest a single step's request may take, in seconds, from the send to the response having been read. A step that runs past it has failed, and its onFailure actions apply. No deployment may set it above ten minutes." },
-          "maxResponseBytes": { "type": "integer", "minimum": 1, "description": "The largest response body a single step may read, in bytes. A step whose response is larger has failed, and its onFailure actions apply." }
+          "maxSteps": { "$ref": "#/components/schemas/BudgetMaxSteps", "description": "Fuel: the maximum number of step executions a run may make, retries and revisits counted. The deployment ceiling is itself bounded by the per-step journal cap (500)." },
+          "wallClockSeconds": { "$ref": "#/components/schemas/BudgetWallClockSeconds", "description": "The maximum age of a run from creation, in seconds." },
+          "maxSubWorkflowDepth": { "$ref": "#/components/schemas/BudgetMaxSubWorkflowDepth", "description": "The sub-workflow nesting depth cap." },
+          "retryAfterCeilingSeconds": { "$ref": "#/components/schemas/BudgetRetryAfterCeilingSeconds", "description": "The ceiling a step's declared retryAfter delay is clamped to, in seconds." },
+          "stepTimeoutSeconds": { "$ref": "#/components/schemas/BudgetStepTimeoutSeconds", "description": "The longest a single step's request may take, in seconds, from the send to the response having been read. A step that runs past it has failed, and its onFailure actions apply. No deployment may set it above ten minutes." },
+          "maxResponseBytes": { "$ref": "#/components/schemas/BudgetMaxResponseBytes", "description": "The largest response body a single step may read, in bytes. A step whose response is larger has failed, and its onFailure actions apply." }
         }
+      },
+      "ResolvedExecutionBudget": {
+        "type": "object",
+        "description": "An execution budget with every limit decided (ADR 0068): a deployment's ceiling, the budget in effect for an environment, or the budget frozen into a run. The limits are those of `ExecutionBudget`, in the same units, and all six are always present.",
+        "properties": {
+          "maxSteps": { "$ref": "#/components/schemas/BudgetMaxSteps", "description": "Fuel: the maximum number of step executions, retries and revisits counted." },
+          "wallClockSeconds": { "$ref": "#/components/schemas/BudgetWallClockSeconds", "description": "The maximum age of a run from creation, in seconds." },
+          "maxSubWorkflowDepth": { "$ref": "#/components/schemas/BudgetMaxSubWorkflowDepth", "description": "The sub-workflow nesting depth cap." },
+          "retryAfterCeilingSeconds": { "$ref": "#/components/schemas/BudgetRetryAfterCeilingSeconds", "description": "The ceiling a step's declared retryAfter delay is clamped to, in seconds." },
+          "stepTimeoutSeconds": { "$ref": "#/components/schemas/BudgetStepTimeoutSeconds", "description": "The longest a single step's request may take, in seconds." },
+          "maxResponseBytes": { "$ref": "#/components/schemas/BudgetMaxResponseBytes", "description": "The largest response body a single step may read, in bytes." }
+        },
+        "required": ["maxSteps", "wallClockSeconds", "maxSubWorkflowDepth", "retryAfterCeilingSeconds", "stepTimeoutSeconds", "maxResponseBytes"]
+      },
+      "EnvironmentExecutionBudget": {
+        "type": "object",
+        "description": "An environment's execution budget seen whole (ADR 0068): what the environment authored, what the deployment allows, and what a run started in the environment now would be held to.",
+        "properties": {
+          "override": { "$ref": "#/components/schemas/ExecutionBudget", "description": "The override authored on the environment, exactly as stored. Absent when the environment authors none." },
+          "effective": { "$ref": "#/components/schemas/ResolvedExecutionBudget", "description": "The budget a run started in this environment now is given: the ceiling, tightened by each limit the override names. It is resolved by the same rule a run start applies." },
+          "ceiling": { "$ref": "#/components/schemas/ResolvedExecutionBudget", "description": "The deployment's ceiling: the budget where the environment names no tighter limit, and the most an override may name." }
+        },
+        "required": ["effective", "ceiling"]
       },
       "EnvironmentCreate": {
         "type": "object",

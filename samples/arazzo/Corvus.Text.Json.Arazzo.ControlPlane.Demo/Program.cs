@@ -205,7 +205,15 @@ WorkflowResumer liveResumer = DemoData.CreateLiveResumer(catalogStore, () => sel
 
 // The deployment's run-derivation key (ADR 0065 §9): idempotent starts and the schedules surface derive run ids
 // under it — the same instance DemoData seeds schedules with, so seeded and API-created schedules share one id space.
-var management = new SecuredWorkflowManagement(stateStore, "demo", liveResumer, runDerivation: DemoData.RunDerivation);
+//
+// The environment registry and the deployment's execution-budget ceiling (ADR 0068) both go to the management seam,
+// because that is where a run's budget is resolved: the ceiling, tightened by the run's environment's override. The
+// control plane reads the ceiling back from the seam, so the ceiling an override is validated against, the one the
+// console shows, and the one a run is held to are one value. The ceiling is this host's configuration
+// (Arazzo:ExecutionBudgetCeiling), and a limit it does not name is the platform default's.
+PostgresEnvironmentStore environmentStore = await PostgresEnvironmentStore.ConnectAsync(dataSource);
+ExecutionBudget executionBudgetCeiling = ExecutionBudgetConfiguration.ReadCeiling(builder.Configuration);
+var management = new SecuredWorkflowManagement(stateStore, "demo", liveResumer, runDerivation: DemoData.RunDerivation, environments: environmentStore, executionBudget: executionBudgetCeiling);
 
 // A workflow's §15 administrator set governs who may approve access requests for it (and publish further versions).
 // The submitter of version 1 establishes administration (DemoData seeds the workflows as administered by the
@@ -236,7 +244,6 @@ PostgresSourceCredentialStore sourceCredentials = await PostgresSourceCredential
 // once the host is listening, below). The control plane only marks runs claimable — it never executes (§18).
 PostgresDraftRunStore draftRunStore = await PostgresDraftRunStore.ConnectAsync(dataSource);
 PostgresDraftRunTraceStore draftRunTraceStore = await PostgresDraftRunTraceStore.ConnectAsync(dataSource);
-PostgresEnvironmentStore environmentStore = await PostgresEnvironmentStore.ConnectAsync(dataSource);
 
 // The durable working-copy store (workflow-designer design §4.1): a designer's in-progress edits survive a restart and
 // are shared across control-plane instances, rather than living only in memory. One of the nine fanned-out backends.

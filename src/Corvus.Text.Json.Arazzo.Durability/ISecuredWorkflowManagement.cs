@@ -15,6 +15,16 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 public interface ISecuredWorkflowManagement
 {
     /// <summary>
+    /// Gets the deployment's execution-budget ceiling (ADR 0068): the budget a run gets where its environment names
+    /// no tighter limit, and the most an environment's override may name.
+    /// </summary>
+    /// <remarks>
+    /// This is the one definition of the ceiling. The control plane validates an authored override against it and
+    /// reports it, and a run start resolves against it, so the three cannot disagree.
+    /// </remarks>
+    ExecutionBudget ExecutionBudgetCeiling { get; }
+
+    /// <summary>
     /// Starts a new run of a workflow: creates a fresh <see cref="WorkflowRunStatus.Pending"/> run with the
     /// supplied inputs and enqueues it (the store is the queue) for a hosting runner to claim and execute. The
     /// run executes asynchronously and durably; observe it via <see cref="GetAsync"/>/<see cref="ListAsync"/>.
@@ -192,6 +202,7 @@ public readonly record struct IdempotentStartResult(WorkflowRunId RunId, bool Cr
 /// <param name="SecurityTags">The security tags (KVP labels) applied to the run at creation, if any (§14.2), distinct from the free-form <paramref name="Tags"/>.</param>
 /// <param name="Environment">The deployment environment the run is pinned to (design §5.5), if any — its credential set and the runners it can be dispatched to; absent on a run created before run→environment pinning.</param>
 /// <param name="UpdatedAt">When the run's checkpoint was last written, if the writer stamped it (absent on a checkpoint written before the stamp existed).</param>
+/// <param name="Budget">The execution budget resolved into the run at start and frozen on its checkpoint (ADR 0068), or <see langword="null"/> for a run that carries none (the scheduler's).</param>
 public readonly record struct WorkflowRunDetail(
     WorkflowRunId Id,
     string WorkflowId,
@@ -205,7 +216,8 @@ public readonly record struct WorkflowRunDetail(
     TagSet Tags = default,
     SecurityTagSet SecurityTags = default,
     string? Environment = null,
-    DateTimeOffset? UpdatedAt = null);
+    DateTimeOffset? UpdatedAt = null,
+    ExecutionBudget? Budget = null);
 
 /// <summary>How to resume a faulted run (plan §11). Each mode loads the checkpoint, mutates status/cursor/state
 /// under optimistic concurrency, then re-enters the executor.</summary>

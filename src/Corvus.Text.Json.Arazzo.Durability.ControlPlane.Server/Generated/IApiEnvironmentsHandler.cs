@@ -66,6 +66,15 @@ public interface IApiEnvironmentsHandler
     ValueTask<DeleteEnvironmentResult> HandleDeleteEnvironmentAsync(DeleteEnvironmentParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Handles GET /environments/{name}/executionBudget — Get an environment's execution budget: its override, the deployment ceiling, and the budget in effect
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<GetEnvironmentExecutionBudgetResult> HandleGetEnvironmentExecutionBudgetAsync(GetEnvironmentExecutionBudgetParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Handles GET /environments/{name}/administrators — List an environment's administrators
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>

@@ -131,8 +131,9 @@ public static class CliApp
                 environments.SetDescription("Manage governed, reach-scoped deployment environments and their administrators (environments:read / environments:write).");
                 environments.AddCommand<EnvironmentListCommand>("list").WithDescription("List environments the caller's reach admits (--output json).");
                 environments.AddCommand<EnvironmentGetCommand>("get").WithDescription("Show one environment.");
-                environments.AddCommand<EnvironmentCreateCommand>("create").WithDescription("Create an environment (--display-name, --description, --manage key=value); grants the creator administration.");
-                environments.AddCommand<EnvironmentUpdateCommand>("update").WithDescription("Change display name / description (merge; current-administrator only).");
+                environments.AddCommand<EnvironmentBudgetCommand>("budget").WithDescription("Show the environment's execution budget: its override, the budget in effect, and the deployment's ceiling (--output json).");
+                environments.AddCommand<EnvironmentCreateCommand>("create").WithDescription("Create an environment (--display-name, --description, --manage key=value, and the budget limits such as --max-steps); grants the creator administration.");
+                environments.AddCommand<EnvironmentUpdateCommand>("update").WithDescription("Change display name, description or budget limits (merge; --clear-budget removes the override; current-administrator only).");
                 environments.AddCommand<EnvironmentDeleteCommand>("delete").WithDescription("Delete an environment (current-administrator only).");
                 environments.AddBranch<CommandSettings>("administrators", administrators =>
                 {

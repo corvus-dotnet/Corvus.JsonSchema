@@ -121,11 +121,11 @@ public sealed partial class CliIntegrationTests
         stderr.ShouldNotBeNullOrEmpty();
     }
 
-    private static async Task<Host> StartEnvironmentsAsync()
+    private static async Task<Host> StartEnvironmentsAsync(ExecutionBudget? executionBudgetCeiling = null)
     {
         var clock = new MutableClock(T0);
         var store = new InMemoryWorkflowStateStore(clock);
-        var management = new SecuredWorkflowManagement(store, "ops", CompleteResumer, clock);
+        var management = new SecuredWorkflowManagement(store, "ops", CompleteResumer, clock, executionBudget: executionBudgetCeiling);
         var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(clock), store, "ops");
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();

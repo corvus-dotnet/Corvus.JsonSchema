@@ -164,6 +164,8 @@ public sealed class WorkflowBackedAccessRequestApprovalServiceTests
     {
         public List<(string WorkflowId, string Environment, string InputsJson, SecurityTagSet SecurityTags)> Starts { get; } = [];
 
+        public ExecutionBudget ExecutionBudgetCeiling => ExecutionBudget.Default;
+
         public ValueTask<WorkflowRunId> StartAsync(string workflowId, JsonElement inputs, string? correlationId, TagSet tags, SecurityTagSet securityTags, string environment, CancellationToken cancellationToken)
         {
             this.Starts.Add((workflowId, environment, inputs.ToString() ?? string.Empty, securityTags));

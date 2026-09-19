@@ -296,7 +296,7 @@ public readonly partial struct WorkflowRunSummary
         /// </summary>
         /// <remarks>
         /// <para>
-        /// The fault error, if the run is/was faulted.
+        /// The fault&#39;s error type, if the run is or was faulted. The platform records these fixed values itself, and any other value is a step&#39;s own failure, recorded as it happened: `budget-fuel` (the run made as many step attempts as its budget&#39;s max steps allows), `budget-deadline` (the run outlived its budget&#39;s wall clock), `budget-depth` (the run nested sub-workflows past its budget&#39;s depth limit), `executor-unhandled` (the executor failed in a way nothing in the workflow handled; the failure is in the executor&#39;s trace and not on the run), `executor-unresolvable` (the workflow version&#39;s executor was refused: missing, not runnable, or failed verification), `transport-unbound` (a source the workflow calls has no usable binding in the run&#39;s environment). The three budget faults are terminal and a resume is refused with 409; the other three can be resumed once their cause is fixed.
         /// </para>
         /// </remarks>
         public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable ErrorType

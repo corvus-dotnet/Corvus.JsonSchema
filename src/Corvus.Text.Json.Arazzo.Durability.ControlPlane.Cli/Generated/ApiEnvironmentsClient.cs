@@ -242,6 +242,27 @@ public sealed class ApiEnvironmentsClient : IApiEnvironmentsClient
     }
 
     /// <summary>
+    /// Get an environment's execution budget: its override, the deployment ceiling, and the budget in effect
+    /// </summary>
+    /// <remarks>
+    /// An environment stores only the override it authored, so the environment itself cannot say what a limit it leaves out will be. This returns the override beside the deployment's ceiling and the effective budget resolved from the two, which is what a run started in the environment now would be frozen with (ADR 0068). A run already started keeps the budget it was given: see the run's own `budget`.
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
+    public ValueTask<GetEnvironmentExecutionBudgetResponse> GetEnvironmentExecutionBudgetAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName NameValue = Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.CreateBuilder(workspace, name, 30).RootElement;
+        GetEnvironmentExecutionBudgetRequest request = new(NameValue);
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<GetEnvironmentExecutionBudgetRequest, GetEnvironmentExecutionBudgetResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
     /// List an environment's administrators
     /// </summary>
     /// <remarks>

@@ -227,8 +227,16 @@ Every production run carries an execution budget
 ([ADR 0068](../adr/0068-execution-budget-fuel-wall-clock-depth.md)): fuel, the maximum number of step executions
 with retries and revisits counted; a wall clock, the maximum age from creation; the sub-workflow depth cap; and a
 ceiling on a step's declared `retryAfter`. The deployment sets the ceiling, an `ExecutionBudget` handed to
-`SecuredWorkflowManagement` and to `MapArazzoControlPlane` (the default is the journal cap's worth of fuel, a day,
-a depth of eight and an hour). An environment may carry an `executionBudget` override on its record, beside
+`SecuredWorkflowManagement` and to nothing else (the default is the journal cap's worth of fuel, a day, a depth of
+eight and an hour). The control plane reads the ceiling back from the management seam
+(`ISecuredWorkflowManagement.ExecutionBudgetCeiling`), so the ceiling an override is validated against, the one the
+API reports and the one a run is resolved against are one value. A host reads it from its configuration with
+`ExecutionBudgetConfiguration.ReadCeiling`: the section is `Arazzo:ExecutionBudgetCeiling`, its keys are the six
+limits as the API names them (`maxSteps`, `wallClockSeconds`, `maxSubWorkflowDepth`, `retryAfterCeilingSeconds`,
+`stepTimeoutSeconds`, `maxResponseBytes`), and a limit it leaves out is the default's. A ceiling may be wider than
+the default wherever the platform has no hard limit of its own, which is everything but fuel (500) and the step
+timeout (ten minutes). A malformed or inadmissible limit stops the host: a deployment that asked for a limit it
+cannot have does not start on a different one. An environment may carry an `executionBudget` override on its record, beside
 `requiredIsolation` and `requireEvidence`, which may only tighten: the environments API refuses a limit wider than
 the ceiling with a 400, and an update that omits the override leaves it unchanged. The effective budget is resolved
 on every start path through the management seam and recorded in the run's checkpoint, so a later change to the
@@ -275,8 +283,15 @@ suspends on it.
 The built-in scheduler run carries no budget. It is the platform's own run and lives as long as its schedule,
 suspended on its cadence timer, so a wall clock would fault every schedule a day after it was created and the
 `retryAfter` ceiling would cut any cadence longer than it. It reaches no source itself, and every run it fires
-starts through the management seam and is budgeted like any other. The per-step transport bounds and the CLI and
-console surfacing are landing in the pieces that follow this one.
+starts through the management seam and is budgeted like any other.
+
+An operator reads a budget in two places. `GET /environments/{name}/executionBudget` (CLI: `environments budget
+<name>`) returns the environment's authored override beside the deployment's ceiling and the effective budget
+resolved from the two, by the same rule a run start applies, so it is what a run started now would be frozen with.
+A run's own `budget` (`GET /runs/{runId}`, CLI: `runs get <runId> --output detail`) is what that run is held to,
+whatever its environment's budget has become since. A faulted run's error type says which limit it hit, and the
+[REST reference](../reference/control-plane-rest-api.md#fault-error-types) lists the fixed values with what each
+means and what to do about it.
 
 ## The trigger surface
 

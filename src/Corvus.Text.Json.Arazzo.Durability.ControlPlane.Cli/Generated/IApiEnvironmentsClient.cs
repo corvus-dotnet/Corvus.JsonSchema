@@ -148,6 +148,16 @@ public interface IApiEnvironmentsClient : IAsyncDisposable
         public static readonly string[] DeleteEnvironmentOpenIdConnectScopes = ["environments:write"];
 
         /// <summary>
+        /// Gets the scopes required by <c>GetEnvironmentExecutionBudget</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] GetEnvironmentExecutionBudgetOauth2Scopes = ["environments:read"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetEnvironmentExecutionBudget</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] GetEnvironmentExecutionBudgetOpenIdConnectScopes = ["environments:read"];
+
+        /// <summary>
         /// Gets the scopes required by <c>ListEnvironmentAdministrators</c> for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] ListEnvironmentAdministratorsOauth2Scopes = ["environments:read"];
@@ -299,6 +309,18 @@ public interface IApiEnvironmentsClient : IAsyncDisposable
     /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
     /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     ValueTask<DeleteEnvironmentResponse> DeleteEnvironmentAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Get an environment's execution budget: its override, the deployment ceiling, and the budget in effect
+    /// </summary>
+    /// <remarks>
+    /// An environment stores only the override it authored, so the environment itself cannot say what a limit it leaves out will be. This returns the override beside the deployment's ceiling and the effective budget resolved from the two, which is what a run started in the environment now would be frozen with (ADR 0068). A run already started keeps the budget it was given: see the run's own `budget`.
+    /// </remarks>
+    /// <param name="name">The name parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
+    ValueTask<GetEnvironmentExecutionBudgetResponse> GetEnvironmentExecutionBudgetAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source name, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// List an environment's administrators

@@ -443,6 +443,13 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
                 environment = env;
             }
 
+            // The budget frozen into the run at start (ADR 0068). A run that carries none, the scheduler's, omits it.
+            Models.ResolvedExecutionBudget.Source budget = default;
+            if (d.Budget is { } frozen)
+            {
+                budget = ExecutionBudgetModels.Resolved(frozen);
+            }
+
             b.Create(
                 createdAt: d.CreatedAt,
                 cursor: d.Cursor,
@@ -450,6 +457,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
                 id: d.Id.Value,
                 status: d.Status.ToString(),
                 workflowId: d.WorkflowId,
+                budget: budget,
                 correlationId: correlationId,
                 environment: environment,
                 fault: fault,

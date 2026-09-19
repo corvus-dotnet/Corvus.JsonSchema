@@ -1057,7 +1057,7 @@ public sealed class ControlPlaneServerTests
         builder.Logging.ClearProviders();
         WebApplication app = builder.Build();
         var runnerRegistry = new InMemoryRunnerRegistry();
-        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open, environmentStore: environmentStore, availabilityStore: availabilityStore, executionBudgetCeiling: ceiling);
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open, environmentStore: environmentStore, availabilityStore: availabilityStore);
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
         await runnerRegistry.RegisterAsync(Runner("flow", 1), default);
@@ -1075,8 +1075,72 @@ public sealed class ControlPlaneServerTests
             state!.Budget.ShouldBe(new ExecutionBudget(25, TimeSpan.FromHours(2), 1, TimeSpan.FromMinutes(10), TimeSpan.FromSeconds(7), 2048));
         }
 
+        // The run says what it is held to, in the API's whole seconds.
+        using (Stj.JsonDocument run = await ReadJsonAsync(await client.GetAsync($"/runs/{runId}")))
+        {
+            BudgetOf(run.RootElement.GetProperty("budget")).ShouldBe((25, 7200, 1, 600, 7, 2048));
+        }
+
+        // And the environment says the same before any run exists to ask: what it authored, what the deployment
+        // allows, and the two resolved. The ceiling is the management seam's, which is the only one there is.
+        using (Stj.JsonDocument budget = await ReadJsonAsync(await client.GetAsync("/environments/prod/executionBudget")))
+        {
+            BudgetOf(budget.RootElement.GetProperty("effective")).ShouldBe((25, 7200, 1, 600, 7, 2048));
+            BudgetOf(budget.RootElement.GetProperty("ceiling")).ShouldBe((200, 7200, 4, 600, 100, 16L * 1024 * 1024));
+            Stj.JsonElement authored = budget.RootElement.GetProperty("override");
+            authored.GetProperty("maxSteps").GetInt32().ShouldBe(25);
+            authored.TryGetProperty("wallClockSeconds", out _).ShouldBeFalse();
+        }
+
+        // An override is validated against that same ceiling: 201 steps is refused where the default's 500 would admit
+        // it, and 200 is admitted.
+        HttpResponseMessage tooWide = await client.PostAsync("/environments", new StringContent("""{"name":"wide","executionBudget":{"maxSteps":201}}""", Encoding.UTF8, "application/json"));
+        tooWide.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        HttpResponseMessage atCeiling = await client.PostAsync("/environments", new StringContent("""{"name":"level","executionBudget":{"maxSteps":200}}""", Encoding.UTF8, "application/json"));
+        atCeiling.StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        (await client.GetAsync("/environments/nowhere/executionBudget")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
         await app.DisposeAsync();
     }
+
+    [TestMethod]
+    public async Task An_environment_with_no_override_reports_the_ceiling_as_its_effective_budget()
+    {
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
+        var environmentStore = new Corvus.Text.Json.Arazzo.Durability.Environments.InMemoryEnvironmentStore(clock);
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock, runDerivation: TestDerivation, environments: environmentStore, executionBudget: ExecutionBudget.CeilingFrom(maxSteps: 50, wallClockSeconds: 172_800));
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops");
+        await AddEnvironmentAsync(environmentStore, "dev", "ops");
+
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Open, environmentStore: environmentStore);
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+
+        using (Stj.JsonDocument budget = await ReadJsonAsync(await client.GetAsync("/environments/dev/executionBudget")))
+        {
+            // A ceiling may be wider than the built-in default where the platform has no hard limit: two days here.
+            BudgetOf(budget.RootElement.GetProperty("ceiling")).ShouldBe((50, 172_800, 8, 3600, 100, 16L * 1024 * 1024));
+            BudgetOf(budget.RootElement.GetProperty("effective")).ShouldBe((50, 172_800, 8, 3600, 100, 16L * 1024 * 1024));
+            budget.RootElement.TryGetProperty("override", out _).ShouldBeFalse();
+        }
+
+        await app.DisposeAsync();
+    }
+
+    private static (int MaxSteps, long WallClockSeconds, int Depth, long RetryAfterCeilingSeconds, long StepTimeoutSeconds, long MaxResponseBytes) BudgetOf(Stj.JsonElement budget)
+        => (budget.GetProperty("maxSteps").GetInt32(),
+            budget.GetProperty("wallClockSeconds").GetInt64(),
+            budget.GetProperty("maxSubWorkflowDepth").GetInt32(),
+            budget.GetProperty("retryAfterCeilingSeconds").GetInt64(),
+            budget.GetProperty("stepTimeoutSeconds").GetInt64(),
+            budget.GetProperty("maxResponseBytes").GetInt64());
 
     [TestMethod]
     public async Task StartCatalogWorkflowRun_is_idempotent_under_an_Idempotency_Key_header()

@@ -148,6 +148,9 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         }
     }
 
+    /// <inheritdoc/>
+    public ExecutionBudget ExecutionBudgetCeiling => this.budgetCeiling;
+
     // The owner group of the run's pinned environment (the sys:tenant management tag, ADR 0065), resolved through
     // the wired environment registry with system reach — the caller's reach gates the start itself at the surface,
     // not the derivation's inputs. No registry wired (a deployment without tenancy governance) resolves to no
@@ -264,7 +267,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         }
 
         using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(cp.Utf8);
-        return new WorkflowRunDetail(state.RunId, state.WorkflowId, state.Status, state.Cursor, state.CreatedAt, state.Wait, state.Fault, cp.Etag, state.CorrelationId, state.Tags, state.SecurityTags, state.Environment, state.UpdatedAt);
+        return new WorkflowRunDetail(state.RunId, state.WorkflowId, state.Status, state.Cursor, state.CreatedAt, state.Wait, state.Fault, cp.Etag, state.CorrelationId, state.Tags, state.SecurityTags, state.Environment, state.UpdatedAt, state.Budget);
     }
 
     /// <inheritdoc/>

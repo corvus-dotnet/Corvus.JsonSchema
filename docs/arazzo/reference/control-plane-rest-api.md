@@ -71,6 +71,38 @@ selects the variant); the generated server `Match`es it onto the engine's `Resum
 
 There is deliberately no `Cancel` resume mode; cancellation is the separate `cancelRun` operation.
 
+## Execution budgets
+
+Every run is held to an execution budget of six limits ([ADR 0068](../adr/0068-execution-budget-fuel-wall-clock-depth.md)). The API states them the same way everywhere, with durations in whole seconds:
+
+| Limit | Meaning |
+| --- | --- |
+| `maxSteps` | Fuel: the most step attempts a run may make, retries and revisits counted. |
+| `wallClockSeconds` | The longest a run may live, from creation. |
+| `maxSubWorkflowDepth` | How deep sub-workflows may nest. |
+| `retryAfterCeilingSeconds` | The ceiling a step's declared `retryAfter` delay is clamped to. |
+| `stepTimeoutSeconds` | The longest a single step's request may take. A breach fails the step, not the run. |
+| `maxResponseBytes` | The largest response body a single step may read. A breach fails the step, not the run. |
+
+An environment stores only the override it authored (`executionBudget` on the environment), and a limit it leaves out is the deployment's. So the environment alone cannot say what its runs are held to. `GET /environments/{name}/executionBudget` answers that: it returns the `override` as stored, the deployment's `ceiling`, and the `effective` budget resolved from the two by the rule a run start applies. An override may only tighten, and a create or update naming a limit wider than the ceiling is refused with 400.
+
+A run's budget is resolved when it starts and frozen with it. `GET /runs/{runId}` returns it as `budget`, and a later change to the environment does not move it. The scheduler's own run carries no budget and has no `budget` property.
+
+## Fault error types
+
+A faulted run's `fault.error` (and `errorType` on a run summary) is an open string: a step that fails with no matching failure action records its own failure there. The platform itself records six fixed values:
+
+| Error type | Meaning | What to do |
+| --- | --- | --- |
+| `budget-fuel` | The run made as many step attempts as its budget's `maxSteps` allows. | Terminal. Start a new run, under a raised budget if the work needs more attempts. |
+| `budget-deadline` | The run outlived its budget's `wallClockSeconds`. | Terminal. Start a new run, under a raised budget if the work needs longer. |
+| `budget-depth` | The run nested sub-workflows past its budget's `maxSubWorkflowDepth`. | Terminal. Flatten the workflow, or start a new run under a raised depth limit. |
+| `executor-unhandled` | The workflow's executor failed in a way nothing in the workflow handled. The failure itself is in the executor's trace and is kept off the run. | Fix the cause, then resume the run. |
+| `executor-unresolvable` | The workflow version's executor was refused: it is missing, not runnable, or failed verification. | Republish or repair the version in the catalog, then resume the run. |
+| `transport-unbound` | A source the workflow calls has no usable binding in the run's environment. | Add the source's credential binding for the environment, then resume the run. |
+
+A resume of a run faulted on its budget is refused with 409 and the problem type `budget-exhausted`.
+
 ## Authentication
 
 A request is satisfied by any one scheme:

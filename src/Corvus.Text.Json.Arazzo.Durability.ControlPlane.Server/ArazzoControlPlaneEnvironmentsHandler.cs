@@ -161,6 +161,33 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
     }
 
     /// <inheritdoc/>
+    public async ValueTask<GetEnvironmentExecutionBudgetResult> HandleGetEnvironmentExecutionBudgetAsync(GetEnvironmentExecutionBudgetParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        // The same read reach as HandleGetEnvironmentAsync: an environment the caller cannot see has no budget to show.
+        string name = (string)parameters.Name;
+        ParsedJsonDocument<Environment>? environment = await this.store.GetAsync(name, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (environment is not { } e)
+        {
+            return GetEnvironmentExecutionBudgetResult.NotFound(NotFoundProblem(name), workspace);
+        }
+
+        // The override goes out as the stored bytes, and the result's body is validated and serialized after this
+        // returns, so the pooled document is the workspace's to dispose and not this method's.
+        workspace.TakeOwnership(e);
+
+        // Resolved by the rule a run start applies (ExecutionBudget.Resolve), against the ceiling a run start resolves
+        // against, so the budget shown is the budget a run started now is frozen with.
+        JsonElement authored = (JsonElement)e.RootElement.ExecutionBudget;
+        ExecutionBudget effective = ExecutionBudget.Resolve(this.budgetCeiling, authored);
+        return GetEnvironmentExecutionBudgetResult.Ok(
+            Models.EnvironmentExecutionBudget.Build(
+                ceiling: ExecutionBudgetModels.Resolved(this.budgetCeiling),
+                effective: ExecutionBudgetModels.Resolved(effective),
+                overrideValue: authored.ValueKind == JsonValueKind.Object ? Models.ExecutionBudget.From(authored) : default(Models.ExecutionBudget.Source)),
+            workspace);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask<CreateEnvironmentResult> HandleCreateEnvironmentAsync(CreateEnvironmentParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         Models.EnvironmentCreate body = parameters.Body;

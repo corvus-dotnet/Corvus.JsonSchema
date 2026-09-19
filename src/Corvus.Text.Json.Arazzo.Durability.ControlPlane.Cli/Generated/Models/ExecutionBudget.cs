@@ -121,12 +121,15 @@ public readonly partial struct ExecutionBudget
     /// <para>
     /// The largest response body a single step may read, in bytes. A step whose response is larger has failed, and its onFailure actions apply.
     /// </para>
+    /// <para>
+    /// An execution-budget limit (ADR 0068). A response body size, in bytes.
+    /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxResponseBytesEntity MaxResponseBytes
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.BudgetMaxResponseBytes MaxResponseBytes
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxResponseBytesUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxResponseBytesEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxResponseBytesUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.BudgetMaxResponseBytes value))
             {
                 return value;
             }
@@ -142,12 +145,15 @@ public readonly partial struct ExecutionBudget
     /// <para>
     /// Fuel: the maximum number of step executions a run may make, retries and revisits counted. The deployment ceiling is itself bounded by the per-step journal cap (500).
     /// </para>
+    /// <para>
+    /// An execution-budget limit (ADR 0068). A count of step executions.
+    /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxStepsEntity MaxSteps
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.BudgetMaxSteps MaxSteps
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxStepsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.MaxStepsEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxStepsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.BudgetMaxSteps value))
             {
                 return value;
             }
@@ -163,12 +169,15 @@ public readonly partial struct ExecutionBudget
     /// <para>
     /// The sub-workflow nesting depth cap.
     /// </para>
+    /// <para>
+    /// An execution-budget limit (ADR 0068). A sub-workflow nesting depth.
+    /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheSubWorkflowNestingDepthCap MaxSubWorkflowDepth
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.BudgetMaxSubWorkflowDepth MaxSubWorkflowDepth
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxSubWorkflowDepthUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheSubWorkflowNestingDepthCap value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MaxSubWorkflowDepthUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.BudgetMaxSubWorkflowDepth value))
             {
                 return value;
             }
@@ -184,12 +193,15 @@ public readonly partial struct ExecutionBudget
     /// <para>
     /// The ceiling a step&#39;s declared retryAfter delay is clamped to, in seconds.
     /// </para>
+    /// <para>
+    /// An execution-budget limit (ADR 0068). A retry delay, in whole seconds.
+    /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.RetryAfterCeilingSecondsEntity RetryAfterCeilingSeconds
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.BudgetRetryAfterCeilingSeconds RetryAfterCeilingSeconds
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RetryAfterCeilingSecondsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.RetryAfterCeilingSecondsEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RetryAfterCeilingSecondsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.BudgetRetryAfterCeilingSeconds value))
             {
                 return value;
             }
@@ -205,12 +217,15 @@ public readonly partial struct ExecutionBudget
     /// <para>
     /// The longest a single step&#39;s request may take, in seconds, from the send to the response having been read. A step that runs past it has failed, and its onFailure actions apply. No deployment may set it above ten minutes.
     /// </para>
+    /// <para>
+    /// An execution-budget limit (ADR 0068). A step request duration, in whole seconds, at most the platform&#39;s ten minutes.
+    /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.StepTimeoutSecondsEntity StepTimeoutSeconds
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.BudgetStepTimeoutSeconds StepTimeoutSeconds
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StepTimeoutSecondsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.StepTimeoutSecondsEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StepTimeoutSecondsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.BudgetStepTimeoutSeconds value))
             {
                 return value;
             }
@@ -226,12 +241,15 @@ public readonly partial struct ExecutionBudget
     /// <para>
     /// The maximum age of a run from creation, in seconds.
     /// </para>
+    /// <para>
+    /// An execution-budget limit (ADR 0068). A run age, in whole seconds.
+    /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheMaximumAgeOfARunFromCreationInSeconds WallClockSeconds
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.BudgetWallClockSeconds WallClockSeconds
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WallClockSecondsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ExecutionBudget.TheMaximumAgeOfARunFromCreationInSeconds value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.WallClockSecondsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.BudgetWallClockSeconds value))
             {
                 return value;
             }

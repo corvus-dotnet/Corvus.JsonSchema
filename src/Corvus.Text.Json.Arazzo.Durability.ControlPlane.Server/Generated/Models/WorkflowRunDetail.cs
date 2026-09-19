@@ -115,6 +115,30 @@ public readonly partial struct WorkflowRunDetail
     }
 
     /// <summary>
+    /// Gets the (optional) <c>budget</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The execution budget resolved into the run when it started and frozen with it (ADR 0068): the limits this run is held to, whatever its environment&#39;s budget has become since. Absent on a run that carries none, which is the scheduler&#39;s.
+    /// </para>
+    /// <para>
+    /// An execution budget with every limit decided (ADR 0068): a deployment&#39;s ceiling, the budget in effect for an environment, or the budget frozen into a run. The limits are those of `ExecutionBudget`, in the same units, and all six are always present.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResolvedExecutionBudget Budget
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.BudgetUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.ResolvedExecutionBudget value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the (optional) <c>correlationId</c> property.
     /// </summary>
     /// <remarks>
@@ -632,6 +656,11 @@ public readonly partial struct WorkflowRunDetail
     public static class JsonPropertyNames
     {
         /// <summary>
+        /// Gets the JSON property name for <see cref="Budget"/>.
+        /// </summary>
+        public const string Budget = "budget";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="CorrelationId"/>.
         /// </summary>
         public const string CorrelationId = "correlationId";
@@ -690,6 +719,11 @@ public readonly partial struct WorkflowRunDetail
         /// Gets the JSON property name for <see cref="WorkflowId"/>.
         /// </summary>
         public const string WorkflowId = "workflowId";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Budget"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> BudgetUtf8 => "budget"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="CorrelationId"/>.
@@ -755,6 +789,11 @@ public readonly partial struct WorkflowRunDetail
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Budget"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Budget => "budget"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="CorrelationId"/>.
         /// </summary>
         public static ReadOnlySpan<byte> CorrelationId => "correlationId"u8;
@@ -817,6 +856,11 @@ public readonly partial struct WorkflowRunDetail
 
     private static class JsonPropertyNamesPrebaked
     {
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Budget"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Budget => [0x85, 0x00, 0x00, 0x00, 0x22, 0x62, 0x75, 0x64, 0x67, 0x65, 0x74, 0x22];
+
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="CorrelationId"/>.
         /// </summary>
