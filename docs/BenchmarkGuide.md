@@ -201,18 +201,20 @@ With each .NET release we measure what the new runtime gives us "for free" and p
 | V4 engine | `src-v4/Corvus.Json.Benchmarking` (`ValidateLargeArrayCorvusV4`) | .NET 8.0, 9.0, 10.0, 11.0 |
 | V5 engine | `benchmarks/Corvus.Text.Json.DotNetVersions.Benchmarks` | .NET 10.0, 11.0 |
 
-The V5 project measures the generated types (`EvaluateSchema()`), the generated standalone evaluator, and the dynamic validator. It is built once for `net10.0` and the same binaries run on each runtime.
+The V5 project measures the generated types (`EvaluateSchema()`), the generated standalone evaluator, and the dynamic validator. Since 5.6.0 all three run the same compiled-plan evaluator, so expect them to agree. It is built once for `net10.0` and the same binaries run on each runtime.
+
+Run both series with the script. It builds the harnesses, waits for the machine to settle, pins the run to the performance cores, and probes the host's health before and after each series.
 
 ```powershell
-# V4 series
-cd src-v4/Corvus.Json.Benchmarking
-dotnet run -c Release -f net10.0 -- --filter '*ValidateLargeDocumentCorvusOnly.ValidateLargeArrayCorvusV4'
-
-# V5 series
-cd benchmarks/Corvus.Text.Json.DotNetVersions.Benchmarks
-dotnet run -c Release -f net10.0 -- --filter '*'
+pwsh benchmarks/scripts/Run-DotNetVersionSeries.ps1
 ```
 
-Every runtime in the series must be installed alongside the SDK that `global.json` pins. BenchmarkDotNet 0.15.8 has no .NET 11 runtime moniker, so the .NET 11.0 job names its toolchain directly. The summary table's `Runtime` column reports the host's runtime for that job. The `Job` column and the legend above the table carry the runtime that actually ran.
+By default the script does not use BenchmarkDotNet. Each harness has an `ab` mode, a stopwatch loop that warms up past JIT tiering and then measures one method in one process. The script rotates those processes through the runtimes (`dotnet exec --fx-version` runs the same binaries on each), round after round, and reports the ratio between adjacent runtimes within each round. The machine drifts over a run, but it drifts for both sides of a pair alike, so the median paired ratio is stable when the absolute times are not.
 
-When a new .NET version ships, add a job for it to each `Program.cs`. Only the relative figures matter, but they need a quiet machine to be stable.
+BenchmarkDotNet runs its jobs in order, directly after it builds them, so the first runtime is measured on a machine that is still hot from the build. On a laptop that ordering decided the result. Three pinned BenchmarkDotNet runs put .NET 11 anywhere from 5% slower to 23% faster than .NET 10 on the V5 series, where the paired rotation says they are level to within 2%. Use `-Method BenchmarkDotNet` when you want its full statistics, and do not trust it for differences of a few percent between adjacent runtimes.
+
+Every runtime in the series must be installed alongside the SDK that `global.json` pins. BenchmarkDotNet 0.15.8 has no .NET 11 runtime moniker, so its .NET 11.0 job names its toolchain directly. The summary table's `Runtime` column reports the host's runtime for that job. The `Job` column and the legend above the table carry the runtime that actually ran.
+
+On a hybrid CPU the run has to stay on the performance cores. Under WSL2 the guest's CPU numbers have no fixed relation to the host's cores, so pinning inside the guest is not enough. Set the affinity of the `vmmemWSL` process on the Windows host from an elevated PowerShell (`(Get-Process vmmemWSL).ProcessorAffinity = 0xFFF` for performance cores on logical processors 0 to 11), re-apply it after every `wsl --shutdown`, and keep the host's display awake. Compare the probe lines in `series.log` between runs. If the overhead figure has drifted up by 20% or more, the host has slowed down and the run should be repeated.
+
+When a new .NET version ships, add a job for it to each `Program.cs`, and add it to the `Runtimes` list for each harness in the script.

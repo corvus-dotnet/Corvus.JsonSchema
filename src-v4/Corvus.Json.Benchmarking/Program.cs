@@ -15,8 +15,13 @@ namespace Corvus.Json.Benchmarking;
 
 internal class Program
 {
-    private static void Main(string[] args)
+    private static int Main(string[] args)
     {
+        if (args.Length > 0 && args[0] == "ab")
+        {
+            return AbHarness.Run(args);
+        }
+
         var config = ManualConfig.Create(DefaultConfig.Instance);
         config.AddJob(
             Job.Default
@@ -50,5 +55,6 @@ internal class Program
                 .WithStrategy(RunStrategy.Throughput));
 
         BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args, config);
+        return 0;
     }
 }
