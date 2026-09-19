@@ -15,7 +15,7 @@
       * runs each series with its CPU affinity set to -CpuList;
       * with -Method Rotation (the default), runs each harness's 'ab' mode once per runtime per round, in turn, and
         reports the ratio between adjacent runtimes for each round (the paired ratio). Machine drift affects both
-        sides of a pair alike, so the median paired ratio is the figure to publish;
+        sides of a pair alike, so the median paired ratio is a quick and drift-resistant cross-check;
       * with -Method BenchmarkDotNet, runs the full BenchmarkDotNet jobs, with each runtime job in -Launches
         separate processes. A single process can settle into a faster or slower state for its whole life, so one
         launch per job is not enough for differences of a few percent. These are the figures we publish;
