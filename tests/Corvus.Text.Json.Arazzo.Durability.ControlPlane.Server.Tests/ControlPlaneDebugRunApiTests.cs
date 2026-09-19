@@ -292,6 +292,40 @@ public sealed class ControlPlaneDebugRunApiTests
     }
 
     [TestMethod]
+    public async Task A_debug_run_is_budgeted_by_the_deployments_ceiling_at_start_and_when_it_is_re_budgeted()
+    {
+        // ADR 0068: a draft run calls real sources, so it is held to a budget like any run, and to THIS deployment's
+        // ceiling. The debug-run management is where a draft run is budgeted at start and re-budgeted on resume, and
+        // built without the ceiling it would resolve against the built-in default of 500 steps instead.
+        ExecutionBudget ceiling = ExecutionBudget.CeilingFrom(maxSteps: 7);
+        await using Scoped host = await StartAsync(withRunner: true, HappyMock(), ceiling: ceiling);
+        string id = await host.CreateReadyWorkingCopyAsync(TwoStepDoc);
+        HttpResponseMessage started = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs",
+            """{"workflowId":"adopt","environment":"development","inputs":{"petId":"42"}}""", StartScopes);
+        started.StatusCode.ShouldBe(HttpStatusCode.Created);
+        string debugRunId;
+        using (Stj.JsonDocument run = Stj.JsonDocument.Parse(await started.Content.ReadAsStringAsync()))
+        {
+            debugRunId = run.RootElement.GetProperty("debugRunId").GetString()!;
+        }
+
+        var address = new WorkflowRunAddress("development", new WorkflowRunId(debugRunId));
+        using (WorkflowRun? pending = await WorkflowRun.ResumeAsync(host.Store, address))
+        {
+            pending!.Budget.ShouldBe(ceiling);
+
+            // It runs out of fuel. Nothing here needs the runner: the fault is what a run records on itself.
+            await pending.FaultAsync("get-pet", attempt: 1, ExecutionBudgetFault.Fuel, default);
+        }
+
+        // Resumed, it is re-budgeted by the same resolution, against the same ceiling, and not widened to the default.
+        (await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/resume", "{}", StartScopes)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        using WorkflowRun? rebudgeted = await WorkflowRun.ResumeAsync(host.Store, address);
+        rebudgeted!.Budget.ShouldBe(ceiling);
+        rebudgeted.Budget!.Value.MaxSteps.ShouldBe(7);
+    }
+
+    [TestMethod]
     public async Task Resuming_a_debug_run_emits_a_resumed_governance_audit_span()
     {
         // §850: continuing a paused debug run is a real re-execution, so it is audited alongside start and cancel.
@@ -622,10 +656,10 @@ public sealed class ControlPlaneDebugRunApiTests
         return mock;
     }
 
-    private static async Task<Scoped> StartAsync(bool withRunner, MockApiTransport? transport, Corvus.Text.Json.AsyncApi.IMessageTransport? messageTransport = null)
+    private static async Task<Scoped> StartAsync(bool withRunner, MockApiTransport? transport, Corvus.Text.Json.AsyncApi.IMessageTransport? messageTransport = null, ExecutionBudget? ceiling = null)
     {
         var store = new InMemoryWorkflowStateStore();
-        var management = new SecuredWorkflowManagement(store, "ops");
+        var management = new SecuredWorkflowManagement(store, "ops", executionBudget: ceiling);
         var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops");
         var workspaceStore = new Corvus.Text.Json.Arazzo.Durability.WorkspaceWorkflows.InMemoryWorkspaceWorkflowStore();
 
@@ -667,7 +701,7 @@ public sealed class ControlPlaneDebugRunApiTests
             draftRunner: runner,
             draftRunTraceStore: traceStore);
         await app.StartAsync();
-        return new Scoped(app, app.GetTestClient(), runner);
+        return new Scoped(app, app.GetTestClient(), runner) { Store = store };
     }
 
     // The no-bodies invariant (the ratified §18 posture): no request or response body property appears in the trace.
@@ -697,6 +731,8 @@ public sealed class ControlPlaneDebugRunApiTests
 
     private sealed class Scoped(WebApplication app, HttpClient client, InProcessDraftRunner? runner) : IAsyncDisposable
     {
+        public InMemoryWorkflowStateStore Store { get; init; } = null!;
+
         // §18 R5: the control plane only marks a debug run claimable; a runner advances it out-of-band. In these
         // single-process tests THIS is that runner — pump it to advance every marked run (start / resume) to its next
         // pause, completion, or fault before asserting the state the UI would poll get-debug-run for.

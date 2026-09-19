@@ -269,8 +269,12 @@ public static class ControlPlaneEndpointExtensions
         // resume verbs (retry/skip/rewind/state-patch) are mark-claimable (§18 R5b), so the management client needs no
         // resumer — a runner performs the re-execution. Absent a run store or a runner the debug-run endpoints fail
         // closed; debug runs REQUIRE a runner to advance the runs the control plane marks claimable.
+        //
+        // It is given the environment registry and the deployment's one ceiling (ADR 0068), because a draft run is
+        // budgeted at start through it and re-budgeted through it on resume. Built without them it would resolve
+        // against the built-in default and no override, which a deployment's tighter ceiling would not bound.
         ISecuredWorkflowManagement? debugRunManagement = workflowStateStore is not null && draftRunner is not null
-            ? new SecuredWorkflowManagement(workflowStateStore, "arazzo-debug-runs")
+            ? new SecuredWorkflowManagement(workflowStateStore, "arazzo-debug-runs", environments: envStore, executionBudget: management.ExecutionBudgetCeiling)
             : null;
         var workspaceHandler = new ArazzoControlPlaneWorkspaceHandler(
             wcStore, access, catalog, srcStore, simulator: workflowSimulator, environments: envStore, credentials: credentialStore,

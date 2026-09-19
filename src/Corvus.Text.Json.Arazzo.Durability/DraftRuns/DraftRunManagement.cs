@@ -43,18 +43,25 @@ public sealed class DraftRunManagement
     private readonly IWorkflowStateStore store;
     private readonly IDraftRunStore drafts;
     private readonly TimeProvider timeProvider;
+    private readonly ExecutionBudgetResolver? resolveBudget;
 
     /// <summary>Initializes a new instance of the <see cref="DraftRunManagement"/> class.</summary>
     /// <param name="store">The state store the Pending run is enqueued to (the shared dispatch queue).</param>
     /// <param name="drafts">The draft-run store the capture is persisted to.</param>
     /// <param name="timeProvider">The time source for the capture timestamp; defaults to <see cref="TimeProvider.System"/>.</param>
-    public DraftRunManagement(IWorkflowStateStore store, IDraftRunStore drafts, TimeProvider? timeProvider = null)
+    /// <param name="resolveBudget">Resolves the execution budget a draft run is frozen with (ADR 0068), which a host
+    /// passes as its management seam's <see cref="ISecuredWorkflowManagement.ResolveExecutionBudgetAsync"/> so a
+    /// draft run is budgeted exactly as a catalogued run in the same environment is. Without one a draft run takes
+    /// <see cref="ExecutionBudget.Default"/>. It is never unbudgeted: a draft run calls real sources (ADR 0045), and
+    /// a working copy is unreviewed code.</param>
+    public DraftRunManagement(IWorkflowStateStore store, IDraftRunStore drafts, TimeProvider? timeProvider = null, ExecutionBudgetResolver? resolveBudget = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(drafts);
         this.store = store;
         this.drafts = drafts;
         this.timeProvider = timeProvider ?? TimeProvider.System;
+        this.resolveBudget = resolveBudget;
     }
 
     /// <summary>
@@ -108,6 +115,13 @@ public sealed class DraftRunManagement
             await this.drafts.PutAsync(id, builder.RootElement, package, cancellationToken).ConfigureAwait(false);
         }
 
+        // ADR 0068: a draft run is held to a budget like any run. It calls real development sources under the
+        // runner's credentials (ADR 0045), so a working copy that loops is otherwise the platform aimed at a third
+        // party with nothing to stop it. Resolved as a catalogued run's is, and never left without one.
+        ExecutionBudget budget = this.resolveBudget is { } resolve
+            ? await resolve(DraftRuns.RunWorkflowId, start.Environment, cancellationToken).ConfigureAwait(false) ?? ExecutionBudget.Default
+            : ExecutionBudget.Default;
+
         SecurityTagSet scopedTags = DraftRuns.WithWorkingCopyTag(securityTags, start.WorkingCopyId);
         using WorkflowRun run = WorkflowRun.CreateNew(
             this.store,
@@ -118,7 +132,8 @@ public sealed class DraftRunManagement
             this.timeProvider,
             correlationId,
             tags,
-            scopedTags);
+            scopedTags,
+            budget);
 
         // §18 R5: persist the debugger pause on the Pending run so the runner that claims it honours the stops on its
         // first advance. The control plane never executes the run; a runner does. Null leaves the run unpaused.

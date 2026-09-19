@@ -24,6 +24,10 @@ A draft also is not a catalogued version, so it needs a way to run without being
   capture-then-time-travel inspection, so the debugger sees real execution.
 - **It is gated.** A debug run is gated by the environment allowing draft runs (`allowsDraftRuns`) and carries
   a `debugRuns` marker, so an environment opts in to hosting draft debug runs.
+- **It is budgeted.** Because it makes real source calls, a debug run is held to an execution budget exactly as a
+  catalogued run in the same environment is ([ADR 0068](0068-execution-budget-fuel-wall-clock-depth.md)): the
+  deployment's ceiling, tightened by the development environment's override. A draft that loops is stopped by
+  its fuel.
 
 ## Decision
 

@@ -196,7 +196,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         // The capture-and-enqueue front end composes from the run store + the draft store (design §18 slice 3d);
         // build it once when both are wired so a debug-run start has it ready.
         this.draftRunManagement = workflowStateStore is not null && draftRunStore is not null
-            ? new DraftRunManagement(workflowStateStore, draftRunStore, this.timeProvider)
+            ? new DraftRunManagement(workflowStateStore, draftRunStore, this.timeProvider, debugRunManagement is { } budgets ? budgets.ResolveExecutionBudgetAsync : null)
             : null;
         this.auditLogger = auditLogger;
     }

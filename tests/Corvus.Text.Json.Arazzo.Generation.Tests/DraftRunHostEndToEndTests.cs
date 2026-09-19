@@ -71,6 +71,13 @@ public sealed class DraftRunHostEndToEndTests
 
     private static readonly byte[] WorkflowUtf8 = Encoding.UTF8.GetBytes(WorkflowJson);
 
+    // The same draft, with one addition: on success it goes back to the step it just ran.
+    private static readonly byte[] LoopingWorkflowUtf8 = Encoding.UTF8.GetBytes(
+        WorkflowJson.Replace(
+            "\"outputs\": { \"petName\": \"$response.body#/name\" }",
+            "\"outputs\": { \"petName\": \"$response.body#/name\" },\n                  \"onSuccess\": [ { \"name\": \"again\", \"type\": \"goto\", \"stepId\": \"getPet\" } ]",
+            StringComparison.Ordinal));
+
     private static readonly IReadOnlyList<KeyValuePair<string, byte[]>> Sources =
         [new("petstore", Encoding.UTF8.GetBytes(PetstoreOpenApi))];
 
@@ -109,6 +116,52 @@ public sealed class DraftRunHostEndToEndTests
     }
 
     [TestMethod]
+    [Timeout(60_000)]
+    public async Task A_draft_run_that_loops_is_stopped_by_its_budget_and_not_left_to_flood_the_source()
+    {
+        // ADR 0068, the draft path. A draft run calls REAL sources under the runner's credentials (ADR 0045), and a
+        // working copy is unreviewed code: this one sends getPet and goes straight back to it, for ever. Started with
+        // no budget, as a draft run used to be, nothing stops it. The token bounds the test itself, so that failure
+        // is a failed assertion and not a hung suite.
+        using var endpoint = new LocalHttpEndpoint(200, """{"name":"Fido"}""");
+        var runStore = new InMemoryWorkflowStateStore();
+        var drafts = new InMemoryDraftRunStore();
+        var budget = new ExecutionBudget(5, TimeSpan.FromHours(1), 8, TimeSpan.Zero, ExecutionBudget.DefaultStepTimeout, ExecutionBudget.DefaultMaxResponseBytes);
+        var management = new DraftRunManagement(runStore, drafts, resolveBudget: (_, _, _) => new ValueTask<ExecutionBudget?>(budget));
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+        WorkflowRunId id = await management.StartAsync(DraftStart(LoopingWorkflowUtf8), inputs.RootElement);
+
+        using var httpClient = new HttpClient { BaseAddress = endpoint.BaseAddress };
+        using var resumer = new DraftWorkflowResumer(drafts, new WorkflowExecutorProvider(durable: true), Binder(httpClient));
+        var dispatcher = new WorkflowDispatcher(runStore, "runner-dev", runnerEnvironment: "development");
+        using var bound = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+
+        await dispatcher.DispatchClaimableAsync([DraftRuns.RunWorkflowId], resumer.AsResumer(), bound.Token);
+
+        // Five attempts, which is its fuel, and then the run faulted itself before making a sixth.
+        bound.IsCancellationRequested.ShouldBeFalse();
+        endpoint.Requests.Count.ShouldBe(5);
+        using WorkflowRun? stopped = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev(id));
+        stopped!.Status.ShouldBe(WorkflowRunStatus.Faulted);
+        stopped.Fault!.Value.Error.ShouldBe(ExecutionBudgetFault.Fuel);
+        stopped.Budget.ShouldBe(budget);
+    }
+
+    [TestMethod]
+    public async Task A_draft_run_started_with_no_resolver_is_still_budgeted()
+    {
+        // Never unbudgeted: a caller that wires no resolver gets the platform default, not nothing.
+        var runStore = new InMemoryWorkflowStateStore();
+        var management = new DraftRunManagement(runStore, new InMemoryDraftRunStore());
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+
+        WorkflowRunId id = await management.StartAsync(DraftStart(), inputs.RootElement);
+
+        using WorkflowRun? run = await WorkflowRun.ResumeAsync(runStore, TestAddresses.Dev(id));
+        run!.Budget.ShouldBe(ExecutionBudget.Default);
+    }
+
+    [TestMethod]
     public async Task A_draft_run_whose_endpoint_returns_5xx_reaches_faulted()
     {
         using var endpoint = new LocalHttpEndpoint(500, """{"error":"boom"}""");
@@ -140,10 +193,10 @@ public sealed class DraftRunHostEndToEndTests
     // currently supply. Rather than force a bespoke, potentially-flaky channel fixture, the message-wait Suspend →
     // deliver → Complete case is deferred; happy + fault above prove the container-free real-transport draft-run host.
 
-    private static DraftRunStart DraftStart() => new(
+    private static DraftRunStart DraftStart(byte[]? documentUtf8 = null) => new(
         WorkingCopyId: "wc-1",
         WorkflowId: "adopt",
-        DocumentUtf8: WorkflowUtf8,
+        DocumentUtf8: documentUtf8 ?? WorkflowUtf8,
         Sources: Sources,
         Environment: "development",
         DocumentEtag: "etag-1",

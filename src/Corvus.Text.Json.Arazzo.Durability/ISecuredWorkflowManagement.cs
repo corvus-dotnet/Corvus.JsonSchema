@@ -25,6 +25,21 @@ public interface ISecuredWorkflowManagement
     ExecutionBudget ExecutionBudgetCeiling { get; }
 
     /// <summary>
+    /// Resolves the execution budget a run of <paramref name="workflowId"/> started in <paramref name="environment"/>
+    /// now would be frozen with (ADR 0068): the deployment's ceiling, tightened by the environment's current override.
+    /// </summary>
+    /// <param name="workflowId">The workflow the run executes.</param>
+    /// <param name="environment">The environment the run is pinned to.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The budget, or <see langword="null"/> for the platform's own scheduler run, which is the one run
+    /// that carries none.</returns>
+    /// <remarks>
+    /// The one resolution. A catalogued run's start, a re-budget on resume, and a draft debug run's start all come
+    /// through it, so no way of starting a run resolves its budget differently or not at all.
+    /// </remarks>
+    ValueTask<ExecutionBudget?> ResolveExecutionBudgetAsync(string workflowId, string environment, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Starts a new run of a workflow: creates a fresh <see cref="WorkflowRunStatus.Pending"/> run with the
     /// supplied inputs and enqueues it (the store is the queue) for a hosting runner to claim and execute. The
     /// run executes asynchronously and durably; observe it via <see cref="GetAsync"/>/<see cref="ListAsync"/>.

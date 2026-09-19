@@ -86,7 +86,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         ArgumentException.ThrowIfNullOrEmpty(environment);
 
         var id = new WorkflowRunId(Guid.NewGuid().ToString("n", System.Globalization.CultureInfo.InvariantCulture));
-        ExecutionBudget? budget = await this.ResolveBudgetAsync(workflowId, environment, cancellationToken).ConfigureAwait(false);
+        ExecutionBudget? budget = await this.ResolveExecutionBudgetAsync(workflowId, environment, cancellationToken).ConfigureAwait(false);
         using WorkflowRun run = WorkflowRun.CreateNew(this.store, id, workflowId, inputs, environment, this.timeProvider, correlationId, tags, securityTags, budget, rerunOf);
         await run.EnqueueAsync(cancellationToken).ConfigureAwait(false);
         return id;
@@ -121,7 +121,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
 
         try
         {
-            ExecutionBudget? budget = await this.ResolveBudgetAsync(workflowId, environment, cancellationToken).ConfigureAwait(false);
+            ExecutionBudget? budget = await this.ResolveExecutionBudgetAsync(workflowId, environment, cancellationToken).ConfigureAwait(false);
             using WorkflowRun run = WorkflowRun.CreateNew(this.store, runId, workflowId, inputs, environment, this.timeProvider, correlationId, tags, securityTags, budget, rerunOf);
             await run.EnqueueAsync(cancellationToken).ConfigureAwait(false);
             return new IdempotentStartResult(runId, Created: true);
@@ -163,8 +163,11 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
     // tenant's workflow: it lives for as long as its schedule does and suspends on its own cadence timer, so a wall
     // clock would fault every schedule a day after it was created and the retryAfter ceiling would cut any cadence
     // longer than it. It reaches no source itself, and every run it fires starts through this same seam and is
-    // budgeted like any other.
-    private async ValueTask<ExecutionBudget?> ResolveBudgetAsync(string workflowId, string environment, CancellationToken cancellationToken)
+    // budgeted like any other. It is the ONLY exemption: a draft debug run calls real sources (ADR 0045) and is
+    // budgeted by this same function.
+
+    /// <inheritdoc/>
+    public async ValueTask<ExecutionBudget?> ResolveExecutionBudgetAsync(string workflowId, string environment, CancellationToken cancellationToken)
     {
         if (string.Equals(workflowId, ScheduleHostedWorkflow.ScheduleWorkflowId, StringComparison.Ordinal))
         {
@@ -599,7 +602,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
     private async ValueTask<RunRebudget?> AssessRebudgetAsync(WorkflowCheckpointState state, string faultError, CancellationToken cancellationToken)
     {
         if (state.Budget is not { } frozen
-            || await this.ResolveBudgetAsync(state.WorkflowId, state.Environment ?? string.Empty, cancellationToken).ConfigureAwait(false) is not { } effective)
+            || await this.ResolveExecutionBudgetAsync(state.WorkflowId, state.Environment ?? string.Empty, cancellationToken).ConfigureAwait(false) is not { } effective)
         {
             return null;
         }

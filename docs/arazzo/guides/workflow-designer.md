@@ -158,7 +158,10 @@ run milliseconds and exactly reproducible. The UX exploits that:
   *completed* run deliberately keeps its overlay for inspection, **Clear** is the explicit return
   to the clean editing surface (starting a new run also replaces it). **Step**
   executes exactly the next step and pauses again, invoked from idle it starts the session paused
-  before the first step; "run to here" targets a step. *Every* pause, breakpoint, manual pause,
+  before the first step; "run to here" targets a step. A debug run is held to its environment's
+  execution budget like any run ([ADR 0068](../adr/0068-execution-budget-fuel-wall-clock-depth.md)),
+  and the wall clock counts from when the run started, paused or not. A session left paused past
+  it faults when it is next stepped: raise the environment's wall clock and resume, or re-run. *Every* pause, breakpoint, manual pause,
   or step, hands the paused context to the context explorer and expression console below for
   inspection; step and resume are both §8.2 replays, differing only in how far the stop condition
   advances (one step vs. the next breakpoint/end).
