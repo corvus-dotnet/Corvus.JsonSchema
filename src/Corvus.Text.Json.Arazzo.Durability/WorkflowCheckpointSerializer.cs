@@ -1016,6 +1016,136 @@ public static class WorkflowCheckpointSerializer
         }
     }
 
+    /// <summary>
+    /// Rewrites a checkpoint for a control-plane remediation (a resume that moves the cursor, supplies a skipped
+    /// step's outputs, patches the run's context, or re-budgets the run), copying every property the remediation does
+    /// not name from the stored bytes verbatim.
+    /// </summary>
+    /// <param name="source">The current checkpoint document (UTF-8 JSON).</param>
+    /// <param name="remediation">What the remediation changes.</param>
+    /// <returns>The rewritten checkpoint document.</returns>
+    /// <remarks>
+    /// A remediation must change what it names and nothing else. Re-serializing the run from a list of its fields
+    /// loses whichever field the list does not know about, and did: the execution budget and the step journal (ADR
+    /// 0068), so a rewound run came back unbudgeted with its fuel refunded. Copying by property makes that class of
+    /// loss impossible, because a property this method has never heard of is carried like any other.
+    /// </remarks>
+    internal static byte[] RewriteForRemediation(ReadOnlySpan<byte> source, in CheckpointRemediation remediation)
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter buffer);
+        try
+        {
+            bool wroteUpdatedAt = false;
+            bool wroteInputs = false;
+            bool wroteStepOutputs = false;
+            var reader = new Utf8JsonReader(source);
+            reader.Read(); // the root StartObject
+            writer.WriteStartObject();
+            while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+            {
+                if (reader.ValueTextEquals("cursor"u8))
+                {
+                    reader.Read();
+                    writer.WriteNumber("cursor"u8, remediation.Cursor);
+                }
+                else if (reader.ValueTextEquals("updatedAt"u8))
+                {
+                    reader.Read();
+                    writer.WriteString("updatedAt"u8, remediation.UpdatedAt);
+                    wroteUpdatedAt = true;
+                }
+                else if (remediation.ReplacesContext && reader.ValueTextEquals("inputs"u8))
+                {
+                    reader.Read();
+                    reader.Skip();
+                    wroteInputs = WriteInputs(writer, remediation.Inputs);
+                }
+                else if (remediation.ReplacesContext && reader.ValueTextEquals("stepOutputs"u8))
+                {
+                    reader.Read();
+                    reader.Skip();
+                    WriteStepOutputs(writer, remediation.StepOutputs!);
+                    wroteStepOutputs = true;
+                }
+                else if (remediation.Budget is { } budget && reader.ValueTextEquals(ExecutionBudget.JsonPropertyNames.BudgetUtf8))
+                {
+                    reader.Read();
+                    reader.Skip();
+                    budget.WriteTo(writer);
+                }
+                else
+                {
+                    // Checkpoint property names are simple ASCII (never escaped), so the raw name span round-trips;
+                    // the value (scalar or whole subtree) is copied verbatim.
+                    ReadOnlySpan<byte> name = reader.ValueSpan;
+                    reader.Read();
+                    int valueStart = (int)reader.TokenStartIndex;
+                    reader.Skip();
+                    writer.WritePropertyName(name);
+                    writer.WriteRawValue(source[valueStart..(int)reader.BytesConsumed], skipInputValidation: true);
+                }
+            }
+
+            // A property the stored document did not carry, and the remediation supplies, is appended.
+            if (!wroteUpdatedAt)
+            {
+                writer.WriteString("updatedAt"u8, remediation.UpdatedAt);
+            }
+
+            if (remediation.ReplacesContext)
+            {
+                if (!wroteInputs)
+                {
+                    WriteInputs(writer, remediation.Inputs);
+                }
+
+                if (!wroteStepOutputs)
+                {
+                    WriteStepOutputs(writer, remediation.StepOutputs!);
+                }
+            }
+
+            writer.WriteEndObject();
+            writer.Flush();
+            return buffer.WrittenSpan.ToArray();
+        }
+        finally
+        {
+            workspace.ReturnWriterAndBuffer(writer, buffer);
+        }
+
+        static bool WriteInputs(Utf8JsonWriter writer, in JsonElement inputs)
+        {
+            // Omitted when undefined, as Serialize omits it: "not present" is Undefined, never null.
+            if (inputs.ValueKind != JsonValueKind.Undefined)
+            {
+                writer.WritePropertyName("inputs"u8);
+                inputs.WriteTo(writer);
+            }
+
+            return true;
+        }
+
+        static void WriteStepOutputs(Utf8JsonWriter writer, PooledUtf8Map<JsonElement> stepOutputs)
+        {
+            writer.WriteStartObject("stepOutputs"u8);
+            PooledUtf8Map<JsonElement>.Enumerator enumerator = stepOutputs.GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                if (enumerator.CurrentValue.ValueKind == JsonValueKind.Undefined)
+                {
+                    continue;
+                }
+
+                writer.WritePropertyName(enumerator.CurrentKey);
+                enumerator.CurrentValue.WriteTo(writer);
+            }
+
+            writer.WriteEndObject();
+        }
+    }
+
     /// <summary>Reads just the security tags from a parsed checkpoint (for the index projection), without materializing the working dictionaries.</summary>
     /// <param name="root">The parsed checkpoint root.</param>
     /// <returns>The security tags as a deferred holder over the persisted bytes (empty if absent).</returns>

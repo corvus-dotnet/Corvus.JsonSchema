@@ -804,6 +804,10 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                 JsonElement inputs = state.Inputs;
                 PooledUtf8Map<JsonElement> stepOutputs = state.StepOutputs;
 
+                // Whether the run's context (inputs and step outputs) changes, which only a skip that supplies the
+                // skipped step's outputs and a state patch do. Otherwise it is carried as stored, like everything else.
+                bool replacesContext = false;
+
                 switch (options.Mode)
                 {
                     case ResumeMode.Rewind:
@@ -815,6 +819,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                         if (state.Fault is { } fault && options.SkipOutputs.ValueKind != JsonValueKind.Undefined)
                         {
                             stepOutputs.Set(fault.StepId, options.SkipOutputs);
+                            replacesContext = true;
                         }
 
                         cursor = options.TargetCursor ?? state.Cursor + 1;
@@ -831,6 +836,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                         inputs = context.TryGetProperty("inputs"u8, out JsonElement patchedInputs) ? patchedInputs : default;
                         stepOutputs = ReadStepOutputs(context);
                         patchedStepOutputs = stepOutputs;
+                        replacesContext = true;
                         break;
 
                     default:
@@ -843,26 +849,14 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                 // The stored write sequence is carried forward unchanged. This is a control-plane remediation, not a
                 // runner save (ADR 0065 decision 7), so it must not consume a sequence the runner is about to propose:
                 // advancing it here would refuse the runner's next legitimate save as superseded.
+                //
+                // Everything the remediation does not name is carried from the stored bytes (RewriteForRemediation):
+                // the budget and the journal above all (ADR 0068), which are what bound the run. The run stays Faulted,
+                // and its fault record stands, so the re-entered executor clears it on its first checkpoint.
                 DateTimeOffset mutatedAt = this.timeProvider.GetUtcNow();
-                mutated = WorkflowCheckpointSerializer.Serialize(
-                    state.RunId,
-                    state.WorkflowId,
-                    WorkflowRunStatus.Faulted,
-                    cursor,
-                    state.Sequence,
-                    state.CreatedAt,
-                    state.RetryCounters,
-                    state.CorrelationTokens,
-                    inputs,
-                    stepOutputs,
-                    default,
-                    wait: null,
-                    fault: state.Fault,
-                    correlationId: state.CorrelationId,
-                    environment: state.Environment,
-                    tags: state.Tags,
-                    securityTags: state.SecurityTags,
-                    updatedAt: mutatedAt);
+                mutated = WorkflowCheckpointSerializer.RewriteForRemediation(
+                    cp.Utf8.Span,
+                    new CheckpointRemediation(cursor, mutatedAt, replacesContext, inputs, replacesContext ? stepOutputs : null));
 
                 indexEntry = new WorkflowRunIndexEntry(
                     state.WorkflowId,

@@ -150,6 +150,61 @@ public sealed class SecuredWorkflowManagementTests
     }
 
     [TestMethod]
+    [DataRow("Rewind")]
+    [DataRow("Skip")]
+    [DataRow("SkipWithOutputs")]
+    [DataRow("StatePatch")]
+    public async Task A_resume_that_mutates_the_checkpoint_keeps_the_runs_budget_and_its_journal(string mode)
+    {
+        // ADR 0068: fuel is the journal's length and the budget is frozen into the run. A remediation rewrites the
+        // checkpoint, and a rewrite that dropped either would hand the run back unbudgeted with its fuel refunded:
+        // fault a run, rewind it, and it is unbounded.
+        var store = new InMemoryWorkflowStateStore();
+        var budget = new ExecutionBudget(10, TimeSpan.FromHours(1), 2, TimeSpan.Zero, TimeSpan.FromSeconds(7), 2048);
+        using (WorkflowRun run = WorkflowRun.CreateNew(store, "r1", "wf", default, "development", budget: budget))
+        {
+            await run.BeginStepAsync("a", default);
+            run.RecordStep("a", WorkflowStepStatus.Succeeded, 1, T0, T0);
+            await run.BeginStepAsync("b", default);
+            run.RecordStep("b", WorkflowStepStatus.Faulted, 1, T0, T0);
+            await run.CheckpointAsync(1, default);
+            await run.FaultAsync("b", attempt: 1, "boom", default);
+        }
+
+        ExecutionBudget? seenBudget = null;
+        ValueTask<WorkflowRunResultKind> Resumer(WorkflowRun run, CancellationToken ct)
+        {
+            seenBudget = run.Budget;
+            return CompleteAndReport(run, ct);
+        }
+
+        var client = new SecuredWorkflowManagement(store, owner: "ops", resumer: Resumer);
+        using ParsedJsonDocument<JsonElement> outputs = ParsedJsonDocument<JsonElement>.Parse("""{"id":"42"}"""u8.ToArray());
+        using ParsedJsonDocument<JsonElement> patch = ParsedJsonDocument<JsonElement>.Parse("""[{"op":"add","path":"/stepOutputs/b","value":{"id":"42"}}]"""u8.ToArray());
+        ResumeOptions options = mode switch
+        {
+            "Rewind" => ResumeOptions.Rewind(0),
+            "Skip" => ResumeOptions.Skip(default, 2),
+            "SkipWithOutputs" => ResumeOptions.Skip(outputs.RootElement, 2),
+            _ => ResumeOptions.StatePatch(patch.RootElement),
+        };
+
+        (await client.ResumeAsync("r1", options, AccessContext.System, default)).ShouldBeTrue();
+
+        seenBudget.ShouldBe(budget);
+        using WorkflowCheckpointState? state = await client.LoadStateAsync("r1", AccessContext.System, default);
+        state!.Budget.ShouldBe(budget);
+        state.StepJournal.Count.ShouldBe(2);
+
+        // And the remediation did what it was for: the context it replaced is the context the run resumed with.
+        if (mode is "SkipWithOutputs" or "StatePatch")
+        {
+            state.StepOutputs.TryGetValue("b", out JsonElement supplied).ShouldBeTrue();
+            supplied.GetProperty("id"u8).GetString().ShouldBe("42");
+        }
+    }
+
+    [TestMethod]
     public async Task Resume_refuses_a_run_that_exhausted_its_budget_in_every_mode()
     {
         // ADR 0068: a budget fault is terminal. Neither the in-process resume nor the hand-off to a runner touches it,
