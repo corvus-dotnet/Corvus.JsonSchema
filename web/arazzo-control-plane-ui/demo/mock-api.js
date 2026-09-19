@@ -23,11 +23,72 @@ function iso(offsetMs) {
   return new Date(Date.now() + offsetMs).toISOString();
 }
 
+// ---- execution budget (ADR 0068) -----------------------------------------------------------------
+// The deployment's ceiling, as the demo host configures it (Arazzo:ExecutionBudgetCeiling: 250 steps, 12 hours, the
+// platform default for the rest). An environment's override only tightens it, limit by limit: the rule the server
+// applies at a run's start, and again when a resume re-budgets a run that faulted on its budget.
+export const BUDGET_CEILING = Object.freeze({
+  maxSteps: 250, wallClockSeconds: 43200, maxSubWorkflowDepth: 8, retryAfterCeilingSeconds: 3600, stepTimeoutSeconds: 100, maxResponseBytes: 16 * 1024 * 1024,
+});
+const BUDGET_KEYS = Object.keys(BUDGET_CEILING);
+
+export function resolveBudget(override) {
+  const effective = { ...BUDGET_CEILING };
+  for (const key of BUDGET_KEYS) {
+    if (Number.isInteger(override?.[key])) effective[key] = Math.min(override[key], BUDGET_CEILING[key]);
+  }
+  return effective;
+}
+
+// The first limit of an authored override the ceiling does not admit, or null. Server parity: 400 names the limit.
+function refusedBudgetLimit(override) {
+  if (override === undefined) return null;
+  if (override === null || typeof override !== 'object' || Array.isArray(override)) return 'executionBudget';
+  for (const [key, value] of Object.entries(override)) {
+    if (!BUDGET_KEYS.includes(key)) continue;
+    const least = key === 'maxSubWorkflowDepth' || key === 'retryAfterCeilingSeconds' ? 0 : 1;
+    if (!Number.isInteger(value) || value < least || value > BUDGET_CEILING[key]) return key;
+  }
+  return null;
+}
+
+// Whether a run faulted on its budget would run on under a budget: the server's rule (room for one more attempt, an
+// age inside the wall clock, and for a depth fault a deeper cap than the one it hit).
+function canResumeUnder(run, effective) {
+  const attempts = run._attempts ?? (run.stepOutputs?.length ?? 0);
+  const ageSeconds = (Date.now() - Date.parse(run.createdAt)) / 1000;
+  return attempts < effective.maxSteps
+    && ageSeconds <= effective.wallClockSeconds
+    && (run.fault?.error !== 'budget-depth' || effective.maxSubWorkflowDepth > (run.budget?.maxSubWorkflowDepth ?? 0));
+}
+
+const BUDGET_FAULTS = new Set(['budget-fuel', 'budget-deadline', 'budget-depth']);
+
 export function seedRuns() {
   const min = 60000;
   const hr = 60 * min;
   const day = 24 * hr;
   return [
+    {
+      // Faulted on its budget, and RESUMABLE: held to 3 attempts when it started, and production's override has
+      // since been raised to 120, so a resume re-budgets it and it runs on from where it stopped (ADR 0068).
+      id: 'run-b0d9e701', workflowId: 'adopt-pet-v1', status: 'Faulted', cursor: 3,
+      createdAt: iso(-40 * min), updatedAt: iso(-9 * min), etag: nextEtag(),
+      fault: { stepId: 'submitAdoption', attempt: 1, error: 'budget-fuel', at: iso(-9 * min) },
+      _errorType: 'budget-fuel', _attempts: 3,
+      budget: { ...BUDGET_CEILING, maxSteps: 3, stepTimeoutSeconds: 30 },
+      correlationId: 'b0d9e7010000000000000000000000a1', environment: 'production', tags: ['tenant-42'],
+    },
+    {
+      // Faulted on its budget, and NOT resumable: it outlived staging's one-hour wall clock two days ago, and no
+      // override can take a run past the deployment's twelve-hour ceiling. Re-run is the way forward.
+      id: 'run-b0d9e702', workflowId: 'onboard-customer-v1', status: 'Faulted', cursor: 1,
+      createdAt: iso(-2 * day), updatedAt: iso(-2 * day + hr), etag: nextEtag(),
+      fault: { stepId: 'verifyIdentity', attempt: 1, error: 'budget-deadline', at: iso(-2 * day + hr) },
+      _errorType: 'budget-deadline', _attempts: 1,
+      budget: { ...BUDGET_CEILING, wallClockSeconds: 3600 },
+      correlationId: 'b0d9e7020000000000000000000000a2', environment: 'staging', tags: ['tenant-7'],
+    },
     {
       id: 'run-7f3a9c21', workflowId: 'adopt-pet-v1', status: 'Faulted', cursor: 1,
       createdAt: iso(-3 * hr), updatedAt: iso(-2 * min), etag: nextEtag(),
@@ -176,6 +237,10 @@ function toDetail(run) {
     environment: run.environment ?? null,
     securityTags: securityTagsForBase(baseWorkflowOf(run.workflowId)),
     tags: run.tags ?? [],
+    // The budget frozen into the run (ADR 0068). Seeded runs that name none were started under the ceiling.
+    budget: run.budget ?? { ...BUDGET_CEILING },
+    ...(run.rerunOf ? { rerunOf: run.rerunOf } : {}),
+    ...(run._rebudget ? { rebudget: run._rebudget } : {}),
   };
 }
 
@@ -946,6 +1011,10 @@ function seedEnvironments() {
     e('uat', 'UAT', 'User acceptance — promotion requires green attested scenario evidence.'),
   ];
   environments[1].managementTags = [{ key: 'sys:group', value: 'env-admins' }];
+  // Execution-budget overrides (ADR 0068): production tightens fuel and the step timeout, staging the wall clock.
+  // The other environments author none, so their runs take the deployment's ceiling.
+  environments[0].executionBudget = { maxSteps: 120, stepTimeoutSeconds: 30 };
+  environments[1].executionBudget = { wallClockSeconds: 3600 };
   // Staging REQUIRES Isolated execution (ADR 0058) — the runners panel's isolation-posture subject. Its isolated
   // runner (runner-eu-2) is seeded Pending, so the posture reads uncovered until an operator authorizes it: the
   // cross-surface story an operator resolves in the console.
@@ -2027,7 +2096,7 @@ export function createMockControlPlane(options = {}) {
     }
 
     // /runs/{id}[/action]
-    const m = path.match(/\/runs\/([^/]+)(?:\/(resume|cancel|steps))?$/);
+    const m = path.match(/\/runs\/([^/]+)(?:\/(resume|cancel|steps|rerun))?$/);
     if (m) {
       const id = decodeURIComponent(m[1]);
       const action = m[2];
@@ -2037,7 +2106,7 @@ export function createMockControlPlane(options = {}) {
       if (!action && method === 'GET') {
         // Reach (§14.2): a run outside the caller's reach reads back as not found (non-disclosing).
         if (!reachAdmits(securityTagsForBase(baseWorkflowOf(run.workflowId)))) return problem(404, 'Run not found', `No run with id '${id}'.`);
-        return json(toDetail(run));
+        return json(toDetail(withRebudget(run)));
       }
       if (action === 'steps' && method === 'GET') {
         // The checkpoint's per-step journal in recording order: every executed step with its status, the attempt it
@@ -2063,6 +2132,7 @@ export function createMockControlPlane(options = {}) {
       }
       if (!action && method === 'DELETE') return deleteRun(run);
       if (action === 'resume' && method === 'POST') return resumeRun(run, body);
+      if (action === 'rerun' && method === 'POST') return rerunRun(run);
       if (action === 'cancel' && method === 'POST') return cancelRun(run, body);
       return problem(405, 'Method not allowed');
     }
@@ -2107,9 +2177,46 @@ export function createMockControlPlane(options = {}) {
     });
   }
 
+  // On a run faulted on its budget: what a resume would give it now and whether it would then run, computed per read
+  // from its environment's CURRENT override, exactly as the server does (ADR 0068).
+  function withRebudget(run) {
+    if (run.status === 'Faulted' && BUDGET_FAULTS.has(run.fault?.error)) {
+      const effective = resolveBudget(findEnvironment(run.environment)?.executionBudget);
+      run._rebudget = { effective, resumable: canResumeUnder(run, effective) };
+    } else {
+      delete run._rebudget;
+    }
+    return run;
+  }
+
+  // Re-run (ADR 0072): a new run of the same version, environment and tags, a fresh budget from the environment as it
+  // is now, a new correlation id, and rerunOf naming the original. The inputs never leave the server.
+  function rerunRun(run) {
+    if (!reachAdmits(securityTagsForBase(baseWorkflowOf(run.workflowId)))) return problem(404, 'Run not found', `No run with id '${run.id}'.`);
+    const id = `run-${Math.random().toString(16).slice(2, 10)}`;
+    runs.push({
+      id, workflowId: run.workflowId, status: 'Pending', cursor: 0,
+      createdAt: iso(0), updatedAt: iso(0), etag: nextEtag(),
+      environment: run.environment, tags: [...(run.tags ?? [])], rerunOf: run.id,
+      budget: resolveBudget(findEnvironment(run.environment)?.executionBudget),
+      correlationId: `${Math.random().toString(16).slice(2)}${Math.random().toString(16).slice(2)}`.padEnd(32, '0').slice(0, 32),
+    });
+    return json({ runId: id, workflowId: run.workflowId, status: 'Pending' }, 202);
+  }
+
   function resumeRun(run, request) {
     if (run.status !== 'Faulted') {
       return problem(409, 'Run is not faulted', `Run '${run.id}' is ${run.status}; only faulted runs can be resumed.`);
+    }
+    // A run faulted on its budget is resumed by re-budgeting it, and refused while it is still outside the budget it
+    // would be given (ADR 0068).
+    if (BUDGET_FAULTS.has(run.fault?.error)) {
+      const { effective, resumable } = withRebudget(run)._rebudget;
+      if (!resumable) {
+        return problem(409, 'Run exhausted its execution budget', `Run '${run.id}' faulted with '${run.fault.error}' and is still outside the budget a resume would give it. Raise the limit on environment '${run.environment}' and resume, or re-run it.`);
+      }
+      run.budget = effective;
+      delete run._rebudget;
     }
     const mode = request?.mode;
     if (mode === 'Rewind' && typeof request.targetCursor === 'number') run.cursor = request.targetCursor;
@@ -4704,6 +4811,20 @@ export function createMockControlPlane(options = {}) {
     }
 
     // /environments/{name} — single environment read/update/delete.
+    // /environments/{name}/executionBudget — the override as stored, the ceiling, and the two resolved (ADR 0068).
+    const budgetMatch = path.match(/^\/environments\/([^/]+)\/executionBudget$/);
+    if (budgetMatch) {
+      if (method !== 'GET') return problem(405, 'Method not allowed');
+      const name = decodeURIComponent(budgetMatch[1]);
+      const e = findEnvironment(name);
+      if (!e || !reachAdmits(e.managementTags)) return notFoundEnvironment(name);
+      return json({
+        ...(e.executionBudget ? { override: structuredClone(e.executionBudget) } : {}),
+        effective: resolveBudget(e.executionBudget),
+        ceiling: { ...BUDGET_CEILING },
+      });
+    }
+
     const oneMatch = path.match(/^\/environments\/([^/]+)\/?$/);
     if (oneMatch) {
       const name = decodeURIComponent(oneMatch[1]);
@@ -4760,6 +4881,9 @@ export function createMockControlPlane(options = {}) {
       return problem(400, 'Reserved management tag', `A management tag key uses the reserved internal prefix '${RESERVED_TAG_PREFIX}', which is owned by the deployment.`);
     }
 
+    const refusedLimit = refusedBudgetLimit(body.executionBudget);
+    if (refusedLimit) return problem(400, 'Invalid execution budget', `The execution budget's '${refusedLimit}' is not a whole number the deployment's ceiling admits.`);
+
     const e = {
       name: body.name, displayName: body.displayName || body.name, description: body.description,
       managementTags: body.managementTags ?? [],
@@ -4769,6 +4893,7 @@ export function createMockControlPlane(options = {}) {
     if (typeof body.requireEvidence === 'boolean') e.requireEvidence = body.requireEvidence;
     // §18: a development-class environment may allow draft debug runs from creation.
     if (typeof body.allowsDraftRuns === 'boolean') e.allowsDraftRuns = body.allowsDraftRuns;
+    if (body.executionBudget !== undefined) e.executionBudget = structuredClone(body.executionBudget);
     environments.push(e);
     // Creating an environment grants the creator administration of it (§7.7), mirroring catalog version creation.
     environmentAdministrators[e.name] = [adminGrant([{ dimension: 'sys:sub', value: actingSubject() }], 'person', 'You (creator)')];
@@ -4798,6 +4923,13 @@ export function createMockControlPlane(options = {}) {
     if (typeof body?.requireEvidence === 'boolean') e.requireEvidence = body.requireEvidence;
     // Contract parity: EnvironmentUpdate carries allowsDraftRuns (§18 draft-run posture).
     if (typeof body?.allowsDraftRuns === 'boolean') e.allowsDraftRuns = body.allowsDraftRuns;
+    // Replace-or-carry, whole (ADR 0068): a present executionBudget replaces the stored override, an empty one
+    // removes it, and absent leaves it unchanged. A limit wider than the ceiling is refused.
+    if (body?.executionBudget !== undefined) {
+      const refused = refusedBudgetLimit(body.executionBudget);
+      if (refused) return problem(400, 'Invalid execution budget', `The execution budget's '${refused}' is not a whole number the deployment's ceiling admits.`);
+      if (Object.keys(body.executionBudget).length === 0) delete e.executionBudget; else e.executionBudget = structuredClone(body.executionBudget);
+    }
     e.lastUpdatedBy = actingSubject(); e.lastUpdatedAt = iso(0); e.etag = nextEtag();
     return json(structuredClone(e));
   }

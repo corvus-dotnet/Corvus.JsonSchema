@@ -61,6 +61,35 @@ test('an environment administrator edits metadata and management tags, stamping 
   assertClean(errors);
 });
 
+test('an environment administrator reads the budget three ways, tightens a limit, and is stopped at the ceiling (ADR 0068)', async ({ page }) => {
+  const errors = watchErrors(page);
+  await openTab(page, 'Environments');
+  const env = page.locator('arazzo-environments');
+  await env.locator('.erow[data-name="production"]').click();
+  const budget = env.locator('.detail-pane .budget');
+  await expect(budget).toBeVisible();
+
+  // What was authored, what a run started here now is held to, and what the deployment allows, side by side.
+  await expect(budget.locator('input[data-limit="maxSteps"]')).toHaveValue('120');
+  await expect(budget.locator('[data-col="effective"][data-limit="maxSteps"]')).toHaveText('120');
+  await expect(budget.locator('[data-col="ceiling"][data-limit="maxSteps"]')).toHaveText('250');
+  await expect(budget.locator('[data-col="effective"][data-limit="wallClockSeconds"]')).toHaveText('43200s (12h)');
+
+  // A limit over the ceiling is said beside its input, before any request, and what was typed is kept.
+  await budget.locator('input[data-limit="maxSteps"]').fill('900');
+  await env.locator('.d-save').click();
+  await expect(budget.locator('.berr[data-limit="maxSteps"]')).toContainText('ceiling of 250');
+  await expect(budget.locator('input[data-limit="maxSteps"]')).toHaveValue('900');
+
+  // Tightened instead, it saves, and Effective is what the server now resolves.
+  await budget.locator('input[data-limit="maxSteps"]').fill('60');
+  await env.locator('.d-save').click();
+  await expect(budget.locator('[data-col="effective"][data-limit="maxSteps"]')).toHaveText('60');
+  await expect(budget.locator('.berr')).toHaveCount(0);
+  await expect(budget.locator('input[data-limit="stepTimeoutSeconds"]')).toHaveValue('30');
+  assertClean(errors);
+});
+
 test('deleting an environment is confirm-gated: cancel keeps it, confirm removes it', async ({ page }) => {
   const errors = watchErrors(page);
   await openTab(page, 'Environments');

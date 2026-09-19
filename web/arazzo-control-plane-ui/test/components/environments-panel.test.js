@@ -209,6 +209,113 @@ describe('<arazzo-environments>', () => {
     await waitFor(() => ![...rows(el)].some((r) => r.dataset.name === 'scratch'));
   });
 
+  // ADR 0068: the environment stores only the override it authored, so the panel reads the budget resource and shows
+  // each limit three ways: what was authored, what a run started here now is held to, and what the deployment allows.
+  async function openEnvironment(name, attrs) {
+    el = panelWithMock(attrs);
+    mount(el);
+    await nextEvent(el, 'loaded');
+    const selected = nextEvent(el, 'environment-selected');
+    el.shadowRoot.querySelector(`.erow[data-name="${name}"]`).click();
+    await selected;
+    return waitFor(() => detail(el).querySelector('.budget'));
+  }
+
+  const cell = (col, limit) => detail(el).querySelector(`.budget [data-col="${col}"][data-limit="${limit}"]`).textContent;
+  const overrideInput = (limit) => detail(el).querySelector(`.budget input[data-limit="${limit}"]`);
+  const type = (input, value) => { input.value = value; input.dispatchEvent(new Event('input')); };
+
+  it('shows each budget limit as the override, the budget in effect, and the ceiling', async () => {
+    await openEnvironment('production');
+    equal(overrideInput('maxSteps').value, '120', 'the authored override seeds the editor');
+    equal(overrideInput('wallClockSeconds').value, '', 'a limit the environment leaves out is empty');
+    equal(cell('effective', 'maxSteps'), '120', 'the override tightens the ceiling');
+    equal(cell('ceiling', 'maxSteps'), '250', 'the deployment allows more');
+    equal(cell('effective', 'wallClockSeconds'), '43200s (12h)', 'a limit left out is the ceilings');
+    equal(cell('effective', 'stepTimeoutSeconds'), '30s');
+    equal(cell('ceiling', 'maxResponseBytes'), '16,777,216 (16 MiB)');
+    equal(detail(el).querySelectorAll('.budget input').length, 6, 'one input per limit');
+  });
+
+  it('saves a changed override and shows the budget the server then resolves', async () => {
+    await openEnvironment('production');
+    type(overrideInput('maxSteps'), '40');
+    type(overrideInput('wallClockSeconds'), '600');
+    const changed = nextEvent(el, 'environment-changed');
+    detail(el).querySelector('.d-save').click();
+    await changed;
+    await waitFor(() => cell('effective', 'maxSteps') === '40');
+    equal(cell('effective', 'wallClockSeconds'), '600s (10m)');
+    equal(overrideInput('stepTimeoutSeconds').value, '30', 'the limits not touched are kept: the override is replaced whole');
+    const stored = await el.client.getEnvironmentExecutionBudget('production');
+    equal(JSON.stringify(stored.override), JSON.stringify({ maxSteps: 40, wallClockSeconds: 600, stepTimeoutSeconds: 30 }));
+  });
+
+  it('a save that does not touch the budget does not send it', async () => {
+    await openEnvironment('production');
+    let sent;
+    const update = el.client.updateEnvironment.bind(el.client);
+    el.client.updateEnvironment = (name, patch) => { sent = patch; return update(name, patch); };
+    el.buildClient = () => el.client;
+    const changed = nextEvent(el, 'environment-changed');
+    detail(el).querySelector('.d-save').click();
+    await changed;
+    ok(!('executionBudget' in sent), 'absent leaves the stored override unchanged');
+  });
+
+  it('says a limit over the ceiling beside its input and does not save', async () => {
+    await openEnvironment('production');
+    let saves = 0;
+    const update = el.client.updateEnvironment.bind(el.client);
+    el.client.updateEnvironment = (name, patch) => { saves++; return update(name, patch); };
+    el.buildClient = () => el.client;
+    type(overrideInput('maxSteps'), '251');
+    detail(el).querySelector('.d-save').click();
+    const message = await waitFor(() => detail(el).querySelector('.berr[data-limit="maxSteps"]'));
+    ok(message.textContent.includes('ceiling of 250'), 'names the ceiling');
+    equal(overrideInput('maxSteps').getAttribute('aria-invalid'), 'true');
+    equal(overrideInput('maxSteps').value, '251', 'what was typed survives the repaint');
+    equal(saves, 0, 'nothing was sent');
+
+    // Editing the limit clears its message without a repaint.
+    type(overrideInput('maxSteps'), '25');
+    ok(!detail(el).querySelector('.berr'), 'the message clears as it is edited');
+  });
+
+  it('emptying every limit removes the override, and the environment takes the ceiling', async () => {
+    await openEnvironment('production');
+    for (const input of detail(el).querySelectorAll('.budget input')) type(input, '');
+    const changed = nextEvent(el, 'environment-changed');
+    detail(el).querySelector('.d-save').click();
+    await changed;
+    await waitFor(() => cell('effective', 'maxSteps') === '250');
+    equal((await el.client.getEnvironmentExecutionBudget('production')).override, undefined);
+  });
+
+  it('shows the budget read-only without environments:write', async () => {
+    await openEnvironment('production', { scopes: 'environments:read' });
+    equal(detail(el).querySelectorAll('.budget input').length, 0, 'no editor');
+    equal(detail(el).querySelector('.budget [data-col="override"]').textContent, '120');
+    equal(cell('effective', 'maxSteps'), '120');
+  });
+
+  it('authors a budget on create, and the draft-run posture reaches the server', async () => {
+    el = panelWithMock();
+    mount(el);
+    await nextEvent(el, 'loaded');
+    el.shadowRoot.querySelector('.new').click();
+    type(el.shadowRoot.querySelector('.f-name'), 'qa');
+    const drafts = el.shadowRoot.querySelector('.f-allowsDraftRuns');
+    drafts.checked = true;
+    drafts.dispatchEvent(new Event('change'));
+    type(el.shadowRoot.querySelector('.budget-create input[data-limit="maxSteps"]'), '15');
+    const created = nextEvent(el, 'environment-created');
+    el.shadowRoot.querySelector('.confirm').click();
+    const e = await created;
+    equal(e.detail.environment.allowsDraftRuns, true, 'the client used to drop this on create');
+    equal(JSON.stringify((await el.client.getEnvironmentExecutionBudget('qa')).override), JSON.stringify({ maxSteps: 15 }));
+  });
+
   it('hides the mutating controls without environments:write', async () => {
     el = panelWithMock({ scopes: 'environments:read availability:read' });
     mount(el);

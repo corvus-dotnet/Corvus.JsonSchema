@@ -20,6 +20,7 @@ import './tag-editor.js';
 import './administrators-panel.js';
 import './pager.js';
 import './splitbar.js';
+import { BUDGET_LIMITS, formatLimit, parseLimit, sameLimits } from '../execution-budget.js';
 
 class ArazzoEnvironments extends ArazzoElement {
   static get observedAttributes() {
@@ -44,6 +45,12 @@ class ArazzoEnvironments extends ArazzoElement {
     /** @private */ this._totalCapped = false;     // true when the true total meets/exceeds the server cap → render "N+"
     /** @private */ this._listSeq = 0;
     /** @private */ this._detailSeq = 0;
+    // The selected environment's execution budget seen whole (ADR 0068): { override?, effective, ceiling }, or null
+    // when the server does not offer it. The override editor's text is kept apart from it, so a repaint (a
+    // validation message, a failed save) never discards what the operator typed.
+    /** @private */ this._budget = null;
+    /** @private */ this._budgetDraft = {};
+    /** @private */ this._budgetErrors = {};
     /** @private */ this._form = null;           // the create-dialog form state
   }
 
@@ -168,9 +175,13 @@ class ArazzoEnvironments extends ArazzoElement {
       const availability = this.canReadAvailability
         ? (await client.listEnvironmentAvailability(name).catch(() => ({ availability: [] }))).availability
         : [];
+      // The budget is its own resource: the environment stores only the override it authored, and this is what
+      // says what a limit it leaves out will be. Best-effort, so a server without it still shows the environment.
+      const budget = await client.getEnvironmentExecutionBudget(name).catch(() => null);
       if (seq !== this._detailSeq) return;
       this._detail = detail;
       this._availability = availability;
+      this.adoptBudget(budget);
       this._detailLoading = false;
       this.renderBody();
       this.emit('environment-selected', { environment: detail });
@@ -187,7 +198,31 @@ class ArazzoEnvironments extends ArazzoElement {
     this._selected = null;
     this._detail = null;
     this._availability = [];
+    this.adoptBudget(null);
     this._detailSeq++;
+  }
+
+  /** Takes the budget as the server reports it, and seeds the override editor's text from the authored override. */
+  adoptBudget(budget) {
+    this._budget = budget;
+    this._budgetErrors = {};
+    this._budgetDraft = Object.fromEntries(BUDGET_LIMITS.map((limit) => [limit.key, budget?.override?.[limit.key] != null ? String(budget.override[limit.key]) : '']));
+  }
+
+  /**
+   * Reads the override editor. Each limit is checked against the deployment's ceiling here, so a limit that cannot
+   * stand is said beside its input before any request. The server has the final say and may still refuse.
+   * @returns {{ limits: object, valid: boolean }} `limits` holds only the limits that are named.
+   */
+  readBudgetDraft() {
+    const limits = {};
+    this._budgetErrors = {};
+    for (const limit of BUDGET_LIMITS) {
+      const { value, error } = parseLimit(limit, this._budgetDraft[limit.key], this._budget?.ceiling);
+      if (error) this._budgetErrors[limit.key] = error;
+      else if (value !== undefined) limits[limit.key] = value;
+    }
+    return { limits, valid: Object.keys(this._budgetErrors).length === 0 };
   }
 
   async saveMetadata() {
@@ -202,20 +237,34 @@ class ArazzoEnvironments extends ArazzoElement {
     // The checkbox state IS the desired requirement — a present requireEvidence replaces the stored flag (§4.6).
     const requireEvidence = this.$('.d-requireEvidence')?.checked ?? false;
     const allowsDraftRuns = this.$('.d-allowsDraftRuns')?.checked ?? false;
-    const saveBtn = this.$('.d-save');
-    if (saveBtn) saveBtn.disabled = true;
-    try {
-      const updated = await this.buildClient().updateEnvironment(this._detail.name, { displayName, description, managementTags, requireEvidence, allowsDraftRuns });
-      this._detail = updated;
-      const i = this._envs.findIndex((e) => e.name === updated.name);
-      if (i >= 0) this._envs[i] = { ...this._envs[i], ...updated };
-      this.renderBody();
-      this.emit('environment-changed', { environment: updated });
-    } catch (err) {
-      this._error = err.problem || { title: err.message };
-      this.renderBody();
-      this.emit('error', { problem: this._error, error: err });
+    // The budget override is sent only when it changed, because a present executionBudget replaces the stored
+    // override whole (ADR 0068). An editor emptied of every limit sends an empty override, which is how the API
+    // says the environment authors none.
+    const patch = { displayName, description, managementTags, requireEvidence, allowsDraftRuns };
+    if (this._budget) {
+      const { limits, valid } = this.readBudgetDraft();
+      if (!valid) { this.renderBody(); return; }
+      if (!sameLimits(limits, this._budget.override)) patch.executionBudget = limits;
     }
+
+    await this.runAction(this.$('.d-save'), async () => {
+      try {
+        const client = this.buildClient();
+        const updated = await client.updateEnvironment(this._detail.name, patch);
+        this._detail = updated;
+        const i = this._envs.findIndex((e) => e.name === updated.name);
+        if (i >= 0) this._envs[i] = { ...this._envs[i], ...updated };
+
+        // Read the budget back, so Effective is what the server now resolves and not what this page worked out.
+        if (this._budget) this.adoptBudget(await client.getEnvironmentExecutionBudget(updated.name).catch(() => this._budget));
+        this.renderBody();
+        this.emit('environment-changed', { environment: updated });
+      } catch (err) {
+        this._error = err.problem || { title: err.message };
+        this.renderBody();
+        this.emit('error', { problem: this._error, error: err });
+      }
+    });
   }
 
   async deleteEnvironment(name) {
@@ -240,7 +289,7 @@ class ArazzoEnvironments extends ArazzoElement {
   // ---- create (modal dialog) --------------------------------------------------------------------
 
   openCreate() {
-    this._form = { name: '', displayName: '', description: '', managementTags: [], requireEvidence: false, allowsDraftRuns: false, formError: null };
+    this._form = { name: '', displayName: '', description: '', managementTags: [], requireEvidence: false, allowsDraftRuns: false, budget: {}, budgetOpen: false, formError: null };
     this.renderEditor();
     this.$('dialog').showModal();
     this.$('.f-name')?.focus();
@@ -256,6 +305,15 @@ class ArazzoEnvironments extends ArazzoElement {
     const form = this._form;
     const name = (form.name || '').trim();
     if (!name) { form.formError = { title: 'An environment name is required.' }; this.renderEditor(); return; }
+    // The budget limits named, checked against the ceiling when this page has seen one (the ceiling is the
+    // deployment's, the same for every environment). The server checks them either way.
+    const executionBudget = {};
+    for (const limit of BUDGET_LIMITS) {
+      const { value, error } = parseLimit(limit, form.budget[limit.key], this._budget?.ceiling);
+      if (error) { form.formError = { title: error }; form.budgetOpen = true; this.renderEditor(); return; }
+      if (value !== undefined) executionBudget[limit.key] = value;
+    }
+
     try {
       const managementTags = this.$('.f-mgmt-editor')?.tags ?? [];
       const created = await this.buildClient().createEnvironment({
@@ -265,6 +323,7 @@ class ArazzoEnvironments extends ArazzoElement {
         requireEvidence: form.requireEvidence || undefined,
         allowsDraftRuns: form.allowsDraftRuns || undefined,
         managementTags: managementTags.length ? managementTags : undefined,
+        executionBudget: Object.keys(executionBudget).length ? executionBudget : undefined,
       });
       this.closeEditor();
       await this.reload();
@@ -331,6 +390,19 @@ class ArazzoEnvironments extends ArazzoElement {
         .detail .section:first-of-type { border-top: none; }
         .detail .section h4 { margin: 0 0 8px; font-size: 13px; color: var(--_muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
         .field { display: grid; gap: 4px; margin-bottom: 10px; }
+        /* The budget is a small table of six limits by three columns. One grid, so the columns line up down the
+           rows: the label sizes to its content, the three value columns share what is left and may shrink to
+           nothing, and an input fills its cell. A validation message takes a full row under its limit. */
+        .budget { display: grid; grid-template-columns: max-content repeat(3, minmax(0, 1fr)); gap: 6px 12px; align-items: center; margin: 4px 0 10px; font-size: 12.5px; }
+        .budget .bh { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); }
+        .budget .bl { color: var(--_muted); }
+        .budget .bv { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+        .budget input { width: 100%; min-width: 0; box-sizing: border-box; font-variant-numeric: tabular-nums; }
+        .budget input[aria-invalid="true"] { border-color: var(--_danger); }
+        .budget .berr { grid-column: 1 / -1; color: var(--_danger); font-size: 12px; }
+        details.budget-create { margin: 6px 0 10px; }
+        details.budget-create summary { cursor: pointer; font-size: 13px; }
+        .budget-create .budget { grid-template-columns: max-content minmax(0, 1fr); margin-top: 8px; }
         .field > span { font-size: 12px; color: var(--_muted); }
         label.check { display: flex; gap: 8px; align-items: center; color: var(--_text); font-size: 13px; cursor: pointer; margin: 0 0 4px; }
         label.check input { width: auto; }
@@ -467,6 +539,7 @@ class ArazzoEnvironments extends ArazzoElement {
             </div>
             <div class="field"><span>Management tags</span><arazzo-tag-editor class="d-mgmt-editor"></arazzo-tag-editor></div>
             <div class="hint">Who may manage and see this environment. An administrator may re-tag; the deployment-internal tags are preserved and the reserved <code>sys:</code> prefix is not allowed.</div>
+            ${this.budgetHtml(true)}
             <div class="row-actions"><button class="d-save primary" type="button">Save</button></div>
           ` : `
             <div class="field"><span>Description</span><div>${e.description ? escapeHtml(e.description) : '<span class="muted">—</span>'}</div></div>
@@ -475,6 +548,7 @@ class ArazzoEnvironments extends ArazzoElement {
             <div class="field"><span>Management tags</span><div>${Array.isArray(e.managementTags) && e.managementTags.length
               ? `<span class="mtags">${e.managementTags.map((t) => `<code>${escapeHtml(t.key)}=${escapeHtml(t.value)}</code>`).join(' ')}</span>`
               : '<span class="muted">None — visible to everyone within reach.</span>'}</div></div>
+            ${this.budgetHtml(false)}
           `}
         </div>
         <div class="section">
@@ -505,11 +579,48 @@ class ArazzoEnvironments extends ArazzoElement {
       mgmtEd.tags = (Array.isArray(e.managementTags) ? e.managementTags : [])
         .filter((t) => !String(t.key || '').startsWith('sys:'));
     }
+    // The override editor's text lives in the draft, so a repaint keeps what was typed. A limit's message clears as
+    // soon as it is edited, without a repaint, which would take the caret.
+    pane.querySelectorAll('.budget input[data-limit]').forEach((input) => input.addEventListener('input', () => {
+      this._budgetDraft[input.dataset.limit] = input.value;
+      if (this._budgetErrors[input.dataset.limit]) {
+        delete this._budgetErrors[input.dataset.limit];
+        input.removeAttribute('aria-invalid');
+        pane.querySelector(`.berr[data-limit="${input.dataset.limit}"]`)?.remove();
+      }
+    }));
     const saveBtn = pane.querySelector('.d-save');
     if (saveBtn) saveBtn.addEventListener('click', () => this.saveMetadata());
     const delBtn = pane.querySelector('.d-delete');
     if (delBtn) delBtn.addEventListener('click', () => this.deleteEnvironment(e.name));
     pane.querySelector('.d-close')?.addEventListener('click', () => { this.clearDetail(); this.renderBody(); });
+  }
+
+  /**
+   * The environment's execution budget (ADR 0068): one row per limit, with what the environment authored, what a
+   * run started here now is held to, and what the deployment allows. An administrator edits the Override column;
+   * an empty input leaves that limit to the ceiling.
+   */
+  budgetHtml(writable) {
+    const budget = this._budget;
+    if (!budget) return '';
+    const rows = BUDGET_LIMITS.map((limit) => {
+      const error = this._budgetErrors[limit.key];
+      const override = writable
+        ? `<input class="b-${limit.key}" data-limit="${limit.key}" inputmode="numeric" aria-label="${escapeHtml(limit.label)} override, in ${escapeHtml(limit.unit)}" placeholder="ceiling" value="${escapeHtml(this._budgetDraft[limit.key] ?? '')}"${error ? ' aria-invalid="true"' : ''}>`
+        : `<span class="bv" data-col="override">${escapeHtml(formatLimit(limit, budget.override))}</span>`;
+      return `<span class="bl" title="${escapeHtml(limit.hint)}">${escapeHtml(limit.label)}</span>
+        ${override}
+        <span class="bv" data-col="effective" data-limit="${limit.key}">${escapeHtml(formatLimit(limit, budget.effective))}</span>
+        <span class="bv" data-col="ceiling" data-limit="${limit.key}">${escapeHtml(formatLimit(limit, budget.ceiling))}</span>
+        ${error ? `<span class="berr" data-limit="${limit.key}" role="alert">${escapeHtml(error)}</span>` : ''}`;
+    }).join('');
+    return `<h4 part="budget-title">Execution budget</h4>
+      <div class="budget" part="budget">
+        <span class="bh">Limit</span><span class="bh">Override</span><span class="bh">Effective</span><span class="bh">Ceiling</span>
+        ${rows}
+      </div>
+      <div class="hint">What a run in this environment is held to. Override tightens the deployment's ceiling for runs started here, and a limit left empty is the ceiling's. A run already started keeps the budget it was given, and one that faulted on its budget is re-budgeted from these limits when it is resumed.</div>`;
   }
 
   availabilityHtml() {
@@ -534,6 +645,12 @@ class ArazzoEnvironments extends ArazzoElement {
       <div class="opt"><label class="check"><input type="checkbox" class="f-allowsDraftRuns"${f.allowsDraftRuns ? ' checked' : ''}> Allow draft debug runs (development-class environments only)</label></div>
       <div class="field"><span>Management tags</span><arazzo-tag-editor class="f-mgmt-editor"></arazzo-tag-editor></div>
       <div class="hint">Scope who may manage and see this environment; an administrator may re-tag it later. The reserved <code>sys:</code> prefix is not allowed.</div>
+      <details class="budget-create"${f.budgetOpen ? ' open' : ''}>
+        <summary>Execution budget (optional)</summary>
+        <div class="budget">${BUDGET_LIMITS.map((limit) => `<span class="bl" title="${escapeHtml(limit.hint)}">${escapeHtml(limit.label)}</span>
+          <input class="fb-${limit.key}" data-limit="${limit.key}" inputmode="numeric" aria-label="${escapeHtml(limit.label)}, in ${escapeHtml(limit.unit)}" placeholder="ceiling (${escapeHtml(limit.unit)})" value="${escapeHtml(f.budget[limit.key] ?? '')}">`).join('')}</div>
+        <div class="hint">Each limit named tightens the deployment's ceiling for runs started in this environment. Leave a limit empty to take the ceiling's.</div>
+      </details>
       <div class="form-err">${f.formError ? `<div class="error-banner"><span><strong>${escapeHtml(f.formError.title || 'Request failed')}</strong>${f.formError.detail ? ' — ' + escapeHtml(f.formError.detail) : ''}</span></div>` : ''}</div>
     `;
     content.querySelector('.f-name').addEventListener('input', (ev) => { f.name = ev.target.value; });
@@ -541,6 +658,8 @@ class ArazzoEnvironments extends ArazzoElement {
     content.querySelector('.f-description').addEventListener('input', (ev) => { f.description = ev.target.value; });
     content.querySelector('.f-requireEvidence').addEventListener('change', (ev) => { f.requireEvidence = ev.target.checked; });
     content.querySelector('.f-allowsDraftRuns').addEventListener('change', (ev) => { f.allowsDraftRuns = ev.target.checked; });
+    content.querySelectorAll('.budget-create input[data-limit]').forEach((input) => input.addEventListener('input', () => { f.budget[input.dataset.limit] = input.value; }));
+    content.querySelector('.budget-create').addEventListener('toggle', (ev) => { f.budgetOpen = ev.target.open; });
     const mgmtEd = content.querySelector('.f-mgmt-editor');
     mgmtEd.tags = Array.isArray(f.managementTags) ? f.managementTags : [];
     mgmtEd.addEventListener('tags-changed', () => { f.managementTags = mgmtEd.tags; });

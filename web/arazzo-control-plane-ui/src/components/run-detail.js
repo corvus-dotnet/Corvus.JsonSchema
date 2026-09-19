@@ -4,8 +4,8 @@
 //
 // Attributes : base-url, runid, poll (ms), scopes (space-separated), show-forbidden
 // Properties : .client, .run (inject to skip the fetch)
-// Events     : run-changed {run}, run-deleted {runId}, error {problem}, close
-// Parts      : header, status, cursor, wait, fault, actions
+// Events     : run-changed {run}, run-deleted {runId}, run-rerun {runId, rerunOf}, run-open {runId} (show another run: a re-run, or the run this one re-runs), error {problem}, close
+// Parts      : header, status, cursor, wait, fault, fault-help, budget, rebudget, rerun-of, actions
 //
 // Standalone-capable: it embeds <arazzo-resume-dialog> and <arazzo-cancel-button> and performs delete
 // itself, so dropping just this element gives a working remediation surface. Layer 2 listens to its
@@ -15,6 +15,7 @@ import { ArazzoElement, SHARED_CSS, escapeHtml, relativeTime, absoluteTime, coun
 import './status-badge.js';
 import './resume-dialog.js';
 import './cancel-button.js';
+import { BUDGET_LIMITS, formatLimit, describeFault, resumability } from '../execution-budget.js';
 
 // Truly-terminal statuses, used to gate the Cancel action (a terminal run can't be cancelled). Faulted is NOT here:
 // it is "terminal-but-recoverable", so it stays cancellable (and resumable).
@@ -71,6 +72,14 @@ class ArazzoRunDetail extends ArazzoElement {
   }
 
   get runId() { return this.getAttribute('runid') || this._run?.id || null; }
+
+  /** Shows another run by id, dropping what is displayed so nothing of the old run lingers under the new id. */
+  showRun(runId) {
+    if (!runId) return;
+    this._run = null;
+    this._error = null;
+    if (this.getAttribute('runid') === runId) this.load(); else this.setAttribute('runid', runId);
+  }
 
   requestRender() { this.load(); }
 
@@ -179,6 +188,19 @@ class ArazzoRunDetail extends ArazzoElement {
         .block h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--_muted); }
         .fault { border-color: color-mix(in srgb, var(--arazzo-status-faulted, #d4351c) 40%, var(--_border)); }
         .fault .err { color: var(--arazzo-status-faulted, #d4351c); font-family: ui-monospace, monospace; font-size: 12px; }
+        /* What one of the platform's own fault types means and what to do about it, under the recorded error. */
+        .fault .help { margin-top: 8px; font-size: 12.5px; display: grid; gap: 4px; }
+        .fault .help .remedy { color: var(--_muted); }
+        .fault .verdict { margin-top: 8px; font-size: 12.5px; font-weight: 600; }
+        .fault .verdict.yes { color: var(--arazzo-status-completed, #2a8a4a); }
+        .fault .verdict.no { color: var(--arazzo-status-suspended, #b45309); }
+        /* A budget is six label/value pairs. The grid sizes the label column to its content and lets values wrap. */
+        .limits { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 16px; font-size: 12.5px; }
+        .limits dt { color: var(--_muted); font-size: 12px; }
+        .limits dd { margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+        .limits.offered { margin-top: 6px; }
+        .link { background: none; border: 0; padding: 0; color: var(--_accent); cursor: pointer; font: inherit; text-decoration: underline; }
+        .why { font-size: 12px; color: var(--_muted); flex-basis: 100%; }
         .actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 14px; border-top: 1px solid var(--_border); }
         /* The buttons are a display:contents wrapper so resume/delete become direct flex children of .actions,
            laid out with the persistent <arazzo-cancel-button> (which is never re-parented — see renderActions). */
@@ -259,13 +281,16 @@ class ArazzoRunDetail extends ArazzoElement {
         <dt>Created</dt><dd class="muted" title="${escapeHtml(absoluteTime(run.createdAt))}">${escapeHtml(relativeTime(run.createdAt))}</dd>
         ${run.updatedAt ? `<dt>Updated</dt><dd class="muted" title="${escapeHtml(absoluteTime(run.updatedAt))}">${escapeHtml(relativeTime(run.updatedAt))}</dd>` : ''}
         ${run.environment ? `<dt>Environment</dt><dd part="environment"><div class="tags"><span class="tag">${escapeHtml(run.environment)}</span></div></dd>` : ''}
+        ${run.rerunOf ? `<dt>Re-run of</dt><dd part="rerun-of"><button class="link mono rerun-of" type="button" title="Open the run this one re-runs">${escapeHtml(run.rerunOf)}</button></dd>` : ''}
         ${run.correlationId ? `<dt>Correlation</dt><dd class="mono" part="correlation" title="telemetry trace id">${escapeHtml(run.correlationId)}<button class="copy ghost" type="button" part="copy-correlation" title="Copy correlation id" aria-label="Copy correlation id">⧉</button></dd>` : ''}
         ${Array.isArray(run.tags) && run.tags.length > 0 ? `<dt>Tags</dt><dd part="tags"><div class="tags">${run.tags.map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div></dd>` : ''}
       </dl>
       <div class="block progress" part="progress" hidden><h4>Progress</h4><div class="prog-body"></div></div>
       ${this.renderWait(run)}
       ${this.renderFault(run)}
+      ${this.renderBudget(run)}
     `;
+    this.$('.rerun-of')?.addEventListener('click', () => this.emit('run-open', { runId: run.rerunOf }));
     this.$('.copy')?.addEventListener('click', async (e) => {
       const button = e.currentTarget;
       if (await copyToClipboard(run.correlationId)) {
@@ -412,6 +437,42 @@ class ArazzoRunDetail extends ArazzoElement {
       <h4>Fault</h4>
       <div>Step <strong>${escapeHtml(fault.stepId)}</strong> · attempt ${escapeHtml(String(fault.attempt))} · <span class="muted" title="${escapeHtml(absoluteTime(fault.at))}">${escapeHtml(relativeTime(fault.at))}</span></div>
       <div class="err">${escapeHtml(fault.error)}</div>
+      ${this.renderFaultHelp(run)}
+    </div>`;
+  }
+
+  /**
+   * What one of the platform's own fault types means and what to do about it (ADR 0068). A step's own failure is
+   * shown as recorded and gets nothing here. On a budget fault the server says whether a resume would run now
+   * (`rebudget`), and the budget the resume would give the run is shown, so the operator sees what to raise.
+   */
+  renderFaultHelp(run) {
+    const described = describeFault(run.fault?.error);
+    if (!described) return '';
+    let verdict = '';
+    if (described.budget && run.rebudget) {
+      verdict = `<div class="verdict ${run.rebudget.resumable ? 'yes' : 'no'}" part="rebudget">${run.rebudget.resumable
+        ? "Resumable now. A resume re-budgets this run from its environment's current budget:"
+        : 'Not resumable yet. This run is still outside the budget a resume would give it:'}</div>
+        ${this.renderLimits(run.rebudget.effective, 'offered')}`;
+    }
+    return `<div class="help" part="fault-help">
+      <div class="meaning">${escapeHtml(described.meaning)}</div>
+      <div class="remedy">${escapeHtml(described.remedy)}</div>
+    </div>${verdict}`;
+  }
+
+  renderLimits(budget, extraClass = '') {
+    return `<dl class="limits ${extraClass}">${BUDGET_LIMITS.map((limit) =>
+      `<dt title="${escapeHtml(limit.hint)}">${escapeHtml(limit.label)}</dt><dd data-limit="${limit.key}">${escapeHtml(formatLimit(limit, budget))}</dd>`).join('')}</dl>`;
+  }
+
+  /** The budget frozen into the run (ADR 0068). A run that carries none, the scheduler's, has no block. */
+  renderBudget(run) {
+    if (!run.budget) return '';
+    return `<div class="block" part="budget">
+      <h4 title="Resolved when the run started, or by a resume that re-budgeted it. A later change to the environment does not move it.">Budget · frozen into the run</h4>
+      ${this.renderLimits(run.budget)}
     </div>`;
   }
 
@@ -426,9 +487,20 @@ class ArazzoRunDetail extends ArazzoElement {
     const isTerminal = TERMINAL.has(run.status);
     const buttons = [];
 
-    // Resume — faulted runs only, runs:write.
+    // Resume — faulted runs only, runs:write. A run faulted on its budget is resumable exactly when the server says
+    // a re-budget would let it run (ADR 0068). Otherwise the button is disabled and says why, so the operator is
+    // not walked into a refusal, and Re-run beside it is the way forward.
+    const resume = resumability(run);
     if (run.status === 'Faulted' && (canWrite || showForbidden)) {
-      buttons.push(`<button class="resume primary" type="button" ${canWrite ? '' : 'disabled title="Requires runs:write"'}>Resume…</button>`);
+      const blocked = !canWrite ? 'Requires runs:write' : (resume.resumable ? '' : resume.reason);
+      buttons.push(`<button class="resume primary" type="button" ${blocked ? `disabled title="${escapeHtml(blocked)}"` : ''}>Resume…</button>`);
+    }
+
+    // Re-run — any run the caller can read, runs:write: a new run of the same version, environment and inputs,
+    // which the server reads from this one. Not offered while the run is still going, where it would double it.
+    const settled = run.status === 'Faulted' || isTerminal;
+    if (settled && (canWrite || showForbidden)) {
+      buttons.push(`<button class="rerun" type="button" ${canWrite ? '' : 'disabled title="Requires runs:write"'}>Re-run…</button>`);
     }
 
     // Cancel — non-terminal runs, runs:write. Delegated to the embedded <arazzo-cancel-button> (first in the bar).
@@ -454,10 +526,40 @@ class ArazzoRunDetail extends ArazzoElement {
       this._resumeDialog.client = this.client;
       this._resumeDialog.open(run);
     });
+    host.querySelector('.rerun')?.addEventListener('click', (e) => this.confirmRerun(run, e.currentTarget));
     host.querySelector('.delete')?.addEventListener('click', (e) => this.confirmDelete(run, e.currentTarget));
+    if (run.status === 'Faulted' && canWrite && !resume.resumable) {
+      host.insertAdjacentHTML('beforeend', `<span class="why" part="resume-blocked">${escapeHtml(resume.reason)}</span>`);
+    }
 
     // Show the bar only when it has something in it.
     this.$('.actions').hidden = !(showCancel || buttons.length > 0);
+  }
+
+  /**
+   * Re-runs the run from the beginning, as a new run (ADR 0072), behind the kit's own confirm: it repeats the
+   * workflow's effects on its sources. One idempotency key is minted per confirmed intent, so a retried or doubled
+   * request starts one run. The new run is announced and selected. This run is left as it is.
+   */
+  async confirmRerun(run, trigger) {
+    const confirmed = await confirmDialog(this, {
+      title: 'Re-run',
+      message: `Start a new run of ${run.workflowId}${run.environment ? ` in ${run.environment}` : ''} with the same inputs as run ${run.id}? It runs from the beginning and repeats the workflow's effects. This run is left as it is.`,
+      confirmLabel: 'Re-run',
+    });
+    if (!confirmed) return;
+    const idempotencyKey = `rerun-${run.id}-${(globalThis.crypto?.randomUUID?.() ?? String(Date.now()))}`;
+    await this.runAction(trigger, async () => {
+      try {
+        const accepted = await this.client.rerunRun(run.id, { idempotencyKey });
+        this.emit('run-rerun', { runId: accepted.runId, rerunOf: run.id });
+        this.emit('run-open', { runId: accepted.runId });
+      } catch (err) {
+        this._error = err.problem || { title: err.message, status: err.status };
+        this.renderBody();
+        this.emit('error', { problem: this._error, error: err });
+      }
+    });
   }
 
   async confirmDelete(run, trigger) {

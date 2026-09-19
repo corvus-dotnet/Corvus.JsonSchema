@@ -24,7 +24,7 @@ function makeClient() {
 
 test('listRuns returns all seeded runs', async () => {
   const { runs, nextPageToken } = await makeClient().listRuns({ limit: 100 });
-  assert.equal(runs.length, 12);
+  assert.equal(runs.length, 14);
   assert.equal(nextPageToken, null);
 });
 
@@ -50,15 +50,15 @@ test('a sensitive versions step journal is redacted for an auditor but read in f
 
 test('listRuns filters by status and workflowId', async () => {
   const c = makeClient();
-  assert.equal((await c.listRuns({ status: 'Faulted' })).runs.length, 5);
-  assert.equal((await c.listRuns({ workflowId: 'onboard' })).runs.length, 5);
+  assert.equal((await c.listRuns({ status: 'Faulted' })).runs.length, 7);
+  assert.equal((await c.listRuns({ workflowId: 'onboard' })).runs.length, 6);
 });
 
 test('listRunsPaged walks every page via the keyset token', async () => {
   let total = 0; let pages = 0;
   for await (const page of makeClient().listRunsPaged({ limit: 3 })) { total += page.runs.length; pages++; }
-  assert.equal(total, 12);
-  assert.equal(pages, 4);
+  assert.equal(total, 14);
+  assert.equal(pages, 5);
 });
 
 test('getRun returns full detail and 404s for an unknown id', async () => {

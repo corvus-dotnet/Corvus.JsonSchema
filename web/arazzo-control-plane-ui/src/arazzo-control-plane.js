@@ -8,7 +8,7 @@
 //
 // Attributes : base-url, scopes (space-separated), theme (auto|light|dark), poll (ms; default 5000)
 // Properties : .client (override the auto-built one), .authProvider (() => Authorization header), .fetch
-// Events     : re-emits run-selected / run-changed / run-deleted / error from its children
+// Events     : re-emits run-selected / run-changed / run-deleted / run-rerun / error from its children
 //
 // Importing this file registers every kit element (table, detail, dialogs, badge).
 
@@ -261,6 +261,9 @@ class ArazzoControlPlane extends ArazzoElement {
     // Detail events bubble (composed) up to here; listen on the pane.
     pane.addEventListener('run-changed', (e) => { table.refresh(); this.emit('run-changed', e.detail); });
     pane.addEventListener('run-deleted', (e) => { table.refresh(); this.clearDetail(); this.emit('run-deleted', e.detail); });
+    // The detail asks to show another run: the new run a re-run started, or the run this one re-runs (ADR 0072).
+    pane.addEventListener('run-open', (e) => { this._pane.querySelector('arazzo-run-detail')?.showRun(e.detail.runId); });
+    pane.addEventListener('run-rerun', (e) => { table.refresh(); this.emit('run-rerun', e.detail); });
     pane.addEventListener('close', () => this.clearDetail());
     pane.addEventListener('error', (e) => this.emit('error', e.detail));
 

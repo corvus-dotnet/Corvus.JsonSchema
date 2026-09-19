@@ -211,6 +211,25 @@ export class ArazzoControlPlaneClient {
     return this._request('POST', `/runs/${encodeURIComponent(runId)}/cancel`, { body: request, signal: opts.signal });
   }
 
+  /**
+   * `rerunRun` — start a new run of the same workflow version, in the same environment, with the same inputs and
+   * tags (ADR 0072). The server reads them from the original, so a run's inputs never pass through this client. The
+   * new run goes through the same admission as any start, gets a fresh execution budget and a new correlation id,
+   * and names the original as its `rerunOf`. It is the remedy when a run cannot or should not be resumed.
+   * @param {string} runId The run to re-run.
+   * @param {{ idempotencyKey?: string, signal?: AbortSignal }} [opts] An `idempotencyKey` makes a repeated request
+   *   start one run, which is what a double click needs.
+   * @returns {Promise<{ runId: string, workflowId: string, status: string }>} The accepted new run. Throws
+   *   {@link ProblemError} `404` for a run outside the caller's reach, `409` where a start would be refused (or
+   *   `not-rerunnable`: a draft run, the scheduler's run, a version that is gone), `422` if the original's inputs no
+   *   longer validate, `429` at the tenant's capacity.
+   */
+  rerunRun(runId, opts = {}) {
+    if (!runId) throw new TypeError('rerunRun requires a run id.');
+    const headers = opts.idempotencyKey ? { 'Idempotency-Key': opts.idempotencyKey } : undefined;
+    return this._request('POST', `/runs/${encodeURIComponent(runId)}/rerun`, { headers, signal: opts.signal });
+  }
+
   // ---- runs:purge -------------------------------------------------------------------------------
 
   /**
@@ -1003,10 +1022,26 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
+   * `getEnvironmentExecutionBudget` — an environment's execution budget seen whole (ADR 0068): the `override` it
+   * authored (absent when it authors none), the deployment's `ceiling`, and the `effective` budget a run started in
+   * it now would be frozen with, resolved by the rule a run start applies. The environment itself stores only the
+   * override, so this is what says what a limit it leaves out will be.
+   * @param {string} name
+   * @param {{ signal?: AbortSignal }} [opts]
+   * @returns {Promise<{ override?: object, effective: object, ceiling: object }>} Throws {@link ProblemError} `404`.
+   */
+  getEnvironmentExecutionBudget(name, opts = {}) {
+    if (!name) throw new TypeError('getEnvironmentExecutionBudget requires a name.');
+    return this._request('GET', `${this._environmentPath(name)}/executionBudget`, { signal: opts.signal });
+  }
+
+  /**
    * `createEnvironment` — create a governed, reach-scoped environment; the deployment grants the calling principal
    * administration of it (§7.7). Conflicts (`409`) if an environment with that name already exists in the caller's reach.
    * A `requireEvidence: true` opts the environment into evidence-gated promotion (workflow-designer §4.6).
-   * @param {{ name: string, displayName?: string, description?: string, requireEvidence?: boolean, managementTags?: Array<{key: string, value: string}>, signal?: AbortSignal }} body
+   * An `executionBudget` authors the environment's budget override (ADR 0068): each limit it names tightens the
+   * deployment's ceiling, and a limit wider than the ceiling is refused `400`.
+   * @param {{ name: string, displayName?: string, description?: string, requireEvidence?: boolean, allowsDraftRuns?: boolean, managementTags?: Array<{key: string, value: string}>, executionBudget?: object, signal?: AbortSignal }} body
    * @returns {Promise<object>} The created {@link EnvironmentSummary}. Throws {@link ProblemError} `400`/`409`.
    */
   createEnvironment(body) {
@@ -1015,7 +1050,9 @@ export class ArazzoControlPlaneClient {
     if (body.displayName) payload.displayName = body.displayName;
     if (body.description) payload.description = body.description;
     if (typeof body.requireEvidence === 'boolean') payload.requireEvidence = body.requireEvidence;
+    if (typeof body.allowsDraftRuns === 'boolean') payload.allowsDraftRuns = body.allowsDraftRuns;
     if (body.managementTags) payload.managementTags = body.managementTags;
+    if (body.executionBudget) payload.executionBudget = body.executionBudget;
     return this._request('POST', '/environments', { body: payload, signal: body.signal });
   }
 
@@ -1025,8 +1062,10 @@ export class ArazzoControlPlaneClient {
    * §14.2; a present `managementTags` replaces the caller's non-internal labels, absent leaves them unchanged, the
    * reserved `sys:` prefix is rejected 400; a present `requireEvidence` likewise replaces the stored flag). The name
    * and created-* audit fields are immutable. The caller must be a current administrator (`403` otherwise).
+   * A present `executionBudget` replaces the stored budget override WHOLE (ADR 0068), so name every limit that is
+   * to stand; an empty object removes the override, and absent leaves it unchanged.
    * @param {string} name
-   * @param {{ displayName?: string, description?: string, requireEvidence?: boolean, managementTags?: Array<{key: string, value: string}> }} patch
+   * @param {{ displayName?: string, description?: string, requireEvidence?: boolean, managementTags?: Array<{key: string, value: string}>, executionBudget?: object }} patch
    * @param {{ signal?: AbortSignal }} [opts]
    * @returns {Promise<object>} The updated {@link EnvironmentSummary}. Throws {@link ProblemError} `400`/`403`/`404`/`409`.
    */
@@ -2472,7 +2511,7 @@ export class ArazzoControlPlaneClient {
   async _request(method, path, opts = {}) {
     const url = `${this._baseUrl}${path}`;
     /** @type {RequestInit} */
-    const init = { method, headers: { Accept: opts.raw ? 'application/octet-stream' : 'application/json' } };
+    const init = { method, headers: { Accept: opts.raw ? 'application/octet-stream' : 'application/json', ...(opts.headers || {}) } };
 
     if (opts.form !== undefined) {
       // multipart/form-data: let fetch set the Content-Type (with its boundary).

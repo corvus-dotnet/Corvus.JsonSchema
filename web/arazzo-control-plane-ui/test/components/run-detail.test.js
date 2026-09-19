@@ -290,3 +290,113 @@ describe('<arazzo-run-detail> enriched step journal (#885)', () => {
     ok(note.textContent.toLowerCase().includes('capped'), 'the capped-journal note renders');
   });
 });
+
+// ADR 0068 and ADR 0072: what a run is held to, why it faulted in words, and the two ways forward.
+describe('<arazzo-run-detail> budget, fault types and recovery', () => {
+  let el;
+  afterEach(() => el?.remove());
+  const part = (name) => el.shadowRoot.querySelector(`[part="${name}"]`);
+  const button = (cls) => el.shadowRoot.querySelector(`.action-buttons .${cls}`);
+
+  it('shows the budget frozen into the run', async () => {
+    el = detailWithMock('run-b0d9e701', { scopes: 'runs:read runs:write' });
+    mount(el);
+    const budget = await waitFor(() => part('budget'));
+    equal(budget.querySelector('[data-limit="maxSteps"]').textContent, '3');
+    equal(budget.querySelector('[data-limit="stepTimeoutSeconds"]').textContent, '30s');
+    equal(budget.querySelectorAll('dd').length, 6, 'all six limits');
+  });
+
+  it('explains a platform fault type under the recorded error, and offers a resume the server says would run', async () => {
+    el = detailWithMock('run-b0d9e701', { scopes: 'runs:read runs:write' });
+    mount(el);
+    const help = await waitFor(() => part('fault-help'));
+    ok(part('fault').querySelector('.err').textContent.includes('budget-fuel'), 'the recorded error is still shown');
+    ok(help.textContent.includes('max steps'), 'what happened');
+    ok(help.textContent.includes('resume the run, or re-run it'), 'what to do');
+    ok(part('rebudget').textContent.includes('Resumable now'), 'the servers answer');
+    equal(part('fault').querySelector('.limits.offered [data-limit="maxSteps"]').textContent, '120', 'the budget a resume would give');
+    ok(!button('resume').disabled, 'Resume is offered');
+    ok(!part('resume-blocked'), 'nothing to explain');
+  });
+
+  it('disables Resume with the reason on a run a re-budget cannot rescue, and leaves Re-run as the way forward', async () => {
+    el = detailWithMock('run-b0d9e702', { scopes: 'runs:read runs:write' });
+    mount(el);
+    await waitFor(() => part('rebudget'));
+    ok(part('rebudget').textContent.includes('Not resumable yet'));
+    ok(button('resume').disabled, 'Resume is disabled');
+    ok(button('resume').title.includes('re-run'), 'and says why');
+    ok(part('resume-blocked').textContent.includes('outside the budget'), 'the reason is on the page, not only in a tooltip');
+    ok(!button('rerun').disabled, 'Re-run is offered');
+  });
+
+  it('shows a steps own failure as recorded, with no explanation and an ordinary Resume', async () => {
+    el = detailWithMock('run-7f3a9c21', { scopes: 'runs:read runs:write' });
+    mount(el);
+    await waitFor(() => part('fault'));
+    ok(!part('fault-help'), 'nothing is invented about an error the platform did not record');
+    ok(!button('resume').disabled);
+  });
+
+  it('re-runs behind the kits confirm, with an idempotency key, and asks to open the new run', async () => {
+    el = detailWithMock('run-b0d9e702', { scopes: 'runs:read runs:write' });
+    let key;
+    const rerun = el.client.rerunRun.bind(el.client);
+    el.client.rerunRun = (id, opts) => { key = opts?.idempotencyKey; return rerun(id, opts); };
+    mount(el);
+    await waitFor(() => button('rerun'));
+    button('rerun').click();
+    const dialog = await waitFor(() => el.shadowRoot.querySelector('dialog.arazzo-confirm'));
+    ok(dialog.textContent.includes('onboard-customer-v1'), 'names what will run');
+    ok(dialog.textContent.includes('repeats'), 'and that it repeats the workflows effects');
+    const rerunEvent = nextEventOf(el, 'run-rerun');
+    const open = nextEventOf(el, 'run-open');
+    dialog.querySelector('.ok').click();
+    const started = (await rerunEvent).detail;
+    equal(started.rerunOf, 'run-b0d9e702');
+    equal((await open).detail.runId, started.runId, 'the new run is opened');
+    ok(key && key.startsWith('rerun-run-b0d9e702-'), 'one key per confirmed intent');
+
+    // Shown, the new run names the run it re-runs, and that is a way back to it.
+    el.showRun(started.runId);
+    const link = await waitFor(() => el.shadowRoot.querySelector('[part="rerun-of"] .rerun-of'));
+    equal(link.textContent, 'run-b0d9e702');
+    const back = nextEventOf(el, 'run-open');
+    link.click();
+    equal((await back).detail.runId, 'run-b0d9e702');
+  });
+
+  it('a cancelled re-run starts nothing', async () => {
+    el = detailWithMock('run-b0d9e702', { scopes: 'runs:read runs:write' });
+    let calls = 0;
+    el.client.rerunRun = () => { calls++; return Promise.resolve({ runId: 'x' }); };
+    mount(el);
+    await waitFor(() => button('rerun'));
+    button('rerun').click();
+    const dialog = await waitFor(() => el.shadowRoot.querySelector('dialog.arazzo-confirm'));
+    dialog.querySelector('.cancel').click();
+    await new Promise((r) => setTimeout(r, 50));
+    equal(calls, 0);
+  });
+
+  it('does not offer Re-run while the run is still going, or without runs:write', async () => {
+    el = detailWithMock('run-9c0142ab', { scopes: 'runs:read runs:write' });
+    mount(el);
+    await waitFor(() => part('wait'));
+    ok(!button('rerun'), 'a suspended run is still going');
+    el.remove();
+
+    el = detailWithMock('run-b0d9e702', { scopes: 'runs:read' });
+    mount(el);
+    await waitFor(() => part('fault'));
+    ok(!button('rerun') && !button('resume'), 'read-only');
+  });
+});
+
+function nextEventOf(el, type, timeout = 4000) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`timed out waiting for ${type}`)), timeout);
+    el.addEventListener(type, (e) => { clearTimeout(timer); resolve(e); }, { once: true });
+  });
+}

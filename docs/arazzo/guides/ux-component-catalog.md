@@ -77,7 +77,7 @@ Layer 2 run-management screen: filters plus master/detail. Source: `arazzo-contr
 
 - **Attributes:** `base-url`, `scopes` (gates `runs:purge`), `theme`, `poll`
 - **Properties:** `.client`, `.authProvider`, `.fetch`; methods `reload()`, `refresh()`
-- **Events:** re-emits `run-selected`, `run-changed`, `run-deleted`, `purge-completed`, `error`
+- **Events:** re-emits `run-selected`, `run-changed`, `run-deleted`, `run-rerun`, `purge-completed`, `error`. It answers the detail's `run-open` itself, by showing that run.
 - **Hosts:** `arazzo-runs-table`, `arazzo-run-detail`, `arazzo-purge-dialog`, `arazzo-workflow-id-input`
 
 ### `<arazzo-runs-table>`
@@ -93,8 +93,12 @@ Filterable, keyset-paged run list. Source: `runs-table.js`.
 Full record plus scope-gated remediation for one run. Source: `run-detail.js`.
 
 - **Attributes:** `base-url`, `runid`, `poll`, `scopes`
-- **Events:** `run-changed`, `run-deleted`, `error`, `close`
+- **Methods:** `showRun(runId)` shows another run by id.
+- **Events:** `run-changed`, `run-deleted`, `run-rerun` (`{runId, rerunOf}`, a re-run started), `run-open` (`{runId}`, a request to show another run: the new run a re-run started, or the run this one re-runs), `error`, `close`
+- **Parts:** `header`, `status`, `cursor`, `wait`, `fault`, `fault-help`, `budget`, `rebudget`, `rerun-of`, `resume-blocked`, `actions`
 - **Hosts:** `arazzo-cancel-button`, `arazzo-resume-dialog`, `arazzo-status-badge`
+
+It shows the execution budget frozen into the run (ADR 0068). Under a fault whose error is one of the platform's six fixed types it says what the type means and what to do. A step's own failure is shown as recorded, with nothing added. On a run faulted on its budget, **Resume** is enabled exactly when the server says a re-budget would let it run (`rebudget.resumable`), and the budget the resume would give is shown. Otherwise it is disabled and the reason is on the page. **Re-run** (ADR 0072) is offered on any faulted or terminal run, behind the kit's confirm dialog, and sends one idempotency key per confirmed intent. The shared vocabulary (the six limits, the fault types, and the resumability rule) is `src/execution-budget.js`.
 
 ### `<arazzo-cancel-button>`
 
@@ -235,7 +239,10 @@ Master-detail over the environment registry (§7.7). Source: `environments-panel
 
 - **Attributes:** `base-url`, `scopes`
 - **Events:** `environment-selected/created/changed/deleted`, `loaded`, `error`
+- **Parts:** `detail`, `budget-title`, `budget`
 - **Hosts:** `arazzo-administrators-panel`, `arazzo-tag-editor`, `arazzo-splitbar`, `arazzo-pager`
+
+The detail shows the environment's execution budget (ADR 0068) from its own resource, one row per limit: the override the environment authored, the budget a run started here now is held to, and the deployment's ceiling. With `environments:write` the Override column is editable. An empty input leaves that limit to the ceiling, a limit over the ceiling is said beside its input before any request, and what was typed survives a repaint. Save sends the override only when it changed, since the server replaces an override whole, and an editor emptied of every limit removes the override. The create dialog takes the same six limits in a collapsed group.
 
 ### `<arazzo-filter-input>`
 

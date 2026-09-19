@@ -261,17 +261,17 @@ test('a persona change resets a paged list to page 1 (a stale cursor must not ca
   const errors = watchErrors(page);
   await openApp(page);
 
-  // Shrink the page so the 12 seeded runs paginate, and walk to page 2.
+  // Shrink the page so the 14 seeded runs paginate, and walk to page 2.
   const table = page.locator('arazzo-control-plane arazzo-runs-table');
   await table.evaluate((el) => el.setAttribute('page-size', '5'));
   const pager = table.locator('arazzo-pager');
-  await expect(pager.locator('.count')).toContainText('12 runs');
+  await expect(pager.locator('.count')).toContainText('14 runs');
   await pager.locator('button.next').click();
   await expect(pager.locator('.count')).toContainText('page 2');
 
   // Switching personas swaps the caller's reach — every surface reloads from page 1.
   await page.locator('#persona').selectOption('viewer');
-  await expect(pager.locator('.count')).toContainText('12 runs');
+  await expect(pager.locator('.count')).toContainText('14 runs');
   await expect(pager.locator('.count')).not.toContainText('page 2');
   await expect(table.locator('tbody tr[data-id]')).toHaveCount(5);
   assertClean(errors);

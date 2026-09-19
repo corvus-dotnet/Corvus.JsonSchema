@@ -10,6 +10,7 @@
 import { ArazzoElement, SHARED_CSS, PAGER_CSS, escapeHtml, relativeTime, absoluteTime, countdown, copyToClipboard, define } from './base.js';
 import './status-badge.js';
 import './pager.js';
+import { describeFault } from '../execution-budget.js';
 
 class ArazzoRunsTable extends ArazzoElement {
   static get observedAttributes() {
@@ -264,7 +265,8 @@ class ArazzoRunsTable extends ArazzoElement {
       : run.awaitingChannel
         ? `<span class="wait muted">✉ ${escapeHtml(run.awaitingChannel)}${run.awaitingCorrelationId ? ' · ' + escapeHtml(run.awaitingCorrelationId) : ''}</span>`
         : '';
-    const err = run.errorType ? `<span class="err" title="${escapeHtml(run.errorType)}">${escapeHtml(run.errorType)}</span>` : '';
+    // One of the platform's own fault types says what happened on hover. A step's own failure is shown as recorded.
+    const err = run.errorType ? `<span class="err" title="${escapeHtml(describeFault(run.errorType)?.meaning ?? run.errorType)}">${escapeHtml(run.errorType)}</span>` : '';
     const tags = Array.isArray(run.tags) && run.tags.length > 0
       ? `<div class="tags">${run.tags.map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>`
       : '';

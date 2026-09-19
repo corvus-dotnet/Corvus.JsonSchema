@@ -22,8 +22,20 @@ describe('<arazzo-runs-table>', () => {
     el = tableWithMock();
     mount(el);
     await nextEvent(el, 'loaded');
-    equal(rowCount(el), 12, 'all seeded runs render');
+    equal(rowCount(el), 14, 'all seeded runs render');
     ok(el.shadowRoot.querySelector('arazzo-status-badge'), 'status badge present');
+  });
+
+  // ADR 0068: one of the platform's own fault types says what happened on hover. A step's own failure is shown as
+  // it was recorded, with nothing invented about it.
+  it('explains a platform fault type on hover and leaves a steps own failure as recorded', async () => {
+    el = tableWithMock({ status: 'Faulted' });
+    mount(el);
+    await nextEvent(el, 'loaded');
+    const error = (id) => el.shadowRoot.querySelector(`tbody tr[data-id="${id}"] .err`);
+    equal(error('run-b0d9e701').textContent, 'budget-fuel', 'the recorded type is what is shown');
+    ok(error('run-b0d9e701').title.includes('max steps'), 'and the hover says what it means');
+    equal(error('run-7f3a9c21').title, 'HttpRequestException');
   });
 
   it('shows each run’s pinned environment (and a placeholder when unpinned)', async () => {
@@ -44,7 +56,7 @@ describe('<arazzo-runs-table>', () => {
     mount(el);
     await nextEvent(el, 'loaded');
     const n = rowCount(el);
-    ok(n > 0 && n < 12, `sees a strict subset of the 12 seeded runs (${n})`);
+    ok(n > 0 && n < 14, `sees a strict subset of the 14 seeded runs (${n})`);
     const workflows = [...el.shadowRoot.querySelectorAll('tbody tr[data-id] td.wf')].map((c) => c.textContent);
     ok(workflows.every((w) => w.includes('nightly-reconcile')), 'every visible run is a payments-domain (nightly-reconcile) run');
   });
@@ -65,7 +77,7 @@ describe('<arazzo-runs-table>', () => {
     el = tableWithMock({ status: 'Faulted' });
     mount(el);
     await nextEvent(el, 'loaded');
-    equal(rowCount(el), 5, 'only the faulted runs');
+    equal(rowCount(el), 7, 'only the faulted runs');
   });
 
   it('filters by a created-before time window', async () => {

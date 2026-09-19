@@ -35,7 +35,7 @@ describe('<arazzo-control-plane>', () => {
     const table = el.shadowRoot.querySelector('arazzo-runs-table');
     await nextEvent(table, 'loaded');
     const all = table.shadowRoot.querySelectorAll('tbody tr[data-id]').length;
-    equal(all, 12, 'the default (full-reach) persona sees every run');
+    equal(all, 14, 'the default (full-reach) persona sees every run');
 
     // Switch to the reach-scoped reader and reload the wrapper, exactly as the demo's persona selector does.
     mock.setPersona('team-reader');

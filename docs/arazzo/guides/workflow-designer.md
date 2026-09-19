@@ -835,7 +835,10 @@ client-side. This keeps the control plane stateless (no session affinity, no cle
 Simulation compiles and runs user-authored workflow code server-side, the same trust decision the
 catalog already makes at add-time (compile) and run-time (execute), gated the same way: capability
 scopes + reach on the working copy, a step budget, a wall-clock timeout, and the mock transport as
-the *only* I/O surface (no real credentials are ever resolved in simulation).
+the *only* I/O surface (no real credentials are ever resolved in simulation). That budget is the
+simulator's own, two limits on one simulated run. It is not the six-limit execution budget a
+production run is held to ([ADR 0068](../adr/0068-execution-budget-fuel-wall-clock-depth.md)),
+which the console shows on the environment and on the run.
 
 ## 9. Scenario carry-over & lifecycle
 

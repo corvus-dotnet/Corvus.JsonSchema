@@ -55,7 +55,7 @@ function capturing() {
   const fetch = async (url, init = {}) => {
     const u = new URL(url);
     const method = (init.method || 'GET').toUpperCase();
-    calls.push({ method, path: u.pathname.replace(BASE_PATH, ''), query: u.searchParams, body: init.body ? JSON.parse(init.body) : undefined });
+    calls.push({ method, path: u.pathname.replace(BASE_PATH, ''), query: u.searchParams, headers: init.headers ?? {}, body: init.body ? JSON.parse(init.body) : undefined });
     if (method === 'DELETE') return new Response(null, { status: 204 });
     if (/\/runs\/?$/.test(u.pathname) && method === 'PURGE') return json({ purgedCount: 0 });
     if (/\/runs\/?$/.test(u.pathname)) return json({ runs: [], nextPageToken: null });
@@ -111,6 +111,22 @@ test('listRuns: tag (repeatable, AND) + correlationId exist in the contract and 
   // Each tag is emitted as a repeated `tag` param (form/explode), AND-matched server-side.
   assert.deepEqual(calls[0].query.getAll('tag'), ['tenant-42', 'priority']);
   assert.equal(calls[0].query.get('correlationId'), 'trace-abc');
+});
+
+test('rerunRun: POST the templated path with no body, the idempotency key in the header the contract declares', async () => {
+  // ADR 0072: the server reads the inputs from the original run, so the client sends none.
+  assert.ok(OPS.rerunRun, 'operation rerunRun present in the OpenAPI document');
+  const { client, calls } = capturing();
+  await client.rerunRun('run-1', { idempotencyKey: 'again-1' });
+  assert.equal(calls[0].method, OPS.rerunRun.method);
+  assert.equal(calls[0].path, OPS.rerunRun.path.replace('{runId}', 'run-1'));
+  assert.equal(calls[0].body, undefined);
+  assert.equal(calls[0].headers['Idempotency-Key'], 'again-1');
+  const declared = (doc.paths['/runs/{runId}/rerun'].post.parameters || []).map((p) => deref(p)).find((p) => p.in === 'header');
+  assert.equal(declared.name, 'Idempotency-Key');
+
+  await client.rerunRun('run-2');
+  assert.equal(calls[1].headers['Idempotency-Key'], undefined);
 });
 
 test('getRun / deleteRun: method + templated path', async () => {
@@ -288,6 +304,24 @@ test('the contract declares the environment operations', () => {
   }
 });
 
+test('environment execution budget: the budget resource, and create carrying the override and the draft-run posture', async () => {
+  const { client, calls } = capturing();
+  // The environment's execution budget seen whole (ADR 0068) is its own resource.
+  assert.ok(OPS.getEnvironmentExecutionBudget, 'operation getEnvironmentExecutionBudget present in the OpenAPI document');
+  await client.getEnvironmentExecutionBudget('qa');
+  assert.equal(calls[0].method, OPS.getEnvironmentExecutionBudget.method);
+  assert.equal(calls[0].path, OPS.getEnvironmentExecutionBudget.path.replace('{name}', 'qa'));
+
+  // Create carries what the form offers: every limit of the override is one the contract's schema names, and the
+  // draft-run posture, which the client used to drop.
+  await client.createEnvironment({ name: 'qa2', allowsDraftRuns: true, executionBudget: { maxSteps: 25, stepTimeoutSeconds: 7 } });
+  const created = calls[calls.length - 1].body;
+  assert.equal(created.allowsDraftRuns, true);
+  assert.deepEqual(created.executionBudget, { maxSteps: 25, stepTimeoutSeconds: 7 });
+  const limits = Object.keys(doc.components.schemas.ExecutionBudget.properties);
+  for (const key of Object.keys(created.executionBudget)) assert.ok(limits.includes(key), `budget limit '${key}' is declared in the contract`);
+});
+
 test('environments: each client method emits the contract method + templated path + body', async () => {
   const { client, calls } = capturing();
   await client.listEnvironments({ limit: 25, pageToken: 'tok' });
@@ -310,6 +344,7 @@ test('environments: each client method emits the contract method + templated pat
   assert.equal(calls[3].method, OPS.updateEnvironment.method);
   assert.equal(calls[3].path, OPS.updateEnvironment.path.replace('{name}', 'qa'));
   assert.equal(calls[3].body.displayName, 'QA2');
+
 
   await client.deleteEnvironment('qa');
   assert.equal(calls[4].method, OPS.deleteEnvironment.method);

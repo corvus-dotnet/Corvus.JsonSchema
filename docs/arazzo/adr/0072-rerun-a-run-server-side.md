@@ -1,6 +1,6 @@
 # ADR 0072. Re-running a run is a server-side operation through the one start admission
 
-Date: 2026-09-19. Status: **Accepted**. Implementation: REST API, server and CLI landed; the console follows. Scope: how an operator starts a run again from the beginning. Follows [ADR 0068](0068-execution-budget-fuel-wall-clock-depth.md), whose re-budget keeps a faulted run's work; this is the remedy when that is not possible or not wanted.
+Date: 2026-09-19. Status: **Accepted**. Implementation: REST API, server, CLI and console landed. Scope: how an operator starts a run again from the beginning. Follows [ADR 0068](0068-execution-budget-fuel-wall-clock-depth.md), whose re-budget keeps a faulted run's work; this is the remedy when that is not possible or not wanted.
 
 ## Context
 

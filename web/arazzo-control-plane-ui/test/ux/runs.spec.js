@@ -53,6 +53,66 @@ test('a suspended run shows its wait and pinned environment in the detail', asyn
   assertClean(errors);
 });
 
+test('a run faulted on its budget says why, what it was held to, and whether a resume would run (ADR 0068)', async ({ page }) => {
+  const errors = watchErrors(page);
+  await openApp(page);
+
+  // Why, without opening it: the list names the fault type and its hover says what it means.
+  const row = page.locator('arazzo-runs-table tbody tr[data-id="run-b0d9e701"]');
+  await expect(row.locator('.err')).toHaveText('budget-fuel');
+  await expect(row.locator('.err')).toHaveAttribute('title', /max steps/);
+
+  await row.click();
+  const detail = page.locator('arazzo-run-detail');
+  await expect(detail.locator('[part="fault-help"]')).toContainText('resume the run, or re-run it');
+  await expect(detail.locator('[part="budget"] [data-limit="maxSteps"]')).toHaveText('3');
+
+  // Production's limit has been raised since, so the server says a resume would run, and shows the budget it gives.
+  await expect(detail.locator('[part="rebudget"]')).toContainText('Resumable now');
+  await expect(detail.locator('.limits.offered [data-limit="maxSteps"]')).toHaveText('120');
+  await detail.getByRole('button', { name: /resume/i }).click();
+  await page.locator('arazzo-resume-dialog').getByRole('button', { name: /^resume$/i }).click();
+
+  // Resumed, it runs on from where it stopped under the new budget, and the fault is gone.
+  await expect(detail.locator('arazzo-status-badge')).toHaveAttribute('status', 'Running');
+  await expect(detail.locator('[part="budget"] [data-limit="maxSteps"]')).toHaveText('120');
+  await expect(detail.locator('[part="fault"]')).toHaveCount(0);
+  assertClean(errors);
+});
+
+test('a run a re-budget cannot rescue has Resume disabled with the reason, and is re-run instead (ADR 0072)', async ({ page }) => {
+  const errors = watchErrors(page);
+  await openApp(page);
+  await page.locator('arazzo-runs-table tbody tr[data-id="run-b0d9e702"]').click();
+  const detail = page.locator('arazzo-run-detail');
+
+  await expect(detail.locator('[part="rebudget"]')).toContainText('Not resumable yet');
+  await expect(detail.getByRole('button', { name: /resume/i })).toBeDisabled();
+  await expect(detail.locator('[part="resume-blocked"]')).toContainText('outside the budget');
+
+  // Re-run is confirm-gated by the kit's own dialog: cancel starts nothing.
+  const rows = page.locator('arazzo-runs-table tbody tr[data-id]');
+  const before = await rows.count();
+  await detail.getByRole('button', { name: /re-run/i }).click();
+  const confirm = detail.locator('dialog.arazzo-confirm');
+  await expect(confirm).toContainText('onboard-customer-v1');
+  await confirm.locator('.cancel').click();
+  await expect(confirm).toHaveCount(0);
+  expect(await rows.count()).toBe(before);
+
+  // Confirmed, a new run starts and is opened. It names the run it re-runs, which is a way back to it.
+  await detail.getByRole('button', { name: /re-run/i }).click();
+  await detail.locator('dialog.arazzo-confirm .ok').click();
+  await expect(detail.locator('[part="rerun-of"]')).toHaveText('run-b0d9e702');
+  await expect(detail.locator('arazzo-status-badge')).toHaveAttribute('status', 'Pending');
+  await expect(detail.locator('[part="budget"] [data-limit="wallClockSeconds"]')).toHaveText('3600s (1h)');
+  await expect.poll(async () => rows.count()).toBe(before + 1);
+
+  await detail.locator('[part="rerun-of"] .rerun-of').click();
+  await expect(detail.locator('[part="cursor"]')).toHaveText('run-b0d9e702');
+  assertClean(errors);
+});
+
 test('resume offers all four modes and StatePatch takes an RFC 6902 document', async ({ page }) => {
   const errors = watchErrors(page);
   await openApp(page);
