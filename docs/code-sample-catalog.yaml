@@ -728,7 +728,8 @@ main-docs:
       - {index: 4, language: powershell, lines: [128, 130]}
       - {index: 5, language: powershell, lines: [140, 151]}
       - {index: 6, language: powershell, lines: [155, 164]}
-      - {index: 7, language: powershell, lines: [208, 210]}
+      - {index: 7, language: powershell, lines: [208, 216]}
+      - {index: 8, language: powershell, lines: [222, 224]}
   - path: "docs/BowtiePrerequisites.md"
     blocks:
       - {index: 0, language: powershell, lines: [31, 33]}

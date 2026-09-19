@@ -2,7 +2,8 @@
 <#
 .SYNOPSIS
     Runs the .NET version-over-version benchmark series (V4 and V5) pinned to a set of CPUs, with host health probes.
-    By default it rotates short single-runtime processes (paired A/B). It can run BenchmarkDotNet instead.
+    By default it rotates short single-runtime processes (a quick paired A/B cross-check). Use -Method BenchmarkDotNet
+    for the figures we publish.
 
 .DESCRIPTION
     The series compares the same code on successive .NET runtimes, so the differences it looks for are a few percent.
@@ -15,9 +16,9 @@
       * with -Method Rotation (the default), runs each harness's 'ab' mode once per runtime per round, in turn, and
         reports the ratio between adjacent runtimes for each round (the paired ratio). Machine drift affects both
         sides of a pair alike, so the median paired ratio is the figure to publish;
-      * with -Method BenchmarkDotNet, runs the full BenchmarkDotNet jobs. BenchmarkDotNet runs its jobs in order,
-        directly after it builds them, so the first runtime is measured on a machine still hot from the build. Its
-        figures for adjacent runtimes disagreed from run to run on the machine this was written on;
+      * with -Method BenchmarkDotNet, runs the full BenchmarkDotNet jobs, with each runtime job in -Launches
+        separate processes. A single process can settle into a faster or slower state for its whole life, so one
+        launch per job is not enough for differences of a few percent. These are the figures we publish;
       * samples how many cores are busy while BenchmarkDotNet is measuring, and aborts the series if other
         work keeps more than -MaxBusyCores busy for three consecutive samples;
       * copies each BenchmarkDotNet log, and a series.log with the probes and samples, to -ResultsDirectory.
@@ -40,6 +41,9 @@
 
 .PARAMETER Method
     Rotation (paired A/B, the default) or BenchmarkDotNet.
+
+.PARAMETER Launches
+    With -Method BenchmarkDotNet, the number of separate processes each runtime job runs in.
 
 .PARAMETER Rounds
     The number of rotation rounds. Each round runs every runtime once.
@@ -87,6 +91,8 @@ param(
 
     [ValidateSet('Rotation', 'BenchmarkDotNet')]
     [string]$Method = 'Rotation',
+
+    [int]$Launches = 6,
 
     [int]$Rounds = 10,
 
@@ -286,7 +292,7 @@ function Invoke-Series([string]$name) {
     }
 
     Invoke-Probe "before $name"
-    $process = Start-Pinned -dotnetArguments @($harness.Assembly, '--filter', $harness.Filter) -workingDirectory $outputDirectory -outputPath $log
+    $process = Start-Pinned -dotnetArguments @($harness.Assembly, '--filter', $harness.Filter, '--launches', "$Launches") -workingDirectory $outputDirectory -outputPath $log
     $busySamples = 0
 
     while (-not $process.HasExited) {

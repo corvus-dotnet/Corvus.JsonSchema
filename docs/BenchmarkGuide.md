@@ -203,15 +203,27 @@ With each .NET release we measure what the new runtime gives us "for free" and p
 
 The V5 project measures the generated types (`EvaluateSchema()`), the generated standalone evaluator, and the dynamic validator. Since 5.6.0 all three run the same compiled-plan evaluator, so expect them to agree. It is built once for `net10.0` and the same binaries run on each runtime.
 
-Run both series with the script. It builds the harnesses, waits for the machine to settle, pins the run to the performance cores, and probes the host's health before and after each series.
+The published figures come from BenchmarkDotNet, with each runtime job run in six separate processes. Both harnesses take `--launches N` for that. BenchmarkDotNet's own `--launchCount` adds another job rather than changing the runtime jobs that `Program.cs` defines.
+
+```powershell
+# V4 series
+cd src-v4/Corvus.Json.Benchmarking
+dotnet run -c Release -f net10.0 -- --filter '*ValidateLargeDocumentCorvusOnly.ValidateLargeArrayCorvusV4' --launches 6
+
+# V5 series
+cd benchmarks/Corvus.Text.Json.DotNetVersions.Benchmarks
+dotnet run -c Release -f net10.0 -- --filter '*' --launches 6
+```
+
+The launch count matters. A process can settle into a slightly faster or slower state for its whole life, and the difference between two launches of the same runtime can be as large as the few percent between adjacent runtimes. Two single-launch runs of one benchmark gave ratios of 1.09 and 0.86 for the same pair of runtimes, each with a tiny error. Run the whole series twice and check that the older steps (.NET 8 to 9, and 9 to 10) reproduce before you trust the newest one.
+
+`benchmarks/scripts/Run-DotNetVersionSeries.ps1` wraps a run. It builds the harnesses, waits for the machine to settle, pins the run to the performance cores, and probes the host's health before and after each series. With `-Method BenchmarkDotNet` it runs the BenchmarkDotNet jobs. Its default, `-Method Rotation`, is a quicker cross-check that does not use BenchmarkDotNet. Each harness has an `ab` mode, a stopwatch loop that warms up past JIT tiering and then measures one method in one process, and the script rotates those processes through the runtimes (`dotnet exec --fx-version` runs the same binaries on each) and reports the ratio between adjacent runtimes within each round.
 
 ```powershell
 pwsh benchmarks/scripts/Run-DotNetVersionSeries.ps1
 ```
 
-By default the script does not use BenchmarkDotNet. Each harness has an `ab` mode, a stopwatch loop that warms up past JIT tiering and then measures one method in one process. The script rotates those processes through the runtimes (`dotnet exec --fx-version` runs the same binaries on each), round after round, and reports the ratio between adjacent runtimes within each round. The machine drifts over a run, but it drifts for both sides of a pair alike, so the median paired ratio is stable when the absolute times are not.
-
-BenchmarkDotNet runs its jobs in order, directly after it builds them, so the first runtime is measured on a machine that is still hot from the build. On a laptop that ordering decided the result. Three pinned BenchmarkDotNet runs put .NET 11 anywhere from 5% slower to 23% faster than .NET 10 on the V5 series, where the paired rotation says they are level to within 2%. Use `-Method BenchmarkDotNet` when you want its full statistics, and do not trust it for differences of a few percent between adjacent runtimes.
+Make sure the machine really is quiet, on the host as well as in the guest. A Windows-side `wsl.exe` console relay that was spinning at two and a half cores cost us a day of measurements, and nothing inside WSL could see it. Check the host's per-process CPU before a run.
 
 Every runtime in the series must be installed alongside the SDK that `global.json` pins. BenchmarkDotNet 0.15.8 has no .NET 11 runtime moniker, so its .NET 11.0 job names its toolchain directly. The summary table's `Runtime` column reports the host's runtime for that job. The `Job` column and the legend above the table carry the runtime that actually ran.
 
