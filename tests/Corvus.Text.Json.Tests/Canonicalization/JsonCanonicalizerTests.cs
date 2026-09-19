@@ -326,6 +326,42 @@ public class JsonCanonicalizerTests
         AssertCanonicalEquals("42", "42");
     }
 
+    [TestMethod]
+    [DataRow("5b225c7564383364225d", DisplayName = "Lone high surrogate")]
+    [DataRow("5b225c7564653030225d", DisplayName = "Lone low surrogate")]
+    [DataRow("5b225c75646530305c7564383364225d", DisplayName = "Reversed surrogate pair")]
+    [DataRow("5b225c75643833645c7530303431225d", DisplayName = "High surrogate followed by a non-surrogate escape")]
+    [DataRow("5b22615c7564383364225d", DisplayName = "Lone high surrogate after literal text")]
+    [DataRow("7b225c7564383364223a317d", DisplayName = "Lone high surrogate in a property name")]
+    [DataRow("7b2261223a7b225c7564653030223a317d7d", DisplayName = "Lone low surrogate in a nested property name")]
+    public void UnpairedSurrogatesThrow(string inputHex)
+    {
+        // RFC 8785 section 3.2.2.2: a lone surrogate cannot be encoded as UTF-8, so canonicalization must fail.
+        AssertCanonicalizationThrows(inputHex);
+    }
+
+    [TestMethod]
+    [DataRow("5b22ff225d", DisplayName = "Invalid lead byte")]
+    [DataRow("5b22c3225d", DisplayName = "Truncated two-byte sequence")]
+    [DataRow("5b2280225d", DisplayName = "Stray continuation byte")]
+    [DataRow("5b22c080225d", DisplayName = "Overlong encoding")]
+    [DataRow("5b22eda080225d", DisplayName = "UTF-8 encoded surrogate")]
+    [DataRow("5b22f4908080225d", DisplayName = "Beyond U+10FFFF")]
+    [DataRow("5b225c6eff225d", DisplayName = "Invalid byte in an escaped string")]
+    [DataRow("7b22ff223a317d", DisplayName = "Invalid byte in a property name")]
+    [DataRow("7b225c6eff223a317d", DisplayName = "Invalid byte in an escaped property name")]
+    public void InvalidUtf8Throws(string inputHex)
+    {
+        // RFC 8785 section 3.2.4: the canonical output is UTF-8, so a string that is not valid UTF-8 must fail.
+        AssertCanonicalizationThrows(inputHex);
+    }
+
+    [TestMethod]
+    public void ValidSurrogatePairIsWrittenAsUtf8()
+    {
+        AssertCanonicalEquals("[\"\\ud83d\\ude00\"]", "[\"\U0001F600\"]");
+    }
+
     #endregion
 
     #region TryCanonicalize API
@@ -512,6 +548,37 @@ public class JsonCanonicalizerTests
         bool success = JsonCanonicalizer.TryCanonicalize(doc.RootElement, buffer, out int bytesWritten);
 
         Assert.IsFalse(success);
+    }
+
+
+    private static void AssertCanonicalizationThrows(string inputHex)
+    {
+        byte[] input = FromHex(inputHex);
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(input);
+        JsonElement root = doc.RootElement;
+
+        Assert.ThrowsExactly<InvalidOperationException>(() =>
+        {
+            byte[] result = JsonCanonicalizer.Canonicalize(root);
+        });
+
+        byte[] destination = new byte[256];
+        Assert.ThrowsExactly<InvalidOperationException>(() =>
+        {
+            JsonCanonicalizer.TryCanonicalize(root, destination, out int bytesWritten);
+        });
+    }
+
+    private static byte[] FromHex(string hex)
+    {
+        byte[] result = new byte[hex.Length / 2];
+        for (int i = 0; i < result.Length; i++)
+        {
+            result[i] = Convert.ToByte(hex.Substring(i * 2, 2), 16);
+        }
+
+        return result;
     }
 
     #endregion
