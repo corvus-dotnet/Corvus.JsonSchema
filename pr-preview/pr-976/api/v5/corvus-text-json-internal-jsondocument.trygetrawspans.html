@@ -99,7 +99,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Internal<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/bc11ba406b8aec024d65c3ae2e2310223f89acac/src/Corvus.Text.Json/Corvus/Text/Json/Document/Internal/JsonDocument.cs#L126">JsonDocument.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/ccfb4978f048ccd31ffb7584e541813c9c769beb/src/Corvus.Text.Json/Corvus/Text/Json/Document/Internal/JsonDocument.cs#L126">JsonDocument.cs</a></p>
 <h2 id="trygetrawspans-readonlymemory-byte-readonlyspan-byte-readonlyspan-byte">TryGetRawSpans(ReadOnlyMemory&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;)</h2>
 <p>Tries to get direct access to the document's rows and UTF-8 text as spans, for documents whose rows are all local: the spans an evaluation reads, built without going through <a href="https://learn.microsoft.com/dotnet/api/system.readonlymemory-1"><code>ReadOnlyMemory</code></a>, and the text as memory for the values it hands on. Valid until the document is disposed or mutated.</p>
 <pre><code class="language-csharp">public virtual bool TryGetRawSpans(out ReadOnlyMemory&lt;byte&gt; utf8Memory, out ReadOnlySpan&lt;byte&gt; rows, out ReadOnlySpan&lt;byte&gt; utf8)

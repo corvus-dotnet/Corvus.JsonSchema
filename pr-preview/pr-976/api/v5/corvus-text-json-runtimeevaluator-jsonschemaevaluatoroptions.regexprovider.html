@@ -99,7 +99,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.RuntimeEvaluator<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/bc11ba406b8aec024d65c3ae2e2310223f89acac/src/Corvus.Text.Json/Corvus/Text/Json/RuntimeEvaluator/JsonSchemaEvaluatorOptions.cs#L93">JsonSchemaEvaluatorOptions.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/ccfb4978f048ccd31ffb7584e541813c9c769beb/src/Corvus.Text.Json/Corvus/Text/Json/RuntimeEvaluator/JsonSchemaEvaluatorOptions.cs#L93">JsonSchemaEvaluatorOptions.cs</a></p>
 <h2 id="regexprovider">RegexProvider()</h2>
 <p>Gets or sets the provider consulted before a regular expression is constructed. Only patterns that need a <a href="https://learn.microsoft.com/dotnet/api/system.text.regularexpressions.regex"><code>Regex</code></a> are offered (the evaluator matches trivial patterns such as prefixes and length ranges without one); a <code>null</code> result falls back to construction with <a href="/Corvus.JsonSchema/pr-preview/pr-976/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.compileregularexpressions.html"><code>CompileRegularExpressions</code></a> and <a href="/Corvus.JsonSchema/pr-preview/pr-976/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluatoroptions.regexmatchtimeout.html"><code>RegexMatchTimeout</code></a>.</p>
 <pre><code class="language-csharp">public JsonSchemaRegexProvider? RegexProvider { get; set; }
