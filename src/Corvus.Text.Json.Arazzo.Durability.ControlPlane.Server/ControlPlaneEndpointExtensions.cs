@@ -75,6 +75,10 @@ public static class ControlPlaneEndpointExtensions
     /// when omitted. The stored-run limit defaults to disabled, because nothing reclaims stored runs yet.</param>
     /// <param name="runnerEnrolmentSecret">The secret runner enrolment tokens are minted and validated with (ADR 0065
     /// decision 2). Leave it empty to accept none, which admits only runners an administrator has pre-authorized by id.</param>
+    /// <param name="auditor">The deployment's governance auditor (ADR 0069), the same instance the host gave its bootstrap, so
+    /// everything this process records is one audit chain. The secured postures require one that appends to an audit
+    /// sink and refuse to map without it. In <see cref="ControlPlaneSecurityMode.Open"/> it may be omitted, and the audit is
+    /// then the span, the log and the counter only.</param>
     /// <param name="checkpointSecret">The secret the serverless checkpoint surface validates run-scoped checkpoint
     /// tokens with (ADR 0062), shared with whichever component mints them. Leave it empty to serve no checkpoint
     /// surface at all: its caller is a baked function holding no principal, so the token is the only thing that can say
@@ -115,7 +119,8 @@ public static class ControlPlaneEndpointExtensions
         Capacity.ControlPlaneCapacityOptions? capacityOptions = null,
         ReadOnlyMemory<byte> checkpointSecret = default,
         WorkflowCheckpointCoordinator? checkpoints = null,
-        Schedules.IScheduleRegistry? scheduleRegistry = null)
+        Schedules.IScheduleRegistry? scheduleRegistry = null,
+        GovernanceAuditor? auditor = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
@@ -133,6 +138,13 @@ public static class ControlPlaneEndpointExtensions
         if ((securityMode is ControlPlaneSecurityMode.Open or ControlPlaneSecurityMode.ScopesOnly) && rowSecurity is not null)
         {
             ServerThrowHelper.ThrowRowSecurityPolicyForbidden(securityMode);
+        }
+
+        // ADR 0069: a secured deployment with nowhere to append its audit does not start, so that registering no sink is a
+        // startup failure and never a silent gap. Open is the development posture, and the one that may run unrecorded.
+        if (securityMode != ControlPlaneSecurityMode.Open && auditor is not { HasSink: true })
+        {
+            ServerThrowHelper.ThrowAuditSinkRequired(securityMode);
         }
 
         // A weak checkpoint secret is caught where it is configured rather than on the first callback that presents a
@@ -171,7 +183,7 @@ public static class ControlPlaneEndpointExtensions
         // The governance/read-access audit (§850/§860) logs under a dedicated "Corvus.Arazzo.Audit" category so a
         // deployment can route/retain it independently; the audit spans ride the always-registered Corvus.Arazzo
         // ActivitySource regardless. Shared by the journal-read audit (§860) and the governance-mutation audit (§850).
-        ILogger? auditLogger = endpoints.ServiceProvider.GetService<ILoggerFactory>()?.CreateLogger("Corvus.Arazzo.Audit");
+        auditor ??= new GovernanceAuditor(endpoints.ServiceProvider.GetService<ILoggerFactory>()?.CreateLogger("Corvus.Arazzo.Audit"));
 
         // The security-authoring API persists rules/bindings; if the deployment's policy is the persistent one,
         // refresh it after writes so authoring changes take effect for subsequent authorization decisions.
@@ -187,7 +199,7 @@ public static class ControlPlaneEndpointExtensions
         // The binding baseUrl scheme policy mirrors the deployment's source-fetch posture: where the fetcher permits
         // insecure http for source documents, an http baseUrl override is likewise allowed; otherwise https only. Read
         // from the provided fetcher so there is no separate credentials-specific configuration flag.
-        var credentialsHandler = new ArazzoControlPlaneCredentialsHandler(credentialStore, access, auditLogger: auditLogger, sources: srcStore, allowInsecureHttp: sourceFetcher?.AllowsInsecureHttp ?? false);
+        var credentialsHandler = new ArazzoControlPlaneCredentialsHandler(credentialStore, access, auditor: auditor, sources: srcStore, allowInsecureHttp: sourceFetcher?.AllowsInsecureHttp ?? false);
 
         // The environment administration service (§7.7) is shared by the environments/availability handlers below and
         // by the access-overview aggregation (administered environments), so it is constructed ahead of both.
@@ -205,7 +217,7 @@ public static class ControlPlaneEndpointExtensions
         // administered workflows and environments + usable credentials, so the security handler also reads the catalog
         // (administered workflows + their representative version, §849), the credential store, the environment
         // administration reverse index, and the environment + availability stores (administered-environment enrichment).
-        var securityHandler = new ArazzoControlPlaneSecurityHandler(policyStore, effectivePolicy as PersistentRowSecurityPolicy, access, catalog, credentialStore, environmentAdministration, auditLogger: auditLogger, environmentStore: envStore, availabilityStore: availStore);
+        var securityHandler = new ArazzoControlPlaneSecurityHandler(policyStore, effectivePolicy as PersistentRowSecurityPolicy, access, catalog, credentialStore, environmentAdministration, auditor: auditor, environmentStore: envStore, availabilityStore: availStore);
 
         // The identity layer (§16.5.4): the store-indexed observed-identity typeahead (an in-memory reference by default
         // so the endpoints function in development) plus an optional pluggable directory. The write paths below record
@@ -215,13 +227,13 @@ public static class ControlPlaneEndpointExtensions
         // The administration management API (§15) governs a base id's administrator set by current-administrator
         // membership; it delegates to the catalog client (which owns the administrator store, if one is configured) and
         // names administrators by deployment-mapped grants rather than raw internal tags.
-        var administratorsHandler = new ArazzoControlPlaneAdministratorsHandler(catalog, access, observedStore, auditLogger);
+        var administratorsHandler = new ArazzoControlPlaneAdministratorsHandler(catalog, access, observedStore, auditor);
 
         // The access-request API (§16.5): requests route to the target workflow's §15 administrators (or self-elevate
         // when eligible); an approval writes a single capped, time-boxed grant to the security-policy store (refreshed
         // in-process when the deployment's policy is the persistent one).
         IAccessRequestStore requestStore = accessRequestStore ?? new InMemoryAccessRequestStore();
-        var builtInApproval = new AccessRequestApprovalService(requestStore, policyStore, catalog, options: accessRequestApprovalOptions, rowSecurity: effectivePolicy as PersistentRowSecurityPolicy, selfElevationEligibility: selfElevationEligibility, auditLogger: auditLogger);
+        var builtInApproval = new AccessRequestApprovalService(requestStore, policyStore, catalog, options: accessRequestApprovalOptions, rowSecurity: effectivePolicy as PersistentRowSecurityPolicy, selfElevationEligibility: selfElevationEligibility, auditor: auditor);
 
         // Design §16.5.1: when the deployment opts into the workflow-backed strategy, submitting a request starts the
         // bootstrapped access-approval workflow and the approve/reject/withdraw touchpoints publish the decision onto the
@@ -229,13 +241,13 @@ public static class ControlPlaneEndpointExtensions
         // handler depends only on the IAccessRequestApprovalService seam.
         IAccessRequestApprovalService approvalService = workflowApproval is null
             ? builtInApproval
-            : new WorkflowBackedAccessRequestApprovalService(builtInApproval, requestStore, management, catalog, new PublishAccessDecisionProducer(workflowApproval.DecisionTransport), workflowApproval.ApprovalWorkflowId, workflowApproval.Environment, auditLogger);
+            : new WorkflowBackedAccessRequestApprovalService(builtInApproval, requestStore, management, catalog, new PublishAccessDecisionProducer(workflowApproval.DecisionTransport), workflowApproval.ApprovalWorkflowId, workflowApproval.Environment, auditor.Logger);
 
         // Hand the composed strategy back to the host (e.g. so a demo can seed a pending request through the SAME
         // submission path a real caller uses — starting the approval run — rather than writing a request straight to the
         // store with no run to enact it, §16.5.1). The handler still depends only on the IAccessRequestApprovalService seam.
         onApprovalServiceBuilt?.Invoke(approvalService);
-        var accessRequestsHandler = new ArazzoControlPlaneAccessRequestsHandler(approvalService, requestStore, catalog, access, accessRequestSubjectClaimType, auditLogger);
+        var accessRequestsHandler = new ArazzoControlPlaneAccessRequestsHandler(approvalService, requestStore, catalog, access, accessRequestSubjectClaimType, auditor);
 
         var identityHandler = new ArazzoControlPlaneIdentityHandler(observedStore, principalDirectory, access);
 
@@ -247,7 +259,7 @@ public static class ControlPlaneEndpointExtensions
         // lifecycle, and the environments handler consults it (with the runner registry) to fence an isolation-floor raise
         // (ADR 0058) — refusing to raise an environment's requiredIsolation while an under-isolated runner stays authorized.
         IEnvironmentRunnerAuthorizationStore runnerAuthStore = environmentRunnerAuthorizationStore ?? new InMemoryEnvironmentRunnerAuthorizationStore();
-        var environmentsHandler = new ArazzoControlPlaneEnvironmentsHandler(securityMode, envStore, environmentAdministration, access, observedStore, auditLogger: auditLogger, runners: runners, runnerAuthorizations: runnerAuthStore, executionBudgetCeiling: management.ExecutionBudgetCeiling);
+        var environmentsHandler = new ArazzoControlPlaneEnvironmentsHandler(securityMode, envStore, environmentAdministration, access, observedStore, auditor: auditor, runners: runners, runnerAuthorizations: runnerAuthStore, executionBudgetCeiling: management.ExecutionBudgetCeiling);
 
         // The kit surfaces that key token custody by principal read the authenticated principal through the
         // accessor in the modes whose access binding carries none (ScopesOnly).
@@ -258,7 +270,7 @@ public static class ControlPlaneEndpointExtensions
         // membership is the management gate. The store itself is resolved above (the credentials handler reads it).
         // The fetch's provider auth mode (ADR 0052) reads the caller's connected-provider token from the broker.
         var sourcesHandler = new ArazzoControlPlaneSourcesHandler(
-            srcStore, access, sourceFetcher, auditLogger: auditLogger,
+            srcStore, access, sourceFetcher, auditor: auditor,
             providers: providerBroker, httpContext: httpContextAccessor, subjectClaimType: accessRequestSubjectClaimType);
         IWorkspaceWorkflowStore wcStore = workspaceWorkflowStore ?? new InMemoryWorkspaceWorkflowStore();
 
@@ -278,7 +290,7 @@ public static class ControlPlaneEndpointExtensions
             : null;
         var workspaceHandler = new ArazzoControlPlaneWorkspaceHandler(
             wcStore, access, catalog, srcStore, simulator: workflowSimulator, environments: envStore, credentials: credentialStore,
-            workflowStateStore: workflowStateStore, draftRunStore: draftRunStore, debugRunManagement: debugRunManagement, draftRunner: draftRunner, draftRunTraceStore: draftRunTraceStore, auditLogger: auditLogger);
+            workflowStateStore: workflowStateStore, draftRunStore: draftRunStore, debugRunManagement: debugRunManagement, draftRunner: draftRunner, draftRunTraceStore: draftRunTraceStore, auditor: auditor);
 
         // The native-build job store (ADR 0055), hoisted so it feeds both the availability handler's deploy-on-publish
         // (first-promoting a version into an Isolated environment queues its serverless build) and the native-builds API
@@ -294,19 +306,19 @@ public static class ControlPlaneEndpointExtensions
         // The availability ("promotion") API (§7.8): the additive (workflow version × environment) matrix. Making a
         // version available is governed by the TARGET environment's administrators and readiness-gated (every source the
         // version references must resolve a credential in that environment, §7.7). The store is hoisted above.
-        var availabilityHandler = new ArazzoControlPlaneAvailabilityHandler(availStore, envStore, environmentAdministration, catalog, credentialStore, access, auditLogger: auditLogger, builds: buildStore);
+        var availabilityHandler = new ArazzoControlPlaneAvailabilityHandler(availStore, envStore, environmentAdministration, catalog, credentialStore, access, auditor: auditor, builds: buildStore);
 
         // The availability-request ("promotion request") API (§7.8): a principal who cannot make a version available
         // directly raises a request; the TARGET environment's administrators approve (readiness-gated, mirroring the direct
         // make) or deny, and the requester may withdraw their own. The approver inbox spans the environments the caller
         // administers (the reverse administration index). Defaults to an in-memory store.
         IAvailabilityRequestStore availRequestStore = availabilityRequestStore ?? new InMemoryAvailabilityRequestStore();
-        var availabilityRequestsHandler = new ArazzoControlPlaneAvailabilityRequestsHandler(availRequestStore, availStore, envStore, environmentAdministration, catalog, credentialStore, access, accessRequestSubjectClaimType, auditLogger);
+        var availabilityRequestsHandler = new ArazzoControlPlaneAvailabilityRequestsHandler(availRequestStore, availStore, envStore, environmentAdministration, catalog, credentialStore, access, accessRequestSubjectClaimType, auditor);
 
         // The native-builds API (ADR 0055): enqueue and poll the asynchronous Native-AOT builds of a version's serverless
         // binary per (environment, runtime target). Each operation is reach-gated to the workflow version, and a background
         // build worker drives each job Queued -> Building -> Ready | Failed. Uses the store hoisted above.
-        var nativeBuildsHandler = new ArazzoControlPlaneNativeBuildsHandler(buildStore, catalog, access, auditLogger: auditLogger);
+        var nativeBuildsHandler = new ArazzoControlPlaneNativeBuildsHandler(buildStore, catalog, access, auditor: auditor);
 
         // The deployments API (ADR 0055): read-only observation of a version's serverless deployments per (environment,
         // runtime target) — their lifecycle state and resulting function invoke URL. The deploy itself runs on the runner
@@ -327,8 +339,8 @@ public static class ControlPlaneEndpointExtensions
         // The revocation fence (§5.5): if the workflow state store can administer leases, revoke expires a compromised runner's
         // leases so an authorized peer reclaims its in-flight runs at once. A store without the capability still stops all
         // future dispatch on revoke; only the immediate in-flight fence is unavailable.
-        var runnerAuthorizationsHandler = new ArazzoControlPlaneRunnerAuthorizationsHandler(runnerAuthStore, envStore, runners, environmentAdministration, access, workflowStateStore as IWorkflowLeaseAdministration, accessRequestSubjectClaimType, runnerEnrolmentSecret, capacityGuard, auditLogger);
-        var environmentKeysHandler = new ArazzoControlPlaneEnvironmentKeysHandler(envStore, environmentAdministration, access, auditLogger: auditLogger);
+        var runnerAuthorizationsHandler = new ArazzoControlPlaneRunnerAuthorizationsHandler(runnerAuthStore, envStore, runners, environmentAdministration, access, workflowStateStore as IWorkflowLeaseAdministration, accessRequestSubjectClaimType, runnerEnrolmentSecret, capacityGuard, auditor);
+        var environmentKeysHandler = new ArazzoControlPlaneEnvironmentKeysHandler(envStore, environmentAdministration, access, auditor: auditor);
 
         // The brokered GitHub API (workflow-designer design §4.7): user-to-server sign-in, session
         // status, and proxied contents reads. Deployment-configured; fails closed when no broker is
@@ -345,13 +357,13 @@ public static class ControlPlaneEndpointExtensions
         // One instance, because it is also the admission every other start goes through (IRunStartAdmission): the catalog's
         // start, a run's re-run and a schedule's run-now must be one chain, and handing those handlers this one is what
         // makes them so.
-        var catalogHandler = new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access, environmentStore, availabilityStore, workflowSimulator, auditLogger, deploymentStore, capacityGuard);
+        var catalogHandler = new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access, environmentStore, availabilityStore, workflowSimulator, auditor, deploymentStore, capacityGuard);
 
-        var schedulesHandler = new ArazzoControlPlaneSchedulesHandler(management, catalog, runners, access, availabilityStore, environmentStore, scheduleRegistry, auditLogger: auditLogger, startAdmission: catalogHandler);
+        var schedulesHandler = new ArazzoControlPlaneSchedulesHandler(management, catalog, runners, access, availabilityStore, environmentStore, scheduleRegistry, auditor: auditor, startAdmission: catalogHandler);
 
         endpoints.MapApiEndpoints(
             securityHandler,
-            new ArazzoControlPlaneHandler(management, access, catalog, auditLogger, catalogHandler),
+            new ArazzoControlPlaneHandler(management, access, catalog, auditor, catalogHandler),
             new ArazzoControlPlaneRunnersHandler(runners, access),
             catalogHandler,
             availabilityHandler,
@@ -371,7 +383,7 @@ public static class ControlPlaneEndpointExtensions
             accessRequestsHandler,
             availabilityRequestsHandler,
             identityHandler,
-            gateScopes ? ControlPlaneAuthorization.RequireDeclaredScopes : null);
+            gateScopes ? AuditRecordFailure.ConfigureWithDeclaredScopes : AuditRecordFailure.Configure);
 
         // The serverless checkpoint surface (ADR 0055): a baked, Native-AOT function advances a run out of process and
         // loads/saves its checkpoint here rather than binding a store SDK. It is not part of the generated OpenAPI

@@ -35,7 +35,7 @@ public sealed class ArazzoControlPlaneNativeBuildsHandler : IApiNativeBuildsHand
     private readonly INativeBuildJobStore builds;
     private readonly ISecuredWorkflowCatalog catalog;
     private readonly ControlPlaneAccess access;
-    private readonly ILogger? auditLogger;
+    private readonly GovernanceAuditor auditor;
 
     /// <summary>Initializes a new, unscoped instance (every request runs with <see cref="AccessContext.System"/>).</summary>
     /// <param name="builds">The native build-job store.</param>
@@ -49,8 +49,8 @@ public sealed class ArazzoControlPlaneNativeBuildsHandler : IApiNativeBuildsHand
     /// <param name="builds">The native build-job store.</param>
     /// <param name="catalog">The workflow catalog (version existence + reach, gating every operation).</param>
     /// <param name="access">Resolves the caller's <see cref="AccessContext"/> and deployment identity per request.</param>
-    /// <param name="auditLogger">The governance audit sink, or <see langword="null"/> to not audit.</param>
-    internal ArazzoControlPlaneNativeBuildsHandler(INativeBuildJobStore builds, ISecuredWorkflowCatalog catalog, ControlPlaneAccess access, ILogger? auditLogger = null)
+    /// <param name="auditor">The governance audit sink, or <see langword="null"/> to not audit.</param>
+    internal ArazzoControlPlaneNativeBuildsHandler(INativeBuildJobStore builds, ISecuredWorkflowCatalog catalog, ControlPlaneAccess access, GovernanceAuditor? auditor = null)
     {
         ArgumentNullException.ThrowIfNull(builds);
         ArgumentNullException.ThrowIfNull(catalog);
@@ -58,7 +58,7 @@ public sealed class ArazzoControlPlaneNativeBuildsHandler : IApiNativeBuildsHand
         this.builds = builds;
         this.catalog = catalog;
         this.access = access;
-        this.auditLogger = auditLogger;
+        this.auditor = auditor ?? GovernanceAuditor.None;
     }
 
     /// <inheritdoc/>
@@ -115,7 +115,7 @@ public sealed class ArazzoControlPlaneNativeBuildsHandler : IApiNativeBuildsHand
         using ParsedJsonDocument<NativeBuildJob> draft = NativeBuildJob.Draft(baseWorkflowId, versionNumber, environment, runtimeIdentifier, buildLabel);
         ParsedJsonDocument<NativeBuildJob> queued = await this.builds.EnqueueAsync(draft.RootElement, enqueuedBy, cancellationToken).ConfigureAwait(false);
         workspace.TakeOwnership(queued);
-        GovernanceAudit.Mutation(this.auditLogger, "nativebuild.enqueue", enqueuedBy, TargetKind, queued.RootElement.IdValue, "queued");
+        await this.auditor.MutationAsync("nativebuild.enqueue", enqueuedBy, TargetKind, queued.RootElement.IdValue, "queued").ConfigureAwait(false);
         Models.NativeBuildView.Source body = Models.NativeBuildView.From(queued.RootElement);
         return EnqueueNativeBuildResult.Accepted(body, workspace);
     }

@@ -42,7 +42,7 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
     private readonly ControlPlaneAccess access;
     private readonly SourceDocumentFetcher? fetcher;
     private readonly string actor;
-    private readonly ILogger? auditLogger;
+    private readonly GovernanceAuditor auditor;
     private readonly ProviderBroker? providers;
     private readonly Microsoft.AspNetCore.Http.IHttpContextAccessor? httpContext;
     private readonly string subjectClaimType;
@@ -66,7 +66,7 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
     /// <param name="fetcher">The server-side document fetcher for <c>fetchSourceDocument</c> (§4.4);
     /// fetching fails closed (400) when <see langword="null"/>.</param>
     /// <param name="actor">The audit actor recorded on writes (a deployment may resolve this from the principal).</param>
-    /// <param name="auditLogger">The §850 governance audit sink.</param>
+    /// <param name="auditor">The §850 governance audit sink.</param>
     /// <param name="providers">The connected-provider broker (ADR 0052) the fetch's <c>provider</c>
     /// auth mode reads its user token from; <see langword="null"/> refuses that mode.</param>
     /// <param name="httpContext">Reads the authenticated principal in the modes whose access binding carries none (ScopesOnly).</param>
@@ -76,7 +76,7 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
         ControlPlaneAccess access,
         SourceDocumentFetcher? fetcher = null,
         string actor = "control-plane",
-        ILogger? auditLogger = null,
+        GovernanceAuditor? auditor = null,
         ProviderBroker? providers = null,
         Microsoft.AspNetCore.Http.IHttpContextAccessor? httpContext = null,
         string subjectClaimType = "sub")
@@ -89,7 +89,7 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
         this.access = access;
         this.fetcher = fetcher;
         this.actor = actor;
-        this.auditLogger = auditLogger;
+        this.auditor = auditor ?? GovernanceAuditor.None;
         this.providers = providers;
         this.httpContext = httpContext;
         this.subjectClaimType = subjectClaimType;
@@ -190,7 +190,7 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
                 managementTags);
             ParsedJsonDocument<RegisteredSource> created = await this.store.AddAsync(draft.RootElement, this.actor, cancellationToken).ConfigureAwait(false);
 
-            GovernanceAudit.Mutation(this.auditLogger, "source.create", this.AuditActor(), TargetKind, (string)body.Name, "created");
+            await this.auditor.MutationAsync("source.create", this.AuditActor(), TargetKind, (string)body.Name, "created").ConfigureAwait(false);
 
             // The full source (document included) is congruent with the API model — a free whole-document re-wrap. Hand the
             // pooled document to the workspace (it disposes it after the response is written); the draft is input only.
@@ -269,7 +269,7 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
             return UpdateSourceResult.NotFound(NotFoundProblem(name), workspace);
         }
 
-        GovernanceAudit.Mutation(this.auditLogger, "source.update", this.AuditActor(), TargetKind, name, "updated");
+        await this.auditor.MutationAsync("source.update", this.AuditActor(), TargetKind, name, "updated").ConfigureAwait(false);
         workspace.TakeOwnership(s);
         return UpdateSourceResult.Ok(Models.SourceEntity.From(s.RootElement), workspace);
     }
@@ -281,7 +281,7 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
         bool deleted = await this.store.DeleteAsync(name, WorkflowEtag.None, this.access.Current(), cancellationToken).ConfigureAwait(false);
         if (deleted)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "source.delete", this.AuditActor(), TargetKind, name, "deleted");
+            await this.auditor.MutationAsync("source.delete", this.AuditActor(), TargetKind, name, "deleted").ConfigureAwait(false);
         }
 
         return deleted

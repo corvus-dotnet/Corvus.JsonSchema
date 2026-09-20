@@ -36,9 +36,10 @@ public static class SecurityBootstrap
     /// <param name="actor">The audit actor recorded as the rules' creator (e.g. <c>"bootstrap"</c>).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The names of the rules that were created (empty if all already existed).</returns>
-    public static async ValueTask<IReadOnlyList<string>> SeedAsync(ISecurityPolicyStore store, string actor = "bootstrap", ILogger? auditLogger = null, CancellationToken cancellationToken = default)
+    public static async ValueTask<IReadOnlyList<string>> SeedAsync(ISecurityPolicyStore store, string actor = "bootstrap", GovernanceAuditor? auditor = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(store);
+        auditor ??= GovernanceAuditor.None;
         var seeded = new List<string>();
         foreach ((string name, string expression, string description) in Rules)
         {
@@ -56,7 +57,7 @@ public static class SecurityBootstrap
                 using ParsedJsonDocument<SecurityRuleDocument> draft = SecurityRuleDocument.Draft(expression, description);
                 (await store.AddRuleAsync(name, draft.RootElement, actor, cancellationToken).ConfigureAwait(false)).Dispose();
                 seeded.Add(name);
-                GovernanceAudit.Mutation(auditLogger, "security-rule.create", actor, "security-rule", name, "created");
+                await auditor.MutationAsync("security-rule.create", actor, "security-rule", name, "created").ConfigureAwait(false);
             }
             catch (InvalidOperationException)
             {

@@ -43,7 +43,7 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
     private readonly Schedules.IScheduleRegistry? scheduleRegistry;
     private readonly ControlPlaneAccess access;
     private readonly TimeProvider timeProvider;
-    private readonly ILogger? auditLogger;
+    private readonly GovernanceAuditor auditor;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneSchedulesHandler"/> class.</summary>
     /// <param name="management">The management client that creates, reads, and cancels the scheduler runs.</param>
@@ -56,7 +56,7 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
     /// scheduleId resolver for get/delete/run-now (the routes carry no environment); <see langword="null"/> means the
     /// schedules surface is not configured and refuses.</param>
     /// <param name="timeProvider">The clock used to compute each schedule's next occurrence; defaults to <see cref="TimeProvider.System"/>.</param>
-    /// <param name="auditLogger">The governance-audit sink for schedule mutations.</param>
+    /// <param name="auditor">The governance-audit sink for schedule mutations.</param>
     /// <param name="startAdmission">The admission every run start goes through, which a run-now is. When
     /// <see langword="null"/> a run-now is refused.</param>
     internal ArazzoControlPlaneSchedulesHandler(
@@ -68,7 +68,7 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
         IEnvironmentStore? environmentStore = null,
         Schedules.IScheduleRegistry? scheduleRegistry = null,
         TimeProvider? timeProvider = null,
-        ILogger? auditLogger = null,
+        GovernanceAuditor? auditor = null,
         IRunStartAdmission? startAdmission = null)
     {
         this.startAdmission = startAdmission;
@@ -84,7 +84,7 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
         this.environmentStore = environmentStore;
         this.scheduleRegistry = scheduleRegistry;
         this.timeProvider = timeProvider ?? TimeProvider.System;
-        this.auditLogger = auditLogger;
+        this.auditor = auditor ?? GovernanceAuditor.None;
     }
 
     private readonly IRunStartAdmission? startAdmission;
@@ -209,7 +209,7 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
 
             if (!OwnerGroupTag.Agrees(catalogVersion.SecurityTagsValue, environmentDoc.RootElement, this.access.OwnerGroupTagKeyUtf8))
             {
-                GovernanceAudit.Mutation(this.auditLogger, "schedule.create", this.AuditActor(), TargetKind, scheduleId, TenancyAgreement.RefusedOutcome);
+                await this.auditor.MutationAsync("schedule.create", this.AuditActor(), TargetKind, scheduleId, TenancyAgreement.RefusedOutcome).ConfigureAwait(false);
                 return CreateScheduleResult.Conflict(
                     Problem(
                         TenancyAgreement.ProblemType,
@@ -285,7 +285,7 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
                 Problem("schedule-collision", "Schedule id already in use", 409, $"Schedule id '{scheduleId}' already addresses a run that is not this schedule; schedule ids are globally unique across the deployment."), workspace);
         }
 
-        GovernanceAudit.Mutation(this.auditLogger, "schedule.create", this.AuditActor(), TargetKind, scheduleId, "created");
+        await this.auditor.MutationAsync("schedule.create", this.AuditActor(), TargetKind, scheduleId, "created").ConfigureAwait(false);
         WorkflowCheckpointState? created = await this.management.LoadStateAsync(runId, ctx, cancellationToken).ConfigureAwait(false);
         if (created is null)
         {
@@ -372,7 +372,7 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
             return DeleteScheduleResult.NotFound(NotFoundProblem(scheduleId), workspace);
         }
 
-        GovernanceAudit.Mutation(this.auditLogger, "schedule.delete", this.AuditActor(), TargetKind, scheduleId, "cancelled");
+        await this.auditor.MutationAsync("schedule.delete", this.AuditActor(), TargetKind, scheduleId, "cancelled").ConfigureAwait(false);
         return DeleteScheduleResult.NoContent();
     }
 
@@ -433,7 +433,7 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
         }
 
         // The admission audits the run it started (run.start). This records the act on the schedule.
-        GovernanceAudit.Mutation(this.auditLogger, "schedule.run-now", this.AuditActor(), TargetKind, scheduleId, "started");
+        await this.auditor.MutationAsync("schedule.run-now", this.AuditActor(), TargetKind, scheduleId, "started").ConfigureAwait(false);
         return RunScheduleNowResult.Accepted(RunStartOutcome.AcceptedBody(outcome), workspace);
     }
 

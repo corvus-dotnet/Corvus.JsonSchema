@@ -133,6 +133,19 @@ separate history resource: governed actions emit a payload-safe audit span and l
 counter ([ADR 0038](../adr/0038-payload-safe-governance-audit.md)), and each checkpoint emits a
 `workflow.checkpoint` span and a duration measurement.
 
+### The audit record, and the one 500 that means the action was applied
+
+In a secured deployment every governed action is also appended to the deployment's audit chain
+([ADR 0069](../adr/0069-audit-as-evidence-append-only-chained-signed-sink.md)), after the action commits. When
+the audit sink refuses the record, the request fails with a `500` problem whose `type` is
+`https://corvus-oss.org/arazzo/control-plane/problems/audit-record-failed`. The action **was applied**. It is
+not in the audit chain, and the deployment's operator is alerted through the
+`corvus.arazzo.governance.audit.append_failures` counter. Do not retry the request on this problem: read the
+resource to see its state. It is a `500` and not a `503` for that reason, since a `503` is retried by gateways
+and clients on their own and the retry would apply a mutation that is not idempotent a second time. Reads and
+run execution never return it. The problem is not declared per operation in the OpenAPI document, which
+declares no `5xx` responses.
+
 ## OpenAPI 3.2 features used
 
 - `openapi: 3.2.0` with a top-level `$self` document identity.

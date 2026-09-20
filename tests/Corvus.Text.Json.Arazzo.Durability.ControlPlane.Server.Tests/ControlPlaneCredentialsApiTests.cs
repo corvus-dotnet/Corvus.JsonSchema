@@ -617,7 +617,7 @@ public sealed class ControlPlaneCredentialsApiTests
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), (rowSecurity is null ? ControlPlaneSecurityMode.ScopesOnly : ControlPlaneSecurityMode.Scoped), rowSecurity: rowSecurity, sourceCredentialStore: new InMemorySourceCredentialStore(), sourceStore: sourceStore);
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), (rowSecurity is null ? ControlPlaneSecurityMode.ScopesOnly : ControlPlaneSecurityMode.Scoped), rowSecurity: rowSecurity, sourceCredentialStore: new InMemorySourceCredentialStore(), sourceStore: sourceStore, auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient());

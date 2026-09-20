@@ -42,7 +42,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     private readonly string actor;
     private readonly TimeProvider timeProvider;
     private readonly TimeSpan expiringWindow;
-    private readonly ILogger? auditLogger;
+    private readonly GovernanceAuditor auditor;
     private readonly Sources.ISourceStore? sources;
     private readonly bool allowInsecureHttp;
 
@@ -67,11 +67,11 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     /// (defaults to <see cref="TimeProvider.System"/>).</param>
     /// <param name="expiringWindow">How far ahead of expiry a still-valid credential is reported as
     /// <see cref="CredentialStatus.ExpiringSoon"/> (defaults to 7 days).</param>
-    /// <param name="auditLogger">The logger for the §850 credential-custody audit (who created/rotated/deleted which binding); the audit span rides the always-registered <see cref="ArazzoTelemetry.ActivitySource"/> regardless.</param>
+    /// <param name="auditor">The logger for the §850 credential-custody audit (who created/rotated/deleted which binding); the audit span rides the always-registered <see cref="ArazzoTelemetry.ActivitySource"/> regardless.</param>
     /// <param name="sources">The sources registry, used to classify a binding's source (an AsyncAPI source takes the
     /// channel-credential rules, ADR 0051); when <see langword="null"/> the source-type rules are not enforced.</param>
     /// <param name="allowInsecureHttp">Permit an <c>http</c> <c>baseUrl</c> override on a written binding (default: <c>https</c> only, mirroring the source-fetch scheme policy).</param>
-    internal ArazzoControlPlaneCredentialsHandler(ISourceCredentialStore store, ControlPlaneAccess access, string actor = "control-plane", TimeProvider? timeProvider = null, TimeSpan? expiringWindow = null, ILogger? auditLogger = null, Sources.ISourceStore? sources = null, bool allowInsecureHttp = false)
+    internal ArazzoControlPlaneCredentialsHandler(ISourceCredentialStore store, ControlPlaneAccess access, string actor = "control-plane", TimeProvider? timeProvider = null, TimeSpan? expiringWindow = null, GovernanceAuditor? auditor = null, Sources.ISourceStore? sources = null, bool allowInsecureHttp = false)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(access);
@@ -81,7 +81,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         this.actor = actor;
         this.timeProvider = timeProvider ?? TimeProvider.System;
         this.expiringWindow = expiringWindow ?? DefaultExpiringWindow;
-        this.auditLogger = auditLogger;
+        this.auditor = auditor ?? GovernanceAuditor.None;
         this.sources = sources;
         this.allowInsecureHttp = allowInsecureHttp;
     }
@@ -267,7 +267,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
                 : SecurityTagSet.Empty;
             if (!this.access.Current().Admits(AccessVerb.Write, managementTags))
             {
-                GovernanceAudit.Mutation(this.auditLogger, "credential.create", this.AuditActor(), TargetKind, CredentialKey((string)body.SourceName, (string)body.Environment), "refused-out-of-reach");
+                await this.auditor.MutationAsync("credential.create", this.AuditActor(), TargetKind, CredentialKey((string)body.SourceName, (string)body.Environment), "refused-out-of-reach").ConfigureAwait(false);
                 return CreateCredentialResult.BadRequest(
                     Problem("management-out-of-reach", "Management scope out of reach", 400, "The binding's management tags are outside your own management reach."), workspace);
             }
@@ -279,7 +279,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
 
             // §850 credential-custody audit: creating a binding also authors its usage scope (which identities it may act
             // as), immutable thereafter — so the created event is where usage-grant authoring is audited.
-            GovernanceAudit.Mutation(this.auditLogger, "credential.create", this.AuditActor(), TargetKind, CredentialKey((string)body.SourceName, (string)body.Environment), hasUsageGrantee ? "created-scoped" : "created");
+            await this.auditor.MutationAsync("credential.create", this.AuditActor(), TargetKind, CredentialKey((string)body.SourceName, (string)body.Environment), hasUsageGrantee ? "created-scoped" : "created").ConfigureAwait(false);
             workspace.TakeOwnership(created);
             return CreateCredentialResult.Created(ToSummary(created.RootElement), workspace);
         }
@@ -364,7 +364,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
             // A principal may not re-tag a binding to a management scope outside its own reach.
             if (!managementTags.IsEmpty && !this.access.Current().Admits(AccessVerb.Write, managementTags))
             {
-                GovernanceAudit.Mutation(this.auditLogger, "credential.update", this.AuditActor(), TargetKind, CredentialKey(sourceName, environment), "refused-out-of-reach");
+                await this.auditor.MutationAsync("credential.update", this.AuditActor(), TargetKind, CredentialKey(sourceName, environment), "refused-out-of-reach").ConfigureAwait(false);
                 return UpdateCredentialResult.BadRequest(
                     Problem("management-out-of-reach", "Management scope out of reach", 400, "The binding's management tags are outside your own management reach."), workspace);
             }
@@ -400,7 +400,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
             // §850 credential-custody audit: a rotation (the secret reference changed) is distinguished from a
             // metadata/tag-only update, and rotations feed the rotation-rate counter (a rate that falls to zero is a signal).
             bool rotated = body.SecretRefs.IsNotUndefined();
-            GovernanceAudit.Mutation(this.auditLogger, "credential.update", this.AuditActor(), TargetKind, CredentialKey(sourceName, environment), rotated ? "rotated" : "updated");
+            await this.auditor.MutationAsync("credential.update", this.AuditActor(), TargetKind, CredentialKey(sourceName, environment), rotated ? "rotated" : "updated").ConfigureAwait(false);
             if (rotated)
             {
                 ArazzoTelemetry.CredentialsRotated.Add(1);
@@ -425,7 +425,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         bool deleted = await this.store.DeleteAsync(sourceName, environment, WorkflowEtag.None, this.access.Current(), cancellationToken).ConfigureAwait(false);
         if (deleted)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "credential.delete", this.AuditActor(), TargetKind, CredentialKey(sourceName, environment), "deleted");
+            await this.auditor.MutationAsync("credential.delete", this.AuditActor(), TargetKind, CredentialKey(sourceName, environment), "deleted").ConfigureAwait(false);
         }
 
         return deleted

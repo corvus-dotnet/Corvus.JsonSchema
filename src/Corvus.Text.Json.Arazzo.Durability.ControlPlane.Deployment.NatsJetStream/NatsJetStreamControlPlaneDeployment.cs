@@ -4,6 +4,7 @@
 
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap;
 using Corvus.Text.Json.Arazzo.Durability.NatsJetStream;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.NatsJetStream;
 
@@ -35,8 +36,10 @@ public static class NatsJetStreamControlPlaneDeployment
     /// <param name="options">The deployment-agnostic bootstrap configuration (genesis admin, capability scopes, label
     /// orderings, identity claim, …).</param>
     /// <param name="cancellationToken">Cancels the provisioning.</param>
+    /// <param name="auditor">The deployment's governance auditor (ADR 0069), so the seeded grants are recorded in the same audit
+    /// chain as everything else the host records. Omit it and they leave the span and the counter only.</param>
     /// <returns>A task that completes when the schema exists and the security policy is seeded.</returns>
-    public static async ValueTask ProvisionAsync(string url, DeploymentBootstrapOptions options, CancellationToken cancellationToken = default)
+    public static async ValueTask ProvisionAsync(string url, DeploymentBootstrapOptions options, CancellationToken cancellationToken = default, GovernanceAuditor? auditor = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(url);
 
@@ -45,7 +48,7 @@ public static class NatsJetStreamControlPlaneDeployment
         // The security store's schema is created above, so the policy can now be seeded. Connect a transient handle
         // purely to seed it; the host connects its own handle for request-time reads (the two are independent).
         await using NatsJetStreamSecurityPolicyStore securityStore = await NatsJetStreamSecurityPolicyStore.ConnectAsync(url, cancellationToken: cancellationToken).ConfigureAwait(false);
-        await new DefaultDeploymentBootstrap().BootstrapSecurityAsync(securityStore, options, cancellationToken).ConfigureAwait(false);
+        await new DefaultDeploymentBootstrap(auditor).BootstrapSecurityAsync(securityStore, options, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>

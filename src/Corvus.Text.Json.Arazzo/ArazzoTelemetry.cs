@@ -200,4 +200,11 @@ public static class ArazzoTelemetry
     /// </summary>
     public static Counter<long> GovernanceDecisions { get; } =
         Meter.CreateCounter<long>("corvus.arazzo.governance.decisions", "{decision}", "Governance decisions recorded via the control plane");
+
+    /// <summary>
+    /// Gets the counter for audit records the audit sink refused (ADR 0069), dimensioned by <see cref="ActionTag">action</see>.
+    /// Each one is a governance action that was applied and left no record in the chain, so any non-zero rate is an alert.
+    /// </summary>
+    public static Counter<long> AuditAppendFailures { get; } =
+        Meter.CreateCounter<long>("corvus.arazzo.governance.audit.append_failures", "{record}", "Audit records the audit sink refused");
 }

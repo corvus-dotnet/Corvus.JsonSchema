@@ -10,6 +10,7 @@ using System.Text;
 using System.Text.Encodings.Web;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using Corvus.Text.Json.Arazzo.Durability;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
@@ -220,7 +221,7 @@ public sealed class ControlPlaneTenancyInvariantTests
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), mode, rowSecurity: rowSecurity, environmentStore: environments);
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), mode, rowSecurity: rowSecurity, environmentStore: environments, auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
         await app.StartAsync();
 
         return new Host(app, app.GetTestClient());

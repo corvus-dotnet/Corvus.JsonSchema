@@ -163,6 +163,13 @@ internal static class ServerThrowHelper
     public static void ThrowRowSecurityPolicyRequired(ControlPlaneSecurityMode securityMode)
         => throw new ArgumentException(SR.Format(SR.RowSecurityPolicyRequired, securityMode), "rowSecurity");
 
+    /// <summary>Throws when a secured security mode is given no auditor that appends to an audit sink (ADR 0069).</summary>
+    /// <param name="securityMode">The configured security mode.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowAuditSinkRequired(ControlPlaneSecurityMode securityMode)
+        => throw new ArgumentException(SR.Format(SR.AuditSinkRequired, securityMode), "auditor");
+
     /// <summary>Throws when a System-reach security mode is given a row-security policy it would ignore.</summary>
     /// <param name="securityMode">The configured security mode.</param>
     [DoesNotReturn]

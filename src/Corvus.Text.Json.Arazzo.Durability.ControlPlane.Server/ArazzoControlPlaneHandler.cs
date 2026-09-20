@@ -26,7 +26,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
     private readonly ISecuredWorkflowManagement management;
     private readonly ControlPlaneAccess access;
     private readonly ISecuredWorkflowCatalog? catalog;
-    private readonly ILogger? auditLogger;
+    private readonly GovernanceAuditor auditor;
     private readonly IRunStartAdmission? startAdmission;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneHandler"/> class (unscoped: full access).</summary>
@@ -43,12 +43,12 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
     /// step-journal disclosure tier; when <see langword="null"/>, version-level journal redaction is not applied (the
     /// <c>runs:outputs:read</c> baseline gate and field-level redaction still apply). The full-access ctor never needs it:
     /// an unscoped caller always holds the stronger grant, so the classification is never consulted.</param>
-    /// <param name="auditLogger">The logger for the §860 step-journal read-access audit (who read which run's journal, at
+    /// <param name="auditor">The logger for the §860 step-journal read-access audit (who read which run's journal, at
     /// which disclosure tier); when <see langword="null"/>, only the audit span is emitted (no structured log). The read
     /// audit is emitted regardless of this — the span rides the always-registered <see cref="ArazzoTelemetry.ActivitySource"/>.</param>
     /// <param name="startAdmission">The admission every run start goes through, which a re-run is. When
     /// <see langword="null"/> (a host that maps no catalog) a re-run is refused.</param>
-    internal ArazzoControlPlaneHandler(ISecuredWorkflowManagement management, ControlPlaneAccess access, ISecuredWorkflowCatalog? catalog = null, ILogger? auditLogger = null, IRunStartAdmission? startAdmission = null)
+    internal ArazzoControlPlaneHandler(ISecuredWorkflowManagement management, ControlPlaneAccess access, ISecuredWorkflowCatalog? catalog = null, GovernanceAuditor? auditor = null, IRunStartAdmission? startAdmission = null)
     {
         this.startAdmission = startAdmission;
         ArgumentNullException.ThrowIfNull(management);
@@ -56,7 +56,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         this.management = management;
         this.access = access;
         this.catalog = catalog;
-        this.auditLogger = auditLogger;
+        this.auditor = auditor ?? GovernanceAuditor.None;
     }
 
     // The audited resource kind for a run mutation (design §850, worklist item 7).
@@ -155,14 +155,14 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         if (detail is not { } d)
         {
             // A refused read (out of reach or absent) is audited too — it is an attempted-access signal.
-            SensitiveReadAudit.JournalRead(this.auditLogger, actor, runId, string.Empty, JournalDisclosure.Refused);
+            SensitiveReadAudit.JournalRead(this.auditor.Logger, actor, runId, string.Empty, JournalDisclosure.Refused);
             return GetRunStepsResult.NotFound(NotFoundProblem(runId), workspace);
         }
 
         ReadOnlyMemory<byte>? journal = await this.management.GetStepJournalAsync(runId, ctx, cancellationToken).ConfigureAwait(false);
         if (journal is not { } bytes)
         {
-            SensitiveReadAudit.JournalRead(this.auditLogger, actor, runId, d.WorkflowId, JournalDisclosure.Refused);
+            SensitiveReadAudit.JournalRead(this.auditor.Logger, actor, runId, d.WorkflowId, JournalDisclosure.Refused);
             return GetRunStepsResult.NotFound(NotFoundProblem(runId), workspace);
         }
 
@@ -178,7 +178,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         }
 
         // §860 read-access audit: who read this run's step journal, and whether the payloads were disclosed or withheld.
-        SensitiveReadAudit.JournalRead(this.auditLogger, actor, runId, d.WorkflowId, redacted ? JournalDisclosure.Redacted : JournalDisclosure.Full);
+        SensitiveReadAudit.JournalRead(this.auditor.Logger, actor, runId, d.WorkflowId, redacted ? JournalDisclosure.Redacted : JournalDisclosure.Full);
 
         // Hand the parsed journal to the response workspace so it lives until the response is written
         // (the result Body references it); the workspace disposes it — do not dispose it here.
@@ -275,7 +275,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
 
         if (await this.management.DeleteAsync(runId, ctx, cancellationToken).ConfigureAwait(false))
         {
-            GovernanceAudit.Mutation(this.auditLogger, "run.delete", this.AuditActor(), RunTargetKind, runId, "deleted");
+            await this.auditor.MutationAsync("run.delete", this.AuditActor(), RunTargetKind, runId, "deleted").ConfigureAwait(false);
             return DeleteRunResult.NoContent();
         }
 
@@ -368,10 +368,10 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
             {
                 // A re-budget widens what a run may cost, so it is a governed act of its own (ADR 0068), recorded with
                 // who did it and what the run was and is now held to.
-                GovernanceAudit.Mutation(this.auditLogger, "run.rebudget", this.AuditActor(), RunTargetKind, runId, $"rebudgeted: {Limits(was)} -> {Limits(rebudget.Effective)}");
+                await this.auditor.MutationAsync("run.rebudget", this.AuditActor(), RunTargetKind, runId, $"rebudgeted: {Limits(was)} -> {Limits(rebudget.Effective)}").ConfigureAwait(false);
             }
 
-            GovernanceAudit.Mutation(this.auditLogger, "run.resume", this.AuditActor(), RunTargetKind, runId, "resumed");
+            await this.auditor.MutationAsync("run.resume", this.AuditActor(), RunTargetKind, runId, "resumed").ConfigureAwait(false);
             WorkflowRunDetail? resumed = await this.management.GetAsync(runId, ctx, cancellationToken).ConfigureAwait(false);
             return resumed is { } d
                 ? ResumeRunResult.Ok(BuildDetail(d), workspace)
@@ -412,7 +412,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         string reason = (string)parameters.Body.Reason;
         if (await this.management.CancelAsync(runId, reason, ctx, cancellationToken).ConfigureAwait(false))
         {
-            GovernanceAudit.Mutation(this.auditLogger, "run.cancel", this.AuditActor(), RunTargetKind, runId, "cancelled");
+            await this.auditor.MutationAsync("run.cancel", this.AuditActor(), RunTargetKind, runId, "cancelled").ConfigureAwait(false);
             WorkflowRunDetail? cancelled = await this.management.GetAsync(runId, ctx, cancellationToken).ConfigureAwait(false);
             return cancelled is { } d
                 ? CancelRunResult.Ok(BuildDetail(d), workspace)
@@ -435,7 +435,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         int purged = await this.management.PurgeAsync(new WorkflowPurgeQuery(olderThan, limit), this.access.Current(), cancellationToken).ConfigureAwait(false);
 
         // The bulk purge is audited by its cutoff (the count rides the workflow.purge execution span's purged_count tag).
-        GovernanceAudit.Mutation(this.auditLogger, "run.purge", this.AuditActor(), RunTargetKind, $"olderThan={olderThan.ToString("O", CultureInfo.InvariantCulture)}", purged > 0 ? "purged" : "purged-none");
+        await this.auditor.MutationAsync("run.purge", this.AuditActor(), RunTargetKind, $"olderThan={olderThan.ToString("O", CultureInfo.InvariantCulture)}", purged > 0 ? "purged" : "purged-none").ConfigureAwait(false);
         return PurgeRunsResult.Ok(
             new Models.PurgeResult.Source((ref Models.PurgeResult.Builder b) => b.Create(purgedCount: purged)),
             workspace);

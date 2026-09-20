@@ -43,7 +43,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
     private readonly ISourceCredentialStore credentials;
     private readonly ControlPlaneAccess access;
     private readonly string subjectClaimType;
-    private readonly ILogger? auditLogger;
+    private readonly GovernanceAuditor auditor;
 
     // The audited resource kind for a promotion decision on this surface (design §850).
     private const string TargetKind = "availability-request";
@@ -66,7 +66,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
         ISourceCredentialStore credentials,
         ControlPlaneAccess access,
         string subjectClaimType = "sub",
-        ILogger? auditLogger = null)
+        GovernanceAuditor? auditor = null)
     {
         ArgumentNullException.ThrowIfNull(requests);
         ArgumentNullException.ThrowIfNull(availability);
@@ -84,7 +84,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
         this.credentials = credentials;
         this.access = access;
         this.subjectClaimType = subjectClaimType;
-        this.auditLogger = auditLogger;
+        this.auditor = auditor ?? GovernanceAuditor.None;
     }
 
     /// <inheritdoc/>
@@ -115,7 +115,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
             // refusal rides that, with the same problem type and audit outcome every other surface uses.
             if (!OwnerGroupTag.Agrees(version.RootElement.SecurityTagsValue, environmentDoc.RootElement, this.access.OwnerGroupTagKeyUtf8))
             {
-                GovernanceAudit.Mutation(this.auditLogger, "availability-request.submit", this.AuditActor(), TargetKind, $"{baseWorkflowId}:{versionNumber}@{environment}", TenancyAgreement.RefusedOutcome);
+                await this.auditor.MutationAsync("availability-request.submit", this.AuditActor(), TargetKind, $"{baseWorkflowId}:{versionNumber}@{environment}", TenancyAgreement.RefusedOutcome).ConfigureAwait(false);
                 return SubmitAvailabilityRequestResult.BadRequest(
                     Problem(
                         TenancyAgreement.ProblemType,
@@ -134,7 +134,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
             baseWorkflowId, versionNumber, environment, reason, PrincipalDisplayName.Resolve(this.access.CurrentPrincipal));
         ParsedJsonDocument<AvailabilityRequest> created = await this.requests.CreateAsync(draft.RootElement, this.CallerActor(), cancellationToken).ConfigureAwait(false);
         workspace.TakeOwnership(created);
-        GovernanceAudit.Mutation(this.auditLogger, "availability-request.submit", this.AuditActor(), TargetKind, created.RootElement.IdValue, "submitted");
+        await this.auditor.MutationAsync("availability-request.submit", this.AuditActor(), TargetKind, created.RootElement.IdValue, "submitted").ConfigureAwait(false);
         return SubmitAvailabilityRequestResult.Created(ToView(created.RootElement), workspace);
     }
 
@@ -282,7 +282,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
         // Governance: the caller must be a current administrator of the request's target environment.
         if (await this.AuthorizeEnvironmentAdminAsync(environment, cancellationToken).ConfigureAwait(false) != GovernanceGate.Authorized)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "availability-request.approve", this.AuditActor(), TargetKind, id, "refused-not-administrator");
+            await this.auditor.MutationAsync("availability-request.approve", this.AuditActor(), TargetKind, id, "refused-not-administrator").ConfigureAwait(false);
             return ApproveAvailabilityRequestResult.Forbidden(NotAdministratorProblem(environment), workspace);
         }
 
@@ -290,7 +290,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
         // must come from a second pair of hands. The requester's own exit is withdraw.
         if (isRequester)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "availability-request.approve", this.AuditActor(), TargetKind, id, "refused-own-request");
+            await this.auditor.MutationAsync("availability-request.approve", this.AuditActor(), TargetKind, id, "refused-own-request").ConfigureAwait(false);
             return ApproveAvailabilityRequestResult.Forbidden(OwnRequestProblem(), workspace);
         }
 
@@ -328,7 +328,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
             // make-available applies (ADR 0065): the version's owner group must be the environment's.
             if (!OwnerGroupTag.Agrees(version.RootElement.SecurityTagsValue, target, this.access.OwnerGroupTagKeyUtf8))
             {
-                GovernanceAudit.Mutation(this.auditLogger, "availability-request.approve", this.AuditActor(), TargetKind, id, TenancyAgreement.RefusedOutcome);
+                await this.auditor.MutationAsync("availability-request.approve", this.AuditActor(), TargetKind, id, TenancyAgreement.RefusedOutcome).ConfigureAwait(false);
                 return ApproveAvailabilityRequestResult.Conflict(
                     Problem(
                         TenancyAgreement.ProblemType,
@@ -359,7 +359,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
                 return ApproveAvailabilityRequestResult.NotFound(NotFoundProblem(id), workspace);
             }
 
-            GovernanceAudit.Mutation(this.auditLogger, "availability-request.approve", this.AuditActor(), TargetKind, id, "approved");
+            await this.auditor.MutationAsync("availability-request.approve", this.AuditActor(), TargetKind, id, "approved").ConfigureAwait(false);
             workspace.TakeOwnership(decided);
             return ApproveAvailabilityRequestResult.Ok(ToView(decided.RootElement), workspace);
         }
@@ -393,7 +393,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
 
         if (await this.AuthorizeEnvironmentAdminAsync(environment, cancellationToken).ConfigureAwait(false) != GovernanceGate.Authorized)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "availability-request.deny", this.AuditActor(), TargetKind, id, "refused-not-administrator");
+            await this.auditor.MutationAsync("availability-request.deny", this.AuditActor(), TargetKind, id, "refused-not-administrator").ConfigureAwait(false);
             return DenyAvailabilityRequestResult.Forbidden(NotAdministratorProblem(environment), workspace);
         }
 
@@ -401,7 +401,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
         // decidedBy always names an independent administrator.
         if (isRequester)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "availability-request.deny", this.AuditActor(), TargetKind, id, "refused-own-request");
+            await this.auditor.MutationAsync("availability-request.deny", this.AuditActor(), TargetKind, id, "refused-own-request").ConfigureAwait(false);
             return DenyAvailabilityRequestResult.Forbidden(OwnRequestProblem(), workspace);
         }
 
@@ -418,7 +418,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
                 return DenyAvailabilityRequestResult.NotFound(NotFoundProblem(id), workspace);
             }
 
-            GovernanceAudit.Mutation(this.auditLogger, "availability-request.deny", this.AuditActor(), TargetKind, id, "denied");
+            await this.auditor.MutationAsync("availability-request.deny", this.AuditActor(), TargetKind, id, "denied").ConfigureAwait(false);
             workspace.TakeOwnership(decided);
             return DenyAvailabilityRequestResult.Ok(ToView(decided.RootElement), workspace);
         }
@@ -451,7 +451,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
         // Only the requester may withdraw their own request (refused 403, distinct from a wrong-state conflict).
         if (!isRequester)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "availability-request.withdraw", this.AuditActor(), TargetKind, id, "refused-not-requester");
+            await this.auditor.MutationAsync("availability-request.withdraw", this.AuditActor(), TargetKind, id, "refused-not-requester").ConfigureAwait(false);
             return WithdrawAvailabilityRequestResult.Forbidden(NotRequesterProblem(), workspace);
         }
 
@@ -469,7 +469,7 @@ public sealed class ArazzoControlPlaneAvailabilityRequestsHandler : IApiAvailabi
             }
 
             workspace.TakeOwnership(decided);
-            GovernanceAudit.Mutation(this.auditLogger, "availability-request.withdraw", this.AuditActor(), TargetKind, id, "withdrawn");
+            await this.auditor.MutationAsync("availability-request.withdraw", this.AuditActor(), TargetKind, id, "withdrawn").ConfigureAwait(false);
             return WithdrawAvailabilityRequestResult.Ok(ToView(decided.RootElement), workspace);
         }
         catch (AvailabilityRequestConflictException)

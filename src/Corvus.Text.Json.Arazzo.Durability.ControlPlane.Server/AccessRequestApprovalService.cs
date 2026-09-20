@@ -46,7 +46,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     private readonly AccessRequestApprovalOptions options;
     private readonly PersistentRowSecurityPolicy? rowSecurity;
     private readonly Func<ClaimsPrincipal, AccessRequest, bool>? selfElevationEligibility;
-    private readonly ILogger? auditLogger;
+    private readonly GovernanceAuditor auditor;
 
     /// <summary>Initializes a new instance of the <see cref="AccessRequestApprovalService"/> class.</summary>
     /// <param name="requests">The access-request store.</param>
@@ -64,7 +64,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         AccessRequestApprovalOptions? options = null,
         PersistentRowSecurityPolicy? rowSecurity = null,
         Func<ClaimsPrincipal, AccessRequest, bool>? selfElevationEligibility = null,
-        ILogger? auditLogger = null)
+        GovernanceAuditor? auditor = null)
     {
         ArgumentNullException.ThrowIfNull(requests);
         ArgumentNullException.ThrowIfNull(policy);
@@ -76,7 +76,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
         this.options = options ?? new AccessRequestApprovalOptions();
         this.rowSecurity = rowSecurity;
         this.selfElevationEligibility = selfElevationEligibility;
-        this.auditLogger = auditLogger;
+        this.auditor = auditor ?? GovernanceAuditor.None;
     }
 
     /// <summary>
@@ -532,7 +532,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
 
         // The policy write is a governance action in its own right (ADR 0038): the grant appears on the security policy
         // with the same trail an API-authored binding leaves, attributed to the deciding actor.
-        GovernanceAudit.Mutation(this.auditLogger, "security-binding.create", actor, BindingKind, bindingId, outcome);
+        await this.auditor.MutationAsync("security-binding.create", actor, BindingKind, bindingId, outcome).ConfigureAwait(false);
         return bindingId;
     }
 
@@ -560,7 +560,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
             {
             }
 
-            GovernanceAudit.Mutation(this.auditLogger, "security-rule.create", actor, RuleKind, ruleName, "created");
+            await this.auditor.MutationAsync("security-rule.create", actor, RuleKind, ruleName, "created").ConfigureAwait(false);
         }
         catch (InvalidOperationException)
         {
@@ -598,7 +598,7 @@ public sealed class AccessRequestApprovalService : IAccessRequestApprovalService
     private async ValueTask RevokeBindingAsync(string bindingId, AuditSubject actor, string outcome, CancellationToken cancellationToken)
     {
         await this.policy.DeleteBindingAsync(bindingId, WorkflowEtag.None, cancellationToken).ConfigureAwait(false);
-        GovernanceAudit.Mutation(this.auditLogger, "security-binding.delete", actor, BindingKind, bindingId, outcome);
+        await this.auditor.MutationAsync("security-binding.delete", actor, BindingKind, bindingId, outcome).ConfigureAwait(false);
         await this.RefreshAsync(cancellationToken).ConfigureAwait(false);
     }
 

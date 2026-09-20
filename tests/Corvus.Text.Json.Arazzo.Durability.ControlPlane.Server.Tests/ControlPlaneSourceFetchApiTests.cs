@@ -256,7 +256,8 @@ public sealed class ControlPlaneSourceFetchApiTests
         app.UseAuthorization();
         app.MapArazzoControlPlane(
             management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.ScopesOnly,
-            sourceCredentialStore: credentialStore, sourceFetcher: fetcher);
+            sourceCredentialStore: credentialStore, sourceFetcher: fetcher,
+            auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient());

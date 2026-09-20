@@ -350,7 +350,7 @@ public sealed class ControlPlaneAvailabilityRequestsApiTests
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), availabilityRequestStore: requests);
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), availabilityRequestStore: requests, auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient(), catalog);

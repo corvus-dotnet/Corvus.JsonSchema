@@ -68,7 +68,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
     private readonly ISecuredWorkflowManagement? debugRunManagement;
     private readonly InProcessDraftRunner? draftRunner;
     private readonly DraftRunManagement? draftRunManagement;
-    private readonly ILogger? auditLogger;
+    private readonly GovernanceAuditor auditor;
 
     // The audited resource kind for a debug-run lifecycle event (design §850, worklist item 8).
     private const string DebugRunTargetKind = "debug-run";
@@ -173,7 +173,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
     /// <param name="draftRunTraceStore">The durable trace store §18 <c>get-debug-run</c> reads each run's assembled
     /// metadata trace from (§18 R4) — written by the runner, possibly in a different process. When <see langword="null"/>
     /// the trace is omitted from the debug-run view.</param>
-    internal ArazzoControlPlaneWorkspaceHandler(IWorkspaceWorkflowStore store, ControlPlaneAccess access, ISecuredWorkflowCatalog? catalog = null, ISourceStore? sources = null, TimeProvider? timeProvider = null, string actor = "control-plane", Corvus.Text.Json.Arazzo.Testing.WorkflowSimulator? simulator = null, IEnvironmentStore? environments = null, ISourceCredentialStore? credentials = null, IWorkflowStateStore? workflowStateStore = null, IDraftRunStore? draftRunStore = null, ISecuredWorkflowManagement? debugRunManagement = null, InProcessDraftRunner? draftRunner = null, IDraftRunTraceStore? draftRunTraceStore = null, ILogger? auditLogger = null)
+    internal ArazzoControlPlaneWorkspaceHandler(IWorkspaceWorkflowStore store, ControlPlaneAccess access, ISecuredWorkflowCatalog? catalog = null, ISourceStore? sources = null, TimeProvider? timeProvider = null, string actor = "control-plane", Corvus.Text.Json.Arazzo.Testing.WorkflowSimulator? simulator = null, IEnvironmentStore? environments = null, ISourceCredentialStore? credentials = null, IWorkflowStateStore? workflowStateStore = null, IDraftRunStore? draftRunStore = null, ISecuredWorkflowManagement? debugRunManagement = null, InProcessDraftRunner? draftRunner = null, IDraftRunTraceStore? draftRunTraceStore = null, GovernanceAuditor? auditor = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(access);
@@ -198,7 +198,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         this.draftRunManagement = workflowStateStore is not null && draftRunStore is not null
             ? new DraftRunManagement(workflowStateStore, draftRunStore, this.timeProvider, debugRunManagement is { } budgets ? budgets.ResolveExecutionBudgetAsync : null)
             : null;
-        this.auditLogger = auditLogger;
+        this.auditor = auditor ?? GovernanceAuditor.None;
     }
 
     // The §850 audit subject for a debug-run event: the authenticated developer, falling back to the configured actor.
@@ -1438,7 +1438,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
 
         WorkflowRunId runId = await this.draftRunManagement!.StartAsync(start, inputs, securityTags, pause, cancellationToken: cancellationToken).ConfigureAwait(false);
 
-        GovernanceAudit.Mutation(this.auditLogger, "debug-run.start", this.AuditActor(), DebugRunTargetKind, runId.Value, "started");
+        await this.auditor.MutationAsync("debug-run.start", this.AuditActor(), DebugRunTargetKind, runId.Value, "started").ConfigureAwait(false);
 
         ParsedJsonDocument<Models.DebugRun>? view = await this.BuildDebugRunViewAsync(runId, id, cancellationToken).ConfigureAwait(false);
         if (view is not { } created)
@@ -1560,7 +1560,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         }
 
         workspace.TakeOwnership(v);
-        GovernanceAudit.Mutation(this.auditLogger, "debug-run.resume", this.AuditActor(), DebugRunTargetKind, runId.Value, "resumed");
+        await this.auditor.MutationAsync("debug-run.resume", this.AuditActor(), DebugRunTargetKind, runId.Value, "resumed").ConfigureAwait(false);
         return ResumeDebugRunResult.Ok(v.RootElement, workspace);
     }
 
@@ -1625,7 +1625,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         }
 
         workspace.TakeOwnership(v);
-        GovernanceAudit.Mutation(this.auditLogger, "debug-run.inject-message", this.AuditActor(), DebugRunTargetKind, runId.Value, "injected");
+        await this.auditor.MutationAsync("debug-run.inject-message", this.AuditActor(), DebugRunTargetKind, runId.Value, "injected").ConfigureAwait(false);
         return InjectDebugRunMessageResult.Ok(v.RootElement, workspace);
     }
 
@@ -1659,7 +1659,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         // returns false and the current state below is returned unchanged.
         if (await this.debugRunManagement!.CancelAsync(runId, "debug-run cancelled by developer", this.access.Current(), cancellationToken).ConfigureAwait(false))
         {
-            GovernanceAudit.Mutation(this.auditLogger, "debug-run.cancel", this.AuditActor(), DebugRunTargetKind, runId.Value, "cancelled");
+            await this.auditor.MutationAsync("debug-run.cancel", this.AuditActor(), DebugRunTargetKind, runId.Value, "cancelled").ConfigureAwait(false);
         }
 
         ParsedJsonDocument<Models.DebugRun>? view = await this.BuildDebugRunViewAsync(runId, id, cancellationToken).ConfigureAwait(false);
@@ -1712,7 +1712,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         await this.draftRunStore!.DeleteAsync(runId, cancellationToken).ConfigureAwait(false);
         await this.workflowStateStore!.DeleteAsync(new WorkflowRunAddress(runEnvironment, runId), cancellationToken).ConfigureAwait(false);
 
-        GovernanceAudit.Mutation(this.auditLogger, "debug-run.delete", this.AuditActor(), DebugRunTargetKind, runId.Value, "deleted");
+        await this.auditor.MutationAsync("debug-run.delete", this.AuditActor(), DebugRunTargetKind, runId.Value, "deleted").ConfigureAwait(false);
         return DeleteDebugRunResult.NoContent();
     }
 

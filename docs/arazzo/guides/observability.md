@@ -70,7 +70,7 @@ tags use the `corvus.arazzo.*` naming: `run_id`, `workflow_id`, `actor`, `resume
 ## The governance-audit primitive
 
 Every governed action (a grant, a revoke, an approval, a denial, a publish, a delete, a promotion, an
-administrator transfer) is audited through one payload-safe primitive, `GovernanceAudit.Mutation`
+administrator transfer) is audited through one payload-safe primitive, `GovernanceAuditor.MutationAsync`
 ([ADR 0038](../adr/0038-payload-safe-governance-audit.md)). It emits a span named for the action plus an
 audit-grade structured log naming the actor, the actor's tenant, the target kind and id, the outcome and, for an
 environment-scoped action, the environment, and it feeds the `corvus.arazzo.governance.decisions` counter,

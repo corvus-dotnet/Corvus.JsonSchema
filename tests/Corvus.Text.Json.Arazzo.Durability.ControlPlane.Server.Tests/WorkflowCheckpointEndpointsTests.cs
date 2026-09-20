@@ -7,6 +7,7 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text.Encodings.Web;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Serverless;
@@ -295,7 +296,7 @@ public sealed class WorkflowCheckpointEndpointsTests
             WebApplication app = builder.Build();
             app.UseAuthentication();
             app.UseAuthorization();
-            app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), securityMode, workflowStateStore: store, checkpointSecret: CheckpointSecret);
+            app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), securityMode, workflowStateStore: store, checkpointSecret: CheckpointSecret, auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
             await app.StartAsync();
 
             return new Host(app, app.GetTestClient(), store);

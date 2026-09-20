@@ -7,6 +7,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using Corvus.Text.Json.Arazzo.Durability;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
@@ -164,7 +165,7 @@ public sealed class ControlPlaneOwnershipStampingTests
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), mode, rowSecurity: rowSecurity);
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), mode, rowSecurity: rowSecurity, auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
         await app.StartAsync();
 
         return new Host(app, app.GetTestClient());

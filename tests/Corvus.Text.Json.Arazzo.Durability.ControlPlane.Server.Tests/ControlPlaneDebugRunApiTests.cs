@@ -6,6 +6,7 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Generation;
@@ -699,7 +700,8 @@ public sealed class ControlPlaneDebugRunApiTests
             workflowStateStore: withRunner ? store : null,
             draftRunStore: drafts,
             draftRunner: runner,
-            draftRunTraceStore: traceStore);
+            draftRunTraceStore: traceStore,
+            auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
         await app.StartAsync();
         return new Scoped(app, app.GetTestClient(), runner) { Store = store };
     }

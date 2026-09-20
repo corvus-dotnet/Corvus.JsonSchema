@@ -50,7 +50,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler, IRunS
     private readonly ConcurrentDictionary<string, AccessContext> tenantScopes = new(StringComparer.Ordinal);
     private SecurityRule? tenantRule;
     private readonly WorkflowSimulator? simulator;
-    private readonly ILogger? auditLogger;
+    private readonly GovernanceAuditor auditor;
 
     // The audited resource kind for a catalog mutation (design §850, worklist item 7).
     private const string CatalogTargetKind = "catalog-version";
@@ -73,11 +73,11 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler, IRunS
     /// <param name="environmentStore">The environment registry used to validate that a run's pinned environment exists and is in the caller's reach (design §5.5); <see langword="null"/> skips that check.</param>
     /// <param name="availabilityStore">The availability registry used to validate that the version is available in the pinned environment (§7.8); <see langword="null"/> skips that check.</param>
     /// <param name="simulator">The workflow simulator used by the simulate endpoint.</param>
-    /// <param name="auditLogger">The governance audit sink.</param>
+    /// <param name="auditor">The governance audit sink.</param>
     /// <param name="deployments">The workflow-deployment store (ADR 0055, ADR 0059); when supplied, the start gate holds a run
     /// pinned to an <see cref="RunIsolationModel.Isolated"/> environment until that environment's serverless function is deployed
     /// (live at its invoke URL). <see langword="null"/> skips the dispatch-ready check, for an in-process-only deployment.</param>
-    internal ArazzoControlPlaneCatalogHandler(ISecuredWorkflowCatalog catalog, ISecuredWorkflowManagement management, IRunnerRegistry runners, ControlPlaneAccess access, IEnvironmentStore? environmentStore = null, IAvailabilityStore? availabilityStore = null, WorkflowSimulator? simulator = null, ILogger? auditLogger = null, IWorkflowDeploymentStore? deployments = null, Capacity.IControlPlaneCapacityGuard? capacity = null)
+    internal ArazzoControlPlaneCatalogHandler(ISecuredWorkflowCatalog catalog, ISecuredWorkflowManagement management, IRunnerRegistry runners, ControlPlaneAccess access, IEnvironmentStore? environmentStore = null, IAvailabilityStore? availabilityStore = null, WorkflowSimulator? simulator = null, GovernanceAuditor? auditor = null, IWorkflowDeploymentStore? deployments = null, Capacity.IControlPlaneCapacityGuard? capacity = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(management);
@@ -92,7 +92,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler, IRunS
         this.deployments = deployments;
         this.capacity = capacity;
         this.simulator = simulator;
-        this.auditLogger = auditLogger;
+        this.auditor = auditor ?? GovernanceAuditor.None;
     }
 
     // The §850 audit subject for a catalog mutation: the authenticated caller, falling back to "system" when unresolved.
@@ -138,7 +138,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler, IRunS
             ParsedJsonDocument<CatalogVersion> version = await this.catalog.AddAsync(parameters.Package, owner, tags, securityTags, cancellationToken).ConfigureAwait(false);
 
             CatalogVersionRef reference = version.RootElement.Ref;
-            GovernanceAudit.Mutation(this.auditLogger, "catalog.publish", this.AuditActor(), CatalogTargetKind, CatalogKey(reference.BaseWorkflowId, reference.VersionNumber), "published");
+            await this.auditor.MutationAsync("catalog.publish", this.AuditActor(), CatalogTargetKind, CatalogKey(reference.BaseWorkflowId, reference.VersionNumber), "published").ConfigureAwait(false);
 
             // The summary is a zero-copy view over the version document, so hand the pooled document to the workspace —
             // it owns it for the response's lifetime, and a throw cannot leak the rented buffer.
@@ -318,7 +318,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler, IRunS
         }
 
         ParsedJsonDocument<CatalogVersion> v = result.Document!;
-        GovernanceAudit.Mutation(this.auditLogger, "catalog.update", this.AuditActor(), CatalogTargetKind, CatalogKey(baseWorkflowId, versionNumber), "updated");
+        await this.auditor.MutationAsync("catalog.update", this.AuditActor(), CatalogTargetKind, CatalogKey(baseWorkflowId, versionNumber), "updated").ConfigureAwait(false);
         workspace.TakeOwnership(v);
         return UpdateCatalogVersionResult.Ok(Models.CatalogVersionSummary.From(this.access.PublicView(v.RootElement, workspace)), workspace);
     }
@@ -334,7 +334,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler, IRunS
         CatalogDeleteOutcome outcome = await this.catalog.DeleteAsync(baseWorkflowId, versionNumber, this.access.Current(), cancellationToken).ConfigureAwait(false);
         if (outcome == CatalogDeleteOutcome.Deleted)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "catalog.delete", this.AuditActor(), CatalogTargetKind, CatalogKey(baseWorkflowId, versionNumber), "deleted");
+            await this.auditor.MutationAsync("catalog.delete", this.AuditActor(), CatalogTargetKind, CatalogKey(baseWorkflowId, versionNumber), "deleted").ConfigureAwait(false);
         }
 
         return outcome switch
@@ -353,7 +353,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler, IRunS
         // The scoped catalog client row-scopes the purge (§14.2): reaps only obsolete versions the principal may
         // see (see run purge — the capability is orthogonal to reach).
         int purged = await this.catalog.PurgeAsync(this.access.Current(), cancellationToken).ConfigureAwait(false);
-        GovernanceAudit.Mutation(this.auditLogger, "catalog.purge", this.AuditActor(), CatalogTargetKind, "(obsolete versions)", purged > 0 ? "purged" : "purged-none");
+        await this.auditor.MutationAsync("catalog.purge", this.AuditActor(), CatalogTargetKind, "(obsolete versions)", purged > 0 ? "purged" : "purged-none").ConfigureAwait(false);
         return PurgeCatalogResult.Ok(
             new Models.PurgeResult.Source((ref Models.PurgeResult.Builder b) => b.Create(purgedCount: purged)), workspace);
     }
@@ -628,7 +628,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler, IRunS
             // owner group, and the counter is the environment's.
             if (!OwnerGroupTag.Agrees(catalogVersionDoc.RootElement.SecurityTagsValue, environmentDoc.RootElement, this.access.OwnerGroupTagKeyUtf8))
             {
-                GovernanceAudit.Mutation(this.auditLogger, request.AuditAction, this.AuditActor(), RunTargetKind, (string)catalogVersionDoc.RootElement.WorkflowId, TenancyAgreement.RefusedOutcome, environment);
+                await this.auditor.MutationAsync(request.AuditAction, this.AuditActor(), RunTargetKind, (string)catalogVersionDoc.RootElement.WorkflowId, TenancyAgreement.RefusedOutcome, environment).ConfigureAwait(false);
                 return RunStartOutcome.Refused(409, TenancyAgreement.ProblemType, TenancyAgreement.Title,
                         TenancyAgreement.Detail(baseWorkflowId, versionNumber, catalogVersionDoc.RootElement.SecurityTagsValue, environment, environmentDoc.RootElement, this.access.OwnerGroupTagKeyUtf8));
             }
@@ -727,7 +727,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler, IRunS
                 // admitted any owner group that is every environment and the deployment counter is the aggregate; once
                 // it has, charging such a run to the shared counter would let it escape the per-tenant bound, so the
                 // start fails closed.
-                GovernanceAudit.Mutation(this.auditLogger, request.AuditAction, this.AuditActor(), RunTargetKind, workflowId, "refused-tenancy-unresolvable", environment);
+                await this.auditor.MutationAsync(request.AuditAction, this.AuditActor(), RunTargetKind, workflowId, "refused-tenancy-unresolvable", environment).ConfigureAwait(false);
                 return RunStartOutcome.Refused(409, "tenancy-unresolvable", "Tenant unresolvable", $"Environment '{environment}' carries no owner group in a tenant-aware deployment, so a run there cannot be charged to a tenant.");
             }
             else
@@ -773,7 +773,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler, IRunS
 
         // Starting a run is a governed action (ADR 0038): audited with the starting actor and the environment the run is
         // pinned to; an idempotent start that found its run already running audits as reused.
-        GovernanceAudit.Mutation(this.auditLogger, request.AuditAction, this.AuditActor(), RunTargetKind, request.RerunOf is { } original ? $"{runId.Value} (rerun of {original})" : runId.Value, outcome, environment);
+        await this.auditor.MutationAsync(request.AuditAction, this.AuditActor(), RunTargetKind, request.RerunOf is { } original ? $"{runId.Value} (rerun of {original})" : runId.Value, outcome, environment).ConfigureAwait(false);
         return RunStartOutcome.Accepted(runId, workflowId);
     }
 

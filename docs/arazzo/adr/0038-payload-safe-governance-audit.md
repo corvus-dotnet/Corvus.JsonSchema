@@ -1,6 +1,6 @@
 # ADR 0038. A payload-safe governance-audit primitive
 
-Date: 2026-07-21. Revised 2026-09-02: the audited actor is the canonical subject, every record carries the
+Date: 2026-07-21. Revised 2026-09-02: the audited actor is the canonical subject, every record carries the Revised 2026-09-20: the primitive is an awaited instance, `GovernanceAuditor`, since it also appends to the audit chain of ADR 0069.
 actor's tenant and, where the action is environment-scoped, the environment, and run start, the bootstrap
 grants, the approval service's policy writes and self-elevation are on the trail (P1-6 of the 2026-08-07
 security audit). Status: **Accepted**. Scope: how a governed action is audited. This records why every
@@ -20,11 +20,12 @@ nobody authenticated, is a trail that cannot be joined to a grant, a request, or
 
 ### Grounded architectural facts
 
-- **One primitive audits every governed action.** `GovernanceAudit.Mutation(logger, action, actor,
-  targetKind, targetId, outcome, environment)` (`Durability/Security/GovernanceAudit.cs`) emits a span named
+- **One primitive audits every governed action.** `GovernanceAuditor.MutationAsync(action, actor,
+  targetKind, targetId, outcome, environment)` (`Durability/Security/GovernanceAuditor.cs`) emits a span named
   for the action on `ArazzoTelemetry.ActivitySource` plus an audit-grade structured log, so who changed what,
   where, and the outcome, are recorded uniformly. It is public in the durability library so the deployment
-  bootstrap and the domain services audit through the same primitive as the handlers.
+  bootstrap and the domain services audit through the same primitive as the handlers. It is an instance, one per
+  deployment, because it also appends the record to the deployment's audit chain ([ADR 0069](0069-audit-as-evidence-append-only-chained-signed-sink.md)), and it is awaited because a record the sink refuses fails the request.
 - **Its inputs are controlled vocabulary and identifiers only.** The action name, actor, target kind, target
   id, outcome, tenant and environment are all a stable controlled vocabulary or an identifier, never a workflow
   payload or a secret. A caller cannot route a step output or a credential value through it, because there is no
@@ -49,7 +50,7 @@ nobody authenticated, is a trail that cannot be joined to a grant, a request, or
 
 ## Decision
 
-Every governed action is audited through **one payload-safe primitive**, `GovernanceAudit`, which emits a span
+Every governed action is audited through **one payload-safe primitive**, `GovernanceAuditor`, which emits a span
 named for the action and an audit-grade structured log. Its inputs are only controlled vocabulary and
 identifiers: the action, the actor as its canonical subject and tenant, the target kind and id, the outcome,
 and the environment where the action is scoped to one. It has no parameter that could carry a payload or a

@@ -41,7 +41,7 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
     private readonly ISourceCredentialStore credentials;
     private readonly ControlPlaneAccess access;
     private readonly string actor;
-    private readonly ILogger? auditLogger;
+    private readonly GovernanceAuditor auditor;
     private readonly INativeBuildJobStore? builds;
 
     // The audited resource kind for promotion/demotion on this surface (design §850).
@@ -67,11 +67,11 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
     /// <param name="credentials">The source-credential store (readiness: a credential per source × environment).</param>
     /// <param name="access">Resolves the caller's <see cref="AccessContext"/> and deployment identity per request.</param>
     /// <param name="actor">The audit actor recorded on writes.</param>
-    /// <param name="auditLogger">The governance audit sink.</param>
+    /// <param name="auditor">The governance audit sink.</param>
     /// <param name="builds">The native-build job store (ADR 0055); when supplied, first-promoting a version into an
     /// <see cref="RunIsolationModel.Isolated"/> environment queues its serverless build (deploy-on-publish). <see langword="null"/>
     /// disables that, for an in-process-only deployment.</param>
-    internal ArazzoControlPlaneAvailabilityHandler(IAvailabilityStore availability, IEnvironmentStore environments, SecuredEnvironmentAdministration administration, ISecuredWorkflowCatalog catalog, ISourceCredentialStore credentials, ControlPlaneAccess access, string actor = "control-plane", ILogger? auditLogger = null, INativeBuildJobStore? builds = null)
+    internal ArazzoControlPlaneAvailabilityHandler(IAvailabilityStore availability, IEnvironmentStore environments, SecuredEnvironmentAdministration administration, ISecuredWorkflowCatalog catalog, ISourceCredentialStore credentials, ControlPlaneAccess access, string actor = "control-plane", GovernanceAuditor? auditor = null, INativeBuildJobStore? builds = null)
     {
         ArgumentNullException.ThrowIfNull(availability);
         ArgumentNullException.ThrowIfNull(environments);
@@ -87,7 +87,7 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
         this.credentials = credentials;
         this.access = access;
         this.actor = actor;
-        this.auditLogger = auditLogger;
+        this.auditor = auditor ?? GovernanceAuditor.None;
         this.builds = builds;
     }
 
@@ -247,7 +247,7 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
             // admits only versions carrying none. Refused and audited like any other governance refusal.
             if (!OwnerGroupTag.Agrees(version.RootElement.SecurityTagsValue, target, this.access.OwnerGroupTagKeyUtf8))
             {
-                GovernanceAudit.Mutation(this.auditLogger, "environment.promote", this.AuditActor(), TargetKind, AvailabilityKey(baseWorkflowId, versionNumber, environment), TenancyAgreement.RefusedOutcome);
+                await this.auditor.MutationAsync("environment.promote", this.AuditActor(), TargetKind, AvailabilityKey(baseWorkflowId, versionNumber, environment), TenancyAgreement.RefusedOutcome).ConfigureAwait(false);
                 return MakeVersionAvailableResult.Conflict(
                     Problem(
                         TenancyAgreement.ProblemType,
@@ -273,7 +273,7 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
         // recorded with who promoted what where. A no-op re-promote (already available) is not re-audited.
         if (created)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "environment.promote", this.AuditActor(), TargetKind, AvailabilityKey(baseWorkflowId, versionNumber, environment), "promoted");
+            await this.auditor.MutationAsync("environment.promote", this.AuditActor(), TargetKind, AvailabilityKey(baseWorkflowId, versionNumber, environment), "promoted").ConfigureAwait(false);
         }
 
         // Deploy-on-publish (ADR 0055): first-promoting a version into an environment that requires Isolated execution
@@ -314,7 +314,7 @@ public sealed class ArazzoControlPlaneAvailabilityHandler : IApiAvailabilityHand
         bool withdrawn = await this.availability.WithdrawAsync(baseWorkflowId, versionNumber, environment, cancellationToken).ConfigureAwait(false);
         if (withdrawn)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "environment.demote", this.AuditActor(), TargetKind, AvailabilityKey(baseWorkflowId, versionNumber, environment), "demoted");
+            await this.auditor.MutationAsync("environment.demote", this.AuditActor(), TargetKind, AvailabilityKey(baseWorkflowId, versionNumber, environment), "demoted").ConfigureAwait(false);
         }
 
         return withdrawn

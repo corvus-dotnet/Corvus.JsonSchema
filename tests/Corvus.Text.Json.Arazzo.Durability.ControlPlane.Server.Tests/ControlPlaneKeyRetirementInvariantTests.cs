@@ -10,6 +10,7 @@ using System.Text.Encodings.Web;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Environment = Corvus.Text.Json.Arazzo.Durability.Environments.Environment;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using Corvus.Text.Json.Arazzo.Durability;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
@@ -192,7 +193,7 @@ public sealed class ControlPlaneKeyRetirementInvariantTests
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy());
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
         await app.StartAsync();
 
         return new Host(app, app.GetTestClient());

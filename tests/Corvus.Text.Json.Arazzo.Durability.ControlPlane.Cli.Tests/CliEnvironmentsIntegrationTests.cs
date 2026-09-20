@@ -143,7 +143,7 @@ public sealed partial class CliIntegrationTests
 
         // The environment stores default to in-memory; the row-security policy maps the bearer token to a deployment
         // identity (sys:tenant=<token>) so create-grants-admin and the current-administrator gate are driven by --token.
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy());
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
         await app.StartAsync();
 
         return new Host(app, store, clock, app.Urls.First());

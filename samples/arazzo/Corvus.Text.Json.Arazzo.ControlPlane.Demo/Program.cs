@@ -94,7 +94,19 @@ using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstr
         }
         """));
 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DeploymentBootstrapOptions bootstrapOptions = bootstrapOptionsDoc.RootElement;
-await Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.Postgres.PostgresControlPlaneDeployment.ProvisionAsync(dataSource, bootstrapOptions);
+// The deployment's one governance auditor (ADR 0069). It is built before anything is seeded and handed to the
+// provisioning, the system-workflow bootstrap and the control plane alike, so every governance action this process
+// records, the genesis grants included, is one audit chain. The secured control plane refuses to start without a sink.
+//
+// The sink here is a directory of chain files, which is the development sink: it is evidence only as far as the
+// directory's permissions make it so. A production deployment appends to immutable storage outside the operational
+// database. Arazzo:AuditDirectory names the directory; the default is under the temporary directory, so the demo
+// leaves nothing in the source tree.
+string auditDirectory = builder.Configuration["Arazzo:AuditDirectory"] ?? Path.Combine(Path.GetTempPath(), "arazzo-control-plane-demo", "audit");
+using ILoggerFactory auditLoggerFactory = LoggerFactory.Create(logging => logging.AddConfiguration(builder.Configuration.GetSection("Logging")).AddConsole());
+var auditor = new GovernanceAuditor(auditLoggerFactory.CreateLogger("Corvus.Arazzo.Audit"), new FileAuditSink(auditDirectory));
+
+await Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.Postgres.PostgresControlPlaneDeployment.ProvisionAsync(dataSource, bootstrapOptions, auditor: auditor);
 
 // The seedExampleData flag (read above, and carried into the bootstrap options so the generated schema records it)
 // gates every piece of demo fiction below — the example catalog + credential references + developer sandbox, the
@@ -265,7 +277,7 @@ PostgresEnvironmentAdministratorStore environmentAdministratorStore = await Post
 // and its availability. Enabled when systemWorkflows is present in the bootstrap options (secured AppHost deployment).
 if (enableSystemApprovalWorkflow)
 {
-    await new Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DefaultDeploymentBootstrap().BootstrapSystemWorkflowsAsync(
+    await new Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DefaultDeploymentBootstrap(auditor).BootstrapSystemWorkflowsAsync(
         catalogStore,
         (Corvus.Text.Json.Arazzo.Durability.IWorkflowWaitIndex)stateStore,
         administrators,
@@ -956,7 +968,8 @@ app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
     // rather than open is the ADR 0016 posture — a surface mapped without a secret would admit any caller this host
     // authenticates to every run in the deployment, and everyone at all in Open.
     checkpoints: checkpointCoordinator,
-    scheduleRegistry: scheduleRegistry);
+    scheduleRegistry: scheduleRegistry,
+    auditor: auditor);
 
 // The runner API (ADR 0065) — the surface every runner store interaction goes through, so that a runner needs no store
 // credential to execute. It shares this host's stores because the demo is one process; the point of the split is that
@@ -1025,6 +1038,7 @@ app.Lifetime.ApplicationStarted.Register(() =>
 
 // Stop the draft runner's pump cleanly on shutdown (best-effort; the process exit would end it regardless).
 app.Lifetime.ApplicationStopping.Register(() => draftRunner.StopAsync().AsTask().GetAwaiter().GetResult());
+app.Lifetime.ApplicationStopped.Register(() => auditor.DisposeAsync().AsTask().GetAwaiter().GetResult());
 
 app.Run();
 

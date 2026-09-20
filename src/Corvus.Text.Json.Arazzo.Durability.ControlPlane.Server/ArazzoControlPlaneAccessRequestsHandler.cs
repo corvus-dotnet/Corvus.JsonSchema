@@ -35,7 +35,7 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
     private readonly ISecuredWorkflowCatalog catalog;
     private readonly ControlPlaneAccess access;
     private readonly string subjectClaimType;
-    private readonly ILogger? auditLogger;
+    private readonly GovernanceAuditor auditor;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneAccessRequestsHandler"/> class.</summary>
     /// <param name="approval">The approval service the submit/approve/deny/withdraw/revoke operations delegate to (it resolves self-elevation eligibility from the principal, §16.5.3).</param>
@@ -43,14 +43,14 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
     /// <param name="catalog">The catalog client, for the §15-administrator visibility checks on the read paths.</param>
     /// <param name="access">Resolves the caller's deployment identity and the current principal per request.</param>
     /// <param name="subjectClaimType">The claim type identifying the requesting subject (and that a grant keys on); default <c>sub</c>.</param>
-    /// <param name="auditLogger">The logger for the §850 governance-decision audit (who decided which request, with what outcome); the audit span rides the always-registered <see cref="ArazzoTelemetry.ActivitySource"/> regardless.</param>
+    /// <param name="auditor">The logger for the §850 governance-decision audit (who decided which request, with what outcome); the audit span rides the always-registered <see cref="ArazzoTelemetry.ActivitySource"/> regardless.</param>
     internal ArazzoControlPlaneAccessRequestsHandler(
         IAccessRequestApprovalService approval,
         IAccessRequestStore requests,
         ISecuredWorkflowCatalog catalog,
         ControlPlaneAccess access,
         string subjectClaimType = "sub",
-        ILogger? auditLogger = null)
+        GovernanceAuditor? auditor = null)
     {
         ArgumentNullException.ThrowIfNull(approval);
         ArgumentNullException.ThrowIfNull(requests);
@@ -62,7 +62,7 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
         this.catalog = catalog;
         this.access = access;
         this.subjectClaimType = subjectClaimType;
-        this.auditLogger = auditLogger;
+        this.auditor = auditor ?? GovernanceAuditor.None;
     }
 
     // The audited resource kind for every action on this surface (design §850).
@@ -99,7 +99,7 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
 
             // A submit the requester's eligibility auto-approved both asked for and obtained access in one call, so it is
             // distinguished in the outcome vocabulary from a submit that waits for an approver (ADR 0038).
-            GovernanceAudit.Mutation(this.auditLogger, "access-request.submit", this.AuditActor(), TargetKind, created.RootElement.IdValue, created.RootElement.HasStatus(AccessRequestStatus.Approved) ? "self-elevated" : "submitted");
+            await this.auditor.MutationAsync("access-request.submit", this.AuditActor(), TargetKind, created.RootElement.IdValue, created.RootElement.HasStatus(AccessRequestStatus.Approved) ? "self-elevated" : "submitted").ConfigureAwait(false);
             return SubmitAccessRequestResult.Created(ToView(created.RootElement), workspace);
         }
         catch (AccessRequestStateException ex)
@@ -248,7 +248,7 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
         string id = (string)parameters.RequestId;
         if (await this.IsOwnRequestAsync(id, cancellationToken).ConfigureAwait(false))
         {
-            GovernanceAudit.Mutation(this.auditLogger, "access-request.approve", this.AuditActor(), TargetKind, id, "refused-own-request");
+            await this.auditor.MutationAsync("access-request.approve", this.AuditActor(), TargetKind, id, "refused-own-request").ConfigureAwait(false);
             return ApproveAccessRequestResult.Forbidden(OwnRequestProblem(), workspace);
         }
 
@@ -260,13 +260,13 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
                 return ApproveAccessRequestResult.NotFound(NotFoundProblem(id), workspace);
             }
 
-            GovernanceAudit.Mutation(this.auditLogger, "access-request.approve", this.AuditActor(), TargetKind, id, "granted");
+            await this.auditor.MutationAsync("access-request.approve", this.AuditActor(), TargetKind, id, "granted").ConfigureAwait(false);
             workspace.TakeOwnership(result);
             return ApproveAccessRequestResult.Ok(ToView(result.RootElement), workspace);
         }
         catch (WorkflowAdministrationException)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "access-request.approve", this.AuditActor(), TargetKind, id, "refused-not-administrator");
+            await this.auditor.MutationAsync("access-request.approve", this.AuditActor(), TargetKind, id, "refused-not-administrator").ConfigureAwait(false);
             return ApproveAccessRequestResult.Forbidden(NotAdministratorProblem(id), workspace);
         }
         catch (AccessRequestStateException ex)
@@ -288,7 +288,7 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
         // access only, bound to the requester, workflow-scoped) that also applies unconditionally.
         if (await this.IsOwnRequestAsync(id, cancellationToken).ConfigureAwait(false))
         {
-            GovernanceAudit.Mutation(this.auditLogger, "access-request.grant", this.AuditActor(), TargetKind, id, "refused-own-request");
+            await this.auditor.MutationAsync("access-request.grant", this.AuditActor(), TargetKind, id, "refused-own-request").ConfigureAwait(false);
             return GrantAccessRequestResult.Forbidden(OwnRequestProblem(), workspace);
         }
 
@@ -300,7 +300,7 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
                 return GrantAccessRequestResult.NotFound(NotFoundProblem(id), workspace);
             }
 
-            GovernanceAudit.Mutation(this.auditLogger, "access-request.grant", this.AuditActor(), TargetKind, id, "granted");
+            await this.auditor.MutationAsync("access-request.grant", this.AuditActor(), TargetKind, id, "granted").ConfigureAwait(false);
             workspace.TakeOwnership(result);
             return GrantAccessRequestResult.Ok(ToView(result.RootElement), workspace);
         }
@@ -324,7 +324,7 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
         // ceiling on a grant.
         if (await this.IsOwnRequestAsync(id, cancellationToken).ConfigureAwait(false))
         {
-            GovernanceAudit.Mutation(this.auditLogger, "access-request.settle", this.AuditActor(), TargetKind, id, "refused-own-request");
+            await this.auditor.MutationAsync("access-request.settle", this.AuditActor(), TargetKind, id, "refused-own-request").ConfigureAwait(false);
             return SettleAccessRequestResult.Forbidden(OwnRequestProblem(), workspace);
         }
 
@@ -336,7 +336,7 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
                 return SettleAccessRequestResult.NotFound(NotFoundProblem(id), workspace);
             }
 
-            GovernanceAudit.Mutation(this.auditLogger, "access-request.settle", this.AuditActor(), TargetKind, id, outcome);
+            await this.auditor.MutationAsync("access-request.settle", this.AuditActor(), TargetKind, id, outcome).ConfigureAwait(false);
             workspace.TakeOwnership(result);
             return SettleAccessRequestResult.Ok(ToView(result.RootElement), workspace);
         }
@@ -362,7 +362,7 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
         // requester, workflow-scoped) that also applies.
         if (await this.IsOwnRequestAsync(id, cancellationToken).ConfigureAwait(false))
         {
-            GovernanceAudit.Mutation(this.auditLogger, "access-request.grant-eligible", this.AuditActor(), TargetKind, id, "refused-own-request");
+            await this.auditor.MutationAsync("access-request.grant-eligible", this.AuditActor(), TargetKind, id, "refused-own-request").ConfigureAwait(false);
             return GrantAccessRequestAsEligibleResult.Forbidden(OwnRequestProblem(), workspace);
         }
 
@@ -374,7 +374,7 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
                 return GrantAccessRequestAsEligibleResult.NotFound(NotFoundProblem(id), workspace);
             }
 
-            GovernanceAudit.Mutation(this.auditLogger, "access-request.grant-eligible", this.AuditActor(), TargetKind, id, "eligible");
+            await this.auditor.MutationAsync("access-request.grant-eligible", this.AuditActor(), TargetKind, id, "eligible").ConfigureAwait(false);
             workspace.TakeOwnership(result);
             return GrantAccessRequestAsEligibleResult.Ok(ToView(result.RootElement), workspace);
         }
@@ -390,7 +390,7 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
         string id = (string)parameters.RequestId;
         if (await this.IsOwnRequestAsync(id, cancellationToken).ConfigureAwait(false))
         {
-            GovernanceAudit.Mutation(this.auditLogger, "access-request.approve-eligible", this.AuditActor(), TargetKind, id, "refused-own-request");
+            await this.auditor.MutationAsync("access-request.approve-eligible", this.AuditActor(), TargetKind, id, "refused-own-request").ConfigureAwait(false);
             return ApproveAccessRequestAsEligibleResult.Forbidden(OwnRequestProblem(), workspace);
         }
 
@@ -402,13 +402,13 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
                 return ApproveAccessRequestAsEligibleResult.NotFound(NotFoundProblem(id), workspace);
             }
 
-            GovernanceAudit.Mutation(this.auditLogger, "access-request.approve-eligible", this.AuditActor(), TargetKind, id, "eligible");
+            await this.auditor.MutationAsync("access-request.approve-eligible", this.AuditActor(), TargetKind, id, "eligible").ConfigureAwait(false);
             workspace.TakeOwnership(result);
             return ApproveAccessRequestAsEligibleResult.Ok(ToView(result.RootElement), workspace);
         }
         catch (WorkflowAdministrationException)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "access-request.approve-eligible", this.AuditActor(), TargetKind, id, "refused-not-administrator");
+            await this.auditor.MutationAsync("access-request.approve-eligible", this.AuditActor(), TargetKind, id, "refused-not-administrator").ConfigureAwait(false);
             return ApproveAccessRequestAsEligibleResult.Forbidden(NotAdministratorProblem(id), workspace);
         }
         catch (AccessRequestStateException ex)
@@ -423,7 +423,7 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
         string id = (string)parameters.RequestId;
         if (await this.IsOwnRequestAsync(id, cancellationToken).ConfigureAwait(false))
         {
-            GovernanceAudit.Mutation(this.auditLogger, "access-request.deny", this.AuditActor(), TargetKind, id, "refused-own-request");
+            await this.auditor.MutationAsync("access-request.deny", this.AuditActor(), TargetKind, id, "refused-own-request").ConfigureAwait(false);
             return DenyAccessRequestResult.Forbidden(OwnRequestProblem(), workspace);
         }
 
@@ -435,13 +435,13 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
                 return DenyAccessRequestResult.NotFound(NotFoundProblem(id), workspace);
             }
 
-            GovernanceAudit.Mutation(this.auditLogger, "access-request.deny", this.AuditActor(), TargetKind, id, "denied");
+            await this.auditor.MutationAsync("access-request.deny", this.AuditActor(), TargetKind, id, "denied").ConfigureAwait(false);
             workspace.TakeOwnership(result);
             return DenyAccessRequestResult.Ok(ToView(result.RootElement), workspace);
         }
         catch (WorkflowAdministrationException)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "access-request.deny", this.AuditActor(), TargetKind, id, "refused-not-administrator");
+            await this.auditor.MutationAsync("access-request.deny", this.AuditActor(), TargetKind, id, "refused-not-administrator").ConfigureAwait(false);
             return DenyAccessRequestResult.Forbidden(NotAdministratorProblem(id), workspace);
         }
         catch (AccessRequestStateException ex)
@@ -470,7 +470,7 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
 
             if (!this.IsRequester(fetched.RootElement))
             {
-                GovernanceAudit.Mutation(this.auditLogger, "access-request.withdraw", this.AuditActor(), TargetKind, id, "refused-not-requester");
+                await this.auditor.MutationAsync("access-request.withdraw", this.AuditActor(), TargetKind, id, "refused-not-requester").ConfigureAwait(false);
                 return WithdrawAccessRequestResult.Forbidden(Problem("not-requester", "Not the requester", 403, "Only the requester may withdraw their request."), workspace);
             }
         }
@@ -483,7 +483,7 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
                 return WithdrawAccessRequestResult.NotFound(NotFoundProblem(id), workspace);
             }
 
-            GovernanceAudit.Mutation(this.auditLogger, "access-request.withdraw", this.AuditActor(), TargetKind, id, "withdrawn");
+            await this.auditor.MutationAsync("access-request.withdraw", this.AuditActor(), TargetKind, id, "withdrawn").ConfigureAwait(false);
             workspace.TakeOwnership(result);
             return WithdrawAccessRequestResult.Ok(ToView(result.RootElement), workspace);
         }
@@ -505,13 +505,13 @@ public sealed class ArazzoControlPlaneAccessRequestsHandler : IApiAccessRequests
                 return RevokeAccessRequestResult.NotFound(NotFoundProblem(id), workspace);
             }
 
-            GovernanceAudit.Mutation(this.auditLogger, "access-request.revoke", this.AuditActor(), TargetKind, id, "revoked");
+            await this.auditor.MutationAsync("access-request.revoke", this.AuditActor(), TargetKind, id, "revoked").ConfigureAwait(false);
             workspace.TakeOwnership(result);
             return RevokeAccessRequestResult.Ok(ToView(result.RootElement), workspace);
         }
         catch (WorkflowAdministrationException)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "access-request.revoke", this.AuditActor(), TargetKind, id, "refused-not-administrator");
+            await this.auditor.MutationAsync("access-request.revoke", this.AuditActor(), TargetKind, id, "refused-not-administrator").ConfigureAwait(false);
             return RevokeAccessRequestResult.Forbidden(NotAdministratorProblem(id), workspace);
         }
         catch (AccessRequestStateException ex)

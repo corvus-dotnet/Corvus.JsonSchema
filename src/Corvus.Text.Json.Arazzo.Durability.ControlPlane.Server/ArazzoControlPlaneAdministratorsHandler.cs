@@ -37,7 +37,7 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
     private readonly ISecuredWorkflowCatalog catalog;
     private readonly ControlPlaneAccess access;
     private readonly IObservedIdentityStore? observed;
-    private readonly ILogger? auditLogger;
+    private readonly GovernanceAuditor auditor;
 
     // The audited resource kind for a workflow-administration change on this surface (design §850).
     private const string TargetKind = "workflow";
@@ -56,14 +56,14 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
     /// from internal tags. Unscoped (no identity) when no row security is configured.</param>
     /// <param name="observed">An optional observed-identity store; a newly added administrator is recorded as a resolvable
     /// grantee for the §16.5.4 typeahead (best-effort).</param>
-    internal ArazzoControlPlaneAdministratorsHandler(ISecuredWorkflowCatalog catalog, ControlPlaneAccess access, IObservedIdentityStore? observed = null, ILogger? auditLogger = null)
+    internal ArazzoControlPlaneAdministratorsHandler(ISecuredWorkflowCatalog catalog, ControlPlaneAccess access, IObservedIdentityStore? observed = null, GovernanceAuditor? auditor = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(access);
         this.catalog = catalog;
         this.access = access;
         this.observed = observed;
-        this.auditLogger = auditLogger;
+        this.auditor = auditor ?? GovernanceAuditor.None;
     }
 
     // The §850 audit subject: the authenticated principal who changed the administrator set (the human-facing name;
@@ -180,7 +180,7 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
         try
         {
             using ParsedJsonDocument<WorkflowAdministrators> record = await this.catalog.AddAdministratorAsync(baseWorkflowId, newAdministrator, adminKind, hasKind, label, hasLabel, this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
-            GovernanceAudit.Mutation(this.auditLogger, "workflow.add-administrator", this.AuditActor(), TargetKind, baseWorkflowId, "added");
+            await this.auditor.MutationAsync("workflow.add-administrator", this.AuditActor(), TargetKind, baseWorkflowId, "added").ConfigureAwait(false);
 
             // Record the newly named administrator as a resolvable grantee for the §16.5.4 typeahead. Best-effort: the
             // sighting is an idempotent projection and never fails the add. `complete` is honest (§17.2): the picker's
@@ -379,7 +379,7 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
         try
         {
             using ParsedJsonDocument<WorkflowAdministrators> record = await this.catalog.TransferAdministrationAsync(baseWorkflowId, newAdministrators, this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
-            GovernanceAudit.Mutation(this.auditLogger, "workflow.transfer-administration", this.AuditActor(), TargetKind, baseWorkflowId, "transferred");
+            await this.auditor.MutationAsync("workflow.transfer-administration", this.AuditActor(), TargetKind, baseWorkflowId, "transferred").ConfigureAwait(false);
             var listContext = new AdministratorListContext(record.RootElement.Administrators, this.access);
             return TransferAdministrationResult.Ok(
                 Models.AdministratorList.Build(in listContext, administrators: Models.AdministratorList.AdministratorGrantArray.Build(in listContext, BuildGrants)),
@@ -416,7 +416,7 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
         try
         {
             using ParsedJsonDocument<WorkflowAdministrators> record = await this.catalog.RemoveAdministratorAsync(baseWorkflowId, digest, this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
-            GovernanceAudit.Mutation(this.auditLogger, "workflow.remove-administrator", this.AuditActor(), TargetKind, baseWorkflowId, "removed");
+            await this.auditor.MutationAsync("workflow.remove-administrator", this.AuditActor(), TargetKind, baseWorkflowId, "removed").ConfigureAwait(false);
             var listContext = new AdministratorListContext(record.RootElement.Administrators, this.access);
             return RemoveAdministratorResult.Ok(
                 Models.AdministratorList.Build(in listContext, administrators: Models.AdministratorList.AdministratorGrantArray.Build(in listContext, BuildGrants)),

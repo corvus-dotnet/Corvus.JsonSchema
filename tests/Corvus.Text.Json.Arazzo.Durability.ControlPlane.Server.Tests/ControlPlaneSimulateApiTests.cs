@@ -6,6 +6,7 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Generation;
 using Corvus.Text.Json.Arazzo.Testing;
@@ -484,7 +485,8 @@ public sealed class ControlPlaneSimulateApiTests
         app.MapArazzoControlPlane(
             management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.ScopesOnly,
             workspaceWorkflowStore: workspaceStore,
-            workflowSimulator: withSimulator ? SharedSimulator : null);
+            workflowSimulator: withSimulator ? SharedSimulator : null,
+            auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
         await app.StartAsync();
         return new Scoped(app, app.GetTestClient());
     }

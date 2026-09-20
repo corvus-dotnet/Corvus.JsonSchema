@@ -132,7 +132,7 @@ public sealed class NativeBuildEndToEndTests
         await using WebApplication app = appBuilder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), nativeBuildJobStore: buildStore);
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), nativeBuildJobStore: buildStore, auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
 

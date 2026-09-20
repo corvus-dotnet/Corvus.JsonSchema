@@ -7,8 +7,9 @@ and which reads are recorded.
 
 ## How coverage is emitted
 
-Every governed mutation is audited through one primitive, `GovernanceAudit.Mutation`
-([ADR 0038](../adr/0038-payload-safe-governance-audit.md)). One call emits three things at once: a span named for
+Every governed mutation is audited through one primitive, `GovernanceAuditor.MutationAsync`
+([ADR 0038](../adr/0038-payload-safe-governance-audit.md)), which also appends the record to the deployment's audit
+chain and fails the request when the sink refuses it ([ADR 0069](../adr/0069-audit-as-evidence-append-only-chained-signed-sink.md)). One call emits three things at once: a span named for
 the action on the `Corvus.Arazzo` activity source (carrying `actor`, `target_kind`, `target_id`, and `outcome`
 tags), an audit-grade structured log, and an increment of `corvus.arazzo.governance.decisions` dimensioned by
 `action` and `outcome`. In the tables below, **decisions** is shorthand for that counter. A refused action is

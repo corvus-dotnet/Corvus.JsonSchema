@@ -1026,7 +1026,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
         // (the §5.5 revocation fence): revoking a runner expires the leases it holds. The store is exposed to the test so a
         // fence assertion can check that a revoked runner's lease is reclaimable. The runner registry is likewise exposed so
         // the registration tests can confirm a registered runner's liveness record (design §16.4).
-        app.MapArazzoControlPlane(management, catalog, registry, ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), environmentRunnerAuthorizationStore: runnerAuthorizations, workflowStateStore: store, runnerEnrolmentSecret: enrolmentSecret ?? default(ReadOnlyMemory<byte>));
+        app.MapArazzoControlPlane(management, catalog, registry, ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), environmentRunnerAuthorizationStore: runnerAuthorizations, workflowStateStore: store, runnerEnrolmentSecret: enrolmentSecret ?? default(ReadOnlyMemory<byte>), auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient(), store, registry);

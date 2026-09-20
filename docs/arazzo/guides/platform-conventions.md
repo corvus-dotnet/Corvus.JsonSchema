@@ -50,7 +50,9 @@ capped. The default cap is 100.
 ## Governance audit
 
 Every governed action (grant, revoke, approve, deny, publish, delete) is audited through one payload-safe
-primitive, `GovernanceAudit` ([ADR 0038](../adr/0038-payload-safe-governance-audit.md)). It emits a span named
+primitive, `GovernanceAuditor` ([ADR 0038](../adr/0038-payload-safe-governance-audit.md)). The host builds one and
+hands the same instance to its bootstrap and to the control plane, and a secured control plane refuses to start
+unless it appends to an audit sink ([ADR 0069](../adr/0069-audit-as-evidence-append-only-chained-signed-sink.md)). It emits a span named
 for the action plus an audit-grade structured log, carrying only controlled vocabulary and identifiers (the
 action, the actor as its canonical subject and tenant, the target kind and id, the outcome, and the environment
 where the action is scoped to one). It has no parameter that could take a payload or a secret, so an action

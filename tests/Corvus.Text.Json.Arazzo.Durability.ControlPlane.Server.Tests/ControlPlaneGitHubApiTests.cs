@@ -7,6 +7,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using Corvus.Text.Json.Arazzo.Durability;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -429,7 +430,8 @@ public sealed class ControlPlaneGitHubApiTests
         app.UseAuthorization();
         app.MapArazzoControlPlane(
             management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.ScopesOnly,
-            gitHubBroker: broker);
+            gitHubBroker: broker,
+            auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
         await app.StartAsync();
         return new Scoped(app, app.GetTestClient());
     }

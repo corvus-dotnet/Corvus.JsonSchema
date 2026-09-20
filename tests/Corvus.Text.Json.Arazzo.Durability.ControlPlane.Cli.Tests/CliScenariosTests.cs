@@ -5,6 +5,7 @@
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 using Corvus.Text.Json.Arazzo.Generation;
@@ -243,7 +244,8 @@ public sealed partial class CliIntegrationTests
         app.MapArazzoControlPlane(
             management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.ScopesOnly,
             workspaceWorkflowStore: workspaceStore,
-            workflowSimulator: new WorkflowSimulator(new WorkflowExecutorProvider(durable: true)));
+            workflowSimulator: new WorkflowSimulator(new WorkflowExecutorProvider(durable: true)),
+            auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
         await app.StartAsync();
         return new WorkspaceHost(app, app.Urls.First());
     }

@@ -43,7 +43,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
     private readonly ControlPlaneAccess access;
     private readonly IObservedIdentityStore? observed;
     private readonly string actor;
-    private readonly ILogger? auditLogger;
+    private readonly GovernanceAuditor auditor;
 
     // The runner registry and runner-authorization roster, used only to fence an isolation-floor raise (ADR 0058): raising
     // requiredIsolation to Isolated is refused while a runner that advertises less is still authorized for the environment.
@@ -90,7 +90,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
     /// <param name="observed">An optional observed-identity store; a newly added administrator is recorded as a resolvable
     /// grantee for the §16.5.4 typeahead (best-effort).</param>
     /// <param name="actor">The audit actor recorded on writes (a deployment may resolve this from the principal).</param>
-    internal ArazzoControlPlaneEnvironmentsHandler(ControlPlaneSecurityMode securityMode, IEnvironmentStore store, SecuredEnvironmentAdministration administration, ControlPlaneAccess access, IObservedIdentityStore? observed = null, string actor = "control-plane", ILogger? auditLogger = null, IRunnerRegistry? runners = null, IEnvironmentRunnerAuthorizationStore? runnerAuthorizations = null, ExecutionBudget? executionBudgetCeiling = null)
+    internal ArazzoControlPlaneEnvironmentsHandler(ControlPlaneSecurityMode securityMode, IEnvironmentStore store, SecuredEnvironmentAdministration administration, ControlPlaneAccess access, IObservedIdentityStore? observed = null, string actor = "control-plane", GovernanceAuditor? auditor = null, IRunnerRegistry? runners = null, IEnvironmentRunnerAuthorizationStore? runnerAuthorizations = null, ExecutionBudget? executionBudgetCeiling = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(administration);
@@ -101,7 +101,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
         this.access = access;
         this.observed = observed;
         this.actor = actor;
-        this.auditLogger = auditLogger;
+        this.auditor = auditor ?? GovernanceAuditor.None;
         this.runners = runners;
         this.runnerAuthorizations = runnerAuthorizations;
         this.securityMode = securityMode;
@@ -242,9 +242,8 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
             // operator their deployment cannot yet serve a second owner group. Saying that to a caller who simply lost a
             // race would send them to investigate a condition that does not hold.
             bool contended = admission == TenancyAdmission.Contended;
-            GovernanceAudit.Mutation(
-                this.auditLogger, "environment.create", this.AuditActor(), TargetKind, (string)body.Name,
-                contended ? "refused-tenancy-interlock-contended" : "refused-tenancy-invariant");
+            await this.auditor.MutationAsync("environment.create", this.AuditActor(), TargetKind, (string)body.Name,
+                contended ? "refused-tenancy-interlock-contended" : "refused-tenancy-invariant").ConfigureAwait(false);
             return CreateEnvironmentResult.Conflict(contended ? TenancyInterlockProblem() : TenancyInvariantProblem(), workspace);
         }
 
@@ -274,7 +273,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
                 await this.administration.EstablishAsync(name, callerIdentity, default, hasKind: false, default, hasLabel: false, cancellationToken).ConfigureAwait(false);
             }
 
-            GovernanceAudit.Mutation(this.auditLogger, "environment.create", this.AuditActor(), TargetKind, name, "created");
+            await this.auditor.MutationAsync("environment.create", this.AuditActor(), TargetKind, name, "created").ConfigureAwait(false);
             workspace.TakeOwnership(created);
             return CreateEnvironmentResult.Created(Models.EnvironmentSummary.From(created.RootElement), workspace);
         }
@@ -342,7 +341,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
         if (body.RequiredIsolation.IsNotUndefined() && ((JsonElement)body.RequiredIsolation).ValueEquals("Isolated"u8)
             && await this.FirstUnderIsolatedAuthorizedRunnerAsync(name, cancellationToken).ConfigureAwait(false) is { } strandedRunner)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "environment.update", this.AuditActor(), TargetKind, name, "refused-isolation-raise-strands-runner");
+            await this.auditor.MutationAsync("environment.update", this.AuditActor(), TargetKind, name, "refused-isolation-raise-strands-runner").ConfigureAwait(false);
             return UpdateEnvironmentResult.Conflict(InsufficientIsolationRaiseProblem(name, strandedRunner), workspace);
         }
 
@@ -367,7 +366,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
             return UpdateEnvironmentResult.NotFound(NotFoundProblem(name), workspace);
         }
 
-        GovernanceAudit.Mutation(this.auditLogger, "environment.update", this.AuditActor(), TargetKind, name, "updated");
+        await this.auditor.MutationAsync("environment.update", this.AuditActor(), TargetKind, name, "updated").ConfigureAwait(false);
         workspace.TakeOwnership(e);
         return UpdateEnvironmentResult.Ok(Models.EnvironmentSummary.From(e.RootElement), workspace);
     }
@@ -396,7 +395,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
 
         // Clean up the now-orphaned administration record (best-effort; the environment is gone either way).
         await this.administration.DeleteRecordAsync(name, cancellationToken).ConfigureAwait(false);
-        GovernanceAudit.Mutation(this.auditLogger, "environment.delete", this.AuditActor(), TargetKind, name, "deleted");
+        await this.auditor.MutationAsync("environment.delete", this.AuditActor(), TargetKind, name, "deleted").ConfigureAwait(false);
         return DeleteEnvironmentResult.NoContent();
     }
 
@@ -505,7 +504,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
                 System.Diagnostics.Activity.Current?.SetTag("arazzo.administration.broadening_overlap_count", overlaps.Count);
             }
 
-            GovernanceAudit.Mutation(this.auditLogger, "environment.add-administrator", this.AuditActor(), TargetKind, name, "added");
+            await this.auditor.MutationAsync("environment.add-administrator", this.AuditActor(), TargetKind, name, "added").ConfigureAwait(false);
             var listContext = new AdministratorListContext(record.RootElement.Administrators, this.access, overlaps);
             return AddEnvironmentAdministratorResult.Ok(
                 Models.AdministratorList.Build(
@@ -578,7 +577,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
         try
         {
             using ParsedJsonDocument<EnvironmentAdministrators> record = await this.administration.TransferAdministrationAsync(name, newAdministrators, this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
-            GovernanceAudit.Mutation(this.auditLogger, "environment.transfer-administration", this.AuditActor(), TargetKind, name, "transferred");
+            await this.auditor.MutationAsync("environment.transfer-administration", this.AuditActor(), TargetKind, name, "transferred").ConfigureAwait(false);
             var listContext = new AdministratorListContext(record.RootElement.Administrators, this.access);
             return TransferEnvironmentAdministrationResult.Ok(
                 Models.AdministratorList.Build(in listContext, administrators: Models.AdministratorList.AdministratorGrantArray.Build(in listContext, BuildGrants)),
@@ -606,7 +605,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
         try
         {
             using ParsedJsonDocument<EnvironmentAdministrators> record = await this.administration.RemoveAdministratorAsync(name, digest, this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
-            GovernanceAudit.Mutation(this.auditLogger, "environment.remove-administrator", this.AuditActor(), TargetKind, name, "removed");
+            await this.auditor.MutationAsync("environment.remove-administrator", this.AuditActor(), TargetKind, name, "removed").ConfigureAwait(false);
             var listContext = new AdministratorListContext(record.RootElement.Administrators, this.access);
             return RemoveEnvironmentAdministratorResult.Ok(
                 Models.AdministratorList.Build(in listContext, administrators: Models.AdministratorList.AdministratorGrantArray.Build(in listContext, BuildGrants)),

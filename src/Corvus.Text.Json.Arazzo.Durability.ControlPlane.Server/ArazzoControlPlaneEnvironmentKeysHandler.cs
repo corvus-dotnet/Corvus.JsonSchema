@@ -71,7 +71,7 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
     private readonly ControlPlaneAccess access;
     private readonly TimeProvider timeProvider;
     private readonly string subjectClaimType;
-    private readonly ILogger? auditLogger;
+    private readonly GovernanceAuditor auditor;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneEnvironmentKeysHandler"/> class.</summary>
     /// <param name="environments">The environment store.</param>
@@ -79,14 +79,14 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
     /// <param name="access">The caller's access context.</param>
     /// <param name="timeProvider">The time source for registration timestamps and the freshness check.</param>
     /// <param name="subjectClaimType">The claim type identifying the deciding subject (the recorded actor); default <c>sub</c>.</param>
-    /// <param name="auditLogger">The governance audit sink, if any.</param>
+    /// <param name="auditor">The governance audit sink, if any.</param>
     internal ArazzoControlPlaneEnvironmentKeysHandler(
         IEnvironmentStore environments,
         SecuredEnvironmentAdministration administration,
         ControlPlaneAccess access,
         TimeProvider? timeProvider = null,
         string subjectClaimType = "sub",
-        ILogger? auditLogger = null)
+        GovernanceAuditor? auditor = null)
     {
         ArgumentNullException.ThrowIfNull(environments);
         ArgumentNullException.ThrowIfNull(administration);
@@ -96,7 +96,7 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
         this.access = access;
         this.timeProvider = timeProvider ?? TimeProvider.System;
         this.subjectClaimType = subjectClaimType;
-        this.auditLogger = auditLogger;
+        this.auditor = auditor ?? GovernanceAuditor.None;
     }
 
     /// <inheritdoc/>
@@ -140,7 +140,7 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
 
         if (gate != GovernanceGate.Authorized)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "environment.key.register", this.AuditActor(), TargetKind, KeyKey(environment, keyId), "refused-not-administrator");
+            await this.auditor.MutationAsync("environment.key.register", this.AuditActor(), TargetKind, KeyKey(environment, keyId), "refused-not-administrator").ConfigureAwait(false);
             return RegisterEnvironmentKeyResult.Forbidden(NotAdministratorProblem(environment), workspace);
         }
 
@@ -159,7 +159,7 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
 
             // The refusal reason is diagnostic, not disclosing: every value here is one the caller supplied, so
             // naming which check failed tells them nothing they did not already know.
-            GovernanceAudit.Mutation(this.auditLogger, "environment.key.register", this.AuditActor(), TargetKind, KeyKey(environment, keyId), $"refused-{possession}");
+            await this.auditor.MutationAsync("environment.key.register", this.AuditActor(), TargetKind, KeyKey(environment, keyId), $"refused-{possession}").ConfigureAwait(false);
             return RegisterEnvironmentKeyResult.BadRequest(PossessionProblem(environment, keyId, possession), workspace);
         }
 
@@ -192,7 +192,7 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
             return RegisterEnvironmentKeyResult.Conflict(ConcurrentWriteProblem(environment, keyId), workspace);
         }
 
-        GovernanceAudit.Mutation(this.auditLogger, "environment.key.register", actor, TargetKind, KeyKey(environment, keyId), "registered");
+        await this.auditor.MutationAsync("environment.key.register", actor, TargetKind, KeyKey(environment, keyId), "registered").ConfigureAwait(false);
         workspace.TakeOwnership(updated);
         return RegisterEnvironmentKeyResult.Ok(Models.EnvironmentKeyView.From(Find(updated.RootElement, keyId)!.Value), workspace);
     }
@@ -211,7 +211,7 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
 
         if (gate != GovernanceGate.Authorized)
         {
-            GovernanceAudit.Mutation(this.auditLogger, "environment.key.retire", this.AuditActor(), TargetKind, KeyKey(environment, keyId), "refused-not-administrator");
+            await this.auditor.MutationAsync("environment.key.retire", this.AuditActor(), TargetKind, KeyKey(environment, keyId), "refused-not-administrator").ConfigureAwait(false);
             return RetireEnvironmentKeyResult.Forbidden(NotAdministratorProblem(environment), workspace);
         }
 
@@ -239,7 +239,7 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
         if (IsLastActive(stored.RootElement, keyId) && await this.MoreThanOneOwnerGroupAsync(cancellationToken).ConfigureAwait(false))
         {
             stored.Dispose();
-            GovernanceAudit.Mutation(this.auditLogger, "environment.key.retire", this.AuditActor(), TargetKind, KeyKey(environment, keyId), "refused-last-active-generation");
+            await this.auditor.MutationAsync("environment.key.retire", this.AuditActor(), TargetKind, KeyKey(environment, keyId), "refused-last-active-generation").ConfigureAwait(false);
             return RetireEnvironmentKeyResult.Conflict(LastActiveGenerationProblem(environment, keyId), workspace);
         }
 
@@ -258,7 +258,7 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
             return RetireEnvironmentKeyResult.Conflict(ConcurrentWriteProblem(environment, keyId), workspace);
         }
 
-        GovernanceAudit.Mutation(this.auditLogger, "environment.key.retire", actor, TargetKind, KeyKey(environment, keyId), "retired");
+        await this.auditor.MutationAsync("environment.key.retire", actor, TargetKind, KeyKey(environment, keyId), "retired").ConfigureAwait(false);
         workspace.TakeOwnership(updated);
         return RetireEnvironmentKeyResult.Ok(Models.EnvironmentKeyView.From(Find(updated.RootElement, keyId)!.Value), workspace);
     }

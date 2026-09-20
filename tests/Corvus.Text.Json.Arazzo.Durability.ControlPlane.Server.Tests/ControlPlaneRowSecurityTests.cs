@@ -7,6 +7,7 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Durability;
 using Microsoft.AspNetCore.Authentication;
@@ -494,7 +495,7 @@ public sealed class ControlPlaneRowSecurityTests
 
         WebApplication app = builder.Build();
         app.UseAuthentication();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.RowSecurityOnly, rowSecurity: policy ?? new TenantRowSecurityPolicy());
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.RowSecurityOnly, rowSecurity: policy ?? new TenantRowSecurityPolicy(), auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient(), store, catalog, clock);

@@ -21,7 +21,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap;
 public sealed class DefaultDeploymentBootstrap : IDeploymentBootstrap
 {
     private const string BootstrapActor = "bootstrap";
-    private readonly ILogger? auditLogger;
+    private readonly GovernanceAuditor auditor;
 
     /// <summary>Initializes a new instance of the <see cref="DefaultDeploymentBootstrap"/> class.</summary>
     public DefaultDeploymentBootstrap()
@@ -30,10 +30,10 @@ public sealed class DefaultDeploymentBootstrap : IDeploymentBootstrap
     }
 
     /// <summary>Initializes a new instance of the <see cref="DefaultDeploymentBootstrap"/> class with an audit logger.</summary>
-    /// <param name="auditLogger">The governance-audit logger the seeded grants are recorded to (the audit span is emitted regardless).</param>
-    public DefaultDeploymentBootstrap(ILogger? auditLogger)
+    /// <param name="auditor">The governance-audit logger the seeded grants are recorded to (the audit span is emitted regardless).</param>
+    public DefaultDeploymentBootstrap(GovernanceAuditor? auditor)
     {
-        this.auditLogger = auditLogger;
+        this.auditor = auditor ?? GovernanceAuditor.None;
     }
 
     /// <inheritdoc/>
@@ -42,7 +42,7 @@ public sealed class DefaultDeploymentBootstrap : IDeploymentBootstrap
         ArgumentNullException.ThrowIfNull(securityStore);
 
         // (1) The editable bootstrap rules (§14.2) — idempotent (only missing rule names are added).
-        await SecurityBootstrap.SeedAsync(securityStore, BootstrapActor, this.auditLogger, cancellationToken).ConfigureAwait(false);
+        await SecurityBootstrap.SeedAsync(securityStore, BootstrapActor, this.auditor, cancellationToken).ConfigureAwait(false);
 
         // Bindings carry a store-assigned id (no natural key like a rule name), so this bootstrap must dedupe by the
         // binding SUBJECT (claim type + value) to stay idempotent: a deployment runs it on every startup, and appending
@@ -75,7 +75,7 @@ public sealed class DefaultDeploymentBootstrap : IDeploymentBootstrap
             using (ParsedJsonDocument<SecurityBindingDocument> created = await securityStore.AddBindingAsync(readAll.RootElement, BootstrapActor, cancellationToken).ConfigureAwait(false))
             {
                 // The founding grants are governance actions (ADR 0038): on the trail like any binding an operator authors.
-                GovernanceAudit.Mutation(this.auditLogger, "security-binding.create", BootstrapActor, "security-binding", created.RootElement.IdValue, "created");
+                await this.auditor.MutationAsync("security-binding.create", BootstrapActor, "security-binding", created.RootElement.IdValue, "created").ConfigureAwait(false);
             }
         }
 
@@ -94,7 +94,7 @@ public sealed class DefaultDeploymentBootstrap : IDeploymentBootstrap
                 additionalClauses: ReadAdditionalClauses(options));
             using (ParsedJsonDocument<SecurityBindingDocument> created = await securityStore.AddBindingAsync(admin.RootElement, BootstrapActor, cancellationToken).ConfigureAwait(false))
             {
-                GovernanceAudit.Mutation(this.auditLogger, "security-binding.create", BootstrapActor, "security-binding", created.RootElement.IdValue, "created");
+                await this.auditor.MutationAsync("security-binding.create", BootstrapActor, "security-binding", created.RootElement.IdValue, "created").ConfigureAwait(false);
             }
         }
     }

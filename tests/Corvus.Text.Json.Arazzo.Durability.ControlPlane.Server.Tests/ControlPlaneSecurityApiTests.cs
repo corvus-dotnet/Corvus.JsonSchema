@@ -512,7 +512,7 @@ public sealed class ControlPlaneSecurityApiTests
         // caller's identity (e.g. team=payments → sys:team=payments), not a raw token claim.
         var policy = new PersistentRowSecurityPolicy(policyStore, internalTagResolver: static p => p?.Claims.Select(c => new SecurityTag(SecurityShell.DefaultInternalPrefix + c.Type, c.Value)).ToList() ?? []);
         await policy.RefreshAsync();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.RowSecurityOnly, rowSecurity: policy, securityPolicyStore: policyStore);
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.RowSecurityOnly, rowSecurity: policy, securityPolicyStore: policyStore, auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient());
@@ -536,7 +536,7 @@ public sealed class ControlPlaneSecurityApiTests
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.ScopesOnly, securityPolicyStore: new InMemorySecurityPolicyStore());
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.ScopesOnly, securityPolicyStore: new InMemorySecurityPolicyStore(), auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient());

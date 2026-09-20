@@ -8,6 +8,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Encodings.Web;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using Corvus.Text.Json.Arazzo.Durability;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -390,7 +391,8 @@ public sealed class ControlPlaneProvidersApiTests
         app.UseAuthorization();
         app.MapArazzoControlPlane(
             management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.ScopesOnly,
-            sourceFetcher: fetcher, providerBroker: providers);
+            sourceFetcher: fetcher, providerBroker: providers,
+            auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
         await app.StartAsync();
         return new Scoped(app, app.GetTestClient());
     }

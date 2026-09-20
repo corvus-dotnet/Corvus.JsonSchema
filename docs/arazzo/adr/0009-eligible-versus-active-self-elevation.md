@@ -30,7 +30,7 @@ approve their own access request would turn a request into a self-grant, which d
   requester, even an administrator: the access-request and availability-request handlers refuse it, and a
   denial of your own request is treated as a withdrawal wearing a decision's clothes
   (`ControlPlane.Server/ArazzoControlPlaneAvailabilityRequestsHandler.cs:274`, and the access-request handler;
-  named in `GovernanceAudit.cs`).
+  named in `GovernanceAuditor.cs`).
 
 ## Decision
 
