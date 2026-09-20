@@ -34,3 +34,19 @@ Azurite emulator.
 **Encryption at rest:** Azure Storage encrypts blobs and tables at rest by default (customer-managed key
 optional). For encryption the storage operator cannot read, wrap this store in `ProtectedWorkflowStateStore`
 (see the `Corvus.Text.Json.Arazzo.Durability` README).
+
+## The audit sink
+
+`AzureBlobAuditSink` is the deployment's audit evidence store ([ADR 0069](../../docs/arazzo/adr/0069-audit-as-evidence-append-only-chained-signed-sink.md)): each audit chain is one append blob, `{chainId}.jsonl`, and each record is one appended block. Give it a container in a storage account **other than** the one the operational stores use, so that whoever holds the operational data does not hold its audit.
+
+```csharp
+BlobContainerClient auditContainer = new BlobServiceClient(auditAccountUri, credential).GetBlobContainerClient("arazzo-audit");
+AzureBlobAuditSink sink = await AzureBlobAuditSink.ConnectAsync(auditContainer);
+var auditor = new GovernanceAuditor(auditLogger, sink, headSigner: auditHeadSigner);
+```
+
+**The container must be immutable, and the sink checks.** `ConnectAsync` refuses a container that has neither an immutability policy nor a legal hold. Create the container with a time-based retention policy and **allow protected append writes** on it: without that setting the policy refuses the appends themselves. The retention period is the audit's retention. The platform adds none of its own.
+
+For development and for the Azurite emulator, which has no immutability policies, pass `allowMutableContainer: true`. What such a container keeps can be rewritten, so it is not evidence.
+
+A chain is never reopened: the blob is created with `If-None-Match: *`. The chain writer opens a new chain at 40,000 records, so a chain stays under an append blob's limit of 50,000 blocks. To verify a chain, download its blob and give it to `arazzo-runs audit verify`, which reads the bytes directly and not through the control plane.

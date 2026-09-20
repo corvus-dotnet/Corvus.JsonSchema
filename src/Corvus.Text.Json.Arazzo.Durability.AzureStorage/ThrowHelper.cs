@@ -95,4 +95,11 @@ internal static class ThrowHelper
     [StackTraceHidden]
     public static void ThrowScheduleRegistrationConflict(string scheduleId)
         => throw new Schedules.ScheduleRegistrationConflictException(SR.Format(SR.ScheduleRegistrationConflict, scheduleId));
+
+    /// <summary>Throws when the audit sink's container has neither an immutability policy nor a legal hold (ADR 0069).</summary>
+    /// <param name="containerName">The container's name.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowAuditContainerIsMutable(string containerName)
+        => throw new InvalidOperationException(SR.Format(SR.AuditContainerIsMutable, containerName));
 }

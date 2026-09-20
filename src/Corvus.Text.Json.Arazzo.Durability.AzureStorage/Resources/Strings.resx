@@ -93,4 +93,7 @@
   <data name="ScheduleRegistrationConflict" xml:space="preserve">
     <value>Schedule id '{0}' is already registered to a different schedule; schedule ids are globally unique across the deployment.</value>
   </data>
+  <data name="AuditContainerIsMutable" xml:space="preserve">
+    <value>The audit container '{0}' has neither an immutability policy nor a legal hold, so what it keeps can be rewritten and is not evidence (ADR 0069). Give it a time-based retention policy that allows protected append writes, or a legal hold. For development or the storage emulator, connect with allowMutableContainer: true.</value>
+  </data>
 </root>
