@@ -1278,6 +1278,7 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
             catch
             {
                 ArrayPool<byte>.Shared.Return(rentedBytes);
+                throw;
             }
         }
 

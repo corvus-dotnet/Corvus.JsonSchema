@@ -289,6 +289,7 @@ public sealed class FixedStringJsonDocument<T> : IJsonDocument
             catch
             {
                 ArrayPool<byte>.Shared.Return(rentedBytes);
+                throw;
             }
         }
 
