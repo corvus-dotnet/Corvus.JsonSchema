@@ -221,7 +221,7 @@ public sealed class ControlPlaneTenancyInvariantTests
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), mode, rowSecurity: rowSecurity, environmentStore: environments, auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), mode, rowSecurity: rowSecurity, environmentStore: environments, auditor: GovernanceAuditor.CreateInMemory());
         await app.StartAsync();
 
         return new Host(app, app.GetTestClient());

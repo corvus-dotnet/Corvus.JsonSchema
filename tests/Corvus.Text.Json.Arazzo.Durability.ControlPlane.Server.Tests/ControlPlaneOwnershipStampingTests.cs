@@ -165,7 +165,7 @@ public sealed class ControlPlaneOwnershipStampingTests
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), mode, rowSecurity: rowSecurity, auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), mode, rowSecurity: rowSecurity, auditor: GovernanceAuditor.CreateInMemory());
         await app.StartAsync();
 
         return new Host(app, app.GetTestClient());

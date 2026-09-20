@@ -46,12 +46,12 @@ public sealed class ControlPlaneAuthorizationTests
         var runners = new InMemoryRunnerRegistry();
 
         // Scoped / RowSecurityOnly REQUIRE a row-security policy — you cannot get scopes without row reach by omission (F2).
-        Should.Throw<ArgumentException>(() => app.MapArazzoControlPlane(management, catalog, runners, ControlPlaneSecurityMode.Scoped, auditor: new GovernanceAuditor(sink: new InMemoryAuditSink())));
-        Should.Throw<ArgumentException>(() => app.MapArazzoControlPlane(management, catalog, runners, ControlPlaneSecurityMode.RowSecurityOnly, auditor: new GovernanceAuditor(sink: new InMemoryAuditSink())));
+        Should.Throw<ArgumentException>(() => app.MapArazzoControlPlane(management, catalog, runners, ControlPlaneSecurityMode.Scoped, auditor: GovernanceAuditor.CreateInMemory()));
+        Should.Throw<ArgumentException>(() => app.MapArazzoControlPlane(management, catalog, runners, ControlPlaneSecurityMode.RowSecurityOnly, auditor: GovernanceAuditor.CreateInMemory()));
 
         // Open / ScopesOnly grant System reach and must NOT be handed a policy that would be silently ignored.
         Should.Throw<ArgumentException>(() => app.MapArazzoControlPlane(management, catalog, runners, ControlPlaneSecurityMode.Open, rowSecurity: new SystemPolicy()));
-        Should.Throw<ArgumentException>(() => app.MapArazzoControlPlane(management, catalog, runners, ControlPlaneSecurityMode.ScopesOnly, rowSecurity: new SystemPolicy(), auditor: new GovernanceAuditor(sink: new InMemoryAuditSink())));
+        Should.Throw<ArgumentException>(() => app.MapArazzoControlPlane(management, catalog, runners, ControlPlaneSecurityMode.ScopesOnly, rowSecurity: new SystemPolicy(), auditor: GovernanceAuditor.CreateInMemory()));
     }
 
     private sealed class SystemPolicy : ControlPlaneRowSecurityPolicy
@@ -137,7 +137,7 @@ public sealed class ControlPlaneAuthorizationTests
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.ScopesOnly, auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.ScopesOnly, auditor: GovernanceAuditor.CreateInMemory());
         await app.StartAsync();
 
         return new Secured(app, app.GetTestClient());

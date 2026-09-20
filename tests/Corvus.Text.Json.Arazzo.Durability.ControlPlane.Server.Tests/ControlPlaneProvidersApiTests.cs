@@ -392,7 +392,7 @@ public sealed class ControlPlaneProvidersApiTests
         app.MapArazzoControlPlane(
             management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.ScopesOnly,
             sourceFetcher: fetcher, providerBroker: providers,
-            auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
+            auditor: GovernanceAuditor.CreateInMemory());
         await app.StartAsync();
         return new Scoped(app, app.GetTestClient());
     }

@@ -207,4 +207,11 @@ public static class ArazzoTelemetry
     /// </summary>
     public static Counter<long> AuditAppendFailures { get; } =
         Meter.CreateCounter<long>("corvus.arazzo.governance.audit.append_failures", "{record}", "Audit records the audit sink refused");
+
+    /// <summary>
+    /// Gets the counter for audit chain heads that could not be signed or stored (ADR 0069). While it rises the chain's
+    /// unsigned window is growing: records are still chained, and nothing yet vouches for the newest of them.
+    /// </summary>
+    public static Counter<long> AuditHeadFailures { get; } =
+        Meter.CreateCounter<long>("corvus.arazzo.governance.audit.head_failures", "{head}", "Audit chain heads that could not be signed or stored");
 }

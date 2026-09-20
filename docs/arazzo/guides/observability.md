@@ -85,6 +85,21 @@ audits as `self-elevated`. Log the actor, tenant, target, and outcome as structu
 interpolated into the message, so a log pipeline can index them and correlate them with the trace by the ambient
 `TraceId`. Never log a message payload or a credential.
 
+### The audit chain's signals
+
+In a secured deployment each of those records is also appended to the deployment's audit chain
+([ADR 0069](../adr/0069-audit-as-evidence-append-only-chained-signed-sink.md)), and the chain has three signals of
+its own. Alert on the first two at any non-zero rate, and retain the third.
+
+| Signal | What it means |
+|--------|---------------|
+| `corvus.arazzo.governance.audit.append_failures` (counter, by action) | The audit sink refused a record. The action was applied, the request got a `500` of type `audit-record-failed`, and the action is not in the chain |
+| `corvus.arazzo.governance.audit.head_failures` (counter) | A chain head could not be signed or stored. Requests keep succeeding and records are still chained, and the newest of them are not yet vouched for by a signature. It is retried at the next cadence tick |
+| `audit.head` (span) and the `Audit anchor` log record on the `Corvus.Arazzo.Audit` category | A signed head, published outside the sink. Keep these where the sink's owner cannot rewrite them: they are what shows that a chain offered later is the chain that was signed |
+
+`AuditSinkHealthCheck` reports unhealthy while either failure is outstanding. A host registers it where it serves
+health checks.
+
 ## Resilience
 
 `ResilientApiTransport` (in `Corvus.Text.Json.OpenApi.Polly`) wraps every operation of an `IApiTransport` in a

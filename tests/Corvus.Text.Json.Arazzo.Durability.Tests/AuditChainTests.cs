@@ -2,8 +2,10 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Security.Cryptography;
 using System.Text;
 using Corvus.Text.Json;
+using Corvus.Text.Json.Arazzo.Execution;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 
@@ -36,12 +38,12 @@ public sealed class AuditChainTests
         lines.Length.ShouldBe(3);
 
         using ParsedJsonDocument<AuditRecord> first = ParsedJsonDocument<AuditRecord>.Parse(Encoding.UTF8.GetBytes(lines[0]));
-        AuditRecord record = first.RootElement;
-        record.EvaluateSchema().ShouldBeTrue();
+        first.RootElement.EvaluateSchema().ShouldBeTrue();
+        first.RootElement.TryGetAsMutationRecord(out AuditRecord.MutationRecord record).ShouldBeTrue();
         ((string)record.Chain).ShouldBe(chainId);
         ((long)record.Seq).ShouldBe(0);
         ((string)record.Prev).ShouldBe(new string('0', 64));
-        ((string)record.Kind).ShouldBe("mutation");
+        lines[0].ShouldContain("\"kind\":\"mutation\"");
         ((string)record.Action).ShouldBe("access-request.approve");
         ((string)record.Actor).ShouldBe("alice");
         ((string)record.Tenant).ShouldBe("acme");
@@ -185,7 +187,7 @@ public sealed class AuditChainTests
 
         // The abandoned chain ends in the half-stored line, and the hash the successor names is a record it really
         // holds: its last whole one.
-        AuditChainVerification previous = await AuditChainVerifier.VerifyAsync(new MemoryStream(inner.Snapshot(abandoned)), Encoding.UTF8.GetBytes(next.ContinuesHash!));
+        AuditChainVerification previous = await AuditChainVerifier.VerifyAsync(new MemoryStream(inner.Snapshot(abandoned)), new AuditChainVerificationOptions { ExpectedHash = Encoding.UTF8.GetBytes(next.ContinuesHash!) });
         previous.Break.ShouldBe(AuditChainBreak.TornTail);
         previous.BreakLine.ShouldBe(3);
         previous.RecordCount.ShouldBe(2);
@@ -277,6 +279,177 @@ public sealed class AuditChainTests
     }
 
     [TestMethod]
+    public async Task A_head_is_signed_at_the_record_cadence_and_vouches_for_the_records_before_it()
+    {
+        var sink = new InMemoryAuditSink();
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var anchors = new List<AuditHead>();
+        await using (var writer = new AuditChainWriter(sink, headSigner: new EcdsaExecutorPackageSigner(key, "audit-1"), headOptions: new AuditHeadOptions(3, TimeSpan.FromHours(1)), onHeadSigned: anchors.Add))
+        {
+            for (int i = 0; i < 7; i++)
+            {
+                await writer.AppendAsync(Approve, default);
+            }
+        }
+
+        // Seven records at three to a head: a head after the third and the sixth, and the close signs the seventh.
+        byte[] stored = sink.Snapshot(sink.ChainIds.ShouldHaveSingleItem());
+        string[] lines = Lines(stored);
+        lines.Length.ShouldBe(10);
+        lines[3].ShouldContain("\"kind\":\"head\"");
+        lines[7].ShouldContain("\"kind\":\"head\"");
+        lines[9].ShouldContain("\"kind\":\"head\"");
+
+        AuditChainVerification verification = await AuditChainVerifier.VerifyAsync(new MemoryStream(stored), new AuditChainVerificationOptions { TrustStore = TrustStore(key, "audit-1") });
+        verification.IsIntact.ShouldBeTrue();
+        verification.RecordCount.ShouldBe(10);
+        verification.HeadCount.ShouldBe(3);
+        verification.HeadSignaturesChecked.ShouldBeTrue();
+        verification.UnsignedTailCount.ShouldBe(0);
+
+        // Each head was published as an anchor naming the tail it vouches for.
+        anchors.Count.ShouldBe(3);
+        anchors[0].Sequence.ShouldBe(3);
+        anchors[0].PreviousHash.ShouldBe(HashOf(lines[2]));
+        anchors[0].KeyId.ShouldBe("audit-1");
+    }
+
+    [TestMethod]
+    public async Task A_quiet_tail_is_signed_once_its_oldest_record_reaches_the_interval()
+    {
+        var sink = new InMemoryAuditSink();
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var clock = new ManualClock(new DateTimeOffset(2026, 9, 20, 12, 0, 0, TimeSpan.Zero));
+        var signed = new SemaphoreSlim(0);
+        await using var writer = new AuditChainWriter(sink, clock, headSigner: new EcdsaExecutorPackageSigner(key, "audit-1"), headOptions: new AuditHeadOptions(1000, TimeSpan.FromSeconds(60)), onHeadSigned: _ => signed.Release());
+
+        await writer.AppendAsync(Approve, default);
+
+        // A tick before the record is a minute old signs nothing.
+        clock.Advance(TimeSpan.FromSeconds(30));
+        clock.Tick();
+        (await signed.WaitAsync(TimeSpan.FromMilliseconds(200))).ShouldBeFalse();
+
+        clock.Advance(TimeSpan.FromSeconds(30));
+        clock.Tick();
+        (await signed.WaitAsync(TimeSpan.FromSeconds(30))).ShouldBeTrue();
+
+        AuditChainVerification verification = await AuditChainVerifier.VerifyAsync(new MemoryStream(sink.Snapshot(sink.ChainIds[0])), new AuditChainVerificationOptions { TrustStore = TrustStore(key, "audit-1") });
+        verification.IsIntact.ShouldBeTrue();
+        verification.HeadCount.ShouldBe(1);
+        verification.UnsignedTailCount.ShouldBe(0);
+
+        // With nothing unsigned, a later tick signs nothing: a head is never a head over a head.
+        clock.Advance(TimeSpan.FromMinutes(5));
+        clock.Tick();
+        (await signed.WaitAsync(TimeSpan.FromMilliseconds(200))).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task A_tail_rewritten_with_its_hashes_recomputed_is_shown_by_the_head_it_cannot_sign()
+    {
+        // The attack the hash links cannot show: whoever holds the sink rewrites the last records and re-links everything
+        // after them, the head included. What they cannot do is sign the head with the audit's key.
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using ECDsa attacker = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        byte[] forged = await SignedChainAsync(attacker, records: 3);
+
+        AuditChainVerification verification = await AuditChainVerifier.VerifyAsync(new MemoryStream(forged), new AuditChainVerificationOptions { TrustStore = TrustStore(key, "audit-1") });
+
+        verification.Break.ShouldBe(AuditChainBreak.HeadSignatureInvalid);
+        verification.BreakLine.ShouldBe(4);
+        verification.RecordCount.ShouldBe(3);
+
+        // The same chain with no trust store reads as intact, and says its heads were not checked.
+        AuditChainVerification unchecked_ = await AuditChainVerifier.VerifyAsync(new MemoryStream(forged));
+        unchecked_.IsIntact.ShouldBeTrue();
+        unchecked_.HeadSignaturesChecked.ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public async Task A_record_altered_under_a_head_breaks_the_link_into_the_head()
+    {
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        string[] lines = Lines(await SignedChainAsync(key, records: 3));
+        lines[2] = lines[2].Replace("\"granted\"", "\"denied\"");
+
+        AuditChainVerification verification = await AuditChainVerifier.VerifyAsync(
+            new MemoryStream(Encoding.UTF8.GetBytes(string.Join('\n', lines) + "\n")),
+            new AuditChainVerificationOptions { TrustStore = TrustStore(key, "audit-1") });
+
+        verification.Break.ShouldBe(AuditChainBreak.HashMismatch);
+        verification.BreakLine.ShouldBe(4);
+    }
+
+    [TestMethod]
+    public async Task A_chain_cut_short_of_a_published_anchor_does_not_hold_it()
+    {
+        var sink = new InMemoryAuditSink();
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var anchors = new List<AuditHead>();
+        await using (var writer = new AuditChainWriter(sink, headSigner: new EcdsaExecutorPackageSigner(key, "audit-1"), headOptions: new AuditHeadOptions(2, TimeSpan.FromHours(1)), onHeadSigned: anchors.Add))
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                await writer.AppendAsync(Approve, default);
+            }
+        }
+
+        byte[] stored = sink.Snapshot(sink.ChainIds[0]);
+        string[] lines = Lines(stored);
+        lines.Length.ShouldBe(6);
+        AuditHead last = anchors[^1];
+
+        AuditChainVerification whole = await AuditChainVerifier.VerifyAsync(new MemoryStream(stored), new AuditChainVerificationOptions { TrustStore = TrustStore(key, "audit-1"), Anchor = last });
+        whole.IsIntact.ShouldBeTrue();
+
+        // Drop the last two records and their head: what is left is a well-formed, fully signed chain. Only the anchor,
+        // held outside the sink, shows it is not the chain that was signed.
+        AuditChainVerification cut = await AuditChainVerifier.VerifyAsync(
+            new MemoryStream(Encoding.UTF8.GetBytes(string.Join('\n', lines[..3]) + "\n")),
+            new AuditChainVerificationOptions { TrustStore = TrustStore(key, "audit-1"), Anchor = last });
+        cut.Break.ShouldBe(AuditChainBreak.AnchorNotFound);
+        cut.RecordCount.ShouldBe(3);
+    }
+
+    [TestMethod]
+    public async Task A_head_that_cannot_be_signed_never_fails_the_append_and_is_tried_again()
+    {
+        var sink = new InMemoryAuditSink();
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var signer = new FlakySigner(new EcdsaExecutorPackageSigner(key, "audit-1")) { Failing = true };
+        var failures = new List<Exception>();
+        int signedHeads = 0;
+        await using var writer = new AuditChainWriter(sink, headSigner: signer, headOptions: new AuditHeadOptions(2, TimeSpan.FromHours(1)), onHeadSigned: _ => signedHeads++, onHeadFailed: failures.Add);
+
+        await writer.AppendAsync(Approve, default);
+        await writer.AppendAsync(Approve, default);
+
+        failures.ShouldHaveSingleItem().ShouldBeOfType<CryptographicException>();
+        signedHeads.ShouldBe(0);
+
+        // The key service recovers: the next append is over the cadence, so it signs a head over all three records.
+        signer.Failing = false;
+        await writer.AppendAsync(Approve, default);
+        signedHeads.ShouldBe(1);
+
+        AuditChainVerification verification = await AuditChainVerifier.VerifyAsync(new MemoryStream(sink.Snapshot(sink.ChainIds.ShouldHaveSingleItem())), new AuditChainVerificationOptions { TrustStore = TrustStore(key, "audit-1") });
+        verification.IsIntact.ShouldBeTrue();
+        verification.RecordCount.ShouldBe(4);
+        verification.UnsignedTailCount.ShouldBe(0);
+    }
+
+    [TestMethod]
+    public async Task A_chain_with_no_signer_is_wholly_unsigned_and_says_so()
+    {
+        AuditChainVerification verification = await AuditChainVerifier.VerifyAsync(new MemoryStream(await ChainOfAsync(5)));
+
+        verification.IsIntact.ShouldBeTrue();
+        verification.HeadCount.ShouldBe(0);
+        verification.UnsignedTailCount.ShouldBe(5);
+    }
+
+    [TestMethod]
     public async Task A_steady_state_append_allocates_nothing_on_the_heap()
     {
         // The record is rendered into a pooled buffer, hashed on the stack and handed to the sink as pooled memory, so
@@ -361,6 +534,23 @@ public sealed class AuditChainTests
         return sink.Snapshot(sink.ChainIds[0]);
     }
 
+    private static async Task<byte[]> SignedChainAsync(ECDsa key, int records)
+    {
+        var sink = new InMemoryAuditSink();
+        await using (var writer = new AuditChainWriter(sink, headSigner: new EcdsaExecutorPackageSigner(key, "audit-1"), headOptions: new AuditHeadOptions(records, TimeSpan.FromHours(1))))
+        {
+            for (int i = 0; i < records; i++)
+            {
+                await writer.AppendAsync(Approve, default);
+            }
+        }
+
+        return sink.Snapshot(sink.ChainIds[0]);
+    }
+
+    private static TrustStoreExecutorPackageVerifier TrustStore(ECDsa key, string keyId)
+        => new(new Dictionary<string, AsymmetricAlgorithm> { [keyId] = key });
+
     private static string[] Lines(byte[] stored)
         => Encoding.UTF8.GetString(stored).Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
@@ -373,6 +563,62 @@ public sealed class AuditChainTests
     private sealed class FixedClock(DateTimeOffset now) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => now;
+    }
+
+    private sealed class ManualClock(DateTimeOffset now) : TimeProvider
+    {
+        private readonly List<ManualTimer> timers = [];
+        private DateTimeOffset now = now;
+
+        public override DateTimeOffset GetUtcNow() => this.now;
+
+        public void Advance(TimeSpan by) => this.now += by;
+
+        public void Tick()
+        {
+            foreach (ManualTimer timer in this.timers.ToArray())
+            {
+                timer.Fire();
+            }
+        }
+
+        public override ITimer CreateTimer(TimerCallback callback, object? state, TimeSpan dueTime, TimeSpan period)
+        {
+            var timer = new ManualTimer(callback, state);
+            this.timers.Add(timer);
+            return timer;
+        }
+
+        private sealed class ManualTimer(TimerCallback callback, object? state) : ITimer
+        {
+            private bool disposed;
+
+            public void Fire()
+            {
+                if (!this.disposed)
+                {
+                    callback(state);
+                }
+            }
+
+            public bool Change(TimeSpan dueTime, TimeSpan period) => true;
+
+            public void Dispose() => this.disposed = true;
+
+            public ValueTask DisposeAsync()
+            {
+                this.disposed = true;
+                return ValueTask.CompletedTask;
+            }
+        }
+    }
+
+    private sealed class FlakySigner(IExecutorPackageSigner inner) : IExecutorPackageSigner
+    {
+        public bool Failing { get; set; }
+
+        public ValueTask<ExecutorPackageSignature> SignAsync(ReadOnlyMemory<byte> manifestUtf8, CancellationToken cancellationToken)
+            => this.Failing ? throw new CryptographicException("the key service is unreachable") : inner.SignAsync(manifestUtf8, cancellationToken);
     }
 
     private sealed class TrickleStream(byte[] content, int chunk) : MemoryStream(content)

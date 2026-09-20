@@ -2,12 +2,15 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics;
 using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using Corvus.Text.Json.Arazzo.Execution;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
@@ -45,6 +48,10 @@ public sealed class ControlPlaneAuditSinkTests
         // An auditor that only logs is not a sink: the log is what ADR 0069 says evaporates.
         ArgumentException logOnly = await Should.ThrowAsync<ArgumentException>(async () => await StartAsync(mode, new GovernanceAuditor()));
         logOnly.ParamName.ShouldBe("auditor");
+
+        // A sink with nothing to sign its heads is not enough either: an alteration at the chain's tail would show nowhere.
+        ArgumentException unsigned = await Should.ThrowAsync<ArgumentException>(async () => await StartAsync(mode, new GovernanceAuditor(sink: new InMemoryAuditSink())));
+        unsigned.ParamName.ShouldBe("auditor");
     }
 
     [TestMethod]
@@ -59,7 +66,7 @@ public sealed class ControlPlaneAuditSinkTests
     public async Task Every_governance_action_is_a_record_in_the_chain_refusals_included()
     {
         var sink = new InMemoryAuditSink();
-        await using var auditor = new GovernanceAuditor(sink: sink);
+        await using var auditor = new GovernanceAuditor(sink: sink, headSigner: Signer(), headOptions: new AuditHeadOptions(1000, TimeSpan.FromHours(1)));
         await using Host host = await StartAsync(ControlPlaneSecurityMode.Scoped, auditor);
 
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"audit-env","displayName":"Audit"}""", Write)).StatusCode.ShouldBe(HttpStatusCode.Created);
@@ -86,7 +93,7 @@ public sealed class ControlPlaneAuditSinkTests
     public async Task A_record_the_sink_refuses_fails_the_request_and_the_action_stands()
     {
         var sink = new SwitchableSink();
-        await using var auditor = new GovernanceAuditor(sink: sink);
+        await using var auditor = new GovernanceAuditor(sink: sink, headSigner: Signer(), headOptions: new AuditHeadOptions(1000, TimeSpan.FromHours(1)));
         await using Host host = await StartAsync(ControlPlaneSecurityMode.Scoped, auditor);
 
         (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"first-env","displayName":"First"}""", Write)).StatusCode.ShouldBe(HttpStatusCode.Created);
@@ -127,6 +134,74 @@ public sealed class ControlPlaneAuditSinkTests
         next.ContinuesChain.ShouldBe(sink.Inner.ChainIds[0]);
     }
 
+    [TestMethod]
+    public async Task A_head_that_cannot_be_signed_degrades_health_and_the_request_still_succeeds()
+    {
+        var signer = new FlakySigner(Signer()) { Failing = true };
+        await using var auditor = new GovernanceAuditor(sink: new InMemoryAuditSink(), headSigner: signer, headOptions: new AuditHeadOptions(1, TimeSpan.FromHours(1)));
+        await using Host host = await StartAsync(ControlPlaneSecurityMode.Scoped, auditor);
+
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"first-env","displayName":"First"}""", Write)).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        auditor.Health.IsHealthy.ShouldBeFalse();
+        auditor.Health.FailuresSinceSuccess.ShouldBe(0);
+        auditor.Health.HeadFailuresSinceSigned.ShouldBe(1);
+        HealthCheckResult degraded = await new AuditSinkHealthCheck(auditor).CheckHealthAsync(new HealthCheckContext());
+        degraded.Status.ShouldBe(HealthStatus.Unhealthy);
+        degraded.Description!.ShouldContain("unsigned window");
+
+        // The key service recovers, and the next record's head is signed over everything unsigned.
+        signer.Failing = false;
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"second-env","displayName":"Second"}""", Write)).StatusCode.ShouldBe(HttpStatusCode.Created);
+        auditor.Health.IsHealthy.ShouldBeTrue();
+    }
+
+    [TestMethod]
+    public async Task Each_signed_head_is_published_as_an_anchor_span_outside_the_sink()
+    {
+        var heads = new List<Activity>();
+        using var listener = new ActivityListener
+        {
+            ShouldListenTo = source => source.Name == ArazzoTelemetry.ActivitySourceName,
+            Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
+            ActivityStopped = activity =>
+            {
+                if (activity.OperationName == GovernanceAuditor.AnchorActivityName)
+                {
+                    lock (heads)
+                    {
+                        heads.Add(activity);
+                    }
+                }
+            },
+        };
+        ActivitySource.AddActivityListener(listener);
+
+        var sink = new InMemoryAuditSink();
+        await using var auditor = new GovernanceAuditor(sink: sink, headSigner: Signer(), headOptions: new AuditHeadOptions(1, TimeSpan.FromHours(1)));
+        await using Host host = await StartAsync(ControlPlaneSecurityMode.Scoped, auditor);
+
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"anchor-env","displayName":"Anchor"}""", Write)).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        string chainId = sink.ChainIds.ShouldHaveSingleItem();
+        Activity anchor;
+        lock (heads)
+        {
+            anchor = heads.Single(a => (string?)a.GetTagItem("corvus.arazzo.audit.chain") == chainId);
+        }
+
+        anchor.GetTagItem("corvus.arazzo.audit.sequence").ShouldBe(1L);
+        anchor.GetTagItem("corvus.arazzo.audit.key_id").ShouldBe("audit-test");
+        ((string)anchor.GetTagItem("corvus.arazzo.audit.signature")!).ShouldNotBeNullOrEmpty();
+
+        // The anchor, held outside the sink, is one the stored chain holds.
+        var published = new AuditHead(chainId, 1, (string)anchor.GetTagItem("corvus.arazzo.audit.previous_hash")!, (string)anchor.GetTagItem("corvus.arazzo.audit.algorithm")!, "audit-test", (string)anchor.GetTagItem("corvus.arazzo.audit.signature")!);
+        (await AuditChainVerifier.VerifyAsync(new MemoryStream(sink.Snapshot(chainId)), new AuditChainVerificationOptions { Anchor = published })).IsIntact.ShouldBeTrue();
+    }
+
+    private static EcdsaExecutorPackageSigner Signer()
+        => new(System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256), "audit-test");
+
     private static async Task<Host> StartAsync(ControlPlaneSecurityMode mode, GovernanceAuditor? auditor)
     {
         var store = new InMemoryWorkflowStateStore();
@@ -158,6 +233,14 @@ public sealed class ControlPlaneAuditSinkTests
         }
 
         return new Host(app, app.GetTestClient());
+    }
+
+    private sealed class FlakySigner(IExecutorPackageSigner inner) : IExecutorPackageSigner
+    {
+        public bool Failing { get; set; }
+
+        public ValueTask<ExecutorPackageSignature> SignAsync(ReadOnlyMemory<byte> manifestUtf8, CancellationToken cancellationToken)
+            => this.Failing ? throw new System.Security.Cryptography.CryptographicException("the key service is unreachable") : inner.SignAsync(manifestUtf8, cancellationToken);
     }
 
     private sealed class SwitchableSink : IAuditSink

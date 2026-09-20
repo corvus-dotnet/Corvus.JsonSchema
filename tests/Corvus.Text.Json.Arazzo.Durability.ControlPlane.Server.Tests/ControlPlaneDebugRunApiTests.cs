@@ -701,7 +701,7 @@ public sealed class ControlPlaneDebugRunApiTests
             draftRunStore: drafts,
             draftRunner: runner,
             draftRunTraceStore: traceStore,
-            auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
+            auditor: GovernanceAuditor.CreateInMemory());
         await app.StartAsync();
         return new Scoped(app, app.GetTestClient(), runner) { Store = store };
     }

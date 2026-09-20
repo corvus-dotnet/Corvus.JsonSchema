@@ -296,7 +296,7 @@ public sealed class WorkflowCheckpointEndpointsTests
             WebApplication app = builder.Build();
             app.UseAuthentication();
             app.UseAuthorization();
-            app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), securityMode, workflowStateStore: store, checkpointSecret: CheckpointSecret, auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
+            app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), securityMode, workflowStateStore: store, checkpointSecret: CheckpointSecret, auditor: GovernanceAuditor.CreateInMemory());
             await app.StartAsync();
 
             return new Host(app, app.GetTestClient(), store);

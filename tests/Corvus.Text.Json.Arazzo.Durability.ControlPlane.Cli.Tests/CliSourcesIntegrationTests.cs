@@ -151,7 +151,7 @@ public sealed partial class CliIntegrationTests
 
         // The source store defaults to in-memory; the row-security policy maps the bearer token to a deployment identity
         // (sys:tenant=<token>) so reach scoping is driven by --token (a source registered by one tenant is invisible to another).
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), auditor: GovernanceAuditor.CreateInMemory());
         await app.StartAsync();
 
         return new Host(app, store, clock, app.Urls.First());

@@ -28,8 +28,13 @@ public sealed class AuditSinkHealthCheck(GovernanceAuditor auditor) : IHealthChe
         var data = new Dictionary<string, object>
         {
             ["failuresSinceSuccess"] = health.FailuresSinceSuccess,
+            ["headFailuresSinceSigned"] = health.HeadFailuresSinceSigned,
             ["lastFailureAt"] = health.LastFailureAt?.ToString("O") ?? string.Empty,
         };
-        return Task.FromResult(HealthCheckResult.Unhealthy("The audit sink refused the last record. Governance mutations are being applied and then refused.", data: data));
+        return Task.FromResult(HealthCheckResult.Unhealthy(
+            health.FailuresSinceSuccess > 0
+                ? "The audit sink refused the last record. Governance mutations are being applied and then refused."
+                : "The audit chain's head could not be signed or stored. Records are still chained, and the unsigned window is growing.",
+            data: data));
     }
 }

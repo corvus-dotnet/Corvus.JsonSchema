@@ -97,7 +97,7 @@ public sealed partial class CliIntegrationTests
         app.UseAuthorization();
         // The subject a granted access request keys on is the caller's tenant identity (the CLI's --token), so the
         // access-requests command tests can submit/approve/self-serve over the same authenticated host.
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), accessRequestSubjectClaimType: "tenant", auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), accessRequestSubjectClaimType: "tenant", auditor: GovernanceAuditor.CreateInMemory());
         await app.StartAsync();
 
         return new Host(app, store, clock, app.Urls.First());

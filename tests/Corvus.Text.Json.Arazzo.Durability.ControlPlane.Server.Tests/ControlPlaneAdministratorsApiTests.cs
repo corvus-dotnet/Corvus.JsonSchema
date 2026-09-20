@@ -291,7 +291,7 @@ public sealed class ControlPlaneAdministratorsApiTests
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: policy ?? new TenantIdentityPolicy(), observedIdentityStore: observed, auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: policy ?? new TenantIdentityPolicy(), observedIdentityStore: observed, auditor: GovernanceAuditor.CreateInMemory());
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient(), catalog);

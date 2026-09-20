@@ -495,7 +495,7 @@ public sealed class ControlPlaneRowSecurityTests
 
         WebApplication app = builder.Build();
         app.UseAuthentication();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.RowSecurityOnly, rowSecurity: policy ?? new TenantRowSecurityPolicy(), auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.RowSecurityOnly, rowSecurity: policy ?? new TenantRowSecurityPolicy(), auditor: GovernanceAuditor.CreateInMemory());
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient(), store, catalog, clock);

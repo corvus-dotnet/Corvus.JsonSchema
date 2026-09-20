@@ -118,7 +118,7 @@
     <value>A GitHub broker requires BaseUrl, ApiBaseUrl, ClientId, ClientSecretRef, and CallbackUrl.</value>
   </data>
   <data name="AuditSinkRequired" xml:space="preserve">
-    <value>ControlPlaneSecurityMode.{0} requires an audit sink (ADR 0069): pass a GovernanceAuditor built with an IAuditSink, the same instance the bootstrap was given. Only Open may run without one.</value>
+    <value>ControlPlaneSecurityMode.{0} requires an audit sink and a head signer (ADR 0069): pass a GovernanceAuditor built with an IAuditSink and the audit's own IExecutorPackageSigner, the same instance the bootstrap was given. Only Open may run without one.</value>
   </data>
   <data name="RowSecurityPolicyRequired" xml:space="preserve">
     <value>ControlPlaneSecurityMode.{0} requires a row-security policy; pass rowSecurity, or use ScopesOnly (capability scopes, no row reach) or Open (unsecured).</value>

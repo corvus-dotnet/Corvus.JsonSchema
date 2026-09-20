@@ -77,7 +77,7 @@ public static class ControlPlaneEndpointExtensions
     /// decision 2). Leave it empty to accept none, which admits only runners an administrator has pre-authorized by id.</param>
     /// <param name="auditor">The deployment's governance auditor (ADR 0069), the same instance the host gave its bootstrap, so
     /// everything this process records is one audit chain. The secured postures require one that appends to an audit
-    /// sink and refuse to map without it. In <see cref="ControlPlaneSecurityMode.Open"/> it may be omitted, and the audit is
+    /// sink and signs its chain's heads, and refuse to map without it. In <see cref="ControlPlaneSecurityMode.Open"/> it may be omitted, and the audit is
     /// then the span, the log and the counter only.</param>
     /// <param name="checkpointSecret">The secret the serverless checkpoint surface validates run-scoped checkpoint
     /// tokens with (ADR 0062), shared with whichever component mints them. Leave it empty to serve no checkpoint
@@ -140,9 +140,10 @@ public static class ControlPlaneEndpointExtensions
             ServerThrowHelper.ThrowRowSecurityPolicyForbidden(securityMode);
         }
 
-        // ADR 0069: a secured deployment with nowhere to append its audit does not start, so that registering no sink is a
-        // startup failure and never a silent gap. Open is the development posture, and the one that may run unrecorded.
-        if (securityMode != ControlPlaneSecurityMode.Open && auditor is not { HasSink: true })
+        // ADR 0069: a secured deployment with nowhere to append its audit, or with nothing to sign its chain's heads, does
+        // not start, so that registering no sink is a startup failure and never a silent gap. Without signed heads an
+        // alteration at a chain's tail shows nowhere. Open is the development posture, and the one that may run unrecorded.
+        if (securityMode != ControlPlaneSecurityMode.Open && auditor is not { HasSink: true, HasHeadSigner: true })
         {
             ServerThrowHelper.ThrowAuditSinkRequired(securityMode);
         }

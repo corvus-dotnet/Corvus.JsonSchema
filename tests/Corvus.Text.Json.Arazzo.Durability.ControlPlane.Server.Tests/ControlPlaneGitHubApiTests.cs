@@ -431,7 +431,7 @@ public sealed class ControlPlaneGitHubApiTests
         app.MapArazzoControlPlane(
             management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.ScopesOnly,
             gitHubBroker: broker,
-            auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
+            auditor: GovernanceAuditor.CreateInMemory());
         await app.StartAsync();
         return new Scoped(app, app.GetTestClient());
     }

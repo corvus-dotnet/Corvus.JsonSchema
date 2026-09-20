@@ -426,7 +426,7 @@ public sealed class ControlPlaneAccessRequestsApiTests
         app.UseAuthorization();
 
         // The test identity (the 'tenant' claim) doubles as the requesting subject, so an approval keys the grant on it.
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), accessRequestSubjectClaimType: "tenant", auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), accessRequestSubjectClaimType: "tenant", auditor: GovernanceAuditor.CreateInMemory());
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient(), catalog);

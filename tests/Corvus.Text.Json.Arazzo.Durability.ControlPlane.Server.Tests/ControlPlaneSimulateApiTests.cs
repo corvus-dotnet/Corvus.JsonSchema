@@ -486,7 +486,7 @@ public sealed class ControlPlaneSimulateApiTests
             management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.ScopesOnly,
             workspaceWorkflowStore: workspaceStore,
             workflowSimulator: withSimulator ? SharedSimulator : null,
-            auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
+            auditor: GovernanceAuditor.CreateInMemory());
         await app.StartAsync();
         return new Scoped(app, app.GetTestClient());
     }

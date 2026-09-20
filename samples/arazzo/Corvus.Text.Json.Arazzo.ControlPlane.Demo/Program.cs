@@ -104,7 +104,28 @@ Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DeploymentBootstrapOpt
 // leaves nothing in the source tree.
 string auditDirectory = builder.Configuration["Arazzo:AuditDirectory"] ?? Path.Combine(Path.GetTempPath(), "arazzo-control-plane-demo", "audit");
 using ILoggerFactory auditLoggerFactory = LoggerFactory.Create(logging => logging.AddConfiguration(builder.Configuration.GetSection("Logging")).AddConsole());
-var auditor = new GovernanceAuditor(auditLoggerFactory.CreateLogger("Corvus.Arazzo.Audit"), new FileAuditSink(auditDirectory));
+// The chain's heads are signed with a key of the audit's own, which signs nothing else and is not the executor package
+// key, so neither key's compromise or rotation touches the other's evidence. The demo keeps an ECDSA P-256 key in a PEM
+// file beside the chains, made on first run, and writes its public half next to it for `arazzo-runs audit verify` to
+// trust. That is a development arrangement: whoever can read the directory can sign. A production deployment holds the
+// audit key in a key service, as the executor key is held in Vault Transit below, and publishes only the public half.
+Directory.CreateDirectory(auditDirectory);
+string auditKeyPath = builder.Configuration["Arazzo:AuditSigningKeyPath"] ?? Path.Combine(auditDirectory, "audit-head-key.pem");
+var auditKey = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256);
+if (File.Exists(auditKeyPath))
+{
+    auditKey.ImportFromPem(await File.ReadAllTextAsync(auditKeyPath));
+}
+else
+{
+    await File.WriteAllTextAsync(auditKeyPath, auditKey.ExportECPrivateKeyPem());
+    await File.WriteAllTextAsync(Path.ChangeExtension(auditKeyPath, ".pub.pem"), auditKey.ExportSubjectPublicKeyInfoPem());
+}
+
+var auditor = new GovernanceAuditor(
+    auditLoggerFactory.CreateLogger("Corvus.Arazzo.Audit"),
+    new FileAuditSink(auditDirectory),
+    headSigner: new EcdsaExecutorPackageSigner(auditKey, builder.Configuration["Arazzo:AuditSigningKeyId"] ?? "demo-audit-head-key"));
 
 await Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.Postgres.PostgresControlPlaneDeployment.ProvisionAsync(dataSource, bootstrapOptions, auditor: auditor);
 

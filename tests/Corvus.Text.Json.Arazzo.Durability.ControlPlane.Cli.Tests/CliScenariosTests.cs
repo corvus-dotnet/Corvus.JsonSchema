@@ -245,7 +245,7 @@ public sealed partial class CliIntegrationTests
             management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.ScopesOnly,
             workspaceWorkflowStore: workspaceStore,
             workflowSimulator: new WorkflowSimulator(new WorkflowExecutorProvider(durable: true)),
-            auditor: new GovernanceAuditor(sink: new InMemoryAuditSink()));
+            auditor: GovernanceAuditor.CreateInMemory());
         await app.StartAsync();
         return new WorkspaceHost(app, app.Urls.First());
     }

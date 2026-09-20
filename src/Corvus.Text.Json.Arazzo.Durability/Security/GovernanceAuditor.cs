@@ -3,6 +3,8 @@
 // </copyright>
 
 using System.Diagnostics;
+using System.Security.Cryptography;
+using Corvus.Text.Json.Arazzo.Execution;
 using Microsoft.Extensions.Logging;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Security;
@@ -37,17 +39,25 @@ namespace Corvus.Text.Json.Arazzo.Durability.Security;
 /// </remarks>
 public sealed class GovernanceAuditor : IAsyncDisposable
 {
+    /// <summary>The name of the span a signed head is published as.</summary>
+    public const string AnchorActivityName = "audit.head";
+
     private readonly AuditChainWriter? chain;
 
     /// <summary>Initializes a new instance of the <see cref="GovernanceAuditor"/> class.</summary>
     /// <param name="logger">The audit logger, if the host wired one (the span is emitted regardless).</param>
     /// <param name="sink">The audit sink, or <see langword="null"/> for a deployment that keeps no audit chain (the <c>Open</c> development posture only).</param>
-    /// <param name="timeProvider">The clock records are stamped from (defaults to the system clock).</param>
-    public GovernanceAuditor(ILogger? logger = null, IAuditSink? sink = null, TimeProvider? timeProvider = null)
+    /// <param name="timeProvider">The clock records are stamped from and the head cadence runs on (defaults to the system clock).</param>
+    /// <param name="headSigner">The audit's own signer, under a key that signs nothing else, or <see langword="null"/> for a chain with no signed heads. The secured postures require one.</param>
+    /// <param name="headOptions">The head cadence (defaults to <see cref="AuditHeadOptions.Default"/>).</param>
+    public GovernanceAuditor(ILogger? logger = null, IAuditSink? sink = null, TimeProvider? timeProvider = null, IExecutorPackageSigner? headSigner = null, AuditHeadOptions? headOptions = null)
     {
         this.Logger = logger;
-        this.chain = sink is null ? null : new AuditChainWriter(sink, timeProvider);
         this.Health = new AuditSinkHealth(timeProvider ?? TimeProvider.System);
+        this.HasHeadSigner = sink is not null && headSigner is not null;
+        this.chain = sink is null
+            ? null
+            : new AuditChainWriter(sink, timeProvider, headSigner: headSigner, headOptions: headOptions, onHeadSigned: this.PublishAnchor, onHeadFailed: this.HeadFailed);
     }
 
     /// <summary>Gets an auditor with no logger and no sink: the span and the counter only.</summary>
@@ -59,8 +69,21 @@ public sealed class GovernanceAuditor : IAsyncDisposable
     /// <summary>Gets a value indicating whether the auditor appends to an audit sink.</summary>
     public bool HasSink => this.chain is not null;
 
+    /// <summary>Gets a value indicating whether the auditor signs its chain's heads.</summary>
+    public bool HasHeadSigner { get; }
+
     /// <summary>Gets what the last append to the sink came to, for a host's health check.</summary>
     public AuditSinkHealth Health { get; }
+
+    /// <summary>
+    /// Creates an auditor over an in-memory sink, signing heads with a key made for it and thrown away with it. It is for
+    /// tests and for trying the platform out: the sink is in the process it records and nobody holds the key's public
+    /// half, so what it keeps is not evidence.
+    /// </summary>
+    /// <param name="logger">The audit logger, if any.</param>
+    /// <returns>The auditor.</returns>
+    public static GovernanceAuditor CreateInMemory(ILogger? logger = null)
+        => new(logger, new InMemoryAuditSink(), headSigner: new EcdsaExecutorPackageSigner(ECDsa.Create(ECCurve.NamedCurves.nistP256), "in-memory-audit-key"));
 
     /// <summary>Records a governance action.</summary>
     /// <param name="action">The action name, also the span name (for example <c>access-request.approve</c>). Stable, controlled vocabulary.</param>
@@ -133,6 +156,41 @@ public sealed class GovernanceAuditor : IAsyncDisposable
 
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => this.chain?.DisposeAsync() ?? ValueTask.CompletedTask;
+
+    // A signed head is published outside the sink, through the span and the log, so that a collector holds anchors the
+    // sink's owner cannot rewrite: a chain rewritten after this point cannot reproduce the head published here.
+    private void PublishAnchor(AuditHead head)
+    {
+        this.Health.HeadSigned();
+        using (Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity(AnchorActivityName))
+        {
+            if (activity is not null)
+            {
+                activity.SetTag("corvus.arazzo.audit.chain", head.ChainId);
+                activity.SetTag("corvus.arazzo.audit.sequence", head.Sequence);
+                activity.SetTag("corvus.arazzo.audit.previous_hash", head.PreviousHash);
+                activity.SetTag("corvus.arazzo.audit.algorithm", head.Algorithm);
+                activity.SetTag("corvus.arazzo.audit.key_id", head.KeyId);
+                activity.SetTag("corvus.arazzo.audit.signature", head.Signature);
+            }
+        }
+
+        this.Logger?.LogInformation(
+            "Audit anchor: chain {Chain} head at sequence {Sequence} over {PreviousHash}, signed {Algorithm} by {KeyId}: {Signature}",
+            head.ChainId,
+            head.Sequence,
+            head.PreviousHash,
+            head.Algorithm,
+            head.KeyId,
+            head.Signature);
+    }
+
+    private void HeadFailed(Exception exception)
+    {
+        this.Health.HeadFailed();
+        ArazzoTelemetry.AuditHeadFailures.Add(1);
+        this.Logger?.LogError(exception, "Audit: the chain's head could not be signed or stored. Records are still chained, and the newest of them are not yet vouched for by a signature. The next cadence tick tries again.");
+    }
 
     private async ValueTask AppendAsync(AuditEntry entry, CancellationToken cancellationToken)
     {
