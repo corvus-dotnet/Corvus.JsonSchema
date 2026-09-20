@@ -740,4 +740,8 @@ internal static class ThrowHelper
     [StackTraceHidden]
     public static void ThrowDraftRunnerLoopAlreadyRunning()
         => throw new InvalidOperationException(SR.DraftRunnerLoopAlreadyRunning);
+
+    // ── Audit chain (ADR 0069) ──
+    public static AuditAppendException GetAuditAppendFailedException(Exception innerException)
+        => new(SR.AuditAppendFailed, innerException);
 }

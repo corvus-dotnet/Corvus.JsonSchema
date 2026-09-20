@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AuditRecord",
+  "description": "One record of an audit chain (ADR 0069). It is the governance audit's record (ADR 0038: who did what to which governed resource, in which tenant and environment, with what outcome) with a timestamp, a sequence and the hash of the record before it. Nothing else is recorded, so the record is payload-safe by construction. A chain is one JSON Lines stream owned by one writer; each line is one record, and a record's hash is the SHA-256 of its line's exact UTF-8 bytes without the line feed.",
+  "type": "object",
+  "required": ["chain", "seq", "at", "prev", "kind", "action", "actor", "targetKind", "targetId", "outcome"],
+  "properties": {
+    "chain": { "$ref": "#/$defs/ChainId" },
+    "seq": { "$ref": "#/$defs/Sequence" },
+    "at": { "$ref": "#/$defs/Timestamp" },
+    "prev": { "$ref": "#/$defs/RecordHash" },
+    "continues": { "$ref": "#/$defs/ChainContinuation" },
+    "kind": { "$ref": "#/$defs/RecordKind" },
+    "action": { "$ref": "#/$defs/Label" },
+    "actor": { "$ref": "#/$defs/Label" },
+    "tenant": { "$ref": "#/$defs/Label" },
+    "targetKind": { "$ref": "#/$defs/Label" },
+    "targetId": { "$ref": "#/$defs/Label" },
+    "outcome": { "$ref": "#/$defs/Label" },
+    "environment": { "$ref": "#/$defs/Label" }
+  },
+  "$defs": {
+    "ChainId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$",
+      "description": "The chain's id: 32 lowercase hex digits, minted by the writer when it opens the chain. Every record of a chain carries the same id."
+    },
+    "Sequence": {
+      "type": "integer",
+      "format": "int64",
+      "minimum": 0,
+      "description": "The record's position in its chain, from zero, with no gaps."
+    },
+    "Timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the writer appended the record."
+    },
+    "RecordHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "A record hash: the SHA-256 of a record line's UTF-8 bytes, as 64 lowercase hex digits. A chain's first record carries 64 zeros."
+    },
+    "RecordKind": {
+      "type": "string",
+      "enum": ["mutation"],
+      "description": "What the record is evidence of. A governance mutation, refused ones included."
+    },
+    "Label": {
+      "type": "string",
+      "description": "A controlled-vocabulary name or an identifier. Never a workflow payload or a secret."
+    },
+    "ChainContinuation": {
+      "type": "object",
+      "description": "Carried by the first record of a chain whose writer had an earlier chain: the earlier chain's id and the hash of the last record the writer knows it appended there. A writer opens a new chain when an append fails, since the failed chain's tail is then unknown, and when a chain reaches its record limit.",
+      "required": ["chain", "hash"],
+      "properties": {
+        "chain": { "$ref": "#/$defs/ChainId" },
+        "hash": { "$ref": "#/$defs/RecordHash" }
+      }
+    }
+  }
+}
