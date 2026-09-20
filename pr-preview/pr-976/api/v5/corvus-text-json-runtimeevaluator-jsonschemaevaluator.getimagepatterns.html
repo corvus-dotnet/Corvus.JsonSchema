@@ -99,7 +99,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.RuntimeEvaluator<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/ccfb4978f048ccd31ffb7584e541813c9c769beb/src/Corvus.Text.Json/Corvus/Text/Json/RuntimeEvaluator/JsonSchemaEvaluator.cs#L180">JsonSchemaEvaluator.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/67c2821254408cd130508e3722b9a2c954dbcc3c/src/Corvus.Text.Json/Corvus/Text/Json/RuntimeEvaluator/JsonSchemaEvaluator.cs#L180">JsonSchemaEvaluator.cs</a></p>
 <h2 id="getimagepatterns-readonlymemory-byte">GetImagePatterns(ReadOnlyMemory&lt;byte&gt;)</h2>
 <p>Gets the pattern table of a program image: every pattern that needs a regular expression, in the index order a <a href="/Corvus.JsonSchema/pr-preview/pr-976/api/v5/corvus-text-json-runtimeevaluator-jsonschemaregexprovider.html"><code>JsonSchemaRegexProvider</code></a> is asked for them. Patterns are in ECMA-262 syntax as written in the schema; <a href="/Corvus.JsonSchema/pr-preview/pr-976/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.todotnetpattern.html"><code>ToDotNetPattern</code></a> gives the form the evaluator itself would construct.</p>
 <pre><code class="language-csharp">public static IReadOnlyList&lt;string&gt; GetImagePatterns(ReadOnlyMemory&lt;byte&gt; image)

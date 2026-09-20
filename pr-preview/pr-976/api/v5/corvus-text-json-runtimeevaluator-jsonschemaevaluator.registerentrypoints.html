@@ -99,7 +99,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.RuntimeEvaluator<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/ccfb4978f048ccd31ffb7584e541813c9c769beb/src/Corvus.Text.Json/Corvus/Text/Json/RuntimeEvaluator/JsonSchemaEvaluator.cs#L140">JsonSchemaEvaluator.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/67c2821254408cd130508e3722b9a2c954dbcc3c/src/Corvus.Text.Json/Corvus/Text/Json/RuntimeEvaluator/JsonSchemaEvaluator.cs#L140">JsonSchemaEvaluator.cs</a></p>
 <h2 id="registerentrypoints-ireadonlylist-string">RegisterEntryPoints(IReadOnlyList&lt;string&gt;)</h2>
 <p>Compiles the given entry points into the program in one step, so that <a href="/Corvus.JsonSchema/pr-preview/pr-976/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.toprogramimage.html"><code>ToProgramImage</code></a> records them and later <a href="/Corvus.JsonSchema/pr-preview/pr-976/api/v5/corvus-text-json-runtimeevaluator-jsonschemaevaluator.forentrypoint.html"><code>ForEntryPoint</code></a> calls find them compiled. Adding many entry points this way runs the compiler's analyses once rather than once per entry point.</p>
 <pre><code class="language-csharp">public void RegisterEntryPoints(IReadOnlyList&lt;string&gt; entryPoints)
