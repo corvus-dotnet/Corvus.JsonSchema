@@ -175,41 +175,44 @@ public static class DemoData
     /// <param name="runStore">The run state store.</param>
     /// <param name="resumer">The live resumer (from <see cref="CreateLiveResumer"/>).</param>
     /// <param name="scheduleRegistry">The deployment's schedule registry, which the seeded nightly-reconcile schedule registers through.</param>
+    /// <param name="resolveBudget">The host management seam's budget resolution (ADR 0068). Each run executed here is frozen with the budget
+    /// a run started through the API in the same environment would get, so the console shows the same budget on both.</param>
     /// <param name="log">An optional sink for the outcome line.</param>
     /// <param name="timeProvider">The time provider (defaults to the system clock).</param>
-    public static async ValueTask RunLiveOnboardingAsync(IWorkflowStateStore runStore, WorkflowResumer resumer, IScheduleRegistry scheduleRegistry, Action<string>? log = null, TimeProvider? timeProvider = null)
+    public static async ValueTask RunLiveOnboardingAsync(IWorkflowStateStore runStore, WorkflowResumer resumer, IScheduleRegistry scheduleRegistry, ExecutionBudgetResolver resolveBudget, Action<string>? log = null, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(runStore);
         ArgumentNullException.ThrowIfNull(resumer);
         ArgumentNullException.ThrowIfNull(scheduleRegistry);
+        ArgumentNullException.ThrowIfNull(resolveBudget);
         TimeProvider time = timeProvider ?? TimeProvider.System;
 
         // A standard applicant clears the KYC score threshold → the run completes all four steps.
-        await RunLiveAsync(runStore, resumer, time, "0b0000000000000000000000000e0001", "live01", """{"email":"ada@example.com","fullName":"Ada Lovelace","plan":"pro"}""", log).ConfigureAwait(false);
+        await RunLiveAsync(runStore, resumer, resolveBudget, time, "0b0000000000000000000000000e0001", "live01", """{"email":"ada@example.com","fullName":"Ada Lovelace","plan":"pro"}""", log).ConfigureAwait(false);
 
         // The same sanctioned applicant on v1 scores below the threshold and — because v1 does not handle the
         // failure — faults live at verifyIdentity. Nothing is hand-seeded: the success criterion is evaluated
         // against the real backend response. This intentionally-unhandled fault demonstrates how a failing step
         // surfaces in the control plane (the dev-test debugging experience), not a recommended design.
-        await RunLiveAsync(runStore, resumer, time, "0b0000000000000000000000000e0002", "live02", """{"email":"mallory@example.com","fullName":"Mallory Sanction","plan":"free"}""", log).ConfigureAwait(false);
+        await RunLiveAsync(runStore, resumer, resolveBudget, time, "0b0000000000000000000000000e0002", "live02", """{"email":"mallory@example.com","fullName":"Mallory Sanction","plan":"free"}""", log).ConfigureAwait(false);
 
         // The resilient v2 of the workflow HANDLES the same KYC failure: verifyIdentity's onFailure routes to the
         // applicant-notification step (skipping provisioning), so the run completes via the remediation branch
         // instead of faulting. Same applicant as live02, different (fixed) workflow version — the production design.
-        await RunLiveAsync(runStore, resumer, time, "0b0000000000000000000000000e0003", "live03", """{"email":"mallory@example.com","fullName":"Mallory Sanction","plan":"free"}""", log, "onboard-customer-v2").ConfigureAwait(false);
+        await RunLiveAsync(runStore, resumer, resolveBudget, time, "0b0000000000000000000000000e0003", "live03", """{"email":"mallory@example.com","fullName":"Mallory Sanction","plan":"free"}""", log, "onboard-customer-v2").ConfigureAwait(false);
 
         // An asynchronous onboarding: the run suspends durably awaiting an out-of-band KYC verdict on the
         // kyc.verdict channel, then a delivered verdict message resumes it to completion — live suspend + resume.
-        await RunLiveSuspendAwaitingKycAsync(runStore, resumer, time, "0b0000000000000000000000000e0004", "live04", log).ConfigureAwait(false);
+        await RunLiveSuspendAwaitingKycAsync(runStore, resumer, resolveBudget, time, "0b0000000000000000000000000e0004", "live04", log).ConfigureAwait(false);
 
         // A resilient onboarding: the identity provider returns a transient incomplete result on the first check,
         // so the step retries with a backoff — the run suspends on a durable TIMER between attempts and resumes
         // when the backoff elapses, succeeding on the retry. Live timer suspend + resume.
-        await RunLiveTimerResumeAsync(runStore, resumer, time, "0b0000000000000000000000000e0005", "live05", log).ConfigureAwait(false);
+        await RunLiveTimerResumeAsync(runStore, resumer, resolveBudget, time, "0b0000000000000000000000000e0005", "live05", log).ConfigureAwait(false);
 
         // A real nightly reconciliation executed against the live ledger service — loads the account book, matches
         // entries, flags the seeded discrepancies, posts corrections, and publishes the report, completing end to end.
-        await RunLiveReconcileAsync(runStore, resumer, time, "0ec00000000000000000000000000001", "reclive01", log).ConfigureAwait(false);
+        await RunLiveReconcileAsync(runStore, resumer, resolveBudget, time, "0ec00000000000000000000000000001", "reclive01", log).ConfigureAwait(false);
 
         // #896: a durable schedule — the canonical §6.4 nightly-reconcile cron — seeded as a Pending $schedule run.
         // Unlike the runs above (executed here in-process), this is left Pending so the app runner (which serves
@@ -248,14 +251,15 @@ public static class DemoData
         }
     }
 
-    private static async ValueTask RunLiveTimerResumeAsync(IWorkflowStateStore runStore, WorkflowResumer resumer, TimeProvider time, string runId, string correlationId, Action<string>? log)
+    private static async ValueTask RunLiveTimerResumeAsync(IWorkflowStateStore runStore, WorkflowResumer resumer, ExecutionBudgetResolver resolveBudget, TimeProvider time, string runId, string correlationId, Action<string>? log)
     {
         try
         {
             // First leg: the identity check fails (transient incomplete result), so the step schedules a retry with
             // a backoff and the run suspends on a durable timer (returns Suspended).
             using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("""{"email":"katherine@example.com","fullName":"Katherine Transient","plan":"pro"}"""u8.ToArray());
-            using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, "onboard-customer-retry-v1", inputs.RootElement, "development", time, correlationId: correlationId, tags: TagSet.FromTags(["tenant-7"]));
+            ExecutionBudget? budget = await resolveBudget("onboard-customer-retry-v1", "development", default).ConfigureAwait(false);
+            using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, "onboard-customer-retry-v1", inputs.RootElement, "development", time, correlationId: correlationId, budget: budget, tags: TagSet.FromTags(["tenant-7"]));
             WorkflowRunResultKind first = await resumer(run, default).ConfigureAwait(false);
             log?.Invoke($"Live retry onboarding run '{runId}' first leg: {first} (identity check backing off, retry on a durable timer).");
 
@@ -272,7 +276,7 @@ public static class DemoData
         }
     }
 
-    private static async ValueTask RunLiveReconcileAsync(IWorkflowStateStore runStore, WorkflowResumer resumer, TimeProvider time, string runId, string correlationId, Action<string>? log)
+    private static async ValueTask RunLiveReconcileAsync(IWorkflowStateStore runStore, WorkflowResumer resumer, ExecutionBudgetResolver resolveBudget, TimeProvider time, string runId, string correlationId, Action<string>? log)
     {
         try
         {
@@ -280,7 +284,8 @@ public static class DemoData
             // against the ledger backend and completes with the computed counts + discrepancy report.
             string date = time.GetUtcNow().ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
             using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes($$"""{"date":"{{date}}"}"""));
-            using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, "nightly-reconcile-v2", inputs.RootElement, "development", time, correlationId: correlationId, tags: TagSet.FromTags(["prod", "billing"]));
+            ExecutionBudget? budget = await resolveBudget("nightly-reconcile-v2", "development", default).ConfigureAwait(false);
+            using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, "nightly-reconcile-v2", inputs.RootElement, "development", time, correlationId: correlationId, budget: budget, tags: TagSet.FromTags(["prod", "billing"]));
             WorkflowRunResultKind result = await resumer(run, default).ConfigureAwait(false);
             log?.Invoke($"Live nightly-reconcile run '{runId}' executed against the ledger service: {result}.");
         }
@@ -290,7 +295,7 @@ public static class DemoData
         }
     }
 
-    private static async ValueTask RunLiveSuspendAwaitingKycAsync(IWorkflowStateStore runStore, WorkflowResumer resumer, TimeProvider time, string runId, string correlationId, Action<string>? log)
+    private static async ValueTask RunLiveSuspendAwaitingKycAsync(IWorkflowStateStore runStore, WorkflowResumer resumer, ExecutionBudgetResolver resolveBudget, TimeProvider time, string runId, string correlationId, Action<string>? log)
     {
         try
         {
@@ -300,7 +305,8 @@ public static class DemoData
             // by submitting a verdict (POST /accounts/{id}/kyc-verdict on the KYC service), which publishes to kyc.verdict
             // and the runner's consumer resumes it. This is a genuine pending-manual-recovery case in the demo's data.
             using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse("""{"email":"grace@example.com","fullName":"Grace Hopper","plan":"enterprise"}"""u8.ToArray());
-            using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, "onboard-customer-async-v1", inputs.RootElement, "development", time, correlationId: correlationId, tags: TagSet.FromTags(["tenant-7"]));
+            ExecutionBudget? budget = await resolveBudget("onboard-customer-async-v1", "development", default).ConfigureAwait(false);
+            using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, "onboard-customer-async-v1", inputs.RootElement, "development", time, correlationId: correlationId, budget: budget, tags: TagSet.FromTags(["tenant-7"]));
             WorkflowRunResultKind first = await resumer(run, default).ConfigureAwait(false);
             log?.Invoke($"Live async onboarding run '{runId}': {first} (review requested on kyc.requests; awaiting an out-of-band verdict).");
         }
@@ -310,12 +316,13 @@ public static class DemoData
         }
     }
 
-    private static async ValueTask RunLiveAsync(IWorkflowStateStore runStore, WorkflowResumer resumer, TimeProvider time, string runId, string correlationId, string inputsJson, Action<string>? log, string workflowId = "onboard-customer-v1")
+    private static async ValueTask RunLiveAsync(IWorkflowStateStore runStore, WorkflowResumer resumer, ExecutionBudgetResolver resolveBudget, TimeProvider time, string runId, string correlationId, string inputsJson, Action<string>? log, string workflowId = "onboard-customer-v1")
     {
         try
         {
             using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(inputsJson));
-            using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, workflowId, inputs.RootElement, "development", time, correlationId: correlationId, tags: TagSet.FromTags(["tenant-7"]));
+            ExecutionBudget? budget = await resolveBudget(workflowId, "development", default).ConfigureAwait(false);
+            using WorkflowRun run = WorkflowRun.CreateNew(runStore, runId, workflowId, inputs.RootElement, "development", time, correlationId: correlationId, budget: budget, tags: TagSet.FromTags(["tenant-7"]));
             WorkflowRunResultKind result = await resumer(run, default).ConfigureAwait(false);
             log?.Invoke($"Live onboarding run '{runId}' executed against its real sources: {result}.");
         }

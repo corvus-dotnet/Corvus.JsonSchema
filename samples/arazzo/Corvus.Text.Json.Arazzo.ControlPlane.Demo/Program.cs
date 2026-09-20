@@ -1019,7 +1019,7 @@ app.Lifetime.ApplicationStarted.Register(() =>
     // Example fiction: one genuinely-executed onboarding run so the demo shows a real run, not only seeded states.
     if (seedExampleData)
     {
-        _ = exampleSeed.RunLiveSampleAsync(stateStore, liveResumer, scheduleRegistry, message => app.Logger.LogInformation("{Message}", message));
+        _ = exampleSeed.RunLiveSampleAsync(stateStore, liveResumer, scheduleRegistry, management.ResolveExecutionBudgetAsync, message => app.Logger.LogInformation("{Message}", message));
     }
 });
 

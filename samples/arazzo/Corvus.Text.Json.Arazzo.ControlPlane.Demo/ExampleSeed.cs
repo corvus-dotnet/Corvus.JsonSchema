@@ -73,9 +73,10 @@ public interface IExampleSeed
     /// <param name="stateStore">The run store the live run is written to.</param>
     /// <param name="resumer">The live resumer that re-enters the run's compiled executor against the demo services.</param>
     /// <param name="scheduleRegistry">The deployment's schedule registry, which the seeded schedule registers through.</param>
+    /// <param name="resolveBudget">The host management seam's budget resolution (ADR 0068), so a live sample run carries the budget an API-started run would.</param>
     /// <param name="log">An optional progress sink.</param>
     /// <returns>A task that completes when the live run has advanced to its first pause (or completion).</returns>
-    ValueTask RunLiveSampleAsync(IWorkflowStateStore stateStore, WorkflowResumer resumer, IScheduleRegistry scheduleRegistry, Action<string>? log = null);
+    ValueTask RunLiveSampleAsync(IWorkflowStateStore stateStore, WorkflowResumer resumer, IScheduleRegistry scheduleRegistry, ExecutionBudgetResolver resolveBudget, Action<string>? log = null);
 }
 
 /// <summary>
@@ -503,6 +504,6 @@ public sealed class ArazzoExampleSeed : IExampleSeed
     }
 
     /// <inheritdoc/>
-    public ValueTask RunLiveSampleAsync(IWorkflowStateStore stateStore, WorkflowResumer resumer, IScheduleRegistry scheduleRegistry, Action<string>? log = null)
-        => DemoData.RunLiveOnboardingAsync(stateStore, resumer, scheduleRegistry, log);
+    public ValueTask RunLiveSampleAsync(IWorkflowStateStore stateStore, WorkflowResumer resumer, IScheduleRegistry scheduleRegistry, ExecutionBudgetResolver resolveBudget, Action<string>? log = null)
+        => DemoData.RunLiveOnboardingAsync(stateStore, resumer, scheduleRegistry, resolveBudget, log);
 }

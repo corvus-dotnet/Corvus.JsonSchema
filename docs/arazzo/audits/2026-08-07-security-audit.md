@@ -558,10 +558,11 @@ This is accepted risk `AR-15` and assumption `ASU-3` in the threat model.
 
 ### GAP-5 · `TB-7` · Execution resource governance
 
-> **Decided.** [ADR 0068](../adr/0068-execution-budget-fuel-wall-clock-depth.md): fuel and wall clock
+> **Decided and implemented.** [ADR 0068](../adr/0068-execution-budget-fuel-wall-clock-depth.md): fuel and wall clock
 > both, plus the depth cap; a deployment ceiling an environment may only tighten, resolved at start;
-> runner-enforced and coordinator-verified on every save; a terminal non-retryable fault per limit; the
-> per-step timeout, response cap and `Retry-After` ceiling on the same record. Implementation open.
+> runner-enforced and coordinator-verified on every save; a fault per limit that only an audited
+> re-budget resumes; the per-step timeout, response cap and `retryAfter` ceiling on the same record.
+> Threat-model H14 is closed. The finding below is left as it was measured.
 No ADR bounds a run's resource consumption. Confirmed absent: a per-run step budget, a wall clock,
 sub-workflow recursion depth in production (`MaxSubWorkflowDepth = 8` is enforced only in the draft
 recorder and the test tracer, and production returns `null`), a response size cap, a step-call
