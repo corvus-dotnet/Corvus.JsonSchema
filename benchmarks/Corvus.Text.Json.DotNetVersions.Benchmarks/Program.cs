@@ -13,13 +13,7 @@ using BenchmarkDotNet.Loggers;
 using BenchmarkDotNet.Running;
 using BenchmarkDotNet.Toolchains.CsProj;
 using BenchmarkDotNet.Toolchains.DotNetCli;
-using Corvus.Text.Json.DotNetVersions.Benchmarks;
 using Perfolizer.Mathematics.OutlierDetection;
-
-if (args.Length > 0 && args[0] == "ab")
-{
-    return AbHarness.Run(args);
-}
 
 // "--launches N" runs every runtime job in N separate processes. BenchmarkDotNet's own --launchCount
 // adds another job rather than changing these, and a single launch per job is not enough when
@@ -62,4 +56,3 @@ config.AddJob(
         .WithStrategy(RunStrategy.Throughput));
 
 BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args, config);
-return 0;

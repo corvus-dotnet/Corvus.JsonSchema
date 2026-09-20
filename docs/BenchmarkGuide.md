@@ -217,7 +217,7 @@ dotnet run -c Release -f net10.0 -- --filter '*' --launches 6
 
 The launch count matters. A process can settle into a slightly faster or slower state for its whole life, and the difference between two launches of the same runtime can be as large as the few percent between adjacent runtimes. Two single-launch runs of one benchmark gave ratios of 1.09 and 0.86 for the same pair of runtimes, each with a tiny error. Run the whole series twice and check that the older steps (.NET 8 to 9, and 9 to 10) reproduce before you trust the newest one.
 
-`benchmarks/scripts/Run-DotNetVersionSeries.ps1` wraps a run. It builds the harnesses, waits for the machine to settle, pins the run to the performance cores, and probes the host's health before and after each series. With `-Method BenchmarkDotNet` it runs the BenchmarkDotNet jobs. Its default, `-Method Rotation`, is a quicker cross-check that does not use BenchmarkDotNet. Each harness has an `ab` mode, a stopwatch loop that warms up past JIT tiering and then measures one method in one process, and the script rotates those processes through the runtimes (`dotnet exec --fx-version` runs the same binaries on each) and reports the ratio between adjacent runtimes within each round.
+`benchmarks/scripts/Run-DotNetVersionSeries.ps1` wraps a run. It builds the harnesses, waits for the machine to settle, pins the run to the performance cores, passes `--launches` (six by default), and probes the host's health before and after each series.
 
 ```powershell
 pwsh benchmarks/scripts/Run-DotNetVersionSeries.ps1
@@ -229,4 +229,4 @@ Every runtime in the series must be installed alongside the SDK that `global.jso
 
 On a hybrid CPU the run has to stay on the performance cores. Under WSL2 the guest's CPU numbers have no fixed relation to the host's cores, so pinning inside the guest is not enough. Set the affinity of the `vmmemWSL` process on the Windows host from an elevated PowerShell (`(Get-Process vmmemWSL).ProcessorAffinity = 0xFFF` for performance cores on logical processors 0 to 11), re-apply it after every `wsl --shutdown`, and keep the host's display awake. Compare the probe lines in `series.log` between runs. If the overhead figure has drifted up by 20% or more, the host has slowed down and the run should be repeated.
 
-When a new .NET version ships, add a job for it to each `Program.cs`, and add it to the `Runtimes` list for each harness in the script.
+When a new .NET version ships, add a job for it to each `Program.cs`.

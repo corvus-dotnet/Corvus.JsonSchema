@@ -1,9 +1,8 @@
 #!/usr/bin/env pwsh
 <#
 .SYNOPSIS
-    Runs the .NET version-over-version benchmark series (V4 and V5) pinned to a set of CPUs, with host health probes.
-    By default it rotates short single-runtime processes (a quick paired A/B cross-check). Use -Method BenchmarkDotNet
-    for the figures we publish.
+    Runs the .NET version-over-version benchmark series (V4 and V5) under BenchmarkDotNet, pinned to a set of CPUs,
+    with host health probes.
 
 .DESCRIPTION
     The series compares the same code on successive .NET runtimes, so the differences it looks for are a few percent.
@@ -13,12 +12,9 @@
       * waits for the machine to settle after the build;
       * runs a health probe (Stopwatch-pair overhead and a fixed CPU-bound loop) before and after each series;
       * runs each series with its CPU affinity set to -CpuList;
-      * with -Method Rotation (the default), runs each harness's 'ab' mode once per runtime per round, in turn, and
-        reports the ratio between adjacent runtimes for each round (the paired ratio). Machine drift affects both
-        sides of a pair alike, so the median paired ratio is a quick and drift-resistant cross-check;
-      * with -Method BenchmarkDotNet, runs the full BenchmarkDotNet jobs, with each runtime job in -Launches
-        separate processes. A single process can settle into a faster or slower state for its whole life, so one
-        launch per job is not enough for differences of a few percent. These are the figures we publish;
+      * runs the BenchmarkDotNet jobs with each runtime job in -Launches separate processes. A single process can
+        settle into a faster or slower state for its whole life, so one launch per job is not enough for
+        differences of a few percent;
       * samples how many cores are busy while BenchmarkDotNet is measuring, and aborts the series if other
         work keeps more than -MaxBusyCores busy for three consecutive samples;
       * copies each BenchmarkDotNet log, and a series.log with the probes and samples, to -ResultsDirectory.
@@ -39,17 +35,8 @@
     Which series to run. V4 is src-v4/Corvus.Json.Benchmarking (.NET 8.0 onwards). V5 is
     benchmarks/Corvus.Text.Json.DotNetVersions.Benchmarks (.NET 10.0 onwards).
 
-.PARAMETER Method
-    Rotation (paired A/B, the default) or BenchmarkDotNet.
-
 .PARAMETER Launches
-    With -Method BenchmarkDotNet, the number of separate processes each runtime job runs in.
-
-.PARAMETER Rounds
-    The number of rotation rounds. Each round runs every runtime once.
-
-.PARAMETER MeasureSeconds
-    How long each rotation process measures for, after its warm-up.
+    The number of separate processes each runtime job runs in.
 
 .PARAMETER CpuList
     The logical CPUs to run on, as a comma-separated list of numbers and ranges. The default, 0-11, is the performance
@@ -89,14 +76,7 @@ param(
     [ValidateSet('V4', 'V5')]
     [string[]]$Series = @('V4', 'V5'),
 
-    [ValidateSet('Rotation', 'BenchmarkDotNet')]
-    [string]$Method = 'Rotation',
-
     [int]$Launches = 6,
-
-    [int]$Rounds = 10,
-
-    [int]$MeasureSeconds = 5,
 
     [string]$CpuList = '0-11',
 
@@ -125,15 +105,11 @@ $harnesses = @{
         Project  = Join-Path $repoRoot 'src-v4' 'Corvus.Json.Benchmarking' 'Corvus.Json.Benchmarking.csproj'
         Assembly = 'Corvus.Json.Benchmarking.dll'
         Filter   = '*ValidateLargeDocumentCorvusOnly.ValidateLargeArrayCorvusV4'
-        Runtimes = @(8, 9, 10, 11)
-        Cases    = @('V4')
     }
     V5 = @{
         Project  = Join-Path $repoRoot 'benchmarks' 'Corvus.Text.Json.DotNetVersions.Benchmarks' 'Corvus.Text.Json.DotNetVersions.Benchmarks.csproj'
         Assembly = 'Corvus.Text.Json.DotNetVersions.Benchmarks.dll'
         Filter   = '*'
-        Runtimes = @(10, 11)
-        Cases    = @('GeneratedTypes', 'StandaloneEvaluator', 'DynamicValidator')
     }
 }
 
@@ -320,81 +296,9 @@ function Invoke-Series([string]$name) {
     Write-Host ''
 }
 
-# The newest installed Microsoft.NETCore.App version for a major version, for dotnet exec --fx-version.
-function Get-RuntimeVersion([int]$major) {
-    $versions = & dotnet --list-runtimes |
-        Where-Object { $_ -match "^Microsoft\.NETCore\.App $major\.\S+" } |
-        ForEach-Object { ($_ -split ' ')[1] }
-    if (-not $versions) { throw "No .NET $major runtime is installed." }
-    return $versions | Sort-Object { [version]($_ -replace '-.*$', '') } | Select-Object -Last 1
-}
-
-function Get-Median([double[]]$values) {
-    $sorted = $values | Sort-Object
-    return $sorted[[int][Math]::Floor($sorted.Count / 2)]
-}
-
-# Runs the harness's 'ab' mode once per runtime per round. A runtime uses the build for its own TFM where the
-# harness has one, and otherwise the newest build before it (so .NET 11 runs the net10.0 binaries unchanged).
-function Invoke-Rotation([string]$name) {
-    $harness = $harnesses[$name]
-    $binDirectory = Join-Path (Split-Path $harness.Project) 'bin' 'Release'
-    $log = Join-Path $ResultsDirectory "$($name.ToLowerInvariant())-rotation.log"
-    $output = Join-Path $ResultsDirectory 'rotation.out'
-
-    $runtimes = foreach ($major in $harness.Runtimes) {
-        $tfmMajor = $major
-        while ($tfmMajor -gt 0 -and -not (Test-Path (Join-Path $binDirectory "net$tfmMajor.0" $harness.Assembly))) { $tfmMajor-- }
-        if ($tfmMajor -eq 0) { throw "No build of $($harness.Assembly) can run on .NET $major." }
-        @{ Major = $major; Version = Get-RuntimeVersion $major; Directory = Join-Path $binDirectory "net$tfmMajor.0" }
-    }
-
-    Invoke-Probe "before $name"
-
-    foreach ($case in $harness.Cases) {
-        $label = $case -eq $name ? $name : "$name $case"
-        $medians = @{}
-        foreach ($runtime in $runtimes) { $medians[$runtime.Major] = [System.Collections.Generic.List[double]]::new() }
-        foreach ($round in 1..$Rounds) {
-            foreach ($runtime in $runtimes) {
-                $caseArguments = $case -eq 'V4' ? @() : @($case)
-                $arguments = @('exec', '--fx-version', $runtime.Version, $harness.Assembly, 'ab') + $caseArguments + @("$MeasureSeconds")
-                $process = Start-Pinned -dotnetArguments $arguments -workingDirectory $runtime.Directory -outputPath $output
-                $process.WaitForExit()
-                $line = (Get-Content $output -Raw).Trim()
-                Add-Content -Path $log -Value $line
-                if ($line -notmatch 'median=([\d.]+)') { throw "The $name harness failed on .NET $($runtime.Major): $line" }
-                $medians[$runtime.Major].Add([double]$Matches[1])
-            }
-
-            Write-SeriesLog "$label round $round of $Rounds"
-        }
-
-        Write-Host ''
-        foreach ($runtime in $runtimes) {
-            Write-SeriesLog ('{0} .NET {1}: median of medians {2:F4} ms' -f $label, $runtime.Major, (Get-Median $medians[$runtime.Major]))
-        }
-
-        for ($i = 1; $i -lt $runtimes.Count; $i++) {
-            $from = $runtimes[$i - 1].Major
-            $to = $runtimes[$i].Major
-            $ratios = 0..($Rounds - 1) | ForEach-Object { $medians[$to][$_] / $medians[$from][$_] }
-            $ratio = Get-Median $ratios
-            Write-SeriesLog ('{0} .NET {1} -> {2}: paired ratio {3:F3} (range {4:F3} to {5:F3}), {6:F1}% {7}' -f $label, $from, $to, $ratio, ($ratios | Measure-Object -Minimum).Minimum, ($ratios | Measure-Object -Maximum).Maximum, ([Math]::Abs(1 - $ratio) * 100), ($ratio -lt 1 ? 'faster' : 'slower'))
-        }
-
-        Write-Host ''
-    }
-
-    Remove-Item $output, "$output.err" -ErrorAction SilentlyContinue
-    Invoke-Probe "after $name"
-}
-
 if (-not $SkipBuild) {
     foreach ($name in $Series) {
-        # The rotation runs each runtime on the build for its own TFM, so it needs them all.
-        $frameworkArguments = $Method -eq 'Rotation' ? @() : @('-f', 'net10.0')
-        & dotnet build $harnesses[$name].Project -c Release @frameworkArguments @BuildArguments
+        & dotnet build $harnesses[$name].Project -c Release -f net10.0 @BuildArguments
         if ($LASTEXITCODE -ne 0) { throw "The $name harness failed to build." }
     }
 }
@@ -405,7 +309,7 @@ Write-SeriesLog "settling for $SettleSeconds s (cpus $CpuList)"
 Start-Sleep -Seconds $SettleSeconds
 
 foreach ($name in $Series) {
-    if ($Method -eq 'Rotation') { Invoke-Rotation $name } else { Invoke-Series $name }
+    Invoke-Series $name
 }
 
 Write-SeriesLog 'SERIES_DONE'

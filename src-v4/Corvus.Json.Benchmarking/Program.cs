@@ -15,13 +15,8 @@ namespace Corvus.Json.Benchmarking;
 
 internal class Program
 {
-    private static int Main(string[] args)
+    private static void Main(string[] args)
     {
-        if (args.Length > 0 && args[0] == "ab")
-        {
-            return AbHarness.Run(args);
-        }
-
         // "--launches N" runs every runtime job in N separate processes. BenchmarkDotNet's own --launchCount
         // adds another job rather than changing these, and a single launch per job is not enough when
         // the difference between adjacent runtimes is a few percent.
@@ -70,6 +65,5 @@ internal class Program
                 .WithStrategy(RunStrategy.Throughput));
 
         BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args, config);
-        return 0;
     }
 }
