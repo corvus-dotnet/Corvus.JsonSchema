@@ -250,11 +250,6 @@
           "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.7"
         }
       },
-      "Microsoft.Extensions.DependencyInjection.Abstractions": {
-        "type": "Transitive",
-        "resolved": "10.0.7",
-        "contentHash": "Z6mfFEaFcwCfSboxJwOLfu7/31npCY9q70WUamHW/vRQhDvBKOT4Vf9YkZj5J6hLvJpb0oDEYfHunQZj0xxvKw=="
-      },
       "Microsoft.Extensions.Diagnostics": {
         "type": "Transitive",
         "resolved": "10.0.7",
@@ -438,6 +433,12 @@
           "Microsoft.Extensions.Http": "[10.0.7, )"
         }
       },
+      "corvus.json.codegeneration.openapi20": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.CodeGeneration": "[1.0.0, )"
+        }
+      },
       "corvus.json.codegeneration.openapi30": {
         "type": "Project",
         "dependencies": {
@@ -470,6 +471,7 @@
           "Corvus.Json.CodeGeneration.CSharp": "[1.0.0, )",
           "Corvus.Json.CodeGeneration.CorvusVocabulary": "[1.0.0, )",
           "Corvus.Json.CodeGeneration.HttpClientDocumentResolver": "[1.0.0, )",
+          "Corvus.Json.CodeGeneration.OpenApi20": "[1.0.0, )",
           "Corvus.Json.CodeGeneration.OpenApi30": "[1.0.0, )",
           "Corvus.Json.ExtendedTypes": "[1.0.0, )",
           "Microsoft.CodeAnalysis.CSharp": "[5.3.0, )",
@@ -512,6 +514,12 @@
           "Microsoft.Extensions.Configuration": "10.0.7",
           "Microsoft.Extensions.Configuration.Abstractions": "10.0.7"
         }
+      },
+      "Microsoft.Extensions.DependencyInjection.Abstractions": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.7, )",
+        "resolved": "10.0.7",
+        "contentHash": "Z6mfFEaFcwCfSboxJwOLfu7/31npCY9q70WUamHW/vRQhDvBKOT4Vf9YkZj5J6hLvJpb0oDEYfHunQZj0xxvKw=="
       },
       "Microsoft.Extensions.DependencyModel": {
         "type": "CentralTransitive",
@@ -816,11 +824,6 @@
           "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.7"
         }
       },
-      "Microsoft.Extensions.DependencyInjection.Abstractions": {
-        "type": "Transitive",
-        "resolved": "10.0.7",
-        "contentHash": "Z6mfFEaFcwCfSboxJwOLfu7/31npCY9q70WUamHW/vRQhDvBKOT4Vf9YkZj5J6hLvJpb0oDEYfHunQZj0xxvKw=="
-      },
       "Microsoft.Extensions.Diagnostics": {
         "type": "Transitive",
         "resolved": "10.0.7",
@@ -1014,6 +1017,13 @@
           "System.Collections.Immutable": "[10.0.7, )"
         }
       },
+      "corvus.json.codegeneration.openapi20": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.CodeGeneration": "[1.0.0, )",
+          "System.Collections.Immutable": "[10.0.7, )"
+        }
+      },
       "corvus.json.codegeneration.openapi30": {
         "type": "Project",
         "dependencies": {
@@ -1050,6 +1060,7 @@
           "Corvus.Json.CodeGeneration.CSharp": "[1.0.0, )",
           "Corvus.Json.CodeGeneration.CorvusVocabulary": "[1.0.0, )",
           "Corvus.Json.CodeGeneration.HttpClientDocumentResolver": "[1.0.0, )",
+          "Corvus.Json.CodeGeneration.OpenApi20": "[1.0.0, )",
           "Corvus.Json.CodeGeneration.OpenApi30": "[1.0.0, )",
           "Corvus.Json.ExtendedTypes": "[1.0.0, )",
           "Microsoft.CodeAnalysis.CSharp": "[5.3.0, )",
@@ -1095,6 +1106,12 @@
           "Microsoft.Extensions.Configuration": "10.0.7",
           "Microsoft.Extensions.Configuration.Abstractions": "10.0.7"
         }
+      },
+      "Microsoft.Extensions.DependencyInjection.Abstractions": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.7, )",
+        "resolved": "10.0.7",
+        "contentHash": "Z6mfFEaFcwCfSboxJwOLfu7/31npCY9q70WUamHW/vRQhDvBKOT4Vf9YkZj5J6hLvJpb0oDEYfHunQZj0xxvKw=="
       },
       "Microsoft.Extensions.DependencyModel": {
         "type": "CentralTransitive",
@@ -1411,11 +1428,6 @@
           "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.7"
         }
       },
-      "Microsoft.Extensions.DependencyInjection.Abstractions": {
-        "type": "Transitive",
-        "resolved": "10.0.7",
-        "contentHash": "Z6mfFEaFcwCfSboxJwOLfu7/31npCY9q70WUamHW/vRQhDvBKOT4Vf9YkZj5J6hLvJpb0oDEYfHunQZj0xxvKw=="
-      },
       "Microsoft.Extensions.Diagnostics": {
         "type": "Transitive",
         "resolved": "10.0.7",
@@ -1609,6 +1621,13 @@
           "System.Collections.Immutable": "[10.0.7, )"
         }
       },
+      "corvus.json.codegeneration.openapi20": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.CodeGeneration": "[1.0.0, )",
+          "System.Collections.Immutable": "[10.0.7, )"
+        }
+      },
       "corvus.json.codegeneration.openapi30": {
         "type": "Project",
         "dependencies": {
@@ -1645,6 +1664,7 @@
           "Corvus.Json.CodeGeneration.CSharp": "[1.0.0, )",
           "Corvus.Json.CodeGeneration.CorvusVocabulary": "[1.0.0, )",
           "Corvus.Json.CodeGeneration.HttpClientDocumentResolver": "[1.0.0, )",
+          "Corvus.Json.CodeGeneration.OpenApi20": "[1.0.0, )",
           "Corvus.Json.CodeGeneration.OpenApi30": "[1.0.0, )",
           "Corvus.Json.ExtendedTypes": "[1.0.0, )",
           "Microsoft.CodeAnalysis.CSharp": "[5.3.0, )",
@@ -1690,6 +1710,12 @@
           "Microsoft.Extensions.Configuration": "10.0.7",
           "Microsoft.Extensions.Configuration.Abstractions": "10.0.7"
         }
+      },
+      "Microsoft.Extensions.DependencyInjection.Abstractions": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.7, )",
+        "resolved": "10.0.7",
+        "contentHash": "Z6mfFEaFcwCfSboxJwOLfu7/31npCY9q70WUamHW/vRQhDvBKOT4Vf9YkZj5J6hLvJpb0oDEYfHunQZj0xxvKw=="
       },
       "Microsoft.Extensions.DependencyModel": {
         "type": "CentralTransitive",
