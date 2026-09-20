@@ -741,6 +741,8 @@ main-docs:
       - {index: 4, language: powershell, lines: [128, 130]}
       - {index: 5, language: powershell, lines: [140, 151]}
       - {index: 6, language: powershell, lines: [155, 164]}
+      - {index: 7, language: powershell, lines: [208, 216]}
+      - {index: 8, language: powershell, lines: [222, 224]}
   - path: "docs/BowtiePrerequisites.md"
     blocks:
       - {index: 0, language: powershell, lines: [31, 33]}
@@ -975,10 +977,10 @@ main-docs:
     blocks:
       - {index: 0, language: bash, lines: [13, 15]}
       - {index: 1, language: csharp, lines: [19, 39], category: compilable, verified: false}
-      - {index: 2, language: csharp, lines: [63, 68], category: compilable, verified: false}
-      - {index: 3, language: csharp, lines: [74, 76], category: fragment, verified: false}
-      - {index: 4, language: csharp, lines: [86, 99], category: compilable, verified: false}
-      - {index: 5, language: csharp, lines: [105, 114], category: compilable, verified: false}
+      - {index: 2, language: csharp, lines: [64, 69], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [75, 77], category: fragment, verified: false}
+      - {index: 4, language: csharp, lines: [87, 100], category: compilable, verified: false}
+      - {index: 5, language: csharp, lines: [106, 115], category: compilable, verified: false}
   - path: "docs/JsonDocumentBuilder.md"
     blocks:
       - {index: 0, language: csharp, lines: [33, 41], category: fragment, verified: false}

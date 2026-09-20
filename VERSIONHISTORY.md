@@ -1,5 +1,15 @@
 # Version History
 
+## V5.7.2
+
+V5.7.2 makes reading a string with an unpaired surrogate escape fail instead of returning its escaped text, and makes RFC 8785 canonicalization reject strings that cannot be written as UTF-8. There are no new features. Input that was silently mishandled now throws `InvalidOperationException`.
+
+### Bug fixes
+
+- **An unpaired surrogate escape is an error when a string is read as UTF-8.** `GetUtf8String()` unescapes into a rented buffer. When the unescape failed, which it does for a lone high or low surrogate such as `"\ud83d"` and for a reversed pair, the `catch` block returned the buffer and did not rethrow, so the method carried on and returned the raw escaped text as though it were the value. `ParsedJsonDocument`, `JsonDocumentBuilder` and `FixedStringJsonDocument` all had the fault; `FixedJsonValueDocument` did not. `GetString()` and the UTF-16 accessors already threw for the same input. All three now rethrow, so the accessors agree. See [#973](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/973).
+
+- **`JsonCanonicalizer` rejects input that RFC 8785 requires it to reject.** Because of the fault above, `["\ud83d"]` canonicalized to `["\\ud83d"]`: the escaped text came back as the value and its backslash was escaped again, which changes the meaning of the string and lets two different inputs share a canonical form. Separately, the parser does not validate the UTF-8 inside a string, and the canonicalizer copied string bytes through, so a string holding a raw `0xFF`, a truncated or overlong sequence, or a UTF-8 encoded surrogate produced output that was not valid UTF-8. `TryCanonicalize` and `Canonicalize` now validate every string value and property name and throw `InvalidOperationException` for an unpaired surrogate (RFC 8785 section 3.2.2.2) and for invalid UTF-8 (section 3.2.4). Output for valid input is unchanged. See [#973](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/973).
+
 ## V5.7.1
 
 V5.7.1 fixes schema evaluation of string values that a document holds as escaped JSON text, which made servers generated since V5.6.0 validate the escaped text of string parameters instead of their value. There are no new features and no breaking changes.

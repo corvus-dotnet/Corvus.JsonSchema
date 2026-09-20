@@ -21,7 +21,8 @@ namespace Corvus.Text.Json.Canonicalization;
 /// </list>
 /// <para>
 /// Input must conform to I-JSON (RFC 7493): no duplicate property names, and all numbers must be
-/// representable as IEEE 754 double-precision values.
+/// representable as IEEE 754 double-precision values. Strings must be valid Unicode: an unpaired
+/// surrogate escape, or a string that is not valid UTF-8, is rejected.
 /// </para>
 /// </remarks>
 public static class JsonCanonicalizer
@@ -37,7 +38,8 @@ public static class JsonCanonicalizer
     /// <param name="bytesWritten">The number of bytes written.</param>
     /// <returns><see langword="true"/> if the canonical output fits in the destination;
     /// <see langword="false"/> if the buffer is too small.</returns>
-    /// <exception cref="InvalidOperationException">The input contains duplicate property names.</exception>
+    /// <exception cref="InvalidOperationException">The input contains duplicate property names, a number
+    /// that is not representable as an IEEE 754 double, an unpaired surrogate, or a string that is not valid UTF-8.</exception>
     public static bool TryCanonicalize(in JsonElement element, Span<byte> destination, out int bytesWritten)
     {
         CanonicalWriter writer = new(destination);
@@ -51,7 +53,8 @@ public static class JsonCanonicalizer
     /// </summary>
     /// <param name="element">The element to canonicalize.</param>
     /// <returns>The canonical JSON bytes.</returns>
-    /// <exception cref="InvalidOperationException">The input contains duplicate property names.</exception>
+    /// <exception cref="InvalidOperationException">The input contains duplicate property names, a number
+    /// that is not representable as an IEEE 754 double, an unpaired surrogate, or a string that is not valid UTF-8.</exception>
     public static byte[] Canonicalize(in JsonElement element)
     {
         // Try stackalloc first for small documents
@@ -305,9 +308,13 @@ public static class JsonCanonicalizer
         /// - Named escapes for <c>\b</c>, <c>\t</c>, <c>\n</c>, <c>\f</c>, <c>\r</c>.
         /// - <c>\uXXXX</c> (lowercase hex) for remaining control characters (U+0000–U+001F).
         /// - All other characters are written literally as UTF-8.
+        /// The parser does not validate the UTF-8 in a string, so it is validated here. The canonical
+        /// output must be valid UTF-8 (RFC 8785 §3.2.4).
         /// </remarks>
         private void WriteCanonicalUtf8String(ReadOnlySpan<byte> utf8Value)
         {
+            JsonReaderHelper.ValidateUtf8(utf8Value);
+
             this.WriteByte((byte)'"');
 
             for (int i = 0; i < utf8Value.Length; i++)
@@ -358,7 +365,7 @@ public static class JsonCanonicalizer
                         else
                         {
                             // All other bytes (ASCII printable, UTF-8 continuation/lead bytes)
-                            // pass through as-is — they are valid UTF-8 and need no escaping.
+                            // pass through as-is — the value has been validated as UTF-8 and needs no escaping.
                             this.WriteByte(b);
                         }
 
