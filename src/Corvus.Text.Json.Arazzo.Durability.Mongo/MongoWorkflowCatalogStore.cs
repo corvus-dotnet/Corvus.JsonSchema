@@ -192,10 +192,12 @@ public sealed class MongoWorkflowCatalogStore : IWorkflowCatalogStore, ISupports
         FilterDefinitionBuilder<BsonDocument> b = Builders<BsonDocument>.Filter;
 
         // Decode the keyset cursor straight from the request UTF-8 (no managed token string); undefined = first page.
+        // A catalog cursor is the version's sort key, a plain string, so it is decoded as text. The address decoder is for
+        // the state store's run cursors and refuses anything that is not `environment/runId`.
         if (query.ContinuationToken.IsNotUndefined())
         {
             using UnescapedUtf8JsonString tokenUtf8 = query.ContinuationToken.GetUtf8String();
-            if (WorkflowContinuationToken.Decode(tokenUtf8.Span) is { } after)
+            if (WorkflowContinuationToken.DecodeText(tokenUtf8.Span) is { } after)
             {
                 filter = b.And(filter, b.Gt("sortKey", after));
             }
