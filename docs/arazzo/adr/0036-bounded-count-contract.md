@@ -1,6 +1,6 @@
 # ADR 0036. The bounded count contract
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how a list's total is counted. Builds on
+Date: 2026-07-21. Status: **Accepted**. Implementation: **partly**. Verified against the code 2026-09-21. Built: the bounded count contract on the sampled seams, native in the SQL-class backends over a subquery capped at `cap + 1` with the list's predicate, a server-fixed cap of 100 in every handler with no client parameter, and capped counts rendered in the UI. Not everywhere: `IRunnerRegistry.CountAsync` is a default method no backend overrides, which lists a page and counts it; `AzureStorageSecurityPolicyStore` has no native count and counts over the fully loaded list; and a key-value backend such as NATS reads and parses candidates until it has `cap + 1` matches, which under a selective filter is a scan of the bucket. So "materialises a number, not rows" and "never an unbounded scan" do not hold for those. Scope: how a list's total is counted. Builds on
 [ADR 0035](0035-keyset-pagination-everywhere.md). This records why a count is bounded by a cap and reports
 whether it was capped, rather than counting an unbounded total.
 

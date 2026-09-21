@@ -1,6 +1,6 @@
 # ADR 0031. The content hash is over the RFC 8785 canonical form of the logical content
 
-Date: 2026-07-21. Status: **Accepted**. Scope: what a package's content hash is computed over. Builds on
+Date: 2026-07-21. Status: **Accepted**. Implementation: **complete**. Verified against the code 2026-09-21. The hash is SHA-256 over the RFC 8785 canonical form of the ordinal-sorted sources and the workflow, the canonical bytes are what is stored and compiled (ADR 0067), and the loader and the AOT build both check it. A client reproduces a version's hash only after applying the same id rewrite, since the hash is computed after it. This record cites `CatalogPackage.Process`; the method is `Project`. Scope: what a package's content hash is computed over. Builds on
 [ADR 0030](0030-immutable-content-hashed-versioned-packages.md). This records why a version's hash is the
 SHA-256 of the RFC 8785 canonical form of the logical `{ workflow, sources }` content, not of the container
 bytes.

@@ -1,6 +1,6 @@
 # ADR 0030. Immutable, content-hashed, versioned packages
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how a workflow is stored in the catalog. Builds on
+Date: 2026-07-21. Status: **Accepted**. Implementation: **partly, with one divergence**. Verified against the code 2026-09-21. Built: the store assigns the version number, the id is rewritten to `{base}-v{n}`, a versioned base id is refused, and the content-hash guard blocks an in-place replacement of the workflow or its sources in every backend sampled. Divergence: "a version is never edited in place" is false for the package. `IWorkflowCatalogStore.UpdatePackageAsync` replaces a version's stored bytes where the content hash is unchanged, and the hash covers the workflow and its sources only. The compiled executor, schema metadata, native binaries and attestations sit outside it, so what runs can change under a fixed version number and hash, and its integrity rests on the signing of ADR 0025 and ADR 0055. The one caller today is the native build worker, and the seam does not limit which entries change. This record cites `CatalogPackage.Process`; the method is `Project`. Scope: how a workflow is stored in the catalog. Builds on
 [ADR 0017](0017-code-generate-the-executor.md). This records why a catalogued workflow is an immutable,
 content-addressable package, and why versions are minted by assigning a number and rewriting the workflow id
 rather than editing a version in place.

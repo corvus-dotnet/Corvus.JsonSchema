@@ -1,6 +1,6 @@
 # ADR 0034. A standalone published-endpoint hosting service is not required
 
-Date: 2026-07-21. Status: **Accepted**. Scope: whether publishing a workflow at an HTTP endpoint needs a
+Date: 2026-07-21. Status: **Accepted**. Implementation: **complete**, being a decision not to build. Verified against the code 2026-09-21. No published-endpoint host exists, and the run-start operation does the reach, environment, tenancy, input, availability, hosting and capacity checks. "No third process is introduced" is no longer true as written, since the serverless execution backends deploy a process for a version; they are execution backends and not inbound endpoints, so the decision stands. The environment's existence check applies only where an environment store is wired. Scope: whether publishing a workflow at an HTTP endpoint needs a
 separate service. Builds on [ADR 0023](0023-two-process-store-as-queue.md) and
 [ADR 0026](0026-triggers-async-by-default.md). This records why a dedicated hosting service for published
 workflow endpoints is declined, because the existing run-start endpoint and runner already provide the

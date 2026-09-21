@@ -1,6 +1,6 @@
 # ADR 0033. Compile at catalog-add; the package is a complete code-generation input
 
-Date: 2026-07-21. Status: **Accepted**. Scope: when a workflow's executor is compiled. Builds on
+Date: 2026-07-21. Status: **Accepted**. Implementation: **complete, with an exception this record does not state**. Verified against the code 2026-09-21. A version is compiled when it is catalogued and its assembly, manifest and signature are baked into the stored package; a failed build is catalogued as not runnable with its error. The exception: draft runs and the simulator do compile on the run path (`DraftWorkflowResumer`, `WorkflowSimulator`). The executor provider is optional at every seam, so a store built without one catalogues every version as not runnable in silence. This record cites `CatalogPackage.Process`; the method is `Project`. Scope: when a workflow's executor is compiled. Builds on
 [ADR 0017](0017-code-generate-the-executor.md), [ADR 0020](0020-durability-is-opt-in-codegen.md), and
 [ADR 0030](0030-immutable-content-hashed-versioned-packages.md). This records why the executor is generated and
 compiled when a version is added to the catalog, and baked into the package.

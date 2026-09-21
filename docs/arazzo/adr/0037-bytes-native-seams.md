@@ -1,6 +1,6 @@
 # ADR 0037. Bytes-native seams: no record-to-document string round-trips
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how JSON values move through the persistence and API layers.
+Date: 2026-07-21. Status: **Accepted**. Implementation: **partly**. Verified against the code 2026-09-21. The posture is real on the read, list and response paths sampled: stores return pooled documents, handlers take ownership, the security handler bridges values far more often than it casts to `string`, and paging tokens decode bytes-native. Hand-written string records remain at write seams: `CatalogOwner` and `CatalogMetadata`, read from the request with `GetString()` and written back into a document, `AuditEntry`, which is written on every audited action, `SourceCredentialDefinition`, and others. This record names `IDirectoryIdentityMapper` and `SourceCredentialStoreExtensions` as the deliberate string surfaces, and nothing enforces the rule mechanically. Scope: how JSON values move through the persistence and API layers.
 This records why a JSON value is carried as bytes or a typed document from end to end, and a string is
 materialised only at the genuine leaf, rather than transcoded to a record and back.
 

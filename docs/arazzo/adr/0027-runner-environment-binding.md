@@ -1,6 +1,6 @@
 # ADR 0027. Runner-to-environment binding, with the revocation fence in the store
 
-Date: 2026-07-21. Status: **Accepted**. Scope: which runner may execute which runs. Builds on
+Date: 2026-07-21. Status: **Accepted**. Implementation: **partly, with divergences**. Verified against the code 2026-09-21. Built: the authorization lifecycle and its withdrawal in every backend, the claim gate (`RunnerAuthorizationBindings.ResolveAsync`, where only `Authorized` binds), and the in-flight fence, which expires a revoked runner's leases through `IWorkflowLeaseAdministration`. Divergences: the claim refusal is in the runner API layer and not in the store, whose lease-acquire path never consults the authorization store; and it is not immediate, since a resolution is cached for up to `MaximumCacheWindow`, 30 seconds, which the class itself calls the fence's latency. Only the expiry of leases already held is immediate. The fence is skipped in silence where the state store does not implement `IWorkflowLeaseAdministration`, and a deployment wired with `DeclaredRunnerEnvironmentBindings` has no lifecycle or revocation at all. Scope: which runner may execute which runs. Builds on
 [ADR 0023](0023-two-process-store-as-queue.md). This records why runs are pinned to an environment, why a
 runner must be authorized for an environment before it may serve it, and why revocation is enforced in the
 store rather than trusted to the runner.

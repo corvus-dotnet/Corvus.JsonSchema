@@ -1,6 +1,6 @@
 # ADR 0029. Native server-side partial update for the hot heartbeat path
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how a runner's frequent heartbeat is persisted. Builds on
+Date: 2026-07-21. Status: **Accepted**. Implementation: **partly**. Verified against the code 2026-09-21. The heartbeat is one statement on Postgres, SQL Server, MySQL and Cosmos, advancing the indexed column and the mirrored `lastSeenAt` together, and the other backends read, modify and write as this record says. Not found: the non-ASCII probe this record says guards the in-place edit. The heartbeat conformance test registers an ASCII runner id and asserts the timestamps only, so the patch's charset safety is unpinned for the runner registry. Scope: how a runner's frequent heartbeat is persisted. Builds on
 [ADR 0021](0021-state-store-abstraction.md) and [ADR 0027](0027-runner-environment-binding.md). This records
 why the runner heartbeat is a single native server-side partial update on backends that store queryable JSON,
 rather than a read-modify-write.

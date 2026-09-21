@@ -1,6 +1,6 @@
 # ADR 0032. The `.awp` container is a deterministic TLV framing, not a ZIP
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how a package's bytes are framed. Builds on
+Date: 2026-07-21. Status: **Accepted**. Implementation: **complete**. Verified against the code 2026-09-21. The container is the magic, a format version, an entry count and length-prefixed stored entries, the reader rejects a bad magic, an unknown encoding and truncation, and a second packer runs in the browser. Not pinned: no test feeds the reader malformed input, and its bounds check adds in unchecked arithmetic, so a crafted length near `int.MaxValue` is caught by the slice after it and surfaces as `ArgumentOutOfRangeException` and not the clean `InvalidDataException` its comment promises. Packages are untrusted uploads. What is stored is the repacked canonical package and not the submitted bytes verbatim. Scope: how a package's bytes are framed. Builds on
 [ADR 0030](0030-immutable-content-hashed-versioned-packages.md) and
 [ADR 0031](0031-content-hash-over-rfc8785-canonical.md). This records why the package container is a small,
 deterministic length-prefixed framing rather than a ZIP.

@@ -1,6 +1,6 @@
 # ADR 0035. Keyset pagination everywhere, API and store
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how every list is paged. This records why every list endpoint,
+Date: 2026-07-21. Status: **Accepted**. Implementation: **partly**. Verified against the code 2026-09-21. Built: every persistent backend pages the sampled store families natively by keyset, with no `OFFSET` and no in-memory `Skip`, and the handlers call the paged overloads. Not everywhere: `AzureStorageSecurityPolicyStore` loads the whole reach-admitted set and pages in memory; `ListAdministeredWorkflowsAsync` is called unpaged on the access-request path, so an administrator of many workflows materialises them all for each request; and unpaged list methods remain on several store interfaces. The default interface implementations that page in memory serve the in-memory stores alone, since every persistent backend overrides them, and would unbound in silence any new backend that forgot to. They are candidates for deletion. Scope: how every list is paged. This records why every list endpoint,
 and the store behind it, is keyset-paged from the start, across every backend, rather than offset-paged or
 unpaged.
 
