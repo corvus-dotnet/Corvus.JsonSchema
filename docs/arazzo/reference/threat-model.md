@@ -47,7 +47,7 @@ cancellations". Both are in fact incremented (`WorkflowRun.WorkflowsSuspended.Ad
 
 ### 1.3 What obliges an update
 
-A threat model that nothing triggers goes stale silently. These are the triggers.
+A threat model that nothing triggers goes stale silently. These are the triggers, and the [review checklist](review-checklist.md#1-does-the-threat-model-need-an-update) asks them of every change.
 
 - A new ADR is accepted, or an existing one superseded. Reconcile its claims against [§7](#7-control-inventory).
 - A new component, store backend, execution backend or API endpoint ships. Assign it to a boundary in [§2](#2-the-system-and-its-trust-boundaries), or add one.
@@ -365,7 +365,8 @@ recording what does not, because a model built only from holes mis-ranks the fix
 | Dependency updates | Absent | Present but inert, Dependabot targets a directory that does not exist in this repository |
 | Reproducible restore | Absent | Lock files only on the legacy v4 projects |
 | Vulnerability disclosure policy | Absent | No `SECURITY.md` |
-| Implementation status recorded in ADRs | Partial | ADRs 0068 to 0071 open with an implementation line; the earlier records do not carry one, so a reader still credits designed-but-unbuilt barriers there. **The root cause of the DIV class** (PROC-6) |
+| Implementation status recorded in ADRs | Holds | Every ADR carries an implementation line verified against the code on 2026-09-21 (PROC-6). What the verification found is in [§11 of the 2026-08-07 audit](../audits/2026-08-07-security-audit.md#11-proc-6-verification-findings), findings V-1 to V-42, none remediated yet. The [review checklist](review-checklist.md) keeps the line true |
+| Review checklist | Holds | [`review-checklist.md`](review-checklist.md) carries the update triggers of §1.3, the read-side question of ADR 0070 and one question for each recurring defect kind (PROC-7). It is a document a reviewer reads, and nothing mechanical enforces it |
 | Observability coverage reference | Partial | Claims verification against the handlers, points at an anchor that no longer exists, omits five emitted actions |
 
 ### 7.3 People

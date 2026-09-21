@@ -71,6 +71,7 @@ does not, and links them for the rest.
 | [`reference/control-plane-use-cases.md`](reference/control-plane-use-cases.md) | The use-case catalog: the jobs each persona brings to each surface, with stable ids. |
 | [`reference/control-plane-observability-coverage.md`](reference/control-plane-observability-coverage.md) | The observability coverage catalog: the span, metric, and audit log each governed action emits, per surface. |
 | [`reference/threat-model.md`](reference/threat-model.md) | The threat model, in swiss-cheese form: assets, adversaries, trust boundaries, the threats at each, and the controls, detection and containment that answer them. The standing artefact a security audit measures against. |
+| [`reference/review-checklist.md`](reference/review-checklist.md) | The review checklist: the threat model's update triggers, the read-side audit question, and one question for each kind of defect the audits keep finding. |
 | [`reference/UBIQUITOUSLANGUAGE.md`](reference/UBIQUITOUSLANGUAGE.md) | The ubiquitous-language glossary. |
 
 ## Audits

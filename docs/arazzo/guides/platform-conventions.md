@@ -77,8 +77,8 @@ because run execution is never gated on the audit sink. A surface mapped by hand
 operations, is seen by no filter and records its own disclosures and its own refusals, as the checkpoint surface
 does.
 
-There is no review checklist for this yet. The 2026-08-07 audit's PROC-7 is where one is wired, and this question
-belongs on it.
+This question is on the [review checklist](../reference/review-checklist.md#3-audit), which every change is
+reviewed against.
 
 ## API-first
 

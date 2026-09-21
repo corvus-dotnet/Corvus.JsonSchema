@@ -158,6 +158,7 @@ Always `using`; prefer `JsonWorkspace.Create()` (thread-local rented) over `Crea
 
 - **Documentation website** (build pipeline, generated-vs-authored files, incremental rebuilds, XmlDocToMarkdown) and **playgrounds** (running, ports, the WASM `SR.Format` gotcha): `corvus-docs-website` skill and `docs/website/DEVELOPMENT.md`. Stop any serving process before rebuilding — file locks hang the build.
 - **Benchmarks**: B/ is the frozen baseline — **never regenerate B/**; regenerate all C/ after codegen changes (`pwsh benchmarks/scripts/Regenerate-CurrentBenchmarks.ps1`). BDN procedure, Job-* cleanup, result locations, JSONata specifics, and the full project table: `corvus-benchmarks` skill and `docs/BenchmarkGuide.md`. Confirm the machine is idle before running.
+- **Arazzo platform changes** (anything under `src/Corvus.Text.Json.Arazzo*`, `samples/arazzo/`, `web/arazzo-*` or `docs/arazzo/`): review the change against `docs/arazzo/reference/review-checklist.md` before committing. It carries the threat model's update triggers, the read-side audit question, and the ADR implementation-status rule.
 - **Code sample catalog**: full triage rules, first-pass prioritization, ExampleRecipes cross-referencing, and script flags: `docs/CodeSampleCatalog.md`. The pre-commit gate above is the mandatory minimum.
 
 ## Namespaces
