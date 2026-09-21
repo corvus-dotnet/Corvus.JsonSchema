@@ -311,7 +311,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         // A binding's detail names where the secret lives and what the source is called with, which is what an attacker
         // steering a credential wants to read. It is a disclosure (ADR 0070): recorded first, and refused if it cannot be.
         // The secret itself is never returned, so the tier is the detail and not a payload of the secret.
-        await this.auditor.ReadAsync("credential.read", this.AuditActor(), "credential", sourceName, "detail", disclosesPayload: true, environment).ConfigureAwait(false);
+        await this.auditor.ReadAsync("credential.read", this.AuditActor(), "credential", sourceName, "detail", failClosed: true, environment).ConfigureAwait(false);
         return GetCredentialResult.Ok(ToSummary(b.RootElement), workspace);
     }
 

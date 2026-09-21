@@ -100,7 +100,7 @@ arazzo-runs scenarios run --working-copy <id> --server https://host/arazzo/v1
 
 ## Verifying the audit (`audit verify`)
 
-`audit verify` checks a deployment's audit chains ([ADR 0069](../../docs/arazzo/adr/0069-audit-as-evidence-append-only-chained-signed-sink.md)) from their stored bytes. It calls no server: the control plane that wrote the evidence is not in the path that checks it. Give it a chain file, a directory of chain files (`*.jsonl`, searched through its subdirectories, which are one to a writer), or `-` to read one chain from standard input, for example a blob downloaded from the audit container.
+`audit verify` checks a deployment's audit chains ([ADR 0069](../../docs/arazzo/adr/0069-audit-as-evidence-append-only-chained-signed-sink.md)) from their stored bytes. It calls no server: the control plane that wrote the evidence is not in the path that checks it. A runner keeps a chain of its own, for the secrets it resolves, and the same command checks that too, against the runner's public key. Give it a chain file, a directory of chain files (`*.jsonl`, searched through its subdirectories, which are one to a writer), or `-` to read one chain from standard input, for example a blob downloaded from the audit container.
 
 ```pwsh
 # Every chain in the sink, against the audit's public key, and an anchor the collector holds

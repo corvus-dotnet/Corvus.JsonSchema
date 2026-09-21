@@ -71,6 +71,6 @@ internal static class SensitiveReadAudit
         // by ReadSideAudit. Recording it here as well would put the same probe on the chain twice.
         return disclosure == JournalDisclosure.Refused
             ? ValueTask.CompletedTask
-            : auditor.ReadAsync("run.journal.read", actor, "run", runId, tier, disclosesPayload: true);
+            : auditor.ReadAsync("run.journal.read", actor, "run", runId, tier, failClosed: true);
     }
 }

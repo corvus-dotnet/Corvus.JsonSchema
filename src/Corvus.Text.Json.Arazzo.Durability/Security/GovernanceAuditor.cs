@@ -194,17 +194,18 @@ public sealed class GovernanceAuditor : IAsyncDisposable
     /// <param name="targetKind">The kind of resource read.</param>
     /// <param name="targetId">The id of the resource read, or asked for. An identifier only, never what was read.</param>
     /// <param name="disclosure">The disclosure tier (for example <c>full</c>, <c>redacted</c>, <c>refused</c>).</param>
-    /// <param name="disclosesPayload">
-    /// <see langword="true"/> for a read that is about to return a payload. Its record comes first and the read fails
-    /// closed: when the sink refuses the record the call throws and the caller discloses nothing, because a payload read
-    /// that left no record is the event the read-side audit exists for, and a read is safe to ask for again.
-    /// <see langword="false"/> for a refusal, which never fails the request: the failure counts, degrades health, and the
-    /// caller answers as it would have.
+    /// <param name="failClosed">
+    /// <see langword="true"/> for a read a caller is about to be given the payload of, and can ask for again: the control
+    /// plane's API disclosures. Its record comes first and the read fails closed: when the sink refuses the record the
+    /// call throws and the caller discloses nothing, because a payload read that left no record is the event the
+    /// read-side audit exists for. <see langword="false"/> for a refusal, and for a disclosure made in the course of
+    /// running a workflow, a runner resolving a secret, since run execution is never gated on the sink (ADR 0069): the
+    /// failure counts, degrades health, and the caller goes on as it would have.
     /// </param>
     /// <param name="environment">The environment the read is scoped to, or <see langword="null"/>.</param>
     /// <returns>A task that completes when the read is recorded.</returns>
     /// <exception cref="AuditAppendException">The sink refused the record of a read that discloses a payload. Nothing has been disclosed.</exception>
-    public ValueTask ReadAsync(string action, AuditSubject actor, string targetKind, string targetId, string disclosure, bool disclosesPayload, string? environment = null)
+    public ValueTask ReadAsync(string action, AuditSubject actor, string targetKind, string targetId, string disclosure, bool failClosed, string? environment = null)
     {
         this.Logger?.LogInformation(
             "Audit: {Actor} (tenant {Tenant}) read {TargetKind} {TargetId} ({Action}) in environment {Environment}; disclosure {Disclosure}.",
@@ -218,7 +219,7 @@ public sealed class GovernanceAuditor : IAsyncDisposable
 
         return this.chain is null
             ? ValueTask.CompletedTask
-            : this.AppendReadAsync(new AuditEntry(action, actor.Subject, actor.OwnerGroup, targetKind, targetId, disclosure, environment, AuditEntryKind.Read), disclosesPayload);
+            : this.AppendReadAsync(new AuditEntry(action, actor.Subject, actor.OwnerGroup, targetKind, targetId, disclosure, environment, AuditEntryKind.Read), failClosed);
     }
 
     /// <summary>
@@ -251,7 +252,7 @@ public sealed class GovernanceAuditor : IAsyncDisposable
 
         if (admitted)
         {
-            await this.ReadAsync(action, actor, targetKind, targetId, "refused", disclosesPayload: false, environment).ConfigureAwait(false);
+            await this.ReadAsync(action, actor, targetKind, targetId, "refused", failClosed: false, environment).ConfigureAwait(false);
         }
     }
 

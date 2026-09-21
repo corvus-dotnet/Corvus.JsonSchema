@@ -1484,7 +1484,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
 
         // A debug run's view carries its trace, the step inputs and outputs a real run keeps in its journal, so reading it
         // is a payload disclosure (ADR 0070): recorded first, and refused if it cannot be.
-        await this.auditor.ReadAsync("debug-run.read", this.AuditActor(), "debug-run", (string)parameters.DebugRunId, "full", disclosesPayload: true).ConfigureAwait(false);
+        await this.auditor.ReadAsync("debug-run.read", this.AuditActor(), "debug-run", (string)parameters.DebugRunId, "full", failClosed: true).ConfigureAwait(false);
         return GetDebugRunResult.Ok(v.RootElement, workspace);
     }
 

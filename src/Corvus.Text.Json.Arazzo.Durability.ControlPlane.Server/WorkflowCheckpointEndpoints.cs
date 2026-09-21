@@ -78,7 +78,7 @@ public static class WorkflowCheckpointEndpoints
             // cannot be. This surface is mapped by hand, so the refusal is written here and not by the endpoint filter.
             try
             {
-                await auditor.ReadAsync("checkpoint.read", new AuditSubject("run:" + address.RunId.Value, null), "run", address.RunId.Value, "full", disclosesPayload: true, address.Environment).ConfigureAwait(false);
+                await auditor.ReadAsync("checkpoint.read", new AuditSubject("run:" + address.RunId.Value, null), "run", address.RunId.Value, "full", failClosed: true, address.Environment).ConfigureAwait(false);
             }
             catch (AuditAppendException)
             {

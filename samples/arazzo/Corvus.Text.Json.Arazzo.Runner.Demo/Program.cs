@@ -175,6 +175,38 @@ if (!string.IsNullOrWhiteSpace(vaultAddress) && !string.IsNullOrWhiteSpace(vault
     // this, every credential read 403s once the initial token expires — VaultSharp neither renews nor re-authenticates.
     builder.Services.AddHostedService<VaultTokenLifecycleService>();
     ISecretResolver secretResolver = new SecretResolverBuilder().AddHashiCorpVault(vaultClient).Build();
+
+    // The runner's own audit chain (ADR 0070). A runner is a process of its own that the control plane does not trust and
+    // that has no path to the control plane's audit sink, so it keeps its own evidence: every secret it resolves is a
+    // record naming the runner and the secret's reference, never the material. Wrapping the resolver here, where it is
+    // composed, covers every consumer of it below. A resolution is never refused because its record could not be
+    // appended, since run execution is not gated on the audit sink (ADR 0069); the runner's audit health says so instead.
+    //
+    // The sink is a directory of chain files and the head key a PEM file beside them, made on first run with its public
+    // half next to it for `arazzo-runs audit verify`. That is the development arrangement. A deployment appends to
+    // immutable storage and holds the head key in a key service the runner can only sign with, and neither is the
+    // control plane's: the runner cannot reach the signing vault, by design.
+    string runnerAuditDirectory = builder.Configuration["Arazzo:AuditDirectory"] ?? Path.Combine(Path.GetTempPath(), "arazzo-runner-demo", "audit");
+    Directory.CreateDirectory(runnerAuditDirectory);
+    string runnerAuditKeyPath = builder.Configuration["Arazzo:AuditSigningKeyPath"] ?? Path.Combine(runnerAuditDirectory, "audit-head-key.pem");
+    var runnerAuditKey = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256);
+    if (File.Exists(runnerAuditKeyPath))
+    {
+        runnerAuditKey.ImportFromPem(await File.ReadAllTextAsync(runnerAuditKeyPath));
+    }
+    else
+    {
+        await File.WriteAllTextAsync(runnerAuditKeyPath, runnerAuditKey.ExportECPrivateKeyPem());
+        await File.WriteAllTextAsync(Path.ChangeExtension(runnerAuditKeyPath, ".pub.pem"), runnerAuditKey.ExportSubjectPublicKeyInfoPem());
+    }
+
+    var runnerAuditor = new GovernanceAuditor(
+        LoggerFactory.Create(logging => logging.AddConfiguration(builder.Configuration.GetSection("Logging")).AddConsole()).CreateLogger("Corvus.Arazzo.Audit"),
+        new FileAuditSink(runnerAuditDirectory),
+        headSigner: new EcdsaExecutorPackageSigner(runnerAuditKey, builder.Configuration["Arazzo:AuditSigningKeyId"] ?? "runner-audit-head-key"),
+        writerId: builder.Configuration["Arazzo:AuditWriterId"]);
+    await runnerAuditor.StartAsync();
+    secretResolver = new AuditedSecretResolver(secretResolver, runnerAuditor, runnerId);
     var providerFactory = new SourceCredentialProviderFactory(secretResolver);
     var credentialCache = new SourceCredentialCache(credentials, providerFactory);
 
