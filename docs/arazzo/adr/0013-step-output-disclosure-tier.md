@@ -1,6 +1,6 @@
 # ADR 0013. Step-output disclosure tier
 
-Date: 2026-07-21. Status: **Accepted**. Scope: reading a run's step outputs. Builds on
+Date: 2026-07-21. Status: **Accepted**. Implementation: **partly, with one divergence**. Verified against the code 2026-09-21. Built: `getRunSteps` requires `runs:read` and `runs:outputs:read`, sensitivity is per catalog version, and a sensitive version's journal is redacted and its read audited at its tier. Divergence: the boundary is not the one this record states. `runs:outputs:read` is the endpoint's baseline for every version, and what lifts redaction on a sensitive version is write reach on the run (`ctx.Admits(AccessVerb.Write, ...)`), so the code has three states where this record describes two, and the scope alone never un-redacts. A caller refused for lacking the scope is stopped before the handler, so that refusal is not a journal-read record. Scope: reading a run's step outputs. Builds on
 [0001](0001-two-plane-access-model.md) and [0004](0004-fail-closed-non-disclosing-enforcement.md). This
 records why reading a run's step outputs is a stronger grant than reading the run, gated per version by an
 output-sensitivity classification, and audited on every read.

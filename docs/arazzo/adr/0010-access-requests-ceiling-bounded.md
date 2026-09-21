@@ -1,7 +1,7 @@
 # ADR 0010. Access requests are ceiling-bounded and subject-pinned
 
 Date: 2026-07-21. Revised 2026-09-02: the per-workflow reach rule is reserved and expression-checked (P1-5 of the
-2026-08-07 security audit). Status: **Accepted**. Scope: what an approved access request may grant. Builds on
+2026-08-07 security audit). Status: **Accepted**. Implementation: **partly, with one divergence**. Verified against the code 2026-09-21. Built: grants are capped to `GrantableScopes`, the TTL is clamped to `MaxTtl`, the subject is the caller's own claim and never the body's, reach is pinned to the per-workflow rule, purge is never granted, and the `workflow-access:` rule namespace is reserved, with an expression check. Divergence: the default allowlist is `runs:read`, `runs:write` and `catalog:read`, which this record does not name, and it is a host-settable list with no validation, so a host can put `security:write` in it. Not enforced: that a grant only enacts a recorded decision, since a holder of `accessRequests:grant` can grant any pending request; and an eligibility binding written with no window has no expiry. No test clamps a duration above `MaxTtl`. Scope: what an approved access request may grant. Builds on
 [0002](0002-grant-verbs-are-reach-not-scopes.md) and [0009](0009-eligible-versus-active-self-elevation.md).
 This records why an approval can only ever grant a narrow, capped slice of access, so the request path can
 never become a way to grant arbitrary reach or scope.

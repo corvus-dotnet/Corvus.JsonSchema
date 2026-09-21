@@ -1,6 +1,6 @@
 # ADR 0011. Approval is a strategy seam
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how an access-request decision is made. Builds on
+Date: 2026-07-21. Status: **Accepted**. Implementation: **partly**. Verified against the code 2026-09-21. Built: `IAccessRequestApprovalService` with the synchronous and the workflow-backed implementations, the second composed over the first so every grant passes the same ceiling, and the handler depends on the interface alone. Not built: a host cannot supply its own strategy through `MapArazzoControlPlane`, which constructs the strategy itself from `WorkflowApprovalOptions`. The ceiling lives inside the built-in service, so a third strategy shares it only by delegating to it. Scope: how an access-request decision is made. Builds on
 [0010](0010-access-requests-ceiling-bounded.md). This records why the decision step is a replaceable strategy
 behind one interface, with a built-in single-approver default and a workflow-backed alternative, rather than
 a fixed approval mechanism baked into the request handler.

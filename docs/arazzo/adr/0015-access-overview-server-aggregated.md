@@ -1,6 +1,6 @@
 # ADR 0015. The access overview is server-aggregated
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how the "who can do what, where" overview for one grantee is
+Date: 2026-07-21. Status: **Accepted**. Implementation: **partly, with one divergence**. Verified against the code 2026-09-21. Built: the overview and its keyset-paged reach, administered and credentials sub-resources are computed on the server, and the client is thin. Divergences: membership matching in the overview is a parallel reimplementation of the resolver's, with a third copy in the self-elevation guard, and no test runs the resolver and the overview over one policy to show they agree; and the overview reads bindings through the store's context-less `ListBindingsAsync` overload where the binding search beside it passes the caller's context, so the overview does not apply the caller's reach to the bindings it aggregates. Scope: how the "who can do what, where" overview for one grantee is
 computed. Builds on [0001](0001-two-plane-access-model.md), [0003](0003-membership-matching-over-canonical-identity.md),
 and [0006](0006-deployment-access-control-shell.md). This records why the overview is computed on the server,
 against the same identity and prefix handling that enforcement uses, rather than re-derived in the client.

@@ -1,6 +1,6 @@
 # ADR 0047. Web-kit permission gating is server-authoritative
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how the web kit decides whether to show a privileged control.
+Date: 2026-07-21. Status: **Accepted**. Implementation: **partly, with one divergence**. Verified against the code 2026-09-21. Built: every gating component treats an absent `scopes` attribute as deferring to the server, and the live shell sets none. Divergence: the test this record cites as live runs against the mock demo and checks the scopes-present branch. One live test covers the server's 403 for one affordance, rule create, and not one for each privileged affordance. The kit README does not say an absent attribute defers to the server, and its usage example passes a hard-coded partial scope list of the kind this record warns against. Nothing enforces that convention. Scope: how the web kit decides whether to show a privileged control.
 Builds on [ADR 0040](0040-three-layer-web-kit.md) and
 [ADR 0004](0004-fail-closed-non-disclosing-enforcement.md). This records why a component gates a mutating
 control from a `scopes` attribute whose absence defers to the server, rather than from a hard-coded scope list

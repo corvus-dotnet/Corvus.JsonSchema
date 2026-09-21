@@ -1,6 +1,6 @@
 # ADR 0046. The deployment bootstrap and the example seed are two seams
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how a deployment's real, required setup is separated from a
+Date: 2026-07-21. Status: **Accepted**. Implementation: **complete**. Verified against the code 2026-09-21. The deployment bootstrap and the example seed are separate seams: `IDeploymentBootstrap` in the library with nine per-backend `ProvisionAsync` entry points, and `IExampleSeed` in the sample only, gated on `seedExampleData`. Not pinned: no test calls any backend's `ProvisionAsync`, and only the Postgres one runs in a host. The sample defaults `seedExampleData` to true where the setting is absent, while the options schema defaults it to false, so a host copied from the sample seeds demo personas by omission. Scope: how a deployment's real, required setup is separated from a
 sample's demo content. This records why the platform splits deployment bootstrapping (the real, config-driven
 setup every deployment runs) from example seeding (demo fiction the sample alone runs), rather than one seeding
 step that mixes the two.

@@ -1,6 +1,6 @@
 # ADR 0012. Delivering an approver's decision to a suspended approval-workflow run
 
-Date: 2026-07-19. Status: **Accepted**. Scope: the
+Date: 2026-07-19. Status: **Accepted**. Implementation: **partly, with divergences**. Verified against the code 2026-09-21. Built: a decision is published over the `access.decision` channel after the pending and administrator checks, the approval workflow awaits it with an ordinary correlated `receive`, and a repeat is a 409. Not built: decision provenance. Nothing secures the channel or verifies the publisher, neither the resume handler nor the settle path checks `decidedBy`, and the sample broker gives the control plane, the tenant runner and the system runner one shared token with no per-subject permissions, so any holder of the transport credential can publish an approval for any pending request, bounded only by ADR 0010's ceiling. Divergence: the workflow calls `settleAccessRequest` for every outcome and not `grantAccessRequest`. The decision consumer is wired in the sample system runner only. Scope: the
 approval capstone (#880, design §16.5.1), piece 3 (decision correlation). This records why the
 approver's decision reaches the suspended approval workflow by being **published to a channel**
 rather than handed to the run by a bespoke control-plane call.

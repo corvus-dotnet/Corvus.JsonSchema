@@ -744,3 +744,19 @@ decision on whether the code or the ADR is wrong.
 | V-6 | Grantee resolution is a UI convention and not a server invariant: the binding and add-administrator handlers accept a free-form claim type, value and identity from the body, and the default `ResolveGranteeIdentity` yields one `sys:sub` tag with no issuer. ADR 0008 says a grantee is never authored as a free-form tuple | 0008 | Reported |
 | V-7 | The approver inbox lists the approver's own requests, since its query excludes no requester. ADR 0009 says it only ever shows requests the approver did not raise. The decision itself is refused by the server and audited. The own-request rule lives in the HTTP handlers and not in the approval service, so an in-process caller is not barred | 0009 | Reported |
 | V-8 | `WorkflowIdentity.SameAdministrator` is exact set-equality, which ADR 0003 lists as the forward membership check. A doc comment in `ControlPlaneRowSecurity.cs` and the grantee picker's warning text still describe exact identity | 0003 | Reported |
+
+### Access requests, approval and bootstrap, ADRs 0010 to 0016, 0046 and 0047 (2026-09-21)
+
+| # | Finding | ADR | State |
+|---|---------|-----|-------|
+| V-9 | The server refuses no directly authored per-person binding for someone other than the caller. The request-only rule for a named `sub` exists in the web kit's grants panel alone, so a holder of `security:write` can grant a colleague any reach and any scope with no second party, by calling the API. ADR 0014 says the split is a server check and not a UI affordance | 0014 | Confirmed |
+| V-10 | The access overview reads bindings through `ISecurityPolicyStore.ListBindingsAsync` without an access context, where the binding search beside it passes the caller's. The security plane is reach-partitioned (P1-5), and the overview aggregates across the partition | 0015 | Confirmed |
+| V-11 | Nothing secures the approval decision channel or verifies who published a decision. The resume handler and the settle path do not check `decidedBy`, and the sample broker hands one token to the control plane and both runners, so any holder of the transport credential can publish an approval for any pending request, bounded by ADR 0010's ceiling. ADR 0012 names channel ACLs as the mitigation and no code provides them | 0012 | Reported |
+| V-12 | What lifts redaction on a sensitive version's journal is write reach on the run, not `runs:outputs:read`, which is the endpoint's baseline. ADR 0013 states the scope as the boundary | 0013 | Reported |
+| V-13 | The default grantable scopes include `catalog:read`, which ADR 0010 does not name, and the allowlist is host-settable with no validation. A grant is not tied to a recorded decision, and an eligibility binding with no window has no expiry | 0010 | Reported |
+| V-14 | `default(ControlPlaneSecurityMode)` is `Open`. A host that binds the mode from configuration and never sets it runs open in silence, which is the omission ADR 0016 says cannot happen. An out-of-range value is not refused | 0016 | Reported |
+| V-15 | The test ADR 0047 cites as live runs against the mock. A host cannot supply its own approval strategy (ADR 0011). The overview's matcher is a third copy of membership matching with no parity test (ADR 0015). The sample seeds demo personas by omission (ADR 0046) | 0047, 0011, 0015, 0046 | Reported |
+
+### What nothing being shipped means for these
+
+No deployment depends on today's behaviour, so none of these needs a migration path or a compatibility hedge, and a path that exists only as a fallback is removed and not guarded. That applies directly to V-3, where the hole is the version-1 administration fallback itself, to V-6's interim single-grant path, and to V-14, where the fix is a zero member that is not a posture.
