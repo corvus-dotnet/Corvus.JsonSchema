@@ -1,6 +1,6 @@
 # ADR 0001. Two-plane access model: capability and reach
 
-Date: 2026-07-21. Status: **Accepted**. Scope: the whole control-plane authorization surface. This records
+Date: 2026-07-21. Status: **Accepted**. Implementation: **complete**. Verified against the code 2026-09-21. Both planes are enforced: capability by `ControlPlaneAuthorization.RequireDeclaredScopes` where the mode gates scopes, reach by `PersistentRowSecurityPolicy.Resolve` into a per-verb `AccessContext` that the secured catalog, management and stores apply, and `MapArazzoControlPlane` validates the mode and policy pairing. The union of stored entitlements into capability depends on ADR 0005, which no host wires. Scope: the whole control-plane authorization surface. This records
 why access is decided on two independent planes, capability and reach, both of which must pass, rather than
 on a single permission model.
 

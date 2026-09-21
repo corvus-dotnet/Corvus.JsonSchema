@@ -1,6 +1,6 @@
 # ADR 0009. Eligible versus active self-elevation, and the independent-decision rule
 
-Date: 2026-07-21. Status: **Accepted**. Scope: standing eligibility versus a live grant, and who may decide a
+Date: 2026-07-21. Status: **Accepted**. Implementation: **complete, with one false consequence**. Verified against the code 2026-09-21. Eligible-only bindings are skipped at compile and confer nothing, stored eligibility self-elevates only the scopes it covers, approve-as-eligible writes an eligible-only binding, and the own-request rule guards every decision in the access-request and availability-request handlers, audited as `refused-own-request`. Divergences: the approver inbox does show the approver's own requests, since its query has no requester exclusion, and the UI renders them with the rule in place of buttons and relies on the server's 403; and the own-request rule is in the HTTP handlers only, so an in-process caller of the approval service is not barred. Scope: standing eligibility versus a live grant, and who may decide a
 request. Builds on [0002](0002-grant-verbs-are-reach-not-scopes.md). This records why an eligibility confers
 nothing until it is activated, and why a request is never decided by its own requester.
 

@@ -721,3 +721,26 @@ current model shares the property in weaker form. **Decide:** a reseed hook on r
 - **Sweep for siblings.** The most productive pattern in this audit was a mitigation applied to one of two sibling paths: redirects fixed on the fetch path but not the run path; reach pushdown real on five backends and in process on four; the lease check on the runner API but not its control-plane twin; the empty-identity guard on the explicit path but not the derived one; the disclosure tier on one of three routes to the same data; the fail-closed directory path but not the default one. **When you fix any item, grep for its siblings before closing it.**
 - **Update the threat model, not just the code.** Closing an item changes a control's state in threat model §7, and may change a residual in §6 or an accepted risk in §11. The model is the standing artefact and this document is a snapshot.
 - **Verify before acting** on anything you cannot see directly in the code. One reported finding in this audit was refuted on verification and dropped.
+
+---
+
+## 11. PROC-6 verification findings
+
+PROC-6 asks for an implementation status on every ADR. Each status is written only after the ADR's decisions are
+checked against the code, and what the check finds that the ADR does not say is listed here and not edited away in
+the ADR. "Confirmed" means the claim was re-read in the code by a second pass before it was written down.
+"Reported" means one pass found it and it has not been re-read. None of these is remediated. Each needs a
+decision on whether the code or the ADR is wrong.
+
+### Access model, ADRs 0001 to 0009 (2026-09-21)
+
+| # | Finding | ADR | State |
+|---|---------|-----|-------|
+| V-1 | An `Unrestricted` verb returns full reach before the deployment shell is applied (`PersistentRowSecurityPolicy.ResolveReach`, which calls it the operator path). ADR 0006 says a tenant boundary the shell imposes holds for every principal regardless of the grants authored, and ADR 0002 that the shell cannot be widened by any user grant. Both hold for rule-bounded grants only. Who may author an `Unrestricted` binding is then the control, and was not checked here | 0002, 0006 | Confirmed |
+| V-2 | Where an ambient provider is configured and the request's context resolves no dimensions, `AddAmbientClaims` returns early and a token-supplied claim of a governed name, `tenant` for one, survives into the reach claim map. The code's own comment calls the ambient value authoritative so that a forged claim cannot widen reach. The fail-closed test for an unresolved context uses a principal with no such claim, so the case is not pinned | 0006 | Confirmed |
+| V-3 | An empty tag set is a subset of any set. On the version-1 fallback in `SecuredWorkflowCatalog.CheckAdministrationAsync`, used where no administrator store is configured, a version 1 carrying no `sys:` tags is therefore administered by anyone. The explicit-record path rejects an empty administrator set | 0003, 0007 | Confirmed |
+| V-4 | Nothing registers `ControlPlaneEntitlementClaimsTransformer`. `AddArazzoControlPlaneEntitlementScopes` has no caller and `MapArazzoControlPlane` does not require it, so a host that omits it ignores approved scope grants in silence. It fails closed. The demo host reimplements the union and skips principals with no `groups` claim | 0005 | Reported |
+| V-5 | The sources and credentials handlers project management tags, `sys:` tags included, verbatim into responses. ADR 0006 says the internal namespace is stripped from client responses and cannot be observed. Catalog and workspace responses do strip. `SecurityShell.StripInternal` has no production caller | 0006 | Reported |
+| V-6 | Grantee resolution is a UI convention and not a server invariant: the binding and add-administrator handlers accept a free-form claim type, value and identity from the body, and the default `ResolveGranteeIdentity` yields one `sys:sub` tag with no issuer. ADR 0008 says a grantee is never authored as a free-form tuple | 0008 | Reported |
+| V-7 | The approver inbox lists the approver's own requests, since its query excludes no requester. ADR 0009 says it only ever shows requests the approver did not raise. The decision itself is refused by the server and audited. The own-request rule lives in the HTTP handlers and not in the approval service, so an in-process caller is not barred | 0009 | Reported |
+| V-8 | `WorkflowIdentity.SameAdministrator` is exact set-equality, which ADR 0003 lists as the forward membership check. A doc comment in `ControlPlaneRowSecurity.cs` and the grantee picker's warning text still describe exact identity | 0003 | Reported |

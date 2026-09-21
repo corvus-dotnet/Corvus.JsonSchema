@@ -1,6 +1,6 @@
 # ADR 0006. The deployment access-control shell and ambient identity
 
-Date: 2026-07-21. Status: **Accepted**. Scope: the deployment-wide constraint every principal's reach is
+Date: 2026-07-21. Status: **Accepted**. Implementation: **partly, with divergences**. Verified against the code 2026-09-21. Built: `SecurityShell.BuildFilter` ANDs the mandated rules, `ValidateUserTags` refuses the reserved keyspace in every mode, an ambient dimension replaces a same-named token claim, and `AmbientIdentityStamp` restamps governed keys. Divergences: an `Unrestricted` grant bypasses the shell (see ADR 0002), so a shell-imposed tenant boundary does not hold "for every principal regardless of the grants authored"; where an ambient provider is configured and the request's context resolves nothing, `AddAmbientClaims` returns early and a token-supplied claim of a governed name survives into the claim map, which no test pins; and the internal namespace is stripped from catalog and workspace responses only, while the sources and credentials handlers project management tags verbatim. `SecurityShell.StripInternal` has no production caller. Scope: the deployment-wide constraint every principal's reach is
 wrapped in, and how request-context dimensions enter the identity. Builds on
 [0002](0002-grant-verbs-are-reach-not-scopes.md) and [0004](0004-fail-closed-non-disclosing-enforcement.md).
 This records why a deployment imposes a mandated wrapper rule and a reserved tag namespace that no user grant

@@ -1,6 +1,6 @@
 # ADR 0007. Administration is a set of resolved identities, digest-keyed, with a reverse index
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how a workflow's (and an environment's) administrators are
+Date: 2026-07-21. Status: **Accepted**. Implementation: **complete where an administrator store is configured**. Verified against the code 2026-09-21. `WorkflowAdministrators` and `EnvironmentAdministrators` are governed by the secured catalog and environment administration, the publish gate throws on a non-administrator, version 1 establishes administration, and the digest-keyed reverse index is bounded at 4,096 subset digests and under-reports when truncated. Without a store, administration is the implicit version-1 identity with no reverse index (and see ADR 0003 for that path's empty-identity case). The reverse index was confirmed in six backends; MySql, Azure Storage and NATS were not individually checked. Scope: how a workflow's (and an environment's) administrators are
 modelled, matched, and queried. Builds on [0003](0003-membership-matching-over-canonical-identity.md). This
 records why administration is a set of resolved identities rather than principals, keyed by a canonical
 digest, with a reverse index that answers "what do I administer" as an indexed lookup.

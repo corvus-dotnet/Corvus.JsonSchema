@@ -1,6 +1,6 @@
 # ADR 0005. Capability entitlements union into token claims; the IdP is never mutated
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how a stored capability grant reaches the capability check.
+Date: 2026-07-21. Status: **Accepted**. Implementation: **partly**. Verified against the code 2026-09-21. Built: `ControlPlaneEntitlementClaimsTransformer` unions `ResolveGrantedScopes` into the `scope` claim, excluding eligible-only and expired bindings. Not built: nothing registers it. `AddArazzoControlPlaneEntitlementScopes` has no caller in the library, the samples or the tests, and `MapArazzoControlPlane` neither registers nor requires it, so a host that omits it silently ignores approved scope grants. That fails closed, and "an approval takes effect on the next request" is not guaranteed. The demo host reimplements the union in its own `KeycloakClaimsTransformer`, which returns early for a principal with no `groups` claim. No end-to-end test runs grant, next request, scope check through the library transformer. Scope: how a stored capability grant reaches the capability check.
 Builds on [0001](0001-two-plane-access-model.md). This records why a scope granted inside the control plane
 (by an access-request approval) is unioned into the principal's `scope` claim at authentication time, rather
 than written back to the identity provider or read from a second place at authorization time.

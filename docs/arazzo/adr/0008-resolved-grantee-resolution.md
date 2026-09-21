@@ -1,6 +1,6 @@
 # ADR 0008. Resolved-grantee resolution: no guessing
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how the identity a grant, an administrator seat, or a
+Date: 2026-07-21. Status: **Accepted**. Implementation: **partly**. Verified against the code 2026-09-21. Built: grantee search over observed, directory and merged sources, reach-filtered, the directory adapters, a picker that yields only server-resolved grantees, and the add-administrator collision guard. Not built: resolution is a convention of the UI and not an invariant the server enforces. `ArazzoControlPlaneSecurityHandler.ReadBinding` accepts any `claimType`, `claimValue` and additional clauses from the body, `HandleAddAdministratorAsync` trusts a client-supplied identity and a client-asserted `complete` and keeps an interim single-grant path, and the default `ResolveGranteeIdentity` yields one `sys:sub` tag with no issuer, the coarse identity this record says cannot exist. No issuer-sensitive validation of a raw subject was found, and no test shows the server refusing a free-form grantee. Scope: how the identity a grant, an administrator seat, or a
 credential usage applies to is chosen. Supports [0003](0003-membership-matching-over-canonical-identity.md).
 This records why a grantee is always resolved to an exact `sys:` identity before it is stored, rather than
 authored as a free-form `{dimension, value}` tuple the system later guesses at.
