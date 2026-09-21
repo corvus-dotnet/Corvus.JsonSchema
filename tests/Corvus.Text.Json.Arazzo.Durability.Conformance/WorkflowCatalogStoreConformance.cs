@@ -182,6 +182,76 @@ public abstract class WorkflowCatalogStoreConformance
     }
 
     [TestMethod]
+    public async Task UpdatePackage_refuses_to_change_or_drop_what_the_version_already_holds()
+    {
+        // V-21 of the 2026-08-07 audit, ADR 0030. The content hash covers the workflow and its sources alone, so an update
+        // with the same hash could swap anything else the version holds, the executor that runs included, under a fixed
+        // version number and hash. The catalog compiles the executor itself and takes none from a submission, so the
+        // entry this store keeps from the submission, the scenario set, stands for every stored entry here.
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        (await store.AddAsync("nightly-reconcile", PackageWithScenarios("nightly-reconcile", """{"scenarios":["as-published"]}"""), Meta(), default)).Dispose();
+        ReadOnlyMemory<byte> before = (await store.GetPackageAsync("nightly-reconcile", 1, default))!.Value;
+        byte[] beforeBytes = before.ToArray();
+        WorkflowPackage.TryReadEntry(before, Encoding.UTF8.GetBytes(WorkflowPackage.ScenariosEntryName), out _).ShouldBeTrue("the store keeps the scenario set, which this test rests on.");
+
+        // The stored workflow and sources, so the same content hash, and a different scenario set. The refusal names the
+        // entry, which is what tells it from the content-hash refusal this update gets past.
+        ReadOnlyMemory<byte> swapped = Repacked(before, """{"scenarios":["swapped-in-later"]}""");
+        CatalogPackage.HashCanonical(swapped).ShouldBe(CatalogPackage.HashCanonical(before));
+        (await Should.ThrowAsync<InvalidOperationException>(async () =>
+            await store.UpdatePackageAsync("nightly-reconcile", 1, swapped, default))).Message.ShouldContain(WorkflowPackage.ScenariosEntryName);
+
+        // Or the entry dropped altogether.
+        (await Should.ThrowAsync<InvalidOperationException>(async () =>
+            await store.UpdatePackageAsync("nightly-reconcile", 1, Repacked(before, scenarios: null), default))).Message.ShouldContain(WorkflowPackage.ScenariosEntryName);
+
+        (await store.GetPackageAsync("nightly-reconcile", 1, default))!.Value.ToArray().ShouldBe(beforeBytes);
+    }
+
+    [TestMethod]
+    public async Task UpdatePackage_adds_a_native_artifact_and_never_replaces_one()
+    {
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        (await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default)).Dispose();
+        byte[] first = [0x7F, (byte)'E', (byte)'L', (byte)'F', 1];
+        byte[] second = [0x7F, (byte)'E', (byte)'L', (byte)'F', 2];
+
+        ReadOnlyMemory<byte> stored = (await store.GetPackageAsync("nightly-reconcile", 1, default))!.Value;
+        (await store.UpdatePackageAsync("nightly-reconcile", 1, WorkflowPackage.AttachNativeArtifact(stored, "linux-x64", first), default)).ShouldBeTrue();
+
+        // Another target is added beside it.
+        stored = (await store.GetPackageAsync("nightly-reconcile", 1, default))!.Value;
+        (await store.UpdatePackageAsync("nightly-reconcile", 1, WorkflowPackage.AttachNativeArtifact(stored, "linux-arm64", second), default)).ShouldBeTrue();
+
+        // A binary already attached is the version's. Attaching over it is refused, and it stays as it was.
+        stored = (await store.GetPackageAsync("nightly-reconcile", 1, default))!.Value;
+        await Should.ThrowAsync<InvalidOperationException>(async () =>
+            await store.UpdatePackageAsync("nightly-reconcile", 1, WorkflowPackage.AttachNativeArtifact(stored, "linux-x64", second), default));
+
+        ReadOnlyMemory<byte> after = (await store.GetPackageAsync("nightly-reconcile", 1, default))!.Value;
+        WorkflowPackage.TryReadNativeArtifact(after, "linux-x64", out ReadOnlyMemory<byte> x64).ShouldBeTrue();
+        x64.ToArray().ShouldBe(first);
+        WorkflowPackage.TryReadNativeArtifact(after, "linux-arm64", out ReadOnlyMemory<byte> arm64).ShouldBeTrue();
+        arm64.ToArray().ShouldBe(second);
+    }
+
+    [TestMethod]
+    public async Task UpdatePackage_refuses_a_new_entry_that_is_not_a_native_artifact()
+    {
+        IWorkflowCatalogStore store = await this.NewStoreAsync();
+        (await store.AddAsync("nightly-reconcile", Package("nightly-reconcile"), Meta(), default)).Dispose();
+
+        // The stored workflow and sources, so the same content hash, plus an executor. The catalog compiles a version's
+        // executor itself at publish, so one that arrives later by this seam is exactly what must not get in.
+        ReadOnlyMemory<byte> stored = (await store.GetPackageAsync("nightly-reconcile", 1, default))!.Value;
+        WorkflowPackageContents contents = WorkflowPackage.Open(stored);
+        ReadOnlyMemory<byte> withExecutor = WorkflowPackage.Pack(contents.Workflow, contents.Sources, executor: new byte[] { 1, 2, 3, 4 });
+        CatalogPackage.HashCanonical(withExecutor).ShouldBe(CatalogPackage.HashCanonical(stored));
+        (await Should.ThrowAsync<InvalidOperationException>(async () =>
+            await store.UpdatePackageAsync("nightly-reconcile", 1, withExecutor, default))).Message.ShouldContain(WorkflowPackage.ExecutorEntryName);
+    }
+
+    [TestMethod]
     public async Task UpdatePackage_returns_false_for_an_unknown_version()
     {
         IWorkflowCatalogStore store = await this.NewStoreAsync();
@@ -686,6 +756,20 @@ public abstract class WorkflowCatalogStoreConformance
     {
         using CatalogPage page = await store.QueryAsync(query, default);
         page.Versions.Count.ShouldBe(expected);
+    }
+
+    // A stored package's own workflow and sources, so its content hash, with the given scenario set or none.
+    private static ReadOnlyMemory<byte> Repacked(ReadOnlyMemory<byte> storedPackage, string? scenarios)
+    {
+        WorkflowPackageContents contents = WorkflowPackage.Open(storedPackage);
+        return WorkflowPackage.Pack(contents.Workflow, contents.Sources, scenarios: scenarios is null ? default : Encoding.UTF8.GetBytes(scenarios));
+    }
+
+    // The same workflow and sources as Package(), with a scenario set beside them, which survives the canonical repack.
+    private static ReadOnlyMemory<byte> PackageWithScenarios(string workflowId, string scenarios)
+    {
+        WorkflowPackageContents contents = WorkflowPackage.Open(Package(workflowId));
+        return CatalogPackage.Build(contents.Workflow, contents.Sources, Encoding.UTF8.GetBytes(scenarios), default);
     }
 
     private static ReadOnlyMemory<byte> Package(string workflowId, string title = "Nightly Reconcile")

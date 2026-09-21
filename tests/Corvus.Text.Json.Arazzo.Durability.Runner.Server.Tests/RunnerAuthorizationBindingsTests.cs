@@ -77,14 +77,15 @@ public sealed class RunnerAuthorizationBindingsTests
     public async Task A_revocation_takes_effect_within_the_cache_window_and_not_before()
     {
         // The cache window IS the revocation fence's latency, which is why it is bounded rather than tuned. This test is
-        // the property: stale until the window elapses, gone immediately after.
+        // the property where nothing announces the change (another replica made it): stale until the window elapses,
+        // gone immediately after.
         Fixture fixture = await Fixture.StartAsync();
         await fixture.AuthorizeAsync(Production, "runner-1", Machine);
         (await fixture.Bindings.ResolveAsync(Machine, default)).Environments.ShouldBe([Production]);
 
         await fixture.DecideAsync(Production, "runner-1", RunnerAuthorizationStatus.Revoked);
 
-        fixture.Clock.Advance(TimeSpan.FromSeconds(29));
+        fixture.Clock.Advance(TimeSpan.FromSeconds(4));
         (await fixture.Bindings.ResolveAsync(Machine, default)).Environments.ShouldBe([Production]);
 
         fixture.Clock.Advance(TimeSpan.FromSeconds(2));
@@ -92,16 +93,65 @@ public sealed class RunnerAuthorizationBindingsTests
     }
 
     [TestMethod]
+    public async Task A_revocation_the_control_plane_announces_takes_effect_at_once()
+    {
+        // V-22 of the 2026-08-07 audit, ADR 0027. A revoked runner went on claiming for the whole cache window, since the
+        // claim refusal lives in this cache and nothing told it of the revocation. The control plane now does.
+        Fixture fixture = await Fixture.StartAsync();
+        await fixture.AuthorizeAsync(Production, "runner-1", Machine);
+        (await fixture.Bindings.ResolveAsync(Machine, default)).Environments.ShouldBe([Production]);
+
+        await fixture.DecideAsync(Production, "runner-1", RunnerAuthorizationStatus.Revoked);
+        fixture.Bindings.AuthorizationChanged(Machine);
+
+        // No time has passed at all.
+        (await fixture.Bindings.ResolveAsync(Machine, default)).Environments.ShouldBeEmpty();
+    }
+
+    [TestMethod]
+    public async Task A_resolution_that_was_reading_when_a_revocation_landed_is_not_cached()
+    {
+        // The race the eviction has to survive: a resolution reads Authorized from the store, the revocation lands and is
+        // announced, and only then does the resolution finish. Caching what it read would put the stale answer back.
+        var clock = new TestClock(T0);
+        var inner = new InMemoryEnvironmentRunnerAuthorizationStore(clock);
+        var environments = new InMemoryEnvironmentStore(clock);
+        using (ParsedJsonDocument<Environments.Environment> draft = Environments.Environment.Draft(Production, "Production", null, default))
+        {
+            (await environments.AddAsync(draft.RootElement, "ops", default)).Dispose();
+        }
+        (await inner.EnsurePendingAsync(Production, "runner-1", "ops", Machine, default)).Dispose();
+        (await inner.DecideAsync(Production, "runner-1", new RunnerAuthorizationDecision(RunnerAuthorizationStatus.Authorized), WorkflowEtag.None, "ops", default))!.Dispose();
+
+        var gated = new GatedListStore(inner);
+        var bindings = new RunnerAuthorizationBindings(gated, environments, timeProvider: clock);
+
+        gated.HoldNextList();
+        Task<RunnerBindings> inFlight = bindings.ResolveAsync(Machine, default).AsTask();
+        await gated.ListRead;
+
+        (await inner.DecideAsync(Production, "runner-1", new RunnerAuthorizationDecision(RunnerAuthorizationStatus.Revoked), WorkflowEtag.None, "ops", default))!.Dispose();
+        bindings.AuthorizationChanged(Machine);
+        gated.Release();
+
+        // The in-flight caller gets what it read, which was true when it read it...
+        (await inFlight).Environments.ShouldBe([Production]);
+
+        // ...and the next caller reads the store, with no time passed.
+        (await bindings.ResolveAsync(Machine, default)).Environments.ShouldBeEmpty();
+    }
+
+    [TestMethod]
     public async Task A_cache_window_longer_than_the_bound_is_reduced_to_it()
     {
-        // A deployment does not get to choose a slower fence: asking for an hour gets thirty seconds.
+        // A deployment does not get to choose a slower fence: asking for an hour gets five seconds.
         Fixture fixture = await Fixture.StartAsync(TimeSpan.FromHours(1));
         await fixture.AuthorizeAsync(Production, "runner-1", Machine);
         (await fixture.Bindings.ResolveAsync(Machine, default)).Environments.ShouldBe([Production]);
 
         await fixture.DecideAsync(Production, "runner-1", RunnerAuthorizationStatus.Revoked);
 
-        fixture.Clock.Advance(TimeSpan.FromSeconds(31));
+        fixture.Clock.Advance(TimeSpan.FromSeconds(6));
         (await fixture.Bindings.ResolveAsync(Machine, default)).Environments.ShouldBeEmpty();
     }
 
@@ -234,6 +284,45 @@ public sealed class RunnerAuthorizationBindingsTests
 
         resolved.Environments.ShouldBe([AcmeOne]);
         resolved.Tenant.ShouldBeNull();
+    }
+
+    // Forwards to the in-memory store, and can hold one ListAsync after it has read, until released.
+    private sealed class GatedListStore(InMemoryEnvironmentRunnerAuthorizationStore inner) : IEnvironmentRunnerAuthorizationStore
+    {
+        private readonly TaskCompletionSource listRead = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource released = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private bool hold;
+
+        public Task ListRead => this.listRead.Task;
+
+        public void HoldNextList() => this.hold = true;
+
+        public void Release() => this.released.SetResult();
+
+        public ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>> EnsurePendingAsync(string environment, string runnerId, string actor, string? principal, CancellationToken cancellationToken)
+            => inner.EnsurePendingAsync(environment, runnerId, actor, principal, cancellationToken);
+
+        public ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>?> GetAsync(string environment, string runnerId, CancellationToken cancellationToken)
+            => inner.GetAsync(environment, runnerId, cancellationToken);
+
+        public async ValueTask<PooledDocumentList<EnvironmentRunnerAuthorization>> ListAsync(RunnerAuthorizationQuery query, CancellationToken cancellationToken)
+        {
+            PooledDocumentList<EnvironmentRunnerAuthorization> read = await inner.ListAsync(query, cancellationToken);
+            if (this.hold)
+            {
+                this.hold = false;
+                this.listRead.SetResult();
+                await this.released.Task;
+            }
+
+            return read;
+        }
+
+        public ValueTask<ParsedJsonDocument<EnvironmentRunnerAuthorization>?> DecideAsync(string environment, string runnerId, RunnerAuthorizationDecision decision, WorkflowEtag expectedEtag, string actor, CancellationToken cancellationToken)
+            => inner.DecideAsync(environment, runnerId, decision, expectedEtag, actor, cancellationToken);
+
+        public ValueTask<bool> TryWithdrawAsync(string environment, string runnerId, WorkflowEtag expectedEtag, CancellationToken cancellationToken)
+            => inner.TryWithdrawAsync(environment, runnerId, expectedEtag, cancellationToken);
     }
 
     private sealed class TestClock(DateTimeOffset now) : TimeProvider

@@ -962,6 +962,11 @@ IAccessRequestApprovalService? seedApprovalService = null;
 // honest components author the same run at once. This host maps the runner API below, and would map the serverless
 // checkpoint surface too if it were given a checkpoint secret, so the instance is built here and passed to both.
 var checkpointCoordinator = new WorkflowCheckpointCoordinator(stateStore);
+// One resolution of which environments a runner's machine principal is bound to, shared by the two surfaces that
+// care: the runner API reads it for each request, and the control plane tells it of each authorization decision, so a
+// revoked runner's cached bindings are gone before the revoke returns (ADR 0027).
+var runnerBindings = new RunnerAuthorizationBindings(runnerAuthorizations, environmentStore);
+
 app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
     management,
     catalog,
@@ -1016,7 +1021,8 @@ app.MapGroup("/arazzo/v1").MapArazzoControlPlane(
     // authenticates to every run in the deployment, and everyone at all in Open.
     checkpoints: checkpointCoordinator,
     scheduleRegistry: scheduleRegistry,
-    auditor: auditor);
+    auditor: auditor,
+    runnerAuthorizationChanges: runnerBindings);
 
 // The runner API (ADR 0065) — the surface every runner store interaction goes through, so that a runner needs no store
 // credential to execute. It shares this host's stores because the demo is one process; the point of the split is that
@@ -1038,7 +1044,7 @@ if (requireAuthorization)
         stateStore,
         catalogStore,
         availabilityStore,
-        new RunnerAuthorizationBindings(runnerAuthorizations, environmentStore),
+        runnerBindings,
         checkpoints: checkpointCoordinator,
         auditor: auditor);
 }

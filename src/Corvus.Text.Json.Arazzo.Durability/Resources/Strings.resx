@@ -587,4 +587,10 @@
   <data name="ServerlessCheckpointOriginMalformed" xml:space="preserve">
     <value>The function setting '{0}' has the entry '{1}', which is not an absolute http or https URL.</value>
   </data>
+  <data name="UpdatedPackageChangesStoredEntry" xml:space="preserve">
+    <value>The updated package removes or changes the stored entry '{0}'. A published version is never edited in place (ADR 0030): a package update may add native artifacts, and every stored entry stays as it is, a native binary already attached included.</value>
+  </data>
+  <data name="UpdatedPackageAddsNonNativeEntry" xml:space="preserve">
+    <value>The updated package adds the entry '{0}', which is not a native artifact. A package update may add entries under 'metadata/native/' and 'metadata/native-attestation/' and nothing else (ADR 0030).</value>
+  </data>
 </root>

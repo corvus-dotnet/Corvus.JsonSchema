@@ -253,6 +253,22 @@ public static partial class CatalogPackage
     }
 
     /// <summary>
+    /// The shared guard behind <see cref="IWorkflowCatalogStore.UpdatePackageAsync"/> (ADR 0030, ADR 0055): the update
+    /// keeps the version's content hash, keeps every stored entry byte for byte, and adds native artifacts and nothing
+    /// else. The content hash covers the workflow and its sources alone, so without the second check the executor that
+    /// runs, and a native binary already attached, could change under a fixed version number and hash.
+    /// </summary>
+    /// <param name="expectedContentHash">The version's stored content hash (its authoritative identity).</param>
+    /// <param name="storedPackage">The version's stored package.</param>
+    /// <param name="updatedPackage">The proposed replacement package.</param>
+    /// <exception cref="InvalidOperationException">The update changes the content hash, removes or changes a stored entry, or adds an entry that is not a native artifact.</exception>
+    public static void EnsureAddsOnlyNativeArtifacts(string expectedContentHash, ReadOnlyMemory<byte> storedPackage, ReadOnlyMemory<byte> updatedPackage)
+    {
+        EnsureContentHash(expectedContentHash, updatedPackage);
+        WorkflowPackage.EnsureAddsOnlyNativeArtifacts(storedPackage, updatedPackage);
+    }
+
+    /// <summary>
     /// Validates a package archive locally: that it is well-formed (a workflow document with a workflow id), that
     /// the workflow id carries no <c>-vN</c> suffix, and that every non-<c>arazzo</c> <c>sourceDescriptions</c>
     /// entry has a matching source document. Also recomputes the content hash and projects the sources.

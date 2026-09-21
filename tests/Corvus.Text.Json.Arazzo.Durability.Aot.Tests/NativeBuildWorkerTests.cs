@@ -74,6 +74,32 @@ public sealed class NativeBuildWorkerTests
     }
 
     [TestMethod]
+    public async Task A_target_the_version_already_carries_is_ready_without_building_over_it()
+    {
+        // V-21 of the 2026-08-07 audit, ADR 0030. A job is keyed by environment as well as target, and a version carries
+        // one binary for each target, so a second environment's job used to rebuild over the first's binary. A published
+        // version is never edited in place: the attached binary is the version's, and the job is Ready as it stands.
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        TrustStoreExecutorPackageVerifier verifier = TrustStore(("release-2026", key));
+        byte[] package = await SignedPackage(key, "release-2026", Manifest(Digest(ExecutorAssembly)));
+        byte[] alreadyBuilt = WorkflowPackage.AttachNativeArtifact(package, "linux-x64", Native);
+
+        var jobs = new InMemoryNativeBuildJobStore();
+        string id = await Enqueue(jobs, "checkout", 1, "staging", "linux-x64");
+        var catalog = new FakeCatalog(alreadyBuilt);
+        var builder = new FakeBuilder(AotBuildResult.Success(new byte[] { 9, 9, 9 }, "ilc ok"));
+        var worker = new NativeBuildWorker(jobs, catalog, new WorkflowAotBuildService(verifier, Signer(key), builder, Options()));
+
+        NativeBuildWorkerResult result = await worker.DriveNextAsync("worker-1", TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(1), CancellationToken.None);
+
+        result.Outcome.ShouldBe(NativeBuildJobStatus.Ready);
+        builder.BuildCalls.ShouldBe(0);
+        catalog.UpdateCalls.ShouldBe(0);
+        using ParsedJsonDocument<NativeBuildJob>? job = await jobs.GetAsync(id, CancellationToken.None);
+        job!.RootElement.StatusValue.ShouldBe("Ready");
+    }
+
+    [TestMethod]
     public async Task A_ready_build_enqueues_a_deployment_for_the_target()
     {
         using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);

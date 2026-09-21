@@ -784,6 +784,29 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     }
 
     [TestMethod]
+    public async Task Every_durable_authorization_decision_is_announced_for_the_runners_bound_principal()
+    {
+        // V-22 of the 2026-08-07 audit, ADR 0027. The runner API caches which environments a principal is bound to, and
+        // nothing told it of a revocation, so a revoked runner claimed for the whole window. Each decision is now
+        // announced once it is durable, so the cache is dropped before the response is sent.
+        var runnerAuth = new InMemoryEnvironmentRunnerAuthorizationStore();
+        await runnerAuth.EnsurePendingAsync("production", "runner-1", "runner", "svc-runner-a", default);
+        var announced = new RecordingAuthorizationChanges();
+        await using Scoped host = await StartAsync(runnerAuth, authorizationChanges: announced);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        announced.Principals.Count.ShouldBe(1);
+
+        (await host.SendAsync(HttpMethod.Post, "/environments/production/runners/runner-1/quarantine", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        announced.Principals.Count.ShouldBe(2);
+
+        (await host.SendAsync(HttpMethod.Delete, "/environments/production/runners/runner-1/authorization", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        announced.Principals.Count.ShouldBe(3);
+        announced.Principals.ShouldAllBe(p => p == "svc-runner-a");
+    }
+
+    [TestMethod]
     public async Task Revoking_a_runner_fences_the_in_flight_run_it_leases()
     {
         // The lease owner is the MACHINE PRINCIPAL, never the runner id (ADR 0065 decision 2: ownership derives from the
@@ -1002,7 +1025,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
     private static async Task<Stj.JsonDocument> ReadJsonAsync(HttpResponseMessage response)
         => Stj.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 
-    private static async Task<Scoped> StartAsync(IEnvironmentRunnerAuthorizationStore runnerAuthorizations, byte[]? enrolmentSecret = null)
+    private static async Task<Scoped> StartAsync(IEnvironmentRunnerAuthorizationStore runnerAuthorizations, byte[]? enrolmentSecret = null, IRunnerAuthorizationChangeObserver? authorizationChanges = null)
     {
         var store = new InMemoryWorkflowStateStore();
         var management = new SecuredWorkflowManagement(store, "ops");
@@ -1027,7 +1050,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
         // (the §5.5 revocation fence): revoking a runner expires the leases it holds. The store is exposed to the test so a
         // fence assertion can check that a revoked runner's lease is reclaimable. The runner registry is likewise exposed so
         // the registration tests can confirm a registered runner's liveness record (design §16.4).
-        app.MapArazzoControlPlane(management, catalog, registry, ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), environmentRunnerAuthorizationStore: runnerAuthorizations, workflowStateStore: store, runnerEnrolmentSecret: enrolmentSecret ?? default(ReadOnlyMemory<byte>), auditor: GovernanceAuditor.CreateInMemory());
+        app.MapArazzoControlPlane(management, catalog, registry, ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), environmentRunnerAuthorizationStore: runnerAuthorizations, workflowStateStore: store, runnerEnrolmentSecret: enrolmentSecret ?? default(ReadOnlyMemory<byte>), auditor: GovernanceAuditor.CreateInMemory(), runnerAuthorizationChanges: authorizationChanges);
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient(), store, registry);
@@ -1044,6 +1067,13 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
             string? tenant = principal?.FindFirst("tenant")?.Value;
             return string.IsNullOrEmpty(tenant) ? [] : [new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", tenant)];
         }
+    }
+
+    private sealed class RecordingAuthorizationChanges : IRunnerAuthorizationChangeObserver
+    {
+        public List<string> Principals { get; } = [];
+
+        public void AuthorizationChanged(string principal) => this.Principals.Add(principal);
     }
 
     private sealed class Scoped(WebApplication app, HttpClient client, InMemoryWorkflowStateStore stateStore, InMemoryRunnerRegistry registry) : IAsyncDisposable

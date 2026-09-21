@@ -76,6 +76,7 @@ public static class ControlPlaneEndpointExtensions
     /// <param name="runnerEnrolmentSecret">The secret runner enrolment tokens are minted and validated with (ADR 0065
     /// decision 2). Leave it empty to accept none, which admits only runners an administrator has pre-authorized by id.</param>
     /// <param name="auditor">The deployment's governance auditor (ADR 0069), the same instance the host gave its bootstrap, so
+    /// <param name="runnerAuthorizationChanges">Told of each durable runner-authorization decision so that cached bindings for that runner are dropped at once and not at the end of their window (ADR 0027). Pass the <c>RunnerAuthorizationBindings</c> given to <c>MapArazzoRunnerApi</c> where this process hosts the runner API too. <see langword="null"/> where it does not, since there is then no cache here to drop.</param>
     /// everything this process records is one audit chain. The secured postures require one that appends to an audit
     /// sink and signs its chain's heads, and refuse to map without it. In <see cref="ControlPlaneSecurityMode.Open"/> it may be omitted, and the audit is
     /// then the span, the log and the counter only.</param>
@@ -120,7 +121,8 @@ public static class ControlPlaneEndpointExtensions
         ReadOnlyMemory<byte> checkpointSecret = default,
         WorkflowCheckpointCoordinator? checkpoints = null,
         Schedules.IScheduleRegistry? scheduleRegistry = null,
-        GovernanceAuditor? auditor = null)
+        GovernanceAuditor? auditor = null,
+        IRunnerAuthorizationChangeObserver? runnerAuthorizationChanges = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(management);
@@ -350,7 +352,7 @@ public static class ControlPlaneEndpointExtensions
         // The revocation fence (§5.5): if the workflow state store can administer leases, revoke expires a compromised runner's
         // leases so an authorized peer reclaims its in-flight runs at once. A store without the capability still stops all
         // future dispatch on revoke; only the immediate in-flight fence is unavailable.
-        var runnerAuthorizationsHandler = new ArazzoControlPlaneRunnerAuthorizationsHandler(runnerAuthStore, envStore, runners, environmentAdministration, access, workflowStateStore as IWorkflowLeaseAdministration, accessRequestSubjectClaimType, runnerEnrolmentSecret, capacityGuard, auditor);
+        var runnerAuthorizationsHandler = new ArazzoControlPlaneRunnerAuthorizationsHandler(runnerAuthStore, envStore, runners, environmentAdministration, access, workflowStateStore as IWorkflowLeaseAdministration, accessRequestSubjectClaimType, runnerEnrolmentSecret, capacityGuard, auditor, runnerAuthorizationChanges);
         var environmentKeysHandler = new ArazzoControlPlaneEnvironmentKeysHandler(envStore, environmentAdministration, access, auditor: auditor);
 
         // The brokered GitHub API (workflow-designer design §4.7): user-to-server sign-in, session

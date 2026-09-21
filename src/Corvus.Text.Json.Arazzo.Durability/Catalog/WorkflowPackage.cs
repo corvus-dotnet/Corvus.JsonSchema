@@ -363,6 +363,54 @@ public static class WorkflowPackage
     }
 
     /// <summary>
+    /// Verifies that <paramref name="updatedPackage"/> differs from <paramref name="storedPackage"/> only by native
+    /// artifacts it adds: every stored entry is present and byte-identical, and every entry that is new sits under
+    /// <see cref="NativeArtifactPrefix"/> or <see cref="NativeAttestationPrefix"/>. A published version is never edited
+    /// in place (ADR 0030), so the executor, its manifest and signature, the schemas, scenarios and evidence, and a
+    /// native binary already attached can none of them change under a fixed version number. Compared as bytes, with no
+    /// entry realised as a string.
+    /// </summary>
+    /// <param name="storedPackage">The version's stored package.</param>
+    /// <param name="updatedPackage">The proposed replacement package.</param>
+    /// <exception cref="InvalidOperationException">The update removes or changes a stored entry, or adds an entry that is not a native artifact.</exception>
+    public static void EnsureAddsOnlyNativeArtifacts(ReadOnlyMemory<byte> storedPackage, ReadOnlyMemory<byte> updatedPackage)
+    {
+        var stored = new PackageReader(storedPackage.Span);
+        while (stored.TryRead(out ReadOnlySpan<byte> name, out int dataOffset, out int dataLength))
+        {
+            if (!TryReadEntry(updatedPackage, name, out ReadOnlyMemory<byte> updated)
+                || !updated.Span.SequenceEqual(storedPackage.Span.Slice(dataOffset, dataLength)))
+            {
+                ThrowHelper.ThrowUpdatedPackageChangesStoredEntry(Encoding.UTF8.GetString(name));
+            }
+        }
+
+        // Every entry of the update, and not only the first of each name, so a second entry under a stored name cannot
+        // carry different bytes past the comparison above.
+        var proposed = new PackageReader(updatedPackage.Span);
+        while (proposed.TryRead(out ReadOnlySpan<byte> name, out int dataOffset, out int dataLength))
+        {
+            if (TryReadEntry(storedPackage, name, out ReadOnlyMemory<byte> existing))
+            {
+                if (!existing.Span.SequenceEqual(updatedPackage.Span.Slice(dataOffset, dataLength)))
+                {
+                    ThrowHelper.ThrowUpdatedPackageChangesStoredEntry(Encoding.UTF8.GetString(name));
+                }
+
+                continue;
+            }
+
+            bool isNativeArtifact =
+                (name.Length > NativeArtifactPrefixUtf8.Length && name.StartsWith(NativeArtifactPrefixUtf8))
+                || (name.Length > NativeAttestationPrefixUtf8.Length && name.StartsWith(NativeAttestationPrefixUtf8));
+            if (!isNativeArtifact)
+            {
+                ThrowHelper.ThrowUpdatedPackageAddsNonNativeEntry(Encoding.UTF8.GetString(name));
+            }
+        }
+    }
+
+    /// <summary>
     /// Reads the native executor binary for a runtime target (<see cref="NativeArtifactPrefix"/> + <paramref name="runtimeIdentifier"/>),
     /// when the package carries one — the returned memory is a view over <paramref name="package"/>.
     /// </summary>

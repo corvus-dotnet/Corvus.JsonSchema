@@ -349,6 +349,16 @@ internal static class ThrowHelper
     public static void ThrowUpdatedPackageContentHashDiffers(string updatedHash, string expectedContentHash)
         => throw new InvalidOperationException(SR.Format(SR.UpdatedPackageContentHashDiffers, updatedHash, expectedContentHash));
 
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowUpdatedPackageChangesStoredEntry(string entryName)
+        => throw new InvalidOperationException(SR.Format(SR.UpdatedPackageChangesStoredEntry, entryName));
+
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowUpdatedPackageAddsNonNativeEntry(string entryName)
+        => throw new InvalidOperationException(SR.Format(SR.UpdatedPackageAddsNonNativeEntry, entryName));
+
     // ── Security-rule parser ────────────────────────────────────────────────────────────────────────────────────────
     public static InvalidOperationException GetResolveKnownNotValidForTagKeyException()
         => new(SR.ResolveKnownNotValidForTagKey);

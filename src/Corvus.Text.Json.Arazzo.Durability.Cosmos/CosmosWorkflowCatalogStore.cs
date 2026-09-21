@@ -534,7 +534,16 @@ public sealed class CosmosWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
 
         // The update may change only metadata (the native binaries and their attestations, ADR 0055), so a differing
         // content hash is refused so the version's identity never drifts — checked against the version's STORED hash.
-        CatalogPackage.EnsureContentHash((string)current.RootElement.Hash, updatedPackage);
+        // The content hash covers the workflow and its sources alone, so the stored package is read as well: every stored
+        // entry must survive byte for byte, and only native artifacts may be added (ADR 0030). A native build is rare, so
+        // the extra read costs little.
+        ReadOnlyMemory<byte>? storedPackage = await this.GetPackageAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+        if (storedPackage is not { } stored)
+        {
+            return false;
+        }
+
+        CatalogPackage.EnsureAddsOnlyNativeArtifacts((string)current.RootElement.Hash, stored, updatedPackage);
 
         // The etag guards the replace against a concurrent write; a NotFound means the version was deleted between the
         // read and the replace. Version mutations are control-plane-serialized, so an etag-guarded replace is sufficient.

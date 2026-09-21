@@ -317,23 +317,32 @@ public sealed class SqliteWorkflowCatalogStore : IWorkflowCatalogStore, ISupport
         {
             // Verify the update against the version's STORED content hash (an existing metadata column) rather than loading
             // and re-canonicalizing the package blob. Only the Package blob is rewritten — the projected columns are untouched.
-            string? storedHash;
+            // The stored package is read with the hash: the hash covers the workflow and its sources alone, so every stored
+            // entry is also held byte for byte and only native artifacts may be added (ADR 0030). Read here, under the
+            // gate, since the gate is not re-entrant.
+            string? storedHash = null;
+            byte[]? storedPackage = null;
             using (SqliteCommand select = this.connection.CreateCommand())
             {
-                select.CommandText = "SELECT Hash FROM CatalogVersions WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;";
+                select.CommandText = "SELECT Hash, Package FROM CatalogVersions WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;";
                 select.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
                 select.Parameters.AddWithValue("@versionNumber", versionNumber);
-                storedHash = await select.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) as string;
+                using SqliteDataReader reader = await select.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                if (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    storedHash = reader.GetString(0);
+                    storedPackage = reader.GetFieldValue<byte[]>(1);
+                }
             }
 
-            if (storedHash is null)
+            if (storedHash is null || storedPackage is null)
             {
                 return false;
             }
 
             // The update may change only metadata (the native binaries and their attestations, ADR 0055), so a differing
             // content hash is refused so the version's identity never drifts.
-            CatalogPackage.EnsureContentHash(storedHash, updatedPackage);
+            CatalogPackage.EnsureAddsOnlyNativeArtifacts(storedHash, storedPackage, updatedPackage);
 
             using SqliteCommand update = this.connection.CreateCommand();
             update.CommandText = "UPDATE CatalogVersions SET Package = @package WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;";

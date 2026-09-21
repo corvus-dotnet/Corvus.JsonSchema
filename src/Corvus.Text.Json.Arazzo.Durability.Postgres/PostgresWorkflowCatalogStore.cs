@@ -366,7 +366,16 @@ public sealed class PostgresWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
 
         // The update may change only metadata (the native binaries and their attestations, ADR 0055), so a differing
         // content hash is refused so the version's identity never drifts.
-        CatalogPackage.EnsureContentHash(storedHash, updatedPackage);
+        // The content hash covers the workflow and its sources alone, so the stored package is read as well: every stored
+        // entry must survive byte for byte, and only native artifacts may be added (ADR 0030). A native build is rare, so
+        // the extra read costs little.
+        ReadOnlyMemory<byte>? storedPackage = await this.GetPackageAsync(baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false);
+        if (storedPackage is not { } stored)
+        {
+            return false;
+        }
+
+        CatalogPackage.EnsureAddsOnlyNativeArtifacts(storedHash, stored, updatedPackage);
 
         await using NpgsqlCommand update = connection.CreateCommand();
         update.CommandText = "UPDATE CatalogVersions SET Package = @package WHERE BaseWorkflowId = @baseWorkflowId AND VersionNumber = @versionNumber;";

@@ -42,6 +42,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     private readonly SecuredEnvironmentAdministration administration;
     private readonly ControlPlaneAccess access;
     private readonly IWorkflowLeaseAdministration? leaseAdministration;
+    private readonly IRunnerAuthorizationChangeObserver? authorizationChanges;
     private readonly string subjectClaimType;
     private readonly ReadOnlyMemory<byte> enrolmentSecret;
     private readonly Capacity.IControlPlaneCapacityGuard? capacity;
@@ -66,6 +67,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     /// id, which is workable for a fixed fleet and not for one that scales itself.</param>
     /// <param name="capacity">Bounds how many runners may be registered for an environment (ADR 0065 decision 3), or
     /// <see langword="null"/> to enforce no capacity limit.</param>
+    /// <param name="authorizationChanges">Told of each durable authorization decision, so the runner API's cached bindings for that principal are dropped at once (ADR 0027). It is the runner API's <c>RunnerAuthorizationBindings</c> where this process hosts that API, and <see langword="null"/> where it does not, in which case there is no cache here to drop.</param>
     /// <param name="auditor">The logger for the §850 runner-authorization audit (who authorized/quarantined/revoked which runner); the audit span rides the always-registered <see cref="ArazzoTelemetry.ActivitySource"/> regardless.</param>
     internal ArazzoControlPlaneRunnerAuthorizationsHandler(
         IEnvironmentRunnerAuthorizationStore authorizations,
@@ -77,7 +79,8 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
         string subjectClaimType = "sub",
         ReadOnlyMemory<byte> enrolmentSecret = default,
         Capacity.IControlPlaneCapacityGuard? capacity = null,
-        GovernanceAuditor? auditor = null)
+        GovernanceAuditor? auditor = null,
+        IRunnerAuthorizationChangeObserver? authorizationChanges = null)
     {
         ArgumentNullException.ThrowIfNull(authorizations);
         ArgumentNullException.ThrowIfNull(environments);
@@ -91,6 +94,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
         this.administration = administration;
         this.access = access;
         this.leaseAdministration = leaseAdministration;
+        this.authorizationChanges = authorizationChanges;
         this.capacity = capacity;
         this.subjectClaimType = subjectClaimType;
         this.enrolmentSecret = enrolmentSecret;
@@ -238,6 +242,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
                 return AuthorizeRunnerResult.NotFound(RunnerNotFoundProblem(environment, runnerId), workspace);
             }
 
+            this.NotifyAuthorizationChanged(decided.RootElement);
             await this.auditor.MutationAsync("runner.authorize", this.AuditActor(), TargetKind, RunnerKey(environment, runnerId), authorizeOutcome).ConfigureAwait(false);
             workspace.TakeOwnership(decided);
             return AuthorizeRunnerResult.Ok(ToView(decided.RootElement), workspace);
@@ -434,6 +439,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
                 return QuarantineRunnerResult.NotFound(RunnerNotFoundProblem(environment, runnerId), workspace);
             }
 
+            this.NotifyAuthorizationChanged(decided.RootElement);
             await this.auditor.MutationAsync("runner.quarantine", this.AuditActor(), TargetKind, RunnerKey(environment, runnerId), "quarantined").ConfigureAwait(false);
             workspace.TakeOwnership(decided);
             return QuarantineRunnerResult.Ok(ToView(decided.RootElement), workspace);
@@ -545,13 +551,19 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
             return RevokeRunnerResult.NotFound(RunnerNotFoundProblem(environment, runnerId), workspace);
         }
 
+        // The Revoked status is durable, so the runner API's cached bindings for this principal go first: a claim that
+        // arrives from here on reads the store and is refused, and does not ride a cached answer (ADR 0027).
+        this.NotifyAuthorizationChanged(decided.RootElement);
+
         // Fence in-flight work AFTER the Revoked status is durable: expire the runner's leases so an authorized peer reclaims
         // its in-flight runs at once (its own next checkpoint write then conflicts). A store without the lease-administration
         // capability skips this; the authorization gate still stops all future dispatch on the next poll.
         await this.FenceRevokedRunnerAsync(decided.RootElement, cancellationToken).ConfigureAwait(false);
 
         // Revoke is a containment action — the most audit-worthy event on this surface — recorded once the removal is durable and fenced.
-        await this.auditor.MutationAsync("runner.revoke", this.AuditActor(), TargetKind, RunnerKey(environment, runnerId), "revoked").ConfigureAwait(false);
+        // A state store that cannot expire leases leaves the runner's in-flight runs to their own lease expiry. That is
+        // said in the record, since a containment action that fenced nothing should not read like one that did.
+        await this.auditor.MutationAsync("runner.revoke", this.AuditActor(), TargetKind, RunnerKey(environment, runnerId), this.leaseAdministration is null ? "revoked-leases-not-fenced" : "revoked").ConfigureAwait(false);
         workspace.TakeOwnership(decided);
         return RevokeRunnerResult.Ok(ToView(decided.RootElement), workspace);
     }
@@ -577,6 +589,16 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     //
     // The owner is read out of the row before any await rather than the element being carried across one, which is what
     // lets this take the document the caller already holds by reference.
+    // Drops the runner API's cached bindings for the authorization's bound principal. A row with no bound principal has
+    // no runner behind it yet, so nothing is cached about it.
+    private void NotifyAuthorizationChanged(in EnvironmentRunnerAuthorization authorization)
+    {
+        if (this.authorizationChanges is { } observer && authorization.PrincipalOrNull is { } principal)
+        {
+            observer.AuthorizationChanged(principal);
+        }
+    }
+
     private ValueTask FenceRevokedRunnerAsync(in EnvironmentRunnerAuthorization authorization, CancellationToken cancellationToken)
         => this.leaseAdministration is { } admin && authorization.PrincipalOrNull is { } owner
             ? new ValueTask(admin.ExpireLeasesForOwnerAsync(owner, authorization.EnvironmentValue, cancellationToken).AsTask())

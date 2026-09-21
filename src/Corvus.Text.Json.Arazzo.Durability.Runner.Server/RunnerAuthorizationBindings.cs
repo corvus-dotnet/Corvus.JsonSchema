@@ -19,16 +19,18 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 /// revocation fence take effect here rather than depending on a runner standing down when told to.
 /// </para>
 /// <para>
-/// Resolution is cached for a bounded window — thirty seconds at most, per ADR 0065 decision 2 — because the window is
-/// the fence's latency. Revoking a runner stops it being offered work within it, so the bound is the property rather
-/// than a tuning knob, and a caller asking for longer gets thirty seconds.
+/// Resolution is cached for a bounded window, five seconds at most, because the window is the fence's latency where
+/// nothing says sooner. The control plane's authorization surface does say sooner: it calls
+/// <see cref="AuthorizationChanged"/> once a decision is durable, so on the replica that handled a revocation the
+/// principal's cached bindings are gone before the revoke returns (ADR 0027). Another replica waits out its window, so
+/// the bound is the property rather than a tuning knob, and a caller asking for longer gets five seconds.
 /// </para>
 /// </remarks>
-public sealed class RunnerAuthorizationBindings : IRunnerEnvironmentBindings
+public sealed class RunnerAuthorizationBindings : IRunnerEnvironmentBindings, IRunnerAuthorizationChangeObserver
 {
     /// <summary>The longest a resolution may be cached. The cache window is the runner-revocation fence's latency, so it
     /// is capped here rather than left to a deployment to choose badly.</summary>
-    public static readonly TimeSpan MaximumCacheWindow = TimeSpan.FromSeconds(30);
+    public static readonly TimeSpan MaximumCacheWindow = TimeSpan.FromSeconds(5);
 
     private readonly IEnvironmentRunnerAuthorizationStore authorizations;
     private readonly IEnvironmentStore environments;
@@ -37,6 +39,10 @@ public sealed class RunnerAuthorizationBindings : IRunnerEnvironmentBindings
     private readonly int cacheCapacity;
     private readonly byte[] ownerGroupTagKey;
     private readonly ConcurrentDictionary<string, Entry> cache = new(StringComparer.Ordinal);
+
+    // Counts authorization changes. A resolution that was reading the store while one landed may have read the state
+    // before it, so it is returned to its caller and not cached.
+    private long changes;
 
     /// <summary>Initializes a new instance of the <see cref="RunnerAuthorizationBindings"/> class.</summary>
     /// <param name="authorizations">The runner-authorization records.</param>
@@ -85,6 +91,7 @@ public sealed class RunnerAuthorizationBindings : IRunnerEnvironmentBindings
             return cached.Bindings;
         }
 
+        long changesBeforeRead = Volatile.Read(ref this.changes);
         RunnerBindings resolved = await this.ReadBindingsAsync(principal, cancellationToken).ConfigureAwait(false);
 
         // Evict wholesale rather than by age: entries all share one window, so a full cache is a cache about to expire
@@ -94,8 +101,22 @@ public sealed class RunnerAuthorizationBindings : IRunnerEnvironmentBindings
             this.cache.Clear();
         }
 
-        this.cache[principal] = new Entry(resolved, now + this.cacheWindow);
+        if (Volatile.Read(ref this.changes) == changesBeforeRead)
+        {
+            this.cache[principal] = new Entry(resolved, now + this.cacheWindow);
+        }
+
         return resolved;
+    }
+
+    /// <inheritdoc/>
+    public void AuthorizationChanged(string principal)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(principal);
+
+        // Count first, so a read already in flight sees the change and does not cache what it read, then drop the entry.
+        Interlocked.Increment(ref this.changes);
+        this.cache.TryRemove(principal, out _);
     }
 
     private async ValueTask<RunnerBindings> ReadBindingsAsync(string principal, CancellationToken cancellationToken)

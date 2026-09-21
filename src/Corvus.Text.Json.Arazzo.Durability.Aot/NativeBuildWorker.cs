@@ -224,6 +224,16 @@ public sealed class NativeBuildWorker
             return new NativeBuildJobCompletion(NativeBuildJobStatus.Failed, VersionGoneReason(baseWorkflowId, versionNumber));
         }
 
+        // A version carries one native binary for each runtime target, and a job is keyed by environment as well, so a
+        // second environment asks for a target the first has already had built. The attached binary is the version's:
+        // a published version is never edited in place (ADR 0030), so it is not rebuilt over, and the catalog would
+        // refuse the replacement. The job is Ready as it stands, and the deploy verifies the attached binary's attestation
+        // as it would a fresh one.
+        if (WorkflowPackage.TryReadNativeArtifact(packageBytes, runtimeIdentifier, out ReadOnlyMemory<byte> attached) && !attached.IsEmpty)
+        {
+            return new NativeBuildJobCompletion(NativeBuildJobStatus.Ready);
+        }
+
         WorkflowAotBuildOutcome outcome;
         try
         {
@@ -247,7 +257,8 @@ public sealed class NativeBuildWorker
             return new NativeBuildJobCompletion(NativeBuildJobStatus.Failed, Summarize(outcome.Log));
         }
 
-        // Persist the attached binary back into the version (metadata-only: the content hash is unchanged, ADR 0055).
+        // Persist the attached binary back into the version. The catalog takes an update that adds native artifacts and
+        // changes nothing else (ADR 0030, ADR 0055).
         bool updated;
         try
         {
@@ -255,8 +266,9 @@ public sealed class NativeBuildWorker
         }
         catch (InvalidOperationException ex)
         {
-            // The update would change immutable content — a logic error (the build attaches only metadata); record it as
-            // Failed rather than looping, since a retry would fail identically.
+            // The update would change a stored entry, or add something other than a native artifact. Either the build did
+            // more than attach, which is a logic error, or another worker attached this target while this one was building.
+            // Record it as Failed rather than looping: a retry reads the attached binary and completes as Ready.
             return new NativeBuildJobCompletion(NativeBuildJobStatus.Failed, Summarize(ex.Message));
         }
 

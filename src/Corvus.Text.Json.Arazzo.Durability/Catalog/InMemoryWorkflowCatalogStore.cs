@@ -376,7 +376,10 @@ public sealed class InMemoryWorkflowCatalogStore : IWorkflowCatalogStore, ISuppo
             // must be unchanged; a differing content hash is refused so the version's identity never drifts. Check against
             // the version's stored content hash rather than re-canonicalizing the stored package.
             using ParsedJsonDocument<CatalogVersion> versionDoc = ParsedJsonDocument<CatalogVersion>.Parse(stored.VersionDoc);
-            CatalogPackage.EnsureContentHash((string)versionDoc.RootElement.Hash, updatedPackage);
+
+            // The hash covers the workflow and its sources alone, so every stored entry is also held byte for byte and
+            // only native artifacts may be added (ADR 0030).
+            CatalogPackage.EnsureAddsOnlyNativeArtifacts((string)versionDoc.RootElement.Hash, stored.Package, updatedPackage);
             this.versions[key] = stored with { Package = updatedPackage.ToArray() };
             return ValueTask.FromResult(true);
         }
