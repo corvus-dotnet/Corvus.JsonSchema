@@ -1,6 +1,6 @@
 # ADR 0060. Local serverless deploy is emulated with LocalStack, and one Lambda deployer serves local development and production
 
-Date: 2026-07-27. Status: **Accepted**. Scope: how the serverless deploy and invoke are emulated locally so the deploy path is proven without a cloud account, and why the runner uses a single deployer against both the local emulator and real AWS. Builds on the serverless deploy design ([ADR 0055](0055-serverless-backend-aot-from-signed-executor.md)) and the deploy security model ([ADR 0059](0059-serverless-deploy-runs-on-the-runner-as-the-secure-boundary.md)).
+Date: 2026-07-27. Status: **Accepted**. Implementation: **complete**. Verified against the code 2026-09-21. One deployer over `IAmazonLambda`, pointed at LocalStack by configuration, with the image tag pinned alike in the AppHost and the test. Divergences: the AppHost adds LocalStack as a plain container and not through a hosting integration, and the demo host throws when no service URL is configured where this record says it falls back to the AWS SDK configuration. Scope: how the serverless deploy and invoke are emulated locally so the deploy path is proven without a cloud account, and why the runner uses a single deployer against both the local emulator and real AWS. Builds on the serverless deploy design ([ADR 0055](0055-serverless-backend-aot-from-signed-executor.md)) and the deploy security model ([ADR 0059](0059-serverless-deploy-runs-on-the-runner-as-the-secure-boundary.md)).
 
 ## Context
 

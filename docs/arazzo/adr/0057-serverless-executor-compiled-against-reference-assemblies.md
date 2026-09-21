@@ -1,6 +1,6 @@
 # ADR 0057. The serverless workflow executor is compiled against reference assemblies
 
-Date: 2026-07-26. Status: **Accepted**. Scope: how the workflow executor IL is compiled at catalog-add time so it can be native-AOT compiled in a serverless build container. Refines [ADR 0055](0055-serverless-backend-aot-from-signed-executor.md).
+Date: 2026-07-26. Status: **Accepted**. Implementation: **complete**. Verified against the code 2026-09-21. `DynamicCompiler` has the opt-in portable mode and the executor provider uses it. No test in the default gate asserts that the emitted executor references `System.Runtime`; the container build tests pin it indirectly. Scope: how the workflow executor IL is compiled at catalog-add time so it can be native-AOT compiled in a serverless build container. Refines [ADR 0055](0055-serverless-backend-aot-from-signed-executor.md).
 
 ADR 0055 established that the serverless backend native-AOT compiles a version's binary from the version's signed executor IL, not from re-generated source. The end-to-end container proof then exposed that the executor IL, as compiled, could not be recompiled in the build container at all. This record settles how the executor is compiled so it can be. It refines 0055 and does not change its decisions.
 

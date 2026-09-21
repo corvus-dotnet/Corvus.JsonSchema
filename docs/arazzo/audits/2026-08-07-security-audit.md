@@ -797,6 +797,18 @@ decision on whether the code or the ADR is wrong.
 | V-34 | No wire proof of reach pushdown was found for the four relational backends or for the Cosmos state and catalog stores. The marker interface is optional, so an unmarked store fails closed at run time and not at build time | 0067 | Reported |
 | V-35 | The step journal has no `suspended` status and nothing records `Skipped`. The journal count now carries the step budget of ADR 0068. The tolerance for runs that predate the journal is a compatibility path to delete | 0050 | Reported |
 
+### Serverless, micro-guest and runner trust, ADRs 0055, 0057 and 0059 to 0066 (2026-09-21)
+
+| # | Finding | ADR | State |
+|---|---------|-----|-------|
+| V-36 | The Azure Functions trigger is emitted as `AuthorizationLevel.Anonymous` and the invoke carries no key or identity. An anonymous caller can post an invocation naming its own `checkpointUrl`, and the function loads and advances that checkpoint with its own source credentials. The ADR 0062 token protects the runner's checkpoint surface and not the function's invoke | 0059, 0061 | Confirmed |
+| V-37 | The Lambda Function URL is `AWS_IAM` and nothing signs the invoke. No SigV4 signer exists in `src/`, the samples or the tests, so the path works on LocalStack alone | 0059 | Confirmed |
+| V-38 | The tenancy gate admits a second owner group once every tenant-owned environment has an active registered key. No code encrypts a payload under that key, so the gate credits a barrier that does not exist. Until SEQ-1 and SEQ-3 land, the rule the code supports is to refuse a second owner group in every reach-isolating mode | 0065 | Confirmed |
+| V-39 | ADR 0065's phase B is unbuilt and the tenant anchor is specification only. Rollback, substitution and replay of a checkpoint by the control plane are undetected. This is SEQ-1 to SEQ-8, already in the remediation order, and the ADR's status line now says so | 0065 | Reported |
+| V-40 | Both sample runners and the checkpoint listener open the shared store with the control plane's at-rest key (extends V-19) | 0065 | Reported |
+| V-41 | The micro-guest sidecar's admin surface has no authentication, and its egress allowlist matches a host on every port. There is no automated live gate. ADR 0064 is not started, and nothing asserts guest entropy is re-seeded on a snapshot restore | 0063, 0064 | Reported |
+| V-42 | Optional seams that fail closed or are always supplied, to delete since nothing is shipped: the nullable checkpoint-token issuer and the function's no-token branch, and the nullable capacity guard on two handlers | 0062, 0066 | Reported |
+
 ### What nothing being shipped means for these
 
 No deployment depends on today's behaviour, so none of these needs a migration path or a compatibility hedge, and a path that exists only as a fallback is removed and not guarded. That applies directly to V-3, where the hole is the version-1 administration fallback itself, to V-6's interim single-grant path, to V-14, where the fix is a zero member that is not a posture, to V-19's sample runner holding the store, to the unconstructed triggers and the durable executor's null-run fallback that the executor batch found, and to the default interface implementations that page and count in memory, which every persistent backend overrides.
