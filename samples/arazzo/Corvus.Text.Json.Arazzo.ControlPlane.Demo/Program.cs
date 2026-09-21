@@ -144,7 +144,13 @@ else
 var auditor = new GovernanceAuditor(
     auditLoggerFactory.CreateLogger("Corvus.Arazzo.Audit"),
     new FileAuditSink(auditDirectory),
-    headSigner: auditHeadSigner);
+    headSigner: auditHeadSigner,
+    writerId: builder.Configuration["Arazzo:AuditWriterId"]);
+
+// A chain does not outlive its process, so the first thing the auditor does is read this instance's last chain back and
+// open the next, continuing it, under a head signed at once. Whatever tail the last process left unsigned is frozen
+// here, before anything else is recorded. The writer id defaults to the machine's name.
+await auditor.StartAsync();
 
 await Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.Postgres.PostgresControlPlaneDeployment.ProvisionAsync(dataSource, bootstrapOptions, auditor: auditor);
 

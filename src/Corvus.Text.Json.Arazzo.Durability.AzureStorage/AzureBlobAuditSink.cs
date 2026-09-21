@@ -12,7 +12,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 
 /// <summary>
 /// An audit sink over an Azure Storage blob container (ADR 0069): each chain is one append blob,
-/// <c>{chainId}.jsonl</c>, and each record is one appended block. The container is the deployment's evidence store,
+/// <c>{writerId}/{chainId}.jsonl</c>, and each record is one appended block. The container is the deployment's evidence store,
 /// outside the operational database, and it is meant to be immutable: under a time-based retention policy that allows
 /// protected append writes, or under a legal hold, an appended block cannot be altered or removed, by this process or
 /// by whoever holds the storage account.
@@ -65,10 +65,10 @@ public sealed class AzureBlobAuditSink : IAuditSink
     }
 
     /// <inheritdoc/>
-    public async ValueTask<IAuditChainStream> CreateChainAsync(ReadOnlyMemory<byte> chainId, CancellationToken cancellationToken)
+    public async ValueTask<IAuditChainStream> CreateChainAsync(ReadOnlyMemory<byte> writerId, ReadOnlyMemory<byte> chainId, CancellationToken cancellationToken)
     {
         // The blob name is a string-typed sink (the storage SDK), once per chain.
-        AppendBlobClient blob = this.container.GetAppendBlobClient(Encoding.UTF8.GetString(chainId.Span) + ChainBlobExtension);
+        AppendBlobClient blob = this.container.GetAppendBlobClient(Encoding.UTF8.GetString(writerId.Span) + "/" + Encoding.UTF8.GetString(chainId.Span) + ChainBlobExtension);
 
         // If-None-Match: * makes the create fail where the blob exists, so a chain is never reopened and never replaced.
         await blob.CreateAsync(
@@ -79,6 +79,22 @@ public sealed class AzureBlobAuditSink : IAuditSink
             },
             cancellationToken).ConfigureAwait(false);
         return new ChainBlob(blob);
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<Stream?> OpenLastChainAsync(ReadOnlyMemory<byte> writerId, CancellationToken cancellationToken)
+    {
+        // A chain's id is a version 7 UUID, so the last chain a writer opened is the last by name under its prefix.
+        string? last = null;
+        await foreach (BlobItem blob in this.container.GetBlobsAsync(BlobTraits.None, BlobStates.None, Encoding.UTF8.GetString(writerId.Span) + "/", cancellationToken).ConfigureAwait(false))
+        {
+            if (blob.Name.EndsWith(ChainBlobExtension, StringComparison.Ordinal) && (last is null || string.CompareOrdinal(blob.Name, last) > 0))
+            {
+                last = blob.Name;
+            }
+        }
+
+        return last is null ? null : await this.container.GetBlobClient(last).OpenReadAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
     private sealed class ChainBlob(AppendBlobClient blob) : IAuditChainStream

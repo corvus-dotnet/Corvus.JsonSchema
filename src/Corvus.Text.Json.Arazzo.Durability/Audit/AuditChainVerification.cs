@@ -17,6 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// <param name="HeadSignaturesChecked">Whether the heads' signatures were checked, which takes a trust store. Without one a head is only a well-formed record.</param>
 /// <param name="HoldsAnchor">Whether a verified head is the anchor the caller supplied. <see langword="false"/> where the caller supplied none. It is reported whatever the break, since a chain that tears after the anchor still holds it.</param>
 /// <param name="UnsignedTailCount">The number of verified records after the last head: the records no signature vouches for. The whole chain, where it holds no head.</param>
+/// <param name="Writer">The id of the writer the chain belongs to, from its open record, or <see langword="null"/> where no record was read.</param>
 public readonly record struct AuditChainVerification(
     AuditChainBreak Break,
     long BreakLine,
@@ -29,7 +30,8 @@ public readonly record struct AuditChainVerification(
     long HeadCount,
     bool HeadSignaturesChecked,
     bool HoldsAnchor,
-    long UnsignedTailCount)
+    long UnsignedTailCount,
+    string? Writer)
 {
     /// <summary>Gets a value indicating whether every line verified.</summary>
     public bool IsIntact => this.Break == AuditChainBreak.None;

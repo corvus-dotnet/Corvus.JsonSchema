@@ -8,7 +8,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 
 /// <summary>
 /// An audit sink over a directory (ADR 0069), for development: each chain is one JSON Lines file,
-/// <c>{chainId}.jsonl</c>, created new and only ever appended to by this process. Every record is flushed to disk before
+/// <c>{writerId}/{chainId}.jsonl</c>, created new and only ever appended to by the process that created it. Every record is flushed to disk before
 /// its append completes.
 /// </summary>
 /// <remarks>
@@ -33,14 +33,39 @@ public sealed class FileAuditSink : IAuditSink
     }
 
     /// <inheritdoc/>
-    public ValueTask<IAuditChainStream> CreateChainAsync(ReadOnlyMemory<byte> chainId, CancellationToken cancellationToken)
+    public ValueTask<IAuditChainStream> CreateChainAsync(ReadOnlyMemory<byte> writerId, ReadOnlyMemory<byte> chainId, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        // The file name is a string-typed sink (the file system API), once per chain.
-        string path = Path.Combine(this.directory, Encoding.UTF8.GetString(chainId.Span) + ChainFileExtension);
+        // The path is a string-typed sink (the file system API), once per chain.
+        string writerDirectory = Path.Combine(this.directory, Encoding.UTF8.GetString(writerId.Span));
+        Directory.CreateDirectory(writerDirectory);
+        string path = Path.Combine(writerDirectory, Encoding.UTF8.GetString(chainId.Span) + ChainFileExtension);
         var file = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.Read, bufferSize: 1, FileOptions.Asynchronous);
         return new ValueTask<IAuditChainStream>(new ChainFile(file));
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<Stream?> OpenLastChainAsync(ReadOnlyMemory<byte> writerId, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        string writerDirectory = Path.Combine(this.directory, Encoding.UTF8.GetString(writerId.Span));
+        if (!Directory.Exists(writerDirectory))
+        {
+            return new ValueTask<Stream?>((Stream?)null);
+        }
+
+        // A chain's id is a version 7 UUID, so the last chain opened is the last by name.
+        string? last = null;
+        foreach (string file in Directory.EnumerateFiles(writerDirectory, "*" + ChainFileExtension))
+        {
+            if (last is null || string.CompareOrdinal(file, last) > 0)
+            {
+                last = file;
+            }
+        }
+
+        return new ValueTask<Stream?>(last is null ? null : new FileStream(last, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
     }
 
     private sealed class ChainFile(FileStream file) : IAuditChainStream

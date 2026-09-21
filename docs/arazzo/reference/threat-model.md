@@ -394,9 +394,10 @@ fails the request that made it, so authoring does not proceed unrecorded. `arazz
 chains from their stored bytes, against the audit's public key and the anchors, without the control plane in the
 path. Four limits are stated. The record is change-blind by decision ([ADR 0038](../adr/0038-payload-safe-governance-audit.md)): it says who
 did what to which resource, not what the resource changed from or to. The records after the last signed head are
-vouched for by no signature yet, which is a window of 64 records or 60 seconds by default. A chain does not outlive its process: a control
-plane that crashes, or stops after its key service has, leaves that window unsigned for good, and its next chain
-does not name the old one. And the chain holds
+vouched for by no signature yet, which is a window of 64 records or 60 seconds by default. A chain does not outlive its process, so a control
+plane that starts reads its own last chain back and continues it under a head signed at once, which freezes the tail
+its last process left unsigned without authenticating it: between a stop and the next start that tail is whatever
+the sink holds, and the verifier goes on reporting it as unsigned. And the chain holds
 mutations only: the one audited read, the step journal, still goes to the log alone, where the three ways a log
 evaporates still apply to it (a sampled activity source, a raised log level, a logger nobody wired), and the rows
 below marked "No" emit nothing at all.

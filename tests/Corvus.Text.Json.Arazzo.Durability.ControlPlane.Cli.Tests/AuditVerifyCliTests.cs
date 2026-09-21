@@ -31,7 +31,7 @@ public sealed class AuditVerifyCliTests
 
         exit.ShouldBe(0, output);
         output.ShouldContain("verified.");
-        output.ShouldContain("records 8");
+        output.ShouldContain("records 9");
         output.ShouldContain("heads 3");
         output.ShouldContain("unsigned tail 0");
     }
@@ -56,7 +56,7 @@ public sealed class AuditVerifyCliTests
     {
         using var workspace = new TempAudit();
         await workspace.WriteChainAsync(records: 2, recordsPerHead: 2);
-        string file = Directory.GetFiles(workspace.Directory, "*.jsonl").ShouldHaveSingleItem();
+        string file = Directory.GetFiles(workspace.Directory, "*.jsonl", SearchOption.AllDirectories).ShouldHaveSingleItem();
         string original = await File.ReadAllTextAsync(file);
         string trust = "audit-1=" + workspace.PublicKeyFile;
 

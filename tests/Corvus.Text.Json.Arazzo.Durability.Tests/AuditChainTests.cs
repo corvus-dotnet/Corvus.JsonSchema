@@ -26,7 +26,7 @@ public sealed class AuditChainTests
     {
         var sink = new InMemoryAuditSink();
         var clock = new FixedClock(new DateTimeOffset(2026, 9, 20, 12, 0, 0, TimeSpan.Zero));
-        await using var writer = new AuditChainWriter(sink, clock);
+        await using var writer = new AuditChainWriter(sink, clock, writerId: "cp-test");
 
         await writer.AppendAsync(Approve, default);
         await writer.AppendAsync(Refuse, default);
@@ -35,15 +35,25 @@ public sealed class AuditChainTests
         string chainId = sink.ChainIds.ShouldHaveSingleItem();
         byte[] stored = sink.Snapshot(chainId);
         string[] lines = Lines(stored);
-        lines.Length.ShouldBe(3);
+        lines.Length.ShouldBe(4);
 
-        using ParsedJsonDocument<AuditRecord> first = ParsedJsonDocument<AuditRecord>.Parse(Encoding.UTF8.GetBytes(lines[0]));
+        // The chain's first record opens it: it names the writer, and carries the 64 zeros a first record links to.
+        using ParsedJsonDocument<AuditRecord> opening = ParsedJsonDocument<AuditRecord>.Parse(Encoding.UTF8.GetBytes(lines[0]));
+        opening.RootElement.EvaluateSchema().ShouldBeTrue();
+        opening.RootElement.TryGetAsOpenRecord(out AuditRecord.OpenRecord open).ShouldBeTrue();
+        ((string)open.Chain).ShouldBe(chainId);
+        ((long)open.Seq).ShouldBe(0);
+        ((string)open.Prev).ShouldBe(new string('0', 64));
+        ((string)open.Writer).ShouldBe("cp-test");
+        open.Continues.IsUndefined().ShouldBeTrue();
+
+        using ParsedJsonDocument<AuditRecord> first = ParsedJsonDocument<AuditRecord>.Parse(Encoding.UTF8.GetBytes(lines[1]));
         first.RootElement.EvaluateSchema().ShouldBeTrue();
         first.RootElement.TryGetAsMutationRecord(out AuditRecord.MutationRecord record).ShouldBeTrue();
         ((string)record.Chain).ShouldBe(chainId);
-        ((long)record.Seq).ShouldBe(0);
-        ((string)record.Prev).ShouldBe(new string('0', 64));
-        lines[0].ShouldContain("\"kind\":\"mutation\"");
+        ((long)record.Seq).ShouldBe(1);
+        ((string)record.Prev).ShouldBe(HashOf(lines[0]));
+        lines[1].ShouldContain("\"kind\":\"mutation\"");
         ((string)record.Action).ShouldBe("access-request.approve");
         ((string)record.Actor).ShouldBe("alice");
         ((string)record.Tenant).ShouldBe("acme");
@@ -51,19 +61,19 @@ public sealed class AuditChainTests
         ((string)record.TargetId).ShouldBe("req-1");
         ((string)record.Outcome).ShouldBe("granted");
         ((string)record.Environment).ShouldBe("production");
-        record.Continues.IsUndefined().ShouldBeTrue();
-        lines[0].ShouldContain("2026-09-20T12:00:00");
+        lines[1].ShouldContain("2026-09-20T12:00:00");
 
         // A record with no tenant and no environment says nothing about them, rather than recording a placeholder.
-        lines[1].ShouldNotContain("\"tenant\"");
-        lines[1].ShouldNotContain("\"environment\"");
+        lines[2].ShouldNotContain("\"tenant\"");
+        lines[2].ShouldNotContain("\"environment\"");
 
         AuditChainVerification verification = await AuditChainVerifier.VerifyAsync(new MemoryStream(stored));
         verification.IsIntact.ShouldBeTrue();
         verification.BreakLine.ShouldBe(0);
         verification.ChainId.ShouldBe(chainId);
-        verification.RecordCount.ShouldBe(3);
-        verification.LastHash.ShouldBe(HashOf(lines[2]));
+        verification.Writer.ShouldBe("cp-test");
+        verification.RecordCount.ShouldBe(4);
+        verification.LastHash.ShouldBe(HashOf(lines[3]));
         verification.ContinuesChain.ShouldBeNull();
     }
 
@@ -133,9 +143,9 @@ public sealed class AuditChainTests
         AuditChainVerification verification = await AuditChainVerifier.VerifyAsync(new MemoryStream(stored, 0, stored.Length - 20));
 
         verification.Break.ShouldBe(AuditChainBreak.TornTail);
-        verification.BreakLine.ShouldBe(3);
-        verification.RecordCount.ShouldBe(2);
-        verification.LastHash.ShouldBe(HashOf(Lines(stored)[1]));
+        verification.BreakLine.ShouldBe(4);
+        verification.RecordCount.ShouldBe(3);
+        verification.LastHash.ShouldBe(HashOf(Lines(stored)[2]));
     }
 
     [TestMethod]
@@ -157,7 +167,7 @@ public sealed class AuditChainTests
         AuditChainVerification verification = await AuditChainVerifier.VerifyAsync(new TrickleStream(stored, 7));
 
         verification.IsIntact.ShouldBeTrue();
-        verification.RecordCount.ShouldBe(5);
+        verification.RecordCount.ShouldBe(6);
     }
 
     [TestMethod]
@@ -182,15 +192,15 @@ public sealed class AuditChainTests
 
         AuditChainVerification next = await AuditChainVerifier.VerifyAsync(new MemoryStream(inner.Snapshot(successor)));
         next.IsIntact.ShouldBeTrue();
-        next.RecordCount.ShouldBe(1);
+        next.RecordCount.ShouldBe(2);
         next.ContinuesChain.ShouldBe(abandoned);
 
         // The abandoned chain ends in the half-stored line, and the hash the successor names is a record it really
         // holds: its last whole one.
         AuditChainVerification previous = await AuditChainVerifier.VerifyAsync(new MemoryStream(inner.Snapshot(abandoned)), new AuditChainVerificationOptions { ExpectedHash = Encoding.UTF8.GetBytes(next.ContinuesHash!) });
         previous.Break.ShouldBe(AuditChainBreak.TornTail);
-        previous.BreakLine.ShouldBe(3);
-        previous.RecordCount.ShouldBe(2);
+        previous.BreakLine.ShouldBe(4);
+        previous.RecordCount.ShouldBe(3);
         previous.LastHash.ShouldBe(next.ContinuesHash);
         previous.ContainsExpectedHash.ShouldBeTrue();
     }
@@ -238,14 +248,15 @@ public sealed class AuditChainTests
         await Should.ThrowAsync<AuditAppendException>(async () => await writer.AppendAsync(Approve, default));
         await writer.AppendAsync(Approve, default);
 
-        (await AuditChainVerifier.VerifyAsync(new MemoryStream(inner.Snapshot(inner.ChainIds.ShouldHaveSingleItem())))).RecordCount.ShouldBe(1);
+        (await AuditChainVerifier.VerifyAsync(new MemoryStream(inner.Snapshot(inner.ChainIds.ShouldHaveSingleItem())))).RecordCount.ShouldBe(2);
     }
 
     [TestMethod]
     public async Task A_full_chain_rolls_over_into_one_that_continues_it()
     {
         var sink = new InMemoryAuditSink();
-        await using var writer = new AuditChainWriter(sink, maxRecordsPerChain: 2);
+        // A chain's open record counts towards its limit, so three to a chain is an open record and two mutations.
+        await using var writer = new AuditChainWriter(sink, maxRecordsPerChain: 3);
 
         for (int i = 0; i < 5; i++)
         {
@@ -256,9 +267,9 @@ public sealed class AuditChainTests
         AuditChainVerification first = await AuditChainVerifier.VerifyAsync(new MemoryStream(sink.Snapshot(sink.ChainIds[0])));
         AuditChainVerification second = await AuditChainVerifier.VerifyAsync(new MemoryStream(sink.Snapshot(sink.ChainIds[1])));
         AuditChainVerification third = await AuditChainVerifier.VerifyAsync(new MemoryStream(sink.Snapshot(sink.ChainIds[2])));
-        first.RecordCount.ShouldBe(2);
-        second.RecordCount.ShouldBe(2);
-        third.RecordCount.ShouldBe(1);
+        first.RecordCount.ShouldBe(3);
+        second.RecordCount.ShouldBe(3);
+        third.RecordCount.ShouldBe(2);
         second.ContinuesChain.ShouldBe(first.ChainId);
         second.ContinuesHash.ShouldBe(first.LastHash);
         third.ContinuesChain.ShouldBe(second.ChainId);
@@ -275,7 +286,7 @@ public sealed class AuditChainTests
 
         AuditChainVerification verification = await AuditChainVerifier.VerifyAsync(new MemoryStream(sink.Snapshot(sink.ChainIds.ShouldHaveSingleItem())));
         verification.IsIntact.ShouldBeTrue();
-        verification.RecordCount.ShouldBe(64);
+        verification.RecordCount.ShouldBe(65);
     }
 
     [TestMethod]
@@ -292,17 +303,18 @@ public sealed class AuditChainTests
             }
         }
 
-        // Seven records at three to a head: a head after the third and the sixth, and the close signs the seventh.
+        // The open record and seven mutations at three to a head: a head after the third and the sixth record, and the
+        // close signs the last two.
         byte[] stored = sink.Snapshot(sink.ChainIds.ShouldHaveSingleItem());
         string[] lines = Lines(stored);
-        lines.Length.ShouldBe(10);
+        lines.Length.ShouldBe(11);
         lines[3].ShouldContain("\"kind\":\"head\"");
         lines[7].ShouldContain("\"kind\":\"head\"");
-        lines[9].ShouldContain("\"kind\":\"head\"");
+        lines[10].ShouldContain("\"kind\":\"head\"");
 
         AuditChainVerification verification = await AuditChainVerifier.VerifyAsync(new MemoryStream(stored), new AuditChainVerificationOptions { TrustStore = TrustStore(key, "audit-1") });
         verification.IsIntact.ShouldBeTrue();
-        verification.RecordCount.ShouldBe(10);
+        verification.RecordCount.ShouldBe(11);
         verification.HeadCount.ShouldBe(3);
         verification.HeadSignaturesChecked.ShouldBeTrue();
         verification.UnsignedTailCount.ShouldBe(0);
@@ -397,13 +409,13 @@ public sealed class AuditChainTests
 
         byte[] stored = sink.Snapshot(sink.ChainIds[0]);
         string[] lines = Lines(stored);
-        lines.Length.ShouldBe(6);
+        lines.Length.ShouldBe(8);
         AuditHead last = anchors[^1];
 
         AuditChainVerification whole = await AuditChainVerifier.VerifyAsync(new MemoryStream(stored), new AuditChainVerificationOptions { TrustStore = TrustStore(key, "audit-1"), Anchor = last });
         whole.IsIntact.ShouldBeTrue();
 
-        // Drop the last two records and their head: what is left is a well-formed, fully signed chain. Only the anchor,
+        // Keep only the open record, the first mutation and their head: what is left is a well-formed, fully signed chain. Only the anchor,
         // held outside the sink, shows it is not the chain that was signed.
         AuditChainVerification cut = await AuditChainVerifier.VerifyAsync(
             new MemoryStream(Encoding.UTF8.GetBytes(string.Join('\n', lines[..3]) + "\n")),
@@ -420,7 +432,7 @@ public sealed class AuditChainTests
         var signer = new FlakySigner(new EcdsaExecutorPackageSigner(key, "audit-1")) { Failing = true };
         var failures = new List<Exception>();
         int signedHeads = 0;
-        await using var writer = new AuditChainWriter(sink, headSigner: signer, headOptions: new AuditHeadOptions(2, TimeSpan.FromHours(1)), onHeadSigned: _ => signedHeads++, onHeadFailed: failures.Add);
+        await using var writer = new AuditChainWriter(sink, headSigner: signer, headOptions: new AuditHeadOptions(3, TimeSpan.FromHours(1)), onHeadSigned: _ => signedHeads++, onHeadFailed: failures.Add);
 
         await writer.AppendAsync(Approve, default);
         await writer.AppendAsync(Approve, default);
@@ -428,14 +440,14 @@ public sealed class AuditChainTests
         failures.ShouldHaveSingleItem().ShouldBeOfType<CryptographicException>();
         signedHeads.ShouldBe(0);
 
-        // The key service recovers: the next append is over the cadence, so it signs a head over all three records.
+        // The key service recovers: the next append is over the cadence, so it signs a head over all four records.
         signer.Failing = false;
         await writer.AppendAsync(Approve, default);
         signedHeads.ShouldBe(1);
 
         AuditChainVerification verification = await AuditChainVerifier.VerifyAsync(new MemoryStream(sink.Snapshot(sink.ChainIds.ShouldHaveSingleItem())), new AuditChainVerificationOptions { TrustStore = TrustStore(key, "audit-1") });
         verification.IsIntact.ShouldBeTrue();
-        verification.RecordCount.ShouldBe(4);
+        verification.RecordCount.ShouldBe(5);
         verification.UnsignedTailCount.ShouldBe(0);
     }
 
@@ -446,7 +458,7 @@ public sealed class AuditChainTests
 
         verification.IsIntact.ShouldBeTrue();
         verification.HeadCount.ShouldBe(0);
-        verification.UnsignedTailCount.ShouldBe(5);
+        verification.UnsignedTailCount.ShouldBe(6);
     }
 
     [TestMethod]
@@ -494,18 +506,19 @@ public sealed class AuditChainTests
         try
         {
             var sink = new FileAuditSink(directory);
-            await using (var writer = new AuditChainWriter(sink))
+            await using (var writer = new AuditChainWriter(sink, writerId: "cp-0"))
             {
                 await writer.AppendAsync(Approve, default);
                 await writer.AppendAsync(Refuse, default);
 
                 // The records are on disk before the append returns, while the writer still holds the file.
-                string open = Directory.GetFiles(directory, "*" + FileAuditSink.ChainFileExtension).ShouldHaveSingleItem();
+                string open = Directory.GetFiles(directory, "*" + FileAuditSink.ChainFileExtension, SearchOption.AllDirectories).ShouldHaveSingleItem();
                 await using var reading = new FileStream(open, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                (await AuditChainVerifier.VerifyAsync(reading)).RecordCount.ShouldBe(2);
+                (await AuditChainVerifier.VerifyAsync(reading)).RecordCount.ShouldBe(3);
             }
 
-            string file = Directory.GetFiles(directory).ShouldHaveSingleItem();
+            // A writer's chains are kept under its id.
+            string file = Directory.GetFiles(Path.Combine(directory, "cp-0")).ShouldHaveSingleItem();
             string chainId = Path.GetFileNameWithoutExtension(file);
             await using (FileStream stored = File.OpenRead(file))
             {
@@ -514,7 +527,7 @@ public sealed class AuditChainTests
                 verification.ChainId.ShouldBe(chainId);
             }
 
-            await Should.ThrowAsync<IOException>(async () => await sink.CreateChainAsync(Encoding.UTF8.GetBytes(chainId), default));
+            await Should.ThrowAsync<IOException>(async () => await sink.CreateChainAsync("cp-0"u8.ToArray(), Encoding.UTF8.GetBytes(chainId), default));
         }
         finally
         {
@@ -631,7 +644,9 @@ public sealed class AuditChainTests
 
     private sealed class DiscardingSink : IAuditSink, IAuditChainStream
     {
-        public ValueTask<IAuditChainStream> CreateChainAsync(ReadOnlyMemory<byte> chainId, CancellationToken cancellationToken) => new(this);
+        public ValueTask<IAuditChainStream> CreateChainAsync(ReadOnlyMemory<byte> writerId, ReadOnlyMemory<byte> chainId, CancellationToken cancellationToken) => new(this);
+
+        public ValueTask<Stream?> OpenLastChainAsync(ReadOnlyMemory<byte> writerId, CancellationToken cancellationToken) => new((Stream?)null);
 
         public ValueTask AppendAsync(ReadOnlyMemory<byte> line, CancellationToken cancellationToken) => ValueTask.CompletedTask;
 
@@ -644,7 +659,9 @@ public sealed class AuditChainTests
 
         public Exception? FailNextCreate { get; set; }
 
-        public async ValueTask<IAuditChainStream> CreateChainAsync(ReadOnlyMemory<byte> chainId, CancellationToken cancellationToken)
+        public ValueTask<Stream?> OpenLastChainAsync(ReadOnlyMemory<byte> writerId, CancellationToken cancellationToken) => inner.OpenLastChainAsync(writerId, cancellationToken);
+
+        public async ValueTask<IAuditChainStream> CreateChainAsync(ReadOnlyMemory<byte> writerId, ReadOnlyMemory<byte> chainId, CancellationToken cancellationToken)
         {
             if (this.FailNextCreate is { } failure)
             {
@@ -652,7 +669,7 @@ public sealed class AuditChainTests
                 throw failure;
             }
 
-            return new Chain(this, await inner.CreateChainAsync(chainId, cancellationToken));
+            return new Chain(this, await inner.CreateChainAsync(writerId, chainId, cancellationToken));
         }
 
         private sealed class Chain(FailingSink owner, IAuditChainStream chain) : IAuditChainStream

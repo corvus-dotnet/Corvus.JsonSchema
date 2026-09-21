@@ -58,7 +58,11 @@ public static class AuditChainSetVerifier
         var entries = new AuditChainSetEntry[chains.Count];
         for (int i = 0; i < chains.Count; i++)
         {
-            entries[i] = new AuditChainSetEntry(chains[i].Name, verifications[i], await StandingAsync(i, chains, verifications, trustStore, cancellationToken).ConfigureAwait(false));
+            entries[i] = new AuditChainSetEntry(
+                chains[i].Name,
+                verifications[i],
+                await StandingAsync(i, chains, verifications, trustStore, cancellationToken).ConfigureAwait(false),
+                ContinuedFromItsLastRecordBy(verifications[i], verifications));
         }
 
         return new AuditChainSetVerification(entries, unmatched);
@@ -74,7 +78,7 @@ public static class AuditChainSetVerifier
 
         if (verification.Break == AuditChainBreak.TornTail)
         {
-            if (!IsContinuedFromItsLastRecord(verification, verifications))
+            if (ContinuedFromItsLastRecordBy(verification, verifications) is null)
             {
                 return AuditChainStanding.Broken;
             }
@@ -105,17 +109,22 @@ public static class AuditChainSetVerifier
         return verification.Break == AuditChainBreak.TornTail ? AuditChainStanding.AbandonedAndContinued : AuditChainStanding.Verified;
     }
 
-    private static bool IsContinuedFromItsLastRecord(in AuditChainVerification torn, AuditChainVerification[] verifications)
+    private static string? ContinuedFromItsLastRecordBy(in AuditChainVerification chain, AuditChainVerification[] verifications)
     {
+        if (chain.ChainId is null)
+        {
+            return null;
+        }
+
         foreach (AuditChainVerification other in verifications)
         {
-            if (other.ContinuesChain == torn.ChainId && other.ContinuesHash == torn.LastHash)
+            if (other.ContinuesChain == chain.ChainId && other.ContinuesHash == chain.LastHash)
             {
-                return true;
+                return other.ChainId;
             }
         }
 
-        return false;
+        return null;
     }
 
     private static int IndexOf(AuditChainVerification[] verifications, string chainId)

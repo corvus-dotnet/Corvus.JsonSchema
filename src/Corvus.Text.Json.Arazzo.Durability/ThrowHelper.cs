@@ -742,6 +742,11 @@ internal static class ThrowHelper
         => throw new InvalidOperationException(SR.DraftRunnerLoopAlreadyRunning);
 
     // ── Audit chain (ADR 0069) ──
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowAuditWriterIdOutsideGrammar(string writerId)
+        => throw new ArgumentException(SR.Format(SR.AuditWriterIdOutsideGrammar, writerId), nameof(writerId));
+
     public static AuditAppendException GetAuditAppendFailedException(Exception innerException)
         => new(SR.AuditAppendFailed, innerException);
 }

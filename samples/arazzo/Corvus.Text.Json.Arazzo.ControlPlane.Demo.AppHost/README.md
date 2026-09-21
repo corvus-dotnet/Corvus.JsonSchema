@@ -79,7 +79,8 @@ panel reports that Git is unavailable — everything else works unchanged. The f
 
 The control plane appends every governance action, the bootstrap's founding grants included, to an audit chain, and signs the chain's head every 64 records or 60 seconds. In this composition:
 
-- **The chains** are files, `{chainId}.jsonl`, under `Arazzo:AuditDirectory` (default `arazzo-control-plane-demo/audit` under the temporary directory). That is the development sink. A production deployment appends to immutable storage outside the operational database (`AzureBlobAuditSink`).
+- **The chains** are files, `{writerId}/{chainId}.jsonl`, under `Arazzo:AuditDirectory` (default `arazzo-control-plane-demo/audit` under the temporary directory). That is the development sink. A production deployment appends to immutable storage outside the operational database (`AzureBlobAuditSink`).
+- **The writer id** is `Arazzo:AuditWriterId`, and defaults to the machine's name. When the control plane starts it reads its own last chain back and continues it under a head signed at once, which freezes whatever tail the last run left unsigned.
 - **The head key** is `arazzo-audit-head`, a second Transit key in the signing vault. It signs the audit's heads and nothing else, and it is not the executor key, so compromising or rotating either leaves the other's evidence standing. The control plane holds a sign-only token, and the private half never leaves the vault.
 - **The public half** is exported by the signing-vault provisioner to `audit-head.pub`, beside `executor-signing.pub`, in the `arazzo-signing-*` handoff directory under the temporary directory.
 
@@ -91,7 +92,9 @@ $audit = Join-Path ([IO.Path]::GetTempPath()) 'arazzo-control-plane-demo/audit'
 arazzo-runs audit verify $audit --trust-key "arazzo-audit-head=$($handoff.FullName)/audit-head.pub"
 ```
 
-Give it `executor-signing.pub` instead and the heads are refused, which is the separation working. A host run with no signing vault falls back to an ECDSA key in a PEM file beside the chains, a development arrangement in which whoever can read the directory can sign.
+Give it `executor-signing.pub` instead and the heads are refused, which is the separation working.
+
+One thing here is the demo's and not the platform's. The signing vault is a dev-mode Vault that every AppHost run creates afresh, so each run signs with a new `arazzo-audit-head` key under the same key id, and each run's public key lands in its own `arazzo-signing-*` directory. Verify a run's chain against that run's key. To check that the runs' chains continue one another, verify the whole audit directory with `--no-signature-check`. A deployment's key service keeps its keys, and a rotated key takes a new key id, so one command with a `--trust-key` for each id covers every chain. A host run with no signing vault falls back to an ECDSA key in a PEM file beside the chains, a development arrangement in which whoever can read the directory can sign.
 
 ## Prerequisites
 

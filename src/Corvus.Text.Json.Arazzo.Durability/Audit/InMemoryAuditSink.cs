@@ -15,6 +15,7 @@ public sealed class InMemoryAuditSink : IAuditSink
     private readonly Lock sync = new();
     private readonly List<string> chainIds = [];
     private readonly Dictionary<string, MemoryStream> chains = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string> writers = new(StringComparer.Ordinal);
 
     /// <summary>Gets the ids of the chains created so far, in creation order.</summary>
     public IReadOnlyList<string> ChainIds
@@ -40,7 +41,7 @@ public sealed class InMemoryAuditSink : IAuditSink
     }
 
     /// <inheritdoc/>
-    public ValueTask<IAuditChainStream> CreateChainAsync(ReadOnlyMemory<byte> chainId, CancellationToken cancellationToken)
+    public ValueTask<IAuditChainStream> CreateChainAsync(ReadOnlyMemory<byte> writerId, ReadOnlyMemory<byte> chainId, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         string id = Encoding.UTF8.GetString(chainId.Span);
@@ -49,9 +50,30 @@ public sealed class InMemoryAuditSink : IAuditSink
         {
             this.chains.Add(id, chain);
             this.chainIds.Add(id);
+            this.writers.Add(id, Encoding.UTF8.GetString(writerId.Span));
         }
 
         return new ValueTask<IAuditChainStream>(new Chain(this.sync, chain));
+    }
+
+    /// <inheritdoc/>
+    public ValueTask<Stream?> OpenLastChainAsync(ReadOnlyMemory<byte> writerId, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        string writer = Encoding.UTF8.GetString(writerId.Span);
+        lock (this.sync)
+        {
+            string? last = null;
+            foreach (string id in this.chainIds)
+            {
+                if (this.writers[id] == writer && (last is null || string.CompareOrdinal(id, last) > 0))
+                {
+                    last = id;
+                }
+            }
+
+            return new ValueTask<Stream?>(last is null ? null : new MemoryStream(this.chains[last].ToArray(), writable: false));
+        }
     }
 
     private sealed class Chain(Lock sync, MemoryStream chain) : IAuditChainStream

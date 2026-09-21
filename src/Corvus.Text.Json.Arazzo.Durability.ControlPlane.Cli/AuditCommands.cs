@@ -15,7 +15,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli;
 internal sealed class AuditVerifySettings : CommandSettings
 {
     [CommandArgument(0, "<path>")]
-    [Description("A chain file, a directory of chain files (*.jsonl), or - to read one chain from standard input.")]
+    [Description("A chain file, a directory of chain files (*.jsonl, searched through its subdirectories, one to a writer), or - to read one chain from standard input.")]
     public string Path { get; init; } = string.Empty;
 
     [CommandOption("--trust-key <KEYID=PEMFILE>")]
@@ -112,7 +112,8 @@ internal sealed class AuditVerifyCommand : AsyncCommand<AuditVerifySettings>
             AuditChainVerification v = chain.Verification;
             bool stands = chain.Standing is AuditChainStanding.Verified or AuditChainStanding.AbandonedAndContinued or AuditChainStanding.Empty;
             console.MarkupLine($"{(stands ? "[green]✓[/]" : "[red]✗[/]")} {Markup.Escape(chain.Name)}: {Describe(chain)}");
-            console.MarkupLine($"    [dim]chain[/] {Markup.Escape(v.ChainId ?? "—")}  [dim]records[/] {v.RecordCount}  [dim]heads[/] {v.HeadCount}  [dim]unsigned tail[/] {v.UnsignedTailCount}");
+            string frozen = v.UnsignedTailCount > 0 && chain.FrozenBy is { } by ? $" [dim](frozen by chain {Markup.Escape(by)}, not signed)[/]" : string.Empty;
+            console.MarkupLine($"    [dim]chain[/] {Markup.Escape(v.ChainId ?? "—")}  [dim]writer[/] {Markup.Escape(v.Writer ?? "—")}  [dim]records[/] {v.RecordCount}  [dim]heads[/] {v.HeadCount}  [dim]unsigned tail[/] {v.UnsignedTailCount}{frozen}");
             if (v.ContinuesChain is not null)
             {
                 console.MarkupLine($"    [dim]continues[/] {Markup.Escape(v.ContinuesChain)} [dim]from[/] {Markup.Escape(v.ContinuesHash ?? "—")}");
@@ -215,7 +216,7 @@ internal sealed class AuditVerifyCommand : AsyncCommand<AuditVerifySettings>
 
         if (Directory.Exists(path))
         {
-            string[] files = Directory.GetFiles(path, "*" + FileAuditSink.ChainFileExtension);
+            string[] files = Directory.GetFiles(path, "*" + FileAuditSink.ChainFileExtension, SearchOption.AllDirectories);
             Array.Sort(files, StringComparer.Ordinal);
             if (files.Length == 0)
             {
@@ -226,7 +227,7 @@ internal sealed class AuditVerifyCommand : AsyncCommand<AuditVerifySettings>
             var chains = new List<AuditChainSource>(files.Length);
             foreach (string file in files)
             {
-                chains.Add(new AuditChainSource(System.IO.Path.GetFileName(file), () => File.OpenRead(file)));
+                chains.Add(new AuditChainSource(System.IO.Path.GetRelativePath(path, file), () => File.OpenRead(file)));
             }
 
             return chains;

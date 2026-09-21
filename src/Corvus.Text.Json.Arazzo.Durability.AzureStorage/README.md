@@ -37,12 +37,13 @@ optional). For encryption the storage operator cannot read, wrap this store in `
 
 ## The audit sink
 
-`AzureBlobAuditSink` is the deployment's audit evidence store ([ADR 0069](../../docs/arazzo/adr/0069-audit-as-evidence-append-only-chained-signed-sink.md)): each audit chain is one append blob, `{chainId}.jsonl`, and each record is one appended block. Give it a container in a storage account **other than** the one the operational stores use, so that whoever holds the operational data does not hold its audit.
+`AzureBlobAuditSink` is the deployment's audit evidence store ([ADR 0069](../../docs/arazzo/adr/0069-audit-as-evidence-append-only-chained-signed-sink.md)): each audit chain is one append blob, `{writerId}/{chainId}.jsonl`, and each record is one appended block. A control plane instance that starts finds its own last chain by listing its prefix, and continues it. Give it a container in a storage account **other than** the one the operational stores use, so that whoever holds the operational data does not hold its audit.
 
 ```csharp
 BlobContainerClient auditContainer = new BlobServiceClient(auditAccountUri, credential).GetBlobContainerClient("arazzo-audit");
 AzureBlobAuditSink sink = await AzureBlobAuditSink.ConnectAsync(auditContainer);
-var auditor = new GovernanceAuditor(auditLogger, sink, headSigner: auditHeadSigner);
+var auditor = new GovernanceAuditor(auditLogger, sink, headSigner: auditHeadSigner, writerId: instanceName);
+await auditor.StartAsync();
 ```
 
 **The container must be immutable, and the sink checks.** `ConnectAsync` refuses a container that has neither an immutability policy nor a legal hold. Create the container with a time-based retention policy and **allow protected append writes** on it: without that setting the policy refuses the appends themselves. The retention period is the audit's retention. The platform adds none of its own.

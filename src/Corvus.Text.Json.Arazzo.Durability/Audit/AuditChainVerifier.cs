@@ -12,7 +12,8 @@ using Corvus.Text.Json.Arazzo.Execution;
 namespace Corvus.Text.Json.Arazzo.Durability;
 
 /// <summary>
-/// Verifies an audit chain from its stored bytes (ADR 0069): every line is an audit record by its schema, the records
+/// Verifies an audit chain from its stored bytes (ADR 0069): every line is an audit record by its schema, the first opens
+/// the chain and no other does, the records
 /// name one chain, their sequence runs from zero with no gap, and each carries the hash of the line before it. Given a
 /// trust store it checks every head's signature, and given an anchor it checks the chain holds it. It reads the sink's
 /// bytes directly, so the control plane that wrote them is not in the path that checks them.
@@ -89,6 +90,7 @@ public static class AuditChainVerifier
         private readonly IncrementalHash hasher = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
         private long line;
         private long records;
+        private string? writer;
         private string? continuesChain;
         private string? continuesHash;
         private bool containsExpectedHash;
@@ -153,7 +155,8 @@ public static class AuditChainVerifier
                 this.heads,
                 options.TrustStore is not null,
                 this.anchorFound,
-                this.records - this.lastHeadRecord);
+                this.records - this.lastHeadRecord,
+                this.records == 0 ? null : this.writer);
         }
 
         private static byte[] InitialHash()
@@ -241,13 +244,27 @@ public static class AuditChainVerifier
                 {
                     using UnescapedUtf8JsonString id = chainIdElement.GetUtf8String();
                     id.Span.CopyTo(this.chainId);
-                    if (record.TryGetAsMutationRecord(out AuditRecord.MutationRecord first) && first.Continues.IsNotUndefined())
+
+                    // A chain's first record opens it, and nothing else does: it is where the chain names its writer and
+                    // the chain it continues, so a chain that starts with anything else has lost its beginning.
+                    if (!record.TryGetAsOpenRecord(out AuditRecord.OpenRecord open))
                     {
-                        this.continuesChain = (string)first.Continues.Chain;
-                        this.continuesHash = (string)first.Continues.Hash;
+                        return AuditChainBreak.MalformedRecord;
+                    }
+
+                    this.writer = (string)open.Writer;
+                    if (open.Continues.IsNotUndefined())
+                    {
+                        this.continuesChain = (string)open.Continues.Chain;
+                        this.continuesHash = (string)open.Continues.Hash;
                     }
                 }
-                else if (!chainIdElement.ValueEquals(this.chainId))
+                else if (record.TryGetAsOpenRecord(out _))
+                {
+                    return AuditChainBreak.MalformedRecord;
+                }
+
+                if (this.records > 0 && !chainIdElement.ValueEquals(this.chainId))
                 {
                     return AuditChainBreak.ForeignRecord;
                 }

@@ -143,8 +143,10 @@ public sealed class AuditChainSetTests
     {
         public bool FailNext { get; set; }
 
-        public async ValueTask<IAuditChainStream> CreateChainAsync(ReadOnlyMemory<byte> chainId, CancellationToken cancellationToken)
-            => new Chain(this, await inner.CreateChainAsync(chainId, cancellationToken));
+        public ValueTask<Stream?> OpenLastChainAsync(ReadOnlyMemory<byte> writerId, CancellationToken cancellationToken) => inner.OpenLastChainAsync(writerId, cancellationToken);
+
+        public async ValueTask<IAuditChainStream> CreateChainAsync(ReadOnlyMemory<byte> writerId, ReadOnlyMemory<byte> chainId, CancellationToken cancellationToken)
+            => new Chain(this, await inner.CreateChainAsync(writerId, chainId, cancellationToken));
 
         private sealed class Chain(FailOnceSink owner, IAuditChainStream chain) : IAuditChainStream
         {

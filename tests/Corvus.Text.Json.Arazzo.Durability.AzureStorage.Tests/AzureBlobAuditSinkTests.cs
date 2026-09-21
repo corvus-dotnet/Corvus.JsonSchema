@@ -65,9 +65,9 @@ public sealed class AzureBlobAuditSinkTests
         blob.Name.ShouldEndWith(AzureBlobAuditSink.ChainBlobExtension);
         blob.Properties.BlobType.ShouldBe(BlobType.Append);
 
-        // Five records and three heads (after the second and fourth, and the close's over the fifth): eight blocks.
+        // The open record, five mutations and three heads (one to every two records): nine blocks.
         BlobProperties properties = await container.GetBlobClient(blob.Name).GetPropertiesAsync();
-        properties.BlobCommittedBlockCount.ShouldBe(8);
+        properties.BlobCommittedBlockCount.ShouldBe(9);
 
         await using Stream stored = await container.GetBlobClient(blob.Name).OpenReadAsync();
         AuditChainVerification verification = await AuditChainVerifier.VerifyAsync(
@@ -75,7 +75,7 @@ public sealed class AzureBlobAuditSinkTests
             new AuditChainVerificationOptions { TrustStore = new TrustStoreExecutorPackageVerifier(new Dictionary<string, AsymmetricAlgorithm> { ["audit-1"] = key }) });
         verification.IsIntact.ShouldBeTrue();
         verification.ChainId.ShouldBe(Path.GetFileNameWithoutExtension(blob.Name));
-        verification.RecordCount.ShouldBe(8);
+        verification.RecordCount.ShouldBe(9);
         verification.HeadCount.ShouldBe(3);
         verification.UnsignedTailCount.ShouldBe(0);
     }
@@ -87,16 +87,16 @@ public sealed class AzureBlobAuditSinkTests
         AzureBlobAuditSink sink = await AzureBlobAuditSink.ConnectAsync(container, allowMutableContainer: true);
         byte[] chainId = "0123456789abcdef0123456789abcdef"u8.ToArray();
 
-        await using (IAuditChainStream first = await sink.CreateChainAsync(chainId, default))
+        await using (IAuditChainStream first = await sink.CreateChainAsync("cp-0"u8.ToArray(), chainId, default))
         {
             await first.AppendAsync("{\"kept\":true}\n"u8.ToArray(), default);
         }
 
-        RequestFailedException refused = await Should.ThrowAsync<RequestFailedException>(async () => await sink.CreateChainAsync(chainId, default));
+        RequestFailedException refused = await Should.ThrowAsync<RequestFailedException>(async () => await sink.CreateChainAsync("cp-0"u8.ToArray(), chainId, default));
         refused.Status.ShouldBe(409);
 
         // The refused create replaced nothing: the chain still holds what was appended to it.
-        BlobDownloadResult kept = await container.GetBlobClient("0123456789abcdef0123456789abcdef" + AzureBlobAuditSink.ChainBlobExtension).DownloadContentAsync();
+        BlobDownloadResult kept = await container.GetBlobClient("cp-0/0123456789abcdef0123456789abcdef" + AzureBlobAuditSink.ChainBlobExtension).DownloadContentAsync();
         kept.Content.ToString().ShouldBe("{\"kept\":true}\n");
     }
 
@@ -122,6 +122,44 @@ public sealed class AzureBlobAuditSinkTests
         AuditChainVerification next = await AuditChainVerifier.VerifyAsync(stored);
         next.IsIntact.ShouldBeTrue();
         next.ContinuesChain.ShouldBe(abandoned);
+    }
+
+    [TestMethod]
+    public async Task A_writer_that_starts_again_finds_its_last_chain_under_its_prefix_and_continues_it()
+    {
+        BlobContainerClient container = await NewContainerAsync();
+        AzureBlobAuditSink sink = await AzureBlobAuditSink.ConnectAsync(container, allowMutableContainer: true);
+        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+
+        // Two processes of cp-0, and one of cp-1 between them, whose chain cp-0 must not take for its own.
+        var first = new AuditChainWriter(sink, headSigner: new EcdsaExecutorPackageSigner(key, "audit-1"), writerId: "cp-0");
+        await first.AppendAsync(Approve, default);
+        await using (var other = new AuditChainWriter(sink, headSigner: new EcdsaExecutorPackageSigner(key, "audit-1"), writerId: "cp-1"))
+        {
+            await other.AppendAsync(Approve, default);
+        }
+
+        await using (var second = new AuditChainWriter(sink, headSigner: new EcdsaExecutorPackageSigner(key, "audit-1"), writerId: "cp-0"))
+        {
+            await second.ResumeAsync(default);
+        }
+
+        var mine = new List<string>();
+        await foreach (BlobItem blob in container.GetBlobsAsync(BlobTraits.None, BlobStates.None, "cp-0/", default))
+        {
+            mine.Add(blob.Name);
+        }
+
+        mine.Sort(StringComparer.Ordinal);
+        mine.Count.ShouldBe(2);
+        await using Stream old = await container.GetBlobClient(mine[0]).OpenReadAsync();
+        await using Stream next = await container.GetBlobClient(mine[1]).OpenReadAsync();
+        AuditChainVerification oldChain = await AuditChainVerifier.VerifyAsync(old);
+        AuditChainVerification nextChain = await AuditChainVerifier.VerifyAsync(next);
+        nextChain.Writer.ShouldBe("cp-0");
+        nextChain.ContinuesChain.ShouldBe(oldChain.ChainId);
+        nextChain.ContinuesHash.ShouldBe(oldChain.LastHash);
+        nextChain.HeadCount.ShouldBe(1);
     }
 
     [TestMethod]

@@ -100,7 +100,7 @@ arazzo-runs scenarios run --working-copy <id> --server https://host/arazzo/v1
 
 ## Verifying the audit (`audit verify`)
 
-`audit verify` checks a deployment's audit chains ([ADR 0069](../../docs/arazzo/adr/0069-audit-as-evidence-append-only-chained-signed-sink.md)) from their stored bytes. It calls no server: the control plane that wrote the evidence is not in the path that checks it. Give it a chain file, a directory of chain files (`*.jsonl`), or `-` to read one chain from standard input, for example a blob downloaded from the audit container.
+`audit verify` checks a deployment's audit chains ([ADR 0069](../../docs/arazzo/adr/0069-audit-as-evidence-append-only-chained-signed-sink.md)) from their stored bytes. It calls no server: the control plane that wrote the evidence is not in the path that checks it. Give it a chain file, a directory of chain files (`*.jsonl`, searched through its subdirectories, which are one to a writer), or `-` to read one chain from standard input, for example a blob downloaded from the audit container.
 
 ```pwsh
 # Every chain in the sink, against the audit's public key, and an anchor the collector holds
@@ -119,10 +119,13 @@ It checks, and names the first failure of, each of these:
 | Every line is an audit record, numbered from zero with no gap, carrying the hash of the line before it | A record was altered, removed, added or reordered |
 | Every head's signature verifies against `--trust-key` | The chain's tail was rewritten and re-linked, which the hashes alone cannot show, or the head was signed with a key you did not give |
 | A chain that says it continues another finds that chain, holding the hash it names | The earlier chain was removed whole, cut short or rewritten |
+| A chain's first record is its open record, and no other record is | The chain has lost its beginning, or had one spliced in |
 | A torn last line is followed by a chain that continues from the record before it | With a successor, this is what a failed append leaves, and the whole records stand. Without one, the chain was cut short |
 | Every `--anchor` names a chain that was given and that holds it | The sink was rewritten after the anchor was published, or the chain was removed |
 
 `--anchor` takes `<chain>:<sequence>:<hash>`, which are the `corvus.arazzo.audit.chain`, `corvus.arazzo.audit.sequence` and `corvus.arazzo.audit.previous_hash` tags of an `audit.head` span, or the same fields of an `Audit anchor` log record. Anchors are what make the check independent of whoever holds the sink, so keep them where the sink's owner cannot rewrite them.
+
+A chain's `unsigned tail` is the number of its records after its last head, which no signature vouches for. Where a later chain continues it, the output says `frozen by chain …, not signed`: the tail cannot have changed since that chain's first head, and nothing authenticated it before then.
 
 With no `--trust-key` the command refuses to run, so that an unchecked chain never reads as verified by accident. `--no-signature-check` verifies the links only, and says in its output that the signatures were not checked. The exit code is `0` only when every chain stands and every anchor is held.
 

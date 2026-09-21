@@ -76,9 +76,10 @@ public sealed class ControlPlaneAuditSinkTests
         byte[] stored = sink.Snapshot(sink.ChainIds.ShouldHaveSingleItem());
         AuditChainVerification verification = await AuditChainVerifier.VerifyAsync(new MemoryStream(stored));
         verification.IsIntact.ShouldBeTrue();
-        verification.RecordCount.ShouldBe(3);
+        verification.RecordCount.ShouldBe(4);
 
-        string[] lines = Encoding.UTF8.GetString(stored).Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        // The chain's open record, then one record to an action.
+        string[] lines = Encoding.UTF8.GetString(stored).Split('\n', StringSplitOptions.RemoveEmptyEntries)[1..];
         using Stj.JsonDocument created = Stj.JsonDocument.Parse(lines[0]);
         created.RootElement.GetProperty("kind").GetString().ShouldBe("mutation");
         created.RootElement.GetProperty("action").GetString().ShouldBe("environment.create");
@@ -190,12 +191,12 @@ public sealed class ControlPlaneAuditSinkTests
             anchor = heads.Single(a => (string?)a.GetTagItem("corvus.arazzo.audit.chain") == chainId);
         }
 
-        anchor.GetTagItem("corvus.arazzo.audit.sequence").ShouldBe(1L);
+        anchor.GetTagItem("corvus.arazzo.audit.sequence").ShouldBe(2L);
         anchor.GetTagItem("corvus.arazzo.audit.key_id").ShouldBe("audit-test");
         ((string)anchor.GetTagItem("corvus.arazzo.audit.signature")!).ShouldNotBeNullOrEmpty();
 
         // The anchor, held outside the sink, is one the stored chain holds.
-        var published = new AuditHead(chainId, 1, (string)anchor.GetTagItem("corvus.arazzo.audit.previous_hash")!, (string)anchor.GetTagItem("corvus.arazzo.audit.algorithm")!, "audit-test", (string)anchor.GetTagItem("corvus.arazzo.audit.signature")!);
+        var published = new AuditHead(chainId, 2, (string)anchor.GetTagItem("corvus.arazzo.audit.previous_hash")!, (string)anchor.GetTagItem("corvus.arazzo.audit.algorithm")!, "audit-test", (string)anchor.GetTagItem("corvus.arazzo.audit.signature")!);
         (await AuditChainVerifier.VerifyAsync(new MemoryStream(sink.Snapshot(chainId)), new AuditChainVerificationOptions { Anchor = published })).IsIntact.ShouldBeTrue();
     }
 
@@ -249,8 +250,10 @@ public sealed class ControlPlaneAuditSinkTests
 
         public bool Failing { get; set; }
 
-        public async ValueTask<IAuditChainStream> CreateChainAsync(ReadOnlyMemory<byte> chainId, CancellationToken cancellationToken)
-            => new Chain(this, await this.Inner.CreateChainAsync(chainId, cancellationToken));
+        public ValueTask<Stream?> OpenLastChainAsync(ReadOnlyMemory<byte> writerId, CancellationToken cancellationToken) => this.Inner.OpenLastChainAsync(writerId, cancellationToken);
+
+        public async ValueTask<IAuditChainStream> CreateChainAsync(ReadOnlyMemory<byte> writerId, ReadOnlyMemory<byte> chainId, CancellationToken cancellationToken)
+            => new Chain(this, await this.Inner.CreateChainAsync(writerId, chainId, cancellationToken));
 
         private sealed class Chain(SwitchableSink owner, IAuditChainStream chain) : IAuditChainStream
         {

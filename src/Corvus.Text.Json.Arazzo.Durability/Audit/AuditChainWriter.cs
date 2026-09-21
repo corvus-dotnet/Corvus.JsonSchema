@@ -35,6 +35,13 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// records are already chained, the failure is reported, and the next tick tries again. What grows meanwhile is the
 /// unsigned window.
 /// </para>
+/// <para>
+/// A chain does not outlive its process, so a writer that starts reads its own last chain back from the sink, and its
+/// new chain's open record names that chain and the last whole record of it, under a head signed at once. That links
+/// the two chains and freezes the old one: removing it, cutting it short, or altering the tail its last process left
+/// unsigned shows from then on. It does not authenticate that tail. Inside a process the writer's memory of the last
+/// hash is what an altered tail breaks against; across a restart the tail is whatever the sink holds.
+/// </para>
 /// </remarks>
 public sealed class AuditChainWriter : IAsyncDisposable
 {
@@ -50,6 +57,8 @@ public sealed class AuditChainWriter : IAsyncDisposable
     private readonly AuditHeadOptions headOptions;
     private readonly Action<AuditHead>? onHeadSigned;
     private readonly Action<Exception>? onHeadFailed;
+    private readonly Action<AuditChainVerification>? onResumed;
+    private readonly byte[] writerId;
     private readonly ITimer? headTimer;
     private readonly SemaphoreSlim gate = new(1, 1);
     private readonly byte[] chainId = new byte[AuditRecord.ChainIdLength];
@@ -61,6 +70,7 @@ public sealed class AuditChainWriter : IAsyncDisposable
     private int unsignedRecords;
     private DateTimeOffset oldestUnsignedAt;
     private bool hasContinuation;
+    private bool resumed;
     private bool disposed;
 
     /// <summary>Initializes a new instance of the <see cref="AuditChainWriter"/> class.</summary>
@@ -71,6 +81,8 @@ public sealed class AuditChainWriter : IAsyncDisposable
     /// <param name="headOptions">The head cadence (defaults to <see cref="AuditHeadOptions.Default"/>).</param>
     /// <param name="onHeadSigned">Called with each head once it is stored, so the caller can publish it outside the sink as an anchor.</param>
     /// <param name="onHeadFailed">Called when a head could not be signed or stored.</param>
+    /// <param name="writerId">The writer's id: 1 to 63 lowercase ASCII letters, digits or hyphens, stable across this instance's restarts, since a writer continues only its own chains. Defaults to the machine's name, which is stable for a machine or a named pod and harmlessly fresh otherwise.</param>
+    /// <param name="onResumed">Called once, when the writer has read its last chain back, with what verifying that chain found.</param>
     public AuditChainWriter(
         IAuditSink sink,
         TimeProvider? timeProvider = null,
@@ -78,7 +90,9 @@ public sealed class AuditChainWriter : IAsyncDisposable
         IExecutorPackageSigner? headSigner = null,
         AuditHeadOptions? headOptions = null,
         Action<AuditHead>? onHeadSigned = null,
-        Action<Exception>? onHeadFailed = null)
+        Action<Exception>? onHeadFailed = null,
+        string? writerId = null,
+        Action<AuditChainVerification>? onResumed = null)
     {
         ArgumentNullException.ThrowIfNull(sink);
         ArgumentOutOfRangeException.ThrowIfLessThan(maxRecordsPerChain, 1);
@@ -91,11 +105,38 @@ public sealed class AuditChainWriter : IAsyncDisposable
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(this.headOptions.Interval, TimeSpan.Zero);
         this.onHeadSigned = onHeadSigned;
         this.onHeadFailed = onHeadFailed;
+        this.onResumed = onResumed;
+        this.writerId = Encoding.UTF8.GetBytes(writerId is null ? DefaultWriterId() : ValidWriterId(writerId));
         if (headSigner is not null)
         {
             // The timer is what signs a quiet tail: without it a record appended before a lull would wait, unsigned, for
             // the next append. It ticks at the interval and signs only where a record has gone unsigned that long.
             this.headTimer = this.timeProvider.CreateTimer(static state => ((AuditChainWriter)state!).OnHeadTimer(), this, this.headOptions.Interval, this.headOptions.Interval);
+        }
+    }
+
+    /// <summary>
+    /// Reads the writer's last chain back from the sink and opens the next, continuing it, with a head signed at once. A
+    /// host calls this when it starts, so that the tail its last process left unsigned is frozen then and not at the
+    /// first governance action, whenever that comes. A writer that is never resumed does the same at its first append.
+    /// </summary>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes when the new chain is open.</returns>
+    /// <exception cref="AuditAppendException">The sink could not be read, or refused the new chain.</exception>
+    public async ValueTask ResumeAsync(CancellationToken cancellationToken)
+    {
+        await this.gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            ObjectDisposedException.ThrowIf(this.disposed, this);
+            if (this.stream is null)
+            {
+                await this.OpenChainAsync(cancellationToken).ConfigureAwait(false);
+            }
+        }
+        finally
+        {
+            this.gate.Release();
         }
     }
 
@@ -193,6 +234,36 @@ public sealed class AuditChainWriter : IAsyncDisposable
         }
     }
 
+    private static string DefaultWriterId()
+    {
+        // The machine's name, brought within the grammar: lowercased, anything else a hyphen, at most 63 characters.
+        string machine = Environment.MachineName;
+        Span<char> id = stackalloc char[Math.Min(machine.Length, AuditRecord.MaxWriterIdLength)];
+        for (int i = 0; i < id.Length; i++)
+        {
+            char c = char.ToLowerInvariant(machine[i]);
+            id[i] = c is (>= 'a' and <= 'z') or (>= '0' and <= '9') ? c : '-';
+        }
+
+        return id.IsEmpty ? "writer" : new string(id);
+    }
+
+    private static string ValidWriterId(string writerId)
+    {
+        bool valid = writerId.Length is >= 1 and <= AuditRecord.MaxWriterIdLength;
+        foreach (char c in writerId)
+        {
+            valid &= c is (>= 'a' and <= 'z') or (>= '0' and <= '9') or '-';
+        }
+
+        if (!valid)
+        {
+            ThrowHelper.ThrowAuditWriterIdOutsideGrammar(writerId);
+        }
+
+        return writerId;
+    }
+
     private static PooledUtf8 RentLine(ReadOnlySpan<byte> written)
     {
         byte[] rented = ArrayPool<byte>.Shared.Rent(written.Length + 1);
@@ -230,18 +301,97 @@ public sealed class AuditChainWriter : IAsyncDisposable
 
     private async ValueTask OpenChainAsync(CancellationToken cancellationToken)
     {
-        Guid.NewGuid().TryFormat(this.chainId, out _, "N");
+        if (!this.resumed)
+        {
+            await this.ReadBackAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        // A version 7 UUID sorts by when it was made, which is how a sink finds the last chain a writer opened.
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        Guid.CreateVersion7(now).TryFormat(this.chainId, out _, "N");
         this.previousHash.AsSpan().Fill((byte)'0');
         this.nextSequence = 0;
         this.unsignedRecords = 0;
         try
         {
-            this.stream = await this.sink.CreateChainAsync(this.chainId, cancellationToken).ConfigureAwait(false);
+            this.stream = await this.sink.CreateChainAsync(this.writerId, this.chainId, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             throw ThrowHelper.GetAuditAppendFailedException(ex);
         }
+
+        using PooledUtf8 line = this.RenderOpen(now);
+        try
+        {
+            await this.stream.AppendAsync(line.Memory, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            await this.CloseChainAsync(inGoodOrder: false).ConfigureAwait(false);
+            if (ex is OperationCanceledException)
+            {
+                throw;
+            }
+
+            throw ThrowHelper.GetAuditAppendFailedException(ex);
+        }
+
+        this.Commit(line.Span);
+        if (this.headSigner is not null)
+        {
+            this.unsignedRecords = 1;
+            this.oldestUnsignedAt = now;
+
+            // A chain that continues another is signed at once: the head over its open record is what freezes the
+            // chain it names, and waiting for the cadence would leave that to the next sixty seconds or sixty-four
+            // records.
+            if (this.hasContinuation)
+            {
+                await this.TrySignHeadAsync().ConfigureAwait(false);
+                if (this.stream is null)
+                {
+                    throw ThrowHelper.GetAuditAppendFailedException(new IOException("The sink refused the head of a chain it had just accepted."));
+                }
+            }
+        }
+    }
+
+    // A chain does not outlive its process, so where the last one got to is read back from the sink, once. The last whole
+    // record that verifies is what the next chain continues from, whatever state the rest of that chain is in: a torn
+    // tail is what a crash leaves, and anything else is reported for the operator and continued from all the same,
+    // since refusing to record would be the worse outcome.
+    private async ValueTask ReadBackAsync(CancellationToken cancellationToken)
+    {
+        AuditChainVerification last;
+        try
+        {
+            Stream? chain = await this.sink.OpenLastChainAsync(this.writerId, cancellationToken).ConfigureAwait(false);
+            if (chain is null)
+            {
+                this.resumed = true;
+                return;
+            }
+
+            await using (chain.ConfigureAwait(false))
+            {
+                last = await AuditChainVerifier.VerifyAsync(chain, cancellationToken: cancellationToken).ConfigureAwait(false);
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            throw ThrowHelper.GetAuditAppendFailedException(ex);
+        }
+
+        if (last is { ChainId: { } id, LastHash: { } hash })
+        {
+            Encoding.UTF8.GetBytes(id, this.continuesChain);
+            Encoding.UTF8.GetBytes(hash, this.continuesHash);
+            this.hasContinuation = true;
+        }
+
+        this.resumed = true;
+        this.onResumed?.Invoke(last);
     }
 
     // Leaves the open chain, remembering where it got to so the next chain's first record can say so. A chain that never
@@ -343,16 +493,30 @@ public sealed class AuditChainWriter : IAsyncDisposable
         Utf8JsonWriter writer = workspace.RentWriterAndBuffer(LineBufferSize, out IByteBufferWriter buffer);
         try
         {
-            bool first = this.nextSequence == 0 && this.hasContinuation;
-            AuditRecord.WriteMutation(
+            AuditRecord.WriteMutation(writer, this.chainId, this.nextSequence, now, this.previousHash, in entry);
+            writer.Flush();
+            return RentLine(buffer.WrittenSpan);
+        }
+        finally
+        {
+            workspace.ReturnWriterAndBuffer(writer, buffer);
+        }
+    }
+
+    private PooledUtf8 RenderOpen(DateTimeOffset now)
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(LineBufferSize, out IByteBufferWriter buffer);
+        try
+        {
+            AuditRecord.WriteOpen(
                 writer,
                 this.chainId,
-                this.nextSequence,
                 now,
                 this.previousHash,
-                first ? this.continuesChain : default,
-                first ? this.continuesHash : default,
-                in entry);
+                this.writerId,
+                this.hasContinuation ? this.continuesChain : default,
+                this.hasContinuation ? this.continuesHash : default);
             writer.Flush();
             return RentLine(buffer.WrittenSpan);
         }
