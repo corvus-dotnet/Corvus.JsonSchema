@@ -73,6 +73,11 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
     // The audited resource kind for a debug-run lifecycle event (design §850, worklist item 8).
     private const string DebugRunTargetKind = "debug-run";
 
+    // The audit target of a working-copy mutation (ADR 0038). The id is the working copy's, and never the document, a
+    // scenario or a source name, so the record stays an identifier.
+    private const string WorkingCopyTargetKind = "working-copy";
+    private const string CatalogTargetKind = "catalog-version";
+
     /// <summary>Initializes a new, unscoped instance (every request runs with <see cref="AccessContext.System"/> — no
     /// row security).</summary>
     /// <param name="store">The persistent working-copy store the endpoints delegate to.</param>
@@ -341,6 +346,8 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
                 created = await this.AttachCarriedSourcesAsync(created, toAttach, cancellationToken).ConfigureAwait(false);
             }
 
+            await this.auditor.MutationAsync("working-copy.create", this.AuditActor(), WorkingCopyTargetKind, created.RootElement.IdValue, "created").ConfigureAwait(false);
+
             // The full working copy (document included) is congruent with the API model — a free whole-document re-wrap.
             workspace.TakeOwnership(created);
             return CreateWorkspaceWorkflowResult.Created(Models.WorkingCopy.From(created.RootElement), workspace);
@@ -436,6 +443,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
             }
 
             workspace.TakeOwnership(w);
+            await this.auditor.MutationAsync("working-copy.update", this.AuditActor(), WorkingCopyTargetKind, id, "updated").ConfigureAwait(false);
             return UpdateWorkspaceWorkflowResult.Ok(Models.WorkingCopy.From(w.RootElement), workspace);
         }
         catch (WorkspaceWorkflowConflictException ex)
@@ -450,6 +458,11 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
     {
         string id = (string)parameters.Id;
         bool deleted = await this.store.DeleteAsync(id, WorkflowEtag.None, this.access.Current(), cancellationToken).ConfigureAwait(false);
+        if (deleted)
+        {
+            await this.auditor.MutationAsync("working-copy.delete", this.AuditActor(), WorkingCopyTargetKind, id, "deleted").ConfigureAwait(false);
+        }
+
         return deleted
             ? DeleteWorkspaceWorkflowResult.NoContent()
             : DeleteWorkspaceWorkflowResult.NotFound(NotFoundProblem(id), workspace);
@@ -570,6 +583,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
                 return AttachWorkingCopySourceResult.NotFound(NotFoundProblem(id), workspace);
             }
 
+            await this.auditor.MutationAsync("working-copy.source.attach", this.AuditActor(), WorkingCopyTargetKind, id, "attached").ConfigureAwait(false);
             ParsedJsonDocument<Models.AttachedSource> response = WorkspaceSourceJson.AttachmentResponse((JsonElement)s.RootElement.Sources, name, s.RootElement.EtagValue.Value);
             workspace.TakeOwnership(response);
             return AttachWorkingCopySourceResult.Ok(response.RootElement, workspace);
@@ -627,6 +641,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
                     return PutScenarioResult.NotFound(NotFoundProblem(id), workspace);
                 }
 
+                await this.auditor.MutationAsync("working-copy.scenario.put", this.AuditActor(), WorkingCopyTargetKind, id, "saved").ConfigureAwait(false);
                 ParsedJsonDocument<Models.PutWorkspaceWorkflowsByIdScenariosByScenarioNameOk> body = WorkspaceScenarioJson.PutResponse(
                     WorkspaceScenarioJson.FindScenario((JsonElement)s.RootElement.Scenarios, name), s.RootElement.EtagValue.Value ?? string.Empty);
                 workspace.TakeOwnership(body);
@@ -661,7 +676,13 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
             {
                 using ParsedJsonDocument<WorkspaceWorkflow> draft = WorkspaceScenarioJson.DraftRemoving((JsonElement)w.RootElement.Scenarios, name);
                 using ParsedJsonDocument<WorkspaceWorkflow>? saved = await this.store.UpdateAsync(id, draft.RootElement, w.RootElement.EtagValue, this.actor, this.access.Current(), cancellationToken).ConfigureAwait(false);
-                return saved is { } ? DeleteScenarioResult.NoContent() : DeleteScenarioResult.NotFound(NotFoundProblem(id), workspace);
+                if (saved is null)
+                {
+                    return DeleteScenarioResult.NotFound(NotFoundProblem(id), workspace);
+                }
+
+                await this.auditor.MutationAsync("working-copy.scenario.delete", this.AuditActor(), WorkingCopyTargetKind, id, "deleted").ConfigureAwait(false);
+                return DeleteScenarioResult.NoContent();
             }
             catch (WorkspaceWorkflowConflictException) when (attempt < 3)
             {
@@ -1014,6 +1035,11 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
             {
                 ParsedJsonDocument<CatalogVersion> version = await this.catalog.AddAsync(package, owner, tags, securityTags, cancellationToken).ConfigureAwait(false);
                 workspace.TakeOwnership(version);
+
+                // The same governed action as the catalog's own publish, so the same record: a version added from the
+                // designer is no less a version (V-29 of the 2026-08-07 audit found this path recorded nothing).
+                CatalogVersionRef published = version.RootElement.Ref;
+                await this.auditor.MutationAsync("catalog.publish", this.AuditActor(), CatalogTargetKind, $"{published.BaseWorkflowId}:{published.VersionNumber}", "published").ConfigureAwait(false);
                 return PublishWorkingCopyResult.Created(Models.CatalogVersionSummary.From(this.access.PublicView(version.RootElement, workspace)), workspace);
             }
             catch (ArgumentException ex)
@@ -1283,9 +1309,13 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
         {
             using ParsedJsonDocument<WorkspaceWorkflow> draft = WorkspaceSourceJson.DraftRemovingAttachment((JsonElement)w.RootElement.Sources, name);
             using ParsedJsonDocument<WorkspaceWorkflow>? saved = await this.store.UpdateAsync(id, draft.RootElement, w.RootElement.EtagValue, this.actor, this.access.Current(), cancellationToken).ConfigureAwait(false);
-            return saved is not null
-                ? DetachWorkingCopySourceResult.NoContent()
-                : DetachWorkingCopySourceResult.NotFound(NotFoundProblem(id), workspace);
+            if (saved is null)
+            {
+                return DetachWorkingCopySourceResult.NotFound(NotFoundProblem(id), workspace);
+            }
+
+            await this.auditor.MutationAsync("working-copy.source.detach", this.AuditActor(), WorkingCopyTargetKind, id, "detached").ConfigureAwait(false);
+            return DetachWorkingCopySourceResult.NoContent();
         }
         catch (WorkspaceWorkflowConflictException ex)
         {

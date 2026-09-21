@@ -117,6 +117,30 @@ A self-approval attempt is refused and audited on every decision verb, with the 
 | Resume a debug run | `debug-run.resume` | decisions | yes |
 | Inject a message into a debug run | `debug-run.inject-message` | decisions | yes |
 
+## Working copies and the designer (O-WC)
+
+A working copy is in no environment and grants nothing until it is published. Its edits are recorded all the same, by
+the working copy's id and never by the document, a scenario or a source name, so the trail shows who changed a draft
+before it became a version.
+
+| Action | Span | Metric | Audit log |
+|---|---|---|---|
+| Create, save, or delete a working copy | `working-copy.create` / `.update` / `.delete` | decisions | yes |
+| Attach or detach a source on a working copy | `working-copy.source.attach` / `.source.detach` | decisions | yes |
+| Save or delete a scenario | `working-copy.scenario.put` / `.scenario.delete` | decisions | yes |
+| Publish a working copy into the catalog | `catalog.publish`, the same record as the catalog's own publish | decisions | yes |
+| Pull a working copy from, or commit it to, a repository | `working-copy.git.pull` / `.git.commit` | decisions | yes |
+| Create a branch in a user's repository | `github.branch.create` | decisions | yes |
+| Begin, complete, or end a GitHub session | `github.session.begin` / `.create` / `.delete` | decisions | yes |
+| Begin, complete, or end a connected-provider session | `provider.session.begin` / `.create` / `.delete` | decisions | yes |
+| Fetch a source document from a URL | `source.fetch`, with the authentication tier as its target and never the URL | decisions | yes |
+
+Completing a session is a `GET`, because OAuth makes its callback one, and it is recorded as a mutation because the
+control plane takes custody of a user's token. Validating, simulating and running scenarios are `POST`s that compute
+and store nothing, and they are not recorded. `EveryMutationIsAuditedTests` holds the whole surface to this: an
+operation that changes state and makes no audit call fails the build's tests until it audits or is listed there as
+compute-only with its reason.
+
 ## Schedules (O-SCH)
 
 | Action | Span | Metric | Audit log |

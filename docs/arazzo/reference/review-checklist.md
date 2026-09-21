@@ -37,8 +37,8 @@ the same change as the thing that triggered it.
 ## 3. Audit
 
 - [ ] **Every operation that changes state records a mutation**, with `auditor.MutationAsync`, and every refusal
-      of one records a refusal with its own outcome. (V-29: publishing a working copy adds a catalog version and
-      records nothing.)
+      of one records a refusal with its own outcome. (V-29: publishing a working copy added a catalog version and
+      recorded nothing. `EveryMutationIsAuditedTests` now fails for a mutating operation that makes no audit call.)
 - [ ] **The read-side question of [ADR 0070](../adr/0070-read-side-audit-three-tiers.md).** Does a new read return
       a payload, meaning step inputs or outputs, checkpoint state, a trace, or the detail of a credential? Then it
       records itself before it answers with `auditor.ReadAsync(..., failClosed: true)`, and its operation id is in

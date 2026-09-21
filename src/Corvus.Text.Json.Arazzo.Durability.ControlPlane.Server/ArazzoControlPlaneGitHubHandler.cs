@@ -28,6 +28,11 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
     // The typeahead page: enough to pick from, small enough to render instantly.
     private const int SearchPageSize = 20;
 
+    private const string SessionTargetKind = "provider-session";
+    private const string RepositoryTargetKind = "github-repository";
+    private const string WorkingCopyTargetKind = "working-copy";
+    private const string GitHubProviderName = "github";
+
     private readonly GitHubBroker? broker;
     private readonly ControlPlaneAccess access;
     private readonly Microsoft.AspNetCore.Http.IHttpContextAccessor? httpContext;
@@ -36,6 +41,7 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
     private readonly ISourceStore? sources;
     private readonly string actor;
     private readonly TimeProvider timeProvider;
+    private readonly GovernanceAuditor auditor;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneGitHubHandler"/> class.</summary>
     /// <param name="broker">The deployment's GitHub broker; <see langword="null"/> refuses every operation (fails closed).</param>
@@ -46,6 +52,7 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
     /// <param name="sources">The source registry (resolves registry attachments at commit).</param>
     /// <param name="actor">The audit actor recorded on pull saves.</param>
     /// <param name="timeProvider">The clock (attachment audit stamps).</param>
+    /// <param name="auditor">The deployment's governance auditor (ADR 0038, ADR 0069): every state change this surface makes is recorded through it.</param>
     internal ArazzoControlPlaneGitHubHandler(
         GitHubBroker? broker,
         ControlPlaneAccess access,
@@ -54,13 +61,15 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
         IWorkspaceWorkflowStore? workspaceStore = null,
         ISourceStore? sources = null,
         string actor = "control-plane",
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        GovernanceAuditor? auditor = null)
     {
         ArgumentNullException.ThrowIfNull(access);
         ArgumentNullException.ThrowIfNull(subjectClaimType);
         ArgumentNullException.ThrowIfNull(actor);
         this.broker = broker;
         this.access = access;
+        this.auditor = auditor ?? GovernanceAuditor.None;
         this.httpContext = httpContext;
         this.subjectClaimType = subjectClaimType;
         this.workspaceStore = workspaceStore;
@@ -68,6 +77,8 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
         this.actor = actor;
         this.timeProvider = timeProvider ?? TimeProvider.System;
     }
+
+    private AuditSubject AuditActor() => this.access.AuditSubject();
 
     /// <inheritdoc/>
     public async ValueTask<BeginGitHubAuthResult> HandleBeginGitHubAuthAsync(BeginGitHubAuthParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
@@ -84,6 +95,7 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
         }
 
         (string authorizeUrl, string state) = await github.BeginAuthAsync(principal, cancellationToken).ConfigureAwait(false);
+        await this.auditor.MutationAsync("github.session.begin", this.AuditActor(), SessionTargetKind, GitHubProviderName, "begun").ConfigureAwait(false);
         return BeginGitHubAuthResult.Ok(
             new((ref Models.GitHubAuthStart.Builder b) => b.Create(authorizeUrl: authorizeUrl, state: state)), workspace);
     }
@@ -97,6 +109,14 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
         }
 
         ProviderBroker.CompleteOutcome outcome = await github.CompleteAuthAsync((string)parameters.State, (string)parameters.Code, cancellationToken).ConfigureAwait(false);
+
+        // The callback is a GET because OAuth makes it one, and it is a mutation all the same: on success the control plane
+        // takes custody of a user's token, so it is recorded as one (ADR 0038).
+        if (outcome == ProviderBroker.CompleteOutcome.Success)
+        {
+            await this.auditor.MutationAsync("github.session.create", this.AuditActor(), SessionTargetKind, GitHubProviderName, "connected").ConfigureAwait(false);
+        }
+
         return outcome switch
         {
             ProviderBroker.CompleteOutcome.Success => CompleteGitHubAuthResult.Ok(),
@@ -141,19 +161,20 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
     }
 
     /// <inheritdoc/>
-    public ValueTask<DeleteGitHubSessionResult> HandleDeleteGitHubSessionAsync(DeleteGitHubSessionParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    public async ValueTask<DeleteGitHubSessionResult> HandleDeleteGitHubSessionAsync(DeleteGitHubSessionParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         if (this.broker is not { } github)
         {
-            return ValueTask.FromResult(DeleteGitHubSessionResult.BadRequest(NotBrokeredProblem(), workspace));
+            return DeleteGitHubSessionResult.BadRequest(NotBrokeredProblem(), workspace);
         }
 
         if (this.PrincipalKey() is { } principal)
         {
             github.Disconnect(principal);
+            await this.auditor.MutationAsync("github.session.delete", this.AuditActor(), SessionTargetKind, GitHubProviderName, "disconnected").ConfigureAwait(false);
         }
 
-        return ValueTask.FromResult(DeleteGitHubSessionResult.NoContent());
+        return DeleteGitHubSessionResult.NoContent();
     }
 
     /// <inheritdoc/>
@@ -353,6 +374,9 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
                     Problem("github-branch-exists", "Branch not created", 409, $"GitHub refused creating '{name}' — most often the name is already taken."), workspace);
         }
 
+        // A branch now exists in the user's repository, created with the token the control plane holds for them.
+        await this.auditor.MutationAsync("github.branch.create", this.AuditActor(), RepositoryTargetKind, $"{owner}/{repo}", "created").ConfigureAwait(false);
+
         // The generated Create() builds the response in one pooled pass (the response pipeline consumes the parsed
         // document); an absent sha is omitted via the default Source.
         ParsedJsonDocument<Models.GitHubBranch> created = Models.GitHubBranch.Create(
@@ -511,6 +535,7 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
             }
 
             workspace.TakeOwnership(updated);
+            await this.auditor.MutationAsync("working-copy.git.pull", this.AuditActor(), WorkingCopyTargetKind, id, "pulled").ConfigureAwait(false);
             return PullWorkingCopyResult.Ok(Models.WorkingCopy.From(updated.RootElement), workspace);
         }
         catch (WorkspaceWorkflowConflictException ex)
@@ -648,6 +673,8 @@ public sealed class ArazzoControlPlaneGitHubHandler : IApiGithubHandler
             }
         }
 
+        // Files, and perhaps a pull request, now exist in the user's repository under the token the control plane holds.
+        await this.auditor.MutationAsync("working-copy.git.commit", this.AuditActor(), WorkingCopyTargetKind, id, "committed").ConfigureAwait(false);
         ParsedJsonDocument<Models.GitCommitResult> body = WriteCommitResult(written, pullRequest);
         workspace.TakeOwnership(body);
         return CommitWorkingCopyResult.Ok(Models.GitCommitResult.From(body.RootElement), workspace);

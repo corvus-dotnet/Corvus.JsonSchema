@@ -49,6 +49,7 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
 
     // The audited resource kind for a source mutation (design §850, worklist item 8).
     private const string TargetKind = "source";
+    private const string FetchTargetKind = "source-document";
 
     /// <summary>Initializes a new, unscoped instance (every request runs with <see cref="AccessContext.System"/> — no
     /// row security).</summary>
@@ -404,6 +405,11 @@ public sealed class ArazzoControlPlaneSourcesHandler : IApiSourcesHandler
 
         (SourceDocumentFetcher.FetchOutcome outcome, string? detail, SourceDocumentFetcher.FetchedDocument? fetched) =
             await this.fetcher.FetchAsync((string)body.Url, this.access.Current(), credentialSourceName, credentialEnvironment, authHeader, cancellationToken).ConfigureAwait(false);
+
+        // The control plane has made a request outward on the caller's behalf, perhaps with a credential, whatever came
+        // back. The record names the tier of authentication used and never the URL, which can carry a secret (ADR 0038).
+        string fetchTier = credentialSourceName is not null ? "binding" : authHeader is not null ? "credentialed" : "anonymous";
+        await this.auditor.MutationAsync("source.fetch", this.AuditActor(), FetchTargetKind, fetchTier, outcome == SourceDocumentFetcher.FetchOutcome.Success ? "fetched" : "fetch-failed").ConfigureAwait(false);
         switch (outcome)
         {
             case SourceDocumentFetcher.FetchOutcome.Success:

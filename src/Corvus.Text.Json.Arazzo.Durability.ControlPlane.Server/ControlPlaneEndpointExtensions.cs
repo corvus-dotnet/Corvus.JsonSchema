@@ -360,12 +360,12 @@ public static class ControlPlaneEndpointExtensions
         // wired. Token custody keys by the same subject claim the request surfaces use.
         var gitHubHandler = new ArazzoControlPlaneGitHubHandler(
             gitHubBroker, access, httpContextAccessor, accessRequestSubjectClaimType,
-            workspaceStore: wcStore, sources: srcStore);
+            workspaceStore: wcStore, sources: srcStore, auditor: auditor);
 
         // The connected-providers API (ADR 0052): the registry with the caller's connection state,
         // the brokered per-provider sign-in, and disconnect. Deployment-configured; an absent
         // broker lists an empty registry and refuses the auth operations.
-        var providersHandler = new ArazzoControlPlaneProvidersHandler(providerBroker, access, httpContextAccessor, accessRequestSubjectClaimType);
+        var providersHandler = new ArazzoControlPlaneProvidersHandler(providerBroker, access, httpContextAccessor, accessRequestSubjectClaimType, auditor);
 
         // One instance, because it is also the admission every other start goes through (IRunStartAdmission): the catalog's
         // start, a run's re-run and a schedule's run-now must be one chain, and handing those handlers this one is what

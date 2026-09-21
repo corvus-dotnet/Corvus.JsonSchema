@@ -224,6 +224,46 @@ public sealed class ControlPlaneSimulateApiTests
     }
 
     [TestMethod]
+    public async Task A_working_copys_life_from_creation_to_publication_is_on_the_audit_trail()
+    {
+        // V-29 of the 2026-08-07 audit. The designer's surface recorded nothing but its debug runs: a working copy was
+        // created, edited and published into the catalog, a new version that runs would start from, with no record of who
+        // did any of it. Each record names the working copy by its id, and the publication names the version it made.
+        using GovernanceAuditProbe audit = GovernanceAuditProbe.Capture();
+        await using Scoped host = await StartAsync(withSimulator: true);
+        string id = await host.CreateWorkingCopyAsync(WorkflowDoc, PetstoreDoc);
+
+        const string passing = """
+            {"name":"happy","inputs":{"petId":"42"},
+             "mocks":[{"source":"petstore","operationId":"getPet","responses":[{"status":200,"body":{"name":"Fido"}}]},
+                      {"source":"petstore","operationId":"adoptPet","responses":[{"status":200}]}],
+             "expect":{"outcome":"completed"}}
+            """;
+        (await host.SendJsonAsync(HttpMethod.Put, $"/workspace/workflows/{id}/scenarios/happy", passing, "workspace:write"))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        HttpResponseMessage published = await host.SendJsonAsync(
+            HttpMethod.Post, $"/workspace/workflows/{id}/publish",
+            """{"owner":{"name":"Team","email":"team@example.com"},"tags":["designer"]}""", "catalog:write");
+        published.StatusCode.ShouldBe(HttpStatusCode.Created);
+        string versionKey;
+        using (Stj.JsonDocument version = Stj.JsonDocument.Parse(await published.Content.ReadAsStringAsync()))
+        {
+            versionKey = $"{version.RootElement.GetProperty("baseWorkflowId").GetString()}:{version.RootElement.GetProperty("versionNumber").GetInt32()}";
+        }
+
+        IReadOnlyList<(string Action, string Outcome)> workingCopy = audit.Events(id);
+        workingCopy.ShouldContain(("working-copy.create", "created"));
+        workingCopy.ShouldContain(("working-copy.scenario.put", "saved"));
+
+        // The same record the catalog's own publish makes, since it is the same governed action.
+        audit.Events(versionKey).ShouldBe([("catalog.publish", "published")]);
+
+        (await host.SendAsync(HttpMethod.Delete, $"/workspace/workflows/{id}", "workspace:write")).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        audit.Events(id).ShouldContain(("working-copy.delete", "deleted"));
+    }
+
+    [TestMethod]
     public async Task Publish_attests_the_suite_server_side_and_embeds_the_evidence()
     {
         await using Scoped host = await StartAsync(withSimulator: true);
@@ -515,6 +555,17 @@ public sealed class ControlPlaneSimulateApiTests
         public async Task<HttpResponseMessage> SendJsonAsync(HttpMethod method, string path, string body, string? scope)
         {
             using var request = new HttpRequestMessage(method, path) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
+            if (scope is not null)
+            {
+                request.Headers.Add(ScopeAuthHandler.ScopeHeader, scope);
+            }
+
+            return await client.SendAsync(request);
+        }
+
+        public async Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, string? scope)
+        {
+            using var request = new HttpRequestMessage(method, path);
             if (scope is not null)
             {
                 request.Headers.Add(ScopeAuthHandler.ScopeHeader, scope);

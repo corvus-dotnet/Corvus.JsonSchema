@@ -3,6 +3,7 @@
 // </copyright>
 
 using Corvus.Text.Json;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
@@ -19,29 +20,37 @@ public sealed class ArazzoControlPlaneProvidersHandler : IApiProvidersHandler
 {
     private const string ProblemBase = "https://corvus-oss.org/arazzo/control-plane/problems/";
 
+    private const string SessionTargetKind = "provider-session";
+
     private readonly ProviderBroker? broker;
     private readonly ControlPlaneAccess access;
     private readonly Microsoft.AspNetCore.Http.IHttpContextAccessor? httpContext;
     private readonly string subjectClaimType;
+    private readonly GovernanceAuditor auditor;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneProvidersHandler"/> class.</summary>
     /// <param name="broker">The deployment's provider broker; <see langword="null"/> lists an empty registry and refuses the auth operations.</param>
     /// <param name="access">Resolves the caller's identity (the token-custody key).</param>
     /// <param name="httpContext">Reads the authenticated principal in the modes whose access binding carries none (ScopesOnly).</param>
     /// <param name="subjectClaimType">The claim naming the authenticated subject (the custody key's fallback dimension).</param>
+    /// <param name="auditor">The deployment's governance auditor (ADR 0038, ADR 0069): every state change this surface makes is recorded through it.</param>
     internal ArazzoControlPlaneProvidersHandler(
         ProviderBroker? broker,
         ControlPlaneAccess access,
         Microsoft.AspNetCore.Http.IHttpContextAccessor? httpContext = null,
-        string subjectClaimType = "sub")
+        string subjectClaimType = "sub",
+        GovernanceAuditor? auditor = null)
     {
         ArgumentNullException.ThrowIfNull(access);
         ArgumentNullException.ThrowIfNull(subjectClaimType);
         this.broker = broker;
         this.access = access;
+        this.auditor = auditor ?? GovernanceAuditor.None;
         this.httpContext = httpContext;
         this.subjectClaimType = subjectClaimType;
     }
+
+    private AuditSubject AuditActor() => this.access.AuditSubject();
 
     /// <inheritdoc/>
     public ValueTask<ListProvidersResult> HandleListProvidersAsync(ListProvidersParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
@@ -83,6 +92,11 @@ public sealed class ArazzoControlPlaneProvidersHandler : IApiProvidersHandler
 
         string providerName = (string)parameters.Provider;
         (ProviderBroker.BeginOutcome outcome, string? authorizeUrl, string? state) = await providers.BeginAuthAsync(providerName, principal, cancellationToken).ConfigureAwait(false);
+        if (outcome == ProviderBroker.BeginOutcome.Success)
+        {
+            await this.auditor.MutationAsync("provider.session.begin", this.AuditActor(), SessionTargetKind, providerName, "begun").ConfigureAwait(false);
+        }
+
         return outcome switch
         {
             ProviderBroker.BeginOutcome.Success => BeginProviderAuthResult.Ok(
@@ -103,6 +117,14 @@ public sealed class ArazzoControlPlaneProvidersHandler : IApiProvidersHandler
         }
 
         ProviderBroker.CompleteOutcome outcome = await providers.CompleteAuthAsync((string)parameters.Provider, (string)parameters.State, (string)parameters.Code, cancellationToken).ConfigureAwait(false);
+
+        // The callback is a GET because OAuth makes it one, and it is a mutation all the same: on success the control plane
+        // takes custody of a user's token, so it is recorded as one (ADR 0038).
+        if (outcome == ProviderBroker.CompleteOutcome.Success)
+        {
+            await this.auditor.MutationAsync("provider.session.create", this.AuditActor(), SessionTargetKind, (string)parameters.Provider, "connected").ConfigureAwait(false);
+        }
+
         return outcome switch
         {
             ProviderBroker.CompleteOutcome.Success => CompleteProviderAuthResult.Ok(),
@@ -114,21 +136,23 @@ public sealed class ArazzoControlPlaneProvidersHandler : IApiProvidersHandler
     }
 
     /// <inheritdoc/>
-    public ValueTask<DeleteProviderSessionResult> HandleDeleteProviderSessionAsync(DeleteProviderSessionParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    public async ValueTask<DeleteProviderSessionResult> HandleDeleteProviderSessionAsync(DeleteProviderSessionParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         if (this.broker is not { } providers)
         {
-            return ValueTask.FromResult(DeleteProviderSessionResult.BadRequest(NotConfiguredProblem(), workspace));
+            return DeleteProviderSessionResult.BadRequest(NotConfiguredProblem(), workspace);
         }
 
         // Idempotent by custody key: an unknown provider name (or an already-absent session)
         // removes nothing and still reports 204.
         if (this.PrincipalKey() is { } principal)
         {
-            providers.Disconnect(principal, (string)parameters.Provider);
+            string providerName = (string)parameters.Provider;
+            providers.Disconnect(principal, providerName);
+            await this.auditor.MutationAsync("provider.session.delete", this.AuditActor(), SessionTargetKind, providerName, "disconnected").ConfigureAwait(false);
         }
 
-        return ValueTask.FromResult(DeleteProviderSessionResult.NoContent());
+        return DeleteProviderSessionResult.NoContent();
     }
 
     // ── registry projection (closure-free Build<TContext> over the configuration rows) ────────────
