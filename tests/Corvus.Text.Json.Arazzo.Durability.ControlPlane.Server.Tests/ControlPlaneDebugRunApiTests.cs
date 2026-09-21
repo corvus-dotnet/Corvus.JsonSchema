@@ -229,6 +229,14 @@ public sealed class ControlPlaneDebugRunApiTests
             steps[0].GetProperty("requests")[0].GetProperty("method").GetString().ShouldBe("get");
         }
 
+        // ADR 0070: that view carries the trace, so reading it is a disclosure, and the read is on the audit chain,
+        // naming the debug run and none of what its trace holds.
+        Stj.JsonElement viewed = ReadRecords(host.AuditSink).First(r => r.GetProperty("action").GetString() == "debug-run.read");
+        viewed.GetProperty("targetKind").GetString().ShouldBe("debug-run");
+        viewed.GetProperty("targetId").GetString().ShouldBe(debugRunId);
+        viewed.GetProperty("disclosure").GetString().ShouldBe("full");
+        viewed.ToString().ShouldNotContain("/pets/42");
+
         // A plain resume carries the single-step pause off (bare resume); the runner then advances step 2 of 2 to
         // completion.
         HttpResponseMessage resumed = await host.SendJsonAsync(HttpMethod.Post, $"/workspace/workflows/{id}/debug-runs/{debugRunId}/resume", "{}", StartScopes);
@@ -657,6 +665,9 @@ public sealed class ControlPlaneDebugRunApiTests
         return mock;
     }
 
+    private static List<Stj.JsonElement> ReadRecords(InMemoryAuditSink sink)
+        => [.. sink.ChainIds.SelectMany(id => Encoding.UTF8.GetString(sink.Snapshot(id)).Split('\n', StringSplitOptions.RemoveEmptyEntries)).Select(l => Stj.JsonDocument.Parse(l).RootElement).Where(r => r.GetProperty("kind").GetString() == "read")];
+
     private static async Task<Scoped> StartAsync(bool withRunner, MockApiTransport? transport, Corvus.Text.Json.AsyncApi.IMessageTransport? messageTransport = null, ExecutionBudget? ceiling = null)
     {
         var store = new InMemoryWorkflowStateStore();
@@ -681,6 +692,7 @@ public sealed class ControlPlaneDebugRunApiTests
             runner = new InProcessDraftRunner(store, "runner-dev", "development", drafts, traceStore, SharedProvider, binder);
         }
 
+        var auditSink = new InMemoryAuditSink();
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
         builder.Logging.ClearProviders();
@@ -701,9 +713,9 @@ public sealed class ControlPlaneDebugRunApiTests
             draftRunStore: drafts,
             draftRunner: runner,
             draftRunTraceStore: traceStore,
-            auditor: GovernanceAuditor.CreateInMemory());
+            auditor: GovernanceAuditor.CreateInMemory(auditSink));
         await app.StartAsync();
-        return new Scoped(app, app.GetTestClient(), runner) { Store = store };
+        return new Scoped(app, app.GetTestClient(), runner) { Store = store, AuditSink = auditSink };
     }
 
     // The no-bodies invariant (the ratified §18 posture): no request or response body property appears in the trace.
@@ -733,6 +745,8 @@ public sealed class ControlPlaneDebugRunApiTests
 
     private sealed class Scoped(WebApplication app, HttpClient client, InProcessDraftRunner? runner) : IAsyncDisposable
     {
+        public InMemoryAuditSink AuditSink { get; init; } = new();
+
         public InMemoryWorkflowStateStore Store { get; init; } = null!;
 
         // §18 R5: the control plane only marks a debug run claimable; a runner advances it out-of-band. In these

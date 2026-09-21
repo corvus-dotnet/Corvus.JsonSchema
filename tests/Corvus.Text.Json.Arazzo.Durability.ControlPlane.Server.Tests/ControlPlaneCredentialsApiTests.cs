@@ -599,12 +599,39 @@ public sealed class ControlPlaneCredentialsApiTests
         created.StatusCode.ShouldBe(HttpStatusCode.Created);
     }
 
+    [TestMethod]
+    public async Task Reading_a_bindings_detail_is_a_read_record_in_the_audit_chain()
+    {
+        await using Scoped host = await StartAsync();
+        (await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/credentials",
+            """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://petstore-key#3"}]}""",
+            Write)).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        (await host.SendAsync(HttpMethod.Get, "/credentials/petstore/production", Read)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // ADR 0070: a binding's detail is a disclosure, so the read is on the chain, naming the binding and its
+        // environment and never the reference it returned.
+        Stj.JsonElement read = ReadRecords(host.AuditSink).ShouldHaveSingleItem();
+        read.GetProperty("action").GetString().ShouldBe("credential.read");
+        read.GetProperty("targetKind").GetString().ShouldBe("credential");
+        read.GetProperty("targetId").GetString().ShouldBe("petstore");
+        read.GetProperty("environment").GetString().ShouldBe("production");
+        read.GetProperty("disclosure").GetString().ShouldBe("detail");
+        read.ToString().ShouldNotContain("keyvault");
+    }
+
+    private static List<Stj.JsonElement> ReadRecords(InMemoryAuditSink sink)
+        => [.. sink.ChainIds.SelectMany(id => Encoding.UTF8.GetString(sink.Snapshot(id)).Split('\n', StringSplitOptions.RemoveEmptyEntries)).Select(l => Stj.JsonDocument.Parse(l).RootElement).Where(r => r.GetProperty("kind").GetString() == "read")];
+
     private static async Task<Scoped> StartAsync(ControlPlaneRowSecurityPolicy? rowSecurity = null, Sources.ISourceStore? sourceStore = null)
     {
         var store = new InMemoryWorkflowStateStore();
         var management = new SecuredWorkflowManagement(store, "ops");
         var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops");
 
+        var auditSink = new InMemoryAuditSink();
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
         builder.Logging.ClearProviders();
@@ -617,10 +644,10 @@ public sealed class ControlPlaneCredentialsApiTests
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), (rowSecurity is null ? ControlPlaneSecurityMode.ScopesOnly : ControlPlaneSecurityMode.Scoped), rowSecurity: rowSecurity, sourceCredentialStore: new InMemorySourceCredentialStore(), sourceStore: sourceStore, auditor: GovernanceAuditor.CreateInMemory());
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), (rowSecurity is null ? ControlPlaneSecurityMode.ScopesOnly : ControlPlaneSecurityMode.Scoped), rowSecurity: rowSecurity, sourceCredentialStore: new InMemorySourceCredentialStore(), sourceStore: sourceStore, auditor: GovernanceAuditor.CreateInMemory(auditSink));
         await app.StartAsync();
 
-        return new Scoped(app, app.GetTestClient());
+        return new Scoped(app, app.GetTestClient()) { AuditSink = auditSink };
     }
 
     /// <summary>A minimal scoped policy: an operator (full reach) so the management guard passes, while the base
@@ -644,6 +671,8 @@ public sealed class ControlPlaneCredentialsApiTests
 
     private sealed class Scoped(WebApplication app, HttpClient client) : IAsyncDisposable
     {
+        public InMemoryAuditSink AuditSink { get; init; } = new();
+
         public Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, string? scope)
             => this.SendCoreAsync(new HttpRequestMessage(method, path), scope);
 

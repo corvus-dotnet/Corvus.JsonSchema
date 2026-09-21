@@ -397,13 +397,15 @@ did what to which resource, not what the resource changed from or to. The record
 vouched for by no signature yet, which is a window of 64 records or 60 seconds by default. A chain does not outlive its process, so a control
 plane that starts reads its own last chain back and continues it under a head signed at once, which freezes the tail
 its last process left unsigned without authenticating it: between a stop and the next start that tail is whatever
-the sink holds, and the verifier goes on reporting it as unsigned. And the chain holds
-mutations and one read, the step journal, which is recorded before it is disclosed and refused when it cannot be
-([ADR 0070](../adr/0070-read-side-audit-three-tiers.md)). The rows below marked "No" emit nothing at all.
+the sink holds, and the verifier goes on reporting it as unsigned. And of reads the chain holds
+the disclosures only, the step journal, a debug run's trace, a credential binding's detail and the checkpoint,
+each recorded before it is disclosed and refused when it cannot be
+([ADR 0070](../adr/0070-read-side-audit-three-tiers.md)). Refused reads, and the volume of lists and searches, are not yet recorded. The rows below marked "No" emit nothing at all.
 
 | Security-critical action | Audited | Consequence |
 |--------------------------|---------|-------------|
-| Checkpoint read or write, the full run payload | No | The exploit that voids the trust boundary produces nothing |
+| Checkpoint read, the full run payload | Yes | A read record in the audit chain with the run as its subject, since the caller is a dispatched function holding a run-scoped token and no principal, and refused when it cannot be recorded ([ADR 0070](../adr/0070-read-side-audit-three-tiers.md)) |
+| Checkpoint write | No | A write through the run-scoped surface or the runner API produces nothing |
 | Every runner API operation, claim, lease, checkpoint, catalog | No | Index rewriting, lease theft, quota trips and epoch anomalies all silent |
 | Any read, list or search on the governance API | No | Cross-tenant reads and enumeration are unreconstructable |
 | Authentication success and failure | No | Brute force and credential stuffing undetectable by construction |
@@ -680,7 +682,7 @@ the store or the artifact source is retried on every poll until it heals, by dec
 decided the same day as [ADR 0069](../adr/0069-audit-as-evidence-append-only-chained-signed-sink.md),
 [ADR 0070](../adr/0070-read-side-audit-three-tiers.md) and
 [ADR 0071](../adr/0071-authentication-event-telemetry.md); none has a ledger row of its own, and the
-detection rows they change in §8 move when the code does. GAP-6 is built and §8 says what it changed. GAP-7 is begun, with the read record and the step-journal read on the chain; GAP-8 is not started.
+detection rows they change in §8 move when the code does. GAP-6 is built and §8 says what it changed. GAP-7 is begun, with the read record and the control plane's four payload disclosures on the chain; GAP-8 is not started.
 
 
 **What was checked and found sound**, so it is not re-litigated: injection is absent across all nine

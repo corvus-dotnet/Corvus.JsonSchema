@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Net;
+using System.Text;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -36,6 +37,35 @@ public sealed class WorkflowCheckpointEndpointsTests
     private static readonly WorkflowRunId Run = new("0123456789abcdef0123456789abcdef");
     private static readonly WorkflowRunAddress Address = new(Env, Run);
     private static readonly byte[] CheckpointSecret = RandomNumberGenerator.GetBytes(CheckpointToken.MinimumSecretBytes);
+
+    [TestMethod]
+    public async Task A_checkpoint_read_is_recorded_with_the_run_as_its_subject_and_is_refused_when_it_cannot_be()
+    {
+        var sink = new FailableSink();
+        await using Host host = await Host.StartAsync(auditSink: sink);
+        string runId = Run.Value;
+        (await host.PostCheckpointAsync(runId, RealCheckpoint(WorkflowRunStatus.Completed), sequence: 1)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        (await host.GetCheckpointAsync(runId)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // ADR 0070: the caller is a dispatched function with a run-scoped token and no principal, so the run is the subject.
+        string chain = Encoding.UTF8.GetString(sink.Inner.Snapshot(sink.Inner.ChainIds.ShouldHaveSingleItem()));
+        string read = chain.Split('\n', StringSplitOptions.RemoveEmptyEntries).Single(l => l.Contains("\"kind\":\"read\""));
+        read.ShouldContain("\"action\":\"checkpoint.read\"");
+        read.ShouldContain("\"actor\":\"run:" + runId + "\"");
+        read.ShouldContain("\"targetId\":\"" + runId + "\"");
+        read.ShouldContain("\"environment\":\"" + Env + "\"");
+        chain.ShouldNotContain("petWorkflow");
+
+        // The whole run payload is not handed over unrecorded.
+        sink.Failing = true;
+        HttpResponseMessage refused = await host.GetCheckpointAsync(runId);
+        refused.StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
+        (await refused.Content.ReadAsStringAsync()).ShouldNotContain("petWorkflow");
+
+        // An unknown run discloses nothing, so the sink being down does not change its answer.
+        (await host.GetCheckpointAsync("badcafebadcafebadcafebadcafe0000")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
 
     [TestMethod]
     public async Task Get_of_an_unknown_run_is_404()
@@ -272,13 +302,33 @@ public sealed class WorkflowCheckpointEndpointsTests
     private static ByteArrayContent OctetStream(byte[] bytes)
         => new(bytes) { Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") } };
 
+    private sealed class FailableSink : IAuditSink
+    {
+        public InMemoryAuditSink Inner { get; } = new();
+
+        public bool Failing { get; set; }
+
+        public ValueTask<Stream?> OpenLastChainAsync(ReadOnlyMemory<byte> writerId, CancellationToken cancellationToken) => this.Inner.OpenLastChainAsync(writerId, cancellationToken);
+
+        public async ValueTask<IAuditChainStream> CreateChainAsync(ReadOnlyMemory<byte> writerId, ReadOnlyMemory<byte> chainId, CancellationToken cancellationToken)
+            => new Chain(this, await this.Inner.CreateChainAsync(writerId, chainId, cancellationToken));
+
+        private sealed class Chain(FailableSink owner, IAuditChainStream chain) : IAuditChainStream
+        {
+            public ValueTask AppendAsync(ReadOnlyMemory<byte> line, CancellationToken cancellationToken)
+                => owner.Failing ? throw new IOException("the audit store is unreachable") : chain.AppendAsync(line, cancellationToken);
+
+            public ValueTask DisposeAsync() => chain.DisposeAsync();
+        }
+    }
+
     private sealed class Host(WebApplication app, HttpClient client, InMemoryWorkflowStateStore store) : IAsyncDisposable
     {
         public HttpClient Client { get; } = client;
 
         public InMemoryWorkflowStateStore Store { get; } = store;
 
-        public static async Task<Host> StartAsync(ControlPlaneSecurityMode securityMode = ControlPlaneSecurityMode.Open)
+        public static async Task<Host> StartAsync(ControlPlaneSecurityMode securityMode = ControlPlaneSecurityMode.Open, IAuditSink? auditSink = null)
         {
             var store = new InMemoryWorkflowStateStore();
             var management = new SecuredWorkflowManagement(store, "ops");
@@ -296,7 +346,7 @@ public sealed class WorkflowCheckpointEndpointsTests
             WebApplication app = builder.Build();
             app.UseAuthentication();
             app.UseAuthorization();
-            app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), securityMode, workflowStateStore: store, checkpointSecret: CheckpointSecret, auditor: GovernanceAuditor.CreateInMemory());
+            app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), securityMode, workflowStateStore: store, checkpointSecret: CheckpointSecret, auditor: auditSink is null ? GovernanceAuditor.CreateInMemory() : new GovernanceAuditor(sink: auditSink, headSigner: new Corvus.Text.Json.Arazzo.Execution.EcdsaExecutorPackageSigner(System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256), "audit-test")));
             await app.StartAsync();
 
             return new Host(app, app.GetTestClient(), store);

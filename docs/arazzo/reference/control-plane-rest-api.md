@@ -144,7 +144,8 @@ not in the audit chain, and the deployment's operator is alerted through the
 resource to see its state. It is a `500` and not a `503` for that reason, since a `503` is retried by gateways
 and clients on their own and the retry would apply a mutation that is not idempotent a second time. Run execution never returns it.
 
-A read that returns a payload, the step journal today, is recorded before it is answered
+A read that returns a payload (the step journal, a debug run's view with its trace, a credential binding's detail, and
+the run-scoped checkpoint) is recorded before it is answered
 ([ADR 0070](../adr/0070-read-side-audit-three-tiers.md)). When its record cannot be appended the read is refused with a
 `500` problem whose `type` is `https://corvus-oss.org/arazzo/control-plane/problems/audit-read-record-failed`.
 **Nothing was disclosed**, and unlike the mutation problem it is safe to ask again. A refused read, a list, a

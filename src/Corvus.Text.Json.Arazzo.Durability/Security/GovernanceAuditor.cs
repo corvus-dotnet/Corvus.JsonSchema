@@ -84,7 +84,14 @@ public sealed class GovernanceAuditor : IAsyncDisposable
     /// <param name="logger">The audit logger, if any.</param>
     /// <returns>The auditor.</returns>
     public static GovernanceAuditor CreateInMemory(ILogger? logger = null)
-        => new(logger, new InMemoryAuditSink(), headSigner: new EcdsaExecutorPackageSigner(ECDsa.Create(ECCurve.NamedCurves.nistP256), "in-memory-audit-key"));
+        => CreateInMemory(new InMemoryAuditSink(), logger);
+
+    /// <summary>Creates an auditor over an in-memory sink the caller holds, so that a test can read what was recorded. See <see cref="CreateInMemory(ILogger?)"/>.</summary>
+    /// <param name="sink">The sink to record into.</param>
+    /// <param name="logger">The audit logger, if any.</param>
+    /// <returns>The auditor.</returns>
+    public static GovernanceAuditor CreateInMemory(InMemoryAuditSink sink, ILogger? logger = null)
+        => new(logger, sink, headSigner: new EcdsaExecutorPackageSigner(ECDsa.Create(ECCurve.NamedCurves.nistP256), "in-memory-audit-key"));
 
     /// <summary>
     /// Reads this instance's last audit chain back from the sink and opens the next, continuing it, under a head signed

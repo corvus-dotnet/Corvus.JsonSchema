@@ -4,6 +4,7 @@
 
 using System.Buffers;
 using System.Globalization;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -38,14 +39,16 @@ public static class WorkflowCheckpointEndpoints
     /// <param name="requireAuthorization">Whether to require an authenticated principal in addition to the token (every mode but Open). The two compose: the ambient principal says a caller belongs to the deployment, the token says which run it may touch.</param>
     /// <param name="authenticateCheckpointToken">The run-scoped checkpoint-token authenticator (ADR 0062): given the request's full run address and the presented bearer token, returns whether it authorises checkpoints for that run at that address. A request without a valid token is a 401 — this is how the checkpoint surface authenticates a serverless function's callback (e.g. <c>(address, token) =&gt; CheckpointToken.TryValidate(secret, token, address, now)</c>). It is required rather than optional because the caller is a machine acting for one run, holding no principal of its own: without it the surface's only gate is the host's ambient authorization, which admits any authenticated caller to any run.</param>
     /// <param name="checkpoints">The host's checkpoint coordinator. Pass the same instance every checkpoint-authoring surface in this host uses — ADR 0065 decision 6 requires the per-run single-flight interlock to be per run, not per component, and the coordinator holds that interlock in memory. When <see langword="null"/> a private one is built, which is correct only for a host mapping this surface alone.</param>
+    /// <param name="auditor">The deployment's governance auditor. A checkpoint read is the run's whole payload, so it is recorded, with the run as its subject, before it is answered, and refused when it cannot be (ADR 0070).</param>
     /// <returns>The same endpoint route builder, for chaining.</returns>
-    public static IEndpointRouteBuilder MapWorkflowCheckpointEndpoints(this IEndpointRouteBuilder endpoints, IWorkflowCheckpointStore store, bool requireAuthorization, Func<WorkflowRunAddress, string, bool> authenticateCheckpointToken, WorkflowCheckpointCoordinator? checkpoints = null)
+    public static IEndpointRouteBuilder MapWorkflowCheckpointEndpoints(this IEndpointRouteBuilder endpoints, IWorkflowCheckpointStore store, bool requireAuthorization, Func<WorkflowRunAddress, string, bool> authenticateCheckpointToken, WorkflowCheckpointCoordinator? checkpoints = null, GovernanceAuditor? auditor = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(authenticateCheckpointToken);
 
         WorkflowCheckpointCoordinator coordinator = checkpoints ?? new WorkflowCheckpointCoordinator(store);
+        auditor ??= GovernanceAuditor.None;
 
         IEndpointConventionBuilder get = endpoints.MapGet("/environments/{environment}/runs/{runId}/checkpoint", async (HttpContext context) =>
         {
@@ -64,6 +67,19 @@ public static class WorkflowCheckpointEndpoints
             if (loaded is not { } load)
             {
                 context.Response.StatusCode = StatusCodes.Status404NotFound;
+                return;
+            }
+
+            // The checkpoint is the run's whole payload, and its caller is a dispatched function holding a run-scoped token
+            // and no principal, so the run is the subject (ADR 0070). It is a disclosure: recorded first, and refused if it
+            // cannot be. This surface is mapped by hand, so the refusal is written here and not by the endpoint filter.
+            try
+            {
+                await auditor.ReadAsync("checkpoint.read", new AuditSubject("run:" + address.RunId.Value, null), "run", address.RunId.Value, "full", disclosesPayload: true, address.Environment).ConfigureAwait(false);
+            }
+            catch (AuditAppendException)
+            {
+                await WriteProblemAsync(context, StatusCodes.Status500InternalServerError, "The checkpoint read could not be recorded in the audit sink, so it was refused and nothing was disclosed. It is safe to ask again.").ConfigureAwait(false);
                 return;
             }
 

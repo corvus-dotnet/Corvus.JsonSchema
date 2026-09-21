@@ -307,6 +307,11 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         // The summary references the pooled binding document (per-field From() zero-copy wrap) — hand it to the
         // workspace so the deferred body validation/serialization is safe (it disposes the document afterwards).
         workspace.TakeOwnership(b);
+
+        // A binding's detail names where the secret lives and what the source is called with, which is what an attacker
+        // steering a credential wants to read. It is a disclosure (ADR 0070): recorded first, and refused if it cannot be.
+        // The secret itself is never returned, so the tier is the detail and not a payload of the secret.
+        await this.auditor.ReadAsync("credential.read", this.AuditActor(), "credential", sourceName, "detail", disclosesPayload: true, environment).ConfigureAwait(false);
         return GetCredentialResult.Ok(ToSummary(b.RootElement), workspace);
     }
 

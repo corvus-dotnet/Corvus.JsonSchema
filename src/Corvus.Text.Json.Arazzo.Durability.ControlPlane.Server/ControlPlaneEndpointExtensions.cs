@@ -402,7 +402,8 @@ public static class ControlPlaneEndpointExtensions
                 workflowStateStore,
                 requireAuthorization: securityMode != ControlPlaneSecurityMode.Open,
                 authenticateCheckpointToken: (address, token) => CheckpointToken.TryValidate(checkpointSecret.Span, token, address, DateTimeOffset.UtcNow),
-                checkpoints: checkpoints);
+                checkpoints: checkpoints,
+                auditor: auditor);
         }
 
         return endpoints;
