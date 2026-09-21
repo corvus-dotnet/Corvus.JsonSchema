@@ -1,6 +1,6 @@
 # ADR 0043. A first-party SVG design surface, not a graph library
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how the workflow designer renders and edits the workflow graph.
+Date: 2026-07-21. Status: **Accepted**. Implementation: **partly, with one divergence**. Verified against the code 2026-09-21. Built: the design surface draws SVG in its own shadow root from a projected graph and emits events, and debug overlays are classes on SVG groups. Divergence: the `@dagrejs/dagre` dependency this record decides on does not exist. It is not vendored, lazy-loaded or a dev dependency; layout is first-party (`layoutGraph` and `routeEdges` in `workflow-layout.js`) with an injection seam for a host's own engine, so the title's "small layout dependency" is stale. The surface knows a little of the domain: it imports `START_ID`, understands `workflow:` exit chips and emits Arazzo-named events. Scope: how the workflow designer renders and edits the workflow graph.
 Builds on [ADR 0041](0041-standards-only-zero-build-elements.md). This records why the design surface is
 hand-authored SVG with a small layout dependency, rather than a graph or diagramming library.
 

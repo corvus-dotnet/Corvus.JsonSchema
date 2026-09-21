@@ -1,6 +1,6 @@
 # ADR 0053. A triggered async action guards itself and shows delayed busy feedback
 
-Date: 2026-07-25. Status: **Accepted**. Scope: how a web-kit control behaves while the async operation it
+Date: 2026-07-25. Status: **Accepted**. Implementation: **partly**. Verified against the code 2026-09-21. `ArazzoElement.runAction` is built, tested and used at about forty call sites across 27 files. "Every" is false: environment create and delete, source delete and scenario save call a mutating client method with no re-entry guard, the schedules panel's create and delete use flags of their own that this record does not exempt, and `sources-panel.js` still writes `disabled` around a save, the pattern this record says was replaced. Scope: how a web-kit control behaves while the async operation it
 triggers is in flight. Builds on [ADR 0040](0040-three-layer-web-kit.md) and
 [ADR 0047](0047-web-kit-permission-gating-server-authoritative.md). This records why every user-triggered
 service action runs through one shared helper that blocks re-entry immediately and shows a spinner only once

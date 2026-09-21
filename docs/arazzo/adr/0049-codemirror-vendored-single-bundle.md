@@ -1,6 +1,6 @@
 # ADR 0049. CodeMirror 6, vendored as a single bundle
 
-Date: 2026-07-21. Status: **Accepted**. Scope: the code-editor technology in the web kit and designer. Builds on
+Date: 2026-07-21. Status: **Accepted**. Implementation: **complete as packaging; the assurance is not built**. Verified against the code 2026-09-21. The bundle is produced by `npm run build:vendor` from a re-export entry, checked in, and lazy-loaded behind injectable loaders. The 2026-08-07 audit's PROC-9 finding stands: the artifact carries no version, the only exact pins and integrity hashes are npm's on the input tarballs in `package-lock.json`, nothing ties the checked-in bundle to that lock, there is no hash of the output, and CI never rebuilds and compares. "Reviewed as a build output" describes an intent, since a 441 KB minified line is not reviewable in a diff. Scope: the code-editor technology in the web kit and designer. Builds on
 [ADR 0041](0041-standards-only-zero-build-elements.md). This records why the kit's editing surfaces use
 CodeMirror 6, vendored as one self-contained module, rather than a heavier editor or a hand-rolled one.
 

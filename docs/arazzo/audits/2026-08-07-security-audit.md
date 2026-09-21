@@ -777,6 +777,14 @@ decision on whether the code or the ADR is wrong.
 | V-24 | The package reader's bounds check adds in unchecked arithmetic and no test feeds it malformed input, on untrusted uploads. The slice after it still throws, so it is memory-safe and reports the wrong exception | 0032 | Reported |
 | V-25 | The non-ASCII probe ADR 0029 says guards the in-place heartbeat edit was not found in any runner-registry test. An executor provider is optional at every seam, so a store built without one catalogues every version as not runnable in silence (ADR 0033). String records remain at write seams (ADR 0037) | 0029, 0033, 0037 | Reported |
 
+### API-first, web kit and designer, ADRs 0039 to 0045, 0049 and 0053 (2026-09-21)
+
+| # | Finding | ADR | State |
+|---|---------|-----|-------|
+| V-26 | Interactive debug runs require a runner hosted inside the control-plane process. `DebugRunsOffered` needs the in-process draft runner and message injection calls it directly, so the control plane executes workflow code, against ADR 0045's "claimed and executed by a runner" and the two-process model of ADR 0023 and ADR 0065 | 0045 | Confirmed |
+| V-27 | The run-scoped checkpoint surface is mapped by hand inside `MapArazzoControlPlane` and is absent from the control plane's OpenAPI document, so its routing, parsing and validation are hand-written and undocumented, and no endpoint filter sees it. ADR 0039 says the contract and the code cannot disagree | 0039 | Confirmed |
+| V-28 | The vendored CodeMirror bundle has no version, no output hash and no rebuild-and-compare in CI (PROC-9 stands). ADR 0043 decides on a `dagre` dependency that does not exist. Several mutating UI actions bypass `runAction` (ADR 0053). `auth-status.js` fetches outside the client (ADR 0040) | 0049, 0043, 0053, 0040 | Reported |
+
 ### What nothing being shipped means for these
 
 No deployment depends on today's behaviour, so none of these needs a migration path or a compatibility hedge, and a path that exists only as a fallback is removed and not guarded. That applies directly to V-3, where the hole is the version-1 administration fallback itself, to V-6's interim single-grant path, to V-14, where the fix is a zero member that is not a posture, to V-19's sample runner holding the store, to the unconstructed triggers and the durable executor's null-run fallback that the executor batch found, and to the default interface implementations that page and count in memory, which every persistent backend overrides.

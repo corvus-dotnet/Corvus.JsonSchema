@@ -1,6 +1,6 @@
 # ADR 0044. A collaboration-ready document model: identity-addressed operations with inverses
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how the designer represents an edit to a workflow document.
+Date: 2026-07-21. Status: **Accepted**. Implementation: **complete for what it decides, with no consumer**. Verified against the code 2026-09-21. `WorkflowDocumentModel` reduces each edit to identity-addressed operations with inverses, undoes this actor's groups only, stamps operations with actor and sequence, applies remote groups, and touches no DOM. No transport exists and nothing outside the model subscribes to `ops` or calls `applyRemote`, as this record says collaboration ships later. Limits: the mechanism is a whole-document clone and diff for each edit, and identity addressing covers workflows, steps and source descriptions only, so an edit inside actions, criteria, parameters or outputs falls through to a whole-array `set`, which two actors would resolve last-writer-wins. Scope: how the designer represents an edit to a workflow document.
 This records why every edit is a group of identity-addressed operations that carry their inverses, from day
 one, rather than a snapshot, even though real-time collaboration ships later.
 

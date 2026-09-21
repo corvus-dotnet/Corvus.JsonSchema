@@ -1,6 +1,6 @@
 # ADR 0045. Remote dev-environment debug runs, never credentials in the browser
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how a draft workflow is debugged against real behaviour. Builds
+Date: 2026-07-21. Status: **Accepted**. Implementation: **partly, with divergences**. Verified against the code 2026-09-21. Built and tested: a debug run executes on the server, the environment must allow draft runs, a calling source must have a binding in the target environment, the run is budgeted, and the trace is metadata. Divergences: there is no `debugRuns` marker on a run or an environment, which is an OpenAPI tag only, and the markers are the reserved `$draft` workflow id and the `sys:workingCopy` tag; and interactive debugging requires a runner hosted inside the control-plane process (`DebugRunsOffered` needs the in-process draft runner, and message injection calls it directly), against "a debug run is claimed and executed by a runner" and the two-process model. On the web side "never in the browser" is an absence and not a control: nothing tests that the designer holds no source secret, and the credential dialog does collect secrets in the browser to send to the control plane. Scope: how a draft workflow is debugged against real behaviour. Builds
 on [ADR 0023](0023-two-process-store-as-queue.md) and [ADR 0027](0027-runner-environment-binding.md). This
 records why a draft is debugged by running it in a development-class environment, never by executing it with
 credentials held in the browser.

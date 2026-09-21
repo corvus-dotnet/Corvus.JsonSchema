@@ -1,6 +1,6 @@
 # ADR 0040. The web kit is three layers, and Layer 1 never fetches
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how the web component kit is structured. This records why the
+Date: 2026-07-21. Status: **Accepted**. Implementation: **partly**. Verified against the code 2026-09-21. The three layers are built and 64 components follow them: one `fetch` in the client, components that take `.client`, and two composed screens. Divergence: `auth-status.js` calls `fetch` itself, extends `HTMLElement` and takes no client, so a host cannot swap or mock its transport, and it builds its own login navigation. "A Layer 1 component never calls `fetch`" is a convention; no lint or test scans for it. Scope: how the web component kit is structured. This records why the
 kit is split into a DOM-free client, composable components, and reference screens, with a hard rule that a
 component never calls `fetch` itself.
 

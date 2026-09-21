@@ -1,6 +1,6 @@
 # ADR 0041. Standards-only, zero-build custom elements
 
-Date: 2026-07-21. Status: **Accepted**. Scope: the technology the web kit is built on. Builds on
+Date: 2026-07-21. Status: **Accepted**. Implementation: **complete, with one false statement**. Verified against the code 2026-09-21. Open shadow roots, an idempotent `define`, theming tokens, no runtime dependency and no bare-specifier import, so every module loads unbundled, and the editor is lazy-loaded. Divergence: there is no vendored layout engine. `src/vendor/` holds the CodeMirror bundle alone, and layout is the kit's own `workflow-layout.js`. `auth-status.js` calls `customElements.define` directly, so a double import of it throws. Scope: the technology the web kit is built on. Builds on
 [ADR 0040](0040-three-layer-web-kit.md). This records why the kit is standards-only custom elements with no
 build step and no framework dependency.
 

@@ -1,6 +1,6 @@
 # ADR 0042. Auth-agnostic: the host owns the session
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how the web kit authenticates. Builds on
+Date: 2026-07-21. Status: **Accepted**. Implementation: **complete**. Verified against the code 2026-09-21. The client calls `getAuthHeader` for each request, an injected `fetch` takes precedence, the two screens rebuild the client from `authProvider`, and the kit holds no identity-provider flow, token store or cookie access. The hook is not tested. It is duplicated on eight standalone panels, so "configured once" holds where a host uses a composed screen or passes `.client`. `auth-status.js` fetches outside the client, so the hook does not reach it (ADR 0040). Scope: how the web kit authenticates. Builds on
 [ADR 0040](0040-three-layer-web-kit.md). This records why the kit takes credentials from its host rather than
 embedding an identity-provider flow.
 
