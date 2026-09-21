@@ -247,15 +247,59 @@ public sealed class GovernanceAuditor : IAsyncDisposable
 
         ArazzoTelemetry.ReadRefusals.Add(1, tags);
 
-        bool admitted = this.refusals.Admit(actor.Subject, this.timeProvider.GetUtcNow(), out long suppressedBefore, out string recordedAs);
-        if (suppressedBefore > 0)
-        {
-            await this.SuppressedAsync(recordedAs, suppressedBefore).ConfigureAwait(false);
-        }
-
-        if (admitted)
+        if (await this.AdmitRefusalAsync(actor).ConfigureAwait(false))
         {
             await this.ReadAsync(action, actor, targetKind, targetId, "refused", failClosed: false, environment).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// Records an action that a surface refused where the caller can cause refusals at will (ADR 0071): the runner API,
+    /// whose every operation a runner calls in a loop. It is a governance record like <see cref="MutationAsync"/>'s, with
+    /// the refusal as its outcome, and it differs in two ways that follow from who can cause it: it never fails the
+    /// request, and a subject's refusals are appended to the chain up to its bound in a window and past it counted,
+    /// with the count recorded when the window turns. Every refusal counts on
+    /// <see cref="ArazzoTelemetry.GovernanceDecisions"/>, those over the bound included.
+    /// </summary>
+    /// <param name="action">The action that was refused.</param>
+    /// <param name="actor">The caller.</param>
+    /// <param name="targetKind">The kind of resource the action targeted.</param>
+    /// <param name="targetId">The id of the resource the action targeted. An identifier only.</param>
+    /// <param name="outcome">The refusal (for example <c>refused-quota</c>).</param>
+    /// <param name="environment">The environment the action is scoped to, or <see langword="null"/>.</param>
+    /// <returns>A task that completes when the refusal is recorded, or counted.</returns>
+    public async ValueTask RefusalAsync(string action, AuditSubject actor, string targetKind, string targetId, string outcome, string? environment = null)
+    {
+        var tags = new TagList { { ArazzoTelemetry.ActionTag, action }, { ArazzoTelemetry.OutcomeTag, outcome } };
+        if (actor.OwnerGroup is { } tenant)
+        {
+            tags.Add(ArazzoTelemetry.TenantTag, tenant);
+        }
+
+        if (environment is not null)
+        {
+            tags.Add(ArazzoTelemetry.EnvironmentTag, environment);
+        }
+
+        ArazzoTelemetry.GovernanceDecisions.Add(1, tags);
+
+        if (!await this.AdmitRefusalAsync(actor).ConfigureAwait(false))
+        {
+            return;
+        }
+
+        this.Logger?.LogInformation(
+            "Audit: {Actor} (tenant {Tenant}) was refused {Action} on {TargetKind} {TargetId} in environment {Environment}; outcome {Outcome}.",
+            actor.Subject,
+            actor.OwnerGroup ?? "-",
+            action,
+            targetKind,
+            targetId,
+            environment ?? "-",
+            outcome);
+        if (this.chain is not null)
+        {
+            await this.AppendReadAsync(new AuditEntry(action, actor.Subject, actor.OwnerGroup, targetKind, targetId, outcome, environment), failClosed: false).ConfigureAwait(false);
         }
     }
 
@@ -308,6 +352,19 @@ public sealed class GovernanceAuditor : IAsyncDisposable
         }
     }
 
+    // One bound for a subject's refusals of either kind, a read refused or an action refused, since it is the subject that
+    // is probing. What its last window suppressed is recorded as it turns.
+    private async ValueTask<bool> AdmitRefusalAsync(AuditSubject actor)
+    {
+        bool admitted = this.refusals.Admit(actor.Subject, this.timeProvider.GetUtcNow(), out long suppressedBefore, out string recordedAs);
+        if (suppressedBefore > 0)
+        {
+            await this.SuppressedAsync(recordedAs, suppressedBefore).ConfigureAwait(false);
+        }
+
+        return admitted;
+    }
+
     private void OnRefusalSweep() => _ = this.SweepRefusalsAsync();
 
     private async Task SweepRefusalsAsync()
@@ -346,10 +403,10 @@ public sealed class GovernanceAuditor : IAsyncDisposable
     // suppressed. Like any refusal record it never fails anything.
     private ValueTask SuppressedAsync(string subject, long count)
     {
-        this.Logger?.LogWarning("Audit: {Count} refused reads by {Actor} were over its bound and were counted, not recorded one by one.", count, subject);
+        this.Logger?.LogWarning("Audit: {Count} refusals of {Actor} were over its bound and were counted, not recorded one by one.", count, subject);
         return this.chain is null
             ? ValueTask.CompletedTask
-            : this.AppendReadAsync(new AuditEntry("read.refusals-suppressed", subject, null, "subject", subject, "suppressed", null, AuditEntryKind.Read, count), failClosed: false);
+            : this.AppendReadAsync(new AuditEntry("refusals.suppressed", subject, null, "subject", subject, "suppressed", null, AuditEntryKind.Read, count), failClosed: false);
     }
 
     // A signed head is published outside the sink, through the span and the log, so that a collector holds anchors the

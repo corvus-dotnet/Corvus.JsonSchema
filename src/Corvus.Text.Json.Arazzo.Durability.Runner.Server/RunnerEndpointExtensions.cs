@@ -4,6 +4,7 @@
 
 using Corvus.Text.Json.Arazzo.Durability.Availability;
 using Corvus.Text.Json.Arazzo.Durability.Runner.Server.Quotas;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -49,6 +50,9 @@ public static class RunnerEndpointExtensions
     /// be per run rather than per component, and two coordinators over one store hold one gate each, which is exactly
     /// the shape that lets two honest components author the same run concurrently. When <see langword="null"/> a
     /// private one is built, which is correct only for a host mapping the runner API alone.</param>
+    /// <param name="auditor">The deployment's governance auditor, the control plane's own, since this API is served by the control
+    /// plane. The API's refusals are recorded in its audit chain (ADR 0071). Required where <paramref name="requireAuthorization"/>
+    /// is <see langword="true"/>.</param>
     /// <returns>The same endpoint route builder, for chaining.</returns>
     /// <remarks>
     /// The host must register <c>IHttpContextAccessor</c> (<c>services.AddHttpContextAccessor()</c>): the machine
@@ -66,7 +70,8 @@ public static class RunnerEndpointExtensions
         TimeProvider? timeProvider = null,
         IRunnerQuotaGuard? quotas = null,
         RunnerQuotaOptions? quotaOptions = null,
-        WorkflowCheckpointCoordinator? checkpoints = null)
+        WorkflowCheckpointCoordinator? checkpoints = null,
+        GovernanceAuditor? auditor = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(store);
@@ -84,12 +89,29 @@ public static class RunnerEndpointExtensions
         // not think about quotas with none, and the load a quota bounds is not the load anyone plans for.
         var gate = new RunnerQuotaGate(bindings, quotas ?? new TokenBucketRunnerQuotaGuard(quotaOptions, timeProvider));
 
+        // ADR 0071: the runner API records its own refusals in the deployment's audit chain. A runner API that
+        // authenticates its callers is a secured surface, and like the control plane's it does not map without somewhere to
+        // record them, so that the seam ADR 0065 does not trust cannot be silent by omission.
+        if (requireAuthorization && auditor is not { HasSink: true })
+        {
+            throw new ArgumentException("A runner API that authenticates its callers records its refusals in the deployment's audit chain (ADR 0071): pass the control plane's GovernanceAuditor, built with an IAuditSink. Only a runner API mapped with requireAuthorization: false may run without one.", nameof(auditor));
+        }
+
+        var refusals = new RunnerRefusalAudit(principals, auditor ?? GovernanceAuditor.None);
         return endpoints.MapApiEndpoints(
             new ArazzoRunnerClaimsHandler(coordinator, principals, gate),
             new ArazzoRunnerLeasesHandler(coordinator, principals, gate),
             new ArazzoRunnerCheckpointsHandler(checkpointCoordinator, coordinator, principals, gate, resolved),
             new ArazzoRunnerCatalogHandler(catalogCoordinator, principals, gate),
-            requireAuthorization ? (in EndpointDescriptor _, IEndpointConventionBuilder builder) => Authorize(builder, requiredScope) : null);
+            (in EndpointDescriptor endpoint, IEndpointConventionBuilder builder) =>
+            {
+                // The refusal filter is added first so that it is outermost and sees how the request was answered.
+                refusals.Configure(in endpoint, builder);
+                if (requireAuthorization)
+                {
+                    Authorize(builder, requiredScope);
+                }
+            });
     }
 
     private static void Authorize(IEndpointConventionBuilder builder, string? requiredScope)

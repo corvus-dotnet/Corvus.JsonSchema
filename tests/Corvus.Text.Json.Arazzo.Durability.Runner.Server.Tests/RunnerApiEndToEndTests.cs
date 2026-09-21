@@ -9,6 +9,7 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using Stj = System.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -42,6 +43,76 @@ public sealed class RunnerApiEndToEndTests
     private const string SequenceHeader = "X-Arazzo-Checkpoint-Seq";
 
     private static readonly DateTimeOffset T0 = new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+
+    [TestMethod]
+    public async Task The_runner_apis_refusals_are_records_naming_the_principal_and_a_success_leaves_none()
+    {
+        var sink = new InMemoryAuditSink();
+        await using GovernanceAuditor auditor = GovernanceAuditor.CreateInMemory(sink);
+        await using Host host = await Host.StartAsync(auditor: auditor);
+        await host.SeedAsync(Run1, WorkflowRunStatus.Pending);
+
+        // A claim that succeeds, and a checkpoint read under the lease it granted, are not refusals.
+        string lease = await host.ClaimLeaseAsync(Runner);
+        (await host.LoadCheckpointAsync(Runner, Run1, lease)).IsSuccessStatusCode.ShouldBeTrue();
+        Refusals(sink).ShouldBeEmpty();
+
+        // ADR 0071: the seam stops being silent. A peer presenting another runner's lease, and a request that names no
+        // machine principal at all.
+        (await host.LoadCheckpointAsync(Peer, Run1, lease)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await host.ClaimAnonymouslyAsync()).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        List<Stj.JsonElement> refusals = Refusals(sink);
+        refusals.Count.ShouldBe(2);
+        refusals[0].GetProperty("kind").GetString().ShouldBe("mutation");
+        refusals[0].GetProperty("action").GetString().ShouldBe("runner.loadCheckpoint");
+        refusals[0].GetProperty("actor").GetString().ShouldBe(Peer);
+        refusals[0].GetProperty("targetKind").GetString().ShouldBe("run");
+        refusals[0].GetProperty("targetId").GetString().ShouldBe(Run1);
+        refusals[0].GetProperty("outcome").GetString().ShouldBe("refused-conflict");
+        refusals[1].GetProperty("action").GetString().ShouldBe("runner.claimRun");
+        refusals[1].GetProperty("actor").GetString().ShouldBe("(no machine principal)");
+        refusals[1].GetProperty("outcome").GetString().ShouldBe("refused-no-principal");
+
+        // The lease token is what holds a run, and it is in no record.
+        string chain = System.Text.Encoding.UTF8.GetString(sink.Snapshot(sink.ChainIds.ShouldHaveSingleItem()));
+        chain.ShouldNotContain(lease);
+    }
+
+    [TestMethod]
+    public async Task A_runner_hammering_its_quota_is_recorded_up_to_its_bound_and_then_as_a_count()
+    {
+        var sink = new InMemoryAuditSink();
+        await using var auditor = new GovernanceAuditor(
+            sink: sink,
+            headSigner: new Corvus.Text.Json.Arazzo.Execution.EcdsaExecutorPackageSigner(System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256), "audit-test"),
+            headOptions: new AuditHeadOptions(1000, TimeSpan.FromHours(1)),
+            refusalLimiter: new RefusalRecordLimiter(perSubject: 2, window: TimeSpan.FromHours(1)));
+        await using Host host = await Host.StartAsync(quotaOptions: new RunnerQuotaOptions { RunnerClaims = new RunnerQuotaLimit(1, 1) }, auditor: auditor);
+
+        (await host.ClaimAsync(Runner)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        for (int i = 0; i < 6; i++)
+        {
+            (await host.ClaimAsync(Runner)).StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+        }
+
+        List<Stj.JsonElement> refusals = Refusals(sink);
+        refusals.Count.ShouldBe(2);
+        refusals.ShouldAllBe(r => r.GetProperty("outcome").GetString() == "refused-quota" && r.GetProperty("actor").GetString() == Runner);
+    }
+
+    [TestMethod]
+    public async Task A_runner_api_that_authenticates_its_callers_does_not_map_without_an_audit_sink()
+    {
+        ArgumentException none = await Should.ThrowAsync<ArgumentException>(async () => await Host.StartAsync(requireAuthorization: true));
+        none.ParamName.ShouldBe("auditor");
+
+        ArgumentException logOnly = await Should.ThrowAsync<ArgumentException>(async () => await Host.StartAsync(requireAuthorization: true, auditor: new GovernanceAuditor()));
+        logOnly.ParamName.ShouldBe("auditor");
+    }
+
+    private static List<Stj.JsonElement> Refusals(InMemoryAuditSink sink)
+        => [.. sink.ChainIds.SelectMany(id => System.Text.Encoding.UTF8.GetString(sink.Snapshot(id)).Split('\n', StringSplitOptions.RemoveEmptyEntries)).Select(l => Stj.JsonDocument.Parse(l).RootElement).Where(r => r.TryGetProperty("outcome", out Stj.JsonElement o) && o.GetString()!.StartsWith("refused", StringComparison.Ordinal))];
 
     [TestMethod]
     public async Task A_claim_answers_the_run_its_workflow_environment_and_lease()
@@ -283,7 +354,7 @@ public sealed class RunnerApiEndToEndTests
 
         public TestClock Clock { get; } = clock;
 
-        public static async Task<Host> StartAsync(RunnerApiOptions? options = null, RunnerQuotaOptions? quotaOptions = null)
+        public static async Task<Host> StartAsync(RunnerApiOptions? options = null, RunnerQuotaOptions? quotaOptions = null, GovernanceAuditor? auditor = null, bool requireAuthorization = false)
         {
             var clock = new TestClock(T0);
             var store = new InMemoryWorkflowStateStore(clock);
@@ -312,7 +383,7 @@ public sealed class RunnerApiEndToEndTests
                 await next(context);
             });
 
-            app.MapArazzoRunnerApi(store, new InMemoryWorkflowCatalogStore(), new InMemoryAvailabilityStore(), bindings, options, requireAuthorization: false, timeProvider: clock, quotaOptions: quotaOptions);
+            app.MapArazzoRunnerApi(store, new InMemoryWorkflowCatalogStore(), new InMemoryAvailabilityStore(), bindings, options, requireAuthorization: requireAuthorization, timeProvider: clock, quotaOptions: quotaOptions, auditor: auditor);
             await app.StartAsync();
 
             return new Host(app, app.GetTestClient(), store, clock);
@@ -328,6 +399,9 @@ public sealed class RunnerApiEndToEndTests
                 WorkflowEtag.None,
                 default);
         }
+
+        public Task<HttpResponseMessage> ClaimAnonymouslyAsync()
+            => this.Client.SendAsync(new HttpRequestMessage(HttpMethod.Post, "/claims") { Content = JsonContent.Create(new { hostedVersions = new[] { Version } }) });
 
         public Task<HttpResponseMessage> ClaimAsync(string principal)
         {

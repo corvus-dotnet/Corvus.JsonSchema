@@ -316,7 +316,7 @@ public sealed class ControlPlaneAuditSinkTests
         }
 
         reads.Count.ShouldBe(4);
-        reads[3].GetProperty("action").GetString().ShouldBe("read.refusals-suppressed");
+        reads[3].GetProperty("action").GetString().ShouldBe("refusals.suppressed");
         reads[3].GetProperty("disclosure").GetString().ShouldBe("suppressed");
         reads[3].GetProperty("suppressed").GetInt64().ShouldBe(7);
         reads[3].GetProperty("actor").GetString().ShouldBe(reads[0].GetProperty("actor").GetString());

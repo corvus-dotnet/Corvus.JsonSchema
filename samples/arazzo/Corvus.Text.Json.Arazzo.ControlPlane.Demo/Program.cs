@@ -1039,7 +1039,8 @@ if (requireAuthorization)
         catalogStore,
         availabilityStore,
         new RunnerAuthorizationBindings(runnerAuthorizations, environmentStore),
-        checkpoints: checkpointCoordinator);
+        checkpoints: checkpointCoordinator,
+        auditor: auditor);
 }
 
 // oscar's PENDING access request (the approver-inbox content): seeded THROUGH the approval service, exactly as a real
