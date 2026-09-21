@@ -30,6 +30,11 @@ requests against the same contract, so a divergence fails the test.
 operation groups (runs, catalog, credentials, administrators, access requests, schedules, and the designer's
 scenarios and debug runs).
 
+Two commands call no server. `catalog verify` checks a package envelope, and `audit verify` checks a deployment's
+audit chains from their stored bytes, against the audit's public key and the anchors a collector holds
+([ADR 0069](../adr/0069-audit-as-evidence-append-only-chained-signed-sink.md)). It reads the sink directly, so the
+control plane that wrote the evidence is not in the path that checks it. The CLI's README documents both.
+
 Authentication is OIDC for a native app: `arazzo-runs login` runs Authorization Code with PKCE on a loopback
 redirect (opening the system browser), or `--use-device-code` for a headless or over-SSH session; the token is
 cached and silently refreshed, so subsequent commands are non-interactive. `--server`, `--authority`, and

@@ -61,6 +61,13 @@ public static class CliApp
                     .WithDescription("Permanently delete a debug run and its trace.");
             });
 
+            c.AddBranch<CommandSettings>("audit", audit =>
+            {
+                audit.SetDescription("Work with the deployment's audit chains (ADR 0069).");
+                audit.AddCommand<AuditVerifyCommand>("verify")
+                    .WithDescription("Verify audit chains from their stored bytes: links, signed heads, continuations and anchors (local, no server).");
+            });
+
             c.AddBranch<CommandSettings>("catalog", catalog =>
             {
                 catalog.SetDescription("Work with the workflow catalog (versioned, hashed package store).");

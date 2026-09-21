@@ -152,6 +152,7 @@ public static class AuditChainVerifier
                 this.containsExpectedHash,
                 this.heads,
                 options.TrustStore is not null,
+                this.anchorFound,
                 this.records - this.lastHeadRecord);
         }
 
