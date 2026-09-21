@@ -75,6 +75,24 @@ panel reports that Git is unavailable — everything else works unchanged. The f
 (registration, local testing, troubleshooting, cloud deployment) is the
 [GitHub OAuth App guide](../../../docs/arazzo/guides/github-oauth-app.md).
 
+## The audit chain, and verifying it (ADR 0069)
+
+The control plane appends every governance action, the bootstrap's founding grants included, to an audit chain, and signs the chain's head every 64 records or 60 seconds. In this composition:
+
+- **The chains** are files, `{chainId}.jsonl`, under `Arazzo:AuditDirectory` (default `arazzo-control-plane-demo/audit` under the temporary directory). That is the development sink. A production deployment appends to immutable storage outside the operational database (`AzureBlobAuditSink`).
+- **The head key** is `arazzo-audit-head`, a second Transit key in the signing vault. It signs the audit's heads and nothing else, and it is not the executor key, so compromising or rotating either leaves the other's evidence standing. The control plane holds a sign-only token, and the private half never leaves the vault.
+- **The public half** is exported by the signing-vault provisioner to `audit-head.pub`, beside `executor-signing.pub`, in the `arazzo-signing-*` handoff directory under the temporary directory.
+
+To check the evidence, with no server in the path:
+
+```pwsh
+$handoff = Get-ChildItem ([IO.Path]::GetTempPath()) -Directory -Filter 'arazzo-signing-*' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+$audit = Join-Path ([IO.Path]::GetTempPath()) 'arazzo-control-plane-demo/audit'
+arazzo-runs audit verify $audit --trust-key "arazzo-audit-head=$($handoff.FullName)/audit-head.pub"
+```
+
+Give it `executor-signing.pub` instead and the heads are refused, which is the separation working. A host run with no signing vault falls back to an ECDSA key in a PEM file beside the chains, a development arrangement in which whoever can read the directory can sign.
+
 ## Prerequisites
 
 - **.NET 10 SDK** and the **Aspire CLI** (`dotnet tool install -g Aspire.Cli`).

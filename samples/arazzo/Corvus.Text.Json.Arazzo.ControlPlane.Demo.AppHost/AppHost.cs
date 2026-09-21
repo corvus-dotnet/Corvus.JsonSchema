@@ -119,6 +119,11 @@ const string signingVaultRootToken = "arazzo-signing-dev-root-token";
 // runner selects the trusted public key by it. Same value keeps the demo simple.
 const string signingKeyName = "arazzo-executor-signing";
 
+// The audit head key (ADR 0069): a SECOND Transit key in the signing vault, which signs the audit chain's heads and
+// nothing else. It is not the executor key, so compromising or rotating either leaves the other's evidence standing.
+// Its public half is exported beside the executor key's, for `arazzo-runs audit verify --trust-key`.
+const string auditHeadKeyName = "arazzo-audit-head";
+
 // The control plane's SIGN-ONLY token: a fixed id the provisioner (root) mints against a policy allowing only
 // transit/sign on the key — least privilege, so the signer cannot administer the vault. Injected to the control plane.
 const string signingControlPlaneToken = "arazzo-cp-signing-token";
@@ -315,13 +320,17 @@ const string signingProvisionScript =
     "until vault status >/dev/null 2>&1; do echo 'waiting for signing vault'; sleep 1; done; " +
     "vault secrets enable transit 2>/dev/null || true; " +
     "vault write -f transit/keys/arazzo-executor-signing type=ecdsa-p256; " +
+    "vault write -f transit/keys/arazzo-audit-head type=ecdsa-p256; " +
     // VaultSharp signs at transit/sign/<key>/<hash-algo> (the hash is a PATH segment), so the sign-only policy must grant
     // the /* sub-path, not just the bare key path — otherwise the sign is permission-denied.
-    "echo 'path \"transit/sign/arazzo-executor-signing\" { capabilities = [\"update\"] } path \"transit/sign/arazzo-executor-signing/*\" { capabilities = [\"update\"] }' | vault policy write arazzo-signer -; " +
+    "echo 'path \"transit/sign/arazzo-executor-signing\" { capabilities = [\"update\"] } path \"transit/sign/arazzo-executor-signing/*\" { capabilities = [\"update\"] } path \"transit/sign/arazzo-audit-head\" { capabilities = [\"update\"] } path \"transit/sign/arazzo-audit-head/*\" { capabilities = [\"update\"] }' | vault policy write arazzo-signer -; " +
     "vault token create -id=arazzo-cp-signing-token -policy=arazzo-signer -period=768h >/dev/null 2>&1 || true; " +
     "KEY=$(vault read -format=json transit/keys/arazzo-executor-signing | grep -o '\"public_key\": *\"[^\"]*\"' | head -1 | sed -e 's/^\"public_key\": *\"//' -e 's/\"$//'); " +
     "printf '%b' \"$KEY\" > /shared/executor-signing.pub; " +
     "chmod 644 /shared/executor-signing.pub; " +
+    "AUDITKEY=$(vault read -format=json transit/keys/arazzo-audit-head | grep -o '\"public_key\": *\"[^\"]*\"' | head -1 | sed -e 's/^\"public_key\": *\"//' -e 's/\"$//'); " +
+    "printf '%b' \"$AUDITKEY\" > /shared/audit-head.pub; " +
+    "chmod 644 /shared/audit-head.pub; " +
     "echo signing-provisioning-complete; sleep 15";
 
 var signingVaultInit = builder.AddContainer("signing-vault-init", "hashicorp/vault", "1.18")
@@ -418,6 +427,8 @@ var controlplane = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPl
     .WithEnvironment("ControlPlane__SigningVault__KeyId", signingKeyName)
     .WithEnvironment("ControlPlane__SigningVault__MountPoint", "transit")
     .WithEnvironment("ControlPlane__SigningVault__Algorithm", "ecdsa-p256-sha256")
+    .WithEnvironment("ControlPlane__SigningVault__AuditKeyName", auditHeadKeyName)
+    .WithEnvironment("ControlPlane__SigningVault__AuditKeyId", auditHeadKeyName)
     // Wait for the signing key + sign token to exist before the control plane seeds (seeding builds + signs executors).
     .WaitForCompletion(signingVaultInit)
     .WithReference(keycloak)

@@ -105,27 +105,46 @@ Corvus.Text.Json.Arazzo.Durability.ControlPlane.Bootstrap.DeploymentBootstrapOpt
 string auditDirectory = builder.Configuration["Arazzo:AuditDirectory"] ?? Path.Combine(Path.GetTempPath(), "arazzo-control-plane-demo", "audit");
 using ILoggerFactory auditLoggerFactory = LoggerFactory.Create(logging => logging.AddConfiguration(builder.Configuration.GetSection("Logging")).AddConsole());
 // The chain's heads are signed with a key of the audit's own, which signs nothing else and is not the executor package
-// key, so neither key's compromise or rotation touches the other's evidence. The demo keeps an ECDSA P-256 key in a PEM
-// file beside the chains, made on first run, and writes its public half next to it for `arazzo-runs audit verify` to
-// trust. That is a development arrangement: whoever can read the directory can sign. A production deployment holds the
-// audit key in a key service, as the executor key is held in Vault Transit below, and publishes only the public half.
+// key, so neither key's compromise or rotation touches the other's evidence. Where the AppHost provisions the signing
+// vault, the audit key is a second Transit key in it: the private half never leaves the vault, the control plane holds
+// a sign-only token, and the provisioner exports the public half for `arazzo-runs audit verify --trust-key`.
+//
+// A bare host with no signing vault falls back to an ECDSA P-256 key in a PEM file beside the chains, made on first
+// run with its public half next to it. That is a development arrangement: whoever can read the directory can sign.
 Directory.CreateDirectory(auditDirectory);
-string auditKeyPath = builder.Configuration["Arazzo:AuditSigningKeyPath"] ?? Path.Combine(auditDirectory, "audit-head-key.pem");
-var auditKey = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256);
-if (File.Exists(auditKeyPath))
+IExecutorPackageSigner auditHeadSigner;
+if (builder.Configuration["ControlPlane:SigningVault:Address"] is { Length: > 0 } auditVaultAddress
+    && builder.Configuration["SIGNING_VAULT_TOKEN"] is { Length: > 0 } auditVaultToken
+    && builder.Configuration["ControlPlane:SigningVault:AuditKeyName"] is { Length: > 0 } auditKeyName)
 {
-    auditKey.ImportFromPem(await File.ReadAllTextAsync(auditKeyPath));
+    auditHeadSigner = new VaultTransitExecutorPackageSigner(
+        new VaultClient(new VaultClientSettings(auditVaultAddress, new TokenAuthMethodInfo(auditVaultToken))),
+        auditKeyName,
+        builder.Configuration["ControlPlane:SigningVault:AuditKeyId"] ?? auditKeyName,
+        builder.Configuration["ControlPlane:SigningVault:Algorithm"] ?? ExecutorSignatureAlgorithms.EcdsaP256Sha256,
+        builder.Configuration["ControlPlane:SigningVault:MountPoint"] ?? "transit");
 }
 else
 {
-    await File.WriteAllTextAsync(auditKeyPath, auditKey.ExportECPrivateKeyPem());
-    await File.WriteAllTextAsync(Path.ChangeExtension(auditKeyPath, ".pub.pem"), auditKey.ExportSubjectPublicKeyInfoPem());
+    string auditKeyPath = builder.Configuration["Arazzo:AuditSigningKeyPath"] ?? Path.Combine(auditDirectory, "audit-head-key.pem");
+    var auditKey = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256);
+    if (File.Exists(auditKeyPath))
+    {
+        auditKey.ImportFromPem(await File.ReadAllTextAsync(auditKeyPath));
+    }
+    else
+    {
+        await File.WriteAllTextAsync(auditKeyPath, auditKey.ExportECPrivateKeyPem());
+        await File.WriteAllTextAsync(Path.ChangeExtension(auditKeyPath, ".pub.pem"), auditKey.ExportSubjectPublicKeyInfoPem());
+    }
+
+    auditHeadSigner = new EcdsaExecutorPackageSigner(auditKey, builder.Configuration["Arazzo:AuditSigningKeyId"] ?? "demo-audit-head-key");
 }
 
 var auditor = new GovernanceAuditor(
     auditLoggerFactory.CreateLogger("Corvus.Arazzo.Audit"),
     new FileAuditSink(auditDirectory),
-    headSigner: new EcdsaExecutorPackageSigner(auditKey, builder.Configuration["Arazzo:AuditSigningKeyId"] ?? "demo-audit-head-key"));
+    headSigner: auditHeadSigner);
 
 await Corvus.Text.Json.Arazzo.Durability.ControlPlane.Deployment.Postgres.PostgresControlPlaneDeployment.ProvisionAsync(dataSource, bootstrapOptions, auditor: auditor);
 

@@ -574,10 +574,11 @@ clock or both, where it is configured, and the fault classification when exceede
 
 ### GAP-6 · all boundaries · Audit as evidence
 
-> **Decided.** [ADR 0069](../adr/0069-audit-as-evidence-append-only-chained-signed-sink.md): an
+> **Decided and implemented.** [ADR 0069](../adr/0069-audit-as-evidence-append-only-chained-signed-sink.md): an
 > append-only sink seam outside the operational store, hash-chained with signed heads anchored through
 > the collector, asserted at startup and failing governance mutations closed in the secured postures,
-> verified by a CLI command; the record is ADR 0038's, unchanged. Implementation open.
+> verified by a CLI command; the record is ADR 0038's, unchanged. Built for every governance mutation. The
+> step-journal read's records join the chain with GAP-7. The finding below is left as it was measured.
 ADR 0038 deliberately scopes the audit primitive to payload-safety and says nothing about durability.
 There is no audit store type in the repository. The audit is an `ILogger` call plus an activity,
 self-documented as best-effort observability rather than a durable store. Three ways it evaporates:

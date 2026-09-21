@@ -345,7 +345,7 @@ recording what does not, because a model built only from holes mis-ranks the fix
 | Quota and capacity counters isolate by owner group, fail closed once the tenancy ledger names one, evict per counter, count by the target environment's owner group | Holds | `RunnerAuthorizationBindings.cs`, `TokenBucketRunnerQuotaGuard.SweepFull`, `ArazzoControlPlaneCatalogHandler.TenantScope` |
 | A version is admitted only into an environment its own owner group holds, at promotion, promotion request, schedule and run start | Holds | `OwnerGroupTag.Agrees`, `TenancyAgreement.cs` |
 | Execution budget: fuel, wall clock and depth per run, deployment ceiling with a tightening environment override, runner-enforced and coordinator-verified on every save, a budget fault resumable only by a control-plane-authored, audited re-budget that the ceiling and the journal cap bound | Holds | `ExecutionBudget.cs`, `WorkflowCheckpointCoordinator.SaveAsync`, `ISecuredWorkflowManagement.ResolveExecutionBudgetAsync`, [ADR 0068](../adr/0068-execution-budget-fuel-wall-clock-depth.md) |
-| Audit sink: append-only, hash-chained, signed heads anchored through the collector, outside the operational store, asserted at startup and failing governance closed in the secured postures | Designed | [ADR 0069](../adr/0069-audit-as-evidence-append-only-chained-signed-sink.md) |
+| Audit sink: append-only, hash-chained, signed heads anchored through the collector, outside the operational store, asserted at startup and failing governance closed in the secured postures | Holds | `Audit/AuditChainWriter.cs`, `Audit/AuditChainVerifier.cs`, `Security/GovernanceAuditor.cs`, `AzureBlobAuditSink.cs`, `AuditRecordFailure.cs`, [ADR 0069](../adr/0069-audit-as-evidence-append-only-chained-signed-sink.md) |
 | Read-side audit in three tiers: payload disclosures audited, reach refusals audited, bulk reads metered | Designed | [ADR 0070](../adr/0070-read-side-audit-three-tiers.md) |
 | Authentication telemetry helper the host registers, runner-API refusals audited, required in the secured postures | Designed | [ADR 0071](../adr/0071-authentication-event-telemetry.md) |
 | Envelope and payload split, unified MAC, blind indexes, tenant anchor, initiator sealing, re-key sweep | Designed | `Durability/Anchoring/*`, conformance-tested |
@@ -383,15 +383,23 @@ recording what does not, because a model built only from holes mis-ranks the fix
 The weakest layer, and weak where it matters most. The surfaces carrying the highest-value data emit
 nothing.
 
-**The audit trail is diagnostic telemetry, not evidence.** There is no audit store type in the
-repository, no interface, no record type, no table. The audit is a logger call plus an activity,
-self-documented as best-effort observability rather than a durable store. No append-only guarantee, no
-hash chain, no retention, and no separation from the database an attacker would already hold, in a
-codebase that ships an ECDSA signing stack and applies it to executor packages but not to audit
-records. Three ways it evaporates unnoticed: the span rides a sampled activity source, so head
-sampling discards most of it; the log is at information level, so raising the level for noise loses
-everything; and the logger is null-conditional, so a host that never wires the category is a silent
-no-op. Nothing asserts at startup that a sink is attached.
+**The mutation audit is evidence. Everything else is still telemetry, or nothing.** Every governance mutation, a
+refused one included, run start and the bootstrap's founding grants are appended, after the action commits, to an
+audit chain ([ADR 0069](../adr/0069-audit-as-evidence-append-only-chained-signed-sink.md)): each record carries the hash of the
+record before it, the chain's head is signed on a cadence under a key of the audit's own, and every signed head is
+also published through the span and the log, so a collector holds anchors that whoever holds the sink cannot
+rewrite. The sink is outside the operational database, and the Azure Storage sink refuses a container that is not
+immutable. A secured control plane does not start without a sink and a head signer, and a record the sink refuses
+fails the request that made it, so authoring does not proceed unrecorded. `arazzo-runs audit verify` checks the
+chains from their stored bytes, against the audit's public key and the anchors, without the control plane in the
+path. Four limits are stated. The record is change-blind by decision ([ADR 0038](../adr/0038-payload-safe-governance-audit.md)): it says who
+did what to which resource, not what the resource changed from or to. The records after the last signed head are
+vouched for by no signature yet, which is a window of 64 records or 60 seconds by default. A chain does not outlive its process: a control
+plane that crashes, or stops after its key service has, leaves that window unsigned for good, and its next chain
+does not name the old one. And the chain holds
+mutations only: the one audited read, the step journal, still goes to the log alone, where the three ways a log
+evaporates still apply to it (a sampled activity source, a raised log level, a logger nobody wired), and the rows
+below marked "No" emit nothing at all.
 
 | Security-critical action | Audited | Consequence |
 |--------------------------|---------|-------------|
@@ -403,11 +411,11 @@ no-op. Nothing asserts at startup that a sink is attached.
 | Secret resolution, and decryption failure | No | The clearest tamper signal in the design is discarded |
 | Outbound document fetch, by destination | No | An SSRF sweep cannot be answered for after the fact |
 | Signature verification failure, verification disabled at startup | No | A tampered package looks like a disk-full build failure |
-| Run start | Yes | `run.start` with the canonical subject, owner group and environment, refusals included. The schedule run-now surface records both: `run.start` against the run it starts, from the admission, and `schedule.run-now` against the schedule (H45 closed) |
-| Bootstrap genesis grant | Yes | Each seeded binding and rule is audited as the bootstrap actor, and the approval service audits every grant, eligibility and revocation it writes |
+| Run start | Yes | A record in the audit chain. `run.start` with the canonical subject, owner group and environment, refusals included. The schedule run-now surface records both: `run.start` against the run it starts, from the admission, and `schedule.run-now` against the schedule (H45 closed) |
+| Bootstrap genesis grant | Yes | Records in the same audit chain as everything else the deployment records, since the host gives its provisioning and its control plane one auditor. Each seeded binding and rule is audited as the bootstrap actor, and the approval service audits every grant, eligibility and revocation it writes |
 | Runner liveness, heartbeat gap | No | The reaper has no caller, so a dead runner keeps satisfying the hosting gates |
-| Governance mutations, including refusals with distinct outcome codes | Yes | Uniform and genuinely well built |
-| Step-journal read, including refusals, with [disclosure tier](UBIQUITOUSLANGUAGE.md#step-output-disclosure-tier) | Yes | The one audited read surface, and a good model for the rest |
+| Governance mutations, including refusals with distinct outcome codes | Yes | Uniform and genuinely well built, and a record in the audit chain: hash-linked, under a signed head, outside the operational store |
+| Step-journal read, including refusals, with [disclosure tier](UBIQUITOUSLANGUAGE.md#step-output-disclosure-tier) | Yes, to the log only | The one audited read surface, and a good model for the rest. It is not yet a record in the audit chain, which it joins with the read-side audit of [ADR 0070](../adr/0070-read-side-audit-three-tiers.md) |
 
 Quality of what *is* recorded:
 
@@ -451,7 +459,7 @@ detection, CON containment, REC recovery.
 | UO-7 SSRF | H15, ASU-3 | PART | NONE | NONE | NONE | **Zero at run time, one at catalog-add.** Closing H2 removed the control plane's own `$ref` fetch, which was the one path the platform could fence in code. What remains is a workflow step's outbound call and the source fetch, both delegated to deployment egress controls the code cannot verify exist |
 | UO-8 denial of service | H14, H45 | PART | PART | GOOD | PART | **Two.** Quota and capacity counters isolate by owner group and a version runs only where its owner group holds the environment (H41 closed), so one tenant no longer exhausts another's allowance, and the schedule run-now surface is counted like any start (H45 closed). Every run but the scheduler's own carries an execution budget the coordinator verifies on every save, so a run that loops is faulted at its fuel or its wall clock whatever the runner does, and only an audited re-budget resumes it (H14 closed). What remains is a host that creates runs directly through the library and chooses its own budget, and an outage that is retried on every poll until it heals |
 | UO-9 integrity loss | anchor is phase B | WEAK | NONE | NONE | NONE | **Zero until phase B, accepted.** Closing H8 raised prevention off the floor — the epoch is now the run's own, persisted and compared, so phase B no longer inherits a counter it could not order by. Nothing else moved: the control plane still holds every copy of the run, so it can roll one back and no layer here would see it |
-| UO-10 undetected breach | H11 | n/a | NONE | n/a | NONE | **Zero on reads and the whole runner API.** Mutation audit is attributed to the canonical subject with owner group and environment, and still change-blind and non-durable |
+| UO-10 undetected breach | H11 | n/a | WEAK | n/a | WEAK | **Zero on reads and the whole runner API, one on mutations.** Mutation audit is attributed to the canonical subject with owner group and environment, and is now durable evidence: a hash-linked chain under signed heads, outside the operational store, that a mutation cannot proceed without. It is still change-blind by decision, so it reconstructs who did what and not what changed |
 | UO-11 revocation fails | H22 | PART | PART | PART | NONE | **Two layers on every backend.** The fence expires the holder's leases and renewal re-authorizes, so a revoked runner is stopped within the binding cache window. Both layers now hold on all backends: every store implements `IWorkflowLeaseAdministration`, so in-flight leases are expired everywhere, and renewal re-authorizes on top. H22 is what remains on all of them: a replica that never refreshes its policy keeps honouring the deleted binding |
 
 ### Why the holes line up
@@ -672,7 +680,7 @@ the store or the artifact source is retried on every poll until it heals, by dec
 decided the same day as [ADR 0069](../adr/0069-audit-as-evidence-append-only-chained-signed-sink.md),
 [ADR 0070](../adr/0070-read-side-audit-three-tiers.md) and
 [ADR 0071](../adr/0071-authentication-event-telemetry.md); none has a ledger row of its own, and the
-detection rows they change in §8 move when the code does.
+detection rows they change in §8 move when the code does. GAP-6 is built, apart from the step-journal read's records, and §8 says what it changed; GAP-7 and GAP-8 are not started.
 
 
 **What was checked and found sound**, so it is not re-litigated: injection is absent across all nine
@@ -708,7 +716,7 @@ is still change-blind, which is the property GAP-6 has to preserve rather than r
 | 8 | Persist a per-run epoch, authenticate the lease token, enforce both ADR 0065 §6 rules | H8, blocks the anchor | **Done.** The epoch is authenticated by comparison against the persisted grant rather than by a MAC over the token, see the H8 note in §12 |
 | 9 | Make pushdown provable in the conformance suite, non-compliant backends return false and fail closed | H12 | **Done.** The default implementation is gone, all twenty stores answer explicitly, the reach oracles are mandatory, and each backend's pushdown is flip-verified on its own wire; recorded as [ADR 0067](../adr/0067-reach-enforced-by-the-store-proven-on-the-wire.md). The follow-on conversions then closed the management-store sibling path on every backend |
 | 10 | Validate `baseUrl` and secret references on write, disable auto-redirect on every run-path client | H4 | **Done.** On the tenant credentials API, not the store boundary, and the run path refuses a cross-origin redirect rather than following it stripped, see the H4 note in §12 |
-| 11 | Add read audit with tenant and canonical subject, instrument the runner API, give the audit a durable append-only sink | H11, UO-10 | **Partly done.** Canonical subject, owner group and environment on every mutation audit, run start, the bootstrap seeds and the approval service included. Read audit (GAP-7), runner-API instrumentation and the durable sink (GAP-6) remain |
+| 11 | Add read audit with tenant and canonical subject, instrument the runner API, give the audit a durable append-only sink | H11, UO-10 | **Partly done.** Canonical subject, owner group and environment on every mutation audit, run start, the bootstrap seeds and the approval service included. The durable append-only sink is built ([ADR 0069](../adr/0069-audit-as-evidence-append-only-chained-signed-sink.md)): a hash-linked chain under signed heads, outside the operational store, asserted at startup and failing governance mutations closed. Read audit (GAP-7) and runner-API instrumentation remain |
 | 12 | Extend the self-elevation guard to read reach and scopes, build an access context on `security:*`, check the rule expression, add the own-request check | H10 | **Done.** The guard refuses any self-conferral, the security plane is reach-partitioned natively on all ten backends, the ceiling rule's expression is verified under a reserved namespace, and `grant` and `settle` carry the own-request check, see the H10 note in §12 |
 | 13 | Composite environment and run-id key with the 32-hex grammar, key the idempotent derivation | H18 | **Done.** The 32-hex grammar is validated at every ingress, deterministic ids are derived under the [run-derivation key](UBIQUITOUSLANGUAGE.md#run-derivation-key) with a distinguishable collision, the schedule registry owns schedule-id uniqueness, and every backend keys runs, leases and security tags by the composite [run address](UBIQUITOUSLANGUAGE.md#run-address), with the composite-address conformance oracles and per-backend flip evidence pinning it |
 | 14 | Add a per-run step budget and wall clock, enforce sub-workflow depth in production | H14 | **Done.** Every run but the scheduler's own carries a budget of fuel, wall clock and depth, resolved once under the deployment ceiling and frozen at start, enforced by the runner and verified by the coordinator on every save, with the per-step timeout, response cap and `retryAfter` ceiling on the same record, see [ADR 0068](../adr/0068-execution-budget-fuel-wall-clock-depth.md) |
