@@ -363,6 +363,41 @@ public sealed class PersistentRowSecurityPolicyTests
     }
 
     [TestMethod]
+    public async Task An_unrestricted_grant_is_unrestricted_within_the_deployment_shell_and_never_past_it()
+    {
+        // V-1 of the 2026-08-07 audit. An Unrestricted verb returned a null (full) reach before the shell was applied, so
+        // an authored grant crossed the tenant boundary that ADR 0006 says holds for every principal whatever is granted.
+        var store = new InMemorySecurityPolicyStore();
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "operator", VerbGrant.Full, VerbGrant.Full, VerbGrant.Full), "admin", default);
+        var shell = new SecurityShell([SecurityRule.Compile("sys:tenant == $claim.tenant")]);
+        var policy = new PersistentRowSecurityPolicy(store, shell, internalTagResolver: ClaimsToTags);
+        await policy.RefreshAsync();
+
+        AccessContext ctx = policy.Resolve(Principal(("sub", "olga"), ("role", "operator"), ("tenant", "acme")));
+
+        SecurityTagSet acmeRow = SecurityTagSet.FromTags([new("sys:tenant", "acme"), new("team", "anything")]);
+        SecurityTagSet globexRow = SecurityTagSet.FromTags([new("sys:tenant", "globex"), new("team", "anything")]);
+        foreach (AccessVerb verb in new[] { AccessVerb.Read, AccessVerb.Write, AccessVerb.Purge })
+        {
+            ctx.Reach(verb).ShouldNotBeNull();
+            ctx.Admits(verb, acmeRow).ShouldBeTrue();
+            ctx.Admits(verb, globexRow).ShouldBeFalse();
+        }
+    }
+
+    [TestMethod]
+    public async Task An_unrestricted_grant_is_full_reach_where_the_shell_mandates_nothing()
+    {
+        var store = new InMemorySecurityPolicyStore();
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "operator", VerbGrant.Full, VerbGrant.None, VerbGrant.None), "admin", default);
+        var policy = new PersistentRowSecurityPolicy(store, internalTagResolver: ClaimsToTags);
+        await policy.RefreshAsync();
+
+        // No mandated rule means no boundary to hold, so the reach stays null and stores keep their unfiltered path.
+        policy.Resolve(Principal(("sub", "olga"), ("role", "operator"))).Reach(AccessVerb.Read).ShouldBeNull();
+    }
+
+    [TestMethod]
     public async Task A_wildcard_binding_cannot_grant_unrestricted_reach_by_default()
     {
         // §17.5/F7: a `*` binding matches every authenticated principal; an Unrestricted grant on it would make

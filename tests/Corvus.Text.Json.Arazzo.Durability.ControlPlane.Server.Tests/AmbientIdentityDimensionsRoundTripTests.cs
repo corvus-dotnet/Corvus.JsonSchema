@@ -156,6 +156,29 @@ public sealed class AmbientIdentityDimensionsRoundTripTests
         ctx.Admits(AccessVerb.Read, Row("acme", "payments")).ShouldBeTrue();
     }
 
+    [TestMethod]
+    public async Task A_token_supplied_tenant_claim_does_not_survive_an_unresolved_context()
+    {
+        // V-2 of the 2026-08-07 audit. Where the context resolved no tenant, the ambient stamping returned early and left
+        // a token's own `tenant` claim in the reach claim map, so a forged claim chose the tenant exactly when the
+        // deployment could not. A governed dimension never comes from the token, resolved or not.
+        (HttpContextAccessor accessor, HttpRequestAmbientIdentityDimensions provider) = HostProvider();
+        var store = new InMemorySecurityPolicyStore();
+        await SeedRuleAsync(store, "team-payments", "team == 'payments'", "admin");
+        await AddBindingDraftAsync(store, SecurityBindingDocument.Draft("role", "member", VerbGrant.Rules("team-payments"), VerbGrant.None, VerbGrant.None), "admin", default);
+        var shell = new SecurityShell([SecurityRule.Compile("sys:tenant == $claim.tenant")]);
+        var policy = new PersistentRowSecurityPolicy(store, shell, internalTagResolver: SubTags, ambient: provider);
+        await policy.RefreshAsync();
+
+        ClaimsPrincipal attacker = Principal(("sub", "mallory"), ("role", "member"), ("tenant", "globex"));
+
+        SetHost(accessor, "unknown.example");
+        AccessContext ctx = policy.Resolve(attacker);
+
+        ctx.Admits(AccessVerb.Read, Row("globex", "payments")).ShouldBeFalse();
+        ctx.Admits(AccessVerb.Read, Row("acme", "payments")).ShouldBeFalse();
+    }
+
     private static (HttpContextAccessor Accessor, HttpRequestAmbientIdentityDimensions Provider) HostProvider()
     {
         var accessor = new HttpContextAccessor();

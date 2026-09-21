@@ -63,6 +63,25 @@ public static class WorkflowIdentity
         return SecurityTagSet.FromTags(tags);
     }
 
+    /// <summary>Whether a caller's tags carry an identity the deployment stamped: any tag in the reserved keyspace other
+    /// than the workflow-identity tag. Every authenticated caller has one (its subject at least), and a caller in a
+    /// posture that identifies nobody has none.</summary>
+    /// <param name="callerTags">The caller's tags.</param>
+    /// <returns><see langword="true"/> if the caller is identified.</returns>
+    public static bool HasStampedIdentity(SecurityTagSet callerTags)
+    {
+        foreach (SecurityTag tag in callerTags)
+        {
+            if (tag.Key.StartsWith(SecurityShell.DefaultInternalPrefix, StringComparison.Ordinal)
+                && !string.Equals(tag.Key, WorkflowTagKey, StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /// <summary>Whether two administrator identities are equal as sets (order-independent) — the exact identity
     /// comparison for the identity operations (add-idempotency, dedupe, digest matching). The administration
     /// authorization gate uses membership (containment), not this; see the secured catalog's IsAdministeredByMember.</summary>

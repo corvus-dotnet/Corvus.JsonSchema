@@ -107,6 +107,58 @@ public sealed class ControlPlaneAccessGrantsApiTests
 
     // Seeds a catalog version, an environment record, an availability entry, and the grantee's administration of both, then
     // constructs the handler WITH the environment + availability stores so the §849 administered-row enrichment runs.
+    [TestMethod]
+    public async Task The_overview_shows_a_caller_only_the_bindings_within_its_own_read_reach()
+    {
+        // V-10 of the 2026-08-07 audit. The security plane is reach-partitioned (P1-5), and the binding search passes the
+        // caller's access context. The overview listed bindings with no context, so it aggregated across the partition:
+        // an acme security admin saw, and had folded into the capability summary, a binding globex manages.
+        SecurityTagSet acme = SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "acme")]);
+        SecurityTagSet globex = SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "globex")]);
+        var policyStore = new InMemorySecurityPolicyStore();
+        using (ParsedJsonDocument<SecurityRuleDocument> rule = SecurityRuleDocument.Draft("sys:tenant == 'acme'"))
+        {
+            (await policyStore.AddRuleAsync("acme-rows", rule.RootElement, "ops", default)).Dispose();
+        }
+
+        // The caller's own reach: acme's rows and nothing else.
+        using (ParsedJsonDocument<SecurityBindingDocument> callerReach = SecurityBindingDocument.Draft("team", "acme-security", VerbGrant.Rules("acme-rows"), VerbGrant.None, VerbGrant.None, managementTags: acme))
+        {
+            (await policyStore.AddBindingAsync(callerReach.RootElement, "ops", default)).Dispose();
+        }
+
+        // Two bindings the grantee satisfies, one managed by each tenant.
+        using (ParsedJsonDocument<SecurityBindingDocument> mine = SecurityBindingDocument.Draft("sub", "u-1042", VerbGrant.None, VerbGrant.None, VerbGrant.None, order: 10, scopes: ["runs:read"], managementTags: acme))
+        {
+            (await policyStore.AddBindingAsync(mine.RootElement, "ops", default)).Dispose();
+        }
+
+        using (ParsedJsonDocument<SecurityBindingDocument> theirs = SecurityBindingDocument.Draft("sub", "u-1042", VerbGrant.None, VerbGrant.None, VerbGrant.None, order: 20, scopes: ["runs:purge"], managementTags: globex))
+        {
+            (await policyStore.AddBindingAsync(theirs.RootElement, "ops", default)).Dispose();
+        }
+
+        var policy = new PersistentRowSecurityPolicy(policyStore, internalTagResolver: static p => p?.FindFirst("team") is { } team ? [new SecurityTag("sys:team", team.Value)] : []);
+        await policy.RefreshAsync();
+        var accessor = new HttpContextAccessor
+        {
+            HttpContext = new DefaultHttpContext { User = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity([new System.Security.Claims.Claim("team", "acme-security")], "test")) },
+        };
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops", administrators: new InMemoryWorkflowAdministratorStore());
+        var handler = new ArazzoControlPlaneSecurityHandler(policyStore, policy, new ControlPlaneAccess(accessor, policy), catalog, new InMemorySourceCredentialStore());
+
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using Stj.JsonDocument reach = await GetReachAsync(handler, GranteeJson, workspace);
+        reach.RootElement.GetProperty("bindings").EnumerateArray()
+            .Select(b => b.GetProperty("scopes")[0].GetString()).ShouldBe(["runs:read"]);
+
+        GetAccessGrantsResult summary = await handler.HandleGetAccessGrantsAsync(new GetAccessGrantsParams { Grantee = EncodeGranteeToken(GranteeJson, workspace) }, workspace);
+        summary.StatusCode.ShouldBe(200);
+        using Stj.JsonDocument summaryDoc = ReadBody(summary.Body);
+        summaryDoc.RootElement.GetProperty("capabilities").EnumerateArray()
+            .Select(c => c.GetProperty("scope").GetString()).ShouldBe(["runs:read"]);
+    }
+
     private static async Task<ArazzoControlPlaneSecurityHandler> CreateEnrichedHandlerAsync()
     {
         SecurityTagSet granteeIdentity = SecurityTagSet.FromTags([new SecurityTag("sys:sub", "u-1042")]);
@@ -134,8 +186,7 @@ public sealed class ControlPlaneAccessGrantsApiTests
         (await availabilityStore.MakeAvailableAsync("orders-workflow", 1, "production", "ops", default)).Entry.Dispose();
 
         var policyStore = new InMemorySecurityPolicyStore();
-        var policy = new PersistentRowSecurityPolicy(policyStore);
-        var access = new ControlPlaneAccess(new HttpContextAccessor(), policy);
+        (PersistentRowSecurityPolicy policy, ControlPlaneAccess access) = await OperatorAccessAsync(policyStore);
         return new ArazzoControlPlaneSecurityHandler(
             policyStore, policy, access, catalog, new InMemorySourceCredentialStore(), environmentAdministration,
             environmentStore: environmentStore, availabilityStore: availabilityStore);
@@ -236,8 +287,7 @@ public sealed class ControlPlaneAccessGrantsApiTests
         await environmentAdministration.EstablishAsync("production", adminIdentity, default, false, default, false, default);
 
         var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops", administrators: new InMemoryWorkflowAdministratorStore());
-        var policy = new PersistentRowSecurityPolicy(policyStore);
-        var access = new ControlPlaneAccess(new HttpContextAccessor(), policy);
+        (PersistentRowSecurityPolicy policy, ControlPlaneAccess access) = await OperatorAccessAsync(policyStore);
         return new ArazzoControlPlaneSecurityHandler(
             policyStore, policy, access, catalog, credentialStore, environmentAdministration, new FixedTimeProvider(Now));
     }
@@ -261,8 +311,7 @@ public sealed class ControlPlaneAccessGrantsApiTests
             (await policyStore.AddBindingAsync(binding.RootElement, "ops", default)).Dispose();
         }
 
-        var policy = new PersistentRowSecurityPolicy(policyStore);
-        var access = new ControlPlaneAccess(new HttpContextAccessor(), policy);
+        (PersistentRowSecurityPolicy policy, ControlPlaneAccess access) = await OperatorAccessAsync(policyStore);
         var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops", administrators: new InMemoryWorkflowAdministratorStore());
         var handler = new ArazzoControlPlaneSecurityHandler(policyStore, policy, access, catalog, new InMemorySourceCredentialStore());
 
@@ -366,9 +415,33 @@ public sealed class ControlPlaneAccessGrantsApiTests
         }
 
         var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops", administrators: administratorStore);
-        var policy = new PersistentRowSecurityPolicy(policyStore);
-        var access = new ControlPlaneAccess(new HttpContextAccessor(), policy);
+        (PersistentRowSecurityPolicy policy, ControlPlaneAccess access) = await OperatorAccessAsync(policyStore);
         return new ArazzoControlPlaneSecurityHandler(policyStore, policy, access, catalog, credentialStore);
+    }
+
+    // The overview applies the caller's read reach to the bindings it aggregates (V-10), and an untagged binding is
+    // visible to full reach alone, so these tests call as an operator whose one binding grants unrestricted read. It is
+    // added last, so it sorts after the bindings under test, and no grantee here satisfies it.
+    private static async Task<(PersistentRowSecurityPolicy Policy, ControlPlaneAccess Access)> OperatorAccessAsync(InMemorySecurityPolicyStore policyStore)
+    {
+        using (ParsedJsonDocument<SecurityBindingDocument> operatorReach = SecurityBindingDocument.Draft("role", "overview-operator", VerbGrant.Full, VerbGrant.None, VerbGrant.None, order: 1000))
+        {
+            (await policyStore.AddBindingAsync(operatorReach.RootElement, "ops", default)).Dispose();
+        }
+
+        var policy = new PersistentRowSecurityPolicy(policyStore, internalTagResolver: static p => p?.FindFirst("role") is { } role ? [new SecurityTag("sys:role", role.Value)] : []);
+        await policy.RefreshAsync();
+        // A fixed accessor, not HttpContextAccessor: that one holds its context in an AsyncLocal, and a value set inside
+        // this awaited method would not flow back to the test that calls the handler.
+        var accessor = new FixedHttpContextAccessor
+        {
+            HttpContext = new DefaultHttpContext { User = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity([new System.Security.Claims.Claim("role", "overview-operator")], "test")) },
+        };
+        var access = new ControlPlaneAccess(accessor, policy);
+
+        // The precondition these tests rest on: the operator's read reach is full.
+        access.Current().Reach(AccessVerb.Read).ShouldBeNull();
+        return (policy, access);
     }
 
     // Base64url-encodes the grantee JSON to its opaque token and binds it as the query parameter exactly as the generated
@@ -411,5 +484,10 @@ public sealed class ControlPlaneAccessGrantsApiTests
         GetAccessGrantsCredentialsResult result = await handler.HandleGetAccessGrantsCredentialsAsync(parameters, workspace);
         result.StatusCode.ShouldBe(200);
         return ReadBody(result.Body);
+    }
+
+    private sealed class FixedHttpContextAccessor : IHttpContextAccessor
+    {
+        public HttpContext? HttpContext { get; set; }
     }
 }

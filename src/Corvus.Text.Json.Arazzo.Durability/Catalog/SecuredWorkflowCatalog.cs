@@ -429,6 +429,13 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
     private static async ValueTask EstablishAdministrationAsync(IWorkflowAdministratorStore store, string baseWorkflowId, SecurityTagSet versionTags, string actor, CancellationToken cancellationToken)
     {
         SecurityTagSet ownerIdentity = WorkflowIdentity.AdministratorIdentity(versionTags);
+        if (ownerIdentity.IsEmpty)
+        {
+            // Nobody identified published this, so there is no administrator to record. An empty identity is never
+            // persisted as an administrator, since it would match every caller (P1-13).
+            return;
+        }
+
         using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         AdministratorIdentity owner = WorkflowAdministrators.BuildIdentity(workspace, ownerIdentity, default, hasKind: false, default, hasLabel: false);
         try
@@ -549,8 +556,14 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
         // Membership (§16.5.4): the version-1 owner administers iff the candidate (submitter) identity CONTAINS the owner
         // identity — the same rule the explicit-record path applies via IsAdministeredBy above, so the no-explicit-store /
         // legacy fallback stays consistent with the stored-record deployment (S4).
-        return (true, ownerIdentity.IsSubsetOf(candidate));
+        return (true, OwnerAdministers(ownerIdentity, candidate));
     }
+
+    // An empty set is a subset of every set, so an identity-less version 1 (published where no caller is identified)
+    // would be administered by anyone. It is administered only by a caller the deployment has not identified either,
+    // which no authenticated caller is, so an identified caller never inherits a workflow that nobody owns (P1-13).
+    private static bool OwnerAdministers(SecurityTagSet ownerIdentity, SecurityTagSet candidate)
+        => ownerIdentity.IsEmpty ? !WorkflowIdentity.HasStampedIdentity(candidate) : ownerIdentity.IsSubsetOf(candidate);
 
     // Loads the current administrators of a base id for a mutation: the explicit record (returned to keep its identities
     // alive for bytes-to-bytes carry-forward) with its etag, else the version-1-derived default identity built in a
@@ -579,6 +592,11 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
         }
 
         SecurityTagSet ownerIdentity = WorkflowIdentity.AdministratorIdentity(firstVersion.RootElement.SecurityTagsValue);
+        if (ownerIdentity.IsEmpty)
+        {
+            // An identity-less version 1 has no administrator to mutate from, and none is invented (P1-13).
+            return (null, null, [], WorkflowEtag.None);
+        }
 
         // The caller (MutateAdministratorsAsync) disposes this workspace in a finally that runs after its PutAsync await, so
         // it may dispose on a different thread — it must be the unrented, thread-affinity-free workspace.

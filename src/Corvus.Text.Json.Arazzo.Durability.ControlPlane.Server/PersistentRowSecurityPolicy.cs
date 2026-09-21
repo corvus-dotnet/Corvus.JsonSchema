@@ -18,7 +18,8 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// </summary>
 /// <remarks>
 /// <para><b>Resolution (per verb):</b> collect the bindings whose claim matches the principal; if any grants the
-/// verb <c>Unrestricted</c>, the reach is <see langword="null"/> (full access — the operator path). Otherwise the
+/// verb <c>Unrestricted</c>, the reach is every row the deployment shell admits (<see langword="null"/>, full access,
+/// only where the shell mandates no rule). Otherwise the
 /// reach is the deployment shell wrapper AND the OR across matched bindings of (that binding's rules ANDed) — so
 /// grants compose as OR (more bindings → more access), always within the shell. If no binding grants the verb the
 /// reach is an empty filter, which is <b>deny-by-default</b> (an authenticated principal with no binding sees
@@ -255,9 +256,11 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
     // Stamps the request-context ambient dimensions (§16.5.5) into the reach claim map, prefix-stripped to claim space
     // (sys:tenant -> the tenant claim) so a rule `sys:tenant == $claim.tenant` resolves the context tenant uniformly with
     // a token-sourced claim. The ambient value is AUTHORITATIVE: it replaces any token-supplied claim of the same name,
-    // so a forged `tenant` claim cannot widen the context-derived reach (the trust boundary). A no-op (no extra entry)
-    // when no provider is configured or the context resolves none. Ambient keys are distinct, so each resolves to its own
-    // claim name with no accumulation needed.
+    // so a forged `tenant` claim cannot widen the context-derived reach (the trust boundary). Every dimension the
+    // provider GOVERNS is first removed from the map, whether or not this context resolves a value for it, so where the
+    // context resolves none the claim is absent and a rule over it denies: a token never supplies a governed dimension.
+    // A no-op when no provider is configured. Ambient keys are distinct, so each resolves to its own claim name with no
+    // accumulation needed.
     private void AddAmbientClaims(Dictionary<string, IReadOnlyList<string>> map)
     {
         if (this.ambient is null)
@@ -265,13 +268,13 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
             return;
         }
 
-        AmbientDimensionSet set = this.ambient.Resolve();
-        if (set.IsEmpty)
+        string prefix = this.InternalTagPrefix;
+        foreach (string governedKey in this.ambient.GovernedKeys)
         {
-            return;
+            map.Remove(governedKey.StartsWith(prefix, StringComparison.Ordinal) ? governedKey[prefix.Length..] : governedKey);
         }
 
-        string prefix = this.InternalTagPrefix;
+        AmbientDimensionSet set = this.ambient.Resolve();
         foreach (SecurityTag tag in set.Tags)
         {
             string claimName = tag.Key.StartsWith(prefix, StringComparison.Ordinal) ? tag.Key[prefix.Length..] : tag.Key;
@@ -397,8 +400,10 @@ public sealed class PersistentRowSecurityPolicy : ControlPlaneRowSecurityPolicy
             VerbClause verb = selectVerb(binding);
             if (verb.Unrestricted)
             {
-                // Any matched Unrestricted grant for the verb → full reach (the operator path).
-                return null;
+                // Any matched Unrestricted grant for the verb → every row the deployment shell admits. The shell bounds
+                // every principal whatever was granted (ADR 0002, ADR 0006), so this is a null (full) reach only where
+                // the shell mandates no rule.
+                return this.shell.BuildUnrestrictedFilter(claims);
             }
 
             if (verb.Clause is { } clause)

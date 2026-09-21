@@ -130,4 +130,14 @@ public sealed class SecurityShell
         ArgumentNullException.ThrowIfNull(userRules);
         return new SecurityFilter([.. this.mandatedRules, .. userRules], claims);
     }
+
+    /// <summary>
+    /// Builds the reach of a principal an <c>Unrestricted</c> grant applies to: every row the deployment's mandated
+    /// wrapper rules admit. The shell bounds every principal whatever grants were authored (ADR 0006), so an
+    /// unrestricted grant is unrestricted <em>within</em> the shell and never a way past it.
+    /// </summary>
+    /// <param name="claims">The principal's claims (name → values).</param>
+    /// <returns>The wrapper-only filter, or <see langword="null"/> (full reach) where the shell mandates no rule.</returns>
+    public SecurityFilter? BuildUnrestrictedFilter(IReadOnlyDictionary<string, IReadOnlyList<string>> claims)
+        => this.mandatedRules.Count == 0 ? null : new SecurityFilter(this.mandatedRules, claims);
 }

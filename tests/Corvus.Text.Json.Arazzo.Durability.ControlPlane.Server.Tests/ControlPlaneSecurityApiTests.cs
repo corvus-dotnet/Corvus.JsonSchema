@@ -346,6 +346,48 @@ public sealed class ControlPlaneSecurityApiTests
         => Stj.JsonDocument.Parse(JsonMarshal.GetRawUtf8Value(result.Body).Memory);
 
     [TestMethod]
+    public async Task A_per_person_binding_cannot_be_authored_directly()
+    {
+        // V-9 of the 2026-08-07 audit, ADR 0014. Only the web kit kept a per-person grant request-only, so a holder of
+        // security:write could grant a named colleague any reach and any scope, with no second party, by calling the API.
+        var policyStore = new InMemorySecurityPolicyStore();
+        await using Scoped host = await StartSecuredAsync(policyStore);
+        const string caller = "team=payments";
+
+        (await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", """{"claimType":"sub","claimValue":"colleague","read":{"unrestricted":true}}""", Write, caller))
+            .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", """{"claimType":"sub","claimValue":"colleague","scopes":["security:write"]}""", Write, caller))
+            .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        // Naming the person in an additional clause names them all the same.
+        HttpResponseMessage viaClause = await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", """{"claimType":"team","claimValue":"billing","additionalClauses":[{"dimension":"sub","value":"colleague"}],"write":{"ruleNames":["reach-payments"]}}""", Write, caller);
+        viaClause.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        using (Stj.JsonDocument problem = await ReadJsonAsync(viaClause))
+        {
+            problem.RootElement.GetProperty("type").GetString()!.ShouldEndWith("per-person-request-only");
+        }
+
+        // A standing group binding is still authored directly, and re-pointing it at a named person is refused on update.
+        HttpResponseMessage billing = await host.SendJsonAsync(HttpMethod.Post, "/security/bindings", """{"claimType":"team","claimValue":"billing","read":{"unrestricted":true}}""", Write, caller);
+        billing.StatusCode.ShouldBe(HttpStatusCode.Created);
+        string bindingId;
+        using (Stj.JsonDocument doc = await ReadJsonAsync(billing))
+        {
+            bindingId = doc.RootElement.GetProperty("id").GetString()!;
+        }
+
+        (await host.SendJsonAsync(HttpMethod.Put, $"/security/bindings/{bindingId}", """{"claimType":"sub","claimValue":"colleague","read":{"unrestricted":true}}""", Write, caller))
+            .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        // Nothing per-person was stored.
+        using PooledDocumentList<SecurityBindingDocument> stored = await policyStore.ListBindingsAsync(default);
+        foreach (SecurityBindingDocument binding in stored)
+        {
+            binding.ClaimTypeValue.ShouldNotBe("sub");
+        }
+    }
+
+    [TestMethod]
     public async Task The_self_elevation_guard_rejects_a_caller_granting_itself_any_reach_or_scope()
     {
         var policyStore = new InMemorySecurityPolicyStore();

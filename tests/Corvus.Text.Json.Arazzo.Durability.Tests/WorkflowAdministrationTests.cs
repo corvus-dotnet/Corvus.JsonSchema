@@ -175,6 +175,29 @@ public sealed class WorkflowAdministrationTests
     }
 
     [TestMethod]
+    public async Task An_identity_less_first_version_is_not_administered_by_whoever_comes_next()
+    {
+        // V-3 and P1-13 of the 2026-08-07 audit. An empty tag set is a subset of every set, so a version 1 that carries
+        // no identity was administered by anyone: the next caller published version 2 of somebody else's workflow id.
+        SecurityTagSet mallory = SecurityTagSet.FromTags([new SecurityTag("sys:sub", "mallory")]);
+
+        // Without an administrator store (the version-1 derivation)...
+        var derived = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops");
+        (await derived.AddAsync(Package("orphan"), Owner, default, SecurityTagSet.Empty, default)).Dispose();
+        await Should.ThrowAsync<WorkflowAdministrationException>(async () => (await derived.AddAsync(Package("orphan"), Owner, default, mallory, default)).Dispose());
+
+        // ...and with one: no empty identity is recorded as an administrator, and none is inherited.
+        SecuredWorkflowCatalog explicitCatalog = NewCatalog(out InMemoryWorkflowAdministratorStore administrators);
+        (await explicitCatalog.AddAsync(Package("orphan"), Owner, default, SecurityTagSet.Empty, default)).Dispose();
+        (await administrators.GetAsync("orphan", default)).ShouldBeNull();
+        await Should.ThrowAsync<WorkflowAdministrationException>(async () => (await explicitCatalog.AddAsync(Package("orphan"), Owner, default, mallory, default)).Dispose());
+        await Should.ThrowAsync<WorkflowAdministrationException>(async () => (await AddAdministratorAsync(explicitCatalog, "orphan", mallory, mallory)).Dispose());
+
+        // A posture that identifies nobody stays consistent with itself: the identity-less caller publishes again.
+        (await derived.AddAsync(Package("orphan"), Owner, default, SecurityTagSet.Empty, default)).Dispose();
+    }
+
+    [TestMethod]
     public async Task Without_an_administrator_store_management_is_unsupported()
     {
         var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops");

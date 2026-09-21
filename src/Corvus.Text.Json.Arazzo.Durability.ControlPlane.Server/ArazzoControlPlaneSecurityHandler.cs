@@ -350,6 +350,13 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             return refused;
         }
 
+        if (this.GrantsToANamedPerson(draft, out problem))
+        {
+            CreateSecurityBindingResult refused = CreateSecurityBindingResult.Forbidden(problem, workspace);
+            await this.auditor.MutationAsync("security-binding.create", this.AuditActor(), BindingKind, string.Empty, "refused-per-person").ConfigureAwait(false);
+            return refused;
+        }
+
         // Stamp the creator's tenant tag as the binding's management scope (§14.2/P1-5), so it is reach-visible to and
         // manageable by the creator's tenant rather than deployment-globally (an unscoped/Open caller stamps none). The
         // stamped draft is a pooled document (a copy of the body plus the tags); the summary references the returned
@@ -392,6 +399,13 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         {
             UpdateSecurityBindingResult refused = UpdateSecurityBindingResult.Forbidden(problem, workspace);
             await this.auditor.MutationAsync("security-binding.update", this.AuditActor(), BindingKind, id, "refused-self-elevation").ConfigureAwait(false);
+            return refused;
+        }
+
+        if (this.GrantsToANamedPerson(draft, out problem))
+        {
+            UpdateSecurityBindingResult refused = UpdateSecurityBindingResult.Forbidden(problem, workspace);
+            await this.auditor.MutationAsync("security-binding.update", this.AuditActor(), BindingKind, id, "refused-per-person").ConfigureAwait(false);
             return refused;
         }
 
@@ -468,7 +482,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
         JsonString bindingPageToken = default;
         while (true)
         {
-            using SecurityBindingPage page = await this.store.ListBindingsAsync(0, bindingPageToken, default, cancellationToken).ConfigureAwait(false);
+            using SecurityBindingPage page = await this.store.ListBindingsAsync(0, bindingPageToken, default, this.CurrentContext(), cancellationToken).ConfigureAwait(false);
             foreach (SecurityBindingDocument binding in page.Bindings)
             {
                 if (!BindingAppliesToGrantee(binding, grantee, this.access))
@@ -540,7 +554,7 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
 
         int limit = parameters.Limit.IsNotUndefined() ? (int)parameters.Limit : DefaultAccessGrantsPageSize;
         JsonString pageToken = JsonString.From(parameters.PageToken);
-        using SecurityBindingPage page = await this.store.ListBindingsAsync(limit, pageToken, default, cancellationToken).ConfigureAwait(false);
+        using SecurityBindingPage page = await this.store.ListBindingsAsync(limit, pageToken, default, this.CurrentContext(), cancellationToken).ConfigureAwait(false);
 
         var matchedBindings = new List<SecurityBindingDocument>();
         foreach (SecurityBindingDocument binding in page.Bindings)
@@ -871,6 +885,50 @@ public sealed class ArazzoControlPlaneSecurityHandler : IApiSecurityHandler
             403,
             "You may not author a binding that grants reach or a capability scope to a claim you hold. Request access through the access-request flow instead.");
         return true;
+    }
+
+    // The per-person split (ADR 0014): a binding that names one person, a `sub` clause, and confers anything is
+    // request-and-approve only, so that granting a named person reach or a scope always involves a second party. Without
+    // this a holder of security:write grants a colleague anything by calling the API, since only the web kit enforced
+    // the split. The approval flow writes its grants through the store, not this handler, so it is unaffected. Inert
+    // with no caller, like the self-elevation guard, since the Open posture has no second party to involve.
+    private bool GrantsToANamedPerson(SecurityBindingDocument draft, out Models.ProblemDetails.Source problem)
+    {
+        problem = default;
+        if (this.access is not { } access || access.CurrentPrincipal is null || !ConfersAnything(draft) || !NamesAPerson(draft))
+        {
+            return false;
+        }
+
+        problem = Problem(
+            "per-person-request-only",
+            "A per-person grant is request-only",
+            403,
+            "A binding that names one person (a sub clause) cannot be authored directly. Grant a person access through the access-request flow, where a second party approves it.");
+        return true;
+    }
+
+    private static bool NamesAPerson(SecurityBindingDocument draft)
+    {
+        // `sub` is the operator-facing dimension that names one person (the sys: prefix stripped). Compared as UTF-8
+        // against the document, so neither dimension is realised as a string.
+        if (draft.ClaimType.ValueEquals("sub"u8))
+        {
+            return true;
+        }
+
+        if (draft.AdditionalClauses.IsNotUndefined())
+        {
+            foreach (SecurityBindingDocument.AdditionalClause clause in draft.AdditionalClauses.EnumerateArray())
+            {
+                if (clause.DimensionValue.ValueEquals("sub"u8))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     // Whether the binding confers anything at all: reach for any verb, or a capability scope. The scopes array is gated

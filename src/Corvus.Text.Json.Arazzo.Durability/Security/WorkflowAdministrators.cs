@@ -78,7 +78,10 @@ public readonly partial struct WorkflowAdministrators
 
         foreach (AdministratorIdentity administrator in this.Administrators.EnumerateArray())
         {
-            if (SecurityTagSet.CopyFrom(administrator.Tags).IsSubsetOf(candidate))
+            // An empty identity is a subset of every candidate, so it is skipped and never matched: a record that holds
+            // one names nobody, and must not make everybody an administrator (P1-13).
+            SecurityTagSet identity = SecurityTagSet.CopyFrom(administrator.Tags);
+            if (!identity.IsEmpty && identity.IsSubsetOf(candidate))
             {
                 return true;
             }
