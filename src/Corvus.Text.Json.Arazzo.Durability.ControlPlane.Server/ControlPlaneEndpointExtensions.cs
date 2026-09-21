@@ -384,7 +384,7 @@ public static class ControlPlaneEndpointExtensions
             accessRequestsHandler,
             availabilityRequestsHandler,
             identityHandler,
-            gateScopes ? AuditRecordFailure.ConfigureWithDeclaredScopes : AuditRecordFailure.Configure);
+            AuditRecordFailure.Compose(new ReadRefusalAudit(access, auditor), gateScopes));
 
         // The serverless checkpoint surface (ADR 0055): a baked, Native-AOT function advances a run out of process and
         // loads/saves its checkpoint here rather than binding a store SDK. It is not part of the generated OpenAPI

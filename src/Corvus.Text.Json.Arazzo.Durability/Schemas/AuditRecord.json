@@ -157,6 +157,9 @@
         },
         "environment": {
           "$ref": "#/$defs/Label"
+        },
+        "suppressed": {
+          "$ref": "#/$defs/SuppressedCount"
         }
       }
     },
@@ -262,6 +265,12 @@
       "type": "string",
       "pattern": "^[a-z0-9-]{1,63}$",
       "description": "The id of the writer a chain belongs to: one control plane instance, stable across its restarts. A writer's chains are stored under its id, and a writer only ever continues its own."
+    },
+    "SuppressedCount": {
+      "type": "integer",
+      "format": "int64",
+      "minimum": 1,
+      "description": "Carried by a read record whose disclosure is `suppressed`: the number of a subject's refusals that a window counted and did not append, because the subject was over its bound (ADR 0070). The record is the evidence of the volume the chain did not take."
     }
   }
 }

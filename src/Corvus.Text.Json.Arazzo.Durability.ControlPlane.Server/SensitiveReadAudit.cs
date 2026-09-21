@@ -67,6 +67,10 @@ internal static class SensitiveReadAudit
 
         // The journal's own log line is the auditor's now, with the chain's record. A journal returned, whole or redacted,
         // is a disclosure and fails closed on the sink; a refused read never fails the request (ADR 0070).
-        return auditor.ReadAsync("run.journal.read", actor, "run", runId, tier, disclosesPayload: disclosure != JournalDisclosure.Refused);
+        // A refused journal read answers with a not-found, and every read that does is recorded once, for every operation,
+        // by ReadRefusalAudit. Recording it here as well would put the same probe on the chain twice.
+        return disclosure == JournalDisclosure.Refused
+            ? ValueTask.CompletedTask
+            : auditor.ReadAsync("run.journal.read", actor, "run", runId, tier, disclosesPayload: true);
     }
 }

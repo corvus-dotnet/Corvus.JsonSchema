@@ -115,6 +115,11 @@ public readonly partial struct AuditRecord
         writer.WriteString(ReadRecord.JsonPropertyNames.TargetKindUtf8, entry.TargetKind);
         writer.WriteString(ReadRecord.JsonPropertyNames.TargetIdUtf8, entry.TargetId);
         writer.WriteString(ReadRecord.JsonPropertyNames.DisclosureUtf8, entry.Outcome);
+        if (entry.Suppressed > 0)
+        {
+            writer.WriteNumber(ReadRecord.JsonPropertyNames.SuppressedUtf8, entry.Suppressed);
+        }
+
         if (entry.Environment is not null)
         {
             writer.WriteString(ReadRecord.JsonPropertyNames.EnvironmentUtf8, entry.Environment);

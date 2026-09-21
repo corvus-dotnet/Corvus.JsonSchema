@@ -199,7 +199,7 @@ checkable rather than a by-product of what a review happened to look at.
 | Privilege escalation by self-granting | **Holds**. The self-elevation guard refuses any binding that confers read, write or purge reach or any scope on the caller, a wildcard binding with any grant is refused on the API path, the access-request ceiling's rule is verified by expression under a reserved namespace, and `approve`, `grant` and `settle` all carry the independent-decision check | The guard is per binding and does not compare against what the caller already holds: a standing grant of a token-held scope is refused rather than weighed | H10 |
 | Unauthenticated or unscoped surface on the API host | **Holds**. The checkpoint surface requires a run-scoped token, and is not mapped at all without a secret to validate one | The token is a bearer credential, so it is replayable within its lifetime, bounded to the one run it names | H1 |
 | Identity spoofing via request-derived dimensions | **Absent**. No cross-check between ambient and token-derived tenant | Tenant becomes a function of the URL, and the self-elevation guard becomes context-local | H21 |
-| Existence disclosure and enumeration | **Partial**. Non-disclosing 404 by design ([ADR 0004](../adr/0004-fail-closed-non-disclosing-enforcement.md)) | Denials are unaudited, so probing is quiet by design *and* by omission | H11 |
+| Existence disclosure and enumeration | **Holds**. Non-disclosing 404 by design ([ADR 0004](../adr/0004-fail-closed-non-disclosing-enforcement.md)), and every such answer to a read is a refusal record in the audit chain, capped for each subject with the suppressed count recorded ([ADR 0070](../adr/0070-read-side-audit-three-tiers.md)) | The answer discloses nothing and the probe is evidenced. What is not yet recorded is a refused mutation on a path that does not already audit its refusals | H11 |
 | Resource exhaustion of the shared plane | **Partial**. Bounded counts, [keyset pagination](UBIQUITOUSLANGUAGE.md#keyset-pagination), standing capacity limits counted by the target environment's owner group in every posture, and a version admitted only into an environment its owner group holds | No rate limiting on any browser-facing or governance endpoint, and the schedule run-now surface now starts its target through the one start admission (H45 closed) | H41, H45 |
 | Object reference forgery | **Holds** for runs. The 32-hex [run-id](UBIQUITOUSLANGUAGE.md#run-id) grammar at every ingress, deterministic ids derived under the [run-derivation key](UBIQUITOUSLANGUAGE.md#run-derivation-key), and the composite [run address](UBIQUITOUSLANGUAGE.md#run-address) as the primary key in every backend | A guessed or disclosed run id resolves only within the caller's reach, and a run-id collision is evaluated only within the caller's environment, so neither branch is an existence oracle over another tenant's runs. The [schedule](UBIQUITOUSLANGUAGE.md#schedule) surface is the deliberate exception: schedule ids are a deployment-global operator namespace (the schedules routes carry no environment), so `create` returns a distinguishable `409` when an id is already registered in any environment. That is a name-taken signal over a shared global namespace, not disclosure of another tenant's run, and is accepted as AR-18 | H18 |
 
@@ -400,7 +400,7 @@ its last process left unsigned without authenticating it: between a stop and the
 the sink holds, and the verifier goes on reporting it as unsigned. And of reads the chain holds
 the disclosures only, the step journal, a debug run's trace, a credential binding's detail and the checkpoint,
 each recorded before it is disclosed and refused when it cannot be
-([ADR 0070](../adr/0070-read-side-audit-three-tiers.md)). Refused reads, and the volume of lists and searches, are not yet recorded. The rows below marked "No" emit nothing at all.
+([ADR 0070](../adr/0070-read-side-audit-three-tiers.md)). Refused reads are recorded too, up to a bound for each subject and as a count past it. The volume of lists and searches is not yet metered. The rows below marked "No" emit nothing at all.
 
 | Security-critical action | Audited | Consequence |
 |--------------------------|---------|-------------|
@@ -409,7 +409,7 @@ each recorded before it is disclosed and refused when it cannot be
 | Every runner API operation, claim, lease, checkpoint, catalog | No | Index rewriting, lease theft, quota trips and epoch anomalies all silent |
 | Any read, list or search on the governance API | No | Cross-tenant reads and enumeration are unreconstructable |
 | Authentication success and failure | No | Brute force and credential stuffing undetectable by construction |
-| Authorization denial on read paths | No | ADR 0004 makes probing quiet by design, and nothing records the probe |
+| Authorization denial on read paths | Yes | Every `GET` that names a resource and answers with a not-found is a refusal record in the audit chain, by the actor, for the id it asked after, recorded for all operations by one filter. A subject's refusals are recorded up to a bound a minute and as a count past it, so an enumeration is evidenced without being able to fill the chain ([ADR 0070](../adr/0070-read-side-audit-three-tiers.md)). ADR 0004 still makes the answer itself non-disclosing |
 | Secret resolution, and decryption failure | No | The clearest tamper signal in the design is discarded |
 | Outbound document fetch, by destination | No | An SSRF sweep cannot be answered for after the fact |
 | Signature verification failure, verification disabled at startup | No | A tampered package looks like a disk-full build failure |
@@ -682,7 +682,7 @@ the store or the artifact source is retried on every poll until it heals, by dec
 decided the same day as [ADR 0069](../adr/0069-audit-as-evidence-append-only-chained-signed-sink.md),
 [ADR 0070](../adr/0070-read-side-audit-three-tiers.md) and
 [ADR 0071](../adr/0071-authentication-event-telemetry.md); none has a ledger row of its own, and the
-detection rows they change in §8 move when the code does. GAP-6 is built and §8 says what it changed. GAP-7 is begun, with the read record and the control plane's four payload disclosures on the chain; GAP-8 is not started.
+detection rows they change in §8 move when the code does. GAP-6 is built and §8 says what it changed. GAP-7 is begun, with the read record, the control plane's four payload disclosures and its refused reads on the chain; GAP-8 is not started.
 
 
 **What was checked and found sound**, so it is not re-litigated: injection is absent across all nine

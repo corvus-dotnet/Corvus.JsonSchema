@@ -214,4 +214,12 @@ public static class ArazzoTelemetry
     /// </summary>
     public static Counter<long> AuditHeadFailures { get; } =
         Meter.CreateCounter<long>("corvus.arazzo.governance.audit.head_failures", "{head}", "Audit chain heads that could not be signed or stored");
+
+    /// <summary>
+    /// Gets the counter for reads that were refused with a non-disclosing not-found (ADR 0070), dimensioned by
+    /// <see cref="ActionTag">action</see> and, where present, by tenant. It counts every refusal, those over a subject's
+    /// bound included, which the audit chain does not take one by one: a probe's full rate is here.
+    /// </summary>
+    public static Counter<long> ReadRefusals { get; } =
+        Meter.CreateCounter<long>("corvus.arazzo.governance.read.refusals", "{refusal}", "Reads refused with a non-disclosing not-found");
 }

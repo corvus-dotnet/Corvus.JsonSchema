@@ -17,4 +17,5 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// <param name="Outcome">The outcome, a refusal included (for example <c>granted</c>, <c>refused-own-request</c>). For a read it is the disclosure tier (for example <c>full</c>, <c>redacted</c>, <c>refused</c>).</param>
 /// <param name="Environment">The environment the action is scoped to, or <see langword="null"/> where it is not environment-scoped.</param>
 /// <param name="Kind">Whether the entry is a mutation or a read.</param>
-public readonly record struct AuditEntry(string Action, string Actor, string? Tenant, string TargetKind, string TargetId, string Outcome, string? Environment, AuditEntryKind Kind = AuditEntryKind.Mutation);
+/// <param name="Suppressed">For a read entry that reports refusals a subject's window counted and did not append, how many; otherwise zero.</param>
+public readonly record struct AuditEntry(string Action, string Actor, string? Tenant, string TargetKind, string TargetId, string Outcome, string? Environment, AuditEntryKind Kind = AuditEntryKind.Mutation, long Suppressed = 0);

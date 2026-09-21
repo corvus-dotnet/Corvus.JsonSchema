@@ -66,6 +66,9 @@ public static class WorkflowCheckpointEndpoints
             CheckpointLoad? loaded = await coordinator.LoadAsync(address, context.RequestAborted).ConfigureAwait(false);
             if (loaded is not { } load)
             {
+                // A refused read is recorded too, and never fails the request (ADR 0070). This surface is mapped by hand, so
+                // the refusal filter over the generated operations does not see it.
+                await auditor.RefusedReadAsync("checkpoint.read", new AuditSubject("run:" + address.RunId.Value, null), "run", address.RunId.Value, address.Environment).ConfigureAwait(false);
                 context.Response.StatusCode = StatusCodes.Status404NotFound;
                 return;
             }

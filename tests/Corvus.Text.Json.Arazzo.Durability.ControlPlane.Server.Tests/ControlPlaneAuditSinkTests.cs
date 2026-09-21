@@ -264,6 +264,68 @@ public sealed class ControlPlaneAuditSinkTests
         auditor.Health.IsHealthy.ShouldBeTrue();
     }
 
+    [TestMethod]
+    public async Task A_read_refused_with_a_not_found_is_a_refusal_record_and_nothing_else_is()
+    {
+        var sink = new InMemoryAuditSink();
+        await using var auditor = new GovernanceAuditor(sink: sink, headSigner: Signer(), headOptions: new AuditHeadOptions(1000, TimeSpan.FromHours(1)));
+        await using Host host = await StartAsync(ControlPlaneSecurityMode.Scoped, auditor);
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"real-env","displayName":"Real"}""", Write)).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        // Found, and so not a refusal; a mutation that finds nothing is not a read; a list names no resource.
+        (await host.SendAsync(HttpMethod.Get, "/environments/real-env", Read)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendAsync(HttpMethod.Delete, "/environments/no-such-env", Write)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await host.SendAsync(HttpMethod.Get, "/environments", Read)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        (await host.SendAsync(HttpMethod.Get, "/environments/secret-env", Read)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        Stj.JsonElement refusal = ReadRecords(sink).ShouldHaveSingleItem();
+        refusal.GetProperty("action").GetString().ShouldBe("getEnvironment");
+        refusal.GetProperty("targetKind").GetString().ShouldBe("environments");
+        refusal.GetProperty("targetId").GetString().ShouldBe("secret-env");
+        refusal.GetProperty("disclosure").GetString().ShouldBe("refused");
+        refusal.GetProperty("actor").GetString().ShouldNotBeNullOrEmpty();
+    }
+
+    [TestMethod]
+    public async Task An_enumeration_is_recorded_up_to_its_bound_and_then_as_a_count()
+    {
+        var sink = new InMemoryAuditSink();
+        var clock = new ManualClock(new DateTimeOffset(2026, 9, 21, 12, 0, 0, TimeSpan.Zero));
+        await using var auditor = new GovernanceAuditor(sink: sink, timeProvider: clock, headSigner: Signer(), headOptions: new AuditHeadOptions(1000, TimeSpan.FromHours(1)), refusalLimiter: new RefusalRecordLimiter(perSubject: 3, window: TimeSpan.FromMinutes(1)));
+        await using Host host = await StartAsync(ControlPlaneSecurityMode.Scoped, auditor);
+
+        for (int i = 0; i < 10; i++)
+        {
+            (await host.SendAsync(HttpMethod.Get, $"/environments/guess-{i}", Read)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        }
+
+        // Ten probes, three records: the chain is not the enumeration's to fill.
+        ReadRecords(sink).Count.ShouldBe(3);
+
+        // The prober goes quiet. The window turns, the sweep runs, and what was not recorded one by one is recorded as a
+        // count against the subject that made it.
+        clock.Advance(TimeSpan.FromSeconds(61));
+        clock.Tick();
+        List<Stj.JsonElement> reads = [];
+        for (int i = 0; i < 100 && reads.Count < 4; i++)
+        {
+            await Task.Delay(20);
+            reads = ReadRecords(sink);
+        }
+
+        reads.Count.ShouldBe(4);
+        reads[3].GetProperty("action").GetString().ShouldBe("read.refusals-suppressed");
+        reads[3].GetProperty("disclosure").GetString().ShouldBe("suppressed");
+        reads[3].GetProperty("suppressed").GetInt64().ShouldBe(7);
+        reads[3].GetProperty("actor").GetString().ShouldBe(reads[0].GetProperty("actor").GetString());
+
+        (await AuditChainVerifier.VerifyAsync(new MemoryStream(sink.Snapshot(sink.ChainIds.ShouldHaveSingleItem())))).IsIntact.ShouldBeTrue();
+    }
+
+    private static List<Stj.JsonElement> ReadRecords(InMemoryAuditSink sink)
+        => [.. sink.ChainIds.SelectMany(id => Encoding.UTF8.GetString(sink.Snapshot(id)).Split('\n', StringSplitOptions.RemoveEmptyEntries)).Select(l => Stj.JsonDocument.Parse(l).RootElement).Where(r => r.GetProperty("kind").GetString() == "read")];
+
     private static async Task SeedRunWithJournalAsync(Host host, string runId)
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "stepA": { "a": 1 }, "stepB": { "b": "two" } }"""u8.ToArray());
@@ -307,6 +369,54 @@ public sealed class ControlPlaneAuditSinkTests
         }
 
         return new Host(app, app.GetTestClient(), store);
+    }
+
+    private sealed class ManualClock(DateTimeOffset now) : TimeProvider
+    {
+        private readonly List<ManualTimer> timers = [];
+        private DateTimeOffset now = now;
+
+        public override DateTimeOffset GetUtcNow() => this.now;
+
+        public void Advance(TimeSpan by) => this.now += by;
+
+        public void Tick()
+        {
+            foreach (ManualTimer timer in this.timers.ToArray())
+            {
+                timer.Fire();
+            }
+        }
+
+        public override ITimer CreateTimer(TimerCallback callback, object? state, TimeSpan dueTime, TimeSpan period)
+        {
+            var timer = new ManualTimer(callback, state);
+            this.timers.Add(timer);
+            return timer;
+        }
+
+        private sealed class ManualTimer(TimerCallback callback, object? state) : ITimer
+        {
+            private bool disposed;
+
+            public void Fire()
+            {
+                if (!this.disposed)
+                {
+                    callback(state);
+                }
+            }
+
+            public bool Change(TimeSpan dueTime, TimeSpan period) => true;
+
+            public void Dispose() => this.disposed = true;
+
+            public ValueTask DisposeAsync()
+            {
+                this.disposed = true;
+                return ValueTask.CompletedTask;
+            }
+        }
     }
 
     private sealed class FlakySigner(IExecutorPackageSigner inner) : IExecutorPackageSigner

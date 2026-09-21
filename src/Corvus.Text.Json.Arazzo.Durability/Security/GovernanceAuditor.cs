@@ -43,6 +43,9 @@ public sealed class GovernanceAuditor : IAsyncDisposable
     public const string AnchorActivityName = "audit.head";
 
     private readonly AuditChainWriter? chain;
+    private readonly RefusalRecordLimiter refusals;
+    private readonly TimeProvider timeProvider;
+    private readonly ITimer? refusalSweep;
 
     /// <summary>Initializes a new instance of the <see cref="GovernanceAuditor"/> class.</summary>
     /// <param name="logger">The audit logger, if the host wired one (the span is emitted regardless).</param>
@@ -50,15 +53,24 @@ public sealed class GovernanceAuditor : IAsyncDisposable
     /// <param name="timeProvider">The clock records are stamped from and the head cadence runs on (defaults to the system clock).</param>
     /// <param name="headSigner">The audit's own signer, under a key that signs nothing else, or <see langword="null"/> for a chain with no signed heads. The secured postures require one.</param>
     /// <param name="headOptions">The head cadence (defaults to <see cref="AuditHeadOptions.Default"/>).</param>
+    /// <param name="refusalLimiter">The bound on how many refusal records one subject can append to the chain (defaults to 60 a minute).</param>
     /// <param name="writerId">This instance's audit writer id, stable across its restarts: 1 to 63 lowercase ASCII letters, digits or hyphens. Defaults to the machine's name.</param>
-    public GovernanceAuditor(ILogger? logger = null, IAuditSink? sink = null, TimeProvider? timeProvider = null, IExecutorPackageSigner? headSigner = null, AuditHeadOptions? headOptions = null, string? writerId = null)
+    public GovernanceAuditor(ILogger? logger = null, IAuditSink? sink = null, TimeProvider? timeProvider = null, IExecutorPackageSigner? headSigner = null, AuditHeadOptions? headOptions = null, string? writerId = null, RefusalRecordLimiter? refusalLimiter = null)
     {
         this.Logger = logger;
+        this.timeProvider = timeProvider ?? TimeProvider.System;
+        this.refusals = refusalLimiter ?? new RefusalRecordLimiter();
         this.Health = new AuditSinkHealth(timeProvider ?? TimeProvider.System);
         this.HasHeadSigner = sink is not null && headSigner is not null;
         this.chain = sink is null
             ? null
             : new AuditChainWriter(sink, timeProvider, headSigner: headSigner, headOptions: headOptions, onHeadSigned: this.PublishAnchor, onHeadFailed: this.HeadFailed, writerId: writerId, onResumed: this.Resumed);
+
+        // The sweep is what records a flood's suppressed count when the subject that made it never asks again.
+        if (this.chain is not null)
+        {
+            this.refusalSweep = this.timeProvider.CreateTimer(static state => ((GovernanceAuditor)state!).OnRefusalSweep(), this, this.refusals.WindowLength, this.refusals.WindowLength);
+        }
     }
 
     /// <summary>Gets an auditor with no logger and no sink: the span and the counter only.</summary>
@@ -209,8 +221,82 @@ public sealed class GovernanceAuditor : IAsyncDisposable
             : this.AppendReadAsync(new AuditEntry(action, actor.Subject, actor.OwnerGroup, targetKind, targetId, disclosure, environment, AuditEntryKind.Read), disclosesPayload);
     }
 
+    /// <summary>
+    /// Records a read that was refused with a non-disclosing not-found (ADR 0070, tier two): the probe, by the actor, for
+    /// the id it asked after. It never fails the request. Every refusal counts on
+    /// <see cref="ArazzoTelemetry.ReadRefusals"/>; a subject's refusals are appended to the chain up to its bound in a
+    /// window, and past it they are counted, and the count recorded when the window turns.
+    /// </summary>
+    /// <param name="action">The read that was refused.</param>
+    /// <param name="actor">The caller.</param>
+    /// <param name="targetKind">The kind of resource asked after.</param>
+    /// <param name="targetId">The id asked after. An identifier only.</param>
+    /// <param name="environment">The environment the read is scoped to, or <see langword="null"/>.</param>
+    /// <returns>A task that completes when the refusal is recorded, or counted.</returns>
+    public async ValueTask RefusedReadAsync(string action, AuditSubject actor, string targetKind, string targetId, string? environment = null)
+    {
+        var tags = new TagList { { ArazzoTelemetry.ActionTag, action } };
+        if (actor.OwnerGroup is { } tenant)
+        {
+            tags.Add(ArazzoTelemetry.TenantTag, tenant);
+        }
+
+        ArazzoTelemetry.ReadRefusals.Add(1, tags);
+
+        bool admitted = this.refusals.Admit(actor.Subject, this.timeProvider.GetUtcNow(), out long suppressedBefore, out string recordedAs);
+        if (suppressedBefore > 0)
+        {
+            await this.SuppressedAsync(recordedAs, suppressedBefore).ConfigureAwait(false);
+        }
+
+        if (admitted)
+        {
+            await this.ReadAsync(action, actor, targetKind, targetId, "refused", disclosesPayload: false, environment).ConfigureAwait(false);
+        }
+    }
+
     /// <inheritdoc/>
-    public ValueTask DisposeAsync() => this.chain?.DisposeAsync() ?? ValueTask.CompletedTask;
+    public async ValueTask DisposeAsync()
+    {
+        if (this.refusalSweep is not null)
+        {
+            await this.refusalSweep.DisposeAsync().ConfigureAwait(false);
+        }
+
+        if (this.chain is not null)
+        {
+            await this.chain.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    private void OnRefusalSweep() => _ = this.SweepRefusalsAsync();
+
+    private async Task SweepRefusalsAsync()
+    {
+        try
+        {
+            var flushed = new List<KeyValuePair<string, long>>();
+            this.refusals.Sweep(this.timeProvider.GetUtcNow(), flushed);
+            foreach (KeyValuePair<string, long> subject in flushed)
+            {
+                await this.SuppressedAsync(subject.Key, subject.Value).ConfigureAwait(false);
+            }
+        }
+        catch (ObjectDisposedException)
+        {
+            // The auditor was disposed between the tick and the append.
+        }
+    }
+
+    // What the chain did not take one by one, it takes as a count: the subject, and how many of its refusals a window
+    // suppressed. Like any refusal record it never fails anything.
+    private ValueTask SuppressedAsync(string subject, long count)
+    {
+        this.Logger?.LogWarning("Audit: {Count} refused reads by {Actor} were over its bound and were counted, not recorded one by one.", count, subject);
+        return this.chain is null
+            ? ValueTask.CompletedTask
+            : this.AppendReadAsync(new AuditEntry("read.refusals-suppressed", subject, null, "subject", subject, "suppressed", null, AuditEntryKind.Read, count), failClosed: false);
+    }
 
     // A signed head is published outside the sink, through the span and the log, so that a collector holds anchors the
     // sink's owner cannot rewrite: a chain rewritten after this point cannot reproduce the head published here.

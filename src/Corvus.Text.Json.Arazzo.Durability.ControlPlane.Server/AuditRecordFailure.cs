@@ -62,4 +62,23 @@ internal static class AuditRecordFailure
         Configure(in endpoint, builder);
         ControlPlaneAuthorization.RequireDeclaredScopes(in endpoint, builder);
     }
+
+    /// <summary>Composes the failure mapping, the refusal record and, where scopes are gated, the declared scopes, on every endpoint.</summary>
+    /// <param name="refusals">The refusal recorder.</param>
+    /// <param name="gateScopes">Whether the endpoint is gated on the scopes its operation declares.</param>
+    /// <returns>The endpoint configuration callback.</returns>
+    public static ConfigureEndpoint Compose(ReadRefusalAudit refusals, bool gateScopes)
+        => (in EndpointDescriptor endpoint, IEndpointConventionBuilder builder) =>
+        {
+            // The refusal filter is added first so that it is outermost: it sees the status the failure mapping settles on.
+            refusals.Configure(in endpoint, builder);
+            if (gateScopes)
+            {
+                ConfigureWithDeclaredScopes(in endpoint, builder);
+            }
+            else
+            {
+                Configure(in endpoint, builder);
+            }
+        };
 }
