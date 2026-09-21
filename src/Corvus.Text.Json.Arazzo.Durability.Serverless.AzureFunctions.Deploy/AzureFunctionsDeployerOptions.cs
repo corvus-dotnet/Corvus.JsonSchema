@@ -13,6 +13,9 @@ namespace Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy;
 /// </summary>
 public sealed record AzureFunctionsDeployerOptions
 {
+    /// <summary>Gets how the runner's invocation of the deployed function is authorized (ADR 0059 decision 4). Required: the deployer sets the invoke key before it publishes anything.</summary>
+    public required AzureFunctionsInvokeAuthorization InvokeAuthorization { get; init; }
+
     /// <summary>Gets the Function App HTTP-trigger invoke path appended to the app base URL. Defaults to <c>api/invoke</c> (the baked <c>[Function("invoke")]</c> trigger's route).</summary>
     public string InvokePath { get; init; } = "api/invoke";
 

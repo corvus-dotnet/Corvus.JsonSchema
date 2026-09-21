@@ -167,6 +167,30 @@ Each deployed function is baked for one environment, so the deployer stamps the 
 `{ runId, environment, checkpointUrl }` to the resolved Function URL (`DeployedFunctionUrlResolver`); the function
 restores the run, binds its transports, advances it, and checkpoints back over HTTP through `HttpWorkflowStateStore`.
 
+### Authenticating the invoke
+
+The function advances whatever run an invocation names, against whatever checkpoint surface it names, with its own
+source credentials. So the platform must refuse an invocation that does not come from the runner, and
+`ServerlessRunExecutionBackend` cannot be constructed without an `IServerlessInvokeAuthenticator`
+([ADR 0059](../adr/0059-serverless-deploy-runs-on-the-runner-as-the-secure-boundary.md) decision 4). There is no
+anonymous choice.
+
+| Platform | Authenticator | What the runner needs |
+|----------|---------------|-----------------------|
+| AWS Lambda | `SigV4ServerlessInvokeAuthenticator` | Its AWS credentials and region. The Function URL is `AWS_IAM`, and the principal holds `lambda:InvokeFunctionUrl` |
+| Azure Functions | `FunctionKeyServerlessInvokeAuthenticator` | A reference to the invoke key in its own secret store, for example `env://ARAZZO_INVOKE_KEY` |
+| Azure Functions with Entra | `EntraServerlessInvokeAuthenticator` over the key authenticator | The key reference, its `TokenCredential`, and the Function App's audience |
+| Micro-guest sidecar | `LoopbackServerlessInvokeAuthenticator` | Nothing. It refuses any URL that is not on the loopback interface |
+
+For Azure the same `AzureFunctionsInvokeAuthorization` goes on the deployer's options. The deployer reads the key by
+reference and sets it on the Function App as the host-level function key `arazzo-invoke` before it publishes the
+package, and the baked trigger is at the `Function` authorization level, so the key never reaches the control plane
+and the function is never live without it. Naming an `EntraAudience` adds Entra as a second layer. The deployer then
+refuses to deploy unless the app's authentication settings require authentication, answer an unauthenticated request
+with a 401 or a 403, exempt no path, and accept that audience. Entra does not replace the key, so switching the app's
+authentication off later leaves the function behind its key. The demo runner reads these from
+`Runner:AzureFlex:InvokeKeyRef` and the optional `Runner:AzureFlex:EntraAudience`.
+
 ### Verifying the deploy path
 
 The deploy-and-run path is exercised live against **LocalStack** as the local analogy for AWS Lambda: a version

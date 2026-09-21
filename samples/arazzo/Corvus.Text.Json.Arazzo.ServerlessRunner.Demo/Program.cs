@@ -145,13 +145,15 @@ byte[] checkpointSecret = Convert.FromBase64String(
 
 // The serverless run-execution backend as this runner's resumer (ADR 0055): dispatch and timer-resume advance a claimed
 // run by INVOKING its deployed function. The production DeployedFunctionUrlResolver maps a run's (base workflow, version,
-// environment) to the Deployed function URL from the shared deployment store; the function checkpoints back to
+// environment) to the Deployed function URL from the shared deployment store; each invocation carries the platform's
+// credential (ADR 0059 decision 4: a SigV4 signature, a function key with optional Entra, or loopback only); the function checkpoints back to
 // checkpointBaseUrl, carrying the token minted above. A resolve failure (no deployed function yet) throws, leaving the
 // run claimable.
 var serverlessBackend = new ServerlessRunExecutionBackend(
     new HttpClient(),
     DeployedFunctionUrlResolver.ForStore(deployments, environments),
     new Uri(checkpointBaseUrl, UriKind.Absolute),
+    ServerlessDeployerSelection.CreateInvokeAuthenticator(builder.Configuration),
     checkpointTokenIssuer: address => CheckpointToken.Issue(checkpointSecret, address, DateTimeOffset.UtcNow.AddHours(1)));
 builder.Services.AddSingleton<WorkflowResumer>(serverlessBackend.AsResumer());
 

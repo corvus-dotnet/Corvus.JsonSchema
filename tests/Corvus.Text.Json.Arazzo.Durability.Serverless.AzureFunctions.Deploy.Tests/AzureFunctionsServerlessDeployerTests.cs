@@ -4,6 +4,7 @@
 
 using Azure.Storage.Blobs;
 using Corvus.Text.Json.Arazzo.Durability.Aot;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 
@@ -45,26 +46,36 @@ public sealed class AzureFunctionsServerlessDeployerTests
     [TestMethod]
     public void Ctor_rejects_a_null_package_container()
     {
-        Should.Throw<ArgumentNullException>(() => new AzureFunctionsServerlessDeployer(null!, new NoOpConfigurator(), new AzureFunctionsDeployerOptions()));
+        Should.Throw<ArgumentNullException>(() => new AzureFunctionsServerlessDeployer(null!, new NoOpConfigurator(), new EnvSecretResolver(), Options()));
     }
 
     [TestMethod]
     public void Ctor_rejects_a_null_configurator()
     {
         BlobContainerClient container = new(new Uri("https://example.blob.core.windows.net/packages"));
-        Should.Throw<ArgumentNullException>(() => new AzureFunctionsServerlessDeployer(container, null!, new AzureFunctionsDeployerOptions()));
+        Should.Throw<ArgumentNullException>(() => new AzureFunctionsServerlessDeployer(container, null!, new EnvSecretResolver(), Options()));
     }
 
     [TestMethod]
     public void Ctor_rejects_null_options()
     {
         BlobContainerClient container = new(new Uri("https://example.blob.core.windows.net/packages"));
-        Should.Throw<ArgumentNullException>(() => new AzureFunctionsServerlessDeployer(container, new NoOpConfigurator(), null!));
+        Should.Throw<ArgumentNullException>(() => new AzureFunctionsServerlessDeployer(container, new NoOpConfigurator(), new EnvSecretResolver(), null!));
     }
+
+    [TestMethod]
+    public void Ctor_rejects_a_null_secret_resolver()
+    {
+        BlobContainerClient container = new(new Uri("https://example.blob.core.windows.net/packages"));
+        Should.Throw<ArgumentNullException>(() => new AzureFunctionsServerlessDeployer(container, new NoOpConfigurator(), null!, Options()));
+    }
+
+    private static AzureFunctionsDeployerOptions Options()
+        => new AzureFunctionsDeployerOptions { InvokeAuthorization = new AzureFunctionsInvokeAuthorization { InvokeKey = SecretRef.Parse("env://ARAZZO_TEST_INVOKE_KEY") } };
 
     private sealed class NoOpConfigurator : IFunctionAppConfigurator
     {
-        public ValueTask<Uri> ApplyRunFromPackageAsync(ServerlessDeployRequest request, Uri packageUrl, IReadOnlyDictionary<string, string> appSettings, CancellationToken cancellationToken)
+        public ValueTask<Uri> ApplyRunFromPackageAsync(ServerlessDeployRequest request, FunctionAppInvokeAccess invokeAccess, Uri packageUrl, IReadOnlyDictionary<string, string> appSettings, CancellationToken cancellationToken)
             => ValueTask.FromResult(new Uri("https://example.net/"));
     }
 }

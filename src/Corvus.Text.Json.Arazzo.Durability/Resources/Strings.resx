@@ -578,4 +578,7 @@
   <data name="AuditAppendFailed" xml:space="preserve">
     <value>The audit record could not be appended to the audit sink, and the chain it was for has been abandoned (ADR 0069). The action the record describes stands.</value>
   </data>
+  <data name="ServerlessInvokeNotLoopback" xml:space="preserve">
+    <value>The function URL '{0}' is not on the loopback interface, so the invocation is refused: the loopback invoke authenticator adds no credential (ADR 0059). Configure the function platform's authenticator.</value>
+  </data>
 </root>

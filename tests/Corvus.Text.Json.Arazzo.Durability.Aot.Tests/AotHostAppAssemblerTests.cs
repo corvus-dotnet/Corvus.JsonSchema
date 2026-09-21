@@ -138,6 +138,11 @@ public sealed class AotHostAppAssemblerTests
         string invoke = FileText(app, "ArazzoInvokeFunction.cs");
         invoke.ShouldContain("""[Function("invoke")]""");
         invoke.ShouldContain("[HttpTrigger(");
+
+        // V-36 of the 2026-08-07 audit: the trigger was Anonymous, so anyone who could reach the app could have it advance
+        // a checkpoint of their choosing with its source credentials. The host now refuses a caller without the invoke key.
+        invoke.ShouldContain("[HttpTrigger(AuthorizationLevel.Function, \"post\")]");
+        invoke.ShouldNotContain("AuthorizationLevel.Anonymous");
         invoke.ShouldContain("HandleAsync");
 
         FileText(app, "host.json").ShouldContain("\"version\": \"2.0\"");

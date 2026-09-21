@@ -5,6 +5,7 @@
 using System.IO.Compression;
 using Azure.Storage.Blobs;
 using Corvus.Text.Json.Arazzo.Durability.Aot;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
@@ -57,12 +58,17 @@ public sealed class AzureFunctionsRunFromPackageDeployTests
             var blobService = new BlobServiceClient(azurite.GetConnectionString(), new BlobClientOptions(BlobClientOptions.ServiceVersion.V2024_11_04));
             BlobContainerClient packages = blobService.GetBlobContainerClient("arazzo-packages");
 
+            // The deployer reads the invoke key by reference from the runner's secret store, which is this process's
+            // environment here, and hands it to the management plane with the package (ADR 0059 decision 4).
+            System.Environment.SetEnvironmentVariable(InvokeKeyVariable, ServerlessLiveExecutionSupport.LocalInvokeKey);
             var configurator = new RecordingFunctionAppConfigurator { AppBaseUrl = new Uri("https://arazzo-fn-serverless-check.example.net/") };
             var deployer = new AzureFunctionsServerlessDeployer(
                 packages,
                 configurator,
+                new SecretResolverBuilder().AddEnvironment().Build(),
                 new AzureFunctionsDeployerOptions
                 {
+                    InvokeAuthorization = new AzureFunctionsInvokeAuthorization { InvokeKey = SecretRef.Parse("env://" + InvokeKeyVariable) },
                     // In production the deployer sets this as an app setting the platform injects; local ARM has no
                     // emulator, so the run below injects the real echo source URL as the container's env directly (the
                     // shared helper), standing in for the platform applying this setting (ADR 0061 asymmetry).
@@ -117,6 +123,9 @@ public sealed class AzureFunctionsRunFromPackageDeployTests
         }
     }
 
+    // The invoke key's name in this process's environment, which stands in for the runner's secret store.
+    private const string InvokeKeyVariable = "ARAZZO_RUN_FROM_PACKAGE_INVOKE_KEY";
+
     private sealed class RecordingFunctionAppConfigurator : IFunctionAppConfigurator
     {
         public required Uri AppBaseUrl { get; init; }
@@ -125,7 +134,7 @@ public sealed class AzureFunctionsRunFromPackageDeployTests
 
         public IReadOnlyDictionary<string, string>? AppSettings { get; private set; }
 
-        public ValueTask<Uri> ApplyRunFromPackageAsync(ServerlessDeployRequest request, Uri packageUrl, IReadOnlyDictionary<string, string> appSettings, CancellationToken cancellationToken)
+        public ValueTask<Uri> ApplyRunFromPackageAsync(ServerlessDeployRequest request, FunctionAppInvokeAccess invokeAccess, Uri packageUrl, IReadOnlyDictionary<string, string> appSettings, CancellationToken cancellationToken)
         {
             this.PackageUrl = packageUrl;
             this.AppSettings = appSettings;

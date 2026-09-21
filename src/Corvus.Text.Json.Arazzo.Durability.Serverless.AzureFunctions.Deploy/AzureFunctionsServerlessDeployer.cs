@@ -7,6 +7,7 @@ using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Sas;
 using Corvus.Text.Json.Arazzo.Durability.Aot;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy;
 
@@ -32,19 +33,23 @@ public sealed class AzureFunctionsServerlessDeployer : IServerlessDeployer
 
     private readonly BlobContainerClient packageContainer;
     private readonly IFunctionAppConfigurator configurator;
+    private readonly ISecretResolver secrets;
     private readonly AzureFunctionsDeployerOptions options;
 
     /// <summary>Initializes a new instance of the <see cref="AzureFunctionsServerlessDeployer"/> class.</summary>
     /// <param name="packageContainer">The package blob container, wired by the runner to Azurite or to real Azure Storage with the environment's identity.</param>
     /// <param name="configurator">The management-plane configurator that points the Function App at the package (real ARM in production; a fake in tests).</param>
-    /// <param name="options">The deployer options: the invoke path, the source app settings, and the package SAS policy.</param>
-    public AzureFunctionsServerlessDeployer(BlobContainerClient packageContainer, IFunctionAppConfigurator configurator, AzureFunctionsDeployerOptions options)
+    /// <param name="secrets">The runner's secret resolver, which the invoke key is read from.</param>
+    /// <param name="options">The deployer options: the invoke authorization, the invoke path, the source app settings, and the package SAS policy.</param>
+    public AzureFunctionsServerlessDeployer(BlobContainerClient packageContainer, IFunctionAppConfigurator configurator, ISecretResolver secrets, AzureFunctionsDeployerOptions options)
     {
         ArgumentNullException.ThrowIfNull(packageContainer);
         ArgumentNullException.ThrowIfNull(configurator);
+        ArgumentNullException.ThrowIfNull(secrets);
         ArgumentNullException.ThrowIfNull(options);
         this.packageContainer = packageContainer;
         this.configurator = configurator;
+        this.secrets = secrets;
         this.options = options;
     }
 
@@ -66,14 +71,22 @@ public sealed class AzureFunctionsServerlessDeployer : IServerlessDeployer
             // Point the Function App at the package and set the source app settings (the management-plane half; real ARM in
             // production, a fake in tests). The returned base URL is the app's; the invoke path forms the HTTP-trigger URL
             // that ServerlessRunExecutionBackend posts each invocation to.
+            // The invoke access goes on with it: the key is in place, and the Entra posture is checked, before the app runs
+            // the package, so there is no moment at which the function is live and open.
+            using SecretMaterial invokeKey = await this.secrets.ResolveAsync(this.options.InvokeAuthorization.InvokeKey, cancellationToken).ConfigureAwait(false);
+            var invokeAccess = new FunctionAppInvokeAccess(invokeKey.Reveal(), this.options.InvokeAuthorization.EntraAudience);
             Uri appBaseUrl = await this.configurator
-                .ApplyRunFromPackageAsync(request, packageUrl, appSettings, cancellationToken)
+                .ApplyRunFromPackageAsync(request, invokeAccess, packageUrl, appSettings, cancellationToken)
                 .ConfigureAwait(false);
 
             var invokeUrl = new Uri(EnsureTrailingSlash(appBaseUrl), this.options.InvokePath);
             return ServerlessDeployResult.Success(
                 invokeUrl.ToString(),
                 $"Deployed run-from-package '{blobName}' and pointed the dotnet-isolated Function App at it (WEBSITE_RUN_FROM_PACKAGE).");
+        }
+        catch (FunctionAppInvokeAccessException ex)
+        {
+            return ServerlessDeployResult.Failure(ex.Message);
         }
         catch (RequestFailedException ex)
         {

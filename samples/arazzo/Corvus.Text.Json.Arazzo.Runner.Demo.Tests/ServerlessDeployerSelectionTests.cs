@@ -2,8 +2,10 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Aot;
 using Corvus.Text.Json.Arazzo.Durability.MicroGuest.Deploy;
+using Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy;
 using Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.Arm;
 using Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.Deploy;
 using Corvus.Text.Json.Arazzo.ServerlessRunner.Demo;
@@ -47,7 +49,8 @@ public sealed class ServerlessDeployerSelectionTests
                 ("Runner:Serverless:Platform", "azure-flex"),
                 ("Runner:AzureFlex:SubscriptionId", "00000000-0000-0000-0000-000000000000"),
                 ("Runner:AzureFlex:ResourceGroup", "rg-arazzo"),
-                ("Runner:AzureFlex:AppNamePrefix", "acme-arazzo")),
+                ("Runner:AzureFlex:AppNamePrefix", "acme-arazzo"),
+                ("Runner:AzureFlex:InvokeKeyRef", "env://ARAZZO_INVOKE_KEY")),
             new Dictionary<string, string>());
 
         deployer.ShouldBeOfType<AzureFunctionsFlexDeployer>();
@@ -63,6 +66,9 @@ public sealed class ServerlessDeployerSelectionTests
             ("Runner:AzureFlex:SubscriptionId", "00000000-0000-0000-0000-000000000000"),
             ("Runner:AzureFlex:ResourceGroup", "rg-arazzo"),
             ("Runner:AzureFlex:AppNamePrefix", "acme-arazzo"),
+
+            // The invoke key is required (ADR 0059 decision 4): there is no deploying a function nobody holds a key to.
+            ("Runner:AzureFlex:InvokeKeyRef", "env://ARAZZO_INVOKE_KEY"),
         ];
         foreach ((string missing, _) in all)
         {
@@ -71,6 +77,34 @@ public sealed class ServerlessDeployerSelectionTests
                 ServerlessDeployerSelection.Create(Config(supplied), new Dictionary<string, string>()));
             ex.Message.ShouldContain(missing);
         }
+    }
+
+    [TestMethod]
+    public void Every_platform_has_an_invoke_authenticator_and_none_is_anonymous()
+    {
+        // ADR 0059 decision 4: the invocation carries the platform's credential. Lambda signs, Azure presents its key
+        // (with Entra on top when an audience is named), and the micro-guest sidecar is reachable on loopback alone.
+        ServerlessDeployerSelection.CreateInvokeAuthenticator(Config())
+            .ShouldBeOfType<SigV4ServerlessInvokeAuthenticator>();
+
+        ServerlessDeployerSelection.CreateInvokeAuthenticator(Config(
+                ("Runner:Serverless:Platform", "azure-flex"),
+                ("Runner:AzureFlex:InvokeKeyRef", "env://ARAZZO_INVOKE_KEY")))
+            .ShouldBeOfType<FunctionKeyServerlessInvokeAuthenticator>();
+
+        ServerlessDeployerSelection.CreateInvokeAuthenticator(Config(
+                ("Runner:Serverless:Platform", "azure-flex"),
+                ("Runner:AzureFlex:InvokeKeyRef", "env://ARAZZO_INVOKE_KEY"),
+                ("Runner:AzureFlex:EntraAudience", "api://arazzo-functions")))
+            .ShouldBeOfType<EntraServerlessInvokeAuthenticator>();
+
+        ServerlessDeployerSelection.CreateInvokeAuthenticator(Config(("Runner:Serverless:Platform", "micro-guest")))
+            .ShouldBeSameAs(LoopbackServerlessInvokeAuthenticator.Instance);
+
+        // Azure without a key reference is a configuration error, not a keyless invoke.
+        Should.Throw<InvalidOperationException>(() => ServerlessDeployerSelection.CreateInvokeAuthenticator(Config(("Runner:Serverless:Platform", "azure-flex"))))
+            .Message.ShouldContain("Runner:AzureFlex:InvokeKeyRef");
+        Should.Throw<InvalidOperationException>(() => ServerlessDeployerSelection.CreateInvokeAuthenticator(Config(("Runner:Serverless:Platform", "nonsense"))));
     }
 
     [TestMethod]

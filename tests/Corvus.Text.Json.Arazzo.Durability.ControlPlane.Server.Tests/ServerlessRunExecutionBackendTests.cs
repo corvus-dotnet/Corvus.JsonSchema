@@ -29,7 +29,7 @@ public class ServerlessRunExecutionBackendTests
     {
         var handler = new StubHandler(HttpStatusCode.OK, """{"outcome":"Completed"}""");
         using var http = new HttpClient(handler);
-        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl);
+        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, new StampingAuthenticator());
         using WorkflowRun run = NewRun("run-1", "adopt-v1", "production");
 
         WorkflowRunResultKind kind = await backend.AdvanceAsync(run, default);
@@ -46,11 +46,54 @@ public class ServerlessRunExecutionBackendTests
     }
 
     [TestMethod]
+    public async Task Every_invocation_is_authenticated_over_its_final_url_and_exact_body()
+    {
+        // V-36 and V-37 of the 2026-08-07 audit: the invocation left the runner with no credential, so an Azure trigger
+        // had to be anonymous and an AWS_IAM Function URL could not be called at all.
+        var handler = new StubHandler(HttpStatusCode.OK, """{"outcome":"Completed"}""");
+        using var http = new HttpClient(handler);
+        var authenticator = new StampingAuthenticator();
+        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, authenticator);
+        using WorkflowRun run = NewRun("run-1", "adopt-v1", "production");
+
+        await backend.AdvanceAsync(run, default);
+
+        // The credential the authenticator added is on the wire, and what it was shown is what was sent.
+        handler.LastInvokeCredential.ShouldBe("stamped");
+        authenticator.SeenUrl.ShouldBe("https://fn.example/invoke");
+        authenticator.SeenBody.ShouldBe(handler.LastBody);
+    }
+
+    [TestMethod]
+    public async Task An_invocation_the_authenticator_refuses_is_never_sent()
+    {
+        var handler = new StubHandler(HttpStatusCode.OK, """{"outcome":"Completed"}""");
+        using var http = new HttpClient(handler);
+        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, LoopbackServerlessInvokeAuthenticator.Instance);
+        using WorkflowRun run = NewRun("run-1", "adopt-v1", "production");
+
+        // The loopback authenticator adds no credential, so it refuses a function that is not on this machine.
+        await Should.ThrowAsync<InvalidOperationException>(async () => await backend.AdvanceAsync(run, default));
+        handler.LastUrl.ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task The_loopback_authenticator_admits_a_function_on_this_machine()
+    {
+        var handler = new StubHandler(HttpStatusCode.OK, """{"outcome":"Completed"}""");
+        using var http = new HttpClient(handler);
+        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(new Uri("http://127.0.0.1:7071/api/invoke")), CheckpointBaseUrl, LoopbackServerlessInvokeAuthenticator.Instance);
+        using WorkflowRun run = NewRun("run-1", "adopt-v1", "production");
+
+        (await backend.AdvanceAsync(run, default)).ShouldBe(WorkflowRunResultKind.Completed);
+    }
+
+    [TestMethod]
     public async Task Maps_a_faulted_outcome()
     {
         var handler = new StubHandler(HttpStatusCode.OK, """{"outcome":"Faulted"}""");
         using var http = new HttpClient(handler);
-        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl);
+        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, new StampingAuthenticator());
         using WorkflowRun run = NewRun("run-1", "adopt-v1", "production");
 
         (await backend.AdvanceAsync(run, default)).ShouldBe(WorkflowRunResultKind.Faulted);
@@ -63,7 +106,7 @@ public class ServerlessRunExecutionBackendTests
         // run). The checkpoint is authoritative, so the informational return is a benign Suspended, not a made-up terminal.
         var handler = new StubHandler(HttpStatusCode.OK, """{"outcome":null}""");
         using var http = new HttpClient(handler);
-        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl);
+        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, new StampingAuthenticator());
         using WorkflowRun run = NewRun("run-1", "adopt-v1", "production");
 
         (await backend.AdvanceAsync(run, default)).ShouldBe(WorkflowRunResultKind.Suspended);
@@ -74,7 +117,7 @@ public class ServerlessRunExecutionBackendTests
     {
         var handler = new StubHandler(HttpStatusCode.InternalServerError, null);
         using var http = new HttpClient(handler);
-        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl);
+        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, new StampingAuthenticator());
         using WorkflowRun run = NewRun("run-1", "adopt-v1", "production");
 
         // A 5xx from the function throws; the dispatcher never released the lease on a completed advance, so its
@@ -86,7 +129,7 @@ public class ServerlessRunExecutionBackendTests
     public void Advertises_isolated_isolation_and_warms_nothing()
     {
         using var http = new HttpClient(new StubHandler(HttpStatusCode.OK, """{"outcome":"Completed"}"""));
-        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl);
+        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, new StampingAuthenticator());
 
         backend.IsolationModel.ShouldBe(RunIsolationModel.Isolated);
 
@@ -99,9 +142,12 @@ public class ServerlessRunExecutionBackendTests
     {
         using var http = new HttpClient(new StubHandler(HttpStatusCode.OK, null));
 
-        Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(null!, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl));
-        Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(http, null!, CheckpointBaseUrl));
-        Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), null!));
+        Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(null!, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, new StampingAuthenticator()));
+        Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(http, null!, CheckpointBaseUrl, new StampingAuthenticator()));
+        Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), null!, new StampingAuthenticator()));
+
+        // The invoke authenticator is required (ADR 0059 decision 4): there is no anonymous invocation to fall back to.
+        Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, null!));
     }
 
     private static WorkflowRun NewRun(string runId, string workflowId, string environment)
@@ -120,15 +166,34 @@ public class ServerlessRunExecutionBackendTests
 
         public string LastBody { get; private set; } = string.Empty;
 
+        public string? LastInvokeCredential { get; private set; }
+
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             this.LastMethod = request.Method;
             this.LastUrl = request.RequestUri?.ToString();
+            this.LastInvokeCredential = request.Headers.TryGetValues("x-test-invoke-credential", out IEnumerable<string>? values) ? values.Single() : null;
             this.LastBody = request.Content is null ? string.Empty : await request.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
             return new HttpResponseMessage(status)
             {
                 Content = json is null ? new StringContent(string.Empty) : new StringContent(json, Encoding.UTF8, "application/json"),
             };
+        }
+    }
+
+    // Stands in for a platform's authenticator: it stamps a header and records what it was shown.
+    private sealed class StampingAuthenticator : IServerlessInvokeAuthenticator
+    {
+        public string? SeenUrl { get; private set; }
+
+        public string? SeenBody { get; private set; }
+
+        public ValueTask AuthenticateAsync(HttpRequestMessage request, ReadOnlyMemory<byte> body, CancellationToken cancellationToken)
+        {
+            this.SeenUrl = request.RequestUri?.ToString();
+            this.SeenBody = Encoding.UTF8.GetString(body.Span);
+            request.Headers.Add("x-test-invoke-credential", "stamped");
+            return ValueTask.CompletedTask;
         }
     }
 }

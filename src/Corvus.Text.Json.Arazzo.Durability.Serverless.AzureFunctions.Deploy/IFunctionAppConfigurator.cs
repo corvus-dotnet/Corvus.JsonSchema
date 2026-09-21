@@ -25,12 +25,14 @@ public interface IFunctionAppConfigurator
     /// Configures the target Function App to run from the uploaded package and returns its base URL.
     /// </summary>
     /// <param name="request">The deploy request identifying the (base workflow, version, environment, runtime) whose app is targeted.</param>
+    /// <param name="invokeAccess">The invoke access to establish on the app before it is pointed at the package: the invoke function key, and the Entra audience the app must require when Entra is layered on top (ADR 0059 decision 4).</param>
     /// <param name="packageUrl">The URL of the uploaded package the app should run from (the <c>WEBSITE_RUN_FROM_PACKAGE</c> value).</param>
     /// <param name="appSettings">The source app settings to set on the app (each <c>ARAZZO_SOURCE__&lt;name&gt;</c> a source base URL).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The configured app's base URL; the deployer appends the HTTP-trigger invoke path to it to form the invoke URL.</returns>
     ValueTask<Uri> ApplyRunFromPackageAsync(
         ServerlessDeployRequest request,
+        FunctionAppInvokeAccess invokeAccess,
         Uri packageUrl,
         IReadOnlyDictionary<string, string> appSettings,
         CancellationToken cancellationToken);

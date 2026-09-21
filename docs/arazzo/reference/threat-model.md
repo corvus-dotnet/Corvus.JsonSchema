@@ -251,7 +251,7 @@ checkable rather than a by-product of what a review happened to look at.
 | Key material originating in a guest | **Holds**. Design forbids it, the listener supplies the ordering token per invocation | None. Correctly anticipated, because snapshot restore would repeat it | |
 | Entropy replay across advances | **Absent**. No reseed hook after snapshot restore | Identical GUIDs and nonces on every advance, acknowledged in [ADR 0064](../adr/0064-microguest-snapshots-after-warmup-init-run-split.md) | H32 |
 | Cross-run or cross-tenant state bleed | **Holds** on the micro-guest, hermetic restore per advance | Serverless backends reuse a warm process, so isolation is per environment and version rather than per run | |
-| Unauthenticated invocation of a deployed guest | **Absent** on Azure Functions, **Holds** on Lambda via IAM | Anyone with the hostname drives the executor over an attacker-supplied checkpoint | H19 |
+| Unauthenticated invocation of a deployed guest | **Holds** on Azure Functions and on Lambda | The invoke authenticator is a required seam with no anonymous implementation. Azure: a `Function`-level trigger behind a key the deployer sets from the runner's secret store, with Entra as an optional second layer whose posture the deployer checks. Lambda: `AWS_IAM` with a Signature Version 4 signature, which did not exist before 2026-09-21, so the path worked on LocalStack alone. Not yet proven against a real Function App or real AWS | H19 |
 
 ### TB-7 Workflow step to external source
 

@@ -752,4 +752,10 @@ internal static class ThrowHelper
 
     public static AuditAppendException GetAuditAppendFailedException(Exception innerException)
         => new(SR.AuditAppendFailed, innerException);
+
+    // ── Serverless invoke authentication (ADR 0059) ──
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowServerlessInvokeNotLoopback(Uri? functionUrl)
+        => throw new InvalidOperationException(SR.Format(SR.ServerlessInvokeNotLoopback, functionUrl));
 }

@@ -26,6 +26,9 @@ public sealed record AzureFunctionsFlexDeployerOptions
     /// </summary>
     public required string AppNamePrefix { get; init; }
 
+    /// <summary>Gets how the runner's invocation of the deployed function is authorized (ADR 0059 decision 4). Required: the deployer sets the invoke key before it publishes anything.</summary>
+    public required AzureFunctionsInvokeAuthorization InvokeAuthorization { get; init; }
+
     /// <summary>Gets the Function App HTTP-trigger invoke path appended to the app base URL. Defaults to <c>api/invoke</c>.</summary>
     public string InvokePath { get; init; } = "api/invoke";
 

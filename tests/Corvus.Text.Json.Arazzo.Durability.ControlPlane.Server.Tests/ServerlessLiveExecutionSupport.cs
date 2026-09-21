@@ -137,6 +137,20 @@ internal static class ServerlessLiveExecutionSupport
     }
 
     // The Azure Functions runtime image to run the published app under, overridable via ARAZZO_AZURE_FUNCTIONS_IMAGE.
+    // Where the Functions host reads its keys from under AzureWebJobsSecretStorageType=files.
+    private const string HostSecretsPath = "/azure-functions-host/Secrets/host.json";
+
+    /// <summary>
+    /// Gets the invoke key the local Functions host is seeded with. The baked trigger is at the Function level
+    /// (ADR 0059 decision 4), so the host refuses an invocation that does not present it. Against a real Function App
+    /// the deployer sets the key through the management plane, which has no emulator, so the local gates seed the host's
+    /// key file directly.
+    /// </summary>
+    internal static string LocalInvokeKey { get; } = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(24));
+
+    private static byte[] HostSecretsWithInvokeKey()
+        => Encoding.UTF8.GetBytes($$"""{"masterKey":{"name":"master","value":"{{Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(24))}}","encrypted":false},"functionKeys":[{"name":"arazzo-invoke","value":"{{LocalInvokeKey}}","encrypted":false}],"systemKeys":[]}""");
+
     internal static string FunctionsImage()
         => System.Environment.GetEnvironmentVariable("ARAZZO_AZURE_FUNCTIONS_IMAGE") ?? DefaultFunctionsImage;
 
@@ -194,6 +208,7 @@ internal static class ServerlessLiveExecutionSupport
                 .WithBindMount(appDirectory, "/home/site/wwwroot")
                 .WithEnvironment("AzureWebJobsStorage", string.Empty)
                 .WithEnvironment("AzureWebJobsSecretStorageType", "files")
+                .WithResourceMapping(HostSecretsWithInvokeKey(), HostSecretsPath)
                 .WithEnvironment("FUNCTIONS_WORKER_RUNTIME", "dotnet-isolated")
                 .WithEnvironment("ARAZZO_SOURCE__echo", sourceBaseUrl)
                 .WithExtraHost("host.containers.internal", "host-gateway")
@@ -215,6 +230,7 @@ internal static class ServerlessLiveExecutionSupport
                 // from the last saved checkpoint (a completed run replies Completed), so retrying the real invocation until
                 // it returns a success response is both a robust readiness gate and faithful to how the runner dispatches.
                 using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(120) };
+                httpClient.DefaultRequestHeaders.Add("x-functions-key", LocalInvokeKey);
                 string payload = string.Empty;
                 bool responded = false;
                 var budget = System.Diagnostics.Stopwatch.StartNew();
@@ -241,6 +257,12 @@ internal static class ServerlessLiveExecutionSupport
 
                 responded.ShouldBeTrue("the isolated worker never returned a success response for the invocation within the warm-up budget.");
                 payload.ShouldContain("Completed", customMessage: $"the run did not report Completed; payload: {payload}");
+
+                // The trigger is at the Function level (ADR 0059 decision 4), so the same host, now warm, refuses the same
+                // invocation from a caller that does not hold the invoke key.
+                using var anonymous = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+                using HttpResponseMessage refused = await anonymous.PostAsync(invokeUri, new StringContent(invocation, Encoding.UTF8, "application/json"));
+                refused.StatusCode.ShouldBe(System.Net.HttpStatusCode.Unauthorized, "the Functions host served an invocation that carried no invoke key.");
             }
             finally
             {
@@ -295,6 +317,7 @@ internal static class ServerlessLiveExecutionSupport
             .WithBindMount(appDirectory, "/home/site/wwwroot")
             .WithEnvironment("AzureWebJobsStorage", string.Empty)
             .WithEnvironment("AzureWebJobsSecretStorageType", "files")
+            .WithResourceMapping(HostSecretsWithInvokeKey(), HostSecretsPath)
             .WithEnvironment("FUNCTIONS_WORKER_RUNTIME", "dotnet-isolated")
             .WithEnvironment("ARAZZO_SOURCE__echo", sourceBaseUrl)
             .WithPortBinding(80, assignRandomHostPort: true)
@@ -305,7 +328,7 @@ internal static class ServerlessLiveExecutionSupport
             var invokeUri = new UriBuilder(Uri.UriSchemeHttp, functions.Hostname, functions.GetMappedPublicPort(80), "/api/invoke").Uri;
             try
             {
-                await InvokeUntilCompletedAsync(invokeUri, runId, sourceBaseUrl, checkpointToken, TimeSpan.FromMinutes(3));
+                await InvokeUntilCompletedAsync(invokeUri, LocalInvokeKey, runId, sourceBaseUrl, checkpointToken, TimeSpan.FromMinutes(3));
             }
             catch
             {
@@ -361,11 +384,12 @@ internal static class ServerlessLiveExecutionSupport
     /// <param name="checkpointToken">The run-scoped bearer token the function presents on each checkpoint call.</param>
     /// <param name="budget">How long to keep retrying before failing.</param>
     /// <returns>A task that completes when a <c>Completed</c> outcome is observed.</returns>
-    internal static async Task InvokeUntilCompletedAsync(Uri invokeUri, WorkflowRunId runId, string checkpointBaseUrl, string checkpointToken, TimeSpan budget)
+    internal static async Task InvokeUntilCompletedAsync(Uri invokeUri, string invokeKey, WorkflowRunId runId, string checkpointBaseUrl, string checkpointToken, TimeSpan budget)
     {
         string baseUrl = checkpointBaseUrl.EndsWith('/') ? checkpointBaseUrl : checkpointBaseUrl + "/";
         string invocation = $$"""{"runId":"{{runId.Value}}","environment":"isolated","checkpointUrl":"{{baseUrl}}","checkpointToken":"{{checkpointToken}}"}""";
         using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(120) };
+        httpClient.DefaultRequestHeaders.Add("x-functions-key", invokeKey);
         string payload = string.Empty;
         bool responded = false;
         var budgetTimer = System.Diagnostics.Stopwatch.StartNew();

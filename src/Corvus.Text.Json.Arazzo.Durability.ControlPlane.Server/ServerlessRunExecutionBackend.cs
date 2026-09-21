@@ -30,21 +30,25 @@ public sealed class ServerlessRunExecutionBackend : IRunExecutionBackend
     private readonly HttpClient client;
     private readonly Func<WorkflowRun, CancellationToken, ValueTask<Uri>> functionUrl;
     private readonly string checkpointBaseUrl;
+    private readonly IServerlessInvokeAuthenticator invokeAuthenticator;
     private readonly Func<WorkflowRunAddress, string>? checkpointTokenIssuer;
 
     /// <summary>Initializes a new instance of the <see cref="ServerlessRunExecutionBackend"/> class.</summary>
-    /// <param name="client">The HTTP client the function is invoked through; its auth and timeout are the deployment's concern.</param>
+    /// <param name="client">The HTTP client the function is invoked through; its timeout is the deployment's concern.</param>
     /// <param name="functionUrl">Resolves the invoke URL of the serverless function deployed for a run's (base workflow, version, environment). The resolution is asynchronous because it reads the run's Deployed <c>WorkflowDeployment</c> from the store (ADR 0059); <see cref="DeployedFunctionUrlResolver.ForStore"/> is the production resolver. It throws when the run has no deployed function, which leaves the run claimable for retry.</param>
     /// <param name="checkpointBaseUrl">The base URL of this deployment's checkpoint surface (§6b) the invoked function checkpoints back to; the function posts <c>environments/{environment}/runs/{id}/checkpoint</c> — the run's full address (ADR 0065 decision 9) — relative to it.</param>
+    /// <param name="invokeAuthenticator">Authenticates each invocation to the function platform (ADR 0059 decision 4). It is required: the function advances whatever run an invocation names, so a function that accepts an unauthenticated invocation is open to anyone who can reach it.</param>
     /// <param name="checkpointTokenIssuer">An optional run-scoped checkpoint-token issuer (ADR 0062): given a run's full address, it mints the bearer token the invoked function presents on its checkpoint callbacks, which a publicly reachable checkpoint surface validates against the same address. When <see langword="null"/>, no token is carried (the checkpoint surface is not token-authenticated).</param>
-    public ServerlessRunExecutionBackend(HttpClient client, Func<WorkflowRun, CancellationToken, ValueTask<Uri>> functionUrl, Uri checkpointBaseUrl, Func<WorkflowRunAddress, string>? checkpointTokenIssuer = null)
+    public ServerlessRunExecutionBackend(HttpClient client, Func<WorkflowRun, CancellationToken, ValueTask<Uri>> functionUrl, Uri checkpointBaseUrl, IServerlessInvokeAuthenticator invokeAuthenticator, Func<WorkflowRunAddress, string>? checkpointTokenIssuer = null)
     {
         ArgumentNullException.ThrowIfNull(client);
         ArgumentNullException.ThrowIfNull(functionUrl);
         ArgumentNullException.ThrowIfNull(checkpointBaseUrl);
+        ArgumentNullException.ThrowIfNull(invokeAuthenticator);
         this.client = client;
         this.functionUrl = functionUrl;
         this.checkpointBaseUrl = checkpointBaseUrl.ToString();
+        this.invokeAuthenticator = invokeAuthenticator;
         this.checkpointTokenIssuer = checkpointTokenIssuer;
     }
 
@@ -86,6 +90,9 @@ public sealed class ServerlessRunExecutionBackend : IRunExecutionBackend
         {
             Content = new ByteArrayContent(body) { Headers = { ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json") } },
         };
+
+        // The credential goes on last, over the final URL and the exact bytes sent, since a signing scheme covers both.
+        await this.invokeAuthenticator.AuthenticateAsync(request, body, cancellationToken).ConfigureAwait(false);
 
         using HttpResponseMessage response = await this.client.SendAsync(request, cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)

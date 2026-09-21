@@ -5,8 +5,11 @@
 using Amazon.Lambda;
 using Amazon.Runtime;
 using Azure.Identity;
+using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Aot;
 using Corvus.Text.Json.Arazzo.Durability.MicroGuest.Deploy;
+using Corvus.Text.Json.Arazzo.Durability.Security;
+using Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy;
 using Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.Arm;
 using Corvus.Text.Json.Arazzo.Durability.Serverless.Lambda.Deploy;
 
@@ -47,6 +50,41 @@ public static class ServerlessDeployerSelection
         };
     }
 
+    /// <summary>
+    /// Builds the configured platform's invoke authenticator (ADR 0059 decision 4), the counterpart of its deployer: what
+    /// the runner presents to the deployed function on each invocation. There is no anonymous choice.
+    /// </summary>
+    /// <param name="configuration">The host configuration.</param>
+    /// <returns>The platform's invoke authenticator.</returns>
+    /// <exception cref="InvalidOperationException">The platform is unknown, or its required configuration is missing.</exception>
+    public static IServerlessInvokeAuthenticator CreateInvokeAuthenticator(IConfiguration configuration)
+    {
+        string platform = configuration["Runner:Serverless:Platform"] ?? "lambda";
+        switch (platform)
+        {
+            case "lambda":
+                // The Function URL is AWS_IAM, so the invocation is signed with the same identity that deployed it.
+                // LocalStack Community ignores the signature; real AWS refuses an invocation without it.
+                return new SigV4ServerlessInvokeAuthenticator(LambdaCredentials(configuration), configuration["Runner:Lambda:Region"] ?? "us-east-1");
+
+            case "azure-flex":
+                AzureFunctionsInvokeAuthorization authorization = AzureInvokeAuthorization(configuration);
+                var functionKey = new FunctionKeyServerlessInvokeAuthenticator(RunnerSecrets(), authorization.InvokeKey);
+                return authorization.EntraAudience is { } audience
+                    ? new EntraServerlessInvokeAuthenticator(functionKey, new DefaultAzureCredential(), audience)
+                    : functionKey;
+
+            case "micro-guest":
+                // The sidecar's invoke endpoint is on its loopback admin surface (ADR 0063), so there is no credential to
+                // add, and this authenticator refuses to invoke anything that is not on this machine.
+                return LoopbackServerlessInvokeAuthenticator.Instance;
+
+            default:
+                throw new InvalidOperationException(
+                    $"Runner:Serverless:Platform '{platform}' is not a known serverless platform — use 'lambda' (default), 'azure-flex', or 'micro-guest'.");
+        }
+    }
+
     // The runner's AWS identity: an IAmazonLambda pointed at LocalStack (the demo's AWS analogue, ADR 0060) or, in
     // production, at real AWS with the runner's own IAM identity. This is the SAME deployer code either way — only the
     // endpoint and credentials differ (ADR 0060). Dummy static credentials are correct for LocalStack Community (it
@@ -61,11 +99,7 @@ public static class ServerlessDeployerSelection
             ServiceURL = lambdaServiceUrl,
             AuthenticationRegion = configuration["Runner:Lambda:Region"] ?? "us-east-1",
         };
-        var lambdaClient = new AmazonLambdaClient(
-            new BasicAWSCredentials(
-                configuration["Runner:Lambda:AccessKey"] ?? "test",
-                configuration["Runner:Lambda:SecretKey"] ?? "test"),
-            lambdaConfig);
+        var lambdaClient = new AmazonLambdaClient(LambdaCredentials(configuration), lambdaConfig);
         return new LambdaServerlessDeployer(
             lambdaClient,
             new LambdaDeployerOptions
@@ -75,6 +109,21 @@ public static class ServerlessDeployerSelection
             });
     }
 
+    private static BasicAWSCredentials LambdaCredentials(IConfiguration configuration)
+        => new(configuration["Runner:Lambda:AccessKey"] ?? "test", configuration["Runner:Lambda:SecretKey"] ?? "test");
+
+    // The invoke key is a reference into the runner's own secret store (env:// or file:// here). The deployer sets it on
+    // each Function App and the invoker presents it, so it never reaches the control plane. Entra is an optional second
+    // layer on top of the key, chosen by naming the Function App's audience.
+    private static AzureFunctionsInvokeAuthorization AzureInvokeAuthorization(IConfiguration configuration)
+        => new()
+        {
+            InvokeKey = SecretRef.Parse(Required(configuration, "Runner:AzureFlex:InvokeKeyRef", "azure-flex")),
+            EntraAudience = configuration["Runner:AzureFlex:EntraAudience"],
+        };
+
+    private static ISecretResolver RunnerSecrets() => new SecretResolverBuilder().AddEnvironmentAndFile().Build();
+
     // The runner's Azure identity is ambient (DefaultAzureCredential: a Managed Identity in production, the developer's
     // CLI sign-in locally — ADR 0059 decision 6, never static keys). The deployer posts the app package to the Flex
     // Consumption One Deploy endpoint with an ARM AAD bearer and stamps the source app settings over ARM (ADR 0061
@@ -83,11 +132,13 @@ public static class ServerlessDeployerSelection
     {
         return new AzureFunctionsFlexDeployer(
             new DefaultAzureCredential(),
+            RunnerSecrets(),
             new AzureFunctionsFlexDeployerOptions
             {
                 SubscriptionId = Required(configuration, "Runner:AzureFlex:SubscriptionId", "azure-flex"),
                 ResourceGroupName = Required(configuration, "Runner:AzureFlex:ResourceGroup", "azure-flex"),
                 AppNamePrefix = Required(configuration, "Runner:AzureFlex:AppNamePrefix", "azure-flex"),
+                InvokeAuthorization = AzureInvokeAuthorization(configuration),
                 FunctionAppSettings = functionSourceEnv,
             });
     }

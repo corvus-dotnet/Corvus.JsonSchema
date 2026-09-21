@@ -6,6 +6,8 @@ using System.Diagnostics;
 using Azure.Identity;
 using Corvus.Text.Json.Arazzo.Durability.Aot;
 using Corvus.Text.Json.Arazzo.Durability.AzureStorage;
+using Corvus.Text.Json.Arazzo.Durability.Security;
+using Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy;
 using Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.Arm;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
@@ -81,7 +83,8 @@ public sealed class ArmFunctionAppLiveDeployTests
             // endpoint (Flex Consumption's only deployment technology) and returns the app's real invoke URL.
             var deployer = new AzureFunctionsFlexDeployer(
                 new AzureCliCredential(),
-                new AzureFunctionsFlexDeployerOptions { SubscriptionId = subscription, ResourceGroupName = resourceGroup, AppNamePrefix = appPrefix });
+                new SecretResolverBuilder().AddEnvironment().Build(),
+                new AzureFunctionsFlexDeployerOptions { SubscriptionId = subscription, ResourceGroupName = resourceGroup, AppNamePrefix = appPrefix, InvokeAuthorization = InvokeAuthorization() });
 
             ServerlessDeployResult result = await deployer.DeployAsync(request, default);
             result.Succeeded.ShouldBeTrue(result.Log);
@@ -174,8 +177,10 @@ public sealed class ArmFunctionAppLiveDeployTests
             // transport binder calls the listener's /demo/echo.
             var deployer = new AzureFunctionsFlexDeployer(
                 new AzureCliCredential(),
+                new SecretResolverBuilder().AddEnvironment().Build(),
                 new AzureFunctionsFlexDeployerOptions
                 {
+                    InvokeAuthorization = InvokeAuthorization(),
                     SubscriptionId = subscription,
                     ResourceGroupName = resourceGroup,
                     AppNamePrefix = appPrefix,
@@ -196,7 +201,7 @@ public sealed class ArmFunctionAppLiveDeployTests
             AzureStorageWorkflowStateStore store = await AzureStorageWorkflowStateStore.ConnectAsync(storageConnection);
             WorkflowRunId runId = await ServerlessLiveExecutionSupport.SeedPendingRunAsync(store);
             string token = ServerlessLiveExecutionSupport.IssueCheckpointToken(checkpointSecret, runId);
-            await ServerlessLiveExecutionSupport.InvokeUntilCompletedAsync(new Uri(result.FunctionUrl), runId, listenerUrl, token, TimeSpan.FromMinutes(5));
+            await ServerlessLiveExecutionSupport.InvokeUntilCompletedAsync(new Uri(result.FunctionUrl), InvokeKey, runId, listenerUrl, token, TimeSpan.FromMinutes(5));
             await ServerlessLiveExecutionSupport.AssertRunCompletedWithEchoAsync(store, runId);
         }
         finally
@@ -223,9 +228,22 @@ public sealed class ArmFunctionAppLiveDeployTests
 
     // Polls the app's invoke route until it stops being a 404 (function not present) and is instead served by our loaded
     // function, which faults on a no-runId probe (a 500). Connection resets and 502/503 during start-up are "keep waiting".
+    // The invoke key for this run (ADR 0059 decision 4): held in this process's environment, which is the runner's secret
+    // store here. The production deployer reads it by reference and sets it on the app, and the invocations present it.
+    private const string InvokeKeyVariable = "ARAZZO_LIVE_INVOKE_KEY";
+
+    private static readonly string InvokeKey = Convert.ToHexStringLower(System.Security.Cryptography.RandomNumberGenerator.GetBytes(24));
+
+    private static AzureFunctionsInvokeAuthorization InvokeAuthorization()
+    {
+        System.Environment.SetEnvironmentVariable(InvokeKeyVariable, InvokeKey);
+        return new AzureFunctionsInvokeAuthorization { InvokeKey = SecretRef.Parse("env://" + InvokeKeyVariable) };
+    }
+
     private static async Task<bool> PollUntilInvokeRouteIsOurFunctionAsync(Uri invokeUri, TimeSpan budget)
     {
         using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        httpClient.DefaultRequestHeaders.Add("x-functions-key", InvokeKey);
         var stopwatch = Stopwatch.StartNew();
         while (stopwatch.Elapsed < budget)
         {

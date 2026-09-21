@@ -48,6 +48,7 @@ public sealed class ArmFunctionAppConfigurator : IFunctionAppConfigurator
     /// <inheritdoc/>
     public async ValueTask<Uri> ApplyRunFromPackageAsync(
         ServerlessDeployRequest request,
+        FunctionAppInvokeAccess invokeAccess,
         Uri packageUrl,
         IReadOnlyDictionary<string, string> appSettings,
         CancellationToken cancellationToken)
@@ -58,6 +59,10 @@ public sealed class ArmFunctionAppConfigurator : IFunctionAppConfigurator
         string appName = AppName(request, this.options.AppNamePrefix);
         ResourceIdentifier siteId = WebSiteResource.CreateResourceIdentifier(this.options.SubscriptionId, this.options.ResourceGroupName, appName);
         WebSiteResource site = this.armClient.GetWebSiteResource(siteId);
+
+        // The invoke access first, so the key is in place and the Entra posture is checked before the app is pointed at
+        // anything.
+        await ArmFunctionInvokeAccess.ApplyAsync(site, invokeAccess, cancellationToken).ConfigureAwait(false);
 
         // Merge run-from-package and the source settings over the app's existing settings, so the runtime settings the app
         // was provisioned with (AzureWebJobsStorage, FUNCTIONS_WORKER_RUNTIME, FUNCTIONS_EXTENSION_VERSION) are preserved.

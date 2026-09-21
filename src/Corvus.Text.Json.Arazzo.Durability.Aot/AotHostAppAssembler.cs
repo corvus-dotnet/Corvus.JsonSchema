@@ -201,7 +201,10 @@ public sealed class ArazzoInvokeFunction
     public ArazzoInvokeFunction(ServerlessInvocationHandler handler) => this.handler = handler;
 
     [Function("invoke")]
-    public async Task<IResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest request)
+    // Function level, never Anonymous (ADR 0059 decision 4): an invocation names the run to advance and the checkpoint
+    // surface to load it from, and the function advances it with its own source credentials, so the host must refuse a
+    // caller that does not hold the invoke key the deployer set.
+    public async Task<IResult> Run([HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequest request)
     {
         using var buffer = new MemoryStream();
         await request.Body.CopyToAsync(buffer, request.HttpContext.RequestAborted);

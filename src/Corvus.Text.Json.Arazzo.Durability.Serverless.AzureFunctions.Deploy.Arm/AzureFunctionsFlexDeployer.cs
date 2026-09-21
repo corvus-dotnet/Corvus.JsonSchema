@@ -10,6 +10,7 @@ using Azure.ResourceManager;
 using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.AppService.Models;
 using Corvus.Text.Json.Arazzo.Durability.Aot;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Serverless.AzureFunctions.Deploy.Arm;
 
@@ -43,16 +44,20 @@ public sealed class AzureFunctionsFlexDeployer : IServerlessDeployer
 
     private readonly TokenCredential credential;
     private readonly ArmClient armClient;
+    private readonly ISecretResolver secrets;
     private readonly AzureFunctionsFlexDeployerOptions options;
 
     /// <summary>Initializes a new instance of the <see cref="AzureFunctionsFlexDeployer"/> class.</summary>
     /// <param name="credential">The credential the runner supplies for the environment (the runner is the secure boundary, ADR 0059).</param>
-    /// <param name="options">The subscription, resource group, app-name prefix, invoke path, and source app settings.</param>
-    public AzureFunctionsFlexDeployer(TokenCredential credential, AzureFunctionsFlexDeployerOptions options)
+    /// <param name="secrets">The runner's secret resolver, which the invoke key is read from.</param>
+    /// <param name="options">The subscription, resource group, app-name prefix, invoke authorization, invoke path, and source app settings.</param>
+    public AzureFunctionsFlexDeployer(TokenCredential credential, ISecretResolver secrets, AzureFunctionsFlexDeployerOptions options)
     {
         ArgumentNullException.ThrowIfNull(credential);
+        ArgumentNullException.ThrowIfNull(secrets);
         ArgumentNullException.ThrowIfNull(options);
         this.credential = credential;
+        this.secrets = secrets;
         this.options = options;
         this.armClient = new ArmClient(credential, options.SubscriptionId);
     }
@@ -66,7 +71,14 @@ public sealed class AzureFunctionsFlexDeployer : IServerlessDeployer
             ResourceIdentifier siteId = WebSiteResource.CreateResourceIdentifier(this.options.SubscriptionId, this.options.ResourceGroupName, appName);
             WebSiteResource site = await this.armClient.GetWebSiteResource(siteId).GetAsync(cancellationToken).ConfigureAwait(false);
 
-            // Set the deployed environment's source settings first (merged over the app's existing settings), so they are
+            // The invoke access before anything else: the key is in place, and the Entra posture is checked, before a
+            // package is published, so there is no moment at which the function is live and open (ADR 0059 decision 4).
+            using (SecretMaterial invokeKey = await this.secrets.ResolveAsync(this.options.InvokeAuthorization.InvokeKey, cancellationToken).ConfigureAwait(false))
+            {
+                await ArmFunctionInvokeAccess.ApplyAsync(site, new FunctionAppInvokeAccess(invokeKey.Reveal(), this.options.InvokeAuthorization.EntraAudience), cancellationToken).ConfigureAwait(false);
+            }
+
+            // Set the deployed environment's source settings next (merged over the app's existing settings), so they are
             // in place when the deployed package starts.
             if (this.options.FunctionAppSettings is { Count: > 0 } sourceSettings)
             {
@@ -136,6 +148,10 @@ public sealed class AzureFunctionsFlexDeployer : IServerlessDeployer
             }
 
             return failure;
+        }
+        catch (FunctionAppInvokeAccessException ex)
+        {
+            return ServerlessDeployResult.Failure(ex.Message);
         }
         catch (RequestFailedException ex)
         {

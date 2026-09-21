@@ -4,6 +4,7 @@
 
 using Azure.Storage.Blobs;
 using Corvus.Text.Json.Arazzo.Durability.Aot;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 using Testcontainers.Azurite;
@@ -55,8 +56,10 @@ public sealed class AzureFunctionsServerlessDeployerAzuriteTests
         var deployer = new AzureFunctionsServerlessDeployer(
             packages,
             configurator,
+            new FixedSecretResolver("the-invoke-key"),
             new AzureFunctionsDeployerOptions
             {
+                InvokeAuthorization = new AzureFunctionsInvokeAuthorization { InvokeKey = SecretRef.Parse("env://ARAZZO_INVOKE_KEY"), EntraAudience = "api://arazzo-functions" },
                 FunctionAppSettings = new Dictionary<string, string>(StringComparer.Ordinal) { ["ARAZZO_SOURCE__echo"] = "https://echo.example" },
             });
 
@@ -81,6 +84,10 @@ public sealed class AzureFunctionsServerlessDeployerAzuriteTests
         configurator.AppSettings!.ShouldContainKeyAndValue("ARAZZO_SOURCE__echo", "https://echo.example");
         configurator.Request!.Value.BaseWorkflowId.ShouldBe("check");
 
+        // The invoke access goes to the management plane with the package: the key resolved from the runner's secret
+        // store, and the Entra audience the app must require (ADR 0059 decision 4).
+        configurator.InvokeAccess.ShouldBe(new FunctionAppInvokeAccess("the-invoke-key", "api://arazzo-functions"));
+
         // The run-from-package URL is the platform's own read handle: fetching it returns exactly the uploaded package.
         using var httpClient = new HttpClient();
         byte[] fetched = await httpClient.GetByteArrayAsync(configurator.PackageUrl);
@@ -91,9 +98,36 @@ public sealed class AzureFunctionsServerlessDeployerAzuriteTests
         (await blob.ExistsAsync()).Value.ShouldBeTrue("the package is not at its deterministic blob name.");
     }
 
+    [TestMethod]
+    public async Task A_refused_invoke_access_is_a_failed_deploy()
+    {
+        var blobService = new BlobServiceClient(azurite.GetConnectionString(), new BlobClientOptions(BlobClientOptions.ServiceVersion.V2024_11_04));
+        var deployer = new AzureFunctionsServerlessDeployer(
+            blobService.GetBlobContainerClient("arazzo-packages-refused"),
+            new RecordingFunctionAppConfigurator { AppBaseUrl = new Uri("https://arazzo-fn-check.example.net/"), Refusal = "the app does not require authentication." },
+            new FixedSecretResolver("the-invoke-key"),
+            new AzureFunctionsDeployerOptions { InvokeAuthorization = new AzureFunctionsInvokeAuthorization { InvokeKey = SecretRef.Parse("env://ARAZZO_INVOKE_KEY"), EntraAudience = "api://arazzo-functions" } });
+
+        ServerlessDeployResult result = await deployer.DeployAsync(new ServerlessDeployRequest("check", 1, "isolated", "linux-x64", new byte[16]), default);
+
+        result.Succeeded.ShouldBeFalse();
+        result.FunctionUrl.ShouldBeEmpty();
+        result.Log.ShouldContain("does not require authentication");
+    }
+
+    private sealed class FixedSecretResolver(string value) : ISecretResolver
+    {
+        public bool CanResolve(SecretScheme scheme) => true;
+
+        public ValueTask<SecretMaterial> ResolveAsync(SecretRef reference, CancellationToken cancellationToken)
+            => ValueTask.FromResult(SecretMaterial.FromString(value));
+    }
+
     private sealed class RecordingFunctionAppConfigurator : IFunctionAppConfigurator
     {
         public required Uri AppBaseUrl { get; init; }
+
+        public string? Refusal { get; init; }
 
         public Uri? PackageUrl { get; private set; }
 
@@ -101,9 +135,17 @@ public sealed class AzureFunctionsServerlessDeployerAzuriteTests
 
         public ServerlessDeployRequest? Request { get; private set; }
 
-        public ValueTask<Uri> ApplyRunFromPackageAsync(ServerlessDeployRequest request, Uri packageUrl, IReadOnlyDictionary<string, string> appSettings, CancellationToken cancellationToken)
+        public FunctionAppInvokeAccess? InvokeAccess { get; private set; }
+
+        public ValueTask<Uri> ApplyRunFromPackageAsync(ServerlessDeployRequest request, FunctionAppInvokeAccess invokeAccess, Uri packageUrl, IReadOnlyDictionary<string, string> appSettings, CancellationToken cancellationToken)
         {
+            if (this.Refusal is not null)
+            {
+                throw new FunctionAppInvokeAccessException(this.Refusal);
+            }
+
             this.Request = request;
+            this.InvokeAccess = invokeAccess;
             this.PackageUrl = packageUrl;
             this.AppSettings = appSettings;
             return ValueTask.FromResult(this.AppBaseUrl);
