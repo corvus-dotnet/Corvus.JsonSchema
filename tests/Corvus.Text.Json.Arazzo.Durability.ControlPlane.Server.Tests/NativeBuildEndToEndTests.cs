@@ -129,6 +129,7 @@ public sealed class NativeBuildEndToEndTests
         appBuilder.Services.AddSingleton(buildService);
         appBuilder.Services.AddNativeAotBuildWorker(new NativeBuildWorkerOptions { WorkerId = "e2e-worker", PollInterval = TimeSpan.FromMilliseconds(50) });
 
+        appBuilder.Services.AddArazzoAuthenticationTelemetry();
         await using WebApplication app = appBuilder.Build();
         app.UseAuthentication();
         app.UseAuthorization();

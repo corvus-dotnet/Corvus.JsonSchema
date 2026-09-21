@@ -392,6 +392,99 @@ public sealed class ControlPlaneAuditSinkTests
         ReadRecords(sink).Select(r => r.GetProperty("disclosure").GetString()).ShouldBe(["full", "refused"]);
     }
 
+    [TestMethod]
+    [DataRow(ControlPlaneSecurityMode.Scoped)]
+    [DataRow(ControlPlaneSecurityMode.RowSecurityOnly)]
+    [DataRow(ControlPlaneSecurityMode.ScopesOnly)]
+    public async Task A_secured_posture_does_not_start_in_a_host_that_does_not_watch_its_authentications(ControlPlaneSecurityMode mode)
+    {
+        InvalidOperationException refused = await Should.ThrowAsync<InvalidOperationException>(async () => await StartAsync(mode, GovernanceAuditor.CreateInMemory(), authenticationTelemetry: false));
+        refused.Message.ShouldContain("AddArazzoAuthenticationTelemetry");
+        refused.Message.ShouldContain(mode.ToString());
+
+        // Open is the development posture, and the one that may run without it.
+        await using Host open = await StartAsync(ControlPlaneSecurityMode.Open, auditor: null, authenticationTelemetry: false);
+    }
+
+    [TestMethod]
+    public async Task A_failed_authentication_is_a_record_naming_the_scheme_the_reason_and_the_address_and_no_token()
+    {
+        var sink = new InMemoryAuditSink();
+        await using var auditor = new GovernanceAuditor(sink: sink, headSigner: Signer(), headOptions: new AuditHeadOptions(1000, TimeSpan.FromHours(1)));
+        await using Host host = await StartAsync(ControlPlaneSecurityMode.Scoped, auditor);
+
+        // A credential that is good, and a request with none: neither is a failure, and neither is recorded.
+        (await host.SendAsync(HttpMethod.Get, "/environments", Read)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendAsync(HttpMethod.Get, "/environments", scope: null)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        Records(sink, "auth").ShouldBeEmpty();
+
+        (await host.SendWithBadTokenAsync("/environments", "eyJhbGciOi.super-secret-token-value.sig")).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+
+        Stj.JsonElement failure = Records(sink, "auth").ShouldHaveSingleItem();
+        failure.GetProperty("scheme").GetString().ShouldBe(ScopeAuthHandler.SchemeName);
+        failure.GetProperty("reason").GetString().ShouldBe("expired");
+        failure.GetProperty("remote").GetString().ShouldNotBeNullOrEmpty();
+        failure.TryGetProperty("subject", out _).ShouldBeFalse();
+
+        // Not the token, not a hash of it, not a fragment.
+        string chain = Encoding.UTF8.GetString(sink.Snapshot(sink.ChainIds.ShouldHaveSingleItem()));
+        chain.ShouldNotContain("super-secret-token-value");
+        chain.ShouldNotContain("eyJhbGciOi");
+        (await AuditChainVerifier.VerifyAsync(new MemoryStream(sink.Snapshot(sink.ChainIds[0])))).IsIntact.ShouldBeTrue();
+    }
+
+    [TestMethod]
+    public async Task Credential_stuffing_is_recorded_up_to_its_bound_and_then_as_a_count_and_never_changes_the_answer()
+    {
+        var sink = new SwitchableSink();
+        var clock = new ManualClock(new DateTimeOffset(2026, 9, 21, 12, 0, 0, TimeSpan.Zero));
+        await using var auditor = new GovernanceAuditor(sink: sink, timeProvider: clock, headSigner: Signer(), headOptions: new AuditHeadOptions(1000, TimeSpan.FromHours(1)), authenticationFailureLimiter: new RefusalRecordLimiter(perSubject: 2, window: TimeSpan.FromMinutes(1)));
+        await using Host host = await StartAsync(ControlPlaneSecurityMode.Scoped, auditor);
+
+        for (int i = 0; i < 6; i++)
+        {
+            (await host.SendWithBadTokenAsync("/environments", "guess-" + i)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        }
+
+        Records(sink.Inner, "auth").Count.ShouldBe(2);
+
+        // The sink goes down mid-attack. A failed authentication is still answered as a failed authentication.
+        sink.Failing = true;
+        (await host.SendWithBadTokenAsync("/environments", "guess-again")).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        sink.Failing = false;
+
+        clock.Advance(TimeSpan.FromSeconds(61));
+        clock.Tick();
+        List<Stj.JsonElement> records = [];
+        for (int i = 0; i < 100 && records.Count < 3; i++)
+        {
+            await Task.Delay(20);
+            records = Records(sink.Inner, "auth");
+        }
+
+        records.Count.ShouldBe(3);
+        records[2].GetProperty("reason").GetString().ShouldBe("suppressed");
+        records[2].GetProperty("suppressed").GetInt64().ShouldBe(5);
+        records[2].GetProperty("remote").GetString().ShouldBe(records[0].GetProperty("remote").GetString());
+    }
+
+    [TestMethod]
+    public async Task A_failed_authentication_whose_record_the_sink_refuses_is_still_answered_as_a_failed_authentication()
+    {
+        var sink = new SwitchableSink { Failing = true };
+        await using var auditor = new GovernanceAuditor(sink: sink, headSigner: Signer(), headOptions: new AuditHeadOptions(1000, TimeSpan.FromHours(1)));
+        await using Host host = await StartAsync(ControlPlaneSecurityMode.Scoped, auditor);
+
+        // This failure is within its address's bound, so its record is attempted, and the sink refuses it.
+        (await host.SendWithBadTokenAsync("/environments", "guess")).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+
+        auditor.Health.IsHealthy.ShouldBeFalse();
+        Records(sink.Inner, "auth").ShouldBeEmpty();
+    }
+
+    private static List<Stj.JsonElement> Records(InMemoryAuditSink sink, string kind)
+        => [.. sink.ChainIds.SelectMany(id => Encoding.UTF8.GetString(sink.Snapshot(id)).Split('\n', StringSplitOptions.RemoveEmptyEntries)).Where(l => l.EndsWith('}')).Select(l => Stj.JsonDocument.Parse(l).RootElement).Where(r => r.GetProperty("kind").GetString() == kind)];
+
     private static List<Stj.JsonElement> ReadRecords(InMemoryAuditSink sink)
         => [.. sink.ChainIds.SelectMany(id => Encoding.UTF8.GetString(sink.Snapshot(id)).Split('\n', StringSplitOptions.RemoveEmptyEntries)).Select(l => Stj.JsonDocument.Parse(l).RootElement).Where(r => r.GetProperty("kind").GetString() == "read")];
 
@@ -407,7 +500,7 @@ public sealed class ControlPlaneAuditSinkTests
     private static EcdsaExecutorPackageSigner Signer()
         => new(System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256), "audit-test");
 
-    private static async Task<Host> StartAsync(ControlPlaneSecurityMode mode, GovernanceAuditor? auditor, ControlPlaneRowSecurityPolicy? policy = null)
+    private static async Task<Host> StartAsync(ControlPlaneSecurityMode mode, GovernanceAuditor? auditor, ControlPlaneRowSecurityPolicy? policy = null, bool authenticationTelemetry = true)
     {
         var store = new InMemoryWorkflowStateStore();
         var management = new SecuredWorkflowManagement(store, "ops");
@@ -420,6 +513,11 @@ public sealed class ControlPlaneAuditSinkTests
             .AddAuthentication(ScopeAuthHandler.SchemeName)
             .AddScheme<AuthenticationSchemeOptions, ScopeAuthHandler>(ScopeAuthHandler.SchemeName, _ => { });
         builder.Services.AddArazzoControlPlaneAuthorization();
+        if (authenticationTelemetry)
+        {
+            builder.Services.AddArazzoAuthenticationTelemetry();
+        }
+
         builder.Services.AddHttpContextAccessor();
 
         WebApplication app = builder.Build();
@@ -533,6 +631,13 @@ public sealed class ControlPlaneAuditSinkTests
         public Task<HttpResponseMessage> SendJsonAsync(HttpMethod method, string path, string body, string? scope)
             => this.SendCoreAsync(new HttpRequestMessage(method, path) { Content = new StringContent(body, Encoding.UTF8, "application/json") }, scope);
 
+        public async Task<HttpResponseMessage> SendWithBadTokenAsync(string path, string token)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, path);
+            request.Headers.Add(ScopeAuthHandler.BadTokenHeader, token);
+            return await client.SendAsync(request);
+        }
+
         public async ValueTask DisposeAsync()
         {
             client.Dispose();
@@ -553,14 +658,25 @@ public sealed class ControlPlaneAuditSinkTests
         }
     }
 
+    // Named as the token validation library names it, since the telemetry classifies a failure by the name of its kind.
+    private sealed class SecurityTokenExpiredException(string message) : Exception(message);
+
     private sealed class ScopeAuthHandler(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder)
         : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
     {
         public const string SchemeName = "Scopes";
         public const string ScopeHeader = "X-Scopes";
+        public const string BadTokenHeader = "X-Bad-Token";
 
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
+            // A credential that was presented and did not validate, as an expired bearer token does not. The failure's
+            // message quotes the token, as a validation library's can, which is why the telemetry never reads it.
+            if (this.Request.Headers.TryGetValue(BadTokenHeader, out Microsoft.Extensions.Primitives.StringValues bad))
+            {
+                return Task.FromResult(AuthenticateResult.Fail(new SecurityTokenExpiredException("The token '" + bad + "' expired.")));
+            }
+
             if (!this.Request.Headers.TryGetValue(ScopeHeader, out Microsoft.Extensions.Primitives.StringValues values))
             {
                 return Task.FromResult(AuthenticateResult.NoResult());

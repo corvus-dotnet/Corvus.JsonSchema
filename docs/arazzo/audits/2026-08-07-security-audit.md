@@ -602,7 +602,8 @@ granularity. `SensitiveReadAudit` on the step journal is a good model.
 > **Decided.** [ADR 0071](../adr/0071-authentication-event-telemetry.md): a helper the host attaches to
 > its authentication events, a counter for the rate and a refusal record per failure without token
 > material, the runner API's own refusals audited, required in the secured postures; throttling stays
-> with GAP-3. Implementation open.
+> with GAP-3. Implementation begun: the authentication telemetry is built, as one scheme-agnostic middleware
+> with its failure records capped for each remote address; the runner API's refusals are next.
 Neither successful nor failed authentication is recorded anywhere, so brute force and credential
 stuffing are undetectable by construction. Authorization denials on read paths are likewise
 unrecorded, which matters more than usual in a deliberately non-disclosing system, since ADR 0004

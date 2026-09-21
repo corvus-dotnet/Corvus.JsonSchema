@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "AuditRecord",
-  "description": "One record of an audit chain (ADR 0069). A chain is one JSON Lines stream owned by one writer; each line is one record, and a record's hash is the SHA-256 of its line's exact UTF-8 bytes without the line feed. Every record carries its chain's id, its sequence from zero, a timestamp and the hash of the record before it. A chain's first record opens it, naming its writer and the chain it continues; after that a record is evidence of a governance mutation, evidence of a read, or a signed head over the records before it.",
+  "description": "One record of an audit chain (ADR 0069). A chain is one JSON Lines stream owned by one writer; each line is one record, and a record's hash is the SHA-256 of its line's exact UTF-8 bytes without the line feed. Every record carries its chain's id, its sequence from zero, a timestamp and the hash of the record before it. A chain's first record opens it, naming its writer and the chain it continues; after that a record is evidence of a governance mutation, evidence of a read, evidence of a failed authentication, or a signed head over the records before it.",
   "oneOf": [
     {
       "$ref": "#/$defs/OpenRecord"
@@ -11,6 +11,9 @@
     },
     {
       "$ref": "#/$defs/ReadRecord"
+    },
+    {
+      "$ref": "#/$defs/AuthenticationRecord"
     },
     {
       "$ref": "#/$defs/HeadRecord"
@@ -163,6 +166,55 @@
         }
       }
     },
+    "AuthenticationRecord": {
+      "type": "object",
+      "description": "The record of an authentication that failed (ADR 0071): the scheme, why it failed, and where it came from. It carries no token material: not the token, not a hash of it, not a fragment. A success is counted and not recorded, since every action that matters already names its subject. A record whose reason is `suppressed` carries how many failures from that address a window counted and did not append.",
+      "required": [
+        "chain",
+        "seq",
+        "at",
+        "prev",
+        "kind",
+        "scheme",
+        "reason",
+        "remote"
+      ],
+      "properties": {
+        "chain": {
+          "$ref": "#/$defs/ChainId"
+        },
+        "seq": {
+          "$ref": "#/$defs/Sequence"
+        },
+        "at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "prev": {
+          "$ref": "#/$defs/RecordHash"
+        },
+        "kind": {
+          "const": "auth"
+        },
+        "scheme": {
+          "$ref": "#/$defs/Label"
+        },
+        "reason": {
+          "$ref": "#/$defs/Label"
+        },
+        "remote": {
+          "$ref": "#/$defs/Label"
+        },
+        "subject": {
+          "$ref": "#/$defs/Label"
+        },
+        "issuer": {
+          "$ref": "#/$defs/Label"
+        },
+        "suppressed": {
+          "$ref": "#/$defs/SuppressedCount"
+        }
+      }
+    },
     "HeadRecord": {
       "type": "object",
       "description": "A signed head: the writer's signature over its chain so far. The signature covers a statement of the chain's id, this record's sequence and this record's previous-hash, which is the hash of the last record before the head, so it vouches for every record before it. Heads are what show an alteration or a removal at a chain's tail, which the hash links alone cannot.",
@@ -270,7 +322,7 @@
       "type": "integer",
       "format": "int64",
       "minimum": 1,
-      "description": "Carried by a read record whose disclosure is `suppressed`: the number of a subject's refusals that a window counted and did not append, because the subject was over its bound (ADR 0070). The record is the evidence of the volume the chain did not take."
+      "description": "Carried by a record that reports what a window counted and did not append, because its subject or its address was over its bound (ADR 0070, ADR 0071): how many. The record is the evidence of the volume the chain did not take."
     }
   }
 }

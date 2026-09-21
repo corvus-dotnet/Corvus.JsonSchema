@@ -117,6 +117,9 @@
   <data name="GitHubBrokerMissingFields" xml:space="preserve">
     <value>A GitHub broker requires BaseUrl, ApiBaseUrl, ClientId, ClientSecretRef, and CallbackUrl.</value>
   </data>
+  <data name="AuthenticationTelemetryRequired" xml:space="preserve">
+    <value>ControlPlaneSecurityMode.{0} requires authentication telemetry (ADR 0071): call services.AddArazzoAuthenticationTelemetry() before the host is built. Only Open may run without it.</value>
+  </data>
   <data name="AuditSinkRequired" xml:space="preserve">
     <value>ControlPlaneSecurityMode.{0} requires an audit sink and a head signer (ADR 0069): pass a GovernanceAuditor built with an IAuditSink and the audit's own IExecutorPackageSigner, the same instance the bootstrap was given. Only Open may run without one.</value>
   </data>

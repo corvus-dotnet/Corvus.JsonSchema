@@ -163,6 +163,13 @@ internal static class ServerThrowHelper
     public static void ThrowRowSecurityPolicyRequired(ControlPlaneSecurityMode securityMode)
         => throw new ArgumentException(SR.Format(SR.RowSecurityPolicyRequired, securityMode), "rowSecurity");
 
+    /// <summary>Throws when a secured security mode is mapped in a host that did not register authentication telemetry (ADR 0071).</summary>
+    /// <param name="securityMode">The configured security mode.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowAuthenticationTelemetryRequired(ControlPlaneSecurityMode securityMode)
+        => throw new InvalidOperationException(SR.Format(SR.AuthenticationTelemetryRequired, securityMode));
+
     /// <summary>Throws when a secured security mode is given no auditor that appends to an audit sink (ADR 0069).</summary>
     /// <param name="securityMode">The configured security mode.</param>
     [DoesNotReturn]

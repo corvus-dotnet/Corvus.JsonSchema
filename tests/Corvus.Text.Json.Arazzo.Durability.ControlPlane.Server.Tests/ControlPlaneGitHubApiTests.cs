@@ -423,6 +423,7 @@ public sealed class ControlPlaneGitHubApiTests
             .AddAuthentication(ScopeSubAuthHandler.SchemeName)
             .AddScheme<AuthenticationSchemeOptions, ScopeSubAuthHandler>(ScopeSubAuthHandler.SchemeName, _ => { });
         builder.Services.AddArazzoControlPlaneAuthorization();
+        builder.Services.AddArazzoAuthenticationTelemetry();
         builder.Services.AddHttpContextAccessor();
 
         WebApplication app = builder.Build();

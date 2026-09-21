@@ -128,6 +128,42 @@ public readonly partial struct AuditRecord
         writer.WriteEndObject();
     }
 
+    /// <summary>Writes one authentication record, in the one property order the chain writer emits.</summary>
+    /// <param name="writer">The writer to serialize into.</param>
+    /// <param name="chainId">The chain's id, as UTF-8 hex.</param>
+    /// <param name="sequence">The record's position in the chain.</param>
+    /// <param name="at">When the record is appended.</param>
+    /// <param name="previousHash">The hash of the record before it, as UTF-8 hex.</param>
+    /// <param name="entry">The failure, with its fields read as <see cref="AuditEntryKind.Authentication"/> says.</param>
+    internal static void WriteAuthentication(Utf8JsonWriter writer, ReadOnlySpan<byte> chainId, long sequence, DateTimeOffset at, ReadOnlySpan<byte> previousHash, in AuditEntry entry)
+    {
+        writer.WriteStartObject();
+        writer.WriteString(AuthenticationRecord.JsonPropertyNames.ChainUtf8, chainId);
+        writer.WriteNumber(AuthenticationRecord.JsonPropertyNames.SeqUtf8, sequence);
+        writer.WriteString(AuthenticationRecord.JsonPropertyNames.AtUtf8, at);
+        writer.WriteString(AuthenticationRecord.JsonPropertyNames.PrevUtf8, previousHash);
+        writer.WriteString(AuthenticationRecord.JsonPropertyNames.KindUtf8, "auth"u8);
+        writer.WriteString(AuthenticationRecord.JsonPropertyNames.SchemeUtf8, entry.Action);
+        writer.WriteString(AuthenticationRecord.JsonPropertyNames.ReasonUtf8, entry.Outcome);
+        writer.WriteString(AuthenticationRecord.JsonPropertyNames.RemoteUtf8, entry.TargetId);
+        if (!string.IsNullOrEmpty(entry.Actor))
+        {
+            writer.WriteString(AuthenticationRecord.JsonPropertyNames.SubjectUtf8, entry.Actor);
+        }
+
+        if (entry.Tenant is not null)
+        {
+            writer.WriteString(AuthenticationRecord.JsonPropertyNames.IssuerUtf8, entry.Tenant);
+        }
+
+        if (entry.Suppressed > 0)
+        {
+            writer.WriteNumber(AuthenticationRecord.JsonPropertyNames.SuppressedUtf8, entry.Suppressed);
+        }
+
+        writer.WriteEndObject();
+    }
+
     /// <summary>Writes one head record.</summary>
     /// <param name="writer">The writer to serialize into.</param>
     /// <param name="chainId">The chain's id, as UTF-8 hex.</param>

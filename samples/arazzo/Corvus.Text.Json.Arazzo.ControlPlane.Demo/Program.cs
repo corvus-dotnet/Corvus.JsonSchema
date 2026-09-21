@@ -565,6 +565,7 @@ if (requireAuthorization)
     builder.Services.AddSingleton(entitlements);
     builder.Services.AddSingleton<IClaimsTransformation, KeycloakClaimsTransformer>();
     builder.Services.AddArazzoControlPlaneAuthorization();
+    builder.Services.AddArazzoAuthenticationTelemetry();
 
     // The runner API's own scope (ADR 0065). It is what a runner presents INSTEAD of a store credential, so it is
     // deliberately not one of the control-plane capability scopes: holding it lets a runner ask for work, and grants

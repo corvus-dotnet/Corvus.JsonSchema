@@ -345,6 +345,7 @@ public sealed class ControlPlaneAvailabilityRequestsApiTests
             .AddAuthentication(ScopeTenantSubAuthHandler.SchemeName)
             .AddScheme<AuthenticationSchemeOptions, ScopeTenantSubAuthHandler>(ScopeTenantSubAuthHandler.SchemeName, _ => { });
         builder.Services.AddArazzoControlPlaneAuthorization();
+        builder.Services.AddArazzoAuthenticationTelemetry();
         builder.Services.AddHttpContextAccessor();
 
         WebApplication app = builder.Build();

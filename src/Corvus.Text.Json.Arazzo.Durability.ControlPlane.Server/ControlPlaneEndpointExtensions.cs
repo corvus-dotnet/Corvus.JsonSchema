@@ -148,6 +148,13 @@ public static class ControlPlaneEndpointExtensions
             ServerThrowHelper.ThrowAuditSinkRequired(securityMode);
         }
 
+        // ADR 0071: a secured deployment that does not watch its own authentications does not start. Brute force and
+        // credential stuffing are otherwise undetectable by construction.
+        if (securityMode != ControlPlaneSecurityMode.Open && endpoints.ServiceProvider.GetService<AuthenticationTelemetry>() is null)
+        {
+            ServerThrowHelper.ThrowAuthenticationTelemetryRequired(securityMode);
+        }
+
         // A weak checkpoint secret is caught where it is configured rather than on the first callback that presents a
         // token signed with it, which would be a silent downgrade of the one credential that surface has.
         if (!checkpointSecret.IsEmpty && checkpointSecret.Length < CheckpointToken.MinimumSecretBytes)
@@ -185,6 +192,9 @@ public static class ControlPlaneEndpointExtensions
         // deployment can route/retain it independently; the audit spans ride the always-registered Corvus.Arazzo
         // ActivitySource regardless. Shared by the journal-read audit (§860) and the governance-mutation audit (§850).
         auditor ??= new GovernanceAuditor(endpoints.ServiceProvider.GetService<ILoggerFactory>()?.CreateLogger("Corvus.Arazzo.Audit"));
+
+        // ADR 0071: the authentication telemetry the host registered records its failures in this deployment's chain.
+        endpoints.ServiceProvider.GetService<AuthenticationTelemetry>()?.Bind(auditor);
 
         // The security-authoring API persists rules/bindings; if the deployment's policy is the persistent one,
         // refresh it after writes so authoring changes take effect for subsequent authorization decisions.

@@ -188,6 +188,7 @@ public sealed class ControlPlaneKeyRetirementInvariantTests
             .AddAuthentication(TenantAuthHandler.SchemeName)
             .AddScheme<AuthenticationSchemeOptions, TenantAuthHandler>(TenantAuthHandler.SchemeName, _ => { });
         builder.Services.AddArazzoControlPlaneAuthorization();
+        builder.Services.AddArazzoAuthenticationTelemetry();
         builder.Services.AddHttpContextAccessor();
 
         WebApplication app = builder.Build();

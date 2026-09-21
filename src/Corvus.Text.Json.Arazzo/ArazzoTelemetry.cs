@@ -231,4 +231,14 @@ public static class ArazzoTelemetry
     /// </summary>
     public static Counter<long> Reads { get; } =
         Meter.CreateCounter<long>("corvus.arazzo.governance.reads", "{read}", "Reads that disclose no payload: lists, searches, counts and index-row gets");
+
+    /// <summary>
+    /// Gets the counter for authentications (ADR 0071), dimensioned by <c>corvus.arazzo.auth.scheme</c>,
+    /// <see cref="OutcomeTag">outcome</see> (<c>success</c>, <c>failure</c>, <c>none</c> for a request that carried no
+    /// credential) and, for a failure, <c>corvus.arazzo.auth.reason</c>. It counts every failure, those over an
+    /// address's bound included, which the audit chain does not take one by one: the rate of a credential-stuffing run
+    /// is here.
+    /// </summary>
+    public static Counter<long> Authentications { get; } =
+        Meter.CreateCounter<long>("corvus.arazzo.authentications", "{authentication}", "Authentications, by scheme, outcome and failure reason");
 }

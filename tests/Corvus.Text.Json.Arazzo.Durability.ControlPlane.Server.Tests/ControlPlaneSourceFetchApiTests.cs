@@ -249,6 +249,7 @@ public sealed class ControlPlaneSourceFetchApiTests
             .AddAuthentication(ScopeAuthHandler.SchemeName)
             .AddScheme<AuthenticationSchemeOptions, ScopeAuthHandler>(ScopeAuthHandler.SchemeName, _ => { });
         builder.Services.AddArazzoControlPlaneAuthorization();
+        builder.Services.AddArazzoAuthenticationTelemetry();
         builder.Services.AddHttpContextAccessor();
 
         WebApplication app = builder.Build();

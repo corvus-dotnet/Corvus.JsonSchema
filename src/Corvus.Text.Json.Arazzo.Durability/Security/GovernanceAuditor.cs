@@ -44,6 +44,7 @@ public sealed class GovernanceAuditor : IAsyncDisposable
 
     private readonly AuditChainWriter? chain;
     private readonly RefusalRecordLimiter refusals;
+    private readonly RefusalRecordLimiter authenticationFailures;
     private readonly TimeProvider timeProvider;
     private readonly ITimer? refusalSweep;
 
@@ -54,12 +55,14 @@ public sealed class GovernanceAuditor : IAsyncDisposable
     /// <param name="headSigner">The audit's own signer, under a key that signs nothing else, or <see langword="null"/> for a chain with no signed heads. The secured postures require one.</param>
     /// <param name="headOptions">The head cadence (defaults to <see cref="AuditHeadOptions.Default"/>).</param>
     /// <param name="refusalLimiter">The bound on how many refusal records one subject can append to the chain (defaults to 60 a minute).</param>
+    /// <param name="authenticationFailureLimiter">The bound on how many authentication failure records one remote address can append to the chain (defaults to 60 a minute).</param>
     /// <param name="writerId">This instance's audit writer id, stable across its restarts: 1 to 63 lowercase ASCII letters, digits or hyphens. Defaults to the machine's name.</param>
-    public GovernanceAuditor(ILogger? logger = null, IAuditSink? sink = null, TimeProvider? timeProvider = null, IExecutorPackageSigner? headSigner = null, AuditHeadOptions? headOptions = null, string? writerId = null, RefusalRecordLimiter? refusalLimiter = null)
+    public GovernanceAuditor(ILogger? logger = null, IAuditSink? sink = null, TimeProvider? timeProvider = null, IExecutorPackageSigner? headSigner = null, AuditHeadOptions? headOptions = null, string? writerId = null, RefusalRecordLimiter? refusalLimiter = null, RefusalRecordLimiter? authenticationFailureLimiter = null)
     {
         this.Logger = logger;
         this.timeProvider = timeProvider ?? TimeProvider.System;
         this.refusals = refusalLimiter ?? new RefusalRecordLimiter();
+        this.authenticationFailures = authenticationFailureLimiter ?? new RefusalRecordLimiter();
         this.Health = new AuditSinkHealth(timeProvider ?? TimeProvider.System);
         this.HasHeadSigner = sink is not null && headSigner is not null;
         this.chain = sink is null
@@ -256,6 +259,41 @@ public sealed class GovernanceAuditor : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Records an authentication that failed (ADR 0071): the scheme, the reason and where it came from, and never any
+    /// token material. It never fails the request. A failed authentication has no subject to be trusted, so failures are
+    /// bounded for each remote address: appended to the chain up to the bound in a window, and past it counted, with the
+    /// count recorded when the window turns. The caller counts every failure on
+    /// <see cref="ArazzoTelemetry.Authentications"/>.
+    /// </summary>
+    /// <param name="scheme">The authentication scheme.</param>
+    /// <param name="reason">Why it failed. Controlled vocabulary.</param>
+    /// <param name="remoteAddress">The address the request came from.</param>
+    /// <param name="subject">The subject, where the result named one; otherwise <see langword="null"/>.</param>
+    /// <param name="issuer">The issuer, where the result named one; otherwise <see langword="null"/>.</param>
+    /// <returns>A task that completes when the failure is recorded, or counted.</returns>
+    public async ValueTask AuthenticationFailedAsync(string scheme, string reason, string remoteAddress, string? subject = null, string? issuer = null)
+    {
+        this.Logger?.LogWarning(
+            "Audit: authentication failed for scheme {Scheme} from {RemoteAddress}: {Reason} (issuer {Issuer}, subject {Subject}).",
+            scheme,
+            remoteAddress,
+            reason,
+            issuer ?? "-",
+            subject ?? "-");
+
+        bool admitted = this.authenticationFailures.Admit(remoteAddress, this.timeProvider.GetUtcNow(), out long suppressedBefore, out string recordedAs);
+        if (suppressedBefore > 0)
+        {
+            await this.AuthenticationFailuresSuppressedAsync(recordedAs, suppressedBefore).ConfigureAwait(false);
+        }
+
+        if (admitted && this.chain is not null)
+        {
+            await this.AppendReadAsync(new AuditEntry(scheme, subject ?? string.Empty, issuer, "remote", remoteAddress, reason, null, AuditEntryKind.Authentication), failClosed: false).ConfigureAwait(false);
+        }
+    }
+
     /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
@@ -282,11 +320,26 @@ public sealed class GovernanceAuditor : IAsyncDisposable
             {
                 await this.SuppressedAsync(subject.Key, subject.Value).ConfigureAwait(false);
             }
+
+            flushed.Clear();
+            this.authenticationFailures.Sweep(this.timeProvider.GetUtcNow(), flushed);
+            foreach (KeyValuePair<string, long> address in flushed)
+            {
+                await this.AuthenticationFailuresSuppressedAsync(address.Key, address.Value).ConfigureAwait(false);
+            }
         }
         catch (ObjectDisposedException)
         {
             // The auditor was disposed between the tick and the append.
         }
+    }
+
+    private ValueTask AuthenticationFailuresSuppressedAsync(string remoteAddress, long count)
+    {
+        this.Logger?.LogWarning("Audit: {Count} failed authentications from {RemoteAddress} were over its bound and were counted, not recorded one by one.", count, remoteAddress);
+        return this.chain is null
+            ? ValueTask.CompletedTask
+            : this.AppendReadAsync(new AuditEntry("(any)", string.Empty, null, "remote", remoteAddress, "suppressed", null, AuditEntryKind.Authentication, count), failClosed: false);
     }
 
     // What the chain did not take one by one, it takes as a count: the subject, and how many of its refusals a window

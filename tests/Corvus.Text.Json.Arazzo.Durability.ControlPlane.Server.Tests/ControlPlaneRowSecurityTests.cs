@@ -493,6 +493,7 @@ public sealed class ControlPlaneRowSecurityTests
             .AddScheme<AuthenticationSchemeOptions, TenantAuthHandler>(TenantAuthHandler.SchemeName, _ => { });
         builder.Services.AddHttpContextAccessor();
 
+        builder.Services.AddArazzoAuthenticationTelemetry();
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.RowSecurityOnly, rowSecurity: policy ?? new TenantRowSecurityPolicy(), auditor: GovernanceAuditor.CreateInMemory());
