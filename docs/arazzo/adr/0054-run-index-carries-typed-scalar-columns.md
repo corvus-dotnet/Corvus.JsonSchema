@@ -1,6 +1,6 @@
 # ADR 0054. The run index carries typed scalar columns, not bytes-native values
 
-Date: 2026-07-26. Status: **Accepted**. Scope: how `WorkflowRunIndexEntry` represents the fields a store indexes alongside the opaque checkpoint.
+Date: 2026-07-26. Status: **Accepted**. Implementation: **complete**. Verified against the code 2026-09-21. The index entry carries string scalars and bytes-native tag sets, and one projection realises them from the checkpoint bytes. Divergences in the description: there are five scalars and no environment, which rides the run address by design, and the projection is called from the checkpoint coordinator, the secured management layer and the runner coordinator as well as the serverless runner. Scope: how `WorkflowRunIndexEntry` represents the fields a store indexes alongside the opaque checkpoint.
 This records why the run index holds its scalar fields (the workflow id, environment, error type, the awaiting channel and correlation ids, and the run correlation id) as managed strings, while the checkpoint payload and the tag sets stay bytes-native. It is a corollary of [ADR 0037](0037-bytes-native-seams.md), settled here so the recurring "why realise a string only to re-encode it" question is not relitigated.
 
 ## Context

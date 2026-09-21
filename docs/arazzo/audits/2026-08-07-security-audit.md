@@ -785,6 +785,18 @@ decision on whether the code or the ADR is wrong.
 | V-27 | The run-scoped checkpoint surface is mapped by hand inside `MapArazzoControlPlane` and is absent from the control plane's OpenAPI document, so its routing, parsing and validation are hand-written and undocumented, and no endpoint filter sees it. ADR 0039 says the contract and the code cannot disagree | 0039 | Confirmed |
 | V-28 | The vendored CodeMirror bundle has no version, no output hash and no rebuild-and-compare in CI (PROC-9 stands). ADR 0043 decides on a `dagre` dependency that does not exist. Several mutating UI actions bypass `runAction` (ADR 0053). `auth-status.js` fetches outside the client (ADR 0040) | 0049, 0043, 0053, 0040 | Reported |
 
+### Audit, credentials, journal and isolation, ADRs 0038, 0048, 0050 to 0052, 0054, 0056, 0058, 0067 and 0072 (2026-09-21)
+
+| # | Finding | ADR | State |
+|---|---------|-----|-------|
+| V-29 | Publishing a working copy adds a catalog version and leaves no audit record. The workspace handler audits `debug-run.*` alone, so workspace create, update and delete, source attach and detach, and scenario put and delete are unaudited, as are the GitHub pull, commit and branch operations and the provider and GitHub session complete and delete, which create and destroy custody of a user's token. No test asserts that every mutating operation audits | 0038 | Confirmed |
+| V-30 | The run-start isolation gate is blind to the environment. `IRunnerRegistry.IsVersionHostedAsync` takes no environment, so a runner in another environment satisfies the match for an Isolated environment, and the gate admits a run that nothing in the target environment can execute. Schedule create hard-codes `InProcess` | 0058 | Confirmed |
+| V-31 | The control plane reads secrets. `ProviderBroker` resolves OAuth client secrets and holds brokered user tokens in memory, and `SourceDocumentFetcher` resolves a workload binding's secret. ADR 0048 says the control plane has no secret-read, and the threat model's control-plane compromise analysis should be checked against this | 0048, 0052 | Confirmed |
+| V-32 | A credential binding's free-form `config` is not checked for secret values, is persisted, and is returned by the read API | 0048 | Reported |
+| V-33 | The audit primitive's payload safety is a convention. Every parameter is a string, and call sites already pass composed text as an outcome or a target id | 0038 | Reported |
+| V-34 | No wire proof of reach pushdown was found for the four relational backends or for the Cosmos state and catalog stores. The marker interface is optional, so an unmarked store fails closed at run time and not at build time | 0067 | Reported |
+| V-35 | The step journal has no `suspended` status and nothing records `Skipped`. The journal count now carries the step budget of ADR 0068. The tolerance for runs that predate the journal is a compatibility path to delete | 0050 | Reported |
+
 ### What nothing being shipped means for these
 
 No deployment depends on today's behaviour, so none of these needs a migration path or a compatibility hedge, and a path that exists only as a fallback is removed and not guarded. That applies directly to V-3, where the hole is the version-1 administration fallback itself, to V-6's interim single-grant path, to V-14, where the fix is a zero member that is not a posture, to V-19's sample runner holding the store, to the unconstructed triggers and the durable executor's null-run fallback that the executor batch found, and to the default interface implementations that page and count in memory, which every persistent backend overrides.

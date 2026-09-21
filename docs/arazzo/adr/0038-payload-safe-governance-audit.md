@@ -1,9 +1,10 @@
 # ADR 0038. A payload-safe governance-audit primitive
 
-Date: 2026-07-21. Revised 2026-09-02: the audited actor is the canonical subject, every record carries the Revised 2026-09-20: the primitive is an awaited instance, `GovernanceAuditor`, since it also appends to the audit chain of ADR 0069.
+Date: 2026-07-21. Revised 2026-09-02: the audited actor is the canonical subject, every record carries the
 actor's tenant and, where the action is environment-scoped, the environment, and run start, the bootstrap
 grants, the approval service's policy writes and self-elevation are on the trail (P1-6 of the 2026-08-07
-security audit). Status: **Accepted**. Scope: how a governed action is audited. This records why every
+security audit). Revised 2026-09-20: the primitive is an awaited instance, `GovernanceAuditor`, since it also
+appends to the audit chain of ADR 0069. Status: **Accepted**. Implementation: **partly**. Verified against the code 2026-09-21. The primitive is built as this record describes, and run start and re-run, the bootstrap grants, the approval service's policy writes and the named refusals call it. "Every governed action" is false. Publishing a working copy adds a catalog version with no audit record, where the catalog's own publish records `catalog.publish`. The other workspace, scenario, source-attachment, GitHub working-copy and provider-session mutations record nothing either, and a provider session creates and destroys custody of a user's token. No test asserts that each mutating operation audits. Payload safety is a convention and not a construction: every parameter is a string, and call sites already pass composed text (a rebudget outcome carrying both limits, a re-run target carrying both run ids). Scope: how a governed action is audited. This records why every
 governed action is audited through one primitive that emits a span and an audit log carrying only controlled
 vocabulary and identifiers, never a payload or a secret, and how the actor and the tenant are named.
 
@@ -77,12 +78,12 @@ The trail is complete for the actions that confer or exercise access:
 - The audit cannot leak. There is no way to pass a payload or a secret to the primitive, so a step output or a
   credential value cannot reach a log or a trace through governance auditing, upholding the disclosure boundary
   ([ADR 0013](0013-step-output-disclosure-tier.md)).
-- Auditing is free when nobody listens, so it can be applied to every governed action without a cost on
-  deployments that do not collect it.
+- The span and the log are free when nobody listens. The chain append is not: where a sink is wired, each
+  governed action pays one awaited append.
 - Because the primitive is shared, adding a new governed action means calling it, not inventing a new audit
   shape, which keeps the trail consistent as the surface grows.
 - Governance decisions are observable as a rate per tenant and environment, not only as individual spans, so a
   deployment can alert on a spike in denials or refusals in one tenant without instrumenting each action.
-- The trail is still best-effort observability, not a durable store. The span rides a sampled activity source and
-  the log is an information-level `ILogger` call. A durable, append-only, tamper-evident sink is the separate
-  decision the audit's GAP-6 asks for.
+- The span and the log are observability: the span rides a sampled activity source and the log is an
+  information-level `ILogger` call. The durable, append-only, tamper-evident record is the audit chain of
+  [ADR 0069](0069-tamper-evident-audit-chain.md), which the same call appends to.

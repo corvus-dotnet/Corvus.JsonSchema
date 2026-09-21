@@ -1,6 +1,6 @@
 # ADR 0072. Re-running a run is a server-side operation through the one start admission
 
-Date: 2026-09-19. Status: **Accepted**. Implementation: REST API, server, CLI and console landed. Scope: how an operator starts a run again from the beginning. Follows [ADR 0068](0068-execution-budget-fuel-wall-clock-depth.md), whose re-budget keeps a faulted run's work; this is the remedy when that is not possible or not wanted.
+Date: 2026-09-19. Status: **Accepted**. Implementation: **complete**. Verified against the code 2026-09-21. One admission, implemented once and called by the catalog start, the re-run and a schedule's run-now, and both callers refuse when no admission is wired. `rerunOf` is on the run detail, in the CLI and in the web UI, and the version id parses with no number styles under the invariant culture. Remnant: creating a schedule checks hosting under a hard-coded `InProcess` (ADR 0058). Implementation: REST API, server, CLI and console landed. Scope: how an operator starts a run again from the beginning. Follows [ADR 0068](0068-execution-budget-fuel-wall-clock-depth.md), whose re-budget keeps a faulted run's work; this is the remedy when that is not possible or not wanted.
 
 ## Context
 

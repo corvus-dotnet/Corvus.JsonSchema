@@ -1,6 +1,6 @@
 # ADR 0050. A durable per-step run journal
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how a durable run records what each step did, so an operator can
+Date: 2026-07-21. Status: **Accepted**. Implementation: **partly**. Verified against the code 2026-09-21. Built: the entry, the cap with its truncated marker, the checkpoint field, the executor's calls and the projection. Divergences: there is no `suspended` status and `EndedAt` cannot be absent, so a parked step has no entry until it completes; `Skipped` is declared and nothing records it; the code adds `Retrying`, one entry for each failed attempt; and status tokens are Pascal-cased on the wire. The journal now carries the step budget of ADR 0068, since its count is measured against `MaxSteps` and a truncated journal counts as over budget, which this record does not say. The tolerance for runs that predate the journal is a compatibility path for runs that cannot exist, since nothing is shipped. Scope: how a durable run records what each step did, so an operator can
 diagnose it. Builds on [ADR 0019](0019-products-are-the-checkpoint.md), and touches
 [ADR 0013](0013-step-output-disclosure-tier.md) and [ADR 0038](0038-payload-safe-governance-audit.md). This
 records why a run persists a metadata-only per-step journal inside its checkpoint, and why that gives operators a

@@ -1,6 +1,6 @@
 # ADR 0052. Acquiring a source document is matched to how the document is protected
 
-Date: 2026-07-24. Status: **Accepted**. Scope: how the acquisition dialog's Fetch URL path (and the
+Date: 2026-07-24. Status: **Accepted**. Implementation: **complete**. Verified against the code 2026-09-21. The fetch takes exactly one of a provider, a one-shot secret or a binding, or none. The provider path is gated on host coverage, a provider with no hosts is refused, and the binding path is scoped to the binding's own host. Divergences: the one-shot API key goes in a header only and never in a query parameter; the Consequence that calls the one-shot secret bearer-only is stale, since bearer, API key and basic are accepted; the fetch and the provider connect and disconnect leave no audit record (ADR 0038); and the binding tier has the control plane resolve a source secret, which ADR 0048 says it never does. Scope: how the acquisition dialog's Fetch URL path (and the
 other acquisition modes beside it) bring a third-party API description document (OpenAPI, AsyncAPI,
 Arazzo) into a working copy or the registry, against endpoints that may be unsecured or secured. This
 record corrects an earlier framing of the same decision that put a brokered OAuth "connect as

@@ -1,6 +1,6 @@
 # ADR 0048. Source credentials are references, resolved runner-side
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how a source's credentials are stored and resolved. This records
+Date: 2026-07-21. Status: **Accepted**. Implementation: **partly, with one false statement**. Verified against the code 2026-09-21. Built: references and schemes, the per-store resolvers in their own packages, runner-side materialisation, no secret writer, and source access evaluated in each store backend. "The control plane has no secret-read" is false. `SourceDocumentFetcher` resolves a workload binding's secret inside the control plane to fetch a protected source document (the binding tier of ADR 0052), and `ProviderBroker` resolves each provider's OAuth client secret and holds brokered user tokens in memory. Nothing checks that a binding's free-form `config` holds no secret value, and the read API returns `config`. Scope: how a source's credentials are stored and resolved. This records
 why the control plane stores a **reference** to a secret and never the secret itself, and why the secret is
 dereferenced by the runner at bind time.
 

@@ -1,6 +1,6 @@
 # ADR 0051. Channel sources bind per environment, like HTTP sources
 
-Date: 2026-07-23. Status: **Accepted**. Scope: how an AsyncAPI (channel) source connects to its broker and how
+Date: 2026-07-23. Status: **Accepted**. Implementation: **complete for NATS, as this record says**. Verified against the code 2026-09-21. The server refuses an API key or usage grantees on a channel source and requires `serverUrl`, the runner builds one transport for each source and environment, and a missing binding throws. Divergence: no `.AddNats(...)` builder exists. Factories are passed to the `ChannelTransportCache` constructor as a collection. Scope: how an AsyncAPI (channel) source connects to its broker and how
 that connection is secured, per environment. This records why a channel source gets a real §13 credential
 binding — reusing the existing auth-kind taxonomy rather than inventing a broker kind — with the environment's
 broker URL as non-secret config and the transport built by a protocol-dispatched factory; and why the control
