@@ -9,8 +9,9 @@ using Microsoft.AspNetCore.Http;
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
 /// <summary>
-/// What a request gets when the audit sink refused the record of the action it made (ADR 0069): a 500 problem of its own
-/// type, saying the action was applied and is not in the audit chain.
+/// What a request gets when the audit sink refused its record: for a mutation (ADR 0069), a 500 problem saying the action
+/// was applied and is not in the audit chain; for a read that discloses a payload (ADR 0070), a 500 problem saying the
+/// read was refused, nothing was disclosed, and it is safe to ask again.
 /// </summary>
 /// <remarks>
 /// It is a 500 and not a 503. The action has committed, and gateways and clients retry a 503 on their own, which would
@@ -20,6 +21,13 @@ internal static class AuditRecordFailure
 {
     /// <summary>The problem type of an action that was applied and could not be recorded.</summary>
     public const string ProblemType = "https://corvus-oss.org/arazzo/control-plane/problems/audit-record-failed";
+
+    /// <summary>The problem type of a payload read that was refused because its record could not be appended.</summary>
+    public const string ReadProblemType = "https://corvus-oss.org/arazzo/control-plane/problems/audit-read-record-failed";
+
+    private const string ReadBody =
+        "{\"type\":\"" + ReadProblemType + "\",\"title\":\"The read could not be recorded, so it was refused\",\"status\":500,"
+        + "\"detail\":\"This read returns a payload, and its audit record could not be appended to the deployment's audit sink, so the read was refused and nothing was disclosed. It is safe to ask again. If it persists, report it to the deployment's operator.\"}";
 
     private const string Body =
         "{\"type\":\"" + ProblemType + "\",\"title\":\"The action was applied and could not be recorded\",\"status\":500,"
@@ -35,13 +43,13 @@ internal static class AuditRecordFailure
             {
                 return await next(context).ConfigureAwait(false);
             }
-            catch (AuditAppendException) when (!context.HttpContext.Response.HasStarted)
+            catch (AuditAppendException ex) when (!context.HttpContext.Response.HasStarted)
             {
                 HttpResponse response = context.HttpContext.Response;
                 response.Clear();
                 response.StatusCode = StatusCodes.Status500InternalServerError;
                 response.ContentType = "application/problem+json";
-                await response.WriteAsync(Body).ConfigureAwait(false);
+                await response.WriteAsync(ex.Kind == AuditEntryKind.Read ? ReadBody : Body).ConfigureAwait(false);
                 return null;
             }
         });

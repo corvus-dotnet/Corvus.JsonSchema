@@ -90,6 +90,39 @@ public readonly partial struct AuditRecord
         writer.WriteEndObject();
     }
 
+    /// <summary>Writes one read record, in the one property order the chain writer emits.</summary>
+    /// <param name="writer">The writer to serialize into.</param>
+    /// <param name="chainId">The chain's id, as UTF-8 hex.</param>
+    /// <param name="sequence">The record's position in the chain.</param>
+    /// <param name="at">When the record is appended.</param>
+    /// <param name="previousHash">The hash of the record before it, as UTF-8 hex.</param>
+    /// <param name="entry">What was read, by whom, at which tier.</param>
+    internal static void WriteRead(Utf8JsonWriter writer, ReadOnlySpan<byte> chainId, long sequence, DateTimeOffset at, ReadOnlySpan<byte> previousHash, in AuditEntry entry)
+    {
+        writer.WriteStartObject();
+        writer.WriteString(ReadRecord.JsonPropertyNames.ChainUtf8, chainId);
+        writer.WriteNumber(ReadRecord.JsonPropertyNames.SeqUtf8, sequence);
+        writer.WriteString(ReadRecord.JsonPropertyNames.AtUtf8, at);
+        writer.WriteString(ReadRecord.JsonPropertyNames.PrevUtf8, previousHash);
+        writer.WriteString(ReadRecord.JsonPropertyNames.KindUtf8, "read"u8);
+        writer.WriteString(ReadRecord.JsonPropertyNames.ActionUtf8, entry.Action);
+        writer.WriteString(ReadRecord.JsonPropertyNames.ActorUtf8, entry.Actor);
+        if (entry.Tenant is not null)
+        {
+            writer.WriteString(ReadRecord.JsonPropertyNames.TenantUtf8, entry.Tenant);
+        }
+
+        writer.WriteString(ReadRecord.JsonPropertyNames.TargetKindUtf8, entry.TargetKind);
+        writer.WriteString(ReadRecord.JsonPropertyNames.TargetIdUtf8, entry.TargetId);
+        writer.WriteString(ReadRecord.JsonPropertyNames.DisclosureUtf8, entry.Outcome);
+        if (entry.Environment is not null)
+        {
+            writer.WriteString(ReadRecord.JsonPropertyNames.EnvironmentUtf8, entry.Environment);
+        }
+
+        writer.WriteEndObject();
+    }
+
     /// <summary>Writes one head record.</summary>
     /// <param name="writer">The writer to serialize into.</param>
     /// <param name="chainId">The chain's id, as UTF-8 hex.</param>

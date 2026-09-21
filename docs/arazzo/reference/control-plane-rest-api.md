@@ -142,9 +142,15 @@ the audit sink refuses the record, the request fails with a `500` problem whose 
 not in the audit chain, and the deployment's operator is alerted through the
 `corvus.arazzo.governance.audit.append_failures` counter. Do not retry the request on this problem: read the
 resource to see its state. It is a `500` and not a `503` for that reason, since a `503` is retried by gateways
-and clients on their own and the retry would apply a mutation that is not idempotent a second time. Reads and
-run execution never return it. The problem is not declared per operation in the OpenAPI document, which
-declares no `5xx` responses.
+and clients on their own and the retry would apply a mutation that is not idempotent a second time. Run execution never returns it.
+
+A read that returns a payload, the step journal today, is recorded before it is answered
+([ADR 0070](../adr/0070-read-side-audit-three-tiers.md)). When its record cannot be appended the read is refused with a
+`500` problem whose `type` is `https://corvus-oss.org/arazzo/control-plane/problems/audit-read-record-failed`.
+**Nothing was disclosed**, and unlike the mutation problem it is safe to ask again. A refused read, a list, a
+search and a count are never failed by the audit sink.
+
+Neither problem is declared per operation in the OpenAPI document, which declares no `5xx` responses.
 
 ## OpenAPI 3.2 features used
 

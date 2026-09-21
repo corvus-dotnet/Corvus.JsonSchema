@@ -155,14 +155,14 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         if (detail is not { } d)
         {
             // A refused read (out of reach or absent) is audited too — it is an attempted-access signal.
-            SensitiveReadAudit.JournalRead(this.auditor.Logger, actor, runId, string.Empty, JournalDisclosure.Refused);
+            await SensitiveReadAudit.JournalReadAsync(this.auditor, actor, runId, string.Empty, JournalDisclosure.Refused).ConfigureAwait(false);
             return GetRunStepsResult.NotFound(NotFoundProblem(runId), workspace);
         }
 
         ReadOnlyMemory<byte>? journal = await this.management.GetStepJournalAsync(runId, ctx, cancellationToken).ConfigureAwait(false);
         if (journal is not { } bytes)
         {
-            SensitiveReadAudit.JournalRead(this.auditor.Logger, actor, runId, d.WorkflowId, JournalDisclosure.Refused);
+            await SensitiveReadAudit.JournalReadAsync(this.auditor, actor, runId, d.WorkflowId, JournalDisclosure.Refused).ConfigureAwait(false);
             return GetRunStepsResult.NotFound(NotFoundProblem(runId), workspace);
         }
 
@@ -178,7 +178,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
         }
 
         // §860 read-access audit: who read this run's step journal, and whether the payloads were disclosed or withheld.
-        SensitiveReadAudit.JournalRead(this.auditor.Logger, actor, runId, d.WorkflowId, redacted ? JournalDisclosure.Redacted : JournalDisclosure.Full);
+        await SensitiveReadAudit.JournalReadAsync(this.auditor, actor, runId, d.WorkflowId, redacted ? JournalDisclosure.Redacted : JournalDisclosure.Full).ConfigureAwait(false);
 
         // Hand the parsed journal to the response workspace so it lives until the response is written
         // (the result Body references it); the workspace disposes it — do not dispose it here.

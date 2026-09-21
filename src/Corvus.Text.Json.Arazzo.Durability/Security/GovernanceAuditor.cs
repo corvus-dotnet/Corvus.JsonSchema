@@ -166,6 +166,42 @@ public sealed class GovernanceAuditor : IAsyncDisposable
             : this.AppendAsync(new AuditEntry(action, subject, tenant, targetKind, targetId, outcome, environment), cancellationToken);
     }
 
+    /// <summary>
+    /// Records a read, or an attempt at one (ADR 0070): who read which resource, at which disclosure tier. The caller emits
+    /// whatever span suits the surface; this writes the audit log and, where there is a sink, the chain's record.
+    /// </summary>
+    /// <param name="action">The read's name (for example <c>run.journal.read</c>). Stable, controlled vocabulary.</param>
+    /// <param name="actor">The caller: its canonical subject and the tenant it acts in.</param>
+    /// <param name="targetKind">The kind of resource read.</param>
+    /// <param name="targetId">The id of the resource read, or asked for. An identifier only, never what was read.</param>
+    /// <param name="disclosure">The disclosure tier (for example <c>full</c>, <c>redacted</c>, <c>refused</c>).</param>
+    /// <param name="disclosesPayload">
+    /// <see langword="true"/> for a read that is about to return a payload. Its record comes first and the read fails
+    /// closed: when the sink refuses the record the call throws and the caller discloses nothing, because a payload read
+    /// that left no record is the event the read-side audit exists for, and a read is safe to ask for again.
+    /// <see langword="false"/> for a refusal, which never fails the request: the failure counts, degrades health, and the
+    /// caller answers as it would have.
+    /// </param>
+    /// <param name="environment">The environment the read is scoped to, or <see langword="null"/>.</param>
+    /// <returns>A task that completes when the read is recorded.</returns>
+    /// <exception cref="AuditAppendException">The sink refused the record of a read that discloses a payload. Nothing has been disclosed.</exception>
+    public ValueTask ReadAsync(string action, AuditSubject actor, string targetKind, string targetId, string disclosure, bool disclosesPayload, string? environment = null)
+    {
+        this.Logger?.LogInformation(
+            "Audit: {Actor} (tenant {Tenant}) read {TargetKind} {TargetId} ({Action}) in environment {Environment}; disclosure {Disclosure}.",
+            actor.Subject,
+            actor.OwnerGroup ?? "-",
+            targetKind,
+            targetId,
+            action,
+            environment ?? "-",
+            disclosure);
+
+        return this.chain is null
+            ? ValueTask.CompletedTask
+            : this.AppendReadAsync(new AuditEntry(action, actor.Subject, actor.OwnerGroup, targetKind, targetId, disclosure, environment, AuditEntryKind.Read), disclosesPayload);
+    }
+
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => this.chain?.DisposeAsync() ?? ValueTask.CompletedTask;
 
@@ -228,6 +264,23 @@ public sealed class GovernanceAuditor : IAsyncDisposable
         this.Logger?.LogError(exception, "Audit: the chain's head could not be signed or stored. Records are still chained, and the newest of them are not yet vouched for by a signature. The next cadence tick tries again.");
     }
 
+    private async ValueTask AppendReadAsync(AuditEntry entry, bool failClosed)
+    {
+        try
+        {
+            await this.AppendAsync(entry, CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (AuditAppendException ex)
+        {
+            // The failure is already counted, logged and on the health state. A refusal is answered as it would have
+            // been; a disclosure is not made.
+            if (failClosed)
+            {
+                throw ThrowHelper.GetAuditReadAppendFailedException(ex.InnerException ?? ex);
+            }
+        }
+    }
+
     private async ValueTask AppendAsync(AuditEntry entry, CancellationToken cancellationToken)
     {
         try
@@ -240,7 +293,9 @@ public sealed class GovernanceAuditor : IAsyncDisposable
             ArazzoTelemetry.AuditAppendFailures.Add(1, new KeyValuePair<string, object?>(ArazzoTelemetry.ActionTag, entry.Action));
             this.Logger?.LogError(
                 ex,
-                "Audit: the record of {Action} on {TargetKind} {TargetId} by {Actor} (outcome {Outcome}) could not be appended to the audit sink. The action stands and is not in the chain.",
+                entry.Kind == AuditEntryKind.Read
+                    ? "Audit: the record of the read {Action} of {TargetKind} {TargetId} by {Actor} (disclosure {Outcome}) could not be appended to the audit sink. A read that discloses a payload is refused; a refusal is answered as it was."
+                    : "Audit: the record of {Action} on {TargetKind} {TargetId} by {Actor} (outcome {Outcome}) could not be appended to the audit sink. The action stands and is not in the chain.",
                 entry.Action,
                 entry.TargetKind,
                 entry.TargetId,

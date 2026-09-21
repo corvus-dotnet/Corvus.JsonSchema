@@ -572,6 +572,9 @@
   <data name="AuditWriterIdOutsideGrammar" xml:space="preserve">
     <value>Audit writer id '{0}' is outside the grammar: 1 to 63 lowercase ASCII letters, digits or hyphens. A writer's chains are stored under its id (ADR 0069).</value>
   </data>
+  <data name="AuditReadAppendFailed" xml:space="preserve">
+    <value>The record of a read that discloses a payload could not be appended to the audit sink, so the read is refused and nothing was disclosed (ADR 0070). It is safe to ask again.</value>
+  </data>
   <data name="AuditAppendFailed" xml:space="preserve">
     <value>The audit record could not be appended to the audit sink, and the chain it was for has been abandoned (ADR 0069). The action the record describes stands.</value>
   </data>

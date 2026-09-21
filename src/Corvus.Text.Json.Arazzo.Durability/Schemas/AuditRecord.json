@@ -1,13 +1,16 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "AuditRecord",
-  "description": "One record of an audit chain (ADR 0069). A chain is one JSON Lines stream owned by one writer; each line is one record, and a record's hash is the SHA-256 of its line's exact UTF-8 bytes without the line feed. Every record carries its chain's id, its sequence from zero, a timestamp and the hash of the record before it. A chain's first record opens it, naming its writer and the chain it continues; after that a record is either evidence of a governance mutation or a signed head over the records before it.",
+  "description": "One record of an audit chain (ADR 0069). A chain is one JSON Lines stream owned by one writer; each line is one record, and a record's hash is the SHA-256 of its line's exact UTF-8 bytes without the line feed. Every record carries its chain's id, its sequence from zero, a timestamp and the hash of the record before it. A chain's first record opens it, naming its writer and the chain it continues; after that a record is evidence of a governance mutation, evidence of a read, or a signed head over the records before it.",
   "oneOf": [
     {
       "$ref": "#/$defs/OpenRecord"
     },
     {
       "$ref": "#/$defs/MutationRecord"
+    },
+    {
+      "$ref": "#/$defs/ReadRecord"
     },
     {
       "$ref": "#/$defs/HeadRecord"
@@ -96,6 +99,60 @@
           "$ref": "#/$defs/Label"
         },
         "outcome": {
+          "$ref": "#/$defs/Label"
+        },
+        "environment": {
+          "$ref": "#/$defs/Label"
+        }
+      }
+    },
+    "ReadRecord": {
+      "type": "object",
+      "description": "The read-side audit's record (ADR 0070): who read, or tried to read, which resource, and at which disclosure tier. It carries the same subject and dimensions as a mutation record and lands in the same chain. It names the actor, the target and the tier, never what was read, so it is payload-safe for the same reason a mutation record is.",
+      "required": [
+        "chain",
+        "seq",
+        "at",
+        "prev",
+        "kind",
+        "action",
+        "actor",
+        "targetKind",
+        "targetId",
+        "disclosure"
+      ],
+      "properties": {
+        "chain": {
+          "$ref": "#/$defs/ChainId"
+        },
+        "seq": {
+          "$ref": "#/$defs/Sequence"
+        },
+        "at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "prev": {
+          "$ref": "#/$defs/RecordHash"
+        },
+        "kind": {
+          "const": "read"
+        },
+        "action": {
+          "$ref": "#/$defs/Label"
+        },
+        "actor": {
+          "$ref": "#/$defs/Label"
+        },
+        "tenant": {
+          "$ref": "#/$defs/Label"
+        },
+        "targetKind": {
+          "$ref": "#/$defs/Label"
+        },
+        "targetId": {
+          "$ref": "#/$defs/Label"
+        },
+        "disclosure": {
           "$ref": "#/$defs/Label"
         },
         "environment": {

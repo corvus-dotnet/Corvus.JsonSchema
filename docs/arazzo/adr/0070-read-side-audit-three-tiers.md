@@ -1,6 +1,6 @@
 # ADR 0070. Read-side audit in three tiers: disclosures audited, refusals audited, bulk reads metered
 
-Date: 2026-09-07. Status: **Accepted**. Implementation: **not started**. Scope: which read surfaces produce an audit record, and which produce a metric instead. Resolves GAP-7 of the 2026-08-07 security audit and the read half remediation row 11 names. Builds on [ADR 0038](0038-payload-safe-governance-audit.md) for the record, [ADR 0004](0004-fail-closed-non-disclosing-enforcement.md) for what a refusal looks like to the caller, [ADR 0067](0067-reach-enforced-by-the-store-proven-on-the-wire.md) for why the store leaves nothing to audit, and [ADR 0069](0069-audit-as-evidence-append-only-chained-signed-sink.md) for where the record lands.
+Date: 2026-09-07. Revised 2026-09-21, on starting the implementation: a read that discloses a payload fails closed on the sink and no other read does, a runner keeps an audit chain of its own, and refusal records are capped for each subject with the suppression itself recorded. Status: **Accepted**. Implementation: **in progress**. Built: the read record, a record kind of the audit chain carrying the same subject and dimensions as a mutation plus the disclosure tier, and the step-journal read moved onto it. Not yet built: the other tier-one disclosures, the refusal records and their cap, the bulk-read counter, and the runner's chain. Scope: which read surfaces produce an audit record, and which produce a metric instead. Resolves GAP-7 of the 2026-08-07 security audit and the read half remediation row 11 names. Builds on [ADR 0038](0038-payload-safe-governance-audit.md) for the record, [ADR 0004](0004-fail-closed-non-disclosing-enforcement.md) for what a refusal looks like to the caller, [ADR 0067](0067-reach-enforced-by-the-store-proven-on-the-wire.md) for why the store leaves nothing to audit, and [ADR 0069](0069-audit-as-evidence-append-only-chained-signed-sink.md) for where the record lands.
 
 ## Context
 
@@ -32,7 +32,13 @@ Two constraints shape the answer. ADR 0004 makes a denied row indistinguishable 
 
 **Tier three, bulk reads are metered.** Successful lists, searches, counts and index-row gets increment a counter dimensioned by action, owner group and outcome, and append nothing.
 
-**Every read record carries the same subject and dimensions as a mutation record**, and lands in the same sink.
+**Every read record carries the same subject and dimensions as a mutation record**, and lands in the same sink. It is a record kind of the audit chain ([ADR 0069](0069-audit-as-evidence-append-only-chained-signed-sink.md)), `read`, naming the actor, the target and the disclosure tier, and never what was read.
+
+**A disclosure fails closed on the sink, and nothing else on the read side does.** A tier-one read is recorded before it is answered. When the sink refuses the record the read is refused with a 500 problem of its own type, `audit-read-record-failed`, saying that nothing was disclosed and that it is safe to ask again: a payload read that left no record is the event this audit exists for, and unlike a mutation a read can simply be repeated. A refusal record, a list, a search and a count never fail the request. A failed append there counts, logs at error and degrades the audit's health, and the caller is answered as it would have been. This narrows ADR 0069's "reads are never gated on the sink" to every read but a disclosure.
+
+**A runner keeps an audit chain of its own.** A secret is resolved on the runner, a separate process that ADR 0065 does not trust and that has no path to the control plane's sink. It is given its own auditor, sink, head key and writer id, and its records are its own evidence, checked by the same verify command. The control plane's chain never carries a runner's account of itself, and no runner-to-control-plane reporting surface is added.
+
+**Refusal records are capped for each subject, and the suppression is itself recorded.** A refusal is an append to a signed chain that any caller can cause by asking for ids it cannot see, on the path every governance mutation queues behind. Each subject's refusals are appended up to a bound a minute, 60 by default. Past it, one record a minute states how many were suppressed for that subject, and a counter carries the full rate. The probe is still evidenced, with its volume, and an enumeration cannot make the chain or the signing key the bottleneck.
 
 ## Consequences
 

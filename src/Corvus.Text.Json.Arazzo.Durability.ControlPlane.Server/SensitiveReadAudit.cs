@@ -39,7 +39,7 @@ internal static class SensitiveReadAudit
     /// <param name="runId">The run whose journal was read.</param>
     /// <param name="workflowId">The run's versioned workflow id (empty when the run was not resolved, e.g. a refused read).</param>
     /// <param name="disclosure">The disclosure tier the read reached.</param>
-    public static void JournalRead(ILogger? logger, in AuditSubject actor, string runId, string workflowId, JournalDisclosure disclosure)
+    public static ValueTask JournalReadAsync(GovernanceAuditor auditor, AuditSubject actor, string runId, string workflowId, JournalDisclosure disclosure)
     {
         string tier = disclosure switch
         {
@@ -65,11 +65,8 @@ internal static class SensitiveReadAudit
             activity?.SetTag(ArazzoTelemetry.JournalDisclosureTag, tier);
         }
 
-        logger?.LogInformation(
-            "Audit: {Actor} read the step journal of run {RunId} ({WorkflowId}); disclosure {JournalDisclosure}.",
-            actor.Subject,
-            runId,
-            string.IsNullOrEmpty(workflowId) ? "unknown" : workflowId,
-            tier);
+        // The journal's own log line is the auditor's now, with the chain's record. A journal returned, whole or redacted,
+        // is a disclosure and fails closed on the sink; a refused read never fails the request (ADR 0070).
+        return auditor.ReadAsync("run.journal.read", actor, "run", runId, tier, disclosesPayload: disclosure != JournalDisclosure.Refused);
     }
 }

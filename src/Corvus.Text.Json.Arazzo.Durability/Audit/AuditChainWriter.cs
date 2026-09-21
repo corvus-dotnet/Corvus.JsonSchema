@@ -493,7 +493,15 @@ public sealed class AuditChainWriter : IAsyncDisposable
         Utf8JsonWriter writer = workspace.RentWriterAndBuffer(LineBufferSize, out IByteBufferWriter buffer);
         try
         {
-            AuditRecord.WriteMutation(writer, this.chainId, this.nextSequence, now, this.previousHash, in entry);
+            if (entry.Kind == AuditEntryKind.Read)
+            {
+                AuditRecord.WriteRead(writer, this.chainId, this.nextSequence, now, this.previousHash, in entry);
+            }
+            else
+            {
+                AuditRecord.WriteMutation(writer, this.chainId, this.nextSequence, now, this.previousHash, in entry);
+            }
+
             writer.Flush();
             return RentLine(buffer.WrittenSpan);
         }

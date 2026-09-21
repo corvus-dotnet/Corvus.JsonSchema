@@ -577,8 +577,7 @@ clock or both, where it is configured, and the fault classification when exceede
 > **Decided and implemented.** [ADR 0069](../adr/0069-audit-as-evidence-append-only-chained-signed-sink.md): an
 > append-only sink seam outside the operational store, hash-chained with signed heads anchored through
 > the collector, asserted at startup and failing governance mutations closed in the secured postures,
-> verified by a CLI command; the record is ADR 0038's, unchanged. Built for every governance mutation. The
-> step-journal read's records join the chain with GAP-7. The finding below is left as it was measured.
+> verified by a CLI command; the record is ADR 0038's, unchanged. Built. The finding below is left as it was measured.
 ADR 0038 deliberately scopes the audit primitive to payload-safety and says nothing about durability.
 There is no audit store type in the repository. The audit is an `ILogger` call plus an activity,
 self-documented as best-effort observability rather than a durable store. Three ways it evaporates:
@@ -591,7 +590,7 @@ that a sink is attached. The codebase already ships an ECDSA signing stack.
 
 > **Decided.** [ADR 0070](../adr/0070-read-side-audit-three-tiers.md): payload disclosures audited,
 > reach refusals audited with the requested id, bulk reads metered. The store half is already closed by
-> ADR 0067. Implementation open.
+> ADR 0067. Implementation begun: the read record is a kind of the audit chain, and the step-journal read is on it.
 `GovernanceAudit` exposes only `Mutation`. No read, list, query or search audit exists, so the
 highest-value event, one tenant's principal reading another's data, produces no record. On the four
 in-process-filtering backends from P1-2 the cross-tenant rows are physically read on every query and

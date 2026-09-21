@@ -5,8 +5,9 @@
 namespace Corvus.Text.Json.Arazzo.Durability;
 
 /// <summary>
-/// An audit record could not be appended to the sink (ADR 0069). The action the record describes has already happened
-/// and stands; what failed is the evidence of it, which a secured control plane surfaces as the request's failure.
+/// An audit record could not be appended to the sink (ADR 0069). For a mutation, the action the record describes has
+/// already happened and stands; what failed is the evidence of it, which a secured control plane surfaces as the request's
+/// failure. For a read that discloses a payload (ADR 0070) the record comes first, so the read is refused undisclosed.
 /// </summary>
 public sealed class AuditAppendException : Exception
 {
@@ -17,4 +18,10 @@ public sealed class AuditAppendException : Exception
         : base(message, innerException)
     {
     }
+
+    /// <summary>
+    /// Gets what the record that could not be appended was evidence of. A mutation has already happened and stands; a read
+    /// has not been answered, since a disclosure is recorded before it is made, so nothing was disclosed.
+    /// </summary>
+    public AuditEntryKind Kind { get; init; }
 }

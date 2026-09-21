@@ -14,6 +14,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// <param name="Tenant">The owner group the actor acts in, or <see langword="null"/> where none is resolved.</param>
 /// <param name="TargetKind">The kind of resource the action targeted.</param>
 /// <param name="TargetId">The id or name of the resource the action targeted.</param>
-/// <param name="Outcome">The outcome, a refusal included (for example <c>granted</c>, <c>refused-own-request</c>).</param>
+/// <param name="Outcome">The outcome, a refusal included (for example <c>granted</c>, <c>refused-own-request</c>). For a read it is the disclosure tier (for example <c>full</c>, <c>redacted</c>, <c>refused</c>).</param>
 /// <param name="Environment">The environment the action is scoped to, or <see langword="null"/> where it is not environment-scoped.</param>
-public readonly record struct AuditEntry(string Action, string Actor, string? Tenant, string TargetKind, string TargetId, string Outcome, string? Environment);
+/// <param name="Kind">Whether the entry is a mutation or a read.</param>
+public readonly record struct AuditEntry(string Action, string Actor, string? Tenant, string TargetKind, string TargetId, string Outcome, string? Environment, AuditEntryKind Kind = AuditEntryKind.Mutation);

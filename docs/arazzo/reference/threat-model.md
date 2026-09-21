@@ -398,9 +398,8 @@ vouched for by no signature yet, which is a window of 64 records or 60 seconds b
 plane that starts reads its own last chain back and continues it under a head signed at once, which freezes the tail
 its last process left unsigned without authenticating it: between a stop and the next start that tail is whatever
 the sink holds, and the verifier goes on reporting it as unsigned. And the chain holds
-mutations only: the one audited read, the step journal, still goes to the log alone, where the three ways a log
-evaporates still apply to it (a sampled activity source, a raised log level, a logger nobody wired), and the rows
-below marked "No" emit nothing at all.
+mutations and one read, the step journal, which is recorded before it is disclosed and refused when it cannot be
+([ADR 0070](../adr/0070-read-side-audit-three-tiers.md)). The rows below marked "No" emit nothing at all.
 
 | Security-critical action | Audited | Consequence |
 |--------------------------|---------|-------------|
@@ -416,7 +415,7 @@ below marked "No" emit nothing at all.
 | Bootstrap genesis grant | Yes | Records in the same audit chain as everything else the deployment records, since the host gives its provisioning and its control plane one auditor. Each seeded binding and rule is audited as the bootstrap actor, and the approval service audits every grant, eligibility and revocation it writes |
 | Runner liveness, heartbeat gap | No | The reaper has no caller, so a dead runner keeps satisfying the hosting gates |
 | Governance mutations, including refusals with distinct outcome codes | Yes | Uniform and genuinely well built, and a record in the audit chain: hash-linked, under a signed head, outside the operational store |
-| Step-journal read, including refusals, with [disclosure tier](UBIQUITOUSLANGUAGE.md#step-output-disclosure-tier) | Yes, to the log only | The one audited read surface, and a good model for the rest. It is not yet a record in the audit chain, which it joins with the read-side audit of [ADR 0070](../adr/0070-read-side-audit-three-tiers.md) |
+| Step-journal read, including refusals, with [disclosure tier](UBIQUITOUSLANGUAGE.md#step-output-disclosure-tier) | Yes | A read record in the audit chain, naming the disclosure tier, and refused undisclosed when its record cannot be appended ([ADR 0070](../adr/0070-read-side-audit-three-tiers.md)). The one audited read surface so far, and the model for the rest |
 
 Quality of what *is* recorded:
 
@@ -681,7 +680,7 @@ the store or the artifact source is retried on every poll until it heals, by dec
 decided the same day as [ADR 0069](../adr/0069-audit-as-evidence-append-only-chained-signed-sink.md),
 [ADR 0070](../adr/0070-read-side-audit-three-tiers.md) and
 [ADR 0071](../adr/0071-authentication-event-telemetry.md); none has a ledger row of its own, and the
-detection rows they change in §8 move when the code does. GAP-6 is built, apart from the step-journal read's records, and §8 says what it changed; GAP-7 and GAP-8 are not started.
+detection rows they change in §8 move when the code does. GAP-6 is built and §8 says what it changed. GAP-7 is begun, with the read record and the step-journal read on the chain; GAP-8 is not started.
 
 
 **What was checked and found sound**, so it is not re-litigated: injection is absent across all nine

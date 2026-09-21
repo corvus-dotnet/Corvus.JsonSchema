@@ -7,6 +7,7 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
@@ -34,6 +35,8 @@ public sealed class ControlPlaneAuditSinkTests
 {
     private const string Write = "environments:write";
     private const string Read = "environments:read";
+    private const string ReadOutputs = "runs:read runs:outputs:read";
+    private const string JournalRun = "0a000000000000000000000000000001";
 
     [TestMethod]
     [DataRow(ControlPlaneSecurityMode.Scoped)]
@@ -200,6 +203,76 @@ public sealed class ControlPlaneAuditSinkTests
         (await AuditChainVerifier.VerifyAsync(new MemoryStream(sink.Snapshot(chainId)), new AuditChainVerificationOptions { Anchor = published })).IsIntact.ShouldBeTrue();
     }
 
+    [TestMethod]
+    public async Task A_journal_read_is_a_read_record_in_the_chain_with_its_disclosure_tier()
+    {
+        var sink = new InMemoryAuditSink();
+        await using var auditor = new GovernanceAuditor(sink: sink, headSigner: Signer(), headOptions: new AuditHeadOptions(1000, TimeSpan.FromHours(1)));
+        await using Host host = await StartAsync(ControlPlaneSecurityMode.Scoped, auditor);
+        await SeedRunWithJournalAsync(host, JournalRun);
+
+        HttpResponseMessage read = await host.SendAsync(HttpMethod.Get, $"/runs/{JournalRun}/steps", ReadOutputs);
+        read.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendAsync(HttpMethod.Get, $"/runs/{new string('e', 32)}/steps", ReadOutputs)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        byte[] stored = sink.Snapshot(sink.ChainIds.ShouldHaveSingleItem());
+        (await AuditChainVerifier.VerifyAsync(new MemoryStream(stored))).IsIntact.ShouldBeTrue();
+        List<Stj.JsonElement> reads = [.. Encoding.UTF8.GetString(stored).Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(l => Stj.JsonDocument.Parse(l).RootElement).Where(r => r.GetProperty("kind").GetString() == "read")];
+        reads.Count.ShouldBe(2);
+        reads[0].GetProperty("action").GetString().ShouldBe("run.journal.read");
+        reads[0].GetProperty("targetKind").GetString().ShouldBe("run");
+        reads[0].GetProperty("targetId").GetString().ShouldBe(JournalRun);
+        reads[0].GetProperty("disclosure").GetString().ShouldBe("full");
+        reads[0].GetProperty("actor").GetString().ShouldNotBeNullOrEmpty();
+
+        // The refusal is the probe: it names what was asked for, and says nothing was disclosed.
+        reads[1].GetProperty("targetId").GetString().ShouldBe(new string('e', 32));
+        reads[1].GetProperty("disclosure").GetString().ShouldBe("refused");
+
+        // A read record names the target and the tier and never what was read.
+        Encoding.UTF8.GetString(stored).ShouldNotContain("two");
+    }
+
+    [TestMethod]
+    public async Task A_payload_read_whose_record_the_sink_refuses_discloses_nothing_and_a_refusal_is_answered_as_it_was()
+    {
+        var sink = new SwitchableSink();
+        await using var auditor = new GovernanceAuditor(sink: sink, headSigner: Signer(), headOptions: new AuditHeadOptions(1000, TimeSpan.FromHours(1)));
+        await using Host host = await StartAsync(ControlPlaneSecurityMode.Scoped, auditor);
+        await SeedRunWithJournalAsync(host, JournalRun);
+        (await host.SendAsync(HttpMethod.Get, $"/runs/{JournalRun}/steps", ReadOutputs)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        sink.Failing = true;
+        HttpResponseMessage refused = await host.SendAsync(HttpMethod.Get, $"/runs/{JournalRun}/steps", ReadOutputs);
+
+        refused.StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
+        string body = await refused.Content.ReadAsStringAsync();
+        using (Stj.JsonDocument problem = Stj.JsonDocument.Parse(body))
+        {
+            problem.RootElement.GetProperty("type").GetString().ShouldBe("https://corvus-oss.org/arazzo/control-plane/problems/audit-read-record-failed");
+            problem.RootElement.GetProperty("detail").GetString()!.ShouldContain("nothing was disclosed");
+        }
+
+        body.ShouldNotContain("stepA");
+        auditor.Health.IsHealthy.ShouldBeFalse();
+
+        // A refusal discloses nothing, so it is never failed by the sink: it is answered as it would have been.
+        (await host.SendAsync(HttpMethod.Get, $"/runs/{new string('e', 32)}/steps", ReadOutputs)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        sink.Failing = false;
+        (await host.SendAsync(HttpMethod.Get, $"/runs/{JournalRun}/steps", ReadOutputs)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        auditor.Health.IsHealthy.ShouldBeTrue();
+    }
+
+    private static async Task SeedRunWithJournalAsync(Host host, string runId)
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{ "stepA": { "a": 1 }, "stepB": { "b": "two" } }"""u8.ToArray());
+        using WorkflowRun run = WorkflowRun.CreateNew(host.Store, runId, "wf", default, "development", TimeProvider.System);
+        run.SetStepOutputs("stepA", doc.RootElement.GetProperty("stepA"u8));
+        run.SetStepOutputs("stepB", doc.RootElement.GetProperty("stepB"u8));
+        await run.CheckpointAsync(cursor: 2, default);
+    }
+
     private static EcdsaExecutorPackageSigner Signer()
         => new(System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256), "audit-test");
 
@@ -233,7 +306,7 @@ public sealed class ControlPlaneAuditSinkTests
             throw;
         }
 
-        return new Host(app, app.GetTestClient());
+        return new Host(app, app.GetTestClient(), store);
     }
 
     private sealed class FlakySigner(IExecutorPackageSigner inner) : IExecutorPackageSigner
@@ -271,8 +344,10 @@ public sealed class ControlPlaneAuditSinkTests
         public override IReadOnlyList<SecurityTag> GetInternalTags(ClaimsPrincipal? principal) => [new SecurityTag("sys:tenant", "acme")];
     }
 
-    private sealed class Host(WebApplication app, HttpClient client) : IAsyncDisposable
+    private sealed class Host(WebApplication app, HttpClient client, InMemoryWorkflowStateStore store) : IAsyncDisposable
     {
+        public InMemoryWorkflowStateStore Store => store;
+
         public Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, string? scope)
             => this.SendCoreAsync(new HttpRequestMessage(method, path), scope);
 

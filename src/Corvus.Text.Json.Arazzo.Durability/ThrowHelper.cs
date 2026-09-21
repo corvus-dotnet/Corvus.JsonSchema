@@ -747,6 +747,9 @@ internal static class ThrowHelper
     public static void ThrowAuditWriterIdOutsideGrammar(string writerId)
         => throw new ArgumentException(SR.Format(SR.AuditWriterIdOutsideGrammar, writerId), nameof(writerId));
 
+    public static AuditAppendException GetAuditReadAppendFailedException(Exception innerException)
+        => new(SR.AuditReadAppendFailed, innerException) { Kind = AuditEntryKind.Read };
+
     public static AuditAppendException GetAuditAppendFailedException(Exception innerException)
         => new(SR.AuditAppendFailed, innerException);
 }
