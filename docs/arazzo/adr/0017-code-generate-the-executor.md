@@ -1,6 +1,6 @@
 # ADR 0017. Code-generate the executor, not a runtime interpreter
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how an Arazzo workflow is executed. This records why a workflow
+Date: 2026-07-21. Status: **Accepted**. Implementation: **partly, with one divergence**. Verified against the code 2026-09-21. Built: the generator emits a static `ExecuteAsync`, criteria and interpolation are inlined ahead of time where they resolve statically, and the generator uses no reflection. Divergence: the run path is not fully static. Where an inliner declines, `StepBodyEmitter` emits a `CompiledCriterion` and `RequestBindingEmitter` falls back to `InterpolationEmitter`, the runtime interpreter this record says was removed from the generated code. The `IHostedWorkflow` adapter is emitted for the durable shape only. Scope: how an Arazzo workflow is executed. This records why a workflow
 is compiled to a strongly-typed executor ahead of time rather than interpreted from the document at run time.
 
 ## Context

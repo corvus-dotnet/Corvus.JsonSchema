@@ -1,6 +1,6 @@
 # ADR 0020. Durability is opt-in code generation
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how a workflow becomes durable. Builds on
+Date: 2026-07-21. Status: **Accepted**. Implementation: **complete, with one false consequence**. Verified against the code 2026-09-21. `--durable` flows from the CLI through the generation driver, `WorkflowExecutorProvider` builds durable by default and binds the assembly digest and package hash into the manifest, and the non-durable shape has no checkpoint calls. Divergence: "no per-step conditional in the hot path" is true of the non-durable shape only. The durable executor emits `if (run is not null)` around each checkpoint, because a durable executor given no run falls back to running without durability, a convenience path that nothing being shipped makes a candidate for deletion. Scope: how a workflow becomes durable. Builds on
 [ADR 0017](0017-code-generate-the-executor.md) and [ADR 0019](0019-products-are-the-checkpoint.md). This
 records why durability is a generation-time choice that changes the emitted executor, so a non-durable
 workflow pays nothing for a durability path it does not use.

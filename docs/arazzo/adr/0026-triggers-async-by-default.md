@@ -1,6 +1,6 @@
 # ADR 0026. Triggers are async by default: HTTP always on, an enqueued run the runner claims
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how a run is started. Builds on
+Date: 2026-07-21. Status: **Accepted**. Implementation: **partly, with divergences**. Verified against the code 2026-09-21. Built: the HTTP start is asynchronous, answers `Accepted`, takes an environment and an idempotency key that derives the run id, and a durable schedule runs. Divergences: a durable schedule is a run of a built-in hosted workflow executed by the runner and not a scheduler service; `MessageWorkflowTrigger` is a runner-side component that subscribes to a transport and starts runs directly, not the in-band dispatcher workflow this record describes, and nothing constructs it or `ScheduleWorkflowTrigger`, which `ScheduleHostedWorkflow` has replaced and is a candidate for deletion; and a start is not an unconditional enqueue, being refused with `409 no-runner` or `409 not-available`. Scope: how a run is started. Builds on
 [ADR 0023](0023-two-process-store-as-queue.md). This records why starting a run enqueues it and returns
 `202`, why HTTP is the always-on trigger, and why message and schedule triggers are host-configured rather
 than a package concern.

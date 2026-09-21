@@ -1,6 +1,6 @@
 # ADR 0025. Integrity binding, with an optional signature custody split
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how a runner trusts the executor it loads. Builds on
+Date: 2026-07-21. Status: **Accepted**. Implementation: **complete for the in-process loader, with the claim overstated for an unsigned deployment**. Verified against the code 2026-09-21. Before any load the package hash, the assembly digest and the target framework are checked, the expected hash is recomputed from the version's documents and not taken on trust, and with a verifier configured an unsigned or untrusted package is refused. The signer and verifier are built. Divergence: "a tampered or mismatched assembly cannot execute, in every deployment, with no configuration" holds for an accident and for the assembly altered alone. Assembly, manifest and documents come from one artifact source, so whoever can write it can supply a malicious assembly with a manifest whose digest matches. Only the signature closes that, verification is off unless configured, and nothing ties it to the security mode. The AOT backends do not pass through this check. Scope: how a runner trusts the executor it loads. Builds on
 [ADR 0024](0024-collectible-assembly-per-version.md). This records why loading verifies a digest binding by
 default, and adds an optional detached signature with a custody split rather than mandating code-signing.
 

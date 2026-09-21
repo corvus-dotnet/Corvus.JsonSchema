@@ -1,6 +1,6 @@
 # ADR 0021. The state-store abstraction: core state store plus optional wait index
 
-Date: 2026-07-21. Status: **Accepted**. Scope: what a durability backend has to implement, and what is
+Date: 2026-07-21. Status: **Accepted**. Implementation: **partly, and overtaken**. Verified against the code 2026-09-21. The seams exist and capability is negotiated by cast. The layout has moved on from this record: persist and load are on `IWorkflowCheckpointStore`, with `IWorkflowStateStore` adding the lease and delete, and there are also `IWorkflowWaitIndex`, `IWorkflowDispatchIndex`, `IWorkflowLeaseAdministration` and `IWorkflowCheckpointFlush` (ADR 0065). The optional tier is optional in type only: all eleven backends implement every seam, and `WorkflowWorker` and `RunnerRunCoordinator` throw unless the store has the wait index, so a backend offering only the core store cannot run workflows through either. Nothing rejects a suspending workflow on a core-only store. Scope: what a durability backend has to implement, and what is
 optional. Builds on [ADR 0019](0019-products-are-the-checkpoint.md). This records why durability is split into
 a required core state store and an optional wait index, so a backend can offer crash-durability without
 implementing suspension.

@@ -757,6 +757,16 @@ decision on whether the code or the ADR is wrong.
 | V-14 | `default(ControlPlaneSecurityMode)` is `Open`. A host that binds the mode from configuration and never sets it runs open in silence, which is the omission ADR 0016 says cannot happen. An out-of-range value is not refused | 0016 | Reported |
 | V-15 | The test ADR 0047 cites as live runs against the mock. A host cannot supply its own approval strategy (ADR 0011). The overview's matcher is a third copy of membership matching with no parity test (ADR 0015). The sample seeds demo personas by omission (ADR 0046) | 0047, 0011, 0015, 0046 | Reported |
 
+### Executor and durability, ADRs 0017 to 0026 (2026-09-21)
+
+| # | Finding | ADR | State |
+|---|---------|-----|-------|
+| V-16 | ADR 0018 is not implemented. `ArazzoReferences.Collect` has no caller outside its tests and the source generators are passed a null operation filter, so a full client and every reachable model is generated and packaged for each source. Attack surface and package size both follow from it | 0018 | Confirmed |
+| V-17 | Nothing unloads a catalogued version when it is obsoleted. `WorkflowExecutorLoader.Unload` is called for draft eviction and the simulator only, so a runner's executor cache grows for its life | 0024 | Confirmed |
+| V-18 | Without a configured verifier the integrity binding does not stop the assembly and its manifest being replaced together, since both come from one artifact source. Verification is off unless configured and nothing ties it to the security mode. Under ADR 0065's mutual distrust an unsigned deployment has no barrier here, which ADR 0025 does not say | 0025 | Reported |
+| V-19 | ADR 0023's shared-store topology was revised by ADR 0065 decision 1 and carries no note saying so. The sample runner still opens the state store directly and hosts a draft runner on it, against ADR 0065's "runners hold no store credentials" | 0023 | Reported |
+| V-20 | The generated run path still falls back to the runtime interpreter for criteria and interpolation the inliners decline (ADR 0017). `TargetCursor` is not range-checked on rewind or skip (ADR 0022). No backend can run workflows with the core store alone, which ADR 0021 calls the simple case. `MessageWorkflowTrigger` and `ScheduleWorkflowTrigger` are constructed nowhere (ADR 0026) | 0017, 0021, 0022, 0026 | Reported |
+
 ### What nothing being shipped means for these
 
-No deployment depends on today's behaviour, so none of these needs a migration path or a compatibility hedge, and a path that exists only as a fallback is removed and not guarded. That applies directly to V-3, where the hole is the version-1 administration fallback itself, to V-6's interim single-grant path, and to V-14, where the fix is a zero member that is not a posture.
+No deployment depends on today's behaviour, so none of these needs a migration path or a compatibility hedge, and a path that exists only as a fallback is removed and not guarded. That applies directly to V-3, where the hole is the version-1 administration fallback itself, to V-6's interim single-grant path, to V-14, where the fix is a zero member that is not a posture, to V-19's sample runner holding the store, and to the unconstructed triggers and the durable executor's null-run fallback that the executor batch found.

@@ -1,6 +1,6 @@
 # ADR 0018. Generate only the operations a workflow uses
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how much client and model code the generator emits for a
+Date: 2026-07-21. Status: **Accepted**. Implementation: **not started**. Verified against the code 2026-09-21. `ArazzoReferences.Collect` gathers the referenced operations of one document and has no caller outside its tests. `OpenApiSourceGenerator` passes a null operation filter to `Generate` and `DescribeOperations`, and `ArazzoGenerationDriver` passes no referenced set, so a full client and every reachable model is generated for each source. There is no recursion into Arazzo-typed sources and no union. "The package carries only the client and model code the workflow needs" is false today. Scope: how much client and model code the generator emits for a
 workflow's source descriptions. Builds on [ADR 0017](0017-code-generate-the-executor.md). This records why the
 generator emits only the operations a workflow actually references, and the schema models those operations
 reach, rather than a full client for each source.

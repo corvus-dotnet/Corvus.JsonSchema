@@ -1,6 +1,6 @@
 # ADR 0019. The products are the checkpoint
 
-Date: 2026-07-21. Status: **Accepted**. Scope: what a durable run persists to be able to resume. Builds on
+Date: 2026-07-21. Status: **Accepted**. Implementation: **complete, with the persisted state understated**. Verified against the code 2026-09-21. A run's cursor and step outputs are restored into one `while`/`switch` path shared by fresh and resumed runs, and there is no separate state-machine representation. Divergence: "the step-output values and a scalar cursor are the entire resumable state" understates it. The checkpoint also carries retry counters, the wait, correlation tokens, the pause, breakpoints, the fault, the step journal, inputs, outputs, tags, security tags and the execution budget, and the retry counters and the wait are resumable state in their own right. Scope: what a durable run persists to be able to resume. Builds on
 [ADR 0017](0017-code-generate-the-executor.md). This records why a run's resumable state is exactly the step
 outputs it has already produced plus a scalar cursor, with no separate reified state machine.
 

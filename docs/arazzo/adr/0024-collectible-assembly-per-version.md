@@ -1,6 +1,6 @@
 # ADR 0024. One collectible assembly per version, loaded and unloaded on demand
 
-Date: 2026-07-21. Status: **Accepted**. Scope: how a runner loads and evicts workflow executors. Builds on
+Date: 2026-07-21. Status: **Accepted**. Implementation: **partly**. Verified against the code 2026-09-21. Built: each version loads into its own collectible load context, verified first, cached by version, and `Unload` removes and unloads it. Not built: nothing unloads a catalogued version when it is obsoleted. The only callers of `Unload` are draft eviction and the simulator, so "an obsoleted version evicts" and "reclaims its memory" are not wired and the cache grows for the life of the runner. The loader is the in-process dynamic-load backend's only; the AOT backends bake the executor at build time (ADR 0055). Scope: how a runner loads and evicts workflow executors. Builds on
 [ADR 0020](0020-durability-is-opt-in-codegen.md). This records why each workflow version is one assembly loaded
 into a collectible load context, cached on first use, and unloaded when the version is obsoleted.
 

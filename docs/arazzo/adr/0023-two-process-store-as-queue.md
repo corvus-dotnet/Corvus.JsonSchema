@@ -1,6 +1,6 @@
 # ADR 0023. Two processes sharing the store, never calling each other on the hot path
 
-Date: 2026-07-21. Status: **Accepted**. Scope: the topology of the control plane and the runner. Builds on
+Date: 2026-07-21. Status: **Accepted**. Implementation: **superseded in part by [ADR 0065](0065-control-plane-owns-store-runners-encrypt-payload.md), decision 1**, and the code follows that record. Verified against the code 2026-09-21. What survives: the control plane enqueues and answers `Accepted`, and a separate runner executes. What does not: runners hold no store credentials and reach the store through the control plane's runner API for claim, lease, checkpoint and artifacts, so the two processes do call each other. A start is refused with `409 no-runner` where no registered runner hosts the version, so a run does not wait in the store for a runner that is down. A residue of the old topology remains and is a candidate for deletion: the sample runner still opens the Postgres state store directly and hosts an in-process draft runner on it. Scope: the topology of the control plane and the runner. Builds on
 [ADR 0020](0020-durability-is-opt-in-codegen.md) and [ADR 0021](0021-state-store-abstraction.md). This records
 why the control plane and the execution host are separate processes that cooperate only through the shared
 durability store, rather than calling each other.

@@ -1,6 +1,6 @@
 # ADR 0022. The resume-mode taxonomy
 
-Date: 2026-07-21. Status: **Accepted**. Scope: the ways a faulted run may be resumed. Builds on
+Date: 2026-07-21. Status: **Accepted**. Implementation: **complete, with a validation gap**. Verified against the code 2026-09-21. The four modes, the lease taken before a mutation, the `Faulted` requirement, the etag-conditional rewrite and the separate cancel are built. Gap: `TargetCursor` is not range-checked. A rewind target is not required to be earlier than the cursor, a skip target to be later, or either to be non-negative and within the workflow's steps, so those are conventions and not invariants. Divergence: a conflicting second write returns `false` for the caller to retry; it is not retried. Scope: the ways a faulted run may be resumed. Builds on
 [ADR 0019](0019-products-are-the-checkpoint.md) and [ADR 0021](0021-state-store-abstraction.md). This records
 the fixed set of resume modes, and why each is a checkpoint mutation under optimistic concurrency followed by
 re-entering the executor.
