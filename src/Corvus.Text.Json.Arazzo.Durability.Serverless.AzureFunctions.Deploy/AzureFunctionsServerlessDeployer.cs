@@ -47,6 +47,10 @@ public sealed class AzureFunctionsServerlessDeployer : IServerlessDeployer
         ArgumentNullException.ThrowIfNull(configurator);
         ArgumentNullException.ThrowIfNull(secrets);
         ArgumentNullException.ThrowIfNull(options);
+
+        // The function refuses to start without its checkpoint origins (ADR 0059 decision 4), so settings that carry none
+        // are refused here, when the runner is configured, and not by a deployed function that answers nothing.
+        ServerlessCheckpointOrigins.RequireIn(options.FunctionAppSettings);
         this.packageContainer = packageContainer;
         this.configurator = configurator;
         this.secrets = secrets;

@@ -191,6 +191,17 @@ with a 401 or a 403, exempt no path, and accept that audience. Entra does not re
 authentication off later leaves the function behind its key. The demo runner reads these from
 `Runner:AzureFlex:InvokeKeyRef` and the optional `Runner:AzureFlex:EntraAudience`.
 
+### Checkpoint origins
+
+An invocation names the `checkpointUrl` the function loads the run from, so the function takes it only from an origin
+(scheme, host and port) it was deployed with. The list is the function setting `ARAZZO_CHECKPOINT_ORIGINS`, absolute
+URLs separated by semicolons, and it goes in the same settings dictionary as the `ARAZZO_SOURCE__<name>` entries. It is
+required. The Lambda and Azure deployers throw when their settings carry none, a function without it fails at
+start-up, and there is no wildcard. List the dispatching runner's checkpoint surface, and its peers' where several
+runners serve one environment, because a run checkpoints back to the runner that dispatched it. The demo runner
+defaults the list to its own `Runner:CheckpointBaseUrl` and takes peers from `Runner:Serverless:CheckpointOrigins`.
+The micro-guest deployer stamps the setting itself, from the one checkpoint surface the guest is allowed egress to.
+
 ### Verifying the deploy path
 
 The deploy-and-run path is exercised live against **LocalStack** as the local analogy for AWS Lambda: a version

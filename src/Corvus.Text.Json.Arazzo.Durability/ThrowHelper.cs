@@ -758,4 +758,14 @@ internal static class ThrowHelper
     [StackTraceHidden]
     public static void ThrowServerlessInvokeNotLoopback(Uri? functionUrl)
         => throw new InvalidOperationException(SR.Format(SR.ServerlessInvokeNotLoopback, functionUrl));
+
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowServerlessCheckpointOriginsMissing()
+        => throw new FormatException(SR.Format(SR.ServerlessCheckpointOriginsMissing, ServerlessCheckpointOrigins.SettingName));
+
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowServerlessCheckpointOriginMalformed(string entry)
+        => throw new FormatException(SR.Format(SR.ServerlessCheckpointOriginMalformed, ServerlessCheckpointOrigins.SettingName, entry));
 }

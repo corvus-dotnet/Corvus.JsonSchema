@@ -46,7 +46,8 @@ public sealed class ServerlessInvocationHandlerTests
         var handler = new ServerlessInvocationHandler(
             new BakedHostedWorkflowResolver(new CompletingHostedWorkflow("wf")),
             NoTransports,
-            runner.CheckpointHandler);
+            runner.CheckpointHandler,
+            ServerlessCheckpointOrigins.Parse(runner.CheckpointBaseUrl));
 
         byte[] outcome = await handler.HandleAsync(Invocation(Run1, runner.CheckpointBaseUrl), default);
 
@@ -65,7 +66,7 @@ public sealed class ServerlessInvocationHandlerTests
         await SeedSuspendedRun(runner.Store, Run1, "wf");
 
         var workflow = new CompletingHostedWorkflow("wf");
-        var handler = new ServerlessInvocationHandler(new BakedHostedWorkflowResolver(workflow), NoTransports, runner.CheckpointHandler);
+        var handler = new ServerlessInvocationHandler(new BakedHostedWorkflowResolver(workflow), NoTransports, runner.CheckpointHandler, ServerlessCheckpointOrigins.Parse(runner.CheckpointBaseUrl));
 
         byte[] outcome = await handler.HandleAsync(Invocation(Run1, runner.CheckpointBaseUrl), default);
 
@@ -81,7 +82,7 @@ public sealed class ServerlessInvocationHandlerTests
         await using Runner runner = await Runner.StartAsync();
         await SeedPendingRun(runner.Store, "run-1", "wf");
 
-        var handler = new ServerlessInvocationHandler(new BakedHostedWorkflowResolver(new CompletingHostedWorkflow("wf")), NoTransports, runner.CheckpointHandler);
+        var handler = new ServerlessInvocationHandler(new BakedHostedWorkflowResolver(new CompletingHostedWorkflow("wf")), NoTransports, runner.CheckpointHandler, ServerlessCheckpointOrigins.Parse(runner.CheckpointBaseUrl));
 
         // The invocation body arrives from outside the function's trust boundary (the dispatch fabric), so the
         // run-id grammar is validated at the parse (ADR 0065 §9: at every ingress, before any store touch) — the
@@ -95,7 +96,7 @@ public sealed class ServerlessInvocationHandlerTests
     public async Task Rejects_an_invocation_missing_the_run_id()
     {
         await using Runner runner = await Runner.StartAsync();
-        var handler = new ServerlessInvocationHandler(new BakedHostedWorkflowResolver(new CompletingHostedWorkflow("wf")), NoTransports, runner.CheckpointHandler);
+        var handler = new ServerlessInvocationHandler(new BakedHostedWorkflowResolver(new CompletingHostedWorkflow("wf")), NoTransports, runner.CheckpointHandler, ServerlessCheckpointOrigins.Parse(runner.CheckpointBaseUrl));
 
         byte[] body = Encoding.UTF8.GetBytes($$"""{"checkpointUrl":"{{runner.CheckpointBaseUrl}}"}""");
         await Should.ThrowAsync<ArgumentException>(async () => await handler.HandleAsync(body, default));
@@ -105,7 +106,7 @@ public sealed class ServerlessInvocationHandlerTests
     public async Task Rejects_an_invocation_missing_the_checkpoint_url()
     {
         await using Runner runner = await Runner.StartAsync();
-        var handler = new ServerlessInvocationHandler(new BakedHostedWorkflowResolver(new CompletingHostedWorkflow("wf")), NoTransports, runner.CheckpointHandler);
+        var handler = new ServerlessInvocationHandler(new BakedHostedWorkflowResolver(new CompletingHostedWorkflow("wf")), NoTransports, runner.CheckpointHandler, ServerlessCheckpointOrigins.Parse(runner.CheckpointBaseUrl));
 
         byte[] body = Encoding.UTF8.GetBytes($$"""{"runId":"{{Run1}}","environment":"development"}""");
         await Should.ThrowAsync<ArgumentException>(async () => await handler.HandleAsync(body, default));
@@ -117,7 +118,7 @@ public sealed class ServerlessInvocationHandlerTests
         // The environment is half the run's address (ADR 0065 decision 9) and is required at this ingress: an
         // invocation without one cannot address the run's checkpoints at all.
         await using Runner runner = await Runner.StartAsync();
-        var handler = new ServerlessInvocationHandler(new BakedHostedWorkflowResolver(new CompletingHostedWorkflow("wf")), NoTransports, runner.CheckpointHandler);
+        var handler = new ServerlessInvocationHandler(new BakedHostedWorkflowResolver(new CompletingHostedWorkflow("wf")), NoTransports, runner.CheckpointHandler, ServerlessCheckpointOrigins.Parse(runner.CheckpointBaseUrl));
 
         byte[] body = Encoding.UTF8.GetBytes($$"""{"runId":"{{Run1}}","checkpointUrl":"{{runner.CheckpointBaseUrl}}"}""");
         ArgumentException refusal = await Should.ThrowAsync<ArgumentException>(async () => await handler.HandleAsync(body, default));
@@ -128,7 +129,7 @@ public sealed class ServerlessInvocationHandlerTests
     public async Task Rejects_an_invocation_whose_environment_is_outside_the_grammar()
     {
         await using Runner runner = await Runner.StartAsync();
-        var handler = new ServerlessInvocationHandler(new BakedHostedWorkflowResolver(new CompletingHostedWorkflow("wf")), NoTransports, runner.CheckpointHandler);
+        var handler = new ServerlessInvocationHandler(new BakedHostedWorkflowResolver(new CompletingHostedWorkflow("wf")), NoTransports, runner.CheckpointHandler, ServerlessCheckpointOrigins.Parse(runner.CheckpointBaseUrl));
 
         byte[] body = Encoding.UTF8.GetBytes($$"""{"runId":"{{Run1}}","environment":"Not_A_Label","checkpointUrl":"{{runner.CheckpointBaseUrl}}"}""");
         ArgumentException refusal = await Should.ThrowAsync<ArgumentException>(async () => await handler.HandleAsync(body, default));
@@ -141,10 +142,37 @@ public sealed class ServerlessInvocationHandlerTests
         var resolver = new BakedHostedWorkflowResolver(new CompletingHostedWorkflow("wf"));
         using var handler = new HttpClientHandler();
 
-        Should.Throw<ArgumentNullException>(() => new ServerlessInvocationHandler(null!, NoTransports, handler));
-        Should.Throw<ArgumentNullException>(() => new ServerlessInvocationHandler(resolver, null!, handler));
-        Should.Throw<ArgumentNullException>(() => new ServerlessInvocationHandler(resolver, NoTransports, null!));
+        Should.Throw<ArgumentNullException>(() => new ServerlessInvocationHandler(null!, NoTransports, handler, Origins));
+        Should.Throw<ArgumentNullException>(() => new ServerlessInvocationHandler(resolver, null!, handler, Origins));
+        Should.Throw<ArgumentNullException>(() => new ServerlessInvocationHandler(resolver, NoTransports, null!, Origins));
+
+        // The checkpoint origins are required: a function with no list has nowhere it may load a run from.
+        Should.Throw<ArgumentNullException>(() => new ServerlessInvocationHandler(resolver, NoTransports, handler, null!));
     }
+
+    [TestMethod]
+    public async Task An_invocation_naming_a_checkpoint_origin_the_function_was_not_deployed_with_is_refused_untouched()
+    {
+        // P1-11 of the 2026-08-07 audit: the function took any absolute checkpointUrl, so a caller could point it at a
+        // checkpoint surface of their own and have it advance what it found there with the function's source credentials.
+        await using Runner runner = await Runner.StartAsync();
+        await SeedPendingRun(runner.Store, Run1, "wf");
+        var handler = new ServerlessInvocationHandler(
+            new BakedHostedWorkflowResolver(new CompletingHostedWorkflow("wf")),
+            NoTransports,
+            runner.CheckpointHandler,
+            ServerlessCheckpointOrigins.Parse("https://runner.example/"));
+
+        ArgumentException refusal = await Should.ThrowAsync<ArgumentException>(
+            async () => await handler.HandleAsync(Invocation(Run1, runner.CheckpointBaseUrl), default));
+        refusal.Message.ShouldContain("checkpoint origin");
+
+        // Nothing was loaded or advanced: the run is as it was seeded.
+        WorkflowCheckpoint stored = (await runner.Store.LoadAsync(new WorkflowRunAddress("development", new WorkflowRunId(Run1)), default))!.Value;
+        WorkflowCheckpointSerializer.ProjectIndex(stored.Utf8).Status.ShouldBe(WorkflowRunStatus.Pending);
+    }
+
+    private static readonly ServerlessCheckpointOrigins Origins = ServerlessCheckpointOrigins.Parse("https://runner.example/");
 
     private static WorkflowTransports NoTransports(WorkflowDescriptor descriptor, SecurityTagSet tags) => EmptyTransports;
 

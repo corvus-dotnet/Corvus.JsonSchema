@@ -155,8 +155,16 @@ public sealed class MicroGuestDeployer : IServerlessDeployer
                 writer.WriteStartObject("environment"u8);
                 foreach ((string name, string value) in context.Options.GuestEnvironment)
                 {
-                    writer.WriteString(name, value);
+                    if (!string.Equals(name, ServerlessCheckpointOrigins.SettingName, StringComparison.Ordinal))
+                    {
+                        writer.WriteString(name, value);
+                    }
                 }
+
+                // The guest's one checkpoint origin is the surface it is allowed egress to: the guest runs on this runner's
+                // machine and is invoked by this runner alone, so the deployer stamps it and takes no other (ADR 0059
+                // decision 4).
+                writer.WriteString(ServerlessCheckpointOrigins.SettingName, context.Options.CheckpointSurfaceUrl.GetLeftPart(UriPartial.Authority));
 
                 writer.WriteEndObject();
                 writer.WriteEndObject();

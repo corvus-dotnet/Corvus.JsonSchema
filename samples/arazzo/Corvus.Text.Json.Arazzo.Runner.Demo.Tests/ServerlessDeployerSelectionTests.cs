@@ -28,7 +28,7 @@ public sealed class ServerlessDeployerSelectionTests
     {
         IServerlessDeployer deployer = ServerlessDeployerSelection.Create(
             Config(("Runner:Lambda:ServiceUrl", "http://localhost:4566")),
-            new Dictionary<string, string> { ["ARAZZO_SOURCE__echo"] = "http://host:8080/demo" });
+            new Dictionary<string, string> { ["ARAZZO_SOURCE__echo"] = "http://host:8080/demo", [ServerlessCheckpointOrigins.SettingName] = "http://host:8080/" });
 
         deployer.ShouldBeOfType<LambdaServerlessDeployer>();
     }
@@ -37,7 +37,7 @@ public sealed class ServerlessDeployerSelectionTests
     public void The_lambda_platform_requires_a_service_url()
     {
         InvalidOperationException ex = Should.Throw<InvalidOperationException>(() =>
-            ServerlessDeployerSelection.Create(Config(), new Dictionary<string, string>()));
+            ServerlessDeployerSelection.Create(Config(), Settings()));
         ex.Message.ShouldContain("Runner:Lambda:ServiceUrl");
     }
 
@@ -51,7 +51,7 @@ public sealed class ServerlessDeployerSelectionTests
                 ("Runner:AzureFlex:ResourceGroup", "rg-arazzo"),
                 ("Runner:AzureFlex:AppNamePrefix", "acme-arazzo"),
                 ("Runner:AzureFlex:InvokeKeyRef", "env://ARAZZO_INVOKE_KEY")),
-            new Dictionary<string, string>());
+            Settings());
 
         deployer.ShouldBeOfType<AzureFunctionsFlexDeployer>();
     }
@@ -74,7 +74,7 @@ public sealed class ServerlessDeployerSelectionTests
         {
             (string, string)[] supplied = [("Runner:Serverless:Platform", "azure-flex"), .. all.Where(k => k.Key != missing)];
             InvalidOperationException ex = Should.Throw<InvalidOperationException>(() =>
-                ServerlessDeployerSelection.Create(Config(supplied), new Dictionary<string, string>()));
+                ServerlessDeployerSelection.Create(Config(supplied), Settings()));
             ex.Message.ShouldContain(missing);
         }
     }
@@ -115,7 +115,7 @@ public sealed class ServerlessDeployerSelectionTests
                 ("Runner:Serverless:Platform", "micro-guest"),
                 ("Runner:MicroGuest:SidecarUrl", "http://127.0.0.1:9411"),
                 ("Runner:MicroGuest:CheckpointSurfaceUrl", "http://172.20.0.10:8199/checkpoints")),
-            new Dictionary<string, string>());
+            Settings());
 
         deployer.ShouldBeOfType<MicroGuestDeployer>();
     }
@@ -132,7 +132,7 @@ public sealed class ServerlessDeployerSelectionTests
         {
             (string, string)[] supplied = [("Runner:Serverless:Platform", "micro-guest"), .. all.Where(k => k.Key != missing)];
             InvalidOperationException ex = Should.Throw<InvalidOperationException>(() =>
-                ServerlessDeployerSelection.Create(Config(supplied), new Dictionary<string, string>()));
+                ServerlessDeployerSelection.Create(Config(supplied), Settings()));
             ex.Message.ShouldContain(missing);
             ex.Message.ShouldContain("micro-guest");
         }
@@ -142,11 +142,14 @@ public sealed class ServerlessDeployerSelectionTests
     public void An_unknown_platform_is_refused_with_the_known_choices()
     {
         InvalidOperationException ex = Should.Throw<InvalidOperationException>(() =>
-            ServerlessDeployerSelection.Create(Config(("Runner:Serverless:Platform", "gcp")), new Dictionary<string, string>()));
+            ServerlessDeployerSelection.Create(Config(("Runner:Serverless:Platform", "gcp")), Settings()));
         ex.Message.ShouldContain("gcp");
         ex.Message.ShouldContain("azure-flex");
         ex.Message.ShouldContain("micro-guest");
     }
+
+    // Function settings that carry the required checkpoint origins (ADR 0059 decision 4) and nothing else.
+    private static Dictionary<string, string> Settings() => new() { [ServerlessCheckpointOrigins.SettingName] = "http://host:8080/" };
 
     private static IConfiguration Config(params (string Key, string Value)[] values)
         => new ConfigurationBuilder().AddInMemoryCollection(values.Select(v => new KeyValuePair<string, string?>(v.Key, v.Value))).Build();

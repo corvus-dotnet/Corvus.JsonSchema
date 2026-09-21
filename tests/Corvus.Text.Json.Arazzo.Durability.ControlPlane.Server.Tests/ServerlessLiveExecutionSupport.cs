@@ -211,6 +211,7 @@ internal static class ServerlessLiveExecutionSupport
                 .WithResourceMapping(HostSecretsWithInvokeKey(), HostSecretsPath)
                 .WithEnvironment("FUNCTIONS_WORKER_RUNTIME", "dotnet-isolated")
                 .WithEnvironment("ARAZZO_SOURCE__echo", sourceBaseUrl)
+                .WithEnvironment(ServerlessCheckpointOrigins.SettingName, sourceBaseUrl)
                 .WithExtraHost("host.containers.internal", "host-gateway")
                 .WithPortBinding(80, assignRandomHostPort: true)
                 .Build();
@@ -320,6 +321,7 @@ internal static class ServerlessLiveExecutionSupport
             .WithResourceMapping(HostSecretsWithInvokeKey(), HostSecretsPath)
             .WithEnvironment("FUNCTIONS_WORKER_RUNTIME", "dotnet-isolated")
             .WithEnvironment("ARAZZO_SOURCE__echo", sourceBaseUrl)
+            .WithEnvironment(ServerlessCheckpointOrigins.SettingName, sourceBaseUrl)
             .WithPortBinding(80, assignRandomHostPort: true)
             .Build();
         await functions.StartAsync();

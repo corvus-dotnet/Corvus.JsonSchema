@@ -77,5 +77,5 @@ public sealed class LambdaServerlessDeployerLocalStackTests
     // so the deploy needs no real AOT build) can never run. Executing a real bootstrap under LocalStack is a separate,
     // heavier proof.
     private static LambdaServerlessDeployer Deployer()
-        => new(client, new LambdaDeployerOptions { ExecutionRoleArn = "arn:aws:iam::000000000000:role/lambda-role" });
+        => new(client, new LambdaDeployerOptions { ExecutionRoleArn = "arn:aws:iam::000000000000:role/lambda-role", FunctionEnvironment = new Dictionary<string, string>(StringComparer.Ordinal) { [ServerlessCheckpointOrigins.SettingName] = "https://runner.example/" } });
 }

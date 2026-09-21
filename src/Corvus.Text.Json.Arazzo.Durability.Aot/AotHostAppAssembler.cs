@@ -173,7 +173,8 @@ builder.ConfigureFunctionsWebApplication();
 
 // One invocation handler for the worker instance's life so checkpoint connections pool across warm invocations; the
 // [Function] resolves it per request. The executor is the signed executor.dll, constructed directly.
-builder.Services.AddSingleton(new ServerlessInvocationHandler(new BakedHostedWorkflowResolver(new {{entryType}}()), Bind, new SocketsHttpHandler()));
+// The checkpoint origins are an app setting the deploy stamps (ADR 0059 decision 4). Without them the worker fails here.
+builder.Services.AddSingleton(new ServerlessInvocationHandler(new BakedHostedWorkflowResolver(new {{entryType}}()), Bind, new SocketsHttpHandler(), ServerlessCheckpointOrigins.FromProcessEnvironment()));
 
 builder.Build().Run();
 
@@ -274,7 +275,8 @@ try
         // The sidecar restores the snapshot only when it holds an invocation, so this fetch answers immediately.
         byte[] invocation = await client.GetByteArrayAsync(endpoint);
 
-        var invocationHandler = new ServerlessInvocationHandler(new BakedHostedWorkflowResolver(new {{entryType}}()), Bind, handler);
+        // The checkpoint origins ride the baked argv with the source bindings, seeded into the environment above.
+        var invocationHandler = new ServerlessInvocationHandler(new BakedHostedWorkflowResolver(new {{entryType}}()), Bind, handler, ServerlessCheckpointOrigins.FromProcessEnvironment());
         byte[] outcome = await invocationHandler.HandleAsync(invocation, CancellationToken.None);
 
         using var content = new ByteArrayContent(outcome);

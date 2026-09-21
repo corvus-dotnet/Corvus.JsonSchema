@@ -98,6 +98,7 @@ public sealed class ServerlessRealCloudCheckpointListenerLambdaTests
                 FunctionEnvironment = new Dictionary<string, string>(StringComparer.Ordinal)
                 {
                     ["ARAZZO_SOURCE__echo"] = sourceBaseUrl,
+                    [ServerlessCheckpointOrigins.SettingName] = sourceBaseUrl,
                 },
             });
             ServerlessDeployResult deploy = await deployer.DeployAsync(

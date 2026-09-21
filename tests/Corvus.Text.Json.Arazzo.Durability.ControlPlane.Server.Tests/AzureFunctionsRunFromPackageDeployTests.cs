@@ -72,7 +72,7 @@ public sealed class AzureFunctionsRunFromPackageDeployTests
                     // In production the deployer sets this as an app setting the platform injects; local ARM has no
                     // emulator, so the run below injects the real echo source URL as the container's env directly (the
                     // shared helper), standing in for the platform applying this setting (ADR 0061 asymmetry).
-                    FunctionAppSettings = new Dictionary<string, string>(StringComparer.Ordinal) { ["ARAZZO_SOURCE__echo"] = "https://echo.example" },
+                    FunctionAppSettings = new Dictionary<string, string>(StringComparer.Ordinal) { ["ARAZZO_SOURCE__echo"] = "https://echo.example", [ServerlessCheckpointOrigins.SettingName] = "https://runner.example/" },
                 });
 
             // 3. Deploy: the production deployer uploads the package to Azurite and records the run-from-package URL.

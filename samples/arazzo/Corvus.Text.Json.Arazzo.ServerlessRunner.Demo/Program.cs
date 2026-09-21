@@ -120,6 +120,11 @@ foreach (IConfigurationSection source in builder.Configuration.GetSection("Runne
     }
 }
 
+// The checkpoint origins each deployed function will take a checkpointUrl from (ADR 0059 decision 4). A run checkpoints
+// back to the runner that dispatched it, so this is this runner's own checkpoint surface, plus its peers' where several
+// runners serve the environment (Runner:Serverless:CheckpointOrigins, semicolon-separated). The function refuses any other.
+functionSourceEnv[ServerlessCheckpointOrigins.SettingName] = builder.Configuration["Runner:Serverless:CheckpointOrigins"] ?? checkpointBaseUrl;
+
 // The deploy service the deploy worker drives: verify the native artifact, then deploy it via the configured platform's
 // deployer — deployer selection is a host-wiring concern (ADR 0061). Runner:Serverless:Platform picks 'lambda' (the
 // default; LocalStack here, real AWS in production, the runner's own cloud identity either way — ADR 0059/0060) or

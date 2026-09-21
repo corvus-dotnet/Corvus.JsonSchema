@@ -69,6 +69,10 @@ public sealed class MicroGuestDeployerTests
         configuration.ShouldContain("\"allowedHosts\":[\"172.20.0.10:8199\",\"petstore.example.com:8443\",\"billing.internal:80\"]");
         // The environment rides verbatim; the sidecar freezes it into the snapshot's argv.
         configuration.ShouldContain("\"ARAZZO_SOURCE__petstore\":\"https://petstore.example.com:8443/api\"");
+
+        // The guest's one checkpoint origin is the surface it is allowed egress to, stamped by the deployer itself
+        // (ADR 0059 decision 4), so the guest refuses a checkpointUrl that points anywhere else.
+        configuration.ShouldContain($"\"{ServerlessCheckpointOrigins.SettingName}\":\"http://172.20.0.10:8199\"");
         configuration.ShouldContain("\"UNRELATED\":\"not-a-url\"");
     }
 

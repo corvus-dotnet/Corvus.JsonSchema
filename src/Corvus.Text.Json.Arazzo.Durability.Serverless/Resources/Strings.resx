@@ -78,4 +78,7 @@
   <data name="TerminalCheckpointNotCommitted" xml:space="preserve">
     <value>The terminal checkpoint did not commit to the dispatching runner; the run stays claimable for re-invocation.</value>
   </data>
+  <data name="CheckpointOriginNotAllowed" xml:space="preserve">
+    <value>The invocation's checkpointUrl is at '{0}', which is not a checkpoint origin this function was deployed with (ADR 0059). Nothing was loaded from it.</value>
+  </data>
 </root>

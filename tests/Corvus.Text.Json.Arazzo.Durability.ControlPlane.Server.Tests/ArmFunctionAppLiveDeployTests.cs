@@ -84,7 +84,7 @@ public sealed class ArmFunctionAppLiveDeployTests
             var deployer = new AzureFunctionsFlexDeployer(
                 new AzureCliCredential(),
                 new SecretResolverBuilder().AddEnvironment().Build(),
-                new AzureFunctionsFlexDeployerOptions { SubscriptionId = subscription, ResourceGroupName = resourceGroup, AppNamePrefix = appPrefix, InvokeAuthorization = InvokeAuthorization() });
+                new AzureFunctionsFlexDeployerOptions { SubscriptionId = subscription, ResourceGroupName = resourceGroup, AppNamePrefix = appPrefix, InvokeAuthorization = InvokeAuthorization(), FunctionAppSettings = new Dictionary<string, string> { [ServerlessCheckpointOrigins.SettingName] = "https://runner.example/" } });
 
             ServerlessDeployResult result = await deployer.DeployAsync(request, default);
             result.Succeeded.ShouldBeTrue(result.Log);
@@ -184,7 +184,7 @@ public sealed class ArmFunctionAppLiveDeployTests
                     SubscriptionId = subscription,
                     ResourceGroupName = resourceGroup,
                     AppNamePrefix = appPrefix,
-                    FunctionAppSettings = new Dictionary<string, string> { ["ARAZZO_SOURCE__echo"] = listenerUrl.TrimEnd('/') },
+                    FunctionAppSettings = new Dictionary<string, string> { ["ARAZZO_SOURCE__echo"] = listenerUrl.TrimEnd('/'), [ServerlessCheckpointOrigins.SettingName] = listenerUrl },
                 });
 
             ServerlessDeployResult result = await deployer.DeployAsync(request, default);

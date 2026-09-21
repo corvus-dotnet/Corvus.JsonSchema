@@ -77,7 +77,7 @@ public sealed class ServerlessLiveExecutionLocalStackTests
                 new AmazonLambdaConfig { ServiceURL = localstack.GetConnectionString(), AuthenticationRegion = "us-east-1" });
 
             // 3. Deploy the real binary with the production deployer (CreateFunction on provided.al2023, wait for Active).
-            var deployer = new LambdaServerlessDeployer(client, new LambdaDeployerOptions { ExecutionRoleArn = "arn:aws:iam::000000000000:role/lambda-role" });
+            var deployer = new LambdaServerlessDeployer(client, new LambdaDeployerOptions { ExecutionRoleArn = "arn:aws:iam::000000000000:role/lambda-role", FunctionEnvironment = new Dictionary<string, string>(StringComparer.Ordinal) { [ServerlessCheckpointOrigins.SettingName] = "https://runner.example/" } });
             ServerlessDeployResult deploy = await deployer.DeployAsync(
                 new ServerlessDeployRequest("serverless-check", 1, "isolated", "linux-x64", nativeBinary),
                 default);
@@ -186,6 +186,9 @@ public sealed class ServerlessLiveExecutionLocalStackTests
                     FunctionEnvironment = new Dictionary<string, string>(StringComparer.Ordinal)
                     {
                         ["ARAZZO_SOURCE__echo"] = sourceBaseUrl,
+
+                        // The function checkpoints back to this host, so this host is its one checkpoint origin.
+                        [ServerlessCheckpointOrigins.SettingName] = sourceBaseUrl,
                     },
                 });
                 ServerlessDeployResult deploy = await deployer.DeployAsync(

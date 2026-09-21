@@ -32,21 +32,25 @@ public sealed class ServerlessInvocationHandler
     private readonly IHostedWorkflowResolver resolver;
     private readonly WorkflowTransportBinder transportBinder;
     private readonly HttpMessageHandler checkpointHandler;
+    private readonly ServerlessCheckpointOrigins checkpointOrigins;
     private readonly TimeProvider timeProvider;
 
     /// <summary>Initializes a new instance of the <see cref="ServerlessInvocationHandler"/> class.</summary>
     /// <param name="resolver">Resolves a run to the workflow that runs it — a <c>BakedHostedWorkflowResolver</c> in a deployed function.</param>
     /// <param name="transportBinder">Binds the workflow's descriptor to the transports it executes through, for this function's (deployed) environment.</param>
     /// <param name="checkpointHandler">The shared, caller-owned HTTP message handler the per-invocation checkpoint client runs over (connection pooling).</param>
+    /// <param name="checkpointOrigins">The checkpoint origins this function was deployed with. An invocation whose <c>checkpointUrl</c> is off the list is refused before anything is loaded from it (ADR 0059 decision 4).</param>
     /// <param name="timeProvider">The time provider the restored run uses for its timer waits; defaults to <see cref="TimeProvider.System"/>.</param>
-    public ServerlessInvocationHandler(IHostedWorkflowResolver resolver, WorkflowTransportBinder transportBinder, HttpMessageHandler checkpointHandler, TimeProvider? timeProvider = null)
+    public ServerlessInvocationHandler(IHostedWorkflowResolver resolver, WorkflowTransportBinder transportBinder, HttpMessageHandler checkpointHandler, ServerlessCheckpointOrigins checkpointOrigins, TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(resolver);
         ArgumentNullException.ThrowIfNull(transportBinder);
         ArgumentNullException.ThrowIfNull(checkpointHandler);
+        ArgumentNullException.ThrowIfNull(checkpointOrigins);
         this.resolver = resolver;
         this.transportBinder = transportBinder;
         this.checkpointHandler = checkpointHandler;
+        this.checkpointOrigins = checkpointOrigins;
         this.timeProvider = timeProvider ?? TimeProvider.System;
     }
 
@@ -60,6 +64,13 @@ public sealed class ServerlessInvocationHandler
     public async ValueTask<byte[]> HandleAsync(ReadOnlyMemory<byte> invocationJson, CancellationToken cancellationToken)
     {
         (WorkflowRunAddress address, Uri checkpointUrl, string? checkpointToken) = ParseInvocation(invocationJson);
+
+        // The function loads the run from this URL and advances it with its own source credentials, so it takes the URL
+        // only from an origin it was deployed with. Checked first, so nothing is sent to, or loaded from, anywhere else.
+        if (!this.checkpointOrigins.Allows(checkpointUrl))
+        {
+            throw ThrowHelper.GetCheckpointOriginNotAllowedException(checkpointUrl, nameof(invocationJson));
+        }
 
         // A bearer credential must never travel in cleartext, so refuse a token over a non-HTTPS checkpoint URL (a loopback
         // address is exempt: in-process and local tests use plain HTTP where TLS adds nothing, but a token never crosses

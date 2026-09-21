@@ -122,6 +122,10 @@ public sealed class AotHostAppAssemblerTests
         app.Target.ShouldBe(ServerlessTarget.AzureFunctions);
 
         string program = FileText(app, "Program.cs");
+
+        // The host takes a checkpointUrl only from an origin it was deployed with (ADR 0059 decision 4): the list is read
+        // at start-up, so a function deployed without one fails there and not on its first invocation.
+        program.ShouldContain("ServerlessCheckpointOrigins.FromProcessEnvironment()");
         program.ShouldContain("FunctionsApplication.CreateBuilder(args)");
         program.ShouldContain("ConfigureFunctionsWebApplication()");
         program.ShouldContain($"new BakedHostedWorkflowResolver(new {EntryType}())");
@@ -176,6 +180,10 @@ public sealed class AotHostAppAssemblerTests
         app.Target.ShouldBe(ServerlessTarget.MicroGuest);
 
         string program = FileText(app, "Program.cs");
+
+        // The host takes a checkpointUrl only from an origin it was deployed with (ADR 0059 decision 4): the list is read
+        // at start-up, so a function deployed without one fails there and not on its first invocation.
+        program.ShouldContain("ServerlessCheckpointOrigins.FromProcessEnvironment()");
         program.ShouldContain($"new BakedHostedWorkflowResolver(new {EntryType}())");
         program.ShouldContain("ServerlessInvocationHandler");
         // One advance per snapshot restore: fetch the invocation from the sidecar endpoint baked as argv[1], post the

@@ -51,6 +51,13 @@ internal static class ThrowHelper
     public static ArgumentException GetMissingCheckpointUrlException(string paramName)
         => new(SR.MissingCheckpointUrl, paramName);
 
+    /// <summary>Creates the exception for an invocation whose <c>checkpointUrl</c> is not at an origin the function was deployed with, for the caller to throw.</summary>
+    /// <param name="checkpointUrl">The refused checkpoint URL.</param>
+    /// <param name="paramName">The offending parameter's name.</param>
+    /// <returns>The exception to throw.</returns>
+    public static ArgumentException GetCheckpointOriginNotAllowedException(Uri checkpointUrl, string paramName)
+        => new(SR.Format(SR.CheckpointOriginNotAllowed, checkpointUrl.GetLeftPart(UriPartial.Authority)), paramName);
+
     /// <summary>Throws when the terminal checkpoint did not commit to the dispatching runner.</summary>
     [DoesNotReturn]
     [StackTraceHidden]

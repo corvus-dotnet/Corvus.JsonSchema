@@ -60,7 +60,7 @@ public sealed class AzureFunctionsServerlessDeployerAzuriteTests
             new AzureFunctionsDeployerOptions
             {
                 InvokeAuthorization = new AzureFunctionsInvokeAuthorization { InvokeKey = SecretRef.Parse("env://ARAZZO_INVOKE_KEY"), EntraAudience = "api://arazzo-functions" },
-                FunctionAppSettings = new Dictionary<string, string>(StringComparer.Ordinal) { ["ARAZZO_SOURCE__echo"] = "https://echo.example" },
+                FunctionAppSettings = new Dictionary<string, string>(StringComparer.Ordinal) { ["ARAZZO_SOURCE__echo"] = "https://echo.example", [ServerlessCheckpointOrigins.SettingName] = "https://runner.example/" },
             });
 
         // Arbitrary bytes stand in for the app zip: this proves the storage mechanism, not that the payload runs.
@@ -106,7 +106,7 @@ public sealed class AzureFunctionsServerlessDeployerAzuriteTests
             blobService.GetBlobContainerClient("arazzo-packages-refused"),
             new RecordingFunctionAppConfigurator { AppBaseUrl = new Uri("https://arazzo-fn-check.example.net/"), Refusal = "the app does not require authentication." },
             new FixedSecretResolver("the-invoke-key"),
-            new AzureFunctionsDeployerOptions { InvokeAuthorization = new AzureFunctionsInvokeAuthorization { InvokeKey = SecretRef.Parse("env://ARAZZO_INVOKE_KEY"), EntraAudience = "api://arazzo-functions" } });
+            new AzureFunctionsDeployerOptions { InvokeAuthorization = new AzureFunctionsInvokeAuthorization { InvokeKey = SecretRef.Parse("env://ARAZZO_INVOKE_KEY"), EntraAudience = "api://arazzo-functions" }, FunctionAppSettings = new Dictionary<string, string> { [ServerlessCheckpointOrigins.SettingName] = "https://runner.example/" } });
 
         ServerlessDeployResult result = await deployer.DeployAsync(new ServerlessDeployRequest("check", 1, "isolated", "linux-x64", new byte[16]), default);
 

@@ -100,6 +100,16 @@ public sealed class LambdaServerlessDeployerTests
             new LambdaServerlessDeployer(client, null!));
     }
 
+    [TestMethod]
+    public void Ctor_refuses_function_settings_that_carry_no_checkpoint_origins()
+    {
+        // The function refuses to start without its checkpoint origins (ADR 0059 decision 4), so the runner is told when
+        // it is configured and not by a deployed function that answers nothing.
+        using var client = new AmazonLambdaClient(new BasicAWSCredentials("test", "test"), new AmazonLambdaConfig { ServiceURL = "http://localhost:4566", AuthenticationRegion = "us-east-1" });
+        Should.Throw<FormatException>(() => new LambdaServerlessDeployer(client, new LambdaDeployerOptions { ExecutionRoleArn = "arn:aws:iam::000000000000:role/lambda-role" }))
+            .Message.ShouldContain(ServerlessCheckpointOrigins.SettingName);
+    }
+
     private static LambdaDeployerOptions ValidOptions()
-        => new() { ExecutionRoleArn = "arn:aws:iam::000000000000:role/lambda-role" };
+        => new() { ExecutionRoleArn = "arn:aws:iam::000000000000:role/lambda-role", FunctionEnvironment = new Dictionary<string, string>(StringComparer.Ordinal) { [ServerlessCheckpointOrigins.SettingName] = "https://runner.example/" } };
 }

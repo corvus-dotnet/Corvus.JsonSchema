@@ -32,7 +32,10 @@ public static class LambdaServerlessFunction
         // One handler for the function instance's life so checkpoint connections pool across warm invocations; the
         // invocation handler builds a per-invocation client over it, addressed at the invocation's checkpoint URL.
         using var checkpointHandler = new SocketsHttpHandler();
-        var invocationHandler = new ServerlessInvocationHandler(resolver, transportBinder, checkpointHandler);
+
+        // The checkpoint origins come from the function's environment, stamped by the deploy. A function without them
+        // fails here, at start-up, and not on its first invocation.
+        var invocationHandler = new ServerlessInvocationHandler(resolver, transportBinder, checkpointHandler, ServerlessCheckpointOrigins.FromProcessEnvironment());
 
         Func<Stream, ILambdaContext, Task<Stream>> handler = (invocation, context) => InvokeAsync(invocationHandler, invocation);
         using HandlerWrapper wrapper = HandlerWrapper.GetHandlerWrapper(handler);

@@ -581,4 +581,10 @@
   <data name="ServerlessInvokeNotLoopback" xml:space="preserve">
     <value>The function URL '{0}' is not on the loopback interface, so the invocation is refused: the loopback invoke authenticator adds no credential (ADR 0059). Configure the function platform's authenticator.</value>
   </data>
+  <data name="ServerlessCheckpointOriginsMissing" xml:space="preserve">
+    <value>The function setting '{0}' is required: the checkpoint origins (absolute http or https URLs separated by semicolons) a deployed function may load a run from and save it to (ADR 0059). There is no default and no wildcard.</value>
+  </data>
+  <data name="ServerlessCheckpointOriginMalformed" xml:space="preserve">
+    <value>The function setting '{0}' has the entry '{1}', which is not an absolute http or https URL.</value>
+  </data>
 </root>

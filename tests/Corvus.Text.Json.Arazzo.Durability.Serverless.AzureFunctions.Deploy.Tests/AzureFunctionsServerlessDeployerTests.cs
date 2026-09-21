@@ -70,8 +70,16 @@ public sealed class AzureFunctionsServerlessDeployerTests
         Should.Throw<ArgumentNullException>(() => new AzureFunctionsServerlessDeployer(container, new NoOpConfigurator(), null!, Options()));
     }
 
+    [TestMethod]
+    public void Ctor_refuses_function_settings_that_carry_no_checkpoint_origins()
+    {
+        BlobContainerClient container = new(new Uri("https://example.blob.core.windows.net/packages"));
+        Should.Throw<FormatException>(() => new AzureFunctionsServerlessDeployer(container, new NoOpConfigurator(), new EnvSecretResolver(), Options() with { FunctionAppSettings = null }))
+            .Message.ShouldContain(ServerlessCheckpointOrigins.SettingName);
+    }
+
     private static AzureFunctionsDeployerOptions Options()
-        => new AzureFunctionsDeployerOptions { InvokeAuthorization = new AzureFunctionsInvokeAuthorization { InvokeKey = SecretRef.Parse("env://ARAZZO_TEST_INVOKE_KEY") } };
+        => new AzureFunctionsDeployerOptions { InvokeAuthorization = new AzureFunctionsInvokeAuthorization { InvokeKey = SecretRef.Parse("env://ARAZZO_TEST_INVOKE_KEY") }, FunctionAppSettings = new Dictionary<string, string> { [ServerlessCheckpointOrigins.SettingName] = "https://runner.example/" } };
 
     private sealed class NoOpConfigurator : IFunctionAppConfigurator
     {
