@@ -400,14 +400,14 @@ its last process left unsigned without authenticating it: between a stop and the
 the sink holds, and the verifier goes on reporting it as unsigned. And of reads the chain holds
 the disclosures only, the step journal, a debug run's trace, a credential binding's detail and the checkpoint,
 each recorded before it is disclosed and refused when it cannot be
-([ADR 0070](../adr/0070-read-side-audit-three-tiers.md)). Refused reads are recorded too, up to a bound for each subject and as a count past it. The volume of lists and searches is not yet metered. The rows below marked "No" emit nothing at all.
+([ADR 0070](../adr/0070-read-side-audit-three-tiers.md)). Refused reads are recorded too, up to a bound for each subject and as a count past it, and every other read is metered and not recorded. The rows below marked "No" emit nothing at all.
 
 | Security-critical action | Audited | Consequence |
 |--------------------------|---------|-------------|
 | Checkpoint read, the full run payload | Yes | A read record in the audit chain with the run as its subject, since the caller is a dispatched function holding a run-scoped token and no principal, and refused when it cannot be recorded ([ADR 0070](../adr/0070-read-side-audit-three-tiers.md)) |
 | Checkpoint write | No | A write through the run-scoped surface or the runner API produces nothing |
 | Every runner API operation, claim, lease, checkpoint, catalog | No | Index rewriting, lease theft, quota trips and epoch anomalies all silent |
-| Any read, list or search on the governance API | No | Cross-tenant reads and enumeration are unreconstructable |
+| Any read, list or search on the governance API | Yes, in three tiers | A read that discloses a payload is a record in the audit chain, made before it is answered. A read refused with a not-found is a record too, capped for each subject. Every other read, which is lists, searches, counts and index-row gets, is metered by action, tenant and outcome on `corvus.arazzo.governance.reads` and recorded nowhere, so a cross-tenant payload read is reconstructable and a bulk read shows as a rate and not as a record ([ADR 0070](../adr/0070-read-side-audit-three-tiers.md)) |
 | Authentication success and failure | No | Brute force and credential stuffing undetectable by construction |
 | Authorization denial on read paths | Yes | Every `GET` that names a resource and answers with a not-found is a refusal record in the audit chain, by the actor, for the id it asked after, recorded for all operations by one filter. A subject's refusals are recorded up to a bound a minute and as a count past it, so an enumeration is evidenced without being able to fill the chain ([ADR 0070](../adr/0070-read-side-audit-three-tiers.md)). ADR 0004 still makes the answer itself non-disclosing |
 | Secret resolution, and decryption failure | No | The clearest tamper signal in the design is discarded |
@@ -682,7 +682,7 @@ the store or the artifact source is retried on every poll until it heals, by dec
 decided the same day as [ADR 0069](../adr/0069-audit-as-evidence-append-only-chained-signed-sink.md),
 [ADR 0070](../adr/0070-read-side-audit-three-tiers.md) and
 [ADR 0071](../adr/0071-authentication-event-telemetry.md); none has a ledger row of its own, and the
-detection rows they change in §8 move when the code does. GAP-6 is built and §8 says what it changed. GAP-7 is begun, with the read record, the control plane's four payload disclosures and its refused reads on the chain; GAP-8 is not started.
+detection rows they change in §8 move when the code does. GAP-6 is built and §8 says what it changed. GAP-7 has the control plane's three tiers built, with its four payload disclosures and its refused reads on the chain and every other read metered, and the runner's own chain still to come; GAP-8 is not started.
 
 
 **What was checked and found sound**, so it is not re-litigated: injection is absent across all nine

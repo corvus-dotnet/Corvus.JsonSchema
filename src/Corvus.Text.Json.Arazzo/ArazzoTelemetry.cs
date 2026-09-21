@@ -222,4 +222,13 @@ public static class ArazzoTelemetry
     /// </summary>
     public static Counter<long> ReadRefusals { get; } =
         Meter.CreateCounter<long>("corvus.arazzo.governance.read.refusals", "{refusal}", "Reads refused with a non-disclosing not-found");
+
+    /// <summary>
+    /// Gets the counter for reads that disclose no payload (ADR 0070, tier three): lists, searches, counts and index-row
+    /// gets, dimensioned by <see cref="ActionTag">action</see>, <see cref="OutcomeTag">outcome</see> and, where present,
+    /// tenant. They are most of the traffic, so they are metered and not recorded: a tenant reading far more than it
+    /// usually does shows here.
+    /// </summary>
+    public static Counter<long> Reads { get; } =
+        Meter.CreateCounter<long>("corvus.arazzo.governance.reads", "{read}", "Reads that disclose no payload: lists, searches, counts and index-row gets");
 }

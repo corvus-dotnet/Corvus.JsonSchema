@@ -89,13 +89,14 @@ interpolated into the message, so a log pipeline can index them and correlate th
 
 In a secured deployment each of those records is also appended to the deployment's audit chain
 ([ADR 0069](../adr/0069-audit-as-evidence-append-only-chained-signed-sink.md)), and the chain has three signals of
-its own, and the read side adds a fourth. Alert on the first two at any non-zero rate, watch the third for a rise, and retain the last.
+its own, and the read side adds two more. Alert on the first two at any non-zero rate, watch the two read counters for a rise, and retain the last.
 
 | Signal | What it means |
 |--------|---------------|
 | `corvus.arazzo.governance.audit.append_failures` (counter, by action) | The audit sink refused a record. The action was applied, the request got a `500` of type `audit-record-failed`, and the action is not in the chain |
 | `corvus.arazzo.governance.audit.head_failures` (counter) | A chain head could not be signed or stored. Requests keep succeeding and records are still chained, and the newest of them are not yet vouched for by a signature. It is retried at the next cadence tick |
 | `corvus.arazzo.governance.read.refusals` (counter, by action and tenant) | A read was refused with a non-disclosing not-found. It counts every refusal, those over a subject's bound included, which the chain records as a count and not one by one. A rising rate from one tenant is an enumeration |
+| `corvus.arazzo.governance.reads` (counter, by action, tenant and outcome) | A read that discloses no payload: a list, a search, a count or an index-row get. They are most of the traffic, so they are metered and recorded nowhere. A tenant reading far more than it usually does shows here |
 | `audit.head` (span) and the `Audit anchor` log record on the `Corvus.Arazzo.Audit` category | A signed head, published outside the sink. Keep these where the sink's owner cannot rewrite them: they are what shows that a chain offered later is the chain that was signed |
 
 `AuditSinkHealthCheck` reports unhealthy while either failure is outstanding. A host registers it where it serves

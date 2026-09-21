@@ -590,7 +590,7 @@ that a sink is attached. The codebase already ships an ECDSA signing stack.
 
 > **Decided.** [ADR 0070](../adr/0070-read-side-audit-three-tiers.md): payload disclosures audited,
 > reach refusals audited with the requested id, bulk reads metered. The store half is already closed by
-> ADR 0067. Implementation begun: the read record is a kind of the audit chain, and the control plane's payload disclosures are on it (step journal, debug run trace, credential detail, checkpoint), with every refused read, capped for each subject.
+> ADR 0067. Implementation begun: the read record is a kind of the audit chain, and the control plane's payload disclosures are on it (step journal, debug run trace, credential detail, checkpoint), with every refused read, capped for each subject, and every other read metered.
 `GovernanceAudit` exposes only `Mutation`. No read, list, query or search audit exists, so the
 highest-value event, one tenant's principal reading another's data, produces no record. On the four
 in-process-filtering backends from P1-2 the cross-tenant rows are physically read on every query and

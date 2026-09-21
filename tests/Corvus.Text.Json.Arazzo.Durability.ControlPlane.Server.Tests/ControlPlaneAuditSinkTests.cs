@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Net;
 using System.Security.Claims;
 using System.Text;
@@ -323,6 +324,74 @@ public sealed class ControlPlaneAuditSinkTests
         (await AuditChainVerifier.VerifyAsync(new MemoryStream(sink.Snapshot(sink.ChainIds.ShouldHaveSingleItem())))).IsIntact.ShouldBeTrue();
     }
 
+    [TestMethod]
+    public async Task Reads_that_disclose_no_payload_are_metered_by_action_and_tenant_and_put_nothing_on_the_chain()
+    {
+        // The meter is the process's, and other tests read too, so this one reads as a tenant nobody else is.
+        const string tenant = "meter-only-tenant";
+        var counted = new System.Collections.Concurrent.ConcurrentBag<(string Action, string Outcome)>();
+        using var listener = new MeterListener
+        {
+            InstrumentPublished = (instrument, l) =>
+            {
+                if (instrument.Meter.Name == ArazzoTelemetry.MeterName && instrument.Name == "corvus.arazzo.governance.reads")
+                {
+                    l.EnableMeasurementEvents(instrument);
+                }
+            },
+        };
+        listener.SetMeasurementEventCallback<long>((_, _, tags, _) =>
+        {
+            string? action = null, outcome = null, seenTenant = null;
+            foreach (KeyValuePair<string, object?> tag in tags)
+            {
+                if (tag.Key == ArazzoTelemetry.ActionTag)
+                {
+                    action = tag.Value as string;
+                }
+                else if (tag.Key == ArazzoTelemetry.OutcomeTag)
+                {
+                    outcome = tag.Value as string;
+                }
+                else if (tag.Key == ArazzoTelemetry.TenantTag)
+                {
+                    seenTenant = tag.Value as string;
+                }
+            }
+
+            if (seenTenant == tenant)
+            {
+                counted.Add((action!, outcome!));
+            }
+        });
+        listener.Start();
+
+        var sink = new InMemoryAuditSink();
+        await using var auditor = new GovernanceAuditor(sink: sink, headSigner: Signer(), headOptions: new AuditHeadOptions(1000, TimeSpan.FromHours(1)));
+        await using Host host = await StartAsync(ControlPlaneSecurityMode.Scoped, auditor, new TenantPolicy(tenant));
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments", """{"name":"metered-env","displayName":"Metered"}""", Write)).StatusCode.ShouldBe(HttpStatusCode.Created);
+        await SeedRunWithJournalAsync(host, JournalRun);
+
+        (await host.SendAsync(HttpMethod.Get, "/environments", Read)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendAsync(HttpMethod.Get, "/environments", Read)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendAsync(HttpMethod.Get, "/environments/count", Read)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendAsync(HttpMethod.Get, "/environments/metered-env", Read)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // A disclosure records itself and a refusal is a record, so neither is on the meter; a mutation is not a read.
+        (await host.SendAsync(HttpMethod.Get, $"/runs/{JournalRun}/steps", ReadOutputs)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendAsync(HttpMethod.Get, "/environments/no-such-env", Read)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        counted.Where(c => c.Action == "listEnvironments").ShouldBe([("listEnvironments", "ok"), ("listEnvironments", "ok")]);
+        counted.Count(c => c.Action == "countEnvironments").ShouldBe(1);
+        counted.Count(c => c.Action == "getEnvironment").ShouldBe(1);
+        counted.ShouldNotContain(c => c.Action == "getRunSteps");
+        counted.ShouldNotContain(c => c.Action == "createEnvironment");
+        counted.Count.ShouldBe(4);
+
+        // Metered, not recorded: of those six reads the chain holds the disclosure and the refusal, and no more.
+        ReadRecords(sink).Select(r => r.GetProperty("disclosure").GetString()).ShouldBe(["full", "refused"]);
+    }
+
     private static List<Stj.JsonElement> ReadRecords(InMemoryAuditSink sink)
         => [.. sink.ChainIds.SelectMany(id => Encoding.UTF8.GetString(sink.Snapshot(id)).Split('\n', StringSplitOptions.RemoveEmptyEntries)).Select(l => Stj.JsonDocument.Parse(l).RootElement).Where(r => r.GetProperty("kind").GetString() == "read")];
 
@@ -338,7 +407,7 @@ public sealed class ControlPlaneAuditSinkTests
     private static EcdsaExecutorPackageSigner Signer()
         => new(System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256), "audit-test");
 
-    private static async Task<Host> StartAsync(ControlPlaneSecurityMode mode, GovernanceAuditor? auditor)
+    private static async Task<Host> StartAsync(ControlPlaneSecurityMode mode, GovernanceAuditor? auditor, ControlPlaneRowSecurityPolicy? policy = null)
     {
         var store = new InMemoryWorkflowStateStore();
         var management = new SecuredWorkflowManagement(store, "ops");
@@ -359,7 +428,7 @@ public sealed class ControlPlaneAuditSinkTests
             app.UseAuthentication();
             app.UseAuthorization();
             bool rowSecured = mode is ControlPlaneSecurityMode.Scoped or ControlPlaneSecurityMode.RowSecurityOnly;
-            app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), mode, rowSecurity: rowSecured ? new TenantPolicy() : null, auditor: auditor);
+            app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), mode, rowSecurity: rowSecured ? policy ?? new TenantPolicy() : null, auditor: auditor);
             await app.StartAsync();
         }
         catch
@@ -447,11 +516,11 @@ public sealed class ControlPlaneAuditSinkTests
         }
     }
 
-    private sealed class TenantPolicy : ControlPlaneRowSecurityPolicy
+    private sealed class TenantPolicy(string tenant = "acme") : ControlPlaneRowSecurityPolicy
     {
         public override AccessContext Resolve(ClaimsPrincipal? principal) => AccessContext.System;
 
-        public override IReadOnlyList<SecurityTag> GetInternalTags(ClaimsPrincipal? principal) => [new SecurityTag("sys:tenant", "acme")];
+        public override IReadOnlyList<SecurityTag> GetInternalTags(ClaimsPrincipal? principal) => [new SecurityTag("sys:tenant", tenant)];
     }
 
     private sealed class Host(WebApplication app, HttpClient client, InMemoryWorkflowStateStore store) : IAsyncDisposable
