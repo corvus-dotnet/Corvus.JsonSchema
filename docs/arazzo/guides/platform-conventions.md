@@ -60,6 +60,26 @@ cannot leak its inputs through the audit, and the span is zero-cost when no list
 action by calling the primitive with the access binding's audit subject, not by inventing a new audit shape or a
 new actor derivation.
 
+### Adding a read: the question to ask
+
+Reads are audited in three tiers ([ADR 0070](../adr/0070-read-side-audit-three-tiers.md)), and two of them cost the author of a new operation nothing. A filter
+over the mapped operations, `ReadSideAudit`, records any `GET` that names a resource and answers with a not-found
+as a refusal, and meters every other read that answers. Every read on the control plane is a `GET`, searches and
+counts included, and that is what lets one filter tell a read from a mutation, so keep it so.
+
+The third tier is the author's. **Does the operation return a payload**, meaning step inputs or outputs, a run's
+checkpoint state, a trace, or the detail of a credential? Then it is a disclosure, and it must do two things. It
+records itself before it answers, with `auditor.ReadAsync(..., failClosed: true)`, after it has taken ownership of
+any pooled document and before it builds the result, so that a record the sink refuses leaves nothing disclosed.
+And its operation id is added to `ReadSideAudit.Disclosures`, or the filter meters it as a bulk read. A read that
+is handed out in the course of running a workflow, a runner resolving a secret, records with `failClosed: false`,
+because run execution is never gated on the audit sink. A surface mapped by hand, outside the generated
+operations, is seen by no filter and records its own disclosures and its own refusals, as the checkpoint surface
+does.
+
+There is no review checklist for this yet. The 2026-08-07 audit's PROC-7 is where one is wired, and this question
+belongs on it.
+
 ## API-first
 
 The control plane is API-first: the OpenAPI document (`docs/arazzo/reference/arazzo-control-plane.openapi.json`)

@@ -673,7 +673,7 @@ current model shares the property in weaker form. **Decide:** a reseed hook on r
 | PROC-4 | No lock files for the current tree, and no `RestoreLockedMode` | Add |
 | PROC-5 | No `SECURITY.md` or disclosure policy | Add |
 | PROC-6 | **ADRs do not record implementation status**, so a reader credits designed-but-unbuilt barriers. The root cause of the DIV class | Add a status line per ADR |
-| PROC-7 | The threat model is committed at `docs/arazzo/reference/threat-model.md`. Wire its update triggers into the review checklist | Wire the triggers |
+| PROC-7 | The threat model is committed at `docs/arazzo/reference/threat-model.md`. Wire its update triggers into the review checklist. The checklist also carries the read-side question ADR 0070 asks of a new operation, which is written down in the platform conventions guide and has no checklist to sit on until this lands | Wire the triggers |
 | PROC-8 | `control-plane-observability-coverage.md` claims verification against the handlers, points at an anchor that no longer exists, and omits five emitted actions | Regenerate or gate in CI |
 | PROC-9 | Vendored CodeMirror has no version pin, no integrity hash and no rebuild-diff, and three sample UIs are in no CI workflow | Pin and verify |
 | PROC-10 | Dependency auto-merge is scoped to `Endjin.*` and `Corvus.*`, a first-party self-trust path, narrow but real | Review policy |
