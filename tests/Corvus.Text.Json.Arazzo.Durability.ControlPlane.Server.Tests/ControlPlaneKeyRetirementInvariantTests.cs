@@ -44,8 +44,10 @@ public sealed class ControlPlaneKeyRetirementInvariantTests
         await CreateEnvironmentAsync(host, "production", "acme");
         (await host.PostAsync("/environments/production/keys", Registration(key, "production", "k1"), "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        // One owner group so far: retirement would be allowed here. Introduce the second, then try.
-        await CreateEnvironmentAsync(host, "staging", "zeus");
+        // One owner group so far: retirement would be allowed here. Introduce the second, then try. The create gate
+        // refuses a second owner group outright until ADR 0065 phase B, so the second group is seeded straight into the
+        // ledger, as a deployment that once held two would carry it.
+        await SeedSecondOwnerGroupAsync(host);
 
         HttpResponseMessage refused = await host.PostAsync("/environments/production/keys/k1/retirement", "{}", "acme");
 
@@ -76,12 +78,10 @@ public sealed class ControlPlaneKeyRetirementInvariantTests
         using ECDsa first = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         using ECDsa second = ECDsa.Create(ECCurve.NamedCurves.nistP256);
 
-        // The keys come first: the create gate refuses a second owner group while any tenant environment is unsealed,
-        // so seeding zeus before sealing production would fail here for a reason this test is not about.
         await CreateEnvironmentAsync(host, "production", "acme");
         await host.PostAsync("/environments/production/keys", Registration(first, "production", "k1"), "acme");
         await host.PostAsync("/environments/production/keys", Registration(second, "production", "k2"), "acme");
-        await CreateEnvironmentAsync(host, "staging", "zeus");
+        await SeedSecondOwnerGroupAsync(host);
 
         (await host.PostAsync("/environments/production/keys/k1/retirement", "{}", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
@@ -101,7 +101,7 @@ public sealed class ControlPlaneKeyRetirementInvariantTests
         await CreateEnvironmentAsync(host, "production", "acme");
         await host.PostAsync("/environments/production/keys", Registration(first, "production", "k1"), "acme");
         await host.PostAsync("/environments/production/keys", Registration(second, "production", "k2"), "acme");
-        await CreateEnvironmentAsync(host, "staging", "zeus");
+        await SeedSecondOwnerGroupAsync(host);
 
         (await host.PostAsync("/environments/production/keys/k1/retirement", "{}", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
@@ -111,20 +111,23 @@ public sealed class ControlPlaneKeyRetirementInvariantTests
     [TestMethod]
     public async Task The_two_gates_compose_so_an_unsealed_multi_tenant_state_is_unreachable()
     {
-        // The create gate refuses a second owner group while anything is unsealed; the retirement gate refuses
-        // unsealing while a second owner group exists. Neither ordering reaches "two owner groups, nothing sealed",
-        // which is the state phase A exists to keep out. Asserted through the API rather than argued in prose.
+        // The create gate refuses a second owner group whatever the sealing state, and the retirement gate refuses
+        // unsealing while the ledger holds a second owner group. Neither ordering reaches "two owner groups, nothing
+        // sealed", which is the state phase A exists to keep out. Asserted through the API rather than argued in prose.
         await using Host host = await StartAsync();
         using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
 
         await CreateEnvironmentAsync(host, "production", "acme");
 
-        // Order one: try to onboard the second group first. Refused, because production holds no active key.
+        // Order one: try to onboard the second group first. Refused.
         (await host.PostAsync("/environments", """{"name":"staging"}""", "zeus")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
 
-        // Order two: seal, onboard, then try to unseal. The onboarding succeeds and the unsealing is refused.
+        // Order two: seal, then try again. Still refused, since a registered key protects nothing until phase B.
         (await host.PostAsync("/environments/production/keys", Registration(key, "production", "k1"), "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await host.PostAsync("/environments", """{"name":"staging"}""", "zeus")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await host.PostAsync("/environments", """{"name":"staging"}""", "zeus")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        // And a deployment whose ledger does hold two groups cannot unseal: the retirement gate is the symmetric half.
+        await SeedSecondOwnerGroupAsync(host);
         (await host.PostAsync("/environments/production/keys/k1/retirement", "{}", "acme")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
 
@@ -142,7 +145,7 @@ public sealed class ControlPlaneKeyRetirementInvariantTests
         await host.PostAsync("/environments/production/keys", Registration(second, "production", "k2"), "acme");
         (await host.PostAsync("/environments/production/keys/k1/retirement", "{}", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        await CreateEnvironmentAsync(host, "staging", "zeus");
+        await SeedSecondOwnerGroupAsync(host);
 
         (await host.PostAsync("/environments/production/keys/k1/retirement", "{}", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
     }
@@ -175,11 +178,21 @@ public sealed class ControlPlaneKeyRetirementInvariantTests
     private static async Task CreateEnvironmentAsync(Host host, string name, string tenant)
         => (await host.PostAsync("/environments", $$"""{"name":"{{name}}"}""", tenant)).StatusCode.ShouldBe(HttpStatusCode.Created);
 
+    // Commits a second owner group to the tenancy ledger directly, as the deployment would carry it had it been admitted:
+    // the create gate refuses a second group outright until ADR 0065 phase B, and the retirement gate reads the ledger.
+    private static async Task SeedSecondOwnerGroupAsync(Host host)
+    {
+        using ParsedJsonDocument<TenancyLedger>? ledger = await host.Environments.GetTenancyLedgerAsync(default);
+        (await host.Environments.TryCommitTenancyLedgerAsync(ledger?.RootElement ?? default, "zeus"u8.ToArray(), "ops", default)).ShouldBeTrue();
+    }
+
     private static async Task<Host> StartAsync()
     {
         var store = new InMemoryWorkflowStateStore();
         var management = new SecuredWorkflowManagement(store, "ops");
         var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops", credentials: null, administrators: new InMemoryWorkflowAdministratorStore());
+
+        var environments = new InMemoryEnvironmentStore();
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -194,10 +207,10 @@ public sealed class ControlPlaneKeyRetirementInvariantTests
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), auditor: GovernanceAuditor.CreateInMemory());
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: new TenantIdentityPolicy(), environmentStore: environments, auditor: GovernanceAuditor.CreateInMemory());
         await app.StartAsync();
 
-        return new Host(app, app.GetTestClient());
+        return new Host(app, app.GetTestClient(), environments);
     }
 
     /// <summary>Full reach for every caller (so an administrator of one environment can still be refused on the
@@ -213,8 +226,10 @@ public sealed class ControlPlaneKeyRetirementInvariantTests
         }
     }
 
-    private sealed class Host(WebApplication app, HttpClient client) : IAsyncDisposable
+    private sealed class Host(WebApplication app, HttpClient client, InMemoryEnvironmentStore environments) : IAsyncDisposable
     {
+        public InMemoryEnvironmentStore Environments => environments;
+
         public Task<HttpResponseMessage> PostAsync(string path, string body, string tenant)
             => this.SendAsync(new HttpRequestMessage(HttpMethod.Post, path) { Content = new StringContent(body, Encoding.UTF8, "application/json") }, tenant);
 

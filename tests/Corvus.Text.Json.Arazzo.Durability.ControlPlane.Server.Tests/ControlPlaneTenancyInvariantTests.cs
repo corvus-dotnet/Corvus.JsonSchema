@@ -65,10 +65,10 @@ public sealed class ControlPlaneTenancyInvariantTests
     }
 
     [TestMethod]
-    public async Task Scoped_refuses_a_second_owner_group_while_an_environment_is_unsealed()
+    public async Task Scoped_refuses_a_second_owner_group_outright()
     {
-        // Reach is isolated here, so encryption is a meaningful compensation and the gate is conditional rather than
-        // absolute: it refuses only while some tenant-owned environment holds no active key.
+        // Reach is isolated here, so encryption would be a meaningful compensation. It is not built (ADR 0065 phase B),
+        // so the gate is absolute in this mode too until it is.
         await using Host host = await StartAsync(ControlPlaneSecurityMode.Scoped, new TenantIdentityPolicy());
 
         (await host.PostAsync("/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
@@ -80,36 +80,23 @@ public sealed class ControlPlaneTenancyInvariantTests
     }
 
     [TestMethod]
-    public async Task Scoped_admits_a_second_owner_group_once_every_environment_is_sealed()
+    public async Task A_registered_key_does_not_admit_a_second_owner_group()
     {
-        // The other half of the conditional rule, and the one that proves the gate is not simply "never two groups".
+        // V-38 of the 2026-08-07 audit. The gate used to admit a second owner group once every tenant-owned environment
+        // held an active registered key. Registering a key is metadata, and no code encrypts a payload under it, so the
+        // deployment was onboarding a second tenant while the control plane held every tenant's plaintext.
         await using Host host = await StartAsync(ControlPlaneSecurityMode.Scoped, new TenantIdentityPolicy());
         using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
 
         (await host.PostAsync("/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
         (await host.PostAsync("/environments/production/keys", Registration(key, "production", "k1"), "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        (await host.PostAsync("/environments", """{"name":"staging"}""", "zeus")).StatusCode.ShouldBe(HttpStatusCode.Created);
-    }
+        HttpResponseMessage refused = await host.PostAsync("/environments", """{"name":"staging"}""", "zeus");
 
-    [TestMethod]
-    public async Task A_retired_generation_does_not_seal_an_environment()
-    {
-        // "At least one ACTIVE generation", not "at least one generation". A key that has been retired protects
-        // nothing, so the environment holding only that one must not open the gate to a second owner group.
-        await using Host host = await StartAsync(ControlPlaneSecurityMode.Scoped, new TenantIdentityPolicy());
-        using ECDsa first = ECDsa.Create(ECCurve.NamedCurves.nistP256);
-        using ECDsa second = ECDsa.Create(ECCurve.NamedCurves.nistP256);
-
-        (await host.PostAsync("/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
-        (await host.PostAsync("/environments/production/keys", Registration(first, "production", "k1"), "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await host.PostAsync("/environments/production/keys", Registration(second, "production", "k2"), "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
-
-        // Retire both while still single-tenant, leaving the environment with generations but none active.
-        (await host.PostAsync("/environments/production/keys/k1/retirement", "{}", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await host.PostAsync("/environments/production/keys/k2/retirement", "{}", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
-
-        (await host.PostAsync("/environments", """{"name":"staging"}""", "zeus")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        refused.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        string problem = await refused.Content.ReadAsStringAsync();
+        problem.ShouldContain("tenancy-invariant");
+        problem.ShouldContain("A registered key does not change that");
     }
 
     [TestMethod]
@@ -140,8 +127,10 @@ public sealed class ControlPlaneTenancyInvariantTests
         (await host.PostAsync("/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
         (await host.PostAsync("/environments/production/keys", Registration(key, "production", "k1"), "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        // The platform environment holds no key at all. If it counted, this would be refused forever.
-        (await host.PostAsync("/environments", """{"name":"staging"}""", "zeus")).StatusCode.ShouldBe(HttpStatusCode.Created);
+        // The platform environment carries no owner group, so acme above was the deployment's first group and not its
+        // second, which is what admitted it. A second group is refused whatever the platform environment holds, and
+        // whatever key production registered.
+        (await host.PostAsync("/environments", """{"name":"staging"}""", "zeus")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
 
     [TestMethod]
@@ -176,16 +165,20 @@ public sealed class ControlPlaneTenancyInvariantTests
     {
         // Admission is recorded before the environment is written, so a create that fails afterwards leaves a group in
         // the ledger with nothing behind it. That is only safe because being in the ledger is not a standing exemption:
-        // the rule runs on every write, so an admitted group is refused exactly when a new one would be.
-        await using Host host = await StartAsync(ControlPlaneSecurityMode.Scoped, new TenantIdentityPolicy());
-        using ECDsa key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        // the rule runs on every write, so a group admitted earlier is refused exactly when a new one would be. The
+        // create gate admits no second group any more, so the second is seeded into the ledger as a deployment that
+        // once held two would carry it.
+        var environments = new InMemoryEnvironmentStore();
+        await using Host host = await StartAsync(ControlPlaneSecurityMode.Scoped, new TenantIdentityPolicy(), environments);
 
         (await host.PostAsync("/environments", """{"name":"production"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Created);
-        (await host.PostAsync("/environments/production/keys", Registration(key, "production", "k1"), "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (ParsedJsonDocument<TenancyLedger>? ledger = await environments.GetTenancyLedgerAsync(default))
+        {
+            (await environments.TryCommitTenancyLedgerAsync(ledger?.RootElement ?? default, "zeus"u8.ToArray(), "ops", default)).ShouldBeTrue();
+        }
 
-        // Admitted while everything was sealed. The environment it creates is unsealed by construction.
-        (await host.PostAsync("/environments", """{"name":"staging"}""", "zeus")).StatusCode.ShouldBe(HttpStatusCode.Created);
-
+        // Neither group is exempt now: the first is re-evaluated on its next create and refused like the second.
+        (await host.PostAsync("/environments", """{"name":"staging"}""", "acme")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
         (await host.PostAsync("/environments", """{"name":"dev"}""", "zeus")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
 

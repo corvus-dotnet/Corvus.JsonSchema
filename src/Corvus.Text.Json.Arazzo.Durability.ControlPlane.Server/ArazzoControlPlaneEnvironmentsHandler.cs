@@ -54,10 +54,6 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
     private readonly ControlPlaneSecurityMode securityMode;
     private readonly ExecutionBudget budgetCeiling;
 
-    // See AnyUnsealedTenantEnvironmentAsync. The owner-group question is one ledger row, but the sealing question is a
-    // scan, so it is paged rather than read whole and it runs only on the rare path that introduces an owner group.
-    private const int TenancyScanPageSize = 200;
-
     // How many times an introducing create re-decides after losing the ledger's compare-and-swap. Bounded rather than
     // unbounded because each attempt is a full re-decision including a possible scan, and a caller that loses this many
     // in a row is better served by a 409 it can retry than by a request that keeps working.
@@ -670,11 +666,11 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
 
     // ADR 0065's write-time tenancy invariant, serialized on the deployment's single tenancy-ledger row.
     //
-    // The rule differs by whether the mode isolates reach, because the gate's premise is that encryption compensates
-    // for shared infrastructure, and that premise holds only where reach isolation already prevents a cross-owner read
-    // through the API. ScopesOnly grants unrestricted reach, so a second owner group reads the first's runs through
-    // the governance API whatever is encrypted at rest, and is refused outright. Scoped and RowSecurityOnly isolate
-    // reach, so a second group is refused only while some tenant-owned environment holds no ACTIVE key. Open
+    // A second distinct owner group is refused in every mode that authenticates. The control plane is the sole custodian
+    // of every tenant's checkpoint plaintext until the payload encryption of ADR 0065 phase B (SEQ-1, SEQ-3) is built,
+    // and until then nothing compensates for sharing it. The gate used to admit a second group in the reach-isolating
+    // modes once every tenant environment held an active registered key, and that credited a barrier that did not
+    // exist: registering a key is metadata, and no code encrypted under it (V-38 of the 2026-08-07 audit). Open
     // authenticates nobody, so there is no owner group to distinguish and the invariant is vacuous by construction.
     //
     // The ledger is what makes the decision a gate rather than an observation. Reading the population and deciding
@@ -720,7 +716,6 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
             }
 
             ReadOnlyMemory<byte> ownerGroup = owner.AsMemory(0, ownerLength);
-            bool scopesOnly = this.securityMode == ControlPlaneSecurityMode.ScopesOnly;
             for (int attempt = 0; attempt < TenancyCommitAttempts; ++attempt)
             {
                 using ParsedJsonDocument<TenancyLedger>? ledger =
@@ -728,8 +723,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
                 TenancyLedger current = ledger?.RootElement ?? default;
                 bool introduces = current.Introduces(ownerGroup.Span, out int distinctAfterwards);
 
-                if (distinctAfterwards > 1
-                    && (scopesOnly || await this.AnyUnsealedTenantEnvironmentAsync(cancellationToken).ConfigureAwait(false)))
+                if (distinctAfterwards > 1)
                 {
                     return TenancyAdmission.Refused;
                 }
@@ -760,57 +754,6 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
         }
     }
 
-    // Whether any tenant-owned environment holds no ACTIVE key generation. Read at SYSTEM reach and over every
-    // environment, not the caller's: the invariant is a property of the deployment, and looking only at what this
-    // administrator can see would let an unsealed environment hide behind the very reach isolation it is being asked
-    // about. Stops at the first environment that proves the answer.
-    private async ValueTask<bool> AnyUnsealedTenantEnvironmentAsync(CancellationToken cancellationToken)
-    {
-        ParsedJsonDocument<JsonString>? token = null;
-        try
-        {
-            while (true)
-            {
-                using EnvironmentPage page = await this.store.ListAsync(
-                    AccessContext.System, TenancyScanPageSize, token?.RootElement ?? default, cancellationToken).ConfigureAwait(false);
-
-                // The key span is read AFTER the await rather than held across it: a ReadOnlySpan cannot live across an
-                // await boundary, and the property hands back the policy's cached UTF-8 either way.
-                if (TenantEnvironmentSealing.AnyUnsealed(page.Environments, this.access.OwnerGroupTagKeyUtf8))
-                {
-                    return true;
-                }
-
-                ReadOnlySpan<byte> next = page.NextPageToken.Span;
-                if (next.IsEmpty)
-                {
-                    return false;
-                }
-
-                // The page's continuation token is pooled and freed when the page disposes at the end of this
-                // iteration, so it cannot be carried straight into the next call.
-                token?.Dispose();
-                token = QuoteToken(next);
-            }
-        }
-        finally
-        {
-            token?.Dispose();
-        }
-    }
-
-    // Wraps a continuation token's UTF-8 as a JSON string value in a pooled document the caller owns. The page's own
-    // token is pooled and freed when the page disposes, so it cannot be carried into the next call as it stands.
-    private static ParsedJsonDocument<JsonString> QuoteToken(ReadOnlySpan<byte> token)
-    {
-        int length = token.Length + 2;
-        byte[] rented = ArrayPool<byte>.Shared.Rent(length);
-        rented[0] = (byte)'"';
-        token.CopyTo(rented.AsSpan(1));
-        rented[token.Length + 1] = (byte)'"';
-        return ParsedJsonDocument<JsonString>.Parse(rented.AsMemory(0, length), rented);
-    }
-
     // Nothing was written, so the caller is told to retry rather than told about a condition that does not hold.
     private static Models.ProblemDetails.Source TenancyInterlockProblem()
         => Problem(
@@ -824,7 +767,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
             "tenancy-invariant",
             "Second owner group refused",
             409,
-            "This deployment cannot yet serve a second owner group: it holds tenant data in the clear, and an environment without an active checkpoint key offers nothing to protect it. Register a key generation for every environment first.");
+            "This deployment cannot yet serve a second owner group: the control plane holds every tenant's checkpoint plaintext, and the payload encryption that would compensate for sharing it (ADR 0065 phase B) is not built. A registered key does not change that.");
 
     // ── environment-summary list projection (congruent whole-document From) ─────────────────────────────────────────
     private static void BuildEnvironments(in IReadOnlyList<Environment> environments, ref Models.EnvironmentList.EnvironmentSummaryArray.Builder array)

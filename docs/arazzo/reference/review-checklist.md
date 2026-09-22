@@ -31,8 +31,8 @@ the same change as the thing that triggered it.
       note. There are no amendment sections. (PROC-6. V-16, V-39 and ADR 0064 were accepted decisions with nothing
       built, and nothing on the page said so.)
 - [ ] **A barrier is credited only when it is built.** A gate that depends on another control checks that the
-      control exists, not that its configuration does. (V-38: the tenancy gate admits a second owner group on a
-      registered key that nothing encrypts under.)
+      control exists, not that its configuration does. (V-38: the tenancy gate admitted a second owner group on a
+      registered key that nothing encrypted under.)
 
 ## 3. Audit
 
