@@ -14,8 +14,8 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
 
 public readonly partial struct AdministratorSetWrite
 {
-    public readonly partial struct AdministratorIdentityArray
-        : IJsonElement<AdministratorIdentityArray>
+    public readonly partial struct GranteeReferenceArray
+        : IJsonElement<GranteeReferenceArray>
     {
         public static partial class JsonSchema
         {
@@ -48,7 +48,7 @@ public readonly partial struct AdministratorSetWrite
             /// </summary>
             public static ReadOnlySpan<byte> SchemaDocumentUtf8 => "arazzo-control-plane.openapi.json"u8;
 
-            private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CorvusJsonSchemaProgram.Entry(47);
+            private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CorvusJsonSchemaProgram.Entry(45);
 
             internal static bool Evaluate(
                 IJsonDocument parentDocument,

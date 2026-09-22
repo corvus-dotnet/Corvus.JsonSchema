@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-09-19T13:32:03.0327959\u002B00:00",
+  "generatedAt": "2026-09-22T20:37:20.8702533\u002B00:00",
   "generatedFiles": [
     "GetAccessGrantsRequest.cs",
     "GetAccessGrantsResponse.cs",
@@ -512,18 +512,12 @@
     "Models/AdministratorList.AdministratorGrantArray.cs",
     "Models/AdministratorList.AdministratorGrantArray.Mutable.cs",
     "Models/AdministratorList.AdministratorGrantArray.JsonSchema.cs",
-    "Models/AdministratorMemberWrite.cs",
-    "Models/AdministratorMemberWrite.Mutable.cs",
-    "Models/AdministratorMemberWrite.JsonSchema.cs",
-    "Models/AdministratorMemberWrite.AdministratorIdentityArray.cs",
-    "Models/AdministratorMemberWrite.AdministratorIdentityArray.Mutable.cs",
-    "Models/AdministratorMemberWrite.AdministratorIdentityArray.JsonSchema.cs",
     "Models/AdministratorSetWrite.cs",
     "Models/AdministratorSetWrite.Mutable.cs",
     "Models/AdministratorSetWrite.JsonSchema.cs",
-    "Models/AdministratorSetWrite.AdministratorIdentityArray.cs",
-    "Models/AdministratorSetWrite.AdministratorIdentityArray.Mutable.cs",
-    "Models/AdministratorSetWrite.AdministratorIdentityArray.JsonSchema.cs",
+    "Models/AdministratorSetWrite.GranteeReferenceArray.cs",
+    "Models/AdministratorSetWrite.GranteeReferenceArray.Mutable.cs",
+    "Models/AdministratorSetWrite.GranteeReferenceArray.JsonSchema.cs",
     "Models/AttachSourceRequest.cs",
     "Models/AttachSourceRequest.Mutable.cs",
     "Models/AttachSourceRequest.JsonSchema.cs",
@@ -947,6 +941,9 @@
     "Models/GranteeList.ResolvedGranteeArray.cs",
     "Models/GranteeList.ResolvedGranteeArray.Mutable.cs",
     "Models/GranteeList.ResolvedGranteeArray.JsonSchema.cs",
+    "Models/GranteeReference.cs",
+    "Models/GranteeReference.Mutable.cs",
+    "Models/GranteeReference.JsonSchema.cs",
     "Models/IdentityCapabilities.cs",
     "Models/IdentityCapabilities.Mutable.cs",
     "Models/IdentityCapabilities.JsonSchema.cs",
@@ -1655,6 +1652,6 @@
   "generatorVersion": "1.0.0\u002B32eda52f63230a0c10c87a1d6639ee1a582d6c61",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "5bff827dd3ee8bec465018ed8cdd6b15f315e33f4a865b5385dafba9e5303876",
+  "specFileHash": "d5c8a3e8027030e440ea02a9108368ad17e6213b5d18e18cc3121eff6b781083",
   "specVersion": "3.2"
-}
+}

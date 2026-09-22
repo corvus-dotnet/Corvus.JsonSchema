@@ -6,6 +6,7 @@ using System.Buffers;
 using System.Text;
 using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
+using Corvus.Text.Json.Arazzo.Directories;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
@@ -41,6 +42,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
     private readonly IEnvironmentStore store;
     private readonly SecuredEnvironmentAdministration administration;
     private readonly ControlPlaneAccess access;
+    private readonly GranteeResolver resolver;
     private readonly IObservedIdentityStore? observed;
     private readonly string actor;
     private readonly GovernanceAuditor auditor;
@@ -67,11 +69,18 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
     /// <param name="administration">The environment-administration governance service.</param>
     /// <param name="actor">The audit actor recorded on writes.</param>
     public ArazzoControlPlaneEnvironmentsHandler(IEnvironmentStore store, SecuredEnvironmentAdministration administration, string actor = "control-plane")
-        : this(ControlPlaneSecurityMode.Open, store, administration, new ControlPlaneAccess(), null, actor)
+        : this(store, administration, new ControlPlaneAccess(), actor)
     {
-        // Open is stated here rather than inherited from a parameter default. This overload exists to build a handler
-        // that runs every request with System reach, which IS the Open posture, so naming it is what makes the choice
-        // legible at the one place that makes it — and stops a reader assuming a scoped default they are not getting.
+        // Open is stated in the private overload rather than inherited from a parameter default. This overload exists
+        // to build a handler that runs every request with System reach, which IS the Open posture, so naming it is what
+        // makes the choice legible at the one place that makes it, and stops a reader assuming a scoped default.
+    }
+
+    // The unscoped handler resolves grantees over an in-memory observed store and the unscoped access (no directory):
+    // the policy's mapping resolves nothing, so administration writes refuse, as they do wherever no policy is configured.
+    private ArazzoControlPlaneEnvironmentsHandler(IEnvironmentStore store, SecuredEnvironmentAdministration administration, ControlPlaneAccess access, string actor)
+        : this(ControlPlaneSecurityMode.Open, store, administration, access, new GranteeResolver(new InMemoryObservedIdentityStore(), null, access), null, actor)
+    {
     }
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneEnvironmentsHandler"/> class.</summary>
@@ -83,18 +92,21 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
     /// <param name="administration">The environment-administration governance service (current-administrator gating).</param>
     /// <param name="access">Resolves the caller's <see cref="AccessContext"/> per request, the internal tags stamped onto
     /// created environments, and the grant↔internal-tag mapping for administrator identities (§14.2/§16.5.4).</param>
+    /// <param name="resolver">Resolves a grantee a write names to its exact deployment-stamped identity (ADR 0008).</param>
     /// <param name="observed">An optional observed-identity store; a newly added administrator is recorded as a resolvable
     /// grantee for the §16.5.4 typeahead (best-effort).</param>
     /// <param name="actor">The audit actor recorded on writes (a deployment may resolve this from the principal).</param>
-    internal ArazzoControlPlaneEnvironmentsHandler(ControlPlaneSecurityMode securityMode, IEnvironmentStore store, SecuredEnvironmentAdministration administration, ControlPlaneAccess access, IObservedIdentityStore? observed = null, string actor = "control-plane", GovernanceAuditor? auditor = null, IRunnerRegistry? runners = null, IEnvironmentRunnerAuthorizationStore? runnerAuthorizations = null, ExecutionBudget? executionBudgetCeiling = null)
+    internal ArazzoControlPlaneEnvironmentsHandler(ControlPlaneSecurityMode securityMode, IEnvironmentStore store, SecuredEnvironmentAdministration administration, ControlPlaneAccess access, GranteeResolver resolver, IObservedIdentityStore? observed = null, string actor = "control-plane", GovernanceAuditor? auditor = null, IRunnerRegistry? runners = null, IEnvironmentRunnerAuthorizationStore? runnerAuthorizations = null, ExecutionBudget? executionBudgetCeiling = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(administration);
         ArgumentNullException.ThrowIfNull(access);
+        ArgumentNullException.ThrowIfNull(resolver);
         ArgumentNullException.ThrowIfNull(actor);
         this.store = store;
         this.administration = administration;
         this.access = access;
+        this.resolver = resolver;
         this.observed = observed;
         this.actor = actor;
         this.auditor = auditor ?? GovernanceAuditor.None;
@@ -415,62 +427,47 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
     public async ValueTask<AddEnvironmentAdministratorResult> HandleAddEnvironmentAdministratorAsync(AddEnvironmentAdministratorParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string name = (string)parameters.Name;
-        Models.AdministratorMemberWrite body = parameters.Body;
+        Models.GranteeReference body = parameters.Body;
 
+        // The grantee is resolved by the server (ADR 0008): the body names a kind and a value, never an identity. The
+        // request's kind IS a JSON value; it converts to the store's kind with a straight From() (free rewrap, no reify)
+        // and reifies to the domain enum only at the resolver's C#-enum leaf. An unreachable directory is reported (502).
+        ObservedIdentity.GranteeKind kind;
         SecurityTagSet newAdministrator;
-        ObservedIdentity.GranteeKind kind = default;
-        bool hasKind = false;
         bool complete;
         try
         {
-            if (body.Identity.IsNotUndefined() && body.Identity.GetArrayLength() > 0)
+            if (!body.Kind.IsNotUndefined() || !body.Value.IsNotUndefined())
             {
-                // Resolved-grantee path: build the full resolved identity bytes-to-bytes (a multi-tag grantee named precisely).
-                var state = new GranteeIdentityState(this.access, body.Identity);
-                newAdministrator = SecurityTagSet.Build(in state, BuildGranteeIdentity);
-                if (body.Kind.IsNotUndefined())
-                {
-                    kind = ObservedIdentity.GranteeKind.From(body.Kind);
-                    hasKind = true;
-                }
-
-                complete = !body.Complete.IsNotUndefined() || (bool)body.Complete;
-            }
-            else
-            {
-                // Interim single-grant path ({dimension, value}); the kind is inferred from the dimension.
-                if (!body.DimensionValue.IsNotUndefined())
-                {
-                    ServerThrowHelper.ThrowGranteeIdentityOrDimensionRequired();
-                }
-
-                var state = new SingleGrantState(this.access, body.DimensionValue, body.Value);
-                newAdministrator = SecurityTagSet.Build(in state, BuildSingleGrantIdentity);
-                hasKind = TryGranteeKindForDimension(body.DimensionValue, out GranteeKind dimensionKind);
-                complete = hasKind && this.access.IsWholeGrainGrantee(dimensionKind);
-                if (hasKind)
-                {
-                    kind = dimensionKind.ToObservedKind();
-                }
+                ServerThrowHelper.ThrowGranteeKindAndValueRequired();
             }
 
-            if (newAdministrator.IsEmpty)
+            kind = ObservedIdentity.GranteeKind.From(body.Kind);
+            GranteeResolution resolution = await this.resolver.ResolveAsync(kind.ToGranteeKind(), JsonString.From(body.Value), cancellationToken).ConfigureAwait(false);
+            if (resolution.Identity.IsEmpty)
             {
                 ServerThrowHelper.ThrowGranteeDoesNotResolve();
             }
+
+            newAdministrator = resolution.Identity;
+            complete = resolution.Complete;
         }
         catch (ArgumentException ex)
         {
             return AddEnvironmentAdministratorResult.BadRequest(Problem("invalid-administrator", "Invalid administrator identity", 400, ex.Message), workspace);
         }
+        catch (PrincipalDirectoryException)
+        {
+            return AddEnvironmentAdministratorResult.BadGateway(DirectoryUnavailableProblem(), workspace);
+        }
 
         JsonString value = JsonString.From(body.Value);
         bool hasLabel = body.Label.IsNotUndefined();
         JsonString label = hasLabel ? JsonString.From(body.Label) : default;
-        AdminKind adminKind = hasKind ? AdminKind.From(kind) : default;
+        AdminKind adminKind = AdminKind.From(kind);
 
         // Collision guard (§16.5.4): refuse if the resolved identity already belongs to a different recorded grantee.
-        if (this.observed is not null && hasKind)
+        if (this.observed is not null)
         {
             using ParsedJsonDocument<ObservedIdentity>? conflict = await this.observed.FindIdentityConflictAsync(kind, value, newAdministrator, cancellationToken).ConfigureAwait(false);
             if (conflict is not null)
@@ -481,9 +478,9 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
 
         try
         {
-            using ParsedJsonDocument<EnvironmentAdministrators> record = await this.administration.AddAdministratorAsync(name, newAdministrator, adminKind, hasKind, label, hasLabel, this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
+            using ParsedJsonDocument<EnvironmentAdministrators> record = await this.administration.AddAdministratorAsync(name, newAdministrator, adminKind, hasKind: true, label, hasLabel, this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
 
-            if (this.observed is not null && hasKind)
+            if (this.observed is not null)
             {
                 await this.observed.SeenAsync(kind, value, label, newAdministrator, complete, "environment-administrator", cancellationToken).ConfigureAwait(false);
             }
@@ -491,7 +488,7 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
             // Broadening advisory (§16.5.4 H5): surface (non-blocking) any existing grantee this narrower identity strictly
             // subsumes; reach-filter the echo to grantees the caller may see. The overlap page is held alive across the
             // synchronous response build (the advisory items read its grantee spans).
-            using ObservedIdentityPage overlapPage = this.observed is not null && hasKind
+            using ObservedIdentityPage overlapPage = this.observed is not null
                 ? await this.observed.FindBroadeningOverlapsAsync(kind, value, newAdministrator, MaxBroadeningOverlaps, cancellationToken).ConfigureAwait(false)
                 : ObservedIdentityPage.Create(new PooledDocumentList<ObservedIdentity>(0));
             List<ObservedIdentity>? overlaps = this.ReachVisibleOverlaps(overlapPage);
@@ -528,25 +525,36 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
     public async ValueTask<TransferEnvironmentAdministrationResult> HandleTransferEnvironmentAdministrationAsync(TransferEnvironmentAdministrationParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string name = (string)parameters.Name;
+
+        // Each grantee is resolved by the server (ADR 0008); the kinds flow as JSON values and reify to the domain enum
+        // only at the resolver's leaf. A grantee nothing resolves is refused (400) naming it, since the caller wrote it.
         List<SecurityTagSet> newAdministrators;
         try
         {
             newAdministrators = [];
-            foreach (Models.AdministratorIdentity identity in parameters.Body.Administrators.EnumerateArray())
+            foreach (Models.GranteeReference grantee in parameters.Body.Administrators.EnumerateArray())
             {
-                var state = new AdministratorGrantState(this.access, identity);
-                SecurityTagSet resolved = SecurityTagSet.Build(in state, BuildAdministratorGrantIdentity);
-                if (resolved.IsEmpty)
+                if (!grantee.Kind.IsNotUndefined() || !grantee.Value.IsNotUndefined())
                 {
-                    ServerThrowHelper.ThrowAdministratorGrantDoesNotResolve((string)identity.DimensionValue, (string)identity.Value);
+                    ServerThrowHelper.ThrowGranteeKindAndValueRequired();
                 }
 
-                newAdministrators.Add(resolved);
+                GranteeResolution resolution = await this.resolver.ResolveAsync(ObservedIdentity.GranteeKind.From(grantee.Kind).ToGranteeKind(), JsonString.From(grantee.Value), cancellationToken).ConfigureAwait(false);
+                if (resolution.Identity.IsEmpty)
+                {
+                    ServerThrowHelper.ThrowAdministratorGranteeDoesNotResolve((string)grantee.Kind, (string)grantee.Value);
+                }
+
+                newAdministrators.Add(resolution.Identity);
             }
         }
         catch (ArgumentException ex)
         {
             return TransferEnvironmentAdministrationResult.BadRequest(Problem("invalid-administrator", "Invalid administrator identity", 400, ex.Message), workspace);
+        }
+        catch (PrincipalDirectoryException)
+        {
+            return TransferEnvironmentAdministrationResult.BadGateway(DirectoryUnavailableProblem(), workspace);
         }
 
         // Collision guard (§16.5.4): refuse the transfer if any named administrator resolves to an identity already held by
@@ -554,15 +562,10 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
         if (this.observed is not null)
         {
             int index = 0;
-            foreach (Models.AdministratorIdentity identity in parameters.Body.Administrators.EnumerateArray())
+            foreach (Models.GranteeReference grantee in parameters.Body.Administrators.EnumerateArray())
             {
                 SecurityTagSet resolved = newAdministrators[index++];
-                if (!TryGranteeKindForDimension(identity.DimensionValue, out GranteeKind transferKind))
-                {
-                    continue;
-                }
-
-                using ParsedJsonDocument<ObservedIdentity>? conflict = await this.observed.FindIdentityConflictAsync(transferKind.ToObservedKind(), JsonString.From(identity.Value), resolved, cancellationToken).ConfigureAwait(false);
+                using ParsedJsonDocument<ObservedIdentity>? conflict = await this.observed.FindIdentityConflictAsync(ObservedIdentity.GranteeKind.From(grantee.Kind), JsonString.From(grantee.Value), resolved, cancellationToken).ConfigureAwait(false);
                 if (conflict is not null)
                 {
                     return TransferEnvironmentAdministrationResult.Conflict(CollisionProblem(), workspace);
@@ -823,84 +826,6 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
         public SecurityTagSet UserTags { get; } = userTags;
     }
 
-    // ── administrator grantee resolution (ported from the §15 administrators handler) ───────────────────────────────
-    private static bool TryGranteeKindForDimension(in Models.JsonString dimension, out GranteeKind kind)
-    {
-        if (dimension.ValueEquals("sub"u8))
-        {
-            kind = GranteeKind.Person;
-            return true;
-        }
-
-        if (dimension.ValueEquals("tenant"u8))
-        {
-            kind = GranteeKind.Team;
-            return true;
-        }
-
-        if (dimension.ValueEquals("role"u8))
-        {
-            kind = GranteeKind.Role;
-            return true;
-        }
-
-        if (dimension.ValueEquals("workflow"u8))
-        {
-            kind = GranteeKind.Workflow;
-            return true;
-        }
-
-        kind = default;
-        return false;
-    }
-
-    private static void BuildGranteeIdentity(ref IdentityBuilder builder, in GranteeIdentityState state)
-    {
-        foreach (Models.AdministratorIdentity grant in state.Identity.EnumerateArray())
-        {
-            using UnescapedUtf8JsonString dimension = grant.DimensionValue.GetUtf8String();
-            using UnescapedUtf8JsonString value = grant.Value.GetUtf8String();
-            state.Access.ResolveUsageGrantInto(dimension.Span, value.Span, ref builder);
-        }
-    }
-
-    private static void BuildSingleGrantIdentity(ref IdentityBuilder builder, in SingleGrantState state)
-    {
-        using UnescapedUtf8JsonString dimension = state.Dimension.GetUtf8String();
-        using UnescapedUtf8JsonString value = state.Value.GetUtf8String();
-        state.Access.ResolveUsageGrantInto(dimension.Span, value.Span, ref builder);
-    }
-
-    private static void BuildAdministratorGrantIdentity(ref IdentityBuilder builder, in AdministratorGrantState state)
-    {
-        using UnescapedUtf8JsonString dimension = state.Identity.DimensionValue.GetUtf8String();
-        using UnescapedUtf8JsonString value = state.Identity.Value.GetUtf8String();
-        state.Access.ResolveUsageGrantInto(dimension.Span, value.Span, ref builder);
-    }
-
-    private readonly ref struct GranteeIdentityState(ControlPlaneAccess access, Models.AdministratorMemberWrite.AdministratorIdentityArray identity)
-    {
-        public ControlPlaneAccess Access { get; } = access;
-
-        public Models.AdministratorMemberWrite.AdministratorIdentityArray Identity { get; } = identity;
-    }
-
-    private readonly ref struct SingleGrantState(ControlPlaneAccess access, Models.JsonString dimension, Models.JsonString value)
-    {
-        public ControlPlaneAccess Access { get; } = access;
-
-        public Models.JsonString Dimension { get; } = dimension;
-
-        public Models.JsonString Value { get; } = value;
-    }
-
-    private readonly ref struct AdministratorGrantState(ControlPlaneAccess access, Models.AdministratorIdentity identity)
-    {
-        public ControlPlaneAccess Access { get; } = access;
-
-        public Models.AdministratorIdentity Identity { get; } = identity;
-    }
-
     // ── administrator-grant projection (digest + described {dimension,value} grants; ported from §15) ───────────────
     private static void BuildGrants(in AdministratorListContext ctx, ref Models.AdministratorList.AdministratorGrantArray.Builder array)
     {
@@ -1096,6 +1021,11 @@ public sealed class ArazzoControlPlaneEnvironmentsHandler : IApiEnvironmentsHand
 
     private static Models.ProblemDetails.Source ConflictProblem(EnvironmentAdministrationConflictException ex)
         => Problem("administration-conflict", "Administration changed concurrently", 409, ex.Message);
+
+    // The resolver's directory leg could not be reached: the identity it would have resolved is never guessed around,
+    // the same 502 the explicit directory search reports.
+    private static Models.ProblemDetails.Source DirectoryUnavailableProblem()
+        => Problem("directory-unavailable", "Directory unavailable", 502, "The external principal directory could not be reached.");
 
     private static Models.ProblemDetails.Source CollisionProblem()
         => Problem(

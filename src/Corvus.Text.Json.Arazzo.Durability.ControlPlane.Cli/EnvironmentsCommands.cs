@@ -336,10 +336,10 @@ internal sealed class EnvironmentAdminAddCommand : AsyncCommand<EnvironmentAdmin
         using (http)
         await using (transport)
         {
+            Models.GranteeKind.Source kind = settings.Kind;
             Models.JsonString.Source value = settings.Value;
-            Models.JsonString.Source dimension = settings.Dimension;
-            await using AddEnvironmentAdministratorResponse response = await client.AddEnvironmentAdministratorAsync(settings.Name, Models.AdministratorMemberWrite.Build(value: value, dimension: dimension), cancellationToken);
-            return response.MatchResult(list => Output.Print(list.ToString()), Output.Problem, Output.Problem, Output.Problem, Output.Problem, Output.Unexpected);
+            await using AddEnvironmentAdministratorResponse response = await client.AddEnvironmentAdministratorAsync(settings.Name, Models.GranteeReference.Build(kind: kind, value: value), cancellationToken);
+            return response.MatchResult(list => Output.Print(list.ToString()), Output.Problem, Output.Problem, Output.Problem, Output.Problem, Output.Problem, Output.Unexpected);
         }
     }
 }
@@ -354,7 +354,7 @@ internal sealed class EnvironmentAdminTransferCommand : AsyncCommand<Environment
         {
             Models.AdministratorSetWrite.Source body = AdministratorCommandHelpers.SetWrite(settings.Administrators!);
             await using TransferEnvironmentAdministrationResponse response = await client.TransferEnvironmentAdministrationAsync(settings.Name, body, cancellationToken);
-            return response.MatchResult(list => Output.Print(list.ToString()), Output.Problem, Output.Problem, Output.Problem, Output.Problem, Output.Unexpected);
+            return response.MatchResult(list => Output.Print(list.ToString()), Output.Problem, Output.Problem, Output.Problem, Output.Problem, Output.Problem, Output.Unexpected);
         }
     }
 }
@@ -373,16 +373,16 @@ internal sealed class EnvironmentAdminRemoveCommand : AsyncCommand<EnvironmentAd
     }
 }
 
-/// <summary>Settings for adding a single environment administrator, named by the deployment-mapped grant
-/// <c>{dimension, value}</c> (e.g. <c>tenant acme</c>) — never a raw internal tag.</summary>
+/// <summary>Settings for adding a single environment administrator, named as the grantee the server resolves to its
+/// exact identity (ADR 0008): a well-known kind and a value (e.g. <c>team acme</c>), never a raw internal tag.</summary>
 internal sealed class EnvironmentAdminMemberSettings : EnvironmentNameSettings
 {
-    [CommandArgument(1, "<dimension>")]
-    [Description("The identity dimension (e.g. tenant, workflow).")]
-    public string Dimension { get; init; } = string.Empty;
+    [CommandArgument(1, "<kind>")]
+    [Description("The grantee kind: person, team, role or workflow.")]
+    public string Kind { get; init; } = string.Empty;
 
     [CommandArgument(2, "<value>")]
-    [Description("The identity value (e.g. the tenant id).")]
+    [Description("The grantee value (a subject id, a team or role name, or a workflow id).")]
     public string Value { get; init; } = string.Empty;
 }
 
@@ -395,18 +395,18 @@ internal sealed class EnvironmentAdminRemoveSettings : EnvironmentNameSettings
     public string Digest { get; init; } = string.Empty;
 }
 
-/// <summary>Settings for replacing the whole environment administrator set. Each <c>--admin dimension=value</c> names one
-/// new administrator; a dimension may repeat to name several.</summary>
+/// <summary>Settings for replacing the whole environment administrator set. Each <c>--admin kind=value</c> names one
+/// new administrator grantee the server resolves; a kind may repeat to name several.</summary>
 internal sealed class EnvironmentAdminTransferSettings : EnvironmentNameSettings
 {
-    [CommandOption("--admin <DIMENSION=VALUE>")]
-    [Description("A new administrator identity, e.g. --admin tenant=acme (repeat to name several; at least one required).")]
+    [CommandOption("--admin <KIND=VALUE>")]
+    [Description("A new administrator grantee, e.g. --admin team=acme (repeat to name several; at least one required).")]
     public ILookup<string, string>? Administrators { get; init; }
 
     /// <inheritdoc/>
     public override Spectre.Console.ValidationResult Validate()
         => this.Administrators?.Any() != true
-            ? Spectre.Console.ValidationResult.Error("at least one --admin <dimension=value> is required.")
+            ? Spectre.Console.ValidationResult.Error("at least one --admin <kind=value> is required.")
             : base.Validate();
 }
 

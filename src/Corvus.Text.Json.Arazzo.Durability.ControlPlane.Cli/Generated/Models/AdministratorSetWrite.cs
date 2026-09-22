@@ -16,7 +16,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The replacement administrator set for a transfer (&#167;15) — at least one identity; duplicates are coalesced.
+/// The replacement administrator set for a transfer (&#167;15): at least one grantee, each resolved by the server; duplicates are coalesced.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -122,11 +122,11 @@ public readonly partial struct AdministratorSetWrite
     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorSetWrite.AdministratorIdentityArray Administrators
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorSetWrite.GranteeReferenceArray Administrators
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AdministratorsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorSetWrite.AdministratorIdentityArray value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AdministratorsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorSetWrite.GranteeReferenceArray value))
             {
                 return value;
             }

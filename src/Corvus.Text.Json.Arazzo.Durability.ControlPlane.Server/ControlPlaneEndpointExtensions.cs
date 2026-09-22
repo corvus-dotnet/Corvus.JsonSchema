@@ -223,10 +223,18 @@ public static class ControlPlaneEndpointExtensions
         // The source-credential management API persists references + metadata only — it never touches secret material.
         ISourceCredentialStore credentialStore = sourceCredentialStore ?? new InMemorySourceCredentialStore();
 
+        // The identity layer (§16.5.4): the store-indexed observed-identity typeahead (an in-memory reference by default
+        // so the endpoints function in development) plus an optional pluggable directory. The write paths below record
+        // observed identities into it, so the grantee typeahead is self-populating, and every write that names a grantee
+        // resolves it on the server through the one resolver (ADR 0008): the directory, then the observed identities,
+        // then the policy's mapping of the kind.
+        IObservedIdentityStore observedStore = observedIdentityStore ?? new InMemoryObservedIdentityStore();
+        var granteeResolver = new GranteeResolver(observedStore, principalDirectory, access);
+
         // The binding baseUrl scheme policy mirrors the deployment's source-fetch posture: where the fetcher permits
         // insecure http for source documents, an http baseUrl override is likewise allowed; otherwise https only. Read
         // from the provided fetcher so there is no separate credentials-specific configuration flag.
-        var credentialsHandler = new ArazzoControlPlaneCredentialsHandler(credentialStore, access, auditor: auditor, sources: srcStore, allowInsecureHttp: sourceFetcher?.AllowsInsecureHttp ?? false);
+        var credentialsHandler = new ArazzoControlPlaneCredentialsHandler(credentialStore, access, granteeResolver, auditor: auditor, sources: srcStore, allowInsecureHttp: sourceFetcher?.AllowsInsecureHttp ?? false);
 
         // The environment administration service (§7.7) is shared by the environments/availability handlers below and
         // by the access-overview aggregation (administered environments), so it is constructed ahead of both.
@@ -246,15 +254,10 @@ public static class ControlPlaneEndpointExtensions
         // administration reverse index, and the environment + availability stores (administered-environment enrichment).
         var securityHandler = new ArazzoControlPlaneSecurityHandler(policyStore, effectivePolicy as PersistentRowSecurityPolicy, access, catalog, credentialStore, environmentAdministration, auditor: auditor, environmentStore: envStore, availabilityStore: availStore);
 
-        // The identity layer (§16.5.4): the store-indexed observed-identity typeahead (an in-memory reference by default
-        // so the endpoints function in development) plus an optional pluggable directory. The write paths below record
-        // observed identities into it, so the grantee typeahead is self-populating.
-        IObservedIdentityStore observedStore = observedIdentityStore ?? new InMemoryObservedIdentityStore();
-
         // The administration management API (§15) governs a base id's administrator set by current-administrator
         // membership; it delegates to the catalog client (which owns the administrator store, if one is configured) and
         // names administrators by deployment-mapped grants rather than raw internal tags.
-        var administratorsHandler = new ArazzoControlPlaneAdministratorsHandler(catalog, access, observedStore, auditor);
+        var administratorsHandler = new ArazzoControlPlaneAdministratorsHandler(catalog, access, granteeResolver, observedStore, auditor);
 
         // The access-request API (§16.5): requests route to the target workflow's §15 administrators (or self-elevate
         // when eligible); an approval writes a single capped, time-boxed grant to the security-policy store (refreshed
@@ -286,7 +289,7 @@ public static class ControlPlaneEndpointExtensions
         // lifecycle, and the environments handler consults it (with the runner registry) to fence an isolation-floor raise
         // (ADR 0058) — refusing to raise an environment's requiredIsolation while an under-isolated runner stays authorized.
         IEnvironmentRunnerAuthorizationStore runnerAuthStore = environmentRunnerAuthorizationStore ?? new InMemoryEnvironmentRunnerAuthorizationStore();
-        var environmentsHandler = new ArazzoControlPlaneEnvironmentsHandler(securityMode, envStore, environmentAdministration, access, observedStore, auditor: auditor, runners: runners, runnerAuthorizations: runnerAuthStore, executionBudgetCeiling: management.ExecutionBudgetCeiling);
+        var environmentsHandler = new ArazzoControlPlaneEnvironmentsHandler(securityMode, envStore, environmentAdministration, access, granteeResolver, observedStore, auditor: auditor, runners: runners, runnerAuthorizations: runnerAuthStore, executionBudgetCeiling: management.ExecutionBudgetCeiling);
 
         // The kit surfaces that key token custody by principal read the authenticated principal through the
         // accessor in the modes whose access binding carries none (ScopesOnly).

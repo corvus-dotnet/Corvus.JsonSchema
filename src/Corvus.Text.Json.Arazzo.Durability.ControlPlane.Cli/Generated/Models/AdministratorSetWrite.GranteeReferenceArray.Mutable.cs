@@ -10,11 +10,11 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 
-public readonly partial struct AdministratorMemberWrite
+public readonly partial struct AdministratorSetWrite
 {
-    public readonly partial struct AdministratorIdentityArray
+    public readonly partial struct GranteeReferenceArray
     {
         public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -87,7 +87,7 @@ public readonly partial struct AdministratorMemberWrite
             /// <param name="instance">The instance of this type.</param>
             /// <returns>A mutable instance.</returns>
             /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-            public static explicit operator Mutable(AdministratorIdentityArray instance)
+            public static explicit operator Mutable(GranteeReferenceArray instance)
             {
                 if (instance._parent is not IMutableJsonDocument doc)
                 {
@@ -102,9 +102,9 @@ public readonly partial struct AdministratorMemberWrite
             /// Converts to an immutable instance of the <see cref="Mutable"/> type.
             /// </summary>
             /// <param name="instance">The <see cref="Mutable"/> instance.</param>
-            /// <returns>An immutable instance of a <see cref="AdministratorIdentityArray"/>, initialized from the <see cref="Mutable"/> value.</returns>
+            /// <returns>An immutable instance of a <see cref="GranteeReferenceArray"/>, initialized from the <see cref="Mutable"/> value.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static implicit operator AdministratorIdentityArray(Mutable instance)
+            public static implicit operator GranteeReferenceArray(Mutable instance)
             {
                 return new(instance._parent, instance._idx);
             }
@@ -118,12 +118,12 @@ public readonly partial struct AdministratorMemberWrite
             }
 
             /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Mutable.this[int]"/>
-            public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.Mutable this[int index]
+            public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference.Mutable this[int index]
             {
                 get
                 {
                     CheckValidInstance();
-                    return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.Mutable>(_idx, index);
+                    return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference.Mutable>(_idx, index);
                 }
             }
 
@@ -135,17 +135,17 @@ public readonly partial struct AdministratorMemberWrite
             }
 
             /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Mutable.EnumerateArray()"/>
-            public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.Mutable> EnumerateArray()
+            public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference.Mutable> EnumerateArray()
             {
                 CheckValidInstance();
-                return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.Mutable>(_parent, _idx);
+                return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference.Mutable>(_parent, _idx);
             }
 
             /// <inheritdoc/>
             public override bool Equals(object? obj)
             {
                 return
-                    (obj is IJsonElement value && Equals(new AdministratorIdentityArray(value.ParentDocument, value.ParentDocumentIndex))) ||
+                    (obj is IJsonElement value && Equals(new GranteeReferenceArray(value.ParentDocument, value.ParentDocumentIndex))) ||
                     (obj is null && this.IsNull());
             }
 
@@ -236,7 +236,7 @@ public readonly partial struct AdministratorMemberWrite
 #endif
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-            private string DebuggerDisplay => $"AdministratorIdentityArray.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+            private string DebuggerDisplay => $"GranteeReferenceArray.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
             /// <summary>
             ///   Sets the value of an array element at the specified index.
             /// </summary>
@@ -259,7 +259,7 @@ public readonly partial struct AdministratorMemberWrite
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.Source value)
+            public void SetItem(int itemIndex, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference.Source value)
             {
                 CheckValidInstance();
 
@@ -306,7 +306,7 @@ public readonly partial struct AdministratorMemberWrite
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.Source value)
+            public void InsertItem(int itemIndex, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference.Source value)
             {
                 CheckValidInstance();
 
@@ -332,7 +332,7 @@ public readonly partial struct AdministratorMemberWrite
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.Source value)
+            public void AddItem(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }
@@ -502,10 +502,10 @@ public readonly partial struct AdministratorMemberWrite
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool Remove(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity item)
+            public bool Remove(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference item)
             {
                 CheckValidInstance();
-                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity>(this, in item))
+                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference>(this, in item))
                 {
                     return false;
                 }
@@ -539,10 +539,10 @@ public readonly partial struct AdministratorMemberWrite
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void RemoveWhere(JsonPredicate<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity> predicate)
+            public void RemoveWhere(JsonPredicate<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference> predicate)
             {
                 CheckValidInstance();
-                JsonElementHelpers.RemoveWhereUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity>(this, predicate);
+                JsonElementHelpers.RemoveWhereUnsafe<Mutable, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference>(this, predicate);
                 _documentVersion = _parent.Version;
             }
 
@@ -559,7 +559,7 @@ public readonly partial struct AdministratorMemberWrite
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool Replace(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity oldItem, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.Source newItem)
+            public bool Replace(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference oldItem, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference.Source newItem)
             {
                 CheckValidInstance();
 
@@ -568,11 +568,11 @@ public readonly partial struct AdministratorMemberWrite
                     return Remove(in oldItem);
                 }
 
-                var enumerator = EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity>(_parent, _idx);
+                var enumerator = EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference>(_parent, _idx);
 
                 while (enumerator.MoveNext())
                 {
-                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity current = enumerator.Current;
+                    Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference current = enumerator.Current;
                     if (JsonElementHelpers.DeepEquals(in current, in oldItem))
                     {
                         ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 30);
@@ -603,17 +603,17 @@ public readonly partial struct AdministratorMemberWrite
             JsonValueKind IJsonElement.ValueKind => ValueKind;
 
             /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Mutable.Clone()"/>
-            public readonly AdministratorIdentityArray Clone()
+            public readonly GranteeReferenceArray Clone()
             {
                 CheckValidInstance();
-                return _parent.CloneElement<AdministratorIdentityArray>(_idx);
+                return _parent.CloneElement<GranteeReferenceArray>(_idx);
             }
 
             /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Mutable.Freeze()"/>
-            public readonly AdministratorIdentityArray Freeze()
+            public readonly GranteeReferenceArray Freeze()
             {
                 CheckValidInstance();
-                return _parent.FreezeElement<AdministratorIdentityArray>(_idx);
+                return _parent.FreezeElement<GranteeReferenceArray>(_idx);
             }
         }
 
@@ -639,9 +639,9 @@ public readonly partial struct AdministratorMemberWrite
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite.AdministratorIdentityArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorSetWrite.GranteeReferenceArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
-            public static implicit operator Source(AdministratorIdentityArray instance) => new(JsonElement.From(instance));
+            public static implicit operator Source(GranteeReferenceArray instance) => new(JsonElement.From(instance));
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -758,7 +758,7 @@ public readonly partial struct AdministratorMemberWrite
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite.AdministratorIdentityArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorSetWrite.GranteeReferenceArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -872,7 +872,7 @@ public readonly partial struct AdministratorMemberWrite
             /// <summary>
             /// Add an item to the array.
             /// </summary>
-            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.Source value)
+            public void AddItem(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference.Source value)
             {
                 value.AddAsItem(ref _builder);
             }
@@ -880,7 +880,7 @@ public readonly partial struct AdministratorMemberWrite
             /// <summary>
             /// Add an item to the array.
             /// </summary>
-            public void AddItem<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorIdentity.Source<TContext> value)
+            public void AddItem<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1051,7 +1051,7 @@ public readonly partial struct AdministratorMemberWrite
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.CreateBuilder(JsonWorkspace)"/>
         public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
         {
-            return workspace.CreateBuilder<AdministratorIdentityArray, Mutable>(this);
+            return workspace.CreateBuilder<GranteeReferenceArray, Mutable>(this);
         }
 
         /// <summary>
@@ -1060,7 +1060,7 @@ public readonly partial struct AdministratorMemberWrite
         /// <param name="value">The value with which to initialize the document.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-        public static ParsedJsonDocument<AdministratorIdentityArray> Create(
+        public static ParsedJsonDocument<GranteeReferenceArray> Create(
             scoped in Source value, int initialCapacity = 30)
         {
             ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
@@ -1070,7 +1070,7 @@ public readonly partial struct AdministratorMemberWrite
                 value.AddAsItem(ref cvb);
                 Debug.Assert(cvb.MemberCount == 1);
                 ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-                return documentBuilder.ToParsedJsonDocument<AdministratorIdentityArray>();
+                return documentBuilder.ToParsedJsonDocument<GranteeReferenceArray>();
             }
             finally
             {
@@ -1084,7 +1084,7 @@ public readonly partial struct AdministratorMemberWrite
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An empty <see cref="ParsedJsonDocument{T}"/>. The caller must dispose it.</returns>
-        public static ParsedJsonDocument<AdministratorIdentityArray> Create(
+        public static ParsedJsonDocument<GranteeReferenceArray> Create(
             int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
@@ -1094,7 +1094,7 @@ public readonly partial struct AdministratorMemberWrite
                 cvb.StartArray();
                 cvb.EndArray();
                 ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-                return documentBuilder.ToParsedJsonDocument<AdministratorIdentityArray>();
+                return documentBuilder.ToParsedJsonDocument<GranteeReferenceArray>();
             }
             finally
             {
@@ -1109,7 +1109,7 @@ public readonly partial struct AdministratorMemberWrite
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-        public static ParsedJsonDocument<AdministratorIdentityArray> Create(
+        public static ParsedJsonDocument<GranteeReferenceArray> Create(
             scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
@@ -1120,7 +1120,7 @@ public readonly partial struct AdministratorMemberWrite
                 source.AddAsItem(ref cvb);
                 Debug.Assert(cvb.MemberCount == 1);
                 ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-                return documentBuilder.ToParsedJsonDocument<AdministratorIdentityArray>();
+                return documentBuilder.ToParsedJsonDocument<GranteeReferenceArray>();
             }
             finally
             {
@@ -1137,7 +1137,7 @@ public readonly partial struct AdministratorMemberWrite
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-        public static ParsedJsonDocument<AdministratorIdentityArray> Create<TContext>(
+        public static ParsedJsonDocument<GranteeReferenceArray> Create<TContext>(
             scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
@@ -1151,7 +1151,7 @@ public readonly partial struct AdministratorMemberWrite
                 source.AddAsItem(ref cvb);
                 Debug.Assert(cvb.MemberCount == 1);
                 ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-                return documentBuilder.ToParsedJsonDocument<AdministratorIdentityArray>();
+                return documentBuilder.ToParsedJsonDocument<GranteeReferenceArray>();
             }
             finally
             {

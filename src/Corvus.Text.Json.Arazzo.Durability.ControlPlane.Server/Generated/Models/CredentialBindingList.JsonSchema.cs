@@ -45,7 +45,7 @@ public readonly partial struct CredentialBindingList
         /// </summary>
         public static ReadOnlySpan<byte> SchemaDocumentUtf8 => "arazzo-control-plane.openapi.json"u8;
 
-        private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CorvusJsonSchemaProgram.Entry(94);
+        private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CorvusJsonSchemaProgram.Entry(92);
 
         internal static bool Evaluate(
             IJsonDocument parentDocument,

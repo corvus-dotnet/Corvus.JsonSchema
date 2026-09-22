@@ -10,8 +10,8 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
-public readonly partial struct AdministratorMemberWrite
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
+public readonly partial struct GranteeReference
 {
     public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -84,7 +84,7 @@ public readonly partial struct AdministratorMemberWrite
         /// <param name="instance">The instance of this type.</param>
         /// <returns>A mutable instance.</returns>
         /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-        public static explicit operator Mutable(AdministratorMemberWrite instance)
+        public static explicit operator Mutable(GranteeReference instance)
         {
             if (instance._parent is not IMutableJsonDocument doc)
             {
@@ -99,9 +99,9 @@ public readonly partial struct AdministratorMemberWrite
         /// Converts to an immutable instance of the <see cref="Mutable"/> type.
         /// </summary>
         /// <param name="instance">The <see cref="Mutable"/> instance.</param>
-        /// <returns>An immutable instance of a <see cref="AdministratorMemberWrite"/>, initialized from the <see cref="Mutable"/> value.</returns>
+        /// <returns>An immutable instance of a <see cref="GranteeReference"/>, initialized from the <see cref="Mutable"/> value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator AdministratorMemberWrite(Mutable instance)
+        public static implicit operator GranteeReference(Mutable instance)
         {
             return new(instance._parent, instance._idx);
         }
@@ -181,81 +181,21 @@ public readonly partial struct AdministratorMemberWrite
         }
 
         /// <summary>
-        /// Gets the (optional) <c>complete</c> property.
+        /// Gets the <c>kind</c> property.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// Whether `identity` is the grantee&#39;s whole stamped identity (the picker&#39;s honest `complete`); defaults to true for the resolved-grantee form.
+        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
-        /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Mutable Complete
-        {
-            get
-            {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CompleteUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Mutable value))
-                {
-                    return value;
-                }
-
-                return default;
-            }
-        }
-
-        /// <summary>
-        /// Gets the (optional) <c>dimension</c> property.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// The single-grant identity dimension (the simple form; ignored when `identity` is provided). The kind is inferred from it.
-        /// </para>
-        /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable DimensionValue
-        {
-            get
-            {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DimensionValueUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable value))
-                {
-                    return value;
-                }
-
-                return default;
-            }
-        }
-
-        /// <summary>
-        /// Gets the (optional) <c>identity</c> property.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// The grantee&#39;s full resolved identity as {dimension, value} grants (from GET /identity/grantees). When present and non-empty this is the administrator identity; `kind` should accompany it.
-        /// </para>
-        /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite.AdministratorIdentityArray.Mutable Identity
-        {
-            get
-            {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdentityUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite.AdministratorIdentityArray.Mutable value))
-                {
-                    return value;
-                }
-
-                return default;
-            }
-        }
-
-        /// <summary>
-        /// Gets the (optional) <c>kind</c> property.
-        /// </summary>
-        /// <remarks>
         /// <para>
         /// A well-known kind of grantee the deployment can resolve to a sys: identity (design &#167;16.5.4).
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Mutable Kind
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Mutable Kind
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KindUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KindUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Mutable value))
                 {
                     return value;
                 }
@@ -272,11 +212,11 @@ public readonly partial struct AdministratorMemberWrite
         /// An optional human-friendly display label, recorded for the &#167;16.5.4 typeahead.
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable Label
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable Label
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LabelUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LabelUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -293,14 +233,14 @@ public readonly partial struct AdministratorMemberWrite
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// <para>
-        /// The grantee value — the searched key (resolved-grantee form) or the single grant&#39;s value.
+        /// The grantee value: a subject id, a team or role name, or a workflow id.
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable Value
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable Value
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ValueUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ValueUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -327,7 +267,7 @@ public readonly partial struct AdministratorMemberWrite
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonElement value && Equals(new AdministratorMemberWrite(value.ParentDocument, value.ParentDocumentIndex))) ||
+                (obj is IJsonElement value && Equals(new GranteeReference(value.ParentDocument, value.ParentDocumentIndex))) ||
                 (obj is null && this.IsNull());
         }
 
@@ -339,189 +279,16 @@ public readonly partial struct AdministratorMemberWrite
         }
 
         /// <summary>
-        /// Set the <c>complete</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetComplete(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source value)
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.CompleteUtf8);
-                _documentVersion = _parent.Version;
-                return;
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CompleteUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Complete, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        /// Remove the <c>complete</c> property, if present.
-        /// </summary>
-        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-        public bool RemoveComplete()
-        {
-            CheckValidInstance();
-            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.CompleteUtf8);
-            _documentVersion = _parent.Version;
-            return result;
-        }
-
-        /// <summary>
-        /// Set the <c>dimension</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetDimensionValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.DimensionValueUtf8);
-                _documentVersion = _parent.Version;
-                return;
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DimensionValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DimensionValue, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        /// Remove the <c>dimension</c> property, if present.
-        /// </summary>
-        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-        public bool RemoveDimensionValue()
-        {
-            CheckValidInstance();
-            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.DimensionValueUtf8);
-            _documentVersion = _parent.Version;
-            return result;
-        }
-
-        /// <summary>
-        /// Set the <c>identity</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetIdentity(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite.AdministratorIdentityArray.Source value)
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.IdentityUtf8);
-                _documentVersion = _parent.Version;
-                return;
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdentityUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Identity, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        /// Set the <c>identity</c> property.
-        /// </summary>
-        /// <param name="value">The value of the property to add.</param>
-        public void SetIdentity<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite.AdministratorIdentityArray.Source<TContext> value)
-#if NET9_0_OR_GREATER
-            where TContext : allows ref struct
-#endif
-        {
-            CheckValidInstance();
-
-            if (value.IsUndefined)
-            {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.IdentityUtf8);
-                _documentVersion = _parent.Version;
-                return;
-            }
-
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdentityUtf8, out IJsonDocument? elementParent, out int elementIdx))
-            {
-                // We are going to replace just the value
-                value.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
-            }
-            else
-            {
-                // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Identity, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
-            }
-
-            _documentVersion = _parent.Version;
-        }
-
-        /// <summary>
-        /// Remove the <c>identity</c> property, if present.
-        /// </summary>
-        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-        public bool RemoveIdentity()
-        {
-            CheckValidInstance();
-            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.IdentityUtf8);
-            _documentVersion = _parent.Version;
-            return result;
-        }
-
-        /// <summary>
         /// Set the <c>kind</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetKind(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source value)
+        public void SetKind(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Source value)
         {
             CheckValidInstance();
 
             if (value.IsUndefined)
             {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.KindUtf8);
-                _documentVersion = _parent.Version;
-                return;
+                CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("kind");
             }
 
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
@@ -543,22 +310,10 @@ public readonly partial struct AdministratorMemberWrite
         }
 
         /// <summary>
-        /// Remove the <c>kind</c> property, if present.
-        /// </summary>
-        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-        public bool RemoveKind()
-        {
-            CheckValidInstance();
-            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.KindUtf8);
-            _documentVersion = _parent.Version;
-            return result;
-        }
-
-        /// <summary>
         /// Set the <c>label</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetLabel(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetLabel(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -603,7 +358,7 @@ public readonly partial struct AdministratorMemberWrite
         /// Set the <c>value</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value)
+        public void SetValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
         {
             CheckValidInstance();
 
@@ -710,7 +465,7 @@ public readonly partial struct AdministratorMemberWrite
 #endif
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebuggerDisplay => $"AdministratorMemberWrite.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+        private string DebuggerDisplay => $"GranteeReference.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Mutable.SetProperty(string, in JsonElement.Source)"/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -817,17 +572,17 @@ public readonly partial struct AdministratorMemberWrite
         JsonValueKind IJsonElement.ValueKind => ValueKind;
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Mutable.Clone()"/>
-        public readonly AdministratorMemberWrite Clone()
+        public readonly GranteeReference Clone()
         {
             CheckValidInstance();
-            return _parent.CloneElement<AdministratorMemberWrite>(_idx);
+            return _parent.CloneElement<GranteeReference>(_idx);
         }
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Mutable.Freeze()"/>
-        public readonly AdministratorMemberWrite Freeze()
+        public readonly GranteeReference Freeze()
         {
             CheckValidInstance();
-            return _parent.FreezeElement<AdministratorMemberWrite>(_idx);
+            return _parent.FreezeElement<GranteeReference>(_idx);
         }
     }
 
@@ -844,12 +599,9 @@ public readonly partial struct AdministratorMemberWrite
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source _createArg2;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg3;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite.AdministratorIdentityArray.Source _createArg4;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source _createArg5;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg6;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Source _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source _createArg2;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source _createArg3;
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Source.IsUndefined"/>
         public bool IsUndefined => _kind == Kind.Unknown;
@@ -860,20 +612,17 @@ public readonly partial struct AdministratorMemberWrite
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite.AdministratorIdentityArray.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg3)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
             _createArg3 = arg3;
-            _createArg4 = arg4;
-            _createArg5 = arg5;
-            _createArg6 = arg6;
             _kind = Kind.Create;
         }
 
-        public static implicit operator Source(AdministratorMemberWrite instance) => new(JsonElement.From(instance));
+        public static implicit operator Source(GranteeReference instance) => new(JsonElement.From(instance));
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -890,7 +639,7 @@ public readonly partial struct AdministratorMemberWrite
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -915,7 +664,7 @@ public readonly partial struct AdministratorMemberWrite
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -940,7 +689,7 @@ public readonly partial struct AdministratorMemberWrite
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -965,7 +714,7 @@ public readonly partial struct AdministratorMemberWrite
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -990,7 +739,7 @@ public readonly partial struct AdministratorMemberWrite
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -1011,19 +760,12 @@ public readonly partial struct AdministratorMemberWrite
             Unknown,
             Source,
             Builder,
-            Create,
         }
 
         private readonly Kind _kind;
         TContext _context;
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source _createArg2;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg3;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite.AdministratorIdentityArray.Source<TContext> _createArg4;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source _createArg5;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source _createArg6;
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Source.IsUndefined"/>
         public bool IsUndefined => _kind == Kind.Unknown;
@@ -1032,19 +774,7 @@ public readonly partial struct AdministratorMemberWrite
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
-
-        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite.AdministratorIdentityArray.Source<TContext> arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6)
-        {
-            _context = context;
-            _createArg1 = arg1;
-            _createArg2 = arg2;
-            _createArg3 = arg3;
-            _createArg4 = arg4;
-            _createArg5 = arg5;
-            _createArg6 = arg6;
-            _kind = Kind.Create;
-        }
+        internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -1058,13 +788,6 @@ public readonly partial struct AdministratorMemberWrite
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
                     break;
-                case Kind.Create:
-                    {
-                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
-                        valueBuilder.EndProperty(handle);
-                        break;
-                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1083,13 +806,6 @@ public readonly partial struct AdministratorMemberWrite
                 case Kind.Builder:
                     valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
-                case Kind.Create:
-                    {
-                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
-                        valueBuilder.EndProperty(handle);
-                        break;
-                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1108,13 +824,6 @@ public readonly partial struct AdministratorMemberWrite
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
-                case Kind.Create:
-                    {
-                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
-                        valueBuilder.EndProperty(handle);
-                        break;
-                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1133,13 +842,6 @@ public readonly partial struct AdministratorMemberWrite
                 case Kind.Builder:
                     valueBuilder.AddProperty(name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
-                case Kind.Create:
-                    {
-                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
-                        valueBuilder.EndProperty(handle);
-                        break;
-                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1158,13 +860,6 @@ public readonly partial struct AdministratorMemberWrite
                 case Kind.Builder:
                     valueBuilder.AddItem(BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
-                case Kind.Create:
-                    {
-                        ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
-                        valueBuilder.EndItem(handle);
-                        break;
-                    }
                 default:
                     Debug.Fail("Unexpected Kind");
                     break;
@@ -1192,72 +887,24 @@ public readonly partial struct AdministratorMemberWrite
 
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source complete = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source dimension = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite.AdministratorIdentityArray.Source identity = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source kind = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source label = default)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Source kind,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source label = default)
         {
-            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Value, ref builder);
-            complete.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Complete, ref builder);
-            dimension.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DimensionValue, ref builder);
-            identity.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Identity, ref builder);
             kind.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Kind, ref builder);
+            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Value, ref builder);
             label.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Label, ref builder);
         }
 
         /// <summary>
-        /// Creates an instance of a <see cref="AdministratorMemberWrite"/>.
+        /// Creates an instance of a <see cref="GranteeReference"/>.
         /// </summary>
         public void Create(
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source complete = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source dimension = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite.AdministratorIdentityArray.Source identity = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source kind = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source label = default)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Source kind,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source label = default)
         {
-            Create(ref _builder, value, complete, dimension, identity, kind, label);
-        }
-
-        internal static void Create<TContext>(
-            in TContext context,
-            ref ComplexValueBuilder builder,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source complete = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source dimension = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite.AdministratorIdentityArray.Source<TContext> identity = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source kind = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source label = default)
-        #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-        #endif
-        {
-            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Value, ref builder);
-            complete.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Complete, ref builder);
-            dimension.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DimensionValue, ref builder);
-            identity.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Identity, ref builder);
-            kind.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Kind, ref builder);
-            label.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Label, ref builder);
-        }
-
-        /// <summary>
-        /// Creates an instance of a <see cref="AdministratorMemberWrite"/>.
-        /// </summary>
-        public void Create<TContext>(
-            in TContext context,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source complete = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source dimension = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite.AdministratorIdentityArray.Source<TContext> identity = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source kind = default,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source label = default)
-        #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-        #endif
-        {
-            Create(context, ref _builder, value, complete, dimension, identity, kind, label);
+            Create(ref _builder, kind, value, label);
         }
 
         /// <summary>
@@ -1352,20 +999,10 @@ public readonly partial struct AdministratorMemberWrite
             o.EndObject();
         }
 
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite.AdministratorIdentityArray.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source arg3, ref ComplexValueBuilder o)
         {
             o.StartObject();
-            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
-            o.EndObject();
-        }
-
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite.AdministratorIdentityArray.Source<TContext> arg4, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source arg6, ref ComplexValueBuilder o)
-#if NET9_0_OR_GREATER
-            where TContext : allows ref struct
-#endif
-        {
-            o.StartObject();
-            Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6);
+            Create(ref o, arg1, arg2, arg3);
             o.EndObject();
         }
     }
@@ -1402,36 +1039,13 @@ public readonly partial struct AdministratorMemberWrite
     /// <summary>
     /// Build an instance of the value directly from its property values.
     /// </summary>
-    /// <param name="value">The value of the <c>"value"</c> property.</param>
-    /// <param name="complete">The value of the <c>"complete"</c> property.</param>
-    /// <param name="dimension">The value of the <c>"dimension"</c> property.</param>
-    /// <param name="identity">The value of the <c>"identity"</c> property.</param>
     /// <param name="kind">The value of the <c>"kind"</c> property.</param>
+    /// <param name="value">The value of the <c>"value"</c> property.</param>
     /// <param name="label">The value of the <c>"label"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source complete = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source dimension = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite.AdministratorIdentityArray.Source identity = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source kind = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source label = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Source kind, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source label = default)
     {
-        return new Source(value, complete, dimension, identity, kind, label);
-    }
-
-    /// <summary>
-    /// Build an instance of the value directly from its property values.
-    /// </summary>
-    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
-    /// <param name="context">The context to pass to the builder.</param>
-    /// <param name="value">The value of the <c>"value"</c> property.</param>
-    /// <param name="complete">The value of the <c>"complete"</c> property.</param>
-    /// <param name="dimension">The value of the <c>"dimension"</c> property.</param>
-    /// <param name="identity">The value of the <c>"identity"</c> property.</param>
-    /// <param name="kind">The value of the <c>"kind"</c> property.</param>
-    /// <param name="label">The value of the <c>"label"</c> property.</param>
-    /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source complete = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source dimension = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite.AdministratorIdentityArray.Source<TContext> identity = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source kind = default, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source label = default)
-        #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-        #endif
-    {
-        return new Source<TContext>(context, value, complete, dimension, identity, kind, label);
+        return new Source(kind, value, label);
     }
 
     /// <summary>
@@ -1527,51 +1141,18 @@ public readonly partial struct AdministratorMemberWrite
     /// Creates and initializes a mutable document from the given property values.
     /// </summary>
     /// <param name="workspace">The JSON workspace.</param>
-    /// <param name="value">The value of the property.</param>
-    /// <param name="complete">The value of the property.</param>
-    /// <param name="dimension">The value of the property.</param>
-    /// <param name="identity">The value of the property.</param>
     /// <param name="kind">The value of the property.</param>
+    /// <param name="value">The value of the property.</param>
     /// <param name="label">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source complete = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source dimension = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite.AdministratorIdentityArray.Source identity = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source kind = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source label = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Source kind, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source label = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(value, complete, dimension, identity, kind, label);
-        cvb = ovb._builder;
-        cvb.EndObject();
-        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-        return documentBuilder;
-    }
-
-    /// <summary>
-    /// Creates and initializes a mutable document from the given property values.
-    /// </summary>
-    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
-    /// <param name="workspace">The JSON workspace.</param>
-    /// <param name="context">The value of the property.</param>
-    /// <param name="value">The value of the property.</param>
-    /// <param name="complete">The value of the property.</param>
-    /// <param name="dimension">The value of the property.</param>
-    /// <param name="identity">The value of the property.</param>
-    /// <param name="kind">The value of the property.</param>
-    /// <param name="label">The value of the property.</param>
-    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
-    /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source complete = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source dimension = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite.AdministratorIdentityArray.Source<TContext> identity = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source kind = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source label = default, int initialCapacity = 30)
-        #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-        #endif
-    {
-        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
-        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
-        cvb.StartObject();
-        Builder ovb = new(cvb);
-        ovb.Create(context, value, complete, dimension, identity, kind, label);
+        ovb.Create(kind, value, label);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1581,7 +1162,7 @@ public readonly partial struct AdministratorMemberWrite
     /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.CreateBuilder(JsonWorkspace)"/>
     public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
     {
-        return workspace.CreateBuilder<AdministratorMemberWrite, Mutable>(this);
+        return workspace.CreateBuilder<GranteeReference, Mutable>(this);
     }
 
     /// <summary>
@@ -1590,7 +1171,7 @@ public readonly partial struct AdministratorMemberWrite
     /// <param name="value">The value with which to initialize the document.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<AdministratorMemberWrite> Create(
+    public static ParsedJsonDocument<GranteeReference> Create(
         scoped in Source value, int initialCapacity = 30)
     {
         ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
@@ -1600,7 +1181,7 @@ public readonly partial struct AdministratorMemberWrite
             value.AddAsItem(ref cvb);
             Debug.Assert(cvb.MemberCount == 1);
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-            return documentBuilder.ToParsedJsonDocument<AdministratorMemberWrite>();
+            return documentBuilder.ToParsedJsonDocument<GranteeReference>();
         }
         finally
         {
@@ -1615,7 +1196,7 @@ public readonly partial struct AdministratorMemberWrite
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<AdministratorMemberWrite> Create(
+    public static ParsedJsonDocument<GranteeReference> Create(
         scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
     {
         ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent(initialValueBufferSize);
@@ -1626,7 +1207,7 @@ public readonly partial struct AdministratorMemberWrite
             source.AddAsItem(ref cvb);
             Debug.Assert(cvb.MemberCount == 1);
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-            return documentBuilder.ToParsedJsonDocument<AdministratorMemberWrite>();
+            return documentBuilder.ToParsedJsonDocument<GranteeReference>();
         }
         finally
         {
@@ -1643,7 +1224,7 @@ public readonly partial struct AdministratorMemberWrite
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<AdministratorMemberWrite> Create<TContext>(
+    public static ParsedJsonDocument<GranteeReference> Create<TContext>(
         scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
@@ -1657,7 +1238,7 @@ public readonly partial struct AdministratorMemberWrite
             source.AddAsItem(ref cvb);
             Debug.Assert(cvb.MemberCount == 1);
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-            return documentBuilder.ToParsedJsonDocument<AdministratorMemberWrite>();
+            return documentBuilder.ToParsedJsonDocument<GranteeReference>();
         }
         finally
         {
@@ -1668,15 +1249,12 @@ public readonly partial struct AdministratorMemberWrite
     /// <summary>
     /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
     /// </summary>
-    /// <param name="value">The value of the property.</param>
-    /// <param name="complete">The value of the property.</param>
-    /// <param name="dimension">The value of the property.</param>
-    /// <param name="identity">The value of the property.</param>
     /// <param name="kind">The value of the property.</param>
+    /// <param name="value">The value of the property.</param>
     /// <param name="label">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<AdministratorMemberWrite> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source complete = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source dimension = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite.AdministratorIdentityArray.Source identity = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source kind = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source label = default, int initialCapacity = 30)
+    public static ParsedJsonDocument<GranteeReference> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeKind.Source kind, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source label = default, int initialCapacity = 30)
     {
         ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
         try
@@ -1684,47 +1262,11 @@ public readonly partial struct AdministratorMemberWrite
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             cvb.StartObject();
             Builder ovb = new(cvb);
-            ovb.Create(value, complete, dimension, identity, kind, label);
+            ovb.Create(kind, value, label);
             cvb = ovb._builder;
             cvb.EndObject();
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-            return documentBuilder.ToParsedJsonDocument<AdministratorMemberWrite>();
-        }
-        finally
-        {
-            documentBuilder.Dispose();
-        }
-    }
-
-    /// <summary>
-    /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
-    /// </summary>
-    /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
-    /// <param name="context">The value of the property.</param>
-    /// <param name="value">The value of the property.</param>
-    /// <param name="complete">The value of the property.</param>
-    /// <param name="dimension">The value of the property.</param>
-    /// <param name="identity">The value of the property.</param>
-    /// <param name="kind">The value of the property.</param>
-    /// <param name="label">The value of the property.</param>
-    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
-    /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<AdministratorMemberWrite> Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source value, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean.Source complete = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source dimension = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite.AdministratorIdentityArray.Source<TContext> identity = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeKind.Source kind = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString.Source label = default, int initialCapacity = 30)
-        #if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-        #endif
-    {
-        ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
-        try
-        {
-            ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
-            cvb.StartObject();
-            Builder ovb = new(cvb);
-            ovb.Create(context, value, complete, dimension, identity, kind, label);
-            cvb = ovb._builder;
-            cvb.EndObject();
-            ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-            return documentBuilder.ToParsedJsonDocument<AdministratorMemberWrite>();
+            return documentBuilder.ToParsedJsonDocument<GranteeReference>();
         }
         finally
         {

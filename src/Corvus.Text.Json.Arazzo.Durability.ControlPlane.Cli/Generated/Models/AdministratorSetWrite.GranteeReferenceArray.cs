@@ -12,25 +12,20 @@ using global::Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 
-public readonly partial struct AdministratorMemberWrite
+public readonly partial struct AdministratorSetWrite
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The grantee&#39;s full resolved identity as {dimension, value} grants (from GET /identity/grantees). When present and non-empty this is the administrator identity; `kind` should accompany it.
-    /// </para>
-    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct AdministratorIdentityArray
+    public readonly partial struct GranteeReferenceArray
 #if NET8_0_OR_GREATER
-        : IJsonElement<AdministratorIdentityArray>,
+        : IJsonElement<GranteeReferenceArray>,
           IFormattable,
           ISpanFormattable,
           IUtf8SpanFormattable
 #else
-        : IJsonElement<AdministratorIdentityArray>,
+        : IJsonElement<GranteeReferenceArray>,
           IFormattable
 #endif
     {
@@ -39,7 +34,7 @@ public readonly partial struct AdministratorMemberWrite
         private readonly int _idx;
 
         #pragma warning restore CS8618 // JsonDocument nullability
-        internal AdministratorIdentityArray(IJsonDocument parent, int idx)
+        internal GranteeReferenceArray(IJsonDocument parent, int idx)
         {
             Debug.Assert(idx >= 0);
             _parent = parent;
@@ -49,7 +44,7 @@ public readonly partial struct AdministratorMemberWrite
         /// <summary>
         /// Gets the default instance.
         /// </summary>
-        public static AdministratorIdentityArray DefaultInstance { get; }
+        public static GranteeReferenceArray DefaultInstance { get; }
 
         /// <summary>
         /// Gets the rank of the array.
@@ -57,12 +52,12 @@ public readonly partial struct AdministratorMemberWrite
         public static int Rank => 1;
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.this[int]"/>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorIdentity this[int index]
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference this[int index]
         {
             get
             {
                 CheckValidInstance();
-                return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorIdentity>(_idx, index);
+                return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference>(_idx, index);
             }
         }
 
@@ -74,10 +69,10 @@ public readonly partial struct AdministratorMemberWrite
         }
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.EnumerateArray()"/>
-        public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorIdentity> EnumerateArray()
+        public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference> EnumerateArray()
         {
             CheckValidInstance();
-            return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorIdentity>(_parent, _idx);
+            return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference>(_parent, _idx);
         }
 
         /// <inheritdoc/>
@@ -87,25 +82,25 @@ public readonly partial struct AdministratorMemberWrite
         private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.operator ==(JsonElement, JsonElement)"/>
-        public static bool operator ==(in AdministratorIdentityArray left, in AdministratorIdentityArray right)
+        public static bool operator ==(in GranteeReferenceArray left, in GranteeReferenceArray right)
         {
             return left.Equals(right);
         }
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.operator !=(JsonElement, JsonElement)"/>
-        public static bool operator !=(in AdministratorIdentityArray left, in AdministratorIdentityArray right)
+        public static bool operator !=(in GranteeReferenceArray left, in GranteeReferenceArray right)
         {
             return !left.Equals(right);
         }
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.operator ==(JsonElement, JsonElement)"/>
-        public static bool operator ==(in AdministratorIdentityArray left, in JsonElement right)
+        public static bool operator ==(in GranteeReferenceArray left, in JsonElement right)
         {
             return left.Equals(right);
         }
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.operator !=(JsonElement, JsonElement)"/>
-        public static bool operator !=(in AdministratorIdentityArray left, in JsonElement right)
+        public static bool operator !=(in GranteeReferenceArray left, in JsonElement right)
         {
             return !left.Equals(right);
         }
@@ -116,7 +111,7 @@ public readonly partial struct AdministratorMemberWrite
         /// <param name="instance">The instance of this type.</param>
         /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator JsonElement(AdministratorIdentityArray instance)
+        public static implicit operator JsonElement(GranteeReferenceArray instance)
         {
             return JsonElement.From(instance);
         }
@@ -127,14 +122,14 @@ public readonly partial struct AdministratorMemberWrite
         /// <param name="instance">The instance of this type as a JsonElement.</param>
         /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator AdministratorIdentityArray(JsonElement instance)
+        public static implicit operator GranteeReferenceArray(JsonElement instance)
         {
-            return AdministratorIdentityArray.From(instance);
+            return GranteeReferenceArray.From(instance);
         }
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.From{T}(in T)"/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static AdministratorIdentityArray From<T>(in T instance)
+        public static GranteeReferenceArray From<T>(in T instance)
             where T : struct, IJsonElement<T>
         {
             return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -143,53 +138,53 @@ public readonly partial struct AdministratorMemberWrite
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.ParseValue(ReadOnlySpan{byte}, JsonDocumentOptions)"/>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static AdministratorIdentityArray ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+        public static GranteeReferenceArray ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<AdministratorIdentityArray>(utf8Json, options);
+            return JsonElementHelpers.ParseValue<GranteeReferenceArray>(utf8Json, options);
             #pragma warning restore CS0618
         }
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.ParseValue(ReadOnlySpan{char}, JsonDocumentOptions)"/>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static AdministratorIdentityArray ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+        public static GranteeReferenceArray ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<AdministratorIdentityArray>(json, options);
+            return JsonElementHelpers.ParseValue<GranteeReferenceArray>(json, options);
             #pragma warning restore CS0618
         }
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.ParseValue(string, JsonDocumentOptions)"/>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static AdministratorIdentityArray ParseValue(string json, JsonDocumentOptions options = default)
+        public static GranteeReferenceArray ParseValue(string json, JsonDocumentOptions options = default)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<AdministratorIdentityArray>(json, options);
+            return JsonElementHelpers.ParseValue<GranteeReferenceArray>(json, options);
             #pragma warning restore CS0618
         }
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.ParseValue(ref Utf8JsonReader)"/>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-        public static AdministratorIdentityArray ParseValue(ref Utf8JsonReader reader)
+        public static GranteeReferenceArray ParseValue(ref Utf8JsonReader reader)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<AdministratorIdentityArray>(ref reader);
+            return JsonElementHelpers.ParseValue<GranteeReferenceArray>(ref reader);
             #pragma warning restore CS0618
         }
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.TryParseValue(ref Utf8JsonReader, out JsonElement?)"/>
-        public static bool TryParseValue(ref Utf8JsonReader reader, out AdministratorIdentityArray? result)
+        public static bool TryParseValue(ref Utf8JsonReader reader, out GranteeReferenceArray? result)
         {
-            return JsonElementHelpers.TryParseValue<AdministratorIdentityArray>(ref reader, out result);
+            return JsonElementHelpers.TryParseValue<GranteeReferenceArray>(ref reader, out result);
         }
 
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonElement value && Equals(new AdministratorIdentityArray(value.ParentDocument, value.ParentDocumentIndex))) ||
+                (obj is IJsonElement value && Equals(new GranteeReferenceArray(value.ParentDocument, value.ParentDocumentIndex))) ||
                 (obj is null && this.IsNull());
         }
 
@@ -271,11 +266,11 @@ public readonly partial struct AdministratorMemberWrite
         void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-        static AdministratorIdentityArray IJsonElement<AdministratorIdentityArray>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+        static GranteeReferenceArray IJsonElement<GranteeReferenceArray>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebuggerDisplay => $"AdministratorIdentityArray: ValueKind = {ValueKind} : \"{ToString()}\"";
+        private string DebuggerDisplay => $"GranteeReferenceArray: ValueKind = {ValueKind} : \"{ToString()}\"";
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -290,19 +285,19 @@ public readonly partial struct AdministratorMemberWrite
         JsonValueKind IJsonElement.ValueKind => ValueKind;
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Clone()"/>
-        public AdministratorIdentityArray Clone()
+        public GranteeReferenceArray Clone()
         {
             CheckValidInstance();
-            return _parent.CloneElement<AdministratorIdentityArray>(_idx);
+            return _parent.CloneElement<GranteeReferenceArray>(_idx);
         }
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Freeze()"/>
-        public AdministratorIdentityArray Freeze()
+        public GranteeReferenceArray Freeze()
         {
             CheckValidInstance();
             if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
             {
-                return mutable.FreezeElement<AdministratorIdentityArray>(_idx);
+                return mutable.FreezeElement<GranteeReferenceArray>(_idx);
             }
 
             return this;

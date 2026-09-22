@@ -89,11 +89,11 @@ internal static class ServerThrowHelper
     public static void ThrowNoGrantableScopesApproval(string requestId)
         => throw new AccessRequestStateException(requestId, SR.NoGrantableScopesApproval);
 
-    /// <summary>Throws when neither a resolved grantee identity nor a single dimension/value grant was provided.</summary>
+    /// <summary>Throws when a grantee reference lacks its kind or its value.</summary>
     [DoesNotReturn]
     [StackTraceHidden]
-    public static void ThrowGranteeIdentityOrDimensionRequired()
-        => throw new ArgumentException(SR.GranteeIdentityOrDimensionRequired);
+    public static void ThrowGranteeKindAndValueRequired()
+        => throw new ArgumentException(SR.GranteeKindAndValueRequired);
 
     /// <summary>Throws when a named grantee does not resolve to a deployment identity.</summary>
     [DoesNotReturn]
@@ -101,13 +101,13 @@ internal static class ServerThrowHelper
     public static void ThrowGranteeDoesNotResolve()
         => throw new ArgumentException(SR.GranteeDoesNotResolve);
 
-    /// <summary>Throws when an administrator grant does not resolve to a deployment identity.</summary>
-    /// <param name="dimension">The grant's dimension.</param>
-    /// <param name="value">The grant's value.</param>
+    /// <summary>Throws when a named administrator grantee does not resolve to a deployment identity.</summary>
+    /// <param name="kind">The grantee's kind.</param>
+    /// <param name="value">The grantee's value.</param>
     [DoesNotReturn]
     [StackTraceHidden]
-    public static void ThrowAdministratorGrantDoesNotResolve(string dimension, string value)
-        => throw new ArgumentException(SR.Format(SR.AdministratorGrantDoesNotResolve, dimension, value));
+    public static void ThrowAdministratorGranteeDoesNotResolve(string kind, string value)
+        => throw new ArgumentException(SR.Format(SR.AdministratorGranteeDoesNotResolve, kind, value));
 
     /// <summary>Throws when the provider registry names a provider more than once.</summary>
     /// <param name="providerName">The duplicated provider name.</param>

@@ -136,8 +136,9 @@ class ArazzoAdministratorsPanel extends ArazzoElement {
   async add() {
     const grantee = this.$('.grant-in').grant;
     if (!grantee) { this.showError({ title: 'Select a grantee to add as an administrator.' }); return; }
-    // The picker resolved the grantee to its exact identity; carry kind/value/identity/label/complete straight through.
-    const member = { kind: grantee.kind, value: grantee.value, identity: grantee.identity, label: grantee.label, complete: grantee.complete };
+    // The picker resolved the grantee for display; the server resolves it again to the identity it stores (ADR 0008),
+    // so only the grantee's kind, value and label are sent.
+    const member = { kind: grantee.kind, value: grantee.value, label: grantee.label };
     await this.mutate(() => this._subject().add(member), () => this.$('.grant-in').reset());
   }
 

@@ -86,7 +86,7 @@ public sealed class ControlPlaneIdentityApiTests
 
         // acme establishes the workflow (sole administrator), then adds {tenant, gamma} as a co-administrator.
         await EstablishAsync(host.Catalog, "flow", "acme");
-        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"dimension":"tenant","value":"gamma"}""", "administrators:write", "acme"))
+        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"kind":"team","value":"gamma"}""", "administrators:write", "acme"))
             .EnsureSuccessStatusCode();
 
         // The write hook recorded gamma, so it now resolves through the grantee typeahead.
@@ -105,7 +105,7 @@ public sealed class ControlPlaneIdentityApiTests
         await EstablishAsync(host.Catalog, "flow", "acme");
 
         // A per-person (sub) administrator: its single-tag mapping is NOT the whole stamped identity, so complete:false.
-        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"dimension":"sub","value":"alice"}""", "administrators:write", "acme"))
+        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"kind":"person","value":"alice"}""", "administrators:write", "acme"))
             .EnsureSuccessStatusCode();
 
         using Stj.JsonDocument doc = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/identity/grantees?q=alice", AdminRead, "acme"));

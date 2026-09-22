@@ -10,29 +10,29 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 
-public readonly partial struct AdministratorMemberWrite
+public readonly partial struct AdministratorSetWrite
 {
-    public readonly partial struct AdministratorIdentityArray
-        : IJsonElement<AdministratorIdentityArray>
+    public readonly partial struct GranteeReferenceArray
+        : IJsonElement<GranteeReferenceArray>
     {
         public static partial class JsonSchema
         {
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/components/schemas/AdministratorMemberWrite/properties/identity"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/components/schemas/AdministratorSetWrite/properties/administrators"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated, as a JSON Pointer within <see cref="SchemaDocument"/>.
             /// </summary>
-            public const string SchemaLocation = "/components/schemas/AdministratorMemberWrite/properties/identity";
+            public const string SchemaLocation = "/components/schemas/AdministratorSetWrite/properties/administrators";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/AdministratorMemberWrite/properties/identity"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/AdministratorSetWrite/properties/administrators"u8;
 
             /// <summary>
             /// Gets the schema document from which this type was generated, relative to the base location for generation.
@@ -48,7 +48,7 @@ public readonly partial struct AdministratorMemberWrite
             /// </summary>
             public static ReadOnlySpan<byte> SchemaDocumentUtf8 => "arazzo-control-plane.openapi.json"u8;
 
-            private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CorvusJsonSchemaProgram.Entry(45);
+            private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CorvusJsonSchemaProgram.Entry(45);
 
             internal static bool Evaluate(
                 IJsonDocument parentDocument,

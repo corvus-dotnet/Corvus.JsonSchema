@@ -47,7 +47,7 @@ The runs commands above sit at the top level; the other control-plane resources 
 ```bash
 arazzo-runs credentials list --status expiring --server https://host:8080
 arazzo-runs credentials update petstore production --ref value=keyvault://petstore-key#4 --server https://host:8080
-arazzo-runs administrators add billing tenant acme --server https://host:8080
+arazzo-runs administrators add billing team acme --server https://host:8080
 arazzo-runs environments update production --max-steps 100 --step-timeout-seconds 30 --server https://host:8080
 arazzo-runs environments budget production --server https://host:8080
 arazzo-runs schedules create nightly-reconcile development nightly-reconcile 2 --cron "0 3 * * *" --inputs '{"date":"2026-07-20"}' --server https://host:8080

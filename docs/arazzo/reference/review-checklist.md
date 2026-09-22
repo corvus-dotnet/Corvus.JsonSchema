@@ -60,6 +60,9 @@ the same change as the thing that triggered it.
 
 - [ ] **Identity comes from the authenticated principal**, never from the request body, a header the caller
       controls, or a claim the token may carry unchecked. (V-2.)
+- [ ] **A grantee a write names is resolved by the server.** A write carries `{kind, value}` and `GranteeResolver`
+      produces the identity that is stored; no write shape has an identity field. (V-6: the administrator and
+      credential handlers stored whatever identity the client sent.)
 - [ ] **A check that takes a scope or an environment is given one.** A context-less overload of a reach-filtered
       call is a bypass. (V-10, V-30: the run-start isolation gate took no environment, so a runner in another environment answered for the run.)
 - [ ] **A new store or store method answers `SupportsRowSecurityFilter`** and ships a wire proof that the reach

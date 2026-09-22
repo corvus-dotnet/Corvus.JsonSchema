@@ -12032,7 +12032,7 @@ public static class ApiEndpointRegistration
         IEndpointConventionBuilder __AddEnvironmentAdministratorEndpoint = app.MapPost("/environments/{name}/administrators/members", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite>? bodyDoc = null;
+            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeReference>? bodyDoc = null;
             try
             {
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.EnvironmentName NameValue = default;
@@ -12060,7 +12060,7 @@ public static class ApiEndpointRegistration
 
                 try
                 {
-                    bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                    bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeReference>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
@@ -14310,7 +14310,7 @@ public static class ApiEndpointRegistration
         IEndpointConventionBuilder __AddAdministratorEndpoint = app.MapPost("/administrators/{baseWorkflowId}/members", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite>? bodyDoc = null;
+            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeReference>? bodyDoc = null;
             try
             {
                 Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString BaseWorkflowIdValue = default;
@@ -14338,7 +14338,7 @@ public static class ApiEndpointRegistration
 
                 try
                 {
-                    bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorMemberWrite>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                    bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.GranteeReference>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {

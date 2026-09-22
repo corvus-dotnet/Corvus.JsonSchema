@@ -28,16 +28,16 @@ internal sealed class AdministratorListSettings : BaseWorkflowIdSettings
     public string Output { get; init; } = "table";
 }
 
-/// <summary>Settings for adding or removing a single administrator identity, named by the deployment-mapped grant
-/// <c>{dimension, value}</c> (e.g. <c>tenant acme</c>) — never a raw internal tag.</summary>
+/// <summary>Settings for adding a single administrator, named as the grantee the server resolves to its exact identity
+/// (ADR 0008): a well-known kind and a value (e.g. <c>team acme</c>), never a raw internal tag.</summary>
 internal sealed class AdministratorMemberSettings : BaseWorkflowIdSettings
 {
-    [CommandArgument(1, "<dimension>")]
-    [Description("The identity dimension (e.g. tenant, workflow).")]
-    public string Dimension { get; init; } = string.Empty;
+    [CommandArgument(1, "<kind>")]
+    [Description("The grantee kind: person, team, role or workflow.")]
+    public string Kind { get; init; } = string.Empty;
 
     [CommandArgument(2, "<value>")]
-    [Description("The identity value (e.g. the tenant id).")]
+    [Description("The grantee value (a subject id, a team or role name, or a workflow id).")]
     public string Value { get; init; } = string.Empty;
 }
 
@@ -50,18 +50,18 @@ internal sealed class AdministratorRemoveSettings : BaseWorkflowIdSettings
     public string Digest { get; init; } = string.Empty;
 }
 
-/// <summary>Settings for replacing the whole administrator set. Each <c>--admin dimension=value</c> names one new
-/// administrator; a dimension may repeat to name several administrators in the same dimension.</summary>
+/// <summary>Settings for replacing the whole administrator set. Each <c>--admin kind=value</c> names one new
+/// administrator grantee the server resolves; a kind may repeat to name several administrators of that kind.</summary>
 internal sealed class AdministratorTransferSettings : BaseWorkflowIdSettings
 {
-    [CommandOption("--admin <DIMENSION=VALUE>")]
-    [Description("A new administrator identity, e.g. --admin tenant=acme (repeat to name several; at least one required).")]
+    [CommandOption("--admin <KIND=VALUE>")]
+    [Description("A new administrator grantee, e.g. --admin team=acme (repeat to name several; at least one required).")]
     public ILookup<string, string>? Administrators { get; init; }
 
     /// <inheritdoc/>
     public override Spectre.Console.ValidationResult Validate()
         => this.Administrators?.Any() != true
-            ? Spectre.Console.ValidationResult.Error("at least one --admin <dimension=value> is required.")
+            ? Spectre.Console.ValidationResult.Error("at least one --admin <kind=value> is required.")
             : base.Validate();
 }
 
@@ -90,12 +90,12 @@ internal sealed class AdministratorAddCommand : AsyncCommand<AdministratorMember
         using (http)
         await using (transport)
         {
-            // Build the member body inline at the call (the value field is taken by `in`, so the Build result is consumed
-            // directly rather than returned from a helper). The interim CLI path names a single {dimension, value} grant.
+            // Build the grantee body inline at the call (the fields are taken by `in`, so the Build result is consumed
+            // directly rather than returned from a helper). The server resolves the grantee to its identity (ADR 0008).
+            Models.GranteeKind.Source kind = settings.Kind;
             Models.JsonString.Source value = settings.Value;
-            Models.JsonString.Source dimension = settings.Dimension;
-            await using AddAdministratorResponse response = await client.AddAdministratorAsync(settings.BaseWorkflowId, Models.AdministratorMemberWrite.Build(value: value, dimension: dimension), cancellationToken);
-            return response.MatchResult(list => Output.Print(list.ToString()), Output.Problem, Output.Problem, Output.Problem, Output.Unexpected);
+            await using AddAdministratorResponse response = await client.AddAdministratorAsync(settings.BaseWorkflowId, Models.GranteeReference.Build(kind: kind, value: value), cancellationToken);
+            return response.MatchResult(list => Output.Print(list.ToString()), Output.Problem, Output.Problem, Output.Problem, Output.Problem, Output.Unexpected);
         }
     }
 }
@@ -124,7 +124,7 @@ internal sealed class AdministratorTransferCommand : AsyncCommand<AdministratorT
         {
             Models.AdministratorSetWrite.Source body = AdministratorCommandHelpers.SetWrite(settings.Administrators!);
             await using TransferAdministrationResponse response = await client.TransferAdministrationAsync(settings.BaseWorkflowId, body, cancellationToken);
-            return response.MatchResult(list => Output.Print(list.ToString()), Output.Problem, Output.Problem, Output.Problem, Output.Unexpected);
+            return response.MatchResult(list => Output.Print(list.ToString()), Output.Problem, Output.Problem, Output.Problem, Output.Problem, Output.Unexpected);
         }
     }
 }
@@ -132,18 +132,18 @@ internal sealed class AdministratorTransferCommand : AsyncCommand<AdministratorT
 /// <summary>Shared rendering and request-body construction for the administrators commands.</summary>
 internal static class AdministratorCommandHelpers
 {
-    public static Models.AdministratorIdentity.Source Identity(string dimension, string value)
-        => new((ref Models.AdministratorIdentity.Builder b) => b.Create(dimension, value));
+    public static Models.GranteeReference.Source Grantee(string kind, string value)
+        => new((ref Models.GranteeReference.Builder b) => b.Create(kind: kind, value: value));
 
     public static Models.AdministratorSetWrite.Source SetWrite(ILookup<string, string> administrators)
         => new((ref Models.AdministratorSetWrite.Builder b) => b.Create(
-            administrators: new Models.AdministratorSetWrite.AdministratorIdentityArray.Source((ref Models.AdministratorSetWrite.AdministratorIdentityArray.Builder ab) =>
+            administrators: new Models.AdministratorSetWrite.GranteeReferenceArray.Source((ref Models.AdministratorSetWrite.GranteeReferenceArray.Builder ab) =>
             {
                 foreach (IGrouping<string, string> group in administrators)
                 {
                     foreach (string value in group)
                     {
-                        ab.AddItem(Identity(group.Key, value));
+                        ab.AddItem(Grantee(group.Key, value));
                     }
                 }
             })));

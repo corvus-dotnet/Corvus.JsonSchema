@@ -6,6 +6,7 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using Corvus.Text.Json.Arazzo.Directories;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.AspNetCore.Authentication;
@@ -50,7 +51,7 @@ public sealed class ControlPlaneAdministratorsApiTests
         }
 
         // acme adds globex as a co-administrator (idempotent membership add).
-        using (Stj.JsonDocument added = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"dimension":"tenant","value":"globex"}""", Write, Acme)))
+        using (Stj.JsonDocument added = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"kind":"team","value":"globex"}""", Write, Acme)))
         {
             Grants(added).Order().ShouldBe(["tenant=acme", "tenant=globex"]);
         }
@@ -62,7 +63,7 @@ public sealed class ControlPlaneAdministratorsApiTests
         }
 
         // globex transfers administration to a fresh set (handing it back to acme).
-        using (Stj.JsonDocument transferred = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Put, "/administrators/flow", """{"administrators":[{"dimension":"tenant","value":"acme"}]}""", Write, Globex)))
+        using (Stj.JsonDocument transferred = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Put, "/administrators/flow", """{"administrators":[{"kind":"team","value":"acme"}]}""", Write, Globex)))
         {
             Grants(transferred).ShouldBe(["tenant=acme"]);
         }
@@ -75,7 +76,7 @@ public sealed class ControlPlaneAdministratorsApiTests
         await EstablishAsync(host.Catalog, "flow", Acme);
 
         // globex is not an administrator: adding (or transferring, or removing) is refused, non-disclosingly.
-        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"dimension":"tenant","value":"globex"}""", Write, Globex))
+        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"kind":"team","value":"globex"}""", Write, Globex))
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await host.SendAsync(HttpMethod.Delete, $"/administrators/flow/members/{Digest(Acme)}", Write, Globex))
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
@@ -87,7 +88,7 @@ public sealed class ControlPlaneAdministratorsApiTests
         await using Scoped host = await StartAsync();
 
         // No administration established for 'ghost': a mutation is a 403, not a 404 — membership is non-disclosing.
-        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/ghost/members", """{"dimension":"tenant","value":"globex"}""", Write, Acme))
+        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/ghost/members", """{"kind":"team","value":"globex"}""", Write, Acme))
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
         // Listing an unknown base id is an empty set (no administration), not an error.
@@ -150,7 +151,7 @@ public sealed class ControlPlaneAdministratorsApiTests
         (await host.SendAsync(HttpMethod.Get, "/administrators/flow", null, Acme)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
 
         // A read scope cannot write → 403.
-        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"dimension":"tenant","value":"globex"}""", Read, Acme))
+        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"kind":"team","value":"globex"}""", Read, Acme))
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
         // A write scope cannot read in this fixture (distinct scopes) → 403 on the read endpoint.
@@ -166,16 +167,16 @@ public sealed class ControlPlaneAdministratorsApiTests
         await EstablishAsync(host.Catalog, "flow", Acme);
 
         // acme records a co-administrator grantee "real" (→ the shared identity), succeeding and seeding the typeahead.
-        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"dimension":"tenant","value":"real"}""", Write, Acme))
+        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"kind":"team","value":"real"}""", Write, Acme))
             .StatusCode.ShouldBe(HttpStatusCode.OK);
 
         // "alias" is a DIFFERENT grantee value that resolves to the SAME identity as "real" — naming it would author an
         // ambiguous grant (the grant would silently also admit "real"), so it is refused (409), not merged.
-        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"dimension":"tenant","value":"alias"}""", Write, Acme))
+        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"kind":"team","value":"alias"}""", Write, Acme))
             .StatusCode.ShouldBe(HttpStatusCode.Conflict);
 
         // A genuinely distinct grantee resolves to its own identity and is unaffected.
-        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"dimension":"tenant","value":"distinct"}""", Write, Acme))
+        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"kind":"team","value":"distinct"}""", Write, Acme))
             .StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
@@ -200,7 +201,7 @@ public sealed class ControlPlaneAdministratorsApiTests
         // Granting the narrower team identity {sys:tenant=acme} broadens administration to also admit alice (whose identity
         // contains it). The add SUCCEEDS (non-blocking, unlike the set-equal collision 409) and the response carries a
         // broadeningAdvisory naming the subsumed grantee.
-        using Stj.JsonDocument added = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"dimension":"tenant","value":"acme"}""", Write, Acme));
+        using Stj.JsonDocument added = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"kind":"team","value":"acme"}""", Write, Acme));
         Stj.JsonElement advisory = added.RootElement.GetProperty("broadeningAdvisory");
         advisory.GetProperty("message").GetString().ShouldNotBeNullOrEmpty();
         advisory.GetProperty("subsumesGrantees").EnumerateArray()
@@ -208,12 +209,95 @@ public sealed class ControlPlaneAdministratorsApiTests
             .ShouldBe(["person:alice"]);
 
         // Granting a distinct identity that subsumes no existing grantee omits the advisory entirely.
-        using Stj.JsonDocument globex = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"dimension":"tenant","value":"globex"}""", Write, Acme));
+        using Stj.JsonDocument globex = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"kind":"team","value":"globex"}""", Write, Acme));
         globex.RootElement.TryGetProperty("broadeningAdvisory", out _).ShouldBeFalse();
     }
 
     // Each administrator is now a resolved-identity grant {digest, identity:[{dimension,value}], kind?, label?}; flatten its
     // identity grants to dimension=value strings (each administrator in these tests is a single-grant identity).
+    [TestMethod]
+    public async Task A_grantee_is_resolved_by_the_server_through_the_directory_on_add_and_transfer()
+    {
+        // ADR 0008: a write names a grantee ({kind, value}); the identity stored is the one the SERVER resolves. With a
+        // directory configured, a team resolves to the directory's full identity (issuer + tenant), which the policy's own
+        // kind-to-dimension mapping (sys:tenant only) could not produce, so the stored identity proves the directory leg ran.
+        var directory = new FakeDirectory(new ResolvedPrincipal(GranteeKind.Team, "globex", "Globex", DirectoryIdentity("globex")));
+        await using Scoped host = await StartAsync(directory: directory);
+        await EstablishAsync(host.Catalog, "flow", Acme);
+
+        using (Stj.JsonDocument added = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"kind":"team","value":"globex"}""", Write, Acme)))
+        {
+            Grants(added).Order().ShouldBe(["iss=https://idp.example.com", "tenant=acme", "tenant=globex"]);
+        }
+
+        using (Stj.JsonDocument transferred = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Put, "/administrators/flow", """{"administrators":[{"kind":"team","value":"globex"}]}""", Write, Acme)))
+        {
+            Grants(transferred).Order().ShouldBe(["iss=https://idp.example.com", "tenant=globex"]);
+        }
+    }
+
+    [TestMethod]
+    public async Task A_client_supplied_identity_is_never_stored()
+    {
+        // The write shape carries no identity: an identity a client smuggles into the body is ignored, and the grantee it
+        // names is resolved by the server. Here the smuggled identity is acme's own, which would have made the add a no-op.
+        await using Scoped host = await StartAsync();
+        await EstablishAsync(host.Catalog, "flow", Acme);
+
+        using Stj.JsonDocument added = await ReadJsonAsync(await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/administrators/flow/members",
+            """{"kind":"team","value":"globex","identity":[{"dimension":"tenant","value":"acme"}],"complete":true,"dimension":"tenant"}""",
+            Write,
+            Acme));
+        Grants(added).Order().ShouldBe(["tenant=acme", "tenant=globex"]);
+    }
+
+    [TestMethod]
+    public async Task An_unreachable_directory_refuses_the_write_rather_than_guessing_the_identity()
+    {
+        // The directory would have resolved the grantee; when it cannot be reached the server does NOT fall back to its own
+        // coarser mapping (which would store a different identity from the one the picker showed): the write is refused
+        // with the same 502 the explicit directory search reports, and the administrator set is unchanged.
+        await using Scoped host = await StartAsync(directory: new BrokenDirectory());
+        await EstablishAsync(host.Catalog, "flow", Acme);
+
+        HttpResponseMessage refused = await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"kind":"team","value":"globex"}""", Write, Acme);
+        refused.StatusCode.ShouldBe(HttpStatusCode.BadGateway);
+        using (Stj.JsonDocument problem = await ReadJsonAsync(refused))
+        {
+            problem.RootElement.GetProperty("title").GetString().ShouldBe("Directory unavailable");
+        }
+
+        (await host.SendJsonAsync(HttpMethod.Put, "/administrators/flow", """{"administrators":[{"kind":"team","value":"globex"}]}""", Write, Acme)).StatusCode.ShouldBe(HttpStatusCode.BadGateway);
+
+        using Stj.JsonDocument listed = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/administrators/flow", Read, Acme));
+        Grants(listed).ShouldBe(["tenant=acme"]);
+
+        // A workflow is never directory-resolved, so it still resolves through the policy while the directory is down.
+        using Stj.JsonDocument workflowAdded = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"kind":"workflow","value":"nightly"}""", Write, Acme));
+        Grants(workflowAdded).Order().ShouldBe(["tenant=acme", "workflow=nightly"]);
+    }
+
+    // A directory identity richer than the policy's single-tag mapping: the issuer the directory stamps plus the tenant.
+    private static SecurityTagSet DirectoryIdentity(string tenant)
+        => SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "iss", "https://idp.example.com"), new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", tenant)]);
+
+    private sealed class FakeDirectory(params ResolvedPrincipal[] principals) : IPrincipalDirectory
+    {
+        public ValueTask<IReadOnlyList<ResolvedPrincipal>> SearchAsync(GranteeKind kind, string query, int limit, CancellationToken cancellationToken)
+        {
+            IReadOnlyList<ResolvedPrincipal> matches = [.. principals.Where(p => p.Kind == kind && p.Value.StartsWith(query, StringComparison.Ordinal)).Take(limit)];
+            return new ValueTask<IReadOnlyList<ResolvedPrincipal>>(matches);
+        }
+    }
+
+    private sealed class BrokenDirectory : IPrincipalDirectory
+    {
+        public ValueTask<IReadOnlyList<ResolvedPrincipal>> SearchAsync(GranteeKind kind, string query, int limit, CancellationToken cancellationToken)
+            => throw new PrincipalDirectoryException("the directory returned 403 (Forbidden).");
+    }
+
     private static IEnumerable<string> Grants(Stj.JsonDocument document)
         => document.RootElement.GetProperty("administrators").EnumerateArray()
             .SelectMany(a => a.GetProperty("identity").EnumerateArray()
@@ -233,9 +317,9 @@ public sealed class ControlPlaneAdministratorsApiTests
         await using Scoped host = await StartAsync();
         await EstablishAsync(host.Catalog, "flow", Acme);
 
-        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"dimension":"tenant","value":"globex"}""", Write, Acme)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"kind":"team","value":"globex"}""", Write, Acme)).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await host.SendAsync(HttpMethod.Delete, $"/administrators/flow/members/{Digest(Acme)}", Write, Globex)).StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await host.SendJsonAsync(HttpMethod.Put, "/administrators/flow", """{"administrators":[{"dimension":"tenant","value":"acme"}]}""", Write, Globex)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await host.SendJsonAsync(HttpMethod.Put, "/administrators/flow", """{"administrators":[{"kind":"team","value":"acme"}]}""", Write, Globex)).StatusCode.ShouldBe(HttpStatusCode.OK);
 
         audit.Events("flow").ShouldBe([("workflow.add-administrator", "added"), ("workflow.remove-administrator", "removed"), ("workflow.transfer-administration", "transferred")]);
     }
@@ -263,7 +347,7 @@ public sealed class ControlPlaneAdministratorsApiTests
         return CatalogPackage.Build(workflow, []);
     }
 
-    private static async Task<Scoped> StartAsync(bool withAdministratorStore = true, IObservedIdentityStore? observed = null, ControlPlaneRowSecurityPolicy? policy = null)
+    private static async Task<Scoped> StartAsync(bool withAdministratorStore = true, IObservedIdentityStore? observed = null, ControlPlaneRowSecurityPolicy? policy = null, IPrincipalDirectory? directory = null)
     {
         var store = new InMemoryWorkflowStateStore();
         var management = new SecuredWorkflowManagement(store, "ops");
@@ -287,15 +371,15 @@ public sealed class ControlPlaneAdministratorsApiTests
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: policy ?? new TenantIdentityPolicy(), observedIdentityStore: observed, auditor: GovernanceAuditor.CreateInMemory());
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), ControlPlaneSecurityMode.Scoped, rowSecurity: policy ?? new TenantIdentityPolicy(), observedIdentityStore: observed, principalDirectory: directory, auditor: GovernanceAuditor.CreateInMemory());
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient(), catalog);
     }
 
     /// <summary>A minimal scoped policy: an operator (full reach), with the principal's <c>tenant</c> claim stamped as
-    /// the deployment identity <c>sys:tenant=&lt;tenant&gt;</c> — so a caller is recognized as an administrator and the
-    /// base class's grant mapping (grant {tenant, value} ↔ sys:tenant=value) round-trips.</summary>
+    /// the deployment identity <c>sys:tenant=&lt;tenant&gt;</c>, so a caller is recognized as an administrator and the
+    /// base class's grantee mapping (a <c>team</c> grantee resolves to sys:tenant=value) round-trips.</summary>
     private sealed class TenantIdentityPolicy : ControlPlaneRowSecurityPolicy
     {
         public override AccessContext Resolve(ClaimsPrincipal? principal) => AccessContext.System;
@@ -320,12 +404,11 @@ public sealed class ControlPlaneAdministratorsApiTests
             return string.IsNullOrEmpty(tenant) ? [] : [new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", tenant)];
         }
 
-        public override void ResolveUsageGrantInto(ReadOnlySpan<byte> dimension, ReadOnlySpan<byte> value, ref IdentityBuilder builder)
+        public override SecurityTagSet ResolveGranteeIdentity(GranteeKind kind, string value)
         {
-            // The grantee identity is resolved bytes-to-bytes; the collision is introduced by remapping the value span,
-            // then delegating to the default prefix+dimension mapping — no managed string on the path.
-            ReadOnlySpan<byte> resolved = value.SequenceEqual("real"u8) || value.SequenceEqual("alias"u8) ? "shared"u8 : value;
-            base.ResolveUsageGrantInto(dimension, resolved, ref builder);
+            // The collision is introduced by remapping the value, then delegating to the default kind-to-dimension mapping.
+            string resolved = value is "real" or "alias" ? "shared" : value;
+            return base.ResolveGranteeIdentity(kind, resolved);
         }
     }
 

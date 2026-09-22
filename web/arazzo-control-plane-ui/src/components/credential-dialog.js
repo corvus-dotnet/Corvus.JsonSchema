@@ -684,13 +684,13 @@ class ArazzoCredentialDialog extends ArazzoElement {
       else if (this._editing.rotatedAt) body.rotatedAt = this._editing.rotatedAt;
     } else {
       // Usage scopes which runs may use the binding. "Shared" (the default) writes no usage grant → usable by any run
-      // that references the source. "Restrict to…" carries the picked grantee's identity (AND-matched); kind/label are
-      // for display. Usage is set at create and immutable afterwards.
+      // that references the source. "Restrict to…" names the picked grantee (kind/value/label); the server resolves it
+      // to the identity it stores (ADR 0008). Usage is set at create and immutable afterwards.
       // mTLS is connection-level and cannot be usage-scoped (the server rejects it), so it never carries a grantee.
       const restricted = this.authKind !== 'mtls' && this.$('input[name="usageMode"]:checked')?.value === 'restricted';
       const grantee = restricted ? this.$('.usage-grantee')?.grant : null;
       if (grantee) {
-        body.usageGrantee = { identity: grantee.identity, kind: grantee.kind, label: grantee.label };
+        body.usageGrantee = { kind: grantee.kind, value: grantee.value, label: grantee.label };
       }
     }
 

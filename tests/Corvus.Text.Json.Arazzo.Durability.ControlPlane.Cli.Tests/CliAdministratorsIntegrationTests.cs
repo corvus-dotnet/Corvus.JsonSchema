@@ -37,7 +37,7 @@ public sealed partial class CliIntegrationTests
         listOut.ShouldContain("acme");
 
         // acme adds globex as a co-administrator.
-        (int addExit, string addOut, _) = await RunAsync(host, "administrators", "add", "flow", "tenant", "globex", "--token", "acme");
+        (int addExit, string addOut, _) = await RunAsync(host, "administrators", "add", "flow", "team", "globex", "--token", "acme");
         addExit.ShouldBe(0);
         addOut.ShouldContain("globex");
         addOut.ShouldContain("acme");
@@ -50,7 +50,7 @@ public sealed partial class CliIntegrationTests
         removeOut.ShouldNotContain("acme");
 
         // globex transfers administration back to acme (replacing the whole set).
-        (int transferExit, string transferOut, _) = await RunAsync(host, "administrators", "transfer", "flow", "--admin", "tenant=acme", "--token", "globex");
+        (int transferExit, string transferOut, _) = await RunAsync(host, "administrators", "transfer", "flow", "--admin", "team=acme", "--token", "globex");
         transferExit.ShouldBe(0);
         transferOut.ShouldContain("acme");
         transferOut.ShouldNotContain("globex");
@@ -62,7 +62,7 @@ public sealed partial class CliIntegrationTests
         await using Host host = await StartAdministeredAsync();
 
         // globex is not an administrator of 'flow': the add is refused (403 → non-zero exit).
-        (int exit, _, string stderr) = await RunAsync(host, "administrators", "add", "flow", "tenant", "globex", "--token", "globex");
+        (int exit, _, string stderr) = await RunAsync(host, "administrators", "add", "flow", "team", "globex", "--token", "globex");
         exit.ShouldBe(1);
         stderr.ShouldNotBeNullOrEmpty();
     }

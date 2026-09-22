@@ -1872,7 +1872,11 @@
             }
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
-          "409": { "$ref": "#/components/responses/Conflict" }
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "502": {
+            "description": "The principal directory that resolves the named grantee could not be reached; the identity is never guessed.",
+            "content": { "application/problem+json": { "schema": { "$ref": "#/components/schemas/ProblemDetails" } } }
+          }
         }
       }
     },
@@ -3375,7 +3379,11 @@
           "400": { "$ref": "#/components/responses/BadRequest" },
           "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" },
-          "409": { "$ref": "#/components/responses/Conflict" }
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "502": {
+            "description": "The principal directory that resolves the named grantee could not be reached; the identity is never guessed.",
+            "content": { "application/problem+json": { "schema": { "$ref": "#/components/schemas/ProblemDetails" } } }
+          }
         }
       }
     },
@@ -3389,13 +3397,13 @@
         ],
         "tags": ["environments"],
         "summary": "Add an environment administrator",
-        "description": "Adds an identity to the environment's administrator set (idempotent). The caller must be a current administrator (403 otherwise); a stale concurrent change conflicts (409).",
+        "description": "Adds a grantee to the environment's administrator set (idempotent); the server resolves it to its exact identity (ADR 0008). The caller must be a current administrator (403 otherwise); a stale concurrent change conflicts (409).",
         "parameters": [
           { "$ref": "#/components/parameters/EnvironmentNamePath" }
         ],
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdministratorMemberWrite" } } }
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GranteeReference" } } }
         },
         "responses": {
           "200": {
@@ -3405,7 +3413,11 @@
           "400": { "$ref": "#/components/responses/BadRequest" },
           "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" },
-          "409": { "$ref": "#/components/responses/Conflict" }
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "502": {
+            "description": "The principal directory that resolves the named grantee could not be reached; the identity is never guessed.",
+            "content": { "application/problem+json": { "schema": { "$ref": "#/components/schemas/ProblemDetails" } } }
+          }
         }
       }
     },
@@ -4043,7 +4055,11 @@
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "403": { "$ref": "#/components/responses/Forbidden" },
-          "409": { "$ref": "#/components/responses/Conflict" }
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "502": {
+            "description": "The principal directory that resolves the named grantee could not be reached; the identity is never guessed.",
+            "content": { "application/problem+json": { "schema": { "$ref": "#/components/schemas/ProblemDetails" } } }
+          }
         }
       }
     },
@@ -4057,13 +4073,13 @@
         ],
         "tags": ["administrators"],
         "summary": "Add an administrator",
-        "description": "Adds an identity to the base workflow id's administrator set (idempotent). The caller must be a current administrator (403 otherwise); a stale concurrent change conflicts (409).",
+        "description": "Adds a grantee to the base workflow id's administrator set (idempotent); the server resolves it to its exact identity (ADR 0008). The caller must be a current administrator (403 otherwise); a stale concurrent change conflicts (409).",
         "parameters": [
           { "$ref": "#/components/parameters/BaseWorkflowIdPath" }
         ],
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdministratorMemberWrite" } } }
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GranteeReference" } } }
         },
         "responses": {
           "200": {
@@ -4072,7 +4088,11 @@
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "403": { "$ref": "#/components/responses/Forbidden" },
-          "409": { "$ref": "#/components/responses/Conflict" }
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "502": {
+            "description": "The principal directory that resolves the named grantee could not be reached; the identity is never guessed.",
+            "content": { "application/problem+json": { "schema": { "$ref": "#/components/schemas/ProblemDetails" } } }
+          }
         }
       }
     },
@@ -8379,7 +8399,7 @@
       },
       "CredentialUsageGrantee": {
         "type": "object",
-        "description": "The resolved grantee whose runs may USE a binding (§13/§16.5.4): its identity as the deployment-mapped {dimension,value} grants the deployment resolves to unforgeable internal tags, plus the resolved kind/label for display. Mirrors AdministratorGrant. A run may use the binding only if it carries every tag of this identity (label-superset). Omit on a binding to default to the creating principal's identity (the owner's runs).",
+        "description": "The resolved grantee whose runs may USE a binding (§13/§16.5.4), as a summary reports it: its identity as the deployment-mapped {dimension,value} grants (the unforgeable internal tags described back), plus the resolved kind/label for display. A run may use the binding only if it carries every tag of this identity. Absent on a binding usable by the owner's runs only or shared.",
         "properties": {
           "identity": {
             "type": "array",
@@ -8417,9 +8437,7 @@
             "description": "Security tags scoping who may MANAGE this binding (§14.2), independent of the usage grant (usageGrantee). The deployment additionally stamps the creating principal's internal tenant tag, and rejects a set the creator's own reach does not admit (no privilege escalation). The reserved internal-tag prefix is not allowed here.",
             "items": { "$ref": "#/components/schemas/CredentialSecurityTag" }
           },
-          "usageGrantee": {
-            "$ref": "#/components/schemas/CredentialUsageGrantee"
-          },
+          "usageGrantee": { "$ref": "#/components/schemas/GranteeReference" },
           "expiresAt": {
             "type": "string",
             "format": "date-time",
@@ -8539,22 +8557,15 @@
         },
         "required": ["dimension", "value"]
       },
-      "AdministratorMemberWrite": {
+      "GranteeReference": {
         "type": "object",
-        "description": "Names an administrator to add (§15). Provide EITHER a resolved grantee from the picker — its `kind`, searchable `value`, and full `identity` (the {dimension,value} grants of GET /identity/grantees), which names a multi-tag grantee (e.g. a person resolved to {sys:tenant, sys:sub}) exactly — OR, for the simple case, a single deployment-mapped {dimension, value} grant (the kind is inferred from the dimension). When `identity` is present and non-empty it is the stored administrator identity.",
+        "description": "A grantee a write names (§15, §13, §16.5.4): its well-known kind and the searched value the picker or the operator supplied. The server resolves it to the exact identity the deployment stamps (the directory, then the observed identities, then the policy's mapping of the kind) and stores that identity; a client never supplies one. A grantee nothing resolves is refused (400).",
         "properties": {
           "kind": { "$ref": "#/components/schemas/GranteeKind" },
-          "value": { "type": "string", "description": "The grantee value — the searched key (resolved-grantee form) or the single grant's value." },
-          "identity": {
-            "type": "array",
-            "description": "The grantee's full resolved identity as {dimension, value} grants (from GET /identity/grantees). When present and non-empty this is the administrator identity; `kind` should accompany it.",
-            "items": { "$ref": "#/components/schemas/AdministratorIdentity" }
-          },
-          "label": { "type": "string", "description": "An optional human-friendly display label, recorded for the §16.5.4 typeahead." },
-          "complete": { "type": "boolean", "description": "Whether `identity` is the grantee's whole stamped identity (the picker's honest `complete`); defaults to true for the resolved-grantee form." },
-          "dimension": { "type": "string", "description": "The single-grant identity dimension (the simple form; ignored when `identity` is provided). The kind is inferred from it." }
+          "value": { "type": "string", "description": "The grantee value: a subject id, a team or role name, or a workflow id." },
+          "label": { "type": "string", "description": "An optional human-friendly display label, recorded for the §16.5.4 typeahead." }
         },
-        "required": ["value"]
+        "required": ["kind", "value"]
       },
       "AdministratorGrant": {
         "type": "object",
@@ -8608,12 +8619,12 @@
       },
       "AdministratorSetWrite": {
         "type": "object",
-        "description": "The replacement administrator set for a transfer (§15) — at least one identity; duplicates are coalesced.",
+        "description": "The replacement administrator set for a transfer (§15): at least one grantee, each resolved by the server; duplicates are coalesced.",
         "properties": {
           "administrators": {
             "type": "array",
             "minItems": 1,
-            "items": { "$ref": "#/components/schemas/AdministratorIdentity" }
+            "items": { "$ref": "#/components/schemas/GranteeReference" }
           }
         },
         "required": ["administrators"]

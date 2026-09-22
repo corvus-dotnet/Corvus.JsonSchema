@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client;
 /// <summary>
 /// Request type for the AddAdministrator operation.
 /// </summary>
-/// <remarks>Adds an identity to the base workflow id's administrator set (idempotent). The caller must be a current administrator (403 otherwise); a stale concurrent change conflicts (409).</remarks>
+/// <remarks>Adds a grantee to the base workflow id's administrator set (idempotent); the server resolves it to its exact identity (ADR 0008). The caller must be a current administrator (403 otherwise); a stale concurrent change conflicts (409).</remarks>
 public readonly struct AddAdministratorRequest : IApiRequest<AddAdministratorRequest>
 {
 

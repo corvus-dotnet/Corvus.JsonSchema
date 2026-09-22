@@ -1100,18 +1100,18 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
-   * `addEnvironmentAdministrator` — add a resolved identity to an environment's administrator set (idempotent); the
-   * caller must be a current administrator (`403`). Provide a resolved grantee from the picker (its `kind`, `value`,
-   * and full `identity`) OR a single deployment-mapped `{ dimension, value }` grant. See {@link addAdministrator}.
+   * `addEnvironmentAdministrator` — add a grantee to an environment's administrator set (idempotent); the caller must
+   * be a current administrator (`403`). The member names the grantee (`kind`, `value`, optional display `label`); the
+   * server resolves it to its exact identity (ADR 0008). See {@link addAdministrator}.
    * @param {string} name
-   * @param {{ value: string, dimension?: string, kind?: string, identity?: Array<{ dimension: string, value: string }>, label?: string, complete?: boolean }} member
+   * @param {{ kind: string, value: string, label?: string }} member
    * @param {{ signal?: AbortSignal }} [opts]
-   * @returns {Promise<object>} The resulting {@link AdministratorList}. Throws {@link ProblemError} `400`/`403`/`404`/`409`.
+   * @returns {Promise<object>} The resulting {@link AdministratorList}. Throws {@link ProblemError} `400`/`403`/`404`/`409`/`502`.
    */
   addEnvironmentAdministrator(name, member, opts = {}) {
     if (!name) throw new TypeError('addEnvironmentAdministrator requires a name.');
-    if (!member || !member.value || (!member.dimension && !(Array.isArray(member.identity) && member.identity.length > 0))) {
-      throw new TypeError('addEnvironmentAdministrator requires a resolved grantee ({ kind, value, identity }) or a single { dimension, value } grant.');
+    if (!member || !member.kind || !member.value) {
+      throw new TypeError('addEnvironmentAdministrator requires a grantee reference ({ kind, value }).');
     }
     return this._request('POST', `${this._environmentAdministratorsPath(name)}/members`, { body: member, signal: opts.signal });
   }
@@ -1130,7 +1130,7 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
-   * `transferEnvironmentAdministration` — replace the entire administrator set with the given identities (at least one);
+   * `transferEnvironmentAdministration` — replace the entire administrator set with the given grantees (at least one);
    * an administrator may transfer administration away from itself. The caller must be a current administrator (`403`).
    * @param {string} name
    * @param {{ administrators: Array<{ dimension: string, value: string }> }} body
@@ -1865,19 +1865,17 @@ export class ArazzoControlPlaneClient {
   // ---- administrators:write ---------------------------------------------------------------------
 
   /**
-   * `addAdministrator` — add a resolved identity to the base id's administrator set (idempotent). The caller must
-   * be a current administrator (`403` otherwise). Provide EITHER a resolved grantee from the picker (its `kind`,
-   * searchable `value`, and full `identity` — the `{ dimension, value }` grants of {@link searchGrantees} — which
-   * names a multi-tag grantee exactly) OR, for the simple case, a single deployment-mapped `{ dimension, value }`
-   * grant (the kind is inferred from the dimension). `value` is required in both forms.
-   * @param {{ value: string, dimension?: string, kind?: string, identity?: Array<{ dimension: string, value: string }>, label?: string, complete?: boolean }} member
+   * `addAdministrator` — add a grantee to the base id's administrator set (idempotent). The caller must be a current
+   * administrator (`403` otherwise). The member names the grantee the picker resolved (`kind`, searchable `value`,
+   * optional display `label`); the server resolves it to its exact identity (ADR 0008), so a client never sends one.
    * @param {string} baseWorkflowId
+   * @param {{ kind: string, value: string, label?: string }} member
    * @param {{ signal?: AbortSignal }} [opts]
-   * @returns {Promise<object>} The resulting {@link AdministratorList}. Throws {@link ProblemError} `400`/`403`/`409`.
+   * @returns {Promise<object>} The resulting {@link AdministratorList}. Throws {@link ProblemError} `400`/`403`/`409`/`502`.
    */
   addAdministrator(baseWorkflowId, member, opts = {}) {
-    if (!member || !member.value || (!member.dimension && !(Array.isArray(member.identity) && member.identity.length > 0))) {
-      throw new TypeError('addAdministrator requires a resolved grantee ({ kind, value, identity }) or a single { dimension, value } grant.');
+    if (!member || !member.kind || !member.value) {
+      throw new TypeError('addAdministrator requires a grantee reference ({ kind, value }).');
     }
     return this._request('POST', `${this._administratorsPath(baseWorkflowId)}/members`, { body: member, signal: opts.signal });
   }
@@ -1896,11 +1894,11 @@ export class ArazzoControlPlaneClient {
   }
 
   /**
-   * `transferAdministration` — replace the entire administrator set with the given identities (at least one);
-   * an administrator may transfer administration away from itself. The caller must be a current administrator
-   * (`403` otherwise).
+   * `transferAdministration` — replace the entire administrator set with the given grantees (at least one), each
+   * resolved by the server; an administrator may transfer administration away from itself. The caller must be a
+   * current administrator (`403` otherwise).
    * @param {string} baseWorkflowId
-   * @param {{ administrators: Array<{ dimension: string, value: string }> }} body
+   * @param {{ administrators: Array<{ kind: string, value: string, label?: string }> }} body
    * @param {{ signal?: AbortSignal }} [opts]
    * @returns {Promise<object>} The resulting {@link AdministratorList}. Throws {@link ProblemError} `400`/`403`/`409`.
    */

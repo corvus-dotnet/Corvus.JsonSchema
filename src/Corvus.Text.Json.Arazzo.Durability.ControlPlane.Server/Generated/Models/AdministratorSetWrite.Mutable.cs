@@ -188,11 +188,11 @@ public readonly partial struct AdministratorSetWrite
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Mutable Administrators
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.GranteeReferenceArray.Mutable Administrators
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AdministratorsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AdministratorsUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.GranteeReferenceArray.Mutable value))
                 {
                     return value;
                 }
@@ -234,7 +234,7 @@ public readonly partial struct AdministratorSetWrite
         /// Set the <c>administrators</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAdministrators(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source value)
+        public void SetAdministrators(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.GranteeReferenceArray.Source value)
         {
             CheckValidInstance();
 
@@ -265,7 +265,7 @@ public readonly partial struct AdministratorSetWrite
         /// Set the <c>administrators</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAdministrators<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source<TContext> value)
+        public void SetAdministrators<TContext>(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.GranteeReferenceArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -509,7 +509,7 @@ public readonly partial struct AdministratorSetWrite
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.GranteeReferenceArray.Source _createArg1;
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Source.IsUndefined"/>
         public bool IsUndefined => _kind == Kind.Unknown;
@@ -522,7 +522,7 @@ public readonly partial struct AdministratorSetWrite
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source arg1)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.GranteeReferenceArray.Source arg1)
         {
             _createArg1 = arg1;
             _kind = Kind.Create;
@@ -673,7 +673,7 @@ public readonly partial struct AdministratorSetWrite
         TContext _context;
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source<TContext> _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.GranteeReferenceArray.Source<TContext> _createArg1;
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Source.IsUndefined"/>
         public bool IsUndefined => _kind == Kind.Unknown;
@@ -684,7 +684,7 @@ public readonly partial struct AdministratorSetWrite
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source<TContext> arg1)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.GranteeReferenceArray.Source<TContext> arg1)
         {
             _context = context;
             _createArg1 = arg1;
@@ -835,7 +835,7 @@ public readonly partial struct AdministratorSetWrite
             _builder = builder;
         }
 
-        internal static void Create(ref ComplexValueBuilder builder, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source administrators)
+        internal static void Create(ref ComplexValueBuilder builder, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.GranteeReferenceArray.Source administrators)
         {
             administrators.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Administrators, ref builder);
         }
@@ -843,7 +843,7 @@ public readonly partial struct AdministratorSetWrite
         /// <summary>
         /// Creates an instance of a <see cref="AdministratorSetWrite"/>.
         /// </summary>
-        public void Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source administrators)
+        public void Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.GranteeReferenceArray.Source administrators)
         {
             Create(ref _builder, administrators);
         }
@@ -851,7 +851,7 @@ public readonly partial struct AdministratorSetWrite
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source<TContext> administrators)
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.GranteeReferenceArray.Source<TContext> administrators)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -862,7 +862,7 @@ public readonly partial struct AdministratorSetWrite
         /// <summary>
         /// Creates an instance of a <see cref="AdministratorSetWrite"/>.
         /// </summary>
-        public void Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source<TContext> administrators)
+        public void Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.GranteeReferenceArray.Source<TContext> administrators)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -962,14 +962,14 @@ public readonly partial struct AdministratorSetWrite
             o.EndObject();
         }
 
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source arg1, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.GranteeReferenceArray.Source arg1, ref ComplexValueBuilder o)
         {
             o.StartObject();
             Create(ref o, arg1);
             o.EndObject();
         }
 
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source<TContext> arg1, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.GranteeReferenceArray.Source<TContext> arg1, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1014,7 +1014,7 @@ public readonly partial struct AdministratorSetWrite
     /// </summary>
     /// <param name="administrators">The value of the <c>"administrators"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source administrators)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.GranteeReferenceArray.Source administrators)
     {
         return new Source(administrators);
     }
@@ -1026,7 +1026,7 @@ public readonly partial struct AdministratorSetWrite
     /// <param name="context">The context to pass to the builder.</param>
     /// <param name="administrators">The value of the <c>"administrators"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source<TContext> administrators)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.GranteeReferenceArray.Source<TContext> administrators)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1130,7 +1130,7 @@ public readonly partial struct AdministratorSetWrite
     /// <param name="administrators">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source administrators, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.GranteeReferenceArray.Source administrators, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1152,7 +1152,7 @@ public readonly partial struct AdministratorSetWrite
     /// <param name="administrators">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source<TContext> administrators, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.GranteeReferenceArray.Source<TContext> administrators, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1261,7 +1261,7 @@ public readonly partial struct AdministratorSetWrite
     /// <param name="administrators">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<AdministratorSetWrite> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source administrators, int initialCapacity = 30)
+    public static ParsedJsonDocument<AdministratorSetWrite> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.GranteeReferenceArray.Source administrators, int initialCapacity = 30)
     {
         ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
         try
@@ -1289,7 +1289,7 @@ public readonly partial struct AdministratorSetWrite
     /// <param name="administrators">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<AdministratorSetWrite> Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.AdministratorIdentityArray.Source<TContext> administrators, int initialCapacity = 30)
+    public static ParsedJsonDocument<AdministratorSetWrite> Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.AdministratorSetWrite.GranteeReferenceArray.Source<TContext> administrators, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

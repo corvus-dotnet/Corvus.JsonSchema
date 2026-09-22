@@ -315,14 +315,14 @@ public readonly partial struct CredentialBindingCreate
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The resolved grantee whose runs may USE a binding (&#167;13/&#167;16.5.4): its identity as the deployment-mapped {dimension,value} grants the deployment resolves to unforgeable internal tags, plus the resolved kind/label for display. Mirrors AdministratorGrant. A run may use the binding only if it carries every tag of this identity (label-superset). Omit on a binding to default to the creating principal&#39;s identity (the owner&#39;s runs).
+    /// A grantee a write names (&#167;15, &#167;13, &#167;16.5.4): its well-known kind and the searched value the picker or the operator supplied. The server resolves it to the exact identity the deployment stamps (the directory, then the observed identities, then the policy&#39;s mapping of the kind) and stores that identity; a client never supplies one. A grantee nothing resolves is refused (400).
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialUsageGrantee UsageGrantee
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference UsageGrantee
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UsageGranteeUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialUsageGrantee value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UsageGranteeUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference value))
             {
                 return value;
             }

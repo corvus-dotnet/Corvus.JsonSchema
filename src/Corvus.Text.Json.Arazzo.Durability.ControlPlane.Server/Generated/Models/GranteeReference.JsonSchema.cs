@@ -11,25 +11,25 @@ using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models;
-public readonly partial struct AdministratorMemberWrite
-    : IJsonElement<AdministratorMemberWrite>
+public readonly partial struct GranteeReference
+    : IJsonElement<GranteeReference>
 {
     public static partial class JsonSchema
     {
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/components/schemas/AdministratorMemberWrite"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/components/schemas/GranteeReference"u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated, as a JSON Pointer within <see cref="SchemaDocument"/>.
         /// </summary>
-        public const string SchemaLocation = "/components/schemas/AdministratorMemberWrite";
+        public const string SchemaLocation = "/components/schemas/GranteeReference";
 
         /// <summary>
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
-        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/AdministratorMemberWrite"u8;
+        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/GranteeReference"u8;
 
         /// <summary>
         /// Gets the schema document from which this type was generated, relative to the base location for generation.
@@ -45,7 +45,7 @@ public readonly partial struct AdministratorMemberWrite
         /// </summary>
         public static ReadOnlySpan<byte> SchemaDocumentUtf8 => "arazzo-control-plane.openapi.json"u8;
 
-        private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CorvusJsonSchemaProgram.Entry(44);
+        private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.CorvusJsonSchemaProgram.Entry(187);
 
         internal static bool Evaluate(
             IJsonDocument parentDocument,

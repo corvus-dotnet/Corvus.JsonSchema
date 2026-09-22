@@ -48,6 +48,11 @@ public struct AddAdministratorResponse : IApiResponse<AddAdministratorResponse>
     /// </summary>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails ConflictBody { get; private set; }
 
+    /// <summary>
+    /// Gets the 502 response body.
+    /// </summary>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails BadGatewayBody { get; private set; }
+
     /// <inheritdoc/>
     public static async ValueTask<AddAdministratorResponse> CreateAsync(
         int statusCode,
@@ -91,6 +96,14 @@ public struct AddAdministratorResponse : IApiResponse<AddAdministratorResponse>
             var conflictDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
             response.parsedDocument = conflictDoc;
             response.ConflictBody = conflictDoc.RootElement;
+            return response;
+        }
+
+        if (statusCode == 502)
+        {
+            var badGatewayDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails>.ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);
+            response.parsedDocument = badGatewayDoc;
+            response.BadGatewayBody = badGatewayDoc.RootElement;
             return response;
         }
 
@@ -166,6 +179,23 @@ public struct AddAdministratorResponse : IApiResponse<AddAdministratorResponse>
     }
 
     /// <summary>
+    /// Tries to get the 502 typed response body.
+    /// </summary>
+    /// <param name="result">The typed response body if the status matches.</param>
+    /// <returns><see langword="true"/> if the status code is 502.</returns>
+    public bool TryGetBadGateway(out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails result)
+    {
+        if (this.StatusCode == 502)
+        {
+            result = this.BadGatewayBody;
+            return true;
+        }
+
+        result = default;
+        return false;
+    }
+
+    /// <summary>
     /// Matches the response against each status code and content type,
     /// and calls the corresponding handler.
     /// </summary>
@@ -174,6 +204,7 @@ public struct AddAdministratorResponse : IApiResponse<AddAdministratorResponse>
     /// <param name="matchBadRequest">Handler for the 400 response.</param>
     /// <param name="matchForbidden">Handler for the 403 response.</param>
     /// <param name="matchConflict">Handler for the 409 response.</param>
+    /// <param name="matchBadGateway">Handler for the 502 response.</param>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TResult>(
@@ -181,6 +212,7 @@ public struct AddAdministratorResponse : IApiResponse<AddAdministratorResponse>
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TResult> matchBadRequest,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TResult> matchForbidden,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TResult> matchConflict,
+        ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TResult> matchBadGateway,
         ResponseMatcher<int, TResult> matchDefault)
     {
         if (this.StatusCode == 200)
@@ -203,6 +235,11 @@ public struct AddAdministratorResponse : IApiResponse<AddAdministratorResponse>
             return matchConflict(this.ConflictBody);
         }
 
+        if (this.StatusCode == 502)
+        {
+            return matchBadGateway(this.BadGatewayBody);
+        }
+
         return matchDefault(this.StatusCode);
     }
 
@@ -217,6 +254,7 @@ public struct AddAdministratorResponse : IApiResponse<AddAdministratorResponse>
     /// <param name="matchBadRequest">Handler for the 400 response.</param>
     /// <param name="matchForbidden">Handler for the 403 response.</param>
     /// <param name="matchConflict">Handler for the 409 response.</param>
+    /// <param name="matchBadGateway">Handler for the 502 response.</param>
     /// <param name="matchDefault">Handler for any unmatched status code.</param>
     /// <returns>The result of calling the matched handler.</returns>
     public TResult MatchResult<TContext, TResult>(
@@ -225,6 +263,7 @@ public struct AddAdministratorResponse : IApiResponse<AddAdministratorResponse>
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TContext, TResult> matchBadRequest,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TContext, TResult> matchForbidden,
         ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TContext, TResult> matchConflict,
+        ResponseMatcher<Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ProblemDetails, TContext, TResult> matchBadGateway,
         ResponseMatcher<int, TContext, TResult> matchDefault)
     where TContext : allows ref struct
     {
@@ -246,6 +285,11 @@ public struct AddAdministratorResponse : IApiResponse<AddAdministratorResponse>
         if (this.StatusCode == 409)
         {
             return matchConflict(this.ConflictBody, context);
+        }
+
+        if (this.StatusCode == 502)
+        {
+            return matchBadGateway(this.BadGatewayBody, context);
         }
 
         return matchDefault(this.StatusCode, context);
@@ -292,6 +336,14 @@ public struct AddAdministratorResponse : IApiResponse<AddAdministratorResponse>
                     ThrowHelper.ThrowResponseBodyValidationFailed(409, SchemaValidationDetail.FormatResults(collector));
                 }
             }
+            else if (this.StatusCode == 502)
+            {
+                using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+                if (!this.BadGatewayBody.EvaluateSchema(collector))
+                {
+                    ThrowHelper.ThrowResponseBodyValidationFailed(502, SchemaValidationDetail.FormatResults(collector));
+                }
+            }
         }
         else
         {
@@ -321,6 +373,13 @@ public struct AddAdministratorResponse : IApiResponse<AddAdministratorResponse>
                 if (!this.ConflictBody.EvaluateSchema())
                 {
                     ThrowHelper.ThrowResponseBodyValidationFailed(409);
+                }
+            }
+            else if (this.StatusCode == 502)
+            {
+                if (!this.BadGatewayBody.EvaluateSchema())
+                {
+                    ThrowHelper.ThrowResponseBodyValidationFailed(502);
                 }
             }
         }

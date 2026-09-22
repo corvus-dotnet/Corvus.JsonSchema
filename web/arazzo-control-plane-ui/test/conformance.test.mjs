@@ -281,16 +281,16 @@ test('administrators: each client method emits the contract method + templated p
   assert.equal(calls[0].method, OPS.listAdministrators.method);
   assert.equal(calls[0].path, OPS.listAdministrators.path.replace('{baseWorkflowId}', 'flow'));
 
-  await client.addAdministrator('flow', { dimension: 'tenant', value: 'acme' });
+  await client.addAdministrator('flow', { kind: 'team', value: 'acme' });
   assert.equal(calls[1].method, OPS.addAdministrator.method);
   assert.equal(calls[1].path, OPS.addAdministrator.path.replace('{baseWorkflowId}', 'flow'));
-  assert.equal(calls[1].body.dimension, 'tenant');
+  assert.equal(calls[1].body.kind, 'team');
 
   await client.removeAdministrator('flow', 'deadbeef');
   assert.equal(calls[2].method, OPS.removeAdministrator.method);
   assert.equal(calls[2].path, OPS.removeAdministrator.path.replace('{baseWorkflowId}', 'flow').replace('{digest}', 'deadbeef'));
 
-  await client.transferAdministration('flow', { administrators: [{ dimension: 'tenant', value: 'acme' }] });
+  await client.transferAdministration('flow', { administrators: [{ kind: 'team', value: 'acme' }] });
   assert.equal(calls[3].method, OPS.transferAdministration.method);
   assert.equal(calls[3].path, OPS.transferAdministration.path.replace('{baseWorkflowId}', 'flow'));
   assert.equal(calls[3].body.administrators[0].value, 'acme');
@@ -354,7 +354,7 @@ test('environments: each client method emits the contract method + templated pat
   assert.equal(calls[5].method, OPS.listEnvironmentAdministrators.method);
   assert.equal(calls[5].path, OPS.listEnvironmentAdministrators.path.replace('{name}', 'qa'));
 
-  await client.addEnvironmentAdministrator('qa', { dimension: 'tenant', value: 'acme' });
+  await client.addEnvironmentAdministrator('qa', { kind: 'team', value: 'acme' });
   assert.equal(calls[6].method, OPS.addEnvironmentAdministrator.method);
   assert.equal(calls[6].path, OPS.addEnvironmentAdministrator.path.replace('{name}', 'qa'));
   assert.equal(calls[6].body.value, 'acme');
@@ -363,7 +363,7 @@ test('environments: each client method emits the contract method + templated pat
   assert.equal(calls[7].method, OPS.removeEnvironmentAdministrator.method);
   assert.equal(calls[7].path, OPS.removeEnvironmentAdministrator.path.replace('{name}', 'qa').replace('{digest}', 'deadbeef'));
 
-  await client.transferEnvironmentAdministration('qa', { administrators: [{ dimension: 'tenant', value: 'acme' }] });
+  await client.transferEnvironmentAdministration('qa', { administrators: [{ kind: 'team', value: 'acme' }] });
   assert.equal(calls[8].method, OPS.transferEnvironmentAdministration.method);
   assert.equal(calls[8].path, OPS.transferEnvironmentAdministration.path.replace('{name}', 'qa'));
   assert.equal(calls[8].body.administrators[0].value, 'acme');

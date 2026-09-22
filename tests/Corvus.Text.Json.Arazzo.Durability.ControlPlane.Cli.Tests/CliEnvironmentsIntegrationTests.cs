@@ -90,7 +90,7 @@ public sealed partial class CliIntegrationTests
         listOut.ShouldContain("acme");
 
         // acme adds globex as a co-administrator.
-        (int addExit, string addOut, _) = await RunAsync(host, "environments", "administrators", "add", "production", "tenant", "globex", "--token", "acme");
+        (int addExit, string addOut, _) = await RunAsync(host, "environments", "administrators", "add", "production", "team", "globex", "--token", "acme");
         addExit.ShouldBe(0);
         addOut.ShouldContain("globex");
         addOut.ShouldContain("acme");
@@ -103,7 +103,7 @@ public sealed partial class CliIntegrationTests
         removeOut.ShouldNotContain("acme");
 
         // globex transfers administration back to acme (replacing the whole set).
-        (int transferExit, string transferOut, _) = await RunAsync(host, "environments", "administrators", "transfer", "production", "--admin", "tenant=acme", "--token", "globex");
+        (int transferExit, string transferOut, _) = await RunAsync(host, "environments", "administrators", "transfer", "production", "--admin", "team=acme", "--token", "globex");
         transferExit.ShouldBe(0);
         transferOut.ShouldContain("acme");
         transferOut.ShouldNotContain("globex");

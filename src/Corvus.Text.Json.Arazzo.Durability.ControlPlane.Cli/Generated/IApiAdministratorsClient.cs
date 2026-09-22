@@ -194,27 +194,27 @@ public interface IApiAdministratorsClient : IAsyncDisposable
     /// Add an administrator
     /// </summary>
     /// <remarks>
-    /// Adds an identity to the base workflow id's administrator set (idempotent). The caller must be a current administrator (403 otherwise); a stale concurrent change conflicts (409).
+    /// Adds a grantee to the base workflow id's administrator set (idempotent); the server resolves it to its exact identity (ADR 0008). The caller must be a current administrator (403 otherwise); a stale concurrent change conflicts (409).
     /// </remarks>
     /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
     /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
-    ValueTask<AddAdministratorResponse> AddAdministratorAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorMemberWrite.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<AddAdministratorResponse> AddAdministratorAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 
     /// <summary>
     /// Add an administrator
     /// </summary>
     /// <remarks>
-    /// Adds an identity to the base workflow id's administrator set (idempotent). The caller must be a current administrator (403 otherwise); a stale concurrent change conflicts (409).
+    /// Adds a grantee to the base workflow id's administrator set (idempotent); the server resolves it to its exact identity (ADR 0008). The caller must be a current administrator (403 otherwise); a stale concurrent change conflicts (409).
     /// </remarks>
     /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
     /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
-    ValueTask<AddAdministratorResponse> AddAdministratorAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.AdministratorMemberWrite.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    ValueTask<AddAdministratorResponse> AddAdministratorAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.GranteeReference.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
     #endif

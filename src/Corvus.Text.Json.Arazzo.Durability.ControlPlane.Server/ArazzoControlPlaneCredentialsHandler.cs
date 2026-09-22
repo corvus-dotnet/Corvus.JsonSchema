@@ -5,6 +5,7 @@
 using System.Text;
 using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
+using Corvus.Text.Json.Arazzo.Directories;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.Extensions.Logging;
@@ -39,6 +40,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
 
     private readonly ISourceCredentialStore store;
     private readonly ControlPlaneAccess access;
+    private readonly GranteeResolver resolver;
     private readonly string actor;
     private readonly TimeProvider timeProvider;
     private readonly TimeSpan expiringWindow;
@@ -46,22 +48,11 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     private readonly Sources.ISourceStore? sources;
     private readonly bool allowInsecureHttp;
 
-    /// <summary>Initializes a new, unscoped instance (every request runs with <see cref="AccessContext.System"/> — no
-    /// row security).</summary>
-    /// <param name="store">The persistent source credential store the endpoints delegate to.</param>
-    /// <param name="actor">The audit actor recorded on writes (a deployment may resolve this from the principal).</param>
-    /// <param name="sources">The sources registry, used to classify a binding's source (an AsyncAPI source takes the
-    /// channel-credential rules, ADR 0051); when <see langword="null"/> the source-type rules are not enforced.</param>
-    /// <param name="allowInsecureHttp">Permit an <c>http</c> <c>baseUrl</c> override on a written binding (default: <c>https</c> only, mirroring the source-fetch scheme policy).</param>
-    public ArazzoControlPlaneCredentialsHandler(ISourceCredentialStore store, string actor = "control-plane", Sources.ISourceStore? sources = null, bool allowInsecureHttp = false)
-        : this(store, new ControlPlaneAccess(), actor, sources: sources, allowInsecureHttp: allowInsecureHttp)
-    {
-    }
-
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneCredentialsHandler"/> class.</summary>
     /// <param name="store">The persistent source credential store the endpoints delegate to.</param>
     /// <param name="access">Resolves the caller's <see cref="AccessContext"/> per request and the internal tenant tags
     /// stamped onto created bindings (§14.2). Unscoped (<see cref="AccessContext.System"/>) when no row security is configured.</param>
+    /// <param name="resolver">Resolves the usage grantee a binding names to its exact deployment-stamped identity (ADR 0008).</param>
     /// <param name="actor">The audit actor recorded on writes (a deployment may resolve this from the principal).</param>
     /// <param name="timeProvider">The clock used to derive each binding's <see cref="CredentialStatus"/> on read
     /// (defaults to <see cref="TimeProvider.System"/>).</param>
@@ -71,13 +62,15 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
     /// <param name="sources">The sources registry, used to classify a binding's source (an AsyncAPI source takes the
     /// channel-credential rules, ADR 0051); when <see langword="null"/> the source-type rules are not enforced.</param>
     /// <param name="allowInsecureHttp">Permit an <c>http</c> <c>baseUrl</c> override on a written binding (default: <c>https</c> only, mirroring the source-fetch scheme policy).</param>
-    internal ArazzoControlPlaneCredentialsHandler(ISourceCredentialStore store, ControlPlaneAccess access, string actor = "control-plane", TimeProvider? timeProvider = null, TimeSpan? expiringWindow = null, GovernanceAuditor? auditor = null, Sources.ISourceStore? sources = null, bool allowInsecureHttp = false)
+    internal ArazzoControlPlaneCredentialsHandler(ISourceCredentialStore store, ControlPlaneAccess access, GranteeResolver resolver, string actor = "control-plane", TimeProvider? timeProvider = null, TimeSpan? expiringWindow = null, GovernanceAuditor? auditor = null, Sources.ISourceStore? sources = null, bool allowInsecureHttp = false)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(access);
+        ArgumentNullException.ThrowIfNull(resolver);
         ArgumentNullException.ThrowIfNull(actor);
         this.store = store;
         this.access = access;
+        this.resolver = resolver;
         this.actor = actor;
         this.timeProvider = timeProvider ?? TimeProvider.System;
         this.expiringWindow = expiringWindow ?? DefaultExpiringWindow;
@@ -132,7 +125,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         Models.CredentialBindingCreate body = parameters.Body;
         ManagementTagsState managementState;
         bool hasManagementTags;
-        UsageTagsState usageState;
+        IReadOnlyList<SecurityTag> internalTags;
         bool hasUsageTags;
         bool hasUsageGrantee;
         SourceCredentialKind authKind;
@@ -145,7 +138,7 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
             // string-sourced from the policy + the user tags' UTF-8 spans), and the Admits write-reach check reads them
             // back from the draft as a non-owning view — so the draft document is the only materialization. InternalTags()
             // is resolved once and shared with usage below.
-            IReadOnlyList<SecurityTag> internalTags = this.access.InternalTags();
+            internalTags = this.access.InternalTags();
             SecurityTagSet userManagement = body.ManagementTags.IsNotUndefined()
                 ? SecurityTagSet.FromOwnedJsonArray(JsonMarshal.GetRawUtf8Value(body.ManagementTags).Memory)
                 : SecurityTagSet.Empty;
@@ -153,19 +146,21 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
             managementState = new ManagementTagsState(internalTags, userManagement);
             hasManagementTags = internalTags.Count > 0 || !userManagement.IsEmpty;
 
-            // usageTags are written straight into the draft (no intermediate SecurityTagSet — the draft document is the
-            // leaf): the operator's usage GRANTS resolved BYTES-TO-BYTES to UNFORGEABLE internal tags (e.g.
-            // sys:workflow=nightly-reconcile; never free-form, so usage cannot be self-granted by a workflow author), or —
-            // with no grants — the creating principal's own identity (its internal tags). The two scopes are independent
-            // (§13/§14.2). Empty only when unscoped (no grants and no internal tags), in which case the property is omitted.
-            // An absent usageGrantee is a `default` value whose nested-array accessor would NRE, so gate on its ValueKind
-            // (null-safe) before touching Identity; its grants become the AND-matched usage tags.
-            Models.CredentialUsageGrantee usageGrantee = body.UsageGrantee;
+            // usageTags are written straight into the draft: the usage GRANTEE the operator names ({kind, value}) is
+            // resolved by the server to its exact deployment-stamped identity (ADR 0008; UNFORGEABLE internal tags, e.g.
+            // sys:workflow=nightly-reconcile, never free-form, so usage cannot be self-granted by a workflow author), or,
+            // with no grantee, the creating principal's own identity (its internal tags). The two scopes are independent
+            // (§13/§14.2). Empty only when unscoped (no grantee and no internal tags), in which case the property is
+            // omitted. The grantee is validated here and resolved below, after the kinds that can never be usage-scoped
+            // have refused it, so a refused binding never reaches the directory.
+            Models.GranteeReference usageGrantee = body.UsageGrantee;
             hasUsageGrantee = usageGrantee.ValueKind == JsonValueKind.Object;
-            Models.CredentialUsageGrantee.CredentialUsageGrantArray identity = hasUsageGrantee ? usageGrantee.Identity : default;
-            bool useGrants = identity.IsNotUndefined() && identity.GetArrayLength() > 0;
-            usageState = new UsageTagsState(this.access, identity, internalTags, useGrants);
-            hasUsageTags = useGrants || internalTags.Count > 0;
+            if (hasUsageGrantee && (!usageGrantee.Kind.IsNotUndefined() || !usageGrantee.Value.IsNotUndefined()))
+            {
+                ServerThrowHelper.ThrowGranteeKindAndValueRequired();
+            }
+
+            hasUsageTags = hasUsageGrantee || internalTags.Count > 0;
 
             // The required request fields are validated up front; their JSON values are then carried into the draft
             // bytes-to-bytes (no per-field strings, no list) — see the draft build below.
@@ -229,6 +224,35 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
             // Connection-scoped: never apply the default creator-identity usage scoping (the mtls rule, uniformly).
             hasUsageTags = false;
         }
+
+        // The usage grantee resolves on the server (ADR 0008): the directory, then the observed identities, then the
+        // policy's mapping of the kind. Nothing the deployment stamps is refused (400); an unreachable directory is
+        // reported (502), never guessed around. The identity is written straight into the draft below.
+        SecurityTagSet usageIdentity = SecurityTagSet.Empty;
+        if (hasUsageGrantee)
+        {
+            try
+            {
+                Models.GranteeReference usageGrantee = body.UsageGrantee;
+                GranteeResolution resolution = await this.resolver.ResolveAsync(ObservedIdentity.GranteeKind.From(usageGrantee.Kind).ToGranteeKind(), JsonString.From(usageGrantee.Value), cancellationToken).ConfigureAwait(false);
+                if (resolution.Identity.IsEmpty)
+                {
+                    ServerThrowHelper.ThrowGranteeDoesNotResolve();
+                }
+
+                usageIdentity = resolution.Identity;
+            }
+            catch (ArgumentException ex)
+            {
+                return CreateCredentialResult.BadRequest(Problem("invalid-credential", "Invalid credential binding", 400, ex.Message), workspace);
+            }
+            catch (PrincipalDirectoryException)
+            {
+                return CreateCredentialResult.BadGateway(Problem("directory-unavailable", "Directory unavailable", 502, "The external principal directory could not be reached."), workspace);
+            }
+        }
+
+        var usageState = new UsageTagsState(usageIdentity, internalTags, hasUsageGrantee);
 
         try
         {
@@ -513,19 +537,24 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         public SecurityTagSet UserTags { get; } = userTags;
     }
 
-    // Writes the binding's usage-identity tags straight into the draft's usage array (no intermediate SecurityTagSet — the
-    // draft document is the leaf): the operator's usage grants resolved bytes-to-bytes to the deployment's UNFORGEABLE
-    // internal tags (ResolveUsageGrantInto, the span counterpart of ResolveUsageGrants — a deployment that remaps grants
-    // overrides it), or — with no grants — the creating principal's own internal tags.
+    // Writes the binding's usage-identity tags straight into the draft's usage array: the resolved grantee identity's
+    // tags copied as UTF-8 spans (the resolver already produced the deployment's UNFORGEABLE internal tags), or, with no
+    // grantee, the creating principal's own internal tags.
     private static void WriteUsageTags(ref IdentityBuilder builder, in UsageTagsState state)
     {
-        if (state.UseGrants)
+        if (state.UseGrantee)
         {
-            foreach (Models.CredentialUsageGrant grant in state.Grants.EnumerateArray())
+            SecurityTagSet.Utf8Enumerator e = state.Identity.EnumerateUtf8();
+            try
             {
-                using UnescapedUtf8JsonString dimension = grant.DimensionValue.GetUtf8String();
-                using UnescapedUtf8JsonString value = grant.Value.GetUtf8String();
-                state.Access.ResolveUsageGrantInto(dimension.Span, value.Span, ref builder);
+                while (e.MoveNext())
+                {
+                    builder.Add(e.CurrentKey, e.CurrentValue);
+                }
+            }
+            finally
+            {
+                e.Dispose();
             }
         }
         else
@@ -534,15 +563,13 @@ public sealed class ArazzoControlPlaneCredentialsHandler : IApiCredentialsHandle
         }
     }
 
-    private readonly struct UsageTagsState(ControlPlaneAccess access, Models.CredentialUsageGrantee.CredentialUsageGrantArray grants, IReadOnlyList<SecurityTag> internalTags, bool useGrants)
+    private readonly struct UsageTagsState(SecurityTagSet identity, IReadOnlyList<SecurityTag> internalTags, bool useGrantee)
     {
-        public ControlPlaneAccess Access { get; } = access;
-
-        public Models.CredentialUsageGrantee.CredentialUsageGrantArray Grants { get; } = grants;
+        public SecurityTagSet Identity { get; } = identity;
 
         public IReadOnlyList<SecurityTag> InternalTags { get; } = internalTags;
 
-        public bool UseGrants { get; } = useGrants;
+        public bool UseGrantee { get; } = useGrantee;
     }
 
     // Writes deployment-internal tags (string-sourced from the policy) verbatim into the buffer: the short key is encoded

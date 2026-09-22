@@ -57,8 +57,8 @@ internal sealed class CredentialCreateSettings : CredentialKeySettings
     [Description("A non-secret configuration entry, e.g. --config parameterName=X-Api-Key (repeatable).")]
     public IReadOnlyDictionary<string, string>? Config { get; init; }
 
-    [CommandOption("--grant <DIMENSION=VALUE>")]
-    [Description("A usage grant naming a workflow identity that may use the binding, e.g. --grant workflow=nightly-reconcile (repeatable).")]
+    [CommandOption("--grant <KIND=VALUE>")]
+    [Description("The one grantee whose runs may use the binding, e.g. --grant workflow=nightly-reconcile; the server resolves it. Omit to scope usage to your own runs.")]
     public ILookup<string, string>? Grants { get; init; }
 
     [CommandOption("--manage <KEY=VALUE>")]
@@ -80,8 +80,13 @@ internal sealed class CredentialCreateSettings : CredentialKeySettings
             return Spectre.Console.ValidationResult.Error("--auth-kind <kind> is required.");
         }
 
-        return this.Refs is not { Count: > 0 }
-            ? Spectre.Console.ValidationResult.Error("at least one --ref <name=secretref> is required.")
+        if (this.Refs is not { Count: > 0 })
+        {
+            return Spectre.Console.ValidationResult.Error("at least one --ref <name=secretref> is required.");
+        }
+
+        return this.Grants?.Sum(g => g.Count()) > 1
+            ? Spectre.Console.ValidationResult.Error("--grant names one grantee (kind=value); a binding is usage-scoped to a single grantee.")
             : base.Validate();
     }
 }
@@ -243,7 +248,7 @@ internal sealed class CredentialCreateCommand : AsyncCommand<CredentialCreateSet
         await using (transport)
         {
             await using CreateCredentialResponse response = await client.CreateCredentialAsync(CredentialCommandHelpers.BuildWrite(settings), cancellationToken);
-            return response.MatchResult(summary => Output.Print(summary.ToString()), Output.Problem, Output.Problem, Output.Unexpected);
+            return response.MatchResult(summary => Output.Print(summary.ToString()), Output.Problem, Output.Problem, Output.Problem, Output.Unexpected);
         }
     }
 }
@@ -563,25 +568,16 @@ internal static class CredentialCommandHelpers
         });
     }
 
-    // The interim CLI form: the --grant {dimension=value}s become the usage grantee's identity (AND-matched), with no
-    // resolved kind/label (the CLI has no interactive grantee picker). Omitted entirely when no grants are given.
-    private static Models.CredentialUsageGrantee.Source WriteUsageGrantee(ILookup<string, string>? grants)
+    // The --grant kind=value names the one grantee whose runs may use the binding; the server resolves it to its exact
+    // identity (ADR 0008). Omitted entirely when no grant is given (usage then defaults to the creator's own runs).
+    private static Models.GranteeReference.Source WriteUsageGrantee(ILookup<string, string>? grants)
     {
         if (grants?.Any() != true)
         {
             return default;
         }
 
-        return new Models.CredentialUsageGrantee.Source((ref Models.CredentialUsageGrantee.Builder b) => b.Create(
-            identity: new Models.CredentialUsageGrantee.CredentialUsageGrantArray.Source((ref Models.CredentialUsageGrantee.CredentialUsageGrantArray.Builder ab) =>
-            {
-                foreach (IGrouping<string, string> group in grants)
-                {
-                    foreach (string value in group)
-                    {
-                        ab.AddItem(new Models.CredentialUsageGrant.Source((ref Models.CredentialUsageGrant.Builder gb) => gb.Create(group.Key, value)));
-                    }
-                }
-            })));
+        IGrouping<string, string> grant = grants.First();
+        return new Models.GranteeReference.Source((ref Models.GranteeReference.Builder b) => b.Create(kind: grant.Key, value: grant.First()));
     }
 }

@@ -87,14 +87,14 @@
   <data name="NoGrantableScopesApproval" xml:space="preserve">
     <value>None of the requested scopes is grantable (an approval may grant only run access).</value>
   </data>
-  <data name="GranteeIdentityOrDimensionRequired" xml:space="preserve">
-    <value>Provide either a resolved grantee `identity` or a single `{ dimension, value }` grant.</value>
+  <data name="GranteeKindAndValueRequired" xml:space="preserve">
+    <value>Provide the grantee's `kind` and `value`.</value>
   </data>
   <data name="GranteeDoesNotResolve" xml:space="preserve">
     <value>The named grantee does not resolve to a deployment identity.</value>
   </data>
-  <data name="AdministratorGrantDoesNotResolve" xml:space="preserve">
-    <value>The administrator grant '{0}={1}' does not resolve to a deployment identity.</value>
+  <data name="AdministratorGranteeDoesNotResolve" xml:space="preserve">
+    <value>The administrator grantee '{0} {1}' does not resolve to a deployment identity.</value>
   </data>
   <data name="ProviderNamedMoreThanOnce" xml:space="preserve">
     <value>The provider registry names '{0}' more than once.</value>

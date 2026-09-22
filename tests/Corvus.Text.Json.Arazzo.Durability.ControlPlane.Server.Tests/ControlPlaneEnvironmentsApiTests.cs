@@ -408,7 +408,7 @@ public sealed class ControlPlaneEnvironmentsApiTests
         HttpResponseMessage added = await host.SendJsonAsync(
             HttpMethod.Post,
             "/environments/production/administrators/members",
-            """{"value":"reconcile","dimension":"workflow"}""",
+            """{"kind":"workflow","value":"reconcile"}""",
             Write);
         added.StatusCode.ShouldBe(HttpStatusCode.OK);
         string digest;

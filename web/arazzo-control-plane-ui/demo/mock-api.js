@@ -1066,10 +1066,18 @@ function seedEnvironmentAdministrators() {
   };
 }
 
-// The well-known grantee kind a single-grant dimension is inferred as (mirrors the server's TryGranteeKindForDimension);
-// a custom dimension names no well-known kind.
-function kindForDimension(dimension) {
-  return { sub: 'person', tenant: 'team', role: 'role', workflow: 'workflow' }[dimension];
+// Resolves a write's grantee reference {kind, value} the way the server does (ADR 0008): a resolvable grantee's exact
+// identity, else the policy's single-tag mapping of the kind (a person's sys:sub, a team's tenant, a role, a workflow).
+// The caller's label (the picker's) is kept for display. Null when the reference is malformed or the kind is unknown.
+function resolveGranteeReference(ref, grantees) {
+  if (!ref || !ref.kind || !ref.value) return null;
+  const seeded = grantees.find((g) => g.kind === ref.kind && g.value === ref.value);
+  if (seeded) {
+    return { identity: seeded.identity.map((g) => ({ dimension: g.dimension, value: g.value })), kind: seeded.kind, label: ref.label ?? seeded.label };
+  }
+  const dimension = { person: 'sys:sub', team: 'tenant', role: 'role', workflow: 'workflow', tenant: 'tenant' }[ref.kind];
+  if (!dimension) return null;
+  return { identity: [{ dimension, value: ref.value }], kind: ref.kind, label: ref.label };
 }
 
 // A stable, order-independent opaque digest of an identity's {dimension,value} grants. NOT the server's SHA-256 — the
@@ -2671,11 +2679,16 @@ export function createMockControlPlane(options = {}) {
     if (findCredential(body.sourceName, body.environment)) {
       return problem(409, 'Credential already exists', `A binding for '${body.sourceName}@${body.environment}' already exists.`);
     }
+    // The usage grantee is a reference ({kind, value}) the mock resolves as the server does (ADR 0008).
+    const usageGrantee = body.usageGrantee ? resolveGranteeReference(body.usageGrantee, grantees) : undefined;
+    if (body.usageGrantee && !usageGrantee) {
+      return problem(400, 'Invalid credential binding', "Provide the usage grantee's `kind` and `value`.");
+    }
     const b = {
       id: `cred-${body.sourceName}-${body.environment}`,
       sourceName: body.sourceName, environment: body.environment, authKind: body.authKind,
       secretRefs: body.secretRefs, config: body.config ?? [], managementTags: body.managementTags ?? [],
-      usageGrantee: body.usageGrantee, description: body.description,
+      usageGrantee, description: body.description,
       expiresAt: body.expiresAt, rotatedAt: body.rotatedAt,
       createdBy: actingSubject(), createdAt: iso(0), etag: nextEtag(),
     };
@@ -2750,22 +2763,13 @@ export function createMockControlPlane(options = {}) {
   // The administrator helpers are subject-agnostic — the same resolved-identity set governs a workflow (§15) and a
   // deployment environment (§7.7). The store + key select which set; `noun` only shapes the last-administrator message.
   function addAdminTo(store, key, member) {
-    // Resolved-grantee form (a full identity[] from the picker) or the interim single {dimension,value} grant.
-    let identity;
-    let kind;
-    let label;
-    if (Array.isArray(member?.identity) && member.identity.length > 0) {
-      identity = member.identity;
-      kind = member.kind;
-      label = member.label;
-    } else if (member?.dimension && member?.value) {
-      identity = [{ dimension: member.dimension, value: member.value }];
-      kind = kindForDimension(member.dimension);
-    } else {
-      return problem(400, 'Invalid administrator identity', 'Provide a resolved grantee identity or a single { dimension, value } grant.');
+    // The member names a grantee ({kind, value}); the mock resolves it as the server does (never a client identity).
+    const resolved = resolveGranteeReference(member, grantees);
+    if (!resolved) {
+      return problem(400, 'Invalid administrator identity', "Provide the grantee's `kind` and `value`.");
     }
 
-    const grant = adminGrant(identity, kind, label);
+    const grant = adminGrant(resolved.identity, resolved.kind, resolved.label);
     const set = store[key] ?? (store[key] = []);
     if (!set.some((a) => a.digest === grant.digest)) set.push(grant);
     return json({ administrators: set });
@@ -2787,10 +2791,12 @@ export function createMockControlPlane(options = {}) {
     }
     const deduped = [];
     for (const a of body.administrators) {
-      if (a?.dimension && a?.value) {
-        const grant = adminGrant([{ dimension: a.dimension, value: a.value }], kindForDimension(a.dimension));
-        if (!deduped.some((d) => d.digest === grant.digest)) deduped.push(grant);
+      const resolved = resolveGranteeReference(a, grantees);
+      if (!resolved) {
+        return problem(400, 'Invalid administrator identity', "Provide each grantee's `kind` and `value`.");
       }
+      const grant = adminGrant(resolved.identity, resolved.kind, resolved.label);
+      if (!deduped.some((d) => d.digest === grant.digest)) deduped.push(grant);
     }
     store[key] = deduped;
     return json({ administrators: deduped });

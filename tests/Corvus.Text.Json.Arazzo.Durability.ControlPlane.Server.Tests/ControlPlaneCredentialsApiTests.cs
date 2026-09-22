@@ -9,6 +9,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
 using Corvus.Text.Json.Arazzo;
+using Corvus.Text.Json.Arazzo.Directories;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.AspNetCore.Authentication;
@@ -231,7 +232,7 @@ public sealed class ControlPlaneCredentialsApiTests
         HttpResponseMessage rejected = await host.SendJsonAsync(
             HttpMethod.Post,
             "/credentials",
-            """{"sourceName":"petstore","environment":"production","authKind":"mtls","secretRefs":[{"name":"certificate","ref":"keyvault://petstore-cert"}],"usageGrantee":{"identity":[{"dimension":"workflow","value":"nightly-reconcile"}],"kind":"workflow"}}""",
+            """{"sourceName":"petstore","environment":"production","authKind":"mtls","secretRefs":[{"name":"certificate","ref":"keyvault://petstore-cert"}],"usageGrantee":{"kind":"workflow","value":"nightly-reconcile"}}""",
             Write);
 
         rejected.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -282,7 +283,7 @@ public sealed class ControlPlaneCredentialsApiTests
         HttpResponseMessage created = await host.SendJsonAsync(
             HttpMethod.Post,
             "/credentials",
-            """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://petstore-key"}],"managementTags":[{"key":"team","value":"ops"}],"usageGrantee":{"identity":[{"dimension":"workflow","value":"nightly-reconcile"}],"kind":"workflow","label":"Nightly reconcile"}}""",
+            """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://petstore-key"}],"managementTags":[{"key":"team","value":"ops"}],"usageGrantee":{"kind":"workflow","value":"nightly-reconcile","label":"Nightly reconcile"}}""",
             Write);
         created.StatusCode.ShouldBe(HttpStatusCode.Created);
         using Stj.JsonDocument doc = await ReadJsonAsync(created);
@@ -555,7 +556,7 @@ public sealed class ControlPlaneCredentialsApiTests
         HttpResponseMessage scoped = await host.SendJsonAsync(
             HttpMethod.Post,
             "/credentials",
-            """{"sourceName":"events","environment":"production","authKind":"bearer","secretRefs":[{"name":"value","ref":"vault://secret/arazzo/events#token"}],"config":[{"key":"serverUrl","value":"nats://broker:4222"}],"usageGrantee":{"kind":"team","identity":[{"dimension":"group","value":"ops"}]}}""",
+            """{"sourceName":"events","environment":"production","authKind":"bearer","secretRefs":[{"name":"value","ref":"vault://secret/arazzo/events#token"}],"config":[{"key":"serverUrl","value":"nats://broker:4222"}],"usageGrantee":{"kind":"team","value":"ops"}}""",
             Write);
         scoped.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await scoped.Content.ReadAsStringAsync()).ShouldContain("usage grantee");
@@ -625,7 +626,54 @@ public sealed class ControlPlaneCredentialsApiTests
     private static List<Stj.JsonElement> ReadRecords(InMemoryAuditSink sink)
         => [.. sink.ChainIds.SelectMany(id => Encoding.UTF8.GetString(sink.Snapshot(id)).Split('\n', StringSplitOptions.RemoveEmptyEntries)).Select(l => Stj.JsonDocument.Parse(l).RootElement).Where(r => r.GetProperty("kind").GetString() == "read")];
 
-    private static async Task<Scoped> StartAsync(ControlPlaneRowSecurityPolicy? rowSecurity = null, Sources.ISourceStore? sourceStore = null)
+    [TestMethod]
+    public async Task A_usage_grantee_is_resolved_by_the_server_and_an_unreachable_directory_refuses_the_binding()
+    {
+        // ADR 0008: the binding names the grantee whose runs may use it ({kind, value}); the usage identity stored is the one
+        // the server resolves. A directory team resolves to the directory's full identity (issuer + team), which the policy's
+        // own mapping could not produce; with the directory down the create is refused (502) rather than scoped to a guess.
+        var directory = new FakeDirectory(new ResolvedPrincipal(GranteeKind.Team, "ops", "Ops", SecurityTagSet.FromTags([new SecurityTag("sys:iss", "https://idp.example.com"), new SecurityTag("sys:team", "ops")])));
+        await using Scoped host = await StartAsync(new GrantMappingPolicy(), directory: directory);
+
+        HttpResponseMessage created = await host.SendJsonAsync(
+            HttpMethod.Post,
+            "/credentials",
+            """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://petstore-key"}],"usageGrantee":{"kind":"team","value":"ops","label":"Ops"}}""",
+            Write);
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(created))
+        {
+            Stj.JsonElement grantee = doc.RootElement.GetProperty("usageGrantee");
+            grantee.GetProperty("identity").EnumerateArray().Select(g => $"{g.GetProperty("dimension").GetString()}={g.GetProperty("value").GetString()}").Order().ShouldBe(["iss=https://idp.example.com", "team=ops"]);
+            grantee.GetProperty("kind").GetString().ShouldBe("team");
+        }
+
+        await using Scoped broken = await StartAsync(new GrantMappingPolicy(), directory: new BrokenDirectory());
+        HttpResponseMessage refused = await broken.SendJsonAsync(
+            HttpMethod.Post,
+            "/credentials",
+            """{"sourceName":"petstore","environment":"production","authKind":"apiKey","secretRefs":[{"name":"value","ref":"keyvault://petstore-key"}],"usageGrantee":{"kind":"team","value":"ops"}}""",
+            Write);
+        refused.StatusCode.ShouldBe(HttpStatusCode.BadGateway);
+        (await broken.SendAsync(HttpMethod.Get, "/credentials/petstore/production", Read)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    private sealed class FakeDirectory(params ResolvedPrincipal[] principals) : IPrincipalDirectory
+    {
+        public ValueTask<IReadOnlyList<ResolvedPrincipal>> SearchAsync(GranteeKind kind, string query, int limit, CancellationToken cancellationToken)
+        {
+            IReadOnlyList<ResolvedPrincipal> matches = [.. principals.Where(p => p.Kind == kind && p.Value.StartsWith(query, StringComparison.Ordinal)).Take(limit)];
+            return new ValueTask<IReadOnlyList<ResolvedPrincipal>>(matches);
+        }
+    }
+
+    private sealed class BrokenDirectory : IPrincipalDirectory
+    {
+        public ValueTask<IReadOnlyList<ResolvedPrincipal>> SearchAsync(GranteeKind kind, string query, int limit, CancellationToken cancellationToken)
+            => throw new PrincipalDirectoryException("the directory returned 403 (Forbidden).");
+    }
+
+    private static async Task<Scoped> StartAsync(ControlPlaneRowSecurityPolicy? rowSecurity = null, Sources.ISourceStore? sourceStore = null, IPrincipalDirectory? directory = null)
     {
         var store = new InMemoryWorkflowStateStore();
         var management = new SecuredWorkflowManagement(store, "ops");
@@ -645,7 +693,7 @@ public sealed class ControlPlaneCredentialsApiTests
         WebApplication app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), (rowSecurity is null ? ControlPlaneSecurityMode.ScopesOnly : ControlPlaneSecurityMode.Scoped), rowSecurity: rowSecurity, sourceCredentialStore: new InMemorySourceCredentialStore(), sourceStore: sourceStore, auditor: GovernanceAuditor.CreateInMemory(auditSink));
+        app.MapArazzoControlPlane(management, catalog, new InMemoryRunnerRegistry(), (rowSecurity is null ? ControlPlaneSecurityMode.ScopesOnly : ControlPlaneSecurityMode.Scoped), rowSecurity: rowSecurity, sourceCredentialStore: new InMemorySourceCredentialStore(), sourceStore: sourceStore, principalDirectory: directory, auditor: GovernanceAuditor.CreateInMemory(auditSink));
         await app.StartAsync();
 
         return new Scoped(app, app.GetTestClient()) { AuditSink = auditSink };

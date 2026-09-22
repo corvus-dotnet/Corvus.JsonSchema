@@ -641,8 +641,9 @@ one resolved identity, **operate** (`runs:read`/`runs:write`, reach-scoped, *bui
 picker, where View is the default scope), so granting sight or operation of a workflow never implies administering it. Arazzo-owned
 identity/entitlement/reach queries are to be indexed and store-pushed-down; as built, the observed-identity typeahead and
 the `/identity/grantees` search are reach-filtered, and the by-subject binding query (self-elevation eligibility) is
-pushed down natively where the backend supports it. The directory adapters and backend stores **ship**; the
-resolved-grantee UI remains design-intent.
+pushed down natively where the backend supports it. The directory adapters, the backend stores, the
+picker and the server-side resolution **ship**: a write names a grantee as `{kind, value}` and the control plane resolves it
+before storing it (ADR 0008), so no surface accepts an identity from a client.
 
 ### 16.5.5 Ambient identity dimensions, deriving a `sys:` tag from request context (not the IdP)
 

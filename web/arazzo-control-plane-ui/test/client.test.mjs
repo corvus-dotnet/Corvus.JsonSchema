@@ -456,7 +456,7 @@ test('deleteCredential removes the binding (then 404)', async () => {
   await assert.rejects(() => c.getCredential('events', 'staging'), (e) => e.status === 404);
 });
 
-// ---- administrators (§15) — resolved identities {digest, identity:[{dimension,value}], kind?, label?} ----------
+// ---- administrators (§15) — writes name a grantee {kind, value}; reads are resolved identities {digest, identity:[{dimension,value}], kind?, label?} ----------
 
 test('listAdministrators returns resolved-identity grants, and an empty set for an unknown base id', async () => {
   const c = makeClient();
@@ -470,28 +470,26 @@ test('listAdministrators returns resolved-identity grants, and an empty set for 
 
 test('addAdministrator is idempotent and transferAdministration replaces the whole set', async () => {
   const c = makeClient();
-  const added = await c.addAdministrator('nightly-reconcile', { dimension: 'tenant', value: 'growth' });
+  const added = await c.addAdministrator('nightly-reconcile', { kind: 'team', value: 'growth' });
   assert.equal(added.administrators.length, 4); // Platform + alice@ops + Ada (seeded) + the newly-added Growth
-  const again = await c.addAdministrator('nightly-reconcile', { dimension: 'tenant', value: 'growth' });
+  const again = await c.addAdministrator('nightly-reconcile', { kind: 'team', value: 'growth' });
   assert.equal(again.administrators.length, 4, 'idempotent');
-  const transferred = await c.transferAdministration('nightly-reconcile', { administrators: [{ dimension: 'tenant', value: 'acme' }] });
+  const transferred = await c.transferAdministration('nightly-reconcile', { administrators: [{ kind: 'team', value: 'acme' }] });
   assert.equal(transferred.administrators.length, 1);
   assert.deepEqual(transferred.administrators[0].identity, [{ dimension: 'tenant', value: 'acme' }]);
 });
 
-test('addAdministrator accepts a resolved grantee (kind + value + identity)', async () => {
+test('addAdministrator names a grantee and the server resolves its identity', async () => {
   const c = makeClient();
-  const added = await c.addAdministrator('nightly-reconcile', {
-    kind: 'person', value: 'u-1042', label: 'Ada Lovelace',
-    identity: [{ dimension: 'sys:iss', value: 'https://idp.example.com' }, { dimension: 'sys:sub', value: 'u-1042' }],
-    complete: true,
-  });
-  // nightly-reconcile is also seeded with a single-dimension Ada (sys:sub only, §6.1); disambiguate by the two-dimension
-  // identity this resolved grantee (sys:iss + sys:sub) was added with.
-  const ada = added.administrators.find((a) => a.label === 'Ada Lovelace' && a.identity.length === 2);
+  // A client-supplied identity is never honoured: only the grantee's kind and value are sent, and the stored identity
+  // is the one the server resolves (Ada's full directory identity: issuer, subject and team membership).
+  const added = await c.addAdministrator('nightly-reconcile', { kind: 'person', value: 'u-1042', label: 'Ada Lovelace' });
+  // nightly-reconcile is also seeded with a single-dimension Ada (sys:sub only, §6.1); disambiguate by the resolved
+  // multi-dimension identity this grantee was added with.
+  const ada = added.administrators.find((a) => a.label === 'Ada Lovelace' && a.identity.length > 1);
   assert.ok(ada, 'the resolved grantee was added');
   assert.equal(ada.kind, 'person');
-  assert.equal(ada.identity.length, 2);
+  assert.ok(ada.identity.some((t) => t.dimension === 'sys:iss'), 'the identity is the server-resolved one');
 });
 
 test('removeAdministrator (by identity digest) refuses to remove the last administrator (409)', async () => {
@@ -508,7 +506,7 @@ test('removeAdministrator (by identity digest) refuses to remove the last admini
 });
 
 test('addAdministrator / transferAdministration validate before calling the server', async () => {
-  await assert.rejects(async () => makeClient().addAdministrator('x', { dimension: 'tenant' }), TypeError);
+  await assert.rejects(async () => makeClient().addAdministrator('x', { value: 'acme' }), TypeError);
   await assert.rejects(async () => makeClient().transferAdministration('x', { administrators: [] }), TypeError);
 });
 
@@ -728,15 +726,13 @@ test('deleteEnvironment removes an environment (and its dependent state) and 404
 test('environment administrators: add a resolved grantee, then refuse removing the last one (409)', async () => {
   const c = makeClient();
   const before = (await c.listEnvironmentAdministrators('staging')).administrators.length; // seeded: alice@ops + omar@ops
-  const added = await c.addEnvironmentAdministrator('staging', {
-    kind: 'team', value: 'payments', identity: [{ dimension: 'team', value: 'payments' }], label: 'Payments',
-  });
+  const added = await c.addEnvironmentAdministrator('staging', { kind: 'team', value: 'payments', label: 'Payments' });
   assert.equal(added.administrators.length, before + 1, 'the seeded admins plus the added team');
   const payments = added.administrators.find((a) => a.label === 'Payments');
   const removed = await c.removeEnvironmentAdministrator('staging', payments.digest);
   assert.equal(removed.administrators.length, before, 'back to the seeded administrators');
   // Reduce to a single administrator, then the last removal is refused.
-  const single = await c.transferEnvironmentAdministration('staging', { administrators: [{ dimension: 'sys:sub', value: 'alice@ops' }] });
+  const single = await c.transferEnvironmentAdministration('staging', { administrators: [{ kind: 'person', value: 'alice@ops' }] });
   assert.equal(single.administrators.length, 1);
   await assert.rejects(
     () => c.removeEnvironmentAdministrator('staging', single.administrators[0].digest),
@@ -746,7 +742,7 @@ test('environment administrators: add a resolved grantee, then refuse removing t
 test('transferEnvironmentAdministration replaces the whole administrator set', async () => {
   const c = makeClient();
   const result = await c.transferEnvironmentAdministration('production', {
-    administrators: [{ dimension: 'tenant', value: 'platform' }],
+    administrators: [{ kind: 'team', value: 'platform' }],
   });
   assert.equal(result.administrators.length, 1);
   assert.ok(result.administrators[0].identity.some((g) => g.dimension === 'tenant' && g.value === 'platform'));

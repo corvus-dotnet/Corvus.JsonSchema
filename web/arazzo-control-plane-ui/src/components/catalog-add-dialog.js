@@ -361,7 +361,8 @@ class ArazzoCatalogAddDialog extends ArazzoElement {
   async applyAdministrators(baseWorkflowId) {
     for (const member of this._stagedAdmins || []) {
       try {
-        await this.client.addAdministrator(baseWorkflowId, member);
+        // The staged grantee's identity is for display; the server resolves the grantee it stores (ADR 0008).
+        await this.client.addAdministrator(baseWorkflowId, { kind: member.kind, value: member.value, label: member.label });
       } catch (err) {
         this.emit('error', { problem: err.problem || { title: err.message }, error: err });
       }

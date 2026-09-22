@@ -5,6 +5,7 @@
 using System.Buffers;
 using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
+using Corvus.Text.Json.Arazzo.Directories;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.Extensions.Logging;
@@ -20,11 +21,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 /// <remarks>
 /// <para><strong>Identity model (§15).</strong> An administrator is a deployment-stamped <c>sys:</c> identity (the same
 /// unforgeable internal tags a catalogued version is stamped with), and the set is governed by current-administrator
-/// membership — never reach. The operator-facing API never exposes raw internal tags: each administrator is named by
-/// the grant <c>{dimension, value}</c> the deployment maps it to (the same mapping the §13 usage grants use, via
-/// <see cref="ControlPlaneRowSecurityPolicy.ResolveUsageGrants"/> / <see cref="ControlPlaneRowSecurityPolicy.DescribeUsageScope"/>).
-/// The caller's own identity is read from the deployment's row-security policy, so administration is meaningful only
-/// when a policy is configured.</para>
+/// membership — never reach. The operator-facing API never exposes raw internal tags: a write names a grantee
+/// (<c>{kind, value}</c>) the server resolves to its exact identity through the <see cref="GranteeResolver"/> (ADR 0008),
+/// and a read describes each stored identity back as <c>{dimension, value}</c> grants (via
+/// <see cref="ControlPlaneRowSecurityPolicy.DescribeUsageScope"/>). The caller's own identity is read from the
+/// deployment's row-security policy, so administration is meaningful only when a policy is configured.</para>
 /// <para>An unknown base id and a caller who is not a current administrator are refused identically (403,
 /// non-disclosing). A concurrent change that loses the optimistic-concurrency race conflicts (409). Removing the last
 /// administrator is refused (409) — a workflow always has at least one. When the catalog client has no administrator
@@ -36,32 +37,29 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
 
     private readonly ISecuredWorkflowCatalog catalog;
     private readonly ControlPlaneAccess access;
+    private readonly GranteeResolver resolver;
     private readonly IObservedIdentityStore? observed;
     private readonly GovernanceAuditor auditor;
 
     // The audited resource kind for a workflow-administration change on this surface (design §850).
     private const string TargetKind = "workflow";
 
-    /// <summary>Initializes a new, unscoped instance (the caller resolves to no identity — administration management
-    /// requires a configured row-security policy).</summary>
-    /// <param name="catalog">The catalog client that owns the administrator store and the administration operations.</param>
-    public ArazzoControlPlaneAdministratorsHandler(ISecuredWorkflowCatalog catalog)
-        : this(catalog, new ControlPlaneAccess())
-    {
-    }
-
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneAdministratorsHandler"/> class.</summary>
     /// <param name="catalog">The catalog client that owns the administrator store and the administration operations.</param>
     /// <param name="access">Resolves the caller's deployment identity per request and maps administrator grants to and
     /// from internal tags. Unscoped (no identity) when no row security is configured.</param>
+    /// <param name="resolver">Resolves a grantee a write names to its exact deployment-stamped identity (ADR 0008).</param>
     /// <param name="observed">An optional observed-identity store; a newly added administrator is recorded as a resolvable
     /// grantee for the §16.5.4 typeahead (best-effort).</param>
-    internal ArazzoControlPlaneAdministratorsHandler(ISecuredWorkflowCatalog catalog, ControlPlaneAccess access, IObservedIdentityStore? observed = null, GovernanceAuditor? auditor = null)
+    /// <param name="auditor">The governance auditor; <see langword="null"/> records nothing.</param>
+    internal ArazzoControlPlaneAdministratorsHandler(ISecuredWorkflowCatalog catalog, ControlPlaneAccess access, GranteeResolver resolver, IObservedIdentityStore? observed = null, GovernanceAuditor? auditor = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(access);
+        ArgumentNullException.ThrowIfNull(resolver);
         this.catalog = catalog;
         this.access = access;
+        this.resolver = resolver;
         this.observed = observed;
         this.auditor = auditor ?? GovernanceAuditor.None;
     }
@@ -86,67 +84,39 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
     /// <inheritdoc/>
     public async ValueTask<AddAdministratorResult> HandleAddAdministratorAsync(AddAdministratorParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        Models.AdministratorMemberWrite body = parameters.Body;
+        Models.GranteeReference body = parameters.Body;
 
+        // The grantee is resolved by the server (ADR 0008): the body names a kind and a value, never an identity. The
+        // request's kind IS a JSON value; it converts to the store's kind with a straight From() (free rewrap, no reify)
+        // and reifies to the domain enum only at the resolver's C#-enum leaf. The resolver's directory leg is the one
+        // dependency that can be unreachable; that is reported (502), never guessed around.
+        ObservedIdentity.GranteeKind kind;
         SecurityTagSet newAdministrator;
-
-        // The grantee kind the observed store seam carries — its own JSON value (ObservedIdentity.GranteeKind). The
-        // resolved path converts the request kind straight across with From(); the interim single-grant path infers it
-        // from the dimension (a domain enum, for the policy's whole-grain test) and maps that to the store kind.
-        ObservedIdentity.GranteeKind kind = default;
-        bool hasKind = false;
         bool complete;
         try
         {
-            if (body.Identity.IsNotUndefined() && body.Identity.GetArrayLength() > 0)
+            if (!body.Kind.IsNotUndefined() || !body.Value.IsNotUndefined())
             {
-                // Resolved-grantee path (the grantee picker): build the full resolved identity BYTES-TO-BYTES, so a
-                // multi-tag grantee (e.g. a person resolved to {sys:tenant, sys:sub}) is named precisely — each grant's
-                // dimension/value is read as UTF-8 and the resolved tag is written straight into the pooled buffer (no
-                // managed string per dimension/value, no intermediate grant list).
-                var state = new GranteeIdentityState(this.access, body.Identity);
-                newAdministrator = SecurityTagSet.Build(in state, BuildGranteeIdentity);
-
-                // The request's grantee kind IS a JSON value; convert it to the store's kind with a straight From()
-                // (free rewrap, no reify, no token re-parse) — the store carries it through bytes-to-bytes.
-                if (body.Kind.IsNotUndefined())
-                {
-                    kind = ObservedIdentity.GranteeKind.From(body.Kind);
-                    hasKind = true;
-                }
-
-                complete = !body.Complete.IsNotUndefined() || (bool)body.Complete;
-            }
-            else
-            {
-                // Interim single-grant path ({dimension, value}); the kind is inferred from the dimension.
-                if (!body.DimensionValue.IsNotUndefined())
-                {
-                    ServerThrowHelper.ThrowGranteeIdentityOrDimensionRequired();
-                }
-
-                var state = new SingleGrantState(this.access, body.DimensionValue, body.Value);
-                newAdministrator = SecurityTagSet.Build(in state, BuildSingleGrantIdentity);
-
-                // Map the dimension to its grantee kind by comparing the JSON value DIRECTLY (ValueEquals — no
-                // GetUtf8String unescape lease). The policy's whole-grain verdict consumes the domain enum; the store kind
-                // is the equivalent JSON value (a pre-built constant — no reify).
-                hasKind = TryGranteeKindForDimension(body.DimensionValue, out GranteeKind dimensionKind);
-                complete = hasKind && this.access.IsWholeGrainGrantee(dimensionKind);
-                if (hasKind)
-                {
-                    kind = dimensionKind.ToObservedKind();
-                }
+                ServerThrowHelper.ThrowGranteeKindAndValueRequired();
             }
 
-            if (newAdministrator.IsEmpty)
+            kind = ObservedIdentity.GranteeKind.From(body.Kind);
+            GranteeResolution resolution = await this.resolver.ResolveAsync(kind.ToGranteeKind(), JsonString.From(body.Value), cancellationToken).ConfigureAwait(false);
+            if (resolution.Identity.IsEmpty)
             {
                 ServerThrowHelper.ThrowGranteeDoesNotResolve();
             }
+
+            newAdministrator = resolution.Identity;
+            complete = resolution.Complete;
         }
         catch (ArgumentException ex)
         {
             return AddAdministratorResult.BadRequest(Problem("invalid-administrator", "Invalid administrator identity", 400, ex.Message), workspace);
+        }
+        catch (PrincipalDirectoryException)
+        {
+            return AddAdministratorResult.BadGateway(DirectoryUnavailableProblem(), workspace);
         }
 
         // baseWorkflowId is the catalog/admin-store key (string-keyed stores) — its genuine leaf is a string, read once.
@@ -161,14 +131,14 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
 
         // The administration record persists the resolved kind as its own (string-enum) JSON value: From() rewraps the
         // observed-store kind (same person/team/role/workflow tokens) into the durable record's kind with no reify.
-        AdminKind adminKind = hasKind ? AdminKind.From(kind) : default;
+        AdminKind adminKind = AdminKind.From(kind);
 
         // Collision guard (§16.5.4): if the resolved identity already belongs to a DIFFERENT recorded grantee, the
         // deployment's identity mapping is not minting unique identities — refuse the ambiguous grant (409) rather than
         // author a grant that would silently also admit that other principal. The message is generic: the conflicting
         // party is never echoed (it may be outside the caller's reach), so the probe — which runs at full reach — does
         // not become a cross-tenant disclosure oracle. The conflicting record (a pooled document) is disposed here.
-        if (this.observed is not null && hasKind)
+        if (this.observed is not null)
         {
             using ParsedJsonDocument<ObservedIdentity>? conflict = await this.observed.FindIdentityConflictAsync(kind, value, newAdministrator, cancellationToken).ConfigureAwait(false);
             if (conflict is not null)
@@ -179,13 +149,13 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
 
         try
         {
-            using ParsedJsonDocument<WorkflowAdministrators> record = await this.catalog.AddAdministratorAsync(baseWorkflowId, newAdministrator, adminKind, hasKind, label, hasLabel, this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
+            using ParsedJsonDocument<WorkflowAdministrators> record = await this.catalog.AddAdministratorAsync(baseWorkflowId, newAdministrator, adminKind, hasKind: true, label, hasLabel, this.CallerIdentity(), cancellationToken).ConfigureAwait(false);
             await this.auditor.MutationAsync("workflow.add-administrator", this.AuditActor(), TargetKind, baseWorkflowId, "added").ConfigureAwait(false);
 
             // Record the newly named administrator as a resolvable grantee for the §16.5.4 typeahead. Best-effort: the
-            // sighting is an idempotent projection and never fails the add. `complete` is honest (§17.2): the picker's
-            // resolved completeness for a grantee-path add, or the policy's whole-grain verdict for the interim grant.
-            if (this.observed is not null && hasKind)
+            // sighting is an idempotent projection and never fails the add. `complete` is the resolver's verdict (§17.2):
+            // whole for a directory or recorded identity, the policy's whole-grain verdict for its own mapping.
+            if (this.observed is not null)
             {
                 await this.observed.SeenAsync(kind, value, label, newAdministrator, complete, "administrator", cancellationToken).ConfigureAwait(false);
             }
@@ -195,7 +165,7 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
             // the grant). The probe runs at full reach; the echo is reach-filtered to grantees the caller may see (the
             // full count is recorded on the ambient activity for audit). The overlap page is held alive across the
             // synchronous response build below, because the advisory items read its grantee kind/value/label spans.
-            using ObservedIdentityPage overlapPage = this.observed is not null && hasKind
+            using ObservedIdentityPage overlapPage = this.observed is not null
                 ? await this.observed.FindBroadeningOverlapsAsync(kind, value, newAdministrator, MaxBroadeningOverlaps, cancellationToken).ConfigureAwait(false)
                 : ObservedIdentityPage.Create(new PooledDocumentList<ObservedIdentity>(0));
             List<ObservedIdentity>? overlaps = this.ReachVisibleOverlaps(overlapPage);
@@ -231,144 +201,52 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
         }
     }
 
-    // Maps an interim {dimension, value} grant's dimension to its grantee kind by comparing the JSON value DIRECTLY
-    // (ValueEquals — no GetUtf8String unescape lease, no managed string), the inverse of the policy's kind→dimension map.
-    // A custom dimension names no well-known kind (false), so it records no sighting / skips the collision probe.
-    private static bool TryGranteeKindForDimension(in Models.JsonString dimension, out GranteeKind kind)
-    {
-        if (dimension.ValueEquals("sub"u8))
-        {
-            kind = GranteeKind.Person;
-            return true;
-        }
-
-        if (dimension.ValueEquals("tenant"u8))
-        {
-            kind = GranteeKind.Team;
-            return true;
-        }
-
-        if (dimension.ValueEquals("role"u8))
-        {
-            kind = GranteeKind.Role;
-            return true;
-        }
-
-        if (dimension.ValueEquals("workflow"u8))
-        {
-            kind = GranteeKind.Workflow;
-            return true;
-        }
-
-        kind = default;
-        return false;
-    }
-
-    // Builds the grantee identity from the resolved {dimension, value} grants, reading each as UTF-8 and writing its
-    // resolved internal tag straight into the pooled buffer (the multi-tag, bytes-to-bytes picker path).
-    private static void BuildGranteeIdentity(ref IdentityBuilder builder, in GranteeIdentityState state)
-    {
-        foreach (Models.AdministratorIdentity grant in state.Identity.EnumerateArray())
-        {
-            using UnescapedUtf8JsonString dimension = grant.DimensionValue.GetUtf8String();
-            using UnescapedUtf8JsonString value = grant.Value.GetUtf8String();
-            state.Access.ResolveUsageGrantInto(dimension.Span, value.Span, ref builder);
-        }
-    }
-
-    // Builds the interim single-grant identity ({dimension, value}) bytes-to-bytes.
-    private static void BuildSingleGrantIdentity(ref IdentityBuilder builder, in SingleGrantState state)
-    {
-        using UnescapedUtf8JsonString dimension = state.Dimension.GetUtf8String();
-        using UnescapedUtf8JsonString value = state.Value.GetUtf8String();
-        state.Access.ResolveUsageGrantInto(dimension.Span, value.Span, ref builder);
-    }
-
-    private readonly ref struct GranteeIdentityState(ControlPlaneAccess access, Models.AdministratorMemberWrite.AdministratorIdentityArray identity)
-    {
-        public ControlPlaneAccess Access { get; } = access;
-
-        public Models.AdministratorMemberWrite.AdministratorIdentityArray Identity { get; } = identity;
-    }
-
-    private readonly ref struct SingleGrantState(ControlPlaneAccess access, Models.JsonString dimension, Models.JsonString value)
-    {
-        public ControlPlaneAccess Access { get; } = access;
-
-        public Models.JsonString Dimension { get; } = dimension;
-
-        public Models.JsonString Value { get; } = value;
-    }
-
-    // Builds one transfer administrator's identity from its {dimension, value} grant element, reading each as UTF-8 and
-    // writing the resolved internal tag straight into the pooled buffer (the bytes-to-bytes set-replacement counterpart
-    // of the picker's BuildGranteeIdentity, one grant per administrator).
-    private static void BuildAdministratorGrantIdentity(ref IdentityBuilder builder, in AdministratorGrantState state)
-    {
-        using UnescapedUtf8JsonString dimension = state.Identity.DimensionValue.GetUtf8String();
-        using UnescapedUtf8JsonString value = state.Identity.Value.GetUtf8String();
-        state.Access.ResolveUsageGrantInto(dimension.Span, value.Span, ref builder);
-    }
-
-    private readonly ref struct AdministratorGrantState(ControlPlaneAccess access, Models.AdministratorIdentity identity)
-    {
-        public ControlPlaneAccess Access { get; } = access;
-
-        public Models.AdministratorIdentity Identity { get; } = identity;
-    }
-
     /// <inheritdoc/>
     public async ValueTask<TransferAdministrationResult> HandleTransferAdministrationAsync(TransferAdministrationParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string baseWorkflowId = (string)parameters.BaseWorkflowId;
+
+        // Each grantee is resolved by the server (ADR 0008); the kinds flow as JSON values and reify to the domain enum
+        // only at the resolver's leaf. A grantee nothing resolves is refused (400) naming it, since the caller wrote it.
         List<SecurityTagSet> newAdministrators;
         try
         {
-            // Build each administrator's identity BYTES-TO-BYTES: read its {dimension, value} grant as UTF-8 from the body
-            // and write the resolved internal tag straight into a pooled buffer (the same span seam the add/picker path
-            // uses), so a transfer set is resolved without a managed string per dimension/value. The catalog materializes
-            // the durable identities (no per-administrator kind/label in the bulk hand-off form).
             newAdministrators = [];
-            foreach (Models.AdministratorIdentity identity in parameters.Body.Administrators.EnumerateArray())
+            foreach (Models.GranteeReference grantee in parameters.Body.Administrators.EnumerateArray())
             {
-                var state = new AdministratorGrantState(this.access, identity);
-                SecurityTagSet resolved = SecurityTagSet.Build(in state, BuildAdministratorGrantIdentity);
-                if (resolved.IsEmpty)
+                if (!grantee.Kind.IsNotUndefined() || !grantee.Value.IsNotUndefined())
                 {
-                    // A grant the deployment declines to map names no identity — rejected. Only this error path forms the
-                    // {dimension, value} strings (for the 400 message); the success path stays string-free.
-                    ServerThrowHelper.ThrowAdministratorGrantDoesNotResolve((string)identity.DimensionValue, (string)identity.Value);
+                    ServerThrowHelper.ThrowGranteeKindAndValueRequired();
                 }
 
-                newAdministrators.Add(resolved);
+                GranteeResolution resolution = await this.resolver.ResolveAsync(ObservedIdentity.GranteeKind.From(grantee.Kind).ToGranteeKind(), JsonString.From(grantee.Value), cancellationToken).ConfigureAwait(false);
+                if (resolution.Identity.IsEmpty)
+                {
+                    ServerThrowHelper.ThrowAdministratorGranteeDoesNotResolve((string)grantee.Kind, (string)grantee.Value);
+                }
+
+                newAdministrators.Add(resolution.Identity);
             }
         }
         catch (ArgumentException ex)
         {
             return TransferAdministrationResult.BadRequest(Problem("invalid-administrator", "Invalid administrator identity", 400, ex.Message), workspace);
         }
+        catch (PrincipalDirectoryException)
+        {
+            return TransferAdministrationResult.BadGateway(DirectoryUnavailableProblem(), workspace);
+        }
 
         // Collision guard (§16.5.4): refuse the transfer if any named administrator resolves to an identity already held
         // by a different grantee (a non-unique deployment mapping). Generic 409 — the conflicting party is never echoed.
-        // The grant's value flows to the (UTF-8) conflict probe as owned, pooled memory; no managed string is formed.
+        // The grantee's kind and value flow to the probe as their JSON values (From() rewraps, no reify).
         if (this.observed is not null)
         {
             int index = 0;
-            foreach (Models.AdministratorIdentity identity in parameters.Body.Administrators.EnumerateArray())
+            foreach (Models.GranteeReference grantee in parameters.Body.Administrators.EnumerateArray())
             {
                 SecurityTagSet resolved = newAdministrators[index++];
-
-                // Map the dimension to its grantee kind by comparing the JSON value DIRECTLY (ValueEquals — no
-                // GetUtf8String unescape lease); a custom dimension names no well-known kind, so it has no collision probe.
-                if (!TryGranteeKindForDimension(identity.DimensionValue, out GranteeKind transferKind))
-                {
-                    continue;
-                }
-
-                // The grantee value flows to the probe as its JSON value (From() rewraps, no reify); the dimension-inferred
-                // domain kind maps to the store's JSON kind (a pre-built constant). The conflicting record (a pooled
-                // document) is disposed at the end of this iteration.
-                using ParsedJsonDocument<ObservedIdentity>? conflict = await this.observed.FindIdentityConflictAsync(transferKind.ToObservedKind(), JsonString.From(identity.Value), resolved, cancellationToken).ConfigureAwait(false);
+                using ParsedJsonDocument<ObservedIdentity>? conflict = await this.observed.FindIdentityConflictAsync(ObservedIdentity.GranteeKind.From(grantee.Kind), JsonString.From(grantee.Value), resolved, cancellationToken).ConfigureAwait(false);
                 if (conflict is not null)
                 {
                     return TransferAdministrationResult.Conflict(CollisionProblem(), workspace);
@@ -457,6 +335,11 @@ public sealed class ArazzoControlPlaneAdministratorsHandler : IApiAdministrators
 
     // A resolved grantee identity that already belongs to a different grantee (§16.5.4) — the deployment's identity
     // mapping is not unique. Generic by design: the conflicting party is never named.
+    // The resolver's directory leg could not be reached: the identity it would have resolved is never guessed around,
+    // the same 502 the explicit directory search reports.
+    private static Models.ProblemDetails.Source DirectoryUnavailableProblem()
+        => Problem("directory-unavailable", "Directory unavailable", 502, "The external principal directory could not be reached.");
+
     private static Models.ProblemDetails.Source CollisionProblem()
         => Problem(
             "identity-collision",

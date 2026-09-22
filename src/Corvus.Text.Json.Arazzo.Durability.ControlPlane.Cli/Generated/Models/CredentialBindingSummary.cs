@@ -447,7 +447,7 @@ public readonly partial struct CredentialBindingSummary
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The resolved grantee whose runs may USE a binding (&#167;13/&#167;16.5.4): its identity as the deployment-mapped {dimension,value} grants the deployment resolves to unforgeable internal tags, plus the resolved kind/label for display. Mirrors AdministratorGrant. A run may use the binding only if it carries every tag of this identity (label-superset). Omit on a binding to default to the creating principal&#39;s identity (the owner&#39;s runs).
+    /// The resolved grantee whose runs may USE a binding (&#167;13/&#167;16.5.4), as a summary reports it: its identity as the deployment-mapped {dimension,value} grants (the unforgeable internal tags described back), plus the resolved kind/label for display. A run may use the binding only if it carries every tag of this identity. Absent on a binding usable by the owner&#39;s runs only or shared.
     /// </para>
     /// </remarks>
     public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.CredentialUsageGrantee UsageGrantee
