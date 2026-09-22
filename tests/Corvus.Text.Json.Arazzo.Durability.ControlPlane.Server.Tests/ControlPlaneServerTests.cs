@@ -817,8 +817,9 @@ public sealed class ControlPlaneServerTests
             capacityOptions: new Capacity.ControlPlaneCapacityOptions { ConcurrentRunsPerTenant = 1 });
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
-        await runnerRegistry.RegisterAsync(Runner("flow", 1), default);
-        await runnerRegistry.RegisterAsync(Runner("zflow", 1, runnerId: "r2"), default);
+        // A runner answers for a run only in the environment it serves (ADR 0058), so each is registered where it is asked for.
+        await runnerRegistry.RegisterAsync(Runner("flow", 1, environment: "acme-prod"), default);
+        await runnerRegistry.RegisterAsync(Runner("zflow", 1, runnerId: "r2", environment: "zeus-prod"), default);
 
         (await StartAsync(client, "flow", "acme-prod")).StatusCode.ShouldBe(HttpStatusCode.Accepted);
         (await StartAsync(client, "flow", "acme-prod")).StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
@@ -861,7 +862,10 @@ public sealed class ControlPlaneServerTests
             capacityOptions: new Capacity.ControlPlaneCapacityOptions { ConcurrentRunsPerTenant = 10 });
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
-        await runnerRegistry.RegisterAsync(Runner("flow", 1), default);
+        // A runner in each environment the test asks of, so that a refusal below is the tenancy refusal it asserts and not
+        // the absence of a runner (a runner answers only for the environment it serves, ADR 0058).
+        await runnerRegistry.RegisterAsync(Runner("flow", 1, environment: "orphan"), default);
+        await runnerRegistry.RegisterAsync(Runner("flow", 1, runnerId: "r2", environment: "platform"), default);
 
         HttpResponseMessage refused = await StartAsync(client, "flow", "orphan");
         refused.StatusCode.ShouldBe(HttpStatusCode.Conflict);
@@ -921,7 +925,11 @@ public sealed class ControlPlaneServerTests
         app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open, environmentStore: environmentStore, availabilityStore: availabilityStore);
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
-        await runnerRegistry.RegisterAsync(Runner("flow", 1), default);
+        // A runner in each environment the test asks of, so that a refusal below is the tenancy refusal it asserts and not
+        // the absence of a runner (a runner answers only for the environment it serves, ADR 0058).
+        await runnerRegistry.RegisterAsync(Runner("flow", 1, environment: "acme-prod"), default);
+        await runnerRegistry.RegisterAsync(Runner("flow", 1, runnerId: "r2", environment: "zeus-prod"), default);
+        await runnerRegistry.RegisterAsync(Runner("flow", 1, runnerId: "r3", environment: "platform"), default);
 
         HttpResponseMessage crossTenant = await StartAsync(client, "flow", "zeus-prod");
         crossTenant.StatusCode.ShouldBe(HttpStatusCode.Conflict);
@@ -1063,7 +1071,7 @@ public sealed class ControlPlaneServerTests
         app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open, environmentStore: environmentStore, availabilityStore: availabilityStore);
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
-        await runnerRegistry.RegisterAsync(Runner("flow", 1), default);
+        await runnerRegistry.RegisterAsync(Runner("flow", 1, environment: "prod"), default);
 
         HttpResponseMessage accepted = await StartAsync(client, "flow", "prod");
         accepted.StatusCode.ShouldBe(HttpStatusCode.Accepted);
@@ -1333,7 +1341,12 @@ public sealed class ControlPlaneServerTests
         // The copy assumed in-process isolation. The only runner here is in-process, and the environment requires
         // isolated execution, so a start is refused and a run-now must be.
         await using ScheduleHost host = await ScheduleHost.StartAsync(environmentJson: """{"name":"development","requiredIsolation":"Isolated"}""");
+
+        // A schedule is created only where its target can run, so an isolated runner is there for the creation, and is
+        // then replaced by an in-process one, which is the state a run-now has to refuse.
+        await host.Runners.RegisterAsync(Runner("flow", 1, environment: "development", servesSchedules: true, isolationModel: "Isolated"), default);
         await host.CreateScheduleAsync("""{"petId":5}""");
+        await host.Runners.RegisterAsync(Runner("flow", 1, environment: "development", servesSchedules: true), default);
 
         (await StartAsync(host.Client, "flow", "development")).StatusCode.ShouldBe(HttpStatusCode.Conflict);
         HttpResponseMessage ranNow = await host.Client.PostAsync("/schedules/nightly/run-now", new StringContent(string.Empty));
@@ -1343,18 +1356,60 @@ public sealed class ControlPlaneServerTests
         problem.RootElement.GetProperty("type").GetString()!.ShouldEndWith("no-runner");
     }
 
+    [TestMethod]
+    public async Task A_schedule_is_refused_where_no_runner_provides_the_isolation_its_environment_requires()
+    {
+        // V-30 of the 2026-08-07 audit. Schedule creation asked for an in-process host whatever the environment required,
+        // so it admitted a schedule that every firing would then refuse.
+        await using ScheduleHost host = await ScheduleHost.StartAsync(environmentJson: """{"name":"development","requiredIsolation":"Isolated"}""");
+
+        HttpResponseMessage created = await host.Client.PostAsync(
+            "/schedules",
+            new StringContent("""{"scheduleId":"nightly","environment":"development","targetBaseWorkflowId":"flow","targetVersionNumber":1,"cron":"0 9 * * *","targetInputs":{"petId":5}}""", Encoding.UTF8, "application/json"));
+
+        created.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        using Stj.JsonDocument problem = await ReadJsonAsync(created);
+        problem.RootElement.GetProperty("type").GetString()!.ShouldEndWith("no-runner");
+    }
+
+    [TestMethod]
+    public async Task A_run_is_refused_where_the_only_runner_hosting_the_version_serves_another_environment()
+    {
+        // V-30 of the 2026-08-07 audit, ADR 0058. The start gate asked the registry with no environment, so a runner
+        // anywhere answered for it. A run is pinned to its environment and a runner claims only its own, so the run was
+        // admitted and then sat Pending, and an Isolated environment's requirement was met by another's isolated runner.
+        await using ScheduleHost host = await ScheduleHost.StartAsync();
+
+        // The host's one runner serves development. Move it to staging: it hosts the same version, elsewhere.
+        await host.Runners.RegisterAsync(Runner("flow", 1, environment: "staging", servesSchedules: true), default);
+
+        HttpResponseMessage refused = await StartAsync(host.Client, "flow", "development");
+        refused.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        using (Stj.JsonDocument problem = await ReadJsonAsync(refused))
+        {
+            problem.RootElement.GetProperty("type").GetString()!.ShouldEndWith("no-runner");
+        }
+
+        // And back again, and the run is admitted.
+        await host.Runners.RegisterAsync(Runner("flow", 1, environment: "development", servesSchedules: true), default);
+        (await StartAsync(host.Client, "flow", "development")).StatusCode.ShouldBe(HttpStatusCode.Accepted);
+    }
+
     // A control plane serving schedules, with one runnable version available in one environment.
     private sealed class ScheduleHost : IAsyncDisposable
     {
         private readonly WebApplication app;
 
-        private ScheduleHost(WebApplication app, HttpClient client)
+        private ScheduleHost(WebApplication app, HttpClient client, InMemoryRunnerRegistry runners)
         {
             this.app = app;
             this.Client = client;
+            this.Runners = runners;
         }
 
         public HttpClient Client { get; }
+
+        public InMemoryRunnerRegistry Runners { get; }
 
         public static async Task<ScheduleHost> StartAsync(Capacity.ControlPlaneCapacityOptions? capacity = null, string environmentJson = """{"name":"development"}""")
         {
@@ -1385,7 +1440,7 @@ public sealed class ControlPlaneServerTests
                 scheduleRegistry: new Schedules.InMemoryScheduleRegistry(), capacityOptions: capacity);
             await app.StartAsync();
             await runners.RegisterAsync(Runner("flow", 1, environment: "development", servesSchedules: true), default);
-            return new ScheduleHost(app, app.GetTestClient());
+            return new ScheduleHost(app, app.GetTestClient(), runners);
         }
 
         public async Task CreateScheduleAsync(string targetInputsJson)
@@ -1481,7 +1536,7 @@ public sealed class ControlPlaneServerTests
             var runners = new InMemoryRunnerRegistry();
             app.MapArazzoControlPlane(management, catalog, runners, ControlPlaneSecurityMode.Open, environmentStore: environments, availabilityStore: availability);
             await app.StartAsync();
-            await runners.RegisterAsync(Runner("flow", 1), default);
+            await runners.RegisterAsync(Runner("flow", 1, environment: "prod"), default);
 
             var host = new RerunHost(app, app.GetTestClient(), management, runStore, availability, environments, clock) { Audit = audit };
             await host.SetBudgetAsync(budgetJson, add: true);
@@ -2032,7 +2087,7 @@ public sealed class ControlPlaneServerTests
 
         // Only an in-process runner hosts the version (absent isolationModel), so the environment's Isolated requirement
         // cannot be satisfied and the start gate refuses the run with an isolation-aware 409.
-        await runnerRegistry.RegisterAsync(Runner("flow", 1, "runner-inproc"), default);
+        await runnerRegistry.RegisterAsync(Runner("flow", 1, "runner-inproc", environment: "isolated-env"), default);
         HttpResponseMessage rejected = await client.PostAsync(
             "/catalog/flow/versions/1/runs?environment=isolated-env",
             new StringContent("""{ "petId": 5 }""", Encoding.UTF8, "application/json"));
@@ -2043,7 +2098,7 @@ public sealed class ControlPlaneServerTests
         }
 
         // An isolated runner hosting the version satisfies the requirement → the run is accepted and pinned.
-        await runnerRegistry.RegisterAsync(Runner("flow", 1, "runner-isolated", isolationModel: "Isolated"), default);
+        await runnerRegistry.RegisterAsync(Runner("flow", 1, "runner-isolated", environment: "isolated-env", isolationModel: "Isolated"), default);
         HttpResponseMessage accepted = await client.PostAsync(
             "/catalog/flow/versions/1/runs?environment=isolated-env",
             new StringContent("""{ "petId": 5 }""", Encoding.UTF8, "application/json"));
@@ -2087,7 +2142,7 @@ public sealed class ControlPlaneServerTests
         await app.StartAsync();
         using HttpClient client = app.GetTestClient();
         (await availabilityStore.MakeAvailableAsync("flow", 1, "isolated-env", "ops", default)).Entry.Dispose();
-        await runnerRegistry.RegisterAsync(Runner("flow", 1, "runner-isolated", isolationModel: "Isolated"), default);
+        await runnerRegistry.RegisterAsync(Runner("flow", 1, "runner-isolated", environment: "isolated-env", isolationModel: "Isolated"), default);
 
         // An isolated runner hosts the version, but no serverless function has been deployed for the environment's target →
         // the dispatch-ready gate (ADR 0059) refuses the run (409) rather than accept one nothing can yet execute.

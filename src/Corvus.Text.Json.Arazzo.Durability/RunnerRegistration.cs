@@ -23,6 +23,10 @@ public readonly partial struct RunnerRegistration
     /// <summary>Gets the runner id as a string.</summary>
     public string RunnerIdValue => (string)this.RunnerId;
 
+    /// <summary>Gets the environment this runner serves, as a string. A registry realises it once at registration, to key
+    /// its hosting index by it. A comparison uses <see cref="EnvironmentEquals"/>, which realises nothing.</summary>
+    public string EnvironmentValue => (string)this.Environment;
+
     /// <summary>Tests whether the runner serves <paramref name="environment"/>, compared string-free (no environment
     /// string is realised from the document — the candidate's bytes are compared against the JSON value).</summary>
     /// <param name="environment">The candidate environment.</param>
@@ -71,15 +75,16 @@ public readonly partial struct RunnerRegistration
     public bool ProvidesIsolation(RunIsolationModel requiredIsolation)
         => requiredIsolation == RunIsolationModel.InProcess || this.IsolationModelValue == RunIsolationModel.Isolated;
 
-    /// <summary>Determines whether this runner hosts the given loaded version AND provides the required isolation (ADR 0058) —
-    /// the start-gate match. The isolation check runs first, so a runner of the wrong isolation is rejected without scanning
-    /// its hosted versions.</summary>
+    /// <summary>Determines whether this runner serves the environment, hosts the given loaded version AND provides the
+    /// required isolation (ADR 0058) — the start-gate match. The environment and isolation checks run first, so a runner
+    /// elsewhere, or of the wrong isolation, is rejected without scanning its hosted versions.</summary>
     /// <param name="baseWorkflowId">The base workflow id of the version.</param>
     /// <param name="versionNumber">The version number.</param>
+    /// <param name="environment">The environment the run is pinned to.</param>
     /// <param name="requiredIsolation">The isolation the target environment requires.</param>
-    /// <returns><see langword="true"/> if this runner hosts the loaded version and provides the required isolation.</returns>
-    public bool HostsVersion(string baseWorkflowId, int versionNumber, RunIsolationModel requiredIsolation)
-        => this.ProvidesIsolation(requiredIsolation) && this.HostsVersion(baseWorkflowId, versionNumber);
+    /// <returns><see langword="true"/> if this runner serves the environment, hosts the loaded version and provides the required isolation.</returns>
+    public bool HostsVersion(string baseWorkflowId, int versionNumber, string environment, RunIsolationModel requiredIsolation)
+        => this.EnvironmentEquals(environment) && this.ProvidesIsolation(requiredIsolation) && this.HostsVersion(baseWorkflowId, versionNumber);
 
     /// <summary>Gets the (baseWorkflowId, versionNumber) pairs this runner hosts with the version loaded — the rows a backend projects into its hosting index.</summary>
     /// <returns>The loaded hosted versions.</returns>

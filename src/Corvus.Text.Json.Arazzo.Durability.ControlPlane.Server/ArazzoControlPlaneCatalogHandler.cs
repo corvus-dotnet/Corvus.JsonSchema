@@ -669,13 +669,15 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler, IRunS
             }
         }
 
-        // Gate on a registered runner that hosts this version AND provides the environment's required isolation (ADR 0058):
-        // a run accepted with no runner to execute it would sit Pending indefinitely, so refuse it up front with a 409.
-        if (!await this.runners.IsVersionHostedAsync(baseWorkflowId, versionNumber, requiredIsolation, cancellationToken).ConfigureAwait(false))
+        // Gate on a registered runner IN THIS ENVIRONMENT that hosts this version AND provides the environment's required
+        // isolation (ADR 0058). A run is pinned to its environment and a runner claims only its own, so a runner elsewhere
+        // that hosts the version cannot execute it: a run accepted on its account would sit Pending indefinitely, and an
+        // Isolated environment's requirement would be met by another environment's runner. Refuse it up front with a 409.
+        if (!await this.runners.IsVersionHostedAsync(baseWorkflowId, versionNumber, environment, requiredIsolation, cancellationToken).ConfigureAwait(false))
         {
             return RunStartOutcome.Refused(409, "no-runner", "No hosting runner", requiredIsolation == RunIsolationModel.Isolated
                     ? $"No registered runner currently hosts version {versionNumber} of '{baseWorkflowId}' with the {requiredIsolation} isolation environment '{environment}' requires; start an isolated-backend runner that hosts it and retry."
-                    : $"No registered runner currently hosts version {versionNumber} of '{baseWorkflowId}'; start a runner that hosts it and retry.");
+                    : $"No registered runner serving environment '{environment}' currently hosts version {versionNumber} of '{baseWorkflowId}'; start a runner there that hosts it and retry.");
         }
 
         // Dispatch-ready gate (ADR 0055, ADR 0059): an Isolated environment runs a version through a serverless function

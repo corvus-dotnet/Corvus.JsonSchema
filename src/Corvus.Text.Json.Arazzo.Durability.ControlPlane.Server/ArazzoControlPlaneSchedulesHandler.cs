@@ -198,6 +198,9 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
         // The target's owner group must be the environment's (ADR 0065), checked here as the start path checks it, so a
         // schedule that could never fire is refused at create rather than at every occurrence. Skipped when no
         // environment registry is wired, as the start path skips it. `var` avoids the Environment type-name clash.
+        // The environment also governs the minimum run isolation (ADR 0058), read here so the hosting check below asks for
+        // what a firing will ask for; absent an environment registry it stays InProcess, as on the start path.
+        RunIsolationModel requiredIsolation = RunIsolationModel.InProcess;
         if (this.environmentStore is { } envStore)
         {
             using var environmentDoc = await envStore.GetAsync(environment, ctx, cancellationToken).ConfigureAwait(false);
@@ -218,6 +221,8 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
                         TenancyAgreement.Detail(targetBase, targetVersion, catalogVersion.SecurityTagsValue, environment, environmentDoc.RootElement, this.access.OwnerGroupTagKeyUtf8)),
                     workspace);
             }
+
+            requiredIsolation = environmentDoc.RootElement.RequiredIsolationValue;
         }
 
         if (this.availabilityStore is { } availStore)
@@ -230,10 +235,10 @@ public sealed class ArazzoControlPlaneSchedulesHandler : IApiSchedulesHandler
             }
         }
 
-        if (!await this.runners.IsVersionHostedAsync(targetBase, targetVersion, RunIsolationModel.InProcess, cancellationToken).ConfigureAwait(false))
+        if (!await this.runners.IsVersionHostedAsync(targetBase, targetVersion, environment, requiredIsolation, cancellationToken).ConfigureAwait(false))
         {
             return CreateScheduleResult.Conflict(
-                Problem("no-runner", "No hosting runner", 409, $"No registered runner currently hosts version {targetVersion} of '{targetBase}'; a schedule needs one to run its target."), workspace);
+                Problem("no-runner", "No hosting runner", 409, $"No registered runner serving environment '{environment}' currently hosts version {targetVersion} of '{targetBase}' with the isolation the environment requires; a schedule needs one to run its target."), workspace);
         }
 
         // The distinguishing gate for a schedule (#896): the environment must have a runner that serves schedules.

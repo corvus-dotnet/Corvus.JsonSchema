@@ -45,10 +45,11 @@ public sealed class SqlServerRunnerRegistry : IRunnerRegistry, IAsyncDisposable
                 base_workflow_id NVARCHAR(450) NOT NULL,
                 version_number INT NOT NULL,
                 isolation_model NVARCHAR(50) NULL,
+                environment NVARCHAR(63) NOT NULL,
                 CONSTRAINT PK_runner_hosted PRIMARY KEY (runner_id, base_workflow_id, version_number),
                 CONSTRAINT FK_runner_hosted FOREIGN KEY (runner_id) REFERENCES runner_registrations (runner_id) ON DELETE CASCADE
             );
-            CREATE INDEX IX_runner_hosted_versions_version ON runner_hosted_versions (base_workflow_id, version_number);
+            CREATE INDEX IX_runner_hosted_versions_version ON runner_hosted_versions (base_workflow_id, version_number, environment);
         END;
         """;
 
@@ -140,15 +141,20 @@ public sealed class SqlServerRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         // The runner's isolation (ADR 0058) is a runner-level field, denormalised onto each hosting-index row so the
         // start-gate EXISTS query can require it without a join. Absent isolationModel means InProcess.
         string isolationModel = registration.IsolationModelValue == RunIsolationModel.Isolated ? "Isolated" : "InProcess";
+
+        // The runner's environment rides each row too, so the gate asks only of runners that could claim the run (a run
+        // is pinned to its environment and a runner claims only its own).
+        string environment = registration.EnvironmentValue;
         foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
         {
             await using SqlCommand insert = connection.CreateCommand();
             insert.Transaction = transaction;
-            insert.CommandText = "INSERT INTO runner_hosted_versions (runner_id, base_workflow_id, version_number, isolation_model) VALUES (@runnerId, @baseWorkflowId, @versionNumber, @isolationModel);";
+            insert.CommandText = "INSERT INTO runner_hosted_versions (runner_id, base_workflow_id, version_number, isolation_model, environment) VALUES (@runnerId, @baseWorkflowId, @versionNumber, @isolationModel, @environment);";
             insert.Parameters.AddWithValue("@runnerId", runnerId);
             insert.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
             insert.Parameters.AddWithValue("@versionNumber", versionNumber);
             insert.Parameters.AddWithValue("@isolationModel", isolationModel);
+            insert.Parameters.AddWithValue("@environment", environment);
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
@@ -156,17 +162,19 @@ public sealed class SqlServerRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     }
 
     /// <inheritdoc/>
-    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, RunIsolationModel requiredIsolation, CancellationToken cancellationToken)
+    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, string environment, RunIsolationModel requiredIsolation, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
+        ArgumentException.ThrowIfNullOrEmpty(environment);
         await using SqlConnection connection = await this.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using SqlCommand command = connection.CreateCommand();
 
         // ADR 0058: an InProcess requirement is met by any hosting runner; an Isolated requirement only by a runner whose
         // denormalised isolation_model is 'Isolated'. @requiredIsolation is the single bounded wire string for this call.
-        command.CommandText = "SELECT CASE WHEN EXISTS (SELECT 1 FROM runner_hosted_versions WHERE base_workflow_id = @baseWorkflowId AND version_number = @versionNumber AND (@requiredIsolation = 'InProcess' OR isolation_model = 'Isolated')) THEN 1 ELSE 0 END;";
+        command.CommandText = "SELECT CASE WHEN EXISTS (SELECT 1 FROM runner_hosted_versions WHERE base_workflow_id = @baseWorkflowId AND version_number = @versionNumber AND environment = @environment AND (@requiredIsolation = 'InProcess' OR isolation_model = 'Isolated')) THEN 1 ELSE 0 END;";
         command.Parameters.AddWithValue("@baseWorkflowId", baseWorkflowId);
         command.Parameters.AddWithValue("@versionNumber", versionNumber);
+        command.Parameters.AddWithValue("@environment", environment);
         command.Parameters.AddWithValue("@requiredIsolation", requiredIsolation == RunIsolationModel.Isolated ? "Isolated" : "InProcess");
         return (int)(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false))! == 1;
     }

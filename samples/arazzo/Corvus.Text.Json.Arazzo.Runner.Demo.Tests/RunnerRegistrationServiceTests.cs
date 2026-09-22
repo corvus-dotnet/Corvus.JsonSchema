@@ -167,7 +167,7 @@ public sealed class RunnerRegistrationServiceTests
 
         public ValueTask<IReadOnlyList<RunnerRegistration>> ListAsync(CancellationToken cancellationToken) => throw new NotSupportedException();
 
-        public ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, RunIsolationModel requiredIsolation, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, string environment, RunIsolationModel requiredIsolation, CancellationToken cancellationToken) => throw new NotSupportedException();
 
         public ValueTask<int> PruneAsync(DateTimeOffset deadBefore, CancellationToken cancellationToken) => throw new NotSupportedException();
     }

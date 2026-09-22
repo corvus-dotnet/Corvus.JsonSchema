@@ -138,16 +138,18 @@ public sealed class CosmosRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     }
 
     /// <inheritdoc/>
-    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, RunIsolationModel requiredIsolation, CancellationToken cancellationToken)
+    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, string environment, RunIsolationModel requiredIsolation, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
+        ArgumentException.ThrowIfNullOrEmpty(environment);
 
         // ADR 0058: an InProcess requirement is met by any hosting runner; an Isolated requirement only by a runner whose
         // top-level isolationModel is 'Isolated'. @requiredIsolation is the single bounded wire string realised per call.
         var definition = new QueryDefinition(
-            "SELECT VALUE COUNT(1) FROM c JOIN h IN c.loadedVersions WHERE h.baseWorkflowId = @baseWorkflowId AND h.versionNumber = @versionNumber AND (@requiredIsolation = 'InProcess' OR c.isolationModel = 'Isolated')")
+            "SELECT VALUE COUNT(1) FROM c JOIN h IN c.loadedVersions WHERE h.baseWorkflowId = @baseWorkflowId AND h.versionNumber = @versionNumber AND c.doc.environment = @environment AND (@requiredIsolation = 'InProcess' OR c.isolationModel = 'Isolated')")
             .WithParameter("@baseWorkflowId", baseWorkflowId)
             .WithParameter("@versionNumber", versionNumber)
+            .WithParameter("@environment", environment)
             .WithParameter("@requiredIsolation", requiredIsolation == RunIsolationModel.Isolated ? "Isolated" : "InProcess");
 
         await foreach (ReadOnlyMemory<byte> element in this.QueryElementsAsync(definition, cancellationToken).ConfigureAwait(false))

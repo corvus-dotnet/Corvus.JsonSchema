@@ -61,7 +61,7 @@ the same change as the thing that triggered it.
 - [ ] **Identity comes from the authenticated principal**, never from the request body, a header the caller
       controls, or a claim the token may carry unchecked. (V-2.)
 - [ ] **A check that takes a scope or an environment is given one.** A context-less overload of a reach-filtered
-      call is a bypass. (V-10, V-30: the run-start isolation gate takes no environment.)
+      call is a bypass. (V-10, V-30: the run-start isolation gate took no environment, so a runner in another environment answered for the run.)
 - [ ] **A new store or store method answers `SupportsRowSecurityFilter`** and ships a wire proof that the reach
       predicate reaches the backend ([ADR 0067](../adr/0067-reach-enforced-by-the-store-proven-on-the-wire.md)). (V-34.)
 - [ ] **A revocation takes effect within a stated bound**, and the bound is written down. (V-22.)

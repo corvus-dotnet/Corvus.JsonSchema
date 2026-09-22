@@ -90,14 +90,19 @@ public sealed class MongoRunnerRegistry : IRunnerRegistry, IAsyncDisposable
     }
 
     /// <inheritdoc/>
-    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, RunIsolationModel requiredIsolation, CancellationToken cancellationToken)
+    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, string environment, RunIsolationModel requiredIsolation, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
 
         // $elemMatch ensures the same array element matches both base id and version.
+        ArgumentException.ThrowIfNullOrEmpty(environment);
+
+        // The runner's environment is a top-level projected field: a run is pinned to its environment and a runner claims
+        // only its own, so only a runner serving it answers for the run.
         FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.ElemMatch(
             "loadedVersions",
-            Builders<BsonDocument>.Filter.Eq("baseWorkflowId", baseWorkflowId) & Builders<BsonDocument>.Filter.Eq("versionNumber", versionNumber));
+            Builders<BsonDocument>.Filter.Eq("baseWorkflowId", baseWorkflowId) & Builders<BsonDocument>.Filter.Eq("versionNumber", versionNumber))
+            & Builders<BsonDocument>.Filter.Eq("environment", environment);
 
         // ADR 0058: an InProcess requirement is met by any hosting runner (filter unchanged); an Isolated requirement only
         // by a runner whose top-level isolationModel is 'Isolated', pushed into the query as an additional condition.
@@ -131,6 +136,7 @@ public sealed class MongoRunnerRegistry : IRunnerRegistry, IAsyncDisposable
             ["_id"] = registration.RunnerIdValue,
             ["lastSeenAt"] = lastSeenAtUnixMilliseconds,
             ["isolationModel"] = registration.IsolationModelValue == RunIsolationModel.Isolated ? "Isolated" : "InProcess",
+            ["environment"] = registration.EnvironmentValue,
             ["doc"] = new BsonBinaryData(doc),
             ["loadedVersions"] = loadedVersions,
         };

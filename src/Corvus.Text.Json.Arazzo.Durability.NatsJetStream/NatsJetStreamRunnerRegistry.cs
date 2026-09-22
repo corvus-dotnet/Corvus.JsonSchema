@@ -139,9 +139,12 @@ public sealed class NatsJetStreamRunnerRegistry : IRunnerRegistry, IAsyncDisposa
         {
             RunnerRegistration old = RunnerRegistration.FromJson(oldValue);
             string oldIsolation = IsolationToken(old);
+
+            // The keys carry the environment the runner served WHEN IT REGISTERED them, which a re-registration may change.
+            string oldEnvironment = old.EnvironmentValue;
             foreach ((string oldBase, int oldVersion) in old.LoadedHostedVersions())
             {
-                await this.DeleteAsync(HostingKey(oldBase, oldVersion, oldIsolation, runnerId), cancellationToken).ConfigureAwait(false);
+                await this.DeleteAsync(HostingKey(oldEnvironment, oldBase, oldVersion, oldIsolation, runnerId), cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -151,9 +154,13 @@ public sealed class NatsJetStreamRunnerRegistry : IRunnerRegistry, IAsyncDisposa
         // The runner's isolation (ADR 0058) is a runner-level property, encoded as a segment of each hosting-index key so an
         // Isolated start-gate requirement is answered by a subject-wildcard scan of just the isolated keys. Absent = InProcess.
         string isolation = IsolationToken(registration);
+
+        // The runner's environment leads the key: a run is pinned to its environment and a runner claims only its own, so
+        // the start gate's scan is scoped to the runners that could claim the run.
+        string environment = registration.EnvironmentValue;
         foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
         {
-            await this.registry.PutAsync(HostingKey(baseWorkflowId, versionNumber, isolation, runnerId), HostingMarker, cancellationToken: cancellationToken).ConfigureAwait(false);
+            await this.registry.PutAsync(HostingKey(environment, baseWorkflowId, versionNumber, isolation, runnerId), HostingMarker, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -350,17 +357,18 @@ public sealed class NatsJetStreamRunnerRegistry : IRunnerRegistry, IAsyncDisposa
     }
 
     /// <inheritdoc/>
-    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, RunIsolationModel requiredIsolation, CancellationToken cancellationToken)
+    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, string environment, RunIsolationModel requiredIsolation, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
+        ArgumentException.ThrowIfNullOrEmpty(environment);
 
         // Enumerate only the hosting-index keys scoped to this (base, version) via a subject-wildcard filter (KV keys map
         // to subjects). ADR 0058: an InProcess requirement uses the trailing '>' to span the {isolation}.{Base64Url(runnerId)}
         // tail, so any hosting runner matches; an Isolated requirement pins the isolation segment to 'Isolated', so only
         // isolated runners' keys are scanned. GetKeysAsync excludes deleted/tombstoned keys, so any returned key is a live host.
         string filter = requiredIsolation == RunIsolationModel.Isolated
-            ? HostingKeyPrefix(baseWorkflowId, versionNumber) + "Isolated.>"
-            : HostingKeyPrefix(baseWorkflowId, versionNumber) + ">";
+            ? HostingKeyPrefix(environment, baseWorkflowId, versionNumber) + "Isolated.>"
+            : HostingKeyPrefix(environment, baseWorkflowId, versionNumber) + ">";
         await foreach (string unused in this.registry.GetKeysAsync([filter], cancellationToken: cancellationToken).ConfigureAwait(false))
         {
             return true;
@@ -387,9 +395,10 @@ public sealed class NatsJetStreamRunnerRegistry : IRunnerRegistry, IAsyncDisposa
                 if (registration.LastSeenAtValue < deadBefore)
                 {
                     string isolation = IsolationToken(registration);
+                    string environment = registration.EnvironmentValue;
                     foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
                     {
-                        await this.DeleteAsync(HostingKey(baseWorkflowId, versionNumber, isolation, registration.RunnerIdValue), cancellationToken).ConfigureAwait(false);
+                        await this.DeleteAsync(HostingKey(environment, baseWorkflowId, versionNumber, isolation, registration.RunnerIdValue), cancellationToken).ConfigureAwait(false);
                     }
 
                     await this.DeleteAsync(key, cancellationToken).ConfigureAwait(false);
@@ -414,14 +423,16 @@ public sealed class NatsJetStreamRunnerRegistry : IRunnerRegistry, IAsyncDisposa
     private static string Key(string runnerId)
         => Enc(runnerId);
 
-    private static string HostingKeyPrefix(string baseWorkflowId, int versionNumber)
-        => string.Create(CultureInfo.InvariantCulture, $"{HostingPrefix}{Enc(baseWorkflowId)}.{versionNumber}.");
+    // The environment is its own subject token, unencoded: its grammar is lowercase letters, digits and hyphens, so it
+    // carries neither a '.' separator nor a wildcard.
+    private static string HostingKeyPrefix(string environment, string baseWorkflowId, int versionNumber)
+        => string.Create(CultureInfo.InvariantCulture, $"{HostingPrefix}{environment}.{Enc(baseWorkflowId)}.{versionNumber}.");
 
     // The hosting-index key carries the runner's isolation (ADR 0058) as its own segment ahead of the runner id, so an
     // Isolated requirement narrows to '{prefix}.Isolated.>' while an InProcess requirement's '{prefix}.>' spans both.
     // The token is a literal single subject token (no dot), matching the structural '.' separators the key already uses.
-    private static string HostingKey(string baseWorkflowId, int versionNumber, string isolationToken, string runnerId)
-        => HostingKeyPrefix(baseWorkflowId, versionNumber) + isolationToken + "." + Enc(runnerId);
+    private static string HostingKey(string environment, string baseWorkflowId, int versionNumber, string isolationToken, string runnerId)
+        => HostingKeyPrefix(environment, baseWorkflowId, versionNumber) + isolationToken + "." + Enc(runnerId);
 
     // The runner's advertised isolation as its wire token; absent isolationModel means InProcess (ADR 0058).
     private static string IsolationToken(in RunnerRegistration registration)

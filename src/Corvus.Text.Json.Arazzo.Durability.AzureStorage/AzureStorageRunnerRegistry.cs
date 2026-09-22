@@ -147,20 +147,27 @@ public sealed class AzureStorageRunnerRegistry : IRunnerRegistry
         // The runner's isolation (ADR 0058) is a runner-level field, denormalised onto each hosting-index entity so the
         // start-gate partition query can require it without reading the runner. Absent isolationModel means InProcess.
         string isolationModel = registration.IsolationModelValue == RunIsolationModel.Isolated ? "Isolated" : "InProcess";
+
+        // The runner's environment rides each index entity too: a run is pinned to its environment and a runner claims only
+        // its own, so the start gate asks only of the runners that could claim the run. It is a column and not part of the
+        // key, so the entity is still found and removed by (partition, runner id) whatever environment it was written with.
+        string environment = registration.EnvironmentValue;
         foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
         {
             var index = new TableEntity(HostingPartition(baseWorkflowId, versionNumber), runnerId)
             {
                 ["IsolationModel"] = isolationModel,
+                ["Environment"] = environment,
             };
             await this.hosting.UpsertEntityAsync(index, TableUpdateMode.Replace, cancellationToken).ConfigureAwait(false);
         }
     }
 
     /// <inheritdoc/>
-    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, RunIsolationModel requiredIsolation, CancellationToken cancellationToken)
+    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, string environment, RunIsolationModel requiredIsolation, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
+        ArgumentException.ThrowIfNullOrEmpty(environment);
         string partition = HostingPartition(baseWorkflowId, versionNumber);
 
         // ADR 0058: an InProcess requirement matches any hosting entity in the partition; an Isolated requirement adds the
@@ -168,8 +175,8 @@ public sealed class AzureStorageRunnerRegistry : IRunnerRegistry
         // isolated value rides as a query-filter parameter (a single bounded literal), quoted/escaped by CreateQueryFilter.
         const string isolatedValue = "Isolated";
         string filter = requiredIsolation == RunIsolationModel.Isolated
-            ? TableClient.CreateQueryFilter($"PartitionKey eq {partition} and IsolationModel eq {isolatedValue}")
-            : TableClient.CreateQueryFilter($"PartitionKey eq {partition}");
+            ? TableClient.CreateQueryFilter($"PartitionKey eq {partition} and Environment eq {environment} and IsolationModel eq {isolatedValue}")
+            : TableClient.CreateQueryFilter($"PartitionKey eq {partition} and Environment eq {environment}");
         IAsyncEnumerator<TableEntity> enumerator = this.hosting
             .QueryAsync<TableEntity>(filter, maxPerPage: 1, select: ["PartitionKey"], cancellationToken: cancellationToken)
             .GetAsyncEnumerator(cancellationToken);

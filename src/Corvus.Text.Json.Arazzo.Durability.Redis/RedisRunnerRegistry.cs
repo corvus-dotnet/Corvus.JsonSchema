@@ -93,12 +93,16 @@ public sealed class RedisRunnerRegistry : IRunnerRegistry, IAsyncDisposable
         {
             RunnerRegistration old = RunnerRegistration.FromJson((byte[])existing!);
             bool oldIsolated = old.IsolationModelValue == RunIsolationModel.Isolated;
+
+            // The memberships are keyed by the environment the runner served WHEN IT REGISTERED them, which a
+            // re-registration may have changed.
+            string oldEnvironment = old.EnvironmentValue;
             foreach ((string baseWorkflowId, int versionNumber) in old.LoadedHostedVersions())
             {
-                await this.database.SetRemoveAsync(HostingKey(baseWorkflowId, versionNumber), runnerId).ConfigureAwait(false);
+                await this.database.SetRemoveAsync(HostingKey(oldEnvironment, baseWorkflowId, versionNumber), runnerId).ConfigureAwait(false);
                 if (oldIsolated)
                 {
-                    await this.database.SetRemoveAsync(IsolatedHostingKey(baseWorkflowId, versionNumber), runnerId).ConfigureAwait(false);
+                    await this.database.SetRemoveAsync(IsolatedHostingKey(oldEnvironment, baseWorkflowId, versionNumber), runnerId).ConfigureAwait(false);
                 }
             }
         }
@@ -110,28 +114,32 @@ public sealed class RedisRunnerRegistry : IRunnerRegistry, IAsyncDisposable
 
         // The runner's isolation (ADR 0058) is a runner-level property. Every loaded version joins the isolation-blind
         // hosting set; an isolated runner additionally joins the parallel isolated-only set. Absent isolationModel = InProcess.
+        // The sets are keyed by the runner's environment as well: a run is pinned to its environment and a runner claims
+        // only its own, so the start gate asks only of the runners that could claim the run.
         bool isolated = registration.IsolationModelValue == RunIsolationModel.Isolated;
+        string environment = registration.EnvironmentValue;
         foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
         {
-            await this.database.SetAddAsync(HostingKey(baseWorkflowId, versionNumber), runnerId).ConfigureAwait(false);
+            await this.database.SetAddAsync(HostingKey(environment, baseWorkflowId, versionNumber), runnerId).ConfigureAwait(false);
             if (isolated)
             {
-                await this.database.SetAddAsync(IsolatedHostingKey(baseWorkflowId, versionNumber), runnerId).ConfigureAwait(false);
+                await this.database.SetAddAsync(IsolatedHostingKey(environment, baseWorkflowId, versionNumber), runnerId).ConfigureAwait(false);
             }
         }
     }
 
     /// <inheritdoc/>
-    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, RunIsolationModel requiredIsolation, CancellationToken cancellationToken)
+    public async ValueTask<bool> IsVersionHostedAsync(string baseWorkflowId, int versionNumber, string environment, RunIsolationModel requiredIsolation, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(baseWorkflowId);
+        ArgumentException.ThrowIfNullOrEmpty(environment);
         cancellationToken.ThrowIfCancellationRequested();
 
         // ADR 0058: an InProcess requirement probes the isolation-blind hosting set (any hosting runner satisfies it); an
         // Isolated requirement probes the parallel isolated-only set (only Isolated runners are members).
         RedisKey key = requiredIsolation == RunIsolationModel.Isolated
-            ? IsolatedHostingKey(baseWorkflowId, versionNumber)
-            : HostingKey(baseWorkflowId, versionNumber);
+            ? IsolatedHostingKey(environment, baseWorkflowId, versionNumber)
+            : HostingKey(environment, baseWorkflowId, versionNumber);
         return await this.database.SetLengthAsync(key).ConfigureAwait(false) > 0;
     }
 
@@ -348,12 +356,13 @@ public sealed class RedisRunnerRegistry : IRunnerRegistry, IAsyncDisposable
                 // Remove this runner's hosting memberships (derived from its stored doc) before deleting it, including the
                 // parallel isolated-only set when the runner advertised Isolated (ADR 0058).
                 bool isolated = registration.IsolationModelValue == RunIsolationModel.Isolated;
+                string environment = registration.EnvironmentValue;
                 foreach ((string baseWorkflowId, int versionNumber) in registration.LoadedHostedVersions())
                 {
-                    await this.database.SetRemoveAsync(HostingKey(baseWorkflowId, versionNumber), runnerId).ConfigureAwait(false);
+                    await this.database.SetRemoveAsync(HostingKey(environment, baseWorkflowId, versionNumber), runnerId).ConfigureAwait(false);
                     if (isolated)
                     {
-                        await this.database.SetRemoveAsync(IsolatedHostingKey(baseWorkflowId, versionNumber), runnerId).ConfigureAwait(false);
+                        await this.database.SetRemoveAsync(IsolatedHostingKey(environment, baseWorkflowId, versionNumber), runnerId).ConfigureAwait(false);
                     }
                 }
 
@@ -381,18 +390,19 @@ public sealed class RedisRunnerRegistry : IRunnerRegistry, IAsyncDisposable
 
     /// <summary>
     /// Builds the isolation-blind hosting-set key for a (base workflow id, version) pair (the members are every runner
-    /// hosting that loaded version). See <see cref="EncodeBaseWorkflowId"/> for the base-id encoding.
+    /// hosting that loaded version). See <see cref="EncodeBaseWorkflowId"/> for the base-id encoding. The environment leads
+    /// the key unencoded: its grammar is lowercase letters, digits and hyphens, so it cannot carry the <c>:</c> separator.
     /// </summary>
-    private static RedisKey HostingKey(string baseWorkflowId, int versionNumber)
-        => $"{HostingPrefix}{EncodeBaseWorkflowId(baseWorkflowId)}:{versionNumber}";
+    private static RedisKey HostingKey(string environment, string baseWorkflowId, int versionNumber)
+        => $"{HostingPrefix}{environment}:{EncodeBaseWorkflowId(baseWorkflowId)}:{versionNumber}";
 
     /// <summary>
     /// Builds the isolated-only hosting-set key for a (base workflow id, version) pair (its members are the isolated
     /// runners hosting that loaded version), the parallel index an <see cref="RunIsolationModel.Isolated"/> requirement
     /// probes (ADR 0058).
     /// </summary>
-    private static RedisKey IsolatedHostingKey(string baseWorkflowId, int versionNumber)
-        => $"{IsolatedHostingPrefix}{EncodeBaseWorkflowId(baseWorkflowId)}:{versionNumber}";
+    private static RedisKey IsolatedHostingKey(string environment, string baseWorkflowId, int versionNumber)
+        => $"{IsolatedHostingPrefix}{environment}:{EncodeBaseWorkflowId(baseWorkflowId)}:{versionNumber}";
 
     /// <summary>
     /// Base64Url-encodes the base workflow id (with the <c>=</c> padding trimmed) so it never contains a <c>:</c> that
