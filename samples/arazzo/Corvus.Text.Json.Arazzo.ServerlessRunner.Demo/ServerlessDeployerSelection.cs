@@ -75,9 +75,11 @@ public static class ServerlessDeployerSelection
                     : functionKey;
 
             case "micro-guest":
-                // The sidecar's invoke endpoint is on its loopback admin surface (ADR 0063), so there is no credential to
-                // add, and this authenticator refuses to invoke anything that is not on this machine.
-                return LoopbackServerlessInvokeAuthenticator.Instance;
+                // The sidecar's admin surface takes the shared admin token the runner holds in its own secret store
+                // (P1-10), and the authenticator refuses to invoke anything that is not on this machine.
+                return new MicroGuestSidecarInvokeAuthenticator(
+                    RunnerSecrets(),
+                    SecretRef.Parse(Required(configuration, "Runner:MicroGuest:AdminTokenRef", "micro-guest")));
 
             default:
                 throw new InvalidOperationException(
@@ -153,9 +155,11 @@ public static class ServerlessDeployerSelection
             new MicroGuestDeployerOptions
             {
                 SidecarBaseUrl = new Uri(Required(configuration, "Runner:MicroGuest:SidecarUrl", "micro-guest")),
+                AdminToken = SecretRef.Parse(Required(configuration, "Runner:MicroGuest:AdminTokenRef", "micro-guest")),
                 CheckpointSurfaceUrl = new Uri(Required(configuration, "Runner:MicroGuest:CheckpointSurfaceUrl", "micro-guest")),
                 GuestEnvironment = functionSourceEnv,
-            });
+            },
+            RunnerSecrets());
     }
 
     private static string Required(IConfiguration configuration, string key, string platform)

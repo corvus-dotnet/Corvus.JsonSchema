@@ -4,7 +4,7 @@ The warm micro-guest sidecar (issue #876, ADR 0063): the small Rust companion pr
 
 ## Surfaces
 
-The **admin surface** (default `127.0.0.1:9411`, keep it loopback) is what the runner drives:
+The **admin surface** (default `127.0.0.1:9411`, keep it loopback) is what the runner drives. Every call but `GET /healthz` must carry `Authorization: Bearer <admin token>`, the shared token given as `--admin-token` (or `ARAZZO_SIDECAR_ADMIN_TOKEN`); the sidecar refuses to start without one, and the runner reads the same value from its own secret store:
 
 | Request | Effect |
 | --- | --- |
@@ -13,7 +13,7 @@ The **admin surface** (default `127.0.0.1:9411`, keep it loopback) is what the r
 | `POST /invoke/{id}` | One run advance: holds the invocation for the guest, restores the snapshot, runs the guest, and returns the outcome the guest posted — the same invocation/outcome contract a deployed cloud function speaks. |
 | `DELETE /sandboxes/{id}` | Tears the sandbox down. |
 
-The **guest surface** (default bind `0.0.0.0:9412`, advertised via `--guest-advertise`) is what the running guest reaches over its allowlisted host-proxied network: `GET /guest/{id}` hands it its invocation, `POST /guest/{id}` receives its outcome. It must be a routable address; the guest's network denies loopback by design. The sidecar adds its own guest host to every sandbox's egress allowlist, and strips the `:port` suffixes from the deployer's `allowedHosts` entries (the policy layer matches by host/IP).
+The **guest surface** (default bind `0.0.0.0:9412`, advertised via `--guest-advertise`) is what the running guest reaches over its allowlisted host-proxied network: `GET /guest/{id}` hands it its invocation, `POST /guest/{id}` receives its outcome. It must be a routable address; the guest's network denies loopback by design. The sidecar adds its own guest host to every sandbox's egress allowlist, and strips the `:port` suffixes from the deployer's `allowedHosts` entries (the policy layer matches by host/IP). The surface answers only the sandbox whose guest token the request carries: the sidecar mints a random token per sandbox at evolve, freezes it into the sandbox's argv as `ARAZZO_GUEST_TOKEN`, and refuses a fetch or an outcome without it, so no other peer on the routable bind can read the checkpoint token an invocation carries or forge an outcome (P1-10).
 
 Each sandbox lives on a dedicated owner thread (the VM never crosses threads), so invocations serialize per sandbox by construction; distinct sandboxes advance concurrently.
 
@@ -24,9 +24,10 @@ Each sandbox lives on a dedicated owner thread (the VM never crosses threads), s
 ```
 arazzo-microguest-sidecar \
   --kernel kernel/.unikraft/build/arazzo-microguest_hyperlight-x86_64 \
-  --guest-advertise 172.20.0.10:9412
+  --guest-advertise 172.20.0.10:9412 \
+  --admin-token "$(cat /run/secrets/arazzo-sidecar-admin-token)"
 ```
 
 The host needs a hypervisor (`/dev/kvm` on Linux). `cargo test --no-default-features` runs the full HTTP and lifecycle suite without KVM or the hyperlight dependency: the real VM sits behind the `VmFactory` seam, and the tests' stand-in guest speaks the same HTTP contract the baked guest does.
 
-This process holds no workflow logic and no credentials: all policy is the sandbox lifecycle and the per-sandbox egress allowlist (ADR 0063), and the guest checkpoints straight back to the runner (ADR 0062).
+This process holds no workflow logic and no source credentials: all policy is the sandbox lifecycle and the per-sandbox egress allowlist (ADR 0063), and the guest checkpoints straight back to the runner (ADR 0062).

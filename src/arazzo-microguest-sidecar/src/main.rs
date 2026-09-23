@@ -23,6 +23,11 @@ struct Args {
     #[arg(long, env = "ARAZZO_SIDECAR_ADMIN_ADVERTISE")]
     admin_advertise: Option<String>,
 
+    /// The shared bearer token the runner presents on the admin surface. Required: the admin surface never
+    /// runs unauthenticated (P1-10). At least 16 characters; the runner reads the same value from its secret store.
+    #[arg(long, env = "ARAZZO_SIDECAR_ADMIN_TOKEN", hide_env_values = true)]
+    admin_token: String,
+
     /// The guest surface bind. The guest's host-proxied network denies loopback, so this must be reachable on
     /// a routable address.
     #[arg(long, env = "ARAZZO_SIDECAR_GUEST_BIND", default_value = "0.0.0.0:9412")]
@@ -51,7 +56,7 @@ fn main() -> anyhow::Result<()> {
         admin_advertise: args.admin_advertise.clone().unwrap_or_else(|| args.admin_bind.clone()),
         guest_advertise: args.guest_advertise.clone(),
     };
-    let sidecar = Arc::new(arazzo_microguest_sidecar::Sidecar::new(addresses, factory));
+    let sidecar = Arc::new(arazzo_microguest_sidecar::Sidecar::new(addresses, factory, args.admin_token.clone())?);
 
     let admin = Arc::new(
         tiny_http::Server::http(args.admin_bind.as_str())

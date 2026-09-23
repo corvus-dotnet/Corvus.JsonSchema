@@ -4,7 +4,7 @@ The micro-guest `IServerlessDeployer` (issue #876, ADR 0063). The runner's deplo
 
 ## The sidecar admin contract
 
-The deployer drives (and the sidecar implements) this surface on `SidecarBaseUrl`:
+The deployer drives (and the sidecar implements) this surface on `SidecarBaseUrl`. Every call carries `Authorization: Bearer <admin token>`, read by reference from the runner's secret store (`AdminToken`, for example `env://ARAZZO_SIDECAR_ADMIN_TOKEN`); the sidecar refuses a call without it, and `MicroGuestSidecarInvokeAuthenticator` presents the same token on each invoke (P1-10):
 
 | Request | Body | Effect |
 | --- | --- | --- |
@@ -18,5 +18,7 @@ Per advance, the runner POSTs the standard invocation document (`{runId, environ
 ## The initrd
 
 The archive is `newc` CPIO in the exact shape the guest kernel's ELF loader consumes (`.`, each ancestor directory, the executable at the kernel's baked exec path (default `/bin/guest`), and the trailer), deterministic (fixed inodes, zero mtime, root ownership) so the same binary always bakes the same initrd.
+
+The sidecar mints a per-sandbox guest token at evolve and freezes it into the sandbox's argv as `ARAZZO_GUEST_TOKEN`; the baked guest presents it on its invocation fetch and its outcome, so the guest surface answers only that sandbox.
 
 This is runner-side deploy tooling: the runner is the secure boundary (ADR 0059), and no control-plane secret or cloud credential is involved. The "platform" is the runner's own machine.

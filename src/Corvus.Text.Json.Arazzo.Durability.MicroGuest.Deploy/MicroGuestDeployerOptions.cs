@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json.Arazzo.Durability.Security;
+
 namespace Corvus.Text.Json.Arazzo.Durability.MicroGuest.Deploy;
 
 /// <summary>
@@ -14,6 +16,11 @@ public sealed record MicroGuestDeployerOptions
     /// machine), e.g. <c>http://127.0.0.1:9411</c>. The deployer uploads the initrd and evolves the sandbox here, and
     /// the sidecar returns the local invoke URL recorded as the deployment's function URL.</summary>
     public required Uri SidecarBaseUrl { get; init; }
+
+    /// <summary>Gets the reference to the sidecar's admin token in the runner's own secret store, for example
+    /// <c>env://ARAZZO_SIDECAR_ADMIN_TOKEN</c>. The sidecar's admin surface refuses every call without it, and the
+    /// same token is what <see cref="MicroGuestSidecarInvokeAuthenticator"/> presents on each invoke (P1-10).</summary>
+    public required SecretRef AdminToken { get; init; }
 
     /// <summary>Gets the runner's checkpoint surface base URL, e.g. <c>http://172.20.0.10:8199/checkpoints</c>. Its
     /// host goes on the sandbox's egress allowlist so the guest can checkpoint back (Model B); it must be a routable

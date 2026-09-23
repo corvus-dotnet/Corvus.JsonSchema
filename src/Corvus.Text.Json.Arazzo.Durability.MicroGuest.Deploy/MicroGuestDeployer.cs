@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Aot;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 
 namespace Corvus.Text.Json.Arazzo.Durability.MicroGuest.Deploy;
 
@@ -38,16 +39,20 @@ public sealed class MicroGuestDeployer : IServerlessDeployer
     private const int MaxSandboxIdLength = 64;
 
     private readonly MicroGuestDeployerOptions options;
+    private readonly ISecretResolver secrets;
     private readonly HttpMessageHandler httpHandler;
 
     /// <summary>Initializes a new instance of the <see cref="MicroGuestDeployer"/> class.</summary>
     /// <param name="options">The sidecar address, guest layout, and per-sandbox posture to deploy with.</param>
+    /// <param name="secrets">The runner's secret resolver, which reads the sidecar's admin token by reference.</param>
     /// <param name="httpHandler">The HTTP message handler the sidecar requests run over; defaults to a
     /// <see cref="SocketsHttpHandler"/> held for the deployer's life (connection pooling). Injectable for tests.</param>
-    public MicroGuestDeployer(MicroGuestDeployerOptions options, HttpMessageHandler? httpHandler = null)
+    public MicroGuestDeployer(MicroGuestDeployerOptions options, ISecretResolver secrets, HttpMessageHandler? httpHandler = null)
     {
         ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(secrets);
         this.options = options;
+        this.secrets = secrets;
         this.httpHandler = httpHandler ?? new SocketsHttpHandler();
     }
 
@@ -59,6 +64,14 @@ public sealed class MicroGuestDeployer : IServerlessDeployer
         byte[] configuration = this.BuildSandboxConfiguration();
 
         using var client = new HttpClient(this.httpHandler, disposeHandler: false) { BaseAddress = this.options.SidecarBaseUrl };
+
+        // The admin surface refuses every call without the sidecar's admin token (P1-10). It is read by reference for
+        // each deploy and never logged; the same token is what the invoke authenticator presents per invocation.
+        using (SecretMaterial adminToken = await this.secrets.ResolveAsync(this.options.AdminToken, cancellationToken).ConfigureAwait(false))
+        {
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken.Reveal());
+        }
+
         try
         {
             // Stage the initrd first, then evolve: the sidecar builds the sandbox from the staged image, so a failed

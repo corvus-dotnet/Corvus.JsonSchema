@@ -451,6 +451,8 @@ item you cannot see directly in the code.
 - **Divergence:** the design's boundary is the micro-guest and artifacts are signed and verified, but the sidecar, which actually boots the image, authenticates neither surface and verifies nothing about the initrd, since verification is entirely caller-side. The guest surface binds `0.0.0.0`, `GET /guest/{id}` returns the invocation including the checkpoint token with deterministic sandbox ids, and `POST` accepts an arbitrary outcome from any peer.
 - **Acceptance criteria:** authenticate both surfaces; scope the guest read to the invoking sandbox; verify the artifact signature sidecar-side.
 
+> **Partly resolved 2026-09-23.** Both surfaces authenticate: the admin surface takes a shared bearer token the sidecar refuses to start without (`--admin-token`), presented by the deployer on every call and by `MicroGuestSidecarInvokeAuthenticator` on each invoke from the runner's own secret store; the guest surface takes a per-sandbox token the sidecar mints at evolve and freezes into the sandbox's argv (`ARAZZO_GUEST_TOKEN`), so `GET`/`POST /guest/{id}` answer only the sandbox whose token they carry and an unknown sandbox is the same refusal. Still open: the sidecar verifies nothing about the initrd it boots; the attestation check stays on the runner's deploy path.
+
 ### P1-11 · DIV · `TB-6` · Azure Functions invoke is anonymous
 - **Where:** `AotHostAppAssembler.cs:204`; `ServerlessInvocationHandler.cs:132-136`
 - **Divergence:** ADR 0059 §4 promised identity-based invoke when the Azure target landed. It landed with `AuthorizationLevel.Anonymous`. Lambda does this correctly via `AWS_IAM`.

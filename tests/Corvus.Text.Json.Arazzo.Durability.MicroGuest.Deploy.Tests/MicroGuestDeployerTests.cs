@@ -5,6 +5,7 @@
 using System.Net;
 using System.Text;
 using Corvus.Text.Json.Arazzo.Durability.Aot;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 
@@ -38,6 +39,7 @@ public sealed class MicroGuestDeployerTests
         result.FunctionUrl.ShouldBe("http://127.0.0.1:9411/invoke/arazzo-mg-pets-adopt-v3-prod-linux-musl-x64");
 
         sidecar.Requests.Count.ShouldBe(2);
+        sidecar.Authorizations.ShouldBe(["Bearer sidecar-admin-token", "Bearer sidecar-admin-token"], customMessage: "every admin call carries the sidecar's admin token (P1-10)");
         (HttpMethod initrdMethod, Uri initrdUri, byte[] initrdBody, string? initrdType) = sidecar.Requests[0];
         initrdMethod.ShouldBe(HttpMethod.Put);
         initrdUri.AbsolutePath.ShouldBe("/sandboxes/arazzo-mg-pets-adopt-v3-prod-linux-musl-x64/initrd");
@@ -156,10 +158,20 @@ public sealed class MicroGuestDeployerTests
             new MicroGuestDeployerOptions
             {
                 SidecarBaseUrl = new Uri("http://127.0.0.1:9411"),
+                AdminToken = SecretRef.Parse("env://ARAZZO_SIDECAR_ADMIN_TOKEN"),
                 CheckpointSurfaceUrl = new Uri("http://172.20.0.10:8199/checkpoints"),
                 GuestEnvironment = environment ?? new Dictionary<string, string>(StringComparer.Ordinal),
             },
+            new FixedSecretResolver("sidecar-admin-token"),
             sidecar);
+
+    private sealed class FixedSecretResolver(string value) : ISecretResolver
+    {
+        public bool CanResolve(SecretScheme scheme) => true;
+
+        public ValueTask<SecretMaterial> ResolveAsync(SecretRef reference, CancellationToken cancellationToken)
+            => ValueTask.FromResult(SecretMaterial.FromString(value));
+    }
 
     // The stand-in sidecar: records every request and answers the happy path (204 for the staged initrd, an invokeUrl
     // for the evolve) unless a test supplies its own responder; a null from the responder falls back to the default.
@@ -167,12 +179,15 @@ public sealed class MicroGuestDeployerTests
     {
         public List<(HttpMethod Method, Uri Uri, byte[] Body, string? ContentType)> Requests { get; } = [];
 
+        public List<string?> Authorizations { get; } = [];
+
         public Func<HttpRequestMessage, HttpResponseMessage?>? Respond { get; init; }
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             byte[] body = request.Content is { } content ? await content.ReadAsByteArrayAsync(cancellationToken) : [];
             this.Requests.Add((request.Method, request.RequestUri!, body, request.Content?.Headers.ContentType?.MediaType));
+            this.Authorizations.Add(request.Headers.Authorization?.ToString());
 
             if (this.Respond?.Invoke(request) is { } response)
             {

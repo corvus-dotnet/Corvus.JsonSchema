@@ -98,8 +98,14 @@ public sealed class ServerlessDeployerSelectionTests
                 ("Runner:AzureFlex:EntraAudience", "api://arazzo-functions")))
             .ShouldBeOfType<EntraServerlessInvokeAuthenticator>();
 
-        ServerlessDeployerSelection.CreateInvokeAuthenticator(Config(("Runner:Serverless:Platform", "micro-guest")))
-            .ShouldBeSameAs(LoopbackServerlessInvokeAuthenticator.Instance);
+        ServerlessDeployerSelection.CreateInvokeAuthenticator(Config(
+                ("Runner:Serverless:Platform", "micro-guest"),
+                ("Runner:MicroGuest:AdminTokenRef", "env://ARAZZO_SIDECAR_ADMIN_TOKEN")))
+            .ShouldBeOfType<MicroGuestSidecarInvokeAuthenticator>();
+
+        // The sidecar's admin surface never runs unauthenticated, so the token reference is required (P1-10).
+        Should.Throw<InvalidOperationException>(() => ServerlessDeployerSelection.CreateInvokeAuthenticator(Config(("Runner:Serverless:Platform", "micro-guest"))))
+            .Message.ShouldContain("Runner:MicroGuest:AdminTokenRef");
 
         // Azure without a key reference is a configuration error, not a keyless invoke.
         Should.Throw<InvalidOperationException>(() => ServerlessDeployerSelection.CreateInvokeAuthenticator(Config(("Runner:Serverless:Platform", "azure-flex"))))
@@ -114,6 +120,7 @@ public sealed class ServerlessDeployerSelectionTests
             Config(
                 ("Runner:Serverless:Platform", "micro-guest"),
                 ("Runner:MicroGuest:SidecarUrl", "http://127.0.0.1:9411"),
+                ("Runner:MicroGuest:AdminTokenRef", "env://ARAZZO_SIDECAR_ADMIN_TOKEN"),
                 ("Runner:MicroGuest:CheckpointSurfaceUrl", "http://172.20.0.10:8199/checkpoints")),
             Settings());
 
@@ -126,6 +133,7 @@ public sealed class ServerlessDeployerSelectionTests
         (string Key, string Value)[] all =
         [
             ("Runner:MicroGuest:SidecarUrl", "http://127.0.0.1:9411"),
+            ("Runner:MicroGuest:AdminTokenRef", "env://ARAZZO_SIDECAR_ADMIN_TOKEN"),
             ("Runner:MicroGuest:CheckpointSurfaceUrl", "http://172.20.0.10:8199/checkpoints"),
         ];
         foreach ((string missing, _) in all)

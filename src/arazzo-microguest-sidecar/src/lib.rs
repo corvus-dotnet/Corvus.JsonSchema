@@ -12,6 +12,12 @@
 //! * The **guest surface** (a routable bind — the guest's host-proxied network denies loopback by design):
 //!   `GET /guest/{id}` hands the running guest its invocation, `POST /guest/{id}` receives its outcome.
 //!
+//! Both surfaces authenticate (P1-10). The admin surface takes one shared bearer token the sidecar refuses to
+//! start without; the runner presents it on every call. The guest surface takes a per-sandbox bearer token the
+//! sidecar mints at evolve and freezes into the sandbox's argv (`ARAZZO_GUEST_TOKEN`), so a running guest can
+//! read and answer only its own sandbox's invocation, and no other peer on the routable bind can read the
+//! checkpoint token an invocation carries.
+//!
 //! Sandbox state lives on a dedicated owner thread per sandbox: the VM is built, restored, and run on that one
 //! thread (so the underlying sandbox never crosses threads), and invocations serialize per sandbox by
 //! construction — each advance runs against a pristine snapshot restore. The real VM sits behind [`VmFactory`]
@@ -39,6 +45,12 @@ const MAX_INITRD_BYTES: usize = 512 * 1024 * 1024;
 
 /// The largest accepted JSON/invocation body.
 const MAX_DOCUMENT_BYTES: usize = 4 * 1024 * 1024;
+
+/// The shortest admin token the sidecar accepts at start-up.
+pub const MIN_ADMIN_TOKEN_LEN: usize = 16;
+
+/// The argv name the per-sandbox guest token rides under (the guest seeds argv pairs into its environment).
+pub const GUEST_TOKEN_VARIABLE: &str = "ARAZZO_GUEST_TOKEN";
 
 /// Everything a VM build needs: the staged image, the frozen argv, the VM size, and the egress allowlist
 /// (already port-stripped, with the sidecar's own guest host included so the guest can fetch its invocation).
@@ -121,6 +133,8 @@ enum Command {
 struct Worker {
     tx: mpsc::Sender<Command>,
     exchange: Arc<GuestExchange>,
+    /// The bearer token this sandbox's guest presents on the guest surface; minted at evolve, frozen into argv.
+    guest_token: String,
     join: std::thread::JoinHandle<()>,
 }
 
@@ -143,6 +157,7 @@ pub struct SidecarAddresses {
 pub struct Sidecar {
     addresses: SidecarAddresses,
     factory: Arc<dyn VmFactory>,
+    admin_token: String,
     sandboxes: Mutex<HashMap<String, Entry>>,
 }
 
@@ -168,8 +183,19 @@ impl HttpReply {
 }
 
 impl Sidecar {
-    pub fn new(addresses: SidecarAddresses, factory: Arc<dyn VmFactory>) -> Self {
-        Self { addresses, factory, sandboxes: Mutex::new(HashMap::new()) }
+    /// Creates the sidecar. `admin_token` is the shared bearer the runner presents on the admin surface; it is
+    /// required and at least [`MIN_ADMIN_TOKEN_LEN`] bytes long.
+    pub fn new(addresses: SidecarAddresses, factory: Arc<dyn VmFactory>, admin_token: String) -> anyhow::Result<Self> {
+        if admin_token.len() < MIN_ADMIN_TOKEN_LEN {
+            anyhow::bail!("the admin token must be at least {MIN_ADMIN_TOKEN_LEN} characters; the admin surface never runs unauthenticated");
+        }
+
+        Ok(Self { addresses, factory, admin_token, sandboxes: Mutex::new(HashMap::new()) })
+    }
+
+    /// Whether an admin-surface request carries the shared admin token.
+    fn admin_authorized(&self, authorization: Option<&str>) -> bool {
+        matches!(bearer(authorization), Some(token) if constant_time_eq(token.as_bytes(), self.admin_token.as_bytes()))
     }
 
     /// `PUT /sandboxes/{id}/initrd`: stage the guest image. Staging never touches a live worker, so a failed
@@ -211,9 +237,15 @@ impl Sidecar {
         };
 
         // The frozen argv: the guest surface URL first (the entry template's argv[1]), then the environment
-        // pairs in deterministic order. Per-run data never rides argv — it arrives over the guest surface.
+        // pairs in deterministic order, then this sandbox's guest token, minted here so it never leaves the
+        // sidecar and the snapshot. Per-run data never rides argv — it arrives over the guest surface.
+        let guest_token = match new_guest_token() {
+            Ok(token) => token,
+            Err(error) => return HttpReply::text(500, format!("minting the guest token for sandbox '{id}' failed: {error}")),
+        };
         let mut args = vec![format!("http://{}/guest/{}", self.addresses.guest_advertise, id)];
         args.extend(document.environment.iter().map(|(name, value)| format!("{name}={value}")));
+        args.push(format!("{GUEST_TOKEN_VARIABLE}={guest_token}"));
 
         // The egress allowlist is IP/host-level (the policy layer matches by address, not port), so the
         // deployer's host:port entries are stripped to hosts; the sidecar's own guest host joins the list so
@@ -258,7 +290,7 @@ impl Sidecar {
                 .entry(id.to_string())
                 .or_default()
                 .worker
-                .replace(Worker { tx: command_tx, exchange, join })
+                .replace(Worker { tx: command_tx, exchange, guest_token, join })
         };
         shutdown(previous);
 
@@ -305,30 +337,69 @@ impl Sidecar {
         }
     }
 
-    /// `GET /guest/{id}`: the running guest fetches its invocation.
-    pub fn guest_fetch(&self, id: &str) -> HttpReply {
-        let exchange = self.exchange(id);
-        match exchange.and_then(|exchange| exchange.pending()) {
+    /// `GET /guest/{id}`: the running guest fetches its invocation. Only the guest holding this sandbox's token
+    /// is answered; an unknown sandbox and a wrong token are the same refusal, so the surface discloses no ids.
+    pub fn guest_fetch(&self, id: &str, authorization: Option<&str>) -> HttpReply {
+        let Some(exchange) = self.guest_exchange(id, authorization) else {
+            return HttpReply::text(401, "the guest surface requires this sandbox's guest token");
+        };
+        match exchange.pending() {
             Some(invocation) => HttpReply { status: 200, content_type: "application/json", body: invocation },
             None => HttpReply::text(404, format!("no invocation is in flight for sandbox '{id}'")),
         }
     }
 
-    /// `POST /guest/{id}`: the running guest posts its outcome.
-    pub fn guest_outcome(&self, id: &str, outcome: Vec<u8>) -> HttpReply {
-        match self.exchange(id) {
+    /// `POST /guest/{id}`: the running guest posts its outcome, under the same token check as the fetch.
+    pub fn guest_outcome(&self, id: &str, authorization: Option<&str>, outcome: Vec<u8>) -> HttpReply {
+        match self.guest_exchange(id, authorization) {
             Some(exchange) => {
                 exchange.post_outcome(outcome);
                 HttpReply::empty(204)
             }
-            None => HttpReply::text(404, format!("no sandbox '{id}'")),
+            None => HttpReply::text(401, "the guest surface requires this sandbox's guest token"),
         }
     }
 
-    fn exchange(&self, id: &str) -> Option<Arc<GuestExchange>> {
+    /// The sandbox's exchange, only when the request carries that sandbox's guest token.
+    fn guest_exchange(&self, id: &str, authorization: Option<&str>) -> Option<Arc<GuestExchange>> {
+        let presented = bearer(authorization)?;
         let sandboxes = self.sandboxes.lock().unwrap();
-        sandboxes.get(id).and_then(|entry| entry.worker.as_ref()).map(|worker| Arc::clone(&worker.exchange))
+        let worker = sandboxes.get(id).and_then(|entry| entry.worker.as_ref())?;
+        if !constant_time_eq(presented.as_bytes(), worker.guest_token.as_bytes()) {
+            return None;
+        }
+
+        Some(Arc::clone(&worker.exchange))
     }
+}
+
+/// The token of a `Bearer` authorization header, if the header is one.
+fn bearer(authorization: Option<&str>) -> Option<&str> {
+    let value = authorization?.trim();
+    let (scheme, token) = value.split_once(' ')?;
+    if !scheme.eq_ignore_ascii_case("bearer") {
+        return None;
+    }
+
+    let token = token.trim();
+    (!token.is_empty()).then_some(token)
+}
+
+/// Compares two secrets without leaking where they differ through timing.
+fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
+    if a.len() != b.len() {
+        return false;
+    }
+
+    a.iter().zip(b).fold(0u8, |acc, (x, y)| acc | (x ^ y)) == 0
+}
+
+/// Mints a per-sandbox guest token: 32 bytes from the kernel's entropy, hex-encoded. The sidecar runs on a
+/// Linux hypervisor host, where `/dev/urandom` is the entropy source; nothing is guessed if it is absent.
+fn new_guest_token() -> anyhow::Result<String> {
+    let mut bytes = [0u8; 32];
+    std::fs::File::open("/dev/urandom")?.read_exact(&mut bytes)?;
+    Ok(bytes.iter().map(|byte| format!("{byte:02x}")).collect())
 }
 
 fn shutdown(worker: Option<Worker>) {
@@ -392,11 +463,18 @@ fn strip_port(entry: &str) -> &str {
     }
 }
 
-/// Routes one admin-surface request.
-pub fn handle_admin(sidecar: &Sidecar, method: &str, path: &str, body: Vec<u8>) -> HttpReply {
+/// Routes one admin-surface request. Everything but the liveness probe requires the shared admin token.
+pub fn handle_admin(sidecar: &Sidecar, method: &str, path: &str, authorization: Option<&str>, body: Vec<u8>) -> HttpReply {
     let segments: Vec<&str> = path.trim_matches('/').split('/').collect();
+    if segments.as_slice() == ["healthz"] && method == "GET" {
+        return HttpReply::text(200, "ok");
+    }
+
+    if !sidecar.admin_authorized(authorization) {
+        return HttpReply::text(401, "the admin surface requires the sidecar's admin token");
+    }
+
     match (method, segments.as_slice()) {
-        ("GET", ["healthz"]) => HttpReply::text(200, "ok"),
         ("PUT", ["sandboxes", id, "initrd"]) => sidecar.stage_initrd(id, body),
         ("PUT", ["sandboxes", id]) => sidecar.configure(id, &body),
         ("DELETE", ["sandboxes", id]) => sidecar.remove(id),
@@ -405,12 +483,12 @@ pub fn handle_admin(sidecar: &Sidecar, method: &str, path: &str, body: Vec<u8>) 
     }
 }
 
-/// Routes one guest-surface request.
-pub fn handle_guest(sidecar: &Sidecar, method: &str, path: &str, body: Vec<u8>) -> HttpReply {
+/// Routes one guest-surface request; each handler checks the sandbox's own guest token.
+pub fn handle_guest(sidecar: &Sidecar, method: &str, path: &str, authorization: Option<&str>, body: Vec<u8>) -> HttpReply {
     let segments: Vec<&str> = path.trim_matches('/').split('/').collect();
     match (method, segments.as_slice()) {
-        ("GET", ["guest", id]) => sidecar.guest_fetch(id),
-        ("POST", ["guest", id]) => sidecar.guest_outcome(id, body),
+        ("GET", ["guest", id]) => sidecar.guest_fetch(id, authorization),
+        ("POST", ["guest", id]) => sidecar.guest_outcome(id, authorization, body),
         _ => HttpReply::text(404, format!("no {method} {path}")),
     }
 }
@@ -420,7 +498,7 @@ pub fn serve(
     server: Arc<tiny_http::Server>,
     sidecar: Arc<Sidecar>,
     workers: usize,
-    route: fn(&Sidecar, &str, &str, Vec<u8>) -> HttpReply,
+    route: fn(&Sidecar, &str, &str, Option<&str>, Vec<u8>) -> HttpReply,
     stopping: Arc<AtomicBool>,
 ) -> Vec<std::thread::JoinHandle<()>> {
     (0..workers.max(1))
@@ -433,12 +511,17 @@ pub fn serve(
                     Ok(Some(mut request)) => {
                         let method = request.method().as_str().to_string();
                         let path = request.url().split('?').next().unwrap_or("").to_string();
+                        let authorization = request
+                            .headers()
+                            .iter()
+                            .find(|header| header.field.equiv("Authorization"))
+                            .map(|header| header.value.as_str().to_string());
                         let limit = if path.ends_with("/initrd") { MAX_INITRD_BYTES } else { MAX_DOCUMENT_BYTES };
                         let mut body = Vec::new();
                         let read = request.as_reader().take(limit as u64 + 1).read_to_end(&mut body);
                         let reply = match read {
                             Ok(_) if body.len() > limit => HttpReply::text(413, "request body too large"),
-                            Ok(_) => route(&sidecar, &method, &path, body),
+                            Ok(_) => route(&sidecar, &method, &path, authorization.as_deref(), body),
                             Err(error) => HttpReply::text(400, format!("reading the request body failed: {error}")),
                         };
                         let response = tiny_http::Response::from_data(reply.body)
@@ -539,11 +622,14 @@ mod tests {
 
     use super::*;
 
+    const ADMIN_TOKEN: &str = "test-admin-token-0123456789";
+
     /// The stand-in guest: on each run it does exactly what the baked entry template does — GET the invocation
-    /// from argv[1] over real HTTP, transform it, POST the outcome back — so the guest surface, the exchange,
-    /// and the owner-thread sequencing are all proven over the wire.
+    /// from argv[1] over real HTTP with the guest token argv carries, transform it, POST the outcome back — so
+    /// the guest surface, the exchange, and the owner-thread sequencing are all proven over the wire.
     struct FakeVm {
         invocation_url: String,
+        guest_token: String,
         behaviour: FakeBehaviour,
     }
 
@@ -562,6 +648,7 @@ mod tests {
                 FakeBehaviour::EchoOverHttp => {
                     let mut invocation = Vec::new();
                     ureq::get(&self.invocation_url)
+                        .set("Authorization", &format!("Bearer {}", self.guest_token))
                         .call()
                         .expect("guest fetch")
                         .into_reader()
@@ -570,6 +657,7 @@ mod tests {
                     let mut outcome = b"outcome:".to_vec();
                     outcome.extend_from_slice(&invocation);
                     ureq::post(&self.invocation_url)
+                        .set("Authorization", &format!("Bearer {}", self.guest_token))
                         .send_bytes(&outcome)
                         .expect("guest outcome post");
                     Ok(0)
@@ -596,7 +684,7 @@ mod tests {
             if self.fail_build {
                 anyhow::bail!("no hypervisor");
             }
-            Ok(Box::new(FakeVm { invocation_url: spec.args[0].clone(), behaviour: self.behaviour }))
+            Ok(Box::new(FakeVm { invocation_url: spec.args[0].clone(), guest_token: guest_token_of(spec), behaviour: self.behaviour }))
         }
     }
 
@@ -604,6 +692,7 @@ mod tests {
         sidecar: Arc<Sidecar>,
         factory: Arc<FakeFactory>,
         admin_base: String,
+        guest_base: String,
         stopping: Arc<AtomicBool>,
     }
 
@@ -617,7 +706,7 @@ mod tests {
             guest_advertise: format!("127.0.0.1:{guest_port}"),
         };
         let factory = Arc::new(factory);
-        let sidecar = Arc::new(Sidecar::new(addresses, Arc::clone(&factory) as Arc<dyn VmFactory>));
+        let sidecar = Arc::new(Sidecar::new(addresses, Arc::clone(&factory) as Arc<dyn VmFactory>, ADMIN_TOKEN.to_string()).expect("sidecar"));
         let stopping = Arc::new(AtomicBool::new(false));
 
         let admin = Arc::new(tiny_http::Server::http(("127.0.0.1", admin_port)).expect("admin bind"));
@@ -625,7 +714,7 @@ mod tests {
         serve(admin, Arc::clone(&sidecar), 2, handle_admin, Arc::clone(&stopping));
         serve(guest, Arc::clone(&sidecar), 2, handle_guest, Arc::clone(&stopping));
 
-        Harness { sidecar, factory, admin_base: format!("http://127.0.0.1:{admin_port}"), stopping }
+        Harness { sidecar, factory, admin_base: format!("http://127.0.0.1:{admin_port}"), guest_base: format!("http://127.0.0.1:{guest_port}"), stopping }
     }
 
     impl Drop for Harness {
@@ -638,19 +727,56 @@ mod tests {
         TcpListener::bind("127.0.0.1:0").expect("probe bind").local_addr().expect("probe addr").port()
     }
 
+    /// The guest token a spec's argv carries.
+    fn guest_token_of(spec: &SandboxSpec) -> String {
+        spec.args
+            .iter()
+            .find_map(|arg| arg.strip_prefix(&format!("{GUEST_TOKEN_VARIABLE}=")))
+            .expect("argv carries the guest token")
+            .to_string()
+    }
+
     fn put(url: &str, body: &[u8]) -> (u16, String) {
-        match ureq::put(url).send_bytes(body) {
+        put_as(url, Some(ADMIN_TOKEN), body)
+    }
+
+    fn post(url: &str, body: &[u8]) -> (u16, String) {
+        post_as(url, Some(ADMIN_TOKEN), body)
+    }
+
+    fn put_as(url: &str, token: Option<&str>, body: &[u8]) -> (u16, String) {
+        let mut request = ureq::put(url);
+        if let Some(token) = token {
+            request = request.set("Authorization", &format!("Bearer {token}"));
+        }
+        match request.send_bytes(body) {
             Ok(response) => read(response),
             Err(ureq::Error::Status(_, response)) => read(response),
             Err(error) => panic!("PUT {url}: {error}"),
         }
     }
 
-    fn post(url: &str, body: &[u8]) -> (u16, String) {
-        match ureq::post(url).send_bytes(body) {
+    fn post_as(url: &str, token: Option<&str>, body: &[u8]) -> (u16, String) {
+        let mut request = ureq::post(url);
+        if let Some(token) = token {
+            request = request.set("Authorization", &format!("Bearer {token}"));
+        }
+        match request.send_bytes(body) {
             Ok(response) => read(response),
             Err(ureq::Error::Status(_, response)) => read(response),
             Err(error) => panic!("POST {url}: {error}"),
+        }
+    }
+
+    fn get_as(url: &str, token: Option<&str>) -> (u16, String) {
+        let mut request = ureq::get(url);
+        if let Some(token) = token {
+            request = request.set("Authorization", &format!("Bearer {token}"));
+        }
+        match request.call() {
+            Ok(response) => read(response),
+            Err(ureq::Error::Status(_, response)) => read(response),
+            Err(error) => panic!("GET {url}: {error}"),
         }
     }
 
@@ -703,6 +829,7 @@ mod tests {
         assert_eq!(spec.memory_mib, 96);
         assert!(spec.args[0].ends_with("/guest/spec-probe"), "argv[1] must be the guest surface URL: {:?}", spec.args);
         assert_eq!(spec.args[1], "ARAZZO_SOURCE__petstore=https://petstore.example.com:8443/api");
+        assert_eq!(guest_token_of(spec).len(), 64, "the guest token is 32 random bytes, hex-encoded, last in argv: {:?}", spec.args);
         assert_eq!(spec.allowed_hosts, vec!["172.20.0.10", "petstore.example.com", "127.0.0.1"]);
         assert_eq!(spec.initrd, b"070701-fake-initrd");
     }
@@ -788,6 +915,58 @@ mod tests {
 
         let (status, _) = post(&format!("{}/invoke/short-lived", harness.admin_base), b"{}");
         assert_eq!(status, 409);
+    }
+
+    #[test]
+    fn the_admin_surface_refuses_a_request_without_the_admin_token() {
+        let harness = start(FakeFactory::new(FakeBehaviour::EchoOverHttp));
+
+        let (status, body) = put_as(&format!("{}/sandboxes/no-token/initrd", harness.admin_base), None, b"070701-x");
+        assert_eq!(status, 401, "{body}");
+        let (status, _) = put_as(&format!("{}/sandboxes/no-token/initrd", harness.admin_base), Some("wrong-token-0123456789"), b"070701-x");
+        assert_eq!(status, 401);
+        let (status, _) = post_as(&format!("{}/invoke/no-token", harness.admin_base), None, b"{}");
+        assert_eq!(status, 401);
+
+        // Nothing was staged by the refused calls, and the liveness probe stays open.
+        let (status, body) = put(&format!("{}/sandboxes/no-token", harness.admin_base), b"{}");
+        assert_eq!(status, 409, "{body}");
+        let (status, _) = get_as(&format!("{}/healthz", harness.admin_base), None);
+        assert_eq!(status, 200);
+    }
+
+    #[test]
+    fn the_guest_surface_answers_only_the_sandbox_whose_token_is_presented() {
+        let harness = start(FakeFactory::new(FakeBehaviour::EchoOverHttp));
+        let (status, _) = deploy(&harness, "guest-a");
+        assert_eq!(status, 200);
+        let (status, _) = deploy(&harness, "guest-b");
+        assert_eq!(status, 200);
+        let (token_a, token_b) = {
+            let specs = harness.factory.specs.lock().unwrap();
+            (guest_token_of(&specs[0]), guest_token_of(&specs[1]))
+        };
+        assert_ne!(token_a, token_b, "each sandbox has its own token");
+
+        // Hold an invocation in flight for guest-a on a background thread (the fake guest answers it itself).
+        let guest_base = harness.guest_base.clone();
+        let (status, _) = get_as(&format!("{guest_base}/guest/guest-a"), None);
+        assert_eq!(status, 401, "no token");
+        let (status, _) = get_as(&format!("{guest_base}/guest/guest-a"), Some(&token_b));
+        assert_eq!(status, 401, "another sandbox's token");
+        let (status, _) = get_as(&format!("{guest_base}/guest/guest-a"), Some(&token_a));
+        assert_eq!(status, 404, "the right token, but nothing in flight");
+        let (status, _) = get_as(&format!("{guest_base}/guest/unknown"), Some(&token_a));
+        assert_eq!(status, 401, "an unknown sandbox is the same refusal");
+        let (status, _) = post_as(&format!("{guest_base}/guest/guest-a"), Some(&token_b), b"forged");
+        assert_eq!(status, 401, "an outcome under another sandbox's token is refused");
+    }
+
+    #[test]
+    fn a_short_admin_token_is_refused_at_construction() {
+        let addresses = SidecarAddresses { admin_advertise: "127.0.0.1:1".into(), guest_advertise: "127.0.0.1:2".into() };
+        let factory = Arc::new(FakeFactory::new(FakeBehaviour::EchoOverHttp)) as Arc<dyn VmFactory>;
+        assert!(Sidecar::new(addresses, factory, "short".into()).is_err());
     }
 
     #[test]

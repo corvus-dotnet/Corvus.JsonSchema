@@ -192,6 +192,10 @@ public sealed class AotHostAppAssemblerTests
         program.ShouldContain("""[DllImport("*", EntryPoint = "_exit")]""");
         // The shared Bind() reads ARAZZO_SOURCE__ bindings, seeded from the baked argv rather than deploy-time app settings.
         program.ShouldContain("ARAZZO_SOURCE__");
+        // The guest surface answers only the sandbox whose token the fetch and the outcome carry (P1-10): the token rides
+        // the baked argv, and the guest exits rather than fetch without it.
+        program.ShouldContain("ARAZZO_GUEST_TOKEN");
+        program.ShouldContain("""AuthenticationHeaderValue("Bearer", guestToken)""");
         // The other targets' entries must not leak into the guest.
         program.ShouldNotContain("LambdaServerlessFunction");
         program.ShouldNotContain("FunctionsApplication");
