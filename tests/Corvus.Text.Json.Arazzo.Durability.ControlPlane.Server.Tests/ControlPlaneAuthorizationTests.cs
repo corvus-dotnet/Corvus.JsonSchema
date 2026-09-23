@@ -54,6 +54,42 @@ public sealed class ControlPlaneAuthorizationTests
         Should.Throw<ArgumentException>(() => app.MapArazzoControlPlane(management, catalog, runners, ControlPlaneSecurityMode.ScopesOnly, rowSecurity: new SystemPolicy(), auditor: GovernanceAuditor.CreateInMemory()));
     }
 
+    [TestMethod]
+    public void A_reach_enforcing_mode_refuses_a_persistent_policy_nothing_refreshes_on_a_bound()
+    {
+        // P1-14: the security API refreshes the policy after its own writes, but a revocation made on another replica
+        // reaches this one only through the hosted refresh, so a secured deployment does not start without it.
+        var store = new InMemoryWorkflowStateStore();
+        var management = new SecuredWorkflowManagement(store, "ops");
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops", administrators: new InMemoryWorkflowAdministratorStore());
+        var runners = new InMemoryRunnerRegistry();
+        var policy = new PersistentRowSecurityPolicy(new InMemorySecurityPolicyStore());
+
+        WebApplicationBuilder unrefreshed = WebApplication.CreateBuilder();
+        unrefreshed.Services.AddArazzoAuthenticationTelemetry();
+        unrefreshed.Services.AddHttpContextAccessor();
+        using WebApplication without = unrefreshed.Build();
+        ArgumentException refusal = Should.Throw<ArgumentException>(() => without.MapArazzoControlPlane(management, catalog, runners, ControlPlaneSecurityMode.RowSecurityOnly, rowSecurity: policy, auditor: GovernanceAuditor.CreateInMemory()));
+        refusal.ParamName.ShouldBe("rowSecurity");
+        refusal.Message.ShouldContain("refreshed on a bounded interval");
+
+        // Registering the refresh for THAT policy is what the mapping looks for; a registration for another one does not do.
+        WebApplicationBuilder other = WebApplication.CreateBuilder();
+        other.Services.AddArazzoAuthenticationTelemetry();
+        other.Services.AddHttpContextAccessor();
+        other.Services.AddArazzoRowSecurityPolicyRefresh(new PersistentRowSecurityPolicy(new InMemorySecurityPolicyStore()));
+        using WebApplication mismatched = other.Build();
+        Should.Throw<ArgumentException>(() => mismatched.MapArazzoControlPlane(management, catalog, runners, ControlPlaneSecurityMode.RowSecurityOnly, rowSecurity: policy, auditor: GovernanceAuditor.CreateInMemory()))
+            .ParamName.ShouldBe("rowSecurity");
+
+        WebApplicationBuilder refreshed = WebApplication.CreateBuilder();
+        refreshed.Services.AddArazzoAuthenticationTelemetry();
+        refreshed.Services.AddHttpContextAccessor();
+        refreshed.Services.AddArazzoRowSecurityPolicyRefresh(policy);
+        using WebApplication with = refreshed.Build();
+        Should.NotThrow(() => with.MapArazzoControlPlane(management, catalog, runners, ControlPlaneSecurityMode.RowSecurityOnly, rowSecurity: policy, auditor: GovernanceAuditor.CreateInMemory()));
+    }
+
     private sealed class SystemPolicy : ControlPlaneRowSecurityPolicy
     {
         public override AccessContext Resolve(ClaimsPrincipal? principal) => AccessContext.System;

@@ -170,6 +170,13 @@ internal static class ServerThrowHelper
     public static void ThrowAuthenticationTelemetryRequired(ControlPlaneSecurityMode securityMode)
         => throw new InvalidOperationException(SR.Format(SR.AuthenticationTelemetryRequired, securityMode));
 
+    /// <summary>Throws when a reach-enforcing security mode is given a persistent policy no hosted service refreshes on a bounded interval, so a revocation made on another replica would never take effect here (P1-14).</summary>
+    /// <param name="securityMode">The configured security mode.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowPolicyRefreshRequired(ControlPlaneSecurityMode securityMode)
+        => throw new ArgumentException(SR.Format(SR.PolicyRefreshRequired, securityMode), "rowSecurity");
+
     /// <summary>Throws when a secured security mode is given no auditor that appends to an audit sink (ADR 0069).</summary>
     /// <param name="securityMode">The configured security mode.</param>
     [DoesNotReturn]

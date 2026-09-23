@@ -164,6 +164,16 @@ public static class ControlPlaneEndpointExtensions
             ServerThrowHelper.ThrowAuditSinkRequired(securityMode);
         }
 
+        // P1-14: a reach-enforcing deployment whose persistent policy nothing refreshes on a bounded interval does not
+        // start. The security API refreshes after its own writes, but a revocation made on another replica would
+        // never reach this one, and a revocation that does not propagate is the incident-response action failing.
+        if ((securityMode is ControlPlaneSecurityMode.Scoped or ControlPlaneSecurityMode.RowSecurityOnly)
+            && rowSecurity is PersistentRowSecurityPolicy persistentPolicy
+            && !endpoints.ServiceProvider.GetServices<RowSecurityPolicyRefreshRegistration>().Any(registration => ReferenceEquals(registration.Policy, persistentPolicy)))
+        {
+            ServerThrowHelper.ThrowPolicyRefreshRequired(securityMode);
+        }
+
         // ADR 0071: a secured deployment that does not watch its own authentications does not start. Brute force and
         // credential stuffing are otherwise undetectable by construction.
         if (securityMode != ControlPlaneSecurityMode.Open && endpoints.ServiceProvider.GetService<AuthenticationTelemetry>() is null)

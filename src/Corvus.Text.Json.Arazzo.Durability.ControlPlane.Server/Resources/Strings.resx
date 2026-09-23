@@ -186,6 +186,9 @@
   <data name="AdministratorStoreRequired" xml:space="preserve">
     <value>The catalog has no administrator store. A control plane publishes, and reads and changes administration, only through the explicit record (ADR 0007): construct the SecuredWorkflowCatalog with an IWorkflowAdministratorStore. Only a runner reads the catalog without one.</value>
   </data>
+  <data name="PolicyRefreshRequired" xml:space="preserve">
+    <value>ControlPlaneSecurityMode.{0} requires the persistent row-security policy to be refreshed on a bounded interval, so a revocation made on another replica takes effect here: call services.AddArazzoRowSecurityPolicyRefresh(policy) with the policy passed as rowSecurity. Only Open and ScopesOnly may run without it.</value>
+  </data>
   <data name="SecurityModeNotNamed" xml:space="preserve">
     <value>ControlPlaneSecurityMode.{0} is not a posture. Name the deployment's posture: Scoped, ScopesOnly, RowSecurityOnly, or Open (unsecured, for development). There is no default (ADR 0016).</value>
   </data>

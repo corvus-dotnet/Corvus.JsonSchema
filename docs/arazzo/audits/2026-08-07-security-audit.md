@@ -476,6 +476,8 @@ item you cannot see directly in the code.
 - **Divergence:** the class doc recommends polling for multi-process freshness and nothing implements it. Only the in-process security handler and approval service call `RefreshAsync`. On a multi-replica control plane a revocation removes the row on one replica while others honour the deleted binding indefinitely. Time-boxed grants still expire, so this hits precisely the incident-response action.
 - **Acceptance criteria:** a hosted service polling on a bounded interval, or store-side change notification; assert revocation latency in a two-instance test.
 
+> **Resolved 2026-09-23.** `RowSecurityPolicyRefreshService` refreshes the persistent policy on a bounded interval, 5 seconds by default and configurable through `AddArazzoRowSecurityPolicyRefresh`; a failed refresh is logged and the last compiled policy stays in force until the next tick. A control plane in Scoped or RowSecurityOnly refuses to map a persistent policy nothing refreshes. A two-instance test revokes a binding through one policy and watches the other deny within the bound, and fails with the service stopped.
+
 ### P1-15 · DIV · `TB-9` · Directory search fails open on the default source
 - **Where:** `ArazzoControlPlaneIdentityHandler.cs:100-104, 157-164, 203-226`
 - **Divergence:** `merged` is the default whenever a directory is configured, and it catches `PrincipalDirectoryException` and substitutes an empty list, while the all-kinds sweep swallows per-kind failures. The explicit `source=directory` path fails closed, and the asymmetry is the finding.

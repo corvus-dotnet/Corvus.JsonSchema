@@ -564,6 +564,10 @@ if (requireAuthorization)
     // transformer also unions the principal's stored grants (claims ∪ entitlements), so it shares the one resolver.
     builder.Services.AddSingleton(entitlements);
     builder.Services.AddSingleton<IClaimsTransformation, KeycloakClaimsTransformer>();
+
+    // Every replica refreshes the shared policy within the refresh bound (5 s by default), so a grant revoked through
+    // one replica stops on all of them; a secured control plane refuses to map the policy without this (P1-14).
+    builder.Services.AddArazzoRowSecurityPolicyRefresh(entitlements);
     builder.Services.AddArazzoControlPlaneAuthorization();
     builder.Services.AddArazzoAuthenticationTelemetry();
 

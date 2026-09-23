@@ -67,7 +67,7 @@ the same change as the thing that triggered it.
       call is a bypass. (V-10, V-30: the run-start isolation gate took no environment, so a runner in another environment answered for the run.)
 - [ ] **A new store or store method answers `SupportsRowSecurityFilter`** and ships a wire proof that the reach
       predicate reaches the backend ([ADR 0067](../adr/0067-reach-enforced-by-the-store-proven-on-the-wire.md)). (V-34.)
-- [ ] **A revocation takes effect within a stated bound**, and the bound is written down. (V-22.)
+- [ ] **A revocation takes effect within a stated bound**, and the bound is written down. (V-22: a revoked runner within 5 s; P1-14: a revoked grant on every replica within the policy refresh bound, 5 s by default, which a reach-enforcing control plane refuses to map without.)
 
 ## 6. Secrets and execution
 
