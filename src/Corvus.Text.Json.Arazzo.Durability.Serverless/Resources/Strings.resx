@@ -81,4 +81,7 @@
   <data name="CheckpointOriginNotAllowed" xml:space="preserve">
     <value>The invocation's checkpointUrl is at '{0}', which is not a checkpoint origin this function was deployed with (ADR 0059). Nothing was loaded from it.</value>
   </data>
+  <data name="MissingCheckpointToken" xml:space="preserve">
+    <value>The invocation is missing its 'checkpointToken'. The runner mints one for every dispatch (ADR 0062), and the checkpoint surface takes no callback without one.</value>
+  </data>
 </root>

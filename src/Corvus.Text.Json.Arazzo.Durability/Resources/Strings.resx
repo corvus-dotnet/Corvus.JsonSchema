@@ -593,4 +593,7 @@
   <data name="UpdatedPackageAddsNonNativeEntry" xml:space="preserve">
     <value>The updated package adds the entry '{0}', which is not a native artifact. A package update may add entries under 'metadata/native/' and 'metadata/native-attestation/' and nothing else (ADR 0030).</value>
   </data>
+  <data name="WorkflowPublishingRequiresStore" xml:space="preserve">
+    <value>Publishing a workflow version requires an administrator store, since publishing establishes and checks the base id's administration (ADR 0007); none is configured on this catalog client. A runner reads the catalog and needs none.</value>
+  </data>
 </root>

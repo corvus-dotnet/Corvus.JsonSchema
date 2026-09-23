@@ -46,7 +46,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler, IRunS
     private readonly IEnvironmentStore? environmentStore;
     private readonly IAvailabilityStore? availabilityStore;
     private readonly IWorkflowDeploymentStore? deployments;
-    private readonly Capacity.IControlPlaneCapacityGuard? capacity;
+    private readonly Capacity.IControlPlaneCapacityGuard capacity;
     private readonly ConcurrentDictionary<string, AccessContext> tenantScopes = new(StringComparer.Ordinal);
     private SecurityRule? tenantRule;
     private readonly WorkflowSimulator? simulator;
@@ -56,20 +56,12 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler, IRunS
     private const string CatalogTargetKind = "catalog-version";
     private const string RunTargetKind = "run";
 
-    /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneCatalogHandler"/> class (unscoped: full access).</summary>
-    /// <param name="catalog">The catalog client the endpoints delegate to.</param>
-    /// <param name="management">The management client used to create runs when a workflow version is triggered.</param>
-    /// <param name="runners">The runner registry consulted to gate a trigger on a runner that hosts the version.</param>
-    public ArazzoControlPlaneCatalogHandler(ISecuredWorkflowCatalog catalog, ISecuredWorkflowManagement management, IRunnerRegistry runners)
-        : this(catalog, management, runners, new ControlPlaneAccess())
-    {
-    }
-
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneCatalogHandler"/> class.</summary>
     /// <param name="catalog">The catalog client the endpoints delegate to.</param>
     /// <param name="management">The management client used to create runs when a workflow version is triggered.</param>
     /// <param name="runners">The runner registry consulted to gate a trigger on a runner that hosts the version.</param>
     /// <param name="access">Resolves the caller's <see cref="AccessContext"/> per request (§14.2).</param>
+    /// <param name="capacity">Bounds the population this handler grows (ADR 0066). It is required: a handler built without one would admit without bound.</param>
     /// <param name="environmentStore">The environment registry used to validate that a run's pinned environment exists and is in the caller's reach (design §5.5); <see langword="null"/> skips that check.</param>
     /// <param name="availabilityStore">The availability registry used to validate that the version is available in the pinned environment (§7.8); <see langword="null"/> skips that check.</param>
     /// <param name="simulator">The workflow simulator used by the simulate endpoint.</param>
@@ -77,7 +69,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler, IRunS
     /// <param name="deployments">The workflow-deployment store (ADR 0055, ADR 0059); when supplied, the start gate holds a run
     /// pinned to an <see cref="RunIsolationModel.Isolated"/> environment until that environment's serverless function is deployed
     /// (live at its invoke URL). <see langword="null"/> skips the dispatch-ready check, for an in-process-only deployment.</param>
-    internal ArazzoControlPlaneCatalogHandler(ISecuredWorkflowCatalog catalog, ISecuredWorkflowManagement management, IRunnerRegistry runners, ControlPlaneAccess access, IEnvironmentStore? environmentStore = null, IAvailabilityStore? availabilityStore = null, WorkflowSimulator? simulator = null, GovernanceAuditor? auditor = null, IWorkflowDeploymentStore? deployments = null, Capacity.IControlPlaneCapacityGuard? capacity = null)
+    internal ArazzoControlPlaneCatalogHandler(ISecuredWorkflowCatalog catalog, ISecuredWorkflowManagement management, IRunnerRegistry runners, ControlPlaneAccess access, Capacity.IControlPlaneCapacityGuard capacity, IEnvironmentStore? environmentStore = null, IAvailabilityStore? availabilityStore = null, WorkflowSimulator? simulator = null, GovernanceAuditor? auditor = null, IWorkflowDeploymentStore? deployments = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(management);
@@ -90,6 +82,7 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler, IRunS
         this.environmentStore = environmentStore;
         this.availabilityStore = availabilityStore;
         this.deployments = deployments;
+        ArgumentNullException.ThrowIfNull(capacity);
         this.capacity = capacity;
         this.simulator = simulator;
         this.auditor = auditor ?? GovernanceAuditor.None;
@@ -711,44 +704,41 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler, IRunS
         //
         // The count is scoped by the caller's READ REACH, which is what makes it the tenant's population rather than the
         // deployment's. The owner group is read only to name the counter in the refusal.
-        if (this.capacity is { } guard)
+        // The population counted is the tenant's, whatever the caller's reach can see (ADR 0066): an operator with
+        // unrestricted read, and every caller in the ScopesOnly and Open postures, would otherwise be counted against
+        // the whole deployment. The scope comes from the target environment's owner group, not the caller's.
+        string counter;
+        AccessContext countScope;
+        if (environmentOwnerGroup is { } ownerGroup)
         {
-            // The population counted is the tenant's, whatever the caller's reach can see (ADR 0066): an operator with
-            // unrestricted read, and every caller in the ScopesOnly and Open postures, would otherwise be counted against
-            // the whole deployment. The scope comes from the target environment's owner group, not the caller's.
-            string counter;
-            AccessContext countScope;
-            if (environmentOwnerGroup is { } ownerGroup)
-            {
-                counter = ownerGroup;
-                countScope = this.TenantScope(ownerGroup);
-            }
-            else if (!platformEnvironment && this.environmentStore is { } tenancy && await IsTenantAwareAsync(tenancy, cancellationToken).ConfigureAwait(false))
-            {
-                // A tenant environment carrying no owner group cannot be charged to a tenant. Before the deployment has
-                // admitted any owner group that is every environment and the deployment counter is the aggregate; once
-                // it has, charging such a run to the shared counter would let it escape the per-tenant bound, so the
-                // start fails closed.
-                await this.auditor.MutationAsync(request.AuditAction, this.AuditActor(), RunTargetKind, workflowId, "refused-tenancy-unresolvable", environment).ConfigureAwait(false);
-                return RunStartOutcome.Refused(409, "tenancy-unresolvable", "Tenant unresolvable", $"Environment '{environment}' carries no owner group in a tenant-aware deployment, so a run there cannot be charged to a tenant.");
-            }
-            else
-            {
-                counter = Capacity.ControlPlaneCapacityNames.Deployment;
-                countScope = AccessContext.System;
-            }
+            counter = ownerGroup;
+            countScope = this.TenantScope(ownerGroup);
+        }
+        else if (!platformEnvironment && this.environmentStore is { } tenancy && await IsTenantAwareAsync(tenancy, cancellationToken).ConfigureAwait(false))
+        {
+            // A tenant environment carrying no owner group cannot be charged to a tenant. Before the deployment has
+            // admitted any owner group that is every environment and the deployment counter is the aggregate; once
+            // it has, charging such a run to the shared counter would let it escape the per-tenant bound, so the
+            // start fails closed.
+            await this.auditor.MutationAsync(request.AuditAction, this.AuditActor(), RunTargetKind, workflowId, "refused-tenancy-unresolvable", environment).ConfigureAwait(false);
+            return RunStartOutcome.Refused(409, "tenancy-unresolvable", "Tenant unresolvable", $"Environment '{environment}' carries no owner group in a tenant-aware deployment, so a run there cannot be charged to a tenant.");
+        }
+        else
+        {
+            counter = Capacity.ControlPlaneCapacityNames.Deployment;
+            countScope = AccessContext.System;
+        }
 
-            // Concurrency first: it is the limit a healthy tenant actually meets, and it releases itself, so reporting
-            // it in preference to the storage limit points the caller at the one that will clear.
-            if (await guard.TryAdmitAsync(Capacity.ControlPlaneCapacityKind.ConcurrentRuns, counter, countScope, cancellationToken).ConfigureAwait(false) is { } busy)
-            {
-                return RunStartOutcome.CapacityExceeded(busy);
-            }
+        // Concurrency first: it is the limit a healthy tenant actually meets, and it releases itself, so reporting
+        // it in preference to the storage limit points the caller at the one that will clear.
+        if (await this.capacity.TryAdmitAsync(Capacity.ControlPlaneCapacityKind.ConcurrentRuns, counter, countScope, cancellationToken).ConfigureAwait(false) is { } busy)
+        {
+            return RunStartOutcome.CapacityExceeded(busy);
+        }
 
-            if (await guard.TryAdmitAsync(Capacity.ControlPlaneCapacityKind.StoredRuns, counter, countScope, cancellationToken).ConfigureAwait(false) is { } full)
-            {
-                return RunStartOutcome.CapacityExceeded(full);
-            }
+        if (await this.capacity.TryAdmitAsync(Capacity.ControlPlaneCapacityKind.StoredRuns, counter, countScope, cancellationToken).ConfigureAwait(false) is { } full)
+        {
+            return RunStartOutcome.CapacityExceeded(full);
         }
 
         WorkflowRunId runId;

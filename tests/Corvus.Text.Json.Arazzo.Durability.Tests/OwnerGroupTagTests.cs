@@ -43,7 +43,7 @@ public sealed class OwnerGroupTagTests
         using ParsedJsonDocument<Environment> environment = Stamped("sys:tenant", "acme");
 
         OwnerGroupTag.Read(environment.RootElement, OwnerGroupTag.DefaultKeyUtf8).ShouldBe("acme");
-        OwnerGroupTag.IsTenantOwned(environment.RootElement, OwnerGroupTag.DefaultKeyUtf8).ShouldBeTrue();
+        OwnerGroupTag.IsStamped(environment.RootElement.ManagementTagsValue, OwnerGroupTag.DefaultKeyUtf8).ShouldBeTrue();
     }
 
     [TestMethod]
@@ -54,7 +54,7 @@ public sealed class OwnerGroupTagTests
         using ParsedJsonDocument<Environment> environment = Stamped("sys:tenant", "acme");
 
         OwnerGroupTag.Read(environment.RootElement, OwnerGroupTag.KeyFor("corp:")).ShouldBeNull();
-        OwnerGroupTag.IsTenantOwned(environment.RootElement, OwnerGroupTag.KeyFor("corp:")).ShouldBeFalse();
+        OwnerGroupTag.IsStamped(environment.RootElement.ManagementTagsValue, OwnerGroupTag.KeyFor("corp:")).ShouldBeFalse();
     }
 
     [TestMethod]
@@ -65,7 +65,7 @@ public sealed class OwnerGroupTagTests
         using ParsedJsonDocument<Environment> untagged = Environment.Draft("production", null, null, SecurityTagSet.Empty);
 
         OwnerGroupTag.Read(untagged.RootElement, OwnerGroupTag.DefaultKeyUtf8).ShouldBeNull();
-        OwnerGroupTag.IsTenantOwned(untagged.RootElement, OwnerGroupTag.DefaultKeyUtf8).ShouldBeFalse();
+        OwnerGroupTag.IsStamped(untagged.RootElement.ManagementTagsValue, OwnerGroupTag.DefaultKeyUtf8).ShouldBeFalse();
     }
 
     [TestMethod]
@@ -76,7 +76,7 @@ public sealed class OwnerGroupTagTests
         using ParsedJsonDocument<Environment> environment = Stamped("sys:tenant", string.Empty);
 
         OwnerGroupTag.Read(environment.RootElement, OwnerGroupTag.DefaultKeyUtf8).ShouldBeNull();
-        OwnerGroupTag.IsTenantOwned(environment.RootElement, OwnerGroupTag.DefaultKeyUtf8).ShouldBeFalse();
+        OwnerGroupTag.IsStamped(environment.RootElement.ManagementTagsValue, OwnerGroupTag.DefaultKeyUtf8).ShouldBeFalse();
     }
 
     [TestMethod]

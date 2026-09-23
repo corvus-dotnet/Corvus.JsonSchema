@@ -80,10 +80,10 @@ the same change as the thing that triggered it.
 ## 7. Defaults and leftovers
 
 - [ ] **The default is the closed posture.** The zero value of a security enum, an omitted option and a null
-      dependency all refuse. (V-14.)
+      dependency all refuse. (V-14: `default(ControlPlaneSecurityMode)` was `Open`.)
 - [ ] **No compatibility path.** Nothing is shipped, so there is no old data and no old caller. A fallback for a
       record that predates a field, a nullable dependency that is always supplied, or an overload kept for a
-      caller that no longer exists is deleted, not guarded. (V-3, V-35, V-42.)
+      caller that no longer exists is deleted, not guarded. (V-3, V-35, V-42: the version-1 administration fallback, the old-run journal tolerance and two nullable dependencies, all deleted.)
 - [ ] **A security control has a test that fails when the control is removed.** Neuter the check, watch the test
       fail, restore it. A bug fix starts from a failing reproduction.
 

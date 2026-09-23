@@ -349,7 +349,7 @@ public sealed class ControlPlaneProvidersApiTests
     {
         var store = new InMemoryWorkflowStateStore();
         var management = new SecuredWorkflowManagement(store, "ops");
-        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops");
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops", administrators: new InMemoryWorkflowAdministratorStore());
 
         // The stub serves plain http on loopback; the fetcher's insecure opt-in mirrors a dev deployment.
         var fetcher = new SourceDocumentFetcher(new HttpClient(), allowInsecureHttp: true, maxDocumentBytes: 32 * 1024);

@@ -10,6 +10,7 @@ using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 using Corvus.Text.Json.Arazzo.Durability.Publishing;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -175,7 +176,7 @@ public sealed partial class CliIntegrationTests
     private static async Task<OperatorHost> StartOperatorHostAsync()
     {
         var stateStore = new InMemoryWorkflowStateStore();
-        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), stateStore, "ops");
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), stateStore, "ops", administrators: new InMemoryWorkflowAdministratorStore());
         var management = new SecuredWorkflowManagement(stateStore, "ops");
         var registry = new InMemoryRunnerRegistry();
         var builds = new InMemoryNativeBuildJobStore();

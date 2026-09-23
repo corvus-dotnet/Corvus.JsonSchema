@@ -672,7 +672,7 @@ public sealed class ControlPlaneDebugRunApiTests
     {
         var store = new InMemoryWorkflowStateStore();
         var management = new SecuredWorkflowManagement(store, "ops", executionBudget: ceiling);
-        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops");
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops", administrators: new InMemoryWorkflowAdministratorStore());
         var workspaceStore = new Corvus.Text.Json.Arazzo.Durability.WorkspaceWorkflows.InMemoryWorkspaceWorkflowStore();
 
         InMemoryDraftRunStore? drafts = null;

@@ -18,6 +18,14 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 public enum ControlPlaneSecurityMode
 {
     /// <summary>
+    /// No posture named. This is the zero value, so that a mode a host carries in an options object or binds from
+    /// configuration and never sets is this and not <see cref="Open"/>. <c>MapArazzoControlPlane</c> refuses it, so a
+    /// deployment that forgets to name its posture fails at start-up rather than running open in silence (V-14 of the
+    /// 2026-08-07 audit).
+    /// </summary>
+    None,
+
+    /// <summary>
     /// Unauthenticated and unrestricted (full <see cref="AccessContext.System"/> reach). For local development and
     /// trusted-network deployments only — it exposes every operation to anonymous callers, so it is logged loudly at
     /// startup. A row-security policy must <strong>not</strong> be supplied (it would be silently ignored).

@@ -328,20 +328,6 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                     writer.WriteEndObject();
                 }
             }
-            else
-            {
-                // Old-run fallback: a checkpoint written before the journal existed has step outputs but no journal, so
-                // project the outputs alone, in the map's order, with no invented status or timing.
-                PooledUtf8Map<JsonElement>.Enumerator entries = s.StepOutputs.GetEnumerator();
-                while (entries.MoveNext())
-                {
-                    writer.WriteStartObject();
-                    writer.WriteString("stepId"u8, entries.CurrentKey);
-                    writer.WritePropertyName("outputs"u8);
-                    entries.CurrentValue.WriteTo(writer);
-                    writer.WriteEndObject();
-                }
-            }
 
             writer.WriteEndArray();
             if (s.JournalTruncated)

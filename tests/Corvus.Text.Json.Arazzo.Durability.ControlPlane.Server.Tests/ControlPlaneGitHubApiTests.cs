@@ -394,7 +394,7 @@ public sealed class ControlPlaneGitHubApiTests
     {
         var store = new InMemoryWorkflowStateStore();
         var management = new SecuredWorkflowManagement(store, "ops");
-        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops");
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops", administrators: new InMemoryWorkflowAdministratorStore());
 
         GitHubBroker? broker = null;
         if (gitHubUrl is not null)

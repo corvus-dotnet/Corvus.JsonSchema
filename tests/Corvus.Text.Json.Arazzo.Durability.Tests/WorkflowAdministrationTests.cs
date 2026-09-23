@@ -181,12 +181,7 @@ public sealed class WorkflowAdministrationTests
         // no identity was administered by anyone: the next caller published version 2 of somebody else's workflow id.
         SecurityTagSet mallory = SecurityTagSet.FromTags([new SecurityTag("sys:sub", "mallory")]);
 
-        // Without an administrator store (the version-1 derivation)...
-        var derived = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops");
-        (await derived.AddAsync(Package("orphan"), Owner, default, SecurityTagSet.Empty, default)).Dispose();
-        await Should.ThrowAsync<WorkflowAdministrationException>(async () => (await derived.AddAsync(Package("orphan"), Owner, default, mallory, default)).Dispose());
-
-        // ...and with one: no empty identity is recorded as an administrator, and none is inherited.
+        // No empty identity is recorded as an administrator, and none is inherited.
         SecuredWorkflowCatalog explicitCatalog = NewCatalog(out InMemoryWorkflowAdministratorStore administrators);
         (await explicitCatalog.AddAsync(Package("orphan"), Owner, default, SecurityTagSet.Empty, default)).Dispose();
         (await administrators.GetAsync("orphan", default)).ShouldBeNull();
@@ -194,17 +189,20 @@ public sealed class WorkflowAdministrationTests
         await Should.ThrowAsync<WorkflowAdministrationException>(async () => (await AddAdministratorAsync(explicitCatalog, "orphan", mallory, mallory)).Dispose());
 
         // A posture that identifies nobody stays consistent with itself: the identity-less caller publishes again.
-        (await derived.AddAsync(Package("orphan"), Owner, default, SecurityTagSet.Empty, default)).Dispose();
+        (await explicitCatalog.AddAsync(Package("orphan"), Owner, default, SecurityTagSet.Empty, default)).Dispose();
     }
 
     [TestMethod]
-    public async Task Without_an_administrator_store_management_is_unsupported()
+    public async Task Without_an_administrator_store_publishing_and_administration_are_unsupported()
     {
-        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops");
-        await catalog.AddAsync(Package("flow"), Owner, default, Acme, default);
+        // A runner reads the catalog and needs no store. A client that publishes, or reads or changes administration,
+        // does: there is no administrator derived from version 1 to fall back on (ADR 0007, V-3 of the 2026-08-07 audit).
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops", administrators: null);
 
-        await Should.ThrowAsync<NotSupportedException>(async () =>
-            await AddAdministratorAsync(catalog, "flow", Globex, caller: Acme));
+        (await Should.ThrowAsync<NotSupportedException>(async () =>
+            await catalog.AddAsync(Package("flow"), Owner, default, Acme, default))).Message.ShouldContain("administrator store");
+        await Should.ThrowAsync<NotSupportedException>(async () => await catalog.GetAdministratorsAsync("flow", default));
+        await Should.ThrowAsync<NotSupportedException>(async () => await AddAdministratorAsync(catalog, "flow", Globex, caller: Acme));
     }
 
     // Adds a resolved identity with no kind/label (the bare identity form) and returns the resulting record.

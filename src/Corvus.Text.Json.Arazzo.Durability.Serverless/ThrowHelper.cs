@@ -51,6 +51,12 @@ internal static class ThrowHelper
     public static ArgumentException GetMissingCheckpointUrlException(string paramName)
         => new(SR.MissingCheckpointUrl, paramName);
 
+    /// <summary>Creates the exception for an invocation carrying no <c>checkpointToken</c>, for the caller to throw (ADR 0062).</summary>
+    /// <param name="paramName">The offending parameter's name.</param>
+    /// <returns>The exception to throw.</returns>
+    public static ArgumentException GetMissingCheckpointTokenException(string paramName)
+        => new(SR.MissingCheckpointToken, paramName);
+
     /// <summary>Creates the exception for an invocation whose <c>checkpointUrl</c> is not at an origin the function was deployed with, for the caller to throw.</summary>
     /// <param name="checkpointUrl">The refused checkpoint URL.</param>
     /// <param name="paramName">The offending parameter's name.</param>

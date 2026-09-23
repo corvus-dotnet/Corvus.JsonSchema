@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -225,7 +226,7 @@ public sealed class ControlPlaneCheckpointSurfaceTests
         {
             var state = new InMemoryWorkflowStateStore();
             var management = new SecuredWorkflowManagement(state, "ops");
-            var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), state, "ops");
+            var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), state, "ops", administrators: new InMemoryWorkflowAdministratorStore());
 
             WebApplicationBuilder builder = WebApplication.CreateBuilder();
             builder.WebHost.UseTestServer();

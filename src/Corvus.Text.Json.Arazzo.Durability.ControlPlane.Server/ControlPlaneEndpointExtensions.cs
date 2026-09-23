@@ -129,6 +129,20 @@ public static class ControlPlaneEndpointExtensions
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(runners);
 
+        // ADR 0016: the posture is named, never defaulted. The enum's zero value is None, so a host that binds the mode
+        // and never sets it arrives here and is refused, as is a value outside the enum.
+        if (securityMode == ControlPlaneSecurityMode.None || !Enum.IsDefined(securityMode))
+        {
+            ServerThrowHelper.ThrowSecurityModeNotNamed(securityMode);
+        }
+
+        // ADR 0007: administration is the explicit record and nothing else. A catalog without the store can publish
+        // nothing and answer no administration read, so a control plane over one does not start.
+        if (!catalog.HasAdministratorStore)
+        {
+            ServerThrowHelper.ThrowAdministratorStoreRequired();
+        }
+
         // §17.4 secure-by-default: derive the posture from the EXPLICIT mode — there is no insecure-by-omission path.
         // A row policy is required exactly for the reach-enforcing modes, and forbidden for the System-reach modes (where
         // it would be silently ignored); scope gating is applied exactly for the scope-gating modes.
@@ -352,7 +366,7 @@ public static class ControlPlaneEndpointExtensions
         // The revocation fence (§5.5): if the workflow state store can administer leases, revoke expires a compromised runner's
         // leases so an authorized peer reclaims its in-flight runs at once. A store without the capability still stops all
         // future dispatch on revoke; only the immediate in-flight fence is unavailable.
-        var runnerAuthorizationsHandler = new ArazzoControlPlaneRunnerAuthorizationsHandler(runnerAuthStore, envStore, runners, environmentAdministration, access, workflowStateStore as IWorkflowLeaseAdministration, accessRequestSubjectClaimType, runnerEnrolmentSecret, capacityGuard, auditor, runnerAuthorizationChanges);
+        var runnerAuthorizationsHandler = new ArazzoControlPlaneRunnerAuthorizationsHandler(runnerAuthStore, envStore, runners, environmentAdministration, access, capacityGuard, workflowStateStore as IWorkflowLeaseAdministration, accessRequestSubjectClaimType, runnerEnrolmentSecret, auditor, runnerAuthorizationChanges);
         var environmentKeysHandler = new ArazzoControlPlaneEnvironmentKeysHandler(envStore, environmentAdministration, access, auditor: auditor);
 
         // The brokered GitHub API (workflow-designer design §4.7): user-to-server sign-in, session
@@ -370,7 +384,7 @@ public static class ControlPlaneEndpointExtensions
         // One instance, because it is also the admission every other start goes through (IRunStartAdmission): the catalog's
         // start, a run's re-run and a schedule's run-now must be one chain, and handing those handlers this one is what
         // makes them so.
-        var catalogHandler = new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access, environmentStore, availabilityStore, workflowSimulator, auditor, deploymentStore, capacityGuard);
+        var catalogHandler = new ArazzoControlPlaneCatalogHandler(catalog, management, runners, access, capacityGuard, environmentStore, availabilityStore, workflowSimulator, auditor, deploymentStore);
 
         var schedulesHandler = new ArazzoControlPlaneSchedulesHandler(management, catalog, runners, access, availabilityStore, environmentStore, scheduleRegistry, auditor: auditor, startAdmission: catalogHandler);
 

@@ -33,7 +33,7 @@ public sealed class SecuredWorkflowCatalogCredentialGateTests
             "system",
             default);
 
-        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops", credentials);
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops", credentials, administrators: new InMemoryWorkflowAdministratorStore());
 
         // A submitter not entitled to the petstore binding may not catalogue a workflow that declares it.
         SourceCredentialAccessDeniedException ex = await Should.ThrowAsync<SourceCredentialAccessDeniedException>(async () =>
@@ -51,7 +51,7 @@ public sealed class SecuredWorkflowCatalogCredentialGateTests
     {
         // petstore has no credential binding at all — it is unauthenticated (or bindings come later), so declaring it
         // is allowed for any submitter.
-        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops", new InMemorySourceCredentialStore());
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops", new InMemorySourceCredentialStore(), administrators: new InMemoryWorkflowAdministratorStore());
         using ParsedJsonDocument<CatalogVersion> versionDoc = await catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), default);
         CatalogVersion version = versionDoc.RootElement;
         ((string)version.WorkflowId).ShouldContain("flow");
@@ -61,7 +61,7 @@ public sealed class SecuredWorkflowCatalogCredentialGateTests
     public async Task With_no_credential_store_the_gate_is_off()
     {
         // No credential store wired → no catalog-time check (back-compat).
-        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops");
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops", administrators: new InMemoryWorkflowAdministratorStore());
         using ParsedJsonDocument<CatalogVersion> versionDoc = await catalog.AddAsync(Package("flow"), Owner, default, default, default);
         CatalogVersion version = versionDoc.RootElement;
         ((string)version.WorkflowId).ShouldContain("flow");
@@ -70,7 +70,7 @@ public sealed class SecuredWorkflowCatalogCredentialGateTests
     [TestMethod]
     public async Task A_base_id_administered_by_one_identity_cannot_be_versioned_by_another()
     {
-        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops");
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops", administrators: new InMemoryWorkflowAdministratorStore());
         SecurityTagSet acme = SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]);
 
         // acme establishes administration of base id "flow" and may publish further versions.

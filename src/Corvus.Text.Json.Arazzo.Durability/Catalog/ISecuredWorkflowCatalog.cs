@@ -16,6 +16,13 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 public interface ISecuredWorkflowCatalog
 {
     /// <summary>
+    /// Gets a value indicating whether the catalog has an administrator store. Publishing, and every administration
+    /// read and mutation, throw <see cref="NotSupportedException"/> without one (ADR 0007), so a control plane maps no
+    /// surface over a catalog that answers <see langword="false"/>. Only a runner reads the catalog without a store.
+    /// </summary>
+    bool HasAdministratorStore { get; }
+
+    /// <summary>
     /// Adds a new immutable version: validates the submitted workflow id has no <c>-vN</c> suffix, then has the
     /// store assign the version, rewrite the id, hash the package and persist it.
     /// </summary>

@@ -124,7 +124,7 @@ public sealed class ServerlessDeployAndRunEndToEndTests
 
         // 5d: the production resolver maps a run of this version-in-environment to the deployed function URL from the shared
         // store, and the serverless backend invokes it — the stub returns Completed, so the advance completes.
-        var backend = new ServerlessRunExecutionBackend(client, DeployedFunctionUrlResolver.ForStore(deploymentStore, environmentStore), new Uri("http://localhost/checkpoint/"), LoopbackServerlessInvokeAuthenticator.Instance);
+        var backend = new ServerlessRunExecutionBackend(client, DeployedFunctionUrlResolver.ForStore(deploymentStore, environmentStore), new Uri("http://localhost/checkpoint/"), LoopbackServerlessInvokeAuthenticator.Instance, static _ => "e2e-token");
         using WorkflowRun run = WorkflowRun.CreateNew(new InMemoryWorkflowStateStore(), "run-e2e", "adopt-v1", default, "production");
         WorkflowRunResultKind kind = await backend.AdvanceAsync(run, default);
         kind.ShouldBe(WorkflowRunResultKind.Completed);

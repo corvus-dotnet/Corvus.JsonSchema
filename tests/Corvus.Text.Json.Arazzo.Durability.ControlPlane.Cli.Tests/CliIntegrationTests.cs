@@ -7,6 +7,7 @@ using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -230,7 +231,7 @@ public sealed partial class CliIntegrationTests
         var store = new InMemoryWorkflowStateStore(clock);
         var management = new SecuredWorkflowManagement(store, "ops", CompleteResumer, clock, runDerivation: TestDerivation);
         var scheduleRegistry = new Schedules.InMemoryScheduleRegistry();
-        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(clock), store, "ops");
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(clock), store, "ops", administrators: new InMemoryWorkflowAdministratorStore());
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.Logging.ClearProviders();

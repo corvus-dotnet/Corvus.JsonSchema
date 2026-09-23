@@ -29,6 +29,9 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
     private readonly ISourceCredentialStore? credentials;
     private readonly IWorkflowAdministratorStore? administrators;
 
+    /// <inheritdoc/>
+    public bool HasAdministratorStore => this.administrators is not null;
+
     /// <summary>Initializes a new instance of the <see cref="SecuredWorkflowCatalog"/> class.</summary>
     /// <param name="catalog">The catalog store.</param>
     /// <param name="runs">The run index, consulted (by exact versioned workflow id) for referential integrity on delete and purge.</param>
@@ -38,12 +41,10 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
     /// source the submitter — by the version's security tags — is not entitled to use: the runs would never receive
     /// the credential, so the submission is rejected at catalog time rather than failing silently at run time. When
     /// <see langword="null"/> (the default) no such check is performed.</param>
-    /// <param name="administrators">An optional workflow administrator store (design §13/§14.2/§15). When supplied, a
-    /// base id's administrator set is governed by it (with the version-1-derived default when no explicit record
-    /// exists) and the administration management operations (<see cref="AddAdministratorAsync"/> /
-    /// <see cref="RemoveAdministratorAsync"/> / <see cref="TransferAdministrationAsync"/>) are available. When
-    /// <see langword="null"/> (the default) administration is the single, immutable version-1 identity and the
-    /// management operations throw <see cref="NotSupportedException"/>.</param>
+    /// <param name="administrators">The workflow administrator store (design §13/§14.2/§15), the only source of a base
+    /// id's administrators (ADR 0007). A runner reads the catalog and never publishes, so it may pass
+    /// <see langword="null"/>; a client that publishes, or reads or changes administration, must supply one, since those
+    /// operations throw <see cref="NotSupportedException"/> without it. Nothing is derived from version 1's tags.</param>
     public SecuredWorkflowCatalog(IWorkflowCatalogStore catalog, IWorkflowWaitIndex runs, string actor, ISourceCredentialStore? credentials = null, IWorkflowAdministratorStore? administrators = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
@@ -120,8 +121,8 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
         // record with the creator's stamped identity as the first administrator, so administration is ALWAYS the explicit
         // store record — never an implicit version-1 derivation. The creator is therefore a normal, removable administrator
         // (a co-administrator can later remove them, e.g. when they leave the organisation), and the reverse administration
-        // index that powers the approver inbox has an entry for every workflow from birth. Only when an administrator store
-        // is configured; otherwise administration is the single, immutable version-1 identity (§15).
+        // index that powers the approver inbox has an entry for every workflow from birth. The store is required for
+        // publishing, and CheckAdministrationAsync above has already refused without one.
         if (this.administrators is { } adminStore && version.RootElement.Ref.VersionNumber == 1)
         {
             await EstablishAdministrationAsync(adminStore, baseWorkflowId, version.RootElement.SecurityTagsValue, this.actor, cancellationToken).ConfigureAwait(false);
@@ -335,24 +336,13 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
         ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
         if (this.administrators is { } store)
         {
-            // Administration is governed by the explicit store record, materialized at creation (§15.2) — return it, or
-            // null when the base id is unknown (or a legacy workflow predating explicit establishment). There is NO
-            // implicit version-1 fallback here: when a store is configured, administration is ONLY the explicit grants.
+            // Administration is the explicit store record, materialized at creation (§15.2): return it, or null when the
+            // base id is unknown, or when version 1 was published by a caller the deployment did not identify and no
+            // administrator was recorded (P1-13). Nothing is derived from version 1.
             return await store.GetAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
         }
 
-        // No administrator store configured: administration is the single, immutable version-1 identity (§15). Surface it
-        // as a synthetic, display-only record so callers project administration uniformly. An unknown base id yields null.
-        using ParsedJsonDocument<CatalogVersion>? firstVersion = await this.catalog.GetAsync(baseWorkflowId, 1, cancellationToken).ConfigureAwait(false);
-        if (firstVersion is null)
-        {
-            return null;
-        }
-
-        SecurityTagSet ownerIdentity = WorkflowIdentity.AdministratorIdentity(firstVersion.RootElement.SecurityTagsValue);
-        using JsonWorkspace workspace = JsonWorkspace.Create();
-        AdministratorIdentity owner = WorkflowAdministrators.BuildIdentity(workspace, ownerIdentity, default, hasKind: false, default, hasLabel: false);
-        return WorkflowAdministratorsSerialization.SerializeNewDoc(baseWorkflowId, [owner], this.actor, default, WorkflowEtag.None);
+        throw ThrowHelper.GetWorkflowAdministrationRequiresStoreException();
     }
 
     /// <inheritdoc/>
@@ -361,9 +351,15 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
         // The reverse administration index lives on the administrator store, keyed by each administrator identity's digest.
         // Under the membership model (§16.5.4) the caller administers a workflow iff one of its administrator identities is a
         // subset of the caller's identity, so the query keys are the distinct-key SUBSET digests of the caller's identity.
-        // With no store configured (or the empty identity, whose subset set is empty), the caller administers nothing.
+        // Without a store this client cannot answer and says so; the empty identity, whose subset set is empty,
+        // administers nothing.
+        if (this.administrators is not { } store)
+        {
+            throw ThrowHelper.GetWorkflowAdministrationRequiresStoreException();
+        }
+
         IReadOnlyList<string> digests = SecurityIdentityDigest.SubsetDigests(callerIdentity);
-        if (this.administrators is not { } store || digests.Count == 0)
+        if (digests.Count == 0)
         {
             return [];
         }
@@ -404,10 +400,15 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
     public async ValueTask<WorkflowAdministeredPage> ListAdministeredWorkflowsAsync(SecurityTagSet callerIdentity, int limit, JsonString pageToken, CancellationToken cancellationToken)
     {
         // The paged twin of the drain above: hand the caller's subset digests to the already-keyset reverse index and
-        // return exactly one store page (its base ids are detached strings; the caller disposes the page). No store or an
-        // empty identity administers nothing, so a last (empty) page.
+        // return exactly one store page (its base ids are detached strings; the caller disposes the page). Without a store
+        // this client cannot answer and says so; an empty identity administers nothing, so a last (empty) page.
+        if (this.administrators is not { } store)
+        {
+            throw ThrowHelper.GetWorkflowAdministrationRequiresStoreException();
+        }
+
         IReadOnlyList<string> digests = SecurityIdentityDigest.SubsetDigests(callerIdentity);
-        if (this.administrators is not { } store || digests.Count == 0)
+        if (digests.Count == 0)
         {
             return WorkflowAdministeredPage.Create([]);
         }
@@ -528,48 +529,36 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
             cancellationToken).ConfigureAwait(false);
     }
 
-    // Read-only administration probe for the publish gate (§13/§14.2): whether the base id has an established administration
-    // and, if so, whether the candidate (the submitter's stamped identity) administers it by membership (§16.5.4) — the
-    // candidate CONTAINS a stored/derived administrator identity — no identity-list materialization. An unknown base id (no
-    // explicit record and no version 1) is unestablished, so the submitter establishes administration by publishing
-    // version 1. Works whether or not an explicit administrator store is configured (the version-1 identity is the implicit
-    // default).
+    // Whether a base id's administration is established, and whether the candidate is one of its administrators. The
+    // explicit record is the only source of administrators (ADR 0007): a base id with no record and no version 1 is
+    // unestablished, so the submitter establishes administration by publishing version 1. Publishing needs the store,
+    // since publishing is what establishes and checks administration; a runner reads the catalog and never publishes.
     private async ValueTask<(bool Established, bool IsAdministrator)> CheckAdministrationAsync(string baseWorkflowId, SecurityTagSet candidate, CancellationToken cancellationToken)
     {
-        if (this.administrators is { } store)
+        if (this.administrators is not { } store)
         {
-            using ParsedJsonDocument<WorkflowAdministrators>? record = await store.GetAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
-            if (record is not null)
-            {
-                return (true, record.RootElement.IsAdministeredBy(candidate));
-            }
+            throw ThrowHelper.GetWorkflowPublishingRequiresStoreException();
         }
 
+        using ParsedJsonDocument<WorkflowAdministrators>? record = await store.GetAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
+        if (record is not null)
+        {
+            return (true, record.RootElement.IsAdministeredBy(candidate));
+        }
+
+        // No record. Either the base id is new, and the submitter establishes administration by publishing version 1,
+        // or version 1 was published by a caller the deployment did not identify, and no administrator was recorded
+        // (P1-13). A workflow nobody owns is administered only by a caller the deployment has not identified either,
+        // which no authenticated caller is, so an identified caller never inherits it.
         using ParsedJsonDocument<CatalogVersion>? firstVersion = await this.catalog.GetAsync(baseWorkflowId, 1, cancellationToken).ConfigureAwait(false);
-        if (firstVersion is null)
-        {
-            return (false, false);
-        }
-
-        SecurityTagSet ownerIdentity = WorkflowIdentity.AdministratorIdentity(firstVersion.RootElement.SecurityTagsValue);
-
-        // Membership (§16.5.4): the version-1 owner administers iff the candidate (submitter) identity CONTAINS the owner
-        // identity — the same rule the explicit-record path applies via IsAdministeredBy above, so the no-explicit-store /
-        // legacy fallback stays consistent with the stored-record deployment (S4).
-        return (true, OwnerAdministers(ownerIdentity, candidate));
+        return firstVersion is null ? (false, false) : (true, !WorkflowIdentity.HasStampedIdentity(candidate));
     }
 
-    // An empty set is a subset of every set, so an identity-less version 1 (published where no caller is identified)
-    // would be administered by anyone. It is administered only by a caller the deployment has not identified either,
-    // which no authenticated caller is, so an identified caller never inherits a workflow that nobody owns (P1-13).
-    private static bool OwnerAdministers(SecurityTagSet ownerIdentity, SecurityTagSet candidate)
-        => ownerIdentity.IsEmpty ? !WorkflowIdentity.HasStampedIdentity(candidate) : ownerIdentity.IsSubsetOf(candidate);
-
     // Loads the current administrators of a base id for a mutation: the explicit record (returned to keep its identities
-    // alive for bytes-to-bytes carry-forward) with its etag, else the version-1-derived default identity built in a
-    // workspace (with WorkflowEtag.None signalling "no record yet"). An unknown base id yields an empty set. The caller
-    // disposes the returned record / workspace.
-    private async ValueTask<(ParsedJsonDocument<WorkflowAdministrators>? Record, JsonWorkspace? FallbackWorkspace, List<AdministratorIdentity> Administrators, WorkflowEtag Etag)> LoadForMutateAsync(string baseWorkflowId, CancellationToken cancellationToken)
+    // alive for bytes-to-bytes carry-forward) with its etag. With no record there are no administrators and the etag is
+    // None, whether the base id is unknown or version 1 was published by a caller the deployment did not identify
+    // (P1-13); nothing is derived from version 1. The caller disposes the returned record.
+    private async ValueTask<(ParsedJsonDocument<WorkflowAdministrators>? Record, List<AdministratorIdentity> Administrators, WorkflowEtag Etag)> LoadForMutateAsync(string baseWorkflowId, CancellationToken cancellationToken)
     {
         IWorkflowAdministratorStore store = this.administrators!;
         ParsedJsonDocument<WorkflowAdministrators>? record = await store.GetAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
@@ -582,27 +571,10 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
                 admins.AddRange(current.Administrators.EnumerateArray());
             }
 
-            return (record, null, admins, current.EtagValue);
+            return (record, admins, current.EtagValue);
         }
 
-        using ParsedJsonDocument<CatalogVersion>? firstVersion = await this.catalog.GetAsync(baseWorkflowId, 1, cancellationToken).ConfigureAwait(false);
-        if (firstVersion is null)
-        {
-            return (null, null, [], WorkflowEtag.None);
-        }
-
-        SecurityTagSet ownerIdentity = WorkflowIdentity.AdministratorIdentity(firstVersion.RootElement.SecurityTagsValue);
-        if (ownerIdentity.IsEmpty)
-        {
-            // An identity-less version 1 has no administrator to mutate from, and none is invented (P1-13).
-            return (null, null, [], WorkflowEtag.None);
-        }
-
-        // The caller (MutateAdministratorsAsync) disposes this workspace in a finally that runs after its PutAsync await, so
-        // it may dispose on a different thread — it must be the unrented, thread-affinity-free workspace.
-        JsonWorkspace fallbackWorkspace = JsonWorkspace.CreateUnrented();
-        AdministratorIdentity owner = WorkflowAdministrators.BuildIdentity(fallbackWorkspace, ownerIdentity, default, hasKind: false, default, hasLabel: false);
-        return (null, fallbackWorkspace, [owner], WorkflowEtag.None);
+        return (null, [], WorkflowEtag.None);
     }
 
     // The read-modify-write core for the administration management operations (§15): load the current administrators,
@@ -625,7 +597,7 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
 
         for (int attempt = 0; ; attempt++)
         {
-            (ParsedJsonDocument<WorkflowAdministrators>? record, JsonWorkspace? fallbackWorkspace, List<AdministratorIdentity> admins, WorkflowEtag etag) =
+            (ParsedJsonDocument<WorkflowAdministrators>? record, List<AdministratorIdentity> admins, WorkflowEtag etag) =
                 await this.LoadForMutateAsync(baseWorkflowId, cancellationToken).ConfigureAwait(false);
             bool handedOffRecord = false;
             try
@@ -668,8 +640,6 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
                 {
                     record?.Dispose();
                 }
-
-                fallbackWorkspace?.Dispose();
             }
         }
     }

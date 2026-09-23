@@ -184,6 +184,19 @@ internal static class ServerThrowHelper
     public static void ThrowRowSecurityPolicyForbidden(ControlPlaneSecurityMode securityMode)
         => throw new ArgumentException(SR.Format(SR.RowSecurityPolicyForbidden, securityMode), "rowSecurity");
 
+    /// <summary>Throws when the catalog a control plane is mapped over has no administrator store: publishing and administration refuse without one, so the control plane does not start (ADR 0007).</summary>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowAdministratorStoreRequired()
+        => throw new ArgumentException(SR.AdministratorStoreRequired, "catalog");
+
+    /// <summary>Throws when the security posture is <see cref="ControlPlaneSecurityMode.None"/> or a value outside the enum: the posture is named, never defaulted (ADR 0016).</summary>
+    /// <param name="securityMode">The value that is not a posture.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowSecurityModeNotNamed(ControlPlaneSecurityMode securityMode)
+        => throw new ArgumentException(SR.Format(SR.SecurityModeNotNamed, securityMode), "securityMode");
+
     /// <summary>Throws when the configured checkpoint secret is shorter than a full-strength key.</summary>
     /// <param name="paramName">The parameter carrying the secret.</param>
     [DoesNotReturn]

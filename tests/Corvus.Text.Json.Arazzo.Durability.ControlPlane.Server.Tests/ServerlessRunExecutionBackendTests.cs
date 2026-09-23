@@ -29,7 +29,7 @@ public class ServerlessRunExecutionBackendTests
     {
         var handler = new StubHandler(HttpStatusCode.OK, """{"outcome":"Completed"}""");
         using var http = new HttpClient(handler);
-        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, new StampingAuthenticator());
+        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, new StampingAuthenticator(), Token);
         using WorkflowRun run = NewRun("run-1", "adopt-v1", "production");
 
         WorkflowRunResultKind kind = await backend.AdvanceAsync(run, default);
@@ -43,6 +43,9 @@ public class ServerlessRunExecutionBackendTests
 
         // Model B: the invocation advertises the checkpoint base URL the function checkpoints back to (§6b).
         handler.LastBody.ShouldContain("https://runner.example/");
+
+        // The token the issuer minted for this run rides the invocation (ADR 0062); the function checkpoints with nothing else.
+        handler.LastBody.ShouldContain("\"checkpointToken\":\"token-for-run-1\"");
     }
 
     [TestMethod]
@@ -53,7 +56,7 @@ public class ServerlessRunExecutionBackendTests
         var handler = new StubHandler(HttpStatusCode.OK, """{"outcome":"Completed"}""");
         using var http = new HttpClient(handler);
         var authenticator = new StampingAuthenticator();
-        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, authenticator);
+        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, authenticator, Token);
         using WorkflowRun run = NewRun("run-1", "adopt-v1", "production");
 
         await backend.AdvanceAsync(run, default);
@@ -69,7 +72,7 @@ public class ServerlessRunExecutionBackendTests
     {
         var handler = new StubHandler(HttpStatusCode.OK, """{"outcome":"Completed"}""");
         using var http = new HttpClient(handler);
-        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, LoopbackServerlessInvokeAuthenticator.Instance);
+        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, LoopbackServerlessInvokeAuthenticator.Instance, Token);
         using WorkflowRun run = NewRun("run-1", "adopt-v1", "production");
 
         // The loopback authenticator adds no credential, so it refuses a function that is not on this machine.
@@ -82,7 +85,7 @@ public class ServerlessRunExecutionBackendTests
     {
         var handler = new StubHandler(HttpStatusCode.OK, """{"outcome":"Completed"}""");
         using var http = new HttpClient(handler);
-        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(new Uri("http://127.0.0.1:7071/api/invoke")), CheckpointBaseUrl, LoopbackServerlessInvokeAuthenticator.Instance);
+        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(new Uri("http://127.0.0.1:7071/api/invoke")), CheckpointBaseUrl, LoopbackServerlessInvokeAuthenticator.Instance, Token);
         using WorkflowRun run = NewRun("run-1", "adopt-v1", "production");
 
         (await backend.AdvanceAsync(run, default)).ShouldBe(WorkflowRunResultKind.Completed);
@@ -93,7 +96,7 @@ public class ServerlessRunExecutionBackendTests
     {
         var handler = new StubHandler(HttpStatusCode.OK, """{"outcome":"Faulted"}""");
         using var http = new HttpClient(handler);
-        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, new StampingAuthenticator());
+        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, new StampingAuthenticator(), Token);
         using WorkflowRun run = NewRun("run-1", "adopt-v1", "production");
 
         (await backend.AdvanceAsync(run, default)).ShouldBe(WorkflowRunResultKind.Faulted);
@@ -106,7 +109,7 @@ public class ServerlessRunExecutionBackendTests
         // run). The checkpoint is authoritative, so the informational return is a benign Suspended, not a made-up terminal.
         var handler = new StubHandler(HttpStatusCode.OK, """{"outcome":null}""");
         using var http = new HttpClient(handler);
-        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, new StampingAuthenticator());
+        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, new StampingAuthenticator(), Token);
         using WorkflowRun run = NewRun("run-1", "adopt-v1", "production");
 
         (await backend.AdvanceAsync(run, default)).ShouldBe(WorkflowRunResultKind.Suspended);
@@ -117,7 +120,7 @@ public class ServerlessRunExecutionBackendTests
     {
         var handler = new StubHandler(HttpStatusCode.InternalServerError, null);
         using var http = new HttpClient(handler);
-        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, new StampingAuthenticator());
+        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, new StampingAuthenticator(), Token);
         using WorkflowRun run = NewRun("run-1", "adopt-v1", "production");
 
         // A 5xx from the function throws; the dispatcher never released the lease on a completed advance, so its
@@ -129,7 +132,7 @@ public class ServerlessRunExecutionBackendTests
     public void Advertises_isolated_isolation_and_warms_nothing()
     {
         using var http = new HttpClient(new StubHandler(HttpStatusCode.OK, """{"outcome":"Completed"}"""));
-        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, new StampingAuthenticator());
+        var backend = new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, new StampingAuthenticator(), Token);
 
         backend.IsolationModel.ShouldBe(RunIsolationModel.Isolated);
 
@@ -142,13 +145,19 @@ public class ServerlessRunExecutionBackendTests
     {
         using var http = new HttpClient(new StubHandler(HttpStatusCode.OK, null));
 
-        Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(null!, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, new StampingAuthenticator()));
-        Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(http, null!, CheckpointBaseUrl, new StampingAuthenticator()));
-        Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), null!, new StampingAuthenticator()));
+        Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(null!, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, new StampingAuthenticator(), Token));
+        Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(http, null!, CheckpointBaseUrl, new StampingAuthenticator(), Token));
+        Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), null!, new StampingAuthenticator(), Token));
 
         // The invoke authenticator is required (ADR 0059 decision 4): there is no anonymous invocation to fall back to.
-        Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, null!));
+        Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, null!, Token));
+
+        // The token issuer is required too (ADR 0062): a backend that minted no token would dispatch runs that could never checkpoint.
+        Should.Throw<ArgumentNullException>(() => new ServerlessRunExecutionBackend(http, (_, _) => new ValueTask<Uri>(FunctionUrl), CheckpointBaseUrl, new StampingAuthenticator(), null!));
     }
+
+    // Stands in for CheckpointToken.Issue: the backend carries whatever the issuer mints, keyed by the run it is for.
+    private static string Token(WorkflowRunAddress address) => "token-for-" + address.RunId.Value;
 
     private static WorkflowRun NewRun(string runId, string workflowId, string environment)
     {

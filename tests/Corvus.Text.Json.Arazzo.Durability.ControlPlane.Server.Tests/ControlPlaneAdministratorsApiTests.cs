@@ -129,20 +129,15 @@ public sealed class ControlPlaneAdministratorsApiTests
     }
 
     [TestMethod]
-    public async Task Administration_management_is_unavailable_without_a_store()
+    public async Task A_control_plane_over_a_catalog_without_an_administrator_store_does_not_start()
     {
-        // A catalog without an administrator store: listing still works (the version-1-derived sole administrator), but
-        // mutation is unavailable (409).
-        await using Scoped host = await StartAsync(withAdministratorStore: false);
-        await EstablishAsync(host.Catalog, "flow", Acme);
+        // ADR 0007: administration is the explicit record. A catalog without the store publishes nothing and answers no
+        // administration read, so mapping the control plane over one is refused rather than deriving an owner from
+        // version 1, which is what this host did until the fallback was deleted.
+        ArgumentException refusal = await Should.ThrowAsync<ArgumentException>(() => StartAsync(withAdministratorStore: false));
 
-        using (Stj.JsonDocument listed = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/administrators/flow", Read, Acme)))
-        {
-            Grants(listed).ShouldBe(["tenant=acme"]);
-        }
-
-        (await host.SendJsonAsync(HttpMethod.Post, "/administrators/flow/members", """{"dimension":"tenant","value":"globex"}""", Write, Acme))
-            .StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        refusal.ParamName.ShouldBe("catalog");
+        refusal.Message.ShouldContain("has no administrator store");
     }
 
     [TestMethod]

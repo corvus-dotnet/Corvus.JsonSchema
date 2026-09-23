@@ -8,6 +8,7 @@ using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo;
 using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Corvus.Text.Json.Arazzo.Durability.Serverless;
 using Corvus.Text.Json.Arazzo.Execution;
 using Corvus.Text.Json.AsyncApi;
@@ -174,6 +175,24 @@ public sealed class ServerlessInvocationHandlerTests
 
     private static readonly ServerlessCheckpointOrigins Origins = ServerlessCheckpointOrigins.Parse("https://runner.example/");
 
+    [TestMethod]
+    public async Task An_invocation_carrying_no_checkpoint_token_is_refused_before_anything_is_loaded()
+    {
+        // V-42 of the 2026-08-07 audit, ADR 0062. The token used to be optional on the function side, a leftover of the
+        // design the ADR removed: the surface refuses every callback without one, so a tokenless invocation could only
+        // load a run it could never save. It is refused at the parse, before the checkpoint surface is touched.
+        await using Runner runner = await Runner.StartAsync();
+        await SeedPendingRun(runner.Store, Run1, "wf");
+        var handler = new ServerlessInvocationHandler(new BakedHostedWorkflowResolver(new CompletingHostedWorkflow("wf")), NoTransports, runner.CheckpointHandler, ServerlessCheckpointOrigins.Parse(runner.CheckpointBaseUrl));
+
+        byte[] body = Encoding.UTF8.GetBytes($$"""{"runId":"{{Run1}}","environment":"development","checkpointUrl":"{{runner.CheckpointBaseUrl}}"}""");
+        ArgumentException refusal = await Should.ThrowAsync<ArgumentException>(async () => await handler.HandleAsync(body, default));
+        refusal.Message.ShouldContain("checkpointToken");
+
+        WorkflowCheckpoint stored = (await runner.Store.LoadAsync(new WorkflowRunAddress("development", new WorkflowRunId(Run1)), default))!.Value;
+        WorkflowCheckpointSerializer.ProjectIndex(stored.Utf8).Status.ShouldBe(WorkflowRunStatus.Pending);
+    }
+
     private static WorkflowTransports NoTransports(WorkflowDescriptor descriptor, SecurityTagSet tags) => EmptyTransports;
 
     // The invocation carries the run-scoped checkpoint token the dispatcher minted (ADR 0062), which the handler sets as
@@ -234,7 +253,7 @@ public sealed class ServerlessInvocationHandlerTests
         {
             var store = new InMemoryWorkflowStateStore();
             var management = new SecuredWorkflowManagement(store, "ops");
-            var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops");
+            var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops", administrators: new InMemoryWorkflowAdministratorStore());
 
             WebApplicationBuilder builder = WebApplication.CreateBuilder();
             builder.WebHost.UseTestServer();

@@ -42,7 +42,7 @@ public sealed class ControlPlaneAuthorizationTests
         WebApplication app = WebApplication.CreateBuilder().Build();
         var store = new InMemoryWorkflowStateStore();
         var management = new SecuredWorkflowManagement(store, "ops");
-        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops");
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops", administrators: new InMemoryWorkflowAdministratorStore());
         var runners = new InMemoryRunnerRegistry();
 
         // Scoped / RowSecurityOnly REQUIRE a row-security policy — you cannot get scopes without row reach by omission (F2).
@@ -119,7 +119,7 @@ public sealed class ControlPlaneAuthorizationTests
     {
         var store = new InMemoryWorkflowStateStore();
         var management = new SecuredWorkflowManagement(store, owner: "ops");
-        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops");
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops", administrators: new InMemoryWorkflowAdministratorStore());
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();

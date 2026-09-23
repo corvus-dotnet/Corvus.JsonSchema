@@ -428,6 +428,10 @@ public sealed class ControlPlaneRowSecurityTests
             """{ "verify": { "ssn": "123-45-6789", "name": "Ada" } }"""u8.ToArray());
         using WorkflowRun run = WorkflowRun.CreateNew(store, id, workflowId, default, "development", clock, securityTags: SecurityTagSet.FromTags(security));
         run.SetStepOutputs("verify", outputs.RootElement.GetProperty("verify"u8));
+
+        // The journal is the only source of steps: a checkpoint that recorded outputs and no journal projects none (ADR 0050).
+        DateTimeOffset now = clock.GetUtcNow();
+        run.RecordStep("verify", WorkflowStepStatus.Succeeded, 1, now, now);
         await run.CheckpointAsync(cursor: 1, default);
     }
 
@@ -480,7 +484,7 @@ public sealed class ControlPlaneRowSecurityTests
         var clock = new FixedClock(T0);
         var store = new InMemoryWorkflowStateStore(clock);
         var management = new SecuredWorkflowManagement(store, "ops", CompleteResumer, clock);
-        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(clock), store, "ops");
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(clock), store, "ops", administrators: new InMemoryWorkflowAdministratorStore());
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();

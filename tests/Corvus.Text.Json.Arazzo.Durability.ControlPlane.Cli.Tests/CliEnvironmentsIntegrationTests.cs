@@ -126,7 +126,7 @@ public sealed partial class CliIntegrationTests
         var clock = new MutableClock(T0);
         var store = new InMemoryWorkflowStateStore(clock);
         var management = new SecuredWorkflowManagement(store, "ops", CompleteResumer, clock, executionBudget: executionBudgetCeiling);
-        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(clock), store, "ops");
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(clock), store, "ops", administrators: new InMemoryWorkflowAdministratorStore());
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.Logging.ClearProviders();

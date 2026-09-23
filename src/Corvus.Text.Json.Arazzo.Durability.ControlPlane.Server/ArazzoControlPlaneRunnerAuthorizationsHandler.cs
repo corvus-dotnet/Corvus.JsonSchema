@@ -45,7 +45,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     private readonly IRunnerAuthorizationChangeObserver? authorizationChanges;
     private readonly string subjectClaimType;
     private readonly ReadOnlyMemory<byte> enrolmentSecret;
-    private readonly Capacity.IControlPlaneCapacityGuard? capacity;
+    private readonly Capacity.IControlPlaneCapacityGuard capacity;
     private readonly GovernanceAuditor auditor;
 
     // The audited resource kind for every decision on this surface (design §850).
@@ -57,6 +57,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     /// <param name="runners">The runner registry the authenticated registration endpoint writes (design §5.5/§16.4): a runner's liveness registration, keyed on its self-chosen runnerId, with reach stamped from the serving environment.</param>
     /// <param name="administration">The environment-administration governance service (current-administrator gating + the reverse index for the inbox).</param>
     /// <param name="access">Resolves the caller's <see cref="AccessContext"/>, deployment identity, and principal per request.</param>
+    /// <param name="capacity">Bounds the population this handler grows (ADR 0066). It is required: a handler built without one would admit without bound.</param>
     /// <param name="leaseAdministration">The workflow state store's lease-administration capability, if it has one (§5.5 revocation
     /// fence): revoking a runner expires the leases it holds so an authorized peer reclaims its in-flight runs at once. A
     /// deployment whose store lacks the capability (<see langword="null"/>) still stops all future dispatch on revoke; only the
@@ -65,8 +66,6 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
     /// <param name="enrolmentSecret">The secret enrolment tokens are minted and validated with (ADR 0065 decision 2), or
     /// empty to accept none. A deployment that leaves it empty admits only runners an administrator has pre-authorized by
     /// id, which is workable for a fixed fleet and not for one that scales itself.</param>
-    /// <param name="capacity">Bounds how many runners may be registered for an environment (ADR 0065 decision 3), or
-    /// <see langword="null"/> to enforce no capacity limit.</param>
     /// <param name="authorizationChanges">Told of each durable authorization decision, so the runner API's cached bindings for that principal are dropped at once (ADR 0027). It is the runner API's <c>RunnerAuthorizationBindings</c> where this process hosts that API, and <see langword="null"/> where it does not, in which case there is no cache here to drop.</param>
     /// <param name="auditor">The logger for the §850 runner-authorization audit (who authorized/quarantined/revoked which runner); the audit span rides the always-registered <see cref="ArazzoTelemetry.ActivitySource"/> regardless.</param>
     internal ArazzoControlPlaneRunnerAuthorizationsHandler(
@@ -75,10 +74,10 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
         IRunnerRegistry runners,
         SecuredEnvironmentAdministration administration,
         ControlPlaneAccess access,
+        Capacity.IControlPlaneCapacityGuard capacity,
         IWorkflowLeaseAdministration? leaseAdministration = null,
         string subjectClaimType = "sub",
         ReadOnlyMemory<byte> enrolmentSecret = default,
-        Capacity.IControlPlaneCapacityGuard? capacity = null,
         GovernanceAuditor? auditor = null,
         IRunnerAuthorizationChangeObserver? authorizationChanges = null)
     {
@@ -87,6 +86,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
         ArgumentNullException.ThrowIfNull(runners);
         ArgumentNullException.ThrowIfNull(administration);
         ArgumentNullException.ThrowIfNull(access);
+        ArgumentNullException.ThrowIfNull(capacity);
         ArgumentException.ThrowIfNullOrEmpty(subjectClaimType);
         this.authorizations = authorizations;
         this.environments = environments;
@@ -192,8 +192,7 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
 
             // The same cap, at the other place a row is created. Without it an administrator could pre-authorize past
             // the environment's limit and the rows would exist before any runner presented itself.
-            if (this.capacity is { } preAuthCapacity
-                && await preAuthCapacity.TryAdmitAsync(Capacity.ControlPlaneCapacityKind.RegisteredRunners, environment, AccessContext.System, cancellationToken).ConfigureAwait(false) is { } atCapacity)
+            if (await this.capacity.TryAdmitAsync(Capacity.ControlPlaneCapacityKind.RegisteredRunners, environment, AccessContext.System, cancellationToken).ConfigureAwait(false) is { } atCapacity)
             {
                 await this.auditor.MutationAsync("runner.authorize", this.AuditActor(), TargetKind, RunnerKey(environment, runnerId), "refused-capacity").ConfigureAwait(false);
                 return AuthorizeRunnerResult.TooManyRequests(CapacityProblem(atCapacity), workspace, RetryAfter());
@@ -308,13 +307,10 @@ public sealed class ArazzoControlPlaneRunnerAuthorizationsHandler : IApiRunnerAu
         // Checked after the authorization gate above, never before it: answering 429 to a caller that has not proved a
         // pre-authorization or a valid token would tell it the environment exists and is full, which is exactly the
         // enumeration the single non-disclosing refusal closes.
-        if (enrolled && this.capacity is { } enrolmentCapacity)
+        if (enrolled && await this.capacity.TryAdmitAsync(Capacity.ControlPlaneCapacityKind.RegisteredRunners, environment, AccessContext.System, cancellationToken).ConfigureAwait(false) is { } full)
         {
-            if (await enrolmentCapacity.TryAdmitAsync(Capacity.ControlPlaneCapacityKind.RegisteredRunners, environment, AccessContext.System, cancellationToken).ConfigureAwait(false) is { } full)
-            {
-                await this.auditor.MutationAsync("runner.register", principal, TargetKind, RunnerKey(environment, runnerId), "refused-capacity").ConfigureAwait(false);
-                return RegisterRunnerResult.TooManyRequests(CapacityProblem(full), workspace, RetryAfter());
-            }
+            await this.auditor.MutationAsync("runner.register", principal, TargetKind, RunnerKey(environment, runnerId), "refused-capacity").ConfigureAwait(false);
+            return RegisterRunnerResult.TooManyRequests(CapacityProblem(full), workspace, RetryAfter());
         }
 
         // The environment is read as the trusted System identity, because what is being read from it is what the server

@@ -460,6 +460,9 @@ internal static class ThrowHelper
     public static NotSupportedException GetWorkflowAdministrationRequiresStoreException()
         => new(SR.WorkflowAdministrationRequiresStore);
 
+    public static NotSupportedException GetWorkflowPublishingRequiresStoreException()
+        => new(SR.WorkflowPublishingRequiresStore);
+
     [DoesNotReturn]
     [StackTraceHidden]
     public static void ThrowCannotRemoveLastEnvironmentAdministrator()

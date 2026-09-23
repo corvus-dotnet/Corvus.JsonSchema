@@ -22,8 +22,8 @@ namespace Corvus.Text.Json.Arazzo.Durability.Environments;
 /// <para>
 /// The owner group is written as a management tag rather than a column because reach in this system is expressed in
 /// identity terms throughout (ADR 0016). Reading it is therefore a walk of the tag set rather than a property read, and
-/// the walk's cost is why <see cref="Read(in Environment, ReadOnlySpan{byte})"/> is documented for the resolution path and <see cref="IsTenantOwned"/> for
-/// the scan.
+/// the walk's cost is why <see cref="Read(in Environment, ReadOnlySpan{byte})"/> is documented for the resolution path and
+/// <see cref="IsStamped"/> for a question that needs no value.
 /// </para>
 /// </remarks>
 public static class OwnerGroupTag
@@ -56,15 +56,6 @@ public static class OwnerGroupTag
         DimensionUtf8.CopyTo(key.AsSpan(prefixLength));
         return key;
     }
-
-    /// <summary>Whether <paramref name="environment"/> carries a non-empty owner group.</summary>
-    /// <param name="environment">The environment.</param>
-    /// <param name="ownerGroupKeyUtf8">The deployment's owner-group tag key.</param>
-    /// <returns><see langword="true"/> if an owner group is stamped and non-empty.</returns>
-    /// <remarks>The scan's form of the question. It answers without materializing the value, so a page of environments
-    /// can be walked without allocating per row.</remarks>
-    public static bool IsTenantOwned(in Environment environment, ReadOnlySpan<byte> ownerGroupKeyUtf8)
-        => IsStamped(environment.ManagementTagsValue, ownerGroupKeyUtf8);
 
     /// <summary>Whether <paramref name="tags"/> carries a non-empty owner group.</summary>
     /// <param name="tags">A stamped tag set: an environment's management tags, or a catalog version's security tags.</param>

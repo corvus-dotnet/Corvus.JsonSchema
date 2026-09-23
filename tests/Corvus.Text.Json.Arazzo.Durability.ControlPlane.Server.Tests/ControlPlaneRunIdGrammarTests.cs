@@ -5,6 +5,7 @@
 using System.Net;
 using System.Text;
 using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Logging;
@@ -58,7 +59,7 @@ public sealed class ControlPlaneRunIdGrammarTests
         {
             var store = new InMemoryWorkflowStateStore();
             var management = new SecuredWorkflowManagement(store, "ops");
-            var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops");
+            var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops", administrators: new InMemoryWorkflowAdministratorStore());
 
             WebApplicationBuilder builder = WebApplication.CreateBuilder();
             builder.WebHost.UseTestServer();

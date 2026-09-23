@@ -201,7 +201,7 @@ public sealed class SystemWorkflowInstallerTests
         public static Fixture Create(Corvus.Text.Json.Arazzo.IWorkflowExecutorProvider? executorProvider = null, Sources.ISourceStore? sources = null)
         {
             var credentials = new InMemorySourceCredentialStore();
-            var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "system", credentials);
+            var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "system", credentials, administrators: new InMemoryWorkflowAdministratorStore());
             var availability = new InMemoryAvailabilityStore();
             var environments = new InMemoryEnvironmentStore();
             var administrators = new InMemoryEnvironmentAdministratorStore();

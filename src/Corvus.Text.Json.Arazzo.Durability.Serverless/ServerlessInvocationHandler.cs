@@ -63,7 +63,7 @@ public sealed class ServerlessInvocationHandler
     /// <returns>The outcome document (UTF-8 JSON) the runner-side backend parses.</returns>
     public async ValueTask<byte[]> HandleAsync(ReadOnlyMemory<byte> invocationJson, CancellationToken cancellationToken)
     {
-        (WorkflowRunAddress address, Uri checkpointUrl, string? checkpointToken) = ParseInvocation(invocationJson);
+        (WorkflowRunAddress address, Uri checkpointUrl, string checkpointToken) = ParseInvocation(invocationJson);
 
         // The function loads the run from this URL and advances it with its own source credentials, so it takes the URL
         // only from an origin it was deployed with. Checked first, so nothing is sent to, or loaded from, anywhere else.
@@ -75,7 +75,7 @@ public sealed class ServerlessInvocationHandler
         // A bearer credential must never travel in cleartext, so refuse a token over a non-HTTPS checkpoint URL (a loopback
         // address is exempt: in-process and local tests use plain HTTP where TLS adds nothing, but a token never crosses
         // the internet unencrypted). Checked before the client is created, so nothing leaks.
-        if (checkpointToken is not null && !checkpointUrl.IsLoopback && !checkpointUrl.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+        if (!checkpointUrl.IsLoopback && !checkpointUrl.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
         {
             throw new ArgumentException("A checkpoint token must not be sent over a non-HTTPS checkpoint URL.", nameof(invocationJson));
         }
@@ -84,13 +84,9 @@ public sealed class ServerlessInvocationHandler
         // run's checkpoints reach the runner that holds its lease (Model B). disposeHandler:false keeps the pooled handler.
         var client = new HttpClient(this.checkpointHandler, disposeHandler: false) { BaseAddress = checkpointUrl };
 
-        // When the invocation carries a run-scoped checkpoint token (ADR 0062), present it as a bearer credential on every
-        // checkpoint request, so a publicly reachable checkpoint surface can authenticate this callback. The token is
-        // opaque here — the runner minted it and the checkpoint surface validates it.
-        if (checkpointToken is not null)
-        {
-            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", checkpointToken);
-        }
+        // The run-scoped checkpoint token (ADR 0062) is the bearer credential on every checkpoint request; the surface
+        // takes no callback without one. The token is opaque here: the runner minted it and the surface validates it.
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", checkpointToken);
 
         try
         {
@@ -114,7 +110,7 @@ public sealed class ServerlessInvocationHandler
         }
     }
 
-    private static (WorkflowRunAddress Address, Uri CheckpointUrl, string? CheckpointToken) ParseInvocation(ReadOnlyMemory<byte> invocationJson)
+    private static (WorkflowRunAddress Address, Uri CheckpointUrl, string CheckpointToken) ParseInvocation(ReadOnlyMemory<byte> invocationJson)
     {
         using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(invocationJson);
         JsonElement root = document.RootElement;
@@ -187,11 +183,12 @@ public sealed class ServerlessInvocationHandler
             throw ThrowHelper.GetMissingCheckpointUrlException(nameof(invocationJson));
         }
 
-        // The checkpoint token is optional (a not-token-authenticated checkpoint surface carries none), so its absence is
-        // not an error; when present it is the bearer credential for the checkpoint callbacks (ADR 0062).
-        string? checkpointToken = root.TryGetProperty("checkpointToken"u8, out JsonElement tokenElement) && tokenElement.ValueKind == JsonValueKind.String
-            ? tokenElement.GetString()
-            : null;
+        // The checkpoint token is the bearer credential for the checkpoint callbacks (ADR 0062), and the surface takes
+        // no callback without one, so an invocation that carries none is refused here, before anything is loaded.
+        if (!root.TryGetProperty("checkpointToken"u8, out JsonElement tokenElement) || tokenElement.ValueKind != JsonValueKind.String || tokenElement.GetString() is not { Length: > 0 } checkpointToken)
+        {
+            throw ThrowHelper.GetMissingCheckpointTokenException(nameof(invocationJson));
+        }
 
         return (new WorkflowRunAddress(environment, new WorkflowRunId(runId)), parsed, checkpointToken);
     }

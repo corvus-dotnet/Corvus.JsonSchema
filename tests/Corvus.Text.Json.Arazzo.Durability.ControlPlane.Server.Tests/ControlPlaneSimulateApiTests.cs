@@ -507,7 +507,7 @@ public sealed class ControlPlaneSimulateApiTests
     {
         var store = new InMemoryWorkflowStateStore();
         var management = new SecuredWorkflowManagement(store, "ops");
-        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops");
+        var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), store, "ops", administrators: new InMemoryWorkflowAdministratorStore());
         var workspaceStore = new Corvus.Text.Json.Arazzo.Durability.WorkspaceWorkflows.InMemoryWorkspaceWorkflowStore();
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
