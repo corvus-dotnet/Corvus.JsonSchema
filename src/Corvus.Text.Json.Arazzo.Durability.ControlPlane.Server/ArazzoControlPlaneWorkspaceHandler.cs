@@ -1029,11 +1029,11 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
                 ownerElement.TryGetProperty("team"u8, out JsonElement ot) ? ot.GetString() : null,
                 ownerElement.TryGetProperty("url"u8, out JsonElement ou) ? ou.GetString() : null);
             TagSet tags = TagSet.CopyFrom(body.Tags);
-            SecurityTagSet securityTags = ArazzoControlPlaneCatalogHandler.CombineSecurityTags(this.access.InternalTags(), default);
+            SecurityTagSet identity = SecurityTagSet.FromTags(this.access.InternalTags());
 
             try
             {
-                ParsedJsonDocument<CatalogVersion> version = await this.catalog.AddAsync(package, owner, tags, securityTags, cancellationToken).ConfigureAwait(false);
+                ParsedJsonDocument<CatalogVersion> version = await this.catalog.AddAsync(package, owner, tags, identity, authorTags: default, cancellationToken).ConfigureAwait(false);
                 workspace.TakeOwnership(version);
 
                 // The same governed action as the catalog's own publish, so the same record: a version added from the

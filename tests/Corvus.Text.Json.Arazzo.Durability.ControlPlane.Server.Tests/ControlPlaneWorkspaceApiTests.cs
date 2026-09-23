@@ -1196,7 +1196,7 @@ public sealed class ControlPlaneWorkspaceApiTests
             }
             """);
             ReadOnlyMemory<byte> package = CatalogPackage.Build(workflow, []);
-            using ParsedJsonDocument<CatalogVersion> version = await catalog.AddAsync(package, new CatalogOwner("Team", "team@example.com", null, null), default, default);
+            using ParsedJsonDocument<CatalogVersion> version = await catalog.AddAsync(package, new CatalogOwner("Team", "team@example.com", null, null), default, default, default, default);
         }
 
         public async Task SeedVersionWithSourceAsync(string workflowId, string sourceName)
@@ -1213,7 +1213,7 @@ public sealed class ControlPlaneWorkspaceApiTests
             { "openapi": "3.0.0", "info": { "title": "{{sourceName}}", "version": "1.0.0" }, "paths": { } }
             """);
             ReadOnlyMemory<byte> package = CatalogPackage.Build(workflow, [new KeyValuePair<string, byte[]>(sourceName, source)]);
-            using ParsedJsonDocument<CatalogVersion> version = await catalog.AddAsync(package, new CatalogOwner("Team", "team@example.com", null, null), default, default);
+            using ParsedJsonDocument<CatalogVersion> version = await catalog.AddAsync(package, new CatalogOwner("Team", "team@example.com", null, null), default, default, default, default);
         }
     }
 

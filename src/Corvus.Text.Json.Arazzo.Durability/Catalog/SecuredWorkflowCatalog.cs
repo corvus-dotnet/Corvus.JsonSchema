@@ -58,12 +58,15 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
     }
 
     /// <inheritdoc/>
-    public ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(ReadOnlyMemory<byte> packageUtf8, CatalogOwner owner, TagSet tags, CancellationToken cancellationToken)
-        => this.AddAsync(packageUtf8, owner, tags, securityTags: default, cancellationToken);
-
-    /// <inheritdoc/>
-    public async ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(ReadOnlyMemory<byte> packageUtf8, CatalogOwner owner, TagSet tags, SecurityTagSet securityTags, CancellationToken cancellationToken)
+    public async ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(ReadOnlyMemory<byte> packageUtf8, CatalogOwner owner, TagSet tags, SecurityTagSet identity, SecurityTagSet authorTags, CancellationToken cancellationToken)
     {
+        // The author's tags widen the version's reach and nothing else. A reserved key among them would let an author
+        // write the deployment's own identity keyspace, so it is refused here whatever the caller validated.
+        if (WorkflowIdentity.HasStampedIdentity(authorTags))
+        {
+            ThrowHelper.ThrowAuthorSecurityTagsReserved();
+        }
+
         using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity("catalog.add");
         activity?.SetTag(ArazzoTelemetry.ActorTag, this.actor);
 
@@ -78,9 +81,10 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
         // Workflow-id administration (§13/§14.2/§15): a base id's administration is established by its first version's
         // stamped administrator identity and thereafter by its explicit administrator record (transfers / additional
         // administrators); only a current administrator may publish further versions, so the immutable workflow identity
-        // (sys:workflow) cannot be squatted. The submitted securityTags carry the submitter's stamped identity. An
-        // unknown base id has no administrators yet — the submitter establishes administration by publishing version 1.
-        (bool established, bool isAdministrator) = await this.CheckAdministrationAsync(baseWorkflowId, securityTags, cancellationToken).ConfigureAwait(false);
+        // (sys:workflow) cannot be squatted. The identity is the submitter's stamped identity alone: the author's tags
+        // are reach, not identity, so a tenant peer administers what a colleague published under extra tags (P1-13).
+        // An unknown base id has no administrators yet — the submitter establishes administration by publishing version 1.
+        (bool established, bool isAdministrator) = await this.CheckAdministrationAsync(baseWorkflowId, identity, cancellationToken).ConfigureAwait(false);
         if (established && !isAdministrator)
         {
             activity?.SetTag(ArazzoTelemetry.OutcomeTag, "workflow-not-administered");
@@ -89,8 +93,8 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
 
         // Stamp the immutable workflow identity so the version (and its runs) carry sys:workflow=<baseWorkflowId> — the
         // identity a source credential grant names. Combined with the owner identity, this is the run's unforgeable
-        // entitlement for the catalog-time and run-time usage checks.
-        SecurityTagSet effectiveTags = WorkflowIdentity.WithWorkflowTag(securityTags, baseWorkflowId);
+        // entitlement for the catalog-time and run-time usage checks. The author's tags ride along as reach.
+        SecurityTagSet effectiveTags = WorkflowIdentity.VersionTags(identity, authorTags, baseWorkflowId);
 
         // Catalog-time usage gate (§13): refuse to catalogue a workflow that declares a credential-protected source the
         // submitter is not entitled to use (by the version's effective tags, which its runs inherit) — fail early rather
@@ -125,7 +129,7 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
         // publishing, and CheckAdministrationAsync above has already refused without one.
         if (this.administrators is { } adminStore && version.RootElement.Ref.VersionNumber == 1)
         {
-            await EstablishAdministrationAsync(adminStore, baseWorkflowId, version.RootElement.SecurityTagsValue, this.actor, cancellationToken).ConfigureAwait(false);
+            await EstablishAdministrationAsync(adminStore, baseWorkflowId, identity, this.actor, cancellationToken).ConfigureAwait(false);
         }
 
         activity?.SetTag(ArazzoTelemetry.VersionNumberTag, version.RootElement.Ref.VersionNumber);
@@ -427,9 +431,8 @@ public sealed class SecuredWorkflowCatalog : ISecuredWorkflowCatalog
     // identity (the version's tags with sys:workflow removed) becomes the sole, explicit, removable administrator. The
     // identity is built in an unrented workspace held across the PutAsync await. A concurrent establish (another node
     // publishing the same base id's version 1) loses the etag-None race harmlessly — administration is already established.
-    private static async ValueTask EstablishAdministrationAsync(IWorkflowAdministratorStore store, string baseWorkflowId, SecurityTagSet versionTags, string actor, CancellationToken cancellationToken)
+    private static async ValueTask EstablishAdministrationAsync(IWorkflowAdministratorStore store, string baseWorkflowId, SecurityTagSet ownerIdentity, string actor, CancellationToken cancellationToken)
     {
-        SecurityTagSet ownerIdentity = WorkflowIdentity.AdministratorIdentity(versionTags);
         if (ownerIdentity.IsEmpty)
         {
             // Nobody identified published this, so there is no administrator to record. An empty identity is never

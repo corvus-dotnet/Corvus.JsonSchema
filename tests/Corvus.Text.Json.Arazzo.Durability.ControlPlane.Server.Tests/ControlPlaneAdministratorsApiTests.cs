@@ -332,7 +332,7 @@ public sealed class ControlPlaneAdministratorsApiTests
     private static async Task EstablishAsync(SecuredWorkflowCatalog catalog, string workflowId, string founder)
     {
         SecurityTagSet founderIdentity = SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", founder)]);
-        await catalog.AddAsync(Package(workflowId), new CatalogOwner("Team", "team@example.com", null, null), default, founderIdentity, default);
+        await catalog.AddAsync(Package(workflowId), new CatalogOwner("Team", "team@example.com", null, null), default, founderIdentity, default, default);
     }
 
     private static ReadOnlyMemory<byte> Package(string workflowId)

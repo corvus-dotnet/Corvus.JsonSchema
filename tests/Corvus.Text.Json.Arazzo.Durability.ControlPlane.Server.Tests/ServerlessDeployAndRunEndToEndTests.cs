@@ -100,7 +100,7 @@ public sealed class ServerlessDeployAndRunEndToEndTests
             (await environmentStore.AddAsync(env.RootElement, "ops", default)).Dispose();
         }
 
-        await catalog.AddAsync(CatalogPackage.Build(Workflow(), []), new CatalogOwner("Team", "team@example.com", null, null), default, default, default);
+        await catalog.AddAsync(CatalogPackage.Build(Workflow(), []), new CatalogOwner("Team", "team@example.com", null, null), default, default, default, default);
         (await availabilityStore.MakeAvailableAsync("adopt", 1, "production", "ops", default)).Entry.Dispose();
         await runnerRegistry.RegisterAsync(Runner("adopt", 1, isolationModel: "Isolated"), default);
 

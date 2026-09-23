@@ -366,22 +366,22 @@ public static class DemoData
         // arazzo-admins group, so any arazzo-admins member may approve access requests for these workflows (and the
         // grant's reach matches because the catalog stamps each version with its sys:workflow tag).
         SecurityTagSet adminFounder = GroupIdentity("arazzo-admins");
-        await catalog.AddAsync(onboarding, OnboardingOwner, TagSet.FromTags(["prod", "kyc"]), adminFounder, default).ConfigureAwait(false);
+        await catalog.AddAsync(onboarding, OnboardingOwner, TagSet.FromTags(["prod", "kyc"]), adminFounder, default, default).ConfigureAwait(false);
 
         // onboard-customer v2: the resilient revision that routes a failed identity check to applicant notification
         // (verifyIdentity onFailure -> goto) instead of faulting. Catalogued as version 2 of the same workflow.
-        await catalog.AddAsync(onboardingV2, OnboardingOwner, TagSet.FromTags(["prod", "kyc"]), adminFounder, default).ConfigureAwait(false);
+        await catalog.AddAsync(onboardingV2, OnboardingOwner, TagSet.FromTags(["prod", "kyc"]), adminFounder, default, default).ConfigureAwait(false);
 
         // onboard-customer-async: awaits an out-of-band KYC verdict (AsyncAPI kyc.verdict channel) — the run
         // suspends durably at the receive step until a verdict message is delivered, then resumes.
-        await catalog.AddAsync(onboardingAsync, OnboardingOwner, TagSet.FromTags(["prod", "kyc"]), adminFounder, default).ConfigureAwait(false);
+        await catalog.AddAsync(onboardingAsync, OnboardingOwner, TagSet.FromTags(["prod", "kyc"]), adminFounder, default, default).ConfigureAwait(false);
 
         // onboard-customer-retry: retries the identity check with a backoff on a transient provider outage — the
         // run suspends on a durable timer between attempts and resumes when the backoff elapses.
-        await catalog.AddAsync(onboardingRetry, OnboardingOwner, TagSet.FromTags(["prod", "kyc"]), adminFounder, default).ConfigureAwait(false);
+        await catalog.AddAsync(onboardingRetry, OnboardingOwner, TagSet.FromTags(["prod", "kyc"]), adminFounder, default, default).ConfigureAwait(false);
 
-        await catalog.AddAsync(reconcile, ReconcileOwner, TagSet.FromTags(["prod", "billing"]), adminFounder, default).ConfigureAwait(false);
-        await catalog.AddAsync(reconcile, ReconcileOwner, TagSet.FromTags(["prod", "billing", "beta"]), adminFounder, default).ConfigureAwait(false);
+        await catalog.AddAsync(reconcile, ReconcileOwner, TagSet.FromTags(["prod", "billing"]), adminFounder, default, default).ConfigureAwait(false);
+        await catalog.AddAsync(reconcile, ReconcileOwner, TagSet.FromTags(["prod", "billing", "beta"]), adminFounder, default, default).ConfigureAwait(false);
         (await catalog.UpdateAsync("nightly-reconcile", 1, owner: null, tags: null, status: CatalogStatus.Obsolete, securityTags: null, internalTagPrefix: null, AccessContext.System, default).ConfigureAwait(false)).Document?.Dispose();
 
         // The onboarding flows process KYC identity data, so their authors classify step outputs sensitive (§14): a run's

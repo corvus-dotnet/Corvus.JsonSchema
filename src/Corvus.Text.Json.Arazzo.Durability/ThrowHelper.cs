@@ -465,6 +465,11 @@ internal static class ThrowHelper
 
     [DoesNotReturn]
     [StackTraceHidden]
+    public static void ThrowAuthorSecurityTagsReserved()
+        => throw new ArgumentException(SR.AuthorSecurityTagsReserved, "authorTags");
+
+    [DoesNotReturn]
+    [StackTraceHidden]
     public static void ThrowCannotRemoveLastEnvironmentAdministrator()
         => throw new ArgumentException(SR.CannotRemoveLastEnvironmentAdministrator, "digest");
 

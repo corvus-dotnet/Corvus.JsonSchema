@@ -276,12 +276,12 @@ public sealed class ControlPlaneAvailabilityApiTests
         public async Task SeedVersionAsync(string workflowId, string tenant, params string[] sourceNames)
         {
             SecurityTagSet identity = SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", tenant)]);
-            await catalog.AddAsync(Package(workflowId, sourceNames), new CatalogOwner("Team", "team@example.com", null, null), default, identity, default);
+            await catalog.AddAsync(Package(workflowId, sourceNames), new CatalogOwner("Team", "team@example.com", null, null), default, identity, default, default);
         }
 
         // Seeds a source-less version stamped with no owner group at all (an operator's, in a deployment that names one).
         public async Task SeedUnownedVersionAsync(string workflowId)
-            => await catalog.AddAsync(Package(workflowId, []), new CatalogOwner("Team", "team@example.com", null, null), default, default, default);
+            => await catalog.AddAsync(Package(workflowId, []), new CatalogOwner("Team", "team@example.com", null, null), default, default, default, default);
 
         // Seeds a source-less version whose package embeds publish evidence (§4.6) — a green or red attested suite.
         public async Task SeedEvidencedVersionAsync(string workflowId, string tenant, bool green)
@@ -290,7 +290,7 @@ public sealed class ControlPlaneAvailabilityApiTests
             byte[] scenarios = Encoding.UTF8.GetBytes("""[{"name":"happy","expect":{"outcome":"completed"}}]""");
             byte[] evidence = Encoding.UTF8.GetBytes($$"""{"packageHash":"seed","engineVersion":"test","at":"2026-07-05T00:00:00Z","suite":{"total":1,"passed":{{(green ? 1 : 0)}},"failed":{{(green ? 0 : 1)}}},"scenarios":[{"name":"happy","passed":{{(green ? "true" : "false")}},"outcome":"{{(green ? "completed" : "faulted")}}"}]}""");
             ReadOnlyMemory<byte> package = CatalogPackage.Build(Workflow(workflowId, []), [], scenarios, evidence);
-            await catalog.AddAsync(package, new CatalogOwner("Team", "team@example.com", null, null), default, identity, default);
+            await catalog.AddAsync(package, new CatalogOwner("Team", "team@example.com", null, null), default, identity, default, default);
         }
 
         public async ValueTask DisposeAsync()

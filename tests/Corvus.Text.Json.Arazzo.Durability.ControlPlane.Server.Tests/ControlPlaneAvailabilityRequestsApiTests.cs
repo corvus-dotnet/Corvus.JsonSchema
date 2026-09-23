@@ -396,7 +396,7 @@ public sealed class ControlPlaneAvailabilityRequestsApiTests
         public async Task SeedVersionAsync(string workflowId, string tenant, params string[] sourceNames)
         {
             SecurityTagSet identity = SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", tenant)]);
-            await catalog.AddAsync(Package(workflowId, sourceNames), new CatalogOwner("Team", "team@example.com", null, null), default, identity, default);
+            await catalog.AddAsync(Package(workflowId, sourceNames), new CatalogOwner("Team", "team@example.com", null, null), default, identity, default, default);
         }
 
         // Seeds a source-less version whose package embeds a green attested suite (§4.6 publish evidence).
@@ -406,7 +406,7 @@ public sealed class ControlPlaneAvailabilityRequestsApiTests
             byte[] scenarios = Encoding.UTF8.GetBytes("""[{"name":"happy","expect":{"outcome":"completed"}}]""");
             byte[] evidence = Encoding.UTF8.GetBytes("""{"packageHash":"seed","engineVersion":"test","at":"2026-07-05T00:00:00Z","suite":{"total":1,"passed":1,"failed":0},"scenarios":[{"name":"happy","passed":true,"outcome":"completed"}]}""");
             ReadOnlyMemory<byte> package = CatalogPackage.Build(Workflow(workflowId), [], scenarios, evidence);
-            await catalog.AddAsync(package, new CatalogOwner("Team", "team@example.com", null, null), default, identity, default);
+            await catalog.AddAsync(package, new CatalogOwner("Team", "team@example.com", null, null), default, identity, default, default);
         }
 
         public async ValueTask DisposeAsync()

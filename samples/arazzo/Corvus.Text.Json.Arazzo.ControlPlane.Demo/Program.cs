@@ -668,7 +668,7 @@ if (seedExampleData && serverlessBuildWorkerWired)
     ReadOnlyMemory<byte> serverlessPackage = WorkflowPackage.Pack(
         await File.ReadAllBytesAsync(Path.Combine(serverlessSpecsDir, "serverless-check.arazzo.json")),
         [new KeyValuePair<string, byte[]>("echo", await File.ReadAllBytesAsync(Path.Combine(serverlessSpecsDir, "echo.openapi.json")))]);
-    (await catalog.AddAsync(serverlessPackage, new CatalogOwner("Serverless Demo", "serverless@example.com", "Platform", null), TagSet.FromTags(["serverless"]), DemoData.GroupIdentity("arazzo-admins"), default)).Dispose();
+    (await catalog.AddAsync(serverlessPackage, new CatalogOwner("Serverless Demo", "serverless@example.com", "Platform", null), TagSet.FromTags(["serverless"]), DemoData.GroupIdentity("arazzo-admins"), default, default)).Dispose();
 
     // Publish serverless-check v1 into the Isolated environment: make it available, then enqueue the native build for the
     // environment's runtime target. The control-plane build worker compiles + signs the native binary in the container,

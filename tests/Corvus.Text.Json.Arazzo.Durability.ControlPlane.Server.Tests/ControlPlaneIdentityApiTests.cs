@@ -263,7 +263,7 @@ public sealed class ControlPlaneIdentityApiTests
           "workflows": [ { "workflowId": "{{workflowId}}", "steps": [] } ]
         }
         """);
-        await catalog.AddAsync(CatalogPackage.Build(workflow, []), new CatalogOwner("Team", "team@example.com", null, null), default, founderIdentity, default);
+        await catalog.AddAsync(CatalogPackage.Build(workflow, []), new CatalogOwner("Team", "team@example.com", null, null), default, founderIdentity, default, default);
     }
 
     // The observed-store seam carries the JSON value (reified only at the store's key leaf); a test builds one from a

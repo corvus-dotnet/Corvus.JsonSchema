@@ -91,7 +91,7 @@ public sealed partial class CliIntegrationTests
         var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(clock), store, "ops", credentials: null, administrators: new InMemoryWorkflowAdministratorStore());
 
         SecurityTagSet founder = SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", "acme")]);
-        await catalog.AddAsync(Package("flow"), new CatalogOwner("Team", "team@example.com", null, null), default, founder, default);
+        await catalog.AddAsync(Package("flow"), new CatalogOwner("Team", "team@example.com", null, null), default, founder, default, default);
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.Logging.ClearProviders();

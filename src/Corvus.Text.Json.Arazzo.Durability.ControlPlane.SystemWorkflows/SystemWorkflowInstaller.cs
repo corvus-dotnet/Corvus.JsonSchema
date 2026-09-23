@@ -326,6 +326,7 @@ public sealed class SystemWorkflowInstaller
             options.Owner,
             TagSet.FromTags(options.WorkflowTags),
             options.AdministratorIdentity,
+            authorTags: default,
             cancellationToken).ConfigureAwait(false)).Dispose();
     }
 

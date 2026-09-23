@@ -37,11 +37,11 @@ public sealed class SecuredWorkflowCatalogCredentialGateTests
 
         // A submitter not entitled to the petstore binding may not catalogue a workflow that declares it.
         SourceCredentialAccessDeniedException ex = await Should.ThrowAsync<SourceCredentialAccessDeniedException>(async () =>
-            await catalog.AddAsync(Package("globex-flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), default));
+            await catalog.AddAsync(Package("globex-flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), default, default));
         ex.DeniedSources.ShouldBe(["petstore"]);
 
         // An entitled submitter may.
-        using ParsedJsonDocument<CatalogVersion> addedDoc = await catalog.AddAsync(Package("acme-flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
+        using ParsedJsonDocument<CatalogVersion> addedDoc = await catalog.AddAsync(Package("acme-flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default, default);
         CatalogVersion added = addedDoc.RootElement;
         ((string)added.WorkflowId).ShouldContain("acme-flow");
     }
@@ -52,7 +52,7 @@ public sealed class SecuredWorkflowCatalogCredentialGateTests
         // petstore has no credential binding at all — it is unauthenticated (or bindings come later), so declaring it
         // is allowed for any submitter.
         var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops", new InMemorySourceCredentialStore(), administrators: new InMemoryWorkflowAdministratorStore());
-        using ParsedJsonDocument<CatalogVersion> versionDoc = await catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), default);
+        using ParsedJsonDocument<CatalogVersion> versionDoc = await catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), default, default);
         CatalogVersion version = versionDoc.RootElement;
         ((string)version.WorkflowId).ShouldContain("flow");
     }
@@ -62,7 +62,7 @@ public sealed class SecuredWorkflowCatalogCredentialGateTests
     {
         // No credential store wired → no catalog-time check (back-compat).
         var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops", administrators: new InMemoryWorkflowAdministratorStore());
-        using ParsedJsonDocument<CatalogVersion> versionDoc = await catalog.AddAsync(Package("flow"), Owner, default, default, default);
+        using ParsedJsonDocument<CatalogVersion> versionDoc = await catalog.AddAsync(Package("flow"), Owner, default, default, default, default);
         CatalogVersion version = versionDoc.RootElement;
         ((string)version.WorkflowId).ShouldContain("flow");
     }
@@ -74,12 +74,12 @@ public sealed class SecuredWorkflowCatalogCredentialGateTests
         SecurityTagSet acme = SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]);
 
         // acme establishes administration of base id "flow" and may publish further versions.
-        (await catalog.AddAsync(Package("flow"), Owner, default, acme, default)).Dispose();
-        (await catalog.AddAsync(Package("flow"), Owner, default, acme, default)).Dispose();
+        (await catalog.AddAsync(Package("flow"), Owner, default, acme, default, default)).Dispose();
+        (await catalog.AddAsync(Package("flow"), Owner, default, acme, default, default)).Dispose();
 
         // globex may not squat the same base id (its immutable workflow identity is administered by acme).
         await Should.ThrowAsync<WorkflowAdministrationException>(async () =>
-            await catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), default));
+            await catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), default, default));
     }
 
     private static ReadOnlyMemory<byte> Package(string workflowId)

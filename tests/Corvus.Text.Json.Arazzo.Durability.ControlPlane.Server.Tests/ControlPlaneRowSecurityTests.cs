@@ -139,7 +139,7 @@ public sealed class ControlPlaneRowSecurityTests
         doc.RootElement.GetProperty("status").GetString().ShouldBe("Faulted");
 
         // Catalog writes are gated the same way: the version is readable (200) but not updatable (403).
-        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
+        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default, default);
         (await host.GetAsync("/catalog/flow/versions/1", tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
         using var patch = new HttpRequestMessage(HttpMethod.Patch, "/catalog/flow/versions/1")
         {
@@ -155,7 +155,7 @@ public sealed class ControlPlaneRowSecurityTests
         // old ones, while every deployment-internal tag (reserved prefix — here the auto-stamped sys:workflow identity) is
         // preserved and never user-editable. The catalog auto-stamps sys:workflow=<baseId> at creation.
         await using Scoped host = await StartAsync();
-        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("team", "payments")]), default);
+        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("team", "payments")]), default, default);
 
         using var patch = new HttpRequestMessage(HttpMethod.Patch, "/catalog/flow/versions/1")
         {
@@ -177,7 +177,7 @@ public sealed class ControlPlaneRowSecurityTests
         // §14.2: the reserved internal prefix is owned by the deployment — a caller may not set (or re-tag with) a
         // sys:-prefixed key. A shell-backed policy enforces it; the whole request is rejected (400) and nothing changes.
         await using Scoped host = await StartAsync(new ShellPolicy());
-        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("team", "payments")]), default);
+        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("team", "payments")]), default, default);
 
         using var patch = new HttpRequestMessage(HttpMethod.Patch, "/catalog/flow/versions/1")
         {
@@ -195,8 +195,8 @@ public sealed class ControlPlaneRowSecurityTests
     public async Task Searching_the_catalog_is_scoped_to_the_principals_tenant()
     {
         await using Scoped host = await StartAsync();
-        await host.Catalog.AddAsync(Package("acme-flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
-        await host.Catalog.AddAsync(Package("globex-flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), default);
+        await host.Catalog.AddAsync(Package("acme-flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default, default);
+        await host.Catalog.AddAsync(Package("globex-flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), default, default);
 
         using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync("/catalog", tenant: "acme"));
 
@@ -210,7 +210,7 @@ public sealed class ControlPlaneRowSecurityTests
     public async Task A_catalog_version_in_another_tenant_is_reported_as_not_found()
     {
         await using Scoped host = await StartAsync();
-        await host.Catalog.AddAsync(Package("globex-flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), default);
+        await host.Catalog.AddAsync(Package("globex-flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "globex")]), default, default);
 
         (await host.GetAsync("/catalog/globex-flow/versions/1", tenant: "acme")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
         (await host.GetAsync("/catalog/globex-flow/versions/1", tenant: "globex")).StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -230,7 +230,7 @@ public sealed class ControlPlaneRowSecurityTests
             Package("flow"),
             Owner,
             default,
-            SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "acme"), new SecurityTag("team", "payments")]),
+            SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "acme"), new SecurityTag("team", "payments")]), default,
             default);
 
         // The operator (no tenant claim) is unrestricted, so the row is visible; the strip is orthogonal to reach.
@@ -249,7 +249,7 @@ public sealed class ControlPlaneRowSecurityTests
             Package("flow"),
             Owner,
             default,
-            SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "acme"), new SecurityTag("team", "payments")]),
+            SecurityTagSet.FromTags([new SecurityTag("sys:tenant", "acme"), new SecurityTag("team", "payments")]), default,
             default);
 
         using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync("/catalog", tenant: null));
@@ -288,7 +288,7 @@ public sealed class ControlPlaneRowSecurityTests
         // its author classified sensitive therefore has its WHOLE step journal redacted — steps are marked redacted with no
         // payload, so the KYC identity data the run processed is not disclosed.
         await using Scoped host = await StartAsync(new ReadAnyWriteNonePolicy());
-        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
+        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default, default);
         (await host.Catalog.UpdateAsync("flow", 1, null, null, null, null, null, AccessContext.System, default, OutputsSensitivity.Sensitive)).Outcome.ShouldBe(CatalogUpdateOutcome.Updated);
         await SeedRunWithOutputsAsync(host.Store, RunKyc, "flow-v1", host.Clock, new SecurityTag("tenant", "acme"));
 
@@ -305,7 +305,7 @@ public sealed class ControlPlaneRowSecurityTests
         // The default policy: an operator (no tenant claim) is unrestricted, so it holds write reach on the run — the
         // stronger grant. A sensitive version's journal is therefore NOT redacted for them; the payload is disclosed.
         await using Scoped host = await StartAsync();
-        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
+        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default, default);
         (await host.Catalog.UpdateAsync("flow", 1, null, null, null, null, null, AccessContext.System, default, OutputsSensitivity.Sensitive)).Outcome.ShouldBe(CatalogUpdateOutcome.Updated);
         await SeedRunWithOutputsAsync(host.Store, RunKyc, "flow-v1", host.Clock, new SecurityTag("tenant", "acme"));
 
@@ -322,7 +322,7 @@ public sealed class ControlPlaneRowSecurityTests
         // journal reads in full at the baseline tier, even for a caller without write reach. The classification, not mere
         // reach, gates the payload.
         await using Scoped host = await StartAsync(new ReadAnyWriteNonePolicy());
-        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
+        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default, default);
         await SeedRunWithOutputsAsync(host.Store, RunOk, "flow-v1", host.Clock, new SecurityTag("tenant", "acme"));
 
         using Stj.JsonDocument doc = await ReadJsonAsync(await host.GetAsync($"/runs/{RunOk}/steps", tenant: "acme"));
@@ -338,7 +338,7 @@ public sealed class ControlPlaneRowSecurityTests
         // audit records disclosure tier "full", naming the caller and the run they read.
         using JournalReadSpans audit = JournalReadSpans.Capture();
         await using Scoped host = await StartAsync();
-        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
+        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default, default);
         (await host.Catalog.UpdateAsync("flow", 1, null, null, null, null, null, AccessContext.System, default, OutputsSensitivity.Sensitive)).Outcome.ShouldBe(CatalogUpdateOutcome.Updated);
         await SeedRunWithOutputsAsync(host.Store, AuditFull, "flow-v1", host.Clock, new SecurityTag("tenant", "acme"));
 
@@ -357,7 +357,7 @@ public sealed class ControlPlaneRowSecurityTests
         // reached disclosure tier "redacted" — a sensitive read that disclosed nothing still leaves an attempted-access trace.
         using JournalReadSpans audit = JournalReadSpans.Capture();
         await using Scoped host = await StartAsync(new ReadAnyWriteNonePolicy());
-        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default);
+        await host.Catalog.AddAsync(Package("flow"), Owner, default, SecurityTagSet.FromTags([new SecurityTag("tenant", "acme")]), default, default);
         (await host.Catalog.UpdateAsync("flow", 1, null, null, null, null, null, AccessContext.System, default, OutputsSensitivity.Sensitive)).Outcome.ShouldBe(CatalogUpdateOutcome.Updated);
         await SeedRunWithOutputsAsync(host.Store, AuditRedacted, "flow-v1", host.Clock, new SecurityTag("tenant", "acme"));
 

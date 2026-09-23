@@ -16,9 +16,8 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// operations — add-idempotency, dedupe, digest matching; the administration authorization gate is membership, §16.5.4)
 /// compares the two sets directly on their unescaped UTF-8 tag bytes
 /// (<see cref="SecurityTagSet.SetEquals"/>) — no managed strings, no list, no hash — instead of materializing two tag
-/// <see cref="List{T}"/>s plus their strings per call. <see cref="AdministratorIdentity"/> filters the workflow tag via the holder's allocation-free enumerator (one
-/// list, not two plus a LINQ iterator). <see cref="WithWorkflowTag"/> is the per-version <em>publish</em> path (cold)
-/// and keeps the straightforward one-list <see cref="SecurityTagSet.FromTags"/> form.
+/// <see cref="List{T}"/>s plus their strings per call. <see cref="VersionTags"/> is the per-version <em>publish</em>
+/// path (cold) and keeps the straightforward one-list <see cref="SecurityTagSet.FromTags"/> form.
 /// </remarks>
 public static class WorkflowIdentity
 {
@@ -30,36 +29,22 @@ public static class WorkflowIdentity
     /// <returns>The <c>sys:workflow</c> tag.</returns>
     public static SecurityTag WorkflowTag(string baseWorkflowId) => new(WorkflowTagKey, baseWorkflowId);
 
-    /// <summary>Returns <paramref name="ownerTags"/> with the workflow-identity tag for <paramref name="baseWorkflowId"/>
-    /// added — the version's full security tag set (owner identity + immutable workflow identity).</summary>
-    /// <param name="ownerTags">The owner-identity tags (e.g. <c>sys:tenant=acme</c>).</param>
+    /// <summary>Builds a catalogued version's full security tag set: the publisher's identity, the author's reach tags
+    /// and the workflow-identity tag for <paramref name="baseWorkflowId"/>. The identity keeps its own meaning apart
+    /// from this set: administration is established and checked from it alone (ADR 0007).</summary>
+    /// <param name="identity">The publisher's deployment-stamped identity (e.g. <c>sys:tenant=acme</c>).</param>
+    /// <param name="authorTags">The author's security tags, if any.</param>
     /// <param name="baseWorkflowId">The base workflow id.</param>
     /// <returns>The combined tag set.</returns>
-    public static SecurityTagSet WithWorkflowTag(SecurityTagSet ownerTags, string baseWorkflowId)
+    public static SecurityTagSet VersionTags(SecurityTagSet identity, SecurityTagSet authorTags, string baseWorkflowId)
     {
-        List<SecurityTag> tags = ownerTags.ToList();
-        tags.Add(WorkflowTag(baseWorkflowId));
-        return SecurityTagSet.FromTags(tags);
-    }
-
-    /// <summary>Returns the administrator-identity portion of a version's tags — the full stamped <c>sys:</c> identity
-    /// with the workflow-identity tag removed — used to compare administration when a new version is added to an
-    /// existing base id.</summary>
-    /// <param name="versionTags">A catalogued version's security tags.</param>
-    /// <returns>The administrator-identity tags.</returns>
-    public static SecurityTagSet AdministratorIdentity(SecurityTagSet versionTags)
-    {
-        // Filter out the workflow-identity tag via the allocation-free enumerator — one list (the FromTags input), not a
-        // ToList + LINQ Where + a second ToList.
-        var tags = new List<SecurityTag>();
-        foreach (SecurityTag tag in versionTags)
+        List<SecurityTag> tags = identity.ToList();
+        foreach (SecurityTag tag in authorTags)
         {
-            if (!string.Equals(tag.Key, WorkflowTagKey, StringComparison.Ordinal))
-            {
-                tags.Add(tag);
-            }
+            tags.Add(tag);
         }
 
+        tags.Add(WorkflowTag(baseWorkflowId));
         return SecurityTagSet.FromTags(tags);
     }
 

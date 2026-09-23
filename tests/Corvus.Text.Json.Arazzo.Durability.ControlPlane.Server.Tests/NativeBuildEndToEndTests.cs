@@ -139,7 +139,7 @@ public sealed class NativeBuildEndToEndTests
 
         // Seed a version — the store compiles and signs its executor.
         SecurityTagSet identity = SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", "acme")]);
-        await catalog.AddAsync(CatalogPackage.Build(Workflow(), []), new CatalogOwner("Team", "team@example.com", null, null), default, identity, default);
+        await catalog.AddAsync(CatalogPackage.Build(Workflow(), []), new CatalogOwner("Team", "team@example.com", null, null), default, identity, default, default);
 
         // Enqueue a build over REST → 202.
         (await Send(client, HttpMethod.Post, "/catalog/adopt/versions/1/nativeBuilds", """{"environment":"production","runtimeIdentifier":"linux-x64"}""", Write))

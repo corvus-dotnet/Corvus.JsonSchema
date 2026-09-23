@@ -213,7 +213,7 @@ public sealed partial class CliIntegrationTests
               "workflows": [ { "workflowId": "{{workflowId}}", "steps": [] } ]
             }
             """);
-            await this.Catalog.AddAsync(CatalogPackage.Build(workflow, []), new CatalogOwner("Team", "team@example.com", null, null), default, default, default);
+            await this.Catalog.AddAsync(CatalogPackage.Build(workflow, []), new CatalogOwner("Team", "team@example.com", null, null), default, default, default, default);
         }
 
         public async ValueTask DisposeAsync() => await this.App.DisposeAsync();

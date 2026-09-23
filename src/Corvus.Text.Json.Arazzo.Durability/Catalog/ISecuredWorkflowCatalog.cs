@@ -23,26 +23,22 @@ public interface ISecuredWorkflowCatalog
     bool HasAdministratorStore { get; }
 
     /// <summary>
-    /// Adds a new immutable version: validates the submitted workflow id has no <c>-vN</c> suffix, then has the
-    /// store assign the version, rewrite the id, hash the package and persist it.
+    /// Adds a new immutable version: validates the submitted workflow id has no <c>-vN</c> suffix, checks that the
+    /// caller administers the base id (or establishes its administration with version 1), then has the store assign
+    /// the version, rewrite the id, hash the package and persist it. The version's security tags are the caller's
+    /// identity, the author's tags and the immutable workflow-identity tag together; administration is established
+    /// and checked from <paramref name="identity"/> alone, never from the author's tags (ADR 0007).
     /// </summary>
     /// <param name="packageUtf8">The package envelope as UTF-8 JSON.</param>
     /// <param name="owner">The accountable governance owner.</param>
     /// <param name="tags">Free-form tags, if any.</param>
+    /// <param name="identity">The caller's deployment-stamped identity (the reserved <c>sys:</c> tags), or the empty set for a caller the deployment did not identify.</param>
+    /// <param name="authorTags">The author's security tags (KVP labels for row authorization, §14.2), never in the reserved keyspace, or the empty set.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The added version's metadata.</returns>
-    /// <exception cref="ArgumentException">The package is malformed, or its workflow id already carries a <c>-vN</c> suffix.</exception>
-    ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(ReadOnlyMemory<byte> packageUtf8, CatalogOwner owner, TagSet tags, CancellationToken cancellationToken);
-
-    /// <summary>Adds a workflow version with security tags (KVP labels for row authorization, §14.2).</summary>
-    /// <param name="packageUtf8">The package envelope as UTF-8 JSON.</param>
-    /// <param name="owner">The accountable governance owner.</param>
-    /// <param name="tags">Free-form tags, if any.</param>
-    /// <param name="securityTags">Security tags (KVP labels) for row authorization, distinct from the free-form <paramref name="tags"/>, if any.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The added version's metadata.</returns>
-    /// <exception cref="ArgumentException">The package is malformed, or its workflow id already carries a <c>-vN</c> suffix.</exception>
-    ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(ReadOnlyMemory<byte> packageUtf8, CatalogOwner owner, TagSet tags, SecurityTagSet securityTags, CancellationToken cancellationToken);
+    /// <exception cref="ArgumentException">The package is malformed, its workflow id already carries a <c>-vN</c> suffix, or <paramref name="authorTags"/> carries a reserved key.</exception>
+    /// <exception cref="WorkflowAdministrationException">The base id is administered and <paramref name="identity"/> is not an administrator.</exception>
+    ValueTask<ParsedJsonDocument<CatalogVersion>> AddAsync(ReadOnlyMemory<byte> packageUtf8, CatalogOwner owner, TagSet tags, SecurityTagSet identity, SecurityTagSet authorTags, CancellationToken cancellationToken);
 
     /// <summary>Searches the catalog, scoped to the caller's read reach (§14.2).</summary>
     /// <param name="query">The search.</param>

@@ -186,7 +186,7 @@ public sealed class ControlPlaneDeploymentsApiTests
         public async Task SeedVersionAsync(string workflowId, string tenant)
         {
             SecurityTagSet identity = SecurityTagSet.FromTags([new SecurityTag(SecurityShell.DefaultInternalPrefix + "tenant", tenant)]);
-            await catalog.AddAsync(Package(workflowId), new CatalogOwner("Team", "team@example.com", null, null), default, identity, default);
+            await catalog.AddAsync(Package(workflowId), new CatalogOwner("Team", "team@example.com", null, null), default, identity, default, default);
         }
 
         /// <summary>Seeds a deployment that reaches Deployed carrying a function URL. Seed this before any other queued

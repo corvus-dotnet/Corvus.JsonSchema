@@ -169,7 +169,7 @@ public sealed class ControlPlaneAccessGrantsApiTests
         var catalog = new SecuredWorkflowCatalog(new InMemoryWorkflowCatalogStore(), new InMemoryWorkflowStateStore(), "ops", administrators: administratorStore);
         ReadOnlyMemory<byte> package = WorkflowPackage.Pack(
             Encoding.UTF8.GetBytes("""{"arazzo":"1.1.0","info":{"title":"Orders","version":"1"},"workflows":[{"workflowId":"orders-workflow","steps":[]}]}"""), []);
-        (await catalog.AddAsync(package, new CatalogOwner("Ops", "ops@example.com"), default, granteeIdentity, default)).Dispose();
+        (await catalog.AddAsync(package, new CatalogOwner("Ops", "ops@example.com"), default, granteeIdentity, default, default)).Dispose();
 
         var environmentStore = new Corvus.Text.Json.Arazzo.Durability.Environments.InMemoryEnvironmentStore();
         using (ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Environments.Environment> environmentDraft =

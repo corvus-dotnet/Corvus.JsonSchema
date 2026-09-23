@@ -122,13 +122,13 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler, IRunS
         }
 
         // The deployment stamps its internal tags (e.g. the principal's tenant, §14.3) onto the new version so runs
-        // triggered from it inherit them; the user tags are combined with them. Internal keys carry the reserved
-        // prefix and user keys cannot, so the two sets never collide.
-        SecurityTagSet securityTags = CombineSecurityTags(this.access.InternalTags(), userTags);
+        // triggered from it inherit them. They are the caller's identity, handed to the catalog apart from the user
+        // tags: administration is established and checked from the identity alone, and the user tags are reach.
+        SecurityTagSet identity = SecurityTagSet.FromTags(this.access.InternalTags());
 
         try
         {
-            ParsedJsonDocument<CatalogVersion> version = await this.catalog.AddAsync(parameters.Package, owner, tags, securityTags, cancellationToken).ConfigureAwait(false);
+            ParsedJsonDocument<CatalogVersion> version = await this.catalog.AddAsync(parameters.Package, owner, tags, identity, userTags, cancellationToken).ConfigureAwait(false);
 
             CatalogVersionRef reference = version.RootElement.Ref;
             await this.auditor.MutationAsync("catalog.publish", this.AuditActor(), CatalogTargetKind, CatalogKey(reference.BaseWorkflowId, reference.VersionNumber), "published").ConfigureAwait(false);
@@ -909,49 +909,6 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler, IRunS
             Email: owner.Email.IsNotUndefined() ? (string)owner.Email : string.Empty,
             Team: owner.Team.IsNotUndefined() ? (string)owner.Team : null,
             Url: owner.Url.IsNotUndefined() ? (string)owner.Url : null);
-
-    // Unions the deployment's internal tags with the validated user tags into one security-tag set. The publish path
-    // is cold, so the internal list is realized once through FromTags; the union itself is bytes-native (each set's
-    // tags are appended from their unescaped UTF-8, no per-tag managed string). Internal keys carry the reserved
-    // prefix and user keys cannot (ValidateUserTags enforced it), so the two sets never collide.
-    internal static SecurityTagSet CombineSecurityTags(IReadOnlyList<SecurityTag> internalTags, SecurityTagSet userTags)
-    {
-        if (userTags.IsEmpty)
-        {
-            return SecurityTagSet.FromTags(internalTags);
-        }
-
-        if (internalTags.Count == 0)
-        {
-            return userTags;
-        }
-
-        SecurityTagSet internalSet = SecurityTagSet.FromTags(internalTags);
-        return SecurityTagSet.Build(
-            (Internal: internalSet, User: userTags),
-            static (ref IdentityBuilder builder, in (SecurityTagSet Internal, SecurityTagSet User) s) =>
-            {
-                AppendTags(ref builder, s.Internal);
-                AppendTags(ref builder, s.User);
-            });
-    }
-
-    // Appends every tag of a set to the builder from its unescaped UTF-8 key/value spans (string-free).
-    private static void AppendTags(ref IdentityBuilder builder, SecurityTagSet set)
-    {
-        SecurityTagSet.Utf8Enumerator e = set.EnumerateUtf8();
-        try
-        {
-            while (e.MoveNext())
-            {
-                builder.Add(e.CurrentKey, e.CurrentValue);
-            }
-        }
-        finally
-        {
-            e.Dispose();
-        }
-    }
 
     // Copy the parsed tag-list parameter's canonical bytes into the holder (per request, not per row). An add or a
     // search needle yields an empty holder when absent; a patch yields null (= "leave tags unchanged").
