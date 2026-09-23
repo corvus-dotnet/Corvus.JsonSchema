@@ -102,7 +102,7 @@ public sealed class ServerlessRealCloudCheckpointListenerLambdaTests
                 },
             });
             ServerlessDeployResult deploy = await deployer.DeployAsync(
-                new ServerlessDeployRequest("serverless-check", 1, "isolated", "linux-x64", nativeBinary),
+                new ServerlessDeployRequest("serverless-check", 1, "isolated", "linux-x64", nativeBinary, AttestationUtf8: default, SignatureUtf8: default),
                 default);
             deploy.Succeeded.ShouldBeTrue(deploy.Log);
 

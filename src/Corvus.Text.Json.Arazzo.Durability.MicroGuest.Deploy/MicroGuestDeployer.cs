@@ -25,10 +25,16 @@ namespace Corvus.Text.Json.Arazzo.Durability.MicroGuest.Deploy;
 /// <item><description><c>PUT {base}/sandboxes/{id}/initrd</c> — the initrd CPIO as <c>application/octet-stream</c>;
 /// the sidecar stages it for the sandbox.</description></item>
 /// <item><description><c>PUT {base}/sandboxes/{id}</c> — the sandbox configuration as JSON
-/// (<c>{"memoryMib", "allowedHosts": ["host:port"], "environment": {"NAME": "value"}}</c>); the sidecar builds the
-/// sandbox from the staged initrd (baking the environment pairs and its own guest-facing endpoint into the frozen
-/// argv), evolves and snapshots it, and returns <c>{"invokeUrl"}</c>. Re-PUT replaces the sandbox (a redeploy).</description></item>
+/// (<c>{"memoryMib", "allowedHosts": ["host:port"], "environment": {"NAME": "value"}, "attestation", "signature"}</c>);
+/// the sidecar verifies the attestation's signature under its own trust store and the staged guest binary's digest
+/// against the attestation, refusing to boot otherwise (P1-10), then builds the sandbox from the staged initrd (baking
+/// the environment pairs and its own guest-facing endpoint into the frozen argv), evolves and snapshots it, and
+/// returns <c>{"invokeUrl"}</c>. Re-PUT replaces the sandbox (a redeploy).</description></item>
 /// </list>
+/// <para><c>attestation</c> is the base64 of the attestation's exact UTF-8 bytes (the signed message) and
+/// <c>signature</c> is the detached signature document verbatim, both exactly as the runner's own verify read them
+/// from the package. A request without them is refused here, before the sidecar is called: the sidecar boots only an
+/// attested image, and a deployer that omitted the evidence would only turn that refusal into a failed deploy.</para>
 /// <para>The egress allowlist sent as <c>allowedHosts</c> is exactly the hosts the run may reach — the runner's
 /// checkpoint surface and the environment's source hosts — the tighter-than-cloud posture ADR 0063 decides. A sidecar
 /// failure is returned as a <see cref="ServerlessDeployResult.Failure"/> rather than thrown, matching how the runner's
@@ -59,9 +65,14 @@ public sealed class MicroGuestDeployer : IServerlessDeployer
     /// <inheritdoc/>
     public async ValueTask<ServerlessDeployResult> DeployAsync(ServerlessDeployRequest request, CancellationToken cancellationToken)
     {
+        if (request.AttestationUtf8.IsEmpty || request.SignatureUtf8.IsEmpty)
+        {
+            throw new ArgumentException("The micro-guest sidecar boots only an attested image, so a deploy request must carry the native attestation and its signature.", nameof(request));
+        }
+
         string sandboxId = SandboxId(request);
         byte[] initrd = InitrdCpio.Build(request.NativeBinary, this.options.GuestBinaryPath);
-        byte[] configuration = this.BuildSandboxConfiguration();
+        byte[] configuration = this.BuildSandboxConfiguration(request);
 
         using var client = new HttpClient(this.httpHandler, disposeHandler: false) { BaseAddress = this.options.SidecarBaseUrl };
 
@@ -133,8 +144,9 @@ public sealed class MicroGuestDeployer : IServerlessDeployer
     }
 
     // The sandbox configuration document: the micro-VM size, the egress allowlist (the checkpoint surface plus each
-    // source host — exactly the hosts the run may reach), and the environment pairs the sidecar freezes into argv.
-    internal byte[] BuildSandboxConfiguration()
+    // source host — exactly the hosts the run may reach), the environment pairs the sidecar freezes into argv, and the
+    // attestation with its signature the sidecar verifies the staged image against before it boots anything.
+    internal byte[] BuildSandboxConfiguration(in ServerlessDeployRequest request)
     {
         List<string> allowedHosts = [HostAndPort(this.options.CheckpointSurfaceUrl)];
         foreach ((string name, string value) in this.options.GuestEnvironment)
@@ -151,8 +163,8 @@ public sealed class MicroGuestDeployer : IServerlessDeployer
         }
 
         return PersistedJson.ToArray(
-            (Options: this.options, AllowedHosts: allowedHosts),
-            static (Utf8JsonWriter writer, in (MicroGuestDeployerOptions Options, List<string> AllowedHosts) context) =>
+            (Options: this.options, AllowedHosts: allowedHosts, Attestation: request.AttestationUtf8, Signature: request.SignatureUtf8),
+            static (Utf8JsonWriter writer, in (MicroGuestDeployerOptions Options, List<string> AllowedHosts, ReadOnlyMemory<byte> Attestation, ReadOnlyMemory<byte> Signature) context) =>
             {
                 writer.WriteStartObject();
                 writer.WriteNumber("memoryMib"u8, context.Options.MemorySizeMib);
@@ -180,6 +192,13 @@ public sealed class MicroGuestDeployer : IServerlessDeployer
                 writer.WriteString(ServerlessCheckpointOrigins.SettingName, context.Options.CheckpointSurfaceUrl.GetLeftPart(UriPartial.Authority));
 
                 writer.WriteEndObject();
+
+                // The evidence the sidecar verifies for itself: the attestation as the exact signed bytes (base64, so
+                // no re-serialization can disturb the signature) and the signature document as it came from the package.
+                writer.WriteBase64String("attestation"u8, context.Attestation.Span);
+                writer.WritePropertyName("signature"u8);
+                writer.WriteRawValue(context.Signature.Span, skipInputValidation: false);
+
                 writer.WriteEndObject();
             });
     }

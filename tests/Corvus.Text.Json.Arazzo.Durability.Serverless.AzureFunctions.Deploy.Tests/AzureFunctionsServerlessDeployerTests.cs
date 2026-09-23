@@ -21,7 +21,7 @@ public sealed class AzureFunctionsServerlessDeployerTests
     [TestMethod]
     public void PackageBlobName_is_deterministic_and_sanitizes_separators_and_lowercases()
     {
-        var request = new ServerlessDeployRequest("Adopt.Pet/Flow", 3, "Prod Env", "linux-x64", ReadOnlyMemory<byte>.Empty);
+        var request = new ServerlessDeployRequest("Adopt.Pet/Flow", 3, "Prod Env", "linux-x64", ReadOnlyMemory<byte>.Empty, AttestationUtf8: default, SignatureUtf8: default);
 
         string first = AzureFunctionsServerlessDeployer.PackageBlobName(request);
         string second = AzureFunctionsServerlessDeployer.PackageBlobName(request);
@@ -34,9 +34,9 @@ public sealed class AzureFunctionsServerlessDeployerTests
     [TestMethod]
     public void PackageBlobName_distinguishes_targets_that_differ_only_by_version_or_environment()
     {
-        var v1 = new ServerlessDeployRequest("check", 1, "isolated", "linux-x64", ReadOnlyMemory<byte>.Empty);
-        var v2 = new ServerlessDeployRequest("check", 2, "isolated", "linux-x64", ReadOnlyMemory<byte>.Empty);
-        var otherEnv = new ServerlessDeployRequest("check", 1, "staging", "linux-x64", ReadOnlyMemory<byte>.Empty);
+        var v1 = new ServerlessDeployRequest("check", 1, "isolated", "linux-x64", ReadOnlyMemory<byte>.Empty, AttestationUtf8: default, SignatureUtf8: default);
+        var v2 = new ServerlessDeployRequest("check", 2, "isolated", "linux-x64", ReadOnlyMemory<byte>.Empty, AttestationUtf8: default, SignatureUtf8: default);
+        var otherEnv = new ServerlessDeployRequest("check", 1, "staging", "linux-x64", ReadOnlyMemory<byte>.Empty, AttestationUtf8: default, SignatureUtf8: default);
 
         AzureFunctionsServerlessDeployer.PackageBlobName(v1).ShouldBe("check-v1-isolated-linux-x64.zip");
         AzureFunctionsServerlessDeployer.PackageBlobName(v2).ShouldNotBe(AzureFunctionsServerlessDeployer.PackageBlobName(v1));

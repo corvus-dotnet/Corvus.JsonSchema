@@ -48,7 +48,7 @@ public sealed class LambdaServerlessDeployerTests
     [TestMethod]
     public void FunctionName_is_deterministic_and_sanitizes_separators_to_hyphens()
     {
-        var request = new ServerlessDeployRequest("orders/create", 3, "prod:eu", "linux-x64", ReadOnlyMemory<byte>.Empty);
+        var request = new ServerlessDeployRequest("orders/create", 3, "prod:eu", "linux-x64", ReadOnlyMemory<byte>.Empty, AttestationUtf8: default, SignatureUtf8: default);
 
         string name = LambdaServerlessDeployer.FunctionName(request);
 
@@ -62,8 +62,8 @@ public sealed class LambdaServerlessDeployerTests
     [TestMethod]
     public void FunctionName_stays_within_64_chars_and_stays_unique_for_over_long_inputs()
     {
-        var r1 = new ServerlessDeployRequest(new string('a', 80), 1, "production-environment", "linux-arm64", ReadOnlyMemory<byte>.Empty);
-        var r2 = new ServerlessDeployRequest(new string('b', 80), 1, "production-environment", "linux-arm64", ReadOnlyMemory<byte>.Empty);
+        var r1 = new ServerlessDeployRequest(new string('a', 80), 1, "production-environment", "linux-arm64", ReadOnlyMemory<byte>.Empty, AttestationUtf8: default, SignatureUtf8: default);
+        var r2 = new ServerlessDeployRequest(new string('b', 80), 1, "production-environment", "linux-arm64", ReadOnlyMemory<byte>.Empty, AttestationUtf8: default, SignatureUtf8: default);
 
         string n1 = LambdaServerlessDeployer.FunctionName(r1);
         string n2 = LambdaServerlessDeployer.FunctionName(r2);

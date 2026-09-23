@@ -28,7 +28,7 @@ public sealed class ArmFunctionAppConfiguratorTests
     [TestMethod]
     public void AppName_is_deterministic_prefixed_lowercased_and_sanitized()
     {
-        var request = new ServerlessDeployRequest("Adopt.Pet", 3, "Prod", "linux-x64", ReadOnlyMemory<byte>.Empty);
+        var request = new ServerlessDeployRequest("Adopt.Pet", 3, "Prod", "linux-x64", ReadOnlyMemory<byte>.Empty, AttestationUtf8: default, SignatureUtf8: default);
 
         string first = ArmFunctionAppConfigurator.AppName(request, "arz");
         string second = ArmFunctionAppConfigurator.AppName(request, "arz");
@@ -41,7 +41,7 @@ public sealed class ArmFunctionAppConfiguratorTests
     [TestMethod]
     public void AppName_stays_within_the_azure_60_char_site_name_limit()
     {
-        var request = new ServerlessDeployRequest(new string('a', 80), 12, "production-environment", "linux-x64", ReadOnlyMemory<byte>.Empty);
+        var request = new ServerlessDeployRequest(new string('a', 80), 12, "production-environment", "linux-x64", ReadOnlyMemory<byte>.Empty, AttestationUtf8: default, SignatureUtf8: default);
 
         string name = ArmFunctionAppConfigurator.AppName(request, "arz-long-prefix");
 
@@ -53,8 +53,8 @@ public sealed class ArmFunctionAppConfiguratorTests
     [TestMethod]
     public void AppName_distinguishes_targets_that_differ_only_by_version()
     {
-        var v1 = new ServerlessDeployRequest("check", 1, "isolated", "linux-x64", ReadOnlyMemory<byte>.Empty);
-        var v2 = new ServerlessDeployRequest("check", 2, "isolated", "linux-x64", ReadOnlyMemory<byte>.Empty);
+        var v1 = new ServerlessDeployRequest("check", 1, "isolated", "linux-x64", ReadOnlyMemory<byte>.Empty, AttestationUtf8: default, SignatureUtf8: default);
+        var v2 = new ServerlessDeployRequest("check", 2, "isolated", "linux-x64", ReadOnlyMemory<byte>.Empty, AttestationUtf8: default, SignatureUtf8: default);
 
         ArmFunctionAppConfigurator.AppName(v1, "arz").ShouldBe("arz-check-v1-isolated-linux-x64");
         ArmFunctionAppConfigurator.AppName(v2, "arz").ShouldNotBe(ArmFunctionAppConfigurator.AppName(v1, "arz"));

@@ -180,7 +180,7 @@ anonymous choice.
 | AWS Lambda | `SigV4ServerlessInvokeAuthenticator` | Its AWS credentials and region. The Function URL is `AWS_IAM`, and the principal holds `lambda:InvokeFunctionUrl` |
 | Azure Functions | `FunctionKeyServerlessInvokeAuthenticator` | A reference to the invoke key in its own secret store, for example `env://ARAZZO_INVOKE_KEY` |
 | Azure Functions with Entra | `EntraServerlessInvokeAuthenticator` over the key authenticator | The key reference, its `TokenCredential`, and the Function App's audience |
-| Micro-guest sidecar | `MicroGuestSidecarInvokeAuthenticator` | A reference to the sidecar's admin token in its own secret store, for example `env://ARAZZO_SIDECAR_ADMIN_TOKEN`, the same token the sidecar was started with. It refuses any URL that is not on the loopback interface |
+| Micro-guest sidecar | `MicroGuestSidecarInvokeAuthenticator` | A reference to the sidecar's admin token in its own secret store, for example `env://ARAZZO_SIDECAR_ADMIN_TOKEN`, the same token the sidecar was started with. It refuses any URL that is not on the loopback interface. The sidecar itself is started with `--trusted-key <keyId>=<path>`, the executor-signing public key the runner's `Runner:ExecutorTrust:PublicKeyFile` holds, because it verifies the attestation of every image it boots |
 
 For Azure the same `AzureFunctionsInvokeAuthorization` goes on the deployer's options. The deployer reads the key by
 reference and sets it on the Function App as the host-level function key `arazzo-invoke` before it publishes the

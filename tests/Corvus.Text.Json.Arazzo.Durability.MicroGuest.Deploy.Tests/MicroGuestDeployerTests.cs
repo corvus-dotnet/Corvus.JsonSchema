@@ -14,18 +14,25 @@ namespace Corvus.Text.Json.Arazzo.Durability.MicroGuest.Deploy.Tests;
 /// <summary>
 /// Proves the micro-guest deployer drives the sidecar admin contract (ADR 0063): it stages the initrd CPIO, evolves
 /// the sandbox with the memory size, the egress allowlist (checkpoint surface plus source hosts, nothing else), and
-/// the environment pairs, returns the sidecar's invoke URL as the function URL, and reports a sidecar failure as a
-/// failed deploy rather than throwing. A fake HTTP handler stands in for the sidecar; no sockets are involved.
+/// the environment pairs, and the attestation with its signature for the sidecar to verify the image against, returns
+/// the sidecar's invoke URL as the function URL, and reports a sidecar failure as a failed deploy rather than throwing.
+/// A fake HTTP handler stands in for the sidecar; no sockets are involved.
 /// </summary>
 [TestClass]
 public sealed class MicroGuestDeployerTests
 {
+    private static readonly byte[] Attestation = "{\"engineVersion\":\"5.0.0\",\"formatVersion\":1,\"nativeDigest\":\"sha256:abc\",\"packageHash\":\"sha256:pkg\",\"rid\":\"linux-musl-x64\"}"u8.ToArray();
+
+    private static readonly byte[] Signature = "{\"algorithm\":\"ecdsa-p256-sha256\",\"keyId\":\"release-2026\",\"value\":\"c2ln\"}"u8.ToArray();
+
     private static readonly ServerlessDeployRequest Request = new(
         "pets/adopt",
         3,
         "prod",
         "linux-musl-x64",
-        new byte[] { 0x7F, (byte)'E', (byte)'L', (byte)'F', 9, 9 });
+        new byte[] { 0x7F, (byte)'E', (byte)'L', (byte)'F', 9, 9 },
+        Attestation,
+        Signature);
 
     [TestMethod]
     public async Task Stages_the_initrd_then_evolves_and_returns_the_invoke_url()
@@ -64,7 +71,7 @@ public sealed class MicroGuestDeployerTests
                 ["UNRELATED"] = "not-a-url",
             });
 
-        string configuration = Encoding.UTF8.GetString(deployer.BuildSandboxConfiguration());
+        string configuration = Encoding.UTF8.GetString(deployer.BuildSandboxConfiguration(Request));
 
         configuration.ShouldContain("\"memoryMib\":64");
         // The allowlist is the checkpoint surface plus each source host with its (defaulted) port, and nothing else.
@@ -76,6 +83,30 @@ public sealed class MicroGuestDeployerTests
         // (ADR 0059 decision 4), so the guest refuses a checkpointUrl that points anywhere else.
         configuration.ShouldContain($"\"{ServerlessCheckpointOrigins.SettingName}\":\"http://172.20.0.10:8199\"");
         configuration.ShouldContain("\"UNRELATED\":\"not-a-url\"");
+    }
+
+    [TestMethod]
+    public void The_sandbox_configuration_carries_the_attestation_bytes_and_the_signature_verbatim()
+    {
+        // The sidecar verifies the image for itself (P1-10): the attestation rides as base64 of its exact signed bytes,
+        // so nothing re-serializes the message the signature is over, and the signature document rides as it came
+        // from the package.
+        string configuration = Encoding.UTF8.GetString(Deployer(new FakeSidecarHandler()).BuildSandboxConfiguration(Request));
+
+        configuration.ShouldContain($"\"attestation\":\"{Convert.ToBase64String(Attestation)}\"");
+        configuration.ShouldContain($"\"signature\":{Encoding.UTF8.GetString(Signature)}");
+    }
+
+    [TestMethod]
+    public async Task A_request_without_an_attestation_is_refused_before_the_sidecar_is_called()
+    {
+        var sidecar = new FakeSidecarHandler();
+        MicroGuestDeployer deployer = Deployer(sidecar);
+
+        await Should.ThrowAsync<ArgumentException>(async () => await deployer.DeployAsync(Request with { AttestationUtf8 = default }, CancellationToken.None));
+        await Should.ThrowAsync<ArgumentException>(async () => await deployer.DeployAsync(Request with { SignatureUtf8 = default }, CancellationToken.None));
+
+        sidecar.Requests.ShouldBeEmpty("an unattested image is never staged");
     }
 
     [TestMethod]
@@ -146,7 +177,7 @@ public sealed class MicroGuestDeployerTests
         MicroGuestDeployer.SandboxId(Request).ShouldBe("arazzo-mg-pets-adopt-v3-prod-linux-musl-x64");
 
         // An over-long tuple truncates with a deterministic suffix, staying within 64 characters without colliding.
-        var longRequest = new ServerlessDeployRequest(new string('w', 80), 12, "production", "linux-musl-x64", default);
+        var longRequest = new ServerlessDeployRequest(new string('w', 80), 12, "production", "linux-musl-x64", default, AttestationUtf8: default, SignatureUtf8: default);
         string id = MicroGuestDeployer.SandboxId(longRequest);
         id.Length.ShouldBe(64);
         id.ShouldBe(MicroGuestDeployer.SandboxId(longRequest));

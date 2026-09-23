@@ -18,6 +18,11 @@
 //! read and answer only its own sandbox's invocation, and no other peer on the routable bind can read the
 //! checkpoint token an invocation carries.
 //!
+//! The sidecar also verifies what it boots (P1-10, [`attestation`]): an evolve carries the control plane's
+//! signed attestation for the binary inside the staged initrd, and the sidecar checks the signature against its
+//! own trust store and the binary's digest against the attestation before anything is built. It does not take
+//! the runner's word for it (ADR 0065).
+//!
 //! Sandbox state lives on a dedicated owner thread per sandbox: the VM is built, restored, and run on that one
 //! thread (so the underlying sandbox never crosses threads), and invocations serialize per sandbox by
 //! construction — each advance runs against a pristine snapshot restore. The real VM sits behind [`VmFactory`]
@@ -31,6 +36,10 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use serde::Deserialize;
+
+pub mod attestation;
+
+use attestation::{SignatureDocument, TrustStore};
 
 /// How long a `PUT /sandboxes/{id}` waits for the owner thread to report the evolve result.
 const EVOLVE_TIMEOUT: Duration = Duration::from_secs(120);
@@ -116,6 +125,11 @@ struct SandboxConfigDocument {
     /// A BTreeMap so the baked argv order is deterministic for identical configuration.
     #[serde(default)]
     environment: BTreeMap<String, String>,
+    /// The control plane's native attestation for the guest binary in the staged initrd: base64 of its exact
+    /// UTF-8 bytes, the message the signature is over.
+    attestation: Option<String>,
+    /// The detached signature over the attestation.
+    signature: Option<SignatureDocument>,
 }
 
 fn default_memory_mib() -> u64 {
@@ -158,6 +172,7 @@ pub struct Sidecar {
     addresses: SidecarAddresses,
     factory: Arc<dyn VmFactory>,
     admin_token: String,
+    trust: TrustStore,
     sandboxes: Mutex<HashMap<String, Entry>>,
 }
 
@@ -184,13 +199,19 @@ impl HttpReply {
 
 impl Sidecar {
     /// Creates the sidecar. `admin_token` is the shared bearer the runner presents on the admin surface; it is
-    /// required and at least [`MIN_ADMIN_TOKEN_LEN`] bytes long.
-    pub fn new(addresses: SidecarAddresses, factory: Arc<dyn VmFactory>, admin_token: String) -> anyhow::Result<Self> {
+    /// required and at least [`MIN_ADMIN_TOKEN_LEN`] bytes long. `trust` holds the attestation-signing public
+    /// keys the sidecar boots images under; it must trust at least one, since the sidecar never boots an
+    /// unattested image.
+    pub fn new(addresses: SidecarAddresses, factory: Arc<dyn VmFactory>, admin_token: String, trust: TrustStore) -> anyhow::Result<Self> {
         if admin_token.len() < MIN_ADMIN_TOKEN_LEN {
             anyhow::bail!("the admin token must be at least {MIN_ADMIN_TOKEN_LEN} characters; the admin surface never runs unauthenticated");
         }
 
-        Ok(Self { addresses, factory, admin_token, sandboxes: Mutex::new(HashMap::new()) })
+        if trust.is_empty() {
+            anyhow::bail!("at least one trusted attestation key is required; the sidecar never boots an unattested image");
+        }
+
+        Ok(Self { addresses, factory, admin_token, trust, sandboxes: Mutex::new(HashMap::new()) })
     }
 
     /// Whether an admin-surface request carries the shared admin token.
@@ -214,8 +235,9 @@ impl Sidecar {
         HttpReply::empty(204)
     }
 
-    /// `PUT /sandboxes/{id}`: evolve the sandbox from the staged initrd. Replaces any previous worker (a
-    /// redeploy) only after the new spec is accepted for building.
+    /// `PUT /sandboxes/{id}`: evolve the sandbox from the staged initrd, once the attestation the document
+    /// carries verifies for the binary inside it. Replaces any previous worker (a redeploy) only after the new
+    /// spec is accepted for building.
     pub fn configure(&self, id: &str, body: &[u8]) -> HttpReply {
         if !valid_id(id) {
             return HttpReply::text(400, format!("invalid sandbox id '{id}'"));
@@ -235,6 +257,17 @@ impl Sidecar {
                 }
             }
         };
+
+        // The image is verified before anything is minted or built: the signature under a trusted key, then the
+        // binary's digest against the attestation. A refusal names the control, and the runner's deploy fails.
+        let verified = match attestation::verify_staged_image(&self.trust, &staged, document.attestation.as_deref(), document.signature.as_ref()) {
+            Ok(verified) => verified,
+            Err(reason) => return HttpReply::text(403, format!("refusing to evolve sandbox '{id}': {reason}")),
+        };
+        eprintln!(
+            "sandbox '{id}': attested guest binary {} for {} (package {}) verified under key '{}'",
+            verified.native_digest, verified.rid, verified.package_hash, verified.key_id
+        );
 
         // The frozen argv: the guest surface URL first (the entry template's argv[1]), then the environment
         // pairs in deterministic order, then this sandbox's guest token, minted here so it never leaves the
@@ -620,9 +653,15 @@ mod tests {
     use std::sync::atomic::AtomicBool;
     use std::sync::{Arc, Mutex};
 
+    use base64::Engine;
+
+    use super::attestation::testing::{attestation_for, initrd_around, TestSigner};
     use super::*;
 
     const ADMIN_TOKEN: &str = "test-admin-token-0123456789";
+
+    /// The stand-in guest binary every attested deploy bakes.
+    const GUEST_BINARY: &[u8] = b"\x7fELF-fake-guest";
 
     /// The stand-in guest: on each run it does exactly what the baked entry template does — GET the invocation
     /// from argv[1] over real HTTP with the guest token argv carries, transform it, POST the outcome back — so
@@ -691,6 +730,7 @@ mod tests {
     struct Harness {
         sidecar: Arc<Sidecar>,
         factory: Arc<FakeFactory>,
+        signer: TestSigner,
         admin_base: String,
         guest_base: String,
         stopping: Arc<AtomicBool>,
@@ -706,7 +746,10 @@ mod tests {
             guest_advertise: format!("127.0.0.1:{guest_port}"),
         };
         let factory = Arc::new(factory);
-        let sidecar = Arc::new(Sidecar::new(addresses, Arc::clone(&factory) as Arc<dyn VmFactory>, ADMIN_TOKEN.to_string()).expect("sidecar"));
+        let signer = TestSigner::p256("release-2026");
+        let sidecar = Arc::new(
+            Sidecar::new(addresses, Arc::clone(&factory) as Arc<dyn VmFactory>, ADMIN_TOKEN.to_string(), trust_store(&signer)).expect("sidecar"),
+        );
         let stopping = Arc::new(AtomicBool::new(false));
 
         let admin = Arc::new(tiny_http::Server::http(("127.0.0.1", admin_port)).expect("admin bind"));
@@ -714,13 +757,19 @@ mod tests {
         serve(admin, Arc::clone(&sidecar), 2, handle_admin, Arc::clone(&stopping));
         serve(guest, Arc::clone(&sidecar), 2, handle_guest, Arc::clone(&stopping));
 
-        Harness { sidecar, factory, admin_base: format!("http://127.0.0.1:{admin_port}"), guest_base: format!("http://127.0.0.1:{guest_port}"), stopping }
+        Harness { sidecar, factory, signer, admin_base: format!("http://127.0.0.1:{admin_port}"), guest_base: format!("http://127.0.0.1:{guest_port}"), stopping }
     }
 
     impl Drop for Harness {
         fn drop(&mut self) {
             self.stopping.store(true, Ordering::Relaxed);
         }
+    }
+
+    fn trust_store(signer: &TestSigner) -> TrustStore {
+        let mut store = TrustStore::new();
+        store.add_pem(&signer.key_id, &signer.public_key_pem()).expect("trust the test key");
+        store
     }
 
     fn free_port() -> u16 {
@@ -785,12 +834,27 @@ mod tests {
         (status, response.into_string().expect("body"))
     }
 
+    /// The deployer's two calls: stage the initrd around the guest binary, then evolve with the attestation the
+    /// harness signer produced for it.
     fn deploy(harness: &Harness, id: &str) -> (u16, String) {
-        let (staged, _) = put(&format!("{}/sandboxes/{id}/initrd", harness.admin_base), b"070701-fake-initrd");
+        deploy_image(harness, id, GUEST_BINARY, &attested_configuration(harness, GUEST_BINARY))
+    }
+
+    fn deploy_image(harness: &Harness, id: &str, guest_binary: &[u8], configuration: &str) -> (u16, String) {
+        let (staged, _) = put(&format!("{}/sandboxes/{id}/initrd", harness.admin_base), &initrd_around(guest_binary));
         assert_eq!(staged, 204);
-        put(
-            &format!("{}/sandboxes/{id}", harness.admin_base),
-            br#"{"memoryMib": 96, "allowedHosts": ["172.20.0.10:8199", "petstore.example.com:8443"], "environment": {"ARAZZO_SOURCE__petstore": "https://petstore.example.com:8443/api"}}"#,
+        put(&format!("{}/sandboxes/{id}", harness.admin_base), configuration.as_bytes())
+    }
+
+    fn attested_configuration(harness: &Harness, guest_binary: &[u8]) -> String {
+        let attestation = attestation_for(guest_binary);
+        let signature = harness.signer.sign(&attestation);
+        format!(
+            r#"{{"memoryMib": 96, "allowedHosts": ["172.20.0.10:8199", "petstore.example.com:8443"], "environment": {{"ARAZZO_SOURCE__petstore": "https://petstore.example.com:8443/api"}}, "attestation": "{}", "signature": {{"algorithm": "{}", "keyId": "{}", "value": "{}"}}}}"#,
+            base64::engine::general_purpose::STANDARD.encode(&attestation),
+            signature.algorithm,
+            signature.key_id,
+            signature.value
         )
     }
 
@@ -831,7 +895,52 @@ mod tests {
         assert_eq!(spec.args[1], "ARAZZO_SOURCE__petstore=https://petstore.example.com:8443/api");
         assert_eq!(guest_token_of(spec).len(), 64, "the guest token is 32 random bytes, hex-encoded, last in argv: {:?}", spec.args);
         assert_eq!(spec.allowed_hosts, vec!["172.20.0.10", "petstore.example.com", "127.0.0.1"]);
-        assert_eq!(spec.initrd, b"070701-fake-initrd");
+        assert_eq!(spec.initrd, initrd_around(GUEST_BINARY));
+    }
+
+    #[test]
+    fn an_evolve_without_an_attestation_boots_nothing() {
+        let harness = start(FakeFactory::new(FakeBehaviour::EchoOverHttp));
+
+        let (status, body) = deploy_image(&harness, "unattested", GUEST_BINARY, r#"{"memoryMib": 64}"#);
+
+        assert_eq!(status, 403, "{body}");
+        assert!(body.contains("refusing to evolve sandbox 'unattested': the configuration carries no attestation"), "{body}");
+        assert!(harness.factory.specs.lock().unwrap().is_empty(), "nothing may be built from an unattested image");
+        let (status, _) = post(&format!("{}/invoke/unattested", harness.admin_base), b"{}");
+        assert_eq!(status, 409, "the sandbox was never evolved");
+    }
+
+    #[test]
+    fn an_evolve_whose_binary_is_not_the_attested_one_boots_nothing() {
+        let harness = start(FakeFactory::new(FakeBehaviour::EchoOverHttp));
+
+        // A valid attestation for the real guest, staged around a different binary.
+        let (status, body) = deploy_image(&harness, "swapped", b"\x7fELF-swapped-guest", &attested_configuration(&harness, GUEST_BINARY));
+
+        assert_eq!(status, 403, "{body}");
+        assert!(body.contains("digests to") && body.contains("but the attestation names"), "{body}");
+        assert!(harness.factory.specs.lock().unwrap().is_empty(), "nothing may be built from a swapped image");
+    }
+
+    #[test]
+    fn an_evolve_signed_by_a_key_the_sidecar_does_not_trust_boots_nothing() {
+        let harness = start(FakeFactory::new(FakeBehaviour::EchoOverHttp));
+        let attestation = attestation_for(GUEST_BINARY);
+        let forged = TestSigner::p256("release-2026").sign(&attestation);
+        let configuration = format!(
+            r#"{{"attestation": "{}", "signature": {{"algorithm": "{}", "keyId": "{}", "value": "{}"}}}}"#,
+            base64::engine::general_purpose::STANDARD.encode(&attestation),
+            forged.algorithm,
+            forged.key_id,
+            forged.value
+        );
+
+        let (status, body) = deploy_image(&harness, "forged", GUEST_BINARY, &configuration);
+
+        assert_eq!(status, 403, "{body}");
+        assert!(body.contains("does not verify under key id 'release-2026'"), "{body}");
+        assert!(harness.factory.specs.lock().unwrap().is_empty(), "nothing may be built from a forged attestation");
     }
 
     #[test]
@@ -963,10 +1072,16 @@ mod tests {
     }
 
     #[test]
-    fn a_short_admin_token_is_refused_at_construction() {
+    fn a_short_admin_token_and_an_empty_trust_store_are_refused_at_construction() {
         let addresses = SidecarAddresses { admin_advertise: "127.0.0.1:1".into(), guest_advertise: "127.0.0.1:2".into() };
         let factory = Arc::new(FakeFactory::new(FakeBehaviour::EchoOverHttp)) as Arc<dyn VmFactory>;
-        assert!(Sidecar::new(addresses, factory, "short".into()).is_err());
+        let trust = trust_store(&TestSigner::p256("release-2026"));
+
+        let short = Sidecar::new(addresses.clone(), Arc::clone(&factory), "short".into(), trust.clone()).err().expect("refused");
+        assert!(short.to_string().contains("admin token must be at least"), "{short}");
+
+        let untrusting = Sidecar::new(addresses, factory, ADMIN_TOKEN.into(), TrustStore::new()).err().expect("refused");
+        assert!(untrusting.to_string().contains("at least one trusted attestation key is required"), "{untrusting}");
     }
 
     #[test]

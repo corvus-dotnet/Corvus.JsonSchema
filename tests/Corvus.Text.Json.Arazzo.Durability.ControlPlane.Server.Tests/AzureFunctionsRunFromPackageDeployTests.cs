@@ -77,7 +77,7 @@ public sealed class AzureFunctionsRunFromPackageDeployTests
 
             // 3. Deploy: the production deployer uploads the package to Azurite and records the run-from-package URL.
             ServerlessDeployResult result = await deployer.DeployAsync(
-                new ServerlessDeployRequest("serverless-check", 1, "isolated", "linux-x64", appZip),
+                new ServerlessDeployRequest("serverless-check", 1, "isolated", "linux-x64", appZip, AttestationUtf8: default, SignatureUtf8: default),
                 default);
             result.Succeeded.ShouldBeTrue(result.Log);
             result.FunctionUrl.ShouldBe("https://arazzo-fn-serverless-check.example.net/api/invoke");

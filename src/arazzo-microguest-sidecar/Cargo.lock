@@ -87,8 +87,10 @@ name = "arazzo-microguest-sidecar"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "base64",
  "clap",
  "hyperlight-unikraft",
+ "ring",
  "serde",
  "serde_json",
  "tiny_http",

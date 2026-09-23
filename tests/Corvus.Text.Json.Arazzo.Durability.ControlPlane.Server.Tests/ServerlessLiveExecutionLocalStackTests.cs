@@ -79,7 +79,7 @@ public sealed class ServerlessLiveExecutionLocalStackTests
             // 3. Deploy the real binary with the production deployer (CreateFunction on provided.al2023, wait for Active).
             var deployer = new LambdaServerlessDeployer(client, new LambdaDeployerOptions { ExecutionRoleArn = "arn:aws:iam::000000000000:role/lambda-role", FunctionEnvironment = new Dictionary<string, string>(StringComparer.Ordinal) { [ServerlessCheckpointOrigins.SettingName] = "https://runner.example/" } });
             ServerlessDeployResult deploy = await deployer.DeployAsync(
-                new ServerlessDeployRequest("serverless-check", 1, "isolated", "linux-x64", nativeBinary),
+                new ServerlessDeployRequest("serverless-check", 1, "isolated", "linux-x64", nativeBinary, AttestationUtf8: default, SignatureUtf8: default),
                 default);
             deploy.Succeeded.ShouldBeTrue(deploy.Log);
 
@@ -192,7 +192,7 @@ public sealed class ServerlessLiveExecutionLocalStackTests
                     },
                 });
                 ServerlessDeployResult deploy = await deployer.DeployAsync(
-                    new ServerlessDeployRequest("serverless-check", 1, "isolated", "linux-x64", nativeBinary),
+                    new ServerlessDeployRequest("serverless-check", 1, "isolated", "linux-x64", nativeBinary, AttestationUtf8: default, SignatureUtf8: default),
                     default);
                 deploy.Succeeded.ShouldBeTrue(deploy.Log);
 

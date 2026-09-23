@@ -109,9 +109,9 @@ public sealed class WorkflowAotBuildService
     /// <param name="package">The version's package, carrying the native binary and its attestation.</param>
     /// <param name="runtimeIdentifier">The runtime target being deployed.</param>
     /// <param name="verifier">The trust store the deploy verifies the attestation against.</param>
-    /// <returns>The verified attestation.</returns>
+    /// <returns>The verified artifact: the parsed attestation with the binary, attestation and signature bytes it was verified from.</returns>
     /// <exception cref="WorkflowAotBuildException">The native binary or attestation is missing or malformed, the digest, target, or version does not match, or the signature does not verify.</exception>
-    public static NativeArtifactAttestation VerifyNativeArtifact(ReadOnlyMemory<byte> package, string runtimeIdentifier, IExecutorPackageVerifier verifier)
+    public static VerifiedNativeArtifact VerifyNativeArtifact(ReadOnlyMemory<byte> package, string runtimeIdentifier, IExecutorPackageVerifier verifier)
     {
         ArgumentException.ThrowIfNullOrEmpty(runtimeIdentifier);
         ArgumentNullException.ThrowIfNull(verifier);
@@ -168,7 +168,7 @@ public sealed class WorkflowAotBuildService
             ThrowHelper.ThrowNativeSignatureUntrusted();
         }
 
-        return attestation;
+        return new VerifiedNativeArtifact(attestation, nativeBinary, attestationManifest, signatureUtf8);
     }
 
     // The trust chain (mirrors WorkflowExecutorLoader's load-time verification, applied before an AOT compile instead of a

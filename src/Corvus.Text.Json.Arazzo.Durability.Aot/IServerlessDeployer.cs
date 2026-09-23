@@ -24,20 +24,26 @@ public interface IServerlessDeployer
 
 /// <summary>
 /// A request to deploy a version's native binary to a function platform for one target (ADR 0055). The binary has
-/// already been verified against the trust store by the caller (<see cref="WorkflowDeployService"/>), so a deployer
-/// hands it to the platform without re-verifying.
+/// already been verified against the trust store by the caller (<see cref="WorkflowDeployService"/>), so a cloud
+/// deployer hands it to the platform without re-verifying. The attestation and its signature ride with the binary
+/// for a platform that verifies for itself: the micro-guest sidecar boots only an image whose attestation verifies
+/// under its own trust store (ADR 0063, ADR 0065).
 /// </summary>
 /// <param name="BaseWorkflowId">The base workflow id whose version is being deployed.</param>
 /// <param name="VersionNumber">The version number being deployed.</param>
 /// <param name="Environment">The target environment the function serves (per-(env, version) baked).</param>
 /// <param name="RuntimeIdentifier">The .NET runtime identifier the native binary targets (e.g. <c>linux-x64</c>).</param>
 /// <param name="NativeBinary">The verified native binary bytes to deploy.</param>
+/// <param name="AttestationUtf8">The native attestation's exact UTF-8 bytes, the message its signature is over (<see cref="Corvus.Text.Json.Arazzo.Execution.NativeArtifactAttestation"/>).</param>
+/// <param name="SignatureUtf8">The detached signature over <paramref name="AttestationUtf8"/> in its UTF-8 JSON form (<see cref="Corvus.Text.Json.Arazzo.Execution.ExecutorPackageSignature"/>).</param>
 public readonly record struct ServerlessDeployRequest(
     string BaseWorkflowId,
     int VersionNumber,
     string Environment,
     string RuntimeIdentifier,
-    ReadOnlyMemory<byte> NativeBinary);
+    ReadOnlyMemory<byte> NativeBinary,
+    ReadOnlyMemory<byte> AttestationUtf8,
+    ReadOnlyMemory<byte> SignatureUtf8);
 
 /// <summary>The outcome of a serverless deploy.</summary>
 /// <param name="Succeeded">Whether the deploy produced a live function.</param>

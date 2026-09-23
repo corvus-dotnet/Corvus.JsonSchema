@@ -64,7 +64,7 @@ public sealed class LambdaServerlessDeployerLocalStackTests
         // CreateFunction stores the function without executing it, so a non-executable placeholder bootstrap proves the
         // control-plane deploy sequence (a real bootstrap's execution is a separate proof).
         ServerlessDeployResult result = await Deployer().DeployAsync(
-            new ServerlessDeployRequest("flow", 1, "production", "linux-x64", new byte[] { 0x7F, (byte)'E', (byte)'L', (byte)'F', 1, 2, 3 }),
+            new ServerlessDeployRequest("flow", 1, "production", "linux-x64", new byte[] { 0x7F, (byte)'E', (byte)'L', (byte)'F', 1, 2, 3 }, AttestationUtf8: default, SignatureUtf8: default),
             default);
 
         result.Succeeded.ShouldBeTrue(result.Log);

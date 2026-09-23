@@ -10,10 +10,11 @@ namespace Corvus.Text.Json.Arazzo.Durability.Aot;
 /// The runner-side deploy service that verifies a version's signed native binary and hands it to a function platform
 /// (ADR 0055, ADR 0059). The runner is the secure boundary: it holds the environment's credentials, and the control
 /// plane holds no user cloud secrets, so this runs runner-side. The service verifies the native binary's attestation
-/// against the trust store before the binary enters the user's cloud account, reads the verified binary from the
-/// package, and deploys it with the target's <see cref="IServerlessDeployer"/>, returning the deployed function's invoke
-/// URL. It does not write the deployment record; the runner's deploy worker records the outcome into the
-/// <c>WorkflowDeployment</c> store, and the control-plane dispatch gate reads it.
+/// against the trust store before the binary enters the user's cloud account, and deploys the verified binary, with
+/// its attestation and signature for a platform that verifies for itself, through the target's
+/// <see cref="IServerlessDeployer"/>, returning the deployed function's invoke URL. It does not write the deployment
+/// record; the runner's deploy worker records the outcome into the <c>WorkflowDeployment</c> store, and the
+/// control-plane dispatch gate reads it.
 /// </summary>
 public sealed class WorkflowDeployService
 {
@@ -55,17 +56,18 @@ public sealed class WorkflowDeployService
 
         // Verify the native binary's attestation before it enters the user's cloud account (ADR 0059): the digest,
         // target, and version bind must match and the signature must verify against the trust store. A bad binary
-        // throws, so the runner never deploys an unverified or swapped binary.
-        WorkflowAotBuildService.VerifyNativeArtifact(package, runtimeIdentifier, this.verifier);
+        // throws, so the runner never deploys an unverified or swapped binary. The deploy carries exactly the bytes
+        // that were verified, so a platform that checks for itself (the micro-guest sidecar) sees the same evidence.
+        VerifiedNativeArtifact verified = WorkflowAotBuildService.VerifyNativeArtifact(package, runtimeIdentifier, this.verifier);
 
-        // Read the verified binary. Verification above guarantees it is present, so this cannot fail; the guard keeps
-        // the compiler's definite-assignment happy and documents the invariant.
-        if (!WorkflowPackage.TryReadNativeArtifact(package, runtimeIdentifier, out ReadOnlyMemory<byte> nativeBinary) || nativeBinary.IsEmpty)
-        {
-            ThrowHelper.ThrowNoNativeBinary(runtimeIdentifier);
-        }
-
-        var request = new ServerlessDeployRequest(baseWorkflowId, versionNumber, environment, runtimeIdentifier, nativeBinary);
+        var request = new ServerlessDeployRequest(
+            baseWorkflowId,
+            versionNumber,
+            environment,
+            runtimeIdentifier,
+            verified.NativeBinary,
+            verified.AttestationUtf8,
+            verified.SignatureUtf8);
         ServerlessDeployResult result = await this.deployer.DeployAsync(request, cancellationToken).ConfigureAwait(false);
         return result.Succeeded
             ? WorkflowDeployOutcome.Success(runtimeIdentifier, result.FunctionUrl, result.Log)

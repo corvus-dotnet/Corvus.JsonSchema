@@ -28,6 +28,12 @@ struct Args {
     #[arg(long, env = "ARAZZO_SIDECAR_ADMIN_TOKEN", hide_env_values = true)]
     admin_token: String,
 
+    /// A trusted attestation-signing public key, as `<keyId>=<path to a PUBLIC KEY PEM>`; repeatable, and
+    /// `;`-separated in the environment. Required: the sidecar boots only an initrd whose native attestation
+    /// verifies under one of these keys (P1-10). Trust two ids to roll a key over.
+    #[arg(long = "trusted-key", env = "ARAZZO_SIDECAR_TRUSTED_KEYS", value_delimiter = ';', required = true, value_name = "KEY_ID=PATH")]
+    trusted_keys: Vec<String>,
+
     /// The guest surface bind. The guest's host-proxied network denies loopback, so this must be reachable on
     /// a routable address.
     #[arg(long, env = "ARAZZO_SIDECAR_GUEST_BIND", default_value = "0.0.0.0:9412")]
@@ -56,7 +62,8 @@ fn main() -> anyhow::Result<()> {
         admin_advertise: args.admin_advertise.clone().unwrap_or_else(|| args.admin_bind.clone()),
         guest_advertise: args.guest_advertise.clone(),
     };
-    let sidecar = Arc::new(arazzo_microguest_sidecar::Sidecar::new(addresses, factory, args.admin_token.clone())?);
+    let trust = trust_store(&args.trusted_keys)?;
+    let sidecar = Arc::new(arazzo_microguest_sidecar::Sidecar::new(addresses, factory, args.admin_token.clone(), trust)?);
 
     let admin = Arc::new(
         tiny_http::Server::http(args.admin_bind.as_str())
@@ -68,8 +75,12 @@ fn main() -> anyhow::Result<()> {
     );
 
     eprintln!(
-        "arazzo-microguest-sidecar: admin on {}, guest surface on {} (advertised {}), kernel {:?}",
-        args.admin_bind, args.guest_bind, args.guest_advertise, args.kernel
+        "arazzo-microguest-sidecar: admin on {}, guest surface on {} (advertised {}), kernel {:?}, trusting {} attestation key(s)",
+        args.admin_bind,
+        args.guest_bind,
+        args.guest_advertise,
+        args.kernel,
+        args.trusted_keys.len()
     );
 
     let stopping = Arc::new(AtomicBool::new(false));
@@ -93,6 +104,20 @@ fn main() -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+/// Reads each `<keyId>=<path>` into the trust store; a malformed entry or an unreadable, non-public-key file
+/// is a start-up error.
+fn trust_store(entries: &[String]) -> anyhow::Result<arazzo_microguest_sidecar::attestation::TrustStore> {
+    let mut trust = arazzo_microguest_sidecar::attestation::TrustStore::new();
+    for entry in entries {
+        let Some((key_id, path)) = entry.split_once('=') else {
+            anyhow::bail!("--trusted-key takes <keyId>=<path>, got '{entry}'");
+        };
+        let pem = std::fs::read_to_string(path).map_err(|error| anyhow::anyhow!("reading the trusted key '{key_id}' from {path}: {error}"))?;
+        trust.add_pem(key_id, &pem)?;
+    }
+    Ok(trust)
 }
 
 #[cfg(feature = "hyperlight")]

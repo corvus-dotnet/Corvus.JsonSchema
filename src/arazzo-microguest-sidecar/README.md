@@ -9,13 +9,17 @@ The **admin surface** (default `127.0.0.1:9411`, keep it loopback) is what the r
 | Request | Effect |
 | --- | --- |
 | `PUT /sandboxes/{id}/initrd` | Stages the guest initrd CPIO the deployer baked. |
-| `PUT /sandboxes/{id}` | Evolves the sandbox from the staged initrd (`{"memoryMib", "allowedHosts", "environment"}`), freezing the guest-surface URL and the environment pairs into argv, and returns `{"invokeUrl"}`. Re-PUT replaces the sandbox. |
+| `PUT /sandboxes/{id}` | Verifies the staged initrd against the attestation the document carries (`{"memoryMib", "allowedHosts", "environment", "attestation", "signature"}`), then evolves the sandbox from it, freezing the guest-surface URL and the environment pairs into argv, and returns `{"invokeUrl"}`. Re-PUT replaces the sandbox. A document whose attestation does not verify is a 403 and nothing is built. |
 | `POST /invoke/{id}` | One run advance: holds the invocation for the guest, restores the snapshot, runs the guest, and returns the outcome the guest posted — the same invocation/outcome contract a deployed cloud function speaks. |
 | `DELETE /sandboxes/{id}` | Tears the sandbox down. |
 
 The **guest surface** (default bind `0.0.0.0:9412`, advertised via `--guest-advertise`) is what the running guest reaches over its allowlisted host-proxied network: `GET /guest/{id}` hands it its invocation, `POST /guest/{id}` receives its outcome. It must be a routable address; the guest's network denies loopback by design. The sidecar adds its own guest host to every sandbox's egress allowlist, and strips the `:port` suffixes from the deployer's `allowedHosts` entries (the policy layer matches by host/IP). The surface answers only the sandbox whose guest token the request carries: the sidecar mints a random token per sandbox at evolve, freezes it into the sandbox's argv as `ARAZZO_GUEST_TOKEN`, and refuses a fetch or an outcome without it, so no other peer on the routable bind can read the checkpoint token an invocation carries or forge an outcome (P1-10).
 
 Each sandbox lives on a dedicated owner thread (the VM never crosses threads), so invocations serialize per sandbox by construction; distinct sandboxes advance concurrently.
+
+## What the sidecar boots
+
+The sidecar does not take the runner's word for what is in an initrd (ADR 0065). It starts only with at least one trusted attestation-signing public key (`--trusted-key <keyId>=<path>`, repeatable, or `ARAZZO_SIDECAR_TRUSTED_KEYS` as a `;`-separated list; `-----BEGIN PUBLIC KEY-----` PEM, ECDSA P-256, P-384 or RSA), and an evolve carries the control plane's native attestation for the guest binary as `attestation` (base64 of its exact signed bytes) and its detached `signature` (`{"algorithm", "keyId", "value"}`, the executor-package scheme: `ecdsa-p256-sha256`, `ecdsa-p384-sha384`, `rsa-pss-sha256`). Before anything is minted or built the signature must verify under the key id it names, the attestation must parse, and the one regular file in the newc CPIO must digest to the attestation's `nativeDigest`. Any miss is a 403 naming the reason, and the sandbox is not evolved. The keys are the same public halves the runner's own trust store holds; trusting two ids rolls a signing key over. What the sidecar cannot check is the attestation's `packageHash`, since it has no package: the binding of a binary to a catalog version stays on the runner's deploy path, and the sidecar's guarantee is that the binary it boots is one a trusted key attested.
 
 ## Building and running
 
@@ -25,7 +29,8 @@ Each sandbox lives on a dedicated owner thread (the VM never crosses threads), s
 arazzo-microguest-sidecar \
   --kernel kernel/.unikraft/build/arazzo-microguest_hyperlight-x86_64 \
   --guest-advertise 172.20.0.10:9412 \
-  --admin-token "$(cat /run/secrets/arazzo-sidecar-admin-token)"
+  --admin-token "$(cat /run/secrets/arazzo-sidecar-admin-token)" \
+  --trusted-key arazzo-executor-signing=/etc/arazzo/executor-signing.pub.pem
 ```
 
 The host needs a hypervisor (`/dev/kvm` on Linux). `cargo test --no-default-features` runs the full HTTP and lifecycle suite without KVM or the hyperlight dependency: the real VM sits behind the `VmFactory` seam, and the tests' stand-in guest speaks the same HTTP contract the baked guest does.

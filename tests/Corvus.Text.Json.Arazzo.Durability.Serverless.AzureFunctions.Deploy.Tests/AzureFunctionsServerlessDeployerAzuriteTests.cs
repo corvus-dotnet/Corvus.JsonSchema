@@ -70,7 +70,7 @@ public sealed class AzureFunctionsServerlessDeployerAzuriteTests
             package[i] = (byte)((i * 31) + 7);
         }
 
-        var request = new ServerlessDeployRequest("check", 1, "isolated", "linux-x64", package);
+        var request = new ServerlessDeployRequest("check", 1, "isolated", "linux-x64", package, AttestationUtf8: default, SignatureUtf8: default);
         ServerlessDeployResult result = await deployer.DeployAsync(request, default);
 
         result.Succeeded.ShouldBeTrue(result.Log);
@@ -108,7 +108,7 @@ public sealed class AzureFunctionsServerlessDeployerAzuriteTests
             new FixedSecretResolver("the-invoke-key"),
             new AzureFunctionsDeployerOptions { InvokeAuthorization = new AzureFunctionsInvokeAuthorization { InvokeKey = SecretRef.Parse("env://ARAZZO_INVOKE_KEY"), EntraAudience = "api://arazzo-functions" }, FunctionAppSettings = new Dictionary<string, string> { [ServerlessCheckpointOrigins.SettingName] = "https://runner.example/" } });
 
-        ServerlessDeployResult result = await deployer.DeployAsync(new ServerlessDeployRequest("check", 1, "isolated", "linux-x64", new byte[16]), default);
+        ServerlessDeployResult result = await deployer.DeployAsync(new ServerlessDeployRequest("check", 1, "isolated", "linux-x64", new byte[16], AttestationUtf8: default, SignatureUtf8: default), default);
 
         result.Succeeded.ShouldBeFalse();
         result.FunctionUrl.ShouldBeEmpty();

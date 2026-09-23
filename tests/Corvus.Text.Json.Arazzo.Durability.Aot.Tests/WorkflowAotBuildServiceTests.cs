@@ -58,7 +58,9 @@ public sealed class WorkflowAotBuildServiceTests
         WorkflowPackage.TryReadNativeArtifact(outcome.Package, "linux-x64", out ReadOnlyMemory<byte> attached).ShouldBeTrue();
         attached.ToArray().ShouldBe(Native);
 
-        NativeArtifactAttestation attestation = WorkflowAotBuildService.VerifyNativeArtifact(outcome.Package, "linux-x64", verifier);
+        VerifiedNativeArtifact verified = WorkflowAotBuildService.VerifyNativeArtifact(outcome.Package, "linux-x64", verifier);
+        NativeArtifactAttestation attestation = verified.Attestation;
+        verified.NativeBinary.ToArray().ShouldBe(Native);
         attestation.RuntimeIdentifier.ShouldBe("linux-x64");
         attestation.NativeDigest.ShouldBe(NativeArtifactAttestation.ComputeDigest(Native));
         attestation.PackageHash.ShouldBe(CatalogPackage.HashCanonical(package));
@@ -219,11 +221,15 @@ public sealed class WorkflowAotBuildServiceTests
         outcome.Succeeded.ShouldBeTrue(outcome.Log);
         outcome.FunctionUrl.ShouldBe("https://fn.example/invoke");
 
-        // The verified native binary was handed to the deployer for the requested target.
+        // The verified native binary was handed to the deployer for the requested target, with the attestation and
+        // signature exactly as the package carries them, for a platform that verifies for itself (the micro-guest sidecar).
         deployer.Received.ShouldNotBeNull();
         deployer.Received!.Value.BaseWorkflowId.ShouldBe("flow");
         deployer.Received!.Value.Environment.ShouldBe("production");
         deployer.Received!.Value.RuntimeIdentifier.ShouldBe("linux-x64");
+        WorkflowPackage.TryReadNativeAttestation(build.Package, "linux-x64", out ReadOnlyMemory<byte> attestationUtf8, out ReadOnlyMemory<byte> signatureUtf8).ShouldBeTrue();
+        deployer.Received!.Value.AttestationUtf8.ToArray().ShouldBe(attestationUtf8.ToArray());
+        deployer.Received!.Value.SignatureUtf8.ToArray().ShouldBe(signatureUtf8.ToArray());
         deployer.Received!.Value.NativeBinary.ToArray().ShouldBe(Native);
     }
 

@@ -69,7 +69,7 @@ public sealed class NativeBuildWorkerTests
         catalog.Persisted.ShouldNotBeNull();
         WorkflowPackage.TryReadNativeArtifact(catalog.Persisted!.Value, "linux-x64", out ReadOnlyMemory<byte> attached).ShouldBeTrue();
         attached.ToArray().ShouldBe(Native);
-        NativeArtifactAttestation attestation = WorkflowAotBuildService.VerifyNativeArtifact(catalog.Persisted.Value, "linux-x64", verifier);
+        NativeArtifactAttestation attestation = WorkflowAotBuildService.VerifyNativeArtifact(catalog.Persisted.Value, "linux-x64", verifier).Attestation;
         attestation.NativeDigest.ShouldBe(NativeArtifactAttestation.ComputeDigest(Native));
     }
 

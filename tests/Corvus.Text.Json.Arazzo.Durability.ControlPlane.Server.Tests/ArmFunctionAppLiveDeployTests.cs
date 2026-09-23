@@ -59,7 +59,7 @@ public sealed class ArmFunctionAppLiveDeployTests
         string id = Guid.NewGuid().ToString("n")[..10];
         string storageAccount = $"arz{id}";
         string appPrefix = $"arz{id}";
-        var request = new ServerlessDeployRequest("serverless-check", 1, "isolated", "linux-x64", ReadOnlyMemory<byte>.Empty);
+        var request = new ServerlessDeployRequest("serverless-check", 1, "isolated", "linux-x64", ReadOnlyMemory<byte>.Empty, AttestationUtf8: default, SignatureUtf8: default);
         string appName = ArmFunctionAppConfigurator.AppName(request, appPrefix);
 
         // Build the real app package BEFORE provisioning, so a build failure leaves no Azure resources behind.
@@ -152,7 +152,7 @@ public sealed class ArmFunctionAppLiveDeployTests
         string id = Guid.NewGuid().ToString("n")[..10];
         string storageAccount = $"arz{id}";
         string appPrefix = $"arz{id}";
-        var request = new ServerlessDeployRequest("serverless-check", 1, "isolated", "linux-x64", ReadOnlyMemory<byte>.Empty);
+        var request = new ServerlessDeployRequest("serverless-check", 1, "isolated", "linux-x64", ReadOnlyMemory<byte>.Empty, AttestationUtf8: default, SignatureUtf8: default);
         string appName = ArmFunctionAppConfigurator.AppName(request, appPrefix);
 
         // Build the real app package BEFORE provisioning, so a build failure leaves no Azure resources behind.
