@@ -241,4 +241,11 @@ public static class ArazzoTelemetry
     /// </summary>
     public static Counter<long> Authentications { get; } =
         Meter.CreateCounter<long>("corvus.arazzo.authentications", "{authentication}", "Authentications, by scheme, outcome and failure reason");
+
+    /// <summary>
+    /// Gets the counter for runners pruned from the registry because their heartbeat went stale (ADR 0029). A rising
+    /// rate is a fleet that is dying or a network that is losing heartbeats.
+    /// </summary>
+    public static Counter<long> RunnersPruned { get; } =
+        Meter.CreateCounter<long>("corvus.arazzo.runners.pruned", "{runner}", "Runners pruned for a stale heartbeat");
 }

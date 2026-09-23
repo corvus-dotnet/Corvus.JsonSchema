@@ -568,6 +568,10 @@ if (requireAuthorization)
     // Every replica refreshes the shared policy within the refresh bound (5 s by default), so a grant revoked through
     // one replica stops on all of them; a secured control plane refuses to map the policy without this (P1-14).
     builder.Services.AddArazzoRowSecurityPolicyRefresh(entitlements);
+
+    // A runner that stops heartbeating is pruned after three missed heartbeats, so it stops satisfying the hosting gates
+    // that would otherwise keep offering it work (ADR 0029, P1-12); each prune is audited and counted.
+    builder.Services.AddArazzoRunnerRegistryPrune(runners, auditor);
     builder.Services.AddArazzoControlPlaneAuthorization();
     builder.Services.AddArazzoAuthenticationTelemetry();
 

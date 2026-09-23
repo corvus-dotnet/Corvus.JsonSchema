@@ -463,6 +463,8 @@ item you cannot see directly in the code.
 - **Divergence:** ADR 0029's liveness path implies stale runners are reaped. Nothing invokes it, so dead runners persist and keep satisfying the fail-closed `IsVersionHostedAsync`, `IsDraftRunsHostedAsync` and `IsSchedulingHostedAsync` gates.
 - **Acceptance criteria:** call it from a hosted service on a configured interval; emit a counter and an audit event on prune; act on `HeartbeatAsync` returning `false`, the runner-unknown desync signal that is currently ignored.
 
+> **Resolved 2026-09-23.** `RunnerRegistryPruneService` sweeps the registry every 15 seconds and prunes a runner unheard for 45 seconds (three missed heartbeats), both configurable through `AddArazzoRunnerRegistryPrune`; each pruned runner is an audit mutation (`runner.prune`) and the `corvus.arazzo.runners.pruned` counter rises. The runner already re-registers when its heartbeat answers unknown. A test proves a stale runner stops satisfying the hosting gate within the window and keeps satisfying it with the sweep removed.
+
 ### P1-13 · DIV · `TB-2` · Empty administrator identity administers everything
 - **Where:** `SecurityTagSet.cs:484-489`; `SecuredWorkflowCatalog.cs:530-553, 578-586`; `WorkflowIdentity.cs:50-64`
 - **Divergence:** ADR 0007 says an administrator identity cannot be squatted once established. `IsSubsetOf` returns `true` for an empty left set and the implicit version-1 path has no guard, though the explicit API paths do (`ArazzoControlPlaneAdministratorsHandler.cs:142, 336`; `ArazzoControlPlaneEnvironmentsHandler.cs:228`). The first mutation then *persists* the empty identity as sole administrator.
