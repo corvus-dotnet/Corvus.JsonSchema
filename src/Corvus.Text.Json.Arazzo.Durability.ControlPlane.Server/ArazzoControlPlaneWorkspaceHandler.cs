@@ -1766,7 +1766,7 @@ public sealed class ArazzoControlPlaneWorkspaceHandler : IApiWorkspaceHandler, I
     /// persisted pause, advances it, and persists the trace; the UI polls <c>get-debug-run</c> for the new state.</summary>
     private async ValueTask MarkResumeClaimableAsync(WorkflowRunAddress address, WorkflowPauseConfig? pause, CancellationToken cancellationToken)
     {
-        using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.workflowStateStore!, address, this.timeProvider, cancellationToken).ConfigureAwait(false);
+        using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.workflowStateStore!, address, this.timeProvider, cancellationToken: cancellationToken).ConfigureAwait(false);
         if (run is null)
         {
             return;

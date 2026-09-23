@@ -121,7 +121,7 @@ public sealed class WorkflowCheckpointEndpointsTests
         HttpResponseMessage posted = await host.PostCheckpointAsync(Run.Value, checkpoint, sequence: 1);
 
         posted.StatusCode.ShouldBe(HttpStatusCode.NoContent);
-        (await host.Store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(checkpoint);
+        (await host.Store.LoadAsync(Address, default))!.Value.Row.ToArray().ShouldBe(checkpoint);
 
         HttpResponseMessage got = await host.GetCheckpointAsync(Run.Value);
         got.Headers.GetValues(SeqHeader).Single().ShouldBe("1");
@@ -144,7 +144,7 @@ public sealed class WorkflowCheckpointEndpointsTests
         refused.StatusCode.ShouldBe(HttpStatusCode.Conflict);
         refused.Headers.GetValues(SeqHeader).Single().ShouldBe("2");
         (await refused.Content.ReadAsStringAsync()).ShouldContain("\"acceptedSequence\":2");
-        (await host.Store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(first);
+        (await host.Store.LoadAsync(Address, default))!.Value.Row.ToArray().ShouldBe(first);
     }
 
     [TestMethod]
@@ -249,7 +249,7 @@ public sealed class WorkflowCheckpointEndpointsTests
         // The function loads the run, advances it, and checks a new checkpoint in.
         WorkflowCheckpoint? loaded = await functionStore.LoadAsync(Address, default);
         loaded.ShouldNotBeNull();
-        loaded!.Value.Utf8.ToArray().ShouldBe(initial);
+        loaded!.Value.Row.ToArray().ShouldBe(initial);
 
         // The advance carries the NEXT sequence. In production WorkflowRun seeds its series from the checkpoint it
         // loaded and increments, so this is what a real function sends; the server accepts only persisted plus one, so
@@ -260,8 +260,8 @@ public sealed class WorkflowCheckpointEndpointsTests
 
         // The runner terminated the fire-and-forget save into the store, re-projecting the index from the bytes.
         WorkflowCheckpoint stored = (await host.Store.LoadAsync(Address, default))!.Value;
-        stored.Utf8.ToArray().ShouldBe(advanced);
-        WorkflowCheckpointSerializer.ProjectIndex(stored.Utf8).Status.ShouldBe(WorkflowRunStatus.Completed);
+        stored.Row.ToArray().ShouldBe(advanced);
+        WorkflowCheckpointSerializer.ProjectIndex(stored.Row).Status.ShouldBe(WorkflowRunStatus.Completed);
     }
 
     private static byte[] RealCheckpoint(WorkflowRunStatus status, int cursor = 0, long sequence = 1)
@@ -269,19 +269,30 @@ public sealed class WorkflowCheckpointEndpointsTests
         using PooledUtf8Map<int> retryCounters = PooledUtf8Map<int>.Rent(0);
         using PooledUtf8Map<JsonElement> stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
         return WorkflowCheckpointSerializer.Serialize(
-            Run,
-            "petWorkflow",
-            status,
-            cursor,
-            sequence,
-            new DateTimeOffset(2026, 3, 4, 5, 6, 7, TimeSpan.Zero),
+            new CheckpointEnvelope(
+                Run,
+                Env,
+                "petWorkflow",
+                status,
+                cursor,
+                sequence,
+                Epoch: null,
+                new DateTimeOffset(2026, 3, 4, 5, 6, 7, TimeSpan.Zero),
+                new DateTimeOffset(2026, 3, 4, 5, 10, 0, TimeSpan.Zero),
+                null,
+                null,
+                default,
+                default,
+                [],
+                false,
+                null,
+                null),
             retryCounters,
             new Dictionary<string, byte[]>(),
-            inputs: default,
+            default,
             stepOutputs,
-            outputs: default,
-            environment: Env,
-            updatedAt: new DateTimeOffset(2026, 3, 4, 5, 10, 0, TimeSpan.Zero));
+            default,
+            []);
     }
 
     // A real checkpoint with its "sequence" property removed, for the omission repro. Asserts the strip actually

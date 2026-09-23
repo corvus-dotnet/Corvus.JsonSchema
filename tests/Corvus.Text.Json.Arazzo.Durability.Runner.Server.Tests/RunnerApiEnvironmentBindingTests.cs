@@ -55,7 +55,7 @@ public sealed class RunnerApiEnvironmentBindingTests
         string lease = await host.PlantLeaseAsync(ProdRunId, Production);
 
         (await host.LoadCheckpointAsync(Runner, Production, ProdRunId, lease)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
-        (await host.SaveCheckpointAsync(Runner, Production, ProdRunId, lease, Checkpoint(ProdRunId, Production, WorkflowRunStatus.Running, sequence: 2), 2)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await host.SaveCheckpointAsync(Runner, Production, ProdRunId, lease, Checkpoint(ProdRunId, Production, WorkflowRunStatus.Running, sequence: 2, epoch: LeaseEpoch(lease)), 2)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
         (await host.RenewLeaseAsync(Runner, Production, ProdRunId, lease, 300)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
 
@@ -88,24 +88,40 @@ public sealed class RunnerApiEnvironmentBindingTests
         (await host.RenewLeaseAsync(Runner, Development, DevRunId, lease, 300)).StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
-    private static byte[] Checkpoint(string runId, string environment, WorkflowRunStatus status, long sequence)
+    // The epoch the lease was granted with: the runner writes it into its region, and the API checks it against the
+    // grant (ADR 0065 decision 6).
+    private static long LeaseEpoch(string lease)
+        => RunnerLeaseToken.TryParse(lease, out long epoch, out _) ? epoch : 0;
+
+    private static byte[] Checkpoint(string runId, string environment, WorkflowRunStatus status, long sequence, long? epoch = null)
     {
         using PooledUtf8Map<int> retryCounters = PooledUtf8Map<int>.Rent(0);
         using PooledUtf8Map<JsonElement> stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
         return WorkflowCheckpointSerializer.Serialize(
-            new WorkflowRunId(runId),
-            Version,
-            status,
-            cursor: 0,
-            sequence,
-            T0,
+            new CheckpointEnvelope(
+                new WorkflowRunId(runId),
+                environment,
+                Version,
+                status,
+                0,
+                sequence,
+                Epoch: epoch,
+                T0,
+                T0,
+                null,
+                null,
+                default,
+                default,
+                [],
+                false,
+                null,
+                null),
             retryCounters,
             new Dictionary<string, byte[]>(),
-            inputs: default,
+            default,
             stepOutputs,
-            outputs: default,
-            environment: environment,
-            updatedAt: T0);
+            default,
+            []);
     }
 
     private sealed class TestClock(DateTimeOffset now) : TimeProvider

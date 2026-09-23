@@ -26,7 +26,7 @@ public interface IWorkflowCheckpointStore
     /// Creates or updates a run's checkpoint under optimistic concurrency.
     /// </summary>
     /// <param name="address">The run's <c>(environment, runId)</c> address.</param>
-    /// <param name="checkpointUtf8">The opaque serialized checkpoint document (UTF-8 JSON).</param>
+    /// <param name="checkpointRow">The opaque serialized checkpoint document (UTF-8 JSON).</param>
     /// <param name="index">The projected fields to index alongside the bytes.</param>
     /// <param name="expected">
     /// The etag the caller last read; pass <see cref="WorkflowEtag.None"/> to create a run that must not yet
@@ -39,7 +39,7 @@ public interface IWorkflowCheckpointStore
     /// is invisible here, so neither collision branch is an existence oracle over another tenant's runs.</exception>
     ValueTask<WorkflowEtag> SaveAsync(
         WorkflowRunAddress address,
-        ReadOnlyMemory<byte> checkpointUtf8,
+        ReadOnlyMemory<byte> checkpointRow,
         in WorkflowRunIndexEntry index,
         WorkflowEtag expected,
         CancellationToken cancellationToken);

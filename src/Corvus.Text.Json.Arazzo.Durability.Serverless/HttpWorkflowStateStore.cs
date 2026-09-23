@@ -77,16 +77,16 @@ public sealed class HttpWorkflowStateStore : IWorkflowCheckpointStore, IWorkflow
     }
 
     /// <inheritdoc/>
-    public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+    public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointRow, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
     {
         // The runner re-projects the index from the bytes, so only the bytes and the write-sequence go over the wire.
         // The sequence comes from the document the run authored — one series, one author. Reading it is a forward-only
         // scan that stops at the property rather than a parse of the whole checkpoint.
-        WorkflowCheckpointSerializer.TryReadSequence(checkpointUtf8, out long seq);
+        WorkflowCheckpointSerializer.TryReadSequence(checkpointRow, out long seq);
 
         // Copy the bytes: the caller may reuse its buffer once we return, but the POST outlives the call, and a retry
         // is a byte-identical resend of the same sequence rather than a re-authoring.
-        byte[] body = checkpointUtf8.ToArray();
+        byte[] body = checkpointRow.ToArray();
         Task<bool> post;
         lock (this.gate)
         {

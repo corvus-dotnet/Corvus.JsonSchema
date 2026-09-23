@@ -101,7 +101,7 @@ public partial class WorkflowExecutorEndToEndTests
         transport.Requests.Count.ShouldBe(5);
 
         Durability.WorkflowCheckpoint stored = (await store.LoadAsync(TestAddresses.Dev("flood-1"), default))!.Value;
-        using Durability.WorkflowCheckpointState state = Durability.WorkflowCheckpointSerializer.Deserialize(stored.Utf8);
+        using Durability.WorkflowCheckpointState state = Durability.WorkflowCheckpointSerializer.Deserialize(stored.Row);
         state.Status.ShouldBe(WorkflowRunStatus.Faulted);
         state.Fault!.Value.Error.ShouldBe(Durability.ExecutionBudgetFault.Fuel);
         state.StepJournal!.Count.ShouldBe(5);
@@ -109,7 +109,7 @@ public partial class WorkflowExecutorEndToEndTests
         state.StepJournal.Select(e => e.Attempt).ShouldBe([1, 2, 3, 4, 5]);
 
         // The run faulted itself inside its fuel, so the control plane's predicate has nothing to refuse.
-        Durability.WorkflowCheckpointSerializer.TryReadBudgetFacts(stored.Utf8, out Durability.CheckpointBudgetFacts facts).ShouldBeTrue();
+        Durability.WorkflowCheckpointSerializer.TryReadBudgetFacts(stored.Row, out Durability.CheckpointBudgetFacts facts).ShouldBeTrue();
         Durability.ExecutionBudgetFault.Find(budget, facts, state.CreatedAt, state.CreatedAt).ShouldBeNull();
     }
 
@@ -161,7 +161,7 @@ public partial class WorkflowExecutorEndToEndTests
         result.IsCompleted.ShouldBeTrue();
         transport.Requests.Count.ShouldBe(2);
 
-        using Durability.WorkflowCheckpointState state = Durability.WorkflowCheckpointSerializer.Deserialize((await store.LoadAsync(TestAddresses.Dev("sub-1"), default))!.Value.Utf8);
+        using Durability.WorkflowCheckpointState state = Durability.WorkflowCheckpointSerializer.Deserialize((await store.LoadAsync(TestAddresses.Dev("sub-1"), default))!.Value.Row);
         state.StepJournal!.Select(e => (e.StepId, e.Status, e.Attempt)).ShouldBe(
         [
             ("callChild/getPet", WorkflowStepStatus.Faulted, 1),
@@ -193,7 +193,7 @@ public partial class WorkflowExecutorEndToEndTests
         // Depth one is the child and depth two the parent it re-enters; the child that would nest at depth three is
         // refused before it reaches the source, so the source saw the one request the first child made.
         transport.Requests.Count.ShouldBe(1);
-        using Durability.WorkflowCheckpointState state = Durability.WorkflowCheckpointSerializer.Deserialize((await store.LoadAsync(TestAddresses.Dev("depth-1"), default))!.Value.Utf8);
+        using Durability.WorkflowCheckpointState state = Durability.WorkflowCheckpointSerializer.Deserialize((await store.LoadAsync(TestAddresses.Dev("depth-1"), default))!.Value.Row);
         state.Status.ShouldBe(WorkflowRunStatus.Faulted);
         state.Fault!.Value.Error.ShouldBe(Durability.ExecutionBudgetFault.Depth);
         state.Fault!.Value.StepId.ShouldBe("callChild/callParent/callChild");

@@ -144,8 +144,8 @@ public sealed class ArazzoRunnerCheckpointsHandler : IApiCheckpointsHandler
             // projection reports everything the save needs: the index, the environment the body claims (checked
             // against the address on every save, ADR 0065 decision 9), the sequence it carries and the budget facts
             // (ADR 0068), so the body is read exactly once on this, the hottest write in the system.
-            ReadOnlyMemory<byte> checkpointUtf8 = rented.AsMemory(0, length);
-            if (!WorkflowCheckpointSerializer.TryProject(checkpointUtf8, out CheckpointProjection projection))
+            ReadOnlyMemory<byte> checkpointRow = rented.AsMemory(0, length);
+            if (!WorkflowCheckpointSerializer.TryProject(checkpointRow, out CheckpointProjection projection))
             {
                 return SaveCheckpointResult.BadRequest(RunnerProblems.MalformedCheckpoint(), workspace);
             }
@@ -161,7 +161,16 @@ public sealed class ArazzoRunnerCheckpointsHandler : IApiCheckpointsHandler
                 return SaveCheckpointResult.BadRequest(RunnerProblems.MalformedCheckpoint(), workspace);
             }
 
-            CheckpointSaveResult result = await this.checkpoints.SaveAsync(new WorkflowRunAddress(environment, id), checkpointUtf8, projection.Index, projection.Environment, projection.Facts, sequence, cancellationToken).ConfigureAwait(false);
+            // ADR 0065 decision 6, the phase-B half: the runner region carries the lease epoch independently of the
+            // header, and the two must agree. A region minted under another grant, whether above this one (a grant
+            // this holder never held) or below it (a rollback to an earlier holder's row), is refused; the lease
+            // check above already established that the header's grant is current.
+            if (!RunnerLeaseToken.TryParse((string)parameters.XArazzoLease, out long leaseEpoch, out _) || projection.Epoch != leaseEpoch)
+            {
+                return SaveCheckpointResult.BadRequest(RunnerProblems.EpochMismatch(), workspace);
+            }
+
+            CheckpointSaveResult result = await this.checkpoints.SaveAsync(new WorkflowRunAddress(environment, id), checkpointRow, projection, sequence, cancellationToken).ConfigureAwait(false);
             return result.Outcome switch
             {
                 CheckpointSaveOutcome.Applied => SaveCheckpointResult.NoContent(workspace, xArazzoCheckpointSeq: sequence),

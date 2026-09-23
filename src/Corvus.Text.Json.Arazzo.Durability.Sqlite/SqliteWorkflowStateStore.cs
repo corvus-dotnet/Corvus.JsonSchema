@@ -97,11 +97,11 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     /// <inheritdoc/>
     public ValueTask<WorkflowEtag> SaveAsync(
         WorkflowRunAddress address,
-        ReadOnlyMemory<byte> checkpointUtf8,
+        ReadOnlyMemory<byte> checkpointRow,
         in WorkflowRunIndexEntry index,
         WorkflowEtag expected,
         CancellationToken cancellationToken)
-        => this.SaveCoreAsync(address, checkpointUtf8.ToArray(), index, expected, cancellationToken);
+        => this.SaveCoreAsync(address, checkpointRow.ToArray(), index, expected, cancellationToken);
 
     // The interface passes the index by `in`; an async method cannot take an `in` parameter, so SaveAsync
     // copies it (a small struct) and this private core does the work.

@@ -74,7 +74,7 @@ internal sealed class RunnerApiCheckpointStore : IWorkflowCheckpointStore
     /// <inheritdoc/>
     // Not async: the interface takes the index by `in`, which an async method may not. The synchronous part reads
     // the sequence and then hands off to the core, which is where the await lives.
-    public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+    public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointRow, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
     {
         ArazzoRunnerClient.HeldLease held = this.owner.RequireLease(address);
 
@@ -82,14 +82,14 @@ internal sealed class RunnerApiCheckpointStore : IWorkflowCheckpointStore
         // scan that stops at the property rather than a parse of the whole checkpoint. The index travels nowhere: the
         // server re-projects it from these same bytes, so sending it would be sending a second copy of what it already
         // has, and one the server could not trust anyway.
-        WorkflowCheckpointSerializer.TryReadSequence(checkpointUtf8, out long sequence);
-        return this.SaveCoreAsync(address, checkpointUtf8, held, sequence, cancellationToken);
+        WorkflowCheckpointSerializer.TryReadSequence(checkpointRow, out long sequence);
+        return this.SaveCoreAsync(address, checkpointRow, held, sequence, cancellationToken);
     }
 
     private static long SequenceHeader(LoadCheckpointResponse response)
         => response.XArazzoCheckpointSeqHeader.IsNotUndefined() ? (long)response.XArazzoCheckpointSeqHeader : 0;
 
-    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointUtf8, ArazzoRunnerClient.HeldLease held, long sequence, CancellationToken cancellationToken)
+    private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointRow, ArazzoRunnerClient.HeldLease held, long sequence, CancellationToken cancellationToken)
     {
         WorkflowRunId id = address.RunId;
         RunnerQuotaHold hold = this.owner.HoldFor(address);
@@ -98,7 +98,7 @@ internal sealed class RunnerApiCheckpointStore : IWorkflowCheckpointStore
         {
             // A fresh stream per attempt over the same buffer, so the resend is byte-identical (ADR 0065 decision 6)
             // rather than a rewind of a stream the last attempt may have partly consumed.
-            using var body = new ReadOnlyMemoryStream(checkpointUtf8);
+            using var body = new ReadOnlyMemoryStream(checkpointRow);
             await using SaveCheckpointResponse response = await this.owner.CheckpointsClient
                 .SaveCheckpointAsync(held.Environment, id.Value, held.Token, sequence, body, cancellationToken)
                 .ConfigureAwait(false);

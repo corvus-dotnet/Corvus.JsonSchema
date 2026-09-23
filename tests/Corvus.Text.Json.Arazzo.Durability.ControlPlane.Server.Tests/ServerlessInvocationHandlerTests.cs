@@ -57,7 +57,7 @@ public sealed class ServerlessInvocationHandlerTests
 
         // ...and its terminal checkpoint landed in the store through the live checkpoint endpoints.
         WorkflowCheckpoint stored = (await runner.Store.LoadAsync(new WorkflowRunAddress("development", new WorkflowRunId(Run1)), default))!.Value;
-        WorkflowCheckpointSerializer.ProjectIndex(stored.Utf8).Status.ShouldBe(WorkflowRunStatus.Completed);
+        WorkflowCheckpointSerializer.ProjectIndex(stored.Row).Status.ShouldBe(WorkflowRunStatus.Completed);
     }
 
     [TestMethod]
@@ -170,7 +170,7 @@ public sealed class ServerlessInvocationHandlerTests
 
         // Nothing was loaded or advanced: the run is as it was seeded.
         WorkflowCheckpoint stored = (await runner.Store.LoadAsync(new WorkflowRunAddress("development", new WorkflowRunId(Run1)), default))!.Value;
-        WorkflowCheckpointSerializer.ProjectIndex(stored.Utf8).Status.ShouldBe(WorkflowRunStatus.Pending);
+        WorkflowCheckpointSerializer.ProjectIndex(stored.Row).Status.ShouldBe(WorkflowRunStatus.Pending);
     }
 
     private static readonly ServerlessCheckpointOrigins Origins = ServerlessCheckpointOrigins.Parse("https://runner.example/");
@@ -190,7 +190,7 @@ public sealed class ServerlessInvocationHandlerTests
         refusal.Message.ShouldContain("checkpointToken");
 
         WorkflowCheckpoint stored = (await runner.Store.LoadAsync(new WorkflowRunAddress("development", new WorkflowRunId(Run1)), default))!.Value;
-        WorkflowCheckpointSerializer.ProjectIndex(stored.Utf8).Status.ShouldBe(WorkflowRunStatus.Pending);
+        WorkflowCheckpointSerializer.ProjectIndex(stored.Row).Status.ShouldBe(WorkflowRunStatus.Pending);
     }
 
     private static WorkflowTransports NoTransports(WorkflowDescriptor descriptor, SecurityTagSet tags) => EmptyTransports;

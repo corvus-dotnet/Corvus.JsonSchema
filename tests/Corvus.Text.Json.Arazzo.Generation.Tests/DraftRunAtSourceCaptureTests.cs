@@ -136,7 +136,7 @@ public sealed class DraftRunAtSourceCaptureTests
         // The checkpoint knows steps a and b (with outputs); the recording captured only b (a ran in
         // an earlier segment on another runner instance). The trace emits a first, checkpoint-derived
         // without requests, then b's captured record enriched with the checkpoint outputs.
-        byte[] checkpoint = """{"status":"Completed","stepOutputs":{"a":{"x":1},"b":{"y":2}},"retryCounters":{"a":1}}"""u8.ToArray();
+        byte[] checkpoint = CompletedRow("""{"a":{"x":1},"b":{"y":2}}""", stepWithRetries: "a", retries: 1);
         IReadOnlyList<RecordedStepRecord> captured = [new("b", 0, false, 0, 1)];
         IReadOnlyList<RecordedApiExchange> exchanges = [new(OperationMethod.Get, "/b", 200)];
 
@@ -157,7 +157,7 @@ public sealed class DraftRunAtSourceCaptureTests
         // The recording captured x FAULTING; the checkpoint now shows x with outputs — only the
         // durable Skip resume produces that delta (design §10 F3): the faulted attempt is emitted,
         // then a synthetic skipped record with the provided outputs.
-        byte[] checkpoint = """{"status":"Completed","stepOutputs":{"x":{"provided":true}}}"""u8.ToArray();
+        byte[] checkpoint = CompletedRow("""{"x":{"provided":true}}""");
         IReadOnlyList<RecordedStepRecord> captured = [new("x", 0, true, 0, 1)];
         IReadOnlyList<RecordedApiExchange> exchanges = [new(OperationMethod.Get, "/x", 503)];
 
@@ -175,7 +175,7 @@ public sealed class DraftRunAtSourceCaptureTests
     {
         // A recording made before at-source capture existed (or on an unshapeable package) assembles
         // exactly as it always did: the legacy checkpoint derivation is byte-for-byte the no-capture path.
-        byte[] checkpoint = """{"status":"Completed","stepOutputs":{"a":{"x":1}}}"""u8.ToArray();
+        byte[] checkpoint = CompletedRow("""{"a":{"x":1}}""");
         IReadOnlyList<RecordedApiExchange> exchanges = [new(OperationMethod.Get, "/a", 200)];
 
         using ParsedJsonDocument<JsonElement> withNull = Assemble(checkpoint, exchanges, capturedSteps: null);
@@ -195,6 +195,32 @@ public sealed class DraftRunAtSourceCaptureTests
         await run.EnqueueAsync(default);
         run.Recorder.ShouldBeNull();
         ((IWorkflowRun)run).BeginSubWorkflow("step", "sub").ShouldBeNull();
+    }
+
+    // A completed run's row as the runner writes it: the step outputs given, one step's retry count, nothing else.
+    private static byte[] CompletedRow(string stepOutputsJson, string? stepWithRetries = null, int retries = 0)
+    {
+        using ParsedJsonDocument<JsonElement> outputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(stepOutputsJson));
+        using PooledUtf8Map<int> retryCounters = PooledUtf8Map<int>.Rent(1);
+        if (stepWithRetries is not null)
+        {
+            retryCounters.Set(stepWithRetries, retries);
+        }
+
+        using PooledUtf8Map<JsonElement> stepOutputs = PooledUtf8Map<JsonElement>.Rent(outputs.RootElement.GetPropertyCount());
+        foreach (JsonProperty<JsonElement> step in outputs.RootElement.EnumerateObject())
+        {
+            stepOutputs.Set(step.Name, step.Value);
+        }
+
+        return WorkflowCheckpointSerializer.Serialize(
+            new CheckpointEnvelope("run-1", "development", "wf", WorkflowRunStatus.Completed, 0, 1, null, default, null, null, null, default, default, [], false, null, null),
+            retryCounters,
+            new Dictionary<string, byte[]>(),
+            inputs: default,
+            stepOutputs,
+            outputs: default,
+            []);
     }
 
     private static ParsedJsonDocument<JsonElement> Assemble(

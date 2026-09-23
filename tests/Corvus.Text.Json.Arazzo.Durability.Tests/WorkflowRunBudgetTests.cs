@@ -41,16 +41,16 @@ public sealed class WorkflowRunBudgetTests
         // rewrite shape), and the journal holds exactly the fuel: a save the coordinator's predicate does not refuse.
         run.Status.ShouldBe(WorkflowRunStatus.Faulted);
         WorkflowCheckpoint stored = (await store.LoadAsync(run.Address, default))!.Value;
-        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex(stored.Utf8);
+        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex(stored.Row);
         index.Status.ShouldBe(WorkflowRunStatus.Faulted);
         index.ErrorType.ShouldBe(ExecutionBudgetFault.Fuel);
-        using (WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(stored.Utf8))
+        using (WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(stored.Row))
         {
             state.Fault!.Value.StepId.ShouldBe("b");
             state.StepJournal!.Count.ShouldBe(2);
         }
 
-        WorkflowCheckpointSerializer.TryReadBudgetFacts(stored.Utf8, out CheckpointBudgetFacts facts).ShouldBeTrue();
+        WorkflowCheckpointSerializer.TryReadBudgetFacts(stored.Row, out CheckpointBudgetFacts facts).ShouldBeTrue();
         facts.BudgetFaulted.ShouldBeTrue();
         ExecutionBudgetFault.Find(run.Budget!.Value, facts, T0, time.GetUtcNow()).ShouldBeNull();
     }
@@ -83,7 +83,7 @@ public sealed class WorkflowRunBudgetTests
 
         WorkflowBudgetExhaustedException thrown = await Should.ThrowAsync<WorkflowBudgetExhaustedException>(async () => await run.BeginStepAsync("b", default));
         thrown.Error.ShouldBe(ExecutionBudgetFault.Deadline);
-        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex((await store.LoadAsync(run.Address, default))!.Value.Utf8);
+        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex((await store.LoadAsync(run.Address, default))!.Value.Row);
         index.Status.ShouldBe(WorkflowRunStatus.Faulted);
         index.ErrorType.ShouldBe(ExecutionBudgetFault.Deadline);
     }
@@ -106,7 +106,7 @@ public sealed class WorkflowRunBudgetTests
         run.RecordStep("callChild", WorkflowStepStatus.Succeeded, 1, T0, T0);
         await run.CheckpointAsync(1, default);
 
-        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize((await store.LoadAsync(run.Address, default))!.Value.Utf8);
+        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize((await store.LoadAsync(run.Address, default))!.Value.Row);
         state.StepJournal!.Select(e => e.StepId).ShouldBe(["callChild/getPet", "callChild/callGrandchild/getPet", "callChild/callGrandchild", "callChild"]);
 
         // A metering scope holds no run state: the executor drops its run to null and only meters through it.
@@ -127,7 +127,7 @@ public sealed class WorkflowRunBudgetTests
 
         WorkflowBudgetExhaustedException thrown = await Should.ThrowAsync<WorkflowBudgetExhaustedException>(async () => await grandchild.BeginStepAsync("c", default));
         thrown.Error.ShouldBe(ExecutionBudgetFault.Depth);
-        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize((await store.LoadAsync(run.Address, default))!.Value.Utf8);
+        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize((await store.LoadAsync(run.Address, default))!.Value.Row);
         state.Status.ShouldBe(WorkflowRunStatus.Faulted);
         state.Fault!.Value.Error.ShouldBe(ExecutionBudgetFault.Depth);
         state.Fault!.Value.StepId.ShouldBe("a/b");
@@ -462,7 +462,7 @@ public sealed class WorkflowRunBudgetTests
     {
         public int Saves { get; private set; }
 
-        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointRow, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
         {
             this.Saves++;
             throw new IOException("the store is unreachable");

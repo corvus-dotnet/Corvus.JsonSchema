@@ -51,7 +51,7 @@ public sealed class RunnerQuotaHoldTests
         // the save that follows is refused until the bucket refills.
         await fixture.Client.Checkpoints.LoadAsync(claim.Address, default);
 
-        byte[] next = RunnerApiFixture.Checkpoint(claim.RunId.Value, WorkflowRunStatus.Running, sequence: 2);
+        byte[] next = RunnerApiFixture.Checkpoint(claim.RunId.Value, WorkflowRunStatus.Running, sequence: 2, epoch: claim.LeaseEpoch);
         WorkflowEtag etag = await fixture.Client.Checkpoints.SaveAsync(
             claim.Address,
             next,
@@ -82,7 +82,7 @@ public sealed class RunnerQuotaHoldTests
 
         await fixture.Client.Checkpoints.LoadAsync(claim.Address, default);
 
-        byte[] next = RunnerApiFixture.Checkpoint(claim.RunId.Value, WorkflowRunStatus.Running, sequence: 2);
+        byte[] next = RunnerApiFixture.Checkpoint(claim.RunId.Value, WorkflowRunStatus.Running, sequence: 2, epoch: claim.LeaseEpoch);
         RunnerQuotaExhaustedException failed = await Should.ThrowAsync<RunnerQuotaExhaustedException>(
             async () => await fixture.Client.Checkpoints.SaveAsync(
                 claim.Address,
@@ -118,7 +118,7 @@ public sealed class RunnerQuotaHoldTests
             async () => await fixture.Client.Checkpoints.LoadAsync(claim.Address, default));
 
         // That single attempt belonged to the advance, so a save now has none left and fails without holding at all.
-        byte[] next = RunnerApiFixture.Checkpoint(claim.RunId.Value, WorkflowRunStatus.Running, sequence: 2);
+        byte[] next = RunnerApiFixture.Checkpoint(claim.RunId.Value, WorkflowRunStatus.Running, sequence: 2, epoch: claim.LeaseEpoch);
         await Should.ThrowAsync<RunnerQuotaExhaustedException>(
             async () => await fixture.Client.Checkpoints.SaveAsync(
                 claim.Address,

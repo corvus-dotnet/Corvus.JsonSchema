@@ -57,7 +57,7 @@ public sealed class SqliteWorkflowStateStoreTests
         {
             WorkflowCheckpoint? loaded = await reopened.LoadAsync(A("p1"), default);
             loaded.ShouldNotBeNull();
-            Encoding.UTF8.GetString(loaded.Value.Utf8.Span).ShouldBe("""{"v":42}""");
+            Encoding.UTF8.GetString(loaded.Value.Row.Span).ShouldBe("""{"v":42}""");
             loaded.Value.Etag.ShouldBe(etag);
         }
     }

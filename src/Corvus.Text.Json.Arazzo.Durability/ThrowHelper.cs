@@ -257,6 +257,23 @@ internal static class ThrowHelper
     public static InvalidOperationException GetCheckpointEnvironmentMismatchException(in WorkflowRunAddress address, string? claimed)
         => new(SR.Format(SR.CheckpointEnvironmentMismatch, address, claimed ?? "<none>"));
 
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowCheckpointRowMalformed()
+        => throw new FormatException(SR.CheckpointRowMalformed);
+
+    public static FormatException GetCheckpointRegionUnknownMemberException(string region, string member)
+        => new(SR.Format(SR.CheckpointRegionUnknownMember, region, member));
+
+    public static FormatException GetCheckpointRegionMalformedMemberException(string region, string member)
+        => new(SR.Format(SR.CheckpointRegionMalformedMember, region, member));
+
+    public static FormatException GetCheckpointRegionMissingMemberException(string region, string member)
+        => new(SR.Format(SR.CheckpointRegionMissingMember, region, member));
+
+    public static InvalidOperationException GetControlPlaneWriteNeedsLoadedRowException(string runId)
+        => new(SR.Format(SR.ControlPlaneWriteNeedsLoadedRow, runId));
+
     public static InvalidOperationException GetCheckpointMissingEnvironmentException(string runId)
         => new(SR.Format(SR.CheckpointMissingEnvironment, runId));
 

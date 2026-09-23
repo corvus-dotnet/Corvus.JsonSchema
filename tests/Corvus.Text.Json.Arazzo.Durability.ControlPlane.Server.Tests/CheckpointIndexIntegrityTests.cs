@@ -53,7 +53,7 @@ public sealed class CheckpointIndexIntegrityTests
         // Refusing is only half of it. The stored row must still say what it said, or the refusal reported a failure
         // the store had already accepted.
         WorkflowCheckpoint stored = (await store.LoadAsync(Address, default))!.Value;
-        WorkflowCheckpointSerializer.ProjectIndex(stored.Utf8, out string? storedEnvironment);
+        WorkflowCheckpointSerializer.ProjectIndex(stored.Row, out string? storedEnvironment);
         storedEnvironment.ShouldBe("production");
     }
 
@@ -87,7 +87,7 @@ public sealed class CheckpointIndexIntegrityTests
         CheckpointSaveResult result = await SaveAsync(coordinator, rewritten, 2);
 
         result.Outcome.ShouldBe(CheckpointSaveOutcome.Rejected);
-        WorkflowCheckpointSerializer.ProjectIndex((await store.LoadAsync(Address, default))!.Value.Utf8).WorkflowId.ShouldBe("onboard");
+        WorkflowCheckpointSerializer.ProjectIndex((await store.LoadAsync(Address, default))!.Value.Row).WorkflowId.ShouldBe("onboard");
     }
 
     [TestMethod]
@@ -120,7 +120,7 @@ public sealed class CheckpointIndexIntegrityTests
         CheckpointSaveResult result = await SaveAsync(coordinator, advanced, 2);
 
         result.Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
-        WorkflowCheckpointSerializer.ProjectIndex((await store.LoadAsync(Address, default))!.Value.Utf8).Status.ShouldBe(WorkflowRunStatus.Completed);
+        WorkflowCheckpointSerializer.ProjectIndex((await store.LoadAsync(Address, default))!.Value.Row).Status.ShouldBe(WorkflowRunStatus.Completed);
     }
 
     [TestMethod]
@@ -135,7 +135,7 @@ public sealed class CheckpointIndexIntegrityTests
         byte[] first = Checkpoint(sequence: 1, environment: "production", workflowId: "onboard");
 
         (await SaveAsync(coordinator, first, 1)).Outcome.ShouldBe(CheckpointSaveOutcome.Applied);
-        WorkflowCheckpointSerializer.ProjectIndex((await store.LoadAsync(Address, default))!.Value.Utf8, out string? storedEnvironment).WorkflowId.ShouldBe("onboard");
+        WorkflowCheckpointSerializer.ProjectIndex((await store.LoadAsync(Address, default))!.Value.Row, out string? storedEnvironment).WorkflowId.ShouldBe("onboard");
         storedEnvironment.ShouldBe("production");
     }
 
@@ -157,7 +157,7 @@ public sealed class CheckpointIndexIntegrityTests
         CheckpointSaveResult result = await SaveAsync(coordinator, moved, 2);
 
         result.Outcome.ShouldBe(CheckpointSaveOutcome.Rejected);
-        WorkflowCheckpointSerializer.ProjectIndex((await store.LoadAsync(Address, default))!.Value.Utf8, out string? storedEnvironment);
+        WorkflowCheckpointSerializer.ProjectIndex((await store.LoadAsync(Address, default))!.Value.Row, out string? storedEnvironment);
         storedEnvironment.ShouldBe("production");
     }
 
@@ -165,7 +165,7 @@ public sealed class CheckpointIndexIntegrityTests
     private static ValueTask<CheckpointSaveResult> SaveAsync(WorkflowCheckpointCoordinator coordinator, byte[] checkpoint, long sequence)
     {
         CheckpointProjection projection = WorkflowCheckpointSerializer.Project(checkpoint);
-        return coordinator.SaveAsync(Address, checkpoint, projection.Index, projection.Environment, projection.Facts, sequence, default);
+        return coordinator.SaveAsync(Address, checkpoint, projection, sequence, default);
     }
 
     private static SecurityTagSet Tags(string key, string value)
@@ -184,19 +184,29 @@ public sealed class CheckpointIndexIntegrityTests
         using PooledUtf8Map<int> retryCounters = PooledUtf8Map<int>.Rent(0);
         using PooledUtf8Map<JsonElement> stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
         return WorkflowCheckpointSerializer.Serialize(
-            Run,
-            workflowId,
-            status,
-            cursor,
-            sequence,
-            new DateTimeOffset(2026, 3, 4, 5, 6, 7, TimeSpan.Zero),
+            new CheckpointEnvelope(
+                Run,
+                environment,
+                workflowId,
+                status,
+                cursor,
+                sequence,
+                Epoch: null,
+                new DateTimeOffset(2026, 3, 4, 5, 6, 7, TimeSpan.Zero),
+                new DateTimeOffset(2026, 3, 4, 5, 10, 0, TimeSpan.Zero),
+                null,
+                null,
+                default,
+                securityTags,
+                [],
+                false,
+                null,
+                null),
             retryCounters,
             new Dictionary<string, byte[]>(),
-            inputs: default,
+            default,
             stepOutputs,
-            outputs: default,
-            securityTags: securityTags,
-            environment: environment,
-            updatedAt: new DateTimeOffset(2026, 3, 4, 5, 10, 0, TimeSpan.Zero));
+            default,
+            []);
     }
 }

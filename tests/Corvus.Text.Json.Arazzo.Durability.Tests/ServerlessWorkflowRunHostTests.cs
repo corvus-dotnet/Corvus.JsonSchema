@@ -152,7 +152,10 @@ public class ServerlessWorkflowRunHostTests
         await run.SuspendForTimerAsync(cursor: 1, TimeSpan.FromMinutes(5), default);
         if (resumeRequested)
         {
-            await run.RequestResumeAsync(null, default);
+            // A resume request is a control-plane write over the stored row (ADR 0065 decision 7), made on a run loaded
+            // from it, as the control plane makes it.
+            using WorkflowRun? stored = await WorkflowRun.ResumeAsync(store, run.Address, Time, cancellationToken: default);
+            await stored!.RequestResumeAsync(null, default);
         }
     }
 
@@ -161,8 +164,8 @@ public class ServerlessWorkflowRunHostTests
     {
         public int Flushes { get; private set; }
 
-        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
-            => inner.SaveAsync(address, checkpointUtf8, index, expected, cancellationToken);
+        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointRow, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+            => inner.SaveAsync(address, checkpointRow, index, expected, cancellationToken);
 
         public ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
             => inner.LoadAsync(address, cancellationToken);

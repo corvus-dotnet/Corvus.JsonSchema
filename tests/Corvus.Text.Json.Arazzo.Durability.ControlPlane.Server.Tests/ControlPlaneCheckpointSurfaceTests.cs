@@ -95,7 +95,7 @@ public sealed class ControlPlaneCheckpointSurfaceTests
         HttpResponseMessage response = await host.PostCheckpointAsync(Run.Value, checkpoint, sequence: 1, token: token);
 
         response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
-        (await host.Store.LoadAsync(Address, default))!.Value.Utf8.ToArray().ShouldBe(checkpoint);
+        (await host.Store.LoadAsync(Address, default))!.Value.Row.ToArray().ShouldBe(checkpoint);
     }
 
     [TestMethod]
@@ -113,8 +113,8 @@ public sealed class ControlPlaneCheckpointSurfaceTests
         response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
         using System.Text.Json.JsonDocument problem = System.Text.Json.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         problem.RootElement.GetProperty("type").GetString().ShouldBe("https://corvus-oss.org/arazzo/runner/problems/budget-exhausted");
-        problem.RootElement.GetProperty("acceptedSequence").GetInt64().ShouldBe(3);
-        WorkflowCheckpointSerializer.ProjectIndex((await host.Store.LoadAsync(Address, default))!.Value.Utf8).ErrorType.ShouldBe(ExecutionBudgetFault.Fuel);
+        problem.RootElement.GetProperty("acceptedSequence").GetInt64().ShouldBe(2, "a control-plane fault consumes no runner sequence");
+        WorkflowCheckpointSerializer.ProjectIndex((await host.Store.LoadAsync(Address, default))!.Value.Row).ErrorType.ShouldBe(ExecutionBudgetFault.Fuel);
     }
 
     [TestMethod]
@@ -179,21 +179,30 @@ public sealed class ControlPlaneCheckpointSurfaceTests
         }
 
         return WorkflowCheckpointSerializer.Serialize(
-            Run,
-            "petWorkflow",
-            WorkflowRunStatus.Running,
-            cursor,
-            sequence,
-            new DateTimeOffset(2026, 3, 4, 5, 6, 7, TimeSpan.Zero),
+            new CheckpointEnvelope(
+                Run,
+                Env,
+                "petWorkflow",
+                WorkflowRunStatus.Running,
+                cursor,
+                sequence,
+                Epoch: null,
+                new DateTimeOffset(2026, 3, 4, 5, 6, 7, TimeSpan.Zero),
+                new DateTimeOffset(2026, 3, 4, 5, 10, 0, TimeSpan.Zero),
+                null,
+                null,
+                default,
+                default,
+                journal,
+                false,
+                null,
+                null),
             retryCounters,
             new Dictionary<string, byte[]>(),
-            inputs: default,
+            default,
             stepOutputs,
-            outputs: default,
-            environment: Env,
-            updatedAt: new DateTimeOffset(2026, 3, 4, 5, 10, 0, TimeSpan.Zero),
-            stepJournal: journal,
-            budget: budget);
+            default,
+            new ControlPlaneRecord(Budget: budget).ToUtf8());
     }
 
     // Counts the store reads the coordinator makes, which is what distinguishes a seeded slot from a fresh one.
@@ -203,8 +212,8 @@ public sealed class ControlPlaneCheckpointSurfaceTests
 
         public int Loads => Volatile.Read(ref this.loads);
 
-        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
-            => inner.SaveAsync(address, checkpointUtf8, index, expected, cancellationToken);
+        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointRow, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+            => inner.SaveAsync(address, checkpointRow, index, expected, cancellationToken);
 
         public ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
         {

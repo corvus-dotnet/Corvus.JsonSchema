@@ -39,7 +39,7 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
     /// <inheritdoc/>
     public ValueTask<WorkflowEtag> SaveAsync(
         WorkflowRunAddress address,
-        ReadOnlyMemory<byte> checkpointUtf8,
+        ReadOnlyMemory<byte> checkpointRow,
         in WorkflowRunIndexEntry index,
         WorkflowEtag expected,
         CancellationToken cancellationToken)
@@ -62,7 +62,7 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
             }
 
             var newEtag = new WorkflowEtag((++this.version).ToString(System.Globalization.CultureInfo.InvariantCulture));
-            this.entries[address] = new Entry(checkpointUtf8.ToArray(), newEtag, index);
+            this.entries[address] = new Entry(checkpointRow.ToArray(), newEtag, index);
             return ValueTask.FromResult(newEtag);
         }
     }

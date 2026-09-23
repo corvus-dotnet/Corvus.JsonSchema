@@ -80,12 +80,12 @@ public static class MetadataTraceAssembler
         ArgumentNullException.ThrowIfNull(store);
         WorkflowCheckpoint checkpoint = await store.LoadAsync(address, cancellationToken).ConfigureAwait(false)
             ?? throw ThrowHelper.GetNoRunToAssembleTraceException(address.RunId.Value);
-        WriteTrace(writer, checkpoint.Utf8, exchanges, pausedBeforeStepId, stepBoundaries, capturedSteps);
+        WriteTrace(writer, checkpoint.Row, exchanges, pausedBeforeStepId, stepBoundaries, capturedSteps);
     }
 
     /// <summary>Writes the metadata trace for a run from its serialized checkpoint and recorded exchanges.</summary>
     /// <param name="writer">The writer to serialize the trace into.</param>
-    /// <param name="checkpointUtf8">The run's serialized checkpoint document (UTF-8 JSON), as produced by
+    /// <param name="checkpointRow">The run's serialized checkpoint document (UTF-8 JSON), as produced by
     /// <see cref="WorkflowCheckpointSerializer"/> — read only, never modified.</param>
     /// <param name="exchanges">The metadata-only exchanges recorded for the run, in call order.</param>
     /// <param name="pausedBeforeStepId">For a paused run, the id of the step the run resumes at; ignored otherwise.</param>
@@ -95,7 +95,7 @@ public static class MetadataTraceAssembler
     /// or empty, exchanges are attributed by the legacy one-per-step position.</param>
     public static void WriteTrace(
         Utf8JsonWriter writer,
-        ReadOnlyMemory<byte> checkpointUtf8,
+        ReadOnlyMemory<byte> checkpointRow,
         IReadOnlyList<RecordedApiExchange> exchanges,
         string? pausedBeforeStepId = null,
         IReadOnlyList<int>? stepBoundaries = null,
@@ -104,22 +104,14 @@ public static class MetadataTraceAssembler
         ArgumentNullException.ThrowIfNull(writer);
         ArgumentNullException.ThrowIfNull(exchanges);
 
-        using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(checkpointUtf8);
-        JsonElement root = document.RootElement;
-
-        WorkflowRunStatus status = Enum.Parse<WorkflowRunStatus>(
-            root.GetProperty("status"u8).GetString() ?? nameof(WorkflowRunStatus.Pending));
+        // The join of the row's regions: the effective status, wait and fault, with the products as views.
+        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(checkpointRow);
+        WorkflowRunStatus status = state.Status;
 
         // A §18 debugger pause is a Suspended run carrying a Pause wait; the dock represents it as
         // outcome=paused + pausedBefore, NOT as a wait-kind, so the Pause wait is never emitted as a wait object.
-        string? waitKind = null;
-        if (root.TryGetProperty("wait"u8, out JsonElement waitElement)
-            && waitElement.TryGetProperty("kind"u8, out JsonElement waitKindElement))
-        {
-            waitKind = waitKindElement.GetString();
-        }
-
-        bool paused = status == WorkflowRunStatus.Suspended && waitKind == nameof(WorkflowWaitKind.Pause);
+        WorkflowWait? wait = state.Wait;
+        bool paused = status == WorkflowRunStatus.Suspended && wait is { Kind: WorkflowWaitKind.Pause };
 
         writer.WriteStartObject();
 
@@ -136,39 +128,39 @@ public static class MetadataTraceAssembler
             writer.WriteString("pausedBefore"u8, pausedBeforeStepId);
         }
 
-        if (root.TryGetProperty("outputs"u8, out JsonElement outputs) && outputs.ValueKind != JsonValueKind.Undefined)
+        if (state.Outputs.ValueKind != JsonValueKind.Undefined)
         {
             writer.WritePropertyName("outputs"u8);
-            outputs.WriteTo(writer);
+            state.Outputs.WriteTo(writer);
         }
 
-        if (status == WorkflowRunStatus.Faulted && root.TryGetProperty("fault"u8, out JsonElement faultElement))
+        if (status == WorkflowRunStatus.Faulted && state.Fault is { } fault)
         {
             writer.WriteStartObject("fault"u8);
-            writer.WriteString("stepId"u8, faultElement.GetProperty("stepId"u8).GetString());
-            writer.WriteNumber("attempt"u8, faultElement.GetProperty("attempt"u8).GetInt32());
-            writer.WriteString("error"u8, faultElement.GetProperty("error"u8).GetString());
+            writer.WriteString("stepId"u8, fault.StepId);
+            writer.WriteNumber("attempt"u8, fault.Attempt);
+            writer.WriteString("error"u8, fault.Error);
             writer.WriteEndObject();
         }
 
         // A timer or message suspend surfaces the wait object the dock renders; a Pause suspend does not.
-        if (status == WorkflowRunStatus.Suspended && !paused && waitKind is not null)
+        if (status == WorkflowRunStatus.Suspended && !paused && wait is { } w)
         {
             writer.WriteStartObject("wait"u8);
-            writer.WriteString("kind"u8, waitKind == nameof(WorkflowWaitKind.Timer) ? "timer"u8 : "message"u8);
-            if (waitKind == nameof(WorkflowWaitKind.Timer) && waitElement.TryGetProperty("dueAt"u8, out JsonElement dueAt))
+            writer.WriteString("kind"u8, w.Kind == WorkflowWaitKind.Timer ? "timer"u8 : "message"u8);
+            if (w.Kind == WorkflowWaitKind.Timer)
             {
-                writer.WriteString("dueAt"u8, dueAt.GetDateTimeOffset());
+                writer.WriteString("dueAt"u8, w.DueAt);
             }
 
-            if (waitElement.TryGetProperty("channel"u8, out JsonElement channel) && channel.ValueKind == JsonValueKind.String)
+            if (w.Channel is { } channel)
             {
-                writer.WriteString("channel"u8, channel.GetString());
+                writer.WriteString("channel"u8, channel);
             }
 
-            if (waitElement.TryGetProperty("correlationId"u8, out JsonElement correlationId) && correlationId.ValueKind == JsonValueKind.String)
+            if (w.CorrelationId is { } correlationId)
             {
-                writer.WriteString("correlationId"u8, correlationId.GetString());
+                writer.WriteString("correlationId"u8, correlationId);
             }
 
             writer.WriteEndObject();
@@ -176,11 +168,11 @@ public static class MetadataTraceAssembler
 
         if (capturedSteps is { Count: > 0 })
         {
-            WriteCapturedSteps(writer, root, status, exchanges, capturedSteps);
+            WriteCapturedSteps(writer, state, status, exchanges, capturedSteps);
         }
         else
         {
-            WriteSteps(writer, root, status, exchanges, stepBoundaries);
+            WriteSteps(writer, state, status, exchanges, stepBoundaries);
         }
 
         writer.WriteEndObject();
@@ -195,7 +187,7 @@ public static class MetadataTraceAssembler
     // no exchanges) follows the faulted one, the derivation design §10 F3 prescribes.
     private static void WriteCapturedSteps(
         Utf8JsonWriter writer,
-        in JsonElement root,
+        WorkflowCheckpointState state,
         WorkflowRunStatus status,
         IReadOnlyList<RecordedApiExchange> exchanges,
         IReadOnlyList<RecordedStepRecord> captured)
@@ -203,19 +195,16 @@ public static class MetadataTraceAssembler
         _ = status;
         var outputsByStep = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
         var attemptsByStep = new Dictionary<string, int>(StringComparer.Ordinal);
-        root.TryGetProperty("retryCounters"u8, out JsonElement retryCounters);
         var spineOrder = new List<string>();
-        if (root.TryGetProperty("stepOutputs"u8, out JsonElement stepOutputs) && stepOutputs.ValueKind == JsonValueKind.Object)
+        PooledUtf8Map<JsonElement>.Enumerator stepOutputs = state.StepOutputs.GetEnumerator();
+        while (stepOutputs.MoveNext())
         {
-            foreach (JsonProperty<JsonElement> step in stepOutputs.EnumerateObject())
+            string name = Encoding.UTF8.GetString(stepOutputs.CurrentKey);
+            outputsByStep[name] = stepOutputs.CurrentValue;
+            spineOrder.Add(name);
+            if (state.RetryCounters.TryGetValue(stepOutputs.CurrentKey, out int count))
             {
-                string name = step.Name;
-                outputsByStep[name] = step.Value;
-                spineOrder.Add(name);
-                if (retryCounters.ValueKind == JsonValueKind.Object && retryCounters.TryGetProperty(name, out JsonElement count))
-                {
-                    attemptsByStep[name] = count.GetInt32();
-                }
+                attemptsByStep[name] = count;
             }
         }
 
@@ -332,26 +321,20 @@ public static class MetadataTraceAssembler
         writer.WriteEndObject();
     }
 
-    private static void WriteSteps(Utf8JsonWriter writer, in JsonElement root, WorkflowRunStatus status, IReadOnlyList<RecordedApiExchange> exchanges, IReadOnlyList<int>? stepBoundaries)
+    private static void WriteSteps(Utf8JsonWriter writer, WorkflowCheckpointState state, WorkflowRunStatus status, IReadOnlyList<RecordedApiExchange> exchanges, IReadOnlyList<int>? stepBoundaries)
     {
         var steps = new List<ExecutedStep>();
-        root.TryGetProperty("retryCounters"u8, out JsonElement retryCounters);
-        if (root.TryGetProperty("stepOutputs"u8, out JsonElement stepOutputs) && stepOutputs.ValueKind == JsonValueKind.Object)
+        PooledUtf8Map<JsonElement>.Enumerator stepOutputs = state.StepOutputs.GetEnumerator();
+        while (stepOutputs.MoveNext())
         {
-            foreach (JsonProperty<JsonElement> step in stepOutputs.EnumerateObject())
-            {
-                using UnescapedUtf8JsonString name = step.Utf8NameSpan;
-                int attempt = retryCounters.ValueKind == JsonValueKind.Object && retryCounters.TryGetProperty(name.Span, out JsonElement count)
-                    ? count.GetInt32()
-                    : 0;
-                steps.Add(new ExecutedStep(Encoding.UTF8.GetString(name.Span), Faulted: false, attempt, step.Value));
-            }
+            int attempt = state.RetryCounters.TryGetValue(stepOutputs.CurrentKey, out int count) ? count : 0;
+            steps.Add(new ExecutedStep(Encoding.UTF8.GetString(stepOutputs.CurrentKey), Faulted: false, attempt, stepOutputs.CurrentValue));
         }
 
-        if (status == WorkflowRunStatus.Faulted && root.TryGetProperty("fault"u8, out JsonElement fault))
+        if (status == WorkflowRunStatus.Faulted && state.Fault is { } fault)
         {
-            string faultStep = fault.GetProperty("stepId"u8).GetString() ?? string.Empty;
-            int faultAttempt = fault.GetProperty("attempt"u8).GetInt32();
+            string faultStep = fault.StepId;
+            int faultAttempt = fault.Attempt;
             if (steps.Count > 0 && steps[^1].StepId == faultStep)
             {
                 // The faulting step also staged outputs (an earlier successful attempt); mark its record faulted.

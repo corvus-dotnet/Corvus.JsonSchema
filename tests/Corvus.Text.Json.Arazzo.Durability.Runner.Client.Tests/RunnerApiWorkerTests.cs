@@ -49,7 +49,7 @@ public sealed class RunnerApiWorkerTests
 
         // Still suspended and still waiting, rather than advanced early.
         WorkflowCheckpoint? stored = await fixture.Store.LoadAsync(new WorkflowRunAddress(Fixture.Production, new WorkflowRunId(Run1)), default);
-        WorkflowCheckpointSerializer.ProjectIndex(stored!.Value.Utf8).Status.ShouldBe(WorkflowRunStatus.Suspended);
+        WorkflowCheckpointSerializer.ProjectIndex(stored!.Value.Row).Status.ShouldBe(WorkflowRunStatus.Suspended);
     }
 
     [TestMethod]
@@ -220,7 +220,7 @@ public sealed class RunnerApiWorkerTests
     // measuring the degenerate path.
     private static async ValueTask<WorkflowRunResultKind> CompleteAsync(Fixture fixture, WorkflowRun run, CancellationToken cancellationToken)
     {
-        byte[] advanced = Fixture.Checkpoint(run.Id.Value, WorkflowRunStatus.Completed, sequence: 2);
+        byte[] advanced = Fixture.Checkpoint(run.Id.Value, WorkflowRunStatus.Completed, sequence: 2, epoch: run.LeaseEpoch);
         await fixture.Client.Checkpoints.SaveAsync(run.Address, advanced, WorkflowCheckpointSerializer.ProjectIndex(advanced), WorkflowEtag.None, cancellationToken);
         return WorkflowRunResultKind.Completed;
     }

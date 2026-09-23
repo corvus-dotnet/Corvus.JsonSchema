@@ -21,14 +21,24 @@ namespace Corvus.Text.Json.Arazzo.Durability.Tests;
 [TestClass]
 public sealed class MetadataTraceAttributionTests
 {
-    // A completed run: stepA (retried once → two attempts) then stepB (one call).
-    private const string Checkpoint = """
-        {
-          "status": "Completed",
-          "stepOutputs": { "stepA": { "x": 1 }, "stepB": { "y": 2 } },
-          "retryCounters": { "stepA": 1 }
-        }
-        """;
+    // A completed run: stepA (retried once → two attempts) then stepB (one call), as the row the runner writes.
+    private static byte[] Checkpoint()
+    {
+        using Corvus.Text.Json.ParsedJsonDocument<Corvus.Text.Json.JsonElement> outputs = Corvus.Text.Json.ParsedJsonDocument<Corvus.Text.Json.JsonElement>.Parse("""{ "stepA": { "x": 1 }, "stepB": { "y": 2 } }"""u8.ToArray());
+        using var retryCounters = PooledUtf8Map<int>.Rent(1);
+        retryCounters.Set("stepA", 1);
+        using var stepOutputs = PooledUtf8Map<Corvus.Text.Json.JsonElement>.Rent(2);
+        stepOutputs.Set("stepA", outputs.RootElement.GetProperty("stepA"u8));
+        stepOutputs.Set("stepB", outputs.RootElement.GetProperty("stepB"u8));
+        return WorkflowCheckpointSerializer.Serialize(
+            new CheckpointEnvelope("run-1", "development", "wf", WorkflowRunStatus.Completed, 2, 1, null, default, null, null, null, default, default, [], false, null, null),
+            retryCounters,
+            new Dictionary<string, byte[]>(),
+            inputs: default,
+            stepOutputs,
+            outputs: default,
+            []);
+    }
 
     private static readonly RecordedApiExchange[] Exchanges =
     [
@@ -67,7 +77,7 @@ public sealed class MetadataTraceAttributionTests
         var buffer = new ArrayBufferWriter<byte>();
         using (var writer = new Utf8JsonWriter(buffer))
         {
-            MetadataTraceAssembler.WriteTrace(writer, Encoding.UTF8.GetBytes(Checkpoint), Exchanges, pausedBeforeStepId: null, stepBoundaries);
+            MetadataTraceAssembler.WriteTrace(writer, Checkpoint(), Exchanges, pausedBeforeStepId: null, stepBoundaries);
             writer.Flush();
         }
 

@@ -146,11 +146,11 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
     /// <inheritdoc/>
     public ValueTask<WorkflowEtag> SaveAsync(
         WorkflowRunAddress address,
-        ReadOnlyMemory<byte> checkpointUtf8,
+        ReadOnlyMemory<byte> checkpointRow,
         in WorkflowRunIndexEntry index,
         WorkflowEtag expected,
         CancellationToken cancellationToken)
-        => this.SaveCoreAsync(address, Envelope.Encode(index, checkpointUtf8.Span), index.SecurityTags, expected, cancellationToken);
+        => this.SaveCoreAsync(address, Envelope.Encode(index, checkpointRow.Span), index.SecurityTags, expected, cancellationToken);
 
     private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunAddress address, byte[] value, SecurityTagSet securityTags, WorkflowEtag expected, CancellationToken cancellationToken)
     {

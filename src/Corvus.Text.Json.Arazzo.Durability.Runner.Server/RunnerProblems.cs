@@ -101,6 +101,13 @@ internal static class RunnerProblems
     /// <summary>The refusal for a save the sole-writer invariant rejected: a peer advanced the run under a lost or stolen lease.</summary>
     /// <param name="acceptedSequence">The sequence the store will accept next.</param>
     /// <returns>The problem body.</returns>
+    internal static ProblemDetails.Source EpochMismatch()
+        => ProblemDetails.Build(
+            detail: "The checkpoint's runner region carries a lease epoch other than the one the presented lease was granted with, so it was not written. A checkpoint is authored under the grant it is saved under (ADR 0065 decision 6).",
+            status: 400,
+            title: "Bad Request",
+            type: "about:blank");
+
     internal static CheckpointWriteProblem.Source WriterConflict(long acceptedSequence)
         => CheckpointWriteProblem.Build(
             acceptedSequence: acceptedSequence,

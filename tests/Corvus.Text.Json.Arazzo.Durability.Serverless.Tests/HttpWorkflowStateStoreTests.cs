@@ -27,9 +27,20 @@ public class HttpWorkflowStateStoreTests
     private static readonly WorkflowRunIndexEntry AnyIndex = new("wf", WorkflowRunStatus.Running, default, default);
     private static readonly ReadOnlyMemory<byte> Bytes = new byte[] { 1, 2, 3 };
 
-    // The sequence travels inside the checkpoint, so a payload under test has to be a document that carries one.
+    // The sequence travels inside the checkpoint's runner region, so a payload under test has to be a row that carries one.
     private static ReadOnlyMemory<byte> At(long sequence)
-        => System.Text.Encoding.UTF8.GetBytes("""{"runId":"run-1","cursor":0,"sequence":""" + sequence + "}");
+    {
+        using PooledUtf8Map<int> retryCounters = PooledUtf8Map<int>.Rent(0);
+        using PooledUtf8Map<JsonElement> stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
+        return WorkflowCheckpointSerializer.Serialize(
+            new CheckpointEnvelope("run-1", "development", "wf", WorkflowRunStatus.Running, 0, sequence, null, default, null, null, null, default, default, [], false, null, null),
+            retryCounters,
+            new Dictionary<string, byte[]>(),
+            inputs: default,
+            stepOutputs,
+            outputs: default,
+            []);
+    }
 
     [TestMethod]
     public async Task Load_returns_the_checkpoint_and_leaves_the_sequence_to_the_document()
@@ -46,7 +57,7 @@ public class HttpWorkflowStateStoreTests
         WorkflowCheckpoint? loaded = await store.LoadAsync(A("run-1"), default);
 
         loaded.ShouldNotBeNull();
-        loaded!.Value.Utf8.ToArray().ShouldBe([9, 9]);
+        loaded!.Value.Row.ToArray().ShouldBe([9, 9]);
         handler.Requests[0].Method.ShouldBe(HttpMethod.Get);
         handler.Requests[0].Path.ShouldBe("/environments/development/runs/run-1/checkpoint");
 

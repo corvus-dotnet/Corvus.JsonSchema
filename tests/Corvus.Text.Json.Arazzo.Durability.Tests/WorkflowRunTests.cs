@@ -34,7 +34,7 @@ public sealed class WorkflowRunTests
         }
 
         WorkflowCheckpoint stored = (await store.LoadAsync(TestAddresses.Dev("run-seq"), default))!.Value;
-        WorkflowCheckpointSerializer.TryReadSequence(stored.Utf8, out long persisted).ShouldBeTrue();
+        WorkflowCheckpointSerializer.TryReadSequence(stored.Row, out long persisted).ShouldBeTrue();
         persisted.ShouldBe(2);
 
         using (WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, TestAddresses.Dev("run-seq"), Time))
@@ -44,7 +44,7 @@ public sealed class WorkflowRunTests
         }
 
         WorkflowCheckpoint after = (await store.LoadAsync(TestAddresses.Dev("run-seq"), default))!.Value;
-        WorkflowCheckpointSerializer.TryReadSequence(after.Utf8, out long continued).ShouldBeTrue();
+        WorkflowCheckpointSerializer.TryReadSequence(after.Row, out long continued).ShouldBeTrue();
         continued.ShouldBe(3);
     }
 

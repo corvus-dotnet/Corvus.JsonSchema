@@ -169,7 +169,7 @@ public partial class WorkflowExecutorEndToEndTests
         }
 
         Durability.WorkflowCheckpoint? stored = await store.LoadAsync(TestAddresses.Dev(runId), default);
-        return (stored is { } checkpoint ? Durability.WorkflowCheckpointSerializer.Deserialize(checkpoint.Utf8) : null, unwound);
+        return (stored is { } checkpoint ? Durability.WorkflowCheckpointSerializer.Deserialize(checkpoint.Row) : null, unwound);
     }
 
     // A transport whose every send fails the way the factory says, counting the sends made on it.

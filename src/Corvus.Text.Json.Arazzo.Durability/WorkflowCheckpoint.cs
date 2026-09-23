@@ -12,6 +12,6 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// as opaque. The <see cref="Etag"/> is the optimistic-concurrency token to pass back as <c>expected</c> on
 /// the next save, so a resumed run advances only if no other worker has written in the meantime.
 /// </remarks>
-/// <param name="Utf8">The serialized checkpoint document (UTF-8 JSON).</param>
+/// <param name="Row">The serialized checkpoint document (UTF-8 JSON).</param>
 /// <param name="Etag">The etag the checkpoint was read at.</param>
-public readonly record struct WorkflowCheckpoint(ReadOnlyMemory<byte> Utf8, WorkflowEtag Etag);
+public readonly record struct WorkflowCheckpoint(ReadOnlyMemory<byte> Row, WorkflowEtag Etag);

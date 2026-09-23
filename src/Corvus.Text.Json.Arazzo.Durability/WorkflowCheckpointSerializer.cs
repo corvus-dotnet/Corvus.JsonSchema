@@ -2,499 +2,207 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Collections.Frozen;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
 
 /// <summary>
-/// Turns a run's products and scalars into the single JSON checkpoint document, and back. The step-output
-/// and inputs <see cref="JsonElement"/>s serialize natively (they already exist — the executor only ever
-/// builds the genuine products), so a checkpoint is almost free; everything else is a handful of scalars.
+/// Turns a run's state into the checkpoint row and back (ADR 0065 decision 4). A row is three regions under the
+/// pinned framing of <see cref="CheckpointRow"/>: the <em>runner region</em> (the envelope, run-management structure
+/// the control plane reads on every save), the <em>payload</em> (tenant data), and the <em>control-plane region</em>
+/// (the control plane's own decisions, <see cref="ControlPlaneRecord"/>). The runner writes the first two and carries
+/// the third verbatim; the control plane writes only the third.
 /// </summary>
 /// <remarks>
-/// The document shape (see <c>docs/ArazzoWorkflowEnginePlan.md</c> §9.2):
+/// <para>The envelope is a closed schema in fixed property order:</para>
 /// <code>
-/// { "runId", "workflowId", "status", "cursor",
-///   "retryCounters": { "&lt;stepId&gt;": n },
-///   "correlationTokens": { "&lt;name&gt;": "&lt;base64&gt;" },
-///   "inputs": &lt;json&gt;,
-///   "stepOutputs": { "&lt;stepId&gt;": &lt;json&gt; },
-///   "outputs": &lt;json&gt; }   // present once the run has completed
+/// { "runId", "environment", "workflowId", "status", "cursor", "sequence", "epoch"?, "createdAt", "updatedAt"?,
+///   "correlationId"?, "rerunOf"?, "tags"?, "securityTags"?, "retryCounters": { "&lt;stepId&gt;": n },
+///   "stepJournal"?: [ { "stepId", "status", "attempt", "startedAt", "endedAt" } ], "journalTruncated"?,
+///   "wait"?, "fault"? }
 /// </code>
+/// <para>The payload is likewise closed:</para>
+/// <code>
+/// { "correlationTokens": { "&lt;name&gt;": "&lt;base64&gt;" }, "inputs"?: &lt;json&gt;, "outputs"?: &lt;json&gt;, "stepOutputs": { "&lt;stepId&gt;": &lt;json&gt; } }
+/// </code>
+/// <para>
+/// An unknown member in either is a malformed row, never data: the envelope is what the control plane reads without a
+/// key, so it cannot be allowed to become a channel. The step-output and inputs elements serialize natively (they
+/// already exist; the executor only ever builds the genuine products), so a checkpoint is almost free.
+/// </para>
 /// </remarks>
 public static class WorkflowCheckpointSerializer
 {
     private const int DefaultBufferSize = 1024;
+    private const string RunnerRegion = "runner";
+    private const string PayloadRegion = "payload";
 
     private static readonly JsonWriterOptions WriterOptions = new() { Indented = false, SkipValidation = true };
 
-    /// <summary>Serializes a run's state to the checkpoint document.</summary>
-    /// <param name="runId">The run id.</param>
-    /// <param name="workflowId">The id of the workflow the run executes.</param>
-    /// <param name="status">The run's lifecycle status.</param>
-    /// <param name="cursor">The cursor (state-machine index of the next step to run).</param>
-    /// <param name="createdAt">When the run was first created.</param>
+    /// <summary>Serializes a run's state to a clear checkpoint row.</summary>
+    /// <param name="envelope">The runner region's scalars.</param>
     /// <param name="retryCounters">The per-step retry attempt counts.</param>
     /// <param name="correlationTokens">The correlation register (name → token bytes).</param>
-    /// <param name="inputs">The workflow inputs (an undefined element writes <c>null</c>).</param>
+    /// <param name="inputs">The workflow inputs (an undefined element omits the member).</param>
     /// <param name="stepOutputs">The per-step <c>outputs</c> products.</param>
-    /// <param name="outputs">The final workflow <c>outputs</c>, if the run has completed (an undefined element omits the field).</param>
-    /// <param name="wait">The wait describing why the run is suspended, if it is (Tier 2).</param>
-    /// <param name="fault">The fault record if the run is faulted (Tier 2).</param>
-    /// <param name="correlationId">The run-wide telemetry correlation id (the W3C trace id) set at creation, if any.</param>
-    /// <param name="tags">The free-form tags applied to the run at creation, if any.</param>
-    /// <param name="securityTags">The security tags (KVP labels) applied to the run at creation, if any (§14.2).</param>
-    /// <param name="environment">The deployment environment the run is pinned to (§5.5), if any.</param>
-    /// <param name="pause">The §18 debugger pause configuration to persist, if the run carries one; a claiming
-    /// runner reads it back on load and applies it. An ordinary run passes none, so nothing is written.</param>
-    /// <param name="updatedAt">When this checkpoint is being written — the same instant the caller stamps on the
-    /// <see cref="WorkflowRunIndexEntry"/>, carried in the run's own record so a point-read needs no index.</param>
-    /// <returns>The serialized checkpoint document (UTF-8 JSON).</returns>
+    /// <param name="outputs">The final workflow <c>outputs</c>, if the run has completed (an undefined element omits the member).</param>
+    /// <param name="controlPlaneRegion">The control-plane region, carried verbatim from the row the run was loaded from (empty for a fresh run whose control plane decided nothing yet).</param>
+    /// <returns>The row.</returns>
     public static byte[] Serialize(
-        WorkflowRunId runId,
-        string workflowId,
-        WorkflowRunStatus status,
-        int cursor,
-        long sequence,
-        DateTimeOffset createdAt,
+        in CheckpointEnvelope envelope,
         PooledUtf8Map<int> retryCounters,
         IReadOnlyDictionary<string, byte[]> correlationTokens,
         in JsonElement inputs,
         PooledUtf8Map<JsonElement> stepOutputs,
         in JsonElement outputs,
-        WorkflowWait? wait = null,
-        WorkflowFault? fault = null,
-        string? correlationId = null,
-        TagSet tags = default,
-        SecurityTagSet securityTags = default,
-        string? environment = null,
-        WorkflowPauseConfig? pause = null,
-        DateTimeOffset? resumeRequestedAt = null,
-        DateTimeOffset? updatedAt = null,
-        IReadOnlyList<WorkflowStepJournalEntry>? stepJournal = null,
-        bool journalTruncated = false,
-        ExecutionBudget? budget = null,
-        string? rerunOf = null)
+        ReadOnlySpan<byte> controlPlaneRegion)
     {
-        ArgumentNullException.ThrowIfNull(workflowId);
+        ArgumentNullException.ThrowIfNull(envelope.WorkflowId);
+        ArgumentException.ThrowIfNullOrEmpty(envelope.Environment);
         ArgumentNullException.ThrowIfNull(retryCounters);
         ArgumentNullException.ThrowIfNull(correlationTokens);
         ArgumentNullException.ThrowIfNull(stepOutputs);
 
-        // Serialize through the pooled writer cache (the same primitive PersistedJson.ToArray uses) rather than a fresh
-        // ArrayBufferWriter + Utf8JsonWriter — this is the run-state checkpoint write hotpath for every backend. Inlined
-        // (not via PersistedJson.ToArray's callback) because the parameter set is too large for a context tuple. The only
-        // retained allocation is the owned byte[] the stores' drivers demand.
+        // Both regions render through the pooled writer cache (the same primitive PersistedJson.ToArray uses) rather
+        // than a fresh ArrayBufferWriter + Utf8JsonWriter each: this is the run-state checkpoint write hot path for
+        // every backend. The only retained allocation is the owned row the stores' drivers demand.
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter buffer);
+        Utf8JsonWriter envelopeWriter = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter envelopeBuffer);
         try
         {
-            writer.WriteStartObject();
-            writer.WriteString("runId"u8, runId.Value);
-            writer.WriteString("workflowId"u8, workflowId);
-            writer.WriteString("status"u8, StatusName(status));
-            writer.WriteNumber("cursor"u8, cursor);
+            WriteEnvelope(envelopeWriter, envelope, retryCounters);
+            envelopeWriter.Flush();
 
-            // The per-run write sequence (ADR 0065 decision 6). It lives in the document rather than in the writer's
-            // memory because the server validates a proposed save against the PERSISTED value, and a value held only in
-            // memory is lost on restart and invisible to a second instance. It is authored here, by the party that
-            // authors the checkpoint, which is also where phase B's MAC'd runner region carries it.
-            writer.WriteNumber("sequence"u8, sequence);
-            writer.WriteString("createdAt"u8, createdAt);
-            if (updatedAt is { } stamped)
+            Utf8JsonWriter payloadWriter = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter payloadBuffer);
+            try
             {
-                writer.WriteString("updatedAt"u8, stamped);
+                WritePayload(payloadWriter, correlationTokens, inputs, stepOutputs, outputs);
+                payloadWriter.Flush();
+                return CheckpointRow.WriteClear(envelopeBuffer.WrittenSpan, payloadBuffer.WrittenSpan, controlPlaneRegion);
             }
-
-            // Run-creation metadata (immutable): the telemetry correlation id, the pinned environment, and free-form tags.
-            if (correlationId is { } cid)
+            finally
             {
-                writer.WriteString("correlationId"u8, cid);
+                workspace.ReturnWriterAndBuffer(payloadWriter, payloadBuffer);
             }
-
-            if (environment is { } env)
-            {
-                writer.WriteString("environment"u8, env);
-            }
-
-            if (rerunOf is { } original)
-            {
-                writer.WriteString("rerunOf"u8, original);
-            }
-
-            if (!tags.IsEmpty)
-            {
-                writer.WritePropertyName("tags"u8);
-                tags.WriteTo(writer);
-            }
-
-            if (!securityTags.IsEmpty)
-            {
-                writer.WritePropertyName("securityTags"u8);
-                securityTags.WriteTo(writer);
-            }
-
-            writer.WriteStartObject("retryCounters"u8);
-            PooledUtf8Map<int>.Enumerator retryEnumerator = retryCounters.GetEnumerator();
-            while (retryEnumerator.MoveNext())
-            {
-                writer.WriteNumber(retryEnumerator.CurrentKey, retryEnumerator.CurrentValue);
-            }
-
-            writer.WriteEndObject();
-
-            writer.WriteStartObject("correlationTokens"u8);
-            foreach (KeyValuePair<string, byte[]> token in correlationTokens)
-            {
-                writer.WriteBase64String(token.Key, token.Value);
-            }
-
-            writer.WriteEndObject();
-
-            // Optional values are omitted when undefined (not written as null): "not present" is Undefined.
-            if (inputs.ValueKind != JsonValueKind.Undefined)
-            {
-                writer.WritePropertyName("inputs"u8);
-                inputs.WriteTo(writer);
-            }
-
-            writer.WriteStartObject("stepOutputs"u8);
-            PooledUtf8Map<JsonElement>.Enumerator stepEnumerator = stepOutputs.GetEnumerator();
-            while (stepEnumerator.MoveNext())
-            {
-                if (stepEnumerator.CurrentValue.ValueKind == JsonValueKind.Undefined)
-                {
-                    continue;
-                }
-
-                writer.WritePropertyName(stepEnumerator.CurrentKey);
-                stepEnumerator.CurrentValue.WriteTo(writer);
-            }
-
-            writer.WriteEndObject();
-
-            // The per-step journal (ADR 0050): payload-free metadata entries, one per step execution, in order. Written
-            // only when there are entries so an unjournaled run's checkpoint is byte-identical to before.
-            if (stepJournal is { Count: > 0 } journal)
-            {
-                writer.WriteStartArray("stepJournal"u8);
-                for (int i = 0; i < journal.Count; i++)
-                {
-                    WorkflowStepJournalEntry entry = journal[i];
-                    writer.WriteStartObject();
-                    writer.WriteString("stepId"u8, entry.StepId);
-                    writer.WriteString("status"u8, StepStatusName(entry.Status));
-                    writer.WriteNumber("attempt"u8, entry.Attempt);
-                    writer.WriteString("startedAt"u8, entry.StartedAt);
-                    writer.WriteString("endedAt"u8, entry.EndedAt);
-                    writer.WriteEndObject();
-                }
-
-                writer.WriteEndArray();
-                if (journalTruncated)
-                {
-                    writer.WriteBoolean("journalTruncated"u8, true);
-                }
-            }
-
-            // ADR 0068: the run's effective execution budget, resolved at start by the control plane and frozen with the
-            // run's identity by the coordinator. Absent on a checkpoint written before budgets existed.
-            if (budget is { } effectiveBudget)
-            {
-                effectiveBudget.WriteTo(writer);
-            }
-
-            if (outputs.ValueKind != JsonValueKind.Undefined)
-            {
-                writer.WritePropertyName("outputs"u8);
-                outputs.WriteTo(writer);
-            }
-
-            if (wait is { } w)
-            {
-                writer.WriteStartObject("wait"u8);
-                writer.WriteString("kind"u8, WaitKindName(w.Kind));
-                if (w.Kind == WorkflowWaitKind.Timer)
-                {
-                    writer.WriteString("dueAt"u8, w.DueAt);
-                }
-                else if (w.Kind == WorkflowWaitKind.Message)
-                {
-                    writer.WriteString("channel"u8, w.Channel);
-                    if (w.CorrelationId is { } waitCorrelationId)
-                    {
-                        writer.WriteString("correlationId"u8, waitCorrelationId);
-                    }
-                }
-
-                // A §18 Pause wait carries no wake trigger — the kind alone is the whole record.
-                writer.WriteEndObject();
-            }
-
-            if (fault is { } f)
-            {
-                writer.WriteStartObject("fault"u8);
-                writer.WriteString("stepId"u8, f.StepId);
-                writer.WriteNumber("attempt"u8, f.Attempt);
-                writer.WriteString("error"u8, f.Error);
-                writer.WriteString("at"u8, f.At);
-                writer.WriteEndObject();
-            }
-
-            // §18: the persisted debugger pause configuration, present only on a run a caller has configured to
-            // stop (SetPause / RequestResumeAsync). A claiming runner reads it back and applies the same stops
-            // without re-supplying them; an ordinary run writes nothing here and is unaffected.
-            if (pause is { } p)
-            {
-                writer.WriteStartObject("pause"u8);
-                writer.WriteBoolean("afterEachStep"u8, p.AfterEachStep);
-                writer.WriteStartArray("breakpoints"u8);
-                if (p.BreakpointCursors is { } breakpoints)
-                {
-                    foreach (int breakpoint in breakpoints)
-                    {
-                        writer.WriteNumberValue(breakpoint);
-                    }
-                }
-
-                writer.WriteEndArray();
-                writer.WriteEndObject();
-            }
-
-            // §18: the resume-requested marker (the control plane marked the run claimable-for-resume). Persisted in
-            // the checkpoint so a dispatcher's loaded run can verify the run is still requested before advancing it; a
-            // runner clears it on its first checkpoint. Absent on an ordinary run.
-            if (resumeRequestedAt is { } requestedAt)
-            {
-                writer.WriteNumber("resumeRequestedAt"u8, requestedAt.ToUnixTimeMilliseconds());
-            }
-
-            writer.WriteEndObject();
-            writer.Flush();
-            return buffer.WrittenSpan.ToArray();
         }
         finally
         {
-            workspace.ReturnWriterAndBuffer(writer, buffer);
+            workspace.ReturnWriterAndBuffer(envelopeWriter, envelopeBuffer);
         }
     }
 
-    /// <summary>Deserializes a checkpoint document into the run's resumable state.</summary>
-    /// <param name="checkpointUtf8">The serialized checkpoint document (UTF-8 JSON).</param>
+    /// <summary>Deserializes a checkpoint row into the run's resumable state: the join of its three regions.</summary>
+    /// <param name="row">The stored row.</param>
     /// <returns>
-    /// The resumable state. The returned value owns the parsed document the <see cref="WorkflowCheckpointState.Inputs"/>
+    /// The resumable state. The returned value owns the parsed payload the <see cref="WorkflowCheckpointState.Inputs"/>
     /// and <see cref="WorkflowCheckpointState.StepOutputs"/> elements point into, so the caller must dispose it.
     /// </returns>
-    public static WorkflowCheckpointState Deserialize(ReadOnlyMemory<byte> checkpointUtf8)
+    /// <exception cref="FormatException">The bytes are not a checkpoint row, or a region does not match its closed schema.</exception>
+    public static WorkflowCheckpointState Deserialize(ReadOnlyMemory<byte> row)
     {
-        ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(checkpointUtf8);
+        CheckpointRowLayout layout = CheckpointRow.Parse(row.Span);
+        ControlPlaneRecord controlPlane = ControlPlaneRecord.Parse(row[layout.ControlPlaneRegion]);
 
-        // Hoisted so the catch can return their pooled buffers if a later read throws on a corrupt checkpoint.
+        // The envelope's values are all materialized (scalars, tag copies, journal entries), so its document is
+        // disposed on the way out; only the payload document lives on, since the products are views into it.
         PooledUtf8Map<int>? retryCounters = null;
         PooledUtf8Map<JsonElement>? stepOutputs = null;
+        ParsedJsonDocument<JsonElement>? payload = null;
         try
         {
-            JsonElement root = document.RootElement;
-
-            string runId = root.GetProperty("runId"u8).GetString() ?? string.Empty;
-            string workflowId = root.GetProperty("workflowId"u8).GetString() ?? string.Empty;
-            WorkflowRunStatus status = Enum.Parse<WorkflowRunStatus>(root.GetProperty("status"u8).GetString() ?? nameof(WorkflowRunStatus.Pending));
-            int cursor = root.GetProperty("cursor"u8).GetInt32();
-            long sequence = root.TryGetProperty("sequence"u8, out JsonElement sequenceElement) && sequenceElement.TryGetInt64(out long persistedSequence)
-                ? persistedSequence
-                : 0;
-            DateTimeOffset createdAt = root.TryGetProperty("createdAt"u8, out JsonElement createdAtElement)
-                ? createdAtElement.GetDateTimeOffset()
-                : default;
-            DateTimeOffset? updatedAt = root.TryGetProperty("updatedAt"u8, out JsonElement updatedAtElement)
-                ? updatedAtElement.GetDateTimeOffset()
-                : null;
-
-            string? correlationId = root.TryGetProperty("correlationId"u8, out JsonElement correlationIdMeta) ? correlationIdMeta.GetString() : null;
-            string? environment = root.TryGetProperty("environment"u8, out JsonElement environmentMeta) ? environmentMeta.GetString() : null;
-
-            TagSet tags = default;
-            if (root.TryGetProperty("tags"u8, out JsonElement tagsElement) && tagsElement.ValueKind == JsonValueKind.Array)
+            CheckpointEnvelope envelope;
+            using (ParsedJsonDocument<JsonElement> envelopeDocument = ParsedJsonDocument<JsonElement>.Parse(row[layout.RunnerRegion]))
             {
-                tags = TagSet.CopyFrom(tagsElement);
+                envelope = ReadEnvelope(envelopeDocument.RootElement, out retryCounters);
             }
 
-            SecurityTagSet securityTags = default;
-            if (root.TryGetProperty("securityTags"u8, out JsonElement securityTagsElement) && securityTagsElement.ValueKind == JsonValueKind.Array)
+            payload = ParsedJsonDocument<JsonElement>.Parse(row[layout.Payload]);
+            JsonElement root = payload.RootElement;
+            if (root.ValueKind != JsonValueKind.Object)
             {
-                securityTags = SecurityTagSet.CopyFrom(securityTagsElement);
+                ThrowHelper.ThrowCheckpointRowMalformed();
             }
 
-            // Pre-size each working map to its persisted element count so a long workflow's restore does not re-allocate
-            // the backing as it grows (GetPropertyCount is a no-alloc scan), and read keys as borrowed UTF-8 spans
-            // (Utf8NameSpan) copied into the map's pooled arena — no per-step key string is materialized.
-            if (root.TryGetProperty("retryCounters"u8, out JsonElement retryCountersElement))
+            Dictionary<string, byte[]>? correlationTokens = null;
+            JsonElement inputs = default;
+            JsonElement outputs = default;
+            foreach (JsonProperty<JsonElement> property in root.EnumerateObject())
             {
-                retryCounters = PooledUtf8Map<int>.Rent(retryCountersElement.GetPropertyCount());
-                foreach (JsonProperty<JsonElement> counter in retryCountersElement.EnumerateObject())
+                if (property.NameEquals("correlationTokens"u8))
                 {
-                    using UnescapedUtf8JsonString name = counter.Utf8NameSpan;
-                    retryCounters.Set(name.Span, counter.Value.GetInt32());
-                }
-            }
-            else
-            {
-                retryCounters = PooledUtf8Map<int>.Rent(0);
-            }
-
-            Dictionary<string, byte[]> correlationTokens;
-            if (root.TryGetProperty("correlationTokens"u8, out JsonElement correlationTokensElement))
-            {
-                correlationTokens = new Dictionary<string, byte[]>(correlationTokensElement.GetPropertyCount());
-                foreach (JsonProperty<JsonElement> token in correlationTokensElement.EnumerateObject())
-                {
-                    correlationTokens[token.Name] = token.Value.GetBytesFromBase64();
-                }
-            }
-            else
-            {
-                correlationTokens = [];
-            }
-
-            JsonElement inputs = root.TryGetProperty("inputs"u8, out JsonElement inputsElement) ? inputsElement : default;
-
-            if (root.TryGetProperty("stepOutputs"u8, out JsonElement stepOutputsElement))
-            {
-                stepOutputs = PooledUtf8Map<JsonElement>.Rent(stepOutputsElement.GetPropertyCount());
-                foreach (JsonProperty<JsonElement> step in stepOutputsElement.EnumerateObject())
-                {
-                    using UnescapedUtf8JsonString name = step.Utf8NameSpan;
-                    stepOutputs.Set(name.Span, step.Value);
-                }
-            }
-            else
-            {
-                stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
-            }
-
-            JsonElement outputs = root.TryGetProperty("outputs"u8, out JsonElement outputsElement) ? outputsElement : default;
-
-            WorkflowWait? wait = null;
-            if (root.TryGetProperty("wait"u8, out JsonElement waitElement))
-            {
-                WorkflowWaitKind kind = Enum.Parse<WorkflowWaitKind>(waitElement.GetProperty("kind"u8).GetString() ?? nameof(WorkflowWaitKind.Timer));
-                wait = kind switch
-                {
-                    WorkflowWaitKind.Timer => WorkflowWait.Timer(waitElement.GetProperty("dueAt"u8).GetDateTimeOffset()),
-                    WorkflowWaitKind.Pause => WorkflowWait.Pause(),
-                    _ => WorkflowWait.Message(
-                        waitElement.GetProperty("channel"u8).GetString() ?? string.Empty,
-                        waitElement.TryGetProperty("correlationId"u8, out JsonElement correlationIdElement) ? correlationIdElement.GetString() : null),
-                };
-            }
-
-            WorkflowFault? fault = null;
-            if (root.TryGetProperty("fault"u8, out JsonElement faultElement))
-            {
-                fault = new WorkflowFault(
-                    faultElement.GetProperty("stepId"u8).GetString() ?? string.Empty,
-                    faultElement.GetProperty("attempt"u8).GetInt32(),
-                    faultElement.GetProperty("error"u8).GetString() ?? string.Empty,
-                    faultElement.GetProperty("at"u8).GetDateTimeOffset());
-            }
-
-            // §18: restore the persisted debugger pause configuration so a claiming runner applies the same stops
-            // on its advance. Absent on an ordinary run (its next advance runs unpaused, as today).
-            WorkflowPauseConfig? pause = null;
-            if (root.TryGetProperty("pause"u8, out JsonElement pauseElement) && pauseElement.ValueKind == JsonValueKind.Object)
-            {
-                bool afterEachStep = pauseElement.TryGetProperty("afterEachStep"u8, out JsonElement afterEachStepElement) && afterEachStepElement.GetBoolean();
-
-                // Allocate the breakpoint set only when there are actually breakpoints. The common debug shape is a
-                // single-step (afterEachStep, no breakpoints), which shares the cached empty set — no per-resume-load
-                // HashSet. (A non-debug run has no pause object at all and never reaches this branch.)
-                IReadOnlySet<int> breakpoints = FrozenSet<int>.Empty;
-                if (pauseElement.TryGetProperty("breakpoints"u8, out JsonElement breakpointsElement)
-                    && breakpointsElement.ValueKind == JsonValueKind.Array
-                    && breakpointsElement.GetArrayLength() > 0)
-                {
-                    var cursors = new HashSet<int>();
-                    foreach (JsonElement breakpoint in breakpointsElement.EnumerateArray())
+                    correlationTokens = new Dictionary<string, byte[]>(property.Value.GetPropertyCount());
+                    foreach (JsonProperty<JsonElement> token in property.Value.EnumerateObject())
                     {
-                        cursors.Add(breakpoint.GetInt32());
+                        correlationTokens[token.Name] = token.Value.GetBytesFromBase64();
                     }
-
-                    breakpoints = cursors;
                 }
-
-                pause = new WorkflowPauseConfig(afterEachStep, breakpoints);
-            }
-
-            DateTimeOffset? resumeRequestedAt = root.TryGetProperty("resumeRequestedAt"u8, out JsonElement resumeRequestedAtElement)
-                ? DateTimeOffset.FromUnixTimeMilliseconds(resumeRequestedAtElement.GetInt64())
-                : null;
-
-            ExecutionBudget? budget = root.TryGetProperty(ExecutionBudget.JsonPropertyNames.BudgetUtf8, out JsonElement budgetElement) && ExecutionBudget.TryRead(budgetElement, out ExecutionBudget readBudget)
-                ? readBudget
-                : null;
-
-            string? rerunOf = root.TryGetProperty("rerunOf"u8, out JsonElement rerunOfElement) ? rerunOfElement.GetString() : null;
-
-            List<WorkflowStepJournalEntry>? journalEntries = null;
-            if (root.TryGetProperty("stepJournal"u8, out JsonElement journalElement) && journalElement.ValueKind == JsonValueKind.Array)
-            {
-                journalEntries = new List<WorkflowStepJournalEntry>(journalElement.GetArrayLength());
-                foreach (JsonElement entry in journalElement.EnumerateArray())
+                else if (property.NameEquals("inputs"u8))
                 {
-                    journalEntries.Add(new WorkflowStepJournalEntry(
-                        entry.GetProperty("stepId"u8).GetString() ?? string.Empty,
-                        Enum.Parse<WorkflowStepStatus>(entry.GetProperty("status"u8).GetString() ?? nameof(WorkflowStepStatus.Succeeded)),
-                        entry.GetProperty("attempt"u8).GetInt32(),
-                        entry.GetProperty("startedAt"u8).GetDateTimeOffset(),
-                        entry.GetProperty("endedAt"u8).GetDateTimeOffset()));
+                    inputs = property.Value;
+                }
+                else if (property.NameEquals("outputs"u8))
+                {
+                    outputs = property.Value;
+                }
+                else if (property.NameEquals("stepOutputs"u8))
+                {
+                    // Pre-sized to the persisted element count so a long workflow's restore does not re-allocate the
+                    // backing as it grows, with keys read as borrowed UTF-8 spans copied into the map's pooled arena.
+                    stepOutputs = PooledUtf8Map<JsonElement>.Rent(property.Value.GetPropertyCount());
+                    foreach (JsonProperty<JsonElement> step in property.Value.EnumerateObject())
+                    {
+                        using UnescapedUtf8JsonString name = step.Utf8NameSpan;
+                        stepOutputs.Set(name.Span, step.Value);
+                    }
+                }
+                else
+                {
+                    throw ThrowHelper.GetCheckpointRegionUnknownMemberException(PayloadRegion, property.Name);
                 }
             }
 
-            bool journalTruncated = root.TryGetProperty("journalTruncated"u8, out JsonElement journalTruncatedElement) && journalTruncatedElement.GetBoolean();
-
-            return new WorkflowCheckpointState(document, runId, workflowId, status, cursor, sequence, createdAt, retryCounters, correlationTokens, inputs, stepOutputs, outputs, wait, fault, correlationId, tags, securityTags, environment, pause, resumeRequestedAt, updatedAt, journalEntries, journalTruncated, budget, rerunOf);
+            return new WorkflowCheckpointState(
+                payload,
+                row,
+                envelope,
+                retryCounters,
+                controlPlane,
+                row[layout.ControlPlaneRegion],
+                correlationTokens ?? throw ThrowHelper.GetCheckpointRegionMissingMemberException(PayloadRegion, "correlationTokens"),
+                inputs,
+                stepOutputs ?? throw ThrowHelper.GetCheckpointRegionMissingMemberException(PayloadRegion, "stepOutputs"),
+                outputs);
         }
         catch
         {
             retryCounters?.Dispose();
             stepOutputs?.Dispose();
-            document.Dispose();
+            payload?.Dispose();
             throw;
         }
     }
 
     /// <summary>
-    /// Reads just the per-run write sequence from a stored checkpoint (ADR 0065 decision 6), without projecting the
-    /// index or materialising the run's working state.
+    /// Reads just the per-run write sequence from a stored row (ADR 0065 decision 6), without projecting the index or
+    /// materialising the run's working state: a forward-only scan of the runner region that stops at the property.
     /// </summary>
-    /// <param name="checkpointUtf8">The stored checkpoint document to read the sequence from.</param>
-    /// <param name="sequence">The sequence the document carries, or zero when it carries none.</param>
-    /// <returns><see langword="true"/> when the document carries a sequence.</returns>
-    /// <remarks>
-    /// <para>
-    /// This runs on the save path of every checkpoint, which is the hottest write in the system, so it reads one
-    /// property rather than reusing <see cref="ProjectIndex(ReadOnlyMemory{byte})"/> — that walks tags, journal, wait,
-    /// and fault, none of which the freshness check reads.
-    /// </para>
-    /// <para>
-    /// Absence is reported rather than folded into zero. Zero is a legitimate sequence for a genesis row, so a
-    /// document with no sequence at all has to stay distinguishable from one at the start of its run.
-    /// </para>
-    /// </remarks>
-    public static bool TryReadSequence(ReadOnlyMemory<byte> checkpointUtf8, out long sequence)
+    /// <param name="row">The stored row.</param>
+    /// <param name="sequence">The sequence the runner region carries, or zero when the bytes are not a row carrying one.</param>
+    /// <returns><see langword="true"/> when the row carries a sequence.</returns>
+    public static bool TryReadSequence(ReadOnlyMemory<byte> row, out long sequence)
     {
+        sequence = 0;
+        if (!CheckpointRow.TryParse(row.Span, out CheckpointRowLayout layout))
+        {
+            return false;
+        }
+
         try
         {
-            // A forward-only scan that stops at the property, NOT a document parse. Parsing builds the metadata index
-            // for the whole checkpoint — step outputs, journal, tags — to read one integer, on the write that happens
-            // most often in the system. `sequence` is written fifth, so this reads a handful of tokens and returns;
-            // Skip() steps over any nested value without indexing it.
-            var reader = new Utf8JsonReader(checkpointUtf8.Span);
+            var reader = new Utf8JsonReader(row.Span[layout.RunnerRegion]);
             if (!reader.Read() || reader.TokenType != JsonTokenType.StartObject)
             {
-                sequence = 0;
                 return false;
             }
 
@@ -508,9 +216,7 @@ public static class WorkflowCheckpointSerializer
 
                 if (isSequence)
                 {
-                    return reader.TokenType == JsonTokenType.Number
-                        ? reader.TryGetInt64(out sequence)
-                        : Absent(out sequence);
+                    return reader.TokenType == JsonTokenType.Number && reader.TryGetInt64(out sequence);
                 }
 
                 reader.Skip();
@@ -518,53 +224,50 @@ public static class WorkflowCheckpointSerializer
         }
         catch (Exception ex) when (ex is Corvus.Text.Json.JsonException or System.Text.Json.JsonException or FormatException or InvalidOperationException)
         {
-            // Bytes that are not a checkpoint at all carry no sequence, which is what this reports. A Try method that
-            // threw on malformed input would turn a corrupt or foreign row into an exception on the load path, where
-            // the caller is asking a question it is entitled to get "no" for. Everything else still propagates.
+            // Bytes that are not a checkpoint carry no sequence, which is what this reports: the caller is asking a
+            // question it is entitled to get "no" for.
         }
 
         sequence = 0;
         return false;
-
-        static bool Absent(out long sequence)
-        {
-            sequence = 0;
-            return false;
-        }
     }
 
     private static ReadOnlySpan<byte> SequenceUtf8 => "sequence"u8;
 
     /// <summary>
-    /// Reads the facts the execution-budget predicate needs (ADR 0068) from a checkpoint's bytes: the run's frozen
-    /// budget, the journal's length and truncation flag, and whether the run already faulted on its budget. A
-    /// forward-only scan like <see cref="TryReadSequence"/>, for a caller that holds a stored row and wants these
-    /// facts alone (the resume refusal, the coordinator's already-faulted check): it parses nothing and allocates
-    /// nothing; the journal is walked entry by entry to count it, and every other value is skipped. A caller that
-    /// parses the body anyway takes the facts from <see cref="Project"/> instead, where the journal's length is a
-    /// metadata read.
+    /// Reads the facts the execution-budget predicate needs (ADR 0068) from a row: the run's frozen budget from the
+    /// control-plane region, the journal's length and truncation from the runner region, and whether the run is
+    /// faulted on its budget, by the control plane's decision or the runner's own. A forward-only scan of the runner
+    /// region like <see cref="TryReadSequence"/>, for a caller that holds a stored row and wants these facts alone.
     /// </summary>
-    /// <param name="checkpointUtf8">The checkpoint document to read.</param>
-    /// <param name="facts">The facts read; <see langword="default"/> when the bytes are not a checkpoint.</param>
-    /// <returns><see langword="true"/> when the document is a JSON object the facts could be read from.</returns>
-    public static bool TryReadBudgetFacts(ReadOnlyMemory<byte> checkpointUtf8, out CheckpointBudgetFacts facts)
+    /// <param name="row">The stored row.</param>
+    /// <param name="facts">The facts read; <see langword="default"/> when the bytes are not a row.</param>
+    /// <returns><see langword="true"/> when the facts could be read.</returns>
+    public static bool TryReadBudgetFacts(ReadOnlyMemory<byte> row, out CheckpointBudgetFacts facts)
     {
-        ExecutionBudget? budget = null;
+        facts = default;
+        if (!CheckpointRow.TryParse(row.Span, out CheckpointRowLayout layout))
+        {
+            return false;
+        }
+
+        long sequence = 0;
         int journalCount = 0;
         bool truncated = false;
-        bool budgetFaulted = false;
+        bool runnerBudgetFaulted = false;
         try
         {
-            var reader = new Utf8JsonReader(checkpointUtf8.Span);
+            ControlPlaneRecord controlPlane = ControlPlaneRecord.Parse(row[layout.ControlPlaneRegion]);
+
+            var reader = new Utf8JsonReader(row.Span[layout.RunnerRegion]);
             if (!reader.Read() || reader.TokenType != JsonTokenType.StartObject)
             {
-                facts = default;
                 return false;
             }
 
             while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
             {
-                int which = reader.ValueTextEquals(ExecutionBudget.JsonPropertyNames.BudgetUtf8) ? 0
+                int which = reader.ValueTextEquals(SequenceUtf8) ? 0
                     : reader.ValueTextEquals("stepJournal"u8) ? 1
                     : reader.ValueTextEquals("journalTruncated"u8) ? 2
                     : reader.ValueTextEquals("fault"u8) ? 3
@@ -577,7 +280,11 @@ public static class WorkflowCheckpointSerializer
                 switch (which)
                 {
                     case 0:
-                        budget = ExecutionBudget.TryRead(ref reader, out ExecutionBudget read) ? read : null;
+                        if (reader.TokenType == JsonTokenType.Number)
+                        {
+                            reader.TryGetInt64(out sequence);
+                        }
+
                         break;
                     case 1:
                         journalCount = reader.TokenType == JsonTokenType.StartArray ? CountArray(ref reader) : 0;
@@ -586,7 +293,7 @@ public static class WorkflowCheckpointSerializer
                         truncated = reader.TokenType == JsonTokenType.True;
                         break;
                     case 3:
-                        budgetFaulted = reader.TokenType == JsonTokenType.StartObject && FaultIsBudgetFault(ref reader);
+                        runnerBudgetFaulted = reader.TokenType == JsonTokenType.StartObject && FaultIsBudgetFault(ref reader);
                         break;
                     default:
                         reader.Skip();
@@ -594,12 +301,11 @@ public static class WorkflowCheckpointSerializer
                 }
             }
 
-            facts = new CheckpointBudgetFacts(budget, journalCount, truncated, budgetFaulted);
+            facts = new CheckpointBudgetFacts(controlPlane.Budget, journalCount, truncated, runnerBudgetFaulted || controlPlane.IsBudgetFaultedAt(sequence));
             return true;
         }
         catch (Exception ex) when (ex is Corvus.Text.Json.JsonException or System.Text.Json.JsonException or FormatException or InvalidOperationException)
         {
-            // Bytes that are not a checkpoint carry no facts; the caller asked a question it is entitled to get "no" for.
             facts = default;
             return false;
         }
@@ -645,408 +351,166 @@ public static class WorkflowCheckpointSerializer
     }
 
     /// <summary>
-    /// Rewrites a checkpoint as terminally faulted on its execution budget (ADR 0068), authored by the control plane
-    /// rather than the runner: the status becomes <see cref="WorkflowRunStatus.Faulted"/>, the wait and any
-    /// resume-requested marker are dropped (a budget-faulted run is neither resumable nor claimable), the write
-    /// sequence is replaced with the one the control plane consumed for this write, the update time is stamped, and
-    /// the fault record names the limit that was hit at the last journaled step. Every other property is copied
-    /// verbatim as <see cref="RewriteStatus"/> does, so the run's working state stays inspectable.
+    /// Projects everything the checkpoint surfaces read from a posted row, in one parse of its envelope and its
+    /// control-plane region: the effective <see cref="WorkflowRunIndexEntry"/>, the environment the runner region
+    /// claims (ADR 0065 decision 9), the write sequence and lease epoch it carries (decision 6), the execution-budget
+    /// facts (ADR 0068), and the control-plane region's bytes (decision 7). The payload is not parsed.
     /// </summary>
-    /// <param name="source">The current (last durable) checkpoint document.</param>
-    /// <param name="sequence">The write sequence the rewritten document carries.</param>
-    /// <param name="error">The budget fault's error type, one of <see cref="ExecutionBudgetFault"/>.</param>
-    /// <param name="at">When the fault was decided.</param>
-    /// <returns>The rewritten checkpoint document.</returns>
-    public static byte[] RewriteFaulted(ReadOnlySpan<byte> source, long sequence, string error, DateTimeOffset at)
-    {
-        ArgumentException.ThrowIfNullOrEmpty(error);
-
-        using JsonWorkspace workspace = JsonWorkspace.Create();
-        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter buffer);
-        try
-        {
-            string stepId = string.Empty;
-            int attempt = 0;
-            bool updatedAtWritten = false;
-
-            var reader = new Utf8JsonReader(source);
-            reader.Read(); // the root StartObject
-            writer.WriteStartObject();
-            while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
-            {
-                if (reader.ValueTextEquals("status"u8))
-                {
-                    reader.Read();
-                    writer.WriteString("status"u8, StatusName(WorkflowRunStatus.Faulted));
-                }
-                else if (reader.ValueTextEquals(SequenceUtf8))
-                {
-                    reader.Read();
-                    writer.WriteNumber(SequenceUtf8, sequence);
-                }
-                else if (reader.ValueTextEquals("updatedAt"u8))
-                {
-                    reader.Read();
-                    writer.WriteString("updatedAt"u8, at);
-                    updatedAtWritten = true;
-                }
-                else if (reader.ValueTextEquals("wait"u8) || reader.ValueTextEquals("resumeRequestedAt"u8) || reader.ValueTextEquals("fault"u8))
-                {
-                    reader.Read();
-                    reader.Skip();
-                }
-                else if (reader.ValueTextEquals("stepJournal"u8))
-                {
-                    // Copied verbatim like every other subtree, after a pass over its entries to find the step the
-                    // fault is recorded against: the last one journaled, which is where the run was when its budget
-                    // ran out. Only that entry's id is materialized.
-                    reader.Read();
-                    int valueStart = (int)reader.TokenStartIndex;
-                    if (reader.TokenType == JsonTokenType.StartArray)
-                    {
-                        (stepId, attempt) = ReadLastJournalStep(ref reader, source);
-                    }
-                    else
-                    {
-                        reader.Skip();
-                    }
-
-                    writer.WritePropertyName("stepJournal"u8);
-                    writer.WriteRawValue(source[valueStart..(int)reader.BytesConsumed], skipInputValidation: true);
-                }
-                else
-                {
-                    ReadOnlySpan<byte> name = reader.ValueSpan;
-                    reader.Read();
-                    int valueStart = (int)reader.TokenStartIndex;
-                    reader.Skip();
-                    writer.WritePropertyName(name);
-                    writer.WriteRawValue(source[valueStart..(int)reader.BytesConsumed], skipInputValidation: true);
-                }
-            }
-
-            if (!updatedAtWritten)
-            {
-                writer.WriteString("updatedAt"u8, at);
-            }
-
-            writer.WriteStartObject("fault"u8);
-            writer.WriteString("stepId"u8, stepId);
-            writer.WriteNumber("attempt"u8, attempt);
-            writer.WriteString("error"u8, error);
-            writer.WriteString("at"u8, at);
-            writer.WriteEndObject();
-
-            writer.WriteEndObject();
-            writer.Flush();
-            return buffer.WrittenSpan.ToArray();
-        }
-        finally
-        {
-            workspace.ReturnWriterAndBuffer(writer, buffer);
-        }
-
-        // Walks the journal array to its end, remembering where the last entry's step id and attempt sit, and
-        // materializes only those. Leaves the reader on the array's end token.
-        static (string StepId, int Attempt) ReadLastJournalStep(ref Utf8JsonReader reader, ReadOnlySpan<byte> source)
-        {
-            int idStart = -1;
-            int idLength = 0;
-            int attempt = 0;
-            while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
-            {
-                if (reader.TokenType != JsonTokenType.StartObject)
-                {
-                    reader.Skip();
-                    continue;
-                }
-
-                while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
-                {
-                    bool isStepId = reader.ValueTextEquals("stepId"u8);
-                    bool isAttempt = reader.ValueTextEquals("attempt"u8);
-                    reader.Read();
-                    if (isStepId && reader.TokenType == JsonTokenType.String)
-                    {
-                        idStart = (int)reader.TokenStartIndex;
-                        idLength = (int)(reader.BytesConsumed - reader.TokenStartIndex);
-                    }
-                    else if (isAttempt && reader.TokenType == JsonTokenType.Number && reader.TryGetInt32(out int read))
-                    {
-                        attempt = read;
-                    }
-                    else
-                    {
-                        reader.Skip();
-                    }
-                }
-            }
-
-            if (idStart < 0)
-            {
-                return (string.Empty, attempt);
-            }
-
-            // The token slice includes its quotes; a fresh reader over it unescapes the same way GetString would.
-            var idReader = new Utf8JsonReader(source.Slice(idStart, idLength));
-            return (idReader.Read() ? idReader.GetString() ?? string.Empty : string.Empty, attempt);
-        }
-    }
-
-    /// <summary>
-    /// Projects everything the checkpoint surfaces read from a posted body, in one parse: the
-    /// <see cref="WorkflowRunIndexEntry"/>, the environment the body claims (ADR 0065 decision 9), the write sequence
-    /// it carries (decision 6) and the execution-budget facts (ADR 0068). The runner API and the serverless surface
-    /// call this once per save and hand the parts to the coordinator, which then reads the body no further. Every
-    /// part is a top-level scalar, a small value object or an array whose length the parsed document already knows,
-    /// so this reads just those and skips the retry counters, correlation tokens, step outputs, inputs, outputs and
-    /// journal entries that <see cref="Deserialize"/> rents pooled maps and builds collections for. The index owns its
-    /// tag copies, so the parsed document is disposed before return. The index is identical to the entry
-    /// <see cref="WorkflowRun"/> stamped when it wrote these bytes, because both build it through
-    /// <see cref="WorkflowRunIndexEntry.Project(string, WorkflowRunStatus, DateTimeOffset, DateTimeOffset, WorkflowWait?, WorkflowFault?, string?, TagSet, SecurityTagSet, DateTimeOffset?)"/>.
-    /// </summary>
-    /// <param name="checkpointUtf8">The serialized checkpoint document (UTF-8 JSON).</param>
+    /// <param name="row">The row.</param>
     /// <returns>The projection.</returns>
-    public static CheckpointProjection Project(ReadOnlyMemory<byte> checkpointUtf8)
+    /// <exception cref="FormatException">The bytes are not a checkpoint row, or the envelope or control-plane region does not match its closed schema.</exception>
+    public static CheckpointProjection Project(ReadOnlyMemory<byte> row)
     {
-        using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(checkpointUtf8);
-        JsonElement root = document.RootElement;
+        CheckpointRowLayout layout = CheckpointRow.Parse(row.Span);
+        ReadOnlyMemory<byte> controlPlaneRegion = row[layout.ControlPlaneRegion];
+        ControlPlaneRecord controlPlane = ControlPlaneRecord.Parse(controlPlaneRegion);
 
-        string workflowId = root.GetProperty("workflowId"u8).GetString() ?? string.Empty;
-        WorkflowRunStatus status = Enum.Parse<WorkflowRunStatus>(root.GetProperty("status"u8).GetString() ?? nameof(WorkflowRunStatus.Pending));
-        DateTimeOffset createdAt = root.TryGetProperty("createdAt"u8, out JsonElement createdAtElement)
-            ? createdAtElement.GetDateTimeOffset()
-            : default;
-
-        // The index carries a non-nullable UpdatedAt; every checkpoint the runtime writes stamps updatedAt, so this
-        // falls back to createdAt only for a checkpoint written before updatedAt was persisted.
-        DateTimeOffset updatedAt = root.TryGetProperty("updatedAt"u8, out JsonElement updatedAtElement)
-            ? updatedAtElement.GetDateTimeOffset()
-            : createdAt;
-
-        string? correlationId = root.TryGetProperty("correlationId"u8, out JsonElement correlationIdElement) ? correlationIdElement.GetString() : null;
-        string? environment = root.TryGetProperty("environment"u8, out JsonElement environmentElement) ? environmentElement.GetString() : null;
-
-        // Absence stays distinguishable from zero (a genesis row's legitimate sequence), as TryReadSequence keeps it.
-        long? sequence = root.TryGetProperty("sequence"u8, out JsonElement sequenceElement)
-            && sequenceElement.ValueKind == JsonValueKind.Number
-            && sequenceElement.TryGetInt64(out long persistedSequence)
-            ? persistedSequence
-            : null;
-
-        TagSet tags = root.TryGetProperty("tags"u8, out JsonElement tagsElement) && tagsElement.ValueKind == JsonValueKind.Array
-            ? TagSet.CopyFrom(tagsElement)
-            : default;
-        SecurityTagSet securityTags = ReadSecurityTags(root);
-
-        WorkflowWait? wait = null;
-        if (root.TryGetProperty("wait"u8, out JsonElement waitElement))
+        CheckpointEnvelope envelope;
+        int journalCount;
+        using (ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(row[layout.RunnerRegion]))
         {
-            WorkflowWaitKind kind = Enum.Parse<WorkflowWaitKind>(waitElement.GetProperty("kind"u8).GetString() ?? nameof(WorkflowWaitKind.Timer));
-            wait = kind switch
+            envelope = ReadEnvelope(document.RootElement, out PooledUtf8Map<int> retryCounters);
+            retryCounters.Dispose();
+            journalCount = envelope.StepJournal.Count;
+        }
+
+        (WorkflowRunStatus status, WorkflowWait? wait, WorkflowFault? fault) = Join(envelope, controlPlane);
+        bool budgetFaulted = fault is { } effective && ExecutionBudgetFault.IsBudgetFault(effective.Error);
+
+        // The index carries a non-nullable UpdatedAt: the latest write to the row, which is the runner's stamp or a
+        // later control-plane decision, so the index and the row agree whichever party wrote last.
+        DateTimeOffset updatedAt = envelope.UpdatedAt ?? envelope.CreatedAt;
+        foreach (DateTimeOffset? decided in (ReadOnlySpan<DateTimeOffset?>)[controlPlane.Cancellation?.At, controlPlane.BudgetFault?.At, controlPlane.ResumeRequest?.At])
+        {
+            if (decided is { } at && at > updatedAt)
             {
-                WorkflowWaitKind.Timer => WorkflowWait.Timer(waitElement.GetProperty("dueAt"u8).GetDateTimeOffset()),
-                WorkflowWaitKind.Pause => WorkflowWait.Pause(),
-                _ => WorkflowWait.Message(
-                    waitElement.GetProperty("channel"u8).GetString() ?? string.Empty,
-                    waitElement.TryGetProperty("correlationId"u8, out JsonElement waitCorrelationElement) ? waitCorrelationElement.GetString() : null),
-            };
+                updatedAt = at;
+            }
         }
 
-        WorkflowFault? fault = null;
-        bool budgetFaulted = false;
-        if (root.TryGetProperty("fault"u8, out JsonElement faultElement))
-        {
-            JsonElement errorElement = faultElement.GetProperty("error"u8);
-            budgetFaulted = ExecutionBudgetFault.IsBudgetFault(errorElement);
-            fault = new WorkflowFault(
-                faultElement.GetProperty("stepId"u8).GetString() ?? string.Empty,
-                faultElement.GetProperty("attempt"u8).GetInt32(),
-                errorElement.GetString() ?? string.Empty,
-                faultElement.GetProperty("at"u8).GetDateTimeOffset());
-        }
-
-        DateTimeOffset? resumeRequestedAt = root.TryGetProperty("resumeRequestedAt"u8, out JsonElement resumeRequestedAtElement)
-            ? DateTimeOffset.FromUnixTimeMilliseconds(resumeRequestedAtElement.GetInt64())
-            : null;
-
-        // ADR 0068: the budget facts. The journal's length is a metadata read on the parsed document, not a walk.
-        ExecutionBudget? budget = root.TryGetProperty(ExecutionBudget.JsonPropertyNames.BudgetUtf8, out JsonElement budgetElement) && ExecutionBudget.TryRead(budgetElement, out ExecutionBudget readBudget)
-            ? readBudget
-            : null;
-        int journalCount = root.TryGetProperty("stepJournal"u8, out JsonElement journalElement) && journalElement.ValueKind == JsonValueKind.Array
-            ? journalElement.GetArrayLength()
-            : 0;
-        bool journalTruncated = root.TryGetProperty("journalTruncated"u8, out JsonElement journalTruncatedElement) && journalTruncatedElement.ValueKind == JsonValueKind.True;
+        WorkflowRunIndexEntry index = WorkflowRunIndexEntry.Project(
+            envelope.WorkflowId,
+            status,
+            envelope.CreatedAt,
+            updatedAt,
+            wait,
+            fault,
+            envelope.CorrelationId,
+            envelope.Tags,
+            envelope.SecurityTags,
+            controlPlane.ResumeRequestedAt(envelope.Sequence));
 
         return new CheckpointProjection(
-            WorkflowRunIndexEntry.Project(
-                workflowId,
-                status,
-                createdAt,
-                updatedAt,
-                wait,
-                fault,
-                correlationId,
-                tags,
-                securityTags,
-                resumeRequestedAt),
-            environment,
-            sequence,
-            new CheckpointBudgetFacts(budget, journalCount, journalTruncated, budgetFaulted));
+            index,
+            envelope.Environment,
+            envelope.Sequence,
+            envelope.Epoch,
+            new CheckpointBudgetFacts(controlPlane.Budget, journalCount, envelope.JournalTruncated, budgetFaulted),
+            controlPlaneRegion);
     }
 
     /// <summary>
     /// Attempts <see cref="Project"/>, returning <see langword="false"/> instead of throwing when the bytes are not a
-    /// well-formed checkpoint document. The checkpoint surfaces use this as the validation boundary for a posted body,
-    /// so a malformed body is a clean rejection rather than an unhandled fault.
+    /// well-formed row. The checkpoint surfaces use this as the validation boundary for a posted body, so a malformed
+    /// body is a clean rejection rather than an unhandled fault.
     /// </summary>
-    /// <param name="checkpointUtf8">The bytes to project.</param>
-    /// <param name="projection">The projection, or <see langword="default"/> when the bytes are not a checkpoint.</param>
+    /// <param name="row">The bytes to project.</param>
+    /// <param name="projection">The projection, or <see langword="default"/> when the bytes are not a row.</param>
     /// <returns><see langword="true"/> if the bytes projected; otherwise <see langword="false"/>.</returns>
-    public static bool TryProject(ReadOnlyMemory<byte> checkpointUtf8, out CheckpointProjection projection)
+    public static bool TryProject(ReadOnlyMemory<byte> row, out CheckpointProjection projection)
     {
         try
         {
-            projection = Project(checkpointUtf8);
+            projection = Project(row);
             return true;
         }
         catch (Exception ex) when (ex is Corvus.Text.Json.JsonException or System.Text.Json.JsonException or FormatException or InvalidOperationException or ArgumentException or KeyNotFoundException)
         {
-            // Malformed JSON (Corvus.Text.Json's own reader exception, or System.Text.Json's), a non-object root, a
-            // missing required property, or a bad scalar (enum/number/date) — the bytes are not a checkpoint. Every
-            // other exception (e.g. cancellation, out-of-memory) still propagates.
+            // Malformed framing or JSON, a missing required member, an unknown member, or a bad scalar: the bytes are
+            // not a checkpoint. Every other exception (e.g. cancellation, out-of-memory) still propagates.
             projection = default;
             return false;
         }
     }
 
-    /// <summary>
-    /// Projects a checkpoint's <see cref="WorkflowRunIndexEntry"/> directly from its bytes, without materializing the
-    /// run's working state: the index part of <see cref="Project"/>, for callers that need nothing else.
-    /// </summary>
-    /// <param name="checkpointUtf8">The serialized checkpoint document (UTF-8 JSON).</param>
-    /// <returns>The index entry the checkpoint projects to.</returns>
-    public static WorkflowRunIndexEntry ProjectIndex(ReadOnlyMemory<byte> checkpointUtf8)
-        => Project(checkpointUtf8).Index;
+    /// <summary>Projects a row's effective <see cref="WorkflowRunIndexEntry"/> directly from its bytes: the index part of <see cref="Project"/>.</summary>
+    /// <param name="row">The row.</param>
+    /// <returns>The index entry the row projects to.</returns>
+    public static WorkflowRunIndexEntry ProjectIndex(ReadOnlyMemory<byte> row)
+        => Project(row).Index;
 
-    /// <summary>
-    /// As <see cref="ProjectIndex(ReadOnlyMemory{byte})"/>, additionally reporting the environment the checkpoint
-    /// BODY claims (ADR 0065 decision 9).
-    /// </summary>
-    /// <param name="checkpointUtf8">The serialized checkpoint document (UTF-8 JSON).</param>
-    /// <param name="environment">The environment the body claims, or <see langword="null"/> when it claims none.</param>
-    /// <returns>The index entry the checkpoint projects to.</returns>
-    public static WorkflowRunIndexEntry ProjectIndex(ReadOnlyMemory<byte> checkpointUtf8, out string? environment)
+    /// <summary>As <see cref="ProjectIndex(ReadOnlyMemory{byte})"/>, additionally reporting the environment the runner region claims (ADR 0065 decision 9).</summary>
+    /// <param name="row">The row.</param>
+    /// <param name="environment">The environment the runner region claims.</param>
+    /// <returns>The index entry the row projects to.</returns>
+    public static WorkflowRunIndexEntry ProjectIndex(ReadOnlyMemory<byte> row, out string environment)
     {
-        CheckpointProjection projection = Project(checkpointUtf8);
+        CheckpointProjection projection = Project(row);
         environment = projection.Environment;
         return projection.Index;
     }
 
-    /// <summary>
-    /// Attempts <see cref="ProjectIndex(ReadOnlyMemory{byte})"/>, returning <see langword="false"/> instead of throwing
-    /// when the bytes are not a well-formed checkpoint document.
-    /// </summary>
-    /// <param name="checkpointUtf8">The bytes to project.</param>
-    /// <param name="index">The projected index entry, or <see langword="default"/> when the bytes are not a checkpoint.</param>
+    /// <summary>Attempts <see cref="ProjectIndex(ReadOnlyMemory{byte})"/>, returning <see langword="false"/> instead of throwing when the bytes are not a well-formed row.</summary>
+    /// <param name="row">The bytes to project.</param>
+    /// <param name="index">The projected index entry, or <see langword="default"/> when the bytes are not a row.</param>
     /// <returns><see langword="true"/> if the bytes projected to an index entry; otherwise <see langword="false"/>.</returns>
-    public static bool TryProjectIndex(ReadOnlyMemory<byte> checkpointUtf8, out WorkflowRunIndexEntry index)
-        => TryProjectIndex(checkpointUtf8, out index, out _);
-
-    /// <summary>
-    /// As <see cref="TryProjectIndex(ReadOnlyMemory{byte}, out WorkflowRunIndexEntry)"/>, additionally reporting
-    /// the environment the checkpoint body claims.
-    /// </summary>
-    /// <param name="checkpointUtf8">The bytes to project.</param>
-    /// <param name="index">The projected index entry, or <see langword="default"/> when the bytes are not a checkpoint.</param>
-    /// <param name="environment">The environment the body claims, or <see langword="null"/>.</param>
-    /// <returns><see langword="true"/> if the bytes projected to an index entry; otherwise <see langword="false"/>.</returns>
-    public static bool TryProjectIndex(ReadOnlyMemory<byte> checkpointUtf8, out WorkflowRunIndexEntry index, out string? environment)
+    public static bool TryProjectIndex(ReadOnlyMemory<byte> row, out WorkflowRunIndexEntry index)
     {
-        bool projected = TryProject(checkpointUtf8, out CheckpointProjection projection);
+        bool projected = TryProject(row, out CheckpointProjection projection);
         index = projection.Index;
-        environment = projection.Environment;
         return projected;
     }
 
     /// <summary>
-    /// Rewrites a checkpoint's <c>status</c> (and optionally drops its <c>wait</c>) by copying every other property's
-    /// raw bytes verbatim — the working state (retry counters, correlation tokens, step outputs, inputs, outputs) is
-    /// passed straight through with no dictionary materialized. For status-only transitions such as cancel, this
-    /// replaces a full <see cref="Deserialize"/> + <see cref="Serialize"/> round-trip.
+    /// Rewrites a row for a control-plane remediation (a resume that moves the cursor, supplies a skipped step's
+    /// outputs, patches the run's context, or re-budgets the run), copying every member the remediation does not name
+    /// verbatim: the cursor and update time in the envelope, the context in the payload, the budget in the
+    /// control-plane region. A remediation must change what it names and nothing else, so nothing here re-serializes
+    /// the run from a list of its fields.
     /// </summary>
-    /// <param name="source">The current checkpoint document (UTF-8 JSON).</param>
-    /// <param name="newStatus">The status to write.</param>
-    /// <param name="dropWait">Whether to omit the <c>wait</c> property (clearing a suspended run's wait).</param>
-    /// <returns>The rewritten checkpoint document.</returns>
-    public static byte[] RewriteStatus(ReadOnlySpan<byte> source, WorkflowRunStatus newStatus, bool dropWait)
+    /// <param name="row">The stored row.</param>
+    /// <param name="remediation">What the remediation changes.</param>
+    /// <returns>The rewritten row.</returns>
+    /// <remarks>
+    /// This rewrites the runner's own regions, which a clear row permits. Once the runner region carries a MAC, a
+    /// payload-mutating resume is recorded as a control-plane request the runner applies inside its own boundary
+    /// (ADR 0065 decision 8), and this becomes a control-plane-region write like every other.
+    /// </remarks>
+    internal static byte[] RewriteForRemediation(ReadOnlyMemory<byte> row, in CheckpointRemediation remediation)
     {
+        CheckpointRowLayout layout = CheckpointRow.Parse(row.Span);
+        ControlPlaneRecord controlPlane = ControlPlaneRecord.Parse(row[layout.ControlPlaneRegion]);
+        byte[] controlPlaneRegion = remediation.Budget is { } budget
+            ? (controlPlane with { Budget = budget }).ToUtf8()
+            : row[layout.ControlPlaneRegion].ToArray();
+
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter buffer);
+        Utf8JsonWriter envelopeWriter = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter envelopeBuffer);
         try
         {
-            var reader = new Utf8JsonReader(source);
-            reader.Read(); // the root StartObject
-            writer.WriteStartObject();
-            while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
-            {
-                if (reader.ValueTextEquals("status"u8))
-                {
-                    reader.Read();
-                    writer.WriteString("status"u8, StatusName(newStatus));
-                }
-                else if (dropWait && reader.ValueTextEquals("wait"u8))
-                {
-                    reader.Read();
-                    reader.Skip();
-                }
-                else
-                {
-                    // Checkpoint property names are simple ASCII (never escaped), so the raw name span round-trips;
-                    // the value (scalar or whole subtree) is copied verbatim, so no working dictionary is built.
-                    ReadOnlySpan<byte> name = reader.ValueSpan;
-                    reader.Read();
-                    int valueStart = (int)reader.TokenStartIndex;
-                    reader.Skip();
-                    writer.WritePropertyName(name);
-                    writer.WriteRawValue(source[valueStart..(int)reader.BytesConsumed], skipInputValidation: true);
-                }
-            }
+            RewriteEnvelope(envelopeWriter, row.Span[layout.RunnerRegion], remediation);
+            envelopeWriter.Flush();
 
-            writer.WriteEndObject();
-            writer.Flush();
-            return buffer.WrittenSpan.ToArray();
+            Utf8JsonWriter payloadWriter = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter payloadBuffer);
+            try
+            {
+                RewritePayload(payloadWriter, row.Span[layout.Payload], remediation);
+                payloadWriter.Flush();
+                return CheckpointRow.WriteClear(envelopeBuffer.WrittenSpan, payloadBuffer.WrittenSpan, controlPlaneRegion);
+            }
+            finally
+            {
+                workspace.ReturnWriterAndBuffer(payloadWriter, payloadBuffer);
+            }
         }
         finally
         {
-            workspace.ReturnWriterAndBuffer(writer, buffer);
+            workspace.ReturnWriterAndBuffer(envelopeWriter, envelopeBuffer);
         }
-    }
 
-    /// <summary>
-    /// Rewrites a checkpoint for a control-plane remediation (a resume that moves the cursor, supplies a skipped
-    /// step's outputs, patches the run's context, or re-budgets the run), copying every property the remediation does
-    /// not name from the stored bytes verbatim.
-    /// </summary>
-    /// <param name="source">The current checkpoint document (UTF-8 JSON).</param>
-    /// <param name="remediation">What the remediation changes.</param>
-    /// <returns>The rewritten checkpoint document.</returns>
-    /// <remarks>
-    /// A remediation must change what it names and nothing else. Re-serializing the run from a list of its fields
-    /// loses whichever field the list does not know about, and did: the execution budget and the step journal (ADR
-    /// 0068), so a rewound run came back unbudgeted with its fuel refunded. Copying by property makes that class of
-    /// loss impossible, because a property this method has never heard of is carried like any other.
-    /// </remarks>
-    internal static byte[] RewriteForRemediation(ReadOnlySpan<byte> source, in CheckpointRemediation remediation)
-    {
-        using JsonWorkspace workspace = JsonWorkspace.Create();
-        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter buffer);
-        try
+        static void RewriteEnvelope(Utf8JsonWriter writer, ReadOnlySpan<byte> source, in CheckpointRemediation remediation)
         {
             bool wroteUpdatedAt = false;
-            bool wroteInputs = false;
-            bool wroteStepOutputs = false;
             var reader = new Utf8JsonReader(source);
             reader.Read(); // the root StartObject
             writer.WriteStartObject();
@@ -1063,11 +527,35 @@ public static class WorkflowCheckpointSerializer
                     writer.WriteString("updatedAt"u8, remediation.UpdatedAt);
                     wroteUpdatedAt = true;
                 }
-                else if (remediation.ReplacesContext && reader.ValueTextEquals("inputs"u8))
+                else
+                {
+                    CopyMember(writer, ref reader, source);
+                }
+            }
+
+            if (!wroteUpdatedAt)
+            {
+                writer.WriteString("updatedAt"u8, remediation.UpdatedAt);
+            }
+
+            writer.WriteEndObject();
+        }
+
+        static void RewritePayload(Utf8JsonWriter writer, ReadOnlySpan<byte> source, in CheckpointRemediation remediation)
+        {
+            bool wroteInputs = false;
+            bool wroteStepOutputs = false;
+            var reader = new Utf8JsonReader(source);
+            reader.Read(); // the root StartObject
+            writer.WriteStartObject();
+            while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+            {
+                if (remediation.ReplacesContext && reader.ValueTextEquals("inputs"u8))
                 {
                     reader.Read();
                     reader.Skip();
-                    wroteInputs = WriteInputs(writer, remediation.Inputs);
+                    WriteInputs(writer, remediation.Inputs);
+                    wroteInputs = true;
                 }
                 else if (remediation.ReplacesContext && reader.ValueTextEquals("stepOutputs"u8))
                 {
@@ -1076,31 +564,13 @@ public static class WorkflowCheckpointSerializer
                     WriteStepOutputs(writer, remediation.StepOutputs!);
                     wroteStepOutputs = true;
                 }
-                else if (remediation.Budget is { } budget && reader.ValueTextEquals(ExecutionBudget.JsonPropertyNames.BudgetUtf8))
-                {
-                    reader.Read();
-                    reader.Skip();
-                    budget.WriteTo(writer);
-                }
                 else
                 {
-                    // Checkpoint property names are simple ASCII (never escaped), so the raw name span round-trips;
-                    // the value (scalar or whole subtree) is copied verbatim.
-                    ReadOnlySpan<byte> name = reader.ValueSpan;
-                    reader.Read();
-                    int valueStart = (int)reader.TokenStartIndex;
-                    reader.Skip();
-                    writer.WritePropertyName(name);
-                    writer.WriteRawValue(source[valueStart..(int)reader.BytesConsumed], skipInputValidation: true);
+                    CopyMember(writer, ref reader, source);
                 }
             }
 
-            // A property the stored document did not carry, and the remediation supplies, is appended.
-            if (!wroteUpdatedAt)
-            {
-                writer.WriteString("updatedAt"u8, remediation.UpdatedAt);
-            }
-
+            // A member the stored payload did not carry, and the remediation supplies, is appended.
             if (remediation.ReplacesContext)
             {
                 if (!wroteInputs)
@@ -1115,60 +585,385 @@ public static class WorkflowCheckpointSerializer
             }
 
             writer.WriteEndObject();
-            writer.Flush();
-            return buffer.WrittenSpan.ToArray();
-        }
-        finally
-        {
-            workspace.ReturnWriterAndBuffer(writer, buffer);
         }
 
-        static bool WriteInputs(Utf8JsonWriter writer, in JsonElement inputs)
+        // Member names are simple ASCII (never escaped), so the raw name span round-trips; the value (scalar or whole
+        // subtree) is copied verbatim, so no working dictionary is built.
+        static void CopyMember(Utf8JsonWriter writer, ref Utf8JsonReader reader, ReadOnlySpan<byte> source)
         {
-            // Omitted when undefined, as Serialize omits it: "not present" is Undefined, never null.
-            if (inputs.ValueKind != JsonValueKind.Undefined)
+            ReadOnlySpan<byte> name = reader.ValueSpan;
+            reader.Read();
+            int valueStart = (int)reader.TokenStartIndex;
+            reader.Skip();
+            writer.WritePropertyName(name);
+            writer.WriteRawValue(source[valueStart..(int)reader.BytesConsumed], skipInputValidation: true);
+        }
+    }
+
+    /// <summary>The join of a runner region and a control-plane record (ADR 0065 decision 7): the run's effective status, wait and fault.</summary>
+    /// <param name="envelope">The runner region.</param>
+    /// <param name="controlPlane">The control-plane record.</param>
+    /// <returns>The effective lifecycle values.</returns>
+    internal static (WorkflowRunStatus Status, WorkflowWait? Wait, WorkflowFault? Fault) Join(in CheckpointEnvelope envelope, in ControlPlaneRecord controlPlane)
+    {
+        if (controlPlane.Cancellation is not null)
+        {
+            // Cancelled is terminal and unconditional: no wait survives it, and the runner's fault, if any, is kept for
+            // the record.
+            return (WorkflowRunStatus.Cancelled, null, envelope.Fault);
+        }
+
+        if (controlPlane.BudgetFault is { } budgetFault && controlPlane.IsBudgetFaultedAt(envelope.Sequence))
+        {
+            // The fault is recorded against the last step journaled, which is where the run was when its budget ran
+            // out; a run with no journal names no step.
+            (string stepId, int attempt) = envelope.StepJournal.Count > 0
+                ? (envelope.StepJournal[^1].StepId, envelope.StepJournal[^1].Attempt)
+                : (string.Empty, 0);
+            return (WorkflowRunStatus.Faulted, null, new WorkflowFault(stepId, attempt, budgetFault.Error, budgetFault.At));
+        }
+
+        return (envelope.Status, envelope.Wait, envelope.Fault);
+    }
+
+    // The envelope in its fixed property order. Optional members are omitted when absent (never written as null).
+    private static void WriteEnvelope(Utf8JsonWriter writer, in CheckpointEnvelope envelope, PooledUtf8Map<int> retryCounters)
+    {
+        writer.WriteStartObject();
+        writer.WriteString("runId"u8, envelope.RunId.Value);
+        writer.WriteString("environment"u8, envelope.Environment);
+        writer.WriteString("workflowId"u8, envelope.WorkflowId);
+        writer.WriteString("status"u8, StatusName(envelope.Status));
+        writer.WriteNumber("cursor"u8, envelope.Cursor);
+
+        // The per-run write sequence (ADR 0065 decision 6): authored by the party that authors the checkpoint, inside
+        // the region the MAC will cover, because the server validates a proposed save against the persisted value.
+        writer.WriteNumber(SequenceUtf8, envelope.Sequence);
+        if (envelope.Epoch is { } epoch)
+        {
+            writer.WriteNumber("epoch"u8, epoch);
+        }
+
+        writer.WriteString("createdAt"u8, envelope.CreatedAt);
+        if (envelope.UpdatedAt is { } updatedAt)
+        {
+            writer.WriteString("updatedAt"u8, updatedAt);
+        }
+
+        if (envelope.CorrelationId is { } correlationId)
+        {
+            writer.WriteString("correlationId"u8, correlationId);
+        }
+
+        if (envelope.RerunOf is { } rerunOf)
+        {
+            writer.WriteString("rerunOf"u8, rerunOf);
+        }
+
+        if (!envelope.Tags.IsEmpty)
+        {
+            writer.WritePropertyName("tags"u8);
+            envelope.Tags.WriteTo(writer);
+        }
+
+        if (!envelope.SecurityTags.IsEmpty)
+        {
+            writer.WritePropertyName("securityTags"u8);
+            envelope.SecurityTags.WriteTo(writer);
+        }
+
+        writer.WriteStartObject("retryCounters"u8);
+        PooledUtf8Map<int>.Enumerator retryEnumerator = retryCounters.GetEnumerator();
+        while (retryEnumerator.MoveNext())
+        {
+            writer.WriteNumber(retryEnumerator.CurrentKey, retryEnumerator.CurrentValue);
+        }
+
+        writer.WriteEndObject();
+
+        // The per-step journal (ADR 0050): payload-free metadata entries, one per step execution, in order.
+        if (envelope.StepJournal is { Count: > 0 } journal)
+        {
+            writer.WriteStartArray("stepJournal"u8);
+            for (int i = 0; i < journal.Count; i++)
             {
-                writer.WritePropertyName("inputs"u8);
-                inputs.WriteTo(writer);
+                WorkflowStepJournalEntry entry = journal[i];
+                writer.WriteStartObject();
+                writer.WriteString("stepId"u8, entry.StepId);
+                writer.WriteString("status"u8, StepStatusName(entry.Status));
+                writer.WriteNumber("attempt"u8, entry.Attempt);
+                writer.WriteString("startedAt"u8, entry.StartedAt);
+                writer.WriteString("endedAt"u8, entry.EndedAt);
+                writer.WriteEndObject();
             }
 
-            return true;
+            writer.WriteEndArray();
+            if (envelope.JournalTruncated)
+            {
+                writer.WriteBoolean("journalTruncated"u8, true);
+            }
         }
 
-        static void WriteStepOutputs(Utf8JsonWriter writer, PooledUtf8Map<JsonElement> stepOutputs)
+        if (envelope.Wait is { } w)
         {
-            writer.WriteStartObject("stepOutputs"u8);
-            PooledUtf8Map<JsonElement>.Enumerator enumerator = stepOutputs.GetEnumerator();
-            while (enumerator.MoveNext())
+            writer.WriteStartObject("wait"u8);
+            writer.WriteString("kind"u8, WaitKindName(w.Kind));
+            if (w.Kind == WorkflowWaitKind.Timer)
             {
-                if (enumerator.CurrentValue.ValueKind == JsonValueKind.Undefined)
+                writer.WriteString("dueAt"u8, w.DueAt);
+            }
+            else if (w.Kind == WorkflowWaitKind.Message)
+            {
+                writer.WriteString("channel"u8, w.Channel);
+                if (w.CorrelationId is { } waitCorrelationId)
                 {
-                    continue;
+                    writer.WriteString("correlationId"u8, waitCorrelationId);
                 }
-
-                writer.WritePropertyName(enumerator.CurrentKey);
-                enumerator.CurrentValue.WriteTo(writer);
             }
 
+            // A §18 Pause wait carries no wake trigger: the kind alone is the whole record.
             writer.WriteEndObject();
         }
-    }
 
-    /// <summary>Reads just the security tags from a parsed checkpoint (for the index projection), without materializing the working dictionaries.</summary>
-    /// <param name="root">The parsed checkpoint root.</param>
-    /// <returns>The security tags as a deferred holder over the persisted bytes (empty if absent).</returns>
-    public static SecurityTagSet ReadSecurityTags(in JsonElement root)
-    {
-        if (!root.TryGetProperty("securityTags"u8, out JsonElement element) || element.ValueKind != JsonValueKind.Array)
+        if (envelope.Fault is { } f)
         {
-            return default;
+            writer.WriteStartObject("fault"u8);
+            writer.WriteString("stepId"u8, f.StepId);
+            writer.WriteNumber("attempt"u8, f.Attempt);
+            writer.WriteString("error"u8, f.Error);
+            writer.WriteString("at"u8, f.At);
+            writer.WriteEndObject();
         }
 
-        return SecurityTagSet.CopyFrom(element);
+        writer.WriteEndObject();
     }
 
-    // Map the enums to their names via constant strings, so serialising a checkpoint does not allocate a
-    // string per call the way Enum.ToString() does. Names match the enum members so Enum.Parse round-trips.
+    // The payload in its fixed property order.
+    private static void WritePayload(Utf8JsonWriter writer, IReadOnlyDictionary<string, byte[]> correlationTokens, in JsonElement inputs, PooledUtf8Map<JsonElement> stepOutputs, in JsonElement outputs)
+    {
+        writer.WriteStartObject();
+        writer.WriteStartObject("correlationTokens"u8);
+        foreach (KeyValuePair<string, byte[]> token in correlationTokens)
+        {
+            writer.WriteBase64String(token.Key, token.Value);
+        }
+
+        writer.WriteEndObject();
+
+        // Optional values are omitted when undefined (not written as null): "not present" is Undefined.
+        WriteInputs(writer, inputs);
+        if (outputs.ValueKind != JsonValueKind.Undefined)
+        {
+            writer.WritePropertyName("outputs"u8);
+            outputs.WriteTo(writer);
+        }
+
+        WriteStepOutputs(writer, stepOutputs);
+        writer.WriteEndObject();
+    }
+
+    private static void WriteInputs(Utf8JsonWriter writer, in JsonElement inputs)
+    {
+        if (inputs.ValueKind != JsonValueKind.Undefined)
+        {
+            writer.WritePropertyName("inputs"u8);
+            inputs.WriteTo(writer);
+        }
+    }
+
+    private static void WriteStepOutputs(Utf8JsonWriter writer, PooledUtf8Map<JsonElement> stepOutputs)
+    {
+        writer.WriteStartObject("stepOutputs"u8);
+        PooledUtf8Map<JsonElement>.Enumerator enumerator = stepOutputs.GetEnumerator();
+        while (enumerator.MoveNext())
+        {
+            if (enumerator.CurrentValue.ValueKind == JsonValueKind.Undefined)
+            {
+                continue;
+            }
+
+            writer.WritePropertyName(enumerator.CurrentKey);
+            enumerator.CurrentValue.WriteTo(writer);
+        }
+
+        writer.WriteEndObject();
+    }
+
+    // Reads the envelope under its closed schema: every member is one it names, and the required ones are present.
+    // The retry counters come out as a pooled map the caller owns.
+    private static CheckpointEnvelope ReadEnvelope(in JsonElement root, out PooledUtf8Map<int> retryCounters)
+    {
+        if (root.ValueKind != JsonValueKind.Object)
+        {
+            ThrowHelper.ThrowCheckpointRowMalformed();
+        }
+
+        string? runId = null;
+        string? environment = null;
+        string? workflowId = null;
+        WorkflowRunStatus? status = null;
+        int? cursor = null;
+        long? sequence = null;
+        long? epoch = null;
+        DateTimeOffset? createdAt = null;
+        DateTimeOffset? updatedAt = null;
+        string? correlationId = null;
+        string? rerunOf = null;
+        TagSet tags = default;
+        SecurityTagSet securityTags = default;
+        PooledUtf8Map<int>? counters = null;
+        List<WorkflowStepJournalEntry>? journal = null;
+        bool journalTruncated = false;
+        WorkflowWait? wait = null;
+        WorkflowFault? fault = null;
+        try
+        {
+            foreach (JsonProperty<JsonElement> property in root.EnumerateObject())
+            {
+                JsonElement value = property.Value;
+                if (property.NameEquals("runId"u8))
+                {
+                    runId = RequiredString(value, "runId");
+                }
+                else if (property.NameEquals("environment"u8))
+                {
+                    environment = RequiredString(value, "environment");
+                }
+                else if (property.NameEquals("workflowId"u8))
+                {
+                    workflowId = RequiredString(value, "workflowId");
+                }
+                else if (property.NameEquals("status"u8))
+                {
+                    status = Enum.TryParse(RequiredString(value, "status"), out WorkflowRunStatus parsed) ? parsed : throw ThrowHelper.GetCheckpointRegionMalformedMemberException(RunnerRegion, "status");
+                }
+                else if (property.NameEquals("cursor"u8))
+                {
+                    cursor = value.GetInt32();
+                }
+                else if (property.NameEquals(SequenceUtf8))
+                {
+                    sequence = value.GetInt64();
+                }
+                else if (property.NameEquals("epoch"u8))
+                {
+                    epoch = value.GetInt64();
+                }
+                else if (property.NameEquals("createdAt"u8))
+                {
+                    createdAt = value.GetDateTimeOffset();
+                }
+                else if (property.NameEquals("updatedAt"u8))
+                {
+                    updatedAt = value.GetDateTimeOffset();
+                }
+                else if (property.NameEquals("correlationId"u8))
+                {
+                    correlationId = RequiredString(value, "correlationId");
+                }
+                else if (property.NameEquals("rerunOf"u8))
+                {
+                    rerunOf = RequiredString(value, "rerunOf");
+                }
+                else if (property.NameEquals("tags"u8))
+                {
+                    tags = value.ValueKind == JsonValueKind.Array ? TagSet.CopyFrom(value) : throw ThrowHelper.GetCheckpointRegionMalformedMemberException(RunnerRegion, "tags");
+                }
+                else if (property.NameEquals("securityTags"u8))
+                {
+                    securityTags = value.ValueKind == JsonValueKind.Array ? SecurityTagSet.CopyFrom(value) : throw ThrowHelper.GetCheckpointRegionMalformedMemberException(RunnerRegion, "securityTags");
+                }
+                else if (property.NameEquals("retryCounters"u8))
+                {
+                    counters = PooledUtf8Map<int>.Rent(value.GetPropertyCount());
+                    foreach (JsonProperty<JsonElement> counter in value.EnumerateObject())
+                    {
+                        using UnescapedUtf8JsonString name = counter.Utf8NameSpan;
+                        counters.Set(name.Span, counter.Value.GetInt32());
+                    }
+                }
+                else if (property.NameEquals("stepJournal"u8))
+                {
+                    if (value.ValueKind != JsonValueKind.Array)
+                    {
+                        throw ThrowHelper.GetCheckpointRegionMalformedMemberException(RunnerRegion, "stepJournal");
+                    }
+
+                    journal = new List<WorkflowStepJournalEntry>(value.GetArrayLength());
+                    foreach (JsonElement entry in value.EnumerateArray())
+                    {
+                        journal.Add(new WorkflowStepJournalEntry(
+                            RequiredString(entry.GetProperty("stepId"u8), "stepJournal"),
+                            Enum.TryParse(RequiredString(entry.GetProperty("status"u8), "stepJournal"), out WorkflowStepStatus stepStatus) ? stepStatus : throw ThrowHelper.GetCheckpointRegionMalformedMemberException(RunnerRegion, "stepJournal"),
+                            entry.GetProperty("attempt"u8).GetInt32(),
+                            entry.GetProperty("startedAt"u8).GetDateTimeOffset(),
+                            entry.GetProperty("endedAt"u8).GetDateTimeOffset()));
+                    }
+                }
+                else if (property.NameEquals("journalTruncated"u8))
+                {
+                    journalTruncated = value.GetBoolean();
+                }
+                else if (property.NameEquals("wait"u8))
+                {
+                    WorkflowWaitKind kind = Enum.TryParse(RequiredString(value.GetProperty("kind"u8), "wait"), out WorkflowWaitKind parsedKind) ? parsedKind : throw ThrowHelper.GetCheckpointRegionMalformedMemberException(RunnerRegion, "wait");
+                    wait = kind switch
+                    {
+                        WorkflowWaitKind.Timer => WorkflowWait.Timer(value.GetProperty("dueAt"u8).GetDateTimeOffset()),
+                        WorkflowWaitKind.Pause => WorkflowWait.Pause(),
+                        _ => WorkflowWait.Message(
+                            RequiredString(value.GetProperty("channel"u8), "wait"),
+                            value.TryGetProperty("correlationId"u8, out JsonElement waitCorrelation) ? RequiredString(waitCorrelation, "wait") : null),
+                    };
+                }
+                else if (property.NameEquals("fault"u8))
+                {
+                    fault = new WorkflowFault(
+                        RequiredString(value.GetProperty("stepId"u8), "fault"),
+                        value.GetProperty("attempt"u8).GetInt32(),
+                        RequiredString(value.GetProperty("error"u8), "fault"),
+                        value.GetProperty("at"u8).GetDateTimeOffset());
+                }
+                else
+                {
+                    throw ThrowHelper.GetCheckpointRegionUnknownMemberException(RunnerRegion, property.Name);
+                }
+            }
+
+            retryCounters = counters ?? throw ThrowHelper.GetCheckpointRegionMissingMemberException(RunnerRegion, "retryCounters");
+            return new CheckpointEnvelope(
+                new WorkflowRunId(runId ?? throw ThrowHelper.GetCheckpointRegionMissingMemberException(RunnerRegion, "runId")),
+                environment ?? throw ThrowHelper.GetCheckpointRegionMissingMemberException(RunnerRegion, "environment"),
+                workflowId ?? throw ThrowHelper.GetCheckpointRegionMissingMemberException(RunnerRegion, "workflowId"),
+                status ?? throw ThrowHelper.GetCheckpointRegionMissingMemberException(RunnerRegion, "status"),
+                cursor ?? throw ThrowHelper.GetCheckpointRegionMissingMemberException(RunnerRegion, "cursor"),
+                sequence ?? throw ThrowHelper.GetCheckpointRegionMissingMemberException(RunnerRegion, "sequence"),
+                epoch,
+                createdAt ?? throw ThrowHelper.GetCheckpointRegionMissingMemberException(RunnerRegion, "createdAt"),
+                updatedAt,
+                correlationId,
+                rerunOf,
+                tags,
+                securityTags,
+                journal ?? [],
+                journalTruncated,
+                wait,
+                fault);
+        }
+        catch
+        {
+            counters?.Dispose();
+            throw;
+        }
+
+        static string RequiredString(in JsonElement element, string member)
+            => element.ValueKind == JsonValueKind.String
+                ? element.GetString()!
+                : throw ThrowHelper.GetCheckpointRegionMalformedMemberException(RunnerRegion, member);
+    }
+
+    // Map the enums to their names via constant strings, so serialising a checkpoint does not allocate a string per
+    // call the way Enum.ToString() does. Names match the enum members so Enum.TryParse round-trips.
     private static string StepStatusName(WorkflowStepStatus status) => status switch
     {
         WorkflowStepStatus.Succeeded => nameof(WorkflowStepStatus.Succeeded),
@@ -1199,10 +994,53 @@ public static class WorkflowCheckpointSerializer
 }
 
 /// <summary>
-/// Everything a checkpoint surface reads from a posted body, from one parse (<see cref="WorkflowCheckpointSerializer.Project"/>).
+/// The runner region's scalars (ADR 0065 decision 4): the run-management structure the runner authors, which the
+/// control plane reads on every save and, once the region carries a MAC, cannot rewrite.
 /// </summary>
-/// <param name="Index">The index entry the checkpoint projects to.</param>
-/// <param name="Environment">The environment the body claims, or <see langword="null"/> when it claims none (ADR 0065 decision 9).</param>
-/// <param name="Sequence">The write sequence the body carries, or <see langword="null"/> when it carries none (ADR 0065 decision 6).</param>
+/// <param name="RunId">The run id.</param>
+/// <param name="Environment">The environment the run is pinned to (decision 9); checked against the row's address on every save.</param>
+/// <param name="WorkflowId">The id of the workflow the run executes.</param>
+/// <param name="Status">The run's lifecycle status as the runner left it.</param>
+/// <param name="Cursor">The cursor (state-machine index of the next step to run).</param>
+/// <param name="Sequence">The per-run write sequence this checkpoint is persisted at (decision 6).</param>
+/// <param name="Epoch">The lease epoch the writer holds the run under (decision 6), or <see langword="null"/> for a writer with no lease grant.</param>
+/// <param name="CreatedAt">When the run was first created.</param>
+/// <param name="UpdatedAt">When this checkpoint is written.</param>
+/// <param name="CorrelationId">The run-wide telemetry correlation id (the W3C trace id) set at creation, if any.</param>
+/// <param name="RerunOf">The id of the run this run re-runs, if any.</param>
+/// <param name="Tags">The free-form tags applied to the run at creation, if any.</param>
+/// <param name="SecurityTags">The security tags applied to the run at creation, if any (design §14.2).</param>
+/// <param name="StepJournal">The per-step journal (ADR 0050).</param>
+/// <param name="JournalTruncated">Whether the journal was capped and its oldest entries dropped.</param>
+/// <param name="Wait">The wait the run is suspended on, if it is.</param>
+/// <param name="Fault">The fault the runner recorded, if the run is faulted.</param>
+public readonly record struct CheckpointEnvelope(
+    WorkflowRunId RunId,
+    string Environment,
+    string WorkflowId,
+    WorkflowRunStatus Status,
+    int Cursor,
+    long Sequence,
+    long? Epoch,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? UpdatedAt,
+    string? CorrelationId,
+    string? RerunOf,
+    TagSet Tags,
+    SecurityTagSet SecurityTags,
+    IReadOnlyList<WorkflowStepJournalEntry> StepJournal,
+    bool JournalTruncated,
+    WorkflowWait? Wait,
+    WorkflowFault? Fault);
+
+/// <summary>
+/// Everything a checkpoint surface reads from a posted row, from one parse of its envelope and control-plane region
+/// (<see cref="WorkflowCheckpointSerializer.Project"/>).
+/// </summary>
+/// <param name="Index">The effective index entry the row projects to.</param>
+/// <param name="Environment">The environment the runner region claims (ADR 0065 decision 9).</param>
+/// <param name="Sequence">The write sequence the runner region carries (decision 6).</param>
+/// <param name="Epoch">The lease epoch the runner region carries (decision 6), or <see langword="null"/> when the writer holds no grant.</param>
 /// <param name="Facts">The execution-budget facts (ADR 0068).</param>
-public readonly record struct CheckpointProjection(WorkflowRunIndexEntry Index, string? Environment, long? Sequence, CheckpointBudgetFacts Facts);
+/// <param name="ControlPlaneRegion">The control-plane region's bytes as the row carries them (decision 7): a runner save must carry the stored region unchanged.</param>
+public readonly record struct CheckpointProjection(WorkflowRunIndexEntry Index, string Environment, long Sequence, long? Epoch, CheckpointBudgetFacts Facts, ReadOnlyMemory<byte> ControlPlaneRegion);

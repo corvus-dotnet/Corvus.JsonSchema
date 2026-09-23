@@ -135,11 +135,11 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
     /// <inheritdoc/>
     public ValueTask<WorkflowEtag> SaveAsync(
         WorkflowRunAddress address,
-        ReadOnlyMemory<byte> checkpointUtf8,
+        ReadOnlyMemory<byte> checkpointRow,
         in WorkflowRunIndexEntry index,
         WorkflowEtag expected,
         CancellationToken cancellationToken)
-        => this.SaveCoreAsync(address, checkpointUtf8, index, expected, cancellationToken);
+        => this.SaveCoreAsync(address, checkpointRow, index, expected, cancellationToken);
 
     private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpoint, WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
     {

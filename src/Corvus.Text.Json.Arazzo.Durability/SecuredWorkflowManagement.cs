@@ -137,7 +137,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
             {
                 // The load was by the composite address, so the occupant IS in this environment structurally
                 // (ADR 0065 decision 9) — only the workflow id can still diverge.
-                WorkflowRunIndexEntry indexEntry = WorkflowCheckpointSerializer.ProjectIndex(checkpoint.Utf8);
+                WorkflowRunIndexEntry indexEntry = WorkflowCheckpointSerializer.ProjectIndex(checkpoint.Row);
                 if (indexEntry.WorkflowId == workflowId)
                 {
                     return new IdempotentStartResult(runId, Created: false);
@@ -269,7 +269,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
             return null;
         }
 
-        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(cp.Utf8);
+        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(cp.Row);
 
         // A run faulted on its budget says whether it can be rescued, by the rule a resume applies (ADR 0068), so no
         // reader of the run re-derives that rule. It costs one environment read, and only for such a run.
@@ -297,7 +297,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
             return null;
         }
 
-        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(cp.Utf8);
+        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(cp.Row);
 
         // The projection is written while the checkpoint state is alive (its elements are views into the
         // pooled document); the returned array is fully detached. Outputs are copied bytes-to-bytes.
@@ -368,7 +368,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
             return null;
         }
 
-        return WorkflowCheckpointSerializer.Deserialize(cp.Utf8);
+        return WorkflowCheckpointSerializer.Deserialize(cp.Row);
     }
 
     /// <inheritdoc/>
@@ -422,7 +422,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                 return false;
             }
 
-            using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.store, address, this.timeProvider, cancellationToken).ConfigureAwait(false);
+            using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.store, address, this.timeProvider, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (run is null || run.Status != WorkflowRunStatus.Faulted)
             {
                 // Only a faulted run is retriable; it may have been resumed, cancelled, or deleted meanwhile.
@@ -510,7 +510,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                 return false;
             }
 
-            using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.store, address, this.timeProvider, cancellationToken).ConfigureAwait(false);
+            using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.store, address, this.timeProvider, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (run is null || run.Status != WorkflowRunStatus.Faulted)
             {
                 activity?.SetTag(ArazzoTelemetry.OutcomeTag, "not-faulted");
@@ -540,15 +540,14 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
     {
         WorkflowCheckpoint? row = await this.store.LoadAsync(address, cancellationToken).ConfigureAwait(false);
         if (row is not { } stored
-            || !WorkflowCheckpointSerializer.TryReadBudgetFacts(stored.Utf8, out CheckpointBudgetFacts facts)
+            || !WorkflowCheckpointSerializer.TryReadBudgetFacts(stored.Row, out CheckpointBudgetFacts facts)
             || !facts.BudgetFaulted)
         {
             return true;
         }
 
         byte[] rebudgeted;
-        WorkflowRunIndexEntry indexEntry;
-        using (WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(stored.Utf8))
+        using (WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(stored.Row))
         {
             if (state.Fault is not { } fault
                 || await this.AssessRebudgetAsync(state, fault.Error, cancellationToken).ConfigureAwait(false) is not { Resumable: true } assessment)
@@ -557,18 +556,13 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                 return false;
             }
 
-            DateTimeOffset at = this.timeProvider.GetUtcNow();
-            rebudgeted = WorkflowCheckpointSerializer.RewriteForRemediation(stored.Utf8.Span, new CheckpointRemediation(state.Cursor, at, Budget: assessment.Effective));
-            indexEntry = new WorkflowRunIndexEntry(
-                state.WorkflowId,
-                WorkflowRunStatus.Faulted,
-                state.CreatedAt,
-                at,
-                ErrorType: fault.Error,
-                CorrelationId: state.CorrelationId,
-                Tags: state.Tags,
-                SecurityTags: state.SecurityTags);
+            // The budget is the control plane's to decide, so the new one goes in the control-plane region and
+            // nothing else in the row changes (ADR 0065 decision 7). The fault stands until the resumed run's first
+            // save supersedes it.
+            rebudgeted = CheckpointRow.WithControlPlaneRegion(stored.Row.Span, (state.ControlPlane with { Budget = assessment.Effective }).ToUtf8());
         }
+
+        WorkflowRunIndexEntry indexEntry = WorkflowCheckpointSerializer.ProjectIndex(rebudgeted);
 
         try
         {
@@ -635,46 +629,34 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                 return false;
             }
 
-            byte[] updated;
-            WorkflowRunIndexEntry indexEntry;
-            string workflowId;
-            using (ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(cp.Utf8))
+            if (!WorkflowCheckpointSerializer.TryProject(cp.Row, out CheckpointProjection projection))
             {
-                JsonElement root = document.RootElement;
-                WorkflowRunStatus status = Enum.Parse<WorkflowRunStatus>(root.GetProperty("status"u8).GetString() ?? nameof(WorkflowRunStatus.Pending));
-                if (status is WorkflowRunStatus.Completed or WorkflowRunStatus.Cancelled)
-                {
-                    // Terminal already; nothing to cancel.
-                    activity?.SetTag(ArazzoTelemetry.OutcomeTag, "already-terminal");
-                    return false;
-                }
+                activity?.SetTag(ArazzoTelemetry.OutcomeTag, "malformed");
+                return false;
+            }
 
-                workflowId = root.GetProperty("workflowId"u8).GetString() ?? string.Empty;
-                string? correlationId = root.TryGetProperty("correlationId"u8, out JsonElement correlationIdElement) ? correlationIdElement.GetString() : null;
-                DateTimeOffset createdAt = root.TryGetProperty("createdAt"u8, out JsonElement createdAtElement) ? createdAtElement.GetDateTimeOffset() : default;
-                string? errorType = root.TryGetProperty("fault"u8, out JsonElement faultElement) && faultElement.TryGetProperty("error"u8, out JsonElement errorElement) ? errorElement.GetString() : null;
-                TagSet tags = root.TryGetProperty("tags"u8, out JsonElement tagsElement) ? TagSet.CopyFrom(tagsElement) : default;
-                SecurityTagSet securityTags = WorkflowCheckpointSerializer.ReadSecurityTags(root);
+            if (projection.Index.Status is WorkflowRunStatus.Completed or WorkflowRunStatus.Cancelled)
+            {
+                // Terminal already; nothing to cancel.
+                activity?.SetTag(ArazzoTelemetry.OutcomeTag, "already-terminal");
+                return false;
+            }
 
-                // Mark cancelled and clear any wait by rewriting the document verbatim — the run-creation metadata and
-                // the working state (retry counters, correlation tokens, step outputs) are carried through as raw JSON,
-                // not deserialized into dictionaries only to be re-serialized unchanged.
-                updated = WorkflowCheckpointSerializer.RewriteStatus(cp.Utf8.Span, WorkflowRunStatus.Cancelled, dropWait: true);
+            string workflowId = projection.Index.WorkflowId;
 
-                indexEntry = new WorkflowRunIndexEntry(
-                    workflowId,
-                    WorkflowRunStatus.Cancelled,
-                    createdAt,
-                    this.timeProvider.GetUtcNow(),
-                    ErrorType: errorType,
-                    CorrelationId: correlationId,
-                    Tags: tags,
-                    SecurityTags: securityTags);
+            // Cancel by writing the control-plane region and nothing else (ADR 0065 decision 7): the runner region and
+            // the payload stay byte for byte as the runner left them, and the join reads the run as cancelled with its
+            // wait cleared. The index is projected from the rewritten row, so the two cannot disagree.
+            ControlPlaneRecord decided = ControlPlaneRecord.Parse(projection.ControlPlaneRegion) with
+            {
+                Cancellation = new ControlPlaneCancellation(this.timeProvider.GetUtcNow()),
+            };
+            byte[] updated = CheckpointRow.WithControlPlaneRegion(cp.Row.Span, decided.ToUtf8());
+            WorkflowRunIndexEntry indexEntry = WorkflowCheckpointSerializer.ProjectIndex(updated);
 
-                if (activity is { IsAllDataRequested: true } && correlationId is { } cid)
-                {
-                    activity.SetTag(ArazzoTelemetry.CorrelationIdTag, cid);
-                }
+            if (activity is { IsAllDataRequested: true } && projection.Index.CorrelationId is { } cid)
+            {
+                activity.SetTag(ArazzoTelemetry.CorrelationIdTag, cid);
             }
 
             await this.store.SaveAsync(address, updated, indexEntry, cp.Etag, cancellationToken).ConfigureAwait(false);
@@ -844,7 +826,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         PooledUtf8Map<JsonElement>? patchedStepOutputs = null;
         try
         {
-            using (WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(cp.Utf8))
+            using (WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(cp.Row))
             {
                 if (state.Status != WorkflowRunStatus.Faulted)
                 {
@@ -907,19 +889,11 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                 // and its fault record stands, so the re-entered executor clears it on its first checkpoint.
                 DateTimeOffset mutatedAt = this.timeProvider.GetUtcNow();
                 mutated = WorkflowCheckpointSerializer.RewriteForRemediation(
-                    cp.Utf8.Span,
+                    cp.Row,
                     new CheckpointRemediation(cursor, mutatedAt, replacesContext, inputs, replacesContext ? stepOutputs : null));
-
-                indexEntry = new WorkflowRunIndexEntry(
-                    state.WorkflowId,
-                    WorkflowRunStatus.Faulted,
-                    state.CreatedAt,
-                    mutatedAt,
-                    ErrorType: state.Fault?.Error,
-                    CorrelationId: state.CorrelationId,
-                    Tags: state.Tags,
-                    SecurityTags: state.SecurityTags);
             }
+
+            indexEntry = WorkflowCheckpointSerializer.ProjectIndex(mutated);
         }
         finally
         {

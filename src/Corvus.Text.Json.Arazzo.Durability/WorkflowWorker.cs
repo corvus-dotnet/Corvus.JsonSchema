@@ -172,7 +172,7 @@ public sealed class WorkflowWorker
 
         try
         {
-            using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.store, address, this.timeProvider, cancellationToken).ConfigureAwait(false);
+            using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.store, address, this.timeProvider, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (run is null || run.Status != WorkflowRunStatus.Suspended)
             {
                 // The run was completed, faulted, or deleted between the query and the lease.

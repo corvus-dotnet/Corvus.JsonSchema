@@ -47,6 +47,19 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     private DateTimeOffset? resumeRequestedAt;
     private long sequence;
 
+    // ADR 0065 decision 7: the control-plane region rides with the run and is re-emitted verbatim on every runner
+    // save; only the control plane's own verbs (a resume request, a pause) change it, and they write it alone.
+    private ControlPlaneRecord controlPlane;
+    private byte[] controlPlaneRegion;
+
+    // ADR 0065 decision 6: the lease epoch this run is held under, written into the runner region so the runner API
+    // can check it against the grant. Null for a writer that holds no grant (the control plane's own in-process runs).
+    private readonly long? leaseEpoch;
+
+    // A runner save leaves the loaded row behind; a control-plane-region write after one would carry a stale runner
+    // region under a current etag, so it is refused.
+    private bool advanced;
+
     // ADR 0050: the per-step journal, accumulated by RecordStep and persisted in the checkpoint. Capped so a
     // pathological goto-loop cannot bloat the checkpoint; past the cap the oldest entries are dropped and the run
     // marks the journal truncated.
@@ -79,12 +92,15 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         WorkflowWait? wait,
         WorkflowFault? fault,
         WorkflowCheckpointState? resumedState,
-        WorkflowPauseConfig? pause = null,
-        DateTimeOffset? resumeRequestedAt = null,
-        ExecutionBudget? budget = null,
+        in ControlPlaneRecord controlPlane,
+        byte[] controlPlaneRegion,
+        long? leaseEpoch,
         string? rerunOf = null)
     {
         this.RerunOf = rerunOf;
+        this.controlPlane = controlPlane;
+        this.controlPlaneRegion = controlPlaneRegion;
+        this.leaseEpoch = leaseEpoch;
         this.store = store;
         this.Id = id;
         this.WorkflowId = workflowId;
@@ -111,10 +127,10 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         // §18: a run loaded from a checkpoint carrying a persisted pause configuration adopts it, recording the
         // loaded cursor as the start cursor so the `cursor > pauseStartCursor` guard fires from the resumed
         // position (a claiming runner never re-supplies it via SetPause). An ordinary run passes none.
-        this.pause = pause;
+        this.pause = controlPlane.Pause;
         this.pauseStartCursor = cursor;
-        this.resumeRequestedAt = resumeRequestedAt;
-        this.Budget = budget;
+        this.resumeRequestedAt = resumedState?.ResumeRequestedAt;
+        this.Budget = controlPlane.Budget;
 
         // ADR 0050: restore the per-step journal from the resumed checkpoint (empty for a fresh run, or a run whose
         // checkpoint predates the journal).
@@ -177,6 +193,9 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     /// Set once at creation and written with every checkpoint.</summary>
     public string? RerunOf { get; }
 
+    /// <summary>Gets the lease epoch this run is held under and writes into its region (ADR 0065 decision 6), or <see langword="null"/> for a writer with no grant.</summary>
+    public long? LeaseEpoch => this.leaseEpoch;
+
     /// <summary>Gets the deployment environment the run is pinned to (design §5.5) — its credential set and the
     /// runners it can be dispatched to. Half the run's address (ADR 0065 decision 9); never absent.</summary>
     public string Environment => this.address.Environment;
@@ -225,6 +244,10 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         ArgumentException.ThrowIfNullOrEmpty(environment);
 
         TimeProvider time = timeProvider ?? TimeProvider.System;
+
+        // The control plane decides the budget at start (ADR 0068), so a fresh run's control-plane region carries it
+        // from the first row on; nothing else is decided yet.
+        var controlPlane = new ControlPlaneRecord(Budget: budget);
         return new WorkflowRun(
             store,
             id,
@@ -245,7 +268,9 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             wait: null,
             fault: null,
             resumedState: null,
-            budget: budget,
+            controlPlane: controlPlane,
+            controlPlaneRegion: controlPlane.ToUtf8(),
+            leaseEpoch: null,
             rerunOf: rerunOf);
     }
 
@@ -259,16 +284,14 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         IWorkflowCheckpointStore store,
         WorkflowCheckpointState state,
         WorkflowEtag etag,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        long? leaseEpoch = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(state);
 
-        // Every run is pinned to its address at creation (ADR 0065 decision 9), so a checkpoint without an
-        // environment is corrupt — resuming it would let the run re-save under an address it was never pinned to.
-        string environment = state.Environment
-            ?? throw ThrowHelper.GetCheckpointMissingEnvironmentException(state.RunId.Value);
-
+        // The control-plane region is carried on as the row holds it, byte for byte: the runner never re-serializes
+        // what the control plane wrote (ADR 0065 decision 7).
         return new WorkflowRun(
             store,
             state.RunId,
@@ -285,13 +308,13 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             correlationId: state.CorrelationId,
             tags: state.Tags,
             securityTags: state.SecurityTags,
-            environment: environment,
+            environment: state.Environment,
             wait: state.Wait,
             fault: state.Fault,
             resumedState: state,
-            pause: state.Pause,
-            resumeRequestedAt: state.ResumeRequestedAt,
-            budget: state.Budget,
+            controlPlane: state.ControlPlane,
+            controlPlaneRegion: state.ControlPlaneRegion.ToArray(),
+            leaseEpoch: leaseEpoch,
             rerunOf: state.RerunOf);
     }
 
@@ -305,6 +328,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         IWorkflowCheckpointStore store,
         WorkflowRunAddress address,
         TimeProvider? timeProvider = null,
+        long? leaseEpoch = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(store);
@@ -315,7 +339,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             return null;
         }
 
-        WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(checkpoint.Value.Utf8);
+        WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(checkpoint.Value.Row);
 
         // The row lives at the address, so a body claiming a different environment is corrupt: resuming it would
         // re-save the run under the body's environment rather than the one it is stored at (ADR 0065 decision 9).
@@ -326,7 +350,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             throw ThrowHelper.GetCheckpointEnvironmentMismatchException(address, claimed);
         }
 
-        return Resume(store, state, checkpoint.Value.Etag, timeProvider);
+        return Resume(store, state, checkpoint.Value.Etag, timeProvider, leaseEpoch);
     }
 
     /// <inheritdoc/>
@@ -392,6 +416,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     {
         this.pause = pause;
         this.pauseStartCursor = this.Cursor;
+        this.DecideControlPlane(this.controlPlane with { Pause = pause });
     }
 
     /// <summary>
@@ -413,8 +438,10 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     {
         this.pause = pause;
         this.pauseStartCursor = this.Cursor;
-        this.resumeRequestedAt = this.timeProvider.GetUtcNow();
-        return this.PersistAsync(default, cancellationToken);
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        this.resumeRequestedAt = now;
+        this.DecideControlPlane(this.controlPlane with { Pause = pause, ResumeRequest = new ControlPlaneResumeRequest(now, this.sequence) });
+        return this.PersistControlPlaneAsync(cancellationToken);
     }
 
     /// <summary>Marks the run resume-claimable WITHOUT changing its persisted pause (design §18 R5b): the control
@@ -425,8 +452,33 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     public ValueTask RequestResumeKeepingPauseAsync(CancellationToken cancellationToken)
     {
         this.pauseStartCursor = this.Cursor;
-        this.resumeRequestedAt = this.timeProvider.GetUtcNow();
-        return this.PersistAsync(default, cancellationToken);
+        DateTimeOffset now = this.timeProvider.GetUtcNow();
+        this.resumeRequestedAt = now;
+        this.DecideControlPlane(this.controlPlane with { ResumeRequest = new ControlPlaneResumeRequest(now, this.sequence) });
+        return this.PersistControlPlaneAsync(cancellationToken);
+    }
+
+    // A control-plane decision changes the region this run carries; a fresh run's first save takes it, a resumed run
+    // writes it alone.
+    private void DecideControlPlane(in ControlPlaneRecord decided)
+    {
+        this.controlPlane = decided;
+        this.controlPlaneRegion = decided.ToUtf8();
+    }
+
+    // Writes the control-plane region and nothing else (ADR 0065 decision 7): the stored row's runner region and
+    // payload stay byte for byte as loaded, under the etag this run holds. The request is recorded against the runner
+    // sequence the row holds, so the runner's next save consumes it.
+    private async ValueTask PersistControlPlaneAsync(CancellationToken cancellationToken)
+    {
+        if (this.resumedState is not { } state || this.advanced)
+        {
+            throw ThrowHelper.GetControlPlaneWriteNeedsLoadedRowException(this.Id.Value);
+        }
+
+        byte[] row = CheckpointRow.WithControlPlaneRegion(state.Row.Span, this.controlPlaneRegion);
+        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex(row);
+        this.etag = await this.store.SaveAsync(this.address, row, index, this.etag, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Gets or sets an optional callback the runner invokes at each durable step checkpoint to mark a §18
@@ -708,35 +760,36 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         // One clock read stamps both records, so the checkpoint's own updatedAt and the index entry cannot drift.
         DateTimeOffset updatedAt = this.timeProvider.GetUtcNow();
 
-        // The run's own write sequence advances once per persisted checkpoint and is carried in the document, so a
-        // resumed run continues the series rather than restarting it (ADR 0065 decision 6).
+        // The run's own write sequence advances once per persisted checkpoint and is carried in the runner region, so
+        // a resumed run continues the series rather than restarting it (ADR 0065 decision 6).
         long sequence = ++this.sequence;
+        this.advanced = true;
 
         byte[] checkpoint = WorkflowCheckpointSerializer.Serialize(
-            this.Id,
-            this.WorkflowId,
-            this.Status,
-            this.Cursor,
-            sequence,
-            this.createdAt,
+            new CheckpointEnvelope(
+                this.Id,
+                this.address.Environment,
+                this.WorkflowId,
+                this.Status,
+                this.Cursor,
+                sequence,
+                this.leaseEpoch,
+                this.createdAt,
+                updatedAt,
+                this.correlationId,
+                this.RerunOf,
+                this.tags,
+                this.securityTags,
+                this.stepJournal,
+                this.journalTruncated,
+                this.wait,
+                this.fault),
             this.retryCounts,
             this.CorrelationTokens,
             this.inputs,
             this.stepOutputs,
             outputs,
-            this.wait,
-            this.fault,
-            this.correlationId,
-            this.tags,
-            this.securityTags,
-            this.address.Environment,
-            this.pause,
-            this.resumeRequestedAt,
-            updatedAt,
-            this.stepJournal,
-            this.journalTruncated,
-            this.Budget,
-            this.RerunOf);
+            this.controlPlaneRegion);
 
         WorkflowRunIndexEntry index = WorkflowRunIndexEntry.Project(
             this.WorkflowId,

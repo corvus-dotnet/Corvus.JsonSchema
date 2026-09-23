@@ -96,7 +96,7 @@ public sealed class WorkflowRunResolutionTests
             Time.GetUtcNow(),
             Time.GetUtcNow(),
             SecurityTags: SecurityTagSet.FromTags([new("tenant", "globex")]));
-        await store.SaveAsync(TestAddresses.Dev(runId), checkpoint.Utf8.ToArray(), drifted, checkpoint.Etag, default);
+        await store.SaveAsync(TestAddresses.Dev(runId), checkpoint.Row.ToArray(), drifted, checkpoint.Etag, default);
         return store;
     }
 

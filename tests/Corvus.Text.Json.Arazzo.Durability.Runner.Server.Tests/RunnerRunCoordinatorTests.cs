@@ -53,7 +53,7 @@ public sealed class RunnerRunCoordinatorTests
         (await fixture.Coordinator.TryClaimAsync(Runner, [Version], null, default)).ShouldBeNull();
 
         var address = new WorkflowRunAddress(Production, new WorkflowRunId("run-1"));
-        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex((await fixture.Store.LoadAsync(address, default))!.Value.Utf8);
+        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex((await fixture.Store.LoadAsync(address, default))!.Value.Row);
         index.Status.ShouldBe(WorkflowRunStatus.Faulted);
         index.ErrorType.ShouldBe(ExecutionBudgetFault.Deadline);
         (await fixture.Store.AcquireLeaseAsync(address, Peer, TimeSpan.FromMinutes(1), default)).ShouldNotBeNull();
@@ -69,7 +69,7 @@ public sealed class RunnerRunCoordinatorTests
         (await fixture.Coordinator.ClaimDueAsync(Runner, [Version], null, null, default)).ShouldBeEmpty();
 
         var address = new WorkflowRunAddress(Production, new WorkflowRunId("run-1"));
-        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex((await fixture.Store.LoadAsync(address, default))!.Value.Utf8);
+        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex((await fixture.Store.LoadAsync(address, default))!.Value.Row);
         index.Status.ShouldBe(WorkflowRunStatus.Faulted);
         index.ErrorType.ShouldBe(ExecutionBudgetFault.Deadline);
     }
@@ -494,8 +494,8 @@ public sealed class RunnerRunCoordinatorTests
 
         public int LeaseAttempts { get; private set; }
 
-        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
-            => this.inner.SaveAsync(address, checkpointUtf8, index, expected, cancellationToken);
+        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointRow, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+            => this.inner.SaveAsync(address, checkpointRow, index, expected, cancellationToken);
 
         public ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
             => this.inner.LoadAsync(address, cancellationToken);
@@ -539,7 +539,7 @@ public sealed class RunnerRunCoordinatorTests
 
     private sealed class CheckpointOnlyStore : IWorkflowStateStore
     {
-        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointRow, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
             => ValueTask.FromResult(WorkflowEtag.None);
 
         public ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
@@ -614,22 +614,30 @@ public sealed class RunnerRunCoordinatorTests
             using PooledUtf8Map<int> retryCounters = PooledUtf8Map<int>.Rent(0);
             using PooledUtf8Map<JsonElement> stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
             return WorkflowCheckpointSerializer.Serialize(
-                new WorkflowRunId(runId),
-                Version,
-                status,
-                cursor: 0,
-                sequence: 1,
-                T0,
+                new CheckpointEnvelope(
+                    new WorkflowRunId(runId),
+                    environment,
+                    Version,
+                    status,
+                    0,
+                    1,
+                    Epoch: null,
+                    T0,
+                    T0,
+                    null,
+                    null,
+                    default,
+                    default,
+                    [],
+                    false,
+                    wait,
+                    null),
                 retryCounters,
                 new Dictionary<string, byte[]>(),
-                inputs: default,
+                default,
                 stepOutputs,
-                outputs: default,
-                wait: wait,
-                environment: environment,
-                resumeRequestedAt: resumeRequestedAt,
-                updatedAt: T0,
-                budget: budget);
+                default,
+                new ControlPlaneRecord(Budget: budget, ResumeRequest: resumeRequestedAt is { } requestedAt ? new ControlPlaneResumeRequest(requestedAt, 1) : null).ToUtf8());
         }
     }
 }

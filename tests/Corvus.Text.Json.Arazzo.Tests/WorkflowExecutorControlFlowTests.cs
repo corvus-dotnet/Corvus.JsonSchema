@@ -326,7 +326,7 @@ public partial class WorkflowExecutorEndToEndTests
         // The completed run's checkpoint carries the journal.
         Durability.WorkflowCheckpoint? checkpoint = await store.LoadAsync(TestAddresses.Dev("journal-1"), default);
         checkpoint.ShouldNotBeNull();
-        using Durability.WorkflowCheckpointState state = Durability.WorkflowCheckpointSerializer.Deserialize(checkpoint.Value.Utf8);
+        using Durability.WorkflowCheckpointState state = Durability.WorkflowCheckpointSerializer.Deserialize(checkpoint.Value.Row);
 
         // ADR 0068: the journal holds one entry per attempt, numbered from one. The failed attempt that was retried
         // and the attempt the step settled on are both there.

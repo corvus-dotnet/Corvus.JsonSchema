@@ -181,19 +181,30 @@ public sealed class StoreControlPlaneCapacityGuardTests
             using PooledUtf8Map<int> retryCounters = PooledUtf8Map<int>.Rent(0);
             using PooledUtf8Map<JsonElement> stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
             return WorkflowCheckpointSerializer.Serialize(
-                new WorkflowRunId(runId),
-                "capacity-v1",
-                status,
-                cursor: 0,
-                sequence: 1,
-                new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
+                new CheckpointEnvelope(
+                    new WorkflowRunId(runId),
+                    Environment,
+                    "capacity-v1",
+                    status,
+                    0,
+                    1,
+                    Epoch: null,
+                    new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
+                    new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
+                    null,
+                    null,
+                    default,
+                    default,
+                    [],
+                    false,
+                    null,
+                    null),
                 retryCounters,
                 new Dictionary<string, byte[]>(),
-                inputs: default,
+                default,
                 stepOutputs,
-                outputs: default,
-                environment: Environment,
-                updatedAt: new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero));
+                default,
+                []);
         }
     }
 }

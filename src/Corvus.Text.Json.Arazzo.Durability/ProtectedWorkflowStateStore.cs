@@ -47,24 +47,24 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
     /// <inheritdoc/>
     public ValueTask<WorkflowEtag> SaveAsync(
         WorkflowRunAddress address,
-        ReadOnlyMemory<byte> checkpointUtf8,
+        ReadOnlyMemory<byte> checkpointRow,
         in WorkflowRunIndexEntry index,
         WorkflowEtag expected,
         CancellationToken cancellationToken)
-        => this.SaveCoreAsync(address, checkpointUtf8, index, expected, cancellationToken);
+        => this.SaveCoreAsync(address, checkpointRow, index, expected, cancellationToken);
 
     // The interface passes the index by `in`; an async method cannot take an `in` parameter, so SaveAsync
     // copies it (a small struct) and this private core does the encrypt-then-write.
     private async ValueTask<WorkflowEtag> SaveCoreAsync(
         WorkflowRunAddress address,
-        ReadOnlyMemory<byte> checkpointUtf8,
+        ReadOnlyMemory<byte> checkpointRow,
         WorkflowRunIndexEntry index,
         WorkflowEtag expected,
         CancellationToken cancellationToken)
     {
         // The protector's associated data stays bound to the run id (its own seam); the store row is addressed by
         // the composite key.
-        ReadOnlyMemory<byte> protectedCheckpoint = await this.protector.ProtectAsync(checkpointUtf8, address.RunId, cancellationToken).ConfigureAwait(false);
+        ReadOnlyMemory<byte> protectedCheckpoint = await this.protector.ProtectAsync(checkpointRow, address.RunId, cancellationToken).ConfigureAwait(false);
         return await this.inner.SaveAsync(address, protectedCheckpoint, index, expected, cancellationToken).ConfigureAwait(false);
     }
 
@@ -77,7 +77,7 @@ public sealed class ProtectedWorkflowStateStore : IWorkflowStateStore, IWorkflow
             return null;
         }
 
-        ReadOnlyMemory<byte> plaintext = await this.protector.UnprotectAsync(checkpoint.Utf8, address.RunId, cancellationToken).ConfigureAwait(false);
+        ReadOnlyMemory<byte> plaintext = await this.protector.UnprotectAsync(checkpoint.Row, address.RunId, cancellationToken).ConfigureAwait(false);
         return new WorkflowCheckpoint(plaintext, checkpoint.Etag);
     }
 

@@ -33,7 +33,7 @@ internal static class RunnerRunAdvance
             // The run loads and advances through the client's checkpoint store, so the executor is unaware it is not
             // talking to a database. The server re-read the run under the lease before offering it, so a null here
             // means the row went away underneath us rather than that the run was unsuitable.
-            using WorkflowRun? run = await WorkflowRun.ResumeAsync(client.Checkpoints, claim.Address, cancellationToken: cancellationToken).ConfigureAwait(false);
+            using WorkflowRun? run = await WorkflowRun.ResumeAsync(client.Checkpoints, claim.Address, leaseEpoch: claim.LeaseEpoch, cancellationToken: cancellationToken).ConfigureAwait(false);
             if (run is null)
             {
                 return false;

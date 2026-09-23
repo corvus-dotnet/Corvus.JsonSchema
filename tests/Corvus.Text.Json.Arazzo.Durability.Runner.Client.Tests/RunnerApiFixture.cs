@@ -132,7 +132,7 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
         return new RunnerApiFixture(app, store, catalog, availability, clock, runnerHttp, runnerTransport, runner, peerHttp, peerTransport, peer, strangerHttp, strangerTransport, stranger);
     }
 
-    public static byte[] Checkpoint(string runId, WorkflowRunStatus status, long sequence, WorkflowWait? wait = null, string? workflowId = null, ExecutionBudget? budget = null, int journalEntries = 0)
+    public static byte[] Checkpoint(string runId, WorkflowRunStatus status, long sequence, WorkflowWait? wait = null, string? workflowId = null, ExecutionBudget? budget = null, int journalEntries = 0, long? epoch = null)
     {
         using PooledUtf8Map<int> retryCounters = PooledUtf8Map<int>.Rent(0);
         using PooledUtf8Map<JsonElement> stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
@@ -143,22 +143,30 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
         }
 
         return WorkflowCheckpointSerializer.Serialize(
-            new WorkflowRunId(runId),
-            workflowId ?? Version,
-            status,
-            cursor: 0,
-            sequence,
-            T0,
+            new CheckpointEnvelope(
+                new WorkflowRunId(runId),
+                Production,
+                workflowId ?? Version,
+                status,
+                0,
+                sequence,
+                Epoch: epoch,
+                T0,
+                T0,
+                null,
+                null,
+                default,
+                default,
+                journal,
+                false,
+                wait,
+                null),
             retryCounters,
             new Dictionary<string, byte[]>(),
-            inputs: default,
+            default,
             stepOutputs,
-            outputs: default,
-            wait: wait,
-            environment: Production,
-            updatedAt: T0,
-            stepJournal: journal,
-            budget: budget);
+            default,
+            new ControlPlaneRecord(Budget: budget).ToUtf8());
     }
 
     /// <summary>Seeds a run suspended on a wait, which is the only state a timer or a message can resume.</summary>

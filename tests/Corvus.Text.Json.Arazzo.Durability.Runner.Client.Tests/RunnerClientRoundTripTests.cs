@@ -42,7 +42,7 @@ public sealed class RunnerClientRoundTripTests
         // The run resumes through the client's checkpoint store exactly as it would over a database-backed one.
         WorkflowCheckpoint? loaded = await fixture.Client.Checkpoints.LoadAsync(claimed.Value.Address, default);
         loaded.ShouldNotBeNull();
-        WorkflowCheckpointSerializer.ProjectIndex(loaded!.Value.Utf8).WorkflowId.ShouldBe(Version);
+        WorkflowCheckpointSerializer.ProjectIndex(loaded!.Value.Row).WorkflowId.ShouldBe(Version);
     }
 
     [TestMethod]
@@ -60,14 +60,14 @@ public sealed class RunnerClientRoundTripTests
         await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending);
         RunnerClaim claimed = (await fixture.Client.TryClaimAsync([Version]))!.Value;
 
-        byte[] advanced = Fixture.Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2);
+        byte[] advanced = Fixture.Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2, epoch: claimed.LeaseEpoch);
         await fixture.Client.Checkpoints.SaveAsync(claimed.Address, advanced, WorkflowCheckpointSerializer.ProjectIndex(advanced), WorkflowEtag.None, default);
 
         // Read back from the STORE, not the API: the point is that the write reached the real thing.
         WorkflowCheckpoint? stored = await fixture.Store.LoadAsync(claimed.Address, default);
         stored.ShouldNotBeNull();
-        WorkflowCheckpointSerializer.ProjectIndex(stored!.Value.Utf8).Status.ShouldBe(WorkflowRunStatus.Running);
-        WorkflowCheckpointSerializer.TryReadSequence(stored.Value.Utf8, out long sequence).ShouldBeTrue();
+        WorkflowCheckpointSerializer.ProjectIndex(stored!.Value.Row).Status.ShouldBe(WorkflowRunStatus.Running);
+        WorkflowCheckpointSerializer.TryReadSequence(stored.Value.Row, out long sequence).ShouldBeTrue();
         sequence.ShouldBe(2);
     }
 
@@ -80,7 +80,7 @@ public sealed class RunnerClientRoundTripTests
         await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending);
         RunnerClaim claimed = (await fixture.Client.TryClaimAsync([Version]))!.Value;
 
-        byte[] advanced = Fixture.Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2);
+        byte[] advanced = Fixture.Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2, epoch: claimed.LeaseEpoch);
         WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex(advanced);
         await fixture.Client.Checkpoints.SaveAsync(claimed.Address, advanced, index, WorkflowEtag.None, default);
 
@@ -103,7 +103,7 @@ public sealed class RunnerClientRoundTripTests
         RunnerClaim claimed = (await fixture.Client.TryClaimAsync([Version]))!.Value;
 
         // The run reads the fixture's clock, so its age is judged against the seeded creation time and only fuel is in play.
-        using WorkflowRun run = (await WorkflowRun.ResumeAsync(fixture.Client.Checkpoints, claimed.Address, new RunnerApiFixture.TestClock(Fixture.T0)))!;
+        using WorkflowRun run = (await WorkflowRun.ResumeAsync(fixture.Client.Checkpoints, claimed.Address, new RunnerApiFixture.TestClock(Fixture.T0), leaseEpoch: claimed.LeaseEpoch))!;
         await run.BeginStepAsync("only", default);
         run.RecordStep("only", WorkflowStepStatus.Succeeded, 1, Fixture.T0, Fixture.T0);
         await run.CheckpointAsync(0, default);
@@ -113,10 +113,10 @@ public sealed class RunnerClientRoundTripTests
         unwound.GetType().Name.ShouldBe("WorkflowBudgetExhaustedException");
 
         WorkflowCheckpoint stored = (await fixture.Store.LoadAsync(claimed.Address, default))!.Value;
-        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex(stored.Utf8);
+        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex(stored.Row);
         index.Status.ShouldBe(WorkflowRunStatus.Faulted);
         index.ErrorType.ShouldBe(ExecutionBudgetFault.Fuel);
-        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(stored.Utf8);
+        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(stored.Row);
         state.StepJournal!.Count.ShouldBe(1);
     }
 
@@ -131,14 +131,14 @@ public sealed class RunnerClientRoundTripTests
         await fixture.SeedAsync(Run1, WorkflowRunStatus.Pending, budget: oneStep);
         RunnerClaim claimed = (await fixture.Client.TryClaimAsync([Version]))!.Value;
 
-        byte[] overBudget = Fixture.Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2, budget: oneStep, journalEntries: 2);
+        byte[] overBudget = Fixture.Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2, budget: oneStep, journalEntries: 2, epoch: claimed.LeaseEpoch);
         RunBudgetExhaustedException refused = await Should.ThrowAsync<RunBudgetExhaustedException>(
             async () => await fixture.Client.Checkpoints.SaveAsync(claimed.Address, overBudget, WorkflowCheckpointSerializer.ProjectIndex(overBudget), WorkflowEtag.None, default));
 
         refused.RunId.ShouldBe(new WorkflowRunId(Run1));
         refused.Message.ShouldContain(ExecutionBudgetFault.Fuel);
 
-        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex((await fixture.Store.LoadAsync(claimed.Address, default))!.Value.Utf8);
+        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex((await fixture.Store.LoadAsync(claimed.Address, default))!.Value.Row);
         index.Status.ShouldBe(WorkflowRunStatus.Faulted);
         index.ErrorType.ShouldBe(ExecutionBudgetFault.Fuel);
 

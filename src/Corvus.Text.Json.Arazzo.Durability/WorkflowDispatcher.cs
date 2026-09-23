@@ -108,7 +108,7 @@ public sealed class WorkflowDispatcher
 
         try
         {
-            using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.store, address, this.timeProvider, cancellationToken).ConfigureAwait(false);
+            using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.store, address, this.timeProvider, cancellationToken: cancellationToken).ConfigureAwait(false);
 
             // Re-check under the lease: the run may have been claimed, completed, suspended, or deleted between
             // the index query and the lease. Dispatchable are fresh (Pending) runs, orphaned (Running) runs, and

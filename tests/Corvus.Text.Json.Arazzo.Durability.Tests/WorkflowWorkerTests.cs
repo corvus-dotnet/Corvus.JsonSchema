@@ -55,18 +55,30 @@ public sealed class WorkflowWorkerTests
         using var retryCounters = PooledUtf8Map<int>.Rent(0);
         using var stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
         byte[] checkpoint = WorkflowCheckpointSerializer.Serialize(
-            "stale",
-            "wf",
-            WorkflowRunStatus.Completed,
-            cursor: 0,
-            sequence: 1,
-            Start,
+            new CheckpointEnvelope(
+                "stale",
+                TestAddresses.Development,
+                "wf",
+                WorkflowRunStatus.Completed,
+                0,
+                1,
+                Epoch: null,
+                Start,
+                null,
+                null,
+                null,
+                default,
+                default,
+                [],
+                false,
+                null,
+                null),
             retryCounters,
             new Dictionary<string, byte[]>(),
-            inputs: default,
+            default,
             stepOutputs,
-            outputs: default,
-            environment: TestAddresses.Development);
+            default,
+            []);
         var index = new WorkflowRunIndexEntry("wf", WorkflowRunStatus.Suspended, Start, Start, DueAt: Start);
         await store.SaveAsync(TestAddresses.Dev("stale"), checkpoint, index, WorkflowEtag.None, default);
         time.Advance(TimeSpan.FromMinutes(1));
@@ -183,7 +195,7 @@ public sealed class WorkflowWorkerTests
     // A store that implements only the universal core (no IWorkflowWaitIndex), to prove the worker rejects it.
     private sealed class CoreOnlyStore : IWorkflowStateStore
     {
-        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointRow, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
             => ValueTask.FromResult(WorkflowEtag.None);
 
         public ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
@@ -204,7 +216,7 @@ public sealed class WorkflowWorkerTests
     // the worker's load-returned-null guard.
     private sealed class PhantomWaitIndexStore : IWorkflowStateStore, IWorkflowWaitIndex
     {
-        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointUtf8, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+        public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointRow, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
             => ValueTask.FromResult(WorkflowEtag.None);
 
         public ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)

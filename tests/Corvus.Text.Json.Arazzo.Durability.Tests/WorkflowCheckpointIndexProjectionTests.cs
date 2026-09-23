@@ -124,27 +124,13 @@ public sealed class WorkflowCheckpointIndexProjectionTests
 
         WorkflowRunIndexEntry projected = WorkflowCheckpointSerializer.ProjectIndex(bytes);
 
-        // The marker persists as unix milliseconds, so it round-trips to millisecond precision.
-        projected.ResumeRequestedAt.ShouldBe(DateTimeOffset.FromUnixTimeMilliseconds(UpdatedAt.ToUnixTimeMilliseconds()));
-    }
-
-    [TestMethod]
-    public void Updated_at_falls_back_to_created_at_for_a_checkpoint_written_before_the_stamp_existed()
-    {
-        // A checkpoint written without an updatedAt stamp still needs a non-null index UpdatedAt; createdAt is the
-        // best proxy for when it was written.
-        byte[] bytes = """{ "runId": "r", "workflowId": "w", "status": "Running", "cursor": 0, "createdAt": "2026-03-04T05:06:07+00:00" }"""u8.ToArray();
-
-        WorkflowRunIndexEntry projected = WorkflowCheckpointSerializer.ProjectIndex(bytes);
-
-        projected.CreatedAt.ShouldBe(CreatedAt);
-        projected.UpdatedAt.ShouldBe(CreatedAt);
+        projected.ResumeRequestedAt.ShouldBe(UpdatedAt);
     }
 
     [TestMethod]
     public void A_minimal_checkpoint_projects_with_no_optional_fields()
     {
-        byte[] bytes = """{ "runId": "r", "workflowId": "petWorkflow", "status": "Pending", "cursor": 0 }"""u8.ToArray();
+        byte[] bytes = SerializeCheckpoint(WorkflowRunStatus.Pending);
 
         WorkflowRunIndexEntry projected = WorkflowCheckpointSerializer.ProjectIndex(bytes);
 
@@ -172,8 +158,8 @@ public sealed class WorkflowCheckpointIndexProjectionTests
     [TestMethod]
     public void Try_project_index_rejects_malformed_bytes()
     {
-        // Not JSON at all: the runner's checkpoint surface uses this to turn a bad body into a clean rejection rather
-        // than an unhandled fault (the reader throws Corvus.Text.Json's own exception, not System.Text.Json's).
+        // Not a row at all: the runner's checkpoint surface uses this to turn a bad body into a clean rejection rather
+        // than an unhandled fault.
         WorkflowCheckpointSerializer.TryProjectIndex(new byte[] { 1, 2, 3 }, out WorkflowRunIndexEntry index).ShouldBeFalse();
         index.ShouldBe(default);
     }
@@ -181,7 +167,7 @@ public sealed class WorkflowCheckpointIndexProjectionTests
     [TestMethod]
     public void Try_project_index_rejects_a_non_checkpoint_object()
     {
-        // Well-formed JSON but missing the required checkpoint fields (the property access throws).
+        // Not a framed row at all, whatever it may be as JSON.
         WorkflowCheckpointSerializer.TryProjectIndex("{}"u8.ToArray(), out WorkflowRunIndexEntry index).ShouldBeFalse();
         index.ShouldBe(default);
     }
@@ -191,7 +177,7 @@ public sealed class WorkflowCheckpointIndexProjectionTests
         WorkflowWait? wait = null,
         WorkflowFault? fault = null,
         string? correlationId = null,
-        string? environment = null,
+        string environment = "development",
         TagSet tags = default,
         SecurityTagSet securityTags = default,
         DateTimeOffset? resumeRequestedAt = null,
@@ -200,24 +186,29 @@ public sealed class WorkflowCheckpointIndexProjectionTests
         using PooledUtf8Map<int> retryCounters = PooledUtf8Map<int>.Rent(0);
         using PooledUtf8Map<JsonElement> stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
         return WorkflowCheckpointSerializer.Serialize(
-            "run-1",
-            "petWorkflow",
-            status,
-            cursor: 1,
-            sequence: 1,
-            CreatedAt,
+            new CheckpointEnvelope(
+                "run-1",
+                environment,
+                "petWorkflow",
+                status,
+                1,
+                1,
+                Epoch: null,
+                CreatedAt,
+                updatedAt,
+                correlationId,
+                null,
+                tags,
+                securityTags,
+                [],
+                false,
+                wait,
+                fault),
             retryCounters,
             new Dictionary<string, byte[]>(),
-            inputs: default,
+            default,
             stepOutputs,
-            outputs: default,
-            wait: wait,
-            fault: fault,
-            correlationId: correlationId,
-            tags: tags,
-            securityTags: securityTags,
-            environment: environment,
-            resumeRequestedAt: resumeRequestedAt,
-            updatedAt: updatedAt);
+            default,
+            new ControlPlaneRecord(ResumeRequest: resumeRequestedAt is { } requestedAt ? new ControlPlaneResumeRequest(requestedAt, 1) : null).ToUtf8());
     }
 }

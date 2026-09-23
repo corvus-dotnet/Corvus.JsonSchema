@@ -136,8 +136,8 @@ public static class WorkflowCheckpointEndpoints
                 // The projection reports everything the save needs: the index, the environment the body claims (checked
                 // against the address on every save, ADR 0065 decision 9), the sequence it carries and the budget facts
                 // (ADR 0068), so the body is read exactly once.
-                ReadOnlyMemory<byte> checkpointUtf8 = rented.AsMemory(0, length);
-                if (!WorkflowCheckpointSerializer.TryProject(checkpointUtf8, out CheckpointProjection projection))
+                ReadOnlyMemory<byte> checkpointRow = rented.AsMemory(0, length);
+                if (!WorkflowCheckpointSerializer.TryProject(checkpointRow, out CheckpointProjection projection))
                 {
                     await WriteProblemAsync(context, StatusCodes.Status400BadRequest, "The request body is not a valid checkpoint document.").ConfigureAwait(false);
                     return;
@@ -156,7 +156,7 @@ public static class WorkflowCheckpointEndpoints
                     return;
                 }
 
-                CheckpointSaveResult result = await coordinator.SaveAsync(address, checkpointUtf8, projection.Index, projection.Environment, projection.Facts, sequence, context.RequestAborted).ConfigureAwait(false);
+                CheckpointSaveResult result = await coordinator.SaveAsync(address, checkpointRow, projection, sequence, context.RequestAborted).ConfigureAwait(false);
                 context.Response.Headers[WriteSequenceHeader] = result.AcceptedSequence.ToString(CultureInfo.InvariantCulture);
                 if (result.Outcome == CheckpointSaveOutcome.Applied)
                 {

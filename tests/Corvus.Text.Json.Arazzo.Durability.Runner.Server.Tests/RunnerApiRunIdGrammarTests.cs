@@ -57,7 +57,7 @@ public sealed class RunnerApiRunIdGrammarTests
         const string lease = "lease-token";
 
         (await host.LoadCheckpointAsync(Runner, runId, lease)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await host.SaveCheckpointAsync(Runner, runId, lease, Checkpoint(ConformingId, WorkflowRunStatus.Running, sequence: 2), 2)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await host.SaveCheckpointAsync(Runner, runId, lease, Checkpoint(ConformingId, WorkflowRunStatus.Running, sequence: 2, epoch: LeaseEpoch(lease)), 2)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await host.RenewLeaseAsync(Runner, runId, lease, 300)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await host.ReleaseLeaseAsync(Runner, runId, lease)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
@@ -77,24 +77,40 @@ public sealed class RunnerApiRunIdGrammarTests
         (await host.LoadCheckpointAsync(Runner, ConformingId, lease)).StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
-    private static byte[] Checkpoint(string runId, WorkflowRunStatus status, long sequence)
+    // The epoch the lease was granted with: the runner writes it into its region, and the API checks it against the
+    // grant (ADR 0065 decision 6).
+    private static long LeaseEpoch(string lease)
+        => RunnerLeaseToken.TryParse(lease, out long epoch, out _) ? epoch : 0;
+
+    private static byte[] Checkpoint(string runId, WorkflowRunStatus status, long sequence, long? epoch = null)
     {
         using PooledUtf8Map<int> retryCounters = PooledUtf8Map<int>.Rent(0);
         using PooledUtf8Map<JsonElement> stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
         return WorkflowCheckpointSerializer.Serialize(
-            new WorkflowRunId(runId),
-            Version,
-            status,
-            cursor: 0,
-            sequence,
-            T0,
+            new CheckpointEnvelope(
+                new WorkflowRunId(runId),
+                Production,
+                Version,
+                status,
+                0,
+                sequence,
+                Epoch: epoch,
+                T0,
+                T0,
+                null,
+                null,
+                default,
+                default,
+                [],
+                false,
+                null,
+                null),
             retryCounters,
             new Dictionary<string, byte[]>(),
-            inputs: default,
+            default,
             stepOutputs,
-            outputs: default,
-            environment: Production,
-            updatedAt: T0);
+            default,
+            []);
     }
 
     private sealed class TestClock(DateTimeOffset now) : TimeProvider

@@ -157,11 +157,11 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
     /// <inheritdoc/>
     public ValueTask<WorkflowEtag> SaveAsync(
         WorkflowRunAddress address,
-        ReadOnlyMemory<byte> checkpointUtf8,
+        ReadOnlyMemory<byte> checkpointRow,
         in WorkflowRunIndexEntry index,
         WorkflowEtag expected,
         CancellationToken cancellationToken)
-        => this.SaveCoreAsync(address, checkpointUtf8.ToArray(), index, expected, cancellationToken);
+        => this.SaveCoreAsync(address, checkpointRow.ToArray(), index, expected, cancellationToken);
 
     private async ValueTask<WorkflowEtag> SaveCoreAsync(WorkflowRunAddress address, byte[] checkpoint, WorkflowRunIndexEntry indexEntry, WorkflowEtag expected, CancellationToken cancellationToken)
     {

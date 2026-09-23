@@ -158,9 +158,28 @@ public sealed class RunnerApiEndToEndTests
         (await loaded.Content.ReadAsByteArrayAsync()).Length.ShouldBeGreaterThan(0);
 
         // The store has persisted sequence 1, so the next save must propose exactly 2.
-        using HttpResponseMessage saved = await host.SaveCheckpointAsync(Runner, Run1, lease, Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2), 2);
+        using HttpResponseMessage saved = await host.SaveCheckpointAsync(Runner, Run1, lease, Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2, epoch: LeaseEpoch(lease)), 2);
         saved.StatusCode.ShouldBe(HttpStatusCode.NoContent);
         SequenceOf(saved).ShouldBe(2);
+    }
+
+    [TestMethod]
+    public async Task A_checkpoint_whose_region_carries_another_epoch_than_the_lease_is_refused()
+    {
+        // ADR 0065 decision 6, the phase-B half: the runner region carries the lease epoch independently of the
+        // header, and a row minted under another grant, or under none, is not written under this one.
+        await using Host host = await Host.StartAsync();
+        await host.SeedAsync(Run1, WorkflowRunStatus.Pending);
+        string lease = await host.ClaimLeaseAsync(Runner);
+
+        using HttpResponseMessage above = await host.SaveCheckpointAsync(Runner, Run1, lease, Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2, epoch: LeaseEpoch(lease) + 1), 2);
+        above.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        using HttpResponseMessage none = await host.SaveCheckpointAsync(Runner, Run1, lease, Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2), 2);
+        none.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        // Nothing was written by either: the save under the grant's own epoch still lands as sequence 2.
+        using HttpResponseMessage saved = await host.SaveCheckpointAsync(Runner, Run1, lease, Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2, epoch: LeaseEpoch(lease)), 2);
+        saved.StatusCode.ShouldBe(HttpStatusCode.NoContent);
     }
 
     [TestMethod]
@@ -169,7 +188,7 @@ public sealed class RunnerApiEndToEndTests
         await using Host host = await Host.StartAsync();
         await host.SeedAsync(Run1, WorkflowRunStatus.Pending);
         string lease = await host.ClaimLeaseAsync(Runner);
-        byte[] checkpoint = Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2);
+        byte[] checkpoint = Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2, epoch: LeaseEpoch(lease));
         (await host.SaveCheckpointAsync(Runner, Run1, lease, checkpoint, 2)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
         // A byte-identical resend of a sequence already persisted. Reporting it as durable would be indistinguishable
@@ -290,7 +309,7 @@ public sealed class RunnerApiEndToEndTests
         await host.SeedAsync(Run1, WorkflowRunStatus.Pending);
         string lease = await host.ClaimLeaseAsync(Runner);
 
-        using HttpResponseMessage saved = await host.SaveCheckpointAsync(Runner, Run1, lease, Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 5), 2);
+        using HttpResponseMessage saved = await host.SaveCheckpointAsync(Runner, Run1, lease, Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 5, epoch: LeaseEpoch(lease)), 2);
 
         saved.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
@@ -319,24 +338,40 @@ public sealed class RunnerApiEndToEndTests
     private static long SequenceOf(HttpResponseMessage response)
         => long.Parse(response.Headers.GetValues(SequenceHeader).Single(), CultureInfo.InvariantCulture);
 
-    private static byte[] Checkpoint(string runId, WorkflowRunStatus status, long sequence)
+    // The epoch the lease was granted with: the runner writes it into its region, and the API checks it against the
+    // grant (ADR 0065 decision 6).
+    private static long LeaseEpoch(string lease)
+        => RunnerLeaseToken.TryParse(lease, out long epoch, out _) ? epoch : 0;
+
+    private static byte[] Checkpoint(string runId, WorkflowRunStatus status, long sequence, long? epoch = null)
     {
         using PooledUtf8Map<int> retryCounters = PooledUtf8Map<int>.Rent(0);
         using PooledUtf8Map<JsonElement> stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
         return WorkflowCheckpointSerializer.Serialize(
-            new WorkflowRunId(runId),
-            Version,
-            status,
-            cursor: 0,
-            sequence,
-            T0,
+            new CheckpointEnvelope(
+                new WorkflowRunId(runId),
+                Production,
+                Version,
+                status,
+                0,
+                sequence,
+                Epoch: epoch,
+                T0,
+                T0,
+                null,
+                null,
+                default,
+                default,
+                [],
+                false,
+                null,
+                null),
             retryCounters,
             new Dictionary<string, byte[]>(),
-            inputs: default,
+            default,
             stepOutputs,
-            outputs: default,
-            environment: Production,
-            updatedAt: T0);
+            default,
+            []);
     }
 
     private sealed class TestClock(DateTimeOffset now) : TimeProvider

@@ -235,9 +235,9 @@ public sealed class SecuredWorkflowManagementTests
         WorkflowRunDetail detail = (await client.GetAsync("r1", AccessContext.System, default))!.Value;
         detail.Status.ShouldBe(WorkflowRunStatus.Faulted);
         detail.Fault!.Value.Error.ShouldBe(ExecutionBudgetFault.Deadline);
-        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex((await store.LoadAsync(new WorkflowRunAddress("development", new WorkflowRunId("r1")), default))!.Value.Utf8);
+        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex((await store.LoadAsync(new WorkflowRunAddress("development", new WorkflowRunId("r1")), default))!.Value.Row);
         index.ResumeRequestedAt.ShouldBeNull();
-        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize((await store.LoadAsync(new WorkflowRunAddress("development", new WorkflowRunId("r1")), default))!.Value.Utf8);
+        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize((await store.LoadAsync(new WorkflowRunAddress("development", new WorkflowRunId("r1")), default))!.Value.Row);
         state.Cursor.ShouldBe(2);
     }
 

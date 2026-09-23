@@ -67,7 +67,7 @@ public sealed class ServerlessWorkflowRunHost
     /// <returns>The run outcome, or <see langword="null"/> when there was nothing dispatchable to advance.</returns>
     public async ValueTask<WorkflowRunResultKind?> InvokeAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
     {
-        using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.store, address, this.timeProvider, cancellationToken).ConfigureAwait(false);
+        using WorkflowRun? run = await WorkflowRun.ResumeAsync(this.store, address, this.timeProvider, cancellationToken: cancellationToken).ConfigureAwait(false);
 
         // Re-check dispatchability on the fresh checkpoint, matching WorkflowDispatcher: a Pending or Running run, or a
         // Suspended/Faulted run the control plane marked resume-claimable (§18), is advanced; a missing run (deleted)

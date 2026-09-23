@@ -54,7 +54,7 @@ public abstract class WorkflowStateStoreConformance
         WorkflowCheckpoint? loaded = await store.LoadAsync(A("run-1"), default);
         loaded.ShouldNotBeNull();
         loaded.Value.Etag.ShouldBe(etag);
-        Encoding.UTF8.GetString(loaded.Value.Utf8.Span).ShouldBe("""{"v":1}""");
+        Encoding.UTF8.GetString(loaded.Value.Row.Span).ShouldBe("""{"v":1}""");
     }
 
     [TestMethod]
@@ -85,7 +85,7 @@ public abstract class WorkflowStateStoreConformance
 
         second.ShouldNotBe(first);
         WorkflowCheckpoint? loaded = await store.LoadAsync(A("run-1"), default);
-        Encoding.UTF8.GetString(loaded!.Value.Utf8.Span).ShouldBe("b");
+        Encoding.UTF8.GetString(loaded!.Value.Row.Span).ShouldBe("b");
         loaded.Value.Etag.ShouldBe(second);
     }
 
@@ -693,9 +693,9 @@ public abstract class WorkflowStateStoreConformance
 
         // Each address answers its own bytes.
         WorkflowCheckpoint? devLoaded = await store.LoadAsync(A("shared-id", "development"), default);
-        Encoding.UTF8.GetString(devLoaded!.Value.Utf8.Span).ShouldBe("""{"env":"dev"}""");
+        Encoding.UTF8.GetString(devLoaded!.Value.Row.Span).ShouldBe("""{"env":"dev"}""");
         WorkflowCheckpoint? prodLoaded = await store.LoadAsync(A("shared-id", "production"), default);
-        Encoding.UTF8.GetString(prodLoaded!.Value.Utf8.Span).ShouldBe("""{"env":"prod"}""");
+        Encoding.UTF8.GetString(prodLoaded!.Value.Row.Span).ShouldBe("""{"env":"prod"}""");
 
         // Deleting one address leaves the other untouched.
         await store.DeleteAsync(A("shared-id", "development"), default);

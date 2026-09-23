@@ -599,4 +599,19 @@
   <data name="WorkflowPublishingRequiresStore" xml:space="preserve">
     <value>Publishing a workflow version requires an administrator store, since publishing establishes and checks the base id's administration (ADR 0007); none is configured on this catalog client. A runner reads the catalog and needs none.</value>
   </data>
+  <data name="CheckpointRowMalformed" xml:space="preserve">
+    <value>The bytes are not a checkpoint row: the framing version, a region length or the clear-row rule is wrong (ADR 0065 decision 6).</value>
+  </data>
+  <data name="CheckpointRegionUnknownMember" xml:space="preserve">
+    <value>The checkpoint's {0} region carries the member '{1}', which its closed schema does not name (ADR 0065 decision 4).</value>
+  </data>
+  <data name="CheckpointRegionMalformedMember" xml:space="preserve">
+    <value>The checkpoint's {0} region carries a malformed '{1}' member.</value>
+  </data>
+  <data name="CheckpointRegionMissingMember" xml:space="preserve">
+    <value>The checkpoint's {0} region carries no '{1}' member, which is required.</value>
+  </data>
+  <data name="ControlPlaneWriteNeedsLoadedRow" xml:space="preserve">
+    <value>A control-plane decision for run '{0}' can be written only over the row it was loaded from and before the run advances: a resume request or a pause is a control-plane-region write, never a runner save (ADR 0065 decision 7).</value>
+  </data>
 </root>

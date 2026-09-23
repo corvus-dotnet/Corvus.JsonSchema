@@ -121,7 +121,7 @@ public sealed class RunnerApiQuotaEndToEndTests
         await host.SeedAsync(Run1, WorkflowRunStatus.Pending);
         string lease = await host.ClaimLeaseAsync(Runner);
 
-        byte[] checkpoint = Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2);
+        byte[] checkpoint = Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2, epoch: LeaseEpoch(lease));
         checkpoint.Length.ShouldBeGreaterThan(64, "the test needs a body larger than the whole volume allowance");
 
         using HttpResponseMessage refused = await host.SaveCheckpointAsync(Runner, Run1, lease, checkpoint, 2);
@@ -215,24 +215,40 @@ public sealed class RunnerApiQuotaEndToEndTests
         body.RootElement.GetProperty("quota").GetString().ShouldBe("checkpoint-bytes/runner");
     }
 
-    private static byte[] Checkpoint(string runId, WorkflowRunStatus status, long sequence)
+    // The epoch the lease was granted with: the runner writes it into its region, and the API checks it against the
+    // grant (ADR 0065 decision 6).
+    private static long LeaseEpoch(string lease)
+        => RunnerLeaseToken.TryParse(lease, out long epoch, out _) ? epoch : 0;
+
+    private static byte[] Checkpoint(string runId, WorkflowRunStatus status, long sequence, long? epoch = null)
     {
         using PooledUtf8Map<int> retryCounters = PooledUtf8Map<int>.Rent(0);
         using PooledUtf8Map<JsonElement> stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
         return WorkflowCheckpointSerializer.Serialize(
-            new WorkflowRunId(runId),
-            Version,
-            status,
-            cursor: 0,
-            sequence,
-            T0,
+            new CheckpointEnvelope(
+                new WorkflowRunId(runId),
+                Production,
+                Version,
+                status,
+                0,
+                sequence,
+                Epoch: epoch,
+                T0,
+                T0,
+                null,
+                null,
+                default,
+                default,
+                [],
+                false,
+                null,
+                null),
             retryCounters,
             new Dictionary<string, byte[]>(),
-            inputs: default,
+            default,
             stepOutputs,
-            outputs: default,
-            environment: Production,
-            updatedAt: T0);
+            default,
+            []);
     }
 
     private sealed class TestClock(DateTimeOffset now) : TimeProvider
@@ -305,7 +321,7 @@ public sealed class RunnerApiQuotaEndToEndTests
         {
             WorkflowCheckpoint? stored = await store.LoadAsync(new WorkflowRunAddress(Production, new WorkflowRunId(runId)), default);
             stored.ShouldNotBeNull();
-            WorkflowCheckpointSerializer.TryReadSequence(stored!.Value.Utf8, out long sequence).ShouldBeTrue();
+            WorkflowCheckpointSerializer.TryReadSequence(stored!.Value.Row, out long sequence).ShouldBeTrue();
             return sequence;
         }
 

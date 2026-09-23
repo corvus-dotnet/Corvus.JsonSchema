@@ -414,7 +414,7 @@ public sealed class RunnerRunCoordinator
         // a row can only come back in the environment the sweep queried, and the old post-load environment
         // comparison has nothing left to compare.
         WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(held.Address, cancellationToken).ConfigureAwait(false);
-        if (checkpoint is not { } row || !WorkflowCheckpointSerializer.TryProject(row.Utf8, out CheckpointProjection projection))
+        if (checkpoint is not { } row || !WorkflowCheckpointSerializer.TryProject(row.Row, out CheckpointProjection projection))
         {
             return null;
         }
@@ -452,8 +452,13 @@ public sealed class RunnerRunCoordinator
             return false;
         }
 
-        long sequence = (projection.Sequence ?? 0) + 1;
-        byte[] faulted = WorkflowCheckpointSerializer.RewriteFaulted(row.Utf8.Span, sequence, exceeded, now);
+        // The fault goes in the control-plane region against the runner sequence the row holds (ADR 0065 decision 7);
+        // the runner's own regions are left byte-for-byte as they were.
+        ControlPlaneRecord decided = ControlPlaneRecord.Parse(projection.ControlPlaneRegion) with
+        {
+            BudgetFault = new ControlPlaneBudgetFault(exceeded, now, projection.Sequence),
+        };
+        byte[] faulted = CheckpointRow.WithControlPlaneRegion(row.Row.Span, decided.ToUtf8());
         try
         {
             await this.store.SaveAsync(address, faulted, WorkflowCheckpointSerializer.ProjectIndex(faulted), row.Etag, cancellationToken).ConfigureAwait(false);
@@ -471,7 +476,7 @@ public sealed class RunnerRunCoordinator
         // The load is by the lease's full address (ADR 0065 decision 9), so the run's environment is structural:
         // a row can only come back in the environment the claim queried.
         WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(held.Address, cancellationToken).ConfigureAwait(false);
-        if (checkpoint is not { } row || !WorkflowCheckpointSerializer.TryProject(row.Utf8, out CheckpointProjection projection))
+        if (checkpoint is not { } row || !WorkflowCheckpointSerializer.TryProject(row.Row, out CheckpointProjection projection))
         {
             return null;
         }
