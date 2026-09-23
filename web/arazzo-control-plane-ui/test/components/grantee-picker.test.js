@@ -95,6 +95,33 @@ describe('<arazzo-grantee-picker>', () => {
     equal(results(el).length, 0, 'the workflow grantee is filtered out of an admin picker');
   });
 
+  it('shows the directory refusal instead of a thinner list when the search answers 502', async () => {
+    // The server refuses the merged search when the directory cannot answer (P1-15). The picker relays that refusal
+    // rather than falling back to the observed identities, so an operator never grants against a stale identity
+    // believing the directory answered.
+    const mock = createMockControlPlane({ latencyMs: 0 });
+    const refusing = async (url, init) => {
+      if (String(url).includes('/identity/grantees')) {
+        return new Response(
+          JSON.stringify({ type: 'https://arazzo.example/problems/directory-unavailable', title: 'Directory unavailable', status: 502 }),
+          { status: 502, headers: { 'content-type': 'application/problem+json' } },
+        );
+      }
+      return mock.fetch(url, init);
+    };
+    el = document.createElement('arazzo-grantee-picker');
+    el.client = new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: refusing });
+    mount(el);
+    el.addEventListener('error', (e) => e.stopPropagation());
+    const errored = nextEvent(el, 'error');
+    type(el, 'ada');
+    const e = await errored;
+    equal(e.detail.problem.status, 502, 'the refusal is relayed as the error');
+    await waitFor(() => !el.shadowRoot.querySelector('.msg').hidden);
+    ok(el.shadowRoot.querySelector('.msg').textContent.includes('directory could not be reached'), 'names the directory refusal');
+    equal(results(el).length, 0, 'no observed-only results are offered');
+  });
+
   it('reset() clears the selection', async () => {
     el = pickerWithMock();
     mount(el);

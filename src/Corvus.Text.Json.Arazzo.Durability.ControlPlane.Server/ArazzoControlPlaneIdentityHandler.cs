@@ -6,6 +6,7 @@ using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Directories;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Security;
+using Microsoft.Extensions.Logging;
 
 namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
 
@@ -33,18 +34,21 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
     private readonly IObservedIdentityStore observed;
     private readonly IPrincipalDirectory? directory;
     private readonly ControlPlaneAccess access;
+    private readonly ILogger? logger;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoControlPlaneIdentityHandler"/> class.</summary>
     /// <param name="observed">The store-indexed observed-identity typeahead.</param>
     /// <param name="directory">An optional external directory for live search; <see langword="null"/> if none is configured.</param>
     /// <param name="access">Resolves the caller's identity and maps grantees to/from internal tags.</param>
-    internal ArazzoControlPlaneIdentityHandler(IObservedIdentityStore observed, IPrincipalDirectory? directory, ControlPlaneAccess access)
+    /// <param name="logger">The logger a refused directory search is recorded on; <see langword="null"/> where the host registers none.</param>
+    internal ArazzoControlPlaneIdentityHandler(IObservedIdentityStore observed, IPrincipalDirectory? directory, ControlPlaneAccess access, ILogger? logger)
     {
         ArgumentNullException.ThrowIfNull(observed);
         ArgumentNullException.ThrowIfNull(access);
         this.observed = observed;
         this.directory = directory;
         this.access = access;
+        this.logger = logger;
     }
 
     /// <inheritdoc/>
@@ -126,17 +130,16 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
         // Ownership ledger above this method; proven by GranteeProjectionBenchmarks (~2.0 KB, the closure-free floor).
         if (string.Equals(source, "directory", StringComparison.Ordinal) && this.directory is not null)
         {
-            // An explicit directory search surfaces a directory failure (the caller asked for THAT source): the shared
-            // adapter failure type maps to a 502 problem instead of an unhandled 500.
+            // A directory failure refuses the search: the shared adapter failure type maps to a 502 problem instead of
+            // an unhandled 500.
             IReadOnlyList<ResolvedPrincipal> found;
             try
             {
                 found = await this.SearchDirectoryAsync(kind, prefix, limit, cancellationToken).ConfigureAwait(false);
             }
-            catch (PrincipalDirectoryException)
+            catch (PrincipalDirectoryException exception)
             {
-                return SearchGranteesResult.BadGateway(
-                    Problem("directory-unavailable", "Directory unavailable", 502, "The external principal directory could not be reached."), workspace);
+                return this.RefuseDirectoryUnavailable(exception, workspace);
             }
 
             var state = new RefTuple<IReadOnlyList<ResolvedPrincipal>, AccessContext, ControlPlaneAccess>(found, context, this.access);
@@ -149,18 +152,19 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
         if (string.Equals(source, "merged", StringComparison.Ordinal) && this.directory is not null)
         {
             // The merged view: directory results (reach-filtered) ahead of the observed identities that do not collide
-            // with one on (kind, value) — directory-preferred, since a directory resolution is complete (§17.2). The
-            // directory leg is best-effort enrichment here, so its failure degrades to observed results rather than
-            // failing the search. One bounded result set: no page token (paging a union of a paged store and an
-            // unpaged directory would re-emit the directory head every page).
+            // with one on (kind, value) — directory-preferred, since a directory resolution is complete (§17.2). A
+            // directory failure refuses the search the same way the explicit source does: an answer from the observed
+            // identities alone would let an operator grant against a stale or partial identity believing the directory
+            // answered (P1-15). One bounded result set: no page token (paging a union of a paged store and an unpaged
+            // directory would re-emit the directory head every page).
             IReadOnlyList<ResolvedPrincipal> merged;
             try
             {
                 merged = await this.SearchDirectoryAsync(kind, prefix, limit, cancellationToken).ConfigureAwait(false);
             }
-            catch (PrincipalDirectoryException)
+            catch (PrincipalDirectoryException exception)
             {
-                merged = [];
+                return this.RefuseDirectoryUnavailable(exception, workspace);
             }
 
             using ObservedIdentityPage observedPage = await this.observed.SearchAsync(context, kind, prefix, limit, pageToken, cancellationToken).ConfigureAwait(false);
@@ -187,8 +191,8 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
     // searchable kind (person/team/role), concatenated. The seam is domain-typed (the GranteeKind enum) and
     // string-typed (an LDAP filter / an HTTP URI), so the store kind and the prefix reify at this genuine leaf.
     // In the all-kinds sweep a kind whose backing resource fails (e.g. a directory service account not permitted to
-    // list roles) contributes nothing rather than failing the kinds that DID resolve; the directory counts as
-    // unreachable — the propagated failure — only when every kind fails.
+    // list roles) fails the search: a result thinned by a kind nobody asked to exclude reads as a complete answer
+    // (P1-15), and the failure propagates to the caller as the directory being unavailable.
     private async ValueTask<IReadOnlyList<ResolvedPrincipal>> SearchDirectoryAsync(ObservedIdentity.GranteeKind kind, JsonString prefix, int limit, CancellationToken cancellationToken)
     {
         string query = prefix.IsNotUndefined() ? (string)prefix : string.Empty;
@@ -198,34 +202,25 @@ public sealed class ArazzoControlPlaneIdentityHandler : IApiIdentityHandler
         }
 
         List<ResolvedPrincipal>? all = null;
-        PrincipalDirectoryException? failure = null;
-        bool anySucceeded = false;
         foreach (GranteeKind searchable in DirectorySearchableKinds)
         {
-            IReadOnlyList<ResolvedPrincipal> found;
-            try
-            {
-                found = await this.directory!.SearchAsync(searchable, query, limit, cancellationToken).ConfigureAwait(false);
-            }
-            catch (PrincipalDirectoryException exception)
-            {
-                failure = exception;
-                continue;
-            }
-
-            anySucceeded = true;
+            IReadOnlyList<ResolvedPrincipal> found = await this.directory!.SearchAsync(searchable, query, limit, cancellationToken).ConfigureAwait(false);
             if (found.Count > 0)
             {
                 (all ??= []).AddRange(found);
             }
         }
 
-        if (!anySucceeded && failure is not null)
-        {
-            throw failure;
-        }
-
         return (IReadOnlyList<ResolvedPrincipal>?)all ?? [];
+    }
+
+    // The directory could not answer, so the search is refused rather than answered from what else is at hand; the
+    // failure is logged where the operator can see why the picker is empty, and the caller gets a 502 problem.
+    private SearchGranteesResult RefuseDirectoryUnavailable(PrincipalDirectoryException exception, JsonWorkspace workspace)
+    {
+        this.logger?.LogWarning(exception, "The principal directory could not answer a grantee search; the search was refused rather than answered from observed identities alone.");
+        return SearchGranteesResult.BadGateway(
+            Problem("directory-unavailable", "Directory unavailable", 502, "The external principal directory could not be reached."), workspace);
     }
 
     private static Models.ProblemDetails.Source Problem(string type, string title, int status, string detail)

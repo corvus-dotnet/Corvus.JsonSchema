@@ -181,10 +181,10 @@ public static class ControlPlaneEndpointExtensions
         bool gateScopes = securityMode is ControlPlaneSecurityMode.Scoped or ControlPlaneSecurityMode.ScopesOnly;
         ControlPlaneRowSecurityPolicy? effectivePolicy = securityMode is ControlPlaneSecurityMode.Scoped or ControlPlaneSecurityMode.RowSecurityOnly ? rowSecurity : null;
 
+        ILogger? logger = endpoints.ServiceProvider.GetService<ILoggerFactory>()?.CreateLogger("Corvus.Text.Json.Arazzo.Durability.ControlPlane");
         if (securityMode == ControlPlaneSecurityMode.Open)
         {
-            endpoints.ServiceProvider.GetService<ILoggerFactory>()?.CreateLogger("Corvus.Text.Json.Arazzo.Durability.ControlPlane")
-                .LogWarning("Arazzo control plane mapped in OPEN security mode: no authentication and no row security — every operation is exposed to anonymous callers. Use this only for development or a trusted network.");
+            logger?.LogWarning("Arazzo control plane mapped in OPEN security mode: no authentication and no row security — every operation is exposed to anonymous callers. Use this only for development or a trusted network.");
         }
 
         // Resolve the caller's AccessContext per request (§14.2/§14.4): when a row-security policy is configured the
@@ -279,7 +279,7 @@ public static class ControlPlaneEndpointExtensions
         onApprovalServiceBuilt?.Invoke(approvalService);
         var accessRequestsHandler = new ArazzoControlPlaneAccessRequestsHandler(approvalService, requestStore, catalog, access, accessRequestSubjectClaimType, auditor);
 
-        var identityHandler = new ArazzoControlPlaneIdentityHandler(observedStore, principalDirectory, access);
+        var identityHandler = new ArazzoControlPlaneIdentityHandler(observedStore, principalDirectory, access, logger);
 
         // The environments management API (§7.7): governed, reach-scoped deployment environments and their administrators.
         // The data plane is reach-filtered (the environment store, hoisted above); governance is current-administrator-gated

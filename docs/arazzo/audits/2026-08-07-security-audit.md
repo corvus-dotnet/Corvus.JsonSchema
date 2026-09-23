@@ -482,6 +482,8 @@ item you cannot see directly in the code.
 - **Impact:** an operator authors a grant against a stale or observed-only identity believing the directory answered.
 - **Acceptance criteria:** fail closed on the default path, or return a partial-result indicator the UI surfaces; log the swallowed exception.
 
+> **Resolved 2026-09-23.** The merged default refuses with the same 502 `directory-unavailable` problem as the explicit source, the all-kinds sweep refuses when any kind fails instead of returning a thinned list, both refusals are logged, and the console's grantee picker shows the refusal instead of the observed identities alone. The observed identities remain reachable by naming `source=observed`. Tests fail with either refusal removed.
+
 ### P1-16 · FUNCTIONAL · `TB-4` · Tag visibility filter over-matches on the relational backends
 
 > **Resolved.** The stored column was already separator-bracketed on both ends (the writer's own

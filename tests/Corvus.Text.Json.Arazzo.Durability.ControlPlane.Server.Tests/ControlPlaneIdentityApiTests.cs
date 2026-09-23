@@ -194,36 +194,45 @@ public sealed class ControlPlaneIdentityApiTests
     }
 
     [TestMethod]
-    public async Task An_all_kinds_directory_search_returns_the_kinds_that_resolve_when_one_kind_fails()
+    public async Task An_all_kinds_directory_search_is_refused_when_one_kind_fails()
     {
         // The live-Keycloak shape: the service account may search users and groups but not realm roles, so the role
-        // leg fails. The kinds that DID resolve are returned — a partial directory is not "unreachable".
+        // leg fails. A result thinned by that kind would read as a complete answer, so the search is refused (P1-15),
+        // whether the caller named the directory or took the merged default.
         var directory = new KindFailingDirectory(
             GranteeKind.Role,
             new ResolvedPrincipal(GranteeKind.Person, "alice"u8, "Alice"u8, hasLabel: true, Tenant("acme")),
             new ResolvedPrincipal(GranteeKind.Team, "acme-team"u8, "Acme Team"u8, hasLabel: true, Tenant("acme")));
 
         await using Scoped host = await StartAsync(directory: directory);
-        using Stj.JsonDocument doc = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/identity/grantees?q=a&source=directory", AdminRead, "acme"));
+        (await host.SendAsync(HttpMethod.Get, "/identity/grantees?q=a&source=directory", AdminRead, "acme")).StatusCode.ShouldBe(HttpStatusCode.BadGateway);
+        (await host.SendAsync(HttpMethod.Get, "/identity/grantees?q=a", AdminRead, "acme")).StatusCode.ShouldBe(HttpStatusCode.BadGateway);
 
-        doc.RootElement.GetProperty("grantees").EnumerateArray()
-            .Select(g => g.GetProperty("kind").GetString()).Order().ShouldBe(["person", "team"]);
+        // Pinning a kind the directory does answer still works.
+        using Stj.JsonDocument doc = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/identity/grantees?q=a&source=directory&kind=person", AdminRead, "acme"));
+        doc.RootElement.GetProperty("grantees").EnumerateArray().Single().GetProperty("value").GetString().ShouldBe("alice");
     }
 
     [TestMethod]
-    public async Task A_merged_search_degrades_to_observed_results_when_the_directory_fails()
+    public async Task A_merged_search_is_refused_when_the_directory_fails_rather_than_answered_from_observed_identities()
     {
+        // The merged view is the default whenever a directory is configured. An answer from the observed identities
+        // alone would let an operator grant against a stale or partial identity believing the directory answered
+        // (P1-15), so the failure refuses the search exactly as an explicit directory search does.
         var observed = new InMemoryObservedIdentityStore();
         await observed.SeenAsync(ObservedIdentity.GranteeKind.EnumValues.Team, Str("acme-team"), Str("Acme"), Tenant("acme"), true, "test", default);
 
         await using Scoped host = await StartAsync(observed, directory: new BrokenDirectory());
         HttpResponseMessage response = await host.SendAsync(HttpMethod.Get, "/identity/grantees?q=acme", AdminRead, "acme");
-        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.StatusCode.ShouldBe(HttpStatusCode.BadGateway);
 
         using Stj.JsonDocument doc = await ReadJsonAsync(response);
-        Stj.JsonElement g = doc.RootElement.GetProperty("grantees").EnumerateArray().Single();
-        g.GetProperty("value").GetString().ShouldBe("acme-team");
-        g.GetProperty("source").GetString().ShouldBe("observed");
+        doc.RootElement.GetProperty("status").GetInt32().ShouldBe(502);
+        doc.RootElement.GetProperty("title").GetString().ShouldBe("Directory unavailable");
+
+        // The observed identities are still reachable by naming that source.
+        using Stj.JsonDocument observedOnly = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/identity/grantees?q=acme&source=observed", AdminRead, "acme"));
+        observedOnly.RootElement.GetProperty("grantees").EnumerateArray().Single().GetProperty("source").GetString().ShouldBe("observed");
     }
 
     [TestMethod]
@@ -347,7 +356,7 @@ public sealed class ControlPlaneIdentityApiTests
     }
 
     // A directory whose backend is unreachable: every search fails the way a real adapter does (the shared base type),
-    // so the handler's degrade (merged) / 502 (explicit) paths are exercised.
+    // so the handler's 502 refusal is exercised on the merged and the explicit paths.
     private sealed class BrokenDirectory : IPrincipalDirectory
     {
         public ValueTask<IReadOnlyList<ResolvedPrincipal>> SearchAsync(GranteeKind kind, string query, int limit, CancellationToken cancellationToken)
@@ -355,7 +364,7 @@ public sealed class ControlPlaneIdentityApiTests
     }
 
     // A directory where ONE kind's backing resource fails (the live-Keycloak service-account shape) while the others
-    // resolve, so the all-kinds sweep's per-kind degrade is exercised.
+    // resolve, so the all-kinds sweep's refusal is exercised.
     private sealed class KindFailingDirectory(GranteeKind failing, params ResolvedPrincipal[] principals) : IPrincipalDirectory
     {
         public ValueTask<IReadOnlyList<ResolvedPrincipal>> SearchAsync(GranteeKind kind, string query, int limit, CancellationToken cancellationToken)

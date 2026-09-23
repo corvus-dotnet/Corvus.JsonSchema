@@ -30,23 +30,12 @@ const DEBOUNCE_MS = 200;
 // /identity/capabilities' SupportedGranteeKinds.)
 const KINDS = ['person', 'team', 'role', 'workflow'];
 
-// The identity sources searched (§16.5.4): `directory` resolves REAL people/teams/roles from the configured IdP (fully
-// resolved, so `complete`); `observed` is the store-indexed typeahead of identities the control plane has seen. With no
-// pinned source the picker searches BOTH and merges, so "look yourself up" finds a directory person just as it finds a
-// store-observed one — the grantee search itself resolves one source per call.
-const SOURCES = ['directory', 'observed'];
-
-// Merges two grantee lists, de-duplicating by kind+value and preferring the first list's entry (the directory's fully
-// resolved identity over an observed partial for the same principal). Order-preserving: directory hits first.
-function mergeGrantees(primary, secondary) {
-  const byKey = new Map();
-  for (const g of primary) byKey.set(`${g.kind}:${g.value}`, g);
-  for (const g of secondary) {
-    const key = `${g.kind}:${g.value}`;
-    if (!byKey.has(key)) byKey.set(key, g);
-  }
-  return [...byKey.values()];
-}
+// The identity sources (§16.5.4): `directory` resolves REAL people/teams/roles from the configured IdP (fully resolved,
+// so `complete`); `observed` is the store-indexed typeahead of identities the control plane has seen. With no pinned
+// source the picker asks for the server's merged view, so "look yourself up" finds a directory person just as it finds
+// a store-observed one. The server refuses that view when the directory cannot answer (502) rather than answering from
+// the observed identities alone, and the picker shows the refusal instead of a thinner list.
+const DIRECTORY_UNAVAILABLE = 502;
 
 class ArazzoGranteePicker extends ArazzoElement {
   static get observedAttributes() {
@@ -202,38 +191,24 @@ class ArazzoGranteePicker extends ArazzoElement {
     const opts = { q: q || undefined, kind: selectedKind || undefined, limit };
     const pinned = this.getAttribute('source');
     try {
-      let grantees;
-      if (pinned) {
-        // A context that pins one source (e.g. an observed-only picker) searches just that.
-        ({ grantees } = await client.searchGrantees({ ...opts, source: pinned }));
-      } else {
-        // No pinned source: search the directory and the observed store together so a real person and a store-seen
-        // identity are both findable. Each source is independent — a failing / unconfigured source yields no results
-        // rather than starving the other; only when BOTH fail is it a real error.
-        const [directory, observed] = await Promise.all(SOURCES.map((source) => this.searchSource(client, opts, source)));
-        if (directory.error && observed.error) throw directory.error;
-        grantees = mergeGrantees(directory.grantees, observed.grantees);
-      }
+      // A context that pins one source (e.g. an observed-only picker) searches just that; otherwise the server's
+      // merged view, which the server refuses outright when the directory cannot answer.
+      const { grantees } = await client.searchGrantees(pinned ? { ...opts, source: pinned } : opts);
       if (seq !== this._seq) return; // a newer keystroke superseded this response
-      const filtered = restrict ? grantees.filter((g) => allowed.includes(g.kind)) : grantees;
+      const filtered = restrict ? (grantees || []).filter((g) => allowed.includes(g.kind)) : (grantees || []);
       this._results = filtered.slice(0, SEARCH_LIMIT);
       this.renderResults();
     } catch (problem) {
       if (seq !== this._seq) return;
       this._results = [];
       this.hideResults();
-      this.setMessage('Could not search grantees.', true);
+      this.setMessage(
+        problem?.status === DIRECTORY_UNAVAILABLE
+          ? 'The directory could not be reached, so grantees cannot be searched right now.'
+          : 'Could not search grantees.',
+        true,
+      );
       this.emit('error', { problem });
-    }
-  }
-
-  /** Searches one identity source, yielding its grantees (or an error to merge on) so one source can fail without starving the other. @private */
-  async searchSource(client, opts, source) {
-    try {
-      const { grantees } = await client.searchGrantees({ ...opts, source });
-      return { grantees: grantees || [] };
-    } catch (error) {
-      return { grantees: [], error };
     }
   }
 
