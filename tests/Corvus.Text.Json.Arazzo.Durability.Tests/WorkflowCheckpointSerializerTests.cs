@@ -118,6 +118,29 @@ public sealed class WorkflowCheckpointSerializerTests
     }
 
     [TestMethod]
+    public void A_submission_is_the_row_without_its_control_plane_region_and_the_server_joins_them_back()
+    {
+        // ADR 0065 decision 7: the runner submits only its own bytes; the region is the server's to hold and join.
+        byte[] region = new ControlPlaneRecord(Budget: ExecutionBudget.Default).ToUtf8();
+        byte[] row = Row(WorkflowRunStatus.Running, sequence: 3, epoch: 4, controlPlane: region);
+        ReadOnlyMemory<byte> submitted = CheckpointRow.SubmittedBytes(row);
+
+        CheckpointRow.TryParseSubmitted(submitted.Span, out CheckpointRowLayout layout).ShouldBeTrue();
+        layout.SubmittedLength.ShouldBe(submitted.Length);
+        submitted[layout.ControlPlaneRegion].Length.ShouldBe(0);
+        CheckpointRow.TryParseSubmitted(row, out _).ShouldBeFalse("a row carrying a region is not a submission");
+        CheckpointRow.TryParse(submitted.Span, out _).ShouldBeFalse("a submission is not a row");
+
+        WorkflowCheckpointSerializer.TryReadSubmission(submitted, out CheckpointSubmission submission).ShouldBeTrue();
+        submission.ShouldBe(new CheckpointSubmission("development", 3, 4));
+        WorkflowCheckpointSerializer.TryReadSubmission(row, out _).ShouldBeFalse();
+        WorkflowCheckpointSerializer.TryReadSubmission(new byte[] { 1, 2, 3 }, out _).ShouldBeFalse();
+
+        CheckpointRow.Join(submitted.Span, region).ShouldBe(row, "join is the inverse of the split");
+        Should.Throw<FormatException>(() => CheckpointRow.Join(row, region));
+    }
+
+    [TestMethod]
     public void Bytes_that_are_not_a_row_are_refused_by_the_framing()
     {
         byte[] row = Row(WorkflowRunStatus.Running);

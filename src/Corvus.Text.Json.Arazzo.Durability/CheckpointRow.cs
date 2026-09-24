@@ -55,6 +55,47 @@ public static class CheckpointRow
     /// <param name="layout">The layout when the row is well formed.</param>
     /// <returns><see langword="true"/> when <paramref name="row"/> is a checkpoint row of this framing version.</returns>
     public static bool TryParse(ReadOnlySpan<byte> row, out CheckpointRowLayout layout)
+        => TryParseCore(row, RegionCount, out layout);
+
+    /// <summary>
+    /// Parses a runner's submission: the submitted bytes alone, which are a row without its control-plane region
+    /// (ADR 0065 decision 7). That region is the server's, joined by <see cref="Join"/>, so a submission that carries
+    /// one is not a submission.
+    /// </summary>
+    /// <param name="submitted">The submitted bytes.</param>
+    /// <param name="layout">The layout when the submission is well formed; its control-plane region is empty and its submitted length is the whole.</param>
+    /// <returns><see langword="true"/> when <paramref name="submitted"/> is a well-formed submission.</returns>
+    public static bool TryParseSubmitted(ReadOnlySpan<byte> submitted, out CheckpointRowLayout layout)
+        => TryParseCore(submitted, RegionCount - 1, out layout);
+
+    /// <summary>The submitted bytes of a stored row: everything the runner wrote, which is what it submits and what the digest is taken over.</summary>
+    /// <param name="row">The stored row.</param>
+    /// <returns>The row's prefix before the control-plane region.</returns>
+    /// <exception cref="FormatException">The bytes are not a checkpoint row.</exception>
+    public static ReadOnlyMemory<byte> SubmittedBytes(ReadOnlyMemory<byte> row)
+        => row[..Parse(row.Span).SubmittedLength];
+
+    /// <summary>Joins a runner's submission with the control-plane region the server holds into the stored row.</summary>
+    /// <param name="submitted">The submitted bytes, as <see cref="TryParseSubmitted"/> accepts them.</param>
+    /// <param name="controlPlaneRegion">The control-plane region.</param>
+    /// <returns>The row.</returns>
+    /// <exception cref="FormatException">The bytes are not a submission.</exception>
+    public static byte[] Join(ReadOnlySpan<byte> submitted, ReadOnlySpan<byte> controlPlaneRegion)
+    {
+        if (!TryParseSubmitted(submitted, out _))
+        {
+            ThrowHelper.ThrowCheckpointRowMalformed();
+        }
+
+        byte[] row = new byte[submitted.Length + LengthPrefix + controlPlaneRegion.Length];
+        submitted.CopyTo(row);
+        WriteRegion(row, submitted.Length, controlPlaneRegion);
+        return row;
+    }
+
+    // The framing walk: the header, then `regionCount` length-framed regions and nothing after them. A submission has
+    // one region fewer than a row (no control-plane region), and its submitted length is its whole length.
+    private static bool TryParseCore(ReadOnlySpan<byte> row, int regionCount, out CheckpointRowLayout layout)
     {
         layout = default;
         if (row.Length < HeaderLength || row[0] != FramingVersion || row[1] > (byte)CheckpointAlgorithm.Aes256Gcm)
@@ -64,9 +105,10 @@ public static class CheckpointRow
 
         var algorithm = (CheckpointAlgorithm)row[1];
         Span<Range> regions = stackalloc Range[RegionCount];
+        regions[RegionCount - 1] = row.Length..row.Length;
         int offset = HeaderLength;
-        int submittedLength = 0;
-        for (int i = 0; i < RegionCount; i++)
+        int submittedLength = row.Length;
+        for (int i = 0; i < regionCount; i++)
         {
             if (i == RegionCount - 1)
             {

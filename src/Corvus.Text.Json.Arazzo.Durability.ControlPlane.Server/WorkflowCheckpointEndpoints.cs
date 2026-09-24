@@ -136,10 +136,10 @@ public static class WorkflowCheckpointEndpoints
                 // The projection reports everything the save needs: the index, the environment the body claims (checked
                 // against the address on every save, ADR 0065 decision 9), the sequence it carries and the budget facts
                 // (ADR 0068), so the body is read exactly once.
-                ReadOnlyMemory<byte> checkpointRow = rented.AsMemory(0, length);
-                if (!WorkflowCheckpointSerializer.TryProject(checkpointRow, out CheckpointProjection projection))
+                ReadOnlyMemory<byte> submitted = rented.AsMemory(0, length);
+                if (!WorkflowCheckpointSerializer.TryReadSubmission(submitted, out CheckpointSubmission submission))
                 {
-                    await WriteProblemAsync(context, StatusCodes.Status400BadRequest, "The request body is not a valid checkpoint document.").ConfigureAwait(false);
+                    await WriteProblemAsync(context, StatusCodes.Status400BadRequest, "The request body is not a valid checkpoint submission.").ConfigureAwait(false);
                     return;
                 }
 
@@ -150,13 +150,13 @@ public static class WorkflowCheckpointEndpoints
                 // in-place rewrite), and a body carrying long.MaxValue re-seeds to an overflowed negative that no
                 // positive header can match (bricking the run). The body must carry the sequence and it must equal
                 // the header.
-                if (projection.Sequence != sequence)
+                if (submission.Sequence != sequence)
                 {
                     await WriteProblemAsync(context, StatusCodes.Status400BadRequest, "The checkpoint body's sequence is missing or does not match the request header.").ConfigureAwait(false);
                     return;
                 }
 
-                CheckpointSaveResult result = await coordinator.SaveAsync(address, checkpointRow, projection, sequence, context.RequestAborted).ConfigureAwait(false);
+                CheckpointSaveResult result = await coordinator.SaveAsync(address, submitted, sequence, context.RequestAborted).ConfigureAwait(false);
                 context.Response.Headers[WriteSequenceHeader] = result.AcceptedSequence.ToString(CultureInfo.InvariantCulture);
                 if (result.Outcome == CheckpointSaveOutcome.Applied)
                 {

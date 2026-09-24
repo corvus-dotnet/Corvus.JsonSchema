@@ -467,18 +467,24 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     }
 
     // Writes the control-plane region and nothing else (ADR 0065 decision 7): the stored row's runner region and
-    // payload stay byte for byte as loaded, under the etag this run holds. The request is recorded against the runner
-    // sequence the row holds, so the runner's next save consumes it.
+    // payload stay byte for byte as stored, and if a runner save moved the row meanwhile the decision is re-applied
+    // over its bytes. The request is recorded against the runner sequence this run loaded, so the runner's next save
+    // consumes it.
     private async ValueTask PersistControlPlaneAsync(CancellationToken cancellationToken)
     {
-        if (this.resumedState is not { } state || this.advanced)
+        if (this.resumedState is null || this.advanced)
         {
             throw ThrowHelper.GetControlPlaneWriteNeedsLoadedRowException(this.Id.Value);
         }
 
-        byte[] row = CheckpointRow.WithControlPlaneRegion(state.Row.Span, this.controlPlaneRegion);
-        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex(row);
-        this.etag = await this.store.SaveAsync(this.address, row, index, this.etag, cancellationToken).ConfigureAwait(false);
+        ControlPlaneRecord decided = this.controlPlane;
+        ControlPlaneWrite written = await ControlPlaneRegionWriter.WriteAsync(this.store, this.address, (_, _) => decided, cancellationToken).ConfigureAwait(false);
+        if (written.Outcome is ControlPlaneWriteOutcome.Conflict or ControlPlaneWriteOutcome.Missing or ControlPlaneWriteOutcome.Malformed)
+        {
+            throw new WorkflowConflictException(this.address, this.etag);
+        }
+
+        this.etag = written.Etag;
     }
 
     /// <summary>Gets or sets an optional callback the runner invokes at each durable step checkpoint to mark a §18

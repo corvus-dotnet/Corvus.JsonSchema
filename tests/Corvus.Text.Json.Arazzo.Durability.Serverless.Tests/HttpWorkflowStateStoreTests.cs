@@ -25,8 +25,6 @@ public class HttpWorkflowStateStoreTests
     private static WorkflowRunAddress A(string runId) => new("development", new WorkflowRunId(runId));
 
     private static readonly WorkflowRunIndexEntry AnyIndex = new("wf", WorkflowRunStatus.Running, default, default);
-    private static readonly ReadOnlyMemory<byte> Bytes = new byte[] { 1, 2, 3 };
-
     // The sequence travels inside the checkpoint's runner region, so a payload under test has to be a row that carries one.
     private static ReadOnlyMemory<byte> At(long sequence)
     {
@@ -91,7 +89,7 @@ public class HttpWorkflowStateStoreTests
         var store = new HttpWorkflowStateStore(Client(handler));
 
         // The save returns synchronously though the POST has not completed (it is gated).
-        ValueTask<WorkflowEtag> save = store.SaveAsync(A("run-1"), Bytes, AnyIndex, default, default);
+        ValueTask<WorkflowEtag> save = store.SaveAsync(A("run-1"), At(1), AnyIndex, default, default);
         save.IsCompleted.ShouldBeTrue();
 
         // Flush blocks on the in-flight POST until the gate releases it.
@@ -164,7 +162,7 @@ public class HttpWorkflowStateStoreTests
         var handler = new StubHandler(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError)));
         var store = new HttpWorkflowStateStore(Client(handler));
 
-        await store.SaveAsync(A("run-1"), Bytes, AnyIndex, default, default);
+        await store.SaveAsync(A("run-1"), At(1), AnyIndex, default, default);
 
         // A 5xx on the terminal checkpoint means the run's final state is not durable, so Flush fails and the run
         // stays claimable for re-invocation.
@@ -207,8 +205,8 @@ public class HttpWorkflowStateStoreTests
         });
         var store = new HttpWorkflowStateStore(Client(handler));
 
-        await store.SaveAsync(A("run-1"), Bytes, AnyIndex, default, default);
-        await store.SaveAsync(A("run-1"), Bytes, AnyIndex, default, default);
+        await store.SaveAsync(A("run-1"), At(1), AnyIndex, default, default);
+        await store.SaveAsync(A("run-1"), At(2), AnyIndex, default, default);
 
         await Should.NotThrowAsync(async () => await store.FlushAsync(default));
     }

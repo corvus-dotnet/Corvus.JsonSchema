@@ -139,13 +139,13 @@ public sealed class ArazzoRunnerCheckpointsHandler : IApiCheckpointsHandler
                 return SaveCheckpointResult.TooManyRequests(RunnerProblems.QuotaExceeded(tooMuch), workspace, RunnerQuotaGate.RetryAfterSeconds(tooMuch));
             }
 
-            // Project (and thereby validate) the received bytes here, in ONE parse, so a malformed body is a clean 400
-            // and the coordinator only ever handles a well-formed checkpoint. The same bytes are stored verbatim. The
-            // projection reports everything the save needs: the index, the environment the body claims (checked
-            // against the address on every save, ADR 0065 decision 9), the sequence it carries and the budget facts
-            // (ADR 0068), so the body is read exactly once on this, the hottest write in the system.
-            ReadOnlyMemory<byte> checkpointRow = rented.AsMemory(0, length);
-            if (!WorkflowCheckpointSerializer.TryProject(checkpointRow, out CheckpointProjection projection))
+            // The body is the runner's submission: its own bytes without the control-plane region, which the server
+            // holds and joins (ADR 0065 decision 7). It is validated here, in ONE parse of the runner region, so a
+            // malformed body, or one that carries a region, is a clean 400 and the coordinator only ever handles a
+            // well-formed submission. The read reports what the surface decides on: the sequence the region carries
+            // and the lease epoch it was authored under.
+            ReadOnlyMemory<byte> submitted = rented.AsMemory(0, length);
+            if (!WorkflowCheckpointSerializer.TryReadSubmission(submitted, out CheckpointSubmission submission))
             {
                 return SaveCheckpointResult.BadRequest(RunnerProblems.MalformedCheckpoint(), workspace);
             }
@@ -156,7 +156,7 @@ public sealed class ArazzoRunnerCheckpointsHandler : IApiCheckpointsHandler
             // the store: a body omitting the sequence re-seeds to zero (accepting header 1 forever, an in-place
             // rewrite), and a body carrying long.MaxValue re-seeds to an overflowed negative that no positive header
             // can match (bricking the run). The body must carry the sequence and it must equal the header.
-            if (projection.Sequence != sequence)
+            if (submission.Sequence != sequence)
             {
                 return SaveCheckpointResult.BadRequest(RunnerProblems.MalformedCheckpoint(), workspace);
             }
@@ -165,12 +165,12 @@ public sealed class ArazzoRunnerCheckpointsHandler : IApiCheckpointsHandler
             // header, and the two must agree. A region minted under another grant, whether above this one (a grant
             // this holder never held) or below it (a rollback to an earlier holder's row), is refused; the lease
             // check above already established that the header's grant is current.
-            if (!RunnerLeaseToken.TryParse((string)parameters.XArazzoLease, out long leaseEpoch, out _) || projection.Epoch != leaseEpoch)
+            if (!RunnerLeaseToken.TryParse((string)parameters.XArazzoLease, out long leaseEpoch, out _) || submission.Epoch != leaseEpoch)
             {
                 return SaveCheckpointResult.BadRequest(RunnerProblems.EpochMismatch(), workspace);
             }
 
-            CheckpointSaveResult result = await this.checkpoints.SaveAsync(new WorkflowRunAddress(environment, id), checkpointRow, projection, sequence, cancellationToken).ConfigureAwait(false);
+            CheckpointSaveResult result = await this.checkpoints.SaveAsync(new WorkflowRunAddress(environment, id), submitted, sequence, cancellationToken).ConfigureAwait(false);
             return result.Outcome switch
             {
                 CheckpointSaveOutcome.Applied => SaveCheckpointResult.NoContent(workspace, xArazzoCheckpointSeq: sequence),

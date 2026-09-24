@@ -184,6 +184,37 @@ public static class WorkflowCheckpointSerializer
     }
 
     /// <summary>
+    /// Validates a runner's submission (the submitted bytes, <see cref="CheckpointRow.TryParseSubmitted"/>) and reads
+    /// what the checkpoint surfaces decide on before the server joins it with the control-plane region it holds: the
+    /// environment the runner region claims (ADR 0065 decision 9), and the sequence and lease epoch it carries
+    /// (decision 6). The runner region is read under its closed schema, so a malformed one is refused here.
+    /// </summary>
+    /// <param name="submitted">The submitted bytes.</param>
+    /// <param name="submission">What the runner region claims, when the submission is well formed.</param>
+    /// <returns><see langword="true"/> when <paramref name="submitted"/> is a well-formed submission.</returns>
+    public static bool TryReadSubmission(ReadOnlyMemory<byte> submitted, out CheckpointSubmission submission)
+    {
+        submission = default;
+        if (!CheckpointRow.TryParseSubmitted(submitted.Span, out CheckpointRowLayout layout))
+        {
+            return false;
+        }
+
+        try
+        {
+            using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(submitted[layout.RunnerRegion]);
+            CheckpointEnvelope envelope = ReadEnvelope(document.RootElement, out PooledUtf8Map<int> retryCounters);
+            retryCounters.Dispose();
+            submission = new CheckpointSubmission(envelope.Environment, envelope.Sequence, envelope.Epoch);
+            return true;
+        }
+        catch (Exception ex) when (ex is Corvus.Text.Json.JsonException or System.Text.Json.JsonException or FormatException or InvalidOperationException or ArgumentException or KeyNotFoundException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Reads just the per-run write sequence from a stored row (ADR 0065 decision 6), without projecting the index or
     /// materialising the run's working state: a forward-only scan of the runner region that stops at the property.
     /// </summary>
@@ -1033,8 +1064,14 @@ public readonly record struct CheckpointEnvelope(
     WorkflowWait? Wait,
     WorkflowFault? Fault);
 
+/// <summary>What a runner's submission claims, read by the checkpoint surfaces before the server joins it with the control-plane region (<see cref="WorkflowCheckpointSerializer.TryReadSubmission"/>).</summary>
+/// <param name="Environment">The environment the runner region claims (ADR 0065 decision 9).</param>
+/// <param name="Sequence">The write sequence the runner region carries (decision 6).</param>
+/// <param name="Epoch">The lease epoch the runner region carries (decision 6), or <see langword="null"/> when the writer holds no grant.</param>
+public readonly record struct CheckpointSubmission(string Environment, long Sequence, long? Epoch);
+
 /// <summary>
-/// Everything a checkpoint surface reads from a posted row, from one parse of its envelope and control-plane region
+/// Everything a checkpoint surface reads from a stored row, from one parse of its envelope and control-plane region
 /// (<see cref="WorkflowCheckpointSerializer.Project"/>).
 /// </summary>
 /// <param name="Index">The effective index entry the row projects to.</param>
@@ -1042,5 +1079,5 @@ public readonly record struct CheckpointEnvelope(
 /// <param name="Sequence">The write sequence the runner region carries (decision 6).</param>
 /// <param name="Epoch">The lease epoch the runner region carries (decision 6), or <see langword="null"/> when the writer holds no grant.</param>
 /// <param name="Facts">The execution-budget facts (ADR 0068).</param>
-/// <param name="ControlPlaneRegion">The control-plane region's bytes as the row carries them (decision 7): a runner save must carry the stored region unchanged.</param>
+/// <param name="ControlPlaneRegion">The control-plane region's bytes as the row carries them (decision 7): the server's, which a runner never submits.</param>
 public readonly record struct CheckpointProjection(WorkflowRunIndexEntry Index, string Environment, long Sequence, long? Epoch, CheckpointBudgetFacts Facts, ReadOnlyMemory<byte> ControlPlaneRegion);

@@ -180,8 +180,15 @@ public sealed class RunnerApiRunIdGrammarTests
             return this.SendAsync(request, principal);
         }
 
+        // A test posts the rows its fixtures build; the surface takes a submission (ADR 0065 decision 7), so a row is
+        // sliced to its submitted bytes here and anything else goes as it is.
+        private static byte[] Submitted(byte[] body)
+            => CheckpointRow.TryParse(body, out CheckpointRowLayout layout) ? body[..layout.SubmittedLength] : body;
+
         public Task<HttpResponseMessage> SaveCheckpointAsync(string principal, string runId, string lease, byte[] body, long sequence)
         {
+            body = Submitted(body);
+
             var request = new HttpRequestMessage(HttpMethod.Put, $"/environments/{Production}/runs/{runId}/checkpoint")
             {
                 Content = new ByteArrayContent(body) { Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") } },

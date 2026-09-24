@@ -259,8 +259,15 @@ public sealed class ControlPlaneCheckpointSurfaceTests
         public Task<HttpResponseMessage> GetCheckpointAsync(string runId, string? token)
             => this.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"/environments/{Env}/runs/{runId}/checkpoint"), token);
 
+        // A test posts the rows its fixtures build; the surface takes a submission (ADR 0065 decision 7), so a row is
+        // sliced to its submitted bytes here and anything else goes as it is.
+        private static byte[] Submitted(byte[] body)
+            => CheckpointRow.TryParse(body, out CheckpointRowLayout layout) ? body[..layout.SubmittedLength] : body;
+
         public Task<HttpResponseMessage> PostCheckpointAsync(string runId, byte[] body, long sequence, string? token)
         {
+            body = Submitted(body);
+
             var request = new HttpRequestMessage(HttpMethod.Post, $"/environments/{Env}/runs/{runId}/checkpoint")
             {
                 Content = new ByteArrayContent(body) { Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") } },

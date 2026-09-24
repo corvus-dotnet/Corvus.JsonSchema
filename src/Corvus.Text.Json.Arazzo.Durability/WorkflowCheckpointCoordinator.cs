@@ -49,6 +49,8 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// </remarks>
 public sealed class WorkflowCheckpointCoordinator
 {
+    private const int MergeAttempts = 3;
+
     private static readonly TimeSpan SlotIdleTtl = TimeSpan.FromMinutes(15);
     private static readonly TimeSpan SweepInterval = TimeSpan.FromMinutes(1);
 
@@ -108,127 +110,137 @@ public sealed class WorkflowCheckpointCoordinator
 
     /// <summary>
     /// Terminates one fire-and-forget checkpoint save into the store, applying the monotonic write-sequence and etag
-    /// invariants. The <paramref name="projection"/> is the caller's one parse of <paramref name="checkpointRow"/>, so
-    /// a malformed body is rejected before it reaches the coordinator.
+    /// invariants. The runner submits only its own bytes (ADR 0065 decision 7); the coordinator joins them with the
+    /// control-plane region the store holds, projects the index from that join, and saves the row.
     /// </summary>
     /// <param name="address">The run's <c>(environment, runId)</c> address.</param>
-    /// <param name="checkpointRow">The checkpoint row to persist verbatim.</param>
-    /// <param name="projection">The caller's one projection of the same bytes (<see cref="WorkflowCheckpointSerializer.Project"/>):
-    /// the index, the environment the runner region claims (a row claiming an environment other than
-    /// <paramref name="address"/>'s is refused on EVERY save, ADR 0065 decision 9: the environment is the run's address,
-    /// and no save may re-home it), the execution-budget facts (ADR 0068), and the control-plane region the row
-    /// carries, which must be the stored one unchanged (decision 7: the runner does not author it).</param>
+    /// <param name="submitted">The runner's submitted bytes, already validated by the surface
+    /// (<see cref="WorkflowCheckpointSerializer.TryReadSubmission"/>): the row without its control-plane region.</param>
     /// <param name="sequence">The save's monotonic per-run write-sequence.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The outcome, and the sequence the store will accept next.</returns>
-    public async ValueTask<CheckpointSaveResult> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointRow, CheckpointProjection projection, long sequence, CancellationToken cancellationToken)
+    /// <remarks>
+    /// A control-plane write that lands between the runner's load and its save moves the row's etag without moving the
+    /// runner's sequence. That is not a conflict with this save: the coordinator reloads, joins the same submitted bytes
+    /// with the newer region, and saves again, so the control plane can delay a runner's save but never fault it
+    /// (decision 7). A conflict that moved the sequence is a peer writer, and is surfaced as one.
+    /// </remarks>
+    public async ValueTask<CheckpointSaveResult> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> submitted, long sequence, CancellationToken cancellationToken)
     {
-        WorkflowRunIndexEntry index = projection.Index;
-        CheckpointBudgetFacts facts = projection.Facts;
         RunSlot slot = this.GetSlot(address);
         await slot.Gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            if (!slot.Seeded)
+            for (int attempt = 1; ; attempt++)
             {
-                // No load preceded this save (a fresh run with no persisted checkpoint, or a slot swept between load and
-                // save). Seed the etag AND the persisted sequence from the store, so the write is conditioned correctly
-                // and the acceptance rule is evaluated against what the row actually holds rather than against a
-                // process-local counter that a restart reset to zero.
-                WorkflowCheckpoint? existing = await this.store.LoadAsync(address, cancellationToken).ConfigureAwait(false);
-                slot.Etag = existing?.Etag ?? WorkflowEtag.None;
-                if (existing is { } row)
+                if (!slot.Seeded)
                 {
-                    SeedFromStored(slot, row.Row);
-                }
-                else
-                {
-                    slot.LastAppliedSequence = 0;
-                    slot.ControlPlaneRegion = null;
-                }
+                    // No load preceded this save (a fresh run with no persisted checkpoint, or a slot swept between load
+                    // and save), or the last attempt found the row moved. Seed the etag, the persisted sequence, the
+                    // identity and the control-plane region from the store, so the write is conditioned correctly and
+                    // the acceptance rule is evaluated against what the row actually holds rather than against a
+                    // process-local counter that a restart reset to zero.
+                    WorkflowCheckpoint? existing = await this.store.LoadAsync(address, cancellationToken).ConfigureAwait(false);
+                    slot.Etag = existing?.Etag ?? WorkflowEtag.None;
+                    if (existing is { } row)
+                    {
+                        SeedFromStored(slot, row.Row);
+                    }
+                    else
+                    {
+                        slot.LastAppliedSequence = 0;
+                        slot.ControlPlaneRegion = null;
+                    }
 
-                slot.Seeded = true;
-            }
-
-            // ADR 0065's mutual distrust, the control plane's half: the runner owns the run's working state and not
-            // the run's identity. The environment IS the run's address (decision 9), so the body's claim is checked
-            // against the address structurally on EVERY save — first save included — replacing the old first-write
-            // identity pin for the environment: a first save could otherwise establish whatever environment it
-            // claimed. Workflow id and security tags stay first-write-pinned below (a fresh run legitimately states
-            // them once). Checked before the sequence rule, so such a save is reported as what it is rather than as
-            // a race the caller should retry.
-            if (!string.Equals(projection.Environment, address.Environment, StringComparison.Ordinal))
-            {
-                return new CheckpointSaveResult(CheckpointSaveOutcome.Rejected, slot.LastAppliedSequence + 1);
-            }
-
-            // The budget and the creation time join the first-write-pinned identity (ADR 0068): a later save that widens
-            // the budget, drops it, or moves the run's creation forward is a save no well-behaved writer produces, and
-            // either would let the runner extend its own bound. The facts come from the caller's one projection of the
-            // same bytes, so the coordinator reads the body no further.
-            if (slot.IdentityEstablished && !slot.Identity.Matches(index, facts.Budget))
-            {
-                return new CheckpointSaveResult(CheckpointSaveOutcome.Rejected, slot.LastAppliedSequence + 1);
-            }
-
-            // ADR 0065 decision 6: the server validates rather than assigns, accepting only the persisted sequence plus
-            // one. Both a stale arrival and a gap are refused, and the caller is told which sequence is accepted.
-            long accepted = slot.LastAppliedSequence + 1;
-            if (sequence != accepted)
-            {
-                return new CheckpointSaveResult(CheckpointSaveOutcome.Superseded, accepted);
-            }
-
-            // ADR 0065 decision 7: the control-plane region is the server's, joined to the row and never the runner's
-            // to author. A save carries the stored region verbatim or it is refused, so a runner cannot cancel,
-            // un-cancel, re-budget or resume-request its own run by writing the region the control plane owns. A row
-            // with nothing stored yet has no region to carry. Decided after the sequence rule, so a stale or
-            // out-of-order arrival is still reported as the race it is.
-            if (slot.ControlPlaneRegion is { } stored && !stored.AsSpan().SequenceEqual(projection.ControlPlaneRegion.Span))
-            {
-                // A row the control plane faulted on its budget is the one case a stale region is expected: the runner's
-                // resend of the refused save still carries the region it loaded. It is told the run is over, as the
-                // refusal it missed told it, rather than that it authored something it does not own.
-                return slot.BudgetFaultError is { } exhausted
-                    ? new CheckpointSaveResult(CheckpointSaveOutcome.BudgetExceeded, slot.LastAppliedSequence + 1, exhausted)
-                    : new CheckpointSaveResult(CheckpointSaveOutcome.Rejected, slot.LastAppliedSequence + 1);
-            }
-
-            // ADR 0068: the authoritative half of the budget. Decided after the sequence rule so only the save that
-            // would otherwise be applied is judged (a stale or out-of-order arrival is refused as the race it is, not
-            // acted on), and against the identity's frozen budget and creation time, never the body's claim of them.
-            if (slot.IdentityEstablished
-                && slot.Identity.Budget is { } budget
-                && ExecutionBudgetFault.Find(budget, facts, slot.Identity.CreatedAt, this.timeProvider.GetUtcNow()) is { } exceeded
-                && !IsRunnerAuthoredBudgetFault(exceeded, index, facts))
-            {
-                return await this.FaultExhaustedAsync(address, slot, accepted, exceeded, cancellationToken).ConfigureAwait(false);
-            }
-
-            try
-            {
-                slot.Etag = await this.store.SaveAsync(address, checkpointRow, index, slot.Etag, cancellationToken).ConfigureAwait(false);
-                slot.LastAppliedSequence = sequence;
-                slot.ControlPlaneRegion = projection.ControlPlaneRegion.ToArray();
-                slot.BudgetFaultError = null;
-
-                // A run with no stored row has no identity to preserve, so its first accepted save is what sets one.
-                if (!slot.IdentityEstablished)
-                {
-                    slot.Identity = RunIdentity.From(index, facts.Budget);
-                    slot.IdentityEstablished = true;
+                    slot.Seeded = true;
                 }
 
-                return new CheckpointSaveResult(CheckpointSaveOutcome.Applied, sequence + 1);
-            }
-            catch (WorkflowConflictException)
-            {
-                // The sole-writer invariant is broken (a lost or stolen lease, or a peer advancing the run): do not
-                // advance the slot, and surface the conflict so the run's outcome is not reported on this write — it
-                // stays claimable for idempotent re-invocation. The slot is now untrustworthy, so drop its seeding and
-                // let the next save re-read the row rather than deciding against a stale sequence.
-                slot.Seeded = false;
-                return new CheckpointSaveResult(CheckpointSaveOutcome.Conflict, accepted);
+                // The join (decision 7): the runner's bytes and the server's region, projected once for everything the
+                // save decides on. A submission the surface validated cannot fail here; if it does, the row is not one
+                // this coordinator can reason about.
+                byte[] joined = CheckpointRow.Join(submitted.Span, slot.ControlPlaneRegion ?? []);
+                if (!WorkflowCheckpointSerializer.TryProject(joined, out CheckpointProjection projection))
+                {
+                    return new CheckpointSaveResult(CheckpointSaveOutcome.Rejected, slot.LastAppliedSequence + 1);
+                }
+
+                WorkflowRunIndexEntry index = projection.Index;
+                CheckpointBudgetFacts facts = projection.Facts;
+
+                // ADR 0065's mutual distrust, the control plane's half: the runner owns the run's working state and not
+                // the run's identity. The environment IS the run's address (decision 9), so the region's claim is checked
+                // against the address structurally on EVERY save, first save included. Workflow id and security tags
+                // stay first-write-pinned below (a fresh run legitimately states them once). Checked before the sequence
+                // rule, so such a save is reported as what it is rather than as a race the caller should retry.
+                if (!string.Equals(projection.Environment, address.Environment, StringComparison.Ordinal))
+                {
+                    return new CheckpointSaveResult(CheckpointSaveOutcome.Rejected, slot.LastAppliedSequence + 1);
+                }
+
+                // The budget and the creation time join the first-write-pinned identity (ADR 0068): a later save that
+                // moves the run's creation forward is a save no well-behaved writer produces. The budget itself now
+                // lives in the region the server holds, so the runner cannot claim another one.
+                if (slot.IdentityEstablished && !slot.Identity.Matches(index, facts.Budget))
+                {
+                    return new CheckpointSaveResult(CheckpointSaveOutcome.Rejected, slot.LastAppliedSequence + 1);
+                }
+
+                // ADR 0065 decision 6: the server validates rather than assigns, accepting only the persisted sequence
+                // plus one. Both a stale arrival and a gap are refused, and the caller is told which sequence is accepted.
+                long accepted = slot.LastAppliedSequence + 1;
+                if (sequence != accepted)
+                {
+                    return new CheckpointSaveResult(CheckpointSaveOutcome.Superseded, accepted);
+                }
+
+                // ADR 0068: the authoritative half of the budget. Decided after the sequence rule so only the save that
+                // would otherwise be applied is judged (a stale or out-of-order arrival is refused as the race it is,
+                // not acted on), and against the identity's frozen budget and creation time.
+                if (slot.IdentityEstablished
+                    && slot.Identity.Budget is { } budget
+                    && ExecutionBudgetFault.Find(budget, facts, slot.Identity.CreatedAt, this.timeProvider.GetUtcNow()) is { } exceeded
+                    && !IsRunnerAuthoredBudgetFault(exceeded, index, facts))
+                {
+                    return await this.FaultExhaustedAsync(address, slot, accepted, exceeded, cancellationToken).ConfigureAwait(false);
+                }
+
+                try
+                {
+                    slot.Etag = await this.store.SaveAsync(address, joined, index, slot.Etag, cancellationToken).ConfigureAwait(false);
+                    slot.LastAppliedSequence = sequence;
+
+                    // A run with no stored row has no identity to preserve, so its first accepted save is what sets one.
+                    if (!slot.IdentityEstablished)
+                    {
+                        slot.Identity = RunIdentity.From(index, facts.Budget);
+                        slot.IdentityEstablished = true;
+                    }
+
+                    return new CheckpointSaveResult(CheckpointSaveOutcome.Applied, sequence + 1);
+                }
+                catch (WorkflowConflictException)
+                {
+                    // The row moved under the slot's etag. Re-read it: if the persisted sequence is still the one this
+                    // save follows, the control plane wrote its region and the save is joined with it on the next
+                    // attempt. Otherwise the sole-writer invariant is broken (a lost or stolen lease, or a peer
+                    // advancing the run): surface the conflict so the run's outcome is not reported on this write, and
+                    // leave the slot unseeded so the next save re-reads the row rather than deciding against a stale
+                    // sequence.
+                    slot.Seeded = false;
+                    WorkflowCheckpoint? moved = await this.store.LoadAsync(address, cancellationToken).ConfigureAwait(false);
+                    if (moved is { } current
+                        && WorkflowCheckpointSerializer.TryProject(current.Row, out CheckpointProjection now)
+                        && now.Sequence + 1 == sequence
+                        && attempt < MergeAttempts)
+                    {
+                        slot.Etag = current.Etag;
+                        SeedFromStored(slot, current.Row);
+                        slot.Seeded = true;
+                        continue;
+                    }
+
+                    return new CheckpointSaveResult(CheckpointSaveOutcome.Conflict, accepted);
+                }
             }
         }
         finally
@@ -249,49 +261,49 @@ public sealed class WorkflowCheckpointCoordinator
 
     // Records the budget fault the control plane decided, in the one region the control plane writes (ADR 0065
     // decision 7): the last durable row's control-plane region gains the fault against the runner sequence it holds,
-    // under the slot's etag (the coordinator is the sole writer), and its runner region and payload are left
-    // byte-for-byte as they were. The runner's sequence is not consumed: a resend of the refused save is judged
-    // again and refused again, since the row now reads as faulted. A row that already carries a budget fault is left
-    // as it is, so a runner that keeps resending after the refusal churns nothing. Called under the slot's gate.
+    // and its runner region and payload are left byte-for-byte as they were. The runner's sequence is not consumed: a
+    // resend of the refused save is judged again and refused again, since the row now reads as faulted. A row that
+    // already carries a budget fault is left as it is, so a runner that keeps resending after the refusal churns
+    // nothing. Written over the row as loaded, and re-applied if the row moves meanwhile. Called under the slot's gate.
     private async ValueTask<CheckpointSaveResult> FaultExhaustedAsync(WorkflowRunAddress address, RunSlot slot, long accepted, string error, CancellationToken cancellationToken)
     {
-        WorkflowCheckpoint? stored = await this.store.LoadAsync(address, cancellationToken).ConfigureAwait(false);
-        if (stored is not { } row)
+        for (int attempt = 1; ; attempt++)
         {
-            // The row went away under an established identity: the sole-writer invariant is broken, and the slot
-            // can no longer be trusted.
-            slot.Seeded = false;
-            return new CheckpointSaveResult(CheckpointSaveOutcome.Conflict, accepted);
-        }
+            WorkflowCheckpoint? stored = await this.store.LoadAsync(address, cancellationToken).ConfigureAwait(false);
+            if (stored is not { } row || !WorkflowCheckpointSerializer.TryProject(row.Row, out CheckpointProjection persisted))
+            {
+                // The row went away under an established identity: the sole-writer invariant is broken, and the slot
+                // can no longer be trusted.
+                slot.Seeded = false;
+                return new CheckpointSaveResult(CheckpointSaveOutcome.Conflict, accepted);
+            }
 
-        if (!WorkflowCheckpointSerializer.TryProject(row.Row, out CheckpointProjection persisted))
-        {
-            slot.Seeded = false;
-            return new CheckpointSaveResult(CheckpointSaveOutcome.Conflict, accepted);
-        }
+            if (persisted.Facts.BudgetFaulted)
+            {
+                return new CheckpointSaveResult(CheckpointSaveOutcome.BudgetExceeded, accepted, error);
+            }
 
-        if (persisted.Facts.BudgetFaulted)
-        {
-            return new CheckpointSaveResult(CheckpointSaveOutcome.BudgetExceeded, accepted, error);
-        }
-
-        ControlPlaneRecord decided = ControlPlaneRecord.Parse(persisted.ControlPlaneRegion) with
-        {
-            BudgetFault = new ControlPlaneBudgetFault(error, this.timeProvider.GetUtcNow(), persisted.Sequence),
-        };
-        byte[] region = decided.ToUtf8();
-        byte[] faulted = CheckpointRow.WithControlPlaneRegion(row.Row.Span, region);
-        try
-        {
-            slot.Etag = await this.store.SaveAsync(address, faulted, WorkflowCheckpointSerializer.ProjectIndex(faulted), slot.Etag, cancellationToken).ConfigureAwait(false);
-            slot.ControlPlaneRegion = region;
-            slot.BudgetFaultError = error;
-            return new CheckpointSaveResult(CheckpointSaveOutcome.BudgetExceeded, accepted, error);
-        }
-        catch (WorkflowConflictException)
-        {
-            slot.Seeded = false;
-            return new CheckpointSaveResult(CheckpointSaveOutcome.Conflict, accepted);
+            ControlPlaneRecord decided = ControlPlaneRecord.Parse(persisted.ControlPlaneRegion) with
+            {
+                BudgetFault = new ControlPlaneBudgetFault(error, this.timeProvider.GetUtcNow(), persisted.Sequence),
+            };
+            byte[] region = decided.ToUtf8();
+            byte[] faulted = CheckpointRow.WithControlPlaneRegion(row.Row.Span, region);
+            try
+            {
+                slot.Etag = await this.store.SaveAsync(address, faulted, WorkflowCheckpointSerializer.ProjectIndex(faulted), row.Etag, cancellationToken).ConfigureAwait(false);
+                slot.ControlPlaneRegion = region;
+                return new CheckpointSaveResult(CheckpointSaveOutcome.BudgetExceeded, accepted, error);
+            }
+            catch (WorkflowConflictException) when (attempt < MergeAttempts)
+            {
+                // The row moved between the load and the write; the decision is re-applied over what is there now.
+            }
+            catch (WorkflowConflictException)
+            {
+                slot.Seeded = false;
+                return new CheckpointSaveResult(CheckpointSaveOutcome.Conflict, accepted);
+            }
         }
     }
 
@@ -360,13 +372,11 @@ public sealed class WorkflowCheckpointCoordinator
             slot.Identity = RunIdentity.From(stored.Index, stored.Facts.Budget);
             slot.IdentityEstablished = true;
             slot.ControlPlaneRegion = stored.ControlPlaneRegion.ToArray();
-            slot.BudgetFaultError = stored.Facts.BudgetFaulted ? stored.Index.ErrorType : null;
         }
         else
         {
             slot.LastAppliedSequence = 0;
             slot.ControlPlaneRegion = null;
-            slot.BudgetFaultError = null;
         }
     }
 
@@ -403,11 +413,8 @@ public sealed class WorkflowCheckpointCoordinator
 
         public bool IdentityEstablished { get; set; }
 
-        /// <summary>The control-plane region the stored row carries, which every runner save must carry unchanged; <see langword="null"/> while no row is stored.</summary>
+        /// <summary>The control-plane region the stored row carries, which the server joins to every runner save; <see langword="null"/> while no row is stored.</summary>
         public byte[]? ControlPlaneRegion { get; set; }
-
-        /// <summary>The budget fault the stored row is under, if it is: what a resend that missed the refusal is told.</summary>
-        public string? BudgetFaultError { get; set; }
 
         public long TouchedTimestamp { get; set; }
     }
@@ -443,10 +450,9 @@ public enum CheckpointSaveOutcome
     Conflict,
 
     /// <summary>
-    /// The save changed something the writer does not own — the body claimed an environment other than the
-    /// addressed one (checked on every save: the environment is the run's address, ADR 0065 decision 9), the
-    /// index re-pointed the run's workflow id or security tags, or the row's control-plane region is not the stored
-    /// one (decision 7). Nothing was written. Distinct from
+    /// The save changed something the writer does not own — the region claimed an environment other than the
+    /// addressed one (checked on every save: the environment is the run's address, ADR 0065 decision 9), or the
+    /// index re-pointed the run's workflow id or security tags. Nothing was written. Distinct from
     /// <see cref="Superseded"/> and <see cref="Conflict"/>, which are both ordinary races a healthy writer retries:
     /// this one is a write no well-behaved writer produces, so a caller that sees it has a defect or an attack
     /// rather than a lost lease.

@@ -622,44 +622,39 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
 
         try
         {
-            WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(address, cancellationToken).ConfigureAwait(false);
-            if (checkpoint is not { } cp)
-            {
-                activity?.SetTag(ArazzoTelemetry.OutcomeTag, "missing");
-                return false;
-            }
-
-            if (!WorkflowCheckpointSerializer.TryProject(cp.Row, out CheckpointProjection projection))
-            {
-                activity?.SetTag(ArazzoTelemetry.OutcomeTag, "malformed");
-                return false;
-            }
-
-            if (projection.Index.Status is WorkflowRunStatus.Completed or WorkflowRunStatus.Cancelled)
-            {
-                // Terminal already; nothing to cancel.
-                activity?.SetTag(ArazzoTelemetry.OutcomeTag, "already-terminal");
-                return false;
-            }
-
-            string workflowId = projection.Index.WorkflowId;
-
             // Cancel by writing the control-plane region and nothing else (ADR 0065 decision 7): the runner region and
             // the payload stay byte for byte as the runner left them, and the join reads the run as cancelled with its
-            // wait cleared. The index is projected from the rewritten row, so the two cannot disagree.
-            ControlPlaneRecord decided = ControlPlaneRecord.Parse(projection.ControlPlaneRegion) with
-            {
-                Cancellation = new ControlPlaneCancellation(this.timeProvider.GetUtcNow()),
-            };
-            byte[] updated = CheckpointRow.WithControlPlaneRegion(cp.Row.Span, decided.ToUtf8());
-            WorkflowRunIndexEntry indexEntry = WorkflowCheckpointSerializer.ProjectIndex(updated);
+            // wait cleared. A run already terminal is left as it is.
+            DateTimeOffset cancelledAt = this.timeProvider.GetUtcNow();
+            ControlPlaneWrite written = await ControlPlaneRegionWriter.WriteAsync(
+                this.store,
+                address,
+                (projection, record) => projection.Index.Status is WorkflowRunStatus.Completed or WorkflowRunStatus.Cancelled
+                    ? null
+                    : record with { Cancellation = new ControlPlaneCancellation(cancelledAt) },
+                cancellationToken).ConfigureAwait(false);
 
-            if (activity is { IsAllDataRequested: true } && projection.Index.CorrelationId is { } cid)
+            switch (written.Outcome)
+            {
+                case ControlPlaneWriteOutcome.Missing:
+                    activity?.SetTag(ArazzoTelemetry.OutcomeTag, "missing");
+                    return false;
+                case ControlPlaneWriteOutcome.Malformed:
+                    activity?.SetTag(ArazzoTelemetry.OutcomeTag, "malformed");
+                    return false;
+                case ControlPlaneWriteOutcome.Unchanged:
+                    // Terminal already; nothing to cancel.
+                    activity?.SetTag(ArazzoTelemetry.OutcomeTag, "already-terminal");
+                    return false;
+                case ControlPlaneWriteOutcome.Conflict:
+                    throw new WorkflowConflictException(address, written.Etag);
+            }
+
+            string workflowId = written.Projection.Index.WorkflowId;
+            if (activity is { IsAllDataRequested: true } && written.Projection.Index.CorrelationId is { } cid)
             {
                 activity.SetTag(ArazzoTelemetry.CorrelationIdTag, cid);
             }
-
-            await this.store.SaveAsync(address, updated, indexEntry, cp.Etag, cancellationToken).ConfigureAwait(false);
 
             if (activity is { IsAllDataRequested: true })
             {

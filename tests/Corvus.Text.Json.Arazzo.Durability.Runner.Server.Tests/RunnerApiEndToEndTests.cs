@@ -164,6 +164,22 @@ public sealed class RunnerApiEndToEndTests
     }
 
     [TestMethod]
+    public async Task A_body_that_carries_a_control_plane_region_is_not_a_submission_and_is_refused()
+    {
+        // ADR 0065 decision 7: the runner submits only its own bytes; the region is the server's. A whole row, region
+        // included, is refused before anything is joined, so a runner cannot smuggle a decision in with its save.
+        await using Host host = await Host.StartAsync();
+        await host.SeedAsync(Run1, WorkflowRunStatus.Pending);
+        string lease = await host.ClaimLeaseAsync(Runner);
+
+        using HttpResponseMessage wholeRow = await host.SaveCheckpointAsync(Runner, Run1, lease, Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2, epoch: LeaseEpoch(lease)), 2, raw: true);
+        wholeRow.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        using HttpResponseMessage submission = await host.SaveCheckpointAsync(Runner, Run1, lease, Checkpoint(Run1, WorkflowRunStatus.Running, sequence: 2, epoch: LeaseEpoch(lease)), 2);
+        submission.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+    }
+
+    [TestMethod]
     public async Task A_checkpoint_whose_region_carries_another_epoch_than_the_lease_is_refused()
     {
         // ADR 0065 decision 6, the phase-B half: the runner region carries the lease epoch independently of the
@@ -463,8 +479,18 @@ public sealed class RunnerApiEndToEndTests
             return this.SendAsync(request, principal);
         }
 
-        public Task<HttpResponseMessage> SaveCheckpointAsync(string principal, string runId, string lease, byte[] body, long sequence)
+        // A test posts the rows its fixtures build; the surface takes a submission (ADR 0065 decision 7), so a row is
+        // sliced to its submitted bytes here and anything else goes as it is.
+        private static byte[] Submitted(byte[] body)
+            => CheckpointRow.TryParse(body, out CheckpointRowLayout layout) ? body[..layout.SubmittedLength] : body;
+
+        public Task<HttpResponseMessage> SaveCheckpointAsync(string principal, string runId, string lease, byte[] body, long sequence, bool raw = false)
         {
+            if (!raw)
+            {
+                body = Submitted(body);
+            }
+
             var request = new HttpRequestMessage(HttpMethod.Put, $"/environments/{Production}/runs/{runId}/checkpoint")
             {
                 Content = new ByteArrayContent(body) { Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") } },

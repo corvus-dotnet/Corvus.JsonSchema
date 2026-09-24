@@ -197,7 +197,7 @@ public sealed class WorkflowCheckpointEndpointsTests
 
         var request = new HttpRequestMessage(HttpMethod.Post, $"/environments/{Env}/runs/{Run.Value}/checkpoint")
         {
-            Content = OctetStream(RealCheckpoint(WorkflowRunStatus.Running)),
+            Content = OctetStream(CheckpointRow.SubmittedBytes(RealCheckpoint(WorkflowRunStatus.Running)).ToArray()),
         };
         request.Headers.Authorization = new AuthenticationHeaderValue(
             "Bearer", CheckpointToken.Issue(CheckpointSecret, Address, DateTimeOffset.UtcNow.AddMinutes(10)));
@@ -367,8 +367,15 @@ public sealed class WorkflowCheckpointEndpointsTests
         public Task<HttpResponseMessage> GetCheckpointAsync(string runId, string? scope = null)
             => this.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"/environments/{Env}/runs/{runId}/checkpoint"), runId, scope);
 
+        // A test posts the rows its fixtures build; the surface takes a submission (ADR 0065 decision 7), so a row is
+        // sliced to its submitted bytes here and anything else goes as it is.
+        private static byte[] Submitted(byte[] body)
+            => CheckpointRow.TryParse(body, out CheckpointRowLayout layout) ? body[..layout.SubmittedLength] : body;
+
         public Task<HttpResponseMessage> PostCheckpointAsync(string runId, byte[] body, long sequence, string? scope = null)
         {
+            body = Submitted(body);
+
             var request = new HttpRequestMessage(HttpMethod.Post, $"/environments/{Env}/runs/{runId}/checkpoint") { Content = OctetStream(body) };
             request.Headers.Add(SeqHeader, sequence.ToString(System.Globalization.CultureInfo.InvariantCulture));
             return this.SendAsync(request, runId, scope);

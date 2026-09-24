@@ -83,7 +83,10 @@ internal sealed class RunnerApiCheckpointStore : IWorkflowCheckpointStore
         // server re-projects it from these same bytes, so sending it would be sending a second copy of what it already
         // has, and one the server could not trust anyway.
         WorkflowCheckpointSerializer.TryReadSequence(checkpointRow, out long sequence);
-        return this.SaveCoreAsync(address, checkpointRow, held, sequence, cancellationToken);
+
+        // Only the runner's own bytes go over the wire (ADR 0065 decision 7): the control-plane region the row carries
+        // is the server's, which it holds and joins for itself.
+        return this.SaveCoreAsync(address, CheckpointRow.SubmittedBytes(checkpointRow), held, sequence, cancellationToken);
     }
 
     private static long SequenceHeader(LoadCheckpointResponse response)

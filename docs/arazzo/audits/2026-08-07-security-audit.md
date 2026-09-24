@@ -514,7 +514,7 @@ Not defects. Listed so the backlog is complete and the P1 dependencies are visib
 
 | ID | Item | Spec | Depends on |
 |---|---|---|---|
-| SEQ-1 | Envelope and payload split, unified MAC over runner region and payload ciphertext hash. **Piece 1 built 2026-09-23:** the framed row, the split into closed-schema runner region and payload, the control-plane region the runner carries unchanged, the lease epoch in the region checked at the runner API. Open: the control-plane region's own store column and CAS (decision 7), then the MAC | ADR 0065 §4 | P1-3, P1-7 |
+| SEQ-1 | Envelope and payload split, unified MAC over runner region and payload ciphertext hash. **Piece 1 built 2026-09-23:** the framed row, the split into closed-schema runner region and payload, the control-plane region, the lease epoch in the region checked at the runner API. **Piece 2 built 2026-09-24:** the runner submits only its own bytes, the server joins and merges on conflict (decision 7 as reworded). Open: the MAC | ADR 0065 §4 | P1-3, P1-7 |
 | SEQ-2 | Tenant anchor store, acceptance predicate, open decision table | ADR 0065 §6 | **P1-1**, P1-7 |
 | SEQ-3 | Envelope encryption, per-operation derived data key, four-label derivation | ADR 0065 §5 | pure functions already conformance-tested |
 | SEQ-4 | Blind wait and correlation indexes | ADR 0065 §4 | backends with atomic row-plus-index CAS |

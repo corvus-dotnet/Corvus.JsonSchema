@@ -85,8 +85,9 @@ public sealed class HttpWorkflowStateStore : IWorkflowCheckpointStore, IWorkflow
         WorkflowCheckpointSerializer.TryReadSequence(checkpointRow, out long seq);
 
         // Copy the bytes: the caller may reuse its buffer once we return, but the POST outlives the call, and a retry
-        // is a byte-identical resend of the same sequence rather than a re-authoring.
-        byte[] body = checkpointRow.ToArray();
+        // is a byte-identical resend of the same sequence rather than a re-authoring. Only the guest's own bytes go
+        // (ADR 0065 decision 7): the control-plane region is the server's, held and joined server-side.
+        byte[] body = CheckpointRow.SubmittedBytes(checkpointRow).ToArray();
         Task<bool> post;
         lock (this.gate)
         {
