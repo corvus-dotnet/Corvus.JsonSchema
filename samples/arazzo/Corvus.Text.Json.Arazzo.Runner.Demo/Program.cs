@@ -150,6 +150,22 @@ string? vaultAddress = builder.Configuration["VAULT_ADDR"];
 string? vaultRoleId = builder.Configuration["Runner:Vault:RoleId"];
 string? vaultWrapTokenFile = builder.Configuration["Runner:Vault:WrapTokenFile"];
 WorkflowTransportBinder binder;
+// The runner's key ring (ADR 0065 decisions 5 and 10): one entry per environment it serves sealed, naming the key
+// generation and where in ITS OWN secret store the environment payload key lives. Every checkpoint row this runner
+// writes for such an environment carries a MAC under a subkey derived from that key, and every row it loads is
+// verified before the run trusts a byte of it. Nothing about keys comes from the control plane, which holds none.
+// Configured as Runner:Sealing:Environments:N:{Environment,KeyId,PayloadKeyRef,Sealed}; empty for an open runner.
+RunnerKeyRing keyRing = RunnerKeyRing.Empty;
+List<RunnerKeyRingEntry> keyRingEntries = [];
+foreach (IConfigurationSection entry in builder.Configuration.GetSection("Runner:Sealing:Environments").GetChildren())
+{
+    keyRingEntries.Add(new RunnerKeyRingEntry(
+        entry["Environment"] ?? throw new InvalidOperationException($"{entry.Path}:Environment is required."),
+        entry["KeyId"] ?? throw new InvalidOperationException($"{entry.Path}:KeyId is required."),
+        SecretRef.Parse(entry["PayloadKeyRef"] ?? throw new InvalidOperationException($"{entry.Path}:PayloadKeyRef is required.")),
+        entry.GetValue("Sealed", true)));
+}
+
 if (!string.IsNullOrWhiteSpace(vaultAddress) && !string.IsNullOrWhiteSpace(vaultRoleId) && !string.IsNullOrWhiteSpace(vaultWrapTokenFile))
 {
     // Self-unwrap: POST sys/wrapping/unwrap authenticated AS the wrapping token, with NO body token (exactly what
@@ -207,6 +223,7 @@ if (!string.IsNullOrWhiteSpace(vaultAddress) && !string.IsNullOrWhiteSpace(vault
         writerId: builder.Configuration["Arazzo:AuditWriterId"]);
     await runnerAuditor.StartAsync();
     secretResolver = new AuditedSecretResolver(secretResolver, runnerAuditor, runnerId);
+    keyRing = await RunnerKeyRing.BuildAsync(keyRingEntries, secretResolver, CancellationToken.None);
     var providerFactory = new SourceCredentialProviderFactory(secretResolver);
     var credentialCache = new SourceCredentialCache(credentials, providerFactory);
 
@@ -218,6 +235,14 @@ if (!string.IsNullOrWhiteSpace(vaultAddress) && !string.IsNullOrWhiteSpace(vault
 }
 else
 {
+    if (keyRingEntries.Count > 0)
+    {
+        // A sealed environment's payload key lives in the runner's secret store. Without one there is nothing to
+        // read it from, and a runner that serves the environment clear instead would be exactly the fail-open
+        // posture decision 10 forbids.
+        throw new InvalidOperationException("Runner:Sealing:Environments is configured but Vault is not: a sealed environment's payload key is read from the runner's own secret store.");
+    }
+
     binder = DraftRunHost.CreateBinder(sourceClients, messageTransport);
 }
 
@@ -268,7 +293,7 @@ var controlPlaneAuthentication = new OAuth2ClientCredentialsAuthenticationProvid
 var runnerApiTransport = new HttpClientTransport(
     new HttpClient { BaseAddress = new Uri($"{controlPlaneBaseUrl.TrimEnd('/')}/arazzo/runner/v1") },
     controlPlaneAuthentication);
-var runnerClient = new ArazzoRunnerClient(runnerApiTransport);
+var runnerClient = new ArazzoRunnerClient(runnerApiTransport, keyRing: keyRing);
 builder.Services.AddSingleton(runnerClient);
 
 // Durable schedules (#896): a schedule is a durable run of the built-in scheduler workflow. When this runner serves

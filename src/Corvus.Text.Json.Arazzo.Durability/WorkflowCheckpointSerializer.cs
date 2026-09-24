@@ -205,7 +205,13 @@ public static class WorkflowCheckpointSerializer
             using ParsedJsonDocument<JsonElement> document = ParsedJsonDocument<JsonElement>.Parse(submitted[layout.RunnerRegion]);
             CheckpointEnvelope envelope = ReadEnvelope(document.RootElement, out PooledUtf8Map<int> retryCounters);
             retryCounters.Dispose();
-            submission = new CheckpointSubmission(envelope.Environment, envelope.Sequence, envelope.Epoch);
+            ReadOnlySpan<byte> keyId = submitted.Span[layout.KeyId];
+            submission = new CheckpointSubmission(
+                envelope.Environment,
+                envelope.Sequence,
+                envelope.Epoch,
+                keyId.IsEmpty ? null : System.Text.Encoding.UTF8.GetString(keyId),
+                !submitted.Span[layout.Mac].IsEmpty);
             return true;
         }
         catch (Exception ex) when (ex is Corvus.Text.Json.JsonException or System.Text.Json.JsonException or FormatException or InvalidOperationException or ArgumentException or KeyNotFoundException)
@@ -1068,7 +1074,9 @@ public readonly record struct CheckpointEnvelope(
 /// <param name="Environment">The environment the runner region claims (ADR 0065 decision 9).</param>
 /// <param name="Sequence">The write sequence the runner region carries (decision 6).</param>
 /// <param name="Epoch">The lease epoch the runner region carries (decision 6), or <see langword="null"/> when the writer holds no grant.</param>
-public readonly record struct CheckpointSubmission(string Environment, long Sequence, long? Epoch);
+/// <param name="KeyId">The key generation the submission is sealed under (decision 4), or <see langword="null"/> for a clear submission.</param>
+/// <param name="HasMac">Whether the submission carries a MAC. The server cannot verify it; it can require it (decision 10).</param>
+public readonly record struct CheckpointSubmission(string Environment, long Sequence, long? Epoch, string? KeyId, bool HasMac);
 
 /// <summary>
 /// Everything a checkpoint surface reads from a stored row, from one parse of its envelope and control-plane region

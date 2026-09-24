@@ -88,6 +88,39 @@ public sealed class RunnerApiEnvironmentBindingTests
         (await host.RenewLeaseAsync(Runner, Development, DevRunId, lease, 300)).StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
+    [TestMethod]
+    public async Task A_sealed_environment_takes_only_a_submission_sealed_under_an_active_generation()
+    {
+        // ADR 0065 decision 10: the runner API holds no key, so it cannot verify a MAC; it requires one. A clear
+        // submission, one under a generation the record does not hold as active, and one that names a generation
+        // without carrying a MAC are each refused before the store sees them. The genuine one is accepted, and the
+        // same posture never touches an environment that is not sealed.
+        await using Host host = await Host.StartAsync(boundEnvironments: [Development, Production], sealedGenerations: new Dictionary<string, IReadOnlySet<string>>
+        {
+            [Production] = new HashSet<string>(["k2"]),
+        });
+        await host.SeedAsync(ProdRunId, Production, WorkflowRunStatus.Running);
+        await host.SeedAsync(DevRunId, Development, WorkflowRunStatus.Running);
+        string prodLease = await host.PlantLeaseAsync(ProdRunId, Production);
+        string devLease = await host.PlantLeaseAsync(DevRunId, Development);
+        byte[] macKey = Enumerable.Range(0, 32).Select(i => (byte)i).ToArray();
+
+        byte[] clear = Checkpoint(ProdRunId, Production, WorkflowRunStatus.Running, sequence: 2, epoch: LeaseEpoch(prodLease));
+        (await host.SaveCheckpointAsync(Runner, Production, ProdRunId, prodLease, clear, 2)).StatusCode.ShouldBe(HttpStatusCode.BadRequest, "clear");
+        byte[] retired = CheckpointIntegrity.Seal(clear, "k1", macKey);
+        (await host.SaveCheckpointAsync(Runner, Production, ProdRunId, prodLease, retired, 2)).StatusCode.ShouldBe(HttpStatusCode.BadRequest, "a generation the record does not hold as active");
+        byte[] sealedRow = CheckpointIntegrity.Seal(clear, "k2", macKey);
+        (await host.SaveCheckpointAsync(Runner, Production, ProdRunId, prodLease, sealedRow, 2)).StatusCode.ShouldBe(HttpStatusCode.NoContent, "sealed under an active generation");
+
+        byte[] devClear = Checkpoint(DevRunId, Development, WorkflowRunStatus.Running, sequence: 2, epoch: LeaseEpoch(devLease));
+        (await host.SaveCheckpointAsync(Runner, Development, DevRunId, devLease, devClear, 2)).StatusCode.ShouldBe(HttpStatusCode.NoContent, "development is not sealed");
+
+        // The persisted row is the sealed submission joined with the control-plane region, MAC intact.
+        WorkflowCheckpoint? stored = await host.LoadStoredAsync(Production, ProdRunId);
+        CheckpointIntegrity.KeyIdOf(stored!.Value.Row.Span).ShouldBe("k2");
+        CheckpointIntegrity.Verify(stored.Value.Row.Span, macKey).ShouldBeTrue();
+    }
+
     // The epoch the lease was granted with: the runner writes it into its region, and the API checks it against the
     // grant (ADR 0065 decision 6).
     private static long LeaseEpoch(string lease)
@@ -131,14 +164,16 @@ public sealed class RunnerApiEnvironmentBindingTests
 
     private sealed class Host(WebApplication app, HttpClient client, InMemoryWorkflowStateStore store) : IAsyncDisposable
     {
-        public static async Task<Host> StartAsync(IReadOnlyList<string> boundEnvironments)
+        public static async Task<Host> StartAsync(IReadOnlyList<string> boundEnvironments, IReadOnlyDictionary<string, IReadOnlySet<string>>? sealedGenerations = null)
         {
             var clock = new TestClock(T0);
             var store = new InMemoryWorkflowStateStore(clock);
-            var bindings = new DeclaredRunnerEnvironmentBindings(new Dictionary<string, IReadOnlyList<string>>
-            {
-                [Runner] = boundEnvironments,
-            });
+            var bindings = new DeclaredRunnerEnvironmentBindings(
+                new Dictionary<string, IReadOnlyList<string>>
+                {
+                    [Runner] = boundEnvironments,
+                },
+                sealedGenerations: sealedGenerations);
 
             WebApplicationBuilder builder = WebApplication.CreateBuilder();
             builder.WebHost.UseTestServer();
@@ -181,6 +216,9 @@ public sealed class RunnerApiEnvironmentBindingTests
             WorkflowLease? lease = await store.AcquireLeaseAsync(new WorkflowRunAddress(environment, new WorkflowRunId(runId)), Runner, TimeSpan.FromMinutes(5), default);
             return RunnerLeaseToken.Issue(lease!.Value.Epoch, lease.Value.Token);
         }
+
+        public ValueTask<WorkflowCheckpoint?> LoadStoredAsync(string environment, string runId)
+            => store.LoadAsync(new WorkflowRunAddress(environment, new WorkflowRunId(runId)), default);
 
         public Task<HttpResponseMessage> LoadCheckpointAsync(string principal, string environment, string runId, string lease)
         {

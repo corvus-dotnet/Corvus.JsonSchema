@@ -810,6 +810,17 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
             return false;
         }
 
+        // A row a runner sealed (ADR 0065 decision 4) is not the control plane's to rewrite: this remediation rewrites
+        // the runner's own regions, which only a clear row permits. Stripping the MAC would make the row one the runner
+        // refuses on its next load, and re-signing it is impossible here, since the control plane holds no key. Until
+        // a payload-mutating resume is recorded as a control-plane request the runner applies inside its own boundary
+        // (decision 8), a sealed environment's faulted run is remediated by nobody, and saying so is the outcome.
+        if (CheckpointIntegrity.KeyIdOf(cp.Row.Span) is not null)
+        {
+            activity?.SetTag(ArazzoTelemetry.OutcomeTag, "sealed");
+            return false;
+        }
+
         byte[] mutated;
         WorkflowRunIndexEntry indexEntry;
 

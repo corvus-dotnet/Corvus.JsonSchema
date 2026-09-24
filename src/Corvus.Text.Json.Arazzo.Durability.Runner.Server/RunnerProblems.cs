@@ -108,6 +108,13 @@ internal static class RunnerProblems
             title: "Bad Request",
             type: "about:blank");
 
+    internal static ProblemDetails.Source CleartextRefused()
+        => ProblemDetails.Build(
+            detail: "The environment is sealed, and the submission carries no MAC under one of its active key generations. A sealed environment takes MAC'd checkpoints only (ADR 0065 decision 10).",
+            status: 400,
+            title: "Bad Request",
+            type: "about:blank");
+
     internal static CheckpointWriteProblem.Source WriterConflict(long acceptedSequence)
         => CheckpointWriteProblem.Build(
             acceptedSequence: acceptedSequence,

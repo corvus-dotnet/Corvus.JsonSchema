@@ -23,9 +23,20 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 /// the deployment rather than to a tenant. Both count against the deployment rather than against a named group.
 /// </para>
 /// </remarks>
-public readonly record struct RunnerBindings(IReadOnlyList<string> Environments, string? Tenant)
+public readonly record struct RunnerBindings(IReadOnlyList<string> Environments, string? Tenant, IReadOnlyDictionary<string, IReadOnlySet<string>>? SealedGenerations = null)
 {
     private static readonly string[] NoEnvironments = [];
+
+    /// <summary>
+    /// The active key generations of a bound environment whose record is sealed (a tenant environment holding at
+    /// least one active generation, ADR 0065 decision 10), or <see langword="null"/> for an environment that is not.
+    /// The runner API cannot verify a MAC, since it holds no key, but it refuses a clear submission for a sealed
+    /// environment, and one under a generation the record does not hold.
+    /// </summary>
+    /// <param name="environment">The environment.</param>
+    /// <returns>The active generation ids, or <see langword="null"/> when the environment is not sealed.</returns>
+    public IReadOnlySet<string>? SealedGenerationsOf(string environment)
+        => this.SealedGenerations is { } generationsByEnvironment && generationsByEnvironment.TryGetValue(environment, out IReadOnlySet<string>? generations) ? generations : null;
 
     /// <summary>Gets the resolution of a principal that is bound to nothing.</summary>
     /// <remarks>The correct answer for a principal whose authorization is pending or revoked, and for one whose

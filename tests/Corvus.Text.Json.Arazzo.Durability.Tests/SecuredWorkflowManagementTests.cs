@@ -150,6 +150,42 @@ public sealed class SecuredWorkflowManagementTests
     }
 
     [TestMethod]
+    public async Task A_resume_that_mutates_a_sealed_checkpoint_is_refused_and_leaves_the_row_intact()
+    {
+        // ADR 0065 decision 4: a row a runner sealed is not the control plane's to rewrite. Stripping the MAC would
+        // hand the runner a row it refuses on its next load, and the control plane holds no key to re-sign it with.
+        var store = new InMemoryWorkflowStateStore();
+        using (WorkflowRun run = WorkflowRun.CreateNew(store, "r1", "wf", default, "development"))
+        {
+            await run.BeginStepAsync("a", default);
+            run.RecordStep("a", WorkflowStepStatus.Faulted, 1, T0, T0);
+            await run.CheckpointAsync(0, default);
+            await run.FaultAsync("a", attempt: 1, "boom", default);
+        }
+
+        var address = new WorkflowRunAddress("development", new WorkflowRunId("r1"));
+        byte[] macKey = Enumerable.Range(0, 32).Select(i => (byte)i).ToArray();
+        WorkflowCheckpoint stored = (await store.LoadAsync(address, default))!.Value;
+        byte[] sealedRow = CheckpointIntegrity.Seal(stored.Row.Span, "k1", macKey);
+        await store.SaveAsync(address, sealedRow, WorkflowCheckpointSerializer.ProjectIndex(sealedRow), stored.Etag, default);
+
+        bool resumerEntered = false;
+        ValueTask<WorkflowRunResultKind> Resumer(WorkflowRun run, CancellationToken ct)
+        {
+            resumerEntered = true;
+            return new(WorkflowRunResultKind.Completed);
+        }
+
+        var client = new SecuredWorkflowManagement(store, owner: "ops", resumer: Resumer);
+        (await client.ResumeAsync("r1", ResumeOptions.Rewind(0), AccessContext.System, default)).ShouldBeFalse();
+        resumerEntered.ShouldBeFalse("a refused remediation never re-enters the executor");
+
+        WorkflowCheckpoint after = (await store.LoadAsync(address, default))!.Value;
+        after.Row.ToArray().ShouldBe(sealedRow, "a refused remediation touches nothing");
+        CheckpointIntegrity.Verify(after.Row.Span, macKey).ShouldBeTrue();
+    }
+
+    [TestMethod]
     [DataRow("Rewind")]
     [DataRow("Skip")]
     [DataRow("SkipWithOutputs")]

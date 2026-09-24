@@ -148,6 +148,7 @@ public sealed class RunnerAuthorizationBindings : IRunnerEnvironmentBindings, IR
     private async ValueTask<RunnerBindings> SeparatedAsync(List<string> bound, CancellationToken cancellationToken)
     {
         List<string>? live = null;
+        Dictionary<string, IReadOnlySet<string>>? sealedGenerations = null;
         bool holdsPlatform = false;
         bool holdsTenant = false;
         string? owner = null;
@@ -170,6 +171,13 @@ public sealed class RunnerAuthorizationBindings : IRunnerEnvironmentBindings, IR
             else
             {
                 holdsTenant = true;
+
+                // A tenant environment holding an active key generation is sealed (ADR 0065 decision 10): the runner
+                // API will require every submission for it to be MAC'd under one of those generations.
+                if (TenantEnvironmentSealing.ActiveGenerations(record.RootElement) is { Count: > 0 } generations)
+                {
+                    (sealedGenerations ??= new Dictionary<string, IReadOnlySet<string>>(StringComparer.Ordinal))[environment] = generations;
+                }
             }
 
             // Read in the same pass as the platform marker, off the record already in hand. A second read to answer
@@ -214,7 +222,7 @@ public sealed class RunnerAuthorizationBindings : IRunnerEnvironmentBindings, IR
             return RunnerBindings.None;
         }
 
-        return live is null ? RunnerBindings.None : new RunnerBindings(live, owner);
+        return live is null ? RunnerBindings.None : new RunnerBindings(live, owner, sealedGenerations);
     }
 
     // Whether the deployment has admitted at least one owner group: the tenancy ledger is the census, answered from

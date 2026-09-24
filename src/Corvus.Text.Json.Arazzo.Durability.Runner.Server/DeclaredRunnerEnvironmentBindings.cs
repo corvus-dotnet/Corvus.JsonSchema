@@ -26,7 +26,8 @@ public sealed class DeclaredRunnerEnvironmentBindings : IRunnerEnvironmentBindin
     /// common case is to omit this and have every principal count against the deployment.</param>
     public DeclaredRunnerEnvironmentBindings(
         IReadOnlyDictionary<string, IReadOnlyList<string>> bindings,
-        IReadOnlyDictionary<string, string>? tenants = null)
+        IReadOnlyDictionary<string, string>? tenants = null,
+        IReadOnlyDictionary<string, IReadOnlySet<string>>? sealedGenerations = null)
     {
         ArgumentNullException.ThrowIfNull(bindings);
 
@@ -37,7 +38,7 @@ public sealed class DeclaredRunnerEnvironmentBindings : IRunnerEnvironmentBindin
                 ? declared
                 : null;
 
-            map[principal] = new RunnerBindings([.. environments], tenant);
+            map[principal] = new RunnerBindings([.. environments], tenant, sealedGenerations);
         }
 
         this.bindings = map;

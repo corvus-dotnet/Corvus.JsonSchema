@@ -132,7 +132,7 @@ public sealed class WorkflowCheckpointSerializerTests
         CheckpointRow.TryParse(submitted.Span, out _).ShouldBeFalse("a submission is not a row");
 
         WorkflowCheckpointSerializer.TryReadSubmission(submitted, out CheckpointSubmission submission).ShouldBeTrue();
-        submission.ShouldBe(new CheckpointSubmission("development", 3, 4));
+        submission.ShouldBe(new CheckpointSubmission("development", 3, 4, KeyId: null, HasMac: false));
         WorkflowCheckpointSerializer.TryReadSubmission(row, out _).ShouldBeFalse();
         WorkflowCheckpointSerializer.TryReadSubmission(new byte[] { 1, 2, 3 }, out _).ShouldBeFalse();
 

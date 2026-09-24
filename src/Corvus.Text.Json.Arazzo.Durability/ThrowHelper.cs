@@ -274,6 +274,15 @@ internal static class ThrowHelper
     public static InvalidOperationException GetControlPlaneWriteNeedsLoadedRowException(string runId)
         => new(SR.Format(SR.ControlPlaneWriteNeedsLoadedRow, runId));
 
+    public static CryptographicException GetCheckpointIntegrityException(in WorkflowRunAddress address)
+        => new(SR.Format(SR.CheckpointIntegrityFailed, address));
+
+    public static CryptographicException GetCheckpointCleartextRefusedException(in WorkflowRunAddress address)
+        => new(SR.Format(SR.CheckpointCleartextRefused, address));
+
+    public static InvalidOperationException GetPayloadKeyNotAKeyException(string environment, string keyId)
+        => new(SR.Format(SR.PayloadKeyNotAKey, environment, keyId));
+
     public static InvalidOperationException GetCheckpointMissingEnvironmentException(string runId)
         => new(SR.Format(SR.CheckpointMissingEnvironment, runId));
 

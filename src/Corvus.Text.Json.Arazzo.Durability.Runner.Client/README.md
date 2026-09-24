@@ -108,6 +108,35 @@ on a run, so a runner that never handles the token cannot log it, persist it, or
 Releasing a run the client does not hold does nothing and is not an error, so a runner can release in a `finally`
 without first working out whether it still holds the lease.
 
+## Sealing what the client saves
+
+A runner that serves a sealed environment passes its key ring to the client, and from then on every checkpoint row it
+saves for an environment on the ring carries a MAC under that environment's key, and every row it loads is verified
+before the run sees it (ADR 0065 decisions 4 and 10). The run itself is unchanged: it saves and loads through
+`runner.Checkpoints` exactly as before.
+
+```csharp
+RunnerKeyRing keyRing = await RunnerKeyRing.BuildAsync(
+    [new RunnerKeyRingEntry("production", "k2", SecretRef.Parse("vault://secret/arazzo/payload-keys/production#key"), Sealed: true)],
+    secretResolver,
+    cancellationToken);
+
+var runner = new ArazzoRunnerClient(transport, keyRing: keyRing);
+```
+
+The payload key is the runner's own, read through its own secret resolver as the base64 of its 32 bytes; nothing about
+keys comes from the control plane. A load that does not verify, or that carries a generation the ring does not hold,
+throws `CryptographicException` before any of the row is trusted, and so does a clear row for an environment marked
+sealed: that is a row the control plane, a backup or a peer wrote without the key. The one clear row a sealed
+environment's runner opens is a run's genesis row, which the control plane writes before any runner has claimed and
+which therefore carries no lease epoch. An environment on the ring that is
+not marked sealed still seals what it writes and verifies what carries a MAC, but tolerates a clear row, which is the
+posture for an environment whose rows predate its key.
+
+The control plane holds no key and cannot verify a MAC. It requires one instead: a save for an environment whose record
+holds an active key generation is refused with `400` unless the submission carries a MAC under one of those
+generations, so a runner that lost its key ring cannot write plaintext into a sealed environment.
+
 ## Refusals a runner must act on
 
 | Situation | What you get |

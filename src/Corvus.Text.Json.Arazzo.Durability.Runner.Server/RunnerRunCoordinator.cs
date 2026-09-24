@@ -299,6 +299,20 @@ public sealed class RunnerRunCoordinator
     }
 
     /// <summary>
+    /// The active key generations of a bound environment the principal serves sealed (ADR 0065 decision 10), or
+    /// <see langword="null"/> when the environment is not sealed or not bound.
+    /// </summary>
+    /// <param name="principal">The authenticated machine principal.</param>
+    /// <param name="environment">The environment.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The active generation ids, or <see langword="null"/>.</returns>
+    public async ValueTask<IReadOnlySet<string>?> SealedGenerationsAsync(string principal, string environment, CancellationToken cancellationToken)
+    {
+        RunnerBindings resolved = await this.bindings.ResolveAsync(principal, cancellationToken).ConfigureAwait(false);
+        return resolved.SealedGenerationsOf(environment);
+    }
+
+    /// <summary>
     /// Checks that a presented lease still authorises operations on a run, without extending it.
     /// </summary>
     /// <param name="principal">The authenticated machine principal.</param>

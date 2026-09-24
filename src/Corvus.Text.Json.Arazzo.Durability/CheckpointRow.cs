@@ -22,9 +22,10 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// the algorithm id) is inside that prefix, so an algorithm selector cannot be swapped outside what is authenticated.
 /// </para>
 /// <para>
-/// A <see cref="CheckpointAlgorithm.Clear"/> row, the only kind an unsealed environment writes, carries an empty key
-/// id, salt, nonce, tag and MAC, and its payload region is the payload's plaintext JSON. A clear row carrying any of
-/// them is malformed: the regions are reserved for a sealed environment and mean nothing without a key.
+/// A <see cref="CheckpointAlgorithm.Clear"/> row, the only kind an unencrypted environment writes, carries an empty
+/// salt, nonce and tag, and its payload region is the payload's plaintext JSON; a clear row carrying any of them is
+/// malformed, since they mean nothing without an encryption. Its key id and MAC regions are either both empty (no
+/// integrity) or both filled (a MAC'd clear row, <see cref="CheckpointIntegrity"/>), never one without the other.
 /// </para>
 /// </remarks>
 public static class CheckpointRow
@@ -67,6 +68,60 @@ public static class CheckpointRow
     /// <returns><see langword="true"/> when <paramref name="submitted"/> is a well-formed submission.</returns>
     public static bool TryParseSubmitted(ReadOnlySpan<byte> submitted, out CheckpointRowLayout layout)
         => TryParseCore(submitted, RegionCount - 1, out layout);
+
+    /// <summary>Parses a row or a submission, whichever the bytes are.</summary>
+    /// <param name="bytes">A row or a submission.</param>
+    /// <returns>The layout.</returns>
+    /// <exception cref="FormatException">The bytes are neither.</exception>
+    public static CheckpointRowLayout ParseAny(ReadOnlySpan<byte> bytes)
+    {
+        if (!TryParse(bytes, out CheckpointRowLayout layout) && !TryParseSubmitted(bytes, out layout))
+        {
+            ThrowHelper.ThrowCheckpointRowMalformed();
+        }
+
+        return layout;
+    }
+
+    /// <summary>
+    /// Rewrites a row's or a submission's key id and MAC regions, leaving every other region as it is. This is how
+    /// <see cref="CheckpointIntegrity"/> seals a row; the regions are inside the submitted bytes, so a sealed row is
+    /// still the runner's own.
+    /// </summary>
+    /// <param name="bytes">A row or a submission.</param>
+    /// <param name="keyId">The key id region's new bytes.</param>
+    /// <param name="mac">The MAC region's new bytes.</param>
+    /// <returns>The rewritten row or submission.</returns>
+    /// <exception cref="FormatException">The bytes are neither a row nor a submission.</exception>
+    public static byte[] WithIntegrity(ReadOnlySpan<byte> bytes, ReadOnlySpan<byte> keyId, ReadOnlySpan<byte> mac)
+    {
+        CheckpointRowLayout layout = ParseAny(bytes);
+        bool isRow = TryParse(bytes, out _);
+        ReadOnlySpan<byte> runner = bytes[layout.RunnerRegion];
+        ReadOnlySpan<byte> salt = bytes[layout.Salt];
+        ReadOnlySpan<byte> nonce = bytes[layout.Nonce];
+        ReadOnlySpan<byte> tag = bytes[layout.Tag];
+        ReadOnlySpan<byte> payload = bytes[layout.Payload];
+        ReadOnlySpan<byte> controlPlane = bytes[layout.ControlPlaneRegion];
+        int regions = isRow ? RegionCount : RegionCount - 1;
+        byte[] rewritten = new byte[HeaderLength + (regions * LengthPrefix) + keyId.Length + runner.Length + salt.Length + nonce.Length + tag.Length + payload.Length + mac.Length + controlPlane.Length];
+        rewritten[0] = bytes[0];
+        rewritten[1] = bytes[1];
+        int offset = HeaderLength;
+        offset = WriteRegion(rewritten, offset, keyId);
+        offset = WriteRegion(rewritten, offset, runner);
+        offset = WriteRegion(rewritten, offset, salt);
+        offset = WriteRegion(rewritten, offset, nonce);
+        offset = WriteRegion(rewritten, offset, tag);
+        offset = WriteRegion(rewritten, offset, payload);
+        offset = WriteRegion(rewritten, offset, mac);
+        if (isRow)
+        {
+            WriteRegion(rewritten, offset, controlPlane);
+        }
+
+        return rewritten;
+    }
 
     /// <summary>The submitted bytes of a stored row: everything the runner wrote, which is what it submits and what the digest is taken over.</summary>
     /// <param name="row">The stored row.</param>
@@ -138,9 +193,10 @@ public static class CheckpointRow
 
         layout = new CheckpointRowLayout(algorithm, regions[0], regions[1], regions[2], regions[3], regions[4], regions[5], regions[6], regions[7], submittedLength);
 
-        // A clear row has nothing to put in the crypto regions; one that carries them is not a row this code wrote.
-        return algorithm != CheckpointAlgorithm.Clear
-            || (layout.KeyId.IsEmpty() && layout.Salt.IsEmpty() && layout.Nonce.IsEmpty() && layout.Tag.IsEmpty() && layout.Mac.IsEmpty());
+        // A clear row has nothing to put in the encryption regions; one that carries them is not a row this code wrote.
+        // Its key id and MAC come together or not at all.
+        return layout.KeyId.IsEmpty() == layout.Mac.IsEmpty()
+            && (algorithm != CheckpointAlgorithm.Clear || (layout.Salt.IsEmpty() && layout.Nonce.IsEmpty() && layout.Tag.IsEmpty()));
     }
 
     /// <summary>Writes a clear row: the runner region and the payload plaintext, with the control-plane region joined.</summary>

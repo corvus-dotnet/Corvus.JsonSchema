@@ -24,4 +24,24 @@ public static class TenantEnvironmentSealing
     /// <returns><see langword="true"/> if the platform marker is present and set.</returns>
     public static bool IsPlatform(in Environment environment)
         => environment.Platform.IsNotUndefined() && (bool)environment.Platform;
+
+    /// <summary>
+    /// The ids of an environment's active key generations (ADR 0065 decision 12): the generations a checkpoint may be
+    /// sealed under. A tenant environment with at least one is sealed (decision 10).
+    /// </summary>
+    /// <param name="environment">The environment record.</param>
+    /// <returns>The active generation ids, empty when there are none.</returns>
+    public static IReadOnlySet<string> ActiveGenerations(in Environment environment)
+    {
+        HashSet<string>? active = null;
+        foreach (Environment.EnvironmentKeyGeneration generation in Environment.Enumerate(environment.KeyGenerations))
+        {
+            if (generation.State.ValueEquals("Active"u8))
+            {
+                (active ??= new HashSet<string>(StringComparer.Ordinal)).Add((string)generation.KeyId);
+            }
+        }
+
+        return active ?? (IReadOnlySet<string>)System.Collections.Frozen.FrozenSet<string>.Empty;
+    }
 }

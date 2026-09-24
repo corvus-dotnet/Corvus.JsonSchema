@@ -217,6 +217,39 @@ public sealed class RunnerAuthorizationBindingsTests
     }
 
     [TestMethod]
+    public async Task A_tenant_environment_holding_an_active_generation_is_sealed_and_names_its_active_generations()
+    {
+        // ADR 0065 decision 10: the runner API requires every submission for such an environment to be MAC'd under
+        // one of these generations. A retired generation is recorded, never a generation a new row may be written
+        // under; an environment with no generation is not sealed, and the platform environment never is.
+        Fixture fixture = await Fixture.StartAsync();
+        await fixture.RegisterGenerationsAsync(Production, """
+            [{"keyId":"k1","sealPublicKey":"AAAA","algorithm":"ES256","state":"Retired","registeredBy":"alice","registeredAt":"2026-08-01T09:00:00+00:00"},{"keyId":"k2","sealPublicKey":"BBBB","algorithm":"ES256","state":"Active","registeredBy":"alice","registeredAt":"2026-08-01T10:00:00+00:00"}]
+            """);
+        await fixture.AuthorizeAsync(Production, "runner-1", Machine);
+        await fixture.AuthorizeAsync(Staging, "runner-2", Machine);
+
+        RunnerBindings resolved = await fixture.Bindings.ResolveAsync(Machine, default);
+
+        resolved.Environments.ShouldBe([Production, Staging], ignoreOrder: true);
+        resolved.SealedGenerationsOf(Production).ShouldBe(["k2"]);
+        resolved.SealedGenerationsOf(Staging).ShouldBeNull("no generation, not sealed");
+        resolved.SealedGenerationsOf("nowhere").ShouldBeNull();
+    }
+
+    [TestMethod]
+    public async Task A_platform_environment_holding_a_generation_is_not_sealed()
+    {
+        Fixture fixture = await Fixture.StartAsync();
+        await fixture.RegisterGenerationsAsync(Platform, """
+            [{"keyId":"k1","sealPublicKey":"AAAA","algorithm":"ES256","state":"Active","registeredBy":"alice","registeredAt":"2026-08-01T09:00:00+00:00"}]
+            """);
+        await fixture.AuthorizeAsync(Platform, "runner-1", Machine);
+
+        (await fixture.Bindings.ResolveAsync(Machine, default)).SealedGenerationsOf(Platform).ShouldBeNull();
+    }
+
+    [TestMethod]
     public async Task An_environment_carrying_no_owner_group_resolves_no_tenant()
     {
         // A deployment that publishes nothing to tell owner groups apart has exactly one tenant by construction, so its
@@ -345,6 +378,8 @@ public sealed class RunnerAuthorizationBindingsTests
 
         public InMemoryEnvironmentRunnerAuthorizationStore Authorizations { get; }
 
+        public InMemoryEnvironmentStore EnvironmentStore { get; private set; } = null!;
+
         public TestClock Clock { get; }
 
         public RunnerAuthorizationBindings Bindings { get; }
@@ -375,7 +410,16 @@ public sealed class RunnerAuthorizationBindingsTests
             }
 
             var bindings = new RunnerAuthorizationBindings(authorizations, environments, cacheWindow, timeProvider: clock, internalTagPrefix: internalTagPrefix);
-            return new Fixture(authorizations, clock, bindings);
+            return new Fixture(authorizations, clock, bindings) { EnvironmentStore = environments };
+        }
+
+        public async ValueTask RegisterGenerationsAsync(string environment, string generationsJson)
+        {
+            using ParsedJsonDocument<Environments.Environment>? stored = await this.EnvironmentStore.GetAsync(environment, AccessContext.System, default);
+            Environments.Environment.EnvironmentKeyGenerationArray generations = Environments.Environment.EnvironmentKeyGenerationArray.ParseValue(generationsJson);
+            using ParsedJsonDocument<Environments.Environment> draft = Environments.Environment.DraftWithKeyGenerations(stored!.RootElement, generations);
+            using ParsedJsonDocument<Environments.Environment>? updated = await this.EnvironmentStore.UpdateAsync(environment, draft.RootElement, stored.RootElement.EtagValue, "ops", AccessContext.System, default);
+            updated.ShouldNotBeNull();
         }
 
         private static ParsedJsonDocument<Environments.Environment> Owned(string name, string ownerGroup)

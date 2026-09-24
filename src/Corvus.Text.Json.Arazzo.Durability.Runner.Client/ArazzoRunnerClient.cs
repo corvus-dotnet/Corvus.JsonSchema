@@ -42,8 +42,9 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     /// <param name="transport">The transport to the runner API host.</param>
     /// <param name="holdOptions">How long this runner will wait out a quota refusal; defaults are used when omitted.</param>
     /// <param name="timeProvider">The time source for quota holds; defaults to <see cref="TimeProvider.System"/>.</param>
-    public ArazzoRunnerClient(IApiTransport transport, RunnerQuotaHoldOptions? holdOptions = null, TimeProvider? timeProvider = null)
-        : this(new ApiClaimsClient(transport), new ApiLeasesClient(transport), new ApiCheckpointsClient(transport), new ApiCatalogClient(transport), ownsClients: true, holdOptions, timeProvider)
+    /// <param name="keyRing">The runner's keys (ADR 0065 decision 10): with one, rows for the environments it holds are sealed on save and verified on load through a <see cref="SealingCheckpointStore"/>.</param>
+    public ArazzoRunnerClient(IApiTransport transport, RunnerQuotaHoldOptions? holdOptions = null, TimeProvider? timeProvider = null, RunnerKeyRing? keyRing = null)
+        : this(new ApiClaimsClient(transport), new ApiLeasesClient(transport), new ApiCheckpointsClient(transport), new ApiCatalogClient(transport), ownsClients: true, holdOptions, timeProvider, keyRing)
     {
     }
 
@@ -55,7 +56,8 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     /// <param name="ownsClients">Whether disposing this disposes the clients.</param>
     /// <param name="holdOptions">How long this runner will wait out a quota refusal; defaults are used when omitted.</param>
     /// <param name="timeProvider">The time source for quota holds; defaults to <see cref="TimeProvider.System"/>.</param>
-    public ArazzoRunnerClient(IApiClaimsClient claims, IApiLeasesClient leases, IApiCheckpointsClient checkpoints, IApiCatalogClient catalog, bool ownsClients = false, RunnerQuotaHoldOptions? holdOptions = null, TimeProvider? timeProvider = null)
+    /// <param name="keyRing">The runner's keys (ADR 0065 decision 10): with one, rows for the environments it holds are sealed on save and verified on load through a <see cref="SealingCheckpointStore"/>.</param>
+    public ArazzoRunnerClient(IApiClaimsClient claims, IApiLeasesClient leases, IApiCheckpointsClient checkpoints, IApiCatalogClient catalog, bool ownsClients = false, RunnerQuotaHoldOptions? holdOptions = null, TimeProvider? timeProvider = null, RunnerKeyRing? keyRing = null)
     {
         ArgumentNullException.ThrowIfNull(claims);
         ArgumentNullException.ThrowIfNull(leases);
@@ -69,7 +71,11 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
         this.ownsClients = ownsClients;
         this.holdOptions = holdOptions ?? new RunnerQuotaHoldOptions();
         this.timeProvider = timeProvider ?? TimeProvider.System;
-        this.Checkpoints = new RunnerApiCheckpointStore(this);
+
+        // ADR 0065 decisions 4 and 10: with a key ring, every row this runner saves for an environment the ring
+        // holds is MAC'd before it leaves the process, and every row it loads is verified before the run trusts it.
+        IWorkflowCheckpointStore checkpointStore = new RunnerApiCheckpointStore(this);
+        this.Checkpoints = keyRing is { IsEmpty: false } ? new SealingCheckpointStore(checkpointStore, keyRing) : checkpointStore;
     }
 
     /// <summary>
