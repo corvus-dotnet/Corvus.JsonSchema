@@ -283,6 +283,24 @@ internal static class ThrowHelper
     public static InvalidOperationException GetCheckpointSealRefusedException(in WorkflowRunAddress address)
         => new(SR.Format(SR.CheckpointSealRefused, address));
 
+    public static Anchoring.CheckpointAnchorException GetCheckpointAnchorRefusedException(in WorkflowRunAddress address, Anchoring.AnchorOpenDecision decision)
+        => new(address, decision, SR.Format(SR.CheckpointAnchorRefused, address, decision.Row == 51 ? "5a" : decision.Row.ToString(System.Globalization.CultureInfo.InvariantCulture), decision.Outcome, decision.Fault));
+
+    public static Anchoring.CheckpointAnchorException GetCheckpointAnchorUnattestedException(in WorkflowRunAddress address)
+        => new(address, null, SR.Format(SR.CheckpointAnchorUnattested, address.Environment));
+
+    public static Anchoring.CheckpointAnchorException GetCheckpointAnchorWriteRejectedException(in WorkflowRunAddress address, Anchoring.AnchorWriteKind kind)
+        => new(address, null, SR.Format(SR.CheckpointAnchorWriteRejected, address, kind));
+
+    public static Anchoring.CheckpointAnchorException GetCheckpointAnchorNeedsGrantException(in WorkflowRunAddress address)
+        => new(address, null, SR.Format(SR.CheckpointAnchorNeedsGrant, address));
+
+    public static InvalidOperationException GetCheckpointGenesisNotFirstException(string runId)
+        => new(SR.Format(SR.CheckpointGenesisNotFirst, runId));
+
+    public static InvalidOperationException GetSealedEnvironmentNeedsAnchorException(string environment)
+        => new(SR.Format(SR.SealedEnvironmentNeedsAnchor, environment));
+
     public static InvalidOperationException GetPayloadKeyNotAKeyException(string environment, string keyId)
         => new(SR.Format(SR.PayloadKeyNotAKey, environment, keyId));
 

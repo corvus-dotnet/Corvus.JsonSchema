@@ -92,17 +92,22 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
 
     public static async Task<RunnerApiFixture> StartAsync(
         Action<Corvus.Text.Json.Arazzo.Durability.Runner.Server.Quotas.RunnerQuotaOptions>? quotas = null,
-        RunnerQuotaHoldOptions? hold = null)
+        RunnerQuotaHoldOptions? hold = null,
+        RunnerKeyRing? keyRing = null,
+        Corvus.Text.Json.Arazzo.Durability.Anchoring.ITenantAnchorStore? anchors = null,
+        IReadOnlyDictionary<string, IReadOnlySet<string>>? sealedGenerations = null)
     {
         var clock = new TestClock(T0);
         var store = new InMemoryWorkflowStateStore(clock);
         var catalog = new InMemoryWorkflowCatalogStore();
         var availability = new InMemoryAvailabilityStore();
-        var bindings = new DeclaredRunnerEnvironmentBindings(new Dictionary<string, IReadOnlyList<string>>
-        {
-            [Runner] = [Production],
-            [Peer] = [Production],
-        });
+        var bindings = new DeclaredRunnerEnvironmentBindings(
+            new Dictionary<string, IReadOnlyList<string>>
+            {
+                [Runner] = [Production],
+                [Peer] = [Production],
+            },
+            sealedGenerations: sealedGenerations);
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -126,7 +131,9 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
         app.MapArazzoRunnerApi(store, catalog, availability, bindings, requireAuthorization: false, timeProvider: clock, quotaOptions: quotaOptions);
         await app.StartAsync();
 
-        (HttpClient runnerHttp, HttpClientTransport runnerTransport, ArazzoRunnerClient runner) = Connect(app, Runner, hold);
+        // The runner alone carries the key ring and the anchor (ADR 0065 decisions 6 and 10): the peer and the stranger
+        // are the deployment's other principals, and a sealed test says what each of them can and cannot do.
+        (HttpClient runnerHttp, HttpClientTransport runnerTransport, ArazzoRunnerClient runner) = Connect(app, Runner, hold, keyRing, anchors);
         (HttpClient peerHttp, HttpClientTransport peerTransport, ArazzoRunnerClient peer) = Connect(app, Peer, hold);
         (HttpClient strangerHttp, HttpClientTransport strangerTransport, ArazzoRunnerClient stranger) = Connect(app, Stranger, hold);
         return new RunnerApiFixture(app, store, catalog, availability, clock, runnerHttp, runnerTransport, runner, peerHttp, peerTransport, peer, strangerHttp, strangerTransport, stranger);
@@ -173,6 +180,11 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
     public ValueTask SeedWaitingAsync(string runId, WorkflowWait wait, string? workflowId = null)
         => this.SaveAsync(runId, Checkpoint(runId, WorkflowRunStatus.Suspended, sequence: 1, wait, workflowId));
 
+    /// <summary>Seeds a run at its genesis row, as the control plane writes it before any runner has claimed (ADR 0065
+    /// decision 6): clear, sequence 0, no grant, suspended on a wait so a sweep can claim it.</summary>
+    public ValueTask SeedGenesisWaitingAsync(string runId, WorkflowWait wait, string? workflowId = null)
+        => this.SaveAsync(runId, Checkpoint(runId, WorkflowRunStatus.Suspended, sequence: 0, wait, workflowId));
+
     public async ValueTask SeedAsync(string runId, WorkflowRunStatus status, ExecutionBudget? budget = null)
     {
         byte[] checkpoint = Checkpoint(runId, status, sequence: 1, budget: budget);
@@ -215,12 +227,12 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
 
     // One transport per principal, because the principal is what the server scopes every operation by: this is how
     // a deployment's two runners differ, so the test's two clients differ the same way.
-    private static (HttpClient Http, HttpClientTransport Transport, ArazzoRunnerClient Client) Connect(WebApplication app, string principal, RunnerQuotaHoldOptions? hold)
+    private static (HttpClient Http, HttpClientTransport Transport, ArazzoRunnerClient Client) Connect(WebApplication app, string principal, RunnerQuotaHoldOptions? hold, RunnerKeyRing? keyRing = null, Corvus.Text.Json.Arazzo.Durability.Anchoring.ITenantAnchorStore? anchors = null)
     {
         HttpClient http = app.GetTestClient();
         http.DefaultRequestHeaders.Add("X-Test-Principal", principal);
         var transport = new HttpClientTransport(http);
-        return (http, transport, new ArazzoRunnerClient(transport, hold));
+        return (http, transport, new ArazzoRunnerClient(transport, hold, keyRing: keyRing, anchors: anchors));
     }
 
     private async ValueTask SaveAsync(string runId, byte[] checkpoint)

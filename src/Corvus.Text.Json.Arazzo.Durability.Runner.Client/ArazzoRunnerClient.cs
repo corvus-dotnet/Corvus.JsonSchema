@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Concurrent;
+using Corvus.Text.Json.Arazzo.Durability.Anchoring;
 using Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models;
 using Corvus.Text.Json.OpenApi;
 
@@ -37,14 +38,17 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     private readonly RunnerQuotaHoldOptions holdOptions;
     private readonly TimeProvider timeProvider;
     private readonly bool ownsClients;
+    private readonly SealingCheckpointStore? sealing;
+    private readonly ITenantAnchorStore? anchors;
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoRunnerClient"/> class over an API transport.</summary>
     /// <param name="transport">The transport to the runner API host.</param>
     /// <param name="holdOptions">How long this runner will wait out a quota refusal; defaults are used when omitted.</param>
     /// <param name="timeProvider">The time source for quota holds; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="keyRing">The runner's keys (ADR 0065 decision 10): with one, rows for the environments it holds are sealed on save and verified on load through a <see cref="SealingCheckpointStore"/>.</param>
-    public ArazzoRunnerClient(IApiTransport transport, RunnerQuotaHoldOptions? holdOptions = null, TimeProvider? timeProvider = null, RunnerKeyRing? keyRing = null)
-        : this(new ApiClaimsClient(transport), new ApiLeasesClient(transport), new ApiCheckpointsClient(transport), new ApiCatalogClient(transport), ownsClients: true, holdOptions, timeProvider, keyRing)
+    /// <param name="anchors">The tenant anchor store (ADR 0065 decision 6): with one, every environment on the ring is anchored, so a rollback, substitution or replay by the control plane faults the run at its next open. Required when the ring marks any environment sealed.</param>
+    public ArazzoRunnerClient(IApiTransport transport, RunnerQuotaHoldOptions? holdOptions = null, TimeProvider? timeProvider = null, RunnerKeyRing? keyRing = null, ITenantAnchorStore? anchors = null)
+        : this(new ApiClaimsClient(transport), new ApiLeasesClient(transport), new ApiCheckpointsClient(transport), new ApiCatalogClient(transport), ownsClients: true, holdOptions, timeProvider, keyRing, anchors)
     {
     }
 
@@ -57,7 +61,8 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     /// <param name="holdOptions">How long this runner will wait out a quota refusal; defaults are used when omitted.</param>
     /// <param name="timeProvider">The time source for quota holds; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="keyRing">The runner's keys (ADR 0065 decision 10): with one, rows for the environments it holds are sealed on save and verified on load through a <see cref="SealingCheckpointStore"/>.</param>
-    public ArazzoRunnerClient(IApiClaimsClient claims, IApiLeasesClient leases, IApiCheckpointsClient checkpoints, IApiCatalogClient catalog, bool ownsClients = false, RunnerQuotaHoldOptions? holdOptions = null, TimeProvider? timeProvider = null, RunnerKeyRing? keyRing = null)
+    /// <param name="anchors">The tenant anchor store (ADR 0065 decision 6): with one, every environment on the ring is anchored, so a rollback, substitution or replay by the control plane faults the run at its next open. Required when the ring marks any environment sealed.</param>
+    public ArazzoRunnerClient(IApiClaimsClient claims, IApiLeasesClient leases, IApiCheckpointsClient checkpoints, IApiCatalogClient catalog, bool ownsClients = false, RunnerQuotaHoldOptions? holdOptions = null, TimeProvider? timeProvider = null, RunnerKeyRing? keyRing = null, ITenantAnchorStore? anchors = null)
     {
         ArgumentNullException.ThrowIfNull(claims);
         ArgumentNullException.ThrowIfNull(leases);
@@ -74,8 +79,21 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
 
         // ADR 0065 decisions 4 and 10: with a key ring, every row this runner saves for an environment the ring
         // holds is MAC'd before it leaves the process, and every row it loads is verified before the run trusts it.
+        // Decision 6: this client is the lease holder, and the lease holder is a run's sole anchor writer, so a ring
+        // that marks an environment sealed needs the tenant anchor store to write. Serving a sealed environment with
+        // no anchor would leave its freshness to the control plane, which is what the anchor exists to take away.
+        if (anchors is null && keyRing is not null)
+        {
+            foreach (string environment in keyRing.SealedEnvironments)
+            {
+                throw new InvalidOperationException($"Environment '{environment}' is on the key ring as sealed, and no tenant anchor store was given. A sealed environment's freshness is the anchor's, so serving it without one is the fail-open posture ADR 0065 decision 10 forbids.");
+            }
+        }
+
         IWorkflowCheckpointStore checkpointStore = new RunnerApiCheckpointStore(this);
-        this.Checkpoints = keyRing is { IsEmpty: false } ? new SealingCheckpointStore(checkpointStore, keyRing) : checkpointStore;
+        this.anchors = anchors;
+        this.sealing = keyRing is { IsEmpty: false } ? new SealingCheckpointStore(checkpointStore, keyRing, anchors) : null;
+        this.Checkpoints = this.sealing ?? checkpointStore;
     }
 
     /// <summary>
@@ -437,6 +455,30 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
             : default;
 
         return this.leases.RenewLeaseAsync(held.Environment, runId.Value, held.Token, body, cancellationToken);
+    }
+
+    /// <summary>
+    /// The tenant-attested store incarnation a run in <paramref name="environment"/> is held under (ADR 0065
+    /// decision 6), which the run writes into its region beside the lease epoch; <see langword="null"/> for an
+    /// environment this runner does not anchor.
+    /// </summary>
+    /// <param name="environment">The run's environment.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The attested incarnation, or <see langword="null"/> when the environment is not anchored here.</returns>
+    /// <exception cref="Anchoring.CheckpointAnchorException">The environment is anchored and the tenant has attested no incarnation for it.</exception>
+    public async ValueTask<ulong?> AttestedIncarnationAsync(string environment, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(environment);
+        if (this.sealing is not { } sealing || this.anchors is not { } anchors || !sealing.IsAnchored(environment))
+        {
+            return null;
+        }
+
+        return await anchors.ReadAttestedIncarnationAsync(environment, cancellationToken).ConfigureAwait(false)
+            ?? throw new CheckpointAnchorException(
+                new WorkflowRunAddress(environment, default),
+                null,
+                $"Environment '{environment}' has no tenant-attested store incarnation, so no run in it can be claimed: the anchor's first attestation is made when the environment is created (ADR 0065 decision 6).");
     }
 
     internal static RunnerApiException Refused(string what, int status)

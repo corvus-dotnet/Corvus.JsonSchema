@@ -35,7 +35,7 @@ public sealed class WorkflowCheckpointSerializerTests
         byte[] controlPlane = new ControlPlaneRecord(Budget: budget).ToUtf8();
 
         byte[] row = WorkflowCheckpointSerializer.Serialize(
-            Envelope(WorkflowRunStatus.Running, cursor: 3, sequence: 1, epoch: 9, tags: TagSet.CopyFrom(root.GetProperty("tags"u8))),
+            Envelope(WorkflowRunStatus.Running, cursor: 3, sequence: 1, epoch: 9, tags: TagSet.CopyFrom(root.GetProperty("tags"u8)), incarnation: 4),
             retryCounters,
             correlationTokens,
             root.GetProperty("inputs"u8),
@@ -53,6 +53,7 @@ public sealed class WorkflowCheckpointSerializerTests
         state.Cursor.ShouldBe(3);
         state.Sequence.ShouldBe(1);
         state.Epoch.ShouldBe(9);
+        state.Incarnation.ShouldBe(4UL);
         state.CreatedAt.ShouldBe(CreatedAt);
         state.UpdatedAt.ShouldBe(CreatedAt);
         state.Tags.ToList().ShouldBe(["x"]);
@@ -403,7 +404,7 @@ public sealed class WorkflowCheckpointSerializerTests
         var budget = new ExecutionBudget(3, TimeSpan.FromMinutes(30), 2, TimeSpan.FromSeconds(5), ExecutionBudget.DefaultStepTimeout, ExecutionBudget.DefaultMaxResponseBytes);
         byte[] region = new ControlPlaneRecord(Budget: budget).ToUtf8();
         var journal = new List<WorkflowStepJournalEntry> { new("s1", WorkflowStepStatus.Succeeded, 1, CreatedAt, CreatedAt.AddSeconds(1)) };
-        byte[] row = Row(WorkflowRunStatus.Faulted, sequence: 7, epoch: 12, journal: journal, truncated: true, fault: new WorkflowFault("s1", 2, ExecutionBudgetFault.Fuel, CreatedAt), controlPlane: region);
+        byte[] row = Row(WorkflowRunStatus.Faulted, sequence: 7, epoch: 12, journal: journal, truncated: true, fault: new WorkflowFault("s1", 2, ExecutionBudgetFault.Fuel, CreatedAt), controlPlane: region, incarnation: 3);
 
         WorkflowCheckpointSerializer.TryProject(row, out CheckpointProjection projection).ShouldBeTrue();
         projection.Index.ShouldBe(WorkflowCheckpointSerializer.ProjectIndex(row));
@@ -411,6 +412,11 @@ public sealed class WorkflowCheckpointSerializerTests
         projection.Environment.ShouldBe("development");
         projection.Sequence.ShouldBe(7);
         projection.Epoch.ShouldBe(12);
+        projection.Incarnation.ShouldBe(3UL);
+
+        // The anchor's ordering key sits in the region in fixed order, the incarnation right after the epoch, so the
+        // MAC and the checkpoint digest cover both (ADR 0065 decision 6).
+        Encoding.UTF8.GetString(row.AsSpan()[CheckpointRow.Parse(row).RunnerRegion]).ShouldContain("\"sequence\":7,\"epoch\":12,\"incarnation\":3,\"createdAt\"");
         projection.ControlPlaneRegion.ToArray().ShouldBe(region);
         WorkflowCheckpointSerializer.TryReadBudgetFacts(row, out CheckpointBudgetFacts scanned).ShouldBeTrue();
         projection.Facts.ShouldBe(scanned);
@@ -418,8 +424,12 @@ public sealed class WorkflowCheckpointSerializerTests
         WorkflowCheckpointSerializer.TryReadSequence(row, out long sequence).ShouldBeTrue();
         sequence.ShouldBe(7);
 
-        // An in-process writer holds no grant and writes no epoch.
-        WorkflowCheckpointSerializer.Project(Row(WorkflowRunStatus.Running)).Epoch.ShouldBeNull();
+        // An in-process writer holds no grant and writes no epoch, and a writer in an environment that is not anchored
+        // writes no incarnation.
+        CheckpointProjection ungranted = WorkflowCheckpointSerializer.Project(Row(WorkflowRunStatus.Running));
+        ungranted.Epoch.ShouldBeNull();
+        ungranted.Incarnation.ShouldBeNull();
+        Encoding.UTF8.GetString(Row(WorkflowRunStatus.Running).AsSpan()[CheckpointRow.Parse(Row(WorkflowRunStatus.Running)).RunnerRegion]).ShouldNotContain("incarnation");
     }
 
     [TestMethod]
@@ -499,7 +509,8 @@ public sealed class WorkflowCheckpointSerializerTests
         IReadOnlyList<WorkflowStepJournalEntry>? journal = null,
         bool truncated = false,
         WorkflowWait? wait = null,
-        WorkflowFault? fault = null)
+        WorkflowFault? fault = null,
+        ulong? incarnation = null)
         => new(
             new WorkflowRunId("run-1"),
             "development",
@@ -517,7 +528,8 @@ public sealed class WorkflowCheckpointSerializerTests
             journal ?? [],
             truncated,
             wait,
-            fault);
+            fault,
+            incarnation);
 
     private static byte[] Row(
         WorkflowRunStatus status,
@@ -528,12 +540,13 @@ public sealed class WorkflowCheckpointSerializerTests
         bool truncated = false,
         WorkflowWait? wait = null,
         WorkflowFault? fault = null,
-        byte[]? controlPlane = null)
+        byte[]? controlPlane = null,
+        ulong? incarnation = null)
     {
         using var retryCounters = PooledUtf8Map<int>.Rent(0);
         using var stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
         return WorkflowCheckpointSerializer.Serialize(
-            Envelope(status, cursor: journal?.Count ?? 0, sequence, epoch, updatedAt, journal: journal, truncated: truncated, wait: wait, fault: fault),
+            Envelope(status, cursor: journal?.Count ?? 0, sequence, epoch, updatedAt, journal: journal, truncated: truncated, wait: wait, fault: fault, incarnation: incarnation),
             retryCounters,
             new Dictionary<string, byte[]>(StringComparer.Ordinal),
             inputs: default,

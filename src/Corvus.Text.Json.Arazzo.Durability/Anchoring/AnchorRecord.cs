@@ -73,6 +73,21 @@ public readonly struct AnchorDigest : IEquatable<AnchorDigest>
         this.w3 = BitConverter.ToUInt64(digest.Slice(24, 8));
     }
 
+    /// <summary>Copies the digest's 32 bytes to <paramref name="destination"/>.</summary>
+    /// <param name="destination">Receives 32 bytes.</param>
+    public void CopyTo(Span<byte> destination)
+    {
+        if (destination.Length < SHA256.HashSizeInBytes)
+        {
+            throw new ArgumentException($"A checkpoint digest is exactly {SHA256.HashSizeInBytes} bytes.", nameof(destination));
+        }
+
+        BitConverter.TryWriteBytes(destination[..8], this.w0);
+        BitConverter.TryWriteBytes(destination.Slice(8, 8), this.w1);
+        BitConverter.TryWriteBytes(destination.Slice(16, 8), this.w2);
+        BitConverter.TryWriteBytes(destination.Slice(24, 8), this.w3);
+    }
+
     /// <inheritdoc/>
     public bool Equals(AnchorDigest other)
         => this.w0 == other.w0 && this.w1 == other.w1 && this.w2 == other.w2 && this.w3 == other.w3;

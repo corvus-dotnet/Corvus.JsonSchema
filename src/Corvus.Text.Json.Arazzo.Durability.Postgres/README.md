@@ -33,3 +33,24 @@ AlloyDB, Aurora PostgreSQL, Neon, and Citus**.
 **Encryption at rest:** managed PostgreSQL (Azure Database, Aurora, AlloyDB, …) encrypts at rest, optionally
 under a customer-managed key. For encryption independent of the server, wrap this store in
 `ProtectedWorkflowStateStore` (see the `Corvus.Text.Json.Arazzo.Durability` README).
+
+## The tenant anchor store
+
+`PostgresTenantAnchorStore` implements `ITenantAnchorStore` (ADR 0065 decision 6) for the **tenant's own**
+database, never the control plane's: one row per run holding the tenant anchor record as its persisted JSON, and
+one row per environment holding the tenant-attested store incarnation. A record write is one transaction that reads
+the stored row under a row lock, compares it with the record the writer decided against, classifies the proposed
+record with `AnchorAcceptance.Classify` against the environment's attested incarnation, and replaces it only if a
+clause admits it. That is the whole of what the store enforces; it verifies no signature. The attestation is
+strictly monotonic in one statement.
+
+```csharp
+// The tenant's own database, provisioned by the runner that owns it.
+await PostgresTenantAnchorStore.PrepareAsync(tenantConnectionString);
+await using var anchors = await PostgresTenantAnchorStore.ConnectAsync(tenantConnectionString);
+await anchors.AttestIncarnationAsync("production", 1, cancellationToken);   // the environment's first attestation
+var runner = new ArazzoRunnerClient(transport, keyRing: keyRing, anchors: anchors);
+```
+
+> The in-memory anchor store is the reference implementation; this backend runs the same anchor-store
+> conformance suite.

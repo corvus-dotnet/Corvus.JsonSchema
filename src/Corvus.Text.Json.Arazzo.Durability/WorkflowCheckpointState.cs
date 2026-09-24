@@ -47,6 +47,7 @@ public sealed class WorkflowCheckpointState : IDisposable
         this.Cursor = envelope.Cursor;
         this.Sequence = envelope.Sequence;
         this.Epoch = envelope.Epoch;
+        this.Incarnation = envelope.Incarnation;
         this.CreatedAt = envelope.CreatedAt;
         this.UpdatedAt = envelope.UpdatedAt;
         this.CorrelationId = envelope.CorrelationId;
@@ -108,6 +109,9 @@ public sealed class WorkflowCheckpointState : IDisposable
 
     /// <summary>Gets the lease epoch the runner wrote into its region (ADR 0065 decision 6), or <see langword="null"/> for a writer that holds no lease grant (the in-process runner).</summary>
     public long? Epoch { get; }
+
+    /// <summary>Gets the tenant-attested store incarnation the runner wrote into its region (ADR 0065 decision 6), or <see langword="null"/> for a writer in an environment that is not anchored.</summary>
+    public ulong? Incarnation { get; }
 
     /// <summary>Gets the instant the run was first created.</summary>
     public DateTimeOffset CreatedAt { get; }

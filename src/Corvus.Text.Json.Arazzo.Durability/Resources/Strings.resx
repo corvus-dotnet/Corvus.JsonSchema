@@ -623,6 +623,24 @@
   <data name="CheckpointSealRefused" xml:space="preserve">
     <value>The row saved for '{0}' already names a key generation. The sealing store encrypts the payload of a clear row and never re-seals one, since encrypting twice would hide a row that did not decrypt (ADR 0065 decision 5).</value>
   </data>
+  <data name="CheckpointAnchorRefused" xml:space="preserve">
+    <value>The tenant anchor refuses run '{0}': decision-table row {1} ({2}, {3}). The run is not advanced; its lease is given back and it is left as it is (ADR 0065 decision 6).</value>
+  </data>
+  <data name="CheckpointAnchorUnattested" xml:space="preserve">
+    <value>Environment '{0}' has no tenant-attested store incarnation, so no run in it can be opened or checkpointed: the anchor's first attestation is made when the environment is created (ADR 0065 decision 6).</value>
+  </data>
+  <data name="CheckpointAnchorWriteRejected" xml:space="preserve">
+    <value>The tenant anchor store rejected the {1} write for run '{0}'. No conforming writer produces a rejected write: either a second writer moved the record, which the sole-writer rule forbids, or the record is one the acceptance predicate admits nothing over (ADR 0065 decision 6).</value>
+  </data>
+  <data name="CheckpointAnchorNeedsGrant" xml:space="preserve">
+    <value>The row saved for run '{0}' carries no lease epoch, or an incarnation other than the attested one, and the environment is anchored: an anchored save is staged under the writer's ordering key, which needs both (ADR 0065 decision 6).</value>
+  </data>
+  <data name="CheckpointGenesisNotFirst" xml:space="preserve">
+    <value>Run '{0}' has already persisted a checkpoint, so it cannot be enqueued: the genesis row is the run's first and only sequence-0 write (ADR 0065 decision 6).</value>
+  </data>
+  <data name="SealedEnvironmentNeedsAnchor" xml:space="preserve">
+    <value>Environment '{0}' is on the key ring as sealed, and no tenant anchor store is configured. A sealed environment's freshness is the anchor's, so serving it without one is the fail-open posture ADR 0065 decision 10 forbids.</value>
+  </data>
   <data name="PayloadKeyNotAKey" xml:space="preserve">
     <value>The payload key for environment '{0}', generation '{1}', is not a 32-byte key in base64. The runner refuses to start with a sealed environment it cannot seal.</value>
   </data>

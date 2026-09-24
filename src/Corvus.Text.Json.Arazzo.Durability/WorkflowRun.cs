@@ -56,6 +56,10 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     // can check it against the grant. Null for a writer that holds no grant (the control plane's own in-process runs).
     private readonly long? leaseEpoch;
 
+    // ADR 0065 decision 6: the tenant-attested store incarnation the runner holds the run under, the other half of the
+    // anchor's ordering key, written beside the epoch. Null for a writer in an environment that is not anchored.
+    private readonly ulong? incarnation;
+
     // A runner save leaves the loaded row behind; a control-plane-region write after one would carry a stale runner
     // region under a current etag, so it is refused.
     private bool advanced;
@@ -95,12 +99,14 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         in ControlPlaneRecord controlPlane,
         byte[] controlPlaneRegion,
         long? leaseEpoch,
-        string? rerunOf = null)
+        string? rerunOf = null,
+        ulong? incarnation = null)
     {
         this.RerunOf = rerunOf;
         this.controlPlane = controlPlane;
         this.controlPlaneRegion = controlPlaneRegion;
         this.leaseEpoch = leaseEpoch;
+        this.incarnation = incarnation;
         this.store = store;
         this.Id = id;
         this.WorkflowId = workflowId;
@@ -196,6 +202,9 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     /// <summary>Gets the lease epoch this run is held under and writes into its region (ADR 0065 decision 6), or <see langword="null"/> for a writer with no grant.</summary>
     public long? LeaseEpoch => this.leaseEpoch;
 
+    /// <summary>Gets the tenant-attested store incarnation this run is held under and writes into its region (ADR 0065 decision 6), or <see langword="null"/> for a writer in an environment that is not anchored.</summary>
+    public ulong? Incarnation => this.incarnation;
+
     /// <summary>Gets the deployment environment the run is pinned to (design §5.5) — its credential set and the
     /// runners it can be dispatched to. Half the run's address (ADR 0065 decision 9); never absent.</summary>
     public string Environment => this.address.Environment;
@@ -279,13 +288,16 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     /// <param name="state">The deserialized checkpoint state; the run takes ownership and disposes it.</param>
     /// <param name="etag">The etag the checkpoint was read at (passed as <c>expected</c> on the next save).</param>
     /// <param name="timeProvider">The time source for checkpoint timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
+    /// <param name="leaseEpoch">The lease epoch the run is held under (ADR 0065 decision 6), written into its region; <see langword="null"/> for a writer with no grant.</param>
+    /// <param name="incarnation">The tenant-attested store incarnation the run is held under (decision 6), written beside the epoch; <see langword="null"/> for an environment that is not anchored.</param>
     /// <returns>The resumed run.</returns>
     public static WorkflowRun Resume(
         IWorkflowCheckpointStore store,
         WorkflowCheckpointState state,
         WorkflowEtag etag,
         TimeProvider? timeProvider = null,
-        long? leaseEpoch = null)
+        long? leaseEpoch = null,
+        ulong? incarnation = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(state);
@@ -315,7 +327,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             controlPlane: state.ControlPlane,
             controlPlaneRegion: state.ControlPlaneRegion.ToArray(),
             leaseEpoch: leaseEpoch,
-            rerunOf: state.RerunOf);
+            rerunOf: state.RerunOf,
+            incarnation: incarnation);
     }
 
     /// <summary>Loads a run's checkpoint from the store and builds a resumed run from it.</summary>
@@ -329,7 +342,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         WorkflowRunAddress address,
         TimeProvider? timeProvider = null,
         long? leaseEpoch = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        ulong? incarnation = null)
     {
         ArgumentNullException.ThrowIfNull(store);
 
@@ -350,7 +364,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             throw ThrowHelper.GetCheckpointEnvironmentMismatchException(address, claimed);
         }
 
-        return Resume(store, state, checkpoint.Value.Etag, timeProvider, leaseEpoch);
+        return Resume(store, state, checkpoint.Value.Etag, timeProvider, leaseEpoch, incarnation);
     }
 
     /// <inheritdoc/>
@@ -395,7 +409,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     /// </summary>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A task that completes when the pending run is durable.</returns>
-    public ValueTask EnqueueAsync(CancellationToken cancellationToken) => this.PersistAsync(default, cancellationToken);
+    public ValueTask EnqueueAsync(CancellationToken cancellationToken) => this.PersistAsync(default, cancellationToken, genesis: true);
 
     /// <summary>
     /// Sets the §18 debugger pause configuration for the run and records the cursor the advance starts at, so a pause
@@ -748,7 +762,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         }
     }
 
-    private async ValueTask PersistAsync(JsonElement outputs, CancellationToken cancellationToken)
+    private async ValueTask PersistAsync(JsonElement outputs, CancellationToken cancellationToken, bool genesis = false)
     {
         using Activity? activity = ArazzoTelemetry.ActivitySource.StartActivity("workflow.checkpoint");
         if (activity is { IsAllDataRequested: true })
@@ -767,8 +781,15 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         DateTimeOffset updatedAt = this.timeProvider.GetUtcNow();
 
         // The run's own write sequence advances once per persisted checkpoint and is carried in the runner region, so
-        // a resumed run continues the series rather than restarting it (ADR 0065 decision 6).
-        long sequence = ++this.sequence;
+        // a resumed run continues the series rather than restarting it (ADR 0065 decision 6). The genesis row, the
+        // one the control plane writes before any runner has claimed, is sequence 0 by definition: it is the origin
+        // of the series the tenant anchor commits to, and a runner's first save is 1.
+        if (genesis && (this.sequence != 0 || this.advanced))
+        {
+            throw ThrowHelper.GetCheckpointGenesisNotFirstException(this.Id.Value);
+        }
+
+        long sequence = genesis ? this.sequence : ++this.sequence;
         this.advanced = true;
 
         byte[] checkpoint = WorkflowCheckpointSerializer.Serialize(
@@ -789,7 +810,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
                 this.stepJournal,
                 this.journalTruncated,
                 this.wait,
-                this.fault),
+                this.fault,
+                this.incarnation),
             this.retryCounts,
             this.CorrelationTokens,
             this.inputs,

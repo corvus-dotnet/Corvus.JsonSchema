@@ -55,6 +55,19 @@ row on load, except a run's genesis row, which the control plane writes before a
 configured for sealing that has no Vault refuses to start rather than serve the environment clear. The AppHost runs
 a second instance of this project, `runner-production`, sealed for `production`.
 
+## The tenant anchor
+
+A sealed environment is also anchored (ADR 0065 decision 6). When the AppHost injects `ConnectionStrings:tenantanchors`,
+the runner opens the tenant's own PostgreSQL database (a `tenant-postgres` instance the control plane never opens),
+provisions its two tables itself, and passes the store to the runner client; a sealed key-ring entry with no anchor
+store refuses to start. Every load of a production run then evaluates the anchor decision table over the row the
+control plane holds before the run trusts it, and every save is staged with the tenant before it is dispatched, so a
+control plane that rolls a production run back, substitutes a checkpoint or re-presents a finished run has the run
+refused at the runner's next claim rather than advanced: the lease goes back, the refusal is counted, and the sweep
+carries on. `Runner:Anchor:InitialIncarnation` (the AppHost sets `1`) records the tenant's first attestation of the
+store incarnation when none exists, standing in for the operator's attestation at environment creation; a later
+restore is attested by raising it, and no run in an environment with no attestation can be opened.
+
 ## Run it
 
 The runner is launched as part of the AppHost composition (it shares the store with the control plane and waits

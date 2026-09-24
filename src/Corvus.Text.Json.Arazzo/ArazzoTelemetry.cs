@@ -56,6 +56,9 @@ public static class ArazzoTelemetry
     /// <summary>The span/measurement tag carrying a run's lifecycle status.</summary>
     public const string StatusTag = "corvus.arazzo.status";
 
+    /// <summary>The tag naming why a runner refused to advance a run it claimed (ADR 0065 decisions 4 and 6): the anchor fault that fired, or <c>integrity</c> for a row that did not verify.</summary>
+    public const string RefusalTag = "corvus.arazzo.refusal";
+
     /// <summary>The span tag carrying a run's telemetry correlation id (the W3C trace id captured at creation).</summary>
     public const string CorrelationIdTag = "corvus.arazzo.correlation_id";
 
@@ -125,6 +128,14 @@ public static class ArazzoTelemetry
     /// </summary>
     public static Counter<long> WorkflowsFaulted { get; } =
         Meter.CreateCounter<long>("corvus.arazzo.workflows.faulted", "{workflow}", "Workflows that faulted");
+
+    /// <summary>
+    /// Gets the counter of runs a runner declined to advance because the row it loaded did not verify or the tenant
+    /// anchor refused it (ADR 0065 decisions 4 and 6): a rollback, a substitution, a replay, or a claim on a run the
+    /// tenant recorded as finished. Tagged by <see cref="RefusalTag"/> with the fault that fired.
+    /// </summary>
+    public static Counter<long> WorkflowsRefused { get; } =
+        Meter.CreateCounter<long>("corvus.arazzo.workflows.refused", "{workflow}", "Runs a runner refused to advance on integrity or anchor grounds");
 
     /// <summary>
     /// Gets the counter for steps executed.

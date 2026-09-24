@@ -33,9 +33,11 @@ public sealed class WorkflowRunTests
             await run.CheckpointAsync(1, default);
         }
 
+        // The genesis row the enqueue wrote is sequence 0 by definition, the origin of the series (decision 6), so
+        // the first checkpoint is 1.
         WorkflowCheckpoint stored = (await store.LoadAsync(TestAddresses.Dev("run-seq"), default))!.Value;
         WorkflowCheckpointSerializer.TryReadSequence(stored.Row, out long persisted).ShouldBeTrue();
-        persisted.ShouldBe(2);
+        persisted.ShouldBe(1);
 
         using (WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, TestAddresses.Dev("run-seq"), Time))
         {
@@ -45,7 +47,7 @@ public sealed class WorkflowRunTests
 
         WorkflowCheckpoint after = (await store.LoadAsync(TestAddresses.Dev("run-seq"), default))!.Value;
         WorkflowCheckpointSerializer.TryReadSequence(after.Row, out long continued).ShouldBeTrue();
-        continued.ShouldBe(3);
+        continued.ShouldBe(2);
     }
 
     [TestMethod]

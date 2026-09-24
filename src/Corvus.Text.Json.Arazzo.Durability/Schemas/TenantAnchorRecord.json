@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TenantAnchorRecord",
+  "description": "The persisted form of a run's tenant anchor record (ADR 0065, the normative tenant-anchor specification): the tenant-held high-water mark the control plane cannot rewrite, and the write-ahead log that makes an honest crash recoverable. One record per run, in a store only the tenant can write, replaced whole under compare-and-swap by exactly the acceptance predicate.",
+  "type": "object",
+  "required": ["runId", "environmentId", "state", "disposition", "epochHighWater", "committed", "reanchorCounter"],
+  "properties": {
+    "runId": {
+      "type": "string",
+      "description": "The run this record anchors. Immutable across every write."
+    },
+    "environmentId": {
+      "type": "string",
+      "description": "The environment the run is pinned to. Immutable across every write."
+    },
+    "state": {
+      "type": "string",
+      "enum": ["Live", "Terminal"],
+      "description": "Whether the run is still advancing, or closed. A terminal record refuses every claim."
+    },
+    "disposition": {
+      "type": "string",
+      "enum": ["None", "Completed", "Abandoned"],
+      "description": "How a terminal record was closed: by its terminal checkpoint, or by an operator-signed abandonment that discarded an outstanding staged save. None while live."
+    },
+    "epochHighWater": {
+      "$ref": "#/$defs/OrderingKey",
+      "description": "The highest ordering key ever accepted for this run. Raised by any accepted write to the key it carries, lowered only by a re-anchor."
+    },
+    "committed": {
+      "$ref": "#/$defs/Mark",
+      "description": "The last checkpoint the tenant committed to."
+    },
+    "pending": {
+      "$ref": "#/$defs/Mark",
+      "description": "The staged next checkpoint, when a save is in flight. Absent otherwise."
+    },
+    "reanchorCounter": {
+      "type": "integer",
+      "format": "uint64",
+      "description": "Strictly monotonic; a re-anchor increments it, which is what stops a signed re-anchor being replayed. A record recovered from a lost anchor starts at 1, which also distinguishes that recovery from a fresh create."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "OrderingKey": {
+      "title": "OrderingKey",
+      "type": "object",
+      "description": "An (incarnation, epoch) pair compared lexicographically. An incarnation change resets the control plane's epoch counter, so epochs are not comparable across one.",
+      "required": ["incarnation", "epoch"],
+      "properties": {
+        "incarnation": {
+          "type": "integer",
+          "format": "uint64",
+          "description": "The tenant-attested store incarnation the key was written under."
+        },
+        "epoch": {
+          "type": "integer",
+          "format": "uint64",
+          "description": "The lease epoch the control plane minted for the grant."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Mark": {
+      "title": "Mark",
+      "type": "object",
+      "description": "A committed or pending mark: a checkpoint's identity at an ordering key.",
+      "required": ["key", "sequence", "digest"],
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/OrderingKey",
+          "description": "The ordering key the mark was written under."
+        },
+        "sequence": {
+          "type": "integer",
+          "format": "uint64",
+          "description": "The checkpoint sequence."
+        },
+        "digest": {
+          "type": "string",
+          "contentEncoding": "base64",
+          "description": "The checkpoint digest over the pinned submitted-bytes layout: 32 bytes, base64."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

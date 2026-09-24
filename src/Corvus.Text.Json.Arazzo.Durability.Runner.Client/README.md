@@ -141,6 +141,33 @@ environment. What the control plane can read of such a run is its envelope: the 
 served as usual, the journal says the payload is sealed and carries no outputs, and a re-run is refused because the
 inputs cannot be read.
 
+## Anchoring what the client loads and saves
+
+A runner that serves a sealed environment also passes its tenant anchor store (ADR 0065 decision 6), and the client
+refuses to start with a ring that marks an environment sealed and no store to anchor it in: the client is the lease
+holder, and the lease holder is a run's sole anchor writer.
+
+```csharp
+PostgresTenantAnchorStore anchors = await PostgresTenantAnchorStore.ConnectAsync(tenantConnectionString);
+var runner = new ArazzoRunnerClient(transport, keyRing: keyRing, anchors: anchors);
+```
+
+The store is the tenant's own, never the control plane's. It holds one record per run of what the tenant last
+committed to (the epoch high-water mark, the committed and pending marks, each a checkpoint digest at an ordering key)
+and the environment's attested store incarnation, and it enforces exactly the acceptance predicate under a
+whole-record compare-and-swap. From then on every load of a run in an environment on the ring evaluates the anchor
+decision table over the row the control plane holds before a byte of it is trusted, and every save is staged with the
+tenant before it is dispatched, under the grant's epoch and the attested incarnation the run writes into its region.
+A rollback, a substituted row at a committed sequence, a replay of a finished run, a row that does not verify, a lost
+anchor or an environment the tenant has not attested is a `CheckpointAnchorException` (or, for a row that does not
+verify, the same `CryptographicException` as before). The worker answers either the same way: the run is not advanced,
+its lease goes back, the refusal is counted on `corvus.arazzo.workflows.refused`, and the sweep carries on with its
+other claims. The run is left as it is for the operator to cancel envelope-only through the control plane; an
+operator-signed re-anchor is admitted by the store and applied by no runner until decision 8's operator key is pinned.
+
+The environment's first attestation is the tenant's to make, before any run in it is claimed; `AttestedIncarnationAsync`
+is what the worker reads for each claim and is null for an environment the runner does not anchor.
+
 ## Refusals a runner must act on
 
 | Situation | What you get |

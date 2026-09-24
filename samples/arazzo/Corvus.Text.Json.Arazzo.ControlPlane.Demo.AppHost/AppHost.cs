@@ -82,6 +82,16 @@ var ledgerDb = ledgerPostgres.AddDatabase("ledgerdb");
 var kycPostgres = builder.AddPostgres("kyc-postgres");
 var kycDb = kycPostgres.AddDatabase("kycdb");
 
+// The tenant's OWN anchor store (ADR 0065 decision 6): a dedicated Postgres instance the production runner alone opens,
+// holding one tenant anchor record per production run and the environment's attested store incarnation. It is what
+// makes a control-plane rollback, substitution or replay of a production checkpoint a fault at the runner's next open.
+// The control plane never sees it, which is the point: the record of which checkpoint is current lives where the
+// party that holds every checkpoint cannot rewrite it. The runner provisions its schema (its own PrepareAsync) and
+// records the first incarnation attestation on startup, standing in for the tenant operator's attestation at
+// environment creation. Ephemeral, like the other databases.
+var tenantPostgres = builder.AddPostgres("tenant-postgres");
+var tenantAnchors = tenantPostgres.AddDatabase("tenantanchors");
+
 // Vault secure introduction (design §13.5.1). Provisioning runs as a CI/IaC identity (here, a fixed dev root token on
 // the one-shot provisioner). The runner does NOT get a pre-minted token: it authenticates via Vault AppRole and
 // receives a dynamically-issued, short-TTL token. In production the runner's identity (its AppRole SecretID, or a
@@ -601,6 +611,11 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner")
 builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner-production")
     .WithReference(workflowstore)
     .WaitFor(workflowstore)
+    // The tenant anchor (ADR 0065 decision 6): the tenant's own database, and the first attestation of the store
+    // incarnation, which unblocks production's runs. A sealed environment cannot be served without one.
+    .WithReference(tenantAnchors)
+    .WaitFor(tenantAnchors)
+    .WithEnvironment("Runner__Anchor__InitialIncarnation", "1")
     .WithEnvironment("Runner__CheckpointProtectionKey", checkpointProtectionKey)
     .WithEnvironment("VAULT_ADDR", vault.GetEndpoint("http"))
     .WithEnvironment("Runner__Vault__RoleId", runnerRoleId)

@@ -95,6 +95,21 @@ public sealed class RunnerKeyRing
     /// <returns><see langword="true"/> when the environment's entry is marked sealed.</returns>
     public bool IsSealed(string environment)
         => this.keys.TryGetValue(environment, out RunnerEnvironmentKeys keys) && keys.Sealed;
+
+    /// <summary>Gets the environments on the ring that are marked sealed.</summary>
+    public IEnumerable<string> SealedEnvironments
+    {
+        get
+        {
+            foreach (KeyValuePair<string, RunnerEnvironmentKeys> entry in this.keys)
+            {
+                if (entry.Value.Sealed)
+                {
+                    yield return entry.Key;
+                }
+            }
+        }
+    }
 }
 
 /// <summary>One environment's entry in a runner's key ring configuration.</summary>

@@ -8,6 +8,7 @@
 // process (its real-life deployment is a container, scaled independently) whose long-running loops are hosted
 // BackgroundServices; the minimal web surface exists only for the §5.4 health probe + Aspire/OTel.
 using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Anchoring;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.Runner.Client;
 using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
@@ -293,7 +294,34 @@ var controlPlaneAuthentication = new OAuth2ClientCredentialsAuthenticationProvid
 var runnerApiTransport = new HttpClientTransport(
     new HttpClient { BaseAddress = new Uri($"{controlPlaneBaseUrl.TrimEnd('/')}/arazzo/runner/v1") },
     controlPlaneAuthentication);
-var runnerClient = new ArazzoRunnerClient(runnerApiTransport, keyRing: keyRing);
+// The tenant anchor store (ADR 0065 decision 6): the tenant's OWN database (the AppHost injects
+// ConnectionStrings:tenantanchors, from a Postgres instance the control plane never opens), holding one record per run
+// of what this tenant last committed to, and the environment's attested store incarnation. Every load of a sealed
+// environment's run evaluates the anchor decision table before the row is trusted, and every save is staged with the
+// tenant before it is dispatched, so a rollback, substitution or replay by the control plane faults the run rather
+// than advancing it. The runner runs its own DDL here because the store is its own. Runner:Anchor:InitialIncarnation
+// records the tenant's FIRST attestation when none exists, standing in for the operator's attestation at environment
+// creation; a later restore is attested by raising it, never by configuration alone. A sealed key-ring entry with no
+// anchor store refuses to start: the runner client enforces it.
+ITenantAnchorStore? anchors = null;
+if (builder.Configuration.GetConnectionString("tenantanchors") is { Length: > 0 } anchorConnection)
+{
+    await PostgresTenantAnchorStore.PrepareAsync(anchorConnection);
+    PostgresTenantAnchorStore tenantAnchors = await PostgresTenantAnchorStore.ConnectAsync(anchorConnection);
+    anchors = tenantAnchors;
+    if (builder.Configuration.GetValue<ulong?>("Runner:Anchor:InitialIncarnation") is { } initialIncarnation)
+    {
+        foreach (RunnerKeyRingEntry entry in keyRingEntries)
+        {
+            if (await tenantAnchors.ReadAttestedIncarnationAsync(entry.Environment, CancellationToken.None) is null)
+            {
+                await tenantAnchors.AttestIncarnationAsync(entry.Environment, initialIncarnation, CancellationToken.None);
+            }
+        }
+    }
+}
+
+var runnerClient = new ArazzoRunnerClient(runnerApiTransport, keyRing: keyRing, anchors: anchors);
 builder.Services.AddSingleton(runnerClient);
 
 // Durable schedules (#896): a schedule is a durable run of the built-in scheduler workflow. When this runner serves

@@ -17,7 +17,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// <remarks>
 /// <para>The envelope is a closed schema in fixed property order:</para>
 /// <code>
-/// { "runId", "environment", "workflowId", "status", "cursor", "sequence", "epoch"?, "createdAt", "updatedAt"?,
+/// { "runId", "environment", "workflowId", "status", "cursor", "sequence", "epoch"?, "incarnation"?, "createdAt", "updatedAt"?,
 ///   "correlationId"?, "rerunOf"?, "tags"?, "securityTags"?, "retryCounters": { "&lt;stepId&gt;": n },
 ///   "stepJournal"?: [ { "stepId", "status", "attempt", "startedAt", "endedAt" } ], "journalTruncated"?,
 ///   "wait"?, "fault"? }
@@ -466,7 +466,8 @@ public static class WorkflowCheckpointSerializer
             envelope.Sequence,
             envelope.Epoch,
             new CheckpointBudgetFacts(controlPlane.Budget, journalCount, envelope.JournalTruncated, budgetFaulted),
-            controlPlaneRegion);
+            controlPlaneRegion,
+            envelope.Incarnation);
     }
 
     /// <summary>
@@ -704,6 +705,13 @@ public static class WorkflowCheckpointSerializer
             writer.WriteNumber("epoch"u8, epoch);
         }
 
+        // The other half of the anchor's ordering key (decision 6): the store incarnation the writer read from the
+        // tenant's own attestation, written beside the epoch so the MAC and the digest cover both.
+        if (envelope.Incarnation is { } incarnation)
+        {
+            writer.WriteNumber("incarnation"u8, incarnation);
+        }
+
         writer.WriteString("createdAt"u8, envelope.CreatedAt);
         if (envelope.UpdatedAt is { } updatedAt)
         {
@@ -865,6 +873,7 @@ public static class WorkflowCheckpointSerializer
         int? cursor = null;
         long? sequence = null;
         long? epoch = null;
+        ulong? incarnation = null;
         DateTimeOffset? createdAt = null;
         DateTimeOffset? updatedAt = null;
         string? correlationId = null;
@@ -908,6 +917,10 @@ public static class WorkflowCheckpointSerializer
                 else if (property.NameEquals("epoch"u8))
                 {
                     epoch = value.GetInt64();
+                }
+                else if (property.NameEquals("incarnation"u8))
+                {
+                    incarnation = value.GetUInt64();
                 }
                 else if (property.NameEquals("createdAt"u8))
                 {
@@ -1008,7 +1021,8 @@ public static class WorkflowCheckpointSerializer
                 journal ?? [],
                 journalTruncated,
                 wait,
-                fault);
+                fault,
+                incarnation);
         }
         catch
         {
@@ -1074,6 +1088,7 @@ public static class WorkflowCheckpointSerializer
 /// <param name="JournalTruncated">Whether the journal was capped and its oldest entries dropped.</param>
 /// <param name="Wait">The wait the run is suspended on, if it is.</param>
 /// <param name="Fault">The fault the runner recorded, if the run is faulted.</param>
+/// <param name="Incarnation">The tenant-attested store incarnation the writer holds the run under (decision 6, the anchor's ordering key with <paramref name="Epoch"/>), or <see langword="null"/> for a writer in an environment that is not anchored.</param>
 public readonly record struct CheckpointEnvelope(
     WorkflowRunId RunId,
     string Environment,
@@ -1091,7 +1106,8 @@ public readonly record struct CheckpointEnvelope(
     IReadOnlyList<WorkflowStepJournalEntry> StepJournal,
     bool JournalTruncated,
     WorkflowWait? Wait,
-    WorkflowFault? Fault);
+    WorkflowFault? Fault,
+    ulong? Incarnation = null);
 
 /// <summary>What a runner's submission claims, read by the checkpoint surfaces before the server joins it with the control-plane region (<see cref="WorkflowCheckpointSerializer.TryReadSubmission"/>).</summary>
 /// <param name="Environment">The environment the runner region claims (ADR 0065 decision 9).</param>
@@ -1112,4 +1128,5 @@ public readonly record struct CheckpointSubmission(string Environment, long Sequ
 /// <param name="Epoch">The lease epoch the runner region carries (decision 6), or <see langword="null"/> when the writer holds no grant.</param>
 /// <param name="Facts">The execution-budget facts (ADR 0068).</param>
 /// <param name="ControlPlaneRegion">The control-plane region's bytes as the row carries them (decision 7): the server's, which a runner never submits.</param>
-public readonly record struct CheckpointProjection(WorkflowRunIndexEntry Index, string Environment, long Sequence, long? Epoch, CheckpointBudgetFacts Facts, ReadOnlyMemory<byte> ControlPlaneRegion);
+/// <param name="Incarnation">The store incarnation the runner region carries (decision 6), or <see langword="null"/> when the writer is not anchored.</param>
+public readonly record struct CheckpointProjection(WorkflowRunIndexEntry Index, string Environment, long Sequence, long? Epoch, CheckpointBudgetFacts Facts, ReadOnlyMemory<byte> ControlPlaneRegion, ulong? Incarnation = null);

@@ -21,8 +21,12 @@ everything. It composes:
   example seed registers a key generation for and which is therefore *sealed* (ADR 0065 decision 10). It reads
   production's payload key from Vault into its key ring, encrypts the payload of every checkpoint row it writes and
   MACs the row, verifies and opens every row it loads, and the control plane refuses any clear production row and
-  shows a production run's step journal without outputs, as sealed. Its own machine principal
-  (`arazzo-runner-production`), its own wrapping token, no `$draft` runs, no schedules.
+  shows a production run's step journal without outputs, as sealed. It anchors every production run in the
+  tenant's own database (decision 6): **tenant-postgres**, a Postgres instance only this runner opens, holds one
+  record per run of what the tenant last committed to and the environment's attested store incarnation, so a
+  control plane that rolls a production run back or substitutes a checkpoint has the run refused at the next claim
+  rather than advanced. Its own machine principal (`arazzo-runner-production`), its own wrapping token, no `$draft`
+  runs, no schedules.
 
 ## Secure introduction — a simulation of the runtime host's identity (design §13.5.1)
 

@@ -5,6 +5,7 @@
 using System.Buffers;
 using System.Security.Cryptography;
 using System.Text;
+using Corvus.Text.Json.Arazzo.Durability.Anchoring;
 
 namespace Corvus.Text.Json.Arazzo.Durability;
 
@@ -19,10 +20,22 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// and come back exactly as before, and nothing above this store ever holds a key.
 /// </summary>
 /// <remarks>
+/// <para>
+/// With a tenant anchor store (decision 6), every environment on the ring is anchored as well: each load evaluates
+/// the anchor decision table over the row the store holds before a byte of it is trusted, and each save stages its
+/// mark with the tenant before it is dispatched, so a rollback, a substitution or a replay by the control plane is a
+/// fault at the next open rather than an advance. The genesis row, the clear row the control plane writes at
+/// sequence 0 before any runner has claimed, is the origin the anchor commits to. A load whose MAC does not verify
+/// is, for an anchored environment, the table's unreadable row rather than a bare integrity fault. Without an anchor
+/// store the environment is sealed but not anchored, which is the listener's posture (decision 11) and never a
+/// lease-holding runner's: the runner client refuses that combination.
+/// </para>
+/// <para>
 /// The store encrypts clear rows only. A row that comes back through it for a control-plane-region write (the
 /// serverless checkpoint coordinator faulting a run on its budget over a row it loaded here) is a clear row by then,
 /// and is encrypted again under a fresh salt, which is what the salt-per-operation rule of decision 5 requires. A
 /// row that already names a key generation is not one this store re-seals: it refuses rather than encrypt twice.
+/// </para>
 /// </remarks>
 public sealed class SealingCheckpointStore : IWorkflowCheckpointStore, IWorkflowCheckpointFlush
 {
@@ -30,17 +43,25 @@ public sealed class SealingCheckpointStore : IWorkflowCheckpointStore, IWorkflow
 
     private readonly IWorkflowCheckpointStore inner;
     private readonly RunnerKeyRing ring;
+    private readonly CheckpointAnchoring? anchoring;
 
     /// <summary>Initializes a new instance of the <see cref="SealingCheckpointStore"/> class.</summary>
     /// <param name="inner">The store the sealed rows go to and the rows to open come from.</param>
     /// <param name="ring">The runner's keys.</param>
-    public SealingCheckpointStore(IWorkflowCheckpointStore inner, RunnerKeyRing ring)
+    /// <param name="anchors">The tenant anchor store (ADR 0065 decision 6); with one, every environment on the ring is anchored.</param>
+    public SealingCheckpointStore(IWorkflowCheckpointStore inner, RunnerKeyRing ring, ITenantAnchorStore? anchors = null)
     {
         ArgumentNullException.ThrowIfNull(inner);
         ArgumentNullException.ThrowIfNull(ring);
         this.inner = inner;
         this.ring = ring;
+        this.anchoring = anchors is null ? null : new CheckpointAnchoring(anchors);
     }
+
+    /// <summary>Gets whether an environment is anchored here: on the ring, with a tenant anchor store to write.</summary>
+    /// <param name="environment">The environment.</param>
+    /// <returns><see langword="true"/> when loads and saves for the environment go through the anchor.</returns>
+    public bool IsAnchored(string environment) => this.anchoring is not null && this.ring.TryGet(environment, out _);
 
     /// <summary>
     /// Seals a clear row: encrypts its payload under a data key derived for this one operation and writes the
@@ -138,13 +159,20 @@ public sealed class SealingCheckpointStore : IWorkflowCheckpointStore, IWorkflow
         }
 
         byte[] sealedRow = Seal(checkpointRow, address, keys);
-        return this.inner.SaveAsync(address, sealedRow, index, expected, cancellationToken);
+        return this.anchoring is null
+            ? this.inner.SaveAsync(address, sealedRow, index, expected, cancellationToken)
+            : this.SaveAnchoredAsync(address, sealedRow, index, expected, cancellationToken);
     }
 
     /// <inheritdoc/>
     public async ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
     {
         WorkflowCheckpoint? loaded = await this.inner.LoadAsync(address, cancellationToken).ConfigureAwait(false);
+        if (this.IsAnchored(address.Environment))
+        {
+            return await this.LoadAnchoredAsync(address, loaded, cancellationToken).ConfigureAwait(false);
+        }
+
         if (loaded is not { } checkpoint)
         {
             return null;
@@ -196,4 +224,73 @@ public sealed class SealingCheckpointStore : IWorkflowCheckpointStore, IWorkflow
     /// <inheritdoc/>
     public ValueTask FlushAsync(CancellationToken cancellationToken)
         => this.inner is IWorkflowCheckpointFlush flush ? flush.FlushAsync(cancellationToken) : default;
+
+    // The digest the anchor commits to: over the submitted bytes of the row as the store holds it, never the
+    // control-plane region, which is joined at read time and is not the runner's to commit to (decision 6).
+    private static AnchorDigest DigestOf(ReadOnlyMemory<byte> row)
+        => CheckpointDigest.ForSubmitted(CheckpointRow.SubmittedBytes(row).Span);
+
+    // An anchored save: the mark is staged with the tenant before the row is dispatched, the dispatch is
+    // acknowledged to the anchor, and the run's gate is held throughout so one save is in flight per run. A dispatch
+    // that fails leaves the mark staged: a 409 is not an abandonment, and the next open resolves it.
+    private async ValueTask<WorkflowEtag> SaveAnchoredAsync(WorkflowRunAddress address, byte[] sealedRow, WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
+    {
+        CheckpointAnchoring.RunSlot staged = await this.anchoring!.StageAsync(address, sealedRow, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            WorkflowEtag etag = await this.inner.SaveAsync(address, sealedRow, index, expected, cancellationToken).ConfigureAwait(false);
+            await this.anchoring.AcknowledgeAsync(staged, address, cancellationToken).ConfigureAwait(false);
+            return etag;
+        }
+        finally
+        {
+            this.anchoring.Release(staged, address);
+        }
+    }
+
+    // An anchored load: the row is classified for the decision table (absent, unreadable, the genesis row, or a
+    // readable row at its MAC-verified sequence and incarnation), the table is evaluated and applied, and only then
+    // is the payload opened and the row handed on.
+    private async ValueTask<WorkflowCheckpoint?> LoadAnchoredAsync(WorkflowRunAddress address, WorkflowCheckpoint? loaded, CancellationToken cancellationToken)
+    {
+        if (loaded is not { } checkpoint)
+        {
+            await this.anchoring!.OpenAsync(address, AnchorStoreRow.Absent, cancellationToken).ConfigureAwait(false);
+            return null;
+        }
+
+        this.ring.TryGet(address.Environment, out RunnerEnvironmentKeys keys);
+        string? keyId = CheckpointIntegrity.KeyIdOf(checkpoint.Row.Span);
+        if (keyId is null)
+        {
+            // A clear row. The one an anchored environment reads is the genesis row (decisions 4 and 6): written by
+            // the control plane before any runner has claimed, holding no key and no lease, at sequence 0 by
+            // definition. Any other clear row was written without the key, and is unreadable to the table.
+            bool genesis = WorkflowCheckpointSerializer.TryProject(checkpoint.Row, out CheckpointProjection projection)
+                && projection.Epoch is null
+                && projection.Sequence == 0;
+            await this.anchoring!.OpenAsync(address, genesis ? AnchorStoreRow.Genesis(DigestOf(checkpoint.Row), 0) : AnchorStoreRow.Unreadable, cancellationToken).ConfigureAwait(false);
+            return checkpoint;
+        }
+
+        if (!string.Equals(keys.KeyId, keyId, StringComparison.Ordinal)
+            || !CheckpointIntegrity.Verify(checkpoint.Row.Span, keys.EnvelopeMac)
+            || !WorkflowCheckpointSerializer.TryProject(checkpoint.Row, out CheckpointProjection verified))
+        {
+            // Table row 5: a row whose MAC does not verify has no trustworthy sequence, and is a hard fault the
+            // anchor records rather than a bare integrity fault.
+            await this.anchoring!.OpenAsync(address, AnchorStoreRow.Unreadable, cancellationToken).ConfigureAwait(false);
+            throw ThrowHelper.GetCheckpointIntegrityException(address);
+        }
+
+        bool clearPayload = CheckpointRow.Parse(checkpoint.Row.Span).Algorithm == CheckpointAlgorithm.Clear;
+        if (clearPayload && keys.Sealed)
+        {
+            throw ThrowHelper.GetCheckpointCleartextRefusedException(address);
+        }
+
+        // The sequence and incarnation come from the MAC-verified region, never from anything the server projected.
+        await this.anchoring!.OpenAsync(address, AnchorStoreRow.At((ulong)verified.Sequence, DigestOf(checkpoint.Row), verified.Incarnation ?? 0), cancellationToken).ConfigureAwait(false);
+        return clearPayload ? checkpoint : new WorkflowCheckpoint(Open(checkpoint.Row, address, keys), checkpoint.Etag);
+    }
 }
