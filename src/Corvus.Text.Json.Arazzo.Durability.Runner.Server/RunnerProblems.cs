@@ -110,7 +110,7 @@ internal static class RunnerProblems
 
     internal static ProblemDetails.Source CleartextRefused()
         => ProblemDetails.Build(
-            detail: "The environment is sealed, and the submission carries no MAC under one of its active key generations. A sealed environment takes MAC'd checkpoints only (ADR 0065 decision 10).",
+            detail: "The environment is sealed, and the submission is not an encrypted checkpoint under one of its active key generations: its payload is clear, it carries no MAC, or its generation is not active. A sealed environment takes encrypted, MAC'd checkpoints only (ADR 0065 decision 10).",
             status: 400,
             title: "Bad Request",
             type: "about:blank");

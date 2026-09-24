@@ -12,7 +12,9 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// The keys a runner holds for the environments it serves (ADR 0065 decisions 5 and 10): one entry per environment,
 /// naming the key generation and the environment payload key, read from the runner's own configuration and its own
 /// secret store. Nothing about keys ever comes from the control plane. The per-generation subkeys are derived once
-/// here and held for the runner's life, so no checkpoint pays for a derivation.
+/// here and held for the runner's life, so no checkpoint pays for one; the payload key is held too, since every
+/// checkpoint's data key is derived from it afresh. Every environment on the ring is one the runner encrypts for:
+/// there is no MAC-only entry.
 /// </summary>
 public sealed class RunnerKeyRing
 {
@@ -62,16 +64,11 @@ public sealed class RunnerKeyRing
                 }
             }
 
-            try
-            {
-                byte[] envelopeMac = new byte[PayloadKeyLength];
-                CheckpointDerivation.DeriveSubkey(payloadKey, CheckpointSubkey.EnvelopeMac, entry.Environment, entry.KeyId, envelopeMac);
-                built[entry.Environment] = new RunnerEnvironmentKeys(entry.KeyId, envelopeMac, entry.Sealed);
-            }
-            finally
-            {
-                Array.Clear(payloadKey);
-            }
+            // The payload key itself stays on the ring: every encryption derives its data key from it (decision 5),
+            // so it is held for the runner's life alongside the subkey derived once here.
+            byte[] envelopeMac = new byte[PayloadKeyLength];
+            CheckpointDerivation.DeriveSubkey(payloadKey, CheckpointSubkey.EnvelopeMac, entry.Environment, entry.KeyId, envelopeMac);
+            built[entry.Environment] = new RunnerEnvironmentKeys(entry.KeyId, payloadKey, envelopeMac, entry.Sealed);
         }
 
         return new RunnerKeyRing(built.ToFrozenDictionary(StringComparer.Ordinal));
@@ -93,7 +90,7 @@ public sealed class RunnerKeyRing
     public bool TryGet(string environment, out RunnerEnvironmentKeys keys)
         => this.keys.TryGetValue(environment, out keys);
 
-    /// <summary>Whether the runner is configured to serve an environment sealed: it writes MAC'd rows only and refuses a clear one.</summary>
+    /// <summary>Whether the runner is configured to serve an environment sealed: it refuses a clear row on load, other than the genesis row.</summary>
     /// <param name="environment">The environment.</param>
     /// <returns><see langword="true"/> when the environment's entry is marked sealed.</returns>
     public bool IsSealed(string environment)
@@ -104,11 +101,12 @@ public sealed class RunnerKeyRing
 /// <param name="Environment">The environment the runner serves.</param>
 /// <param name="KeyId">The key generation the runner writes under; the id the control plane's registration carries.</param>
 /// <param name="PayloadKey">Where the runner reads the environment payload key: a reference into its own secret store, holding the key's 32 bytes as base64.</param>
-/// <param name="Sealed">Whether the environment is sealed for this runner: it writes MAC'd rows only and refuses a clear one on open.</param>
+/// <param name="Sealed">Whether the environment is sealed for this runner: it refuses a clear row on open, other than the genesis row. The runner encrypts and MACs what it writes for the environment either way.</param>
 public sealed record RunnerKeyRingEntry(string Environment, string KeyId, SecretRef PayloadKey, bool Sealed);
 
-/// <summary>The derived keys a runner holds for one environment.</summary>
+/// <summary>The keys a runner holds for one environment.</summary>
 /// <param name="KeyId">The key generation.</param>
-/// <param name="EnvelopeMac">The <c>envelope-mac</c> subkey (ADR 0065 decision 5).</param>
+/// <param name="PayloadKey">The environment payload key (ADR 0065 decision 5): the derivation key every checkpoint's data key comes from.</param>
+/// <param name="EnvelopeMac">The <c>envelope-mac</c> subkey, derived once.</param>
 /// <param name="Sealed">Whether the environment is sealed for this runner.</param>
-public readonly record struct RunnerEnvironmentKeys(string KeyId, byte[] EnvelopeMac, bool Sealed);
+public readonly record struct RunnerEnvironmentKeys(string KeyId, byte[] PayloadKey, byte[] EnvelopeMac, bool Sealed);

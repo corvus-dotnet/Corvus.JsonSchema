@@ -6041,7 +6041,8 @@
             "items": { "$ref": "#/components/schemas/WorkflowRunStepRecord" },
             "description": "The recorded steps, in the order the run executed them."
           },
-          "truncated": { "type": "boolean", "description": "True when the journal was capped and its oldest entries were dropped (a long-running or looping run, ADR 0050); the retained steps are the most recent." }
+          "truncated": { "type": "boolean", "description": "True when the journal was capped and its oldest entries were dropped (a long-running or looping run, ADR 0050); the retained steps are the most recent." },
+          "sealed": { "type": "boolean", "description": "True when the run's checkpoint payload is encrypted under its environment's key (a sealed environment, ADR 0065 decision 5): the control plane holds no key, so no step carries outputs. The steps' ids, outcomes, attempts and timing are envelope data and are reported as usual." }
         },
         "required": ["runId", "steps"]
       },

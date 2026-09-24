@@ -51,6 +51,31 @@ IWorkflowStateStore stateStore = builder.Configuration["Runner:CheckpointProtect
     ? new ProtectedWorkflowStateStore(postgresStateStore, new AesGcmCheckpointProtector(Convert.FromBase64String(checkpointKey)))
     : postgresStateStore;
 PostgresWorkflowCatalogStore catalogStore = await PostgresWorkflowCatalogStore.ConnectAsync(dataSource);
+
+// The runner's key ring (ADR 0065 decisions 5, 10 and 11): this host is the listener that terminates the function's
+// plaintext checkpoint, so it is the host that holds the environment payload key. For every environment named under
+// Runner:Sealing:Environments:N:{Environment,KeyId,PayloadKeyRef,Sealed} it reads the key from its own secret store,
+// an env:// or file:// reference the platform injects into this container and nothing the control plane supplies,
+// encrypts the payload of every checkpoint the function posts before the row reaches the shared store, MACs the row,
+// and opens every row the function loads. The function itself never holds a key. Empty for an open environment, as
+// the demo's isolated environment is.
+RunnerKeyRing keyRing = RunnerKeyRing.Empty;
+List<RunnerKeyRingEntry> keyRingEntries = [];
+foreach (IConfigurationSection entry in builder.Configuration.GetSection("Runner:Sealing:Environments").GetChildren())
+{
+    keyRingEntries.Add(new RunnerKeyRingEntry(
+        entry["Environment"] ?? throw new InvalidOperationException($"{entry.Path}:Environment is required."),
+        entry["KeyId"] ?? throw new InvalidOperationException($"{entry.Path}:KeyId is required."),
+        SecretRef.Parse(entry["PayloadKeyRef"] ?? throw new InvalidOperationException($"{entry.Path}:PayloadKeyRef is required.")),
+        entry.GetValue("Sealed", true)));
+}
+
+if (keyRingEntries.Count > 0)
+{
+    keyRing = await RunnerKeyRing.BuildAsync(keyRingEntries, new CompositeSecretResolver(new EnvSecretResolver(), new FileSecretResolver()), CancellationToken.None);
+}
+
+IWorkflowCheckpointStore checkpointSurfaceStore = keyRing.IsEmpty ? stateStore : new SealingCheckpointStore(stateStore, keyRing);
 PostgresRunnerRegistry registry = await PostgresRunnerRegistry.ConnectAsync(dataSource);
 PostgresEnvironmentStore environments = await PostgresEnvironmentStore.ConnectAsync(dataSource);
 PostgresEnvironmentRunnerAuthorizationStore runnerAuthorizations = await PostgresEnvironmentRunnerAuthorizationStore.ConnectAsync(dataSource);
@@ -238,9 +263,10 @@ app.MapDefaultEndpoints();
 // Every request must carry the run-scoped token this runner minted for that dispatch (ADR 0062). There is no ambient
 // principal to require: the caller is a function in a container, and the token is what binds it to one run. The surface
 // is reachable from that container, so an unauthenticated one would let anything on that network read and overwrite
-// every run this runner holds.
+// every run this runner holds. For a sealed environment the store behind it is the sealing store built above, so the
+// function's clear checkpoint is encrypted here and the row it loads is opened here (ADR 0065 decision 11).
 app.MapWorkflowCheckpointEndpoints(
-    stateStore,
+    checkpointSurfaceStore,
     requireAuthorization: false,
     authenticateCheckpointToken: (address, token) => CheckpointToken.TryValidate(checkpointSecret, token, address, DateTimeOffset.UtcNow));
 

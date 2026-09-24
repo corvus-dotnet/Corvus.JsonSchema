@@ -40,8 +40,9 @@ public static class WorkflowCheckpointEndpoints
     /// <param name="authenticateCheckpointToken">The run-scoped checkpoint-token authenticator (ADR 0062): given the request's full run address and the presented bearer token, returns whether it authorises checkpoints for that run at that address. A request without a valid token is a 401 — this is how the checkpoint surface authenticates a serverless function's callback (e.g. <c>(address, token) =&gt; CheckpointToken.TryValidate(secret, token, address, now)</c>). It is required rather than optional because the caller is a machine acting for one run, holding no principal of its own: without it the surface's only gate is the host's ambient authorization, which admits any authenticated caller to any run.</param>
     /// <param name="checkpoints">The host's checkpoint coordinator. Pass the same instance every checkpoint-authoring surface in this host uses — ADR 0065 decision 6 requires the per-run single-flight interlock to be per run, not per component, and the coordinator holds that interlock in memory. When <see langword="null"/> a private one is built, which is correct only for a host mapping this surface alone.</param>
     /// <param name="auditor">The deployment's governance auditor. A checkpoint read is the run's whole payload, so it is recorded, with the run as its subject, before it is answered, and refused when it cannot be (ADR 0070).</param>
+    /// <param name="sealedGenerations">For a host that holds no key and terminates into the shared store (the control plane's own mapping): the active key generations of a sealed environment, or <see langword="null"/> for an environment that is not sealed. A save for a sealed environment that is not encrypted and MAC'd under one of them is refused with <c>400</c> (ADR 0065 decision 10), the rule the runner API applies. A host that seals what it terminates itself (a <see cref="SealingCheckpointStore"/> over a listener's store) needs none: its store encrypts.</param>
     /// <returns>The same endpoint route builder, for chaining.</returns>
-    public static IEndpointRouteBuilder MapWorkflowCheckpointEndpoints(this IEndpointRouteBuilder endpoints, IWorkflowCheckpointStore store, bool requireAuthorization, Func<WorkflowRunAddress, string, bool> authenticateCheckpointToken, WorkflowCheckpointCoordinator? checkpoints = null, GovernanceAuditor? auditor = null)
+    public static IEndpointRouteBuilder MapWorkflowCheckpointEndpoints(this IEndpointRouteBuilder endpoints, IWorkflowCheckpointStore store, bool requireAuthorization, Func<WorkflowRunAddress, string, bool> authenticateCheckpointToken, WorkflowCheckpointCoordinator? checkpoints = null, GovernanceAuditor? auditor = null, Func<string, CancellationToken, ValueTask<IReadOnlySet<string>?>>? sealedGenerations = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentNullException.ThrowIfNull(store);
@@ -153,6 +154,17 @@ public static class WorkflowCheckpointEndpoints
                 if (submission.Sequence != sequence)
                 {
                     await WriteProblemAsync(context, StatusCodes.Status400BadRequest, "The checkpoint body's sequence is missing or does not match the request header.").ConfigureAwait(false);
+                    return;
+                }
+
+                // ADR 0065 decision 10, on a keyless host: a sealed environment takes encrypted, MAC'd submissions
+                // under an active generation only. The same rule as the runner API's, so this surface is not the way
+                // round it.
+                if (sealedGenerations is not null
+                    && await sealedGenerations(address.Environment, context.RequestAborted).ConfigureAwait(false) is { } generations
+                    && !CheckpointSealing.IsSealedUnder(submission, generations))
+                {
+                    await WriteProblemAsync(context, StatusCodes.Status400BadRequest, "The environment is sealed, and the submission is not an encrypted checkpoint under one of its active key generations (ADR 0065 decision 10).").ConfigureAwait(false);
                     return;
                 }
 

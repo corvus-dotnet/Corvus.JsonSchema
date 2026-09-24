@@ -26,6 +26,10 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// salt, nonce and tag, and its payload region is the payload's plaintext JSON; a clear row carrying any of them is
 /// malformed, since they mean nothing without an encryption. Its key id and MAC regions are either both empty (no
 /// integrity) or both filled (a MAC'd clear row, <see cref="CheckpointIntegrity"/>), never one without the other.
+/// An <see cref="CheckpointAlgorithm.Aes256Gcm"/> row, what a sealed environment's runner writes, carries a 32-byte
+/// salt, a 12-byte nonce, a 16-byte tag and a payload region that is ciphertext (<see cref="CheckpointPayloadCipher"/>),
+/// and always a key id and a MAC: an encrypted row without its MAC is malformed, since the algorithm selector it
+/// carries would be unauthenticated.
 /// </para>
 /// </remarks>
 public static class CheckpointRow
@@ -194,9 +198,22 @@ public static class CheckpointRow
         layout = new CheckpointRowLayout(algorithm, regions[0], regions[1], regions[2], regions[3], regions[4], regions[5], regions[6], regions[7], submittedLength);
 
         // A clear row has nothing to put in the encryption regions; one that carries them is not a row this code wrote.
-        // Its key id and MAC come together or not at all.
-        return layout.KeyId.IsEmpty() == layout.Mac.IsEmpty()
-            && (algorithm != CheckpointAlgorithm.Clear || (layout.Salt.IsEmpty() && layout.Nonce.IsEmpty() && layout.Tag.IsEmpty()));
+        // Its key id and MAC come together or not at all. An encrypted row carries every encryption region at its
+        // fixed length, and its key id and MAC without exception.
+        if (layout.KeyId.IsEmpty() != layout.Mac.IsEmpty())
+        {
+            return false;
+        }
+
+        return algorithm switch
+        {
+            CheckpointAlgorithm.Clear => layout.Salt.IsEmpty() && layout.Nonce.IsEmpty() && layout.Tag.IsEmpty(),
+            CheckpointAlgorithm.Aes256Gcm => !layout.KeyId.IsEmpty()
+                && layout.Salt.Length() == CheckpointPayloadCipher.SaltLength
+                && layout.Nonce.Length() == CheckpointPayloadCipher.NonceLength
+                && layout.Tag.Length() == CheckpointPayloadCipher.TagLength,
+            _ => false,
+        };
     }
 
     /// <summary>Writes a clear row: the runner region and the payload plaintext, with the control-plane region joined.</summary>
@@ -218,6 +235,42 @@ public static class CheckpointRow
         offset = WriteRegion(row, offset, payload);
         offset = WriteRegion(row, offset, ReadOnlySpan<byte>.Empty); // MAC
         WriteRegion(row, offset, controlPlaneRegion);
+        return row;
+    }
+
+    /// <summary>
+    /// Writes an encrypted row (ADR 0065 decision 5): the runner region clear, the payload as
+    /// <see cref="CheckpointPayloadCipher"/> ciphertext with its salt, nonce and tag, and the key id and MAC of
+    /// <see cref="CheckpointIntegrity"/>, with the control-plane region joined.
+    /// </summary>
+    /// <param name="runnerRegion">The runner-authored region (the envelope JSON).</param>
+    /// <param name="keyId">The key generation the payload is encrypted and the row is MAC'd under.</param>
+    /// <param name="salt">The data-key salt.</param>
+    /// <param name="nonce">The AEAD nonce.</param>
+    /// <param name="tag">The AEAD tag.</param>
+    /// <param name="ciphertext">The payload ciphertext.</param>
+    /// <param name="mac">The unified MAC.</param>
+    /// <param name="controlPlaneRegion">The control-plane region, carried verbatim.</param>
+    /// <returns>The row.</returns>
+    public static byte[] WriteSealed(ReadOnlySpan<byte> runnerRegion, ReadOnlySpan<byte> keyId, ReadOnlySpan<byte> salt, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> tag, ReadOnlySpan<byte> ciphertext, ReadOnlySpan<byte> mac, ReadOnlySpan<byte> controlPlaneRegion)
+    {
+        byte[] row = new byte[HeaderLength + (RegionCount * LengthPrefix) + keyId.Length + runnerRegion.Length + salt.Length + nonce.Length + tag.Length + ciphertext.Length + mac.Length + controlPlaneRegion.Length];
+        row[0] = FramingVersion;
+        row[1] = (byte)CheckpointAlgorithm.Aes256Gcm;
+        int offset = HeaderLength;
+        offset = WriteRegion(row, offset, keyId);
+        offset = WriteRegion(row, offset, runnerRegion);
+        offset = WriteRegion(row, offset, salt);
+        offset = WriteRegion(row, offset, nonce);
+        offset = WriteRegion(row, offset, tag);
+        offset = WriteRegion(row, offset, ciphertext);
+        offset = WriteRegion(row, offset, mac);
+        WriteRegion(row, offset, controlPlaneRegion);
+        if (!TryParse(row, out _))
+        {
+            ThrowHelper.ThrowCheckpointRowMalformed();
+        }
+
         return row;
     }
 
@@ -247,6 +300,8 @@ public static class CheckpointRow
     }
 
     private static bool IsEmpty(this Range range) => range.Start.Value == range.End.Value;
+
+    private static int Length(this Range range) => range.End.Value - range.Start.Value;
 }
 
 /// <summary>The payload algorithm a row's header names; the selector is inside the submitted bytes and therefore authenticated once a MAC exists.</summary>
@@ -255,19 +310,19 @@ public enum CheckpointAlgorithm : byte
     /// <summary>No payload encryption: the payload region is plaintext JSON. The only algorithm of an unsealed environment.</summary>
     Clear = 0,
 
-    /// <summary>AES-256-GCM under a per-encryption derived data key (ADR 0065 decision 5). Reserved until SEQ-3 builds it.</summary>
+    /// <summary>AES-256-GCM under a per-encryption derived data key (ADR 0065 decision 5, <see cref="CheckpointPayloadCipher"/>): the algorithm of a sealed environment.</summary>
     Aes256Gcm = 1,
 }
 
 /// <summary>Where each region of a parsed checkpoint row sits, as ranges into the row's bytes.</summary>
 /// <param name="Algorithm">The payload algorithm the header names.</param>
-/// <param name="KeyId">The key id region (empty on a clear row).</param>
+/// <param name="KeyId">The key id region (empty on an unsealed clear row).</param>
 /// <param name="RunnerRegion">The runner-authored region: the envelope JSON.</param>
-/// <param name="Salt">The data-key salt (empty on a clear row).</param>
-/// <param name="Nonce">The AEAD nonce (empty on a clear row).</param>
-/// <param name="Tag">The AEAD tag (empty on a clear row).</param>
+/// <param name="Salt">The data-key salt (32 bytes on an encrypted row, empty on a clear row).</param>
+/// <param name="Nonce">The AEAD nonce (12 bytes on an encrypted row, empty on a clear row).</param>
+/// <param name="Tag">The AEAD tag (16 bytes on an encrypted row, empty on a clear row).</param>
 /// <param name="Payload">The payload region: plaintext JSON on a clear row, ciphertext otherwise.</param>
-/// <param name="Mac">The unified MAC (empty on a clear row).</param>
+/// <param name="Mac">The unified MAC (empty on an unsealed clear row).</param>
 /// <param name="ControlPlaneRegion">The server-owned control-plane region, joined at read time.</param>
 /// <param name="SubmittedLength">The length of the submitted bytes: the prefix of the row every runner-written region lies in, which the checkpoint digest is taken over.</param>
 public readonly record struct CheckpointRowLayout(

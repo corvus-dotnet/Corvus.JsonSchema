@@ -435,6 +435,12 @@ public static class ControlPlaneEndpointExtensions
         // one leaves the ambient authorization as the only gate, and that admits any authenticated caller to every run
         // in the deployment — and admits everyone in Open. A deployment that dispatches no serverless runs configures
         // no secret and serves no such surface, which is the ADR 0016 posture: absent rather than open.
+        //
+        // The control plane holds no environment payload key (ADR 0065 decision 5), so this mapping terminates
+        // submissions into the store as they arrive: it serves unsealed environments, and for a sealed one it applies
+        // the runner API's rule, requiring a submission encrypted and MAC'd under an active generation, so it is not
+        // the way round that rule. A host that seals what it terminates is a listener with its own key ring
+        // (decision 11), which wraps its store in a SealingCheckpointStore and needs no rule here.
         if (workflowStateStore is not null && !checkpointSecret.IsEmpty)
         {
             endpoints.MapWorkflowCheckpointEndpoints(
@@ -442,7 +448,14 @@ public static class ControlPlaneEndpointExtensions
                 requireAuthorization: securityMode != ControlPlaneSecurityMode.Open,
                 authenticateCheckpointToken: (address, token) => CheckpointToken.TryValidate(checkpointSecret.Span, token, address, DateTimeOffset.UtcNow),
                 checkpoints: checkpoints,
-                auditor: auditor);
+                auditor: auditor,
+                sealedGenerations: async (environment, cancellationToken) =>
+                {
+                    using ParsedJsonDocument<Environments.Environment>? record = await envStore.GetAsync(environment, AccessContext.System, cancellationToken).ConfigureAwait(false);
+                    return record is { } found && !TenantEnvironmentSealing.IsPlatform(found.RootElement) && TenantEnvironmentSealing.ActiveGenerations(found.RootElement) is { Count: > 0 } generations
+                        ? generations
+                        : null;
+                });
         }
 
         return endpoints;

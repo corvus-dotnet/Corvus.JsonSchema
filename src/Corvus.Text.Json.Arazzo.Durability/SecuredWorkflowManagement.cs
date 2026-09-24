@@ -335,6 +335,13 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
                 writer.WriteBoolean("truncated"u8, true);
             }
 
+            if (s.PayloadSealed)
+            {
+                // ADR 0065 decision 5: the payload is encrypted under the environment's key and the control plane
+                // holds none, so no step carries outputs; the journal itself is envelope data and is disclosed as usual.
+                writer.WriteBoolean("sealed"u8, true);
+            }
+
             writer.WriteEndObject();
         });
     }

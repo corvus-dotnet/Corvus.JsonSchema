@@ -306,6 +306,15 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
                 Problem("not-rerunnable", "Run cannot be re-run", 409, $"Run '{runId}' is not a run of a catalogued workflow version, so there is nothing to re-run it from."), workspace);
         }
 
+        // A run in a sealed environment carries its inputs encrypted under the environment's key (ADR 0065 decision
+        // 5), which the control plane does not hold, so there is nothing to start the re-run from here. A re-run of
+        // such a run is the tenant's to start, with the inputs it holds.
+        if (original.PayloadSealed)
+        {
+            return RerunRunResult.Conflict(
+                Problem("not-rerunnable", "Run cannot be re-run", 409, $"Run '{runId}' is in a sealed environment: its inputs are encrypted under the environment's key, which the control plane does not hold, so a re-run has to be started from the inputs the tenant holds."), workspace);
+        }
+
         // Through the same admission as any start, as the caller: the version still available and hosted, the inputs
         // still valid, capacity, and a fresh budget resolved from the environment as it is now.
         var request = new RunStartRequest(

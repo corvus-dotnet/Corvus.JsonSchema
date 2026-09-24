@@ -91,10 +91,11 @@ public sealed class RunnerApiEnvironmentBindingTests
     [TestMethod]
     public async Task A_sealed_environment_takes_only_a_submission_sealed_under_an_active_generation()
     {
-        // ADR 0065 decision 10: the runner API holds no key, so it cannot verify a MAC; it requires one. A clear
-        // submission, one under a generation the record does not hold as active, and one that names a generation
-        // without carrying a MAC are each refused before the store sees them. The genuine one is accepted, and the
-        // same posture never touches an environment that is not sealed.
+        // ADR 0065 decision 10: the runner API holds no key, so it cannot verify a MAC or open a payload; it requires
+        // an encrypted, MAC'd submission under an active generation. A clear submission, one under a generation the
+        // record does not hold as active, and a MAC'd one whose payload is still clear are each refused before the
+        // store sees them. The genuine one is accepted, and the same posture never touches an environment that is not
+        // sealed.
         await using Host host = await Host.StartAsync(boundEnvironments: [Development, Production], sealedGenerations: new Dictionary<string, IReadOnlySet<string>>
         {
             [Production] = new HashSet<string>(["k2"]),
@@ -103,22 +104,35 @@ public sealed class RunnerApiEnvironmentBindingTests
         await host.SeedAsync(DevRunId, Development, WorkflowRunStatus.Running);
         string prodLease = await host.PlantLeaseAsync(ProdRunId, Production);
         string devLease = await host.PlantLeaseAsync(DevRunId, Development);
-        byte[] macKey = Enumerable.Range(0, 32).Select(i => (byte)i).ToArray();
+        byte[] payloadKey = Enumerable.Range(0, 32).Select(i => (byte)i).ToArray();
+        var prodAddress = new WorkflowRunAddress(Production, new WorkflowRunId(ProdRunId));
 
         byte[] clear = Checkpoint(ProdRunId, Production, WorkflowRunStatus.Running, sequence: 2, epoch: LeaseEpoch(prodLease));
         (await host.SaveCheckpointAsync(Runner, Production, ProdRunId, prodLease, clear, 2)).StatusCode.ShouldBe(HttpStatusCode.BadRequest, "clear");
-        byte[] retired = CheckpointIntegrity.Seal(clear, "k1", macKey);
+        byte[] retired = SealingCheckpointStore.Seal(clear, prodAddress, Keys("k1", payloadKey));
         (await host.SaveCheckpointAsync(Runner, Production, ProdRunId, prodLease, retired, 2)).StatusCode.ShouldBe(HttpStatusCode.BadRequest, "a generation the record does not hold as active");
-        byte[] sealedRow = CheckpointIntegrity.Seal(clear, "k2", macKey);
-        (await host.SaveCheckpointAsync(Runner, Production, ProdRunId, prodLease, sealedRow, 2)).StatusCode.ShouldBe(HttpStatusCode.NoContent, "sealed under an active generation");
+        byte[] macdClear = CheckpointIntegrity.Seal(clear, "k2", Keys("k2", payloadKey).EnvelopeMac);
+        (await host.SaveCheckpointAsync(Runner, Production, ProdRunId, prodLease, macdClear, 2)).StatusCode.ShouldBe(HttpStatusCode.BadRequest, "a MAC over a clear payload is still a clear write");
+        byte[] sealedRow = SealingCheckpointStore.Seal(clear, prodAddress, Keys("k2", payloadKey));
+        (await host.SaveCheckpointAsync(Runner, Production, ProdRunId, prodLease, sealedRow, 2)).StatusCode.ShouldBe(HttpStatusCode.NoContent, "encrypted and sealed under an active generation");
 
         byte[] devClear = Checkpoint(DevRunId, Development, WorkflowRunStatus.Running, sequence: 2, epoch: LeaseEpoch(devLease));
         (await host.SaveCheckpointAsync(Runner, Development, DevRunId, devLease, devClear, 2)).StatusCode.ShouldBe(HttpStatusCode.NoContent, "development is not sealed");
 
-        // The persisted row is the sealed submission joined with the control-plane region, MAC intact.
+        // The persisted row is the encrypted submission joined with the control-plane region, MAC intact.
         WorkflowCheckpoint? stored = await host.LoadStoredAsync(Production, ProdRunId);
-        CheckpointIntegrity.KeyIdOf(stored!.Value.Row.Span).ShouldBe("k2");
-        CheckpointIntegrity.Verify(stored.Value.Row.Span, macKey).ShouldBeTrue();
+        CheckpointRow.Parse(stored!.Value.Row.Span).Algorithm.ShouldBe(CheckpointAlgorithm.Aes256Gcm);
+        CheckpointIntegrity.KeyIdOf(stored.Value.Row.Span).ShouldBe("k2");
+        CheckpointIntegrity.Verify(stored.Value.Row.Span, Keys("k2", payloadKey).EnvelopeMac).ShouldBeTrue();
+        CheckpointRow.Parse(SealingCheckpointStore.Open(stored.Value.Row, prodAddress, Keys("k2", payloadKey))).Algorithm.ShouldBe(CheckpointAlgorithm.Clear, "the runner that holds the key opens it");
+    }
+
+    // The keys a runner holds for production under one generation (ADR 0065 decision 5).
+    private static RunnerEnvironmentKeys Keys(string keyId, byte[] payloadKey)
+    {
+        byte[] envelopeMac = new byte[32];
+        Corvus.Text.Json.Arazzo.Durability.Anchoring.CheckpointDerivation.DeriveSubkey(payloadKey, Corvus.Text.Json.Arazzo.Durability.Anchoring.CheckpointSubkey.EnvelopeMac, Production, keyId, envelopeMac);
+        return new RunnerEnvironmentKeys(keyId, payloadKey, envelopeMac, Sealed: true);
     }
 
     // The epoch the lease was granted with: the runner writes it into its region, and the API checks it against the

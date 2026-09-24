@@ -13,6 +13,20 @@ A scale-to-zero Container App running the listener, plus the resources it needs,
 
 It writes `.listener-deploy-state.json` (resource names, the public URL, the checkpoint secret, and the storage connection string). `Remove-CheckpointListener.ps1` reads that file and deletes every resource, best-effort, so there is zero cost between runs.
 
+## Sealing an environment the listener serves
+
+The listener terminates a function's plaintext checkpoint, so for a sealed environment (ADR 0065 decisions 5, 10 and
+11) it is the host that holds the environment payload key. It reads its key ring from the same configuration shape
+the application runner uses, as Container App env vars: `Runner__Sealing__Environments__0__Environment`,
+`Runner__Sealing__Environments__0__KeyId`, `Runner__Sealing__Environments__0__PayloadKeyRef` and
+`Runner__Sealing__Environments__0__Sealed`. The payload key reference is an `env://` or `file://` reference into the
+listener's own container, so the key itself is a Container App secret referenced by env
+(`ARAZZO_PAYLOAD_KEY_PRODUCTION=secretref:payload-key-production`, with `PayloadKeyRef` set to
+`env://ARAZZO_PAYLOAD_KEY_PRODUCTION`) holding the base64 of the 32-byte key. With an entry present, every checkpoint
+the function posts for that environment is encrypted and MAC'd before it reaches the storage account, and every row the
+function loads is verified and opened by the listener; the function never holds a key. The deploy script here stands
+up an open environment and sets none of these.
+
 ## Usage
 
 ```pwsh

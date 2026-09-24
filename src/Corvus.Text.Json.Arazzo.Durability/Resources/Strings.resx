@@ -620,6 +620,9 @@
   <data name="CheckpointCleartextRefused" xml:space="preserve">
     <value>The checkpoint at '{0}' is a clear row, and this runner serves that environment sealed: a row without the environment's MAC is not one it wrote, and is refused (ADR 0065 decision 10).</value>
   </data>
+  <data name="CheckpointSealRefused" xml:space="preserve">
+    <value>The row saved for '{0}' already names a key generation. The sealing store encrypts the payload of a clear row and never re-seals one, since encrypting twice would hide a row that did not decrypt (ADR 0065 decision 5).</value>
+  </data>
   <data name="PayloadKeyNotAKey" xml:space="preserve">
     <value>The payload key for environment '{0}', generation '{1}', is not a 32-byte key in base64. The runner refuses to start with a sealed environment it cannot seal.</value>
   </data>

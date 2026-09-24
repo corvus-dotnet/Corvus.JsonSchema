@@ -132,7 +132,7 @@ public sealed class WorkflowCheckpointSerializerTests
         CheckpointRow.TryParse(submitted.Span, out _).ShouldBeFalse("a submission is not a row");
 
         WorkflowCheckpointSerializer.TryReadSubmission(submitted, out CheckpointSubmission submission).ShouldBeTrue();
-        submission.ShouldBe(new CheckpointSubmission("development", 3, 4, KeyId: null, HasMac: false));
+        submission.ShouldBe(new CheckpointSubmission("development", 3, 4, CheckpointAlgorithm.Clear, KeyId: null, HasMac: false));
         WorkflowCheckpointSerializer.TryReadSubmission(row, out _).ShouldBeFalse();
         WorkflowCheckpointSerializer.TryReadSubmission(new byte[] { 1, 2, 3 }, out _).ShouldBeFalse();
 
@@ -169,6 +169,95 @@ public sealed class WorkflowCheckpointSerializerTests
         WorkflowCheckpointSerializer.TryProject(wrongVersion, out _).ShouldBeFalse();
         WorkflowCheckpointSerializer.TryReadSequence(wrongVersion, out _).ShouldBeFalse();
         WorkflowCheckpointSerializer.TryReadBudgetFacts(wrongVersion, out _).ShouldBeFalse();
+    }
+
+    [TestMethod]
+    public void An_encrypted_row_carries_every_encryption_region_at_its_fixed_length_and_always_its_key_id_and_mac()
+    {
+        // ADR 0065 decision 5: the framing knows the shape of an encrypted row, so a row that names the algorithm
+        // without the material to open it, or without the MAC that authenticates the selector, is malformed.
+        byte[] row = Row(WorkflowRunStatus.Running);
+        CheckpointRowLayout clear = CheckpointRow.Parse(row);
+        byte[] runner = row[clear.RunnerRegion];
+        byte[] controlPlane = row[clear.ControlPlaneRegion];
+        byte[] salt = new byte[CheckpointPayloadCipher.SaltLength];
+        byte[] nonce = new byte[CheckpointPayloadCipher.NonceLength];
+        byte[] tag = new byte[CheckpointPayloadCipher.TagLength];
+        byte[] ciphertext = [1, 2, 3, 4];
+        byte[] mac = new byte[CheckpointIntegrity.MacLength];
+
+        byte[] sealedRow = CheckpointRow.WriteSealed(runner, "k1"u8, salt, nonce, tag, ciphertext, mac, controlPlane);
+
+        CheckpointRow.TryParse(sealedRow, out CheckpointRowLayout layout).ShouldBeTrue();
+        layout.Algorithm.ShouldBe(CheckpointAlgorithm.Aes256Gcm);
+        sealedRow[layout.Salt].Length.ShouldBe(32);
+        sealedRow[layout.Nonce].Length.ShouldBe(12);
+        sealedRow[layout.Tag].Length.ShouldBe(16);
+        sealedRow[layout.Payload].ShouldBe(ciphertext);
+        sealedRow[layout.RunnerRegion].ShouldBe(runner);
+        sealedRow[layout.ControlPlaneRegion].ShouldBe(controlPlane);
+        CheckpointRow.SubmittedBytes(sealedRow).Length.ShouldBe(layout.SubmittedLength);
+        CheckpointRow.TryParseSubmitted(CheckpointRow.SubmittedBytes(sealedRow).Span, out _).ShouldBeTrue("an encrypted submission is a submission");
+
+        Should.Throw<FormatException>(() => CheckpointRow.WriteSealed(runner, "k1"u8, new byte[16], nonce, tag, ciphertext, mac, controlPlane), "a short salt");
+        Should.Throw<FormatException>(() => CheckpointRow.WriteSealed(runner, "k1"u8, salt, new byte[16], tag, ciphertext, mac, controlPlane), "a long nonce");
+        Should.Throw<FormatException>(() => CheckpointRow.WriteSealed(runner, "k1"u8, salt, nonce, new byte[12], ciphertext, mac, controlPlane), "a short tag");
+        Should.Throw<FormatException>(() => CheckpointRow.WriteSealed(runner, [], salt, nonce, tag, ciphertext, [], controlPlane), "no key id and no MAC");
+        Should.Throw<FormatException>(() => CheckpointRow.WriteSealed(runner, "k1"u8, salt, nonce, tag, ciphertext, [], controlPlane), "a key id without a MAC");
+
+        // The same shapes arriving from the store are refused by the parse, not only by the writer.
+        byte[] clearWithSalt = [.. row];
+        clearWithSalt[1] = (byte)CheckpointAlgorithm.Aes256Gcm;
+        CheckpointRow.TryParse(clearWithSalt, out _).ShouldBeFalse("an encrypted header over empty encryption regions");
+    }
+
+    [TestMethod]
+    public void An_encrypted_row_deserializes_to_its_envelope_alone()
+    {
+        // ADR 0065 decision 5: the reader holds no key, so the payload is reported sealed rather than empty, and
+        // everything the control plane governs on is still there.
+        using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{ "inputs": { "petId": 7 }, "getPet": { "status": "available" } }"""u8.ToArray());
+        using var retryCounters = PooledUtf8Map<int>.Rent(1);
+        retryCounters.Set("getPet", 2);
+        using var stepOutputs = PooledUtf8Map<JsonElement>.Rent(1);
+        stepOutputs.Set("getPet", source.RootElement.GetProperty("getPet"u8));
+        byte[] row = WorkflowCheckpointSerializer.Serialize(
+            Envelope(WorkflowRunStatus.Running, cursor: 3, sequence: 5, epoch: 9),
+            retryCounters,
+            new Dictionary<string, byte[]> { ["orderRef"] = Encoding.UTF8.GetBytes("abc-123") },
+            source.RootElement.GetProperty("inputs"u8),
+            stepOutputs,
+            outputs: default,
+            new ControlPlaneRecord(Budget: ExecutionBudget.Default).ToUtf8());
+        CheckpointRowLayout clear = CheckpointRow.Parse(row);
+        byte[] mac = new byte[CheckpointIntegrity.MacLength];
+        byte[] sealedRow = CheckpointRow.WriteSealed(row[clear.RunnerRegion], "k1"u8, new byte[32], new byte[12], new byte[16], [9, 9, 9], mac, row[clear.ControlPlaneRegion]);
+
+        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(sealedRow);
+
+        state.PayloadSealed.ShouldBeTrue();
+        state.RunId.ShouldBe(new WorkflowRunId("run-1"));
+        state.Status.ShouldBe(WorkflowRunStatus.Running);
+        state.Cursor.ShouldBe(3);
+        state.Sequence.ShouldBe(5);
+        state.Epoch.ShouldBe(9);
+        state.Budget.ShouldBe(ExecutionBudget.Default);
+        state.RetryCounters.TryGetValue("getPet", out int retry).ShouldBeTrue();
+        retry.ShouldBe(2);
+        state.Inputs.ValueKind.ShouldBe(JsonValueKind.Undefined);
+        state.Outputs.ValueKind.ShouldBe(JsonValueKind.Undefined);
+        state.StepOutputs.Count.ShouldBe(0);
+        state.CorrelationTokens.ShouldBeEmpty();
+        state.Row.ToArray().ShouldBe(sealedRow, "a control-plane write over it still has the row as stored");
+
+        using WorkflowCheckpointState clearState = WorkflowCheckpointSerializer.Deserialize(row);
+        clearState.PayloadSealed.ShouldBeFalse();
+        clearState.StepOutputs.Count.ShouldBe(1);
+
+        WorkflowCheckpointSerializer.TryReadSubmission(CheckpointRow.SubmittedBytes(sealedRow), out CheckpointSubmission submission).ShouldBeTrue();
+        submission.Algorithm.ShouldBe(CheckpointAlgorithm.Aes256Gcm);
+        submission.KeyId.ShouldBe("k1");
+        submission.HasMac.ShouldBeTrue();
     }
 
     [TestMethod]

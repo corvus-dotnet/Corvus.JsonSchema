@@ -8,8 +8,10 @@
 // presenting the run-scoped checkpoint token the runner minted; this host validates it against the run in the URL, so the
 // surface is reachable by a real cloud function without being an open write endpoint. It is the runner-side host that
 // makes a true real-cloud run-to-completion provable, and a reusable way to run a token-authenticated checkpoint surface.
+using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.AzureStorage;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server;
+using Corvus.Text.Json.Arazzo.Durability.Security;
 
 WebApplicationBuilder builder = WebApplication.CreateSlimBuilder(args);
 
@@ -24,13 +26,39 @@ byte[] checkpointSecret = Convert.FromBase64String(secretBase64);
 await AzureStorageWorkflowStateStore.PrepareAsync(storageConnection);
 AzureStorageWorkflowStateStore store = await AzureStorageWorkflowStateStore.ConnectAsync(storageConnection);
 
+// The listener's key ring (ADR 0065 decisions 5, 10 and 11): the listener terminates the function's plaintext
+// checkpoint, so it is the host that holds the environment payload key. Each environment named under
+// Runner:Sealing:Environments:N:{Environment,KeyId,PayloadKeyRef,Sealed} (as Container App env vars,
+// Runner__Sealing__Environments__0__Environment and so on) has its key read from this container's own secret store,
+// an env:// or file:// reference to a Container App secret, never from the control plane. Every checkpoint the
+// function posts for it is encrypted and MAC'd here before it reaches the store, and every row the function loads is
+// verified and opened here. Empty for an open environment.
+RunnerKeyRing keyRing = RunnerKeyRing.Empty;
+List<RunnerKeyRingEntry> keyRingEntries = [];
+foreach (IConfigurationSection entry in builder.Configuration.GetSection("Runner:Sealing:Environments").GetChildren())
+{
+    keyRingEntries.Add(new RunnerKeyRingEntry(
+        entry["Environment"] ?? throw new InvalidOperationException($"{entry.Path}:Environment is required."),
+        entry["KeyId"] ?? throw new InvalidOperationException($"{entry.Path}:KeyId is required."),
+        SecretRef.Parse(entry["PayloadKeyRef"] ?? throw new InvalidOperationException($"{entry.Path}:PayloadKeyRef is required.")),
+        entry.GetValue("Sealed", true)));
+}
+
+if (keyRingEntries.Count > 0)
+{
+    keyRing = await RunnerKeyRing.BuildAsync(keyRingEntries, new CompositeSecretResolver(new EnvSecretResolver(), new FileSecretResolver()), CancellationToken.None);
+}
+
+IWorkflowCheckpointStore checkpointSurfaceStore = keyRing.IsEmpty ? store : new SealingCheckpointStore(store, keyRing);
+
 WebApplication app = builder.Build();
 
 // The token-authenticated checkpoint surface (ADR 0062): the run's function presents a run-scoped bearer token, validated
 // against the run in the request URL. requireAuthorization is false because the token is the credential, not an OIDC
-// principal — a machine callback has no interactive session.
+// principal — a machine callback has no interactive session. For a sealed environment the store behind it is the
+// sealing store built above (ADR 0065 decision 11).
 app.MapWorkflowCheckpointEndpoints(
-    store,
+    checkpointSurfaceStore,
     requireAuthorization: false,
     authenticateCheckpointToken: (address, token) => CheckpointToken.TryValidate(checkpointSecret, token, address, DateTimeOffset.UtcNow));
 

@@ -10,7 +10,8 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// The deserialized contents of a checkpoint row: the run's complete resumable state, as the join of the runner
 /// region, the payload and the control-plane region (ADR 0065 decisions 4 and 7). It owns the parsed payload document
 /// the <see cref="Inputs"/> and <see cref="StepOutputs"/> elements point into, so it must be disposed once the run
-/// that resumed from it has finished reading those products.
+/// that resumed from it has finished reading those products. For an encrypted row read without the key, the payload
+/// is absent and <see cref="PayloadSealed"/> says so.
 /// </summary>
 /// <remarks>
 /// The lifecycle values here are the <em>effective</em> ones: <see cref="Status"/>, <see cref="Wait"/>,
@@ -21,10 +22,10 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// </remarks>
 public sealed class WorkflowCheckpointState : IDisposable
 {
-    private readonly ParsedJsonDocument<JsonElement> payload;
+    private readonly ParsedJsonDocument<JsonElement>? payload;
 
     internal WorkflowCheckpointState(
-        ParsedJsonDocument<JsonElement> payload,
+        ParsedJsonDocument<JsonElement>? payload,
         ReadOnlyMemory<byte> row,
         in CheckpointEnvelope envelope,
         PooledUtf8Map<int> retryCounters,
@@ -36,6 +37,7 @@ public sealed class WorkflowCheckpointState : IDisposable
         JsonElement outputs)
     {
         this.payload = payload;
+        this.PayloadSealed = payload is null;
         this.Row = row;
         this.ControlPlaneRegion = controlPlaneRegion;
         this.RunId = envelope.RunId;
@@ -72,6 +74,14 @@ public sealed class WorkflowCheckpointState : IDisposable
 
     /// <summary>Gets the row these contents were read from, exactly as stored, for a control-plane write that replaces its control-plane region and nothing else.</summary>
     public ReadOnlyMemory<byte> Row { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the row's payload is encrypted and was not opened (ADR 0065 decision 5): the
+    /// reader holds no key. <see cref="Inputs"/> and <see cref="Outputs"/> are then undefined and
+    /// <see cref="StepOutputs"/> and <see cref="CorrelationTokens"/> empty, and a reader that needs them says the
+    /// payload is sealed rather than that there is none.
+    /// </summary>
+    public bool PayloadSealed { get; }
 
     /// <summary>Gets the control-plane region's bytes as the row carries them, which a runner save re-emits verbatim.</summary>
     public ReadOnlyMemory<byte> ControlPlaneRegion { get; }
@@ -168,6 +178,6 @@ public sealed class WorkflowCheckpointState : IDisposable
         // The maps hold views into the payload document; return their pooled buffers before the document's.
         this.RetryCounters.Dispose();
         this.StepOutputs.Dispose();
-        this.payload.Dispose();
+        this.payload?.Dispose();
     }
 }

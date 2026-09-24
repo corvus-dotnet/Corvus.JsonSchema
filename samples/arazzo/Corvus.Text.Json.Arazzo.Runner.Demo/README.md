@@ -47,11 +47,13 @@ orphan reclaim in action.
 When `Runner:Sealing:Environments` names an environment, the runner builds a key ring at start (ADR 0065
 decisions 5 and 10): for each entry it resolves the environment's payload key through its own Vault identity
 (`PayloadKeyRef`, the base64 of a 32-byte key), derives the `envelope-mac` subkey once, and from then on every
-checkpoint row it saves for that environment carries a MAC under the named generation (`KeyId`) and every row it
-loads is verified before the run sees it. An entry marked `Sealed` refuses a clear row on load, except a run's
-genesis row, which the control plane writes before any runner has claimed. A runner configured for sealing that has
-no Vault refuses to start rather than serve the environment clear. The AppHost runs a second instance of this
-project, `runner-production`, sealed for `production`.
+checkpoint row it saves for that environment has its payload encrypted under a data key derived for that one save
+and carries a MAC under the named generation (`KeyId`), and every row it loads is verified and opened before the run
+sees it. The control plane, the store and a backup hold the payload as ciphertext; the run detail and step journal
+they serve are the envelope, with the journal saying the payload is sealed. An entry marked `Sealed` refuses a clear
+row on load, except a run's genesis row, which the control plane writes before any runner has claimed. A runner
+configured for sealing that has no Vault refuses to start rather than serve the environment clear. The AppHost runs
+a second instance of this project, `runner-production`, sealed for `production`.
 
 ## Run it
 

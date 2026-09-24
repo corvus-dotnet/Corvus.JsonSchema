@@ -92,7 +92,12 @@ public static class WorkflowCheckpointSerializer
         }
     }
 
-    /// <summary>Deserializes a checkpoint row into the run's resumable state: the join of its three regions.</summary>
+    /// <summary>
+    /// Deserializes a checkpoint row into the run's resumable state: the join of its three regions. An encrypted row
+    /// (ADR 0065 decision 5) deserializes to its envelope alone, <see cref="WorkflowCheckpointState.PayloadSealed"/>:
+    /// the reader holds no key, so the inputs, outputs, step outputs and correlation tokens are absent rather than
+    /// invented, and a run that needs them is opened through the runner's <see cref="SealingCheckpointStore"/>.
+    /// </summary>
     /// <param name="row">The stored row.</param>
     /// <returns>
     /// The resumable state. The returned value owns the parsed payload the <see cref="WorkflowCheckpointState.Inputs"/>
@@ -115,6 +120,23 @@ public static class WorkflowCheckpointSerializer
             using (ParsedJsonDocument<JsonElement> envelopeDocument = ParsedJsonDocument<JsonElement>.Parse(row[layout.RunnerRegion]))
             {
                 envelope = ReadEnvelope(envelopeDocument.RootElement, out retryCounters);
+            }
+
+            if (layout.Algorithm != CheckpointAlgorithm.Clear)
+            {
+                // The payload region is ciphertext: nothing here can read it, and nothing here tries.
+                stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
+                return new WorkflowCheckpointState(
+                    payload: null,
+                    row,
+                    envelope,
+                    retryCounters,
+                    controlPlane,
+                    row[layout.ControlPlaneRegion],
+                    new Dictionary<string, byte[]>(0, StringComparer.Ordinal),
+                    inputs: default,
+                    stepOutputs,
+                    outputs: default);
             }
 
             payload = ParsedJsonDocument<JsonElement>.Parse(row[layout.Payload]);
@@ -210,6 +232,7 @@ public static class WorkflowCheckpointSerializer
                 envelope.Environment,
                 envelope.Sequence,
                 envelope.Epoch,
+                layout.Algorithm,
                 keyId.IsEmpty ? null : System.Text.Encoding.UTF8.GetString(keyId),
                 !submitted.Span[layout.Mac].IsEmpty);
             return true;
@@ -1074,9 +1097,10 @@ public readonly record struct CheckpointEnvelope(
 /// <param name="Environment">The environment the runner region claims (ADR 0065 decision 9).</param>
 /// <param name="Sequence">The write sequence the runner region carries (decision 6).</param>
 /// <param name="Epoch">The lease epoch the runner region carries (decision 6), or <see langword="null"/> when the writer holds no grant.</param>
+/// <param name="Algorithm">The payload algorithm the header names (decision 5): <see cref="CheckpointAlgorithm.Clear"/> for a clear payload.</param>
 /// <param name="KeyId">The key generation the submission is sealed under (decision 4), or <see langword="null"/> for a clear submission.</param>
 /// <param name="HasMac">Whether the submission carries a MAC. The server cannot verify it; it can require it (decision 10).</param>
-public readonly record struct CheckpointSubmission(string Environment, long Sequence, long? Epoch, string? KeyId, bool HasMac);
+public readonly record struct CheckpointSubmission(string Environment, long Sequence, long? Epoch, CheckpointAlgorithm Algorithm, string? KeyId, bool HasMac);
 
 /// <summary>
 /// Everything a checkpoint surface reads from a stored row, from one parse of its envelope and control-plane region

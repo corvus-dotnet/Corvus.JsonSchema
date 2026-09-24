@@ -11,9 +11,10 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// The unified MAC of ADR 0065 decision 4: one HMAC-SHA256 under the environment's <c>envelope-mac</c> subkey
 /// (<see cref="CheckpointDerivation"/>) that makes the runner region and the payload cryptographically inseparable.
 /// The message is the row's header, the key id and the runner region, each length-framed, followed by the SHA-256 of
-/// the payload region; the header is inside the coverage so the algorithm selector it carries is authenticated
-/// (decision 6), and the key id is inside it so a row cannot be re-pointed at another generation. The MAC is written
-/// into the row's MAC region and verified on every open by the party that holds the key: the runner.
+/// the payload region, which is the ciphertext on an encrypted row; the header is inside the coverage so the
+/// algorithm selector it carries is authenticated (decision 6), and the key id is inside it so a row cannot be
+/// re-pointed at another generation. The MAC is written into the row's MAC region and verified on every open by the
+/// party that holds the key: the runner.
 /// </summary>
 public static class CheckpointIntegrity
 {
@@ -69,12 +70,30 @@ public static class CheckpointIntegrity
         return keyId.IsEmpty ? null : System.Text.Encoding.UTF8.GetString(keyId);
     }
 
-    // message = len‖header ‖ len‖keyId ‖ len‖runnerRegion ‖ len‖SHA256(payload)
-    private static void Compute(ReadOnlySpan<byte> row, in CheckpointRowLayout layout, ReadOnlySpan<byte> keyId, ReadOnlySpan<byte> envelopeMacKey, Span<byte> destination)
+    /// <summary>
+    /// Computes the MAC over a row's parts before the row exists, for a writer that assembles an encrypted row in one
+    /// allocation (<see cref="SealingCheckpointStore"/>): the message is the one <see cref="Seal"/> uses.
+    /// </summary>
+    /// <param name="algorithm">The payload algorithm the row's header will name.</param>
+    /// <param name="keyId">The key id region's bytes.</param>
+    /// <param name="runnerRegion">The runner region's bytes.</param>
+    /// <param name="payloadRegion">The payload region's bytes: ciphertext for an encrypted row.</param>
+    /// <param name="envelopeMacKey">The <c>envelope-mac</c> subkey.</param>
+    /// <param name="destination">Receives <see cref="MacLength"/> bytes.</param>
+    public static void Compute(CheckpointAlgorithm algorithm, ReadOnlySpan<byte> keyId, ReadOnlySpan<byte> runnerRegion, ReadOnlySpan<byte> payloadRegion, ReadOnlySpan<byte> envelopeMacKey, Span<byte> destination)
     {
-        ReadOnlySpan<byte> runner = row[layout.RunnerRegion];
+        ReadOnlySpan<byte> header = [CheckpointRow.FramingVersion, (byte)algorithm];
+        Compute(header, keyId, runnerRegion, payloadRegion, envelopeMacKey, destination);
+    }
+
+    private static void Compute(ReadOnlySpan<byte> row, in CheckpointRowLayout layout, ReadOnlySpan<byte> keyId, ReadOnlySpan<byte> envelopeMacKey, Span<byte> destination)
+        => Compute(row[..HeaderLength], keyId, row[layout.RunnerRegion], row[layout.Payload], envelopeMacKey, destination);
+
+    // message = len‖header ‖ len‖keyId ‖ len‖runnerRegion ‖ len‖SHA256(payload)
+    private static void Compute(ReadOnlySpan<byte> header, ReadOnlySpan<byte> keyId, ReadOnlySpan<byte> runner, ReadOnlySpan<byte> payload, ReadOnlySpan<byte> envelopeMacKey, Span<byte> destination)
+    {
         Span<byte> digest = stackalloc byte[DigestLength];
-        SHA256.HashData(row[layout.Payload], digest);
+        SHA256.HashData(payload, digest);
 
         int length = (4 * LengthPrefix) + HeaderLength + keyId.Length + runner.Length + DigestLength;
         byte[]? rented = length > 512 ? System.Buffers.ArrayPool<byte>.Shared.Rent(length) : null;
@@ -83,7 +102,7 @@ public static class CheckpointIntegrity
         try
         {
             int written = 0;
-            written += Frame(message[written..], row[..HeaderLength]);
+            written += Frame(message[written..], header);
             written += Frame(message[written..], keyId);
             written += Frame(message[written..], runner);
             written += Frame(message[written..], digest);

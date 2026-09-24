@@ -106,14 +106,24 @@ public sealed class CheckpointIntegrityTests
     [TestMethod]
     public void A_changed_algorithm_selector_does_not_verify()
     {
-        // The header is inside the coverage (decision 6): flipping the selector from clear to encrypted, or back,
-        // is caught by the MAC rather than by whatever the selector then makes of the payload.
-        byte[] sealedRow = CheckpointIntegrity.Seal(Row(), "k1", Key);
+        // The header is inside the coverage (decision 6): flipping the selector from clear to encrypted, or back, is
+        // caught by the MAC rather than by whatever the selector then makes of the payload. Since SEQ-3 the framing
+        // refuses the flipped row before the MAC is reached, because an encrypted row carries encryption regions at
+        // fixed lengths and a clear one carries none; the MAC still differs, so the selector is authenticated
+        // whichever check runs first.
+        byte[] row = Row();
+        byte[] sealedRow = CheckpointIntegrity.Seal(row, "k1", Key);
         byte[] tampered = (byte[])sealedRow.Clone();
         tampered[1] = (byte)CheckpointAlgorithm.Aes256Gcm;
+        CheckpointRow.TryParse(tampered, out _).ShouldBeFalse("a clear row's regions are not an encrypted row's");
 
-        CheckpointRow.TryParse(tampered, out _).ShouldBeTrue("the tampered row still parses");
-        CheckpointIntegrity.Verify(tampered, Key).ShouldBeFalse();
+        CheckpointRowLayout layout = CheckpointRow.Parse(row);
+        byte[] asClear = new byte[CheckpointIntegrity.MacLength];
+        byte[] asEncrypted = new byte[CheckpointIntegrity.MacLength];
+        CheckpointIntegrity.Compute(CheckpointAlgorithm.Clear, "k1"u8, row[layout.RunnerRegion], row[layout.Payload], Key, asClear);
+        CheckpointIntegrity.Compute(CheckpointAlgorithm.Aes256Gcm, "k1"u8, row[layout.RunnerRegion], row[layout.Payload], Key, asEncrypted);
+        asClear.ShouldBe(sealedRow[CheckpointRow.Parse(sealedRow).Mac], "the MAC over the parts is the MAC in the row");
+        asEncrypted.ShouldNotBe(asClear, "the selector is inside the MAC");
     }
 
     [TestMethod]

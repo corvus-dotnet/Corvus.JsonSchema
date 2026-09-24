@@ -186,6 +186,45 @@ public sealed class SecuredWorkflowManagementTests
     }
 
     [TestMethod]
+    public async Task The_step_journal_of_a_sealed_run_reports_the_steps_and_says_the_payload_is_sealed()
+    {
+        // ADR 0065 decision 5: the journal is envelope data and is disclosed; the outputs are payload, encrypted under
+        // a key the control plane does not hold, so the view says so rather than showing empty steps.
+        var store = new InMemoryWorkflowStateStore();
+        using ParsedJsonDocument<JsonElement> products = ParsedJsonDocument<JsonElement>.Parse("""{"getPet":{"status":"available"}}"""u8.ToArray());
+        using (WorkflowRun run = WorkflowRun.CreateNew(store, "r1", "wf", default, "development"))
+        {
+            await run.BeginStepAsync("getPet", default);
+            run.SetStepOutputs("getPet", products.RootElement.GetProperty("getPet"u8));
+            run.RecordStep("getPet", WorkflowStepStatus.Succeeded, 1, T0, T0);
+            await run.CheckpointAsync(1, default);
+        }
+
+        var address = new WorkflowRunAddress("development", new WorkflowRunId("r1"));
+        byte[] payloadKey = Enumerable.Range(0, 32).Select(i => (byte)(i + 7)).ToArray();
+        byte[] envelopeMac = new byte[32];
+        Anchoring.CheckpointDerivation.DeriveSubkey(payloadKey, Anchoring.CheckpointSubkey.EnvelopeMac, "development", "k1", envelopeMac);
+        WorkflowCheckpoint stored = (await store.LoadAsync(address, default))!.Value;
+        byte[] sealedRow = SealingCheckpointStore.Seal(stored.Row, address, new RunnerEnvironmentKeys("k1", payloadKey, envelopeMac, Sealed: true));
+        await store.SaveAsync(address, sealedRow, WorkflowCheckpointSerializer.ProjectIndex(sealedRow), stored.Etag, default);
+
+        var client = new SecuredWorkflowManagement(store, owner: "ops");
+        ReadOnlyMemory<byte>? journal = await client.GetStepJournalAsync("r1", AccessContext.System, default);
+
+        journal.ShouldNotBeNull();
+        string view = System.Text.Encoding.UTF8.GetString(journal!.Value.Span);
+        view.ShouldContain("\"stepId\":\"getPet\"");
+        view.ShouldContain("\"status\":\"Succeeded\"");
+        view.ShouldContain("\"sealed\":true");
+        view.ShouldNotContain("outputs");
+        view.ShouldNotContain("available");
+
+        WorkflowRunDetail? detail = await client.GetAsync("r1", AccessContext.System, default);
+        detail.ShouldNotBeNull("the detail is envelope data and reads as before");
+        detail!.Value.Cursor.ShouldBe(1);
+    }
+
+    [TestMethod]
     [DataRow("Rewind")]
     [DataRow("Skip")]
     [DataRow("SkipWithOutputs")]

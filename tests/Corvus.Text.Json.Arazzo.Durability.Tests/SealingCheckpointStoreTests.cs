@@ -11,9 +11,9 @@ using Shouldly;
 namespace Corvus.Text.Json.Arazzo.Durability.Tests;
 
 /// <summary>
-/// The runner's side of ADR 0065 decisions 4 and 10: the decorator seals what it saves for an environment it holds a
-/// key for, verifies what it loads, and refuses a clear row for an environment it serves sealed. The run above it never
-/// sees a difference.
+/// The runner's side of ADR 0065 decisions 4, 5 and 10: the decorator encrypts and seals what it saves for an
+/// environment it holds a key for, verifies and opens what it loads, and refuses a clear row for an environment it
+/// serves sealed. The run above it never sees a difference.
 /// </summary>
 [TestClass]
 public sealed class SealingCheckpointStoreTests
@@ -26,22 +26,140 @@ public sealed class SealingCheckpointStoreTests
     private static readonly WorkflowRunAddress DevelopmentRun = new(Development, new WorkflowRunId("run-2"));
 
     [TestMethod]
-    public async Task A_row_saved_for_a_held_environment_is_sealed_at_the_store_and_verified_on_load()
+    public async Task A_row_saved_for_a_held_environment_is_encrypted_and_sealed_at_the_store_and_opened_on_load()
     {
         var inner = new InMemoryWorkflowStateStore();
         var store = new SealingCheckpointStore(inner, Ring(sealedProduction: true));
-        byte[] row = Row(ProductionRun);
+        byte[] row = Row(ProductionRun, inputs: "{\"petId\":7}");
 
         await store.SaveAsync(ProductionRun, row, WorkflowCheckpointSerializer.ProjectIndex(row), WorkflowEtag.None, default);
 
-        WorkflowCheckpoint? stored = await inner.LoadAsync(ProductionRun, default);
-        CheckpointIntegrity.KeyIdOf(stored!.Value.Row.Span).ShouldBe("k1", "what reaches the store is sealed");
-        CheckpointIntegrity.Verify(stored.Value.Row.Span, EnvelopeMac()).ShouldBeTrue();
+        WorkflowCheckpoint stored = (await inner.LoadAsync(ProductionRun, default))!.Value;
+        CheckpointRowLayout layout = CheckpointRow.Parse(stored.Row.Span);
+        layout.Algorithm.ShouldBe(CheckpointAlgorithm.Aes256Gcm, "what reaches the store is encrypted");
+        CheckpointIntegrity.KeyIdOf(stored.Row.Span).ShouldBe("k1", "and sealed");
+        CheckpointIntegrity.Verify(stored.Row.Span, EnvelopeMac()).ShouldBeTrue();
+        System.Text.Encoding.Latin1.GetString(stored.Row.Span).Contains("petId", StringComparison.Ordinal).ShouldBeFalse("the payload does not reach the store in the clear");
+        stored.Row.Span[layout.RunnerRegion].ToArray().ShouldBe(row[CheckpointRow.Parse(row).RunnerRegion], "the envelope is clear by design");
+        WorkflowCheckpointSerializer.TryProject(stored.Row, out CheckpointProjection storedProjection).ShouldBeTrue("the control plane still projects the envelope");
+        storedProjection.Sequence.ShouldBe(3);
 
-        WorkflowCheckpoint? loaded = await store.LoadAsync(ProductionRun, default);
-        loaded.ShouldNotBeNull();
-        WorkflowCheckpointSerializer.TryProject(loaded!.Value.Row, out CheckpointProjection projection).ShouldBeTrue();
-        projection.Sequence.ShouldBe(3);
+        WorkflowCheckpoint loaded = (await store.LoadAsync(ProductionRun, default))!.Value;
+        loaded.Etag.ShouldBe(stored.Etag, "the etag is the stored row's, so the next save is conditioned on it");
+        CheckpointRow.Parse(loaded.Row.Span).Algorithm.ShouldBe(CheckpointAlgorithm.Clear, "the run sees a clear row");
+        loaded.Row.ToArray().ShouldBe(row, "opened, the row is byte for byte the one that was saved");
+    }
+
+    [TestMethod]
+    public async Task A_run_checkpoints_and_resumes_through_the_store_without_knowing_it_is_sealed()
+    {
+        // The run is crypto-free: it saves its products and gets them back, and the store in between holds ciphertext.
+        var inner = new InMemoryWorkflowStateStore();
+        var store = new SealingCheckpointStore(inner, Ring(sealedProduction: true));
+        using ParsedJsonDocument<JsonElement> products = ParsedJsonDocument<JsonElement>.Parse("""{"inputs":{"petId":7},"getPet":{"status":"available"}}"""u8.ToArray());
+        using (WorkflowRun run = WorkflowRun.CreateNew(store, ProductionRun.RunId, "petWorkflow", products.RootElement.GetProperty("inputs"u8), Production))
+        {
+            await run.BeginStepAsync("getPet", default);
+            run.SetStepOutputs("getPet", products.RootElement.GetProperty("getPet"u8));
+            run.RecordStep("getPet", WorkflowStepStatus.Succeeded, 1, T0, T0);
+            await run.CheckpointAsync(1, default);
+        }
+
+        WorkflowCheckpoint stored = (await inner.LoadAsync(ProductionRun, default))!.Value;
+        CheckpointRow.Parse(stored.Row.Span).Algorithm.ShouldBe(CheckpointAlgorithm.Aes256Gcm);
+        System.Text.Encoding.Latin1.GetString(stored.Row.Span).ShouldNotContain("available");
+
+        using WorkflowRun? resumed = await WorkflowRun.ResumeAsync(store, ProductionRun);
+        resumed.ShouldNotBeNull();
+        resumed!.Cursor.ShouldBe(1);
+        resumed.TryGetStepOutputs("getPet", out JsonElement getPet).ShouldBeTrue();
+        getPet.GetProperty("status"u8).GetString().ShouldBe("available");
+        resumed.Inputs.GetProperty("petId"u8).GetInt32().ShouldBe(7);
+    }
+
+    [TestMethod]
+    public async Task A_control_plane_reader_of_the_stored_row_gets_the_envelope_and_no_payload()
+    {
+        // ADR 0065 decision 5: the row at rest deserializes to its envelope alone for a reader without the key.
+        var inner = new InMemoryWorkflowStateStore();
+        var store = new SealingCheckpointStore(inner, Ring(sealedProduction: true));
+        byte[] row = Row(ProductionRun, inputs: "{\"petId\":7}");
+        await store.SaveAsync(ProductionRun, row, WorkflowCheckpointSerializer.ProjectIndex(row), WorkflowEtag.None, default);
+
+        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize((await inner.LoadAsync(ProductionRun, default))!.Value.Row);
+
+        state.PayloadSealed.ShouldBeTrue();
+        state.Sequence.ShouldBe(3);
+        state.Environment.ShouldBe(Production);
+        state.Inputs.ValueKind.ShouldBe(JsonValueKind.Undefined);
+        state.Outputs.ValueKind.ShouldBe(JsonValueKind.Undefined);
+        state.StepOutputs.Count.ShouldBe(0);
+        state.CorrelationTokens.ShouldBeEmpty();
+    }
+
+    [TestMethod]
+    public async Task A_row_whose_payload_does_not_open_faults_the_load_like_a_bad_mac()
+    {
+        // The ciphertext moved and the row re-sealed by someone holding the MAC key but not the run: the MAC verifies,
+        // the AEAD refuses, and the run sees the one integrity fault.
+        var inner = new InMemoryWorkflowStateStore();
+        var store = new SealingCheckpointStore(inner, Ring(sealedProduction: true));
+        byte[] row = Row(ProductionRun);
+        await store.SaveAsync(ProductionRun, row, WorkflowCheckpointSerializer.ProjectIndex(row), WorkflowEtag.None, default);
+
+        WorkflowCheckpoint stored = (await inner.LoadAsync(ProductionRun, default))!.Value;
+        byte[] moved = [.. stored.Row.Span];
+        CheckpointRowLayout layout = CheckpointRow.Parse(moved);
+        moved[layout.Payload.Start.Value] ^= 0x01;
+        byte[] mac = new byte[CheckpointIntegrity.MacLength];
+        CheckpointIntegrity.Compute(CheckpointAlgorithm.Aes256Gcm, "k1"u8, moved.AsSpan()[layout.RunnerRegion], moved.AsSpan()[layout.Payload], EnvelopeMac(), mac);
+        byte[] resealed = CheckpointRow.WithIntegrity(moved, "k1"u8, mac);
+        CheckpointIntegrity.Verify(resealed, EnvelopeMac()).ShouldBeTrue("the MAC is genuine; only the AEAD can tell");
+        await inner.SaveAsync(ProductionRun, resealed, WorkflowCheckpointSerializer.ProjectIndex(resealed), stored.Etag, default);
+
+        CryptographicException fault = await Should.ThrowAsync<CryptographicException>(async () => await store.LoadAsync(ProductionRun, default));
+        fault.Message.ShouldContain("does not verify");
+    }
+
+    [TestMethod]
+    public async Task A_row_sealed_for_another_run_does_not_open_at_this_address()
+    {
+        // The whole row of run-1 copied over run-3's, MAC intact: the envelope names run-1 and the payload is bound
+        // to it, so the address it is loaded at refuses it before the run compares names.
+        var inner = new InMemoryWorkflowStateStore();
+        var store = new SealingCheckpointStore(inner, Ring(sealedProduction: true));
+        byte[] row = Row(ProductionRun);
+        await store.SaveAsync(ProductionRun, row, WorkflowCheckpointSerializer.ProjectIndex(row), WorkflowEtag.None, default);
+        WorkflowCheckpoint stored = (await inner.LoadAsync(ProductionRun, default))!.Value;
+        var other = new WorkflowRunAddress(Production, new WorkflowRunId("run-3"));
+        await inner.SaveAsync(other, stored.Row, WorkflowCheckpointSerializer.ProjectIndex(stored.Row), WorkflowEtag.None, default);
+
+        await Should.ThrowAsync<CryptographicException>(async () => await store.LoadAsync(other, default));
+    }
+
+    [TestMethod]
+    public async Task A_macd_row_whose_payload_is_clear_is_refused_for_a_sealed_environment()
+    {
+        // This store never writes one: a MAC over a clear payload is a row that left the boundary in the clear.
+        var inner = new InMemoryWorkflowStateStore();
+        byte[] row = CheckpointIntegrity.Seal(Row(ProductionRun), "k1", EnvelopeMac());
+        await inner.SaveAsync(ProductionRun, row, WorkflowCheckpointSerializer.ProjectIndex(row), WorkflowEtag.None, default);
+
+        CryptographicException fault = await Should.ThrowAsync<CryptographicException>(async () => await new SealingCheckpointStore(inner, Ring(sealedProduction: true)).LoadAsync(ProductionRun, default));
+        fault.Message.ShouldContain("clear row");
+
+        (await new SealingCheckpointStore(inner, Ring(sealedProduction: false)).LoadAsync(ProductionRun, default)).ShouldNotBeNull("an environment held but not marked sealed tolerates it");
+    }
+
+    [TestMethod]
+    public async Task A_row_that_already_names_a_generation_is_not_sealed_twice()
+    {
+        var inner = new InMemoryWorkflowStateStore();
+        var store = new SealingCheckpointStore(inner, Ring(sealedProduction: true));
+        byte[] row = CheckpointIntegrity.Seal(Row(ProductionRun), "k1", EnvelopeMac());
+
+        await Should.ThrowAsync<InvalidOperationException>(async () => await store.SaveAsync(ProductionRun, row, WorkflowCheckpointSerializer.ProjectIndex(row), WorkflowEtag.None, default));
+        (await inner.LoadAsync(ProductionRun, default)).ShouldBeNull();
     }
 
     [TestMethod]
@@ -139,6 +257,7 @@ public sealed class SealingCheckpointStoreTests
         ring.IsSealed(Development).ShouldBeFalse();
         ring.TryGet(Production, out RunnerEnvironmentKeys keys).ShouldBeTrue();
         keys.KeyId.ShouldBe("k1");
+        keys.PayloadKey.ShouldBe(PayloadKey);
         keys.EnvelopeMac.ShouldBe(EnvelopeMac());
         secrets.Resolutions.ShouldBe(1);
     }
@@ -155,7 +274,7 @@ public sealed class SealingCheckpointStoreTests
     private static RunnerKeyRing Ring(bool sealedProduction)
         => RunnerKeyRing.From(new Dictionary<string, RunnerEnvironmentKeys>
         {
-            [Production] = new("k1", EnvelopeMac(), sealedProduction),
+            [Production] = new("k1", PayloadKey, EnvelopeMac(), sealedProduction),
         });
 
     private static byte[] EnvelopeMac(string keyId = "k1")
@@ -165,10 +284,11 @@ public sealed class SealingCheckpointStoreTests
         return subkey;
     }
 
-    private static byte[] Row(WorkflowRunAddress address, long sequence = 3, long? epoch = 2)
+    private static byte[] Row(WorkflowRunAddress address, long sequence = 3, long? epoch = 2, string? inputs = null)
     {
         using var retryCounters = PooledUtf8Map<int>.Rent(0);
         using var stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
+        using ParsedJsonDocument<JsonElement>? inputsDocument = inputs is null ? null : ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(inputs));
         return WorkflowCheckpointSerializer.Serialize(
             new CheckpointEnvelope(
                 address.RunId,
@@ -190,7 +310,7 @@ public sealed class SealingCheckpointStoreTests
                 null),
             retryCounters,
             new Dictionary<string, byte[]>(StringComparer.Ordinal),
-            inputs: default,
+            inputs: inputsDocument?.RootElement ?? default,
             stepOutputs,
             outputs: default,
             []);

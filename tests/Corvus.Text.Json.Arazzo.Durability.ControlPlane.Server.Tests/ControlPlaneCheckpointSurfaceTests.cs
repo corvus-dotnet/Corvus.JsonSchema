@@ -6,6 +6,8 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using Corvus.Text.Json.Arazzo.Durability;
+using Corvus.Text.Json.Arazzo.Durability.Anchoring;
+using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
@@ -115,6 +117,42 @@ public sealed class ControlPlaneCheckpointSurfaceTests
         problem.RootElement.GetProperty("type").GetString().ShouldBe("https://corvus-oss.org/arazzo/runner/problems/budget-exhausted");
         problem.RootElement.GetProperty("acceptedSequence").GetInt64().ShouldBe(2, "a control-plane fault consumes no runner sequence");
         WorkflowCheckpointSerializer.ProjectIndex((await host.Store.LoadAsync(Address, default))!.Value.Row).ErrorType.ShouldBe(ExecutionBudgetFault.Fuel);
+    }
+
+    [TestMethod]
+    public async Task A_sealed_environment_takes_only_an_encrypted_submission_under_an_active_generation()
+    {
+        // ADR 0065 decision 10 on the control plane's own mapping: it holds no key and terminates into the shared
+        // store, so it applies the runner API's rule rather than being the way round it. A clear submission for a
+        // sealed environment is refused; an encrypted one under an active generation lands as it is.
+        var environments = new InMemoryEnvironmentStore();
+        using (ParsedJsonDocument<Durability.Environments.Environment> draft = Durability.Environments.Environment.Draft(Env, null, null, default))
+        using (await environments.AddAsync(draft.RootElement, "ops", default))
+        {
+        }
+
+        using (ParsedJsonDocument<Durability.Environments.Environment>? stored = await environments.GetAsync(Env, AccessContext.System, default))
+        using (ParsedJsonDocument<Durability.Environments.Environment> sealedDraft = Durability.Environments.Environment.DraftWithKeyGenerations(stored!.RootElement, Durability.Environments.Environment.EnvironmentKeyGenerationArray.ParseValue("""
+            [{"keyId":"k2","sealPublicKey":"BBBB","algorithm":"ES256","state":"Active","registeredBy":"alice","registeredAt":"2026-08-01T10:00:00+00:00"}]
+            """)))
+        using (await environments.UpdateAsync(Env, sealedDraft.RootElement, stored.RootElement.EtagValue, "ops", AccessContext.System, default))
+        {
+        }
+
+        await using Host host = await Host.StartAsync(Secret, environments: environments);
+        string token = CheckpointToken.Issue(Secret, Address, DateTimeOffset.UtcNow.AddMinutes(10));
+        byte[] clear = RealCheckpoint(sequence: 1);
+
+        (await host.PostCheckpointAsync(Run.Value, clear, sequence: 1, token)).StatusCode.ShouldBe(HttpStatusCode.BadRequest, "clear");
+
+        byte[] payloadKey = Enumerable.Range(0, 32).Select(i => (byte)i).ToArray();
+        byte[] envelopeMac = new byte[32];
+        CheckpointDerivation.DeriveSubkey(payloadKey, CheckpointSubkey.EnvelopeMac, Env, "k2", envelopeMac);
+        byte[] sealedRow = SealingCheckpointStore.Seal(clear, Address, new RunnerEnvironmentKeys("k2", payloadKey, envelopeMac, Sealed: true));
+        (await host.PostCheckpointAsync(Run.Value, sealedRow, sequence: 1, token)).StatusCode.ShouldBe(HttpStatusCode.NoContent, "encrypted under an active generation");
+
+        WorkflowCheckpoint? persisted = await host.Store.LoadAsync(Address, default);
+        CheckpointRow.Parse(persisted!.Value.Row.Span).Algorithm.ShouldBe(CheckpointAlgorithm.Aes256Gcm, "the control plane stores what it was given");
     }
 
     [TestMethod]
@@ -231,7 +269,8 @@ public sealed class ControlPlaneCheckpointSurfaceTests
         public static async Task<Host> StartAsync(
             ReadOnlyMemory<byte> checkpointSecret,
             IWorkflowCheckpointStore? checkpointStore = null,
-            WorkflowCheckpointCoordinator? checkpoints = null)
+            WorkflowCheckpointCoordinator? checkpoints = null,
+            IEnvironmentStore? environments = null)
         {
             var state = new InMemoryWorkflowStateStore();
             var management = new SecuredWorkflowManagement(state, "ops");
@@ -250,7 +289,8 @@ public sealed class ControlPlaneCheckpointSurfaceTests
                 ControlPlaneSecurityMode.Open,
                 workflowStateStore: state,
                 checkpointSecret: checkpointSecret,
-                checkpoints: checkpoints);
+                checkpoints: checkpoints,
+                environmentStore: environments);
             await app.StartAsync();
 
             return new Host(app, app.GetTestClient(), checkpointStore ?? state);

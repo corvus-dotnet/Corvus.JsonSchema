@@ -172,10 +172,12 @@ public sealed class ArazzoRunnerCheckpointsHandler : IApiCheckpointsHandler
 
             // ADR 0065 decision 10: the runner API independently refuses a clear submission for an environment whose
             // record is sealed, and one sealed under a generation the record does not hold as active. It holds no key,
-            // so it cannot verify the MAC; requiring it is what keeps a runner that lost its key ring, or a peer
-            // without one, from writing plaintext into a sealed environment.
+            // so it cannot verify the MAC or open the payload; requiring an encrypted, MAC'd submission is what keeps a
+            // runner that lost its key ring, or a peer without one, from writing plaintext into a sealed environment.
+            // The algorithm selector is read from the header, which the MAC covers, so a MAC'd row whose payload is
+            // clear is refused as the clear write it is.
             if (await this.coordinator.SealedGenerationsAsync(principal, environment, cancellationToken).ConfigureAwait(false) is { } generations
-                && (!submission.HasMac || submission.KeyId is null || !generations.Contains(submission.KeyId)))
+                && !CheckpointSealing.IsSealedUnder(submission, generations))
             {
                 return SaveCheckpointResult.BadRequest(RunnerProblems.CleartextRefused(), workspace);
             }

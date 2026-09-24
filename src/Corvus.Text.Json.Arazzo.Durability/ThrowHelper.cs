@@ -280,6 +280,9 @@ internal static class ThrowHelper
     public static CryptographicException GetCheckpointCleartextRefusedException(in WorkflowRunAddress address)
         => new(SR.Format(SR.CheckpointCleartextRefused, address));
 
+    public static InvalidOperationException GetCheckpointSealRefusedException(in WorkflowRunAddress address)
+        => new(SR.Format(SR.CheckpointSealRefused, address));
+
     public static InvalidOperationException GetPayloadKeyNotAKeyException(string environment, string keyId)
         => new(SR.Format(SR.PayloadKeyNotAKey, environment, keyId));
 
