@@ -46,6 +46,9 @@ internal sealed class RunnerPreAuthorizationService(
     private static readonly (string Environment, string RunnerId, string Principal)[] Fleet =
     [
         ("development", "demo-runner-development", "arazzo-runner"),
+        // Production is sealed (ADR 0065 decision 10) and its runner holds the key the development runner does not, so
+        // it has its own principal: a principal claims across every environment it is bound to.
+        ("production", "demo-runner-production", "arazzo-runner-production"),
         ("system", "demo-system-runner", "arazzo-access-approval"),
         ("isolated", "demo-serverless-runner", "arazzo-runner"),
     ];

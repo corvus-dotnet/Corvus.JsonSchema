@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Security.Cryptography;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Availability;
@@ -227,7 +228,13 @@ public sealed class ArazzoExampleSeed : IExampleSeed
                 description: description,
                 displayName: displayName,
                 managementTags: (CpEnvironment.SecurityTagInfoArray.Source)reachTags.RootElement);
-            (await context.EnvironmentStore.AddAsync(environment.RootElement, "demo", cancellationToken)).Dispose();
+            using (ParsedJsonDocument<CpEnvironment> added = await context.EnvironmentStore.AddAsync(environment.RootElement, "demo", cancellationToken))
+            {
+                if (name == "production")
+                {
+                    await RegisterProductionSealKeyAsync(context.EnvironmentStore, added.RootElement, cancellationToken);
+                }
+            }
         }
 
         // Environment administrators (§7.7): the arazzo-admins group administers every environment — the key unblock so
@@ -506,4 +513,29 @@ public sealed class ArazzoExampleSeed : IExampleSeed
     /// <inheritdoc/>
     public ValueTask RunLiveSampleAsync(IWorkflowStateStore stateStore, WorkflowResumer resumer, IScheduleRegistry scheduleRegistry, ExecutionBudgetResolver resolveBudget, Action<string>? log = null)
         => DemoData.RunLiveOnboardingAsync(stateStore, resumer, scheduleRegistry, resolveBudget, log);
+
+    /// <summary>
+    /// The key generation the production environment's checkpoints are sealed under (ADR 0065 decision 10). Registering
+    /// it is what makes production a sealed environment: the runner API then accepts a production row only under an
+    /// active generation's MAC. The AppHost's runner-production carries the same generation id in its key ring, and the
+    /// payload key itself is in that runner's Vault, never here. The seal key registered is a fresh ES256 pair whose
+    /// private half is discarded: until run-start input sealing lands it is the registration, not the key, that matters.
+    /// </summary>
+    private const string ProductionKeyId = "production-2026-09";
+
+    private static async ValueTask RegisterProductionSealKeyAsync(IEnvironmentStore environments, CpEnvironment stored, CancellationToken cancellationToken)
+    {
+        using var sealKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using ParsedJsonDocument<JsonElement> sealPublicKey = ParsedJsonDocument<JsonElement>.Parse("\"" + Convert.ToBase64String(sealKey.ExportSubjectPublicKeyInfo()) + "\"");
+        using ParsedJsonDocument<JsonElement> algorithm = ParsedJsonDocument<JsonElement>.Parse("\"ES256\"");
+        using ParsedJsonDocument<CpEnvironment> draft = CpEnvironment.DraftWithKeyRegistered(
+            stored, ProductionKeyId, sealPublicKey.RootElement, algorithm.RootElement, "demo", DateTimeOffset.UtcNow);
+        using ParsedJsonDocument<CpEnvironment>? updated = await environments.UpdateAsync(
+            "production", draft.RootElement, stored.EtagValue, "demo", AccessContext.System, cancellationToken);
+        if (updated is null)
+        {
+            throw new InvalidOperationException("Registering the production seal key lost a concurrent write during seeding.");
+        }
+    }
+
 }

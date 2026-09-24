@@ -22,6 +22,15 @@ bool seedExampleData = !string.Equals(builder.Configuration["SeedExampleData"], 
 // Vault AppRole trust above).
 string checkpointProtectionKey = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
 
+// The production environment's payload key (ADR 0065 decisions 5 and 10): the tenant's own key, which the control
+// plane never holds. The provisioner seeds it into the runner's Vault under secret/arazzo/payload-keys/production, and
+// runner-production reads it as its read-only AppRole identity into its key ring; every checkpoint row that runner
+// writes for production carries a MAC under a subkey of it. Fresh per composition boot, like the protection key above.
+// The key GENERATION id is shared with the control plane's registration of production's seal key (ExampleSeed): the
+// runner writes rows under this id and the runner API accepts production rows only under an active generation.
+string productionPayloadKey = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
+const string productionKeyId = "production-2026-09";
+
 // The checkpoint CALLBACK secret (ADR 0062), which is a different thing from the protection key above: that one wraps
 // checkpoints at rest, this one signs the run-scoped bearer token a dispatched serverless function presents on its
 // callbacks. The serverless runner both mints and validates it, so it is one per-boot value handed to that one process.
@@ -108,6 +117,9 @@ string vaultWrapTokenPath = Path.Combine(vaultHandoffDir, "secretid.wrap");
 // wrapping token is single-use (unwrapping consumes it), so two runners cannot share one. Both bind to the same
 // read-only AppRole (secret/arazzo/* covers secret/arazzo/controlplane, the credential the system runner resolves).
 string vaultSystemWrapTokenPath = Path.Combine(vaultHandoffDir, "secretid-system.wrap");
+
+// The production runner is a THIRD runner process with its own single-use wrapping token, for the same reason.
+string vaultProductionWrapTokenPath = Path.Combine(vaultHandoffDir, "secretid-production.wrap");
 
 // Executor-package signing (#879). A SEPARATE HashiCorp Vault — the control-plane SIGNING vault — holds the private key
 // that signs each compiled executor's manifest at catalog-add. It is deliberately NOT the runner's credential vault
@@ -236,7 +248,7 @@ string? aotRuntimeVersion = builder.Configuration["ARAZZO_AOT_RUNTIME_VERSION"] 
 // REAL (every deployment): wait for Vault, write the read-only, path-scoped policy, enable AppRole, (re)create the
 // runner's role bound to that policy with a short-TTL renewable token, pin the non-secret RoleID, and hand off a
 // response-wrapped single-use SecretID via the shared dir. The runner never gets write privileges.
-const string approleTrustScript =
+string approleTrustScript =
     "set -e; " +
     "until vault status >/dev/null 2>&1; do echo 'waiting for vault'; sleep 1; done; " +
     "echo 'path \"secret/data/arazzo/*\" { capabilities = [\"read\"] }' | vault policy write arazzo-runner-ro -; " +
@@ -256,7 +268,14 @@ const string approleTrustScript =
     "chmod 644 /shared/secretid.wrap; " +
     // A SECOND response-wrapped SecretID for the control-plane system runner (its wrapping token is its own — single-use).
     "vault write -f -wrap-ttl=1800s -field=wrapping_token auth/approle/role/arazzo-runner/secret-id > /shared/secretid-system.wrap; " +
-    "chmod 644 /shared/secretid-system.wrap; ";
+    "chmod 644 /shared/secretid-system.wrap; " +
+    // A THIRD for the production runner.
+    "vault write -f -wrap-ttl=1800s -field=wrapping_token auth/approle/role/arazzo-runner/secret-id > /shared/secretid-production.wrap; " +
+    "chmod 644 /shared/secretid-production.wrap; " +
+    // The production environment's payload key (ADR 0065 decision 5), at the path runner-production's key ring
+    // references (vault://secret/arazzo/payload-keys/production#key). Real trust provisioning, not example data: a
+    // deployment's provisioner places each sealed environment's key in the runner's secret store the same way.
+    $"vault kv put secret/arazzo/payload-keys/production key={productionPayloadKey}; ";
 
 // EXAMPLE-ONLY (seedExampleData): dev-dummy API keys for the sample's source services, at the Vault paths the seeded
 // credential *references* point at (vault://secret/arazzo/<source>#api-key). A real deployment omits this and provisions
@@ -569,6 +588,54 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner")
     // Aspire-managed HTTP endpoint (no hardcoded port). The runner is an internal worker, so Aspire proxies this
     // endpoint; letting Aspire assign the port (rather than the old launchSettings applicationUrl=5280) is what stops
     // the app from binding the same port as the DCP proxy — the collision that was crashing the runner on startup.
+    .WithHttpEndpoint()
+    .WithHttpHealthCheck("/health");
+
+// The PRODUCTION RUNNER: a second application runner process serving the production environment, which the example
+// seed registers a key generation for and which is therefore SEALED (ADR 0065 decision 10). It is the demo's real
+// sealed environment end to end: this runner reads production's payload key from Vault into its key ring, MACs every
+// checkpoint row it writes and verifies every row it loads, and the runner API refuses any clear production row. It
+// has its own machine principal, because a principal claims across every environment it is bound to and the
+// development runner holds no production key; its own wrapping token, because one is single-use; hosts no $draft runs
+// (production admits none) and fires no schedules (the development runner does).
+builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner-production")
+    .WithReference(workflowstore)
+    .WaitFor(workflowstore)
+    .WithEnvironment("Runner__CheckpointProtectionKey", checkpointProtectionKey)
+    .WithEnvironment("VAULT_ADDR", vault.GetEndpoint("http"))
+    .WithEnvironment("Runner__Vault__RoleId", runnerRoleId)
+    .WithEnvironment("Runner__Vault__WrapTokenFile", vaultProductionWrapTokenPath)
+    .WithEnvironment("Runner__ExecutorTrust__PublicKeyFile", signingPublicKeyPath)
+    .WithEnvironment("Runner__ExecutorTrust__KeyId", signingKeyName)
+    .WithEnvironment("Runner__Environment", "production")
+    .WithEnvironment("Runner__RunnerId", "demo-runner-production")
+    .WithEnvironment("Runner__HostDraftRuns", "false")
+    .WithEnvironment("Runner__ServesSchedules", "false")
+    // The key ring (ADR 0065 decisions 5 and 10): production, under the registered generation, from the runner's own
+    // Vault, sealed. Nothing about keys comes from the control plane.
+    .WithEnvironment("Runner__Sealing__Environments__0__Environment", "production")
+    .WithEnvironment("Runner__Sealing__Environments__0__KeyId", productionKeyId)
+    .WithEnvironment("Runner__Sealing__Environments__0__PayloadKeyRef", "vault://secret/arazzo/payload-keys/production#key")
+    .WithEnvironment("Runner__Sealing__Environments__0__Sealed", "true")
+    .WithEnvironment("Runner__Sources__Onboarding", onboarding.GetEndpoint("http"))
+    .WithEnvironment("Runner__Sources__Ledger", ledger.GetEndpoint("http"))
+    .WithEnvironment("Runner__Sources__Kyc", kyc.GetEndpoint("http"))
+    .WithEnvironment("Nats__Url", nats.GetEndpoint("nats"))
+    .WithEnvironment("Nats__Token", natsToken)
+    .WithReference(controlplane)
+    .WaitFor(controlplane)
+    .WithReference(keycloak)
+    .WaitFor(keycloak)
+    .WithEnvironment("Runner__ControlPlane__BaseUrl", controlplane.GetEndpoint("http"))
+    .WithEnvironment("Runner__Keycloak__BaseUrl", keycloak.GetEndpoint("http"))
+    .WithEnvironment("Runner__Keycloak__ClientId", "arazzo-runner-production")
+    .WithEnvironment("Runner__Keycloak__ClientSecret", "arazzo-runner-production-dev-secret")
+    .WaitFor(onboarding)
+    .WaitFor(ledger)
+    .WaitFor(kyc)
+    .WaitFor(nats)
+    .WaitForCompletion(vaultInit)
+    .WaitForCompletion(signingVaultInit)
     .WithHttpEndpoint()
     .WithHttpHealthCheck("/health");
 

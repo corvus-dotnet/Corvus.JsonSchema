@@ -17,6 +17,11 @@ everything. It composes:
 - **runner** — the execution host: a separate process that claims and executes catalogued runs and §18
   `$draft` debug runs, resolving each source's credential as its own read-only Vault identity at bind
   time. The control plane never executes; the runner does.
+- **runner-production**, a second application runner serving the **production** environment, which the
+  example seed registers a key generation for and which is therefore *sealed* (ADR 0065 decision 10). It reads
+  production's payload key from Vault into its key ring, MACs every checkpoint row it writes and verifies every
+  row it loads, and the control plane refuses any clear production row. Its own machine principal
+  (`arazzo-runner-production`), its own wrapping token, no `$draft` runs, no schedules.
 
 ## Secure introduction — a simulation of the runtime host's identity (design §13.5.1)
 

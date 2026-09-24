@@ -127,6 +127,18 @@
       ]
     },
     {
+      "clientId": "arazzo-runner-production",
+      "name": "Arazzo production runner (machine principal serving the sealed production environment, ADR 0065 decision 10)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "arazzo-runner-production-dev-secret",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "defaultClientScopes": ["runners:register", "runs:write", "runner:execute"]
+    },
+    {
       "clientId": "arazzo-access-approval",
       "name": "Arazzo control-plane system runner (machine principal, design §16.5.1)",
       "enabled": true,
