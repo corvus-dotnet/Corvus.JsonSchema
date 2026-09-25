@@ -51,6 +51,31 @@ So the *mechanism* (AppRole, response-wrapping, unwrap-then-login, least privile
 **delivery of the workload's identity** is simulated by the orchestrator rather than a real service
 principal / attestation. The dev root token on the provisioner is likewise a stand-in for a CI/IaC identity.
 
+## The sealed-start initiator handoff (ADR 0065 decision 9)
+
+Production is a sealed environment, and a run there can be started with inputs the control plane never reads. The
+AppHost provisions two P-256 key pairs per boot: production's **seal key**, whose public half the control plane's
+example seed registers as the generation an initiator seals to and whose private half the provisioner seeds into
+`runner-production`'s Vault (`secret/arazzo/seal-keys/production`), and the tenant operator's **initiator key**,
+whose public half is pinned on `runner-production` (`Runner__Sealing__Environments__0__Initiators__0`) and whose
+private half is written to the handoff directory as `production-initiator.key.pem`, beside
+`production-seal-key.fingerprint`. The AppHost logs both paths at start (`Sealed-start initiator handoff: ...`). To
+start a production run sealed, as the operator:
+
+```bash
+arazzo-runs start onboard-customer 2 --environment production \
+  --inputs '{"email":"ada@example.com","fullName":"Ada Lovelace","plan":"pro"}' \
+  --sealed --initiator-key <handoff>/production-initiator.key.pem \
+  --seal-key-fingerprint "$(cat <handoff>/production-seal-key.fingerprint)" \
+  --server http://<controlplane>/ --token <token>
+```
+
+The CLI pins the fingerprint before it seals, so a control plane publishing a key of its own gets nothing; the runner
+pins the initiator, so a seal anyone else made faults the run at its start rather than running. The live composition
+test `A_sealed_start_of_a_production_run_is_opened_and_advanced_by_the_production_runner` does exactly this over HTTP
+and watches `runner-production` open the seal and complete the onboarding. In a deployment both keys are the
+tenant's, provisioned from its own key management, and the operator keeps the initiator key where operators keep keys.
+
 ## GitHub OAuth App — the designer's Git integration (workflow-designer §4.7)
 
 The workflow designer can bind a working copy to a Git branch and commit/pull **as the signed-in

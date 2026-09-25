@@ -16,7 +16,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The public seal key (base64, SPKI). Not a secret.
+/// The sealed inputs: the AES-256-GCM ciphertext of the inputs document followed by its 16-byte tag.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]

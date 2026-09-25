@@ -18,6 +18,8 @@ arazzo-runs <command> [args] --server <url> [--token <bearer>]
 | `list [--status <s>] [--workflow-id <id>] [--limit <n>] [--page-token <t>] [--output table\|json]` | List runs (default a table, with a faulted run's error type in the Error column; `--output json` for piping). Follow `nextPageToken` to page. |
 | `get <runId> [--output json\|detail]` | Show a run's management detail. The default is the run as the API returns it, which includes the `budget` frozen into it at start. `--output detail` lays the run out to read, with its budget, and explains a platform fault type (`budget-fuel`, `executor-unresolvable` and the rest): what happened and what to do. On a run faulted on its budget it shows whether a `resume` would run now, and the budget the resume would give it. It shows `rerunOf` on a re-run. |
 | `resume <runId> --mode <mode> …` | Resume a faulted run. `--mode` is `RetryFaultedStep` (default), `Rewind` (`--target-cursor`), `Skip` (`--target-cursor`, `--skip-outputs-file <path>`), or `StatePatch` (`--patch-file <path>`, validated against RFC 6902 before sending). JSON-valued inputs are read from files, not passed on the command line. |
+| `start <baseWorkflowId> <version> --environment <name> [--inputs <json-or-file>] [--idempotency-key <key>]` | Start a run of a catalogued version in an environment. The control plane validates the inputs against the version's schema and stores them. Prints the run's id. |
+| `start <baseWorkflowId> <version> --environment <name> --sealed --initiator-key <pem> --seal-key-fingerprint <base64-sha256> [--inputs <json-or-file>] [--seal-key-id <keyId>] [--run-id <id>]` | Start a run from inputs the control plane never reads (ADR 0065 decision 9). The CLI is the initiator: it fetches the environment's published seal key, refuses it unless its SHA-256 fingerprint is the pinned one, seals the inputs to it (RFC 9180 HPKE) under a binding of the environment, workflow version, key generation and the run id it names (fresh at random unless given), signs the seal with the initiator's P-256 key, and posts the seal. The runner that holds the private seal half and pins the initiator's public key opens and validates the inputs at first claim; anything else faults the run at its start. Prints the run's id. |
 | `rerun <runId> [--idempotency-key <key>]` | Start a new run of the same workflow version, in the same environment, with the same inputs, which the server reads from the original. The remedy when a run cannot or should not be resumed. Prints the new run's id. |
 | `cancel <runId> --reason <text>` | Cancel a non-terminal run. |
 | `delete <runId>` | Permanently delete a single run. |
@@ -55,6 +57,18 @@ arazzo-runs schedules run-now nightly-reconcile --server https://host:8080
 ```
 
 ### Examples
+
+A sealed start into `production`, as the tenant's operator: the initiator key is the operator's own, and the
+fingerprint is the one the operator recorded when the seal key was registered, never one read off the control plane
+at the time of the start.
+
+```bash
+arazzo-runs start onboard-customer 2 --environment production \
+  --inputs '{"email":"ada@example.com","fullName":"Ada Lovelace","plan":"pro"}' \
+  --sealed --initiator-key ~/.arazzo/production-initiator.key.pem \
+  --seal-key-fingerprint 'q1n...=' --server https://controlplane.example
+```
+
 
 ```bash
 arazzo-runs list --status Faulted --server https://host:8080

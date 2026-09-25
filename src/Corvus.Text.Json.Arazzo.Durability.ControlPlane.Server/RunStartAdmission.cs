@@ -31,6 +31,8 @@ public interface IRunStartAdmission
 /// <param name="Tags">The free-form tags to stamp on the run.</param>
 /// <param name="RerunOf">The run this start re-runs, or <see langword="null"/>.</param>
 /// <param name="AuditAction">The governance-audit action the start is recorded under.</param>
+/// <param name="SealedRunId">For a sealed start (ADR 0065 decision 9), the run id the initiator chose; <see langword="null"/> for a plain start.</param>
+/// <param name="Sealed">For a sealed start, the initiator's seal, which the chain stores unread in place of validating <paramref name="Inputs"/>; <see langword="null"/> for a plain start.</param>
 public readonly record struct RunStartRequest(
     string BaseWorkflowId,
     int VersionNumber,
@@ -39,7 +41,13 @@ public readonly record struct RunStartRequest(
     string? IdempotencyKey = null,
     TagSet Tags = default,
     string? RerunOf = null,
-    string AuditAction = "run.start");
+    string AuditAction = "run.start",
+    WorkflowRunId? SealedRunId = null,
+    SealedInputs? Sealed = null)
+{
+    /// <summary>Gets a value indicating whether this is a sealed start: the initiator named the run and sealed the inputs.</summary>
+    public bool IsSealed => this.Sealed is not null && this.SealedRunId is not null;
+}
 
 /// <summary>How an admission ended.</summary>
 public enum RunStartOutcomeKind

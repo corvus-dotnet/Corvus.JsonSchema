@@ -525,6 +525,10 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
                 rerunOf = original;
             }
 
+            // The sealed-start badge (ADR 0065 decision 9): present only on a run an initiator started sealed, so a
+            // plain start in a sealed environment reads as control-plane trusted by its absence.
+            Models.JsonBoolean.Source sealedStart = d.SealedStart ? (Models.JsonBoolean.Source)true : default;
+
             b.Create(
                 createdAt: d.CreatedAt,
                 cursor: d.Cursor,
@@ -538,6 +542,7 @@ public sealed class ArazzoControlPlaneHandler : IApiRunsHandler
                 fault: fault,
                 rebudget: rebudget,
                 rerunOf: rerunOf,
+                sealedStart: sealedStart,
                 tags: tags,
                 updatedAt: d.UpdatedAt is { } updated ? (Models.JsonDateTime.Source)updated : default,
                 wait: wait);

@@ -155,16 +155,22 @@ WorkflowTransportBinder binder;
 // generation and where in ITS OWN secret store the environment payload key lives. Every checkpoint row this runner
 // writes for such an environment carries a MAC under a subkey derived from that key, and every row it loads is
 // verified before the run trusts a byte of it. Nothing about keys comes from the control plane, which holds none.
-// Configured as Runner:Sealing:Environments:N:{Environment,KeyId,PayloadKeyRef,Sealed}; empty for an open runner.
+// Configured as Runner:Sealing:Environments:N:{Environment,KeyId,PayloadKeyRef,Sealed,SealKeyRef,Initiators:M}; empty for
+// an open runner. SealKeyRef names the private half of the environment's seal key in the runner's own secret store
+// and Initiators the base64 SPKI of each initiator key the runner pins (ADR 0065 decision 9): with both, the runner
+// opens the environment's sealed starts; with neither it faults them; with one and not the other it does not start.
 RunnerKeyRing keyRing = RunnerKeyRing.Empty;
 List<RunnerKeyRingEntry> keyRingEntries = [];
 foreach (IConfigurationSection entry in builder.Configuration.GetSection("Runner:Sealing:Environments").GetChildren())
 {
+    List<string> initiators = [.. entry.GetSection("Initiators").GetChildren().Select(initiator => initiator.Value).OfType<string>()];
     keyRingEntries.Add(new RunnerKeyRingEntry(
         entry["Environment"] ?? throw new InvalidOperationException($"{entry.Path}:Environment is required."),
         entry["KeyId"] ?? throw new InvalidOperationException($"{entry.Path}:KeyId is required."),
         SecretRef.Parse(entry["PayloadKeyRef"] ?? throw new InvalidOperationException($"{entry.Path}:PayloadKeyRef is required.")),
-        entry.GetValue("Sealed", true)));
+        entry.GetValue("Sealed", true),
+        entry["SealKeyRef"] is { Length: > 0 } sealKeyRef ? SecretRef.Parse(sealKeyRef) : null,
+        initiators.Count > 0 ? initiators : null));
 }
 
 if (!string.IsNullOrWhiteSpace(vaultAddress) && !string.IsNullOrWhiteSpace(vaultRoleId) && !string.IsNullOrWhiteSpace(vaultWrapTokenFile))

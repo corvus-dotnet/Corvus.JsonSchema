@@ -596,9 +596,12 @@ IExampleSeed exampleSeed = new ArazzoExampleSeed();
 if (seedExampleData)
 {
     string specsDir = Path.Combine(builder.Environment.ContentRootPath, "specs");
+    // The public half of production's seal key, provisioned by the AppHost beside the private half it seeds into
+    // runner-production's Vault (ADR 0065 decision 9); absent when running standalone.
     await exampleSeed.SeedAsync(new ExampleSeedContext(
         catalog, sourceCredentials, environmentStore, environmentAdministratorStore, sourceStore,
-        availabilityStore, accessRequests, availabilityRequestStore, securityPolicy, specsDir, natsUrl));
+        availabilityStore, accessRequests, availabilityRequestStore, securityPolicy, specsDir, natsUrl,
+        builder.Configuration["ControlPlane:Production:SealPublicKey"]));
 
     // The persona rules/bindings the seed just wrote must take effect for THIS process's resolver (capability scopes
     // + row reach) without waiting for a write-triggered refresh.

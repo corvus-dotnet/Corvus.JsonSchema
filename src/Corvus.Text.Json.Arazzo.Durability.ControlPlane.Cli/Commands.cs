@@ -4,6 +4,7 @@
 
 using System.ComponentModel;
 using Corvus.Text.Json;
+using Corvus.Text.Json.Arazzo.Durability.Anchoring;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client;
 using Corvus.Text.Json.OpenApi.HttpTransport;
 using Corvus.Text.Json.Patch;
@@ -511,6 +512,167 @@ internal sealed class ListCommand : AsyncCommand<ListSettings>
         }
 
         return 0;
+    }
+}
+
+internal sealed class StartSettings : RunsSettings
+{
+    [CommandArgument(0, "<BASE_WORKFLOW_ID>")]
+    [Description("The base workflow id of the catalogued version to run.")]
+    public string BaseWorkflowId { get; init; } = string.Empty;
+
+    [CommandArgument(1, "<VERSION>")]
+    [Description("The version number to run.")]
+    public int VersionNumber { get; init; }
+
+    [CommandOption("--environment <NAME>")]
+    [Description("The deployment environment to pin the run to.")]
+    public string Environment { get; init; } = string.Empty;
+
+    [CommandOption("--inputs <JSON_OR_FILE>")]
+    [Description("The workflow inputs: a JSON object, or the path of a file holding one. Defaults to {}.")]
+    public string? Inputs { get; init; }
+
+    [CommandOption("--idempotency-key <KEY>")]
+    [Description("Makes a plain start idempotent: a repeat with the same key starts one run. Not used with --sealed, where the run id is the key.")]
+    public string? IdempotencyKey { get; init; }
+
+    [CommandOption("--sealed")]
+    [Description("Seal the inputs to the environment's registered seal key and sign them as the initiator (ADR 0065 decision 9), so the control plane never reads them. Requires --initiator-key and --seal-key-fingerprint.")]
+    public bool Sealed { get; init; }
+
+    [CommandOption("--initiator-key <PEM_FILE>")]
+    [Description("The initiator's P-256 private key (PKCS#8 or EC PEM) whose public half the runner pins.")]
+    public string? InitiatorKey { get; init; }
+
+    [CommandOption("--seal-key-fingerprint <BASE64_SHA256>")]
+    [Description("The pinned fingerprint of the environment's seal key: base64 SHA-256 of its SubjectPublicKeyInfo. The start is refused if the key the control plane publishes has any other fingerprint.")]
+    public string? SealKeyFingerprint { get; init; }
+
+    [CommandOption("--seal-key-id <KEY_ID>")]
+    [Description("The seal key generation to seal to; defaults to the environment's active generation.")]
+    public string? SealKeyId { get; init; }
+
+    [CommandOption("--run-id <RUN_ID>")]
+    [Description("The run id a sealed start names (32 lowercase hex characters); defaults to a fresh random id, printed with the result.")]
+    public string? RunId { get; init; }
+
+    /// <inheritdoc/>
+    public override Spectre.Console.ValidationResult Validate()
+    {
+        if (base.Validate() is { Successful: false } failed)
+        {
+            return failed;
+        }
+
+        if (string.IsNullOrEmpty(this.Environment))
+        {
+            return Spectre.Console.ValidationResult.Error("--environment <name> is required.");
+        }
+
+        if (this.Sealed && (string.IsNullOrEmpty(this.InitiatorKey) || string.IsNullOrEmpty(this.SealKeyFingerprint)))
+        {
+            return Spectre.Console.ValidationResult.Error("--sealed requires --initiator-key <pem-file> and --seal-key-fingerprint <base64-sha256>: a start is sealed only to a key whose fingerprint the operator pinned, and signed only as an initiator the runner pins.");
+        }
+
+        if (!this.Sealed && (this.InitiatorKey is not null || this.SealKeyFingerprint is not null || this.SealKeyId is not null || this.RunId is not null))
+        {
+            return Spectre.Console.ValidationResult.Error("--initiator-key, --seal-key-fingerprint, --seal-key-id and --run-id apply to a sealed start only (--sealed).");
+        }
+
+        if (this.RunId is { } runId && !WorkflowRunId.IsWellFormed(runId))
+        {
+            return Spectre.Console.ValidationResult.Error("--run-id must be exactly 32 lowercase hexadecimal characters.");
+        }
+
+        return Spectre.Console.ValidationResult.Success();
+    }
+
+    /// <summary>Reads the inputs document as UTF-8 JSON: the option's text when it is JSON, otherwise the file it names.</summary>
+    /// <returns>The inputs, or <c>{}</c> when none were given.</returns>
+    public byte[] ReadInputs()
+    {
+        if (string.IsNullOrWhiteSpace(this.Inputs))
+        {
+            return "{}"u8.ToArray();
+        }
+
+        string trimmed = this.Inputs.Trim();
+        return trimmed.StartsWith('{') ? System.Text.Encoding.UTF8.GetBytes(trimmed) : File.ReadAllBytes(this.Inputs);
+    }
+}
+
+/// <summary>
+/// Starts a run of a catalogued version. A plain start posts the inputs for the control plane to validate and store. A
+/// sealed start (ADR 0065 decision 9) is the initiator's: it fetches the environment's published seal key, refuses it
+/// unless its fingerprint is the one pinned on the command line (a control plane that swapped the key would otherwise
+/// read the inputs), seals the inputs to it under the binding of this run, signs the seal with the initiator's key, and
+/// posts the seal, which the control plane stores unread as the run's genesis row.
+/// </summary>
+internal sealed class StartCommand : AsyncCommand<StartSettings>
+{
+    protected override async Task<int> ExecuteAsync(CommandContext context, StartSettings settings, CancellationToken cancellationToken)
+    {
+        byte[] inputs = settings.ReadInputs();
+        (HttpClient http, HttpClientTransport transport, ApiCatalogClient client) = await settings.CreateCatalogClientAsync(cancellationToken);
+        using (http)
+        await using (transport)
+        {
+            if (!settings.Sealed)
+            {
+                using ParsedJsonDocument<Models.JsonObject> body = ParsedJsonDocument<Models.JsonObject>.Parse(inputs);
+                Models.JsonString.Source key = settings.IdempotencyKey is { Length: > 0 } k ? (Models.JsonString.Source)k : default;
+                await using StartCatalogWorkflowRunResponse response = await client.StartCatalogWorkflowRunAsync(settings.BaseWorkflowId, settings.VersionNumber, settings.Environment, body.RootElement, key, cancellationToken);
+                return response.MatchResult(accepted => Output.Print(accepted.ToString()), Output.Problem, Output.Problem, Output.Quota, Output.Validation, Output.Unexpected);
+            }
+
+            // The seal key, from the control plane, pinned by fingerprint before anything is sealed to it.
+            var keys = new ApiEnvironmentKeysClient(transport);
+            string? keyId = null;
+            byte[]? sealPublicKey = null;
+            await using (ListEnvironmentKeysResponse listed = await keys.ListEnvironmentKeysAsync(settings.Environment, "Active", cancellationToken: cancellationToken))
+            {
+                if (listed.StatusCode != 200)
+                {
+                    Console.Error.WriteLine($"The environment's seal keys could not be listed ({listed.StatusCode}).");
+                    return 1;
+                }
+
+                foreach (Models.EnvironmentKeyView generation in listed.OkBody.Keys.EnumerateArray())
+                {
+                    string candidate = (string)generation.KeyId;
+                    if (settings.SealKeyId is null || string.Equals(candidate, settings.SealKeyId, StringComparison.Ordinal))
+                    {
+                        keyId = candidate;
+                        sealPublicKey = ((JsonElement)generation.SealPublicKey).GetBytesFromBase64();
+                        break;
+                    }
+                }
+            }
+
+            if (keyId is null || sealPublicKey is null)
+            {
+                Console.Error.WriteLine(settings.SealKeyId is null
+                    ? $"Environment '{settings.Environment}' has no active seal key generation, so nothing can be sealed to it."
+                    : $"Environment '{settings.Environment}' has no active seal key generation '{settings.SealKeyId}'.");
+                return 1;
+            }
+
+            string fingerprint = RunStartInitiator.SealKeyFingerprint(sealPublicKey);
+            if (!string.Equals(fingerprint, settings.SealKeyFingerprint, StringComparison.Ordinal))
+            {
+                Console.Error.WriteLine($"The seal key the control plane publishes for generation '{keyId}' has fingerprint {fingerprint}, not the pinned {settings.SealKeyFingerprint}. Nothing was sealed or sent: a key the operator did not pin may be anyone's.");
+                return 1;
+            }
+
+            using var initiatorKey = System.Security.Cryptography.ECDsa.Create();
+            initiatorKey.ImportFromPem(await File.ReadAllTextAsync(settings.InitiatorKey!, cancellationToken));
+            string runId = settings.RunId ?? RunStartInitiator.NewRunId();
+            SealedInputs sealedInputs = RunStartInitiator.Seal(sealPublicKey, keyId, settings.Environment, settings.BaseWorkflowId, settings.VersionNumber, runId, inputs, initiatorKey);
+            using ParsedJsonDocument<Models.SealedRunStart> sealedBody = ParsedJsonDocument<Models.SealedRunStart>.Parse(SealedRunStart.Serialize(runId, sealedInputs));
+            await using StartSealedCatalogWorkflowRunResponse sealedResponse = await client.StartSealedCatalogWorkflowRunAsync(settings.BaseWorkflowId, settings.VersionNumber, settings.Environment, sealedBody.RootElement, cancellationToken);
+            return sealedResponse.MatchResult(accepted => Output.Print(accepted.ToString()), Output.Problem, Output.Problem, Output.Quota, Output.Unexpected);
+        }
     }
 }
 

@@ -139,6 +139,27 @@ public readonly partial struct WorkflowRunSteps
     }
 
     /// <summary>
+    /// Gets the (optional) <c>sealed</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// True when the run&#39;s checkpoint payload is encrypted under its environment&#39;s key (a sealed environment, ADR 0065 decision 5): the control plane holds no key, so no step carries outputs. The steps&#39; ids, outcomes, attempts and timing are envelope data and are reported as usual.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean Sealed
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SealedUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the <c>steps</c> property.
     /// </summary>
     /// <remarks>
@@ -436,6 +457,11 @@ public readonly partial struct WorkflowRunSteps
         public const string RunId = "runId";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="Sealed"/>.
+        /// </summary>
+        public const string Sealed = "sealed";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Steps"/>.
         /// </summary>
         public const string Steps = "steps";
@@ -449,6 +475,11 @@ public readonly partial struct WorkflowRunSteps
         /// Gets the JSON property name for <see cref="RunId"/>.
         /// </summary>
         public static ReadOnlySpan<byte> RunIdUtf8 => "runId"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Sealed"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SealedUtf8 => "sealed"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Steps"/>.
@@ -469,6 +500,11 @@ public readonly partial struct WorkflowRunSteps
         public static ReadOnlySpan<byte> RunId => "runId"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Sealed"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Sealed => "sealed"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Steps"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Steps => "steps"u8;
@@ -485,6 +521,11 @@ public readonly partial struct WorkflowRunSteps
         /// Gets the pre-baked property name blob for <see cref="RunId"/>.
         /// </summary>
         public static ReadOnlySpan<byte> RunId => [0x75, 0x00, 0x00, 0x00, 0x22, 0x72, 0x75, 0x6E, 0x49, 0x64, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Sealed"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Sealed => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x65, 0x61, 0x6C, 0x65, 0x64, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Steps"/>.

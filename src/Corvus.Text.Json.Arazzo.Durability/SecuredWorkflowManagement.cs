@@ -311,7 +311,7 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
         RunRebudget? rebudget = state.Status == WorkflowRunStatus.Faulted && state.Fault is { } fault && ExecutionBudgetFault.IsBudgetFault(fault.Error)
             ? await this.AssessRebudgetAsync(state, fault.Error, cancellationToken).ConfigureAwait(false)
             : null;
-        return new WorkflowRunDetail(state.RunId, state.WorkflowId, state.Status, state.Cursor, state.CreatedAt, state.Wait, state.Fault, cp.Etag, state.CorrelationId, state.Tags, state.SecurityTags, state.Environment, state.UpdatedAt, state.Budget, state.RerunOf, rebudget);
+        return new WorkflowRunDetail(state.RunId, state.WorkflowId, state.Status, state.Cursor, state.CreatedAt, state.Wait, state.Fault, cp.Etag, state.CorrelationId, state.Tags, state.SecurityTags, state.Environment, state.UpdatedAt, state.Budget, state.RerunOf, rebudget, state.SealedStart);
     }
 
     /// <inheritdoc/>

@@ -165,6 +165,15 @@ public interface IApiCatalogHandler
     ValueTask<StartCatalogWorkflowRunResult> HandleStartCatalogWorkflowRunAsync(StartCatalogWorkflowRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Handles POST /catalog/{baseWorkflowId}/versions/{versionNumber}/runs/sealed — Start a run of a workflow version from inputs an initiator sealed
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<StartSealedCatalogWorkflowRunResult> HandleStartSealedCatalogWorkflowRunAsync(StartSealedCatalogWorkflowRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Handles GET /catalog/{baseWorkflowId}/versions/{versionNumber}/sources/{sourceName} — Get a single source document from a version
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>

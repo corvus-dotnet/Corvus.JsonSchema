@@ -44,7 +44,8 @@ public sealed record ExampleSeedContext(
     IAvailabilityRequestStore AvailabilityRequests,
     ISecurityPolicyStore SecurityPolicy,
     string SpecsDir,
-    string BrokerUrl);
+    string BrokerUrl,
+    string? ProductionSealPublicKey = null);
 
 /// <summary>
 /// Seeds the sample's <em>example</em> content — the demo fiction: catalogued workflow versions, source-credential
@@ -232,7 +233,7 @@ public sealed class ArazzoExampleSeed : IExampleSeed
             {
                 if (name == "production")
                 {
-                    await RegisterProductionSealKeyAsync(context.EnvironmentStore, added.RootElement, cancellationToken);
+                    await RegisterProductionSealKeyAsync(context.EnvironmentStore, added.RootElement, context.ProductionSealPublicKey, cancellationToken);
                 }
             }
         }
@@ -518,15 +519,18 @@ public sealed class ArazzoExampleSeed : IExampleSeed
     /// The key generation the production environment's checkpoints are sealed under (ADR 0065 decision 10). Registering
     /// it is what makes production a sealed environment: the runner API then accepts a production row only under an
     /// active generation's MAC. The AppHost's runner-production carries the same generation id in its key ring, and the
-    /// payload key itself is in that runner's Vault, never here. The seal key registered is a fresh ES256 pair whose
-    /// private half is discarded: until run-start input sealing lands it is the registration, not the key, that matters.
+    /// payload key itself is in that runner's Vault, never here. The seal key registered is the public half the
+    /// AppHost provisioned (ADR 0065 decision 9): its private half is in runner-production's Vault, so an initiator's
+    /// sealed start opens there and nowhere else. Standalone, with no provisioned key, a fresh pair is registered and
+    /// its private half discarded, so production is sealed and a sealed start into it faults at the runner.
     /// </summary>
     private const string ProductionKeyId = "production-2026-09";
 
-    private static async ValueTask RegisterProductionSealKeyAsync(IEnvironmentStore environments, CpEnvironment stored, CancellationToken cancellationToken)
+    private static async ValueTask RegisterProductionSealKeyAsync(IEnvironmentStore environments, CpEnvironment stored, string? provisionedPublicKey, CancellationToken cancellationToken)
     {
         using var sealKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
-        using ParsedJsonDocument<JsonElement> sealPublicKey = ParsedJsonDocument<JsonElement>.Parse("\"" + Convert.ToBase64String(sealKey.ExportSubjectPublicKeyInfo()) + "\"");
+        string publicKey = provisionedPublicKey ?? Convert.ToBase64String(sealKey.ExportSubjectPublicKeyInfo());
+        using ParsedJsonDocument<JsonElement> sealPublicKey = ParsedJsonDocument<JsonElement>.Parse("\"" + publicKey + "\"");
         using ParsedJsonDocument<JsonElement> algorithm = ParsedJsonDocument<JsonElement>.Parse("\"ES256\"");
         using ParsedJsonDocument<CpEnvironment> draft = CpEnvironment.DraftWithKeyRegistered(
             stored, ProductionKeyId, sealPublicKey.RootElement, algorithm.RootElement, "demo", DateTimeOffset.UtcNow);

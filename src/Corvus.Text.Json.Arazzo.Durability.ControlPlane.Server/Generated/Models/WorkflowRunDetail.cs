@@ -346,6 +346,27 @@ public readonly partial struct WorkflowRunDetail
     }
 
     /// <summary>
+    /// Gets the (optional) <c>sealedStart</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Whether the run was started sealed by an initiator (ADR 0065 decision 9): its inputs reached the control plane as ciphertext to the environment&#39;s seal key, and the runner that first claimed it opened them. Absent on a plain start, which in a sealed environment is the control-plane-trusted start: its inputs were clear until the first runner save.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean SealedStart
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SealedStartUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonBoolean value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the <c>status</c> property.
     /// </summary>
     /// <remarks>
@@ -754,6 +775,11 @@ public readonly partial struct WorkflowRunDetail
         public const string RerunOf = "rerunOf";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="SealedStart"/>.
+        /// </summary>
+        public const string SealedStart = "sealedStart";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Status"/>.
         /// </summary>
         public const string Status = "status";
@@ -827,6 +853,11 @@ public readonly partial struct WorkflowRunDetail
         /// Gets the JSON property name for <see cref="RerunOf"/>.
         /// </summary>
         public static ReadOnlySpan<byte> RerunOfUtf8 => "rerunOf"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="SealedStart"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SealedStartUtf8 => "sealedStart"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Status"/>.
@@ -907,6 +938,11 @@ public readonly partial struct WorkflowRunDetail
         public static ReadOnlySpan<byte> RerunOf => "rerunOf"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="SealedStart"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SealedStart => "sealedStart"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Status"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Status => "status"u8;
@@ -983,6 +1019,11 @@ public readonly partial struct WorkflowRunDetail
         /// Gets the pre-baked property name blob for <see cref="RerunOf"/>.
         /// </summary>
         public static ReadOnlySpan<byte> RerunOf => [0x95, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x72, 0x75, 0x6E, 0x4F, 0x66, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SealedStart"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SealedStart => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x65, 0x61, 0x6C, 0x65, 0x64, 0x53, 0x74, 0x61, 0x72, 0x74, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Status"/>.

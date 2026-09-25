@@ -560,6 +560,53 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler, IRunS
     }
 
     /// <inheritdoc/>
+    public async ValueTask<StartSealedCatalogWorkflowRunResult> HandleStartSealedCatalogWorkflowRunAsync(StartSealedCatalogWorkflowRunParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        string baseWorkflowId = (string)parameters.BaseWorkflowId;
+        int versionNumber = (int)parameters.VersionNumber;
+        Models.SealedRunStart body = parameters.Body;
+
+        // The seal's parts at the shapes a seal produces (ADR 0065 decision 9); nothing in them is read beyond that.
+        SealedInputs sealedInputs;
+        try
+        {
+            sealedInputs = new SealedInputs(
+                (string)body.KeyId,
+                ((JsonElement)body.Enc).GetBytesFromBase64(),
+                ((JsonElement)body.Ciphertext).GetBytesFromBase64(),
+                ((JsonElement)body.Signature).GetBytesFromBase64());
+        }
+        catch (FormatException)
+        {
+            sealedInputs = default;
+        }
+
+        if (!sealedInputs.IsWellFormed)
+        {
+            return StartSealedCatalogWorkflowRunResult.Conflict(Problem("sealed-start-malformed", "Sealed start malformed", 409, "The sealed start's parts do not have the shapes a seal produces: a 65-byte encapsulated key, a ciphertext at least a tag long, and a 64-byte signature."), workspace);
+        }
+
+        var request = new RunStartRequest(
+            baseWorkflowId,
+            versionNumber,
+            parameters.Environment.IsNotUndefined() ? (string)parameters.Environment : null,
+            Inputs: default,
+            AuditAction: "run.start.sealed",
+            SealedRunId: new WorkflowRunId((string)body.RunId),
+            Sealed: sealedInputs);
+
+        RunStartOutcome outcome = await this.AdmitAndStartAsync(request, cancellationToken).ConfigureAwait(false);
+        return outcome.Kind switch
+        {
+            RunStartOutcomeKind.Accepted => StartSealedCatalogWorkflowRunResult.Accepted(RunStartOutcome.AcceptedBody(outcome), workspace),
+            RunStartOutcomeKind.VersionNotFound => StartSealedCatalogWorkflowRunResult.NotFound(NotFoundProblem(baseWorkflowId, versionNumber), workspace),
+            RunStartOutcomeKind.CapacityExceeded => StartSealedCatalogWorkflowRunResult.TooManyRequests(CapacityProblem(outcome.Capacity!.Value), workspace, CapacityRetryAfter()),
+            _ when outcome.Status == 404 => StartSealedCatalogWorkflowRunResult.NotFound(Problem(outcome.ProblemType!, outcome.Title!, 404, outcome.Detail!), workspace),
+            _ => StartSealedCatalogWorkflowRunResult.Conflict(Problem(outcome.ProblemType!, outcome.Title!, 409, outcome.Detail!), workspace),
+        };
+    }
+
+    /// <inheritdoc/>
     /// <remarks>
     /// The whole of what stands between a request and a run: the version and the environment in the caller's reach,
     /// the tenancy agreement between them, a runnable version, inputs that validate, availability in the environment,
@@ -615,6 +662,14 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler, IRunS
             platformEnvironment = TenantEnvironmentSealing.IsPlatform(environmentDoc.RootElement);
             environmentOwnerGroup = platformEnvironment ? null : OwnerGroupTag.Read(environmentDoc.RootElement, this.access.OwnerGroupTagKeyUtf8);
 
+            // A sealed start (ADR 0065 decision 9) is wrapped to one of the environment's ACTIVE seal key generations,
+            // read off the record in hand: a seal to a retired or unknown generation would reach a runner that holds no
+            // key for it and could only fault the run, so it is refused here, where the initiator can act on it.
+            if (request.Sealed is { } sealedInputs && !TenantEnvironmentSealing.ActiveGenerations(environmentDoc.RootElement).Contains(sealedInputs.KeyId))
+            {
+                return RunStartOutcome.Refused(409, "seal-key-not-active", "Seal key generation not active", $"Key generation '{sealedInputs.KeyId}' is not an active seal key generation of environment '{environment}', so a start sealed to it cannot be opened by any runner serving it.");
+            }
+
             // A version runs only in an environment its own owner group holds (ADR 0065). The promotion gate refuses a
             // mismatch through the API; this re-check holds against an availability entry written any other way, and it
             // is what keeps the population counted below the population charged: the run is stamped with the version's
@@ -639,8 +694,11 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler, IRunS
         string cacheKey = $"{baseWorkflowId}/{versionNumber}/inputs/{workflowId}//";
         (SchemaResolution resolution, ValidatorSchema schema) = await this.ResolveSchemaAsync(baseWorkflowId, versionNumber, target, cacheKey, ctx, cancellationToken).ConfigureAwait(false);
 
+        // A sealed start's inputs are ciphertext to the control plane (ADR 0065 decision 9): nothing here can validate
+        // them, and the runner that first claims the run validates what it opens against this same schema. The schema
+        // is still resolved, so a version outside the caller's reach answers the same way for either kind of start.
         Corvus.Text.Json.JsonElement inputs = request.Inputs;
-        if (resolution == SchemaResolution.Resolved)
+        if (resolution == SchemaResolution.Resolved && !request.IsSealed)
         {
             // A start with no inputs at all (a schedule that stores none) is validated as the empty object it amounts
             // to, so a version that requires inputs refuses it and one that does not admits it.
@@ -743,7 +801,22 @@ public sealed class ArazzoControlPlaneCatalogHandler : IApiCatalogHandler, IRunS
 
         WorkflowRunId runId;
         string outcome = "started";
-        if (request.IdempotencyKey is { Length: > 0 } idempotencyKey)
+        if (request.Sealed is { } sealedStart && request.SealedRunId is { } sealedRunId)
+        {
+            try
+            {
+                // The initiator named the run and the seal's binding carries the id, so the run is created under it and
+                // an initiator's own retry converges on it; any other occupant is a collision, refused (ADR 0065 §9).
+                IdempotentStartResult started = await this.management.StartSealedAsync(sealedRunId, workflowId, sealedStart, environment, correlationId: null, tags: request.Tags, securityTags: catalogVersion.SecurityTagsValue, cancellationToken: cancellationToken).ConfigureAwait(false);
+                runId = started.RunId;
+                outcome = started.Created ? "started" : "reused";
+            }
+            catch (WorkflowRunCollisionException)
+            {
+                return RunStartOutcome.Refused(409, "run-id-occupied", "Run id occupied", "The run id the sealed start names is occupied by a run that is not this start. Seal again under a fresh id.");
+            }
+        }
+        else if (request.IdempotencyKey is { Length: > 0 } idempotencyKey)
         {
             try
             {

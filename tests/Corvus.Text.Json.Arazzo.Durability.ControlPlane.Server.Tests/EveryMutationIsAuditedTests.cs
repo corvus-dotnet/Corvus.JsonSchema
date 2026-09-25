@@ -46,6 +46,7 @@ public sealed partial class EveryMutationIsAuditedTests
     private static readonly Dictionary<string, string> AuditedByDelegation = new(StringComparer.Ordinal)
     {
         ["startCatalogWorkflowRun"] = "AdmitAndStartAsync",
+        ["startSealedCatalogWorkflowRun"] = "AdmitAndStartAsync",
         ["rerunRun"] = "AdmitAndStartAsync",
     };
 

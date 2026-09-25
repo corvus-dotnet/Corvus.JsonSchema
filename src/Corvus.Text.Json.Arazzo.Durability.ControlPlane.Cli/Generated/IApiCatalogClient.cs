@@ -258,6 +258,16 @@ public interface IApiCatalogClient : IAsyncDisposable
         public static readonly string[] StartCatalogWorkflowRunOpenIdConnectScopes = ["runs:write"];
 
         /// <summary>
+        /// Gets the scopes required by <c>StartSealedCatalogWorkflowRun</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] StartSealedCatalogWorkflowRunOauth2Scopes = ["runs:write"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>StartSealedCatalogWorkflowRun</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] StartSealedCatalogWorkflowRunOpenIdConnectScopes = ["runs:write"];
+
+        /// <summary>
         /// Gets the scopes required by <c>GetCatalogSource</c> for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] GetCatalogSourceOauth2Scopes = ["catalog:read"];
@@ -591,6 +601,40 @@ public interface IApiCatalogClient : IAsyncDisposable
     /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
     /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     ValueTask<StartCatalogWorkflowRunResponse> StartCatalogWorkflowRunAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source environment, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonObject.Source<TContext> body, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source idempotencyKey = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    ;
+
+    /// <summary>
+    /// Start a run of a workflow version from inputs an initiator sealed
+    /// </summary>
+    /// <remarks>
+    /// Starts a run whose inputs the caller sealed to the environment's registered seal key and signed as an initiator (ADR 0065 decision 9). The control plane stores the seal as the run's genesis row and reads none of it: the inputs are neither validated nor seen here, and the runner that first claims the run opens, verifies and validates them, faulting the run at its start (`sealed-start-inputs-invalid`, `sealed-start-unopenable`) rather than running it when they do not open or validate. The initiator names the run: `runId` is in the seal's binding, so the control plane creates the run under it, and a repeat carrying the same id for the same workflow version in the same environment returns that run rather than starting another. The `keyId` must be one of the environment's active seal key generations. Every other gate of `startCatalogWorkflowRun` applies unchanged. A run started this way says so in its detail (`sealedStart`); a browser or a schedule cannot make one, since neither holds an initiator key the runner pins. Returns 202 with the run id. 404 if the version does not exist, or the environment does not exist or is outside the caller's reach; 409 if the version is not available in the environment, is not runnable, no registered runner currently serves the environment, the key generation is not active for the environment (`seal-key-not-active`), or the run id is occupied by another start (`run-id-occupied`).
+    /// </remarks>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="versionNumber">The versionNumber parameter.</param>
+    /// <param name="environment">The environment parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
+    ValueTask<StartSealedCatalogWorkflowRunResponse> StartSealedCatalogWorkflowRunAsync(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source environment, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SealedRunStart.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Start a run of a workflow version from inputs an initiator sealed
+    /// </summary>
+    /// <remarks>
+    /// Starts a run whose inputs the caller sealed to the environment's registered seal key and signed as an initiator (ADR 0065 decision 9). The control plane stores the seal as the run's genesis row and reads none of it: the inputs are neither validated nor seen here, and the runner that first claims the run opens, verifies and validates them, faulting the run at its start (`sealed-start-inputs-invalid`, `sealed-start-unopenable`) rather than running it when they do not open or validate. The initiator names the run: `runId` is in the seal's binding, so the control plane creates the run under it, and a repeat carrying the same id for the same workflow version in the same environment returns that run rather than starting another. The `keyId` must be one of the environment's active seal key generations. Every other gate of `startCatalogWorkflowRun` applies unchanged. A run started this way says so in its detail (`sealedStart`); a browser or a schedule cannot make one, since neither holds an initiator key the runner pins. Returns 202 with the run id. 404 if the version does not exist, or the environment does not exist or is outside the caller's reach; 409 if the version is not available in the environment, is not runnable, no registered runner currently serves the environment, the key generation is not active for the environment (`seal-key-not-active`), or the run id is occupied by another start (`run-id-occupied`).
+    /// </remarks>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="versionNumber">The versionNumber parameter.</param>
+    /// <param name="environment">The environment parameter.</param>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
+    ValueTask<StartSealedCatalogWorkflowRunResponse> StartSealedCatalogWorkflowRunAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.VersionNumber.Source versionNumber, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source environment, Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.SealedRunStart.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     #if NET9_0_OR_GREATER
         where TContext : allows ref struct
     #endif

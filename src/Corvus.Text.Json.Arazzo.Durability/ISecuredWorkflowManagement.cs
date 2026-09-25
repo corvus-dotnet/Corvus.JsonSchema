@@ -238,6 +238,7 @@ public readonly record struct IdempotentStartResult(WorkflowRunId RunId, bool Cr
 /// <param name="RerunOf">The id of the run this run re-runs, or <see langword="null"/> for a run started in its own right.</param>
 /// <param name="Rebudget">On a run faulted on its budget, what a re-budget would do for it; otherwise <see langword="null"/>.</param>
 /// <param name="Budget">The execution budget resolved into the run at start and frozen on its checkpoint (ADR 0068), or <see langword="null"/> for a run that carries none (the scheduler's).</param>
+/// <param name="SealedStart">Whether the run was started sealed by an initiator (ADR 0065 decision 9), as its envelope says.</param>
 public readonly record struct WorkflowRunDetail(
     WorkflowRunId Id,
     string WorkflowId,
@@ -254,7 +255,8 @@ public readonly record struct WorkflowRunDetail(
     DateTimeOffset? UpdatedAt = null,
     ExecutionBudget? Budget = null,
     string? RerunOf = null,
-    RunRebudget? Rebudget = null);
+    RunRebudget? Rebudget = null,
+    bool SealedStart = false);
 
 /// <summary>
 /// What a re-budget would do for a run that faulted on its execution budget (ADR 0068): the budget the run would be

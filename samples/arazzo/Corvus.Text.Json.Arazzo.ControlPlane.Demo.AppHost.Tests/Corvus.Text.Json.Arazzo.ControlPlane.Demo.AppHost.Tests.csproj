@@ -16,5 +16,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.ControlPlane.Demo.AppHost\Corvus.Text.Json.Arazzo.ControlPlane.Demo.AppHost.csproj" />
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability\Corvus.Text.Json.Arazzo.Durability.csproj" />
   </ItemGroup>
 </Project>

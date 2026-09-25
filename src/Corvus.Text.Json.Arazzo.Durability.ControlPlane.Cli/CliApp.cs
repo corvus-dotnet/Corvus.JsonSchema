@@ -23,6 +23,8 @@ public static class CliApp
                 .WithDescription("List runs (filter by status / workflow id, paged).");
             c.AddCommand<GetCommand>("get")
                 .WithDescription("Show a run's management detail.");
+            c.AddCommand<StartCommand>("start")
+                .WithDescription("Start a run of a catalogued version in an environment (--inputs). With --sealed, seal the inputs to the environment's pinned seal key and sign them as the initiator, so the control plane never reads them.");
             c.AddCommand<RerunCommand>("rerun").WithDescription("Start a new run of the same version, in the same environment, with the same inputs (--idempotency-key). The remedy when a run cannot or should not be resumed.");
             c.AddCommand<ResumeCommand>("resume")
                 .WithDescription("Resume a faulted run (RetryFaultedStep / Rewind / Skip / StatePatch).");

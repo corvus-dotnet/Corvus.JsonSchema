@@ -55,6 +55,21 @@ row on load, except a run's genesis row, which the control plane writes before a
 configured for sealing that has no Vault refuses to start rather than serve the environment clear. The AppHost runs
 a second instance of this project, `runner-production`, sealed for `production`.
 
+## Sealed starts
+
+A production run can be started sealed (ADR 0065 decision 9): an initiator the tenant controls seals the inputs to
+production's published seal key and signs them, and the control plane stores the seal as the run's genesis row
+without reading it. `runner-production` opens such a start at first claim because its key ring entry names both
+halves of the arrangement, `SealKeyRef` (the private half of production's seal key, in its own Vault at
+`secret/arazzo/seal-keys/production`, provisioned beside the payload key) and `Initiators` (the base64 SPKI of each
+initiator key it pins; the AppHost pins the operator's initiator key it hands off). It re-derives the seal's binding
+from the run it claimed, verifies the initiator's signature, opens the inputs, validates them against the version's
+inputs schema itself, and only then runs a step. A seal to another key, a signature no pinned initiator made, a seal
+moved to another run, or inputs that do not validate fault the run at its start (`sealed-start-unopenable`,
+`sealed-start-inputs-invalid`) rather than running it, and a runner configured with a seal key and no initiator, or the
+reverse, does not start. A start from the console is a plain start: admitted as before, and its run detail carries no
+`sealedStart` badge.
+
 ## The tenant anchor
 
 A sealed environment is also anchored (ADR 0065 decision 6). When the AppHost injects `ConnectionStrings:tenantanchors`,

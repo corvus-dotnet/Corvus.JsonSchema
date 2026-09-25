@@ -753,6 +753,108 @@ public sealed class ControlPlaneServerTests
     }
 
     [TestMethod]
+    public async Task StartSealedCatalogWorkflowRun_stores_the_initiators_seal_unread_and_refuses_what_no_runner_could_open()
+    {
+        // ADR 0065 decision 9: the control plane admits a sealed start through the same chain as a plain one, stores
+        // the seal as the genesis row, validates no inputs (it cannot), and refuses a seal to a generation the
+        // environment does not hold active and a run id another start occupies.
+        var clock = new MutableClock(T0);
+        var runStore = new InMemoryWorkflowStateStore(clock);
+        var catalogStore = new InMemoryWorkflowCatalogStore(clock, executorProvider: new FakeExecutorProvider());
+        var management = new SecuredWorkflowManagement(runStore, "ops", CompleteResumer, clock, runDerivation: TestDerivation);
+        var catalog = new SecuredWorkflowCatalog(catalogStore, runStore, "ops", administrators: new InMemoryWorkflowAdministratorStore());
+        var environmentStore = new Corvus.Text.Json.Arazzo.Durability.Environments.InMemoryEnvironmentStore(clock);
+        var availabilityStore = new Corvus.Text.Json.Arazzo.Durability.Availability.InMemoryAvailabilityStore(clock);
+        await catalog.AddAsync(InputsWorkflowPackage("flow"), new CatalogOwner("Team", "team@example.com"), default, default, default, default);
+        await catalog.AddAsync(InputsWorkflowPackage("other"), new CatalogOwner("Team", "team@example.com"), default, default, default, default);
+        await AddEnvironmentAsync(environmentStore, "production", null);
+        using var sealKey = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256);
+        using var initiator = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256);
+        byte[] sealSpki = sealKey.ExportSubjectPublicKeyInfo();
+        await RegisterKeyAsync(environmentStore, "production", "k1", sealSpki);
+        (await availabilityStore.MakeAvailableAsync("flow", 1, "production", "ops", default)).Entry.Dispose();
+        (await availabilityStore.MakeAvailableAsync("other", 1, "production", "ops", default)).Entry.Dispose();
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Logging.ClearProviders();
+        WebApplication app = builder.Build();
+        var runnerRegistry = new InMemoryRunnerRegistry();
+        app.MapArazzoControlPlane(management, catalog, runnerRegistry, ControlPlaneSecurityMode.Open, environmentStore: environmentStore, availabilityStore: availabilityStore);
+        await app.StartAsync();
+        using HttpClient client = app.GetTestClient();
+        await runnerRegistry.RegisterAsync(Runner("flow", 1), default);
+        await runnerRegistry.RegisterAsync(Runner("other", 1, runnerId: "r2"), default);
+
+        // Inputs that would NOT validate against the version's schema are admitted: the control plane cannot see them,
+        // and the runner validates what it opens. The row is the sealed genesis row and carries no inputs text.
+        const string runId = "0123456789abcdef0123456789abcdef";
+        SealedInputs sealedInputs = Anchoring.RunStartInitiator.Seal(sealSpki, "k1", "production", "flow", 1, runId, """{"nothing":"the schema wants"}"""u8, initiator);
+        HttpResponseMessage accepted = await client.PostAsync("/catalog/flow/versions/1/runs/sealed?environment=production", SealedBody(runId, sealedInputs));
+        accepted.StatusCode.ShouldBe(HttpStatusCode.Accepted);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(accepted))
+        {
+            doc.RootElement.GetProperty("runId").GetString().ShouldBe(runId, "the initiator named the run");
+            doc.RootElement.GetProperty("workflowId").GetString().ShouldBe("flow-v1");
+            doc.RootElement.GetProperty("status").GetString().ShouldBe("Pending");
+        }
+
+        WorkflowCheckpoint genesis = (await runStore.LoadAsync(new WorkflowRunAddress("production", new WorkflowRunId(runId)), default))!.Value;
+        CheckpointRow.Parse(genesis.Row.Span).Algorithm.ShouldBe(CheckpointAlgorithm.SealedGenesis);
+        Encoding.Latin1.GetString(genesis.Row.Span).Contains("the schema wants", StringComparison.Ordinal).ShouldBeFalse();
+
+        // The run detail says it started sealed; the initiator's retry converges on the same run.
+        HttpResponseMessage detail = await client.GetAsync($"/runs/{runId}");
+        detail.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (Stj.JsonDocument doc = await ReadJsonAsync(detail))
+        {
+            doc.RootElement.GetProperty("sealedStart").GetBoolean().ShouldBeTrue();
+        }
+
+        (await client.PostAsync("/catalog/flow/versions/1/runs/sealed?environment=production", SealedBody(runId, sealedInputs))).StatusCode.ShouldBe(HttpStatusCode.Accepted, "the initiator's own retry");
+
+        // Another start occupying the id is refused, a retired or unknown generation is refused, and malformed parts
+        // are refused before the chain runs. A plain start's detail carries no badge.
+        HttpResponseMessage occupied = await client.PostAsync("/catalog/other/versions/1/runs/sealed?environment=production", SealedBody(runId, Anchoring.RunStartInitiator.Seal(sealSpki, "k1", "production", "other", 1, runId, "{}"u8, initiator)));
+        occupied.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await occupied.Content.ReadAsStringAsync()).ShouldContain("run-id-occupied");
+        HttpResponseMessage unknownGeneration = await client.PostAsync("/catalog/flow/versions/1/runs/sealed?environment=production", SealedBody("fedcba9876543210fedcba9876543210", Anchoring.RunStartInitiator.Seal(sealSpki, "k9", "production", "flow", 1, "fedcba9876543210fedcba9876543210", "{}"u8, initiator)));
+        unknownGeneration.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await unknownGeneration.Content.ReadAsStringAsync()).ShouldContain("seal-key-not-active");
+        HttpResponseMessage malformed = await client.PostAsync("/catalog/flow/versions/1/runs/sealed?environment=production", new StringContent("""{ "runId": "fedcba9876543210fedcba9876543210", "keyId": "k1", "enc": "AAEC", "ciphertext": "AAEC", "signature": "AAEC" }""", Encoding.UTF8, "application/json"));
+        malformed.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await malformed.Content.ReadAsStringAsync()).ShouldContain("sealed-start-malformed");
+        (await client.PostAsync("/catalog/flow/versions/99/runs/sealed?environment=production", SealedBody(runId, sealedInputs))).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        HttpResponseMessage plain = await client.PostAsync("/catalog/flow/versions/1/runs?environment=production", new StringContent("""{ "petId": 5 }""", Encoding.UTF8, "application/json"));
+        plain.StatusCode.ShouldBe(HttpStatusCode.Accepted);
+        string plainId;
+        using (Stj.JsonDocument doc = await ReadJsonAsync(plain))
+        {
+            plainId = doc.RootElement.GetProperty("runId").GetString()!;
+        }
+
+        using (Stj.JsonDocument doc = await ReadJsonAsync(await client.GetAsync($"/runs/{plainId}")))
+        {
+            doc.RootElement.TryGetProperty("sealedStart", out _).ShouldBeFalse("a plain start carries no badge");
+        }
+
+        await app.StopAsync();
+
+        static StringContent SealedBody(string runId, SealedInputs sealedInputs)
+            => new(Encoding.UTF8.GetString(SealedRunStart.Serialize(runId, sealedInputs)), Encoding.UTF8, "application/json");
+    }
+
+    private static async Task RegisterKeyAsync(Corvus.Text.Json.Arazzo.Durability.Environments.IEnvironmentStore store, string name, string keyId, byte[] sealPublicKey)
+    {
+        using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Environments.Environment>? stored = await store.GetAsync(name, AccessContext.System, default);
+        using ParsedJsonDocument<JsonElement> publicKey = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("\"" + Convert.ToBase64String(sealPublicKey) + "\""));
+        using ParsedJsonDocument<JsonElement> algorithm = ParsedJsonDocument<JsonElement>.Parse("\"ES256\""u8.ToArray());
+        using ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Environments.Environment> draft =
+            Corvus.Text.Json.Arazzo.Durability.Environments.Environment.DraftWithKeyRegistered(stored!.RootElement, keyId, publicKey.RootElement, algorithm.RootElement, "ops", T0);
+        (await store.UpdateAsync(name, draft.RootElement, stored.RootElement.EtagValue, "ops", AccessContext.System, default))!.Dispose();
+    }
+
+    [TestMethod]
     public async Task StartCatalogWorkflowRun_is_audited_with_an_actor_and_the_environment()
     {
         // P1-6: starting a run is a governed action. It is audited with an actor (the unauthenticated Open posture

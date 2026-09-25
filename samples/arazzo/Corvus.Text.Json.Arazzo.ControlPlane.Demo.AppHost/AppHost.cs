@@ -31,6 +31,28 @@ string checkpointProtectionKey = Convert.ToBase64String(System.Security.Cryptogr
 string productionPayloadKey = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
 const string productionKeyId = "production-2026-09";
 
+// The production environment's SEAL key pair (ADR 0065 decision 9): the P-256 key an initiator wraps a sealed start's
+// inputs to. The control plane registers the PUBLIC half as the generation's seal key (ExampleSeed reads it from
+// ControlPlane:Production:SealPublicKey); the PRIVATE half goes into runner-production's Vault beside the payload key,
+// so a sealed start opens on that runner and nowhere else. The INITIATOR key pair is the tenant operator's: its public
+// half is pinned on runner-production (Runner:Sealing:Environments:0:Initiators:0), and its private half is written
+// to the handoff directory for `arazzo-runs start --sealed --initiator-key <file>`, beside the seal key's fingerprint
+// the CLI is told to pin. Both fresh per composition boot; a deployment provisions them from its own key management.
+string productionSealPublicKey;
+string productionSealPrivateKey;
+string productionInitiatorPublicKey;
+string productionInitiatorPrivateKeyPem;
+using (var sealKey = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256))
+using (var initiatorKey = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256))
+{
+    productionSealPublicKey = Convert.ToBase64String(sealKey.ExportSubjectPublicKeyInfo());
+    productionSealPrivateKey = Convert.ToBase64String(sealKey.ExportPkcs8PrivateKey());
+    productionInitiatorPublicKey = Convert.ToBase64String(initiatorKey.ExportSubjectPublicKeyInfo());
+    productionInitiatorPrivateKeyPem = initiatorKey.ExportPkcs8PrivateKeyPem();
+}
+
+string productionSealKeyFingerprint = Convert.ToBase64String(System.Security.Cryptography.SHA256.HashData(Convert.FromBase64String(productionSealPublicKey)));
+
 // The checkpoint CALLBACK secret (ADR 0062), which is a different thing from the protection key above: that one wraps
 // checkpoints at rest, this one signs the run-scoped bearer token a dispatched serverless function presents on its
 // callbacks. The serverless runner both mints and validates it, so it is one per-boot value handed to that one process.
@@ -167,6 +189,16 @@ if (!OperatingSystem.IsWindows())
 }
 string signingPublicKeyPath = Path.Combine(signingHandoffDir, "executor-signing.pub");
 
+// The initiator's handoff (ADR 0065 decision 9): the tenant operator's private initiator key and the fingerprint of
+// production's seal key, which the CLI pins before it seals. In a deployment these are the operator's own, kept where
+// the operator keeps keys; here the orchestrator writes them beside the other handoff files and says where.
+string initiatorKeyPath = Path.Combine(signingHandoffDir, "production-initiator.key.pem");
+string sealKeyFingerprintPath = Path.Combine(signingHandoffDir, "production-seal-key.fingerprint");
+File.WriteAllText(initiatorKeyPath, productionInitiatorPrivateKeyPem);
+File.WriteAllText(sealKeyFingerprintPath, productionSealKeyFingerprint);
+Environment.SetEnvironmentVariable("ARAZZO_INITIATOR_HANDOFF_DIR", signingHandoffDir);
+Console.WriteLine($"Sealed-start initiator handoff: {initiatorKeyPath} (initiator key), {sealKeyFingerprintPath} (seal key fingerprint {productionSealKeyFingerprint})");
+
 // HashiCorp Vault, dev mode: unsealed, in-memory (fresh each run), KV v2 mounted at secret/. The secret *store*.
 var vault = builder.AddContainer("vault", "hashicorp/vault", "1.18")
     .WithEnvironment("VAULT_DEV_ROOT_TOKEN_ID", vaultRootToken)
@@ -285,7 +317,10 @@ string approleTrustScript =
     // The production environment's payload key (ADR 0065 decision 5), at the path runner-production's key ring
     // references (vault://secret/arazzo/payload-keys/production#key). Real trust provisioning, not example data: a
     // deployment's provisioner places each sealed environment's key in the runner's secret store the same way.
-    $"vault kv put secret/arazzo/payload-keys/production key={productionPayloadKey}; ";
+    $"vault kv put secret/arazzo/payload-keys/production key={productionPayloadKey}; " +
+    // The private half of production's seal key (decision 9), at the path runner-production's key ring references
+    // (vault://secret/arazzo/seal-keys/production#key), so that runner alone opens production's sealed starts.
+    $"vault kv put secret/arazzo/seal-keys/production key={productionSealPrivateKey}; ";
 
 // EXAMPLE-ONLY (seedExampleData): dev-dummy API keys for the sample's source services, at the Vault paths the seeded
 // credential *references* point at (vault://secret/arazzo/<source>#api-key). A real deployment omits this and provisions
@@ -439,6 +474,9 @@ var controlplane = builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPl
     // W4 seeding split: the AppHost's single SeedExampleData switch drives the control plane's example seed too, so one
     // flag governs all demo fiction end to end (this control-plane seed + the Vault demo secrets + the Keycloak personas).
     .WithEnvironment("ControlPlane__SeedExampleData", seedExampleData ? "true" : "false")
+    // The public half of production's seal key (ADR 0065 decision 9), registered by the example seed as the generation
+    // an initiator seals to; its private half is runner-production's alone.
+    .WithEnvironment("ControlPlane__Production__SealPublicKey", productionSealPublicKey)
     // §14.1/§16: ENFORCE authentication + row security. This activates the whole (already-built) auth stack — Keycloak
     // JWT-bearer + BFF cookie/OIDC + dev-API-key, ControlPlaneSecurityMode.Scoped, and the per-row reach policy — so the
     // API is no longer anonymous. The first administrator is bootstrapped declaratively (§16.2): the Keycloak realm
@@ -632,6 +670,11 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner-product
     .WithEnvironment("Runner__Sealing__Environments__0__KeyId", productionKeyId)
     .WithEnvironment("Runner__Sealing__Environments__0__PayloadKeyRef", "vault://secret/arazzo/payload-keys/production#key")
     .WithEnvironment("Runner__Sealing__Environments__0__Sealed", "true")
+    // The sealed start (ADR 0065 decision 9): the private seal half from the runner's own Vault, and the initiator this
+    // runner pins, so a start the operator sealed with the handed-off initiator key opens here and a start anyone else
+    // sealed faults at its start.
+    .WithEnvironment("Runner__Sealing__Environments__0__SealKeyRef", "vault://secret/arazzo/seal-keys/production#key")
+    .WithEnvironment("Runner__Sealing__Environments__0__Initiators__0", productionInitiatorPublicKey)
     .WithEnvironment("Runner__Sources__Onboarding", onboarding.GetEndpoint("http"))
     .WithEnvironment("Runner__Sources__Ledger", ledger.GetEndpoint("http"))
     .WithEnvironment("Runner__Sources__Kyc", kyc.GetEndpoint("http"))
