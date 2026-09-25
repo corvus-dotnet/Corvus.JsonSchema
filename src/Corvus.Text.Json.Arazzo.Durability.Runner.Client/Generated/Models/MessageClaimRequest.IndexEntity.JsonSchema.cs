@@ -10,29 +10,29 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models;
 
-public readonly partial struct TimerClaimRequest
+public readonly partial struct MessageClaimRequest
 {
-    public readonly partial struct LimitEntity
-        : IJsonElement<LimitEntity>
+    public readonly partial struct IndexEntity
+        : IJsonElement<IndexEntity>
     {
         public static partial class JsonSchema
         {
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/components/schemas/TimerClaimRequest/properties/limit"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyMessage("/components/schemas/MessageClaimRequest/properties/index"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated, as a JSON Pointer within <see cref="SchemaDocument"/>.
             /// </summary>
-            public const string SchemaLocation = "/components/schemas/TimerClaimRequest/properties/limit";
+            public const string SchemaLocation = "/components/schemas/MessageClaimRequest/properties/index";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/TimerClaimRequest/properties/limit"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/schemas/MessageClaimRequest/properties/index"u8;
 
             /// <summary>
             /// Gets the schema document from which this type was generated, relative to the base location for generation.
@@ -48,7 +48,7 @@ public readonly partial struct TimerClaimRequest
             /// </summary>
             public static ReadOnlySpan<byte> SchemaDocumentUtf8 => "arazzo-runner.openapi.json"u8;
 
-            private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.CorvusJsonSchemaProgram.Entry(43);
+            private static readonly global::Corvus.Text.Json.RuntimeEvaluator.JsonSchemaEvaluator Evaluator = global::Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.CorvusJsonSchemaProgram.Entry(33);
 
             internal static bool Evaluate(
                 IJsonDocument parentDocument,

@@ -127,6 +127,42 @@ public sealed class RunnerApiEnvironmentBindingTests
         CheckpointRow.Parse(SealingCheckpointStore.Open(stored.Value.Row, prodAddress, Keys("k2", payloadKey))).Algorithm.ShouldBe(CheckpointAlgorithm.Clear, "the runner that holds the key opens it");
     }
 
+    [TestMethod]
+    public async Task A_message_is_claimed_by_channel_or_by_blind_index_and_a_sealed_environment_is_swept_by_index_only()
+    {
+        // ADR 0065 decision 4: a message claim names the message by its channel (an environment served clear) or by
+        // its blind wait index (a sealed environment), exactly one of the two. A sealed environment's rows carry the
+        // index in the channel column, and a channel claim never looks at them, so a runner without the key cannot
+        // sweep a sealed environment's waits by naming channels.
+        await using Host host = await Host.StartAsync(boundEnvironments: [Development, Production], sealedGenerations: new Dictionary<string, IReadOnlySet<string>>
+        {
+            [Production] = new HashSet<string>(["k2"]),
+        });
+        const string Index = "k2.29gDQKWEKLZynGM0-j3zWc80lR9N3Be7YeB6Q_ogdeI";
+        await host.SeedWaitingAsync(ProdRunId, Production, WorkflowWait.BlindMessage(Index));
+        await host.SeedWaitingAsync(DevRunId, Development, WorkflowWait.Message("kyc.verdict", "acct-42"));
+
+        (await host.ClaimMessageAsync(Runner, """{"channel":"kyc.verdict","index":"k2.abc","hostedVersions":["adopt-v3"]}""")).StatusCode.ShouldBe(HttpStatusCode.BadRequest, "both");
+        (await host.ClaimMessageAsync(Runner, """{"hostedVersions":["adopt-v3"]}""")).StatusCode.ShouldBe(HttpStatusCode.BadRequest, "neither");
+        (await host.ClaimMessageAsync(Runner, """{"index":"not an index","hostedVersions":["adopt-v3"]}""")).StatusCode.ShouldBe(HttpStatusCode.BadRequest, "an index outside its grammar");
+
+        HttpResponseMessage byIndex = await host.ClaimMessageAsync(Runner, $$"""{"index":"{{Index}}","hostedVersions":["adopt-v3"]}""");
+        byIndex.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await byIndex.Content.ReadAsStringAsync()).Contains(ProdRunId, StringComparison.Ordinal).ShouldBeTrue("the sealed run is claimed by its index");
+
+        HttpResponseMessage byChannel = await host.ClaimMessageAsync(Runner, """{"channel":"kyc.verdict","correlationId":"acct-42","hostedVersions":["adopt-v3"]}""");
+        byChannel.StatusCode.ShouldBe(HttpStatusCode.OK);
+        string claimed = await byChannel.Content.ReadAsStringAsync();
+        claimed.Contains(DevRunId, StringComparison.Ordinal).ShouldBeTrue("the clear run is claimed by its channel");
+        claimed.Contains(ProdRunId, StringComparison.Ordinal).ShouldBeFalse();
+
+        // A row in the sealed environment whose channel column holds a plaintext channel (a rewrite, or a row that
+        // predates its key) is still never offered to a channel claim.
+        const string ClearProdRunId = "00000000000000000000000000000c0c";
+        await host.SeedWaitingAsync(ClearProdRunId, Production, WorkflowWait.Message("kyc.verdict", "acct-42"));
+        (await (await host.ClaimMessageAsync(Runner, """{"channel":"kyc.verdict","correlationId":"acct-42","hostedVersions":["adopt-v3"]}""")).Content.ReadAsStringAsync()).Contains(ClearProdRunId, StringComparison.Ordinal).ShouldBeFalse("a sealed environment is never swept by channel");
+    }
+
     // The keys a runner holds for production under one generation (ADR 0065 decision 5).
     private static RunnerEnvironmentKeys Keys(string keyId, byte[] payloadKey)
     {
@@ -140,7 +176,7 @@ public sealed class RunnerApiEnvironmentBindingTests
     private static long LeaseEpoch(string lease)
         => RunnerLeaseToken.TryParse(lease, out long epoch, out _) ? epoch : 0;
 
-    private static byte[] Checkpoint(string runId, string environment, WorkflowRunStatus status, long sequence, long? epoch = null)
+    private static byte[] Checkpoint(string runId, string environment, WorkflowRunStatus status, long sequence, long? epoch = null, WorkflowWait? wait = null)
     {
         using PooledUtf8Map<int> retryCounters = PooledUtf8Map<int>.Rent(0);
         using PooledUtf8Map<JsonElement> stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
@@ -161,7 +197,7 @@ public sealed class RunnerApiEnvironmentBindingTests
                 default,
                 [],
                 false,
-                null,
+                wait,
                 null),
             retryCounters,
             new Dictionary<string, byte[]>(),
@@ -221,6 +257,24 @@ public sealed class RunnerApiEnvironmentBindingTests
                 WorkflowCheckpointSerializer.ProjectIndex(checkpoint),
                 WorkflowEtag.None,
                 default);
+        }
+
+        // Seeds, or re-seeds over whatever is there, a run suspended on a wait.
+        public async ValueTask SeedWaitingAsync(string runId, string environment, WorkflowWait wait)
+        {
+            var address = new WorkflowRunAddress(environment, new WorkflowRunId(runId));
+            byte[] checkpoint = Checkpoint(runId, environment, WorkflowRunStatus.Suspended, sequence: 1, wait: wait);
+            WorkflowCheckpoint? current = await store.LoadAsync(address, default);
+            await store.SaveAsync(address, checkpoint, WorkflowCheckpointSerializer.ProjectIndex(checkpoint), current?.Etag ?? WorkflowEtag.None, default);
+        }
+
+        public Task<HttpResponseMessage> ClaimMessageAsync(string principal, string body)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, "/messageClaims")
+            {
+                Content = new StringContent(body, System.Text.Encoding.UTF8, "application/json"),
+            };
+            return this.SendAsync(request, principal);
         }
 
         public async ValueTask<string> PlantLeaseAsync(string runId, string environment)

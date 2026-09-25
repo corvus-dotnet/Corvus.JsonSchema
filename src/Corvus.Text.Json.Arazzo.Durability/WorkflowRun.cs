@@ -60,6 +60,10 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     // anchor's ordering key, written beside the epoch. Null for a writer in an environment that is not anchored.
     private readonly ulong? incarnation;
 
+    // ADR 0065 decision 4: for a sealed environment the runner supplies the blinder for its key generation, and every
+    // message wait this run persists is the blind index rather than the channel and correlation id.
+    private readonly Anchoring.WaitIndexBlinder? waitBlinder;
+
     // A runner save leaves the loaded row behind; a control-plane-region write after one would carry a stale runner
     // region under a current etag, so it is refused.
     private bool advanced;
@@ -100,13 +104,15 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         byte[] controlPlaneRegion,
         long? leaseEpoch,
         string? rerunOf = null,
-        ulong? incarnation = null)
+        ulong? incarnation = null,
+        Anchoring.WaitIndexBlinder? waitBlinder = null)
     {
         this.RerunOf = rerunOf;
         this.controlPlane = controlPlane;
         this.controlPlaneRegion = controlPlaneRegion;
         this.leaseEpoch = leaseEpoch;
         this.incarnation = incarnation;
+        this.waitBlinder = waitBlinder;
         this.store = store;
         this.Id = id;
         this.WorkflowId = workflowId;
@@ -290,6 +296,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     /// <param name="timeProvider">The time source for checkpoint timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="leaseEpoch">The lease epoch the run is held under (ADR 0065 decision 6), written into its region; <see langword="null"/> for a writer with no grant.</param>
     /// <param name="incarnation">The tenant-attested store incarnation the run is held under (decision 6), written beside the epoch; <see langword="null"/> for an environment that is not anchored.</param>
+    /// <param name="waitBlinder">The blinder for the environment's key generation (decision 4): with one, every message wait the run persists is its blind index; <see langword="null"/> for an environment the runner serves clear.</param>
     /// <returns>The resumed run.</returns>
     public static WorkflowRun Resume(
         IWorkflowCheckpointStore store,
@@ -297,7 +304,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         WorkflowEtag etag,
         TimeProvider? timeProvider = null,
         long? leaseEpoch = null,
-        ulong? incarnation = null)
+        ulong? incarnation = null,
+        Anchoring.WaitIndexBlinder? waitBlinder = null)
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentNullException.ThrowIfNull(state);
@@ -328,7 +336,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             controlPlaneRegion: state.ControlPlaneRegion.ToArray(),
             leaseEpoch: leaseEpoch,
             rerunOf: state.RerunOf,
-            incarnation: incarnation);
+            incarnation: incarnation,
+            waitBlinder: waitBlinder);
     }
 
     /// <summary>Loads a run's checkpoint from the store and builds a resumed run from it.</summary>
@@ -343,7 +352,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         TimeProvider? timeProvider = null,
         long? leaseEpoch = null,
         CancellationToken cancellationToken = default,
-        ulong? incarnation = null)
+        ulong? incarnation = null,
+        Anchoring.WaitIndexBlinder? waitBlinder = null)
     {
         ArgumentNullException.ThrowIfNull(store);
 
@@ -364,7 +374,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             throw ThrowHelper.GetCheckpointEnvironmentMismatchException(address, claimed);
         }
 
-        return Resume(store, state, checkpoint.Value.Etag, timeProvider, leaseEpoch, incarnation);
+        return Resume(store, state, checkpoint.Value.Etag, timeProvider, leaseEpoch, incarnation, waitBlinder);
     }
 
     /// <inheritdoc/>
@@ -680,7 +690,10 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         this.Status = WorkflowRunStatus.Suspended;
         this.fault = null;
         var w = WorkflowWait.Message(channel, correlationId);
-        this.wait = w;
+
+        // For a sealed environment the row carries the blind index and never the channel or the correlation id (ADR
+        // 0065 decision 4); the executor still gets the wait it asked for.
+        this.wait = this.waitBlinder is { } blinder ? WorkflowWait.BlindMessage(blinder.Blind(channel, correlationId)) : w;
         await this.PersistAsync(default, cancellationToken).ConfigureAwait(false);
         ArazzoTelemetry.WorkflowsSuspended.Add(1, new KeyValuePair<string, object?>(ArazzoTelemetry.WorkflowIdTag, this.WorkflowId));
         return w;

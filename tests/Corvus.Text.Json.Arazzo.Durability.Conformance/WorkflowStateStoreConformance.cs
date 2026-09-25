@@ -453,6 +453,25 @@ public abstract class WorkflowStateStoreConformance
     }
 
     [TestMethod]
+    public async Task A_blinded_wait_is_matched_by_its_index_and_by_nothing_else()
+    {
+        // ADR 0065 decision 4: a sealed environment's wait is stored as its blind index, in the channel column with
+        // nothing in the correlation column, so it is matched by equality on the index and never by the wildcard
+        // rule. The index is opaque text to the store, keyed by generation.
+        IWorkflowStateStore store = await this.NewStoreAsync();
+        const string Index = "k2.29gDQKWEKLZynGM0-j3zWc80lR9N3Be7YeB6Q_ogdeI";
+        const string Other = "k2.Aq1Bq2Cq3Dq4Eq5Fq6Gq7Hq8Iq9Jq0Kq1Lq2Mq3Nq4O";
+        await store.SaveAsync(A("blinded"), Bytes("a"), Suspended(channel: Index, correlationId: null), WorkflowEtag.None, default);
+        await store.SaveAsync(A("clear"), Bytes("a"), Suspended(channel: "kyc.verdict", correlationId: "acct-42"), WorkflowEtag.None, default);
+
+        var index = (IWorkflowWaitIndex)store;
+        (await Collect(index.QueryAwaitingAsync(Index, null, default))).ShouldHaveSingleItem().ShouldBe(A("blinded"));
+        (await Collect(index.QueryAwaitingAsync(Other, null, default))).ShouldBeEmpty("a different index is a different message");
+        (await Collect(index.QueryAwaitingAsync("kyc.verdict", "acct-42", default))).ShouldHaveSingleItem().ShouldBe(A("clear"), "a channel query never reaches a blinded wait");
+        (await Collect(index.QueryAwaitingAsync("kyc.verdict", null, default))).ShouldHaveSingleItem().ShouldBe(A("clear"), "nor does a wildcard one");
+    }
+
+    [TestMethod]
     public async Task QueryAwaiting_matches_a_run_awaiting_a_channel_with_no_correlation()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();

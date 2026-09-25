@@ -574,7 +574,7 @@
         "name": "environment",
         "in": "path",
         "required": true,
-        "description": "The run's home environment: half of the run's address, because runs are keyed by (environment, runId) at every ingress and in every backend (ADR 0065 §9).",
+        "description": "The run's home environment: half of the run's address, because runs are keyed by (environment, runId) at every ingress and in every backend (ADR 0065 \u00a79).",
         "schema": {
           "$ref": "#/components/schemas/EnvironmentName"
         }
@@ -750,14 +750,14 @@
     "schemas": {
       "RunId": {
         "type": "string",
-        "description": "A run id: exactly 32 lowercase hexadecimal characters (ADR 0065 §9), validated at every ingress before any store touch. The grammar makes 128 bits of entropy structurally provable, satisfies every backend's key constraint by construction, and bounds the covert-channel width to the id's own entropy.",
+        "description": "A run id: exactly 32 lowercase hexadecimal characters (ADR 0065 \u00a79), validated at every ingress before any store touch. The grammar makes 128 bits of entropy structurally provable, satisfies every backend's key constraint by construction, and bounds the covert-channel width to the id's own entropy.",
         "pattern": "^[0-9a-f]{32}$",
         "minLength": 32,
         "maxLength": 32
       },
       "EnvironmentName": {
         "type": "string",
-        "description": "A deployment environment's name: 1 to 63 lowercase ASCII letters, digits or hyphens, not beginning or ending with a hyphen (a DNS-label shape). The name is half of every run's composite (environment, runId) store key (ADR 0065 §9).",
+        "description": "A deployment environment's name: 1 to 63 lowercase ASCII letters, digits or hyphens, not beginning or ending with a hyphen (a DNS-label shape). The name is half of every run's composite (environment, runId) store key (ADR 0065 \u00a79).",
         "pattern": "^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$",
         "minLength": 1,
         "maxLength": 63
@@ -818,7 +818,9 @@
             "type": "string",
             "description": "The versioned workflow id the run executes, from the runner's own hostedVersions."
           },
-          "environment": { "$ref": "#/components/schemas/EnvironmentName" },
+          "environment": {
+            "$ref": "#/components/schemas/EnvironmentName"
+          },
           "lease": {
             "$ref": "#/components/schemas/LeaseGrant"
           }
@@ -980,15 +982,14 @@
       },
       "MessageClaimRequest": {
         "type": "object",
-        "description": "The channel a message arrived on, and what the runner can execute. The message payload is deliberately absent. The runner holds it and hands it to each resumed run itself, so delivering a message tells the control plane that one arrived on a channel, never what it said.\n\nThe correlation id is present because the wait it matches is already recorded server-side, so naming it discloses nothing the control plane does not hold, and omitting it widens the delivery to every run awaiting the channel.",
+        "description": "The message a runner is delivering, named either by the channel it arrived on (an environment the runner serves clear) or by its blind wait index (a sealed environment, ADR 0065 decision 4), and what the runner can execute. Exactly one of channel and index is present. The message payload is deliberately absent. The runner holds it and hands it to each resumed run itself, so delivering a message tells the control plane that one arrived, never what it said.\n\nThe correlation id accompanies a channel because the wait it matches is already recorded server-side, so naming it discloses nothing the control plane does not hold, and omitting it widens the delivery to every run awaiting the channel. A blind index carries both the channel and the correlation id inside the MAC, so nothing accompanies it; the runner queries the channel-only index separately when it wants a wildcard waiter to wake.",
         "required": [
-          "channel",
           "hostedVersions"
         ],
         "properties": {
           "channel": {
             "type": "string",
-            "description": "The channel the message arrived on.",
+            "description": "The channel the message arrived on, for an environment the runner serves clear. Absent when the message is named by its blind index. A sealed environment's waits are matched by index only, so a channel claim is refused for one.",
             "minLength": 1,
             "maxLength": 256
           },
@@ -997,6 +998,13 @@
             "description": "The delivered message's correlation token. A message carrying none matches every run awaiting the channel, whatever correlation each is waiting for, and a run awaiting the channel with no particular correlation is matched by any message on it. Otherwise the two must be equal. Absence is a wildcard on either side rather than a value in its own right.",
             "minLength": 1,
             "maxLength": 256
+          },
+          "index": {
+            "type": "string",
+            "description": "The blind wait index of the delivered message under the environment's key (ADR 0065 decision 4): the key generation, a full stop, and the base64url HMAC over the framed channel and correlation id, exactly as the runner that parked the run rendered it. Matched by equality against the wait index; the control plane learns neither the channel nor the business key. Absent when the message is named by its channel.",
+            "minLength": 3,
+            "maxLength": 320,
+            "pattern": "^[^.]{1,256}\\.[A-Za-z0-9_-]{43}$"
           },
           "hostedVersions": {
             "type": "array",

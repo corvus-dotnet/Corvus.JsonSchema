@@ -168,6 +168,23 @@ operator-signed re-anchor is admitted by the store and applied by no runner unti
 The environment's first attestation is the tenant's to make, before any run in it is claimed; `AttestedIncarnationAsync`
 is what the worker reads for each claim and is null for an environment the runner does not anchor.
 
+## Blinding what the client parks on
+
+For every environment on the key ring, a run's message wait is parked as its blind wait index (ADR 0065 decision 4)
+rather than its channel and correlation id: `{keyId}.{base64url}` of an HMAC under the environment's `wait-index`
+subkey over the framed channel and correlation id, with a sentinel kind byte in place of the correlation field for a
+channel-only wait, so absence is a value no correlation id can spell. The run's region and the control plane's index column carry that and nothing else, so the store,
+the control plane and a backup hold neither the channel nor the business key. `runner.WaitBlinderFor(environment)` is
+the blinder the run is given at resume; nothing above the client computes an index by hand.
+
+Delivery is unchanged for the caller: `RunnerApiMessageDelivery.DeliverAsync(channel, correlationId, payload)`. The
+worker sweeps the environments it serves clear by channel, and each environment on the ring by the message's index
+under that environment's key and, when a correlation id was delivered, by the channel-only index too, so a run
+awaiting any message on the channel still wakes. A delivery with no correlation id reaches channel-only waiters only,
+never every correlated waiter (the decision-4 residue). Before a resumed run is handed the message, the worker checks
+that the wait in the run's own MAC-verified region is one it queried, and hands the run back otherwise. The runner API
+never sweeps a sealed environment by channel, so a runner without the key finds nothing there.
+
 ## Refusals a runner must act on
 
 | Situation | What you get |

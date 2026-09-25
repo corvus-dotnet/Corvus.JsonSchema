@@ -16,10 +16,10 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The channel a message arrived on, and what the runner can execute. The message payload is deliberately absent. The runner holds it and hands it to each resumed run itself, so delivering a message tells the control plane that one arrived on a channel, never what it said.
+/// The message a runner is delivering, named either by the channel it arrived on (an environment the runner serves clear) or by its blind wait index (a sealed environment, ADR 0065 decision 4), and what the runner can execute. Exactly one of channel and index is present. The message payload is deliberately absent. The runner holds it and hands it to each resumed run itself, so delivering a message tells the control plane that one arrived, never what it said.
 /// </para>
 /// <para>
-/// The correlation id is present because the wait it matches is already recorded server-side, so naming it discloses nothing the control plane does not hold, and omitting it widens the delivery to every run awaiting the channel.
+/// The correlation id accompanies a channel because the wait it matches is already recorded server-side, so naming it discloses nothing the control plane does not hold, and omitting it widens the delivery to every run awaiting the channel. A blind index carries both the channel and the correlation id inside the MAC, so nothing accompanies it; the runner queries the channel-only index separately when it wants a wildcard waiter to wake.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -52,21 +52,18 @@ public readonly partial struct MessageClaimRequest
     public static MessageClaimRequest DefaultInstance { get; }
 
     /// <summary>
-    /// Gets the <c>channel</c> property.
+    /// Gets the (optional) <c>channel</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// <para>
-    /// The channel the message arrived on.
+    /// The channel the message arrived on, for an environment the runner serves clear. Absent when the message is named by its blind index. A sealed environment&#39;s waits are matched by index only, so a channel claim is refused for one.
     /// </para>
     /// </remarks>
-    public Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.TheChannelTheMessageArrivedOn Channel
+    public Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.ChannelEntity Channel
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ChannelUtf8, out Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.TheChannelTheMessageArrivedOn value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ChannelUtf8, out Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.ChannelEntity value))
             {
                 return value;
             }
@@ -112,6 +109,27 @@ public readonly partial struct MessageClaimRequest
         get
         {
             if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HostedVersionsUtf8, out Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>index</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The blind wait index of the delivered message under the environment&#39;s key (ADR 0065 decision 4): the key generation, a full stop, and the base64url HMAC over the framed channel and correlation id, exactly as the runner that parked the run rendered it. Matched by equality against the wait index; the control plane learns neither the channel nor the business key. Absent when the message is named by its channel.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.IndexEntity Index
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IndexUtf8, out Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.IndexEntity value))
             {
                 return value;
             }
@@ -418,6 +436,11 @@ public readonly partial struct MessageClaimRequest
         public const string HostedVersions = "hostedVersions";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="Index"/>.
+        /// </summary>
+        public const string Index = "index";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="LeaseSeconds"/>.
         /// </summary>
         public const string LeaseSeconds = "leaseSeconds";
@@ -441,6 +464,11 @@ public readonly partial struct MessageClaimRequest
         /// Gets the JSON property name for <see cref="HostedVersions"/>.
         /// </summary>
         public static ReadOnlySpan<byte> HostedVersionsUtf8 => "hostedVersions"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Index"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> IndexUtf8 => "index"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="LeaseSeconds"/>.
@@ -471,6 +499,11 @@ public readonly partial struct MessageClaimRequest
         public static ReadOnlySpan<byte> HostedVersions => "hostedVersions"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Index"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Index => "index"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="LeaseSeconds"/>.
         /// </summary>
         public static ReadOnlySpan<byte> LeaseSeconds => "leaseSeconds"u8;
@@ -497,6 +530,11 @@ public readonly partial struct MessageClaimRequest
         /// Gets the pre-baked property name blob for <see cref="HostedVersions"/>.
         /// </summary>
         public static ReadOnlySpan<byte> HostedVersions => [0x05, 0x01, 0x00, 0x00, 0x22, 0x68, 0x6F, 0x73, 0x74, 0x65, 0x64, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Index"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Index => [0x75, 0x00, 0x00, 0x00, 0x22, 0x69, 0x6E, 0x64, 0x65, 0x78, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="LeaseSeconds"/>.

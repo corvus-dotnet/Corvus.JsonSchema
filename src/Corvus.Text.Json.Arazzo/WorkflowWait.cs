@@ -28,12 +28,27 @@ public enum WorkflowWaitKind
 /// <param name="DueAt">For a timer wait, the instant the run becomes due to resume.</param>
 /// <param name="Channel">For a message wait, the channel the run is awaiting a message on.</param>
 /// <param name="CorrelationId">For a message wait, the correlation id the run is awaiting, if any.</param>
+/// <param name="Index">The blind wait index (ADR 0065 decision 4) when the wait is blinded for a sealed environment, in which case <paramref name="Channel"/> and <paramref name="CorrelationId"/> are <see langword="null"/>; otherwise <see langword="null"/>.</param>
 public readonly record struct WorkflowWait(
     WorkflowWaitKind Kind,
     DateTimeOffset DueAt,
     string? Channel,
-    string? CorrelationId)
+    string? CorrelationId,
+    string? Index = null)
 {
+    /// <summary>Gets a value indicating whether this message wait is blinded: it carries the blind wait index of its
+    /// channel and correlation id under the environment's key (ADR 0065 decision 4) and no plaintext channel.</summary>
+    public bool IsBlinded => this.Index is not null;
+
+    /// <summary>
+    /// Creates a blinded message wait: the run awaits the message whose blind wait index is <paramref name="index"/>.
+    /// The plaintext channel and correlation id never reach the checkpoint; the runner that computed the index holds them.
+    /// </summary>
+    /// <param name="index">The blind wait index, as the runner's <c>WaitIndexBlinder</c> renders it.</param>
+    /// <returns>The wait.</returns>
+    public static WorkflowWait BlindMessage(string index)
+        => new(WorkflowWaitKind.Message, default, null, null, index);
+
     /// <summary>Creates a timer wait due at the given instant.</summary>
     /// <param name="dueAt">When the run becomes due to resume.</param>
     /// <returns>The wait.</returns>

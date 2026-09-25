@@ -95,11 +95,58 @@ public sealed class RunnerApiWorker
         ArgumentNullException.ThrowIfNull(hostedWorkflowIds);
         ArgumentNullException.ThrowIfNull(resume);
 
+        // The environments this runner serves clear are swept by channel. The environments on its key ring hold blind
+        // indexes (ADR 0065 decision 4), so each is swept by the index of this message under its own key, and, when the
+        // message carries a correlation id, by the channel-only index too, so a run awaiting any message on the channel
+        // still wakes. A message with no correlation id reaches channel-only waiters alone.
         IReadOnlyList<RunnerClaim> claims = await this.client.ClaimAwaitingMessageAsync(channel, correlationId, hostedWorkflowIds, this.MaximumRunsPerSweep, this.LeaseDuration, cancellationToken).ConfigureAwait(false);
-        return await this.AdvanceAllAsync(claims, resume, payload, headers, hasMessage: true, cancellationToken).ConfigureAwait(false);
+        HashSet<string>? indexes = null;
+        foreach (string environment in this.client.BlindedEnvironments)
+        {
+            if (this.client.WaitBlinderFor(environment) is not { } blinder)
+            {
+                continue;
+            }
+
+            indexes ??= new HashSet<string>(StringComparer.Ordinal);
+            string index = blinder.Blind(channel, correlationId);
+            if (indexes.Add(index))
+            {
+                claims = Append(claims, await this.client.ClaimAwaitingIndexAsync(index, hostedWorkflowIds, this.MaximumRunsPerSweep, this.LeaseDuration, cancellationToken).ConfigureAwait(false));
+            }
+
+            if (correlationId is not null)
+            {
+                string channelOnly = blinder.BlindChannelOnly(channel);
+                if (indexes.Add(channelOnly))
+                {
+                    claims = Append(claims, await this.client.ClaimAwaitingIndexAsync(channelOnly, hostedWorkflowIds, this.MaximumRunsPerSweep, this.LeaseDuration, cancellationToken).ConfigureAwait(false));
+                }
+            }
+        }
+
+        return await this.AdvanceAllAsync(claims, resume, payload, headers, hasMessage: true, cancellationToken, new MessageMatch(channel, correlationId, indexes)).ConfigureAwait(false);
     }
 
-    private async ValueTask<int> AdvanceAllAsync(IReadOnlyList<RunnerClaim> claims, WorkflowResumer resume, JsonElement payload, JsonElement headers, bool hasMessage, CancellationToken cancellationToken)
+    private static IReadOnlyList<RunnerClaim> Append(IReadOnlyList<RunnerClaim> claims, IReadOnlyList<RunnerClaim> more)
+    {
+        if (more.Count == 0)
+        {
+            return claims;
+        }
+
+        if (claims.Count == 0)
+        {
+            return more;
+        }
+
+        var all = new List<RunnerClaim>(claims.Count + more.Count);
+        all.AddRange(claims);
+        all.AddRange(more);
+        return all;
+    }
+
+    private async ValueTask<int> AdvanceAllAsync(IReadOnlyList<RunnerClaim> claims, WorkflowResumer resume, JsonElement payload, JsonElement headers, bool hasMessage, CancellationToken cancellationToken, MessageMatch match = default)
     {
         int resumed = 0;
         int next = 0;
@@ -109,7 +156,7 @@ public sealed class RunnerApiWorker
             {
                 // Counted as taken before it is advanced: an advance releases its own claim however it ends.
                 RunnerClaim claim = claims[next++];
-                if (await RunnerRunAdvance.AdvanceAsync(this.client, claim, resume, payload, headers, hasMessage, cancellationToken).ConfigureAwait(false))
+                if (await RunnerRunAdvance.AdvanceAsync(this.client, claim, resume, payload, headers, hasMessage, cancellationToken, match).ConfigureAwait(false))
                 {
                     resumed++;
                 }

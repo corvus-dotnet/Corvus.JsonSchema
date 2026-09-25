@@ -115,6 +115,13 @@ internal static class RunnerProblems
             title: "Bad Request",
             type: "about:blank");
 
+    internal static ProblemDetails.Source MessageClaimShape()
+        => ProblemDetails.Build(
+            detail: "A message claim names the message by exactly one of its channel and its blind wait index: a channel, with an optional correlation id, for an environment the runner serves clear, or an index for a sealed environment (ADR 0065 decision 4).",
+            status: 400,
+            title: "Bad Request",
+            type: "about:blank");
+
     internal static CheckpointWriteProblem.Source WriterConflict(long acceptedSequence)
         => CheckpointWriteProblem.Build(
             acceptedSequence: acceptedSequence,

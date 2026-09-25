@@ -351,7 +351,8 @@ recording what does not, because a model built only from holes mis-ranks the fix
 | Authentication telemetry the host registers, required in the secured postures, its failure records capped for each address | Holds | `AuthenticationTelemetry.cs`, `GovernanceAuditor.AuthenticationFailedAsync`, [ADR 0071](../adr/0071-authentication-event-telemetry.md) |
 | Runner-API refusals audited, capped for each principal, and required where the runner API authenticates its callers | Holds | `RunnerRefusalAudit.cs`, `GovernanceAuditor.RefusalAsync`, [ADR 0071](../adr/0071-authentication-event-telemetry.md) |
 | Tenant anchor: acceptance predicate, open decision table, tenant-owned store, attested incarnation, the runner's staging before dispatch | Holds for an anchored environment | `Durability/Anchoring/*`, `SealingCheckpointStore.cs`, `Postgres/PostgresTenantAnchorStore.cs`, `Runner.Client/RunnerRunAdvance.cs`, conformance-tested |
-| Blind indexes, initiator sealing, re-key sweep, operator-signed re-anchor and abandon | Designed | `Durability/Anchoring/*`, conformance-tested |
+| Blind wait index: the runner region and the index column carry the HMAC under the `wait-index` subkey in place of the channel and correlation id for every environment on the runner's key ring; index claims at the runner API; the delivery re-check | Holds for a sealed environment's wait match key | `Anchoring/WaitIndexBlinder.cs`, `WorkflowRun.cs`, `WorkflowRunIndexEntry.cs`, `Runner.Server/RunnerRunCoordinator.cs`, `Runner.Client/RunnerApiWorker.cs`, `Runner.Client/RunnerRunAdvance.cs`, conformance-tested on every backend |
+| Initiator sealing, re-key sweep, operator-signed re-anchor and abandon, the run-level correlation id's blinding | Designed | `Durability/Anchoring/*`, conformance-tested |
 
 ### 7.2 Process
 
@@ -492,7 +493,7 @@ residues, which is unusually good practice and the reason this register can be a
 | AR-5 | Terminal runs are never re-opened, so envelope tampering on completed runs is never detected without a periodic sweep | Standing |
 | AR-6 | A listener compromise yields the environment's plaintext, because its load path decrypts | Standing |
 | AR-7 | Envelope metadata is platform-visible, and for data-dependent workflows that includes the decision, not merely the shape | Standing |
-| AR-8 | Blind indexes leak equality and frequency, and a wildcard wait leaks a per-channel constant | Phase B onward |
+| AR-8 | Blind indexes leak equality and frequency, and a wildcard wait leaks a per-channel constant: since 2026-09-24 every channel-only wait on one channel in an environment shares one index the control plane can group and count | Standing |
 | AR-9 | Rollback is detected, not prevented, and only for an environment the runner anchors; an unanchored environment is as it was | Standing |
 | AR-10 | Forced duplicate execution remains possible without forgery. The control plane can expire a lease mid-advance, and both advances' side effects have landed | Standing |
 | AR-11 | Payload-mutating [resume](UBIQUITOUSLANGUAGE.md#resume) is a custody control, not an integrity one. A runner cannot judge whether rewriting a payment amount was legitimate | Standing |

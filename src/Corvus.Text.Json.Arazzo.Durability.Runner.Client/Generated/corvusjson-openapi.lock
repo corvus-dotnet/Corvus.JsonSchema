@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-09-24T06:03:23.6526109\u002B00:00",
+  "generatedAt": "2026-09-24T21:44:20.9939304\u002B00:00",
   "generatedFiles": [
     "ClaimRunRequest.cs",
     "ClaimRunResponse.cs",
@@ -117,9 +117,9 @@
     "Models/MessageClaimRequest.cs",
     "Models/MessageClaimRequest.Mutable.cs",
     "Models/MessageClaimRequest.JsonSchema.cs",
-    "Models/MessageClaimRequest.TheChannelTheMessageArrivedOn.cs",
-    "Models/MessageClaimRequest.TheChannelTheMessageArrivedOn.Mutable.cs",
-    "Models/MessageClaimRequest.TheChannelTheMessageArrivedOn.JsonSchema.cs",
+    "Models/MessageClaimRequest.ChannelEntity.cs",
+    "Models/MessageClaimRequest.ChannelEntity.Mutable.cs",
+    "Models/MessageClaimRequest.ChannelEntity.JsonSchema.cs",
     "Models/MessageClaimRequest.CorrelationIdEntity.cs",
     "Models/MessageClaimRequest.CorrelationIdEntity.Mutable.cs",
     "Models/MessageClaimRequest.CorrelationIdEntity.JsonSchema.cs",
@@ -129,6 +129,9 @@
     "Models/MessageClaimRequest.HostedVersionsEntityArray.HostedVersionsEntity.cs",
     "Models/MessageClaimRequest.HostedVersionsEntityArray.HostedVersionsEntity.Mutable.cs",
     "Models/MessageClaimRequest.HostedVersionsEntityArray.HostedVersionsEntity.JsonSchema.cs",
+    "Models/MessageClaimRequest.IndexEntity.cs",
+    "Models/MessageClaimRequest.IndexEntity.Mutable.cs",
+    "Models/MessageClaimRequest.IndexEntity.JsonSchema.cs",
     "Models/MessageClaimRequest.LeaseSecondsEntity.cs",
     "Models/MessageClaimRequest.LeaseSecondsEntity.Mutable.cs",
     "Models/MessageClaimRequest.LeaseSecondsEntity.JsonSchema.cs",
@@ -173,9 +176,9 @@
     "Models/GetHostedVersionsLimit.JsonSchema.cs",
     "Models/CorvusJsonSchemaProgram.cs"
   ],
-  "generatorVersion": "1.0.0\u002B47637e57a0956a381b59eff2cb97673e0eab5ab6",
+  "generatorVersion": "1.0.0\u002Bf7443e9a1b7ffc10efe9c3a047ec6f5426425db3",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.Runner.Client",
-  "specFileHash": "b90bcd5193ef17b41832cbd7aaad18717ac18fcc149bc127a49ae9e1fae9cf56",
+  "specFileHash": "5c6c5e713e6c3d21438bba4a5c03c014317c07408667223ececc0d11b4807181",
   "specVersion": "3.2"
 }

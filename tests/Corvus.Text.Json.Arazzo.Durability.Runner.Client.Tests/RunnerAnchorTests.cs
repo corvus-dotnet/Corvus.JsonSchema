@@ -49,14 +49,15 @@ public sealed class RunnerAnchorTests
             sealedGenerations: new Dictionary<string, IReadOnlySet<string>> { [Fixture.Production] = new HashSet<string>([KeyId]) });
 
         // Two runs at their genesis rows, as the control plane wrote them: clear, sequence 0, no grant, waiting on a
-        // message. A message rather than a timer, because the run's own clock is the process's and the server's is
-        // the fixture's, and a message is due whenever it is delivered.
-        await fixture.SeedGenesisWaitingAsync(Run1, WorkflowWait.Message(Channel, null));
-        await fixture.SeedGenesisWaitingAsync(Run2, WorkflowWait.Message(Channel, null));
+        // timer that is due. The first claim is by timer, since a sealed environment is never swept by channel; every
+        // later rest is a message wait the runner blinds, and every later sweep a delivery claimed by its index.
+        await fixture.SeedGenesisWaitingAsync(Run1, WorkflowWait.Timer(Fixture.T0));
+        await fixture.SeedGenesisWaitingAsync(Run2, WorkflowWait.Timer(Fixture.T0));
+        fixture.Clock.Advance(TimeSpan.FromMinutes(1));
         using ParsedJsonDocument<JsonElement> payload = ParsedJsonDocument<JsonElement>.Parse("""{"orderId":42}"""u8.ToArray());
 
         var worker = new RunnerApiWorker(fixture.Client);
-        (await worker.DeliverMessageAsync(Channel, null, payload.RootElement, [Fixture.Version], Advance, default)).ShouldBe(2);
+        (await worker.ResumeDueTimersAsync([Fixture.Version], Advance, default)).ShouldBe(2);
 
         // Every row the runner wrote carries its grant, sealed under the environment's key, and the tenant's record
         // committed to the last one before the run rested.

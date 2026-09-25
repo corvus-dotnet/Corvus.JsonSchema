@@ -115,21 +115,18 @@ public readonly partial struct MessageClaimRequest
         }
 
         /// <summary>
-        /// Gets the <c>channel</c> property.
+        /// Gets the (optional) <c>channel</c> property.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-        /// </para>
-        /// <para>
-        /// The channel the message arrived on.
+        /// The channel the message arrived on, for an environment the runner serves clear. Absent when the message is named by its blind index. A sealed environment&#39;s waits are matched by index only, so a channel claim is refused for one.
         /// </para>
         /// </remarks>
-        public Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.TheChannelTheMessageArrivedOn.Mutable Channel
+        public Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.ChannelEntity.Mutable Channel
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ChannelUtf8, out Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.TheChannelTheMessageArrivedOn.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ChannelUtf8, out Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.ChannelEntity.Mutable value))
                 {
                     return value;
                 }
@@ -175,6 +172,27 @@ public readonly partial struct MessageClaimRequest
             get
             {
                 if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HostedVersionsUtf8, out Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Mutable value))
+                {
+                    return value;
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>index</c> property.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The blind wait index of the delivered message under the environment&#39;s key (ADR 0065 decision 4): the key generation, a full stop, and the base64url HMAC over the framed channel and correlation id, exactly as the runner that parked the run rendered it. Matched by equality against the wait index; the control plane learns neither the channel nor the business key. Absent when the message is named by its channel.
+        /// </para>
+        /// </remarks>
+        public Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.IndexEntity.Mutable Index
+        {
+            get
+            {
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IndexUtf8, out Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.IndexEntity.Mutable value))
                 {
                     return value;
                 }
@@ -251,13 +269,15 @@ public readonly partial struct MessageClaimRequest
         /// Set the <c>channel</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetChannel(scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.TheChannelTheMessageArrivedOn.Source value)
+        public void SetChannel(scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.ChannelEntity.Source value)
         {
             CheckValidInstance();
 
             if (value.IsUndefined)
             {
-                CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("channel");
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ChannelUtf8);
+                _documentVersion = _parent.Version;
+                return;
             }
 
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
@@ -276,6 +296,18 @@ public readonly partial struct MessageClaimRequest
             }
 
             _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Remove the <c>channel</c> property, if present.
+        /// </summary>
+        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+        public bool RemoveChannel()
+        {
+            CheckValidInstance();
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ChannelUtf8);
+            _documentVersion = _parent.Version;
+            return result;
         }
 
         /// <summary>
@@ -386,6 +418,51 @@ public readonly partial struct MessageClaimRequest
             }
 
             _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Set the <c>index</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetIndex(scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.IndexEntity.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.IndexUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IndexUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Index, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Remove the <c>index</c> property, if present.
+        /// </summary>
+        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+        public bool RemoveIndex()
+        {
+            CheckValidInstance();
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.IndexUtf8);
+            _documentVersion = _parent.Version;
+            return result;
         }
 
         /// <summary>
@@ -600,11 +677,12 @@ public readonly partial struct MessageClaimRequest
         private readonly Kind _kind;
         private readonly JsonElement _jsonElement;
         private readonly Builder.Build? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.TheChannelTheMessageArrivedOn.Source _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source _createArg2;
+        private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.ChannelEntity.Source _createArg2;
         private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source _createArg3;
-        private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source _createArg4;
-        private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source _createArg5;
+        private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.IndexEntity.Source _createArg4;
+        private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source _createArg5;
+        private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source _createArg6;
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Source.IsUndefined"/>
         public bool IsUndefined => _kind == Kind.Unknown;
@@ -617,13 +695,14 @@ public readonly partial struct MessageClaimRequest
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.TheChannelTheMessageArrivedOn.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source arg5)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.ChannelEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.IndexEntity.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source arg6)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
             _createArg3 = arg3;
             _createArg4 = arg4;
             _createArg5 = arg5;
+            _createArg6 = arg6;
             _kind = Kind.Create;
         }
 
@@ -644,7 +723,7 @@ public readonly partial struct MessageClaimRequest
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -669,7 +748,7 @@ public readonly partial struct MessageClaimRequest
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -694,7 +773,7 @@ public readonly partial struct MessageClaimRequest
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -719,7 +798,7 @@ public readonly partial struct MessageClaimRequest
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -744,7 +823,7 @@ public readonly partial struct MessageClaimRequest
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -772,11 +851,12 @@ public readonly partial struct MessageClaimRequest
         TContext _context;
         Source _source;
         private readonly Builder.Build<TContext>? _objectBuilder;
-        private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.TheChannelTheMessageArrivedOn.Source _createArg1;
-        private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source<TContext> _createArg2;
+        private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source<TContext> _createArg1;
+        private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.ChannelEntity.Source _createArg2;
         private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source _createArg3;
-        private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source _createArg4;
-        private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source _createArg5;
+        private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.IndexEntity.Source _createArg4;
+        private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source _createArg5;
+        private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source _createArg6;
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Source.IsUndefined"/>
         public bool IsUndefined => _kind == Kind.Unknown;
@@ -787,7 +867,7 @@ public readonly partial struct MessageClaimRequest
 
         internal Source(scoped in TContext context, Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.TheChannelTheMessageArrivedOn.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source arg5)
+        internal Source(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source<TContext> arg1, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.ChannelEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.IndexEntity.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source arg6)
         {
             _context = context;
             _createArg1 = arg1;
@@ -795,6 +875,7 @@ public readonly partial struct MessageClaimRequest
             _createArg3 = arg3;
             _createArg4 = arg4;
             _createArg5 = arg5;
+            _createArg6 = arg6;
             _kind = Kind.Create;
         }
 
@@ -813,7 +894,7 @@ public readonly partial struct MessageClaimRequest
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -838,7 +919,7 @@ public readonly partial struct MessageClaimRequest
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -863,7 +944,7 @@ public readonly partial struct MessageClaimRequest
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -888,7 +969,7 @@ public readonly partial struct MessageClaimRequest
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -913,7 +994,7 @@ public readonly partial struct MessageClaimRequest
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
+                        Builder.BuildCreateValue(_context, _createArg1, _createArg2, _createArg3, _createArg4, _createArg5, _createArg6, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -944,15 +1025,17 @@ public readonly partial struct MessageClaimRequest
 
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.TheChannelTheMessageArrivedOn.Source channel,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source hostedVersions,
+            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.ChannelEntity.Source channel = default,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source correlationId = default,
+            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.IndexEntity.Source index = default,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source leaseSeconds = default,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source limit = default)
         {
-            channel.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Channel, ref builder);
             hostedVersions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HostedVersions, ref builder);
+            channel.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Channel, ref builder);
             correlationId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CorrelationId, ref builder);
+            index.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Index, ref builder);
             leaseSeconds.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LeaseSeconds, ref builder);
             limit.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Limit, ref builder);
         }
@@ -961,30 +1044,33 @@ public readonly partial struct MessageClaimRequest
         /// Creates an instance of a <see cref="MessageClaimRequest"/>.
         /// </summary>
         public void Create(
-            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.TheChannelTheMessageArrivedOn.Source channel,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source hostedVersions,
+            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.ChannelEntity.Source channel = default,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source correlationId = default,
+            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.IndexEntity.Source index = default,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source leaseSeconds = default,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source limit = default)
         {
-            Create(ref _builder, channel, hostedVersions, correlationId, leaseSeconds, limit);
+            Create(ref _builder, hostedVersions, channel, correlationId, index, leaseSeconds, limit);
         }
 
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.TheChannelTheMessageArrivedOn.Source channel,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source<TContext> hostedVersions,
+            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.ChannelEntity.Source channel = default,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source correlationId = default,
+            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.IndexEntity.Source index = default,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source leaseSeconds = default,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source limit = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
         {
-            channel.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Channel, ref builder);
             hostedVersions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HostedVersions, ref builder);
+            channel.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Channel, ref builder);
             correlationId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CorrelationId, ref builder);
+            index.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Index, ref builder);
             leaseSeconds.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LeaseSeconds, ref builder);
             limit.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Limit, ref builder);
         }
@@ -994,16 +1080,17 @@ public readonly partial struct MessageClaimRequest
         /// </summary>
         public void Create<TContext>(
             in TContext context,
-            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.TheChannelTheMessageArrivedOn.Source channel,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source<TContext> hostedVersions,
+            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.ChannelEntity.Source channel = default,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source correlationId = default,
+            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.IndexEntity.Source index = default,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source leaseSeconds = default,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source limit = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
         {
-            Create(context, ref _builder, channel, hostedVersions, correlationId, leaseSeconds, limit);
+            Create(context, ref _builder, hostedVersions, channel, correlationId, index, leaseSeconds, limit);
         }
 
         internal static void BuildValue(Build value, ref ComplexValueBuilder o)
@@ -1029,20 +1116,20 @@ public readonly partial struct MessageClaimRequest
             o.EndObject();
         }
 
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.TheChannelTheMessageArrivedOn.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source arg5, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.ChannelEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.IndexEntity.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source arg6, ref ComplexValueBuilder o)
         {
             o.StartObject();
-            Create(ref o, arg1, arg2, arg3, arg4, arg5);
+            Create(ref o, arg1, arg2, arg3, arg4, arg5, arg6);
             o.EndObject();
         }
 
-        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.TheChannelTheMessageArrivedOn.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source<TContext> arg2, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source arg5, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source<TContext> arg1, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.ChannelEntity.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.IndexEntity.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source arg5, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source arg6, ref ComplexValueBuilder o)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
         {
             o.StartObject();
-            Create(context, ref o, arg1, arg2, arg3, arg4, arg5);
+            Create(context, ref o, arg1, arg2, arg3, arg4, arg5, arg6);
             o.EndObject();
         }
     }
@@ -1079,15 +1166,16 @@ public readonly partial struct MessageClaimRequest
     /// <summary>
     /// Build an instance of the value directly from its property values.
     /// </summary>
-    /// <param name="channel">The value of the <c>"channel"</c> property.</param>
     /// <param name="hostedVersions">The value of the <c>"hostedVersions"</c> property.</param>
+    /// <param name="channel">The value of the <c>"channel"</c> property.</param>
     /// <param name="correlationId">The value of the <c>"correlationId"</c> property.</param>
+    /// <param name="index">The value of the <c>"index"</c> property.</param>
     /// <param name="leaseSeconds">The value of the <c>"leaseSeconds"</c> property.</param>
     /// <param name="limit">The value of the <c>"limit"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.TheChannelTheMessageArrivedOn.Source channel, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source hostedVersions, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source correlationId = default, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source leaseSeconds = default, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source limit = default)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source hostedVersions, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.ChannelEntity.Source channel = default, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source correlationId = default, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.IndexEntity.Source index = default, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source leaseSeconds = default, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source limit = default)
     {
-        return new Source(channel, hostedVersions, correlationId, leaseSeconds, limit);
+        return new Source(hostedVersions, channel, correlationId, index, leaseSeconds, limit);
     }
 
     /// <summary>
@@ -1095,18 +1183,19 @@ public readonly partial struct MessageClaimRequest
     /// </summary>
     /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
     /// <param name="context">The context to pass to the builder.</param>
-    /// <param name="channel">The value of the <c>"channel"</c> property.</param>
     /// <param name="hostedVersions">The value of the <c>"hostedVersions"</c> property.</param>
+    /// <param name="channel">The value of the <c>"channel"</c> property.</param>
     /// <param name="correlationId">The value of the <c>"correlationId"</c> property.</param>
+    /// <param name="index">The value of the <c>"index"</c> property.</param>
     /// <param name="leaseSeconds">The value of the <c>"leaseSeconds"</c> property.</param>
     /// <param name="limit">The value of the <c>"limit"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.TheChannelTheMessageArrivedOn.Source channel, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source<TContext> hostedVersions, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source correlationId = default, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source leaseSeconds = default, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source limit = default)
+    public static Source<TContext> Build<TContext>(scoped in TContext context, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source<TContext> hostedVersions, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.ChannelEntity.Source channel = default, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source correlationId = default, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.IndexEntity.Source index = default, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source leaseSeconds = default, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source limit = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
     {
-        return new Source<TContext>(context, channel, hostedVersions, correlationId, leaseSeconds, limit);
+        return new Source<TContext>(context, hostedVersions, channel, correlationId, index, leaseSeconds, limit);
     }
 
     /// <summary>
@@ -1202,20 +1291,21 @@ public readonly partial struct MessageClaimRequest
     /// Creates and initializes a mutable document from the given property values.
     /// </summary>
     /// <param name="workspace">The JSON workspace.</param>
-    /// <param name="channel">The value of the property.</param>
     /// <param name="hostedVersions">The value of the property.</param>
+    /// <param name="channel">The value of the property.</param>
     /// <param name="correlationId">The value of the property.</param>
+    /// <param name="index">The value of the property.</param>
     /// <param name="leaseSeconds">The value of the property.</param>
     /// <param name="limit">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.TheChannelTheMessageArrivedOn.Source channel, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source hostedVersions, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source correlationId = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source leaseSeconds = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source limit = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source hostedVersions, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.ChannelEntity.Source channel = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source correlationId = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.IndexEntity.Source index = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source leaseSeconds = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source limit = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(channel, hostedVersions, correlationId, leaseSeconds, limit);
+        ovb.Create(hostedVersions, channel, correlationId, index, leaseSeconds, limit);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1228,14 +1318,15 @@ public readonly partial struct MessageClaimRequest
     /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
     /// <param name="workspace">The JSON workspace.</param>
     /// <param name="context">The value of the property.</param>
-    /// <param name="channel">The value of the property.</param>
     /// <param name="hostedVersions">The value of the property.</param>
+    /// <param name="channel">The value of the property.</param>
     /// <param name="correlationId">The value of the property.</param>
+    /// <param name="index">The value of the property.</param>
     /// <param name="leaseSeconds">The value of the property.</param>
     /// <param name="limit">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.TheChannelTheMessageArrivedOn.Source channel, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source<TContext> hostedVersions, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source correlationId = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source leaseSeconds = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source limit = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source<TContext> hostedVersions, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.ChannelEntity.Source channel = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source correlationId = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.IndexEntity.Source index = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source leaseSeconds = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source limit = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1244,7 +1335,7 @@ public readonly partial struct MessageClaimRequest
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(context, channel, hostedVersions, correlationId, leaseSeconds, limit);
+        ovb.Create(context, hostedVersions, channel, correlationId, index, leaseSeconds, limit);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1341,14 +1432,15 @@ public readonly partial struct MessageClaimRequest
     /// <summary>
     /// Creates a new <see cref="ParsedJsonDocument{T}"/> from the given property values.
     /// </summary>
-    /// <param name="channel">The value of the property.</param>
     /// <param name="hostedVersions">The value of the property.</param>
+    /// <param name="channel">The value of the property.</param>
     /// <param name="correlationId">The value of the property.</param>
+    /// <param name="index">The value of the property.</param>
     /// <param name="leaseSeconds">The value of the property.</param>
     /// <param name="limit">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<MessageClaimRequest> Create(in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.TheChannelTheMessageArrivedOn.Source channel, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source hostedVersions, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source correlationId = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source leaseSeconds = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source limit = default, int initialCapacity = 30)
+    public static ParsedJsonDocument<MessageClaimRequest> Create(in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source hostedVersions, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.ChannelEntity.Source channel = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source correlationId = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.IndexEntity.Source index = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source leaseSeconds = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source limit = default, int initialCapacity = 30)
     {
         ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
         try
@@ -1356,7 +1448,7 @@ public readonly partial struct MessageClaimRequest
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             cvb.StartObject();
             Builder ovb = new(cvb);
-            ovb.Create(channel, hostedVersions, correlationId, leaseSeconds, limit);
+            ovb.Create(hostedVersions, channel, correlationId, index, leaseSeconds, limit);
             cvb = ovb._builder;
             cvb.EndObject();
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1373,14 +1465,15 @@ public readonly partial struct MessageClaimRequest
     /// </summary>
     /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
     /// <param name="context">The value of the property.</param>
-    /// <param name="channel">The value of the property.</param>
     /// <param name="hostedVersions">The value of the property.</param>
+    /// <param name="channel">The value of the property.</param>
     /// <param name="correlationId">The value of the property.</param>
+    /// <param name="index">The value of the property.</param>
     /// <param name="leaseSeconds">The value of the property.</param>
     /// <param name="limit">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<MessageClaimRequest> Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.TheChannelTheMessageArrivedOn.Source channel, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source<TContext> hostedVersions, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source correlationId = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source leaseSeconds = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source limit = default, int initialCapacity = 30)
+    public static ParsedJsonDocument<MessageClaimRequest> Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.HostedVersionsEntityArray.Source<TContext> hostedVersions, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.ChannelEntity.Source channel = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.CorrelationIdEntity.Source correlationId = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.IndexEntity.Source index = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LeaseSecondsEntity.Source leaseSeconds = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.MessageClaimRequest.LimitEntity.Source limit = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1391,7 +1484,7 @@ public readonly partial struct MessageClaimRequest
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             cvb.StartObject();
             Builder ovb = new(cvb);
-            ovb.Create(context, channel, hostedVersions, correlationId, leaseSeconds, limit);
+            ovb.Create(context, hostedVersions, channel, correlationId, index, leaseSeconds, limit);
             cvb = ovb._builder;
             cvb.EndObject();
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);

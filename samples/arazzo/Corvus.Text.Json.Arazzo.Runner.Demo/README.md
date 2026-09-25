@@ -68,6 +68,11 @@ carries on. `Runner:Anchor:InitialIncarnation` (the AppHost sets `1`) records th
 store incarnation when none exists, standing in for the operator's attestation at environment creation; a later
 restore is attested by raising it, and no run in an environment with no attestation can be opened.
 
+Production's message waits are blinded as well (ADR 0065 decision 4): `onboard-customer` suspends awaiting the KYC
+verdict correlated by account id, and what the store and the control plane hold for that wait is the blind index
+under production's key, not `kyc.verdict` and not the account id. The `KycVerdictResumeHandler` delivers the verdict
+exactly as before; the runner client computes the index and claims by it.
+
 ## Run it
 
 The runner is launched as part of the AppHost composition (it shares the store with the control plane and waits

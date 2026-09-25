@@ -21,6 +21,7 @@ internal static class RunnerRunAdvance
     /// <param name="headers">The delivered message's headers, so a resumed step can read <c>$message.header.*</c>.</param>
     /// <param name="hasMessage">Whether a message is being delivered, as distinct from a timer having fired.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="match">What the delivered message was claimed by: the channel and correlation id, and the blind indexes queried for the runner's blinded environments. A resumed run whose wait does not match is handed back without the message.</param>
     /// <returns><see langword="true"/> when the run was advanced.</returns>
     public static async ValueTask<bool> AdvanceAsync(
         ArazzoRunnerClient client,
@@ -29,7 +30,8 @@ internal static class RunnerRunAdvance
         JsonElement message,
         JsonElement headers,
         bool hasMessage,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        MessageMatch match = default)
     {
         try
         {
@@ -39,7 +41,7 @@ internal static class RunnerRunAdvance
             // into its region (ADR 0065 decision 6): the lease epoch, and for an anchored environment the tenant's
             // attested incarnation beside it, which together are the ordering key the anchor stages every save under.
             ulong? incarnation = await client.AttestedIncarnationAsync(claim.Environment, cancellationToken).ConfigureAwait(false);
-            using WorkflowRun? run = await WorkflowRun.ResumeAsync(client.Checkpoints, claim.Address, leaseEpoch: claim.LeaseEpoch, cancellationToken: cancellationToken, incarnation: incarnation).ConfigureAwait(false);
+            using WorkflowRun? run = await WorkflowRun.ResumeAsync(client.Checkpoints, claim.Address, leaseEpoch: claim.LeaseEpoch, cancellationToken: cancellationToken, incarnation: incarnation, waitBlinder: client.WaitBlinderFor(claim.Environment)).ConfigureAwait(false);
             if (run is null)
             {
                 return false;
@@ -47,6 +49,14 @@ internal static class RunnerRunAdvance
 
             if (hasMessage)
             {
+                // The wait the run actually parked on, from its MAC-verified region, has to be the one the message was
+                // claimed by (ADR 0065 decision 4): the index query is answered by the control plane, and a run it
+                // offered under another wait is handed back rather than given a message meant for someone else.
+                if (!match.Matches(run.Wait))
+                {
+                    return false;
+                }
+
                 run.DeliverMessage(message, headers);
             }
 
@@ -87,5 +97,37 @@ internal static class RunnerRunAdvance
             // is safe on every path.
             await client.ReleaseAsync(claim.Address, CancellationToken.None).ConfigureAwait(false);
         }
+    }
+}
+
+/// <summary>
+/// What a delivered message was claimed by (ADR 0065 decision 4): the channel and correlation id for environments the
+/// runner serves clear, and the blind indexes queried for the environments on its key ring. A resumed run is given the
+/// message only when the wait it parked on is one of these.
+/// </summary>
+/// <param name="Channel">The channel, or <see langword="null"/> when the delivery named no channel.</param>
+/// <param name="CorrelationId">The delivered correlation id, or <see langword="null"/>.</param>
+/// <param name="Indexes">The blind indexes queried, or <see langword="null"/> when none were.</param>
+public readonly record struct MessageMatch(string? Channel, string? CorrelationId, IReadOnlySet<string>? Indexes)
+{
+    /// <summary>Whether a run's wait is one the delivery was claimed by.</summary>
+    /// <param name="wait">The wait the run parked on, from its own region.</param>
+    /// <returns><see langword="true"/> when the message is for this run.</returns>
+    public bool Matches(WorkflowWait? wait)
+    {
+        if (wait is not { Kind: WorkflowWaitKind.Message } w)
+        {
+            return false;
+        }
+
+        if (w.Index is { } index)
+        {
+            return this.Indexes is { } indexes && indexes.Contains(index);
+        }
+
+        // The clear rule: the channel is the channel, and a correlation absent on either side is a wildcard.
+        return this.Channel is { } channel
+            && string.Equals(w.Channel, channel, StringComparison.Ordinal)
+            && (this.CorrelationId is null || w.CorrelationId is null || string.Equals(w.CorrelationId, this.CorrelationId, StringComparison.Ordinal));
     }
 }

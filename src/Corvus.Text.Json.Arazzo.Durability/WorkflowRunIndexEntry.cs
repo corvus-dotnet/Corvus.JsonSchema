@@ -86,8 +86,12 @@ public readonly record struct WorkflowRunIndexEntry(
             createdAt,
             updatedAt,
             DueAt: wait is { Kind: WorkflowWaitKind.Timer } timer ? timer.DueAt : null,
-            AwaitingChannel: wait is { Kind: WorkflowWaitKind.Message } message ? message.Channel : null,
-            AwaitingCorrelationId: wait is { Kind: WorkflowWaitKind.Message } messageCorrelation ? messageCorrelation.CorrelationId : null,
+
+            // A blinded wait (ADR 0065 decision 4) is indexed by its blind index in the channel column and nothing in
+            // the correlation column, so every backend matches it by plain equality and the wildcard rule never reaches
+            // it: a blinded wait is matched by its index and by nothing else.
+            AwaitingChannel: wait is { Kind: WorkflowWaitKind.Message } message ? message.Index ?? message.Channel : null,
+            AwaitingCorrelationId: wait is { Kind: WorkflowWaitKind.Message, Index: null } messageCorrelation ? messageCorrelation.CorrelationId : null,
             ErrorType: fault?.Error,
             CorrelationId: correlationId,
             Tags: tags,

@@ -118,17 +118,26 @@ public sealed class ArazzoRunnerClaimsHandler : IApiClaimsHandler
 
         List<string> hosted = Realise(parameters.Body.HostedVersions);
 
-        // An absent correlation id is a wildcard over the channel: it matches every run awaiting it, whatever
+        // The message is named by exactly one of its channel and its blind wait index (ADR 0065 decision 4). An absent
+        // correlation id beside a channel is a wildcard over it: it matches every run awaiting the channel, whatever
         // correlation each is waiting for. It is passed through as null so the store applies that rule, rather than
-        // being turned into a value here.
+        // being turned into a value here. An index carries its correlation inside the MAC and takes none beside it.
+        bool byChannel = parameters.Body.Channel.IsNotUndefined();
+        bool byIndex = parameters.Body.Index.IsNotUndefined();
+        if (byChannel == byIndex || (byIndex && parameters.Body.CorrelationId.IsNotUndefined()))
+        {
+            return ClaimAwaitingMessageResult.BadRequest(RunnerProblems.MessageClaimShape(), workspace);
+        }
+
         string? correlationId = parameters.Body.CorrelationId.IsNotUndefined()
             ? (string)parameters.Body.CorrelationId
             : null;
 
         IReadOnlyList<ClaimedRunRecord> claims = await this.coordinator.ClaimAwaitingAsync(
             principal,
-            (string)parameters.Body.Channel,
+            byChannel ? (string)parameters.Body.Channel : null,
             correlationId,
+            byIndex ? (string)parameters.Body.Index : null,
             hosted,
             Limit(parameters.Body.Limit),
             Lease(parameters.Body.LeaseSeconds),

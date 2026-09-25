@@ -40,6 +40,8 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     private readonly bool ownsClients;
     private readonly SealingCheckpointStore? sealing;
     private readonly ITenantAnchorStore? anchors;
+    private readonly RunnerKeyRing? keyRing;
+    private readonly ConcurrentDictionary<string, WaitIndexBlinder> blinders = new(StringComparer.Ordinal);
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoRunnerClient"/> class over an API transport.</summary>
     /// <param name="transport">The transport to the runner API host.</param>
@@ -92,6 +94,7 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
 
         IWorkflowCheckpointStore checkpointStore = new RunnerApiCheckpointStore(this);
         this.anchors = anchors;
+        this.keyRing = keyRing;
         this.sealing = keyRing is { IsEmpty: false } ? new SealingCheckpointStore(checkpointStore, keyRing, anchors) : null;
         this.Checkpoints = this.sealing ?? checkpointStore;
     }
@@ -263,7 +266,6 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
 
         MessageClaimRequest.Source<IReadOnlyCollection<string>> request = MessageClaimRequest.Build(
             in hostedVersions,
-            channel,
             MessageClaimRequest.HostedVersionsEntityArray.Build(
                 in hostedVersions,
                 static (in IReadOnlyCollection<string> versions, ref MessageClaimRequest.HostedVersionsEntityArray.Builder builder) =>
@@ -273,9 +275,51 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
                         builder.AddItem(version);
                     }
                 }),
-            correlation,
-            leaseSeconds,
-            wanted);
+            channel: channel,
+            correlationId: correlation,
+            leaseSeconds: leaseSeconds,
+            limit: wanted);
+
+        return this.ReadClaimsAsync(this.claims.ClaimAwaitingMessageAsync(request, cancellationToken));
+    }
+
+    /// <summary>
+    /// Claims every run awaiting the message whose blind wait index is <paramref name="index"/> (ADR 0065 decision 4),
+    /// and takes a lease on each. The index is computed by this runner's own <see cref="WaitBlinderFor"/> for the
+    /// environment, so the control plane matches it by equality and learns neither the channel nor the business key.
+    /// </summary>
+    /// <param name="index">The blind wait index.</param>
+    /// <param name="hostedVersions">The versioned workflow ids this runner has baked and can execute.</param>
+    /// <param name="limit">The most runs to claim; the server bounds it.</param>
+    /// <param name="lease">The lease duration to request; the server bounds it.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The claimed runs, empty when nothing awaits that index.</returns>
+    public ValueTask<IReadOnlyList<RunnerClaim>> ClaimAwaitingIndexAsync(string index, IReadOnlyCollection<string> hostedVersions, int? limit = null, TimeSpan? lease = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(index);
+        ArgumentNullException.ThrowIfNull(hostedVersions);
+
+        MessageClaimRequest.LeaseSecondsEntity.Source leaseSeconds = lease is { } requested
+            ? (MessageClaimRequest.LeaseSecondsEntity.Source)(long)requested.TotalSeconds
+            : default;
+        MessageClaimRequest.LimitEntity.Source wanted = limit is { } count
+            ? (MessageClaimRequest.LimitEntity.Source)(long)count
+            : default;
+
+        MessageClaimRequest.Source<IReadOnlyCollection<string>> request = MessageClaimRequest.Build(
+            in hostedVersions,
+            MessageClaimRequest.HostedVersionsEntityArray.Build(
+                in hostedVersions,
+                static (in IReadOnlyCollection<string> versions, ref MessageClaimRequest.HostedVersionsEntityArray.Builder builder) =>
+                {
+                    foreach (string version in versions)
+                    {
+                        builder.AddItem(version);
+                    }
+                }),
+            index: (MessageClaimRequest.IndexEntity.Source)index,
+            leaseSeconds: leaseSeconds,
+            limit: wanted);
 
         return this.ReadClaimsAsync(this.claims.ClaimAwaitingMessageAsync(request, cancellationToken));
     }
@@ -480,6 +524,27 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
                 null,
                 $"Environment '{environment}' has no tenant-attested store incarnation, so no run in it can be claimed: the anchor's first attestation is made when the environment is created (ADR 0065 decision 6).");
     }
+
+    /// <summary>
+    /// The wait-index blinder for an environment on this runner's key ring (ADR 0065 decision 4), which a run in that
+    /// environment parks its message waits under and a delivery names them by; <see langword="null"/> for an
+    /// environment the runner serves clear.
+    /// </summary>
+    /// <param name="environment">The environment.</param>
+    /// <returns>The blinder, or <see langword="null"/>.</returns>
+    public WaitIndexBlinder? WaitBlinderFor(string environment)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(environment);
+        if (this.keyRing is not { } ring || !ring.TryGet(environment, out RunnerEnvironmentKeys keys))
+        {
+            return null;
+        }
+
+        return this.blinders.GetOrAdd(environment, static (env, k) => new WaitIndexBlinder(env, k.KeyId, k.PayloadKey), keys);
+    }
+
+    /// <summary>Gets the environments on this runner's key ring, whose waits are blinded.</summary>
+    public IEnumerable<string> BlindedEnvironments => this.keyRing?.Environments ?? [];
 
     internal static RunnerApiException Refused(string what, int status)
         => new((System.Net.HttpStatusCode)status, $"The runner API refused to {what} ({status}).");

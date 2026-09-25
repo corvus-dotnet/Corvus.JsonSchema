@@ -262,6 +262,32 @@ public sealed class WorkflowCheckpointSerializerTests
     }
 
     [TestMethod]
+    public void A_blinded_message_wait_carries_its_index_and_no_channel_and_is_indexed_by_it()
+    {
+        // ADR 0065 decision 4: a sealed environment's wait is the blind index alone. It round-trips, it projects to the
+        // channel column with nothing in the correlation column, and the region carries no channel text.
+        byte[] row = Row(WorkflowRunStatus.Suspended, wait: WorkflowWait.BlindMessage("k2.abc"));
+
+        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(row);
+        state.Wait.ShouldBe(WorkflowWait.BlindMessage("k2.abc"));
+        state.Wait!.Value.IsBlinded.ShouldBeTrue();
+        state.Wait.Value.Channel.ShouldBeNull();
+        WorkflowRunIndexEntry index = WorkflowCheckpointSerializer.ProjectIndex(row);
+        index.AwaitingChannel.ShouldBe("k2.abc");
+        index.AwaitingCorrelationId.ShouldBeNull();
+        Encoding.UTF8.GetString(row.AsSpan()[CheckpointRow.Parse(row).RunnerRegion]).ShouldNotContain("channel");
+
+        // A clear wait is as it was, and a wait carrying both shapes, or neither, is malformed.
+        WorkflowCheckpointSerializer.ProjectIndex(Row(WorkflowRunStatus.Suspended, wait: WorkflowWait.Message("kyc.verdict", "acct-42"))).AwaitingCorrelationId.ShouldBe("acct-42");
+        byte[] both = WithRunnerRegion(Row(WorkflowRunStatus.Suspended), "{\"runId\":\"run-1\",\"environment\":\"development\",\"workflowId\":\"w\",\"status\":\"Suspended\",\"cursor\":0,\"sequence\":1,\"createdAt\":\"2026-03-04T05:06:07+00:00\",\"retryCounters\":{},\"wait\":{\"kind\":\"Message\",\"channel\":\"c\",\"index\":\"k2.abc\"}}");
+        Should.Throw<FormatException>(() => WorkflowCheckpointSerializer.Deserialize(both)).Message.ShouldContain("'wait'");
+        byte[] neither = WithRunnerRegion(Row(WorkflowRunStatus.Suspended), "{\"runId\":\"run-1\",\"environment\":\"development\",\"workflowId\":\"w\",\"status\":\"Suspended\",\"cursor\":0,\"sequence\":1,\"createdAt\":\"2026-03-04T05:06:07+00:00\",\"retryCounters\":{},\"wait\":{\"kind\":\"Message\"}}");
+        Should.Throw<FormatException>(() => WorkflowCheckpointSerializer.Deserialize(neither)).Message.ShouldContain("'wait'");
+        byte[] indexed = WithRunnerRegion(Row(WorkflowRunStatus.Suspended), "{\"runId\":\"run-1\",\"environment\":\"development\",\"workflowId\":\"w\",\"status\":\"Suspended\",\"cursor\":0,\"sequence\":1,\"createdAt\":\"2026-03-04T05:06:07+00:00\",\"retryCounters\":{},\"wait\":{\"kind\":\"Message\",\"index\":\"k2.abc\",\"correlationId\":\"x\"}}");
+        Should.Throw<FormatException>(() => WorkflowCheckpointSerializer.Deserialize(indexed)).Message.ShouldContain("'wait'");
+    }
+
+    [TestMethod]
     public void Every_region_is_a_closed_schema()
     {
         // The envelope is what the control plane reads without a key, so an unknown member is a malformed row rather

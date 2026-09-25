@@ -182,11 +182,34 @@ public sealed class RunnerRunCoordinator
     /// The payload is not a parameter and never reaches the store. This answers which runs a message can resume, not
     /// what it said, so the runner keeps the only copy and hands it to each run itself.
     /// </remarks>
-    public async ValueTask<IReadOnlyList<ClaimedRunRecord>> ClaimAwaitingAsync(string principal, string channel, string? correlationId, IReadOnlyCollection<string> hostedVersions, int? limit, TimeSpan? requestedLease, CancellationToken cancellationToken)
+    public ValueTask<IReadOnlyList<ClaimedRunRecord>> ClaimAwaitingAsync(string principal, string channel, string? correlationId, IReadOnlyCollection<string> hostedVersions, int? limit, TimeSpan? requestedLease, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(channel);
+        return this.ClaimAwaitingAsync(principal, channel, correlationId, index: null, hostedVersions, limit, requestedLease, cancellationToken);
+    }
+
+    /// <summary>
+    /// Claims runs awaiting a message named by its channel and correlation id, for the environments the principal
+    /// serves clear, or by its blind wait index (ADR 0065 decision 4), for any environment. A sealed environment's
+    /// waits are matched by index only: a channel claim never looks at one, since its rows carry no channel to match.
+    /// </summary>
+    /// <param name="principal">The authenticated machine principal.</param>
+    /// <param name="channel">The channel, or <see langword="null"/> when the message is named by its index.</param>
+    /// <param name="correlationId">The correlation id accompanying a channel, or <see langword="null"/>.</param>
+    /// <param name="index">The blind wait index, or <see langword="null"/> when the message is named by its channel.</param>
+    /// <param name="hostedVersions">The versioned workflow ids the runner can execute.</param>
+    /// <param name="limit">The most runs to claim; the server bounds it.</param>
+    /// <param name="requestedLease">The requested lease duration; the server bounds it.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The claimed runs, empty when nothing awaits that message.</returns>
+    public async ValueTask<IReadOnlyList<ClaimedRunRecord>> ClaimAwaitingAsync(string principal, string? channel, string? correlationId, string? index, IReadOnlyCollection<string> hostedVersions, int? limit, TimeSpan? requestedLease, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrEmpty(principal);
-        ArgumentException.ThrowIfNullOrEmpty(channel);
         ArgumentNullException.ThrowIfNull(hostedVersions);
+        if (string.IsNullOrEmpty(channel) == string.IsNullOrEmpty(index))
+        {
+            throw new ArgumentException("A message is named by exactly one of its channel and its blind wait index.");
+        }
 
         if (await this.BeginSweepAsync(principal, hostedVersions, cancellationToken).ConfigureAwait(false) is not { } sweep)
         {
@@ -202,7 +225,15 @@ public sealed class RunnerRunCoordinator
 
         foreach (string environment in sweep.Environments)
         {
-            await foreach (WorkflowRunAddress address in this.waits.QueryAwaitingAsync(channel, correlationId, environment, cancellationToken).ConfigureAwait(false))
+            // A sealed environment holds blind indexes and no channel (ADR 0065 decision 4): a channel claim has nothing
+            // to match there and is not looked up, so a runner that lost its key cannot sweep a sealed environment's
+            // waits by naming channels.
+            if (index is null && sweep.Bindings.SealedGenerationsOf(environment) is not null)
+            {
+                continue;
+            }
+
+            await foreach (WorkflowRunAddress address in this.waits.QueryAwaitingAsync(index ?? channel!, index is null ? correlationId : null, environment, cancellationToken).ConfigureAwait(false))
             {
                 if (claims.Count >= wanted)
                 {
@@ -383,7 +414,7 @@ public sealed class RunnerRunCoordinator
     // Resolves what a sweep is allowed to look at, or null when it is allowed to look at nothing. A principal bound to
     // no environment is offered nothing, which is the correct answer for one whose authorization is pending or revoked,
     // and is the same rule the single-run claim applies.
-    private async ValueTask<(IReadOnlyList<string> Environments, HashSet<string> Hosted)?> BeginSweepAsync(string principal, IReadOnlyCollection<string> hostedVersions, CancellationToken cancellationToken)
+    private async ValueTask<(IReadOnlyList<string> Environments, HashSet<string> Hosted, RunnerBindings Bindings)?> BeginSweepAsync(string principal, IReadOnlyCollection<string> hostedVersions, CancellationToken cancellationToken)
     {
         RunnerBindings resolved = await this.bindings.ResolveAsync(principal, cancellationToken).ConfigureAwait(false);
         IReadOnlyList<string> environments = resolved.Environments;
@@ -394,7 +425,7 @@ public sealed class RunnerRunCoordinator
 
         // Built once per sweep rather than per candidate: a runner may host a thousand versions, and every candidate
         // is re-checked against them under its lease.
-        return (environments, new HashSet<string>(hostedVersions, StringComparer.Ordinal));
+        return (environments, new HashSet<string>(hostedVersions, StringComparer.Ordinal), resolved);
     }
 
     // Leases one waiting candidate and keeps it only if it is still resumable under that lease. A run that changed

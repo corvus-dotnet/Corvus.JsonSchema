@@ -22,6 +22,8 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 ///   "stepJournal"?: [ { "stepId", "status", "attempt", "startedAt", "endedAt" } ], "journalTruncated"?,
 ///   "wait"?, "fault"? }
 /// </code>
+/// <para>A message wait is <c>{ "kind": "Message", "channel", "correlationId"? }</c>, or, blinded for a sealed environment
+/// (ADR 0065 decision 4), <c>{ "kind": "Message", "index" }</c>: exactly one of the two shapes.</para>
 /// <para>The payload is likewise closed:</para>
 /// <code>
 /// { "correlationTokens": { "&lt;name&gt;": "&lt;base64&gt;" }, "inputs"?: &lt;json&gt;, "outputs"?: &lt;json&gt;, "stepOutputs": { "&lt;stepId&gt;": &lt;json&gt; } }
@@ -782,10 +784,19 @@ public static class WorkflowCheckpointSerializer
             }
             else if (w.Kind == WorkflowWaitKind.Message)
             {
-                writer.WriteString("channel"u8, w.Channel);
-                if (w.CorrelationId is { } waitCorrelationId)
+                // A blinded wait carries the blind index alone (ADR 0065 decision 4): the channel and the correlation id
+                // never reach the row. A clear wait carries the channel and, when there is one, the correlation id.
+                if (w.Index is { } index)
                 {
-                    writer.WriteString("correlationId"u8, waitCorrelationId);
+                    writer.WriteString("index"u8, index);
+                }
+                else
+                {
+                    writer.WriteString("channel"u8, w.Channel);
+                    if (w.CorrelationId is { } waitCorrelationId)
+                    {
+                        writer.WriteString("correlationId"u8, waitCorrelationId);
+                    }
                 }
             }
 
@@ -984,9 +995,7 @@ public static class WorkflowCheckpointSerializer
                     {
                         WorkflowWaitKind.Timer => WorkflowWait.Timer(value.GetProperty("dueAt"u8).GetDateTimeOffset()),
                         WorkflowWaitKind.Pause => WorkflowWait.Pause(),
-                        _ => WorkflowWait.Message(
-                            RequiredString(value.GetProperty("channel"u8), "wait"),
-                            value.TryGetProperty("correlationId"u8, out JsonElement waitCorrelation) ? RequiredString(waitCorrelation, "wait") : null),
+                        _ => ReadMessageWait(value),
                     };
                 }
                 else if (property.NameEquals("fault"u8))
@@ -1034,6 +1043,23 @@ public static class WorkflowCheckpointSerializer
             => element.ValueKind == JsonValueKind.String
                 ? element.GetString()!
                 : throw ThrowHelper.GetCheckpointRegionMalformedMemberException(RunnerRegion, member);
+
+        // A message wait is blinded or clear, never both and never neither: exactly one of `index` and `channel`.
+        static WorkflowWait ReadMessageWait(in JsonElement value)
+        {
+            bool hasIndex = value.TryGetProperty("index"u8, out JsonElement waitIndex);
+            bool hasChannel = value.TryGetProperty("channel"u8, out JsonElement waitChannel);
+            if (hasIndex == hasChannel || (hasIndex && value.TryGetProperty("correlationId"u8, out _)))
+            {
+                throw ThrowHelper.GetCheckpointRegionMalformedMemberException(RunnerRegion, "wait");
+            }
+
+            return hasIndex
+                ? WorkflowWait.BlindMessage(RequiredString(waitIndex, "wait"))
+                : WorkflowWait.Message(
+                    RequiredString(waitChannel, "wait"),
+                    value.TryGetProperty("correlationId"u8, out JsonElement waitCorrelation) ? RequiredString(waitCorrelation, "wait") : null);
+        }
     }
 
     // Map the enums to their names via constant strings, so serialising a checkpoint does not allocate a string per
