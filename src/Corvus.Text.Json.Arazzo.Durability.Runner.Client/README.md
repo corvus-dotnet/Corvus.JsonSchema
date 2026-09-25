@@ -185,6 +185,42 @@ never every correlated waiter (the decision-4 residue). Before a resumed run is 
 that the wait in the run's own MAC-verified region is one it queried, and hands the run back otherwise. The runner API
 never sweeps a sealed environment by channel, so a runner without the key finds nothing there.
 
+## Opening a sealed start
+
+A run an initiator started sealed (ADR 0065 decision 9) arrives at its first claim as the sealed genesis row: the
+initiator's HPKE seal of the inputs to the environment's registered seal key, under a binding of the environment,
+base workflow id, version, key generation and the run id the initiator chose, with the initiator's ES256 signature
+over the binding and the seal. The control plane stored it and read none of it. A runner opens it only when its key
+ring entry names the private seal half and pins the initiator keys, together or not at all:
+
+```csharp
+RunnerKeyRing keyRing = await RunnerKeyRing.BuildAsync(
+    [new RunnerKeyRingEntry(
+        "production",
+        "k2",
+        SecretRef.Parse("vault://secret/arazzo/payload-keys/production#key"),
+        Sealed: true,
+        SealKey: SecretRef.Parse("vault://secret/arazzo/seal-keys/production#key"),
+        Initiators: [initiatorPublicKeyBase64Spki])],
+    secretResolver,
+    cancellationToken);
+```
+
+The seal key is read as the base64 PKCS#8 of the P-256 private half; each initiator is the base64
+SubjectPublicKeyInfo of a P-256 key. On the first claim the client's sealing store re-derives the binding from the
+address it claimed, the workflow id the envelope names and the generation it holds, verifies the signature under a
+pinned initiator, opens the seal, and hands the run its inputs; the run then says it started sealed
+(`run.SealedStart`) in every save, inside the MAC'd region. Before a step runs, the client validates the opened
+inputs against the version's inputs schema (`runner.StartInputs`, built from the version's own workflow document as
+the runner API serves it, the same schema the control plane validates a clear start against).
+
+A start that does not open (no seal key on the ring, another generation, a signature no pinned initiator verifies, a
+seal moved to another run, workflow, environment or generation, or plaintext that is not JSON) and inputs that do not
+validate are not run: the client faults the run at its start, as a sealed save at sequence 1 with the error type
+`sealed-start-unopenable` or `sealed-start-inputs-invalid` and the step id `$start`, gives the lease back, and counts
+the refusal. A faulted run is not claimable, so a refused start is never offered again on the next sweep. The fault
+records which refusal and not the schema detail; an initiator validates its own inputs before it seals them.
+
 ## Refusals a runner must act on
 
 | Situation | What you get |
@@ -192,6 +228,7 @@ never sweeps a sealed environment by channel, so a runner without the key finds 
 | Nothing claimable | `TryClaimAsync` returns `null` — the common case for an idle runner, and not an error. |
 | The lease is no longer current | `RunnerLeaseLostException`. The run may already be held by another runner, so stop advancing it. |
 | A save lost the sequence predicate | `CheckpointSupersededException`, carrying the sequence the store will accept next. |
+| A sealed start did not open, or its inputs did not validate | Nothing to act on: the client faulted the run at its start (`sealed-start-unopenable`, `sealed-start-inputs-invalid`) and released it. The advance reports the run as not advanced. |
 | Anything else non-success | `RunnerApiException` with the status. |
 
 **A superseded save is raised, never swallowed.** Reporting it as durable would leave a runner committed to a

@@ -48,6 +48,7 @@ public sealed class WorkflowCheckpointState : IDisposable
         this.Sequence = envelope.Sequence;
         this.Epoch = envelope.Epoch;
         this.Incarnation = envelope.Incarnation;
+        this.SealedStart = envelope.SealedStart;
         this.CreatedAt = envelope.CreatedAt;
         this.UpdatedAt = envelope.UpdatedAt;
         this.CorrelationId = envelope.CorrelationId;
@@ -112,6 +113,14 @@ public sealed class WorkflowCheckpointState : IDisposable
 
     /// <summary>Gets the tenant-attested store incarnation the runner wrote into its region (ADR 0065 decision 6), or <see langword="null"/> for a writer in an environment that is not anchored.</summary>
     public ulong? Incarnation { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the run was started sealed by an initiator (ADR 0065 decision 9). At sequence
+    /// 0 with <see cref="PayloadSealed"/> the row is the sealed genesis row as the control plane wrote it, and only
+    /// the runner's <see cref="SealingCheckpointStore"/> can open the inputs; beyond it the runner has vouched for
+    /// the flag in every save.
+    /// </summary>
+    public bool SealedStart { get; }
 
     /// <summary>Gets the instant the run was first created.</summary>
     public DateTimeOffset CreatedAt { get; }

@@ -245,6 +245,133 @@ public sealed class SealingCheckpointStoreTests
     }
 
     [TestMethod]
+    public async Task A_sealed_start_opens_at_first_claim_into_the_clear_row_the_run_resumes_from()
+    {
+        // ADR 0065 decision 9: the control plane wrote the initiator's seal as the genesis row; the runner that holds
+        // the seal key and pins the initiator opens it, and the run sees its inputs as any inputs.
+        (byte[] sealSpki, byte[] sealPkcs8) = InputSealTests.SealKeyPair();
+        using var initiator = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var inner = new InMemoryWorkflowStateStore();
+        var store = new SealingCheckpointStore(inner, SealingRing(sealPkcs8, [initiator.ExportSubjectPublicKeyInfo()]));
+        WorkflowRunAddress address = SealedRun;
+        await EnqueueSealedAsync(inner, address, RunStartInitiator.Seal(sealSpki, "k1", Production, "pet", 3, address.RunId.Value, """{"petId":7}"""u8, initiator));
+
+        WorkflowCheckpoint stored = (await inner.LoadAsync(address, default))!.Value;
+        CheckpointRow.Parse(stored.Row.Span).Algorithm.ShouldBe(CheckpointAlgorithm.SealedGenesis);
+        WorkflowCheckpoint opened = (await store.LoadAsync(address, default))!.Value;
+        opened.Etag.ShouldBe(stored.Etag);
+        CheckpointRowLayout layout = CheckpointRow.Parse(opened.Row.Span);
+        layout.Algorithm.ShouldBe(CheckpointAlgorithm.Clear);
+        opened.Row.Span[layout.RunnerRegion].ToArray().ShouldBe(stored.Row.Span[CheckpointRow.Parse(stored.Row.Span).RunnerRegion].ToArray(), "the envelope is the control plane's, as written");
+        using (WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(opened.Row))
+        {
+            state.SealedStart.ShouldBeTrue();
+            state.PayloadSealed.ShouldBeFalse();
+            state.Inputs.GetProperty("petId"u8).GetInt32().ShouldBe(7);
+            state.Sequence.ShouldBe(0);
+        }
+
+        // The run resumes from it and its first save is sealed under the environment's key, saying it started sealed.
+        using (WorkflowRun run = (await WorkflowRun.ResumeAsync(store, address, leaseEpoch: 2))!)
+        {
+            run.SealedStart.ShouldBeTrue();
+            run.Sequence.ShouldBe(0);
+            await run.CheckpointAsync(1, default);
+        }
+
+        WorkflowCheckpoint saved = (await inner.LoadAsync(address, default))!.Value;
+        CheckpointRow.Parse(saved.Row.Span).Algorithm.ShouldBe(CheckpointAlgorithm.Aes256Gcm);
+        using WorkflowCheckpointState resumed = WorkflowCheckpointSerializer.Deserialize((await store.LoadAsync(address, default))!.Value.Row);
+        resumed.SealedStart.ShouldBeTrue();
+        resumed.Sequence.ShouldBe(1);
+        resumed.Inputs.GetProperty("petId"u8).GetInt32().ShouldBe(7);
+    }
+
+    [TestMethod]
+    public async Task A_sealed_start_that_does_not_open_is_refused_with_the_row_and_why()
+    {
+        (byte[] sealSpki, byte[] sealPkcs8) = InputSealTests.SealKeyPair();
+        (byte[] otherSpki, byte[] otherPkcs8) = InputSealTests.SealKeyPair();
+        using var initiator = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using var stranger = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        byte[] pinned = initiator.ExportSubjectPublicKeyInfo();
+        WorkflowRunAddress address = SealedRun;
+
+        // The initiator's genuine seal for this run, opened by a runner holding no seal key at all.
+        var noSealKey = new InMemoryWorkflowStateStore();
+        await EnqueueSealedAsync(noSealKey, address, RunStartInitiator.Seal(sealSpki, "k1", Production, "pet", 3, address.RunId.Value, "{}"u8, initiator));
+        SealedStartException fault = await Should.ThrowAsync<SealedStartException>(async () => await new SealingCheckpointStore(noSealKey, Ring(sealedProduction: true)).LoadAsync(address, default));
+        fault.Refusal.ShouldBe(SealedStartRefusal.NoSealKey);
+        fault.Address.ShouldBe(address);
+        fault.Row.ToArray().ShouldBe((await noSealKey.LoadAsync(address, default))!.Value.Row.ToArray(), "the row is carried so the runner can fault the run from its envelope");
+        fault.Etag.ShouldBe((await noSealKey.LoadAsync(address, default))!.Value.Etag);
+
+        // Sealed to another generation than the one the runner holds.
+        var otherGeneration = new InMemoryWorkflowStateStore();
+        await EnqueueSealedAsync(otherGeneration, address, RunStartInitiator.Seal(otherSpki, "k0", Production, "pet", 3, address.RunId.Value, "{}"u8, initiator));
+        (await Should.ThrowAsync<SealedStartException>(async () => await new SealingCheckpointStore(otherGeneration, SealingRing(sealPkcs8, [pinned])).LoadAsync(address, default))).Refusal.ShouldBe(SealedStartRefusal.UnknownGeneration);
+
+        // Signed by an initiator the runner does not pin: the seal itself is fine, which is the point.
+        var unpinned = new InMemoryWorkflowStateStore();
+        await EnqueueSealedAsync(unpinned, address, RunStartInitiator.Seal(sealSpki, "k1", Production, "pet", 3, address.RunId.Value, "{}"u8, stranger));
+        (await Should.ThrowAsync<SealedStartException>(async () => await new SealingCheckpointStore(unpinned, SealingRing(sealPkcs8, [pinned])).LoadAsync(address, default))).Refusal.ShouldBe(SealedStartRefusal.UnpinnedInitiator);
+
+        // Sealed for another run, another workflow version, or another environment: the binding the runner derives
+        // from its own address and the envelope does not match, so the signature and the seal both fail.
+        var movedRun = new InMemoryWorkflowStateStore();
+        await EnqueueSealedAsync(movedRun, address, RunStartInitiator.Seal(sealSpki, "k1", Production, "pet", 3, "fedcba9876543210fedcba9876543210", "{}"u8, initiator));
+        (await Should.ThrowAsync<SealedStartException>(async () => await new SealingCheckpointStore(movedRun, SealingRing(sealPkcs8, [pinned])).LoadAsync(address, default))).Refusal.ShouldBe(SealedStartRefusal.UnpinnedInitiator);
+        var movedVersion = new InMemoryWorkflowStateStore();
+        await EnqueueSealedAsync(movedVersion, address, RunStartInitiator.Seal(sealSpki, "k1", Production, "pet", 4, address.RunId.Value, "{}"u8, initiator));
+        (await Should.ThrowAsync<SealedStartException>(async () => await new SealingCheckpointStore(movedVersion, SealingRing(sealPkcs8, [pinned])).LoadAsync(address, default))).Refusal.ShouldBe(SealedStartRefusal.UnpinnedInitiator);
+
+        // Sealed to another key of the same generation id: the signature verifies, and the seal does not open.
+        var otherKey = new InMemoryWorkflowStateStore();
+        await EnqueueSealedAsync(otherKey, address, RunStartInitiator.Seal(otherSpki, "k1", Production, "pet", 3, address.RunId.Value, "{}"u8, initiator));
+        (await Should.ThrowAsync<SealedStartException>(async () => await new SealingCheckpointStore(otherKey, SealingRing(sealPkcs8, [pinned])).LoadAsync(address, default))).Refusal.ShouldBe(SealedStartRefusal.Unopenable);
+
+        // Sealed plaintext that is not a JSON value opens cryptographically and is still no start.
+        var notJson = new InMemoryWorkflowStateStore();
+        await EnqueueSealedAsync(notJson, address, RunStartInitiator.Seal(sealSpki, "k1", Production, "pet", 3, address.RunId.Value, "not json"u8, initiator));
+        (await Should.ThrowAsync<SealedStartException>(async () => await new SealingCheckpointStore(notJson, SealingRing(sealPkcs8, [pinned])).LoadAsync(address, default))).Refusal.ShouldBe(SealedStartRefusal.Unopenable);
+
+        // A runner that does not hold the environment at all gets the row as stored, as any keyless reader does.
+        WorkflowCheckpoint passedThrough = (await new SealingCheckpointStore(noSealKey, Ring(sealedProduction: true)).LoadAsync(new WorkflowRunAddress(Development, address.RunId), default) is { } dev ? dev : default);
+        passedThrough.Row.IsEmpty.ShouldBeTrue("nothing at that address");
+        var elsewhere = new InMemoryWorkflowStateStore();
+        WorkflowRunAddress developmentRun = new(Development, address.RunId);
+        await EnqueueSealedAsync(elsewhere, developmentRun, RunStartInitiator.Seal(sealSpki, "k1", Development, "pet", 3, address.RunId.Value, "{}"u8, initiator));
+        CheckpointRow.Parse((await new SealingCheckpointStore(elsewhere, SealingRing(sealPkcs8, [pinned])).LoadAsync(developmentRun, default))!.Value.Row.Span).Algorithm.ShouldBe(CheckpointAlgorithm.SealedGenesis);
+        _ = otherPkcs8;
+    }
+
+    [TestMethod]
+    public async Task An_anchored_sealed_start_is_the_origin_the_tenant_commits_to_under_the_genesis_label()
+    {
+        (byte[] sealSpki, byte[] sealPkcs8) = InputSealTests.SealKeyPair();
+        using var initiator = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var inner = new InMemoryWorkflowStateStore();
+        var anchors = new InMemoryTenantAnchorStore();
+        await anchors.AttestIncarnationAsync(Production, 1, default);
+        var store = new SealingCheckpointStore(inner, SealingRing(sealPkcs8, [initiator.ExportSubjectPublicKeyInfo()]), anchors);
+        WorkflowRunAddress address = SealedRun;
+        await EnqueueSealedAsync(inner, address, RunStartInitiator.Seal(sealSpki, "k1", Production, "pet", 3, address.RunId.Value, "{}"u8, initiator));
+        WorkflowCheckpoint genesis = (await inner.LoadAsync(address, default))!.Value;
+        CheckpointRowLayout layout = CheckpointRow.Parse(genesis.Row.Span);
+        AnchorDigest expected = CheckpointDigest.ForGenesis(genesis.Row.Span[layout.Payload], genesis.Row.Span[layout.Mac]);
+
+        using (WorkflowRun run = (await WorkflowRun.ResumeAsync(store, address, leaseEpoch: 2, incarnation: 1))!)
+        {
+            await run.CheckpointAsync(1, default);
+        }
+
+        AnchorRecord record = (await anchors.ReadAsync(Production, address.RunId.Value, default))!.Value;
+        record.Committed.Sequence.ShouldBe(0UL);
+        record.Committed.Digest.ShouldBe(expected, "the create commits to the initiator-signed row under the genesis label, not the ordinary one");
+        record.Committed.Digest.ShouldNotBe(CheckpointDigest.ForSubmitted(CheckpointRow.SubmittedBytes(genesis.Row).Span));
+    }
+
+    [TestMethod]
     public async Task The_ring_is_built_from_the_runners_own_secret_store()
     {
         // Decision 5: the payload key is the runner's, read through its own resolver; the ring derives the subkeys once.
@@ -276,6 +403,21 @@ public sealed class SealingCheckpointStoreTests
         {
             [Production] = new("k1", PayloadKey, EnvelopeMac(), sealedProduction),
         });
+
+    private static readonly WorkflowRunAddress SealedRun = new(Production, new WorkflowRunId("0123456789abcdef0123456789abcdef"));
+
+    private static RunnerKeyRing SealingRing(byte[] sealPrivateKey, IReadOnlyList<byte[]> initiators)
+        => RunnerKeyRing.From(new Dictionary<string, RunnerEnvironmentKeys>
+        {
+            [Production] = new("k1", PayloadKey, EnvelopeMac(), Sealed: true, sealPrivateKey, initiators),
+        });
+
+    // What the control plane's sealed start does: the seal becomes the genesis row, unread.
+    private static async ValueTask EnqueueSealedAsync(IWorkflowCheckpointStore store, WorkflowRunAddress address, SealedInputs sealedInputs)
+    {
+        using WorkflowRun run = WorkflowRun.CreateSealed(store, address.RunId, "pet-v3", sealedInputs, address.Environment);
+        await run.EnqueueAsync(default);
+    }
 
     private static byte[] EnvelopeMac(string keyId = "k1")
     {

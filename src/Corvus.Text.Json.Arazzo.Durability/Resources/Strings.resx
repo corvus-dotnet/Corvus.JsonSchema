@@ -644,4 +644,19 @@
   <data name="PayloadKeyNotAKey" xml:space="preserve">
     <value>The payload key for environment '{0}', generation '{1}', is not a 32-byte key in base64. The runner refuses to start with a sealed environment it cannot seal.</value>
   </data>
+  <data name="SealKeyNotAKey" xml:space="preserve">
+    <value>The seal key for environment '{0}', generation '{1}', is not a P-256 private key in base64 PKCS#8. The runner refuses to start with a seal key it cannot open a sealed start with (ADR 0065 decision 9).</value>
+  </data>
+  <data name="SealKeyNeedsInitiators" xml:space="preserve">
+    <value>Environment '{0}' has a seal key on the key ring and no pinned initiator, or a pinned initiator and no seal key. A sealed start is opened only under an initiator signature the runner pins, so both are configured or neither (ADR 0065 decision 9).</value>
+  </data>
+  <data name="InitiatorKeyNotAKey" xml:space="preserve">
+    <value>A pinned initiator key for environment '{0}' is not a P-256 public key in base64 SubjectPublicKeyInfo.</value>
+  </data>
+  <data name="SealedStartRefused" xml:space="preserve">
+    <value>The sealed start of run '{0}' did not open: {1} (ADR 0065 decision 9). The run is faulted at its start and is not claimed again.</value>
+  </data>
+  <data name="SealedStartNotFirst" xml:space="preserve">
+    <value>Run '{0}' has already persisted a checkpoint, so its sealed start cannot be enqueued: the sealed genesis row is the run's first and only write, and a runner never re-serializes it (ADR 0065 decision 9).</value>
+  </data>
 </root>

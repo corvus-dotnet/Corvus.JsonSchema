@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SealedRunStart",
+  "description": "A sealed start of a workflow run, as an initiator the tenant controls submits it (ADR 0065 decision 9): the run id the initiator chose, the seal key generation the inputs are wrapped to, the seal's encapsulated key and ciphertext, and the initiator's signature over the binding and the seal. The control plane stores exactly this as the run's genesis row and reads none of it; the runner opens it at first claim.",
+  "type": "object",
+  "required": ["runId", "keyId", "enc", "ciphertext", "signature"],
+  "properties": {
+    "runId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$",
+      "description": "The run id the initiator chose: 32 lowercase hex characters, the run-id grammar. The seal's binding carries it, so the control plane must create the run under it."
+    },
+    "keyId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "description": "The environment's seal key generation the inputs are wrapped to; must be one of the environment's active generations."
+    },
+    "enc": {
+      "type": "string",
+      "contentEncoding": "base64",
+      "description": "The HPKE encapsulated key: an uncompressed P-256 point, 65 bytes."
+    },
+    "ciphertext": {
+      "type": "string",
+      "contentEncoding": "base64",
+      "description": "The sealed inputs: the AES-256-GCM ciphertext of the inputs document followed by its 16-byte tag."
+    },
+    "signature": {
+      "type": "string",
+      "contentEncoding": "base64",
+      "description": "The initiator's ES256 signature (IEEE P1363, 64 bytes) over the binding, the encapsulated key and the ciphertext."
+    }
+  },
+  "additionalProperties": false
+}

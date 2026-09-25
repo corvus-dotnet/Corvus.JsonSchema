@@ -41,6 +41,7 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     private readonly SealingCheckpointStore? sealing;
     private readonly ITenantAnchorStore? anchors;
     private readonly RunnerKeyRing? keyRing;
+    private RunStartInputValidator? startInputs;
     private readonly ConcurrentDictionary<string, WaitIndexBlinder> blinders = new(StringComparer.Ordinal);
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoRunnerClient"/> class over an API transport.</summary>
@@ -545,6 +546,12 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
 
     /// <summary>Gets the environments on this runner's key ring, whose waits are blinded.</summary>
     public IEnumerable<string> BlindedEnvironments => this.keyRing?.Environments ?? [];
+
+    /// <summary>
+    /// Gets the validator a sealed start's inputs are checked against at first claim (ADR 0065 decision 9), over the
+    /// version documents this runner reads through the runner API.
+    /// </summary>
+    public RunStartInputValidator StartInputs => this.startInputs ??= new RunStartInputValidator(new RunnerApiArtifactSource(this.catalog));
 
     internal static RunnerApiException Refused(string what, int status)
         => new((System.Net.HttpStatusCode)status, $"The runner API refused to {what} ({status}).");

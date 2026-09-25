@@ -31,6 +31,13 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// lease-holding runner's: the runner client refuses that combination.
 /// </para>
 /// <para>
+/// A sealed start's genesis row (decision 9) is opened here too: the seal key generation has to be the one the ring
+/// holds, the initiator's signature has to verify under a pinned initiator key, and the inputs are opened under the
+/// binding re-derived from the run's own address and the envelope's workflow id, never from anything else in the row.
+/// A start that does not open is a <see cref="SealedStartException"/> carrying the row, so the runner can fault the
+/// run at its start rather than claim it again and again; a runner with no seal key for the environment opens none.
+/// </para>
+/// <para>
 /// The store encrypts clear rows only. A row that comes back through it for a control-plane-region write (the
 /// serverless checkpoint coordinator faulting a run on its budget over a row it loaded here) is a clear row by then,
 /// and is encrypted again under a fresh salt, which is what the salt-per-operation rule of decision 5 requires. A
@@ -196,6 +203,15 @@ public sealed class SealingCheckpointStore : IWorkflowCheckpointStore, IWorkflow
             return checkpoint;
         }
 
+        if (CheckpointRow.Parse(checkpoint.Row.Span).Algorithm == CheckpointAlgorithm.SealedGenesis)
+        {
+            // A sealed start's genesis row (decision 9). A runner that holds the environment opens it; one that does
+            // not gets the envelope, as any keyless reader does.
+            return this.ring.TryGet(address.Environment, out RunnerEnvironmentKeys sealKeys)
+                ? new WorkflowCheckpoint(OpenSealedGenesis(checkpoint, address, sealKeys), checkpoint.Etag)
+                : checkpoint;
+        }
+
         if (!this.ring.TryGet(address.Environment, out RunnerEnvironmentKeys keys)
             || !string.Equals(keys.KeyId, keyId, StringComparison.Ordinal)
             || !CheckpointIntegrity.Verify(checkpoint.Row.Span, keys.EnvelopeMac))
@@ -227,8 +243,79 @@ public sealed class SealingCheckpointStore : IWorkflowCheckpointStore, IWorkflow
 
     // The digest the anchor commits to: over the submitted bytes of the row as the store holds it, never the
     // control-plane region, which is joined at read time and is not the runner's to commit to (decision 6).
+    // A sealed start's genesis row is digested over its own pinned layout (decision 6): the sealed inputs and the
+    // initiator's signature, which is the only tenant-side authenticator that exists at sequence 0.
     private static AnchorDigest DigestOf(ReadOnlyMemory<byte> row)
-        => CheckpointDigest.ForSubmitted(CheckpointRow.SubmittedBytes(row).Span);
+    {
+        CheckpointRowLayout layout = CheckpointRow.Parse(row.Span);
+        return layout.Algorithm == CheckpointAlgorithm.SealedGenesis
+            ? CheckpointDigest.ForGenesis(row.Span[layout.Payload], row.Span[layout.Mac])
+            : CheckpointDigest.ForSubmitted(row.Span[..layout.SubmittedLength]);
+    }
+
+    // Opens a sealed start's genesis row (decision 9) into the clear row the run resumes from: the envelope as the
+    // control plane wrote it, and the inputs the initiator sealed. Every refusal carries the row, so the runner can
+    // record the refusal on the run itself.
+    private static byte[] OpenSealedGenesis(in WorkflowCheckpoint checkpoint, in WorkflowRunAddress address, in RunnerEnvironmentKeys keys)
+    {
+        ReadOnlyMemory<byte> row = checkpoint.Row;
+        CheckpointRowLayout layout = CheckpointRow.Parse(row.Span);
+        if (!keys.OpensSealedStarts || keys.SealPrivateKey is not { } sealKey || keys.InitiatorKeys is not { } initiators)
+        {
+            throw ThrowHelper.GetSealedStartException(address, SealedStartRefusal.NoSealKey, row, checkpoint.Etag);
+        }
+
+        if (!string.Equals(keys.KeyId, CheckpointIntegrity.KeyIdOf(row.Span), StringComparison.Ordinal))
+        {
+            throw ThrowHelper.GetSealedStartException(address, SealedStartRefusal.UnknownGeneration, row, checkpoint.Etag);
+        }
+
+        // The binding is re-derived from what the runner knows on its own account: the address it claimed, and the
+        // workflow the envelope names, which the control plane authored and the initiator sealed for. A row moved to
+        // another run, environment, workflow or generation therefore does not open, whatever it says about itself.
+        if (!WorkflowCheckpointSerializer.TryProject(row, out CheckpointProjection projection)
+            || projection.Sequence != 0
+            || projection.Epoch is not null
+            || !string.Equals(projection.Environment, address.Environment, StringComparison.Ordinal)
+            || !WorkflowVersionId.TryParse(projection.Index.WorkflowId, out string baseWorkflowId, out int versionNumber))
+        {
+            throw ThrowHelper.GetSealedStartException(address, SealedStartRefusal.Unopenable, row, checkpoint.Etag);
+        }
+
+        ReadOnlySpan<byte> enc = row.Span[layout.Salt];
+        ReadOnlySpan<byte> ciphertext = row.Span[layout.Payload];
+        ReadOnlySpan<byte> signature = row.Span[layout.Mac];
+        byte[] binding = new byte[SealedStartSignature.BindingLength(address.Environment, baseWorkflowId, keys.KeyId, address.RunId.Value)];
+        SealedStartSignature.WriteBinding(address.Environment, baseWorkflowId, versionNumber, keys.KeyId, address.RunId.Value, binding);
+        bool signed = false;
+        foreach (byte[] initiator in initiators)
+        {
+            signed |= SealedStartSignature.Verify(initiator, binding, enc, ciphertext, signature);
+        }
+
+        if (!signed)
+        {
+            throw ThrowHelper.GetSealedStartException(address, SealedStartRefusal.UnpinnedInitiator, row, checkpoint.Etag);
+        }
+
+        byte[] rented = ArrayPool<byte>.Shared.Rent(ciphertext.Length - InputSeal.TagLength);
+        Span<byte> inputs = rented.AsSpan(0, ciphertext.Length - InputSeal.TagLength);
+        try
+        {
+            InputSeal.Open(sealKey, enc, SealedStartSignature.SealInfo, binding, ciphertext, inputs);
+            using ParsedJsonDocument<JsonElement> parsed = ParsedJsonDocument<JsonElement>.Parse(inputs.ToArray());
+            return CheckpointRow.WriteClear(row.Span[layout.RunnerRegion], WorkflowCheckpointSerializer.SerializeStartPayload(parsed.RootElement), row.Span[layout.ControlPlaneRegion]);
+        }
+        catch (Exception ex) when (ex is CryptographicException or Corvus.Text.Json.JsonException or System.Text.Json.JsonException or FormatException)
+        {
+            throw ThrowHelper.GetSealedStartException(address, SealedStartRefusal.Unopenable, row, checkpoint.Etag);
+        }
+        finally
+        {
+            inputs.Clear();
+            ArrayPool<byte>.Shared.Return(rented);
+        }
+    }
 
     // An anchored save: the mark is staged with the tenant before the row is dispatched, the dispatch is
     // acknowledged to the anchor, and the run's gate is held throughout so one save is in flight per run. A dispatch
@@ -271,6 +358,14 @@ public sealed class SealingCheckpointStore : IWorkflowCheckpointStore, IWorkflow
                 && projection.Sequence == 0;
             await this.anchoring!.OpenAsync(address, genesis ? AnchorStoreRow.Genesis(DigestOf(checkpoint.Row), 0) : AnchorStoreRow.Unreadable, cancellationToken).ConfigureAwait(false);
             return checkpoint;
+        }
+
+        if (CheckpointRow.Parse(checkpoint.Row.Span).Algorithm == CheckpointAlgorithm.SealedGenesis)
+        {
+            // A sealed start's genesis row (decision 9): the origin the anchor commits to, digested over its own
+            // layout, and opened only once the table has admitted the claim.
+            await this.anchoring!.OpenAsync(address, AnchorStoreRow.Genesis(DigestOf(checkpoint.Row), 0), cancellationToken).ConfigureAwait(false);
+            return new WorkflowCheckpoint(OpenSealedGenesis(checkpoint, address, keys), checkpoint.Etag);
         }
 
         if (!string.Equals(keys.KeyId, keyId, StringComparison.Ordinal)

@@ -99,6 +99,24 @@ public interface ISecuredWorkflowManagement
     ValueTask<IdempotentStartResult> StartNamedAsync(WorkflowRunId runId, string workflowId, JsonElement inputs, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default, string? rerunOf = null)
         => throw ThrowHelper.GetStartNamedNotSupportedException();
 
+    /// <summary>
+    /// Starts a run whose inputs an initiator sealed to the environment's seal key and signed (ADR 0065 decision 9),
+    /// under the run id the initiator chose. The control plane writes the seal as the run's genesis row and reads
+    /// none of it: the inputs are validated by the runner that first claims the run, not here. Convergence and
+    /// collision behave exactly as <see cref="StartNamedAsync"/>: an existing run of the same workflow in the same
+    /// environment is the initiator's own retry, and any other occupant is refused.
+    /// </summary>
+    /// <param name="runId">The run id the initiator chose, which the seal's binding carries.</param>
+    /// <param name="workflowId">The versioned workflow id (<c>{base}-v{n}</c>) to run.</param>
+    /// <param name="sealedInputs">The sealed inputs, as the initiator submitted them.</param>
+    /// <param name="environment">The deployment environment the run is pinned to; required.</param>
+    /// <param name="correlationId">An optional telemetry correlation id; a new one is captured when omitted.</param>
+    /// <param name="tags">Optional free-form tags to attach to the run.</param>
+    /// <param name="securityTags">Optional security tags (KVP labels) for row authorization (§14.2).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The run id and whether this call created the run.</returns>
+    ValueTask<IdempotentStartResult> StartSealedAsync(WorkflowRunId runId, string workflowId, SealedInputs sealedInputs, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default);
+
     /// <summary>Lists runs matching a visibility query (filter by status / workflow id, paged), scoped to the
     /// caller's read reach (§14.2).</summary>
     /// <param name="query">The visibility query.</param>

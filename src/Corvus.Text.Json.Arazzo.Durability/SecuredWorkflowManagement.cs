@@ -149,6 +149,41 @@ public sealed class SecuredWorkflowManagement : ISecuredWorkflowManagement
     }
 
     /// <inheritdoc/>
+    public async ValueTask<IdempotentStartResult> StartSealedAsync(WorkflowRunId runId, string workflowId, SealedInputs sealedInputs, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(workflowId);
+        ArgumentException.ThrowIfNullOrEmpty(environment);
+        if (!WorkflowRunId.IsWellFormed(runId.Value))
+        {
+            throw ThrowHelper.GetNamedRunIdOutsideGrammarException(runId.Value, nameof(runId));
+        }
+
+        try
+        {
+            ExecutionBudget? budget = await this.ResolveExecutionBudgetAsync(workflowId, environment, cancellationToken).ConfigureAwait(false);
+            using WorkflowRun run = WorkflowRun.CreateSealed(this.store, runId, workflowId, sealedInputs, environment, this.timeProvider, correlationId, tags, securityTags, budget);
+            await run.EnqueueAsync(cancellationToken).ConfigureAwait(false);
+            return new IdempotentStartResult(runId, Created: true);
+        }
+        catch (WorkflowConflictException)
+        {
+            // The same rule as a named start (ADR 0065 §9): the occupant is this start only when it is this workflow
+            // in this environment, which is the initiator retrying under the id it chose; anything else is refused.
+            WorkflowCheckpoint? existing = await this.store.LoadAsync(new WorkflowRunAddress(environment, runId), cancellationToken).ConfigureAwait(false);
+            if (existing is { } checkpoint)
+            {
+                WorkflowRunIndexEntry indexEntry = WorkflowCheckpointSerializer.ProjectIndex(checkpoint.Row);
+                if (indexEntry.WorkflowId == workflowId)
+                {
+                    return new IdempotentStartResult(runId, Created: false);
+                }
+            }
+
+            throw ThrowHelper.GetIdempotentRunCollisionException(runId.Value);
+        }
+    }
+
+    /// <inheritdoc/>
     public ExecutionBudget ExecutionBudgetCeiling => this.budgetCeiling;
 
     // The owner group of the run's pinned environment (the sys:tenant management tag, ADR 0065), resolved through

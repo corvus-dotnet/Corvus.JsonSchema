@@ -197,13 +197,17 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
     }
 
     /// <summary>Catalogues a workflow and makes that version available in an environment.</summary>
-    public async ValueTask SeedCatalogAsync(string baseWorkflowId, string environment)
+    /// <param name="baseWorkflowId">The base workflow id.</param>
+    /// <param name="environment">The environment the version is made available in.</param>
+    /// <param name="inputsSchema">The workflow's declared inputs schema, as JSON, or <see langword="null"/> for a workflow that declares none.</param>
+    public async ValueTask SeedCatalogAsync(string baseWorkflowId, string environment, string? inputsSchema = null)
     {
+        string inputs = inputsSchema is null ? string.Empty : $$""", "inputs": {{inputsSchema}}""";
         byte[] workflow = System.Text.Encoding.UTF8.GetBytes($$"""
         {
           "arazzo": "1.1.0",
           "info": { "title": "Flow", "description": "A flow." },
-          "workflows": [ { "workflowId": "{{baseWorkflowId}}", "steps": [] } ]
+          "workflows": [ { "workflowId": "{{baseWorkflowId}}"{{inputs}}, "steps": [] } ]
         }
         """);
 

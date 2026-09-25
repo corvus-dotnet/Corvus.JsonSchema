@@ -64,6 +64,11 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     // message wait this run persists is the blind index rather than the channel and correlation id.
     private readonly Anchoring.WaitIndexBlinder? waitBlinder;
 
+    // ADR 0065 decision 9: a run started sealed by an initiator says so in every save, and holds the initiator's
+    // sealed inputs only until its genesis row is written; a runner that resumes it has opened them by then.
+    private readonly bool sealedStart;
+    private SealedInputs? sealedInputs;
+
     // A runner save leaves the loaded row behind; a control-plane-region write after one would carry a stale runner
     // region under a current etag, so it is refused.
     private bool advanced;
@@ -105,9 +110,11 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         long? leaseEpoch,
         string? rerunOf = null,
         ulong? incarnation = null,
-        Anchoring.WaitIndexBlinder? waitBlinder = null)
+        Anchoring.WaitIndexBlinder? waitBlinder = null,
+        bool sealedStart = false)
     {
         this.RerunOf = rerunOf;
+        this.sealedStart = sealedStart;
         this.controlPlane = controlPlane;
         this.controlPlaneRegion = controlPlaneRegion;
         this.leaseEpoch = leaseEpoch;
@@ -211,6 +218,12 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     /// <summary>Gets the tenant-attested store incarnation this run is held under and writes into its region (ADR 0065 decision 6), or <see langword="null"/> for a writer in an environment that is not anchored.</summary>
     public ulong? Incarnation => this.incarnation;
 
+    /// <summary>Gets a value indicating whether the run was started sealed by an initiator (ADR 0065 decision 9): its inputs reached the control plane as ciphertext, and the runner that first claimed it opened them.</summary>
+    public bool SealedStart => this.sealedStart;
+
+    /// <summary>Gets the per-run write sequence of the last persisted checkpoint (ADR 0065 decision 6): 0 at the genesis row, before any runner save.</summary>
+    public long Sequence => this.sequence;
+
     /// <summary>Gets the deployment environment the run is pinned to (design §5.5) — its credential set and the
     /// runners it can be dispatched to. Half the run's address (ADR 0065 decision 9); never absent.</summary>
     public string Environment => this.address.Environment;
@@ -289,6 +302,73 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             rerunOf: rerunOf);
     }
 
+    /// <summary>
+    /// Creates a fresh run whose inputs an initiator sealed to the environment's seal key and signed (ADR 0065
+    /// decision 9). The run holds the sealed inputs only until <see cref="EnqueueAsync"/> writes its genesis row;
+    /// nothing here can read them, and the runner that first claims the run opens them through its own store.
+    /// </summary>
+    /// <param name="store">The state store to persist the genesis row to.</param>
+    /// <param name="id">The run id the initiator chose, which the seal's binding carries.</param>
+    /// <param name="workflowId">The versioned id of the workflow the run executes.</param>
+    /// <param name="sealedInputs">The sealed inputs, as the initiator submitted them.</param>
+    /// <param name="environment">The deployment environment the run is pinned to; required.</param>
+    /// <param name="timeProvider">The time source for checkpoint timestamps; defaults to <see cref="TimeProvider.System"/>.</param>
+    /// <param name="correlationId">The run-wide telemetry correlation id; defaults to the ambient trace id.</param>
+    /// <param name="tags">Free-form tags to apply to the run.</param>
+    /// <param name="securityTags">Security tags (KVP labels) to apply to the run.</param>
+    /// <param name="budget">The run's effective execution budget (ADR 0068).</param>
+    /// <returns>The new run.</returns>
+    /// <exception cref="ArgumentException">The sealed inputs do not have the shapes a seal produces.</exception>
+    public static WorkflowRun CreateSealed(
+        IWorkflowCheckpointStore store,
+        WorkflowRunId id,
+        string workflowId,
+        in SealedInputs sealedInputs,
+        string environment,
+        TimeProvider? timeProvider = null,
+        string? correlationId = null,
+        TagSet tags = default,
+        SecurityTagSet securityTags = default,
+        ExecutionBudget? budget = null)
+    {
+        ArgumentNullException.ThrowIfNull(store);
+        ArgumentNullException.ThrowIfNull(workflowId);
+        ArgumentException.ThrowIfNullOrEmpty(environment);
+        if (!sealedInputs.IsWellFormed)
+        {
+            throw new ArgumentException("The sealed inputs do not have the shapes a seal produces.", nameof(sealedInputs));
+        }
+
+        TimeProvider time = timeProvider ?? TimeProvider.System;
+        var controlPlane = new ControlPlaneRecord(Budget: budget);
+        var run = new WorkflowRun(
+            store,
+            id,
+            workflowId,
+            time,
+            WorkflowRunStatus.Pending,
+            cursor: 0,
+            retryCounts: PooledUtf8Map<int>.Rent(0),
+            correlationTokens: [],
+            inputs: default,
+            stepOutputs: PooledUtf8Map<JsonElement>.Rent(0),
+            etag: WorkflowEtag.None,
+            createdAt: time.GetUtcNow(),
+            correlationId: correlationId ?? Activity.Current?.TraceId.ToString(),
+            tags: tags,
+            securityTags: securityTags,
+            environment: environment,
+            wait: null,
+            fault: null,
+            resumedState: null,
+            controlPlane: controlPlane,
+            controlPlaneRegion: controlPlane.ToUtf8(),
+            leaseEpoch: null,
+            sealedStart: true);
+        run.sealedInputs = sealedInputs;
+        return run;
+    }
+
     /// <summary>Builds a run from a loaded checkpoint, ready to be re-entered by the executor.</summary>
     /// <param name="store">The state store to persist subsequent checkpoints to.</param>
     /// <param name="state">The deserialized checkpoint state; the run takes ownership and disposes it.</param>
@@ -337,7 +417,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             leaseEpoch: leaseEpoch,
             rerunOf: state.RerunOf,
             incarnation: incarnation,
-            waitBlinder: waitBlinder);
+            waitBlinder: waitBlinder,
+            sealedStart: state.SealedStart);
     }
 
     /// <summary>Loads a run's checkpoint from the store and builds a resumed run from it.</summary>
@@ -805,32 +886,39 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         long sequence = genesis ? this.sequence : ++this.sequence;
         this.advanced = true;
 
-        byte[] checkpoint = WorkflowCheckpointSerializer.Serialize(
-            new CheckpointEnvelope(
-                this.Id,
-                this.address.Environment,
-                this.WorkflowId,
-                this.Status,
-                this.Cursor,
-                sequence,
-                this.leaseEpoch,
-                this.createdAt,
-                updatedAt,
-                this.correlationId,
-                this.RerunOf,
-                this.tags,
-                this.securityTags,
-                this.stepJournal,
-                this.journalTruncated,
-                this.wait,
-                this.fault,
-                this.incarnation),
-            this.retryCounts,
-            this.CorrelationTokens,
-            this.inputs,
-            this.stepOutputs,
-            outputs,
-            this.controlPlaneRegion);
+        var envelope = new CheckpointEnvelope(
+            this.Id,
+            this.address.Environment,
+            this.WorkflowId,
+            this.Status,
+            this.Cursor,
+            sequence,
+            this.leaseEpoch,
+            this.createdAt,
+            updatedAt,
+            this.correlationId,
+            this.RerunOf,
+            this.tags,
+            this.securityTags,
+            this.stepJournal,
+            this.journalTruncated,
+            this.wait,
+            this.fault,
+            this.incarnation,
+            this.sealedStart);
+
+        // A sealed start's genesis row carries the initiator's seal as submitted (ADR 0065 decision 9); every other
+        // row, of any run, is the clear row the store in between may encrypt.
+        byte[] checkpoint = genesis && this.sealedInputs is { } sealedGenesis
+            ? WorkflowCheckpointSerializer.SerializeSealedGenesis(envelope, this.retryCounts, sealedGenesis, this.controlPlaneRegion)
+            : WorkflowCheckpointSerializer.Serialize(
+                envelope,
+                this.retryCounts,
+                this.CorrelationTokens,
+                this.inputs,
+                this.stepOutputs,
+                outputs,
+                this.controlPlaneRegion);
 
         WorkflowRunIndexEntry index = WorkflowRunIndexEntry.Project(
             this.WorkflowId,
@@ -848,6 +936,7 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         try
         {
             this.etag = await this.store.SaveAsync(this.address, checkpoint, index, this.etag, cancellationToken).ConfigureAwait(false);
+            this.sealedInputs = null;
         }
         catch
         {

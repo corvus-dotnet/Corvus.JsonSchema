@@ -166,6 +166,9 @@ public sealed class WorkflowBackedAccessRequestApprovalServiceTests
 
         public ExecutionBudget ExecutionBudgetCeiling => ExecutionBudget.Default;
 
+        public ValueTask<IdempotentStartResult> StartSealedAsync(WorkflowRunId runId, string workflowId, SealedInputs sealedInputs, string environment, string? correlationId = null, TagSet tags = default, SecurityTagSet securityTags = default, CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
         public ValueTask<ExecutionBudget?> ResolveExecutionBudgetAsync(string workflowId, string environment, CancellationToken cancellationToken)
             => new(ExecutionBudget.Default);
 

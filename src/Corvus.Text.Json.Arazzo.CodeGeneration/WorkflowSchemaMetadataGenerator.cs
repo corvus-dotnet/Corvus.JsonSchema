@@ -49,12 +49,6 @@ public static class WorkflowSchemaMetadataGenerator
     /// <summary>The format version written into the metadata document.</summary>
     public const int FormatVersion = 1;
 
-    /// <summary>The <c>$defs</c> member a built validation schema places its target sub-schema under.</summary>
-    private const string ValidationTargetName = "__corvusTarget";
-
-    /// <summary>The same-document reference to the target sub-schema (a <c>$defs</c> member — a known schema location).</summary>
-    private const string ValidationTargetRef = "#/$defs/" + ValidationTargetName;
-
     private const int MaxDepth = 12;
 
     // The schemas for the two intrinsic scalar output sources ($statusCode → integer; $url/$method/headers/
@@ -206,16 +200,11 @@ public static class WorkflowSchemaMetadataGenerator
         }
     }
 
+    // The inputs schema is the one definition in Corvus.Text.Json.Arazzo, because a runner validates a sealed
+    // start's inputs against it at first claim (ADR 0065 decision 9) and must admit exactly what the control plane
+    // would have admitted for a clear one.
     private static bool TryWriteInputsValidationSchema(Utf8JsonWriter writer, JsonElement workflow, JsonElement workflowRoot)
-    {
-        if (!workflow.TryGetProperty("inputs", out JsonElement inputs) || inputs.ValueKind != JsonValueKind.Object)
-        {
-            return false;
-        }
-
-        WriteValidationWrapper(writer, inputs, [workflowRoot]);
-        return true;
-    }
+        => TryGetString(workflow, "workflowId") is { } workflowId && WorkflowValidationSchema.TryWriteInputs(writer, workflowRoot, workflowId);
 
     private static bool TryWriteBodyValidationSchema(
         Utf8JsonWriter writer,
@@ -268,10 +257,10 @@ public static class WorkflowSchemaMetadataGenerator
         // Carry both the operation source's and the workflow's reusable schema buckets so local $refs resolve.
         JsonElement[] roots = resolved ? [opRoot, workflowRoot] : [workflowRoot];
         writer.WriteStartObject();
-        writer.WriteString("$ref", ValidationTargetRef);
+        writer.WriteString("$ref", WorkflowValidationSchema.TargetRef);
         writer.WritePropertyName("$defs");
         writer.WriteStartObject();
-        writer.WritePropertyName(ValidationTargetName);
+        writer.WritePropertyName(WorkflowValidationSchema.TargetName);
         writer.WriteStartObject();
         writer.WriteString("type", "object");
         writer.WritePropertyName("properties");
@@ -288,10 +277,10 @@ public static class WorkflowSchemaMetadataGenerator
 
         writer.WriteEndObject(); // properties
         writer.WriteEndObject(); // target object
-        WriteMergedDefsEntries(writer, roots);
+        WorkflowValidationSchema.WriteMergedDefs(writer, roots);
         writer.WriteEndObject(); // $defs
-        WriteCarriedObject(writer, roots, "components");
-        WriteCarriedObject(writer, roots, "definitions");
+        WorkflowValidationSchema.WriteCarriedObject(writer, roots, "components");
+        WorkflowValidationSchema.WriteCarriedObject(writer, roots, "definitions");
         writer.WriteEndObject(); // wrapper
         return true;
     }
@@ -312,10 +301,10 @@ public static class WorkflowSchemaMetadataGenerator
         JsonElement[] roots = [.. rootList];
 
         writer.WriteStartObject();
-        writer.WriteString("$ref", ValidationTargetRef);
+        writer.WriteString("$ref", WorkflowValidationSchema.TargetRef);
         writer.WritePropertyName("$defs");
         writer.WriteStartObject();
-        writer.WritePropertyName(ValidationTargetName);
+        writer.WritePropertyName(WorkflowValidationSchema.TargetName);
         writer.WriteStartObject();
         writer.WriteString("type", "object");
         writer.WritePropertyName("properties");
@@ -335,10 +324,10 @@ public static class WorkflowSchemaMetadataGenerator
 
         writer.WriteEndObject(); // properties
         writer.WriteEndObject(); // target object
-        WriteMergedDefsEntries(writer, roots);
+        WorkflowValidationSchema.WriteMergedDefs(writer, roots);
         writer.WriteEndObject(); // $defs
-        WriteCarriedObject(writer, roots, "components");
-        WriteCarriedObject(writer, roots, "definitions");
+        WorkflowValidationSchema.WriteCarriedObject(writer, roots, "components");
+        WorkflowValidationSchema.WriteCarriedObject(writer, roots, "definitions");
         writer.WriteEndObject(); // wrapper
         return true;
     }
@@ -538,57 +527,7 @@ public static class WorkflowSchemaMetadataGenerator
     /// so the sub-schema's local <c>$ref</c>s still resolve.
     /// </summary>
     private static void WriteValidationWrapper(Utf8JsonWriter writer, JsonElement subSchema, JsonElement[] roots)
-    {
-        writer.WriteStartObject();
-        writer.WriteString("$ref", ValidationTargetRef);
-        writer.WritePropertyName("$defs");
-        writer.WriteStartObject();
-        writer.WritePropertyName(ValidationTargetName);
-        subSchema.WriteTo(writer);
-        WriteMergedDefsEntries(writer, roots);
-        writer.WriteEndObject(); // $defs
-        WriteCarriedObject(writer, roots, "components");
-        WriteCarriedObject(writer, roots, "definitions");
-        writer.WriteEndObject();
-    }
-
-    /// <summary>Merges the <c>$defs</c> members of every root into the wrapper's <c>$defs</c> (first writer wins on a name clash).</summary>
-    private static void WriteMergedDefsEntries(Utf8JsonWriter writer, JsonElement[] roots)
-    {
-        var written = new HashSet<string>(StringComparer.Ordinal) { ValidationTargetName };
-        foreach (JsonElement root in roots)
-        {
-            if (root.ValueKind == JsonValueKind.Object
-                && root.TryGetProperty("$defs", out JsonElement defs)
-                && defs.ValueKind == JsonValueKind.Object)
-            {
-                foreach (var entry in defs.EnumerateObject())
-                {
-                    if (written.Add(entry.Name))
-                    {
-                        writer.WritePropertyName(entry.Name);
-                        entry.Value.WriteTo(writer);
-                    }
-                }
-            }
-        }
-    }
-
-    /// <summary>Copies a reusable keyword object (e.g. <c>components</c>/<c>definitions</c>) from the first root that has it.</summary>
-    private static void WriteCarriedObject(Utf8JsonWriter writer, JsonElement[] roots, string keyword)
-    {
-        foreach (JsonElement root in roots)
-        {
-            if (root.ValueKind == JsonValueKind.Object
-                && root.TryGetProperty(keyword, out JsonElement value)
-                && value.ValueKind == JsonValueKind.Object)
-            {
-                writer.WritePropertyName(keyword);
-                value.WriteTo(writer);
-                return;
-            }
-        }
-    }
+        => WorkflowValidationSchema.WriteWrapper(writer, subSchema, roots);
 
     private static bool TryResponseBodyForStatus(StepOperation op, string? status, out JsonElement schema)
     {

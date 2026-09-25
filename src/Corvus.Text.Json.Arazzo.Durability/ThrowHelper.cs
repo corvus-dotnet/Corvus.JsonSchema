@@ -301,6 +301,21 @@ internal static class ThrowHelper
     public static InvalidOperationException GetSealedEnvironmentNeedsAnchorException(string environment)
         => new(SR.Format(SR.SealedEnvironmentNeedsAnchor, environment));
 
+    public static InvalidOperationException GetSealKeyNotAKeyException(string environment, string keyId)
+        => new(SR.Format(SR.SealKeyNotAKey, environment, keyId));
+
+    public static InvalidOperationException GetSealKeyNeedsInitiatorsException(string environment)
+        => new(SR.Format(SR.SealKeyNeedsInitiators, environment));
+
+    public static InvalidOperationException GetInitiatorKeyNotAKeyException(string environment)
+        => new(SR.Format(SR.InitiatorKeyNotAKey, environment));
+
+    public static SealedStartException GetSealedStartException(in WorkflowRunAddress address, SealedStartRefusal refusal, ReadOnlyMemory<byte> row, WorkflowEtag etag)
+        => new(address, refusal, row, etag, SR.Format(SR.SealedStartRefused, address, refusal));
+
+    public static InvalidOperationException GetSealedStartNotFirstException(string runId)
+        => new(SR.Format(SR.SealedStartNotFirst, runId));
+
     public static InvalidOperationException GetPayloadKeyNotAKeyException(string environment, string keyId)
         => new(SR.Format(SR.PayloadKeyNotAKey, environment, keyId));
 

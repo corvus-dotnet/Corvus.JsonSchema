@@ -33,6 +33,7 @@ internal static class RunnerRunAdvance
         CancellationToken cancellationToken,
         MessageMatch match = default)
     {
+        ulong? incarnation = null;
         try
         {
             // The run loads and advances through the client's checkpoint store, so the executor is unaware it is not
@@ -40,10 +41,20 @@ internal static class RunnerRunAdvance
             // means the row went away underneath us rather than that the run was unsuitable. The run writes its grant
             // into its region (ADR 0065 decision 6): the lease epoch, and for an anchored environment the tenant's
             // attested incarnation beside it, which together are the ordering key the anchor stages every save under.
-            ulong? incarnation = await client.AttestedIncarnationAsync(claim.Environment, cancellationToken).ConfigureAwait(false);
+            incarnation = await client.AttestedIncarnationAsync(claim.Environment, cancellationToken).ConfigureAwait(false);
             using WorkflowRun? run = await WorkflowRun.ResumeAsync(client.Checkpoints, claim.Address, leaseEpoch: claim.LeaseEpoch, cancellationToken: cancellationToken, incarnation: incarnation, waitBlinder: client.WaitBlinderFor(claim.Environment)).ConfigureAwait(false);
             if (run is null)
             {
+                return false;
+            }
+
+            // A sealed start's first claim (ADR 0065 decision 9): the control plane admitted inputs it could not read,
+            // so the runner validates what it opened against the version's inputs schema before a step runs. Inputs
+            // that do not validate fault the run at its start, sealed like any save, and the run is never claimed again.
+            if (run.SealedStart && run.Sequence == 0 && !await client.StartInputs.ValidateAsync(run.WorkflowId, run.Inputs, cancellationToken).ConfigureAwait(false))
+            {
+                await run.FaultAsync(SealedStartFault.StepId, 1, SealedStartFault.InputsInvalid, cancellationToken).ConfigureAwait(false);
+                CountRefusal(claim, SealedStartFault.InputsInvalid);
                 return false;
             }
 
@@ -75,6 +86,19 @@ internal static class RunnerRunAdvance
             // run is over, not lost: nothing here is retried, and the release below hands back the lease.
             return false;
         }
+        catch (SealedStartException unopenable)
+        {
+            // The sealed start did not open (ADR 0065 decision 9): no seal key, another generation, an initiator this
+            // runner does not pin, or a seal that does not verify under the binding for this run. The row's envelope
+            // is the control plane's and is readable, so the run is resumed from it alone and faulted at its start,
+            // sealed like any save, which is what keeps it from being claimed again on every sweep. The refusal is
+            // counted, since a stream of them is a run-injection attempt or a misconfigured initiator.
+            System.Diagnostics.Activity.Current?.AddException(unopenable);
+            using WorkflowRun run = WorkflowRun.Resume(client.Checkpoints, WorkflowCheckpointSerializer.Deserialize(unopenable.Row), unopenable.Etag, leaseEpoch: claim.LeaseEpoch, incarnation: incarnation, waitBlinder: client.WaitBlinderFor(claim.Environment));
+            await run.FaultAsync(SealedStartFault.StepId, 1, SealedStartFault.Unopenable, cancellationToken).ConfigureAwait(false);
+            CountRefusal(claim, SealedStartFault.Unopenable);
+            return false;
+        }
         catch (Exception fault) when (fault is CheckpointAnchorException or CryptographicException)
         {
             // The tenant anchor refused the run (a rollback, a substitution, a replay, a claim on a finished run) or
@@ -83,10 +107,7 @@ internal static class RunnerRunAdvance
             // sweep carries on with the other claims rather than ending on this one. It is the operator's to dispose
             // of envelope-only, or to recover once a signed re-anchor can be applied.
             System.Diagnostics.Activity.Current?.AddException(fault);
-            ArazzoTelemetry.WorkflowsRefused.Add(
-                1,
-                new KeyValuePair<string, object?>(ArazzoTelemetry.WorkflowIdTag, claim.WorkflowId),
-                new KeyValuePair<string, object?>(ArazzoTelemetry.RefusalTag, fault is CheckpointAnchorException { Decision: { } decision } ? decision.Fault.ToString() : "integrity"));
+            CountRefusal(claim, fault is CheckpointAnchorException { Decision: { } decision } ? decision.Fault.ToString() : "integrity");
             return false;
         }
         finally
@@ -98,6 +119,12 @@ internal static class RunnerRunAdvance
             await client.ReleaseAsync(claim.Address, CancellationToken.None).ConfigureAwait(false);
         }
     }
+
+    private static void CountRefusal(in RunnerClaim claim, string refusal)
+        => ArazzoTelemetry.WorkflowsRefused.Add(
+            1,
+            new KeyValuePair<string, object?>(ArazzoTelemetry.WorkflowIdTag, claim.WorkflowId),
+            new KeyValuePair<string, object?>(ArazzoTelemetry.RefusalTag, refusal));
 }
 
 /// <summary>

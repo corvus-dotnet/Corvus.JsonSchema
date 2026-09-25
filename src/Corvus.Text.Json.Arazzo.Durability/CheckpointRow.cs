@@ -31,6 +31,15 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// and always a key id and a MAC: an encrypted row without its MAC is malformed, since the algorithm selector it
 /// carries would be unauthenticated.
 /// </para>
+/// <para>
+/// A <see cref="CheckpointAlgorithm.SealedGenesis"/> row is the one row the control plane writes for a sealed start
+/// (ADR 0065 decision 9), at sequence 0 before any runner has claimed: its key id is the seal key generation, its
+/// runner region the envelope the control plane authored, its salt region the seal's 65-byte encapsulated key, its
+/// payload the sealed inputs (<see cref="Anchoring.InputSeal"/>) and its MAC region the initiator's 64-byte signature
+/// (<see cref="Anchoring.SealedStartSignature"/>), which is the row's authenticator since no runner key has touched
+/// it. Its nonce and tag regions are empty: the seal carries its own. The same regions, so every reader parses it and
+/// every keyless one sees an envelope and no inputs.
+/// </para>
 /// </remarks>
 public static class CheckpointRow
 {
@@ -157,7 +166,7 @@ public static class CheckpointRow
     private static bool TryParseCore(ReadOnlySpan<byte> row, int regionCount, out CheckpointRowLayout layout)
     {
         layout = default;
-        if (row.Length < HeaderLength || row[0] != FramingVersion || row[1] > (byte)CheckpointAlgorithm.Aes256Gcm)
+        if (row.Length < HeaderLength || row[0] != FramingVersion || row[1] > (byte)CheckpointAlgorithm.SealedGenesis)
         {
             return false;
         }
@@ -199,7 +208,9 @@ public static class CheckpointRow
 
         // A clear row has nothing to put in the encryption regions; one that carries them is not a row this code wrote.
         // Its key id and MAC come together or not at all. An encrypted row carries every encryption region at its
-        // fixed length, and its key id and MAC without exception.
+        // fixed length, and its key id and MAC without exception. A sealed genesis row carries the seal key
+        // generation, the encapsulated key where the salt would be, the sealed inputs, and the initiator's signature
+        // where the MAC would be, each at the length the seal produces.
         if (layout.KeyId.IsEmpty() != layout.Mac.IsEmpty())
         {
             return false;
@@ -212,6 +223,12 @@ public static class CheckpointRow
                 && layout.Salt.Length() == CheckpointPayloadCipher.SaltLength
                 && layout.Nonce.Length() == CheckpointPayloadCipher.NonceLength
                 && layout.Tag.Length() == CheckpointPayloadCipher.TagLength,
+            CheckpointAlgorithm.SealedGenesis => !layout.KeyId.IsEmpty()
+                && layout.Salt.Length() == Anchoring.InputSeal.EncLength
+                && layout.Nonce.IsEmpty()
+                && layout.Tag.IsEmpty()
+                && layout.Payload.Length() >= Anchoring.InputSeal.TagLength
+                && layout.Mac.Length() == Anchoring.SealedStartSignature.SignatureLength,
             _ => false,
         };
     }
@@ -275,6 +292,47 @@ public static class CheckpointRow
     }
 
     /// <summary>
+    /// Writes the genesis row of a sealed start (ADR 0065 decision 9): the control plane's envelope in the runner
+    /// region, the seal key generation as the key id, the encapsulated key in the salt region, the sealed inputs as
+    /// the payload and the initiator's signature in the MAC region, with the control-plane region joined.
+    /// </summary>
+    /// <param name="runnerRegion">The envelope the control plane authored for the run's start.</param>
+    /// <param name="keyId">The seal key generation.</param>
+    /// <param name="sealedInputs">The sealed inputs.</param>
+    /// <param name="controlPlaneRegion">The control-plane region.</param>
+    /// <returns>The row.</returns>
+    /// <exception cref="ArgumentException">The sealed inputs do not have the shapes a seal produces.</exception>
+    public static byte[] WriteSealedGenesis(ReadOnlySpan<byte> runnerRegion, ReadOnlySpan<byte> keyId, in SealedInputs sealedInputs, ReadOnlySpan<byte> controlPlaneRegion)
+    {
+        if (keyId.IsEmpty || !sealedInputs.IsWellFormed)
+        {
+            throw new ArgumentException("A sealed genesis row needs the seal key generation and well-formed sealed inputs.", nameof(sealedInputs));
+        }
+
+        ReadOnlySpan<byte> enc = sealedInputs.Enc.Span;
+        ReadOnlySpan<byte> ciphertext = sealedInputs.Ciphertext.Span;
+        ReadOnlySpan<byte> signature = sealedInputs.Signature.Span;
+        byte[] row = new byte[HeaderLength + (RegionCount * LengthPrefix) + keyId.Length + runnerRegion.Length + enc.Length + ciphertext.Length + signature.Length + controlPlaneRegion.Length];
+        row[0] = FramingVersion;
+        row[1] = (byte)CheckpointAlgorithm.SealedGenesis;
+        int offset = HeaderLength;
+        offset = WriteRegion(row, offset, keyId);
+        offset = WriteRegion(row, offset, runnerRegion);
+        offset = WriteRegion(row, offset, enc);
+        offset = WriteRegion(row, offset, ReadOnlySpan<byte>.Empty); // nonce
+        offset = WriteRegion(row, offset, ReadOnlySpan<byte>.Empty); // tag
+        offset = WriteRegion(row, offset, ciphertext);
+        offset = WriteRegion(row, offset, signature);
+        WriteRegion(row, offset, controlPlaneRegion);
+        if (!TryParse(row, out _))
+        {
+            ThrowHelper.ThrowCheckpointRowMalformed();
+        }
+
+        return row;
+    }
+
+    /// <summary>
     /// Replaces a row's control-plane region, leaving every submitted byte exactly as it was. This is the one write
     /// the control plane makes to a row (ADR 0065 decision 7): it never rewrites the runner's octets.
     /// </summary>
@@ -312,17 +370,20 @@ public enum CheckpointAlgorithm : byte
 
     /// <summary>AES-256-GCM under a per-encryption derived data key (ADR 0065 decision 5, <see cref="CheckpointPayloadCipher"/>): the algorithm of a sealed environment.</summary>
     Aes256Gcm = 1,
+
+    /// <summary>The genesis row of a sealed start (ADR 0065 decision 9): the payload is the initiator's seal to the environment's seal key (<see cref="Anchoring.InputSeal"/>), the salt region its encapsulated key and the MAC region the initiator's signature. Written by the control plane at sequence 0 only; a runner never submits one.</summary>
+    SealedGenesis = 2,
 }
 
 /// <summary>Where each region of a parsed checkpoint row sits, as ranges into the row's bytes.</summary>
 /// <param name="Algorithm">The payload algorithm the header names.</param>
 /// <param name="KeyId">The key id region (empty on an unsealed clear row).</param>
 /// <param name="RunnerRegion">The runner-authored region: the envelope JSON.</param>
-/// <param name="Salt">The data-key salt (32 bytes on an encrypted row, empty on a clear row).</param>
+/// <param name="Salt">The data-key salt (32 bytes on an encrypted row, empty on a clear row; the seal's encapsulated key on a sealed genesis row).</param>
 /// <param name="Nonce">The AEAD nonce (12 bytes on an encrypted row, empty on a clear row).</param>
 /// <param name="Tag">The AEAD tag (16 bytes on an encrypted row, empty on a clear row).</param>
 /// <param name="Payload">The payload region: plaintext JSON on a clear row, ciphertext otherwise.</param>
-/// <param name="Mac">The unified MAC (empty on an unsealed clear row).</param>
+/// <param name="Mac">The unified MAC (empty on an unsealed clear row; the initiator's signature on a sealed genesis row).</param>
 /// <param name="ControlPlaneRegion">The server-owned control-plane region, joined at read time.</param>
 /// <param name="SubmittedLength">The length of the submitted bytes: the prefix of the row every runner-written region lies in, which the checkpoint digest is taken over.</param>
 public readonly record struct CheckpointRowLayout(

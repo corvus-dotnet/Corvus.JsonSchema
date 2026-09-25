@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
 
@@ -17,7 +18,7 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// <remarks>
 /// <para>The envelope is a closed schema in fixed property order:</para>
 /// <code>
-/// { "runId", "environment", "workflowId", "status", "cursor", "sequence", "epoch"?, "incarnation"?, "createdAt", "updatedAt"?,
+/// { "runId", "environment", "workflowId", "status", "cursor", "sequence", "epoch"?, "incarnation"?, "sealedStart"?, "createdAt", "updatedAt"?,
 ///   "correlationId"?, "rerunOf"?, "tags"?, "securityTags"?, "retryCounters": { "&lt;stepId&gt;": n },
 ///   "stepJournal"?: [ { "stepId", "status", "attempt", "startedAt", "endedAt" } ], "journalTruncated"?,
 ///   "wait"?, "fault"? }
@@ -93,6 +94,57 @@ public static class WorkflowCheckpointSerializer
             workspace.ReturnWriterAndBuffer(envelopeWriter, envelopeBuffer);
         }
     }
+
+    /// <summary>
+    /// Serializes the genesis row of a sealed start (ADR 0065 decision 9): the envelope the control plane authors for
+    /// the run, with the initiator's sealed inputs carried as they were submitted. The envelope says the start was
+    /// sealed, and the run carries that into every later save.
+    /// </summary>
+    /// <param name="envelope">The runner region's scalars, as the control plane authors them at start.</param>
+    /// <param name="retryCounters">The per-step retry attempt counts (empty at start).</param>
+    /// <param name="sealedInputs">The sealed inputs.</param>
+    /// <param name="controlPlaneRegion">The control-plane region.</param>
+    /// <returns>The row.</returns>
+    public static byte[] SerializeSealedGenesis(in CheckpointEnvelope envelope, PooledUtf8Map<int> retryCounters, in SealedInputs sealedInputs, ReadOnlySpan<byte> controlPlaneRegion)
+    {
+        ArgumentNullException.ThrowIfNull(envelope.WorkflowId);
+        ArgumentException.ThrowIfNullOrEmpty(envelope.Environment);
+        ArgumentNullException.ThrowIfNull(retryCounters);
+        if (!envelope.SealedStart || envelope.Sequence != 0)
+        {
+            throw ThrowHelper.GetSealedStartNotFirstException(envelope.RunId.Value);
+        }
+
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        Utf8JsonWriter envelopeWriter = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter envelopeBuffer);
+        try
+        {
+            WriteEnvelope(envelopeWriter, envelope, retryCounters);
+            envelopeWriter.Flush();
+            Span<byte> keyId = stackalloc byte[Encoding.UTF8.GetMaxByteCount(sealedInputs.KeyId.Length)];
+            keyId = keyId[..Encoding.UTF8.GetBytes(sealedInputs.KeyId, keyId)];
+            return CheckpointRow.WriteSealedGenesis(envelopeBuffer.WrittenSpan, keyId, sealedInputs, controlPlaneRegion);
+        }
+        finally
+        {
+            workspace.ReturnWriterAndBuffer(envelopeWriter, envelopeBuffer);
+        }
+    }
+
+    /// <summary>
+    /// Serializes the payload region of a run at its start: the inputs and nothing else, which is what a sealed start's
+    /// genesis row becomes once the runner has opened it (ADR 0065 decision 9).
+    /// </summary>
+    /// <param name="inputs">The opened inputs.</param>
+    /// <returns>The payload region's bytes.</returns>
+    public static byte[] SerializeStartPayload(in JsonElement inputs)
+    {
+        using PooledUtf8Map<JsonElement> stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
+        (JsonElement Inputs, PooledUtf8Map<JsonElement> StepOutputs) payload = (inputs, stepOutputs);
+        return PersistedJson.ToArray(payload, static (Utf8JsonWriter writer, in (JsonElement Inputs, PooledUtf8Map<JsonElement> StepOutputs) p) => WritePayload(writer, EmptyCorrelationTokens, p.Inputs, p.StepOutputs, default));
+    }
+
+    private static readonly Dictionary<string, byte[]> EmptyCorrelationTokens = new(0, StringComparer.Ordinal);
 
     /// <summary>
     /// Deserializes a checkpoint row into the run's resumable state: the join of its three regions. An encrypted row
@@ -714,6 +766,13 @@ public static class WorkflowCheckpointSerializer
             writer.WriteNumber("incarnation"u8, incarnation);
         }
 
+        // A run started sealed says so for its whole life (decision 9), inside the region the MAC covers from the
+        // first runner save on, so the badge the control plane shows is one the runner vouched for.
+        if (envelope.SealedStart)
+        {
+            writer.WriteBoolean("sealedStart"u8, true);
+        }
+
         writer.WriteString("createdAt"u8, envelope.CreatedAt);
         if (envelope.UpdatedAt is { } updatedAt)
         {
@@ -885,6 +944,7 @@ public static class WorkflowCheckpointSerializer
         long? sequence = null;
         long? epoch = null;
         ulong? incarnation = null;
+        bool sealedStart = false;
         DateTimeOffset? createdAt = null;
         DateTimeOffset? updatedAt = null;
         string? correlationId = null;
@@ -932,6 +992,10 @@ public static class WorkflowCheckpointSerializer
                 else if (property.NameEquals("incarnation"u8))
                 {
                     incarnation = value.GetUInt64();
+                }
+                else if (property.NameEquals("sealedStart"u8))
+                {
+                    sealedStart = value.GetBoolean();
                 }
                 else if (property.NameEquals("createdAt"u8))
                 {
@@ -1031,7 +1095,8 @@ public static class WorkflowCheckpointSerializer
                 journalTruncated,
                 wait,
                 fault,
-                incarnation);
+                incarnation,
+                sealedStart);
         }
         catch
         {
@@ -1115,6 +1180,7 @@ public static class WorkflowCheckpointSerializer
 /// <param name="Wait">The wait the run is suspended on, if it is.</param>
 /// <param name="Fault">The fault the runner recorded, if the run is faulted.</param>
 /// <param name="Incarnation">The tenant-attested store incarnation the writer holds the run under (decision 6, the anchor's ordering key with <paramref name="Epoch"/>), or <see langword="null"/> for a writer in an environment that is not anchored.</param>
+/// <param name="SealedStart">Whether the run was started sealed by an initiator (decision 9): its genesis row carried the initiator's seal, and the runner opened it at first claim. Carried by every later save.</param>
 public readonly record struct CheckpointEnvelope(
     WorkflowRunId RunId,
     string Environment,
@@ -1133,7 +1199,8 @@ public readonly record struct CheckpointEnvelope(
     bool JournalTruncated,
     WorkflowWait? Wait,
     WorkflowFault? Fault,
-    ulong? Incarnation = null);
+    ulong? Incarnation = null,
+    bool SealedStart = false);
 
 /// <summary>What a runner's submission claims, read by the checkpoint surfaces before the server joins it with the control-plane region (<see cref="WorkflowCheckpointSerializer.TryReadSubmission"/>).</summary>
 /// <param name="Environment">The environment the runner region claims (ADR 0065 decision 9).</param>

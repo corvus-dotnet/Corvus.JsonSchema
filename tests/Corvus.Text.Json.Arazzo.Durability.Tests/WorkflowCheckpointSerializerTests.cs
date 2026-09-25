@@ -213,6 +213,70 @@ public sealed class WorkflowCheckpointSerializerTests
     }
 
     [TestMethod]
+    public void A_sealed_genesis_row_carries_the_seal_key_generation_the_encapsulated_key_the_sealed_inputs_and_the_initiators_signature()
+    {
+        // ADR 0065 decision 9: the framing knows the shape of a sealed start's genesis row, so one that names the
+        // algorithm without a seal's parts at their lengths is malformed, and every keyless reader gets its envelope.
+        byte[] row = Row(WorkflowRunStatus.Pending, sequence: 0, sealedStart: true);
+        CheckpointRowLayout clear = CheckpointRow.Parse(row);
+        byte[] runner = row[clear.RunnerRegion];
+        byte[] controlPlane = row[clear.ControlPlaneRegion];
+        var sealedInputs = new SealedInputs("k1", new byte[Anchoring.InputSeal.EncLength], new byte[20], new byte[Anchoring.SealedStartSignature.SignatureLength]);
+
+        byte[] genesis = CheckpointRow.WriteSealedGenesis(runner, "k1"u8, sealedInputs, controlPlane);
+
+        CheckpointRow.TryParse(genesis, out CheckpointRowLayout layout).ShouldBeTrue();
+        layout.Algorithm.ShouldBe(CheckpointAlgorithm.SealedGenesis);
+        genesis[layout.Salt].Length.ShouldBe(65);
+        genesis[layout.Nonce].Length.ShouldBe(0);
+        genesis[layout.Tag].Length.ShouldBe(0);
+        genesis[layout.Payload].Length.ShouldBe(20);
+        genesis[layout.Mac].Length.ShouldBe(64);
+        CheckpointIntegrity.KeyIdOf(genesis).ShouldBe("k1");
+        genesis[layout.RunnerRegion].ShouldBe(runner);
+        genesis[layout.ControlPlaneRegion].ShouldBe(controlPlane);
+
+        Should.Throw<ArgumentException>(() => CheckpointRow.WriteSealedGenesis(runner, "k1"u8, sealedInputs with { Enc = new byte[33] }, controlPlane), "a compressed point is not a seal's encapsulated key");
+        Should.Throw<ArgumentException>(() => CheckpointRow.WriteSealedGenesis(runner, "k1"u8, sealedInputs with { Signature = new byte[63] }, controlPlane), "a short signature");
+        Should.Throw<ArgumentException>(() => CheckpointRow.WriteSealedGenesis(runner, "k1"u8, sealedInputs with { Ciphertext = new byte[15] }, controlPlane), "a ciphertext shorter than a tag");
+        Should.Throw<ArgumentException>(() => CheckpointRow.WriteSealedGenesis(runner, [], sealedInputs, controlPlane), "no generation");
+
+        byte[] withNonce = [.. genesis];
+        withNonce[1] = (byte)CheckpointAlgorithm.Aes256Gcm;
+        CheckpointRow.TryParse(withNonce, out _).ShouldBeFalse("the same regions under the encrypted header are not an encrypted row");
+        byte[] clearAsGenesis = [.. row];
+        clearAsGenesis[1] = (byte)CheckpointAlgorithm.SealedGenesis;
+        CheckpointRow.TryParse(clearAsGenesis, out _).ShouldBeFalse("a sealed genesis header over empty regions is not a sealed genesis row");
+
+        using WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(genesis);
+        state.PayloadSealed.ShouldBeTrue("a keyless reader gets the envelope alone");
+        state.SealedStart.ShouldBeTrue();
+        state.Sequence.ShouldBe(0);
+        state.Inputs.ValueKind.ShouldBe(JsonValueKind.Undefined);
+        WorkflowCheckpointSerializer.TryReadSubmission(CheckpointRow.SubmittedBytes(genesis), out CheckpointSubmission submission).ShouldBeTrue();
+        submission.Algorithm.ShouldBe(CheckpointAlgorithm.SealedGenesis);
+        CheckpointSealing.IsSealedUnder(submission, new HashSet<string>(["k1"])).ShouldBeFalse("a runner never submits a sealed genesis row: only the control plane writes one");
+    }
+
+    [TestMethod]
+    public void The_sealed_start_flag_is_carried_by_the_envelope_and_absent_when_false()
+    {
+        byte[] sealedRow = Row(WorkflowRunStatus.Running, sealedStart: true);
+        byte[] plainRow = Row(WorkflowRunStatus.Running);
+        Encoding.UTF8.GetString(sealedRow[CheckpointRow.Parse(sealedRow).RunnerRegion]).ShouldContain("\"sealedStart\":true");
+        Encoding.UTF8.GetString(plainRow[CheckpointRow.Parse(plainRow).RunnerRegion]).ShouldNotContain("sealedStart");
+        using WorkflowCheckpointState sealedState = WorkflowCheckpointSerializer.Deserialize(sealedRow);
+        sealedState.SealedStart.ShouldBeTrue();
+        using WorkflowCheckpointState plainState = WorkflowCheckpointSerializer.Deserialize(plainRow);
+        plainState.SealedStart.ShouldBeFalse();
+
+        var sealedInputs = new SealedInputs("k1", new byte[Anchoring.InputSeal.EncLength], new byte[20], new byte[Anchoring.SealedStartSignature.SignatureLength]);
+        using var retryCounters = PooledUtf8Map<int>.Rent(0);
+        Should.Throw<InvalidOperationException>(() => WorkflowCheckpointSerializer.SerializeSealedGenesis(Envelope(WorkflowRunStatus.Pending, sequence: 0), retryCounters, sealedInputs, []), "a genesis row that does not say it is sealed");
+        Should.Throw<InvalidOperationException>(() => WorkflowCheckpointSerializer.SerializeSealedGenesis(Envelope(WorkflowRunStatus.Pending, sequence: 1, sealedStart: true), retryCounters, sealedInputs, []), "a sealed genesis row beyond sequence 0");
+    }
+
+    [TestMethod]
     public void An_encrypted_row_deserializes_to_its_envelope_alone()
     {
         // ADR 0065 decision 5: the reader holds no key, so the payload is reported sealed rather than empty, and
@@ -536,7 +600,8 @@ public sealed class WorkflowCheckpointSerializerTests
         bool truncated = false,
         WorkflowWait? wait = null,
         WorkflowFault? fault = null,
-        ulong? incarnation = null)
+        ulong? incarnation = null,
+        bool sealedStart = false)
         => new(
             new WorkflowRunId("run-1"),
             "development",
@@ -555,7 +620,8 @@ public sealed class WorkflowCheckpointSerializerTests
             truncated,
             wait,
             fault,
-            incarnation);
+            incarnation,
+            sealedStart);
 
     private static byte[] Row(
         WorkflowRunStatus status,
@@ -567,12 +633,13 @@ public sealed class WorkflowCheckpointSerializerTests
         WorkflowWait? wait = null,
         WorkflowFault? fault = null,
         byte[]? controlPlane = null,
-        ulong? incarnation = null)
+        ulong? incarnation = null,
+        bool sealedStart = false)
     {
         using var retryCounters = PooledUtf8Map<int>.Rent(0);
         using var stepOutputs = PooledUtf8Map<JsonElement>.Rent(0);
         return WorkflowCheckpointSerializer.Serialize(
-            Envelope(status, cursor: journal?.Count ?? 0, sequence, epoch, updatedAt, journal: journal, truncated: truncated, wait: wait, fault: fault, incarnation: incarnation),
+            Envelope(status, cursor: journal?.Count ?? 0, sequence, epoch, updatedAt, journal: journal, truncated: truncated, wait: wait, fault: fault, incarnation: incarnation, sealedStart: sealedStart),
             retryCounters,
             new Dictionary<string, byte[]>(StringComparer.Ordinal),
             inputs: default,

@@ -33,6 +33,41 @@ public sealed class SecuredWorkflowManagementTests
     }
 
     [TestMethod]
+    public async Task A_sealed_start_writes_the_initiators_seal_as_the_genesis_row_and_collides_as_a_named_start_does()
+    {
+        // ADR 0065 decision 9: the control plane stores the seal and reads none of it; the initiator's retry under
+        // the id it chose converges, and any other occupant of the id is refused.
+        var store = new InMemoryWorkflowStateStore();
+        var management = new SecuredWorkflowManagement(store, "ops");
+        using var initiator = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256);
+        (byte[] sealSpki, _) = InputSealTests.SealKeyPair();
+        const string runId = "0123456789abcdef0123456789abcdef";
+        SealedInputs sealedInputs = Anchoring.RunStartInitiator.Seal(sealSpki, "k1", "production", "onboard", 2, runId, """{"email":"ada@example.com"}"""u8, initiator);
+
+        IdempotentStartResult started = await management.StartSealedAsync(new WorkflowRunId(runId), "onboard-v2", sealedInputs, "production");
+
+        started.Created.ShouldBeTrue();
+        WorkflowCheckpoint genesis = (await store.LoadAsync(new WorkflowRunAddress("production", started.RunId), default))!.Value;
+        CheckpointRowLayout layout = CheckpointRow.Parse(genesis.Row.Span);
+        layout.Algorithm.ShouldBe(CheckpointAlgorithm.SealedGenesis);
+        genesis.Row.Span[layout.Payload].ToArray().ShouldBe(sealedInputs.Ciphertext.ToArray(), "the seal is stored as submitted");
+        genesis.Row.Span[layout.Mac].ToArray().ShouldBe(sealedInputs.Signature.ToArray());
+        System.Text.Encoding.Latin1.GetString(genesis.Row.Span).Contains("ada@example.com", StringComparison.Ordinal).ShouldBeFalse("the inputs never reach the store in the clear");
+        using (WorkflowCheckpointState state = WorkflowCheckpointSerializer.Deserialize(genesis.Row))
+        {
+            state.SealedStart.ShouldBeTrue();
+            state.PayloadSealed.ShouldBeTrue();
+            state.Sequence.ShouldBe(0);
+            state.Status.ShouldBe(WorkflowRunStatus.Pending);
+            state.WorkflowId.ShouldBe("onboard-v2");
+        }
+
+        (await management.StartSealedAsync(new WorkflowRunId(runId), "onboard-v2", sealedInputs, "production")).Created.ShouldBeFalse("the initiator's own retry");
+        await Should.ThrowAsync<WorkflowRunCollisionException>(async () => await management.StartSealedAsync(new WorkflowRunId(runId), "other-v1", sealedInputs, "production"));
+        await Should.ThrowAsync<ArgumentException>(async () => await management.StartSealedAsync(new WorkflowRunId("not-hex"), "onboard-v2", sealedInputs, "production"));
+    }
+
+    [TestMethod]
     public async Task Get_returns_null_for_an_unknown_run()
     {
         var client = new SecuredWorkflowManagement(new InMemoryWorkflowStateStore(), owner: "ops");
