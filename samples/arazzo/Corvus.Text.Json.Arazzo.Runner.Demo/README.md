@@ -42,11 +42,16 @@ environment's administrator and authorizes the runner on registration (productio
 the UI/API). Also visible: the seeded orphaned `Running` run is reclaimed and re-executed shortly after startup —
 orphan reclaim in action.
 
-## Sealed checkpoints
+## The allowlist, and sealed checkpoints
 
-When `Runner:Sealing:Environments` names an environment, the runner builds a key ring at start (ADR 0065
-decisions 5 and 10): for each entry it resolves the environment's payload key through its own Vault identity
-(`PayloadKeyRef`, the base64 of a 32-byte key), derives the `envelope-mac` subkey once, and from then on every
+`Runner:Environments` is the runner's allowlist (ADR 0065 decision 10), and it is default deny: the runner serves
+the environments its entries name and no other, whatever the control plane binds it to, so the AppHost gives
+`runner` a clear `development` entry and `system-runner` a clear `system` entry, and a runner with no entries would
+serve nothing. A keyed entry names the environment's key generation, its payload key in the runner's own Vault
+(`PayloadKeyRef`, the base64 of a 32-byte key), and `SealKeyFingerprint`, the pinned base64 SHA-256 of the seal
+key the tenant registered: the runner checks what the control plane advertises for that generation against it once a
+minute and suspends the environment on any other key. For each keyed entry the runner builds its key ring at start
+(decisions 5 and 10): it resolves the payload key, derives the `envelope-mac` subkey once, and from then on every
 checkpoint row it saves for that environment has its payload encrypted under a data key derived for that one save
 and carries a MAC under the named generation (`KeyId`), and every row it loads is verified and opened before the run
 sees it. The control plane, the store and a backup hold the payload as ciphertext; the run detail and step journal

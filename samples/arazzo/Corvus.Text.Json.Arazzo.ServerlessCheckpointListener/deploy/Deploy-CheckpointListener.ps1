@@ -114,6 +114,9 @@ Invoke-Az acr create -n $registry -g $ResourceGroup -l $Location --sku Basic --a
 $image = "$(Invoke-Az acr show -n $registry -g $ResourceGroup --query loginServer -o tsv)/arazzo-checkpoint-listener:$imageTag"
 Invoke-Az acr build --registry $registry --image "arazzo-checkpoint-listener:$imageTag" --file (Join-Path $publishDir 'Dockerfile') $publishDir | Out-Null
 
+# The listener's allowlist (ADR 0065 decision 10) is default deny, so the environment the live proof's runs belong to
+# (production, as the end-to-end test registers its runner) is named as a clear entry; a sealed deployment adds the
+# generation, the payload key reference and the pinned seal-key fingerprint beside it (see README).
 # 4. Log Analytics (explicit name for deterministic teardown), the Container Apps environment, and the app. A
 #    fresh 256-bit checkpoint secret; the storage connection string and secret are Container App secrets.
 $secretBytes = [byte[]]::new(32)
@@ -134,7 +137,7 @@ $fqdn = Invoke-Az containerapp create -n $app -g $ResourceGroup --environment $e
     --registry-server $loginServer --registry-username $registryUser --registry-password $registryPassword `
     --target-port 8080 --ingress external --min-replicas 0 --max-replicas 1 --cpu 0.5 --memory 1.0Gi `
     --secrets "storage-conn=$storageConnection" "checkpoint-secret=$checkpointSecret" `
-    --env-vars 'ARAZZO_CHECKPOINT_STORAGE=secretref:storage-conn' 'ARAZZO_CHECKPOINT_SECRET=secretref:checkpoint-secret' `
+    --env-vars 'ARAZZO_CHECKPOINT_STORAGE=secretref:storage-conn' 'ARAZZO_CHECKPOINT_SECRET=secretref:checkpoint-secret' 'Runner__Environments__0__Environment=production' `
     --query 'properties.configuration.ingress.fqdn' -o tsv
 
 $state = [ordered]@{

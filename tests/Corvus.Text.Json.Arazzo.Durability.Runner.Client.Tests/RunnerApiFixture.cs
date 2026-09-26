@@ -95,7 +95,8 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
         RunnerQuotaHoldOptions? hold = null,
         RunnerKeyRing? keyRing = null,
         Corvus.Text.Json.Arazzo.Durability.Anchoring.ITenantAnchorStore? anchors = null,
-        IReadOnlyDictionary<string, IReadOnlySet<string>>? sealedGenerations = null)
+        IReadOnlyDictionary<string, IReadOnlySet<string>>? sealedGenerations = null,
+        IReadOnlyDictionary<string, IReadOnlyList<RunnerSealKeyGeneration>>? sealKeys = null)
     {
         var clock = new TestClock(T0);
         var store = new InMemoryWorkflowStateStore(clock);
@@ -107,7 +108,8 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
                 [Runner] = [Production],
                 [Peer] = [Production],
             },
-            sealedGenerations: sealedGenerations);
+            sealedGenerations: sealedGenerations,
+            sealKeys: sealKeys);
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -132,10 +134,12 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
         await app.StartAsync();
 
         // The runner alone carries the key ring and the anchor (ADR 0065 decisions 6 and 10): the peer and the stranger
-        // are the deployment's other principals, and a sealed test says what each of them can and cannot do.
-        (HttpClient runnerHttp, HttpClientTransport runnerTransport, ArazzoRunnerClient runner) = Connect(app, Runner, hold, keyRing, anchors);
-        (HttpClient peerHttp, HttpClientTransport peerTransport, ArazzoRunnerClient peer) = Connect(app, Peer, hold);
-        (HttpClient strangerHttp, HttpClientTransport strangerTransport, ArazzoRunnerClient stranger) = Connect(app, Stranger, hold);
+        // are the deployment's other principals, and a sealed test says what each of them can and cannot do. Every
+        // client admits production on its allowlist, clear unless a ring says otherwise: a runner with no allowlist
+        // serves nothing (decision 10), which is its own test.
+        (HttpClient runnerHttp, HttpClientTransport runnerTransport, ArazzoRunnerClient runner) = Connect(app, Runner, hold, keyRing ?? RunnerKeyRing.Admitting(Production), anchors);
+        (HttpClient peerHttp, HttpClientTransport peerTransport, ArazzoRunnerClient peer) = Connect(app, Peer, hold, RunnerKeyRing.Admitting(Production));
+        (HttpClient strangerHttp, HttpClientTransport strangerTransport, ArazzoRunnerClient stranger) = Connect(app, Stranger, hold, RunnerKeyRing.Admitting(Production));
         return new RunnerApiFixture(app, store, catalog, availability, clock, runnerHttp, runnerTransport, runner, peerHttp, peerTransport, peer, strangerHttp, strangerTransport, stranger);
     }
 

@@ -29,11 +29,12 @@ public static class ApiEndpointRegistration
     /// <param name="leasesHandler">The handler for ApiLeases operations.</param>
     /// <param name="checkpointsHandler">The handler for ApiCheckpoints operations.</param>
     /// <param name="catalogHandler">The handler for ApiCatalog operations.</param>
+    /// <param name="environmentsHandler">The handler for ApiEnvironments operations.</param>
     /// <param name="serverOptions">Optional registration-time server options (request body limits, etc.). When <see langword="null"/>, defaults are used.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiClaimsHandler claimsHandler, IApiLeasesHandler leasesHandler, IApiCheckpointsHandler checkpointsHandler, IApiCatalogHandler catalogHandler, ApiServerOptions? serverOptions = null)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiClaimsHandler claimsHandler, IApiLeasesHandler leasesHandler, IApiCheckpointsHandler checkpointsHandler, IApiCatalogHandler catalogHandler, IApiEnvironmentsHandler environmentsHandler, ApiServerOptions? serverOptions = null)
     {
-        return MapApiEndpoints(app, claimsHandler, leasesHandler, checkpointsHandler, catalogHandler, configureEndpoint: null, serverOptions: serverOptions);
+        return MapApiEndpoints(app, claimsHandler, leasesHandler, checkpointsHandler, catalogHandler, environmentsHandler, configureEndpoint: null, serverOptions: serverOptions);
     }
 
     /// <summary>
@@ -44,10 +45,11 @@ public static class ApiEndpointRegistration
     /// <param name="leasesHandler">The handler for ApiLeases operations.</param>
     /// <param name="checkpointsHandler">The handler for ApiCheckpoints operations.</param>
     /// <param name="catalogHandler">The handler for ApiCatalog operations.</param>
+    /// <param name="environmentsHandler">The handler for ApiEnvironments operations.</param>
     /// <param name="configureEndpoint">An optional callback invoked once per generated endpoint, after the route is mapped, to apply per-endpoint conventions (authorization, naming, tags, output caching, rate limiting, etc.). May be <see langword="null"/>.</param>
     /// <param name="serverOptions">Optional registration-time server options (request body limits, etc.). When <see langword="null"/>, defaults are used.</param>
     /// <returns>The endpoint route builder for chaining.</returns>
-    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiClaimsHandler claimsHandler, IApiLeasesHandler leasesHandler, IApiCheckpointsHandler checkpointsHandler, IApiCatalogHandler catalogHandler, ConfigureEndpoint? configureEndpoint, ApiServerOptions? serverOptions = null)
+    public static IEndpointRouteBuilder MapApiEndpoints(this IEndpointRouteBuilder app, IApiClaimsHandler claimsHandler, IApiLeasesHandler leasesHandler, IApiCheckpointsHandler checkpointsHandler, IApiCatalogHandler catalogHandler, IApiEnvironmentsHandler environmentsHandler, ConfigureEndpoint? configureEndpoint, ApiServerOptions? serverOptions = null)
     {
         serverOptions ??= new ApiServerOptions();
 
@@ -1211,6 +1213,89 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "runner:execute" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "runner:execute" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __GetHostedVersionEndpoint);
 
+        IEndpointConventionBuilder __GetEnvironmentSealKeyEndpoint = app.MapGet("/environments/{environment}/sealKey", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName EnvironmentValue = default;
+                if (context.Request.RouteValues.TryGetValue("environment", out object? EnvironmentRouteVal) && EnvironmentRouteVal is string EnvironmentRaw)
+                {
+                    EnvironmentValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentName>(EnvironmentRaw, workspace);
+                }
+
+                if (EnvironmentValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'environment' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!EnvironmentValue.IsUndefined() && !EnvironmentValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'environment' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                GetEnvironmentSealKeyParams parameters = new()
+                {
+                    Environment = EnvironmentValue,
+                }
+                ;
+
+                GetEnvironmentSealKeyResult result = await environmentsHandler.HandleGetEnvironmentSealKeyAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                result.WriteResponseHeaders<Microsoft.AspNetCore.Http.IHeaderDictionary>(static (name, value, headers) =>
+                {
+                    headers.Append(System.Text.Encoding.UTF8.GetString(name), System.Text.Encoding.UTF8.GetString(value));
+                }, context.Response.Headers);
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "getEnvironmentSealKey",
+                methodName: "GetEnvironmentSealKey",
+                httpMethod: "GET",
+                routeTemplate: "/environments/{environment}/sealKey",
+                tags: new[] { "environments" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "runner:execute" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "runner:execute" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __GetEnvironmentSealKeyEndpoint);
+
         return app;
     }
     /// <summary>
@@ -1371,6 +1456,16 @@ public static class ApiEndpointRegistration
         /// Gets the scopes required by <c>GetHostedVersion</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
         public static readonly string[] GetHostedVersionOpenIdConnectScopes = ["runner:execute"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetEnvironmentSealKey</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] GetEnvironmentSealKeyOauth2Scopes = ["runner:execute"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetEnvironmentSealKey</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] GetEnvironmentSealKeyOpenIdConnectScopes = ["runner:execute"];
 
         /// <summary>
         /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.

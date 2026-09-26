@@ -54,28 +54,29 @@ PostgresWorkflowCatalogStore catalogStore = await PostgresWorkflowCatalogStore.C
 
 // The runner's key ring (ADR 0065 decisions 5, 10 and 11): this host is the listener that terminates the function's
 // plaintext checkpoint, so it is the host that holds the environment payload key. For every environment named under
-// Runner:Sealing:Environments:N:{Environment,KeyId,PayloadKeyRef,Sealed} it reads the key from its own secret store,
+// Runner:Environments:N:{Environment,Sealed,KeyId,PayloadKeyRef,SealKeyFingerprint} it reads the key from its own secret store,
 // an env:// or file:// reference the platform injects into this container and nothing the control plane supplies,
 // encrypts the payload of every checkpoint the function posts before the row reaches the shared store, MACs the row,
 // and opens every row the function loads. The function itself never holds a key. Empty for an open environment, as
 // the demo's isolated environment is.
-RunnerKeyRing keyRing = RunnerKeyRing.Empty;
+// The allowlist (ADR 0065 decision 10) is default deny: this host serves the environments named under
+// Runner:Environments:N:{Environment,Sealed,KeyId,PayloadKeyRef,SealKeyFingerprint} and no other, each clear or with
+// its key from this host's own secret store (env:// or file://). A checkpoint for an environment with no entry is
+// refused, so a function pointed at this host for an environment the tenant did not name gets nothing.
 List<RunnerKeyRingEntry> keyRingEntries = [];
-foreach (IConfigurationSection entry in builder.Configuration.GetSection("Runner:Sealing:Environments").GetChildren())
+foreach (IConfigurationSection entry in builder.Configuration.GetSection("Runner:Environments").GetChildren())
 {
     keyRingEntries.Add(new RunnerKeyRingEntry(
         entry["Environment"] ?? throw new InvalidOperationException($"{entry.Path}:Environment is required."),
-        entry["KeyId"] ?? throw new InvalidOperationException($"{entry.Path}:KeyId is required."),
-        SecretRef.Parse(entry["PayloadKeyRef"] ?? throw new InvalidOperationException($"{entry.Path}:PayloadKeyRef is required.")),
-        entry.GetValue("Sealed", true)));
+        entry.GetValue("Sealed", false),
+        entry["KeyId"],
+        entry["PayloadKeyRef"] is { Length: > 0 } payloadKeyRef ? SecretRef.Parse(payloadKeyRef) : null,
+        entry["SealKeyFingerprint"],
+        MinimumKeyId: entry["MinimumKeyId"]));
 }
 
-if (keyRingEntries.Count > 0)
-{
-    keyRing = await RunnerKeyRing.BuildAsync(keyRingEntries, new CompositeSecretResolver(new EnvSecretResolver(), new FileSecretResolver()), CancellationToken.None);
-}
-
-IWorkflowCheckpointStore checkpointSurfaceStore = keyRing.IsEmpty ? stateStore : new SealingCheckpointStore(stateStore, keyRing);
+RunnerKeyRing keyRing = await RunnerKeyRing.BuildAsync(keyRingEntries, new CompositeSecretResolver(new EnvSecretResolver(), new FileSecretResolver()), CancellationToken.None);
+IWorkflowCheckpointStore checkpointSurfaceStore = new SealingCheckpointStore(stateStore, keyRing);
 PostgresRunnerRegistry registry = await PostgresRunnerRegistry.ConnectAsync(dataSource);
 PostgresEnvironmentStore environments = await PostgresEnvironmentStore.ConnectAsync(dataSource);
 PostgresEnvironmentRunnerAuthorizationStore runnerAuthorizations = await PostgresEnvironmentRunnerAuthorizationStore.ConnectAsync(dataSource);

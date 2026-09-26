@@ -656,6 +656,24 @@
   <data name="SealedStartRefused" xml:space="preserve">
     <value>The sealed start of run '{0}' did not open: {1} (ADR 0065 decision 9). The run is faulted at its start and is not claimed again.</value>
   </data>
+  <data name="AllowlistEntryDuplicate" xml:space="preserve">
+    <value>Environment '{0}' appears more than once on the runner's allowlist. One entry names how an environment is served.</value>
+  </data>
+  <data name="AllowlistSealedEntryNeedsKey" xml:space="preserve">
+    <value>Environment '{0}' is on the runner's allowlist with a key setting but no key generation and payload key reference, or marked sealed with no key. A sealed environment is served with its key or not at all (ADR 0065 decision 10).</value>
+  </data>
+  <data name="AllowlistNeedsSecrets" xml:space="preserve">
+    <value>Environment '{0}' is on the runner's allowlist with a key, and no secret resolver was given to read it with. A keyed entry's keys come from the runner's own secret store.</value>
+  </data>
+  <data name="AllowlistSealKeyFingerprintRequired" xml:space="preserve">
+    <value>Environment '{0}', generation '{1}', is on the runner's allowlist with a key and no pinned seal-key fingerprint. The runner checks the seal key the control plane advertises against the fingerprint the tenant pinned, so an entry without one would take any key at all (ADR 0065 decision 10).</value>
+  </data>
+  <data name="AllowlistMinimumGenerationNotHeld" xml:space="preserve">
+    <value>Environment '{0}' names '{1}' as its minimum generation and holds '{2}'. A ring holds one generation per environment, so the minimum is the generation held; a minimum naming another waits on a ring that holds more than one (ADR 0065 decision 12).</value>
+  </data>
+  <data name="CheckpointEnvironmentNotAdmitted" xml:space="preserve">
+    <value>Run '{0}' is in an environment this runner's allowlist does not admit, so its checkpoint is neither loaded nor saved here (ADR 0065 decision 10). A binding the control plane wrote for an environment the tenant did not name gets the runner nothing.</value>
+  </data>
   <data name="SealedStartNotFirst" xml:space="preserve">
     <value>Run '{0}' has already persisted a checkpoint, so its sealed start cannot be enqueued: the sealed genesis row is the run's first and only write, and a runner never re-serializes it (ADR 0065 decision 9).</value>
   </data>

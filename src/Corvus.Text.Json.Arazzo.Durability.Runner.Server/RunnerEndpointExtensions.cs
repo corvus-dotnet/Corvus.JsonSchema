@@ -103,6 +103,7 @@ public static class RunnerEndpointExtensions
             new ArazzoRunnerLeasesHandler(coordinator, principals, gate),
             new ArazzoRunnerCheckpointsHandler(checkpointCoordinator, coordinator, principals, gate, resolved),
             new ArazzoRunnerCatalogHandler(catalogCoordinator, principals, gate),
+            new ArazzoRunnerEnvironmentsHandler(bindings, principals, gate),
             (in EndpointDescriptor endpoint, IEndpointConventionBuilder builder) =>
             {
                 // The refusal filter is added first so that it is outermost and sees how the request was answered.

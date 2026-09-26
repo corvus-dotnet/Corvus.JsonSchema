@@ -163,16 +163,24 @@ public sealed class SealingCheckpointStoreTests
     }
 
     [TestMethod]
-    public async Task A_row_for_an_environment_the_ring_does_not_hold_passes_through_clear()
+    public async Task A_row_for_an_environment_the_ring_does_not_admit_is_neither_loaded_nor_saved()
     {
+        // ADR 0065 decision 10: the ring is the allowlist. An environment with no entry is not served at all, so a
+        // binding the control plane wrote for it gets the runner nothing; an entry with no key is served clear.
         var inner = new InMemoryWorkflowStateStore();
         var store = new SealingCheckpointStore(inner, Ring(sealedProduction: true));
-        byte[] row = Row(DevelopmentRun);
+        byte[] row = Row(DevelopmentRun, inputs: "{\"petId\":7}");
+        await inner.SaveAsync(DevelopmentRun, row, WorkflowCheckpointSerializer.ProjectIndex(row), WorkflowEtag.None, default);
 
-        await store.SaveAsync(DevelopmentRun, row, WorkflowCheckpointSerializer.ProjectIndex(row), WorkflowEtag.None, default);
+        (await Should.ThrowAsync<CheckpointEnvironmentNotAdmittedException>(async () => await store.LoadAsync(DevelopmentRun, default))).Address.ShouldBe(DevelopmentRun);
+        await Should.ThrowAsync<CheckpointEnvironmentNotAdmittedException>(async () => await store.SaveAsync(DevelopmentRun, row, WorkflowCheckpointSerializer.ProjectIndex(row), WorkflowEtag.None, default));
 
-        CheckpointIntegrity.KeyIdOf((await inner.LoadAsync(DevelopmentRun, default))!.Value.Row.Span).ShouldBeNull();
-        (await store.LoadAsync(DevelopmentRun, default)).ShouldNotBeNull();
+        var admitting = new SealingCheckpointStore(inner, RunnerKeyRing.From(new Dictionary<string, RunnerEnvironmentKeys> { [Production] = new("k1", PayloadKey, EnvelopeMac(), true) }, Development));
+        WorkflowCheckpoint loaded = (await admitting.LoadAsync(DevelopmentRun, default))!.Value;
+        loaded.Row.ToArray().ShouldBe(row, "an admitted environment with no key is served clear");
+        RunnerKeyRing.Admitting(Development).Admits(Development).ShouldBeTrue();
+        RunnerKeyRing.Admitting(Development).Admits(Production).ShouldBeFalse();
+        RunnerKeyRing.Empty.IsEmpty.ShouldBeTrue();
     }
 
     [TestMethod]
@@ -335,13 +343,14 @@ public sealed class SealingCheckpointStoreTests
         await EnqueueSealedAsync(notJson, address, RunStartInitiator.Seal(sealSpki, "k1", Production, "pet", 3, address.RunId.Value, "not json"u8, initiator));
         (await Should.ThrowAsync<SealedStartException>(async () => await new SealingCheckpointStore(notJson, SealingRing(sealPkcs8, [pinned])).LoadAsync(address, default))).Refusal.ShouldBe(SealedStartRefusal.Unopenable);
 
-        // A runner that does not hold the environment at all gets the row as stored, as any keyless reader does.
-        WorkflowCheckpoint passedThrough = (await new SealingCheckpointStore(noSealKey, Ring(sealedProduction: true)).LoadAsync(new WorkflowRunAddress(Development, address.RunId), default) is { } dev ? dev : default);
-        passedThrough.Row.IsEmpty.ShouldBeTrue("nothing at that address");
+        // A runner that admits the environment clear and holds no key for it gets the row as stored, as any keyless
+        // reader does; one that does not admit the environment at all gets nothing (decision 10).
         var elsewhere = new InMemoryWorkflowStateStore();
         WorkflowRunAddress developmentRun = new(Development, address.RunId);
         await EnqueueSealedAsync(elsewhere, developmentRun, RunStartInitiator.Seal(sealSpki, "k1", Development, "pet", 3, address.RunId.Value, "{}"u8, initiator));
-        CheckpointRow.Parse((await new SealingCheckpointStore(elsewhere, SealingRing(sealPkcs8, [pinned])).LoadAsync(developmentRun, default))!.Value.Row.Span).Algorithm.ShouldBe(CheckpointAlgorithm.SealedGenesis);
+        var admittingClear = new SealingCheckpointStore(elsewhere, RunnerKeyRing.From(new Dictionary<string, RunnerEnvironmentKeys> { [Production] = new("k1", PayloadKey, EnvelopeMac(), true, sealPkcs8, [pinned]) }, Development));
+        CheckpointRow.Parse((await admittingClear.LoadAsync(developmentRun, default))!.Value.Row.Span).Algorithm.ShouldBe(CheckpointAlgorithm.SealedGenesis);
+        await Should.ThrowAsync<CheckpointEnvironmentNotAdmittedException>(async () => await new SealingCheckpointStore(elsewhere, SealingRing(sealPkcs8, [pinned])).LoadAsync(developmentRun, default));
         _ = otherPkcs8;
     }
 
@@ -377,7 +386,7 @@ public sealed class SealingCheckpointStoreTests
         // Decision 5: the payload key is the runner's, read through its own resolver; the ring derives the subkeys once.
         var secrets = new FixedSecretResolver(Convert.ToBase64String(PayloadKey));
         RunnerKeyRing ring = await RunnerKeyRing.BuildAsync(
-            [new RunnerKeyRingEntry(Production, "k1", SecretRef.Parse("env://PAYLOAD_KEY"), Sealed: true)], secrets, default);
+            [new RunnerKeyRingEntry(Production, Sealed: true, KeyId: "k1", PayloadKey: SecretRef.Parse("env://PAYLOAD_KEY"), SealKeyFingerprint: "pinned")], secrets, default);
 
         ring.IsEmpty.ShouldBeFalse();
         ring.IsSealed(Production).ShouldBeTrue();
@@ -394,7 +403,7 @@ public sealed class SealingCheckpointStoreTests
     {
         var secrets = new FixedSecretResolver(Convert.ToBase64String(new byte[16]));
         InvalidOperationException fault = await Should.ThrowAsync<InvalidOperationException>(async () =>
-            await RunnerKeyRing.BuildAsync([new RunnerKeyRingEntry(Production, "k1", SecretRef.Parse("env://PAYLOAD_KEY"), Sealed: true)], secrets, default));
+            await RunnerKeyRing.BuildAsync([new RunnerKeyRingEntry(Production, Sealed: true, KeyId: "k1", PayloadKey: SecretRef.Parse("env://PAYLOAD_KEY"), SealKeyFingerprint: "pinned")], secrets, default));
         fault.Message.ShouldContain("32-byte");
     }
 

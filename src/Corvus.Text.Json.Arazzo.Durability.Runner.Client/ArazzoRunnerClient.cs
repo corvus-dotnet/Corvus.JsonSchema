@@ -29,10 +29,14 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Client;
 /// </remarks>
 public sealed class ArazzoRunnerClient : IAsyncDisposable
 {
+    private static readonly TimeSpan SealKeyCheckInterval = TimeSpan.FromMinutes(1);
+
     private readonly IApiClaimsClient claims;
     private readonly IApiLeasesClient leases;
     private readonly IApiCheckpointsClient checkpoints;
     private readonly IApiCatalogClient catalog;
+    private readonly IApiEnvironmentsClient environments;
+    private readonly ConcurrentDictionary<string, SealKeyCheck> sealKeyChecks = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<WorkflowRunAddress, HeldLease> heldLeases = new();
     private readonly ConcurrentDictionary<WorkflowRunAddress, RunnerQuotaHold> quotaHolds = new();
     private readonly RunnerQuotaHoldOptions holdOptions;
@@ -40,7 +44,7 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     private readonly bool ownsClients;
     private readonly SealingCheckpointStore? sealing;
     private readonly ITenantAnchorStore? anchors;
-    private readonly RunnerKeyRing? keyRing;
+    private readonly RunnerKeyRing keyRing;
     private RunStartInputValidator? startInputs;
     private readonly ConcurrentDictionary<string, WaitIndexBlinder> blinders = new(StringComparer.Ordinal);
 
@@ -51,7 +55,7 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     /// <param name="keyRing">The runner's keys (ADR 0065 decision 10): with one, rows for the environments it holds are sealed on save and verified on load through a <see cref="SealingCheckpointStore"/>.</param>
     /// <param name="anchors">The tenant anchor store (ADR 0065 decision 6): with one, every environment on the ring is anchored, so a rollback, substitution or replay by the control plane faults the run at its next open. Required when the ring marks any environment sealed.</param>
     public ArazzoRunnerClient(IApiTransport transport, RunnerQuotaHoldOptions? holdOptions = null, TimeProvider? timeProvider = null, RunnerKeyRing? keyRing = null, ITenantAnchorStore? anchors = null)
-        : this(new ApiClaimsClient(transport), new ApiLeasesClient(transport), new ApiCheckpointsClient(transport), new ApiCatalogClient(transport), ownsClients: true, holdOptions, timeProvider, keyRing, anchors)
+        : this(new ApiClaimsClient(transport), new ApiLeasesClient(transport), new ApiCheckpointsClient(transport), new ApiCatalogClient(transport), ownsClients: true, holdOptions, timeProvider, keyRing, anchors, new ApiEnvironmentsClient(transport))
     {
     }
 
@@ -65,13 +69,15 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     /// <param name="timeProvider">The time source for quota holds; defaults to <see cref="TimeProvider.System"/>.</param>
     /// <param name="keyRing">The runner's keys (ADR 0065 decision 10): with one, rows for the environments it holds are sealed on save and verified on load through a <see cref="SealingCheckpointStore"/>.</param>
     /// <param name="anchors">The tenant anchor store (ADR 0065 decision 6): with one, every environment on the ring is anchored, so a rollback, substitution or replay by the control plane faults the run at its next open. Required when the ring marks any environment sealed.</param>
-    public ArazzoRunnerClient(IApiClaimsClient claims, IApiLeasesClient leases, IApiCheckpointsClient checkpoints, IApiCatalogClient catalog, bool ownsClients = false, RunnerQuotaHoldOptions? holdOptions = null, TimeProvider? timeProvider = null, RunnerKeyRing? keyRing = null, ITenantAnchorStore? anchors = null)
+    /// <param name="environments">The environments client, which serves the seal keys the control plane advertises for the runner's allowlist check (decision 10).</param>
+    public ArazzoRunnerClient(IApiClaimsClient claims, IApiLeasesClient leases, IApiCheckpointsClient checkpoints, IApiCatalogClient catalog, bool ownsClients = false, RunnerQuotaHoldOptions? holdOptions = null, TimeProvider? timeProvider = null, RunnerKeyRing? keyRing = null, ITenantAnchorStore? anchors = null, IApiEnvironmentsClient? environments = null)
     {
         ArgumentNullException.ThrowIfNull(claims);
         ArgumentNullException.ThrowIfNull(leases);
         ArgumentNullException.ThrowIfNull(checkpoints);
         ArgumentNullException.ThrowIfNull(catalog);
 
+        this.environments = environments ?? throw new ArgumentNullException(nameof(environments), "The environments client serves the seal keys the control plane advertises, which the runner checks against its allowlist (ADR 0065 decision 10).");
         this.claims = claims;
         this.leases = leases;
         this.checkpoints = checkpoints;
@@ -85,9 +91,12 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
         // Decision 6: this client is the lease holder, and the lease holder is a run's sole anchor writer, so a ring
         // that marks an environment sealed needs the tenant anchor store to write. Serving a sealed environment with
         // no anchor would leave its freshness to the control plane, which is what the anchor exists to take away.
-        if (anchors is null && keyRing is not null)
+        // Decision 10: the ring is the runner's allowlist, and it is default deny. A client built without one admits
+        // no environment and serves nothing, which is the fail-closed reading of a runner nobody configured.
+        RunnerKeyRing ring = keyRing ?? RunnerKeyRing.Empty;
+        if (anchors is null)
         {
-            foreach (string environment in keyRing.SealedEnvironments)
+            foreach (string environment in ring.SealedEnvironments)
             {
                 throw new InvalidOperationException($"Environment '{environment}' is on the key ring as sealed, and no tenant anchor store was given. A sealed environment's freshness is the anchor's, so serving it without one is the fail-open posture ADR 0065 decision 10 forbids.");
             }
@@ -95,9 +104,9 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
 
         IWorkflowCheckpointStore checkpointStore = new RunnerApiCheckpointStore(this);
         this.anchors = anchors;
-        this.keyRing = keyRing;
-        this.sealing = keyRing is { IsEmpty: false } ? new SealingCheckpointStore(checkpointStore, keyRing, anchors) : null;
-        this.Checkpoints = this.sealing ?? checkpointStore;
+        this.keyRing = ring;
+        this.sealing = new SealingCheckpointStore(checkpointStore, ring, anchors);
+        this.Checkpoints = this.sealing;
     }
 
     /// <summary>
@@ -536,7 +545,7 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     public WaitIndexBlinder? WaitBlinderFor(string environment)
     {
         ArgumentException.ThrowIfNullOrEmpty(environment);
-        if (this.keyRing is not { } ring || !ring.TryGet(environment, out RunnerEnvironmentKeys keys))
+        if (!this.keyRing.TryGet(environment, out RunnerEnvironmentKeys keys))
         {
             return null;
         }
@@ -545,7 +554,84 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     }
 
     /// <summary>Gets the environments on this runner's key ring, whose waits are blinded.</summary>
-    public IEnumerable<string> BlindedEnvironments => this.keyRing?.Environments ?? [];
+    public IEnumerable<string> BlindedEnvironments => this.keyRing.Environments;
+
+    /// <summary>Gets the runner's allowlist (ADR 0065 decision 10): the environments it serves, clear or sealed.</summary>
+    public RunnerKeyRing Allowlist => this.keyRing;
+
+    /// <summary>
+    /// Whether this runner admits a claim for an environment (ADR 0065 decision 10): the environment is on its
+    /// allowlist and, for a keyed entry with a pinned fingerprint, the seal key the control plane advertises for the
+    /// generation held is the one the tenant pinned. The advertised key is fetched at most once a minute per environment; a fetch that fails, a
+    /// generation the environment does not hold active, or any other fingerprint than the pinned one suspends the
+    /// environment until a later check passes. A binding the control plane wrote for an environment the tenant did
+    /// not name, and an environment the control plane re-keyed under a key the tenant did not register, both get this
+    /// runner nothing.
+    /// </summary>
+    /// <param name="environment">The environment.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>Why the environment is admitted or not.</returns>
+    public async ValueTask<RunnerAdmission> AdmitsAsync(string environment, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(environment);
+        if (!this.keyRing.Admits(environment))
+        {
+            return RunnerAdmission.NotAllowlisted;
+        }
+
+        if (!this.keyRing.TryGet(environment, out RunnerEnvironmentKeys keys) || keys.SealKeyFingerprint is null)
+        {
+            // A clear entry, or keys handed to the ring by a host that holds them itself with no pin to check: a
+            // configured ring (RunnerKeyRing.BuildAsync) never builds a keyed entry without one.
+            return RunnerAdmission.Admitted;
+        }
+
+        long now = this.timeProvider.GetTimestamp();
+        if (this.sealKeyChecks.TryGetValue(environment, out SealKeyCheck cached) && this.timeProvider.GetElapsedTime(cached.CheckedAt, now) < SealKeyCheckInterval)
+        {
+            return cached.Admission;
+        }
+
+        RunnerAdmission admission = await this.CheckSealKeyAsync(environment, keys, cancellationToken).ConfigureAwait(false);
+        this.sealKeyChecks[environment] = new SealKeyCheck(now, admission);
+        return admission;
+    }
+
+    // The advertised seal keys, compared to the pin: the generation this runner holds has to be registered, active,
+    // and under exactly the public key whose fingerprint the tenant pinned. The control plane's answer is a claim the
+    // pin checks, never the other way round.
+    private async ValueTask<RunnerAdmission> CheckSealKeyAsync(string environment, RunnerEnvironmentKeys keys, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using GetEnvironmentSealKeyResponse response = await this.environments.GetEnvironmentSealKeyAsync(environment, cancellationToken).ConfigureAwait(false);
+            if (response.StatusCode != 200)
+            {
+                return RunnerAdmission.SealKeyUnavailable;
+            }
+
+            foreach (EnvironmentSealKeyGeneration generation in response.OkBody.Generations.EnumerateArray())
+            {
+                if (!string.Equals((string)generation.KeyId, keys.KeyId, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (!generation.State.ValueEquals("Active"u8))
+                {
+                    return RunnerAdmission.GenerationNotActive;
+                }
+
+                return keys.Pins(((JsonElement)generation.SealPublicKey).GetBytesFromBase64()) ? RunnerAdmission.Admitted : RunnerAdmission.SealKeyMismatch;
+            }
+
+            return RunnerAdmission.GenerationNotActive;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or RunnerApiException or FormatException)
+        {
+            return RunnerAdmission.SealKeyUnavailable;
+        }
+    }
 
     /// <summary>
     /// Gets the validator a sealed start's inputs are checked against at first claim (ADR 0065 decision 9), over the
@@ -581,4 +667,6 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     /// <param name="Environment">The run's home environment, echoed by the claim.</param>
     /// <param name="Token">The lease token, presented on every operation over the run.</param>
     internal readonly record struct HeldLease(string Environment, string Token);
+
+    private readonly record struct SealKeyCheck(long CheckedAt, RunnerAdmission Admission);
 }

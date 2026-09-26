@@ -38,6 +38,11 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// run at its start rather than claim it again and again; a runner with no seal key for the environment opens none.
 /// </para>
 /// <para>
+/// The ring is the runner's allowlist (decision 10): an environment it does not admit is neither loaded nor saved here,
+/// so a binding the control plane wrote for an environment the tenant did not name gets nothing, and an admitted
+/// environment with no key is served clear.
+/// </para>
+/// <para>
 /// The store encrypts clear rows only. A row that comes back through it for a control-plane-region write (the
 /// serverless checkpoint coordinator faulting a run on its budget over a row it loaded here) is a clear row by then,
 /// and is encrypted again under a fresh salt, which is what the salt-per-operation rule of decision 5 requires. A
@@ -160,6 +165,11 @@ public sealed class SealingCheckpointStore : IWorkflowCheckpointStore, IWorkflow
     /// <inheritdoc/>
     public ValueTask<WorkflowEtag> SaveAsync(WorkflowRunAddress address, ReadOnlyMemory<byte> checkpointRow, in WorkflowRunIndexEntry index, WorkflowEtag expected, CancellationToken cancellationToken)
     {
+        if (!this.ring.Admits(address.Environment))
+        {
+            throw ThrowHelper.GetCheckpointEnvironmentNotAdmittedException(address);
+        }
+
         if (!this.ring.TryGet(address.Environment, out RunnerEnvironmentKeys keys))
         {
             return this.inner.SaveAsync(address, checkpointRow, index, expected, cancellationToken);
@@ -174,6 +184,11 @@ public sealed class SealingCheckpointStore : IWorkflowCheckpointStore, IWorkflow
     /// <inheritdoc/>
     public async ValueTask<WorkflowCheckpoint?> LoadAsync(WorkflowRunAddress address, CancellationToken cancellationToken)
     {
+        if (!this.ring.Admits(address.Environment))
+        {
+            throw ThrowHelper.GetCheckpointEnvironmentNotAdmittedException(address);
+        }
+
         WorkflowCheckpoint? loaded = await this.inner.LoadAsync(address, cancellationToken).ConfigureAwait(false);
         if (this.IsAnchored(address.Environment))
         {

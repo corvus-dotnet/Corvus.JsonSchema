@@ -149,6 +149,7 @@ public sealed class RunnerAuthorizationBindings : IRunnerEnvironmentBindings, IR
     {
         List<string>? live = null;
         Dictionary<string, IReadOnlySet<string>>? sealedGenerations = null;
+        Dictionary<string, IReadOnlyList<RunnerSealKeyGeneration>>? sealKeys = null;
         bool holdsPlatform = false;
         bool holdsTenant = false;
         string? owner = null;
@@ -177,6 +178,13 @@ public sealed class RunnerAuthorizationBindings : IRunnerEnvironmentBindings, IR
                 if (TenantEnvironmentSealing.ActiveGenerations(record.RootElement) is { Count: > 0 } generations)
                 {
                     (sealedGenerations ??= new Dictionary<string, IReadOnlySet<string>>(StringComparer.Ordinal))[environment] = generations;
+                }
+
+                // What the control plane advertises as the environment's seal keys (decision 10), for the runner to
+                // check against the fingerprint it pinned; read off the same record.
+                if (SealKeysOf(record.RootElement) is { Count: > 0 } advertised)
+                {
+                    (sealKeys ??= new Dictionary<string, IReadOnlyList<RunnerSealKeyGeneration>>(StringComparer.Ordinal))[environment] = advertised;
                 }
             }
 
@@ -222,7 +230,7 @@ public sealed class RunnerAuthorizationBindings : IRunnerEnvironmentBindings, IR
             return RunnerBindings.None;
         }
 
-        return live is null ? RunnerBindings.None : new RunnerBindings(live, owner, sealedGenerations);
+        return live is null ? RunnerBindings.None : new RunnerBindings(live, owner, sealedGenerations, sealKeys);
     }
 
     // Whether the deployment has admitted at least one owner group: the tenancy ledger is the census, answered from
@@ -234,4 +242,17 @@ public sealed class RunnerAuthorizationBindings : IRunnerEnvironmentBindings, IR
     }
 
     private readonly record struct Entry(RunnerBindings Bindings, DateTimeOffset ExpiresAt);
+
+    // Every registered generation with its public seal key, as the record holds it: what the runner API advertises to
+    // a bound runner, which compares the active one it holds against the fingerprint it pinned (decision 10).
+    private static IReadOnlyList<RunnerSealKeyGeneration> SealKeysOf(in Environments.Environment environment)
+    {
+        List<RunnerSealKeyGeneration>? keys = null;
+        foreach (Environments.Environment.EnvironmentKeyGeneration generation in Environments.Environment.Enumerate(environment.KeyGenerations))
+        {
+            (keys ??= []).Add(new RunnerSealKeyGeneration((string)generation.KeyId, (string)generation.SealPublicKey, generation.State.ValueEquals("Active"u8)));
+        }
+
+        return keys ?? [];
+    }
 }

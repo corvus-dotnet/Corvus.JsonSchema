@@ -108,6 +108,38 @@ on a run, so a runner that never handles the token cannot log it, persist it, or
 Releasing a run the client does not hold does nothing and is not an error, so a runner can release in a `finally`
 without first working out whether it still holds the lease.
 
+## The allowlist: what the client serves at all
+
+The key ring is the runner's allowlist (ADR 0065 decision 10), and it is default deny. A client built without one
+admits no environment and serves nothing; a client admits exactly the environments its entries name, each clear or
+sealed, and hands back a claim for any other before loading a byte, releasing the lease and counting the refusal
+(`allowlist`). The control plane decides which principals it binds to which environments; the runner decides which it
+serves. A binding written for an environment the tenant did not name gets the runner nothing.
+
+```csharp
+RunnerKeyRing keyRing = await RunnerKeyRing.BuildAsync(
+    [
+        RunnerKeyRingEntry.Clear("development"),
+        new RunnerKeyRingEntry(
+            "production",
+            Sealed: true,
+            KeyId: "k2",
+            PayloadKey: SecretRef.Parse("vault://secret/arazzo/payload-keys/production#key"),
+            SealKeyFingerprint: "q1n...="),
+    ],
+    secretResolver,
+    cancellationToken);
+```
+
+A keyed entry pins the fingerprint of the seal key the tenant registered for its generation (the base64 SHA-256 of
+the key's SubjectPublicKeyInfo) and does not build without it. The runner API's `getEnvironmentSealKey` advertises a
+bound environment's generations and public seal keys; `runner.AdmitsAsync(environment)` checks the generation held
+against the pin at most once a minute per environment and suspends the environment (`seal-key-mismatch`,
+`generation-not-active`, `seal-key-unavailable`) until a later check passes. A control plane that re-keyed the
+environment under a key of its own therefore gets nothing opened or sealed under it. The minimum generation is the
+generation held: a row under any other is refused, and a `MinimumKeyId` naming another generation does not build until
+a ring can hold more than one.
+
 ## Sealing what the client saves
 
 A runner that serves a sealed environment passes its key ring to the client, and from then on every checkpoint row it
@@ -118,7 +150,7 @@ exactly as before, and nothing above the client ever holds a key.
 
 ```csharp
 RunnerKeyRing keyRing = await RunnerKeyRing.BuildAsync(
-    [new RunnerKeyRingEntry("production", "k2", SecretRef.Parse("vault://secret/arazzo/payload-keys/production#key"), Sealed: true)],
+    [new RunnerKeyRingEntry("production", Sealed: true, KeyId: "k2", PayloadKey: SecretRef.Parse("vault://secret/arazzo/payload-keys/production#key"), SealKeyFingerprint: "q1n...=")],
     secretResolver,
     cancellationToken);
 
@@ -197,9 +229,10 @@ ring entry names the private seal half and pins the initiator keys, together or 
 RunnerKeyRing keyRing = await RunnerKeyRing.BuildAsync(
     [new RunnerKeyRingEntry(
         "production",
-        "k2",
-        SecretRef.Parse("vault://secret/arazzo/payload-keys/production#key"),
         Sealed: true,
+        KeyId: "k2",
+        PayloadKey: SecretRef.Parse("vault://secret/arazzo/payload-keys/production#key"),
+        SealKeyFingerprint: "q1n...=",
         SealKey: SecretRef.Parse("vault://secret/arazzo/seal-keys/production#key"),
         Initiators: [initiatorPublicKeyBase64Spki])],
     secretResolver,
@@ -228,6 +261,7 @@ records which refusal and not the schema detail; an initiator validates its own 
 | Nothing claimable | `TryClaimAsync` returns `null` — the common case for an idle runner, and not an error. |
 | The lease is no longer current | `RunnerLeaseLostException`. The run may already be held by another runner, so stop advancing it. |
 | A save lost the sequence predicate | `CheckpointSupersededException`, carrying the sequence the store will accept next. |
+| The claim is for an environment the allowlist does not admit, or a keyed environment whose advertised seal key is not the pinned one | Nothing to act on: the client handed the claim back and counted it (`allowlist`, `seal-key-mismatch`, `generation-not-active`, `seal-key-unavailable`). |
 | A sealed start did not open, or its inputs did not validate | Nothing to act on: the client faulted the run at its start (`sealed-start-unopenable`, `sealed-start-inputs-invalid`) and released it. The advance reports the run as not advanced. |
 | Anything else non-success | `RunnerApiException` with the status. |
 

@@ -12,9 +12,9 @@ using global::Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models;
 
-public readonly partial struct MessageClaimRequest
+public readonly partial struct EnvironmentSealKeyGeneration
 {
-    public readonly partial struct TheChannelTheMessageArrivedOn
+    public readonly partial struct EnvironmentSealKeyState
     {
         public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -90,7 +90,7 @@ public readonly partial struct MessageClaimRequest
             /// <param name="instance">The instance of this type.</param>
             /// <returns>A mutable instance.</returns>
             /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-            public static explicit operator Mutable(TheChannelTheMessageArrivedOn instance)
+            public static explicit operator Mutable(EnvironmentSealKeyState instance)
             {
                 if (instance._parent is not IMutableJsonDocument doc)
                 {
@@ -105,9 +105,9 @@ public readonly partial struct MessageClaimRequest
             /// Converts to an immutable instance of the <see cref="Mutable"/> type.
             /// </summary>
             /// <param name="instance">The <see cref="Mutable"/> instance.</param>
-            /// <returns>An immutable instance of a <see cref="TheChannelTheMessageArrivedOn"/>, initialized from the <see cref="Mutable"/> value.</returns>
+            /// <returns>An immutable instance of a <see cref="EnvironmentSealKeyState"/>, initialized from the <see cref="Mutable"/> value.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static implicit operator TheChannelTheMessageArrivedOn(Mutable instance)
+            public static implicit operator EnvironmentSealKeyState(Mutable instance)
             {
                 return new(instance._parent, instance._idx);
             }
@@ -136,7 +136,7 @@ public readonly partial struct MessageClaimRequest
             public override bool Equals(object? obj)
             {
                 return
-                    (obj is IJsonElement value && Equals(new TheChannelTheMessageArrivedOn(value.ParentDocument, value.ParentDocumentIndex))) ||
+                    (obj is IJsonElement value && Equals(new EnvironmentSealKeyState(value.ParentDocument, value.ParentDocumentIndex))) ||
                     (obj is null && this.IsNull());
             }
 
@@ -266,7 +266,7 @@ public readonly partial struct MessageClaimRequest
 #endif
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-            private string DebuggerDisplay => $"TheChannelTheMessageArrivedOn.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+            private string DebuggerDisplay => $"EnvironmentSealKeyState.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
             IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -281,17 +281,113 @@ public readonly partial struct MessageClaimRequest
             JsonValueKind IJsonElement.ValueKind => ValueKind;
 
             /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Mutable.Clone()"/>
-            public readonly TheChannelTheMessageArrivedOn Clone()
+            public readonly EnvironmentSealKeyState Clone()
             {
                 CheckValidInstance();
-                return _parent.CloneElement<TheChannelTheMessageArrivedOn>(_idx);
+                return _parent.CloneElement<EnvironmentSealKeyState>(_idx);
             }
 
             /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Mutable.Freeze()"/>
-            public readonly TheChannelTheMessageArrivedOn Freeze()
+            public readonly EnvironmentSealKeyState Freeze()
             {
                 CheckValidInstance();
-                return _parent.FreezeElement<TheChannelTheMessageArrivedOn>(_idx);
+                return _parent.FreezeElement<EnvironmentSealKeyState>(_idx);
+            }
+
+            /// <summary>
+            /// Matches the value against the constant values, and returns the result of calling the provided match function for the first match found.
+            /// </summary>
+            /// <typeparam name="TContext">The immutable context to pass in to the match function.</typeparam>
+            /// <typeparam name="TResult">The result of calling the match function.</typeparam>
+            /// <param name="context">The context to pass to the match function.</param>
+            /// <param name="matchActive">Match 1st item.</param>
+            /// <param name="matchRetired">Match 2nd item.</param>
+            /// <param name="defaultMatch">Match any other value.</param>
+            /// <returns>An instance of the value returned by the match function.</returns>
+            public TResult Match<TContext, TResult>(
+                in TContext context,
+                Func<TContext, TResult> matchActive,
+                Func<TContext, TResult> matchRetired,
+                Func<TContext, TResult> defaultMatch)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+            {
+                if (this.ValueEquals(Constants.Enum1))
+                {
+                    return matchActive(context);
+                }
+
+                if (this.ValueEquals(Constants.Enum2))
+                {
+                    return matchRetired(context);
+                }
+
+                return defaultMatch(context);
+            }
+
+            /// <summary>
+            /// Matches the value against the constant values, and returns the result of calling the provided match function for the first match found.
+            /// </summary>
+            /// <typeparam name="TResult">The result of calling the match function.</typeparam>
+            /// <param name="matchActive">Match 1st item.</param>
+            /// <param name="matchRetired">Match 2nd item.</param>
+            /// <param name="defaultMatch">Match any other value.</param>
+            /// <returns>An instance of the value returned by the match function.</returns>
+            public TResult Match<TResult>(
+                Func<TResult> matchActive,
+                Func<TResult> matchRetired,
+                Func<TResult> defaultMatch)
+            {
+                if (this.ValueEquals(Constants.Enum1))
+                {
+                    return matchActive();
+                }
+
+                if (this.ValueEquals(Constants.Enum2))
+                {
+                    return matchRetired();
+                }
+
+                return defaultMatch();
+            }
+
+            /// <summary>
+            /// Converts the value to its <see cref="KnownValues"/> equivalent.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            /// <exception cref="InvalidOperationException">The value did not match a well-known value.</exception>
+            public static implicit operator KnownValues(Mutable value)
+            {
+                if (value.TryGetKnownValue(out KnownValues result))
+                {
+                    return result;
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Tries to get the <see cref="KnownValues"/> equivalent of this value.
+            /// </summary>
+            /// <param name="result">The corresponding well-known value, or the default if this value did not match one.</param>
+            /// <returns><see langword="true"/> if the value matched a well-known value.</returns>
+            public bool TryGetKnownValue(out KnownValues result)
+            {
+                if (this.ValueEquals(Constants.Enum1))
+                {
+                    result = KnownValues.Active;
+                    return true;
+                }
+
+                if (this.ValueEquals(Constants.Enum2))
+                {
+                    result = KnownValues.Retired;
+                    return true;
+                }
+
+                result = default;
+                return false;
             }
         }
 
@@ -339,7 +435,7 @@ public readonly partial struct MessageClaimRequest
                 _kind = requiresUnescaping ? Kind.RawUtf8StringRequiresUnescaping : Kind.RawUtf8StringNotRequiresUnescaping;
             }
 
-            public static implicit operator Source(TheChannelTheMessageArrivedOn instance) => new(JsonElement.From(instance));
+            public static implicit operator Source(EnvironmentSealKeyState instance) => new(JsonElement.From(instance));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(ReadOnlySpan<byte> value) => new (value);
@@ -349,6 +445,9 @@ public readonly partial struct MessageClaimRequest
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Source(string value) => new (value.AsSpan());
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(KnownValues value) => (EnvironmentSealKeyState)value;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);
@@ -511,7 +610,7 @@ public readonly partial struct MessageClaimRequest
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.CreateBuilder(JsonWorkspace)"/>
         public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
         {
-            return workspace.CreateBuilder<TheChannelTheMessageArrivedOn, Mutable>(this);
+            return workspace.CreateBuilder<EnvironmentSealKeyState, Mutable>(this);
         }
 
         /// <summary>
@@ -520,7 +619,7 @@ public readonly partial struct MessageClaimRequest
         /// <param name="value">The value with which to initialize the document.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given value. The caller must dispose it.</returns>
-        public static ParsedJsonDocument<TheChannelTheMessageArrivedOn> Create(
+        public static ParsedJsonDocument<EnvironmentSealKeyState> Create(
             scoped in Source value, int initialCapacity = 1)
         {
             ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
@@ -530,7 +629,7 @@ public readonly partial struct MessageClaimRequest
                 value.AddAsItem(ref cvb);
                 Debug.Assert(cvb.MemberCount == 1);
                 ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-                return documentBuilder.ToParsedJsonDocument<TheChannelTheMessageArrivedOn>();
+                return documentBuilder.ToParsedJsonDocument<EnvironmentSealKeyState>();
             }
             finally
             {

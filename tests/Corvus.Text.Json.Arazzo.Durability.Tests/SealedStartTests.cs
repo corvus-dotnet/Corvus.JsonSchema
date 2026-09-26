@@ -134,7 +134,7 @@ public sealed class SealedStartTests
         });
 
         RunnerKeyRing ring = await RunnerKeyRing.BuildAsync(
-            [new RunnerKeyRingEntry("production", "k1", SecretRef.Parse("env://PAYLOAD_KEY"), Sealed: true, SecretRef.Parse("env://SEAL_KEY"), [initiatorSpki])], secrets, default);
+            [new RunnerKeyRingEntry("production", Sealed: true, KeyId: "k1", PayloadKey: SecretRef.Parse("env://PAYLOAD_KEY"), SealKeyFingerprint: "pinned", SealKey: SecretRef.Parse("env://SEAL_KEY"), Initiators: [initiatorSpki])], secrets, default);
 
         ring.TryGet("production", out RunnerEnvironmentKeys keys).ShouldBeTrue();
         keys.OpensSealedStarts.ShouldBeTrue();
@@ -142,16 +142,32 @@ public sealed class SealedStartTests
         keys.InitiatorKeys!.Single().ShouldBe(initiator.ExportSubjectPublicKeyInfo());
 
         // Without a seal key the ring is as before: the environment is sealed, and sealed starts there fault.
-        RunnerKeyRing plain = await RunnerKeyRing.BuildAsync([new RunnerKeyRingEntry("production", "k1", SecretRef.Parse("env://PAYLOAD_KEY"), Sealed: true)], secrets, default);
+        RunnerKeyRing plain = await RunnerKeyRing.BuildAsync([new RunnerKeyRingEntry("production", Sealed: true, KeyId: "k1", PayloadKey: SecretRef.Parse("env://PAYLOAD_KEY"), SealKeyFingerprint: "pinned")], secrets, default);
         plain.TryGet("production", out RunnerEnvironmentKeys plainKeys).ShouldBeTrue();
         plainKeys.OpensSealedStarts.ShouldBeFalse();
 
         // Half a configuration is no configuration: a seal key opens nothing without a pinned initiator, and a pin
         // without a seal key is meaningless.
         (await Should.ThrowAsync<InvalidOperationException>(async () => await RunnerKeyRing.BuildAsync(
-            [new RunnerKeyRingEntry("production", "k1", SecretRef.Parse("env://PAYLOAD_KEY"), Sealed: true, SecretRef.Parse("env://SEAL_KEY"))], secrets, default))).Message.ShouldContain("initiator");
+            [new RunnerKeyRingEntry("production", Sealed: true, KeyId: "k1", PayloadKey: SecretRef.Parse("env://PAYLOAD_KEY"), SealKeyFingerprint: "pinned", SealKey: SecretRef.Parse("env://SEAL_KEY"))], secrets, default))).Message.ShouldContain("initiator");
         (await Should.ThrowAsync<InvalidOperationException>(async () => await RunnerKeyRing.BuildAsync(
-            [new RunnerKeyRingEntry("production", "k1", SecretRef.Parse("env://PAYLOAD_KEY"), Sealed: true, Initiators: [initiatorSpki])], secrets, default))).Message.ShouldContain("initiator");
+            [new RunnerKeyRingEntry("production", Sealed: true, KeyId: "k1", PayloadKey: SecretRef.Parse("env://PAYLOAD_KEY"), SealKeyFingerprint: "pinned", Initiators: [initiatorSpki])], secrets, default))).Message.ShouldContain("initiator");
+
+        // The allowlist rules (decision 10): a keyed entry pins the seal key's fingerprint or does not build; the
+        // minimum generation is the one held; a clear entry needs no secret resolver and is admitted with no key.
+        (await Should.ThrowAsync<InvalidOperationException>(async () => await RunnerKeyRing.BuildAsync(
+            [new RunnerKeyRingEntry("production", Sealed: true, KeyId: "k1", PayloadKey: SecretRef.Parse("env://PAYLOAD_KEY"))], secrets, default))).Message.ShouldContain("fingerprint");
+        (await Should.ThrowAsync<InvalidOperationException>(async () => await RunnerKeyRing.BuildAsync(
+            [new RunnerKeyRingEntry("production", Sealed: true, KeyId: "k1", PayloadKey: SecretRef.Parse("env://PAYLOAD_KEY"), SealKeyFingerprint: "pinned", MinimumKeyId: "k0")], secrets, default))).Message.ShouldContain("minimum");
+        (await Should.ThrowAsync<InvalidOperationException>(async () => await RunnerKeyRing.BuildAsync(
+            [new RunnerKeyRingEntry("production", Sealed: true)], secrets, default))).Message.ShouldContain("sealed");
+        RunnerKeyRing clear = await RunnerKeyRing.BuildAsync([RunnerKeyRingEntry.Clear("development"), new RunnerKeyRingEntry("production", Sealed: true, KeyId: "k1", PayloadKey: SecretRef.Parse("env://PAYLOAD_KEY"), SealKeyFingerprint: "pinned", MinimumKeyId: "k1")], secrets, default);
+        clear.Admits("development").ShouldBeTrue();
+        clear.TryGet("development", out _).ShouldBeFalse("clear: admitted with no key");
+        clear.Admits("production").ShouldBeTrue();
+        clear.Admits("staging").ShouldBeFalse();
+        (await RunnerKeyRing.BuildAsync([RunnerKeyRingEntry.Clear("development")], secrets: null, default)).Admits("development").ShouldBeTrue("no secrets needed for a clear entry");
+        (await Should.ThrowAsync<InvalidOperationException>(async () => await RunnerKeyRing.BuildAsync([RunnerKeyRingEntry.Clear("development"), RunnerKeyRingEntry.Clear("development")], secrets: null, default))).Message.ShouldContain("more than once");
 
         // A seal key that is not a P-256 key, and an initiator that is not a P-256 public key, refuse the build.
         using var p384 = ECDsa.Create(ECCurve.NamedCurves.nistP384);
@@ -161,9 +177,9 @@ public sealed class SealedStartTests
             ["SEAL_KEY"] = Convert.ToBase64String(p384.ExportPkcs8PrivateKey()),
         });
         (await Should.ThrowAsync<InvalidOperationException>(async () => await RunnerKeyRing.BuildAsync(
-            [new RunnerKeyRingEntry("production", "k1", SecretRef.Parse("env://PAYLOAD_KEY"), Sealed: true, SecretRef.Parse("env://SEAL_KEY"), [initiatorSpki])], wrongKeys, default))).Message.ShouldContain("P-256");
+            [new RunnerKeyRingEntry("production", Sealed: true, KeyId: "k1", PayloadKey: SecretRef.Parse("env://PAYLOAD_KEY"), SealKeyFingerprint: "pinned", SealKey: SecretRef.Parse("env://SEAL_KEY"), Initiators: [initiatorSpki])], wrongKeys, default))).Message.ShouldContain("P-256");
         (await Should.ThrowAsync<InvalidOperationException>(async () => await RunnerKeyRing.BuildAsync(
-            [new RunnerKeyRingEntry("production", "k1", SecretRef.Parse("env://PAYLOAD_KEY"), Sealed: true, SecretRef.Parse("env://SEAL_KEY"), [Convert.ToBase64String(p384.ExportSubjectPublicKeyInfo())])], secrets, default))).Message.ShouldContain("P-256");
+            [new RunnerKeyRingEntry("production", Sealed: true, KeyId: "k1", PayloadKey: SecretRef.Parse("env://PAYLOAD_KEY"), SealKeyFingerprint: "pinned", SealKey: SecretRef.Parse("env://SEAL_KEY"), Initiators: [Convert.ToBase64String(p384.ExportSubjectPublicKeyInfo())])], secrets, default))).Message.ShouldContain("P-256");
     }
 
     private static byte[] Binding(string environment, string baseWorkflowId, int version, string keyId, string runId)

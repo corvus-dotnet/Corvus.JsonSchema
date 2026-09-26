@@ -229,7 +229,16 @@ var controlPlaneAuthentication = new OAuth2ClientCredentialsAuthenticationProvid
 var runnerApiTransport = new HttpClientTransport(
     new HttpClient { BaseAddress = new Uri($"{controlPlaneBaseUrl.TrimEnd('/')}/arazzo/runner/v1") },
     controlPlaneAuthentication);
-var runnerClient = new ArazzoRunnerClient(runnerApiTransport);
+// The system runner's allowlist (ADR 0065 decision 10): the platform's own environment, served clear; it is never
+// sealed and its runs are platform data. Named under Runner:Environments like any runner's, so a binding for any other
+// environment gets this process nothing.
+List<RunnerKeyRingEntry> allowlist = [.. builder.Configuration.GetSection("Runner:Environments").GetChildren().Select(entry => RunnerKeyRingEntry.Clear(entry["Environment"] ?? throw new InvalidOperationException($"{entry.Path}:Environment is required.")))];
+if (allowlist.Count == 0)
+{
+    allowlist.Add(RunnerKeyRingEntry.Clear(runnerEnvironment));
+}
+
+var runnerClient = new ArazzoRunnerClient(runnerApiTransport, keyRing: await RunnerKeyRing.BuildAsync(allowlist, secrets: null, CancellationToken.None));
 builder.Services.AddSingleton(runnerClient);
 
 // Catalogued-run execution: claim a Pending access-approval run and re-enter its baked executor through the real

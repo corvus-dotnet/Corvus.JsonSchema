@@ -21,13 +21,15 @@ public sealed class DeclaredRunnerEnvironmentBindings : IRunnerEnvironmentBindin
     /// <summary>Initializes a new instance of the <see cref="DeclaredRunnerEnvironmentBindings"/> class.</summary>
     /// <param name="bindings">The environments each machine principal serves. A principal absent from the map is bound
     /// to nothing, which is the fail-closed reading of a principal the deployment has not declared.</param>
+    /// <param name="sealKeys">The seal key generations the deployment advertises per environment (ADR 0065 decision 10), or <see langword="null"/> for none.</param>
     /// <param name="tenants">The tenant each machine principal's usage is counted against, or <see langword="null"/>
     /// when the deployment names none. A deployment that declares its runners by name typically has one tenant, so the
     /// common case is to omit this and have every principal count against the deployment.</param>
     public DeclaredRunnerEnvironmentBindings(
         IReadOnlyDictionary<string, IReadOnlyList<string>> bindings,
         IReadOnlyDictionary<string, string>? tenants = null,
-        IReadOnlyDictionary<string, IReadOnlySet<string>>? sealedGenerations = null)
+        IReadOnlyDictionary<string, IReadOnlySet<string>>? sealedGenerations = null,
+        IReadOnlyDictionary<string, IReadOnlyList<RunnerSealKeyGeneration>>? sealKeys = null)
     {
         ArgumentNullException.ThrowIfNull(bindings);
 
@@ -38,7 +40,7 @@ public sealed class DeclaredRunnerEnvironmentBindings : IRunnerEnvironmentBindin
                 ? declared
                 : null;
 
-            map[principal] = new RunnerBindings([.. environments], tenant, sealedGenerations);
+            map[principal] = new RunnerBindings([.. environments], tenant, sealedGenerations, sealKeys);
         }
 
         this.bindings = map;

@@ -310,6 +310,24 @@ internal static class ThrowHelper
     public static InvalidOperationException GetInitiatorKeyNotAKeyException(string environment)
         => new(SR.Format(SR.InitiatorKeyNotAKey, environment));
 
+    public static InvalidOperationException GetAllowlistEntryDuplicateException(string environment)
+        => new(SR.Format(SR.AllowlistEntryDuplicate, environment));
+
+    public static InvalidOperationException GetAllowlistSealedEntryNeedsKeyException(string environment)
+        => new(SR.Format(SR.AllowlistSealedEntryNeedsKey, environment));
+
+    public static InvalidOperationException GetAllowlistNeedsSecretsException(string environment)
+        => new(SR.Format(SR.AllowlistNeedsSecrets, environment));
+
+    public static InvalidOperationException GetAllowlistSealKeyFingerprintRequiredException(string environment, string keyId)
+        => new(SR.Format(SR.AllowlistSealKeyFingerprintRequired, environment, keyId));
+
+    public static InvalidOperationException GetAllowlistMinimumGenerationNotHeldException(string environment, string minimum, string held)
+        => new(SR.Format(SR.AllowlistMinimumGenerationNotHeld, environment, minimum, held));
+
+    public static CheckpointEnvironmentNotAdmittedException GetCheckpointEnvironmentNotAdmittedException(in WorkflowRunAddress address)
+        => new(address, SR.Format(SR.CheckpointEnvironmentNotAdmitted, address));
+
     public static SealedStartException GetSealedStartException(in WorkflowRunAddress address, SealedStartRefusal refusal, ReadOnlyMemory<byte> row, WorkflowEtag etag)
         => new(address, refusal, row, etag, SR.Format(SR.SealedStartRefused, address, refusal));
 

@@ -23,9 +23,15 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 /// the deployment rather than to a tenant. Both count against the deployment rather than against a named group.
 /// </para>
 /// </remarks>
-public readonly record struct RunnerBindings(IReadOnlyList<string> Environments, string? Tenant, IReadOnlyDictionary<string, IReadOnlySet<string>>? SealedGenerations = null)
+public readonly record struct RunnerBindings(IReadOnlyList<string> Environments, string? Tenant, IReadOnlyDictionary<string, IReadOnlySet<string>>? SealedGenerations = null, IReadOnlyDictionary<string, IReadOnlyList<RunnerSealKeyGeneration>>? SealKeys = null)
 {
     private static readonly string[] NoEnvironments = [];
+
+    /// <summary>The seal key generations the control plane advertises for a bound environment (ADR 0065 decision 10), or <see langword="null"/> when the environment is not bound or holds no registration.</summary>
+    /// <param name="environment">The environment.</param>
+    /// <returns>The generations, active and retired.</returns>
+    public IReadOnlyList<RunnerSealKeyGeneration>? SealKeysOf(string environment)
+        => this.SealKeys is { } keysByEnvironment && keysByEnvironment.TryGetValue(environment, out IReadOnlyList<RunnerSealKeyGeneration>? keys) ? keys : null;
 
     /// <summary>
     /// The active key generations of a bound environment whose record is sealed (a tenant environment holding at
@@ -46,3 +52,9 @@ public readonly record struct RunnerBindings(IReadOnlyList<string> Environments,
     /// <summary>Gets the number of bound environments.</summary>
     public int Count => this.Environments.Count;
 }
+
+/// <summary>One registered seal key generation of an environment, as the runner API advertises it (ADR 0065 decision 10).</summary>
+/// <param name="KeyId">The generation's id.</param>
+/// <param name="SealPublicKey">The public seal key, base64 SubjectPublicKeyInfo.</param>
+/// <param name="Active">Whether the generation is active.</param>
+public readonly record struct RunnerSealKeyGeneration(string KeyId, string SealPublicKey, bool Active);

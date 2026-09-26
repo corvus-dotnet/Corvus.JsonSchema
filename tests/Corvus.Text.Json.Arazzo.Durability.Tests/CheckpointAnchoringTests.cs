@@ -388,7 +388,7 @@ public sealed class CheckpointAnchoringTests
             await run!.CheckpointAsync(1, default);
         }
 
-        (await anchors.ReadAsync(Development, RunId, default)).ShouldBeNull("nothing is anchored for an environment the runner holds no key for");
+        (await anchors.ReadAsync(Development, RunId, default)).ShouldBeNull("nothing is anchored for an environment the runner admits clear and holds no key for");
 
         // An anchored save carries the grant it is staged under: no epoch, no stage, no dispatch.
         using WorkflowRun? ungranted = await WorkflowRun.ResumeAsync(store, ProductionRun);
@@ -430,10 +430,13 @@ public sealed class CheckpointAnchoringTests
     {
         byte[] envelopeMac = new byte[32];
         CheckpointDerivation.DeriveSubkey(PayloadKey, CheckpointSubkey.EnvelopeMac, Production, "k1", envelopeMac);
-        return RunnerKeyRing.From(new Dictionary<string, RunnerEnvironmentKeys>
-        {
-            [Production] = new("k1", PayloadKey, envelopeMac, Sealed: true),
-        });
+        // Development is admitted clear (decision 10): served, unanchored, with no key; nothing else is served at all.
+        return RunnerKeyRing.From(
+            new Dictionary<string, RunnerEnvironmentKeys>
+            {
+                [Production] = new("k1", PayloadKey, envelopeMac, Sealed: true),
+            },
+            Development);
     }
 
     private static byte[] Row(WorkflowRunAddress address, long sequence, long? epoch = Epoch, ulong? incarnation = Incarnation)

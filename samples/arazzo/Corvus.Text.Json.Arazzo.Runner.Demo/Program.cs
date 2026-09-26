@@ -155,23 +155,29 @@ WorkflowTransportBinder binder;
 // generation and where in ITS OWN secret store the environment payload key lives. Every checkpoint row this runner
 // writes for such an environment carries a MAC under a subkey derived from that key, and every row it loads is
 // verified before the run trusts a byte of it. Nothing about keys comes from the control plane, which holds none.
-// Configured as Runner:Sealing:Environments:N:{Environment,KeyId,PayloadKeyRef,Sealed,SealKeyRef,Initiators:M}; empty for
-// an open runner. SealKeyRef names the private half of the environment's seal key in the runner's own secret store
-// and Initiators the base64 SPKI of each initiator key the runner pins (ADR 0065 decision 9): with both, the runner
-// opens the environment's sealed starts; with neither it faults them; with one and not the other it does not start.
+// The runner's allowlist (ADR 0065 decision 10), configured as Runner:Environments:N:{Environment,Sealed,KeyId,
+// PayloadKeyRef,SealKeyFingerprint,SealKeyRef,Initiators:M}: the environments this runner serves at all, each clear
+// (Sealed=false, no key) or sealed (a key generation, the payload key in the runner's own secret store, and the pinned
+// fingerprint of the seal key the tenant registered, which the runner checks against what the control plane
+// advertises). SealKeyRef and Initiators (decision 9) let the runner open the environment's sealed starts; with one
+// and not the other it does not start. An environment with no entry is not served, whatever the control plane binds.
 RunnerKeyRing keyRing = RunnerKeyRing.Empty;
 List<RunnerKeyRingEntry> keyRingEntries = [];
-foreach (IConfigurationSection entry in builder.Configuration.GetSection("Runner:Sealing:Environments").GetChildren())
+foreach (IConfigurationSection entry in builder.Configuration.GetSection("Runner:Environments").GetChildren())
 {
     List<string> initiators = [.. entry.GetSection("Initiators").GetChildren().Select(initiator => initiator.Value).OfType<string>()];
     keyRingEntries.Add(new RunnerKeyRingEntry(
         entry["Environment"] ?? throw new InvalidOperationException($"{entry.Path}:Environment is required."),
-        entry["KeyId"] ?? throw new InvalidOperationException($"{entry.Path}:KeyId is required."),
-        SecretRef.Parse(entry["PayloadKeyRef"] ?? throw new InvalidOperationException($"{entry.Path}:PayloadKeyRef is required.")),
-        entry.GetValue("Sealed", true),
+        entry.GetValue("Sealed", false),
+        entry["KeyId"],
+        entry["PayloadKeyRef"] is { Length: > 0 } payloadKeyRef ? SecretRef.Parse(payloadKeyRef) : null,
+        entry["SealKeyFingerprint"],
         entry["SealKeyRef"] is { Length: > 0 } sealKeyRef ? SecretRef.Parse(sealKeyRef) : null,
-        initiators.Count > 0 ? initiators : null));
+        initiators.Count > 0 ? initiators : null,
+        entry["MinimumKeyId"]));
 }
+
+bool keyedEntries = keyRingEntries.Any(entry => entry.KeyId is not null);
 
 if (!string.IsNullOrWhiteSpace(vaultAddress) && !string.IsNullOrWhiteSpace(vaultRoleId) && !string.IsNullOrWhiteSpace(vaultWrapTokenFile))
 {
@@ -242,13 +248,16 @@ if (!string.IsNullOrWhiteSpace(vaultAddress) && !string.IsNullOrWhiteSpace(vault
 }
 else
 {
-    if (keyRingEntries.Count > 0)
+    if (keyedEntries)
     {
         // A sealed environment's payload key lives in the runner's secret store. Without one there is nothing to
         // read it from, and a runner that serves the environment clear instead would be exactly the fail-open
         // posture decision 10 forbids.
-        throw new InvalidOperationException("Runner:Sealing:Environments is configured but Vault is not: a sealed environment's payload key is read from the runner's own secret store.");
+        throw new InvalidOperationException("Runner:Environments names a keyed environment but Vault is not configured: a sealed environment's keys are read from the runner's own secret store.");
     }
+
+    // A runner with no Vault serves its clear environments only, and only those it names.
+    keyRing = await RunnerKeyRing.BuildAsync(keyRingEntries, secrets: null, CancellationToken.None);
 
     binder = DraftRunHost.CreateBinder(sourceClients, messageTransport);
 }

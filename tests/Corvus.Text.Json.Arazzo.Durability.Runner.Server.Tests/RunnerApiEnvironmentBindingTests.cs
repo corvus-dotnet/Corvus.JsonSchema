@@ -44,6 +44,38 @@ public sealed class RunnerApiEnvironmentBindingTests
     private static readonly DateTimeOffset T0 = new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
     [TestMethod]
+    public async Task The_advertised_seal_keys_of_a_bound_environment_are_served_and_an_unbound_one_is_not_there()
+    {
+        // ADR 0065 decision 10: the runner API advertises a bound environment's registered seal key generations, which
+        // the runner checks against the fingerprint it pinned; an environment the principal is not bound to answers
+        // 404 whether or not it exists.
+        await using Host host = await Host.StartAsync(
+            boundEnvironments: [Production],
+            sealKeys: new Dictionary<string, IReadOnlyList<RunnerSealKeyGeneration>>
+            {
+                [Production] = [new RunnerSealKeyGeneration("k1", "AAEC", true), new RunnerSealKeyGeneration("k0", "AAED", false)],
+                [Development] = [new RunnerSealKeyGeneration("d1", "AAEE", true)],
+            });
+
+        HttpResponseMessage bound = await host.GetSealKeyAsync(Runner, Production);
+        bound.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (System.Text.Json.JsonDocument doc = System.Text.Json.JsonDocument.Parse(await bound.Content.ReadAsStringAsync()))
+        {
+            doc.RootElement.GetProperty("environment").GetString().ShouldBe(Production);
+            System.Text.Json.JsonElement generations = doc.RootElement.GetProperty("generations");
+            generations.GetArrayLength().ShouldBe(2);
+            generations[0].GetProperty("keyId").GetString().ShouldBe("k1");
+            generations[0].GetProperty("sealPublicKey").GetString().ShouldBe("AAEC");
+            generations[0].GetProperty("state").GetString().ShouldBe("Active");
+            generations[1].GetProperty("state").GetString().ShouldBe("Retired");
+        }
+
+        (await host.GetSealKeyAsync(Runner, Development)).StatusCode.ShouldBe(HttpStatusCode.NotFound, "not bound, so not there");
+        (await host.GetSealKeyAsync(Runner, "elsewhere")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await host.GetSealKeyAsync("runner-unbound", Production)).StatusCode.ShouldBe(HttpStatusCode.NotFound, "a principal with no bindings");
+    }
+
+    [TestMethod]
     public async Task A_lease_on_a_run_outside_the_principals_bindings_does_not_grant_checkpoint_access()
     {
         // The principal is bound ONLY to development. The run is pinned to production, and the principal holds a
@@ -214,7 +246,7 @@ public sealed class RunnerApiEnvironmentBindingTests
 
     private sealed class Host(WebApplication app, HttpClient client, InMemoryWorkflowStateStore store) : IAsyncDisposable
     {
-        public static async Task<Host> StartAsync(IReadOnlyList<string> boundEnvironments, IReadOnlyDictionary<string, IReadOnlySet<string>>? sealedGenerations = null)
+        public static async Task<Host> StartAsync(IReadOnlyList<string> boundEnvironments, IReadOnlyDictionary<string, IReadOnlySet<string>>? sealedGenerations = null, IReadOnlyDictionary<string, IReadOnlyList<RunnerSealKeyGeneration>>? sealKeys = null)
         {
             var clock = new TestClock(T0);
             var store = new InMemoryWorkflowStateStore(clock);
@@ -223,7 +255,8 @@ public sealed class RunnerApiEnvironmentBindingTests
                 {
                     [Runner] = boundEnvironments,
                 },
-                sealedGenerations: sealedGenerations);
+                sealedGenerations: sealedGenerations,
+                sealKeys: sealKeys);
 
             WebApplicationBuilder builder = WebApplication.CreateBuilder();
             builder.WebHost.UseTestServer();
@@ -267,6 +300,9 @@ public sealed class RunnerApiEnvironmentBindingTests
             WorkflowCheckpoint? current = await store.LoadAsync(address, default);
             await store.SaveAsync(address, checkpoint, WorkflowCheckpointSerializer.ProjectIndex(checkpoint), current?.Etag ?? WorkflowEtag.None, default);
         }
+
+        public Task<HttpResponseMessage> GetSealKeyAsync(string principal, string environment)
+            => this.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"/environments/{environment}/sealKey"), principal);
 
         public Task<HttpResponseMessage> ClaimMessageAsync(string principal, string body)
         {

@@ -10,27 +10,27 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models;
+namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models;
 
-public readonly partial struct MessageClaimRequest
+public readonly partial struct EnvironmentSealKeys
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The channel the message arrived on.
+    /// Every registered generation, active and retired.
     /// </para>
     /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct TheChannelTheMessageArrivedOn
+    public readonly partial struct EnvironmentSealKeyGenerationArray
 #if NET8_0_OR_GREATER
-        : IJsonElement<TheChannelTheMessageArrivedOn>,
+        : IJsonElement<EnvironmentSealKeyGenerationArray>,
           IFormattable,
           ISpanFormattable,
           IUtf8SpanFormattable
 #else
-        : IJsonElement<TheChannelTheMessageArrivedOn>,
+        : IJsonElement<EnvironmentSealKeyGenerationArray>,
           IFormattable
 #endif
     {
@@ -39,7 +39,7 @@ public readonly partial struct MessageClaimRequest
         private readonly int _idx;
 
         #pragma warning restore CS8618 // JsonDocument nullability
-        internal TheChannelTheMessageArrivedOn(IJsonDocument parent, int idx)
+        internal EnvironmentSealKeyGenerationArray(IJsonDocument parent, int idx)
         {
             Debug.Assert(idx >= 0);
             _parent = parent;
@@ -49,19 +49,36 @@ public readonly partial struct MessageClaimRequest
         /// <summary>
         /// Gets the default instance.
         /// </summary>
-        public static TheChannelTheMessageArrivedOn DefaultInstance { get; }
+        public static EnvironmentSealKeyGenerationArray DefaultInstance { get; }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetValue(out string? value) { CheckValidInstance(); return _parent.TryGetString(_idx, JsonTokenType.String, out value); }
+        /// <summary>
+        /// Gets the rank of the array.
+        /// </summary>
+        public static int Rank => 1;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UnescapedUtf8JsonString GetUtf8String() { CheckValidInstance(); return _parent.GetUtf8JsonString(_idx, JsonTokenType.String); }
+        /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.this[int]"/>
+        public Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentSealKeyGeneration this[int index]
+        {
+            get
+            {
+                CheckValidInstance();
+                return _parent.GetArrayIndexElement<Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentSealKeyGeneration>(_idx, index);
+            }
+        }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UnescapedUtf16JsonString GetUtf16String() { CheckValidInstance(); return _parent.GetUtf16JsonString(_idx, JsonTokenType.String); }
+        /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.GetArrayLength()"/>
+        public int GetArrayLength()
+        {
+            CheckValidInstance();
+            return _parent.GetArrayLength(_idx);
+        }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public string? GetString() { CheckValidInstance(); return _parent.GetString(_idx, JsonTokenType.String); }
+        /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.EnumerateArray()"/>
+        public ArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentSealKeyGeneration> EnumerateArray()
+        {
+            CheckValidInstance();
+            return EnumeratorCreator.CreateArrayEnumerator<Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentSealKeyGeneration>(_parent, _idx);
+        }
 
         /// <inheritdoc/>
         public JsonValueKind ValueKind => TokenType.ToValueKind();
@@ -69,29 +86,26 @@ public readonly partial struct MessageClaimRequest
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator string(TheChannelTheMessageArrivedOn value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
-
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.operator ==(JsonElement, JsonElement)"/>
-        public static bool operator ==(in TheChannelTheMessageArrivedOn left, in TheChannelTheMessageArrivedOn right)
+        public static bool operator ==(in EnvironmentSealKeyGenerationArray left, in EnvironmentSealKeyGenerationArray right)
         {
             return left.Equals(right);
         }
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.operator !=(JsonElement, JsonElement)"/>
-        public static bool operator !=(in TheChannelTheMessageArrivedOn left, in TheChannelTheMessageArrivedOn right)
+        public static bool operator !=(in EnvironmentSealKeyGenerationArray left, in EnvironmentSealKeyGenerationArray right)
         {
             return !left.Equals(right);
         }
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.operator ==(JsonElement, JsonElement)"/>
-        public static bool operator ==(in TheChannelTheMessageArrivedOn left, in JsonElement right)
+        public static bool operator ==(in EnvironmentSealKeyGenerationArray left, in JsonElement right)
         {
             return left.Equals(right);
         }
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.operator !=(JsonElement, JsonElement)"/>
-        public static bool operator !=(in TheChannelTheMessageArrivedOn left, in JsonElement right)
+        public static bool operator !=(in EnvironmentSealKeyGenerationArray left, in JsonElement right)
         {
             return !left.Equals(right);
         }
@@ -102,7 +116,7 @@ public readonly partial struct MessageClaimRequest
         /// <param name="instance">The instance of this type.</param>
         /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator JsonElement(TheChannelTheMessageArrivedOn instance)
+        public static implicit operator JsonElement(EnvironmentSealKeyGenerationArray instance)
         {
             return JsonElement.From(instance);
         }
@@ -113,14 +127,14 @@ public readonly partial struct MessageClaimRequest
         /// <param name="instance">The instance of this type as a JsonElement.</param>
         /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator TheChannelTheMessageArrivedOn(JsonElement instance)
+        public static implicit operator EnvironmentSealKeyGenerationArray(JsonElement instance)
         {
-            return TheChannelTheMessageArrivedOn.From(instance);
+            return EnvironmentSealKeyGenerationArray.From(instance);
         }
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.From{T}(in T)"/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static TheChannelTheMessageArrivedOn From<T>(in T instance)
+        public static EnvironmentSealKeyGenerationArray From<T>(in T instance)
             where T : struct, IJsonElement<T>
         {
             return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -129,53 +143,53 @@ public readonly partial struct MessageClaimRequest
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.ParseValue(ReadOnlySpan{byte}, JsonDocumentOptions)"/>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static TheChannelTheMessageArrivedOn ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+        public static EnvironmentSealKeyGenerationArray ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<TheChannelTheMessageArrivedOn>(utf8Json, options);
+            return JsonElementHelpers.ParseValue<EnvironmentSealKeyGenerationArray>(utf8Json, options);
             #pragma warning restore CS0618
         }
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.ParseValue(ReadOnlySpan{char}, JsonDocumentOptions)"/>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static TheChannelTheMessageArrivedOn ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+        public static EnvironmentSealKeyGenerationArray ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<TheChannelTheMessageArrivedOn>(json, options);
+            return JsonElementHelpers.ParseValue<EnvironmentSealKeyGenerationArray>(json, options);
             #pragma warning restore CS0618
         }
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.ParseValue(string, JsonDocumentOptions)"/>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static TheChannelTheMessageArrivedOn ParseValue(string json, JsonDocumentOptions options = default)
+        public static EnvironmentSealKeyGenerationArray ParseValue(string json, JsonDocumentOptions options = default)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<TheChannelTheMessageArrivedOn>(json, options);
+            return JsonElementHelpers.ParseValue<EnvironmentSealKeyGenerationArray>(json, options);
             #pragma warning restore CS0618
         }
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.ParseValue(ref Utf8JsonReader)"/>
         [Obsolete("Use ParsedJsonDocument<T>.Parse() for pooled-memory parsing, or Clone() for a standalone copy. ParseValue allocates without pooling.")]
-        public static TheChannelTheMessageArrivedOn ParseValue(ref Utf8JsonReader reader)
+        public static EnvironmentSealKeyGenerationArray ParseValue(ref Utf8JsonReader reader)
         {
             #pragma warning disable CS0618 // Type or member is obsolete
-            return JsonElementHelpers.ParseValue<TheChannelTheMessageArrivedOn>(ref reader);
+            return JsonElementHelpers.ParseValue<EnvironmentSealKeyGenerationArray>(ref reader);
             #pragma warning restore CS0618
         }
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.TryParseValue(ref Utf8JsonReader, out JsonElement?)"/>
-        public static bool TryParseValue(ref Utf8JsonReader reader, out TheChannelTheMessageArrivedOn? result)
+        public static bool TryParseValue(ref Utf8JsonReader reader, out EnvironmentSealKeyGenerationArray? result)
         {
-            return JsonElementHelpers.TryParseValue<TheChannelTheMessageArrivedOn>(ref reader, out result);
+            return JsonElementHelpers.TryParseValue<EnvironmentSealKeyGenerationArray>(ref reader, out result);
         }
 
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonElement value && Equals(new TheChannelTheMessageArrivedOn(value.ParentDocument, value.ParentDocumentIndex))) ||
+                (obj is IJsonElement value && Equals(new EnvironmentSealKeyGenerationArray(value.ParentDocument, value.ParentDocumentIndex))) ||
                 (obj is null && this.IsNull());
         }
 
@@ -184,45 +198,6 @@ public readonly partial struct MessageClaimRequest
             where T : struct, IJsonElement
         {
             return JsonElementHelpers.DeepEquals(this, other);
-        }
-
-        /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.ValueEquals(ReadOnlySpan{byte})"/>
-        public bool ValueEquals(ReadOnlySpan<byte> utf8Text)
-        {
-            CheckValidInstance();
-
-            if (TokenType != JsonTokenType.String)
-            {
-                return false;
-            }
-
-            return _parent.TextEquals(_idx, utf8Text, isPropertyName: false, shouldUnescape: true);
-        }
-
-        /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.ValueEquals(ReadOnlySpan{char})"/>
-        public bool ValueEquals(ReadOnlySpan<char> text)
-        {
-            CheckValidInstance();
-
-            if (TokenType != JsonTokenType.String)
-            {
-                return false;
-            }
-
-            return _parent.TextEquals(_idx, text, isPropertyName: false);
-        }
-
-        /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.ValueEquals(string)"/>
-        public bool ValueEquals(string text)
-        {
-            CheckValidInstance();
-
-            if (TokenType != JsonTokenType.String)
-            {
-                return false;
-            }
-
-            return _parent.TextEquals(_idx, text, isPropertyName: false);
         }
 
         /// <inheritdoc/>
@@ -296,11 +271,11 @@ public readonly partial struct MessageClaimRequest
         void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-        static TheChannelTheMessageArrivedOn IJsonElement<TheChannelTheMessageArrivedOn>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+        static EnvironmentSealKeyGenerationArray IJsonElement<EnvironmentSealKeyGenerationArray>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebuggerDisplay => $"TheChannelTheMessageArrivedOn: ValueKind = {ValueKind} : \"{ToString()}\"";
+        private string DebuggerDisplay => $"EnvironmentSealKeyGenerationArray: ValueKind = {ValueKind} : \"{ToString()}\"";
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -315,19 +290,19 @@ public readonly partial struct MessageClaimRequest
         JsonValueKind IJsonElement.ValueKind => ValueKind;
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Clone()"/>
-        public TheChannelTheMessageArrivedOn Clone()
+        public EnvironmentSealKeyGenerationArray Clone()
         {
             CheckValidInstance();
-            return _parent.CloneElement<TheChannelTheMessageArrivedOn>(_idx);
+            return _parent.CloneElement<EnvironmentSealKeyGenerationArray>(_idx);
         }
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Freeze()"/>
-        public TheChannelTheMessageArrivedOn Freeze()
+        public EnvironmentSealKeyGenerationArray Freeze()
         {
             CheckValidInstance();
             if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
             {
-                return mutable.FreezeElement<TheChannelTheMessageArrivedOn>(_idx);
+                return mutable.FreezeElement<EnvironmentSealKeyGenerationArray>(_idx);
             }
 
             return this;

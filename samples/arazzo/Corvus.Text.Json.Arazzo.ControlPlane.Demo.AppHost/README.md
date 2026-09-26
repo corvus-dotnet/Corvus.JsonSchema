@@ -18,7 +18,9 @@ everything. It composes:
   `$draft` debug runs, resolving each source's credential as its own read-only Vault identity at bind
   time. The control plane never executes; the runner does.
 - **runner-production**, a second application runner serving the **production** environment, which the
-  example seed registers a key generation for and which is therefore *sealed* (ADR 0065 decision 10). It reads
+  example seed registers a key generation for and which is therefore *sealed* (ADR 0065 decision 10). Its allowlist
+  names production alone, sealed, with the pinned fingerprint of the seal key the AppHost provisioned, so a binding to
+  any other environment, or a control plane advertising another seal key, gets it nothing. It reads
   production's payload key from Vault into its key ring, encrypts the payload of every checkpoint row it writes and
   MACs the row, verifies and opens every row it loads, and the control plane refuses any clear production row and
   shows a production run's step journal without outputs, as sealed. It anchors every production run in the
@@ -57,7 +59,7 @@ Production is a sealed environment, and a run there can be started with inputs t
 AppHost provisions two P-256 key pairs per boot: production's **seal key**, whose public half the control plane's
 example seed registers as the generation an initiator seals to and whose private half the provisioner seeds into
 `runner-production`'s Vault (`secret/arazzo/seal-keys/production`), and the tenant operator's **initiator key**,
-whose public half is pinned on `runner-production` (`Runner__Sealing__Environments__0__Initiators__0`) and whose
+whose public half is pinned on `runner-production` (`Runner__Environments__0__Initiators__0`) and whose
 private half is written to the handoff directory as `production-initiator.key.pem`, beside
 `production-seal-key.fingerprint`. The AppHost logs both paths at start (`Sealed-start initiator handoff: ...`). To
 start a production run sealed, as the operator:

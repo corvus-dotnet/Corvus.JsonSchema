@@ -36,6 +36,16 @@ internal static class RunnerRunAdvance
         ulong? incarnation = null;
         try
         {
+            // The allowlist (ADR 0065 decision 10): a claim for an environment this runner does not admit, or one
+            // whose advertised seal key is not the one the tenant pinned, is handed back before a byte of it is
+            // loaded. The control plane bound the principal; the runner decides what it serves.
+            RunnerAdmission admission = await client.AdmitsAsync(claim.Environment, cancellationToken).ConfigureAwait(false);
+            if (admission != RunnerAdmission.Admitted)
+            {
+                CountRefusal(claim, RefusalTagOf(admission));
+                return false;
+            }
+
             // The run loads and advances through the client's checkpoint store, so the executor is unaware it is not
             // talking to a database. The server re-read the run under the lease before offering it, so a null here
             // means the row went away underneath us rather than that the run was unsuitable. The run writes its grant
@@ -119,6 +129,14 @@ internal static class RunnerRunAdvance
             await client.ReleaseAsync(claim.Address, CancellationToken.None).ConfigureAwait(false);
         }
     }
+
+    private static string RefusalTagOf(RunnerAdmission admission) => admission switch
+    {
+        RunnerAdmission.NotAllowlisted => "allowlist",
+        RunnerAdmission.SealKeyMismatch => "seal-key-mismatch",
+        RunnerAdmission.GenerationNotActive => "generation-not-active",
+        _ => "seal-key-unavailable",
+    };
 
     private static void CountRefusal(in RunnerClaim claim, string refusal)
         => ArazzoTelemetry.WorkflowsRefused.Add(

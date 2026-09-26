@@ -35,7 +35,7 @@ const string productionKeyId = "production-2026-09";
 // inputs to. The control plane registers the PUBLIC half as the generation's seal key (ExampleSeed reads it from
 // ControlPlane:Production:SealPublicKey); the PRIVATE half goes into runner-production's Vault beside the payload key,
 // so a sealed start opens on that runner and nowhere else. The INITIATOR key pair is the tenant operator's: its public
-// half is pinned on runner-production (Runner:Sealing:Environments:0:Initiators:0), and its private half is written
+// half is pinned on runner-production (Runner:Environments:0:Initiators:0), and its private half is written
 // to the handoff directory for `arazzo-runs start --sealed --initiator-key <file>`, beside the seal key's fingerprint
 // the CLI is told to pin. Both fresh per composition boot; a deployment provisions them from its own key management.
 string productionSealPublicKey;
@@ -595,6 +595,9 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner")
     // §18 multi-process: this runner hosts the development-environment $draft debug runs the control plane marks,
     // executing each against the real source services (below).
     .WithEnvironment("Runner__Environment", "development")
+    // The runner's allowlist (ADR 0065 decision 10): development, served clear, and nothing else.
+    .WithEnvironment("Runner__Environments__0__Environment", "development")
+    .WithEnvironment("Runner__Environments__0__Sealed", "false")
     // The id an administrator pre-authorized for this runner's machine principal (ADR 0065 decision 2). Registration
     // requires that decision to exist already, so the id is declared here and seeded by the control plane rather than
     // invented by the process; the demo's seed pre-authorizes exactly these three (environment, id, principal) triples.
@@ -666,15 +669,18 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner-product
     .WithEnvironment("Runner__ServesSchedules", "false")
     // The key ring (ADR 0065 decisions 5 and 10): production, under the registered generation, from the runner's own
     // Vault, sealed. Nothing about keys comes from the control plane.
-    .WithEnvironment("Runner__Sealing__Environments__0__Environment", "production")
-    .WithEnvironment("Runner__Sealing__Environments__0__KeyId", productionKeyId)
-    .WithEnvironment("Runner__Sealing__Environments__0__PayloadKeyRef", "vault://secret/arazzo/payload-keys/production#key")
-    .WithEnvironment("Runner__Sealing__Environments__0__Sealed", "true")
+    .WithEnvironment("Runner__Environments__0__Environment", "production")
+    .WithEnvironment("Runner__Environments__0__KeyId", productionKeyId)
+    .WithEnvironment("Runner__Environments__0__PayloadKeyRef", "vault://secret/arazzo/payload-keys/production#key")
+    .WithEnvironment("Runner__Environments__0__Sealed", "true")
+    // The pinned fingerprint of the seal key the tenant registered (ADR 0065 decision 10): the runner checks what the
+    // control plane advertises for production against it, and suspends production on any other key.
+    .WithEnvironment("Runner__Environments__0__SealKeyFingerprint", productionSealKeyFingerprint)
     // The sealed start (ADR 0065 decision 9): the private seal half from the runner's own Vault, and the initiator this
     // runner pins, so a start the operator sealed with the handed-off initiator key opens here and a start anyone else
     // sealed faults at its start.
-    .WithEnvironment("Runner__Sealing__Environments__0__SealKeyRef", "vault://secret/arazzo/seal-keys/production#key")
-    .WithEnvironment("Runner__Sealing__Environments__0__Initiators__0", productionInitiatorPublicKey)
+    .WithEnvironment("Runner__Environments__0__SealKeyRef", "vault://secret/arazzo/seal-keys/production#key")
+    .WithEnvironment("Runner__Environments__0__Initiators__0", productionInitiatorPublicKey)
     .WithEnvironment("Runner__Sources__Onboarding", onboarding.GetEndpoint("http"))
     .WithEnvironment("Runner__Sources__Ledger", ledger.GetEndpoint("http"))
     .WithEnvironment("Runner__Sources__Kyc", kyc.GetEndpoint("http"))
@@ -719,6 +725,8 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPlane_SystemRunner>("
     .WithEnvironment("Runner__ExecutorTrust__KeyId", signingKeyName)
     // The internal environment the bootstrapped approval workflow is made available in (design §16.5.1).
     .WithEnvironment("Runner__Environment", "system")
+    // The system runner's allowlist (ADR 0065 decision 10): the platform environment, served clear, and nothing else.
+    .WithEnvironment("Runner__Environments__0__Environment", "system")
     .WithEnvironment("Runner__RunnerId", "demo-system-runner")
     // The message bus: the approval run's notify SEND publishes to access.notify; the decision consumer subscribes to
     // access.decision (the approver's decision, published by the control plane).
