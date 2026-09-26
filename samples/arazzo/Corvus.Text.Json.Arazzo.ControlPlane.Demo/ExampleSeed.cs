@@ -284,6 +284,11 @@ public sealed class ArazzoExampleSeed : IExampleSeed
         // depending on the gap rather than illustrating the rule.
         (await context.Availability.MakeAvailableAsync("onboard-customer-async", 1, "development", "demo", cancellationToken)).Entry.Dispose();
 
+        // Available in production too (ADR 0065 decision 12): a sealed start of it there parks awaiting its verdict
+        // under the current key generation, which is what a rotation's re-key sweep has to carry across; the live
+        // composition test rotates production and watches the parked run move to the successor.
+        (await context.Availability.MakeAvailableAsync("onboard-customer-async", 1, "production", "demo", cancellationToken)).Entry.Dispose();
+
         // Security personas (§14.2/§15/§16.5): three archetypes beyond the genesis admin, so the governance surfaces
         // show reach-scoping, the administration split, and the PIM lifecycle out of the box. The realm import defines
         // the matching Keycloak groups + users (oscar/observers, erin/env-admins, wanda/reconcile-owners); everyone

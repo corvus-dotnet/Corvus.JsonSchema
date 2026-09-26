@@ -528,7 +528,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         var listings = new List<WorkflowRunListing>();
         await foreach ((WorkflowRunAddress address, WorkflowRunIndexEntry index) in this.ScanAsync(candidates, cancellationToken).ConfigureAwait(false))
         {
-            if (Matches(query, address.RunId.Value, index)
+            if (Matches(query, address, index)
                 && (after is not { } cursor || WorkflowRunAddress.Compare(address, cursor) > 0))
             {
                 listings.Add(new WorkflowRunListing(address, index));
@@ -559,7 +559,7 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
         int count = 0;
         await foreach ((WorkflowRunAddress address, WorkflowRunIndexEntry index) in this.ScanAsync(candidates, cancellationToken).ConfigureAwait(false))
         {
-            if (Matches(query, address.RunId.Value, index) && ++count > cap)
+            if (Matches(query, address, index) && ++count > cap)
             {
                 return (cap, true);
             }
@@ -571,8 +571,9 @@ public sealed class NatsJetStreamWorkflowStateStore : IWorkflowStateStore, IWork
     // The shared visibility filter (run-id point lookup / status / workflow / draft-exclusion / timestamps /
     // correlation / tags / §14.2 security reach), WITHOUT the keyset cursor: QueryAsync adds the cursor + sorts,
     // CountAsync scans with just this. Both share the one predicate so the reach filter cannot drift.
-    private static bool Matches(in WorkflowQuery query, string runId, in WorkflowRunIndexEntry index)
-        => (query.RunId is not { } pointRunId || string.Equals(runId, pointRunId, StringComparison.Ordinal))
+    private static bool Matches(in WorkflowQuery query, in WorkflowRunAddress address, in WorkflowRunIndexEntry index)
+        => (query.RunId is not { } pointRunId || string.Equals(address.RunId.Value, pointRunId, StringComparison.Ordinal))
+            && (query.Environment is not { } environment || string.Equals(address.Environment, environment, StringComparison.Ordinal))
             && (query.Status is not { } status || index.Status == status)
             && (query.WorkflowId is not { } workflowId || index.WorkflowId == workflowId)
 

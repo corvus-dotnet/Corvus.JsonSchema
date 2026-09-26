@@ -562,6 +562,7 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     {
         var sql = new System.Text.StringBuilder();
         sql.Append("(@point_run_id IS NULL OR run_id = @point_run_id)");
+        sql.Append(" AND (@query_environment IS NULL OR environment = @query_environment)");
         sql.Append(" AND (@status IS NULL OR status = @status)");
         sql.Append(" AND (@workflow_id IS NULL OR workflow_id = @workflow_id)");
 
@@ -577,6 +578,7 @@ public sealed class MySqlWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
         sql.Append(" AND (@correlation_id IS NULL OR correlation_id = @correlation_id)");
 
         command.Parameters.AddWithValue("@point_run_id", (object?)query.RunId ?? DBNull.Value);
+        command.Parameters.AddWithValue("@query_environment", (object?)query.Environment ?? DBNull.Value);
         command.Parameters.AddWithValue("@status", (object?)query.Status?.ToString() ?? DBNull.Value);
         command.Parameters.AddWithValue("@workflow_id", (object?)query.WorkflowId ?? DBNull.Value);
         command.Parameters.AddWithValue("@draft_id", DraftRuns.RunWorkflowId);

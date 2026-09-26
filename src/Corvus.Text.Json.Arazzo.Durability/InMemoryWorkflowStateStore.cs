@@ -332,6 +332,7 @@ public sealed class InMemoryWorkflowStateStore : IWorkflowStateStore, IWorkflowW
     // applies in full.
     private static bool Matches(in WorkflowQuery query, in WorkflowRunAddress address, in WorkflowRunIndexEntry index)
         => !((query.RunId is { } id && !string.Equals(address.RunId.Value, id, StringComparison.Ordinal))
+            || (query.Environment is { } environment && !string.Equals(address.Environment, environment, StringComparison.Ordinal))
             || (query.Status is { } status && index.Status != status)
             || (query.WorkflowId is { } workflowId && index.WorkflowId != workflowId)
             || (query.WorkflowId is null && query.RunId is null && string.Equals(index.WorkflowId, DraftRuns.RunWorkflowId, StringComparison.Ordinal))

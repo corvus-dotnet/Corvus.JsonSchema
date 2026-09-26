@@ -484,6 +484,72 @@ public sealed class SealingCheckpointStoreTests
         (await Should.ThrowAsync<SealedStartException>(async () => await new SealingCheckpointStore(second, withoutK1Seal).LoadAsync(other, default))).Refusal.ShouldBe(SealedStartRefusal.NoSealKey);
     }
 
+    [TestMethod]
+    public async Task A_blinded_wait_keeps_its_clear_form_inside_the_payload_and_a_reseal_re_parks_it_under_the_write_generation()
+    {
+        // ADR 0065 decision 12: the region carries the blind index alone; the payload, ciphertext to the store, carries
+        // the channel and correlation id it was derived from, so a re-key can re-derive the index under the generation
+        // the runner now writes under, with the run's progress untouched.
+        var inner = new InMemoryWorkflowStateStore();
+        byte[] newerPayloadKey = Enumerable.Range(0, 32).Select(i => (byte)(200 - i)).ToArray();
+        RunnerKeyRing ring = TwoGenerationRing(newerPayloadKey, minimum: null);
+        var store = new SealingCheckpointStore(inner, ring);
+        var older = new WaitIndexBlinder(Production, "k1", PayloadKey);
+        var newer = new WaitIndexBlinder(Production, "k2", newerPayloadKey);
+
+        ring.SelectWriteGeneration(Production, "k1");
+        using (WorkflowRun fresh = WorkflowRun.CreateNew(store, ProductionRun.RunId, "petWorkflow", default, Production))
+        {
+            await fresh.EnqueueAsync(default);
+        }
+
+        using (WorkflowRun run = (await WorkflowRun.ResumeAsync(store, ProductionRun, leaseEpoch: 2, waitBlinder: older))!)
+        {
+            await run.CheckpointAsync(1, default);
+            await run.SuspendForMessageAsync(1, "kyc.verdict", "acct-42", default);
+        }
+
+        WorkflowCheckpoint parked = (await inner.LoadAsync(ProductionRun, default))!.Value;
+        CheckpointIntegrity.KeyIdOf(parked.Row.Span).ShouldBe("k1");
+        WorkflowCheckpointSerializer.ProjectIndex(parked.Row).AwaitingChannel.ShouldBe(older.Blind("kyc.verdict", "acct-42"));
+        System.Text.Encoding.Latin1.GetString(parked.Row.Span).Contains("acct-42", StringComparison.Ordinal).ShouldBeFalse("the clear wait is inside the ciphertext");
+        using (WorkflowCheckpointState opened = WorkflowCheckpointSerializer.Deserialize((await store.LoadAsync(ProductionRun, default))!.Value.Row))
+        {
+            opened.Wait!.Value.IsBlinded.ShouldBeTrue();
+            opened.ClearWait.ShouldBe(WorkflowWait.Message("kyc.verdict", "acct-42"));
+        }
+
+        // The sweep: resumed under the old generation, re-sealed under the new one, parked under the new index.
+        ring.SelectWriteGeneration(Production, "k2");
+        using (WorkflowRun resumed = (await WorkflowRun.ResumeAsync(store, ProductionRun, leaseEpoch: 3, waitBlinder: newer))!)
+        {
+            int cursor = resumed.Cursor;
+            long sequence = resumed.Sequence;
+            await resumed.ResealAsync(default);
+            resumed.Cursor.ShouldBe(cursor);
+            resumed.Status.ShouldBe(WorkflowRunStatus.Suspended);
+            resumed.Sequence.ShouldBe(sequence + 1, "a re-seal is a new checkpoint");
+        }
+
+        WorkflowCheckpoint resealed = (await inner.LoadAsync(ProductionRun, default))!.Value;
+        CheckpointIntegrity.KeyIdOf(resealed.Row.Span).ShouldBe("k2");
+        WorkflowCheckpointSerializer.ProjectIndex(resealed.Row).AwaitingChannel.ShouldBe(newer.Blind("kyc.verdict", "acct-42"));
+        using WorkflowCheckpointState after = WorkflowCheckpointSerializer.Deserialize((await store.LoadAsync(ProductionRun, default))!.Value.Row);
+        after.ClearWait.ShouldBe(WorkflowWait.Message("kyc.verdict", "acct-42"), "the clear wait travels with the row");
+
+        // A clear wait puts nothing in the payload: the region already carries the channel.
+        var clearStore = new InMemoryWorkflowStateStore();
+        using (WorkflowRun clear = WorkflowRun.CreateNew(clearStore, DevelopmentRun.RunId, "petWorkflow", default, Development))
+        {
+            await clear.SuspendForMessageAsync(0, "kyc.verdict", "acct-1", default);
+        }
+
+        WorkflowCheckpoint clearRow = (await clearStore.LoadAsync(DevelopmentRun, default))!.Value;
+        System.Text.Encoding.UTF8.GetString(clearRow.Row.Span[CheckpointRow.Parse(clearRow.Row.Span).Payload]).ShouldNotContain("\"wait\"");
+        using WorkflowCheckpointState clearState = WorkflowCheckpointSerializer.Deserialize(clearRow.Row);
+        clearState.ClearWait.ShouldBeNull();
+    }
+
     private static RunnerKeyRing TwoGenerationRing(byte[] newerPayloadKey, string? minimum)
     {
         byte[] newerMac = new byte[32];

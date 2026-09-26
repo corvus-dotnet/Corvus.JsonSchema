@@ -138,6 +138,13 @@ public static class ArazzoTelemetry
         Meter.CreateCounter<long>("corvus.arazzo.workflows.refused", "{workflow}", "Runs a runner refused to advance on integrity or anchor grounds");
 
     /// <summary>
+    /// Gets the counter of resting runs a re-key sweep carried from an older key generation to the one the runner
+    /// writes under (ADR 0065 decision 12).
+    /// </summary>
+    public static Counter<long> WorkflowsResealed { get; } =
+        Meter.CreateCounter<long>("corvus.arazzo.workflows.resealed", "{workflow}", "Resting runs re-sealed under the current key generation");
+
+    /// <summary>
     /// Gets the counter for steps executed.
     /// </summary>
     public static Counter<long> StepsExecuted { get; } =

@@ -64,6 +64,17 @@ private half is written to the handoff directory as `production-initiator.key.pe
 `production-seal-key.fingerprint`. The AppHost logs both paths at start (`Sealed-start initiator handoff: ...`). To
 start a production run sealed, as the operator:
 
+The AppHost also provisions a **successor generation** `production-2026-10` (ADR 0065 decision 12): its payload key
+and seal pair are in `runner-production`'s Vault beside the current generation's, the runner lists both
+(`Runner__Environments__0__Generations__0/1`), and only the current one is registered. The handoff directory holds
+the current generation's private seal half (`production-seal-production-2026-09.key.pem`) and the successor's pair
+(`production-seal-production-2026-10.key.pem` and `.pub`). Registering the successor through
+`POST /environments/production/keys` with its possession proof and the outgoing key's rotation signature moves
+`runner-production` to it at its next check, its sweep re-seals production's resting runs (the run detail's
+`keyGeneration` shows the move), and a `start --sealed` still pinned on the old fingerprint follows the chain. The
+live composition test `A_production_rotation_moves_the_runner_to_the_successor_and_re_seals_its_resting_runs` does
+exactly that.
+
 ```bash
 arazzo-runs start onboard-customer 2 --environment production \
   --inputs '{"email":"ada@example.com","fullName":"Ada Lovelace","plan":"pro"}' \

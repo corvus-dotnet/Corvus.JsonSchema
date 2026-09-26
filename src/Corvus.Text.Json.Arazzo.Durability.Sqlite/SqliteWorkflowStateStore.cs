@@ -492,6 +492,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
     {
         var sql = new System.Text.StringBuilder();
         sql.Append("(@runId IS NULL OR RunId = @runId)");
+        sql.Append(" AND (@queryEnvironment IS NULL OR Environment = @queryEnvironment)");
         sql.Append(" AND (@status IS NULL OR Status = @status)");
         sql.Append(" AND (@workflowId IS NULL OR WorkflowId = @workflowId)");
 
@@ -505,6 +506,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
         sql.Append(" AND (@correlationId IS NULL OR CorrelationId = @correlationId)");
 
         command.Parameters.AddWithValue("@runId", (object?)query.RunId ?? DBNull.Value);
+        command.Parameters.AddWithValue("@queryEnvironment", (object?)query.Environment ?? DBNull.Value);
         command.Parameters.AddWithValue("@status", (object?)query.Status?.ToString() ?? DBNull.Value);
         command.Parameters.AddWithValue("@workflowId", (object?)query.WorkflowId ?? DBNull.Value);
 

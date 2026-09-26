@@ -547,7 +547,7 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             }
 
             var fields = entries.ToDictionary(e => (string)e.Name!, e => e.Value);
-            if (!Matches(query, address.RunId.Value, fields))
+            if (!Matches(query, address, fields))
             {
                 continue;
             }
@@ -625,7 +625,7 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             }
 
             var fields = entries.ToDictionary(e => (string)e.Name!, e => e.Value);
-            if (Matches(query, address.RunId.Value, fields) && ++count > cap)
+            if (Matches(query, address, fields) && ++count > cap)
             {
                 return (cap, true);
             }
@@ -638,9 +638,14 @@ public sealed class RedisWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
     // correlation / tags / §14.2 security reach) over a run's hash fields, WITHOUT the keyset cursor: QueryAsync
     // adds the cursor + builds the listing, CountAsync scans with just this. Both share the one predicate so the
     // reach filter cannot drift.
-    private static bool Matches(WorkflowQuery query, string runId, Dictionary<string, RedisValue> fields)
+    private static bool Matches(WorkflowQuery query, in WorkflowRunAddress address, Dictionary<string, RedisValue> fields)
     {
-        if (query.RunId is { } pointRunId && !string.Equals(runId, pointRunId, StringComparison.Ordinal))
+        if (query.RunId is { } pointRunId && !string.Equals(address.RunId.Value, pointRunId, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        if (query.Environment is { } environment && !string.Equals(address.Environment, environment, StringComparison.Ordinal))
         {
             return false;
         }

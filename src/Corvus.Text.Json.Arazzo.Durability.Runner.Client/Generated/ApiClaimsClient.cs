@@ -243,6 +243,77 @@ public sealed class ApiClaimsClient : IApiClaimsClient
         return SendWithBodyAsyncCore<ClaimAwaitingMessageRequest, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.MessageClaimRequest, ClaimAwaitingMessageResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
     }
 
+    /// <summary>
+    /// Claim the resting runs still sealed under an older key generation
+    /// </summary>
+    /// <remarks>
+    /// <para>The re-key sweep's claim (ADR 0065 decision 12). Takes, from the sealed environments the principal is bound to, runs whose stored row is sealed under the named generation and whose lease is free, and returns each with a fresh lease grant; the runner then opens each under the old generation, saves it under the generation it now writes under, re-deriving any blind wait index, and releases it. A run whose lease is held is skipped, never preempted: retirement is enforced by refusing new writes under the old generation, not by taking work away from a runner mid-advance. Terminal runs are not offered, since a finished run is never re-opened. The environment is never a request parameter, for the same reason as every other claim. Like every claim, this returns rows under a lease and so is a bulk read path: it is batch-capped, quota-limited and counted like the others.</para><para>The candidate set is walked in pages: the response carries a page token to pass back for the next pass, so one request never scans an environment end to end.</para>
+    /// </remarks>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
+    public ValueTask<ClaimForRekeyResponse> ClaimForRekeyAsync(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RekeyClaimRequest.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RekeyClaimRequest bodyValue = Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RekeyClaimRequest.CreateBuilder(workspace, body, 30).RootElement;
+        ClaimForRekeyRequest request = new();
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<ClaimForRekeyRequest, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RekeyClaimRequest, ClaimForRekeyResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Claim the resting runs still sealed under an older key generation
+    /// </summary>
+    /// <remarks>
+    /// <para>The re-key sweep's claim (ADR 0065 decision 12). Takes, from the sealed environments the principal is bound to, runs whose stored row is sealed under the named generation and whose lease is free, and returns each with a fresh lease grant; the runner then opens each under the old generation, saves it under the generation it now writes under, re-deriving any blind wait index, and releases it. A run whose lease is held is skipped, never preempted: retirement is enforced by refusing new writes under the old generation, not by taking work away from a runner mid-advance. Terminal runs are not offered, since a finished run is never re-opened. The environment is never a request parameter, for the same reason as every other claim. Like every claim, this returns rows under a lease and so is a bulk read path: it is batch-capped, quota-limited and counted like the others.</para><para>The candidate set is walked in pages: the response carries a page token to pass back for the next pass, so one request never scans an environment end to end.</para>
+    /// </remarks>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
+    public ValueTask<ClaimForRekeyResponse> ClaimForRekeyAsync<TContext>(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RekeyClaimRequest.Source<TContext> body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    #if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+    #endif
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RekeyClaimRequest bodyValue = Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RekeyClaimRequest.CreateBuilder(workspace, in body, 30).RootElement;
+        ClaimForRekeyRequest request = new();
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyAsyncCore<ClaimForRekeyRequest, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.RekeyClaimRequest, ClaimForRekeyResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
+    }
+
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => default;
 

@@ -164,6 +164,14 @@ once the last generation reaching the pin is retired the environment is suspende
 queries the blind wait index under every held generation (`WaitBlindersFor`), so a run parked under an older
 generation still wakes.
 
+`RunnerRekeySweep` is the re-key sweep (decision 12). One `SweepAsync` pass, for every environment holding a
+generation older than the write generation, claims a page of resting runs still sealed under it
+(`runner.ClaimForRekeyAsync`, free leases only, finished runs excluded), resumes each through the sealing store,
+re-seals it under the write generation with `WorkflowRun.ResealAsync` (a new checkpoint at the same cursor and
+status, a blinded wait re-parked under the current blinder) and releases it; a held run is left for a later pass. The
+sample dispatch service runs one pass per poll. The control plane's run detail reports `keyGeneration`, so an
+operator retires a generation once nothing rests under it.
+
 ## Sealing what the client saves
 
 A runner that serves a sealed environment passes its key ring to the client, and from then on every checkpoint row it

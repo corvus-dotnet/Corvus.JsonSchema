@@ -563,6 +563,11 @@ public sealed class MongoWorkflowStateStore : IWorkflowStateStore, IWorkflowWait
             filter = b.And(filter, b.Eq("_id.r", pointRunId));
         }
 
+        if (query.Environment is { } environment)
+        {
+            filter = b.And(filter, b.Eq("environment", environment));
+        }
+
         if (query.Status is { } status)
         {
             filter = b.And(filter, b.Eq("status", status.ToString()));

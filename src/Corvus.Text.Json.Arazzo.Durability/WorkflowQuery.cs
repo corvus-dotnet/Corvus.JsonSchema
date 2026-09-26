@@ -41,7 +41,8 @@ public readonly record struct WorkflowQuery(
     string? CorrelationId = null,
     TagSet Tags = default,
     SecurityFilter? Security = null,
-    string? RunId = null);
+    string? RunId = null,
+    string? Environment = null);
 
 /// <summary>One run in a <see cref="WorkflowRunPage"/>: its full <c>(environment, runId)</c> address and the
 /// indexed projection (ADR 0065 decision 9 — the address, not a bare id, is how a listing row is operated on).</summary>

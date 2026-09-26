@@ -248,6 +248,84 @@ public sealed class RunnerRunCoordinator
     }
 
     /// <summary>
+    /// Takes, for the re-key sweep (ADR 0065 decision 12), resting runs in the principal's sealed environments whose
+    /// stored row is sealed under <paramref name="generation"/> and whose lease is free, and their leases. Terminal
+    /// runs are never offered, a held lease is skipped rather than preempted, and the candidate set is walked a page
+    /// at a time from <paramref name="pageToken"/>, so one request never scans an environment end to end.
+    /// </summary>
+    /// <param name="principal">The authenticated machine principal, which becomes the lease owner.</param>
+    /// <param name="generation">The key generation the wanted rows are sealed under.</param>
+    /// <param name="pageToken">Where the previous pass stopped, or <see langword="null"/> to start over.</param>
+    /// <param name="limit">The most runs to claim, bounded by the deployment.</param>
+    /// <param name="requestedLease">The lease duration the runner asked for, bounded by the deployment.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The claimed runs and the token for the next pass, <see langword="null"/> once the walk reached the end.</returns>
+    public async ValueTask<(IReadOnlyList<ClaimedRunRecord> Claims, string? NextPageToken)> ClaimForRekeyAsync(string principal, string generation, string? pageToken, int? limit, TimeSpan? requestedLease, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(principal);
+        ArgumentException.ThrowIfNullOrEmpty(generation);
+
+        RunnerBindings resolved = await this.bindings.ResolveAsync(principal, cancellationToken).ConfigureAwait(false);
+        if (resolved.Count == 0)
+        {
+            return ([], null);
+        }
+
+        TimeSpan lease = this.options.BoundLease(requestedLease);
+        int wanted = this.options.BoundSweep(limit);
+        var claims = new List<ClaimedRunRecord>(wanted);
+        int considered = 0;
+
+        // The page token names the environment being walked and the store's own continuation within it, so a pass
+        // resumes where the previous one stopped and moves to the next sealed environment once one is exhausted.
+        (int environmentIndex, string? continuation) = RekeyPageToken.Parse(pageToken);
+        for (; environmentIndex < resolved.Environments.Count; environmentIndex++, continuation = null)
+        {
+            string environment = resolved.Environments[environmentIndex];
+            if (resolved.SealedGenerationsOf(environment) is null)
+            {
+                // A clear environment holds no sealed rows to re-key, and is not walked.
+                continue;
+            }
+
+            while (true)
+            {
+                // The store's token is carried as the JSON string it expects, parsed for the life of the query.
+                using ParsedJsonDocument<JsonString>? tokenDocument = continuation is null ? null : RekeyPageToken.AsQueryToken(continuation);
+                using WorkflowRunPage page = await this.waits.QueryAsync(new WorkflowQuery(Environment: environment, Limit: wanted, ContinuationToken: tokenDocument?.RootElement ?? default), cancellationToken).ConfigureAwait(false);
+                foreach (WorkflowRunListing listing in page.Runs)
+                {
+                    if (++considered > this.options.ClaimCandidates || claims.Count >= wanted)
+                    {
+                        // Bounded, like every claim: the runner comes back for the rest with the token below.
+                        return (claims, RekeyPageToken.Write(environmentIndex, continuation));
+                    }
+
+                    if (listing.Index.Status is WorkflowRunStatus.Completed or WorkflowRunStatus.Cancelled)
+                    {
+                        continue;
+                    }
+
+                    await this.TryTakeForRekeyAsync(listing.Address, principal, generation, lease, claims, cancellationToken).ConfigureAwait(false);
+                }
+
+                if (page.NextPageToken.IsEmpty)
+                {
+                    break;
+                }
+
+                continuation = System.Text.Encoding.UTF8.GetString(page.NextPageToken.Span);
+                if (claims.Count >= wanted)
+                {
+                    return (claims, RekeyPageToken.Write(environmentIndex, continuation));
+                }
+            }
+        }
+
+        return (claims, null);
+    }
+
+    /// <summary>
     /// Extends a lease the principal already holds.
     /// </summary>
     /// <param name="principal">The authenticated machine principal.</param>
@@ -449,6 +527,32 @@ public sealed class RunnerRunCoordinator
         await this.store.ReleaseLeaseAsync(held, cancellationToken).ConfigureAwait(false);
     }
 
+    // Leases one re-key candidate and keeps it only if its stored row is sealed under the generation being emptied:
+    // the key id sits in the row's clear header (ADR 0065 decision 4), so the API reads it without a key. Anything
+    // else, a row already under another generation or a run that finished meanwhile, is handed straight back.
+    private async ValueTask TryTakeForRekeyAsync(WorkflowRunAddress address, string principal, string generation, TimeSpan lease, List<ClaimedRunRecord> claims, CancellationToken cancellationToken)
+    {
+        WorkflowLease? acquired = await this.store.AcquireLeaseAsync(address, principal, lease, cancellationToken).ConfigureAwait(false);
+        if (acquired is not { } held)
+        {
+            // Held by a live runner: never preempted, left for a later pass.
+            return;
+        }
+
+        WorkflowCheckpoint? checkpoint = await this.store.LoadAsync(held.Address, cancellationToken).ConfigureAwait(false);
+        if (checkpoint is { } row
+            && string.Equals(CheckpointIntegrity.KeyIdOf(row.Row.Span), generation, StringComparison.Ordinal)
+            && WorkflowCheckpointSerializer.TryProject(row.Row, out CheckpointProjection projection)
+            && projection.Index.Status is not (WorkflowRunStatus.Completed or WorkflowRunStatus.Cancelled))
+        {
+            var grant = new RunnerLeaseGrant(RunnerLeaseToken.Issue(held.Epoch, held.Token), held.ExpiresAt, held.Epoch);
+            claims.Add(new ClaimedRunRecord(held.RunId, projection.Index.WorkflowId, held.Address.Environment, grant));
+            return;
+        }
+
+        await this.store.ReleaseLeaseAsync(held, cancellationToken).ConfigureAwait(false);
+    }
+
     // A waiting run must still be Suspended to be resumable. That is a stricter predicate than a dispatch claim's, and
     // deliberately so: the wait index says a timer fired or a message matched, but the run may have been advanced,
     // completed, or faulted since, and resuming a run that is no longer waiting would re-enter it at a step it has
@@ -544,6 +648,44 @@ public sealed class RunnerRunCoordinator
 
         var grant = new RunnerLeaseGrant(RunnerLeaseToken.Issue(held.Epoch, held.Token), held.ExpiresAt, held.Epoch);
         return new ClaimedRunRecord(held.RunId, entry.WorkflowId, held.Address.Environment, grant);
+    }
+}
+
+/// <summary>
+/// The re-key claim's page token (ADR 0065 decision 12): the index of the environment being walked among the
+/// principal's bindings and the store's own continuation within it, so a pass resumes where the last one stopped.
+/// Opaque to the runner, and worthless to anyone else, since it names nothing but a position.
+/// </summary>
+internal static class RekeyPageToken
+{
+    public static (int EnvironmentIndex, string? Continuation) Parse(string? token)
+    {
+        if (string.IsNullOrEmpty(token))
+        {
+            return (0, null);
+        }
+
+        int split = token.IndexOf(':', StringComparison.Ordinal);
+        if (split < 0 || !int.TryParse(token.AsSpan(0, split), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out int index))
+        {
+            return (0, null);
+        }
+
+        return (index, split + 1 < token.Length ? token[(split + 1)..] : null);
+    }
+
+    public static string Write(int environmentIndex, string? continuation)
+        => string.Concat(environmentIndex.ToString(System.Globalization.CultureInfo.InvariantCulture), ":", continuation);
+
+    // The store takes its own token back as a JSON string value; the document owns the bytes for the query's life.
+    public static ParsedJsonDocument<JsonString> AsQueryToken(string continuation)
+    {
+        int length = System.Text.Encoding.UTF8.GetByteCount(continuation);
+        byte[] quoted = new byte[length + 2];
+        quoted[0] = (byte)'"';
+        System.Text.Encoding.UTF8.GetBytes(continuation, quoted.AsSpan(1, length));
+        quoted[^1] = (byte)'"';
+        return ParsedJsonDocument<JsonString>.Parse(quoted);
     }
 }
 

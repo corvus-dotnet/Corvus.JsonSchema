@@ -34,8 +34,10 @@ public sealed class WorkflowCheckpointState : IDisposable
         Dictionary<string, byte[]> correlationTokens,
         JsonElement inputs,
         PooledUtf8Map<JsonElement> stepOutputs,
-        JsonElement outputs)
+        JsonElement outputs,
+        WorkflowWait? clearWait = null)
     {
+        this.ClearWait = clearWait;
         this.payload = payload;
         this.PayloadSealed = payload is null;
         this.Row = row;
@@ -160,6 +162,9 @@ public sealed class WorkflowCheckpointState : IDisposable
 
     /// <summary>Gets the wait describing why the run is suspended, if it is; cleared when the control plane cancelled or faulted the run.</summary>
     public WorkflowWait? Wait { get; }
+
+    /// <summary>Gets the clear channel and correlation id behind a blinded message wait (ADR 0065 decision 12), from the opened payload; <see langword="null"/> when the wait is not blinded or the payload is sealed.</summary>
+    public WorkflowWait? ClearWait { get; }
 
     /// <summary>Gets the effective fault record: the control plane's budget fault while it is in effect, otherwise the runner's own fault.</summary>
     public WorkflowFault? Fault { get; }

@@ -544,6 +544,7 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
     {
         var sql = new System.Text.StringBuilder();
         sql.Append("(@point_run_id IS NULL OR run_id = @point_run_id)");
+        sql.Append(" AND (@query_environment IS NULL OR environment = @query_environment)");
         sql.Append(" AND (@status IS NULL OR status = @status)");
         sql.Append(" AND (@workflow_id IS NULL OR workflow_id = @workflow_id)");
 
@@ -559,6 +560,7 @@ public sealed class PostgresWorkflowStateStore : IWorkflowStateStore, IWorkflowW
         sql.Append(" AND (@correlation_id IS NULL OR correlation_id = @correlation_id)");
 
         command.Parameters.Add(NullableText("point_run_id", query.RunId));
+        command.Parameters.Add(NullableText("query_environment", query.Environment));
         command.Parameters.Add(NullableText("status", query.Status?.ToString()));
         command.Parameters.Add(NullableText("workflow_id", query.WorkflowId));
         command.Parameters.AddWithValue("draft_id", DraftRuns.RunWorkflowId);

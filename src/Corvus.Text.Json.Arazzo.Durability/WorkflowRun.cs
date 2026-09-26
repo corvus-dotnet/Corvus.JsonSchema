@@ -64,6 +64,10 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
     // message wait this run persists is the blind index rather than the channel and correlation id.
     private readonly Anchoring.WaitIndexBlinder? waitBlinder;
 
+    // ADR 0065 decision 12: the clear channel and correlation id behind a blinded wait, carried inside the payload so
+    // a re-key sweep can re-derive the index under another generation. Null whenever the wait is not a blinded one.
+    private WorkflowWait? clearWait;
+
     // ADR 0065 decision 9: a run started sealed by an initiator says so in every save, and holds the initiator's
     // sealed inputs only until its genesis row is written; a runner that resumes it has opened them by then.
     private readonly bool sealedStart;
@@ -111,8 +115,10 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         string? rerunOf = null,
         ulong? incarnation = null,
         Anchoring.WaitIndexBlinder? waitBlinder = null,
-        bool sealedStart = false)
+        bool sealedStart = false,
+        WorkflowWait? clearWait = null)
     {
+        this.clearWait = clearWait;
         this.RerunOf = rerunOf;
         this.sealedStart = sealedStart;
         this.controlPlane = controlPlane;
@@ -418,7 +424,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
             rerunOf: state.RerunOf,
             incarnation: incarnation,
             waitBlinder: waitBlinder,
-            sealedStart: state.SealedStart);
+            sealedStart: state.SealedStart,
+            clearWait: state.ClearWait);
     }
 
     /// <summary>Loads a run's checkpoint from the store and builds a resumed run from it.</summary>
@@ -773,11 +780,31 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
         var w = WorkflowWait.Message(channel, correlationId);
 
         // For a sealed environment the row carries the blind index and never the channel or the correlation id (ADR
-        // 0065 decision 4); the executor still gets the wait it asked for.
+        // 0065 decision 4); the executor still gets the wait it asked for, and the payload keeps the clear wait so a
+        // re-key can re-derive the index (decision 12).
         this.wait = this.waitBlinder is { } blinder ? WorkflowWait.BlindMessage(blinder.Blind(channel, correlationId)) : w;
+        this.clearWait = this.waitBlinder is null ? null : w;
         await this.PersistAsync(default, cancellationToken).ConfigureAwait(false);
         ArazzoTelemetry.WorkflowsSuspended.Add(1, new KeyValuePair<string, object?>(ArazzoTelemetry.WorkflowIdTag, this.WorkflowId));
         return w;
+    }
+
+    /// <summary>
+    /// Re-seals the run where it rests (ADR 0065 decision 12): persists the same cursor, status and wait as a new
+    /// checkpoint, so the store in between seals it under the generation the runner now writes under, with a blinded
+    /// message wait re-derived from the clear wait the payload carries under the runner's current blinder. Nothing
+    /// about the run's progress changes; only the row's generation, its sequence and the index it is parked under.
+    /// </summary>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A task that completes when the re-sealed checkpoint is durable.</returns>
+    public ValueTask ResealAsync(CancellationToken cancellationToken)
+    {
+        if (this.wait is { IsBlinded: true } && this.clearWait is { Channel: { } channel } clear && this.waitBlinder is { } blinder)
+        {
+            this.wait = WorkflowWait.BlindMessage(blinder.Blind(channel, clear.CorrelationId));
+        }
+
+        return this.PersistAsync(default, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -918,7 +945,8 @@ public sealed class WorkflowRun : IWorkflowRun, IDisposable
                 this.inputs,
                 this.stepOutputs,
                 outputs,
-                this.controlPlaneRegion);
+                this.controlPlaneRegion,
+                this.wait is { IsBlinded: true } ? this.clearWait : null);
 
         WorkflowRunIndexEntry index = WorkflowRunIndexEntry.Project(
             this.WorkflowId,

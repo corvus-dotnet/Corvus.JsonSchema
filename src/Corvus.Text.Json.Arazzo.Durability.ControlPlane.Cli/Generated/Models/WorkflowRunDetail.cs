@@ -298,6 +298,27 @@ public readonly partial struct WorkflowRunDetail
     }
 
     /// <summary>
+    /// Gets the (optional) <c>keyGeneration</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The key generation the run&#39;s stored checkpoint is sealed under (ADR 0065 decisions 5 and 12), read from the row&#39;s clear header. Absent on a clear row. A re-key sweep moves resting runs from an older generation to the current one, and this is how an operator sees a generation empty before retiring it.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString KeyGeneration
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeyGenerationUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the (optional) <c>rebudget</c> property.
     /// </summary>
     /// <remarks>
@@ -765,6 +786,11 @@ public readonly partial struct WorkflowRunDetail
         public const string Id = "id";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="KeyGeneration"/>.
+        /// </summary>
+        public const string KeyGeneration = "keyGeneration";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Rebudget"/>.
         /// </summary>
         public const string Rebudget = "rebudget";
@@ -843,6 +869,11 @@ public readonly partial struct WorkflowRunDetail
         /// Gets the JSON property name for <see cref="Id"/>.
         /// </summary>
         public static ReadOnlySpan<byte> IdUtf8 => "id"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="KeyGeneration"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> KeyGenerationUtf8 => "keyGeneration"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Rebudget"/>.
@@ -928,6 +959,11 @@ public readonly partial struct WorkflowRunDetail
         public static ReadOnlySpan<byte> Id => "id"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="KeyGeneration"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> KeyGeneration => "keyGeneration"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Rebudget"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Rebudget => "rebudget"u8;
@@ -1009,6 +1045,11 @@ public readonly partial struct WorkflowRunDetail
         /// Gets the pre-baked property name blob for <see cref="Id"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Id => [0x45, 0x00, 0x00, 0x00, 0x22, 0x69, 0x64, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="KeyGeneration"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> KeyGeneration => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x6B, 0x65, 0x79, 0x47, 0x65, 0x6E, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Rebudget"/>.

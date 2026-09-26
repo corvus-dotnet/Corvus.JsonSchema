@@ -198,6 +198,69 @@ public sealed class RunnerApiEnvironmentBindingTests
         (await (await host.ClaimMessageAsync(Runner, """{"channel":"kyc.verdict","correlationId":"acct-42","hostedVersions":["adopt-v3"]}""")).Content.ReadAsStringAsync()).Contains(ClearProdRunId, StringComparison.Ordinal).ShouldBeFalse("a sealed environment is never swept by channel");
     }
 
+    [TestMethod]
+    public async Task A_rekey_claim_offers_the_resting_runs_sealed_under_the_named_generation_and_nothing_else()
+    {
+        // ADR 0065 decision 12: the sweep's claim walks the principal's sealed environments for rows still sealed
+        // under the generation being emptied. A row under another generation, a finished run, a run whose lease is
+        // held, and anything in a clear environment are not offered; what is offered comes leased, and a later pass
+        // continues from the returned token.
+        await using Host host = await Host.StartAsync(boundEnvironments: [Development, Production], sealedGenerations: new Dictionary<string, IReadOnlySet<string>>
+        {
+            [Production] = new HashSet<string>(["k1", "k2"]),
+        });
+        byte[] payloadKey = Enumerable.Range(0, 32).Select(i => (byte)i).ToArray();
+        async ValueTask PlantAsync(string runId, string generation, WorkflowRunStatus status)
+        {
+            var address = new WorkflowRunAddress(Production, new WorkflowRunId(runId));
+            byte[] clear = Checkpoint(runId, Production, status, sequence: 2, epoch: 1);
+            await host.PlantStoredAsync(address, SealingCheckpointStore.Seal(clear, address, Keys(generation, payloadKey)));
+        }
+
+        await PlantAsync("0b0000000000000000000000000000c1", "k1", WorkflowRunStatus.Suspended);
+        await PlantAsync("0b0000000000000000000000000000c2", "k1", WorkflowRunStatus.Running);
+        await PlantAsync("0b0000000000000000000000000000c3", "k1", WorkflowRunStatus.Suspended);
+        await PlantAsync("0b0000000000000000000000000000c4", "k1", WorkflowRunStatus.Completed);
+        await PlantAsync("0b0000000000000000000000000000c5", "k2", WorkflowRunStatus.Suspended);
+        await host.SeedAsync(DevRunId, Development, WorkflowRunStatus.Suspended);
+        string held = await host.PlantLeaseAsync("0b0000000000000000000000000000c3", Production, "runner-peer");
+        held.ShouldNotBeNullOrEmpty();
+
+        HttpResponseMessage first = await host.ClaimRekeyAsync(Runner, """{"generation":"k1","limit":1}""");
+        first.StatusCode.ShouldBe(HttpStatusCode.OK, await first.Content.ReadAsStringAsync());
+        using System.Text.Json.JsonDocument page1 = System.Text.Json.JsonDocument.Parse(await first.Content.ReadAsStringAsync());
+        page1.RootElement.GetProperty("claims").GetArrayLength().ShouldBe(1, "bounded by the limit");
+        string? token = page1.RootElement.GetProperty("nextPageToken").GetString();
+        token.ShouldNotBeNullOrEmpty("the walk did not reach the end");
+
+        var offered = new List<string> { page1.RootElement.GetProperty("claims")[0].GetProperty("runId").GetString()! };
+        for (int i = 0; i < 6 && token is not null; i++)
+        {
+            HttpResponseMessage next = await host.ClaimRekeyAsync(Runner, $$"""{"generation":"k1","limit":8,"pageToken":"{{token}}"}""");
+            next.StatusCode.ShouldBe(HttpStatusCode.OK);
+            using System.Text.Json.JsonDocument page = System.Text.Json.JsonDocument.Parse(await next.Content.ReadAsStringAsync());
+            foreach (System.Text.Json.JsonElement claim in page.RootElement.GetProperty("claims").EnumerateArray())
+            {
+                offered.Add(claim.GetProperty("runId").GetString()!);
+                claim.GetProperty("environment").GetString().ShouldBe(Production);
+                claim.GetProperty("lease").GetProperty("token").GetString().ShouldNotBeNullOrEmpty();
+            }
+
+            token = page.RootElement.TryGetProperty("nextPageToken", out System.Text.Json.JsonElement more) ? more.GetString() : null;
+        }
+
+        // Under k1, resting, free, and not finished.
+        offered.OrderBy(id => id, StringComparer.Ordinal).ShouldBe(["0b0000000000000000000000000000c1", "0b0000000000000000000000000000c2"]);
+        token.ShouldBeNull("the walk reached the end");
+
+        // The offered runs are leased to the caller now; a stranger to production gets nothing at all.
+        (await host.LoadStoredAsync(Production, "0b0000000000000000000000000000c1")).ShouldNotBeNull();
+        HttpResponseMessage unbound = await host.ClaimRekeyAsync("runner-unbound", """{"generation":"k1"}""");
+        unbound.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using System.Text.Json.JsonDocument none = System.Text.Json.JsonDocument.Parse(await unbound.Content.ReadAsStringAsync());
+        none.RootElement.GetProperty("claims").GetArrayLength().ShouldBe(0);
+    }
+
     // The keys a runner holds for production under one generation (ADR 0065 decision 5).
     private static RunnerEnvironmentKeys Keys(string keyId, byte[] payloadKey)
     {
@@ -307,6 +370,22 @@ public sealed class RunnerApiEnvironmentBindingTests
         public Task<HttpResponseMessage> GetSealKeyAsync(string principal, string environment)
             => this.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"/environments/{environment}/sealKey"), principal);
 
+        public Task<HttpResponseMessage> ClaimRekeyAsync(string principal, string body)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, "/rekeyClaims")
+            {
+                Content = new StringContent(body, System.Text.Encoding.UTF8, "application/json"),
+            };
+            return this.SendAsync(request, principal);
+        }
+
+        // Puts a row into the store as a runner's save would leave it, for tests of what the API offers over it.
+        public async ValueTask PlantStoredAsync(WorkflowRunAddress address, byte[] row)
+        {
+            WorkflowCheckpoint? current = await store.LoadAsync(address, default);
+            await store.SaveAsync(address, row, WorkflowCheckpointSerializer.ProjectIndex(row), current?.Etag ?? WorkflowEtag.None, default);
+        }
+
         public Task<HttpResponseMessage> ClaimMessageAsync(string principal, string body)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, "/messageClaims")
@@ -316,11 +395,11 @@ public sealed class RunnerApiEnvironmentBindingTests
             return this.SendAsync(request, principal);
         }
 
-        public async ValueTask<string> PlantLeaseAsync(string runId, string environment)
+        public async ValueTask<string> PlantLeaseAsync(string runId, string environment, string owner = Runner)
         {
             // The wire header is the server-minted composite (epoch + store token), exactly what a claim
             // response would carry; the store token alone is not a presentable lease.
-            WorkflowLease? lease = await store.AcquireLeaseAsync(new WorkflowRunAddress(environment, new WorkflowRunId(runId)), Runner, TimeSpan.FromMinutes(5), default);
+            WorkflowLease? lease = await store.AcquireLeaseAsync(new WorkflowRunAddress(environment, new WorkflowRunId(runId)), owner, TimeSpan.FromMinutes(5), default);
             return RunnerLeaseToken.Issue(lease!.Value.Epoch, lease.Value.Token);
         }
 

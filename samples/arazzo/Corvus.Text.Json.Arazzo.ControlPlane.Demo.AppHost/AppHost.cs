@@ -30,6 +30,12 @@ string checkpointProtectionKey = Convert.ToBase64String(System.Security.Cryptogr
 // runner writes rows under this id and the runner API accepts production rows only under an active generation.
 string productionPayloadKey = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
 const string productionKeyId = "production-2026-09";
+// The SUCCESSOR generation (ADR 0065 decision 12), provisioned ahead of its registration: its payload key and seal
+// pair go into runner-production's Vault beside the current generation's, and the runner lists both, so the tenant
+// operator can rotate by registering the successor with the outgoing key's signature and every runner follows without
+// a restart, re-sealing resting runs as it goes. Only the current generation is registered at seed time.
+const string productionSuccessorKeyId = "production-2026-10";
+string productionSuccessorPayloadKey = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
 
 // The production environment's SEAL key pair (ADR 0065 decision 9): the P-256 key an initiator wraps a sealed start's
 // inputs to. The control plane registers the PUBLIC half as the generation's seal key (ExampleSeed reads it from
@@ -40,13 +46,22 @@ const string productionKeyId = "production-2026-09";
 // the CLI is told to pin. Both fresh per composition boot; a deployment provisions them from its own key management.
 string productionSealPublicKey;
 string productionSealPrivateKey;
+string productionSealPrivateKeyPem;
+string productionSuccessorSealPublicKey;
+string productionSuccessorSealPrivateKey;
+string productionSuccessorSealPrivateKeyPem;
 string productionInitiatorPublicKey;
 string productionInitiatorPrivateKeyPem;
 using (var sealKey = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256))
+using (var successorSealKey = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256))
 using (var initiatorKey = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256))
 {
     productionSealPublicKey = Convert.ToBase64String(sealKey.ExportSubjectPublicKeyInfo());
     productionSealPrivateKey = Convert.ToBase64String(sealKey.ExportPkcs8PrivateKey());
+    productionSealPrivateKeyPem = sealKey.ExportPkcs8PrivateKeyPem();
+    productionSuccessorSealPublicKey = Convert.ToBase64String(successorSealKey.ExportSubjectPublicKeyInfo());
+    productionSuccessorSealPrivateKey = Convert.ToBase64String(successorSealKey.ExportPkcs8PrivateKey());
+    productionSuccessorSealPrivateKeyPem = successorSealKey.ExportPkcs8PrivateKeyPem();
     productionInitiatorPublicKey = Convert.ToBase64String(initiatorKey.ExportSubjectPublicKeyInfo());
     productionInitiatorPrivateKeyPem = initiatorKey.ExportPkcs8PrivateKeyPem();
 }
@@ -196,6 +211,13 @@ string initiatorKeyPath = Path.Combine(signingHandoffDir, "production-initiator.
 string sealKeyFingerprintPath = Path.Combine(signingHandoffDir, "production-seal-key.fingerprint");
 File.WriteAllText(initiatorKeyPath, productionInitiatorPrivateKeyPem);
 File.WriteAllText(sealKeyFingerprintPath, productionSealKeyFingerprint);
+
+// The rotation handoff (ADR 0065 decision 12): the tenant operator holds the seal pairs, so the outgoing generation's
+// private half (which signs the rotation) and the successor's public half (which is registered) and private half are
+// written beside them. `production-seal-<generation>.key.pem` is PKCS#8 PEM, `.pub` is base64 SPKI.
+File.WriteAllText(Path.Combine(signingHandoffDir, $"production-seal-{productionKeyId}.key.pem"), productionSealPrivateKeyPem);
+File.WriteAllText(Path.Combine(signingHandoffDir, $"production-seal-{productionSuccessorKeyId}.key.pem"), productionSuccessorSealPrivateKeyPem);
+File.WriteAllText(Path.Combine(signingHandoffDir, $"production-seal-{productionSuccessorKeyId}.pub"), productionSuccessorSealPublicKey);
 Environment.SetEnvironmentVariable("ARAZZO_INITIATOR_HANDOFF_DIR", signingHandoffDir);
 Console.WriteLine($"Sealed-start initiator handoff: {initiatorKeyPath} (initiator key), {sealKeyFingerprintPath} (seal key fingerprint {productionSealKeyFingerprint})");
 
@@ -320,7 +342,11 @@ string approleTrustScript =
     $"vault kv put secret/arazzo/payload-keys/production key={productionPayloadKey}; " +
     // The private half of production's seal key (decision 9), at the path runner-production's key ring references
     // (vault://secret/arazzo/seal-keys/production#key), so that runner alone opens production's sealed starts.
-    $"vault kv put secret/arazzo/seal-keys/production key={productionSealPrivateKey}; ";
+    $"vault kv put secret/arazzo/seal-keys/production key={productionSealPrivateKey}; " +
+    // The successor generation's keys (decision 12), provisioned ahead of its registration so the rotation is a
+    // registration and nothing else; the runner holds both and moves to the successor once it is registered.
+    $"vault kv put secret/arazzo/payload-keys/{productionSuccessorKeyId} key={productionSuccessorPayloadKey}; " +
+    $"vault kv put secret/arazzo/seal-keys/{productionSuccessorKeyId} key={productionSuccessorSealPrivateKey}; ";
 
 // EXAMPLE-ONLY (seedExampleData): dev-dummy API keys for the sample's source services, at the Vault paths the seeded
 // credential *references* point at (vault://secret/arazzo/<source>#api-key). A real deployment omits this and provisions
@@ -670,8 +696,15 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner-product
     // The key ring (ADR 0065 decisions 5 and 10): production, under the registered generation, from the runner's own
     // Vault, sealed. Nothing about keys comes from the control plane.
     .WithEnvironment("Runner__Environments__0__Environment", "production")
-    .WithEnvironment("Runner__Environments__0__KeyId", productionKeyId)
-    .WithEnvironment("Runner__Environments__0__PayloadKeyRef", "vault://secret/arazzo/payload-keys/production#key")
+    // Two generations, oldest first (ADR 0065 decision 12): the registered one and the provisioned successor. The
+    // runner writes under the newest the control plane holds active that reaches the pinned fingerprint, so it moves
+    // to the successor the moment the operator registers it with the outgoing key's signature.
+    .WithEnvironment("Runner__Environments__0__Generations__0__KeyId", productionKeyId)
+    .WithEnvironment("Runner__Environments__0__Generations__0__PayloadKeyRef", "vault://secret/arazzo/payload-keys/production#key")
+    .WithEnvironment("Runner__Environments__0__Generations__0__SealKeyRef", "vault://secret/arazzo/seal-keys/production#key")
+    .WithEnvironment("Runner__Environments__0__Generations__1__KeyId", productionSuccessorKeyId)
+    .WithEnvironment("Runner__Environments__0__Generations__1__PayloadKeyRef", $"vault://secret/arazzo/payload-keys/{productionSuccessorKeyId}#key")
+    .WithEnvironment("Runner__Environments__0__Generations__1__SealKeyRef", $"vault://secret/arazzo/seal-keys/{productionSuccessorKeyId}#key")
     .WithEnvironment("Runner__Environments__0__Sealed", "true")
     // The pinned fingerprint of the seal key the tenant registered (ADR 0065 decision 10): the runner checks what the
     // control plane advertises for production against it, and suspends production on any other key.
@@ -679,7 +712,6 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner-product
     // The sealed start (ADR 0065 decision 9): the private seal half from the runner's own Vault, and the initiator this
     // runner pins, so a start the operator sealed with the handed-off initiator key opens here and a start anyone else
     // sealed faults at its start.
-    .WithEnvironment("Runner__Environments__0__SealKeyRef", "vault://secret/arazzo/seal-keys/production#key")
     .WithEnvironment("Runner__Environments__0__Initiators__0", productionInitiatorPublicKey)
     .WithEnvironment("Runner__Sources__Onboarding", onboarding.GetEndpoint("http"))
     .WithEnvironment("Runner__Sources__Ledger", ledger.GetEndpoint("http"))

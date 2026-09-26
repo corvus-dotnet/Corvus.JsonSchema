@@ -402,6 +402,47 @@
         }
       }
     },
+    "/rekeyClaims": {
+      "post": {
+        "operationId": "claimForRekey",
+        "tags": [
+          "claims"
+        ],
+        "summary": "Claim the resting runs still sealed under an older key generation",
+        "description": "The re-key sweep's claim (ADR 0065 decision 12). Takes, from the sealed environments the principal is bound to, runs whose stored row is sealed under the named generation and whose lease is free, and returns each with a fresh lease grant; the runner then opens each under the old generation, saves it under the generation it now writes under, re-deriving any blind wait index, and releases it. A run whose lease is held is skipped, never preempted: retirement is enforced by refusing new writes under the old generation, not by taking work away from a runner mid-advance. Terminal runs are not offered, since a finished run is never re-opened. The environment is never a request parameter, for the same reason as every other claim. Like every claim, this returns rows under a lease and so is a bulk read path: it is batch-capped, quota-limited and counted like the others.\n\nThe candidate set is walked in pages: the response carries a page token to pass back for the next pass, so one request never scans an environment end to end.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RekeyClaimRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The runs claimed, possibly none, and where the next pass continues.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RekeyClaims"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/QuotaExceeded"
+          }
+        }
+      }
+    },
     "/hostedVersions": {
       "get": {
         "operationId": "listHostedVersions",
@@ -1067,6 +1108,62 @@
             "description": "The requested lease duration. The server bounds it; a request above the deployment's maximum is granted the maximum rather than refused.",
             "minimum": 1,
             "maximum": 3600
+          }
+        },
+        "additionalProperties": false
+      },
+      "RekeyClaimRequest": {
+        "type": "object",
+        "description": "What the re-key sweep asks for (ADR 0065 decision 12): the key generation whose rows are to be re-sealed, and how many at a time. The environment is absent by design: it is resolved from the principal's bindings, and only sealed environments are walked.",
+        "required": [
+          "generation"
+        ],
+        "properties": {
+          "generation": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "The key generation the wanted rows are sealed under: the one the runner still holds to open them and no longer writes under."
+          },
+          "leaseSeconds": {
+            "title": "RekeyLeaseSeconds",
+            "type": "integer",
+            "description": "The requested lease duration. The server bounds it.",
+            "minimum": 1,
+            "maximum": 3600
+          },
+          "limit": {
+            "title": "RekeyClaimLimit",
+            "type": "integer",
+            "description": "The most runs to claim in this request. The server bounds it.",
+            "minimum": 1,
+            "maximum": 256
+          },
+          "pageToken": {
+            "type": "string",
+            "description": "Where the previous pass stopped, as its response gave it; absent to start from the beginning."
+          }
+        },
+        "additionalProperties": false
+      },
+      "RekeyClaims": {
+        "type": "object",
+        "description": "The runs a re-key pass claimed, each already leased to this runner, and where the next pass continues.",
+        "required": [
+          "claims"
+        ],
+        "properties": {
+          "claims": {
+            "type": "array",
+            "description": "The claimed runs, in no guaranteed order.",
+            "items": {
+              "$ref": "#/components/schemas/ClaimedRun"
+            },
+            "maxItems": 256
+          },
+          "nextPageToken": {
+            "type": "string",
+            "description": "The token to pass as pageToken on the next pass; absent when the walk reached the end of the candidate set, at which point a later pass starts over."
           }
         },
         "additionalProperties": false

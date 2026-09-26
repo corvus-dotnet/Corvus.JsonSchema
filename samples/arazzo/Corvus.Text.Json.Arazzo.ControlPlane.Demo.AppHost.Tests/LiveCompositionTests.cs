@@ -195,6 +195,89 @@ public sealed class LiveCompositionTests
         done.GetProperty("sealedStart").GetBoolean().ShouldBeTrue();
     }
 
+    [TestMethod]
+    [TestCategory("integration")]
+    public async Task A_production_rotation_moves_the_runner_to_the_successor_and_re_seals_its_resting_runs()
+    {
+        if (Environment.GetEnvironmentVariable("ARAZZO_APPHOST_E2E") != "1")
+        {
+            Assert.Inconclusive("Set ARAZZO_APPHOST_E2E=1 (and have a container runtime) to run the full two-process composition e2e.");
+        }
+
+        IDistributedApplicationTestingBuilder appHost =
+            await DistributedApplicationTestingBuilder.CreateAsync<Projects.Corvus_Text_Json_Arazzo_ControlPlane_Demo_AppHost>();
+        await using DistributedApplication app = await appHost.BuildAsync();
+        await app.StartAsync();
+        ResourceNotificationService notifications = app.Services.GetRequiredService<ResourceNotificationService>();
+        await notifications.WaitForResourceHealthyAsync("controlplane", default).WaitAsync(StartupTimeout);
+        await notifications.WaitForResourceHealthyAsync("runner-production", default).WaitAsync(StartupTimeout);
+        using HttpClient http = app.CreateHttpClient("controlplane");
+        http.DefaultRequestHeaders.Add("X-Api-Key", "demo-admin-key");
+
+        // The operator's handoff (ADR 0065 decisions 9 and 12): the initiator key, the fingerprint pinned on the
+        // current generation, the outgoing generation's private seal half and the successor's pair.
+        string handoff = Environment.GetEnvironmentVariable("ARAZZO_INITIATOR_HANDOFF_DIR")!;
+        using var initiator = System.Security.Cryptography.ECDsa.Create();
+        initiator.ImportFromPem(await File.ReadAllTextAsync(Path.Combine(handoff, "production-initiator.key.pem")));
+        string pinnedFingerprint = (await File.ReadAllTextAsync(Path.Combine(handoff, "production-seal-key.fingerprint"))).Trim();
+        using var outgoing = System.Security.Cryptography.ECDsa.Create();
+        outgoing.ImportFromPem(await File.ReadAllTextAsync(Path.Combine(handoff, "production-seal-production-2026-09.key.pem")));
+        using var successor = System.Security.Cryptography.ECDsa.Create();
+        successor.ImportFromPem(await File.ReadAllTextAsync(Path.Combine(handoff, "production-seal-production-2026-10.key.pem")));
+        byte[] successorSpki = Convert.FromBase64String((await File.ReadAllTextAsync(Path.Combine(handoff, "production-seal-production-2026-10.pub"))).Trim());
+
+        // A run that rests in production under the current generation: a sealed start of the asynchronous
+        // onboarding, which parks awaiting a KYC verdict on kyc.verdict and stays parked until one arrives.
+        Stj.JsonElement keys = await PollAsync(http, "/arazzo/v1/environments/production/keys?state=Active", doc => doc.GetProperty("keys").GetArrayLength() > 0, "production's seal key generation is registered");
+        Stj.JsonElement current = keys.GetProperty("keys")[0];
+        current.GetProperty("keyId").GetString().ShouldBe("production-2026-09");
+        byte[] currentSpki = current.GetProperty("sealPublicKey").GetBytesFromBase64();
+        string restingRunId = RunStartInitiator.NewRunId();
+        SealedInputs resting = RunStartInitiator.Seal(currentSpki, "production-2026-09", "production", "onboard-customer-async", 1, restingRunId, """{"email":"resting@example.com","fullName":"Resting Run","plan":"enterprise"}"""u8, initiator);
+        using (var body = new ByteArrayContent(SealedRunStart.Serialize(restingRunId, resting)))
+        {
+            body.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+            using HttpResponseMessage accepted = await http.PostAsync("/arazzo/v1/catalog/onboard-customer-async/versions/1/runs/sealed?environment=production", body);
+            accepted.StatusCode.ShouldBe(HttpStatusCode.Accepted, await accepted.Content.ReadAsStringAsync());
+        }
+
+        Stj.JsonElement parked = await PollAsync(http, $"/arazzo/v1/runs/{restingRunId}", doc => doc.GetProperty("status").GetString() == "Suspended", "the run parks awaiting its KYC verdict under the current generation");
+        parked.GetProperty("keyGeneration").GetString().ShouldBe("production-2026-09");
+
+        // The rotation: the successor is registered with its own possession proof and the outgoing key's signature
+        // over the rotation tuple. Nothing on the runner is edited or restarted.
+        DateTimeOffset notBefore = DateTimeOffset.UtcNow;
+        byte[] tuple = new byte[Corvus.Text.Json.Arazzo.Durability.Environments.EnvironmentKeyPossession.MaxTupleLength("production", "production-2026-10", successorSpki.Length)];
+        int written = Corvus.Text.Json.Arazzo.Durability.Environments.EnvironmentKeyPossession.WriteSignedTuple(tuple, "production", "production-2026-10", successorSpki, notBefore);
+        byte[] possession = successor.SignData(tuple.AsSpan(0, written), System.Security.Cryptography.HashAlgorithmName.SHA256, System.Security.Cryptography.DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
+        byte[] link = Corvus.Text.Json.Arazzo.Durability.Environments.EnvironmentKeyRotation.Sign(outgoing, "production", "production-2026-09", "production-2026-10", successorSpki);
+        string registration = $$"""{"keyId":"production-2026-10","sealPublicKey":"{{Convert.ToBase64String(successorSpki)}}","algorithm":"ES256","notBefore":"{{notBefore:O}}","signature":"{{Convert.ToBase64String(possession)}}","predecessorKeyId":"production-2026-09","rotationSignature":"{{Convert.ToBase64String(link)}}"}""";
+        using (var body = new StringContent(registration, System.Text.Encoding.UTF8, "application/json"))
+        {
+            using HttpResponseMessage registered = await http.PostAsync("/arazzo/v1/environments/production/keys", body);
+            registered.StatusCode.ShouldBe(HttpStatusCode.OK, await registered.Content.ReadAsStringAsync());
+        }
+
+        // runner-production follows the chain at its next check and its sweep re-seals the resting run.
+        Stj.JsonElement resealed = await PollAsync(http, $"/arazzo/v1/runs/{restingRunId}", doc => doc.GetProperty("keyGeneration").GetString() == "production-2026-10", "the re-key sweep carries the resting run to the successor");
+        resealed.GetProperty("status").GetString().ShouldBe("Suspended", "re-sealing changes the row's generation and nothing about the run");
+
+        // A sealed start pinned on the OLD fingerprint follows the chain to the successor and completes there.
+        string chainedRunId = RunStartInitiator.NewRunId();
+        SealedInputs chained = RunStartInitiator.Seal(successorSpki, "production-2026-10", "production", "onboard-customer", 2, chainedRunId, """{"email":"rotated@example.com","fullName":"Rotated Start","plan":"pro"}"""u8, initiator);
+        using (var body = new ByteArrayContent(SealedRunStart.Serialize(chainedRunId, chained)))
+        {
+            body.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+            using HttpResponseMessage accepted = await http.PostAsync("/arazzo/v1/catalog/onboard-customer/versions/2/runs/sealed?environment=production", body);
+            accepted.StatusCode.ShouldBe(HttpStatusCode.Accepted, await accepted.Content.ReadAsStringAsync());
+        }
+
+        Stj.JsonElement done = await PollAsync(http, $"/arazzo/v1/runs/{chainedRunId}", doc => doc.GetProperty("status").GetString() is "Completed" or "Faulted", "the runner opens a start sealed to the successor and completes it");
+        done.GetProperty("status").GetString().ShouldBe("Completed");
+        done.GetProperty("keyGeneration").GetString().ShouldBe("production-2026-10");
+        pinnedFingerprint.ShouldBe(RunStartInitiator.SealKeyFingerprint(currentSpki), "the operator's pin never changed");
+    }
+
     private static async Task<Stj.JsonElement> PollAsync(HttpClient http, string path, Func<Stj.JsonElement, bool> settled, string what)
     {
         Stj.JsonElement last = default;

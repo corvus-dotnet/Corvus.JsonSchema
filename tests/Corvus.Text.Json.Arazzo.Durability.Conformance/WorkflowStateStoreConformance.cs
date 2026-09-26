@@ -660,6 +660,27 @@ public abstract class WorkflowStateStoreConformance
     }
 
     [TestMethod]
+    public async Task Query_filters_by_environment_and_composes_with_the_other_filters()
+    {
+        // ADR 0065 decision 12: the re-key sweep walks one environment's resting runs, so the visibility query takes
+        // the environment as a filter of its own, on every backend, beside the others rather than instead of them.
+        IWorkflowStateStore store = await this.NewStoreAsync();
+        await store.SaveAsync(new WorkflowRunAddress("production", new WorkflowRunId("run-1")), Bytes("a"), Index(WorkflowRunStatus.Suspended), WorkflowEtag.None, default);
+        await store.SaveAsync(new WorkflowRunAddress("production", new WorkflowRunId("run-2")), Bytes("a"), Index(WorkflowRunStatus.Running), WorkflowEtag.None, default);
+        await store.SaveAsync(new WorkflowRunAddress("staging", new WorkflowRunId("run-3")), Bytes("a"), Index(WorkflowRunStatus.Suspended), WorkflowEtag.None, default);
+
+        var index = (IWorkflowWaitIndex)store;
+        WorkflowRunPage production = await index.QueryAsync(new WorkflowQuery(Environment: "production", Limit: 10), default);
+        production.Runs.Select(r => r.Id.Value).OrderBy(id => id, StringComparer.Ordinal).ShouldBe(["run-1", "run-2"]);
+        production.Runs.ShouldAllBe(r => r.Address.Environment == "production");
+        (await index.CountAsync(new WorkflowQuery(Environment: "production"), 100, default)).ShouldBe((2, false));
+        (await index.QueryAsync(new WorkflowQuery(Environment: "staging", Limit: 10), default)).Runs.ShouldHaveSingleItem().Id.Value.ShouldBe("run-3");
+        (await index.QueryAsync(new WorkflowQuery(Environment: "nowhere", Limit: 10), default)).Runs.ShouldBeEmpty();
+        (await index.QueryAsync(new WorkflowQuery(Environment: "production", Status: WorkflowRunStatus.Running, Limit: 10), default)).Runs.ShouldHaveSingleItem().Id.Value.ShouldBe("run-2");
+        (await index.QueryAsync(new WorkflowQuery(Environment: "staging", RunId: "run-1", Limit: 10), default)).Runs.ShouldBeEmpty("the point lookup composes with the environment");
+    }
+
+    [TestMethod]
     public async Task A_run_named_by_id_is_listed_even_when_it_is_a_reserved_kind()
     {
         IWorkflowStateStore store = await this.NewStoreAsync();

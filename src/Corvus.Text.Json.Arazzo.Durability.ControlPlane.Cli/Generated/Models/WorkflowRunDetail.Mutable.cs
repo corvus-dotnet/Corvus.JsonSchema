@@ -364,6 +364,27 @@ public readonly partial struct WorkflowRunDetail
         }
 
         /// <summary>
+        /// Gets the (optional) <c>keyGeneration</c> property.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The key generation the run&#39;s stored checkpoint is sealed under (ADR 0065 decisions 5 and 12), read from the row&#39;s clear header. Absent on a clear row. A re-key sweep moves resting runs from an older generation to the current one, and this is how an operator sees a generation empty before retiring it.
+        /// </para>
+        /// </remarks>
+        public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable KeyGeneration
+        {
+            get
+            {
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeyGenerationUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Mutable value))
+                {
+                    return value;
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
         /// Gets the (optional) <c>rebudget</c> property.
         /// </summary>
         /// <remarks>
@@ -946,6 +967,51 @@ public readonly partial struct WorkflowRunDetail
             }
 
             _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Set the <c>keyGeneration</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetKeyGeneration(scoped in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.KeyGenerationUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeyGenerationUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.KeyGeneration, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Remove the <c>keyGeneration</c> property, if present.
+        /// </summary>
+        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+        public bool RemoveKeyGeneration()
+        {
+            CheckValidInstance();
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.KeyGenerationUtf8);
+            _documentVersion = _parent.Version;
+            return result;
         }
 
         /// <summary>
@@ -1853,6 +1919,7 @@ public readonly partial struct WorkflowRunDetail
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source correlationId = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source environment = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowFault.Source fault = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source keyGeneration = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunRebudget.Source rebudget = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source rerunOf = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source sealedStart = default,
@@ -1870,6 +1937,7 @@ public readonly partial struct WorkflowRunDetail
             correlationId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CorrelationId, ref builder);
             environment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Environment, ref builder);
             fault.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Fault, ref builder);
+            keyGeneration.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.KeyGeneration, ref builder);
             rebudget.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Rebudget, ref builder);
             rerunOf.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RerunOf, ref builder);
             sealedStart.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SealedStart, ref builder);
@@ -1892,6 +1960,7 @@ public readonly partial struct WorkflowRunDetail
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source correlationId = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source environment = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowFault.Source fault = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source keyGeneration = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunRebudget.Source rebudget = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source rerunOf = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source sealedStart = default,
@@ -1899,7 +1968,7 @@ public readonly partial struct WorkflowRunDetail
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source updatedAt = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.Source wait = default)
         {
-            Create(ref _builder, createdAt, cursor, etag, id, status, workflowId, budget, correlationId, environment, fault, rebudget, rerunOf, sealedStart, tags, updatedAt, wait);
+            Create(ref _builder, createdAt, cursor, etag, id, status, workflowId, budget, correlationId, environment, fault, keyGeneration, rebudget, rerunOf, sealedStart, tags, updatedAt, wait);
         }
 
         internal static void Create<TContext>(
@@ -1915,6 +1984,7 @@ public readonly partial struct WorkflowRunDetail
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source correlationId = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source environment = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowFault.Source<TContext> fault = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source keyGeneration = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunRebudget.Source<TContext> rebudget = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source rerunOf = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source sealedStart = default,
@@ -1935,6 +2005,7 @@ public readonly partial struct WorkflowRunDetail
             correlationId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CorrelationId, ref builder);
             environment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Environment, ref builder);
             fault.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Fault, ref builder);
+            keyGeneration.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.KeyGeneration, ref builder);
             rebudget.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Rebudget, ref builder);
             rerunOf.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RerunOf, ref builder);
             sealedStart.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SealedStart, ref builder);
@@ -1958,6 +2029,7 @@ public readonly partial struct WorkflowRunDetail
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source correlationId = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source environment = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowFault.Source<TContext> fault = default,
+            in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source keyGeneration = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunRebudget.Source<TContext> rebudget = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source rerunOf = default,
             in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source sealedStart = default,
@@ -1968,7 +2040,7 @@ public readonly partial struct WorkflowRunDetail
         where TContext : allows ref struct
         #endif
         {
-            Create(context, ref _builder, createdAt, cursor, etag, id, status, workflowId, budget, correlationId, environment, fault, rebudget, rerunOf, sealedStart, tags, updatedAt, wait);
+            Create(context, ref _builder, createdAt, cursor, etag, id, status, workflowId, budget, correlationId, environment, fault, keyGeneration, rebudget, rerunOf, sealedStart, tags, updatedAt, wait);
         }
 
         /// <summary>
@@ -2220,6 +2292,7 @@ public readonly partial struct WorkflowRunDetail
     /// <param name="correlationId">The value of the property.</param>
     /// <param name="environment">The value of the property.</param>
     /// <param name="fault">The value of the property.</param>
+    /// <param name="keyGeneration">The value of the property.</param>
     /// <param name="rebudget">The value of the property.</param>
     /// <param name="rerunOf">The value of the property.</param>
     /// <param name="sealedStart">The value of the property.</param>
@@ -2228,13 +2301,13 @@ public readonly partial struct WorkflowRunDetail
     /// <param name="wait">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInteger.Source cursor, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source etag, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source id, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStatus.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source workflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedExecutionBudget.Source budget = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source correlationId = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source environment = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowFault.Source fault = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunRebudget.Source rebudget = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source rerunOf = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source sealedStart = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunDetail.JsonStringArray.Source tags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source updatedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.Source wait = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInteger.Source cursor, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source etag, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source id, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStatus.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source workflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedExecutionBudget.Source budget = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source correlationId = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source environment = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowFault.Source fault = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source keyGeneration = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunRebudget.Source rebudget = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source rerunOf = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source sealedStart = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunDetail.JsonStringArray.Source tags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source updatedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.Source wait = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(createdAt, cursor, etag, id, status, workflowId, budget, correlationId, environment, fault, rebudget, rerunOf, sealedStart, tags, updatedAt, wait);
+        ovb.Create(createdAt, cursor, etag, id, status, workflowId, budget, correlationId, environment, fault, keyGeneration, rebudget, rerunOf, sealedStart, tags, updatedAt, wait);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -2257,6 +2330,7 @@ public readonly partial struct WorkflowRunDetail
     /// <param name="correlationId">The value of the property.</param>
     /// <param name="environment">The value of the property.</param>
     /// <param name="fault">The value of the property.</param>
+    /// <param name="keyGeneration">The value of the property.</param>
     /// <param name="rebudget">The value of the property.</param>
     /// <param name="rerunOf">The value of the property.</param>
     /// <param name="sealedStart">The value of the property.</param>
@@ -2265,7 +2339,7 @@ public readonly partial struct WorkflowRunDetail
     /// <param name="wait">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInteger.Source cursor, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source etag, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source id, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStatus.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source workflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedExecutionBudget.Source<TContext> budget = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source correlationId = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source environment = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowFault.Source<TContext> fault = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunRebudget.Source<TContext> rebudget = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source rerunOf = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source sealedStart = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunDetail.JsonStringArray.Source<TContext> tags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source updatedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.Source<TContext> wait = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInteger.Source cursor, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source etag, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source id, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStatus.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source workflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedExecutionBudget.Source<TContext> budget = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source correlationId = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source environment = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowFault.Source<TContext> fault = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source keyGeneration = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunRebudget.Source<TContext> rebudget = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source rerunOf = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source sealedStart = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunDetail.JsonStringArray.Source<TContext> tags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source updatedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.Source<TContext> wait = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -2274,7 +2348,7 @@ public readonly partial struct WorkflowRunDetail
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(context, createdAt, cursor, etag, id, status, workflowId, budget, correlationId, environment, fault, rebudget, rerunOf, sealedStart, tags, updatedAt, wait);
+        ovb.Create(context, createdAt, cursor, etag, id, status, workflowId, budget, correlationId, environment, fault, keyGeneration, rebudget, rerunOf, sealedStart, tags, updatedAt, wait);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -2381,6 +2455,7 @@ public readonly partial struct WorkflowRunDetail
     /// <param name="correlationId">The value of the property.</param>
     /// <param name="environment">The value of the property.</param>
     /// <param name="fault">The value of the property.</param>
+    /// <param name="keyGeneration">The value of the property.</param>
     /// <param name="rebudget">The value of the property.</param>
     /// <param name="rerunOf">The value of the property.</param>
     /// <param name="sealedStart">The value of the property.</param>
@@ -2389,7 +2464,7 @@ public readonly partial struct WorkflowRunDetail
     /// <param name="wait">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<WorkflowRunDetail> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInteger.Source cursor, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source etag, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source id, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStatus.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source workflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedExecutionBudget.Source budget = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source correlationId = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source environment = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowFault.Source fault = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunRebudget.Source rebudget = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source rerunOf = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source sealedStart = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunDetail.JsonStringArray.Source tags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source updatedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.Source wait = default, int initialCapacity = 30)
+    public static ParsedJsonDocument<WorkflowRunDetail> Create(in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInteger.Source cursor, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source etag, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source id, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStatus.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source workflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedExecutionBudget.Source budget = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source correlationId = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source environment = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowFault.Source fault = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source keyGeneration = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunRebudget.Source rebudget = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source rerunOf = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source sealedStart = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunDetail.JsonStringArray.Source tags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source updatedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.Source wait = default, int initialCapacity = 30)
     {
         ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
         try
@@ -2397,7 +2472,7 @@ public readonly partial struct WorkflowRunDetail
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             cvb.StartObject();
             Builder ovb = new(cvb);
-            ovb.Create(createdAt, cursor, etag, id, status, workflowId, budget, correlationId, environment, fault, rebudget, rerunOf, sealedStart, tags, updatedAt, wait);
+            ovb.Create(createdAt, cursor, etag, id, status, workflowId, budget, correlationId, environment, fault, keyGeneration, rebudget, rerunOf, sealedStart, tags, updatedAt, wait);
             cvb = ovb._builder;
             cvb.EndObject();
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -2424,6 +2499,7 @@ public readonly partial struct WorkflowRunDetail
     /// <param name="correlationId">The value of the property.</param>
     /// <param name="environment">The value of the property.</param>
     /// <param name="fault">The value of the property.</param>
+    /// <param name="keyGeneration">The value of the property.</param>
     /// <param name="rebudget">The value of the property.</param>
     /// <param name="rerunOf">The value of the property.</param>
     /// <param name="sealedStart">The value of the property.</param>
@@ -2432,7 +2508,7 @@ public readonly partial struct WorkflowRunDetail
     /// <param name="wait">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<WorkflowRunDetail> Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInteger.Source cursor, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source etag, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source id, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStatus.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source workflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedExecutionBudget.Source<TContext> budget = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source correlationId = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source environment = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowFault.Source<TContext> fault = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunRebudget.Source<TContext> rebudget = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source rerunOf = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source sealedStart = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunDetail.JsonStringArray.Source<TContext> tags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source updatedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.Source<TContext> wait = default, int initialCapacity = 30)
+    public static ParsedJsonDocument<WorkflowRunDetail> Create<TContext>(in TContext context, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source createdAt, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonInteger.Source cursor, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source etag, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source id, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunStatus.Source status, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source workflowId, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.ResolvedExecutionBudget.Source<TContext> budget = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source correlationId = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentName.Source environment = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowFault.Source<TContext> fault = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonString.Source keyGeneration = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunRebudget.Source<TContext> rebudget = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.RunId.Source rerunOf = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonBoolean.Source sealedStart = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowRunDetail.JsonStringArray.Source<TContext> tags = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime.Source updatedAt = default, in Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.WorkflowWait.Source<TContext> wait = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -2443,7 +2519,7 @@ public readonly partial struct WorkflowRunDetail
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             cvb.StartObject();
             Builder ovb = new(cvb);
-            ovb.Create(context, createdAt, cursor, etag, id, status, workflowId, budget, correlationId, environment, fault, rebudget, rerunOf, sealedStart, tags, updatedAt, wait);
+            ovb.Create(context, createdAt, cursor, etag, id, status, workflowId, budget, correlationId, environment, fault, keyGeneration, rebudget, rerunOf, sealedStart, tags, updatedAt, wait);
             cvb = ovb._builder;
             cvb.EndObject();
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);

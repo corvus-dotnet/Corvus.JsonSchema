@@ -49,6 +49,7 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     private readonly RunnerKeyRing keyRing;
     private RunStartInputValidator? startInputs;
     private readonly ConcurrentDictionary<(string Environment, string KeyId), WaitIndexBlinder> blinders = new();
+    private readonly ConcurrentDictionary<(string Environment, string KeyId), string?> rekeyPageTokens = new();
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoRunnerClient"/> class over an API transport.</summary>
     /// <param name="transport">The transport to the runner API host.</param>
@@ -336,6 +337,41 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
         return this.ReadClaimsAsync(this.claims.ClaimAwaitingMessageAsync(request, cancellationToken));
     }
 
+    /// <summary>
+    /// Claims, for the re-key sweep (ADR 0065 decision 12), a page of resting runs in this runner's sealed
+    /// environments whose stored row is sealed under <paramref name="generation"/>, taking a lease on each that is
+    /// free; a held run is skipped, never preempted.
+    /// </summary>
+    /// <param name="generation">The key generation the wanted rows are sealed under.</param>
+    /// <param name="pageToken">Where the previous pass stopped, or <see langword="null"/> to start over.</param>
+    /// <param name="limit">The most runs to claim; the server bounds it.</param>
+    /// <param name="lease">The lease duration to request; the server bounds it.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The claimed runs and the token for the next pass.</returns>
+    public async ValueTask<RunnerRekeyClaims> ClaimForRekeyAsync(string generation, string? pageToken, int? limit = null, TimeSpan? lease = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(generation);
+        RekeyClaimRequest.Source request = RekeyClaimRequest.Build(
+            generation: generation,
+            leaseSeconds: lease is { } requested ? (RekeyClaimRequest.RekeyLeaseSeconds.Source)(long)requested.TotalSeconds : default,
+            limit: limit is { } count ? (RekeyClaimRequest.RekeyClaimLimit.Source)(long)count : default,
+            pageToken: pageToken is { } token ? (Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.JsonString.Source)token : default);
+
+        await using ClaimForRekeyResponse response = await this.claims.ClaimForRekeyAsync(request, cancellationToken).ConfigureAwait(false);
+        if (response.StatusCode != 200)
+        {
+            throw Refused("claim runs for re-key", response.StatusCode);
+        }
+
+        var claimed = new List<RunnerClaim>(response.OkBody.Claims.GetArrayLength());
+        foreach (ClaimedRun run in response.OkBody.Claims.EnumerateArray())
+        {
+            claimed.Add(this.Retain(run));
+        }
+
+        return new RunnerRekeyClaims(claimed, response.OkBody.NextPageToken.IsNotUndefined() ? (string)response.OkBody.NextPageToken : null);
+    }
+
     private async ValueTask<IReadOnlyList<RunnerClaim>> ReadClaimsAsync(ValueTask<ClaimDueTimersResponse> pending)
     {
         await using ClaimDueTimersResponse response = await pending.ConfigureAwait(false);
@@ -365,22 +401,27 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
         var result = new List<RunnerClaim>(claims.GetArrayLength());
         foreach (ClaimedRun claimed in claims.EnumerateArray())
         {
-            var runId = new WorkflowRunId((string)claimed.RunId);
-
-            // The environment is half of the run's address (ADR 0065 §9): every later operation for this run names it
-            // in the route, so the retention is keyed by the full address — the same id claimed in two environments is
-            // two runs with two leases. One materialisation serves both the claim and the entry.
-            string environment = (string)claimed.Environment;
-            this.heldLeases[new WorkflowRunAddress(environment, runId)] = new HeldLease(environment, (string)claimed.Lease.Token);
-            result.Add(new RunnerClaim(
-                runId,
-                (string)claimed.WorkflowId,
-                environment,
-                ((NodaTime.OffsetDateTime)claimed.Lease.ExpiresAt).ToDateTimeOffset(),
-                (long)claimed.Lease.Epoch));
+            result.Add(this.Retain(claimed));
         }
 
         return result;
+    }
+
+    private RunnerClaim Retain(in ClaimedRun claimed)
+    {
+        var runId = new WorkflowRunId((string)claimed.RunId);
+
+        // The environment is half of the run's address (ADR 0065 §9): every later operation for this run names it
+        // in the route, so the retention is keyed by the full address — the same id claimed in two environments is
+        // two runs with two leases. One materialisation serves both the claim and the entry.
+        string environment = (string)claimed.Environment;
+        this.heldLeases[new WorkflowRunAddress(environment, runId)] = new HeldLease(environment, (string)claimed.Lease.Token);
+        return new RunnerClaim(
+            runId,
+            (string)claimed.WorkflowId,
+            environment,
+            ((NodaTime.OffsetDateTime)claimed.Lease.ExpiresAt).ToDateTimeOffset(),
+            (long)claimed.Lease.Epoch);
     }
 
     private async ValueTask<RunnerClaim?> ReadClaimAsync(ValueTask<ClaimRunResponse> pending)
@@ -578,6 +619,20 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
 
     private WaitIndexBlinder BlinderFor(string environment, in RunnerGenerationKeys generation)
         => this.blinders.GetOrAdd((environment, generation.KeyId), static (key, g) => new WaitIndexBlinder(key.Environment, g.KeyId, g.PayloadKey), generation);
+
+    /// <summary>Where the re-key sweep's last pass over a generation of an environment stopped (ADR 0065 decision 12), or <see langword="null"/> to start over.</summary>
+    /// <param name="environment">The environment.</param>
+    /// <param name="generation">The generation being emptied.</param>
+    /// <returns>The page token the last pass was given for the next one.</returns>
+    public string? RekeyPageTokenOf(string environment, string generation)
+        => this.rekeyPageTokens.TryGetValue((environment, generation), out string? token) ? token : null;
+
+    /// <summary>Records where a re-key pass stopped, for the next one.</summary>
+    /// <param name="environment">The environment.</param>
+    /// <param name="generation">The generation being emptied.</param>
+    /// <param name="nextPageToken">The token the pass was given for the next one, or <see langword="null"/> when the walk reached the end and the next pass starts over.</param>
+    public void RememberRekeyPageToken(string environment, string generation, string? nextPageToken)
+        => this.rekeyPageTokens[(environment, generation)] = nextPageToken;
 
     /// <summary>Gets the environments on this runner's key ring, whose waits are blinded.</summary>
     public IEnumerable<string> BlindedEnvironments => this.keyRing.Environments;

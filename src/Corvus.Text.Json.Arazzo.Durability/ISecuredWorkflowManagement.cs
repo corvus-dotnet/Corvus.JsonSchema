@@ -256,7 +256,8 @@ public readonly record struct WorkflowRunDetail(
     ExecutionBudget? Budget = null,
     string? RerunOf = null,
     RunRebudget? Rebudget = null,
-    bool SealedStart = false);
+    bool SealedStart = false,
+    string? KeyGeneration = null);
 
 /// <summary>
 /// What a re-budget would do for a run that faulted on its execution budget (ADR 0068): the budget the run would be

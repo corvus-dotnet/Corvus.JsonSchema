@@ -146,6 +146,52 @@ public sealed class ArazzoRunnerClaimsHandler : IApiClaimsHandler
         return ClaimAwaitingMessageResult.Ok(Project(claims), workspace);
     }
 
+    /// <inheritdoc/>
+    public async ValueTask<ClaimForRekeyResult> HandleClaimForRekeyAsync(ClaimForRekeyParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        if (this.principals.Resolve() is not { } principal)
+        {
+            return ClaimForRekeyResult.Forbidden(RunnerProblems.NoPrincipal(), workspace);
+        }
+
+        // The re-key claim returns rows under a lease like every other claim (ADR 0065 decision 12), so it draws on
+        // the same quota: batch-capped by the coordinator, rate-limited here.
+        if (await this.quotas.TryAcquireAsync(RunnerQuotaKind.Claim, principal, 1, cancellationToken).ConfigureAwait(false) is { } refused)
+        {
+            return ClaimForRekeyResult.TooManyRequests(RunnerProblems.QuotaExceeded(refused), workspace, RunnerQuotaGate.RetryAfterSeconds(refused));
+        }
+
+        (IReadOnlyList<ClaimedRunRecord> claims, string? nextPageToken) = await this.coordinator.ClaimForRekeyAsync(
+            principal,
+            (string)parameters.Body.Generation,
+            parameters.Body.PageToken.IsNotUndefined() ? (string)parameters.Body.PageToken : null,
+            Limit(parameters.Body.Limit),
+            Lease(parameters.Body.LeaseSeconds),
+            cancellationToken).ConfigureAwait(false);
+
+        var page = new RekeyPage(claims, nextPageToken);
+        return ClaimForRekeyResult.Ok(
+            RekeyClaims.Build(
+                in page,
+                RekeyClaims.ClaimedRunArray.Build(
+                    in page,
+                    static (in RekeyPage source, ref RekeyClaims.ClaimedRunArray.Builder builder) =>
+                    {
+                        foreach (ClaimedRunRecord run in source.Claims)
+                        {
+                            builder.AddItem(ClaimedRun.Build(
+                                environment: run.Environment,
+                                lease: LeaseGrant.Build(epoch: run.Lease.Epoch, expiresAt: run.Lease.ExpiresAt, token: run.Lease.Token),
+                                runId: run.RunId.Value,
+                                workflowId: run.WorkflowId));
+                        }
+                    }),
+                nextPageToken: page.NextPageToken is { } next ? (Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source)next : default),
+            workspace);
+    }
+
+    private readonly record struct RekeyPage(IReadOnlyList<ClaimedRunRecord> Claims, string? NextPageToken);
+
     // Threaded rather than captured: the claims are the builder's context, so projecting a sweep allocates no closure
     // however many runs it returns.
     private static ClaimedRuns.Source<IReadOnlyList<ClaimedRunRecord>> Project(IReadOnlyList<ClaimedRunRecord> claims)
@@ -193,7 +239,11 @@ public sealed class ArazzoRunnerClaimsHandler : IApiClaimsHandler
 
     private static int? Limit(MessageClaimRequest.LimitEntity limit) => limit.IsNotUndefined() ? (int)limit : null;
 
+    private static int? Limit(RekeyClaimRequest.RekeyClaimLimit limit) => limit.IsNotUndefined() ? (int)limit : null;
+
     private static TimeSpan? Lease(TimerClaimRequest.LeaseSecondsEntity seconds) => seconds.IsNotUndefined() ? TimeSpan.FromSeconds((long)seconds) : null;
 
     private static TimeSpan? Lease(MessageClaimRequest.LeaseSecondsEntity seconds) => seconds.IsNotUndefined() ? TimeSpan.FromSeconds((long)seconds) : null;
+
+    private static TimeSpan? Lease(RekeyClaimRequest.RekeyLeaseSeconds seconds) => seconds.IsNotUndefined() ? TimeSpan.FromSeconds((long)seconds) : null;
 }

@@ -43,6 +43,7 @@ public sealed class WorkflowDispatchService(
     {
         var dispatcher = new RunnerApiDispatcher(client);
         var worker = new RunnerApiWorker(client);
+        var rekey = new RunnerRekeySweep(client);
 
         using var timer = new PeriodicTimer(PollInterval);
         while (!stoppingToken.IsCancellationRequested)
@@ -63,6 +64,14 @@ public sealed class WorkflowDispatchService(
                     {
                         logger.LogInformation("Dispatched {Dispatched} new/orphaned run(s); resumed {Resumed} due run(s).", dispatched, resumed);
                     }
+                }
+
+                // The re-key sweep (ADR 0065 decision 12): one pass per poll while the ring holds a generation older
+                // than the one written under. Nothing to do, and no round trip, for a ring with one generation.
+                int resealed = await rekey.SweepAsync(stoppingToken).ConfigureAwait(false);
+                if (resealed > 0)
+                {
+                    logger.LogInformation("Re-sealed {Resealed} resting run(s) under the current key generation.", resealed);
                 }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)

@@ -314,6 +314,93 @@ public static class ApiEndpointRegistration
                 securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "runner:execute" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "runner:execute" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
             __ClaimAwaitingMessageEndpoint);
 
+        IEndpointConventionBuilder __ClaimForRekeyEndpoint = app.MapPost("/rekeyClaims", async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RekeyClaimRequest>? bodyDoc = null;
+            try
+            {
+                try
+                {
+                    bodyDoc = await ParsedJsonDocument<Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.RekeyClaimRequest>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!bodyDoc!.RootElement.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                ClaimForRekeyParams parameters = new()
+                {
+                    Body = bodyDoc!.RootElement,
+                }
+                ;
+
+                ClaimForRekeyResult result = await claimsHandler.HandleClaimForRekeyAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                context.Response.StatusCode = result.StatusCode;
+                result.WriteResponseHeaders<Microsoft.AspNetCore.Http.IHeaderDictionary>(static (name, value, headers) =>
+                {
+                    headers.Append(System.Text.Encoding.UTF8.GetString(name), System.Text.Encoding.UTF8.GetString(value));
+                }, context.Response.Headers);
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
+            }
+        }
+        );
+        configureEndpoint?.Invoke(
+            new EndpointDescriptor(
+                operationId: "claimForRekey",
+                methodName: "ClaimForRekey",
+                httpMethod: "POST",
+                routeTemplate: "/rekeyClaims",
+                tags: new[] { "claims" },
+                isCallback: false,
+                securityRequirements: new EndpointSecurityRequirementSet[] { new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("oauth2", new[] { "runner:execute" }, "oauth2") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("openIdConnect", new[] { "runner:execute" }, "openIdConnect") }, false), new EndpointSecurityRequirementSet(new EndpointSecurityRequirement[] { new EndpointSecurityRequirement("mtls", System.Array.Empty<string>(), "mutualTLS") }, false) }),
+            __ClaimForRekeyEndpoint);
+
         IEndpointConventionBuilder __RenewLeaseEndpoint = app.MapPost("/environments/{environment}/runs/{runId}/lease/renewal", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -1426,6 +1513,16 @@ public static class ApiEndpointRegistration
         /// Gets the scopes required by <c>ClaimAwaitingMessage</c> for the <c>OpenIdConnect</c> scheme.
         /// </summary>
         public static readonly string[] ClaimAwaitingMessageOpenIdConnectScopes = ["runner:execute"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ClaimForRekey</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] ClaimForRekeyOauth2Scopes = ["runner:execute"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>ClaimForRekey</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] ClaimForRekeyOpenIdConnectScopes = ["runner:execute"];
 
         /// <summary>
         /// Gets the scopes required by <c>ListHostedVersions</c> for the <c>Oauth2</c> scheme.

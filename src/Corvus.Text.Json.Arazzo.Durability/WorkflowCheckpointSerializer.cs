@@ -27,8 +27,11 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// (ADR 0065 decision 4), <c>{ "kind": "Message", "index" }</c>: exactly one of the two shapes.</para>
 /// <para>The payload is likewise closed:</para>
 /// <code>
-/// { "correlationTokens": { "&lt;name&gt;": "&lt;base64&gt;" }, "inputs"?: &lt;json&gt;, "outputs"?: &lt;json&gt;, "stepOutputs": { "&lt;stepId&gt;": &lt;json&gt; } }
+/// { "correlationTokens": { "&lt;name&gt;": "&lt;base64&gt;" }, "inputs"?: &lt;json&gt;, "outputs"?: &lt;json&gt;, "stepOutputs": { "&lt;stepId&gt;": &lt;json&gt; }, "wait"?: { "channel", "correlationId"? } }
 /// </code>
+/// <para>The payload's <c>wait</c> is the clear form of a blinded message wait (ADR 0065 decision 12): the channel and
+/// correlation id the runner region's blind index was derived from, inside the ciphertext, so a re-key sweep can
+/// re-derive the index under another generation. Present exactly when the region's wait is blinded.</para>
 /// <para>
 /// An unknown member in either is a malformed row, never data: the envelope is what the control plane reads without a
 /// key, so it cannot be allowed to become a channel. The step-output and inputs elements serialize natively (they
@@ -51,6 +54,7 @@ public static class WorkflowCheckpointSerializer
     /// <param name="stepOutputs">The per-step <c>outputs</c> products.</param>
     /// <param name="outputs">The final workflow <c>outputs</c>, if the run has completed (an undefined element omits the member).</param>
     /// <param name="controlPlaneRegion">The control-plane region, carried verbatim from the row the run was loaded from (empty for a fresh run whose control plane decided nothing yet).</param>
+    /// <param name="clearWait">The clear channel and correlation id of a blinded message wait (ADR 0065 decision 12), carried inside the payload; <see langword="null"/> when the wait is not a blinded message wait.</param>
     /// <returns>The row.</returns>
     public static byte[] Serialize(
         in CheckpointEnvelope envelope,
@@ -59,7 +63,8 @@ public static class WorkflowCheckpointSerializer
         in JsonElement inputs,
         PooledUtf8Map<JsonElement> stepOutputs,
         in JsonElement outputs,
-        ReadOnlySpan<byte> controlPlaneRegion)
+        ReadOnlySpan<byte> controlPlaneRegion,
+        WorkflowWait? clearWait = null)
     {
         ArgumentNullException.ThrowIfNull(envelope.WorkflowId);
         ArgumentException.ThrowIfNullOrEmpty(envelope.Environment);
@@ -80,7 +85,7 @@ public static class WorkflowCheckpointSerializer
             Utf8JsonWriter payloadWriter = workspace.RentWriterAndBuffer(WriterOptions, DefaultBufferSize, out IByteBufferWriter payloadBuffer);
             try
             {
-                WritePayload(payloadWriter, correlationTokens, inputs, stepOutputs, outputs);
+                WritePayload(payloadWriter, correlationTokens, inputs, stepOutputs, outputs, clearWait);
                 payloadWriter.Flush();
                 return CheckpointRow.WriteClear(envelopeBuffer.WrittenSpan, payloadBuffer.WrittenSpan, controlPlaneRegion);
             }
@@ -203,6 +208,7 @@ public static class WorkflowCheckpointSerializer
             Dictionary<string, byte[]>? correlationTokens = null;
             JsonElement inputs = default;
             JsonElement outputs = default;
+            WorkflowWait? clearWait = null;
             foreach (JsonProperty<JsonElement> property in root.EnumerateObject())
             {
                 if (property.NameEquals("correlationTokens"u8))
@@ -220,6 +226,20 @@ public static class WorkflowCheckpointSerializer
                 else if (property.NameEquals("outputs"u8))
                 {
                     outputs = property.Value;
+                }
+                else if (property.NameEquals("wait"u8))
+                {
+                    // The clear wait behind the region's blind index (decision 12).
+                    JsonElement clear = property.Value;
+                    if (clear.ValueKind != JsonValueKind.Object
+                        || !clear.TryGetProperty("channel"u8, out JsonElement clearChannel)
+                        || clearChannel.ValueKind != JsonValueKind.String
+                        || (clear.TryGetProperty("correlationId"u8, out JsonElement clearCorrelation) && clearCorrelation.ValueKind != JsonValueKind.String))
+                    {
+                        throw ThrowHelper.GetCheckpointRegionMalformedMemberException(PayloadRegion, "wait");
+                    }
+
+                    clearWait = WorkflowWait.Message(clearChannel.GetString()!, clearCorrelation.ValueKind == JsonValueKind.String ? clearCorrelation.GetString() : null);
                 }
                 else if (property.NameEquals("stepOutputs"u8))
                 {
@@ -248,7 +268,8 @@ public static class WorkflowCheckpointSerializer
                 correlationTokens ?? throw ThrowHelper.GetCheckpointRegionMissingMemberException(PayloadRegion, "correlationTokens"),
                 inputs,
                 stepOutputs ?? throw ThrowHelper.GetCheckpointRegionMissingMemberException(PayloadRegion, "stepOutputs"),
-                outputs);
+                outputs,
+                clearWait);
         }
         catch
         {
@@ -877,7 +898,7 @@ public static class WorkflowCheckpointSerializer
     }
 
     // The payload in its fixed property order.
-    private static void WritePayload(Utf8JsonWriter writer, IReadOnlyDictionary<string, byte[]> correlationTokens, in JsonElement inputs, PooledUtf8Map<JsonElement> stepOutputs, in JsonElement outputs)
+    private static void WritePayload(Utf8JsonWriter writer, IReadOnlyDictionary<string, byte[]> correlationTokens, in JsonElement inputs, PooledUtf8Map<JsonElement> stepOutputs, in JsonElement outputs, WorkflowWait? clearWait = null)
     {
         writer.WriteStartObject();
         writer.WriteStartObject("correlationTokens"u8);
@@ -897,6 +918,21 @@ public static class WorkflowCheckpointSerializer
         }
 
         WriteStepOutputs(writer, stepOutputs);
+
+        // The clear wait behind a blind index (decision 12): only ever a message wait with a channel, and only inside
+        // the payload, which the store encrypts; the region carries the index alone.
+        if (clearWait is { Kind: WorkflowWaitKind.Message, Channel: { } clearChannel })
+        {
+            writer.WriteStartObject("wait"u8);
+            writer.WriteString("channel"u8, clearChannel);
+            if (clearWait.Value.CorrelationId is { } clearCorrelation)
+            {
+                writer.WriteString("correlationId"u8, clearCorrelation);
+            }
+
+            writer.WriteEndObject();
+        }
+
         writer.WriteEndObject();
     }
 

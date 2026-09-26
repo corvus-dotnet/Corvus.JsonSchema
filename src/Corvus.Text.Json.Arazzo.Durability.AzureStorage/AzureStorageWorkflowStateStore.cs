@@ -743,6 +743,11 @@ public sealed class AzureStorageWorkflowStateStore : IWorkflowStateStore, IWorkf
             filter += TableClient.CreateQueryFilter($" and Status eq {status.ToString()}");
         }
 
+        if (query.Environment is { } environment)
+        {
+            filter += TableClient.CreateQueryFilter($" and PartitionKey eq {environment}");
+        }
+
         if (query.WorkflowId is { } workflowId)
         {
             filter += TableClient.CreateQueryFilter($" and WorkflowId eq {workflowId}");

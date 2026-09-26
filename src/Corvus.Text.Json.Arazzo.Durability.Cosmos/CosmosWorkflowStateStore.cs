@@ -670,6 +670,12 @@ public sealed class CosmosWorkflowStateStore : IWorkflowStateStore, IWorkflowWai
             parameters.Add(("@status", status.ToString()));
         }
 
+        if (query.Environment is { } environment)
+        {
+            conditions.Add("c.environment = @environment");
+            parameters.Add(("@environment", environment));
+        }
+
         if (query.WorkflowId is { } workflowId)
         {
             conditions.Add("c.workflowId = @workflowId");
