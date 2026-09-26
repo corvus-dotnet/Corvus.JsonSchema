@@ -169,6 +169,40 @@ public sealed class SealedStartTests
         (await RunnerKeyRing.BuildAsync([RunnerKeyRingEntry.Clear("development")], secrets: null, default)).Admits("development").ShouldBeTrue("no secrets needed for a clear entry");
         (await Should.ThrowAsync<InvalidOperationException>(async () => await RunnerKeyRing.BuildAsync([RunnerKeyRingEntry.Clear("development"), RunnerKeyRingEntry.Clear("development")], secrets: null, default))).Message.ShouldContain("more than once");
 
+        // Several generations (decision 12): listed oldest first, written under the newest by default, each with its
+        // own payload key and, when the runner opens sealed starts there, its own seal key; the minimum has to be one
+        // held; a generation listed twice, and an entry naming both the list and the single form, do not build.
+        var twoGenerations = new MapSecretResolver(new Dictionary<string, string>
+        {
+            ["PAYLOAD_KEY"] = Convert.ToBase64String(PayloadKey),
+            ["PAYLOAD_KEY_2"] = Convert.ToBase64String(Enumerable.Range(0, 32).Select(i => (byte)(99 - i)).ToArray()),
+            ["SEAL_KEY"] = Convert.ToBase64String(sealPkcs8),
+        });
+        RunnerKeyRing rotated = await RunnerKeyRing.BuildAsync(
+            [new RunnerKeyRingEntry("production", Sealed: true, SealKeyFingerprint: "pinned", Initiators: [initiatorSpki], MinimumKeyId: "k1", Generations: [new RunnerKeyGeneration("k1", SecretRef.Parse("env://PAYLOAD_KEY"), SecretRef.Parse("env://SEAL_KEY")), new RunnerKeyGeneration("k2", SecretRef.Parse("env://PAYLOAD_KEY_2"))])], twoGenerations, default);
+        rotated.TryGet("production", out RunnerEnvironmentKeys rotatedKeys).ShouldBeTrue();
+        rotatedKeys.KeyId.ShouldBe("k2", "the newest is written under");
+        rotatedKeys.GenerationCount.ShouldBe(2);
+        rotatedKeys.Accepts("k1").ShouldBeTrue();
+        rotatedKeys.Accepts("k3").ShouldBeFalse();
+        rotatedKeys.OpensSealedStarts.ShouldBeTrue("k1 holds a seal key and an initiator is pinned");
+        rotatedKeys.TryGetGeneration("k1", out RunnerGenerationKeys k1).ShouldBeTrue();
+        k1.SealPrivateKey.ShouldBe(sealPkcs8);
+        rotatedKeys.TryGetGeneration("k2", out RunnerGenerationKeys k2).ShouldBeTrue();
+        k2.SealPrivateKey.ShouldBeNull();
+        rotated.SelectWriteGeneration("production", "k1").ShouldBeTrue();
+        rotated.TryGet("production", out RunnerEnvironmentKeys reselected).ShouldBeTrue();
+        reselected.KeyId.ShouldBe("k1");
+        reselected.PayloadKey.ShouldBe(PayloadKey);
+        (await Should.ThrowAsync<InvalidOperationException>(async () => await RunnerKeyRing.BuildAsync(
+            [new RunnerKeyRingEntry("production", Sealed: true, SealKeyFingerprint: "pinned", MinimumKeyId: "k0", Generations: [new RunnerKeyGeneration("k1", SecretRef.Parse("env://PAYLOAD_KEY")), new RunnerKeyGeneration("k2", SecretRef.Parse("env://PAYLOAD_KEY_2"))])], twoGenerations, default))).Message.ShouldContain("minimum");
+        (await Should.ThrowAsync<InvalidOperationException>(async () => await RunnerKeyRing.BuildAsync(
+            [new RunnerKeyRingEntry("production", Sealed: true, SealKeyFingerprint: "pinned", Generations: [new RunnerKeyGeneration("k1", SecretRef.Parse("env://PAYLOAD_KEY")), new RunnerKeyGeneration("k1", SecretRef.Parse("env://PAYLOAD_KEY_2"))])], twoGenerations, default))).Message.ShouldContain("more than once");
+        (await Should.ThrowAsync<InvalidOperationException>(async () => await RunnerKeyRing.BuildAsync(
+            [new RunnerKeyRingEntry("production", Sealed: true, KeyId: "k1", PayloadKey: SecretRef.Parse("env://PAYLOAD_KEY"), SealKeyFingerprint: "pinned", Generations: [new RunnerKeyGeneration("k2", SecretRef.Parse("env://PAYLOAD_KEY_2"))])], twoGenerations, default))).Message.ShouldContain("one form");
+        (await Should.ThrowAsync<InvalidOperationException>(async () => await RunnerKeyRing.BuildAsync(
+            [new RunnerKeyRingEntry("production", Sealed: true, SealKeyFingerprint: "pinned", Generations: [new RunnerKeyGeneration("k1", SecretRef.Parse("env://PAYLOAD_KEY"), SecretRef.Parse("env://SEAL_KEY")), new RunnerKeyGeneration("k2", SecretRef.Parse("env://PAYLOAD_KEY_2"))])], twoGenerations, default))).Message.ShouldContain("initiator", customMessage: "a seal key on any generation needs a pinned initiator");
+
         // A seal key that is not a P-256 key, and an initiator that is not a P-256 public key, refuse the build.
         using var p384 = ECDsa.Create(ECCurve.NamedCurves.nistP384);
         var wrongKeys = new MapSecretResolver(new Dictionary<string, string>

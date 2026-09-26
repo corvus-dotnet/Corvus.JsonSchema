@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-09-25T06:18:29.4795682\u002B00:00",
+  "generatedAt": "2026-09-26T10:15:41.5063214\u002B00:00",
   "generatedFiles": [
     "GetAccessGrantsRequest.cs",
     "GetAccessGrantsResponse.cs",
@@ -772,6 +772,9 @@
     "Models/EnvironmentKeyRegistration.KeyIdEntity.cs",
     "Models/EnvironmentKeyRegistration.KeyIdEntity.Mutable.cs",
     "Models/EnvironmentKeyRegistration.KeyIdEntity.JsonSchema.cs",
+    "Models/EnvironmentKeyRegistration.PredecessorKeyIdEntity.cs",
+    "Models/EnvironmentKeyRegistration.PredecessorKeyIdEntity.Mutable.cs",
+    "Models/EnvironmentKeyRegistration.PredecessorKeyIdEntity.JsonSchema.cs",
     "Models/EnvironmentKeyRetirementNote.cs",
     "Models/EnvironmentKeyRetirementNote.Mutable.cs",
     "Models/EnvironmentKeyRetirementNote.JsonSchema.cs",
@@ -1657,9 +1660,9 @@
     "Models/Corvus__UnionAttribute.cs",
     "Models/CorvusJsonSchemaProgram.cs"
   ],
-  "generatorVersion": "1.0.0\u002Bfaf30bf6d1d1aa22630bbb25f9c7d01c7c57fc74",
+  "generatorVersion": "1.0.0\u002B7d256a6f28e8cfc5265ac45360a4e8ed9e055c51",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client",
-  "specFileHash": "c6186fed8c00575f77a7bdf0c32d1e93930ad6f2bd3ff503269257c0145cf673",
+  "specFileHash": "ca32bed531e99ec98e1223308c17d4628e487f6cf8ad3da1b44b2300e7ba1dda",
   "specVersion": "3.2"
 }

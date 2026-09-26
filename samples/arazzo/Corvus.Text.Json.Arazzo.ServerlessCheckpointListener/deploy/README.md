@@ -19,7 +19,10 @@ The listener terminates a function's plaintext checkpoint, so for a sealed envir
 11) it is the host that holds the environment payload key. It reads its allowlist from the same configuration shape
 the application runner uses, as Container App env vars: `Runner__Environments__0__Environment`,
 `Runner__Environments__0__Sealed`, and for a keyed entry `Runner__Environments__0__KeyId`,
-`Runner__Environments__0__PayloadKeyRef` and `Runner__Environments__0__SealKeyFingerprint`. The allowlist is default
+`Runner__Environments__0__PayloadKeyRef` and `Runner__Environments__0__SealKeyFingerprint`, or several generations
+under `Runner__Environments__0__Generations__N__KeyId` and `..__PayloadKeyRef`, oldest first (ADR 0065 decision 12);
+the listener checks nothing over the wire, so it writes under the newest generation listed and a successor is listed
+only once it is registered. The allowlist is default
 deny (decision 10): the listener terminates checkpoints for the environments it names and refuses every other, so the
 deploy script names the environment it serves even when that environment is open. The payload key reference is an `env://` or `file://` reference into the
 listener's own container, so the key itself is a Container App secret referenced by env

@@ -16,7 +16,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The seal key generations the control plane advertises for an environment (ADR 0065 decision 10): what a runner compares to the fingerprint pinned in its own allowlist. Not a secret, and not authoritative: the pin is the authority, and this is the claim it checks.
+/// The seal key generations the control plane advertises for an environment (ADR 0065 decision 10): what a runner compares to the fingerprint pinned in its own allowlist. Not a secret, and not authoritative: the pin is the authority, and this is the claim it checks. Each generation carries its rotation link (decision 12), so a runner holding several generations selects the newest active one that reaches its pin along verified links and writes under it.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]

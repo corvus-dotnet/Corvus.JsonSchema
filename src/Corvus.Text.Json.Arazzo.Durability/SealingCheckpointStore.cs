@@ -14,8 +14,9 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// the runner's checkpoint store that, for an environment its <see cref="RunnerKeyRing"/> holds, encrypts the payload
 /// of every clear row it saves (<see cref="CheckpointPayloadCipher"/>), seals the row with the unified MAC
 /// (<see cref="CheckpointIntegrity"/>), and on every load verifies the MAC, decrypts the payload and hands back a
-/// clear row. A load whose MAC does not verify, that names a generation the ring does not hold, or whose payload does
-/// not decrypt faults before any of its envelope is trusted; a clear row for an environment the runner serves sealed
+/// clear row. A load whose MAC does not verify, that names a generation the ring does not hold or accept, or whose
+/// payload does not decrypt faults before any of its envelope is trusted; a clear row for an environment the runner
+/// serves sealed
 /// is refused the same way, other than the genesis row. The run itself stays crypto-free: it sees clear rows go out
 /// and come back exactly as before, and nothing above this store ever holds a key.
 /// </summary>
@@ -31,8 +32,8 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// lease-holding runner's: the runner client refuses that combination.
 /// </para>
 /// <para>
-/// A sealed start's genesis row (decision 9) is opened here too: the seal key generation has to be the one the ring
-/// holds, the initiator's signature has to verify under a pinned initiator key, and the inputs are opened under the
+/// A sealed start's genesis row (decision 9) is opened here too: the seal key generation has to be one the ring holds
+/// with its private seal half, the initiator's signature has to verify under a pinned initiator key, and the inputs are opened under the
 /// binding re-derived from the run's own address and the envelope's workflow id, never from anything else in the row.
 /// A start that does not open is a <see cref="SealedStartException"/> carrying the row, so the runner can fault the
 /// run at its start rather than claim it again and again; a runner with no seal key for the environment opens none.
@@ -47,6 +48,11 @@ namespace Corvus.Text.Json.Arazzo.Durability;
 /// serverless checkpoint coordinator faulting a run on its budget over a row it loaded here) is a clear row by then,
 /// and is encrypted again under a fresh salt, which is what the salt-per-operation rule of decision 5 requires. A
 /// row that already names a key generation is not one this store re-seals: it refuses rather than encrypt twice.
+/// </para>
+/// <para>
+/// A ring may hold several generations of an environment (decision 12): a row under any of them at or above the
+/// entry's minimum opens, under that generation's keys, and every save goes out under the generation the ring
+/// currently writes under, so a run last saved under an older generation is carried to the newer one by its next save.
 /// </para>
 /// </remarks>
 public sealed class SealingCheckpointStore : IWorkflowCheckpointStore, IWorkflowCheckpointFlush
@@ -122,8 +128,8 @@ public sealed class SealingCheckpointStore : IWorkflowCheckpointStore, IWorkflow
 
     /// <summary>
     /// Opens an encrypted row: verifies its MAC, decrypts its payload and returns the clear row, with the runner
-    /// region and the control-plane region as they were. A MAC that does not verify, a generation other than the one
-    /// held, and a payload that does not authenticate are one and the same refusal.
+    /// region and the control-plane region as they were. A MAC that does not verify, a generation the keys do not
+    /// hold or accept, and a payload that does not authenticate are one and the same refusal.
     /// </summary>
     /// <param name="sealedRow">The encrypted row.</param>
     /// <param name="address">The run's address.</param>
@@ -135,8 +141,9 @@ public sealed class SealingCheckpointStore : IWorkflowCheckpointStore, IWorkflow
     {
         CheckpointRowLayout layout = CheckpointRow.Parse(sealedRow.Span);
         if (layout.Algorithm != CheckpointAlgorithm.Aes256Gcm
-            || !string.Equals(keys.KeyId, CheckpointIntegrity.KeyIdOf(sealedRow.Span), StringComparison.Ordinal)
-            || !CheckpointIntegrity.Verify(sealedRow.Span, keys.EnvelopeMac)
+            || CheckpointIntegrity.KeyIdOf(sealedRow.Span) is not { } keyId
+            || !keys.TryGetGeneration(keyId, out RunnerGenerationKeys generation)
+            || !CheckpointIntegrity.Verify(sealedRow.Span, generation.EnvelopeMac)
             || !WorkflowCheckpointSerializer.TryReadSequence(sealedRow, out long sequence))
         {
             throw ThrowHelper.GetCheckpointIntegrityException(address);
@@ -148,7 +155,7 @@ public sealed class SealingCheckpointStore : IWorkflowCheckpointStore, IWorkflow
         Span<byte> plaintext = rented.AsSpan(0, ciphertext.Length);
         try
         {
-            CheckpointPayloadCipher.Decrypt(keys.PayloadKey, address.Environment, keys.KeyId, address.RunId.Value, (ulong)sequence, row[layout.Salt], row[layout.Nonce], row[layout.Tag], ciphertext, plaintext);
+            CheckpointPayloadCipher.Decrypt(generation.PayloadKey, address.Environment, generation.KeyId, address.RunId.Value, (ulong)sequence, row[layout.Salt], row[layout.Nonce], row[layout.Tag], ciphertext, plaintext);
             return CheckpointRow.WriteClear(row[layout.RunnerRegion], plaintext, row[layout.ControlPlaneRegion]);
         }
         catch (CryptographicException)
@@ -228,11 +235,11 @@ public sealed class SealingCheckpointStore : IWorkflowCheckpointStore, IWorkflow
         }
 
         if (!this.ring.TryGet(address.Environment, out RunnerEnvironmentKeys keys)
-            || !string.Equals(keys.KeyId, keyId, StringComparison.Ordinal)
-            || !CheckpointIntegrity.Verify(checkpoint.Row.Span, keys.EnvelopeMac))
+            || !keys.TryGetGeneration(keyId, out RunnerGenerationKeys generation)
+            || !CheckpointIntegrity.Verify(checkpoint.Row.Span, generation.EnvelopeMac))
         {
-            // A generation this runner does not hold and a MAC that does not verify are the same refusal: the row is
-            // not one this runner can vouch for, and saying which would be an oracle on the key ring.
+            // A generation this runner does not hold or accept and a MAC that does not verify are the same refusal:
+            // the row is not one this runner can vouch for, and saying which would be an oracle on the key ring.
             throw ThrowHelper.GetCheckpointIntegrityException(address);
         }
 
@@ -275,14 +282,21 @@ public sealed class SealingCheckpointStore : IWorkflowCheckpointStore, IWorkflow
     {
         ReadOnlyMemory<byte> row = checkpoint.Row;
         CheckpointRowLayout layout = CheckpointRow.Parse(row.Span);
-        if (!keys.OpensSealedStarts || keys.SealPrivateKey is not { } sealKey || keys.InitiatorKeys is not { } initiators)
+        if (!keys.OpensSealedStarts || keys.InitiatorKeys is not { } initiators)
         {
             throw ThrowHelper.GetSealedStartException(address, SealedStartRefusal.NoSealKey, row, checkpoint.Etag);
         }
 
-        if (!string.Equals(keys.KeyId, CheckpointIntegrity.KeyIdOf(row.Span), StringComparison.Ordinal))
+        // The seal was made to one of the environment's registered generations (decision 12): the row names it, and
+        // the runner opens it under that generation's private seal half, whichever generation it currently writes under.
+        if (CheckpointIntegrity.KeyIdOf(row.Span) is not { } sealGeneration || !keys.TryGetGeneration(sealGeneration, out RunnerGenerationKeys generation))
         {
             throw ThrowHelper.GetSealedStartException(address, SealedStartRefusal.UnknownGeneration, row, checkpoint.Etag);
+        }
+
+        if (generation.SealPrivateKey is not { } sealKey)
+        {
+            throw ThrowHelper.GetSealedStartException(address, SealedStartRefusal.NoSealKey, row, checkpoint.Etag);
         }
 
         // The binding is re-derived from what the runner knows on its own account: the address it claimed, and the
@@ -300,8 +314,8 @@ public sealed class SealingCheckpointStore : IWorkflowCheckpointStore, IWorkflow
         ReadOnlySpan<byte> enc = row.Span[layout.Salt];
         ReadOnlySpan<byte> ciphertext = row.Span[layout.Payload];
         ReadOnlySpan<byte> signature = row.Span[layout.Mac];
-        byte[] binding = new byte[SealedStartSignature.BindingLength(address.Environment, baseWorkflowId, keys.KeyId, address.RunId.Value)];
-        SealedStartSignature.WriteBinding(address.Environment, baseWorkflowId, versionNumber, keys.KeyId, address.RunId.Value, binding);
+        byte[] binding = new byte[SealedStartSignature.BindingLength(address.Environment, baseWorkflowId, generation.KeyId, address.RunId.Value)];
+        SealedStartSignature.WriteBinding(address.Environment, baseWorkflowId, versionNumber, generation.KeyId, address.RunId.Value, binding);
         bool signed = false;
         foreach (byte[] initiator in initiators)
         {
@@ -383,8 +397,8 @@ public sealed class SealingCheckpointStore : IWorkflowCheckpointStore, IWorkflow
             return new WorkflowCheckpoint(OpenSealedGenesis(checkpoint, address, keys), checkpoint.Etag);
         }
 
-        if (!string.Equals(keys.KeyId, keyId, StringComparison.Ordinal)
-            || !CheckpointIntegrity.Verify(checkpoint.Row.Span, keys.EnvelopeMac)
+        if (!keys.TryGetGeneration(keyId, out RunnerGenerationKeys generation)
+            || !CheckpointIntegrity.Verify(checkpoint.Row.Span, generation.EnvelopeMac)
             || !WorkflowCheckpointSerializer.TryProject(checkpoint.Row, out CheckpointProjection verified))
         {
             // Table row 5: a row whose MAC does not verify has no trustworthy sequence, and is a hard fault the

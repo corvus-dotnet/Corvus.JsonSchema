@@ -80,7 +80,7 @@ public sealed class ControlPlaneKeyRetirementInvariantTests
 
         await CreateEnvironmentAsync(host, "production", "acme");
         await host.PostAsync("/environments/production/keys", Registration(first, "production", "k1"), "acme");
-        await host.PostAsync("/environments/production/keys", Registration(second, "production", "k2"), "acme");
+        await host.PostAsync("/environments/production/keys", Rotation(second, "production", "k2", first, "k1"), "acme");
         await SeedSecondOwnerGroupAsync(host);
 
         (await host.PostAsync("/environments/production/keys/k1/retirement", "{}", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -100,7 +100,7 @@ public sealed class ControlPlaneKeyRetirementInvariantTests
 
         await CreateEnvironmentAsync(host, "production", "acme");
         await host.PostAsync("/environments/production/keys", Registration(first, "production", "k1"), "acme");
-        await host.PostAsync("/environments/production/keys", Registration(second, "production", "k2"), "acme");
+        await host.PostAsync("/environments/production/keys", Rotation(second, "production", "k2", first, "k1"), "acme");
         await SeedSecondOwnerGroupAsync(host);
 
         (await host.PostAsync("/environments/production/keys/k1/retirement", "{}", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -142,7 +142,7 @@ public sealed class ControlPlaneKeyRetirementInvariantTests
 
         await CreateEnvironmentAsync(host, "production", "acme");
         await host.PostAsync("/environments/production/keys", Registration(first, "production", "k1"), "acme");
-        await host.PostAsync("/environments/production/keys", Registration(second, "production", "k2"), "acme");
+        await host.PostAsync("/environments/production/keys", Rotation(second, "production", "k2", first, "k1"), "acme");
         (await host.PostAsync("/environments/production/keys/k1/retirement", "{}", "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
         await SeedSecondOwnerGroupAsync(host);
@@ -160,6 +160,22 @@ public sealed class ControlPlaneKeyRetirementInvariantTests
 
         TenantEnvironmentSealing.IsPlatform(tenant.RootElement).ShouldBeFalse();
         TenantEnvironmentSealing.IsPlatform(platform.RootElement).ShouldBeTrue();
+    }
+
+    // A rotation (ADR 0065 decision 12): the new key's own possession proof plus the predecessor's signature over the
+    // rotation tuple, made with the outgoing private seal half.
+    private static string Rotation(ECDsa key, string environment, string keyId, ECDsa predecessor, string predecessorKeyId, ECDsa? linkSignedBy = null)
+    {
+        byte[] spki = key.ExportSubjectPublicKeyInfo();
+        DateTimeOffset notBefore = DateTimeOffset.UtcNow;
+        byte[] tuple = new byte[EnvironmentKeyPossession.MaxTupleLength(environment, keyId, spki.Length)];
+        int written = EnvironmentKeyPossession.WriteSignedTuple(tuple, environment, keyId, spki, notBefore);
+        byte[] signature = key.SignData(tuple.AsSpan(0, written), HashAlgorithmName.SHA256, DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
+        byte[] link = EnvironmentKeyRotation.Sign(linkSignedBy ?? predecessor, environment, predecessorKeyId, keyId, spki);
+
+        return $$"""
+            {"keyId":"{{keyId}}","sealPublicKey":"{{Convert.ToBase64String(spki)}}","algorithm":"ES256","notBefore":"{{notBefore:O}}","signature":"{{Convert.ToBase64String(signature)}}","predecessorKeyId":"{{predecessorKeyId}}","rotationSignature":"{{Convert.ToBase64String(link)}}"}
+            """;
     }
 
     private static string Registration(ECDsa key, string environment, string keyId)

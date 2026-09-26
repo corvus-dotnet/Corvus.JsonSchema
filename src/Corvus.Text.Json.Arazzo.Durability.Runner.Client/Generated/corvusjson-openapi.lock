@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-09-26T06:45:04.3644230\u002B00:00",
+  "generatedAt": "2026-09-26T10:14:51.8954751\u002B00:00",
   "generatedFiles": [
     "ClaimRunRequest.cs",
     "ClaimRunResponse.cs",
@@ -198,6 +198,6 @@
   "generatorVersion": "1.0.0\u002B7d256a6f28e8cfc5265ac45360a4e8ed9e055c51",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.Runner.Client",
-  "specFileHash": "bcd11c5df6dbce2305ab01618dc76278c9060070263c004d15dc04c93a6d7d69",
+  "specFileHash": "58170dea53d528d3050cf8f6eec9adf5310213b839a25f20516abf011999b723",
   "specVersion": "3.2"
 }

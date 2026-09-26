@@ -16,7 +16,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A request to register a key generation for an environment (ADR 0065). Self-authenticating: the registrant signs the framed tuple (&quot;environment-key-registration&quot;, environment, keyId, sealPublicKey, notBefore) with the private half of sealPublicKey, and the server verifies against the presented key. There is no server-issued challenge to fetch first, because the signed content fully determines the effect, so replaying a registration re-registers the identical generation and changes nothing. Every field is length-framed before signing, so a different split of the same bytes cannot yield the same signature.
+/// A request to register a key generation for an environment (ADR 0065). Self-authenticating: the registrant signs the framed tuple (&quot;environment-key-registration&quot;, environment, keyId, sealPublicKey, notBefore) with the private half of sealPublicKey, and the server verifies against the presented key. There is no server-issued challenge to fetch first, because the signed content fully determines the effect, so replaying a registration re-registers the identical generation and changes nothing. Every field is length-framed before signing, so a different split of the same bytes cannot yield the same signature. A registration into an environment that already holds a generation is a rotation (ADR 0065 decision 12) and must name its predecessor and carry the predecessor&#39;s signature over the framed rotation tuple (&quot;environment-key-rotation&quot;, environment, predecessorKeyId, keyId, sealPublicKey), made with the predecessor&#39;s private seal half; the link is stored with the generation and advertised with it, so a runner or an initiator that pinned an earlier generation follows the rotation only along links it verifies itself. An environment&#39;s first generation carries no predecessor.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -112,6 +112,48 @@ public readonly partial struct EnvironmentKeyRegistration
         get
         {
             if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.NotBeforeUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonDateTime value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>predecessorKeyId</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The generation this one is rotated from (ADR 0065 decision 12): a generation the environment already holds, active or retired. Required when the environment holds any generation, and refused when it holds none.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentKeyRegistration.PredecessorKeyIdEntity PredecessorKeyId
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PredecessorKeyIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.EnvironmentKeyRegistration.PredecessorKeyIdEntity value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>rotationSignature</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The predecessor&#39;s ES256 signature (base64, IEEE P1363) over the framed rotation tuple, made with the predecessor&#39;s private seal half. Required with predecessorKeyId. Stored on the new generation for its life and advertised to runners and initiators, which verify it against the predecessor&#39;s registered key.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonCorvusBase64String RotationSignature
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RotationSignatureUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client.Models.JsonCorvusBase64String value))
             {
                 return value;
             }
@@ -424,6 +466,16 @@ public readonly partial struct EnvironmentKeyRegistration
         public const string NotBefore = "notBefore";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="PredecessorKeyId"/>.
+        /// </summary>
+        public const string PredecessorKeyId = "predecessorKeyId";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="RotationSignature"/>.
+        /// </summary>
+        public const string RotationSignature = "rotationSignature";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="SealPublicKey"/>.
         /// </summary>
         public const string SealPublicKey = "sealPublicKey";
@@ -447,6 +499,16 @@ public readonly partial struct EnvironmentKeyRegistration
         /// Gets the JSON property name for <see cref="NotBefore"/>.
         /// </summary>
         public static ReadOnlySpan<byte> NotBeforeUtf8 => "notBefore"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="PredecessorKeyId"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> PredecessorKeyIdUtf8 => "predecessorKeyId"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="RotationSignature"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RotationSignatureUtf8 => "rotationSignature"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="SealPublicKey"/>.
@@ -477,6 +539,16 @@ public readonly partial struct EnvironmentKeyRegistration
         public static ReadOnlySpan<byte> NotBefore => "notBefore"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="PredecessorKeyId"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> PredecessorKeyId => "predecessorKeyId"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="RotationSignature"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RotationSignature => "rotationSignature"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="SealPublicKey"/>.
         /// </summary>
         public static ReadOnlySpan<byte> SealPublicKey => "sealPublicKey"u8;
@@ -503,6 +575,16 @@ public readonly partial struct EnvironmentKeyRegistration
         /// Gets the pre-baked property name blob for <see cref="NotBefore"/>.
         /// </summary>
         public static ReadOnlySpan<byte> NotBefore => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x6F, 0x74, 0x42, 0x65, 0x66, 0x6F, 0x72, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="PredecessorKeyId"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> PredecessorKeyId => [0x25, 0x01, 0x00, 0x00, 0x22, 0x70, 0x72, 0x65, 0x64, 0x65, 0x63, 0x65, 0x73, 0x73, 0x6F, 0x72, 0x4B, 0x65, 0x79, 0x49, 0x64, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="RotationSignature"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RotationSignature => [0x35, 0x01, 0x00, 0x00, 0x22, 0x72, 0x6F, 0x74, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x53, 0x69, 0x67, 0x6E, 0x61, 0x74, 0x75, 0x72, 0x65, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="SealPublicKey"/>.

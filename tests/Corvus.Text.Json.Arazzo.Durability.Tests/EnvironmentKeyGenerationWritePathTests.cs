@@ -94,6 +94,38 @@ public sealed class EnvironmentKeyGenerationWritePathTests
     }
 
     [TestMethod]
+    public async Task A_rotation_link_is_written_with_the_successor_and_survives_its_retirement()
+    {
+        // ADR 0065 decision 12: the predecessor id and its signature are facts of the generation for its whole life,
+        // so a chain walked years later still verifies through a retired generation.
+        IEnvironmentStore store = new InMemoryEnvironmentStore();
+        WorkflowEtag etag = await AddAsync(store, "production", "Production", null);
+        etag = await RegisterAsync(store, "production", etag, OneActiveGeneration);
+        using ParsedJsonDocument<Environment>? stored = await store.GetAsync("production", AccessContext.System, default);
+        using ParsedJsonDocument<JsonElement> spki = ParsedJsonDocument<JsonElement>.Parse("\"BBBB\"");
+        using ParsedJsonDocument<JsonElement> algorithm = ParsedJsonDocument<JsonElement>.Parse("\"ES256\"");
+        using ParsedJsonDocument<JsonElement> signature = ParsedJsonDocument<JsonElement>.Parse("\"c2ln\"");
+        DateTimeOffset at = new(2026, 8, 1, 11, 0, 0, TimeSpan.Zero);
+        using ParsedJsonDocument<Environment> rotated = Environment.DraftWithKeyRegistered(stored!.RootElement, "k2", spki.RootElement, algorithm.RootElement, "alice", at, "k1", signature.RootElement);
+        (await store.UpdateAsync("production", rotated.RootElement, stored.RootElement.EtagValue, "alice", AccessContext.System, default))!.Dispose();
+
+        using ParsedJsonDocument<Environment>? fetched = await store.GetAsync("production", AccessContext.System, default);
+        List<Environment.EnvironmentKeyGeneration> generations = Generations(fetched!.RootElement);
+        ((string)generations[1].KeyId).ShouldBe("k2");
+        ((string)generations[1].PredecessorKeyId).ShouldBe("k1");
+        ((string)generations[1].RotationSignature).ShouldBe("c2ln");
+        ((JsonElement)generations[0].PredecessorKeyId).ValueKind.ToString().ShouldBe("Undefined", "the first generation names no predecessor");
+
+        using ParsedJsonDocument<Environment> retired = Environment.DraftWithKeyRetired(fetched.RootElement, "k2", "bob", at.AddDays(1), "rotated on");
+        (await store.UpdateAsync("production", retired.RootElement, fetched.RootElement.EtagValue, "bob", AccessContext.System, default))!.Dispose();
+        using ParsedJsonDocument<Environment>? after = await store.GetAsync("production", AccessContext.System, default);
+        List<Environment.EnvironmentKeyGeneration> afterRetirement = Generations(after!.RootElement);
+        ((string)afterRetirement[1].State).ShouldBe("Retired");
+        ((string)afterRetirement[1].PredecessorKeyId).ShouldBe("k1", "retirement keeps the link");
+        ((string)afterRetirement[1].RotationSignature).ShouldBe("c2ln");
+    }
+
+    [TestMethod]
     public async Task A_new_environment_has_no_generations()
     {
         IEnvironmentStore store = new InMemoryEnvironmentStore();

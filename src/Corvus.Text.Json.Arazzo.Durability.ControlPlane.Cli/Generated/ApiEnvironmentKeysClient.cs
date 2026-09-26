@@ -64,7 +64,7 @@ public sealed class ApiEnvironmentKeysClient : IApiEnvironmentKeysClient
     /// Register a key generation for an environment
     /// </summary>
     /// <remarks>
-    /// Registers a checkpoint key generation (ADR 0065). The request is self-authenticating: it carries a signature over the framed tuple made with the private half of the presented seal key, and one whose signature does not verify, whose tuple names a different environment or key id, or whose notBefore falls outside the freshness window is refused (400). Idempotent by construction, since the signed content determines the effect, so replaying a registration returns the existing generation. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach).
+    /// Registers a checkpoint key generation (ADR 0065). The request is self-authenticating: it carries a signature over the framed tuple made with the private half of the presented seal key, and one whose signature does not verify, whose tuple names a different environment or key id, or whose notBefore falls outside the freshness window is refused (400). Idempotent by construction, since the signed content determines the effect, so replaying a registration returns the existing generation. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach). Into an environment that already holds a generation, the registration is a rotation and must carry the predecessor's signature (decision 12), or it is refused with `environment-key-rotation`.
     /// </remarks>
     /// <param name="name">The name parameter.</param>
     /// <param name="body">The request body..</param>
@@ -100,7 +100,7 @@ public sealed class ApiEnvironmentKeysClient : IApiEnvironmentKeysClient
     /// Register a key generation for an environment
     /// </summary>
     /// <remarks>
-    /// Registers a checkpoint key generation (ADR 0065). The request is self-authenticating: it carries a signature over the framed tuple made with the private half of the presented seal key, and one whose signature does not verify, whose tuple names a different environment or key id, or whose notBefore falls outside the freshness window is refused (400). Idempotent by construction, since the signed content determines the effect, so replaying a registration returns the existing generation. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach).
+    /// Registers a checkpoint key generation (ADR 0065). The request is self-authenticating: it carries a signature over the framed tuple made with the private half of the presented seal key, and one whose signature does not verify, whose tuple names a different environment or key id, or whose notBefore falls outside the freshness window is refused (400). Idempotent by construction, since the signed content determines the effect, so replaying a registration returns the existing generation. The caller must be a current administrator of the environment (403 otherwise; 404 if it is not in the caller's reach). Into an environment that already holds a generation, the registration is a rotation and must carry the predecessor's signature (decision 12), or it is refused with `environment-key-rotation`.
     /// </remarks>
     /// <param name="name">The name parameter.</param>
     /// <param name="body">The request body..</param>

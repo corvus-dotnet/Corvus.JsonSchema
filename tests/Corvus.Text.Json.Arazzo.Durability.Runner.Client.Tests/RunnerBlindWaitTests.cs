@@ -79,6 +79,55 @@ public sealed class RunnerBlindWaitTests
     }
 
     [TestMethod]
+    public async Task A_run_parked_under_an_older_generation_still_wakes_on_delivery_after_the_runner_moved_to_a_newer_one()
+    {
+        // ADR 0065 decision 12: the run parked its wait under k2; the runner now writes under k3 but still holds k2,
+        // so a delivery queries the index under both generations, wakes the run, and its next wait is parked under k3.
+        var anchors = new InMemoryTenantAnchorStore();
+        await anchors.AttestIncarnationAsync(Fixture.Production, 1, default);
+        byte[] newerPayloadKey = Enumerable.Range(0, 32).Select(i => (byte)(150 - i)).ToArray();
+        byte[] olderMac = new byte[32];
+        CheckpointDerivation.DeriveSubkey(PayloadKey, CheckpointSubkey.EnvelopeMac, Fixture.Production, KeyId, olderMac);
+        byte[] newerMac = new byte[32];
+        CheckpointDerivation.DeriveSubkey(newerPayloadKey, CheckpointSubkey.EnvelopeMac, Fixture.Production, "k3", newerMac);
+        RunnerKeyRing ring = RunnerKeyRing.From(new Dictionary<string, RunnerEnvironmentKeys>
+        {
+            [Fixture.Production] = RunnerEnvironmentKeys.Holding([new RunnerGenerationKeys(KeyId, PayloadKey, olderMac), new RunnerGenerationKeys("k3", newerPayloadKey, newerMac)], @sealed: true),
+        });
+        await using Fixture fixture = await Fixture.StartAsync(
+            keyRing: ring,
+            anchors: anchors,
+            sealedGenerations: new Dictionary<string, IReadOnlySet<string>> { [Fixture.Production] = new HashSet<string>([KeyId, "k3"]) });
+        await fixture.SeedGenesisWaitingAsync(Correlated, WorkflowWait.Timer(Fixture.T0));
+        fixture.Clock.Advance(TimeSpan.FromMinutes(1));
+        using ParsedJsonDocument<JsonElement> payload = ParsedJsonDocument<JsonElement>.Parse("""{"verdict":"approved"}"""u8.ToArray());
+        var worker = new RunnerApiWorker(fixture.Client);
+
+        // Parked under k2, the generation the runner wrote under at the time.
+        ring.SelectWriteGeneration(Fixture.Production, KeyId);
+        (await worker.ResumeDueTimersAsync([Fixture.Version], Park, default)).ShouldBe(1);
+        var older = new WaitIndexBlinder(Fixture.Production, KeyId, PayloadKey);
+        WorkflowCheckpointSerializer.ProjectIndex((await fixture.Store.LoadAsync(Address(Correlated), default))!.Value.Row).AwaitingChannel.ShouldBe(older.Blind(Channel, "acct-42"));
+
+        // The runner has moved to k3. The delivery still finds the run under k2's index, and the run parks again
+        // under k3's.
+        ring.SelectWriteGeneration(Fixture.Production, "k3");
+        (await worker.DeliverMessageAsync(Channel, "acct-42", payload.RootElement, [Fixture.Version], Park, default)).ShouldBe(1);
+        var newer = new WaitIndexBlinder(Fixture.Production, "k3", newerPayloadKey);
+        WorkflowCheckpoint moved = (await fixture.Store.LoadAsync(Address(Correlated), default))!.Value;
+        CheckpointIntegrity.KeyIdOf(moved.Row.Span).ShouldBe("k3");
+        WorkflowCheckpointSerializer.ProjectIndex(moved.Row).AwaitingChannel.ShouldBe(newer.Blind(Channel, "acct-42"));
+        (await worker.DeliverMessageAsync(Channel, "acct-42", payload.RootElement, [Fixture.Version], Park, default)).ShouldBe(1, "and wakes under k3 too");
+
+        static async ValueTask<WorkflowRunResultKind> Park(WorkflowRun run, CancellationToken cancellationToken)
+        {
+            await run.CheckpointAsync(run.Cursor + 1, cancellationToken);
+            await run.SuspendForMessageAsync(run.Cursor, Channel, "acct-42", cancellationToken);
+            return WorkflowRunResultKind.Suspended;
+        }
+    }
+
+    [TestMethod]
     public async Task A_run_offered_under_a_wait_the_message_was_not_claimed_by_is_handed_back_without_it()
     {
         // The control plane answers the index query; a run it offers whose own region says it parked on a different

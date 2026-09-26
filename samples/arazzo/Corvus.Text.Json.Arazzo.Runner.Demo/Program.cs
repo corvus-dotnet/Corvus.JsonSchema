@@ -156,16 +156,29 @@ WorkflowTransportBinder binder;
 // writes for such an environment carries a MAC under a subkey derived from that key, and every row it loads is
 // verified before the run trusts a byte of it. Nothing about keys comes from the control plane, which holds none.
 // The runner's allowlist (ADR 0065 decision 10), configured as Runner:Environments:N:{Environment,Sealed,KeyId,
-// PayloadKeyRef,SealKeyFingerprint,SealKeyRef,Initiators:M}: the environments this runner serves at all, each clear
-// (Sealed=false, no key) or sealed (a key generation, the payload key in the runner's own secret store, and the pinned
-// fingerprint of the seal key the tenant registered, which the runner checks against what the control plane
-// advertises). SealKeyRef and Initiators (decision 9) let the runner open the environment's sealed starts; with one
-// and not the other it does not start. An environment with no entry is not served, whatever the control plane binds.
+// PayloadKeyRef,SealKeyFingerprint,SealKeyRef,Initiators:M,MinimumKeyId,Generations:M:{KeyId,PayloadKeyRef,SealKeyRef}}:
+// the environments this runner serves at all, each clear (Sealed=false, no key) or sealed (its key generations, each
+// payload key in the runner's own secret store, and the pinned fingerprint of a seal key the tenant registered, which
+// the runner checks against what the control plane advertises). A single generation is named by KeyId and
+// PayloadKeyRef; several are listed under Generations, oldest first (decision 12), and the runner writes under the
+// newest of them the control plane holds active and that reaches the pin along signed rotation links, so a rotation
+// the tenant registers is followed without a restart. SealKeyRef and Initiators (decision 9) let the runner open the
+// environment's sealed starts; with one and not the other it does not start. An environment with no entry is not
+// served, whatever the control plane binds.
 RunnerKeyRing keyRing = RunnerKeyRing.Empty;
 List<RunnerKeyRingEntry> keyRingEntries = [];
 foreach (IConfigurationSection entry in builder.Configuration.GetSection("Runner:Environments").GetChildren())
 {
     List<string> initiators = [.. entry.GetSection("Initiators").GetChildren().Select(initiator => initiator.Value).OfType<string>()];
+    List<RunnerKeyGeneration> generations = [];
+    foreach (IConfigurationSection generation in entry.GetSection("Generations").GetChildren())
+    {
+        generations.Add(new RunnerKeyGeneration(
+            generation["KeyId"] ?? throw new InvalidOperationException($"{generation.Path}:KeyId is required."),
+            SecretRef.Parse(generation["PayloadKeyRef"] ?? throw new InvalidOperationException($"{generation.Path}:PayloadKeyRef is required.")),
+            generation["SealKeyRef"] is { Length: > 0 } generationSealKeyRef ? SecretRef.Parse(generationSealKeyRef) : null));
+    }
+
     keyRingEntries.Add(new RunnerKeyRingEntry(
         entry["Environment"] ?? throw new InvalidOperationException($"{entry.Path}:Environment is required."),
         entry.GetValue("Sealed", false),
@@ -174,10 +187,11 @@ foreach (IConfigurationSection entry in builder.Configuration.GetSection("Runner
         entry["SealKeyFingerprint"],
         entry["SealKeyRef"] is { Length: > 0 } sealKeyRef ? SecretRef.Parse(sealKeyRef) : null,
         initiators.Count > 0 ? initiators : null,
-        entry["MinimumKeyId"]));
+        entry["MinimumKeyId"],
+        generations.Count > 0 ? generations : null));
 }
 
-bool keyedEntries = keyRingEntries.Any(entry => entry.KeyId is not null);
+bool keyedEntries = keyRingEntries.Any(entry => entry.HeldGenerations.Count > 0);
 
 if (!string.IsNullOrWhiteSpace(vaultAddress) && !string.IsNullOrWhiteSpace(vaultRoleId) && !string.IsNullOrWhiteSpace(vaultWrapTokenFile))
 {

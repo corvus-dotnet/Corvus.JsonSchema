@@ -54,25 +54,37 @@ PostgresWorkflowCatalogStore catalogStore = await PostgresWorkflowCatalogStore.C
 
 // The runner's key ring (ADR 0065 decisions 5, 10 and 11): this host is the listener that terminates the function's
 // plaintext checkpoint, so it is the host that holds the environment payload key. For every environment named under
-// Runner:Environments:N:{Environment,Sealed,KeyId,PayloadKeyRef,SealKeyFingerprint} it reads the key from its own secret store,
+// Runner:Environments:N:{Environment,Sealed,KeyId,PayloadKeyRef,SealKeyFingerprint,MinimumKeyId,Generations:M} it reads the key from its own secret store,
 // an env:// or file:// reference the platform injects into this container and nothing the control plane supplies,
 // encrypts the payload of every checkpoint the function posts before the row reaches the shared store, MACs the row,
 // and opens every row the function loads. The function itself never holds a key. Empty for an open environment, as
 // the demo's isolated environment is.
 // The allowlist (ADR 0065 decision 10) is default deny: this host serves the environments named under
-// Runner:Environments:N:{Environment,Sealed,KeyId,PayloadKeyRef,SealKeyFingerprint} and no other, each clear or with
+// Runner:Environments:N:{Environment,Sealed,KeyId,PayloadKeyRef,SealKeyFingerprint,MinimumKeyId,Generations:M} and no other, each clear or with
 // its key from this host's own secret store (env:// or file://). A checkpoint for an environment with no entry is
 // refused, so a function pointed at this host for an environment the tenant did not name gets nothing.
 List<RunnerKeyRingEntry> keyRingEntries = [];
 foreach (IConfigurationSection entry in builder.Configuration.GetSection("Runner:Environments").GetChildren())
 {
+    // Several generations are listed under Generations, oldest first (ADR 0065 decision 12). This host checks nothing
+    // over the wire, so it writes under the newest listed: list a successor here only once it is registered.
+    List<RunnerKeyGeneration> generations = [];
+    foreach (IConfigurationSection generation in entry.GetSection("Generations").GetChildren())
+    {
+        generations.Add(new RunnerKeyGeneration(
+            generation["KeyId"] ?? throw new InvalidOperationException($"{generation.Path}:KeyId is required."),
+            SecretRef.Parse(generation["PayloadKeyRef"] ?? throw new InvalidOperationException($"{generation.Path}:PayloadKeyRef is required.")),
+            generation["SealKeyRef"] is { Length: > 0 } generationSealKeyRef ? SecretRef.Parse(generationSealKeyRef) : null));
+    }
+
     keyRingEntries.Add(new RunnerKeyRingEntry(
         entry["Environment"] ?? throw new InvalidOperationException($"{entry.Path}:Environment is required."),
         entry.GetValue("Sealed", false),
         entry["KeyId"],
         entry["PayloadKeyRef"] is { Length: > 0 } payloadKeyRef ? SecretRef.Parse(payloadKeyRef) : null,
         entry["SealKeyFingerprint"],
-        MinimumKeyId: entry["MinimumKeyId"]));
+        MinimumKeyId: entry["MinimumKeyId"],
+        Generations: generations.Count > 0 ? generations : null));
 }
 
 RunnerKeyRing keyRing = await RunnerKeyRing.BuildAsync(keyRingEntries, new CompositeSecretResolver(new EnvSecretResolver(), new FileSecretResolver()), CancellationToken.None);

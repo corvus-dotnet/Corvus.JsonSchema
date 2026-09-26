@@ -16,7 +16,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The public seal key, base64 SubjectPublicKeyInfo; its SHA-256 is what the runner pins.
+/// The predecessor&#39;s ES256 signature (base64, IEEE P1363) over the framed rotation tuple (environment, predecessorKeyId, keyId, sealPublicKey), present exactly when predecessorKeyId is. A runner pinned on an earlier generation writes under this one only when the links from it back to the pin verify under the predecessors&#39; advertised keys.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]

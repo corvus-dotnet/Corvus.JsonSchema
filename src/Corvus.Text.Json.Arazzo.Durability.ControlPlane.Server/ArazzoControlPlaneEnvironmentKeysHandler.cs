@@ -171,18 +171,32 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
             return RegisterEnvironmentKeyResult.Ok(Models.EnvironmentKeyView.From(existing), workspace);
         }
 
+        // ADR 0065 decision 12: into an environment that already holds a generation, a registration is a rotation and
+        // carries the predecessor's signature over the rotation tuple, made with the private seal half of a generation
+        // the environment holds. An administrator alone cannot swap the seal key: the outgoing key has to hand over.
+        // Into an empty environment a predecessor is refused, since there is nothing it could name.
+        EnvironmentKeyRotationCheck rotation = VerifyRotation(environment, keyId, stored.RootElement, parameters.Body);
+        if (rotation.Result != EnvironmentKeyRotationCheckResult.Verified)
+        {
+            stored.Dispose();
+            await this.auditor.MutationAsync("environment.key.register", this.AuditActor(), TargetKind, KeyKey(environment, keyId), $"refused-rotation-{rotation.Result}").ConfigureAwait(false);
+            return RegisterEnvironmentKeyResult.BadRequest(RotationProblem(environment, keyId, rotation.Result), workspace);
+        }
+
         string actor = this.CallerActor();
 
-        // The seal key and algorithm are carried into the document as the request's own JSON values, copied verbatim.
-        // Round-tripping them through managed strings would decode and re-encode two values that are already the exact
-        // bytes being stored.
+        // The seal key, algorithm and rotation signature are carried into the document as the request's own JSON
+        // values, copied verbatim. Round-tripping them through managed strings would decode and re-encode values that
+        // are already the exact bytes being stored.
         using ParsedJsonDocument<Environment> draft = Environment.DraftWithKeyRegistered(
             stored.RootElement,
             keyId,
             (JsonElement)parameters.Body.SealPublicKey,
             (JsonElement)parameters.Body.Algorithm,
             actor,
-            this.timeProvider.GetUtcNow());
+            this.timeProvider.GetUtcNow(),
+            rotation.PredecessorKeyId,
+            (JsonElement)parameters.Body.RotationSignature);
 
         ParsedJsonDocument<Environment>? updated = await this.environments.UpdateAsync(
             environment, draft.RootElement, stored.RootElement.EtagValue, actor, this.access.Current(), cancellationToken).ConfigureAwait(false);
@@ -345,6 +359,97 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
 
     private static string KeyKey(string environment, string keyId) => $"{environment}/{keyId}";
 
+    // Why a rotation link was refused, or that it verified, with the predecessor it names.
+    private enum EnvironmentKeyRotationCheckResult : byte
+    {
+        Verified,
+        PredecessorRequired,
+        PredecessorRefused,
+        PredecessorUnknown,
+        SignatureRequired,
+        SignatureUnreadable,
+        SignatureInvalid,
+    }
+
+    private readonly record struct EnvironmentKeyRotationCheck(EnvironmentKeyRotationCheckResult Result, string? PredecessorKeyId);
+
+    // The rotation rule of decision 12, decided against the stored generation set: a first generation names no
+    // predecessor; a later one names a generation the environment holds, active or retired, and its signature verifies
+    // under that generation's recorded seal key. Synchronous for the same reason as the possession proof: the decoded
+    // spans and the request's UTF-8 views are ref structs that stay in one frame.
+    private static EnvironmentKeyRotationCheck VerifyRotation(string environment, string keyId, in Environment stored, in Models.EnvironmentKeyRegistration body)
+    {
+        bool holdsAny = Environment.Enumerate(stored.KeyGenerations).GetEnumerator().MoveNext();
+
+        bool namesPredecessor = ((JsonElement)body.PredecessorKeyId).ValueKind == JsonValueKind.String;
+        bool carriesSignature = ((JsonElement)body.RotationSignature).ValueKind == JsonValueKind.String;
+        if (!holdsAny)
+        {
+            return namesPredecessor || carriesSignature
+                ? new(EnvironmentKeyRotationCheckResult.PredecessorRefused, null)
+                : new(EnvironmentKeyRotationCheckResult.Verified, null);
+        }
+
+        if (!namesPredecessor)
+        {
+            return new(EnvironmentKeyRotationCheckResult.PredecessorRequired, null);
+        }
+
+        if (!carriesSignature)
+        {
+            return new(EnvironmentKeyRotationCheckResult.SignatureRequired, null);
+        }
+
+        string predecessorKeyId = (string)body.PredecessorKeyId;
+        if (Find(stored, predecessorKeyId) is not { } predecessor)
+        {
+            return new(EnvironmentKeyRotationCheckResult.PredecessorUnknown, null);
+        }
+
+        ReadOnlySpan<byte> predecessorBase64 = ((JsonElement)predecessor.SealPublicKey).GetUtf8String().Span;
+        ReadOnlySpan<byte> sealBase64 = ((JsonElement)body.SealPublicKey).GetUtf8String().Span;
+        ReadOnlySpan<byte> signatureBase64 = ((JsonElement)body.RotationSignature).GetUtf8String().Span;
+        int maxPredecessor = Base64.GetMaxDecodedFromUtf8Length(predecessorBase64.Length);
+        int maxSeal = Base64.GetMaxDecodedFromUtf8Length(sealBase64.Length);
+        int maxSignature = Base64.GetMaxDecodedFromUtf8Length(signatureBase64.Length);
+        byte[]? rentedPredecessor = maxPredecessor > StackDecodeThreshold ? ArrayPool<byte>.Shared.Rent(maxPredecessor) : null;
+        byte[]? rentedSeal = maxSeal > StackDecodeThreshold ? ArrayPool<byte>.Shared.Rent(maxSeal) : null;
+        byte[]? rentedSignature = maxSignature > StackDecodeThreshold ? ArrayPool<byte>.Shared.Rent(maxSignature) : null;
+        try
+        {
+            Span<byte> predecessorBuffer = rentedPredecessor ?? stackalloc byte[StackDecodeThreshold];
+            Span<byte> sealBuffer = rentedSeal ?? stackalloc byte[StackDecodeThreshold];
+            Span<byte> signatureBuffer = rentedSignature ?? stackalloc byte[StackDecodeThreshold];
+            if (Base64.DecodeFromUtf8(predecessorBase64, predecessorBuffer, out _, out int predecessorLength) != OperationStatus.Done
+                || Base64.DecodeFromUtf8(sealBase64, sealBuffer, out _, out int sealLength) != OperationStatus.Done
+                || Base64.DecodeFromUtf8(signatureBase64, signatureBuffer, out _, out int signatureLength) != OperationStatus.Done)
+            {
+                return new(EnvironmentKeyRotationCheckResult.SignatureUnreadable, predecessorKeyId);
+            }
+
+            return EnvironmentKeyRotation.Verify(environment, predecessorKeyId, predecessorBuffer[..predecessorLength], keyId, sealBuffer[..sealLength], signatureBuffer[..signatureLength]) == EnvironmentKeyRotationResult.Verified
+                ? new(EnvironmentKeyRotationCheckResult.Verified, predecessorKeyId)
+                : new(EnvironmentKeyRotationCheckResult.SignatureInvalid, predecessorKeyId);
+        }
+        finally
+        {
+            if (rentedPredecessor is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedPredecessor);
+            }
+
+            if (rentedSeal is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedSeal);
+            }
+
+            if (rentedSignature is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedSignature);
+            }
+        }
+    }
+
     // Decodes the base64 seal key and signature from the request's own UTF-8 and verifies the proof of possession.
     // Synchronous by construction: the decoded spans and the request's UTF-8 views are ref structs that cannot cross
     // an await, and keeping the whole proof in one synchronous frame is what lets them stay spans.
@@ -459,6 +564,17 @@ internal sealed class ArazzoControlPlaneEnvironmentKeysHandler : IApiEnvironment
             "Last active key generation",
             409,
             $"'{keyId}' is the last active key generation for environment '{environment}', and this deployment serves more than one owner group. Register a replacement generation before retiring this one.");
+
+    private static Models.ProblemDetails.Source RotationProblem(string environment, string keyId, EnvironmentKeyRotationCheckResult result)
+        => Problem("environment-key-rotation", "Key rotation not accepted", 400, result switch
+        {
+            EnvironmentKeyRotationCheckResult.PredecessorRequired => $"Environment '{environment}' already holds a key generation, so registering '{keyId}' is a rotation: name the predecessor generation and carry its signature over the rotation tuple (ADR 0065 decision 12).",
+            EnvironmentKeyRotationCheckResult.PredecessorRefused => $"Environment '{environment}' holds no key generation, so '{keyId}' is its first and can name no predecessor.",
+            EnvironmentKeyRotationCheckResult.PredecessorUnknown => $"The predecessor named for '{keyId}' is not a generation environment '{environment}' holds.",
+            EnvironmentKeyRotationCheckResult.SignatureRequired => $"Registering '{keyId}' names a predecessor and carries no rotation signature; the predecessor's private seal half has to sign the rotation tuple.",
+            EnvironmentKeyRotationCheckResult.SignatureUnreadable => "The rotation signature or a seal key did not decode as base64.",
+            _ => $"The rotation signature did not verify under the predecessor's registered seal key for environment '{environment}' and key '{keyId}'. It must be made with the predecessor's private seal half, over the framed rotation tuple.",
+        });
 
     private static Models.ProblemDetails.Source PossessionProblem(string environment, string keyId, EnvironmentKeyPossessionResult result)
         => Problem("environment-key-possession", "Key registration not accepted", 400, PossessionDetail(environment, keyId, result));

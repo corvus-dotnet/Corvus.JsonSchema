@@ -399,6 +399,105 @@ public sealed class SealingCheckpointStoreTests
     }
 
     [TestMethod]
+    public async Task A_ring_holding_several_generations_opens_rows_under_any_at_or_above_the_minimum_and_writes_under_the_selected_one()
+    {
+        // ADR 0065 decision 12: the runner holds k1 (old) and k2 (new). A row sealed under k1 opens; a save goes out
+        // under the write generation, k2 by default, so the run is carried across on its next save; a generation the
+        // ring holds but has put below its minimum is refused like one it never held; the write generation follows
+        // the ring's selection.
+        var inner = new InMemoryWorkflowStateStore();
+        byte[] otherPayloadKey = Enumerable.Range(0, 32).Select(i => (byte)(200 - i)).ToArray();
+        RunnerKeyRing ring = TwoGenerationRing(otherPayloadKey, minimum: null);
+        var store = new SealingCheckpointStore(inner, ring);
+        byte[] row = Row(ProductionRun, inputs: "{\"petId\":7}");
+        RunnerEnvironmentKeys old = new("k1", PayloadKey, EnvelopeMac(), Sealed: true);
+        WorkflowEtag etag = await inner.SaveAsync(ProductionRun, SealingCheckpointStore.Seal(row, ProductionRun, old), WorkflowCheckpointSerializer.ProjectIndex(row), WorkflowEtag.None, default);
+
+        WorkflowCheckpoint opened = (await store.LoadAsync(ProductionRun, default))!.Value;
+        opened.Row.ToArray().ShouldBe(row, "a row under the older generation opens under that generation's keys");
+
+        ring.WriteGenerationOf(Production).ShouldBe("k2", "the newest held generation is written under by default");
+        byte[] next = Row(ProductionRun, sequence: 4, inputs: "{\"petId\":7}");
+        await store.SaveAsync(ProductionRun, next, WorkflowCheckpointSerializer.ProjectIndex(next), etag, default);
+        WorkflowCheckpoint stored = (await inner.LoadAsync(ProductionRun, default))!.Value;
+        CheckpointIntegrity.KeyIdOf(stored.Row.Span).ShouldBe("k2", "the save carried the run to the write generation");
+        (await store.LoadAsync(ProductionRun, default))!.Value.Row.ToArray().ShouldBe(next, "and it opens under k2");
+
+        // The ring is told to write under k1 again (what a runner does while k2 is not yet registered active): the
+        // next save is under k1. A generation not held cannot be selected.
+        ring.SelectWriteGeneration(Production, "k1").ShouldBeTrue();
+        ring.WriteGenerationOf(Production).ShouldBe("k1");
+        Should.Throw<ArgumentException>(() => ring.SelectWriteGeneration(Production, "k9"));
+        byte[] third = Row(ProductionRun, sequence: 5, inputs: "{\"petId\":7}");
+        await store.SaveAsync(ProductionRun, third, WorkflowCheckpointSerializer.ProjectIndex(third), stored.Etag, default);
+        CheckpointIntegrity.KeyIdOf((await inner.LoadAsync(ProductionRun, default))!.Value.Row.Span).ShouldBe("k1");
+
+        // With the minimum raised to k2, the row under k1 is refused on open: held, but no longer accepted.
+        var tightened = new SealingCheckpointStore(inner, TwoGenerationRing(otherPayloadKey, minimum: "k2"));
+        await Should.ThrowAsync<CryptographicException>(async () => await tightened.LoadAsync(ProductionRun, default));
+        Should.Throw<ArgumentException>(() => TwoGenerationRing(otherPayloadKey, minimum: "k2").SelectWriteGeneration(Production, "k1"), "below the minimum, so not written under either");
+    }
+
+    [TestMethod]
+    public async Task A_sealed_start_made_to_an_older_generation_opens_under_that_generations_seal_key()
+    {
+        // ADR 0065 decisions 9 and 12: an initiator sealed to k1 before the rotation; the runner now writes under k2
+        // but still holds k1's private seal half, so the start opens, and the first save is under k2.
+        (byte[] sealSpki, byte[] sealPkcs8) = InputSealTests.SealKeyPair();
+        (_, byte[] newerPkcs8) = InputSealTests.SealKeyPair();
+        using var initiator = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        byte[] otherPayloadKey = Enumerable.Range(0, 32).Select(i => (byte)(200 - i)).ToArray();
+        byte[] otherMac = new byte[32];
+        CheckpointDerivation.DeriveSubkey(otherPayloadKey, CheckpointSubkey.EnvelopeMac, Production, "k2", otherMac);
+        var inner = new InMemoryWorkflowStateStore();
+        RunnerKeyRing ring = RunnerKeyRing.From(new Dictionary<string, RunnerEnvironmentKeys>
+        {
+            [Production] = RunnerEnvironmentKeys.Holding(
+                [new RunnerGenerationKeys("k1", PayloadKey, EnvelopeMac(), sealPkcs8), new RunnerGenerationKeys("k2", otherPayloadKey, otherMac, newerPkcs8)],
+                @sealed: true,
+                initiatorKeys: [initiator.ExportSubjectPublicKeyInfo()]),
+        });
+        var store = new SealingCheckpointStore(inner, ring);
+        WorkflowRunAddress address = SealedRun;
+        await EnqueueSealedAsync(inner, address, RunStartInitiator.Seal(sealSpki, "k1", Production, "pet", 3, address.RunId.Value, """{"petId":7}"""u8, initiator));
+
+        using (WorkflowRun run = (await WorkflowRun.ResumeAsync(store, address, leaseEpoch: 2))!)
+        {
+            run.SealedStart.ShouldBeTrue();
+            run.Inputs.GetProperty("petId"u8).GetInt32().ShouldBe(7);
+            await run.CheckpointAsync(1, default);
+        }
+
+        CheckpointIntegrity.KeyIdOf((await inner.LoadAsync(address, default))!.Value.Row.Span).ShouldBe("k2");
+
+        // A seal to a generation whose private half the runner does not hold is a start that does not open.
+        RunnerKeyRing withoutK1Seal = RunnerKeyRing.From(new Dictionary<string, RunnerEnvironmentKeys>
+        {
+            [Production] = RunnerEnvironmentKeys.Holding(
+                [new RunnerGenerationKeys("k1", PayloadKey, EnvelopeMac()), new RunnerGenerationKeys("k2", otherPayloadKey, otherMac, newerPkcs8)],
+                @sealed: true,
+                initiatorKeys: [initiator.ExportSubjectPublicKeyInfo()]),
+        });
+        var second = new InMemoryWorkflowStateStore();
+        WorkflowRunAddress other = new(Production, new WorkflowRunId("0123456789abcdef0123456789abcdee"));
+        await EnqueueSealedAsync(second, other, RunStartInitiator.Seal(sealSpki, "k1", Production, "pet", 3, other.RunId.Value, """{"petId":7}"""u8, initiator));
+        (await Should.ThrowAsync<SealedStartException>(async () => await new SealingCheckpointStore(second, withoutK1Seal).LoadAsync(other, default))).Refusal.ShouldBe(SealedStartRefusal.NoSealKey);
+    }
+
+    private static RunnerKeyRing TwoGenerationRing(byte[] newerPayloadKey, string? minimum)
+    {
+        byte[] newerMac = new byte[32];
+        CheckpointDerivation.DeriveSubkey(newerPayloadKey, CheckpointSubkey.EnvelopeMac, Production, "k2", newerMac);
+        return RunnerKeyRing.From(new Dictionary<string, RunnerEnvironmentKeys>
+        {
+            [Production] = RunnerEnvironmentKeys.Holding(
+                [new RunnerGenerationKeys("k1", PayloadKey, EnvelopeMac()), new RunnerGenerationKeys("k2", newerPayloadKey, newerMac)],
+                @sealed: true,
+                minimumKeyId: minimum),
+        });
+    }
+
+    [TestMethod]
     public async Task A_payload_key_that_is_not_thirty_two_bytes_refuses_to_build_the_ring()
     {
         var secrets = new FixedSecretResolver(Convert.ToBase64String(new byte[16]));

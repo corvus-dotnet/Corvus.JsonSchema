@@ -49,8 +49,11 @@ the environments its entries name and no other, whatever the control plane binds
 `runner` a clear `development` entry and `system-runner` a clear `system` entry, and a runner with no entries would
 serve nothing. A keyed entry names the environment's key generation, its payload key in the runner's own Vault
 (`PayloadKeyRef`, the base64 of a 32-byte key), and `SealKeyFingerprint`, the pinned base64 SHA-256 of the seal
-key the tenant registered: the runner checks what the control plane advertises for that generation against it once a
-minute and suspends the environment on any other key. For each keyed entry the runner builds its key ring at start
+key the tenant registered: the runner checks what the control plane advertises against it once a minute and suspends
+the environment on any other key. Several generations are listed under `Generations:N:{KeyId,PayloadKeyRef,SealKeyRef}`,
+oldest first (decision 12), and the runner writes under the newest of them the control plane holds active and that
+reaches the pinned fingerprint along signed rotation links, so a rotation the tenant registers is followed without a
+restart; rows under any held generation still open, and `MinimumKeyId` names the oldest one accepted. For each keyed entry the runner builds its key ring at start
 (decisions 5 and 10): it resolves the payload key, derives the `envelope-mac` subkey once, and from then on every
 checkpoint row it saves for that environment has its payload encrypted under a data key derived for that one save
 and carries a MAC under the named generation (`KeyId`), and every row it loads is verified and opened before the run

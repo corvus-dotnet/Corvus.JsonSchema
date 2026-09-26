@@ -1091,7 +1091,7 @@
       },
       "EnvironmentSealKeys": {
         "type": "object",
-        "description": "The seal key generations the control plane advertises for an environment (ADR 0065 decision 10): what a runner compares to the fingerprint pinned in its own allowlist. Not a secret, and not authoritative: the pin is the authority, and this is the claim it checks.",
+        "description": "The seal key generations the control plane advertises for an environment (ADR 0065 decision 10): what a runner compares to the fingerprint pinned in its own allowlist. Not a secret, and not authoritative: the pin is the authority, and this is the claim it checks. Each generation carries its rotation link (decision 12), so a runner holding several generations selects the newest active one that reaches its pin along verified links and writes under it.",
         "required": [
           "environment",
           "generations"
@@ -1135,6 +1135,15 @@
               "Retired"
             ],
             "description": "Whether the generation is current."
+          },
+          "predecessorKeyId": {
+            "type": "string",
+            "description": "The generation this one was rotated from (ADR 0065 decision 12); absent on the environment's first generation."
+          },
+          "rotationSignature": {
+            "type": "string",
+            "contentEncoding": "base64",
+            "description": "The predecessor's ES256 signature (base64, IEEE P1363) over the framed rotation tuple (environment, predecessorKeyId, keyId, sealPublicKey), present exactly when predecessorKeyId is. A runner pinned on an earlier generation writes under this one only when the links from it back to the pin verify under the predecessors' advertised keys."
           }
         }
       },

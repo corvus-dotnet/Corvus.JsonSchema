@@ -139,6 +139,16 @@
         "reason": {
           "type": "string",
           "description": "An optional note recorded with the retirement."
+        },
+        "predecessorKeyId": {
+          "type": "string",
+          "maxLength": 256,
+          "description": "The generation this one was rotated from (ADR 0065 decision 12): the active or retired generation whose private seal half signed this registration. Absent on an environment's first generation."
+        },
+        "rotationSignature": {
+          "type": "string",
+          "contentEncoding": "base64",
+          "description": "The predecessor's ES256 signature (base64, IEEE P1363) over the framed rotation tuple (environment, predecessorKeyId, keyId, sealPublicKey). Stored with the generation and advertised with it, so a runner or an initiator that pinned an earlier generation verifies the link for itself; present exactly when predecessorKeyId is."
         }
       },
       "additionalProperties": false

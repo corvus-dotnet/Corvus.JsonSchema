@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json.Arazzo.Durability.Anchoring;
+
 namespace Corvus.Text.Json.Arazzo.Durability.Runner.Client;
 
 /// <summary>
@@ -96,31 +98,30 @@ public sealed class RunnerApiWorker
         ArgumentNullException.ThrowIfNull(resume);
 
         // The environments this runner serves clear are swept by channel. The environments on its key ring hold blind
-        // indexes (ADR 0065 decision 4), so each is swept by the index of this message under its own key, and, when the
-        // message carries a correlation id, by the channel-only index too, so a run awaiting any message on the channel
-        // still wakes. A message with no correlation id reaches channel-only waiters alone.
+        // indexes (ADR 0065 decision 4), so each is swept by the index of this message under every generation the
+        // runner holds (a run parked under an older generation wakes before the re-key sweep has reached it, decision
+        // 12), and, when the message carries a correlation id, by the channel-only index too, so a run awaiting any
+        // message on the channel still wakes. A message with no correlation id reaches channel-only waiters alone.
         IReadOnlyList<RunnerClaim> claims = await this.client.ClaimAwaitingMessageAsync(channel, correlationId, hostedWorkflowIds, this.MaximumRunsPerSweep, this.LeaseDuration, cancellationToken).ConfigureAwait(false);
         HashSet<string>? indexes = null;
         foreach (string environment in this.client.BlindedEnvironments)
         {
-            if (this.client.WaitBlinderFor(environment) is not { } blinder)
+            foreach (WaitIndexBlinder blinder in this.client.WaitBlindersFor(environment))
             {
-                continue;
-            }
-
-            indexes ??= new HashSet<string>(StringComparer.Ordinal);
-            string index = blinder.Blind(channel, correlationId);
-            if (indexes.Add(index))
-            {
-                claims = Append(claims, await this.client.ClaimAwaitingIndexAsync(index, hostedWorkflowIds, this.MaximumRunsPerSweep, this.LeaseDuration, cancellationToken).ConfigureAwait(false));
-            }
-
-            if (correlationId is not null)
-            {
-                string channelOnly = blinder.BlindChannelOnly(channel);
-                if (indexes.Add(channelOnly))
+                indexes ??= new HashSet<string>(StringComparer.Ordinal);
+                string index = blinder.Blind(channel, correlationId);
+                if (indexes.Add(index))
                 {
-                    claims = Append(claims, await this.client.ClaimAwaitingIndexAsync(channelOnly, hostedWorkflowIds, this.MaximumRunsPerSweep, this.LeaseDuration, cancellationToken).ConfigureAwait(false));
+                    claims = Append(claims, await this.client.ClaimAwaitingIndexAsync(index, hostedWorkflowIds, this.MaximumRunsPerSweep, this.LeaseDuration, cancellationToken).ConfigureAwait(false));
+                }
+
+                if (correlationId is not null)
+                {
+                    string channelOnly = blinder.BlindChannelOnly(channel);
+                    if (indexes.Add(channelOnly))
+                    {
+                        claims = Append(claims, await this.client.ClaimAwaitingIndexAsync(channelOnly, hostedWorkflowIds, this.MaximumRunsPerSweep, this.LeaseDuration, cancellationToken).ConfigureAwait(false));
+                    }
                 }
             }
         }

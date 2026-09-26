@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.ComponentModel;
+using System.Text.Json;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Anchoring;
 using Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.Client;
@@ -626,11 +627,12 @@ internal sealed class StartCommand : AsyncCommand<StartSettings>
                 return response.MatchResult(accepted => Output.Print(accepted.ToString()), Output.Problem, Output.Problem, Output.Quota, Output.Validation, Output.Unexpected);
             }
 
-            // The seal key, from the control plane, pinned by fingerprint before anything is sealed to it.
+            // The seal key, from the control plane, pinned by fingerprint before anything is sealed to it. Every
+            // generation is listed, retired ones too, because a rotation chain (ADR 0065 decision 12) may pass through
+            // a retired generation on its way back to the pinned one.
             var keys = new ApiEnvironmentKeysClient(transport);
-            string? keyId = null;
-            byte[]? sealPublicKey = null;
-            await using (ListEnvironmentKeysResponse listed = await keys.ListEnvironmentKeysAsync(settings.Environment, "Active", cancellationToken: cancellationToken))
+            var advertised = new List<Corvus.Text.Json.Arazzo.Durability.Environments.AdvertisedKeyGeneration>();
+            await using (ListEnvironmentKeysResponse listed = await keys.ListEnvironmentKeysAsync(settings.Environment, cancellationToken: cancellationToken))
             {
                 if (listed.StatusCode != 200)
                 {
@@ -640,29 +642,63 @@ internal sealed class StartCommand : AsyncCommand<StartSettings>
 
                 foreach (Models.EnvironmentKeyView generation in listed.OkBody.Keys.EnumerateArray())
                 {
-                    string candidate = (string)generation.KeyId;
-                    if (settings.SealKeyId is null || string.Equals(candidate, settings.SealKeyId, StringComparison.Ordinal))
-                    {
-                        keyId = candidate;
-                        sealPublicKey = ((JsonElement)generation.SealPublicKey).GetBytesFromBase64();
-                        break;
-                    }
+                    advertised.Add(new Corvus.Text.Json.Arazzo.Durability.Environments.AdvertisedKeyGeneration(
+                        (string)generation.KeyId,
+                        ((JsonElement)generation.SealPublicKey).GetBytesFromBase64(),
+                        generation.State.ValueEquals("Active"u8),
+                        ((JsonElement)generation.PredecessorKeyId).ValueKind == JsonValueKind.String ? (string)generation.PredecessorKeyId : null,
+                        ((JsonElement)generation.RotationSignature).ValueKind == JsonValueKind.String ? ((JsonElement)generation.RotationSignature).GetBytesFromBase64() : null));
+                }
+            }
+
+            // The generation sealed to is the pinned key itself, or the latest active successor whose rotation links
+            // all verify back to it: the farthest reachable one, so a pinned initiator follows a rotation on its own
+            // and never a generation the outgoing key did not hand over to.
+            string? keyId = null;
+            byte[]? sealPublicKey = null;
+            int farthest = -1;
+            bool anyActive = false;
+            bool unreachable = false;
+            foreach (Corvus.Text.Json.Arazzo.Durability.Environments.AdvertisedKeyGeneration generation in advertised)
+            {
+                if (!generation.Active || (settings.SealKeyId is not null && !string.Equals(generation.KeyId, settings.SealKeyId, StringComparison.Ordinal)))
+                {
+                    continue;
+                }
+
+                anyActive = true;
+                int distance = Corvus.Text.Json.Arazzo.Durability.Environments.EnvironmentKeyChain.Distance(settings.Environment, settings.SealKeyFingerprint!, generation.KeyId, advertised);
+                if (distance < 0)
+                {
+                    unreachable = true;
+                }
+                else if (distance > farthest)
+                {
+                    farthest = distance;
+                    keyId = generation.KeyId;
+                    sealPublicKey = generation.SealPublicKey;
                 }
             }
 
             if (keyId is null || sealPublicKey is null)
             {
-                Console.Error.WriteLine(settings.SealKeyId is null
-                    ? $"Environment '{settings.Environment}' has no active seal key generation, so nothing can be sealed to it."
-                    : $"Environment '{settings.Environment}' has no active seal key generation '{settings.SealKeyId}'.");
+                if (unreachable)
+                {
+                    Console.Error.WriteLine($"No active seal key generation of environment '{settings.Environment}' is the pinned key {settings.SealKeyFingerprint} or reaches it along signed rotation links. Nothing was sealed or sent: a key the outgoing key did not hand over to may be anyone's.");
+                }
+                else if (!anyActive)
+                {
+                    Console.Error.WriteLine(settings.SealKeyId is null
+                        ? $"Environment '{settings.Environment}' has no active seal key generation, so nothing can be sealed to it."
+                        : $"Environment '{settings.Environment}' has no active seal key generation '{settings.SealKeyId}'.");
+                }
+
                 return 1;
             }
 
-            string fingerprint = RunStartInitiator.SealKeyFingerprint(sealPublicKey);
-            if (!string.Equals(fingerprint, settings.SealKeyFingerprint, StringComparison.Ordinal))
+            if (farthest > 0)
             {
-                Console.Error.WriteLine($"The seal key the control plane publishes for generation '{keyId}' has fingerprint {fingerprint}, not the pinned {settings.SealKeyFingerprint}. Nothing was sealed or sent: a key the operator did not pin may be anyone's.");
-                return 1;
+                Console.Error.WriteLine($"Sealing to generation '{keyId}', {farthest} rotation(s) on from the pinned key.");
             }
 
             using var initiatorKey = System.Security.Cryptography.ECDsa.Create();

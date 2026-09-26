@@ -242,7 +242,24 @@ public readonly partial struct Environment
     /// <returns>A pooled draft document.</returns>
     public static ParsedJsonDocument<Environment> DraftWithKeyRegistered(
         in Environment stored, string keyId, in JsonElement sealPublicKey, in JsonElement algorithm, string registeredBy, DateTimeOffset registeredAt)
-        => DraftWithKeyMutation(new KeyMutation(stored, keyId, sealPublicKey, algorithm, registeredBy, registeredAt, reason: null, retire: false));
+        => DraftWithKeyRegistered(stored, keyId, sealPublicKey, algorithm, registeredBy, registeredAt, predecessorKeyId: null, rotationSignature: default);
+
+    /// <summary>
+    /// Builds a draft that appends a generation rotated from a predecessor (ADR 0065 decision 12): the registration
+    /// above, with the predecessor's id and its signature over the rotation tuple recorded on the new generation.
+    /// </summary>
+    /// <param name="stored">The stored environment.</param>
+    /// <param name="keyId">The generation's id.</param>
+    /// <param name="sealPublicKey">The public seal key, base64url SPKI.</param>
+    /// <param name="algorithm">The seal key's signature algorithm.</param>
+    /// <param name="registeredBy">The registering actor.</param>
+    /// <param name="registeredAt">The registration instant.</param>
+    /// <param name="predecessorKeyId">The generation this one was rotated from, or <see langword="null"/> for a first registration.</param>
+    /// <param name="rotationSignature">The predecessor's signature over the rotation tuple, as the request's own JSON value; undefined with no predecessor.</param>
+    /// <returns>A pooled draft document.</returns>
+    public static ParsedJsonDocument<Environment> DraftWithKeyRegistered(
+        in Environment stored, string keyId, in JsonElement sealPublicKey, in JsonElement algorithm, string registeredBy, DateTimeOffset registeredAt, string? predecessorKeyId, in JsonElement rotationSignature)
+        => DraftWithKeyMutation(new KeyMutation(stored, keyId, sealPublicKey, algorithm, registeredBy, registeredAt, reason: null, retire: false, predecessorKeyId, rotationSignature));
 
     /// <summary>
     /// Builds a draft that marks a generation Retired (ADR 0065). Retirement is recorded rather than removed, so a
@@ -256,7 +273,7 @@ public readonly partial struct Environment
     /// <returns>A pooled draft document.</returns>
     public static ParsedJsonDocument<Environment> DraftWithKeyRetired(
         in Environment stored, string keyId, string retiredBy, DateTimeOffset retiredAt, string? reason)
-        => DraftWithKeyMutation(new KeyMutation(stored, keyId, sealPublicKey: default, algorithm: default, retiredBy, retiredAt, reason, retire: true));
+        => DraftWithKeyMutation(new KeyMutation(stored, keyId, sealPublicKey: default, algorithm: default, retiredBy, retiredAt, reason, retire: true, predecessorKeyId: null, rotationSignature: default));
 
     private static ParsedJsonDocument<Environment> DraftWithKeyMutation(in KeyMutation mutation)
         => PersistedJson.ToPooledDocument<Environment, KeyMutation>(
@@ -364,6 +381,14 @@ public readonly partial struct Environment
         writer.WriteString(EnvironmentKeyGeneration.JsonPropertyNames.StateUtf8, "Active");
         writer.WriteString(EnvironmentKeyGeneration.JsonPropertyNames.RegisteredByUtf8, m.Actor);
         writer.WriteString(EnvironmentKeyGeneration.JsonPropertyNames.RegisteredAtUtf8, m.At);
+        if (m.PredecessorKeyId is { } predecessorKeyId)
+        {
+            // The rotation link (decision 12) is a fact of the generation for its whole life: the signature is copied
+            // as the request's own JSON value, never decoded and re-encoded.
+            writer.WriteString(EnvironmentKeyGeneration.JsonPropertyNames.PredecessorKeyIdUtf8, predecessorKeyId);
+            WriteValueIfPresent(writer, EnvironmentKeyGeneration.JsonPropertyNames.RotationSignatureUtf8, m.RotationSignature);
+        }
+
         writer.WriteEndObject();
     }
 
@@ -382,6 +407,10 @@ public readonly partial struct Environment
         {
             writer.WriteString(EnvironmentKeyGeneration.JsonPropertyNames.ReasonUtf8, reason);
         }
+
+        // Retirement keeps the rotation link: a chain through a retired generation still verifies (decision 12).
+        WriteValueIfPresent(writer, EnvironmentKeyGeneration.JsonPropertyNames.PredecessorKeyIdUtf8, (JsonElement)generation.PredecessorKeyId);
+        WriteValueIfPresent(writer, EnvironmentKeyGeneration.JsonPropertyNames.RotationSignatureUtf8, (JsonElement)generation.RotationSignature);
 
         writer.WriteEndObject();
     }
@@ -567,8 +596,10 @@ public readonly partial struct Environment
     // One key mutation, with every echoed value read once from the stored environment.
     private readonly struct KeyMutation
     {
-        public KeyMutation(in Environment stored, string keyId, in JsonElement sealPublicKey, in JsonElement algorithm, string actor, DateTimeOffset at, string? reason, bool retire)
+        public KeyMutation(in Environment stored, string keyId, in JsonElement sealPublicKey, in JsonElement algorithm, string actor, DateTimeOffset at, string? reason, bool retire, string? predecessorKeyId, in JsonElement rotationSignature)
         {
+            this.PredecessorKeyId = predecessorKeyId;
+            this.RotationSignature = rotationSignature;
             this.Name = (JsonElement)stored.Name;
             this.DisplayName = (JsonElement)stored.DisplayName;
             this.Description = (JsonElement)stored.Description;
@@ -589,6 +620,10 @@ public readonly partial struct Environment
         }
 
         public JsonElement Name { get; }
+
+        public string? PredecessorKeyId { get; }
+
+        public JsonElement RotationSignature { get; }
 
         public JsonElement DisplayName { get; }
 

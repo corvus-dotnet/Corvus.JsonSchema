@@ -53,8 +53,10 @@ public readonly record struct RunnerBindings(IReadOnlyList<string> Environments,
     public int Count => this.Environments.Count;
 }
 
-/// <summary>One registered seal key generation of an environment, as the runner API advertises it (ADR 0065 decision 10).</summary>
+/// <summary>One registered seal key generation as the control plane advertises it to runners (ADR 0065 decisions 10 and 12).</summary>
 /// <param name="KeyId">The generation's id.</param>
-/// <param name="SealPublicKey">The public seal key, base64 SubjectPublicKeyInfo.</param>
-/// <param name="Active">Whether the generation is active.</param>
-public readonly record struct RunnerSealKeyGeneration(string KeyId, string SealPublicKey, bool Active);
+/// <param name="SealPublicKey">Its public seal key, base64 SubjectPublicKeyInfo.</param>
+/// <param name="Active">Whether the control plane holds it active.</param>
+/// <param name="PredecessorKeyId">The generation it was rotated from, or <see langword="null"/> on a first registration.</param>
+/// <param name="RotationSignature">The predecessor's signature over the rotation tuple, base64, or <see langword="null"/> with no predecessor.</param>
+public readonly record struct RunnerSealKeyGeneration(string KeyId, string SealPublicKey, bool Active, string? PredecessorKeyId = null, string? RotationSignature = null);

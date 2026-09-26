@@ -322,8 +322,17 @@ internal static class ThrowHelper
     public static InvalidOperationException GetAllowlistSealKeyFingerprintRequiredException(string environment, string keyId)
         => new(SR.Format(SR.AllowlistSealKeyFingerprintRequired, environment, keyId));
 
-    public static InvalidOperationException GetAllowlistMinimumGenerationNotHeldException(string environment, string minimum, string held)
-        => new(SR.Format(SR.AllowlistMinimumGenerationNotHeld, environment, minimum, held));
+    public static InvalidOperationException GetAllowlistMinimumGenerationNotHeldException(string environment, string minimum)
+        => new(SR.Format(SR.AllowlistMinimumGenerationNotHeld, environment, minimum));
+
+    public static InvalidOperationException GetAllowlistGenerationDuplicateException(string environment, string keyId)
+        => new(SR.Format(SR.AllowlistGenerationDuplicate, environment, keyId));
+
+    public static ArgumentException GetAllowlistGenerationNotHeldException(string environment, string keyId)
+        => new(SR.Format(SR.AllowlistGenerationNotHeld, environment, keyId));
+
+    public static InvalidOperationException GetAllowlistGenerationsAndShorthandException(string environment)
+        => new(SR.Format(SR.AllowlistGenerationsAndShorthand, environment));
 
     public static CheckpointEnvironmentNotAdmittedException GetCheckpointEnvironmentNotAdmittedException(in WorkflowRunAddress address)
         => new(address, SR.Format(SR.CheckpointEnvironmentNotAdmitted, address));

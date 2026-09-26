@@ -5,6 +5,7 @@
 using System.Security.Cryptography;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Anchoring;
+using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
@@ -101,6 +102,92 @@ public sealed class RunnerAllowlistTests
     }
 
     [TestMethod]
+    public async Task A_runner_holding_a_successor_writes_under_it_once_the_control_plane_advertises_it_chained_to_the_pin()
+    {
+        // ADR 0065 decision 12: the runner holds k1 (pinned) and k3 (provisioned ahead). While only k1 is registered
+        // it writes under k1; once k3 is registered active with k1's signature over the rotation, it writes under k2
+        // without a restart; a k3 the outgoing key did not hand over to is never written under, and with k1 retired
+        // such a runner is suspended.
+        using var first = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using var second = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using var stranger = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        byte[] firstSpki = first.ExportSubjectPublicKeyInfo();
+        byte[] secondSpki = second.ExportSubjectPublicKeyInfo();
+        string pinned = RunStartInitiator.SealKeyFingerprint(firstSpki);
+        string link = Convert.ToBase64String(EnvironmentKeyRotation.Sign(first, Fixture.Production, KeyId, "k3", secondSpki));
+        string strangerLink = Convert.ToBase64String(EnvironmentKeyRotation.Sign(stranger, Fixture.Production, KeyId, "k3", secondSpki));
+
+        // Only k1 registered: k1 is written under.
+        await using Fixture before = await Fixture.StartAsync(
+            keyRing: TwoGenerationRing(pinned),
+            anchors: await AnchorsAsync(),
+            sealedGenerations: Generations(KeyId),
+            sealKeys: new Dictionary<string, IReadOnlyList<RunnerSealKeyGeneration>> { [Fixture.Production] = [new RunnerSealKeyGeneration(KeyId, Convert.ToBase64String(firstSpki), true)] });
+        (await before.Client.AdmitsAsync(Fixture.Production)).ShouldBe(RunnerAdmission.Admitted);
+        before.Client.Allowlist.WriteGenerationOf(Fixture.Production).ShouldBe(KeyId);
+        await before.SeedGenesisWaitingAsync(Run1, WorkflowWait.Timer(Fixture.T0));
+        before.Clock.Advance(TimeSpan.FromMinutes(1));
+        (await new RunnerApiWorker(before.Client).ResumeDueTimersAsync([Fixture.Version], Park, default)).ShouldBe(1);
+        CheckpointIntegrity.KeyIdOf((await before.Store.LoadAsync(Address(Run1), default))!.Value.Row.Span).ShouldBe(KeyId);
+
+        // k3 registered active, chained from k1: the write generation advances to k3 and the next save is under it;
+        // a message wait parked under k1 still wakes, since the delivery queries every held generation's index.
+        await using Fixture after = await Fixture.StartAsync(
+            keyRing: TwoGenerationRing(pinned),
+            anchors: await AnchorsAsync(),
+            sealedGenerations: Generations(KeyId, "k3"),
+            sealKeys: new Dictionary<string, IReadOnlyList<RunnerSealKeyGeneration>>
+            {
+                [Fixture.Production] = [new RunnerSealKeyGeneration(KeyId, Convert.ToBase64String(firstSpki), true), new RunnerSealKeyGeneration("k3", Convert.ToBase64String(secondSpki), true, KeyId, link)],
+            });
+        (await after.Client.AdmitsAsync(Fixture.Production)).ShouldBe(RunnerAdmission.Admitted);
+        after.Client.Allowlist.WriteGenerationOf(Fixture.Production).ShouldBe("k3", "the newest held generation that chains to the pin");
+        await after.SeedGenesisWaitingAsync(Run1, WorkflowWait.Timer(Fixture.T0));
+        after.Clock.Advance(TimeSpan.FromMinutes(1));
+        (await new RunnerApiWorker(after.Client).ResumeDueTimersAsync([Fixture.Version], Park, default)).ShouldBe(1);
+        CheckpointIntegrity.KeyIdOf((await after.Store.LoadAsync(Address(Run1), default))!.Value.Row.Span).ShouldBe("k3");
+
+        // k3 advertised under a link the outgoing key did not sign: k1 is still written under while it is active,
+        // and once k1 is retired the runner is suspended rather than following the swap.
+        await using Fixture forged = await Fixture.StartAsync(
+            keyRing: TwoGenerationRing(pinned),
+            anchors: await AnchorsAsync(),
+            sealedGenerations: Generations(KeyId, "k3"),
+            sealKeys: new Dictionary<string, IReadOnlyList<RunnerSealKeyGeneration>>
+            {
+                [Fixture.Production] = [new RunnerSealKeyGeneration(KeyId, Convert.ToBase64String(firstSpki), true), new RunnerSealKeyGeneration("k3", Convert.ToBase64String(secondSpki), true, KeyId, strangerLink)],
+            });
+        (await forged.Client.AdmitsAsync(Fixture.Production)).ShouldBe(RunnerAdmission.Admitted);
+        forged.Client.Allowlist.WriteGenerationOf(Fixture.Production).ShouldBe(KeyId, "the forged successor is not followed");
+        await using Fixture forgedAndRetired = await Fixture.StartAsync(
+            keyRing: TwoGenerationRing(pinned),
+            anchors: await AnchorsAsync(),
+            sealedGenerations: Generations("k3"),
+            sealKeys: new Dictionary<string, IReadOnlyList<RunnerSealKeyGeneration>>
+            {
+                [Fixture.Production] = [new RunnerSealKeyGeneration(KeyId, Convert.ToBase64String(firstSpki), false), new RunnerSealKeyGeneration("k3", Convert.ToBase64String(secondSpki), true, KeyId, strangerLink)],
+            });
+        (await forgedAndRetired.Client.AdmitsAsync(Fixture.Production)).ShouldBe(RunnerAdmission.SealKeyMismatch);
+
+        static async ValueTask<WorkflowRunResultKind> Park(WorkflowRun run, CancellationToken cancellationToken)
+        {
+            await run.CheckpointAsync(run.Cursor + 1, cancellationToken);
+            await run.SuspendForTimerAsync(run.Cursor, TimeSpan.FromMinutes(5), cancellationToken);
+            return WorkflowRunResultKind.Suspended;
+        }
+
+        static async Task<InMemoryTenantAnchorStore> AnchorsAsync()
+        {
+            var anchors = new InMemoryTenantAnchorStore();
+            await anchors.AttestIncarnationAsync(Fixture.Production, 1, default);
+            return anchors;
+        }
+
+        static Dictionary<string, IReadOnlySet<string>> Generations(params string[] active)
+            => new() { [Fixture.Production] = new HashSet<string>(active) };
+    }
+
+    [TestMethod]
     public void A_keyed_entry_needs_a_pinned_fingerprint_and_the_minimum_generation_is_the_one_held()
     {
         using var http = new HttpClient { BaseAddress = new Uri("http://localhost/") };
@@ -113,6 +200,24 @@ public sealed class RunnerAllowlistTests
 
     private static Dictionary<string, IReadOnlyList<RunnerSealKeyGeneration>> Advertised(string keyId, byte[] spki, bool active)
         => new() { [Fixture.Production] = [new RunnerSealKeyGeneration(keyId, Convert.ToBase64String(spki), active)] };
+
+    private static readonly byte[] SecondPayloadKey = Enumerable.Range(0, 32).Select(i => (byte)(77 + i)).ToArray();
+
+    // k1 and k2 held, oldest first (decision 12), pinned on k1's seal key.
+    private static RunnerKeyRing TwoGenerationRing(string pinnedFingerprint)
+    {
+        byte[] firstMac = new byte[32];
+        CheckpointDerivation.DeriveSubkey(PayloadKey, CheckpointSubkey.EnvelopeMac, Fixture.Production, KeyId, firstMac);
+        byte[] secondMac = new byte[32];
+        CheckpointDerivation.DeriveSubkey(SecondPayloadKey, CheckpointSubkey.EnvelopeMac, Fixture.Production, "k3", secondMac);
+        return RunnerKeyRing.From(new Dictionary<string, RunnerEnvironmentKeys>
+        {
+            [Fixture.Production] = RunnerEnvironmentKeys.Holding(
+                [new RunnerGenerationKeys(KeyId, PayloadKey, firstMac), new RunnerGenerationKeys("k3", SecondPayloadKey, secondMac)],
+                @sealed: true,
+                sealKeyFingerprint: pinnedFingerprint),
+        });
+    }
 
     private static RunnerKeyRing Ring(string pinnedFingerprint)
     {

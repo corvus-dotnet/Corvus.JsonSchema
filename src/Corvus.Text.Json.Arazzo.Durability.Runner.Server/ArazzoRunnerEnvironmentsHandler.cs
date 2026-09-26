@@ -66,10 +66,14 @@ public sealed class ArazzoRunnerEnvironmentsHandler : IApiEnvironmentsHandler
                     {
                         foreach (RunnerSealKeyGeneration generation in source)
                         {
+                            // The rotation link travels with the generation (decision 12), so the runner can verify
+                            // the chain from a successor back to the fingerprint it pinned.
                             builder.AddItem(EnvironmentSealKeyGeneration.Build(
                                 keyId: generation.KeyId,
                                 sealPublicKey: generation.SealPublicKey,
-                                state: generation.Active ? "Active" : "Retired"));
+                                state: generation.Active ? "Active" : "Retired",
+                                predecessorKeyId: generation.PredecessorKeyId is { } predecessor ? (Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source)predecessor : default,
+                                rotationSignature: generation.RotationSignature is { } signature ? (Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Source)signature : default));
                         }
                     })),
             workspace);

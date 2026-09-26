@@ -3,7 +3,9 @@
 // </copyright>
 
 using System.Collections.Concurrent;
+using System.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Anchoring;
+using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models;
 using Corvus.Text.Json.OpenApi;
 
@@ -46,7 +48,7 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     private readonly ITenantAnchorStore? anchors;
     private readonly RunnerKeyRing keyRing;
     private RunStartInputValidator? startInputs;
-    private readonly ConcurrentDictionary<string, WaitIndexBlinder> blinders = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<(string Environment, string KeyId), WaitIndexBlinder> blinders = new();
 
     /// <summary>Initializes a new instance of the <see cref="ArazzoRunnerClient"/> class over an API transport.</summary>
     /// <param name="transport">The transport to the runner API host.</param>
@@ -536,9 +538,9 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     }
 
     /// <summary>
-    /// The wait-index blinder for an environment on this runner's key ring (ADR 0065 decision 4), which a run in that
-    /// environment parks its message waits under and a delivery names them by; <see langword="null"/> for an
-    /// environment the runner serves clear.
+    /// The wait-index blinder for an environment on this runner's key ring (ADR 0065 decision 4), under the generation
+    /// the runner currently writes under: what a run in that environment parks its message waits under;
+    /// <see langword="null"/> for an environment the runner serves clear.
     /// </summary>
     /// <param name="environment">The environment.</param>
     /// <returns>The blinder, or <see langword="null"/>.</returns>
@@ -550,8 +552,32 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
             return null;
         }
 
-        return this.blinders.GetOrAdd(environment, static (env, k) => new WaitIndexBlinder(env, k.KeyId, k.PayloadKey), keys);
+        return this.BlinderFor(environment, keys.WriteGeneration);
     }
+
+    /// <summary>
+    /// The wait-index blinders for every generation of an environment this runner holds and accepts (ADR 0065
+    /// decisions 4 and 12): a delivery queries the index under each, so a run parked under an older generation still
+    /// wakes before the re-key sweep has carried it to the newer one. Empty for an environment served clear.
+    /// </summary>
+    /// <param name="environment">The environment.</param>
+    /// <returns>The blinders, oldest generation first.</returns>
+    public IEnumerable<WaitIndexBlinder> WaitBlindersFor(string environment)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(environment);
+        if (!this.keyRing.TryGet(environment, out RunnerEnvironmentKeys keys))
+        {
+            yield break;
+        }
+
+        foreach (RunnerGenerationKeys generation in keys.AcceptedGenerations())
+        {
+            yield return this.BlinderFor(environment, generation);
+        }
+    }
+
+    private WaitIndexBlinder BlinderFor(string environment, in RunnerGenerationKeys generation)
+        => this.blinders.GetOrAdd((environment, generation.KeyId), static (key, g) => new WaitIndexBlinder(key.Environment, g.KeyId, g.PayloadKey), generation);
 
     /// <summary>Gets the environments on this runner's key ring, whose waits are blinded.</summary>
     public IEnumerable<string> BlindedEnvironments => this.keyRing.Environments;
@@ -561,9 +587,11 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
 
     /// <summary>
     /// Whether this runner admits a claim for an environment (ADR 0065 decision 10): the environment is on its
-    /// allowlist and, for a keyed entry with a pinned fingerprint, the seal key the control plane advertises for the
-    /// generation held is the one the tenant pinned. The advertised key is fetched at most once a minute per environment; a fetch that fails, a
-    /// generation the environment does not hold active, or any other fingerprint than the pinned one suspends the
+    /// allowlist and, for a keyed entry with a pinned fingerprint, some generation the runner holds is advertised
+    /// active by the control plane under the seal key the tenant pinned, or under one that reaches the pin along
+    /// verified rotation links (decision 12). The newest such generation becomes the one the runner writes under, so
+    /// a rotation the tenant registered is followed without a restart. The advertised keys are fetched at most once a
+    /// minute per environment; a fetch that fails, no held generation active, or none reaching the pin suspends the
     /// environment until a later check passes. A binding the control plane wrote for an environment the tenant did
     /// not name, and an environment the control plane re-keyed under a key the tenant did not register, both get this
     /// runner nothing.
@@ -597,9 +625,10 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
         return admission;
     }
 
-    // The advertised seal keys, compared to the pin: the generation this runner holds has to be registered, active,
-    // and under exactly the public key whose fingerprint the tenant pinned. The control plane's answer is a claim the
-    // pin checks, never the other way round.
+    // The advertised seal keys, compared to the pin: a generation this runner holds has to be registered, active, and
+    // under the public key whose fingerprint the tenant pinned or under one that reaches it along rotation links the
+    // predecessors signed (decision 12). The newest held generation that qualifies is the one written under from now
+    // on. The control plane's answer is a claim the pin checks, never the other way round.
     private async ValueTask<RunnerAdmission> CheckSealKeyAsync(string environment, RunnerEnvironmentKeys keys, CancellationToken cancellationToken)
     {
         try
@@ -610,22 +639,50 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
                 return RunnerAdmission.SealKeyUnavailable;
             }
 
+            var advertised = new List<AdvertisedKeyGeneration>();
             foreach (EnvironmentSealKeyGeneration generation in response.OkBody.Generations.EnumerateArray())
             {
-                if (!string.Equals((string)generation.KeyId, keys.KeyId, StringComparison.Ordinal))
+                advertised.Add(new AdvertisedKeyGeneration(
+                    (string)generation.KeyId,
+                    ((JsonElement)generation.SealPublicKey).GetBytesFromBase64(),
+                    generation.State.ValueEquals("Active"u8),
+                    ((JsonElement)generation.PredecessorKeyId).ValueKind == JsonValueKind.String ? (string)generation.PredecessorKeyId : null,
+                    ((JsonElement)generation.RotationSignature).ValueKind == JsonValueKind.String ? ((JsonElement)generation.RotationSignature).GetBytesFromBase64() : null));
+            }
+
+            // Newest held generation first: the first that is active and reaches the pin is written under.
+            IReadOnlyList<RunnerGenerationKeys> held = [.. keys.AcceptedGenerations()];
+            RunnerAdmission refusal = RunnerAdmission.GenerationNotActive;
+            for (int i = held.Count - 1; i >= 0; i--)
+            {
+                string keyId = held[i].KeyId;
+                AdvertisedKeyGeneration? found = null;
+                foreach (AdvertisedKeyGeneration generation in advertised)
+                {
+                    if (string.Equals(generation.KeyId, keyId, StringComparison.Ordinal))
+                    {
+                        found = generation;
+                        break;
+                    }
+                }
+
+                if (found is not { Active: true } candidate)
                 {
                     continue;
                 }
 
-                if (!generation.State.ValueEquals("Active"u8))
+                if (keys.Pins(candidate.SealPublicKey) || (keys.SealKeyFingerprint is { } pin && EnvironmentKeyChain.Reaches(environment, pin, keyId, advertised)))
                 {
-                    return RunnerAdmission.GenerationNotActive;
+                    this.keyRing.SelectWriteGeneration(environment, keyId);
+                    return RunnerAdmission.Admitted;
                 }
 
-                return keys.Pins(((JsonElement)generation.SealPublicKey).GetBytesFromBase64()) ? RunnerAdmission.Admitted : RunnerAdmission.SealKeyMismatch;
+                // Advertised active under a key that neither is the pin nor reaches it: the substitution the pin
+                // exists to catch, unless an older held generation still qualifies.
+                refusal = RunnerAdmission.SealKeyMismatch;
             }
 
-            return RunnerAdmission.GenerationNotActive;
+            return refusal;
         }
         catch (Exception ex) when (ex is HttpRequestException or RunnerApiException or FormatException)
         {

@@ -136,9 +136,33 @@ the key's SubjectPublicKeyInfo) and does not build without it. The runner API's 
 bound environment's generations and public seal keys; `runner.AdmitsAsync(environment)` checks the generation held
 against the pin at most once a minute per environment and suspends the environment (`seal-key-mismatch`,
 `generation-not-active`, `seal-key-unavailable`) until a later check passes. A control plane that re-keyed the
-environment under a key of its own therefore gets nothing opened or sealed under it. The minimum generation is the
-generation held: a row under any other is refused, and a `MinimumKeyId` naming another generation does not build until
-a ring can hold more than one.
+environment under a key of its own therefore gets nothing opened or sealed under it.
+
+An entry holds one generation, as above, or several under `Generations`, oldest first (ADR 0065 decision 12), each
+with its own payload key and, when the runner opens sealed starts under it, its own private seal half:
+
+```csharp
+new RunnerKeyRingEntry(
+    "production",
+    Sealed: true,
+    SealKeyFingerprint: "q1n...=",
+    Generations:
+    [
+        new RunnerKeyGeneration("production-2026-09", SecretRef.Parse("vault://secret/arazzo/payload-keys/production-2026-09#key")),
+        new RunnerKeyGeneration("production-2026-10", SecretRef.Parse("vault://secret/arazzo/payload-keys/production-2026-10#key")),
+    ])
+```
+
+A row under any held generation at or above the entry's minimum opens under that generation's keys; `MinimumKeyId`
+names one held generation, the oldest by default, and a row under an older held generation is refused, which is how a
+generation is retired in two steps, first the minimum, then the secret. Every save goes out under the **write
+generation**: the newest held to begin with, and re-selected at each `AdmitsAsync` check as the newest held
+generation the runner API advertises active whose seal key is the pinned one or reaches it along the rotation links
+the predecessors signed (`EnvironmentKeyChain`). Registering a chained successor therefore moves every runner that
+holds its secrets to it without a restart; a successor the outgoing key did not sign for is never written under, and
+once the last generation reaching the pin is retired the environment is suspended (`seal-key-mismatch`). A delivery
+queries the blind wait index under every held generation (`WaitBlindersFor`), so a run parked under an older
+generation still wakes.
 
 ## Sealing what the client saves
 

@@ -669,7 +669,16 @@
     <value>Environment '{0}', generation '{1}', is on the runner's allowlist with a key and no pinned seal-key fingerprint. The runner checks the seal key the control plane advertises against the fingerprint the tenant pinned, so an entry without one would take any key at all (ADR 0065 decision 10).</value>
   </data>
   <data name="AllowlistMinimumGenerationNotHeld" xml:space="preserve">
-    <value>Environment '{0}' names '{1}' as its minimum generation and holds '{2}'. A ring holds one generation per environment, so the minimum is the generation held; a minimum naming another waits on a ring that holds more than one (ADR 0065 decision 12).</value>
+    <value>Environment '{0}' names '{1}' as its minimum generation, which is not one of the generations the runner holds for it. The minimum is the oldest held generation a row is accepted under (ADR 0065 decisions 10 and 12).</value>
+  </data>
+  <data name="AllowlistGenerationDuplicate" xml:space="preserve">
+    <value>Environment '{0}' lists generation '{1}' more than once on the runner's allowlist. Each generation held is listed once, oldest first (ADR 0065 decision 12).</value>
+  </data>
+  <data name="AllowlistGenerationNotHeld" xml:space="preserve">
+    <value>Environment '{0}' cannot be written under generation '{1}': the runner does not hold it, or it is below the minimum generation (ADR 0065 decision 12).</value>
+  </data>
+  <data name="AllowlistGenerationsAndShorthand" xml:space="preserve">
+    <value>Environment '{0}' lists its generations and also names a single key generation, payload key or seal key. An entry holds its generations in one form: the single generation, or the list (ADR 0065 decision 12).</value>
   </data>
   <data name="CheckpointEnvironmentNotAdmitted" xml:space="preserve">
     <value>Run '{0}' is in an environment this runner's allowlist does not admit, so its checkpoint is neither loaded nor saved here (ADR 0065 decision 10). A binding the control plane wrote for an environment the tenant did not name gets the runner nothing.</value>

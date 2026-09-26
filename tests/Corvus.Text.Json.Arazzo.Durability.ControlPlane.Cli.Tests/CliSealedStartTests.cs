@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Corvus.Text.Json.Arazzo.Durability;
 using Corvus.Text.Json.Arazzo.Durability.Anchoring;
+using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -53,6 +54,50 @@ public sealed class CliSealedStartTests
             InputSeal.Open(sealKey.ExportPkcs8PrivateKey(), sealedInputs.Enc.Span, SealedStartSignature.SealInfo, binding, sealedInputs.Ciphertext.Span, opened);
             Encoding.UTF8.GetString(opened).ShouldBe("""{"email":"ada@example.com"}""");
             Encoding.Latin1.GetString(server.Posted!).Contains("ada@example.com", StringComparison.Ordinal).ShouldBeFalse("the inputs never leave the initiator in the clear");
+        }
+        finally
+        {
+            File.Delete(initiatorKeyPath);
+        }
+    }
+
+    [TestMethod]
+    public async Task A_pinned_initiator_follows_a_rotation_along_signed_links_and_never_an_unsigned_one()
+    {
+        // ADR 0065 decision 12: the operator pinned k1's fingerprint. Once k2 is registered with k1's signature over
+        // the rotation, the initiator seals to k2 on its own; a k2 the outgoing key did not hand over to is refused,
+        // and with k1 retired that leaves nothing to seal to.
+        using var first = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using var second = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using var stranger = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using var initiator = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        byte[] firstSpki = first.ExportSubjectPublicKeyInfo();
+        byte[] secondSpki = second.ExportSubjectPublicKeyInfo();
+        string pinned = RunStartInitiator.SealKeyFingerprint(firstSpki);
+        string link = Convert.ToBase64String(EnvironmentKeyRotation.Sign(first, "production", "k1", "k2", secondSpki));
+        string strangerLink = Convert.ToBase64String(EnvironmentKeyRotation.Sign(stranger, "production", "k1", "k2", secondSpki));
+        string initiatorKeyPath = Path.Combine(Path.GetTempPath(), "arazzo-initiator-" + Guid.NewGuid().ToString("N") + ".pem");
+        await File.WriteAllTextAsync(initiatorKeyPath, initiator.ExportPkcs8PrivateKeyPem());
+        try
+        {
+            string chained = $$"""{ "keys": [ { "keyId": "k1", "sealPublicKey": "{{Convert.ToBase64String(firstSpki)}}", "algorithm": "ES256", "state": "Retired", "registeredBy": "ops", "registeredAt": "2026-01-01T00:00:00Z" }, { "keyId": "k2", "sealPublicKey": "{{Convert.ToBase64String(secondSpki)}}", "algorithm": "ES256", "state": "Active", "registeredBy": "ops", "registeredAt": "2026-02-01T00:00:00Z", "predecessorKeyId": "k1", "rotationSignature": "{{link}}" } ] }""";
+            await using (FakeControlPlane server = await FakeControlPlane.StartAsync("production", chained))
+            {
+                (int exit, string stdout, string stderr) = await RunAsync(server, "start", "onboard", "2", "--environment", "production", "--inputs", """{"email":"ada@example.com"}""", "--sealed", "--initiator-key", initiatorKeyPath, "--seal-key-fingerprint", pinned, "--run-id", "0123456789abcdef0123456789abcdef");
+                exit.ShouldBe(0, stderr + stdout);
+                using ParsedJsonDocument<SealedRunStart> posted = ParsedJsonDocument<SealedRunStart>.Parse(server.Posted!);
+                posted.RootElement.ToSealedInputs().KeyId.ShouldBe("k2", "sealed to the successor the pinned key handed over to");
+                stderr.ShouldContain("k2");
+            }
+
+            string forged = chained.Replace(link, strangerLink, StringComparison.Ordinal);
+            await using (FakeControlPlane server = await FakeControlPlane.StartAsync("production", forged))
+            {
+                (int exit, string stdout, string stderr) = await RunAsync(server, "start", "onboard", "2", "--environment", "production", "--inputs", """{"email":"ada@example.com"}""", "--sealed", "--initiator-key", initiatorKeyPath, "--seal-key-fingerprint", pinned);
+                exit.ShouldBe(1, stderr + stdout);
+                server.Posted.ShouldBeNull("nothing sealed to a successor the outgoing key did not sign for");
+                stderr.ShouldContain("rotation");
+            }
         }
         finally
         {
@@ -136,14 +181,16 @@ public sealed class CliSealedStartTests
 
         public string? Error { get; private set; }
 
-        public static async Task<FakeControlPlane> StartAsync(string environment, string keyId, byte[] sealSpki)
+        public static Task<FakeControlPlane> StartAsync(string environment, string keyId, byte[] sealSpki)
+            => StartAsync(environment, $$"""{ "keys": [ { "keyId": "{{keyId}}", "sealPublicKey": "{{Convert.ToBase64String(sealSpki)}}", "algorithm": "ES256", "state": "Active", "registeredBy": "ops", "registeredAt": "2026-01-01T00:00:00Z" } ] }""");
+
+        public static async Task<FakeControlPlane> StartAsync(string environment, string keys)
         {
             WebApplicationBuilder builder = WebApplication.CreateBuilder();
             builder.Logging.ClearProviders();
             WebApplication app = builder.Build();
             app.Urls.Add("http://127.0.0.1:0");
             var server = new FakeControlPlane(app);
-            string keys = $$"""{ "keys": [ { "keyId": "{{keyId}}", "sealPublicKey": "{{Convert.ToBase64String(sealSpki)}}", "algorithm": "ES256", "state": "Active", "registeredBy": "ops", "registeredAt": "2026-01-01T00:00:00Z" } ] }""";
             app.MapGet($"/environments/{environment}/keys", () => Results.Content(keys, "application/json"));
             app.MapPost("/catalog/{baseWorkflowId}/versions/{versionNumber}/runs/sealed", async (HttpRequest request) =>
             {

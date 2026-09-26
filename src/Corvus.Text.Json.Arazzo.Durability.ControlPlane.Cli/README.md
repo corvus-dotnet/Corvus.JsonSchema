@@ -60,7 +60,9 @@ arazzo-runs schedules run-now nightly-reconcile --server https://host:8080
 
 A sealed start into `production`, as the tenant's operator: the initiator key is the operator's own, and the
 fingerprint is the one the operator recorded when the seal key was registered, never one read off the control plane
-at the time of the start.
+at the time of the start. After a rotation the pin still holds: the command seals to the latest active generation
+whose rotation links, each signed by the outgoing key, verify back to the pinned one (ADR 0065 decision 12), says so
+on stderr, and refuses a generation nothing pinned handed over to.
 
 ```bash
 arazzo-runs start onboard-customer 2 --environment production \

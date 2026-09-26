@@ -205,6 +205,48 @@ public readonly partial struct EnvironmentSealKeyGeneration
         }
 
         /// <summary>
+        /// Gets the (optional) <c>predecessorKeyId</c> property.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The generation this one was rotated from (ADR 0065 decision 12); absent on the environment&#39;s first generation.
+        /// </para>
+        /// </remarks>
+        public Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Mutable PredecessorKeyId
+        {
+            get
+            {
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PredecessorKeyIdUtf8, out Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Mutable value))
+                {
+                    return value;
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>rotationSignature</c> property.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The predecessor&#39;s ES256 signature (base64, IEEE P1363) over the framed rotation tuple (environment, predecessorKeyId, keyId, sealPublicKey), present exactly when predecessorKeyId is. A runner pinned on an earlier generation writes under this one only when the links from it back to the pin verify under the predecessors&#39; advertised keys.
+        /// </para>
+        /// </remarks>
+        public Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Mutable RotationSignature
+        {
+            get
+            {
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RotationSignatureUtf8, out Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Mutable value))
+                {
+                    return value;
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
         /// Gets the <c>sealPublicKey</c> property.
         /// </summary>
         /// <remarks>
@@ -311,6 +353,96 @@ public readonly partial struct EnvironmentSealKeyGeneration
             }
 
             _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Set the <c>predecessorKeyId</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetPredecessorKeyId(scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.PredecessorKeyIdUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PredecessorKeyIdUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PredecessorKeyId, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Remove the <c>predecessorKeyId</c> property, if present.
+        /// </summary>
+        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+        public bool RemovePredecessorKeyId()
+        {
+            CheckValidInstance();
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.PredecessorKeyIdUtf8);
+            _documentVersion = _parent.Version;
+            return result;
+        }
+
+        /// <summary>
+        /// Set the <c>rotationSignature</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetRotationSignature(scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.RotationSignatureUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RotationSignatureUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RotationSignature, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Remove the <c>rotationSignature</c> property, if present.
+        /// </summary>
+        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+        public bool RemoveRotationSignature()
+        {
+            CheckValidInstance();
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.RotationSignatureUtf8);
+            _documentVersion = _parent.Version;
+            return result;
         }
 
         /// <summary>
@@ -592,6 +724,8 @@ public readonly partial struct EnvironmentSealKeyGeneration
         private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source _createArg1;
         private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Source _createArg2;
         private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentSealKeyGeneration.EnvironmentSealKeyState.Source _createArg3;
+        private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source _createArg4;
+        private readonly Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Source _createArg5;
 
         /// <inheritdoc cref="global::Corvus.Text.Json.JsonElement.Source.IsUndefined"/>
         public bool IsUndefined => _kind == Kind.Unknown;
@@ -604,11 +738,13 @@ public readonly partial struct EnvironmentSealKeyGeneration
 
         internal Source(Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentSealKeyGeneration.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentSealKeyGeneration.EnvironmentSealKeyState.Source arg3)
+        internal Source(scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentSealKeyGeneration.EnvironmentSealKeyState.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Source arg5)
         {
             _createArg1 = arg1;
             _createArg2 = arg2;
             _createArg3 = arg3;
+            _createArg4 = arg4;
+            _createArg5 = arg5;
             _kind = Kind.Create;
         }
 
@@ -629,7 +765,7 @@ public readonly partial struct EnvironmentSealKeyGeneration
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(utf8Name, escapeName, nameRequiresUnescaping);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -654,7 +790,7 @@ public readonly partial struct EnvironmentSealKeyGeneration
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -679,7 +815,7 @@ public readonly partial struct EnvironmentSealKeyGeneration
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -704,7 +840,7 @@ public readonly partial struct EnvironmentSealKeyGeneration
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartProperty(name);
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
                         valueBuilder.EndProperty(handle);
                         break;
                     }
@@ -729,7 +865,7 @@ public readonly partial struct EnvironmentSealKeyGeneration
                 case Kind.Create:
                     {
                         ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartItem();
-                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, ref valueBuilder);
+                        Builder.BuildCreateValue(_createArg1, _createArg2, _createArg3, _createArg4, _createArg5, ref valueBuilder);
                         valueBuilder.EndItem(handle);
                         break;
                     }
@@ -879,11 +1015,15 @@ public readonly partial struct EnvironmentSealKeyGeneration
             ref ComplexValueBuilder builder,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source keyId,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Source sealPublicKey,
-            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentSealKeyGeneration.EnvironmentSealKeyState.Source state)
+            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentSealKeyGeneration.EnvironmentSealKeyState.Source state,
+            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source predecessorKeyId = default,
+            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Source rotationSignature = default)
         {
             keyId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.KeyId, ref builder);
             sealPublicKey.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SealPublicKey, ref builder);
             state.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.State, ref builder);
+            predecessorKeyId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PredecessorKeyId, ref builder);
+            rotationSignature.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RotationSignature, ref builder);
         }
 
         /// <summary>
@@ -892,9 +1032,11 @@ public readonly partial struct EnvironmentSealKeyGeneration
         public void Create(
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source keyId,
             in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Source sealPublicKey,
-            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentSealKeyGeneration.EnvironmentSealKeyState.Source state)
+            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentSealKeyGeneration.EnvironmentSealKeyState.Source state,
+            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source predecessorKeyId = default,
+            in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Source rotationSignature = default)
         {
-            Create(ref _builder, keyId, sealPublicKey, state);
+            Create(ref _builder, keyId, sealPublicKey, state, predecessorKeyId, rotationSignature);
         }
 
         /// <summary>
@@ -989,10 +1131,10 @@ public readonly partial struct EnvironmentSealKeyGeneration
             o.EndObject();
         }
 
-        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentSealKeyGeneration.EnvironmentSealKeyState.Source arg3, ref ComplexValueBuilder o)
+        internal static void BuildCreateValue(scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source arg1, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Source arg2, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentSealKeyGeneration.EnvironmentSealKeyState.Source arg3, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source arg4, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Source arg5, ref ComplexValueBuilder o)
         {
             o.StartObject();
-            Create(ref o, arg1, arg2, arg3);
+            Create(ref o, arg1, arg2, arg3, arg4, arg5);
             o.EndObject();
         }
     }
@@ -1032,10 +1174,12 @@ public readonly partial struct EnvironmentSealKeyGeneration
     /// <param name="keyId">The value of the <c>"keyId"</c> property.</param>
     /// <param name="sealPublicKey">The value of the <c>"sealPublicKey"</c> property.</param>
     /// <param name="state">The value of the <c>"state"</c> property.</param>
+    /// <param name="predecessorKeyId">The value of the <c>"predecessorKeyId"</c> property.</param>
+    /// <param name="rotationSignature">The value of the <c>"rotationSignature"</c> property.</param>
     /// <returns>The source from which to build the value.</returns>
-    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source keyId, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Source sealPublicKey, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentSealKeyGeneration.EnvironmentSealKeyState.Source state)
+    public static Source Build(scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source keyId, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Source sealPublicKey, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentSealKeyGeneration.EnvironmentSealKeyState.Source state, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source predecessorKeyId = default, scoped in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Source rotationSignature = default)
     {
-        return new Source(keyId, sealPublicKey, state);
+        return new Source(keyId, sealPublicKey, state, predecessorKeyId, rotationSignature);
     }
 
     /// <summary>
@@ -1134,15 +1278,17 @@ public readonly partial struct EnvironmentSealKeyGeneration
     /// <param name="keyId">The value of the property.</param>
     /// <param name="sealPublicKey">The value of the property.</param>
     /// <param name="state">The value of the property.</param>
+    /// <param name="predecessorKeyId">The value of the property.</param>
+    /// <param name="rotationSignature">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source keyId, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Source sealPublicKey, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentSealKeyGeneration.EnvironmentSealKeyState.Source state, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source keyId, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Source sealPublicKey, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentSealKeyGeneration.EnvironmentSealKeyState.Source state, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source predecessorKeyId = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Source rotationSignature = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(keyId, sealPublicKey, state);
+        ovb.Create(keyId, sealPublicKey, state, predecessorKeyId, rotationSignature);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1242,9 +1388,11 @@ public readonly partial struct EnvironmentSealKeyGeneration
     /// <param name="keyId">The value of the property.</param>
     /// <param name="sealPublicKey">The value of the property.</param>
     /// <param name="state">The value of the property.</param>
+    /// <param name="predecessorKeyId">The value of the property.</param>
+    /// <param name="rotationSignature">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>A <see cref="ParsedJsonDocument{T}"/> containing the given property values. The caller must dispose it.</returns>
-    public static ParsedJsonDocument<EnvironmentSealKeyGeneration> Create(in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source keyId, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Source sealPublicKey, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentSealKeyGeneration.EnvironmentSealKeyState.Source state, int initialCapacity = 30)
+    public static ParsedJsonDocument<EnvironmentSealKeyGeneration> Create(in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source keyId, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Source sealPublicKey, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.EnvironmentSealKeyGeneration.EnvironmentSealKeyState.Source state, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonString.Source predecessorKeyId = default, in Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Source rotationSignature = default, int initialCapacity = 30)
     {
         ParsedJsonDocumentBuilder documentBuilder = ParsedJsonDocumentBuilder.Rent();
         try
@@ -1252,7 +1400,7 @@ public readonly partial struct EnvironmentSealKeyGeneration
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             cvb.StartObject();
             Builder ovb = new(cvb);
-            ovb.Create(keyId, sealPublicKey, state);
+            ovb.Create(keyId, sealPublicKey, state, predecessorKeyId, rotationSignature);
             cvb = ovb._builder;
             cvb.EndObject();
             ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);

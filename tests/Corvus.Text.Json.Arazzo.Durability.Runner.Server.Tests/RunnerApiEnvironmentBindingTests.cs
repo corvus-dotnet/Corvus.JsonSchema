@@ -53,7 +53,7 @@ public sealed class RunnerApiEnvironmentBindingTests
             boundEnvironments: [Production],
             sealKeys: new Dictionary<string, IReadOnlyList<RunnerSealKeyGeneration>>
             {
-                [Production] = [new RunnerSealKeyGeneration("k1", "AAEC", true), new RunnerSealKeyGeneration("k0", "AAED", false)],
+                [Production] = [new RunnerSealKeyGeneration("k1", "AAEC", true, "k0", "c2ln"), new RunnerSealKeyGeneration("k0", "AAED", false)],
                 [Development] = [new RunnerSealKeyGeneration("d1", "AAEE", true)],
             });
 
@@ -67,7 +67,10 @@ public sealed class RunnerApiEnvironmentBindingTests
             generations[0].GetProperty("keyId").GetString().ShouldBe("k1");
             generations[0].GetProperty("sealPublicKey").GetString().ShouldBe("AAEC");
             generations[0].GetProperty("state").GetString().ShouldBe("Active");
+            generations[0].GetProperty("predecessorKeyId").GetString().ShouldBe("k0", "the rotation link travels with the generation (decision 12)");
+            generations[0].GetProperty("rotationSignature").GetString().ShouldBe("c2ln");
             generations[1].GetProperty("state").GetString().ShouldBe("Retired");
+            generations[1].TryGetProperty("predecessorKeyId", out _).ShouldBeFalse("a first generation names none");
         }
 
         (await host.GetSealKeyAsync(Runner, Development)).StatusCode.ShouldBe(HttpStatusCode.NotFound, "not bound, so not there");

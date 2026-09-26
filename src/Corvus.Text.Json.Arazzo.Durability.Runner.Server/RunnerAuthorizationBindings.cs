@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Concurrent;
+using System.Text.Json;
 using Corvus.Text.Json.Arazzo.Durability.Environments;
 using Corvus.Text.Json.Arazzo.Durability.RunnerAuthorization;
 
@@ -250,7 +251,12 @@ public sealed class RunnerAuthorizationBindings : IRunnerEnvironmentBindings, IR
         List<RunnerSealKeyGeneration>? keys = null;
         foreach (Environments.Environment.EnvironmentKeyGeneration generation in Environments.Environment.Enumerate(environment.KeyGenerations))
         {
-            (keys ??= []).Add(new RunnerSealKeyGeneration((string)generation.KeyId, (string)generation.SealPublicKey, generation.State.ValueEquals("Active"u8)));
+            (keys ??= []).Add(new RunnerSealKeyGeneration(
+                (string)generation.KeyId,
+                (string)generation.SealPublicKey,
+                generation.State.ValueEquals("Active"u8),
+                ((JsonElement)generation.PredecessorKeyId).ValueKind == JsonValueKind.String ? (string)generation.PredecessorKeyId : null,
+                ((JsonElement)generation.RotationSignature).ValueKind == JsonValueKind.String ? (string)generation.RotationSignature : null));
         }
 
         return keys ?? [];

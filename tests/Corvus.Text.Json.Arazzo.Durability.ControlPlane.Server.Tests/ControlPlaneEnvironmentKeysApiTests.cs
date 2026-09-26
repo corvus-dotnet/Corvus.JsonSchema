@@ -150,13 +150,57 @@ public sealed class ControlPlaneEnvironmentKeysApiTests
         using ECDsa second = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         await host.SendJsonAsync(HttpMethod.Post, "/environments/production/keys", Registration(first, "production", "k1"), "acme");
         await host.SendJsonAsync(HttpMethod.Post, "/environments/production/keys/k1/retirement", "{}", "acme");
-        await host.SendJsonAsync(HttpMethod.Post, "/environments/production/keys", Registration(second, "production", "k2"), "acme");
+
+        // The retired generation still hands over (decision 12): a compromised generation is retired and its
+        // successor registered in either order, and the chain through it verifies.
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/keys", Rotation(second, "production", "k2", first, "k1"), "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
 
         using Stj.JsonDocument all = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/environments/production/keys", "acme"));
         all.RootElement.GetProperty("keys").EnumerateArray().Select(k => k.GetProperty("keyId").GetString()).ShouldBe(["k1", "k2"]);
+        all.RootElement.GetProperty("keys")[1].GetProperty("predecessorKeyId").GetString().ShouldBe("k1");
+        all.RootElement.GetProperty("keys")[1].GetProperty("rotationSignature").GetString().ShouldNotBeNullOrEmpty();
+        all.RootElement.GetProperty("keys")[0].TryGetProperty("predecessorKeyId", out _).ShouldBeFalse("the first generation names no predecessor");
 
         using Stj.JsonDocument active = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/environments/production/keys?state=Active", "acme"));
         active.RootElement.GetProperty("keys").EnumerateArray().Select(k => k.GetProperty("keyId").GetString()).ShouldBe(["k2"]);
+    }
+
+    [TestMethod]
+    public async Task A_second_generation_is_a_rotation_and_needs_the_predecessors_signature()
+    {
+        // ADR 0065 decision 12: into an environment that already holds a generation, an administrator cannot swap the
+        // seal key alone; the outgoing private half has to hand over. A first generation can name no predecessor.
+        await using Scoped host = await StartAsync();
+        await CreateEnvironmentAsync(host, "production", "acme");
+
+        using ECDsa first = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using ECDsa second = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using ECDsa stranger = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        HttpResponseMessage unchainedFirst = await host.SendJsonAsync(HttpMethod.Post, "/environments/production/keys", Rotation(first, "production", "k1", stranger, "k0"), "acme");
+        unchainedFirst.StatusCode.ShouldBe(HttpStatusCode.BadRequest, "a first generation names no predecessor");
+        (await unchainedFirst.Content.ReadAsStringAsync()).ShouldContain("environment-key-rotation");
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/keys", Registration(first, "production", "k1"), "acme")).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        HttpResponseMessage unchained = await host.SendJsonAsync(HttpMethod.Post, "/environments/production/keys", Registration(second, "production", "k2"), "acme");
+        unchained.StatusCode.ShouldBe(HttpStatusCode.BadRequest, "a second generation with no predecessor");
+        (await unchained.Content.ReadAsStringAsync()).ShouldContain("environment-key-rotation");
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/keys", Rotation(second, "production", "k2", first, "k1", linkSignedBy: stranger), "acme")).StatusCode.ShouldBe(HttpStatusCode.BadRequest, "a link the predecessor did not sign");
+        (await host.SendJsonAsync(HttpMethod.Post, "/environments/production/keys", Rotation(second, "production", "k2", first, "k9"), "acme")).StatusCode.ShouldBe(HttpStatusCode.BadRequest, "a predecessor the environment does not hold");
+
+        using Stj.JsonDocument listed = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/environments/production/keys", "acme"));
+        listed.RootElement.GetProperty("keys").GetArrayLength().ShouldBe(1, "nothing above was registered");
+
+        string rotation = Rotation(second, "production", "k2", first, "k1");
+        using Stj.JsonDocument registered = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/environments/production/keys", rotation, "acme"));
+        registered.RootElement.GetProperty("keyId").GetString().ShouldBe("k2");
+        registered.RootElement.GetProperty("predecessorKeyId").GetString().ShouldBe("k1");
+        registered.RootElement.GetProperty("state").GetString().ShouldBe("Active");
+
+        // Replay names the generation that already exists, as for a first registration.
+        using Stj.JsonDocument replayed = await ReadJsonAsync(await host.SendJsonAsync(HttpMethod.Post, "/environments/production/keys", rotation, "acme"));
+        replayed.RootElement.GetProperty("keyId").GetString().ShouldBe("k2");
+        using Stj.JsonDocument active = await ReadJsonAsync(await host.SendAsync(HttpMethod.Get, "/environments/production/keys?state=Active", "acme"));
+        active.RootElement.GetProperty("keys").EnumerateArray().Select(k => k.GetProperty("keyId").GetString()).ShouldBe(["k1", "k2"], "both active until one is retired");
     }
 
     [TestMethod]
@@ -216,6 +260,22 @@ public sealed class ControlPlaneEnvironmentKeysApiTests
 
         return $$"""
             {"keyId":"{{keyId}}","sealPublicKey":"{{Convert.ToBase64String(spki)}}","algorithm":"ES256","notBefore":"{{notBefore:O}}","signature":"{{Convert.ToBase64String(signature)}}"}
+            """;
+    }
+
+    // A rotation (ADR 0065 decision 12): the new key's own possession proof plus the predecessor's signature over the
+    // rotation tuple, made with the outgoing private seal half.
+    private static string Rotation(ECDsa key, string environment, string keyId, ECDsa predecessor, string predecessorKeyId, ECDsa? linkSignedBy = null)
+    {
+        byte[] spki = key.ExportSubjectPublicKeyInfo();
+        DateTimeOffset notBefore = DateTimeOffset.UtcNow;
+        byte[] tuple = new byte[EnvironmentKeyPossession.MaxTupleLength(environment, keyId, spki.Length)];
+        int written = EnvironmentKeyPossession.WriteSignedTuple(tuple, environment, keyId, spki, notBefore);
+        byte[] signature = key.SignData(tuple.AsSpan(0, written), HashAlgorithmName.SHA256, DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
+        byte[] link = EnvironmentKeyRotation.Sign(linkSignedBy ?? predecessor, environment, predecessorKeyId, keyId, spki);
+
+        return $$"""
+            {"keyId":"{{keyId}}","sealPublicKey":"{{Convert.ToBase64String(spki)}}","algorithm":"ES256","notBefore":"{{notBefore:O}}","signature":"{{Convert.ToBase64String(signature)}}","predecessorKeyId":"{{predecessorKeyId}}","rotationSignature":"{{Convert.ToBase64String(link)}}"}
             """;
     }
 

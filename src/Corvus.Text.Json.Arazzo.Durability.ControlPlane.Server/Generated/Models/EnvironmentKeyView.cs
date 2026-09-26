@@ -163,6 +163,27 @@ public readonly partial struct EnvironmentKeyView
     }
 
     /// <summary>
+    /// Gets the (optional) <c>predecessorKeyId</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The generation this one was rotated from (ADR 0065 decision 12), or absent on an environment&#39;s first generation.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString PredecessorKeyId
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PredecessorKeyIdUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets the (optional) <c>reason</c> property.
     /// </summary>
     /// <remarks>
@@ -265,6 +286,27 @@ public readonly partial struct EnvironmentKeyView
         get
         {
             if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RetiredByUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>rotationSignature</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The predecessor&#39;s signature over the rotation tuple, present exactly when predecessorKeyId is. An initiator pinned on an earlier generation seals to this one only when the links from it back to the pin verify.
+    /// </para>
+    /// </remarks>
+    public Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String RotationSignature
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RotationSignatureUtf8, out Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server.Models.JsonCorvusBase64String value))
             {
                 return value;
             }
@@ -579,6 +621,11 @@ public readonly partial struct EnvironmentKeyView
         public const string KeyId = "keyId";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="PredecessorKeyId"/>.
+        /// </summary>
+        public const string PredecessorKeyId = "predecessorKeyId";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="Reason"/>.
         /// </summary>
         public const string Reason = "reason";
@@ -604,6 +651,11 @@ public readonly partial struct EnvironmentKeyView
         public const string RetiredBy = "retiredBy";
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="RotationSignature"/>.
+        /// </summary>
+        public const string RotationSignature = "rotationSignature";
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="SealPublicKey"/>.
         /// </summary>
         public const string SealPublicKey = "sealPublicKey";
@@ -622,6 +674,11 @@ public readonly partial struct EnvironmentKeyView
         /// Gets the JSON property name for <see cref="KeyId"/>.
         /// </summary>
         public static ReadOnlySpan<byte> KeyIdUtf8 => "keyId"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="PredecessorKeyId"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> PredecessorKeyIdUtf8 => "predecessorKeyId"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Reason"/>.
@@ -649,6 +706,11 @@ public readonly partial struct EnvironmentKeyView
         public static ReadOnlySpan<byte> RetiredByUtf8 => "retiredBy"u8;
 
         /// <summary>
+        /// Gets the JSON property name for <see cref="RotationSignature"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RotationSignatureUtf8 => "rotationSignature"u8;
+
+        /// <summary>
         /// Gets the JSON property name for <see cref="SealPublicKey"/>.
         /// </summary>
         public static ReadOnlySpan<byte> SealPublicKeyUtf8 => "sealPublicKey"u8;
@@ -670,6 +732,11 @@ public readonly partial struct EnvironmentKeyView
         /// Gets the escaped UTF-8 JSON property name for <see cref="KeyId"/>.
         /// </summary>
         public static ReadOnlySpan<byte> KeyId => "keyId"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="PredecessorKeyId"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> PredecessorKeyId => "predecessorKeyId"u8;
 
         /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Reason"/>.
@@ -697,6 +764,11 @@ public readonly partial struct EnvironmentKeyView
         public static ReadOnlySpan<byte> RetiredBy => "retiredBy"u8;
 
         /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="RotationSignature"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RotationSignature => "rotationSignature"u8;
+
+        /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="SealPublicKey"/>.
         /// </summary>
         public static ReadOnlySpan<byte> SealPublicKey => "sealPublicKey"u8;
@@ -718,6 +790,11 @@ public readonly partial struct EnvironmentKeyView
         /// Gets the pre-baked property name blob for <see cref="KeyId"/>.
         /// </summary>
         public static ReadOnlySpan<byte> KeyId => [0x75, 0x00, 0x00, 0x00, 0x22, 0x6B, 0x65, 0x79, 0x49, 0x64, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="PredecessorKeyId"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> PredecessorKeyId => [0x25, 0x01, 0x00, 0x00, 0x22, 0x70, 0x72, 0x65, 0x64, 0x65, 0x63, 0x65, 0x73, 0x73, 0x6F, 0x72, 0x4B, 0x65, 0x79, 0x49, 0x64, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="Reason"/>.
@@ -743,6 +820,11 @@ public readonly partial struct EnvironmentKeyView
         /// Gets the pre-baked property name blob for <see cref="RetiredBy"/>.
         /// </summary>
         public static ReadOnlySpan<byte> RetiredBy => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x74, 0x69, 0x72, 0x65, 0x64, 0x42, 0x79, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="RotationSignature"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> RotationSignature => [0x35, 0x01, 0x00, 0x00, 0x22, 0x72, 0x6F, 0x74, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x53, 0x69, 0x67, 0x6E, 0x61, 0x74, 0x75, 0x72, 0x65, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="SealPublicKey"/>.
