@@ -232,7 +232,8 @@ File.WriteAllText(Path.Combine(signingHandoffDir, $"production-seal-{productionS
 
 // The executor countersigning handoff (ADR 0065 phase C): the tenant operator's executor-signing private half, which
 // countersigns each version's executor for production, beside the public half runner-production pins.
-File.WriteAllText(Path.Combine(signingHandoffDir, "production-executor-signing.key.pem"), productionExecutorSigningPrivateKeyPem);
+string productionExecutorSigningKeyPath = Path.Combine(signingHandoffDir, "production-executor-signing.key.pem");
+File.WriteAllText(productionExecutorSigningKeyPath, productionExecutorSigningPrivateKeyPem);
 File.WriteAllText(Path.Combine(signingHandoffDir, "production-executor-signing.pub"), productionExecutorSigningPublicKey);
 Environment.SetEnvironmentVariable("ARAZZO_INITIATOR_HANDOFF_DIR", signingHandoffDir);
 Console.WriteLine($"Sealed-start initiator handoff: {initiatorKeyPath} (initiator key), {sealKeyFingerprintPath} (seal key fingerprint {productionSealKeyFingerprint})");
@@ -760,6 +761,17 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner-product
 // bootstrapped access-approval runs the control plane starts, and hosts the access.decision consumer. It registers as
 // the arazzo-access-approval machine principal, and resolves the 'controlplane' OAuth2 credential (accessRequests:grant)
 // as its own read-only Vault identity to call grantAccessRequest on the control-plane API.
+// The tenant operator's step (ADR 0065 phase C): a one-shot run of the REAL CLI that countersigns every version
+// currently available in production with the handed-off executor-signing key, so runner-production, which pins that
+// key, executes them. Without it every production run is handed back until an operator countersigns; with it the
+// composition illustrates the whole chain, platform signature, tenant countersignature, runner pin. The CLI computes
+// each digest from the executor the control plane serves and refuses a manifest naming another. It reaches the control
+// plane through the demo's development API-key scheme (`--api-key`), the stand-in for an operator's sign-in.
+builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Durability_ControlPlane_Cli>("production-operator")
+    .WithArgs("availability", "countersign", "production", "--signing-key", productionExecutorSigningKeyPath, "--api-key", "demo-admin-key")
+    .WithEnvironment("ARAZZO_RUNS_SERVER", ReferenceExpression.Create($"{controlplane.GetEndpoint("http")}/arazzo/v1"))
+    .WaitFor(controlplane);
+
 builder.AddProject<Projects.Corvus_Text_Json_Arazzo_ControlPlane_SystemRunner>("system-runner")
     .WithReference(workflowstore)
     .WaitFor(workflowstore)

@@ -90,10 +90,13 @@ executor-signing key in the signing vault: its public half is pinned on `runner-
 executor says the platform built it; `runner-production` executes a version in production only under the tenant's
 countersignature over that executor's package hash and assembly digest, recorded through
 `PUT /environments/production/executors/{baseWorkflowId}/{versionNumber}` by an administrator of production, and
-hands every run of an uncountersigned version back until then. The live composition tests countersign
-`onboard-customer` 1 and 2 and `onboard-customer-async` 1 over HTTP with the handed-off key before they start
-production runs, computing each digest from the executor the control plane serves and refusing a manifest that names
-another; a plain `aspire run` leaves production's versions uncountersigned until the operator does the same.
+hands every run of an uncountersigned version back until then. The `production-operator` resource is that operator:
+a one-shot run of the real CLI, once the control plane is healthy, that countersigns every version available in
+production with the handed-off key (`arazzo-runs availability countersign production --signing-key <handoff>/production-executor-signing.key.pem --api-key demo-admin-key`),
+computing each digest from the executor the control plane serves and refusing a manifest that names another. The live
+composition test `A_version_the_tenant_has_not_countersigned_is_handed_back_until_the_operator_countersigns_it`
+withdraws one countersignature, watches `runner-production` hand the version's run back, countersigns it again and
+watches the run complete.
 
 The CLI pins the fingerprint before it seals, so a control plane publishing a key of its own gets nothing; the runner
 pins the initiator, so a seal anyone else made faults the run at its start rather than running. The live composition

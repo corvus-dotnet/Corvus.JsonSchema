@@ -30,7 +30,9 @@ arazzo-runs <command> [args] --server <url> [--token <bearer>]
 `--server` is the control plane's **base URL** — origin plus any base path the deployment mounts the API under,
 e.g. `https://host:8080` (API at the root) or `https://host/arazzo/v1`. The generated request paths are absolute
 (`/runs`); the CLI prepends the `--server` base path to them, so it adapts to wherever the API is served.
-`--server`/`--token` may also come from `ARAZZO_RUNS_SERVER` / `ARAZZO_RUNS_TOKEN`.
+`--server`/`--token` may also come from `ARAZZO_RUNS_SERVER` / `ARAZZO_RUNS_TOKEN`. `--api-key` (or
+`ARAZZO_RUNS_API_KEY`) sends a development API key as `X-Api-Key` instead, for a deployment that authenticates the CLI
+with that scheme, such as the demo composition.
 
 The runs commands above sit at the top level; the other control-plane resources are grouped under noun branches
 (run `arazzo-runs <group> --help` for each):
@@ -45,6 +47,7 @@ The runs commands above sit at the top level; the other control-plane resources 
 | `access-requests` | Request elevated capability on a workflow, and — as a §15 administrator — decide requests (§16.5): `submit`/`list`/`get`/`approve`/`approve-as-eligible`/`deny`/`withdraw`/`revoke`. |
 | `schedules` | Manage durable schedules (#896) — a cadence that starts a target workflow on each occurrence: `list`/`get`/`create`/`run-now`/`delete`. Creating one needs a runner serving schedules in the target environment. Reuses the `runs:read`/`runs:write` scopes. |
 | `scenarios` | Run workflow scenario suites (workflow-designer design §4.5) — the CI story; see below. |
+| `availability` | Promotion: `make`/`withdraw`/`environments`/`versions`, and the tenant operator's executor countersignature (ADR 0065 phase C): `countersign <environment> [<baseWorkflowId> <versionNumber>] --signing-key <pem> [--expect-digest <sha256:hex>]` signs, with the tenant's own executor-signing key, the executor the control plane serves for a version (its digest computed here from the served bytes and checked against the manifest) for one environment, or every version available there; `countersignatures <environment>` lists; `withdraw-countersignature <environment> <baseWorkflowId> <versionNumber>` removes one. A runner that pins the tenant's key executes nothing in the environment the tenant did not countersign. |
 
 ```bash
 arazzo-runs credentials list --status expiring --server https://host:8080
@@ -71,6 +74,21 @@ arazzo-runs start onboard-customer 2 --environment production \
   --seal-key-fingerprint 'q1n...=' --server https://controlplane.example
 ```
 
+
+The tenant operator's countersignature over a version's executor for production (ADR 0065 phase C). The CLI reads
+the executor and its manifest from the control plane, computes the digest from the served bytes, refuses a manifest
+that names another, signs the framed tuple with the operator's own executor-signing key and records it; a runner
+pinning that key's public half executes the version in production from its next check, and hands back every run of
+it until then. `--expect-digest` pins the digest the operator reviewed; without a version, every version available
+in the environment is countersigned.
+
+```bash
+arazzo-runs availability countersign production onboard-customer 2 \
+  --signing-key ~/.arazzo/production-executor-signing.key.pem \
+  --expect-digest sha256:9f2c... --server https://controlplane.example
+arazzo-runs availability countersign production --signing-key ~/.arazzo/production-executor-signing.key.pem --server https://controlplane.example
+arazzo-runs availability countersignatures production --server https://controlplane.example
+```
 
 ```bash
 arazzo-runs list --status Faulted --server https://host:8080

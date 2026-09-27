@@ -172,6 +172,9 @@ public static class CliApp
                 availability.AddCommand<AvailabilityWithdrawCommand>("withdraw").WithDescription("Withdraw a version's availability in an environment (baseWorkflowId versionNumber environment).");
                 availability.AddCommand<AvailabilityListEnvironmentsCommand>("environments").WithDescription("List the environments a version is available in (baseWorkflowId versionNumber; --output json).");
                 availability.AddCommand<AvailabilityListVersionsCommand>("versions").WithDescription("List the workflow versions available in an environment (environment; --output json).");
+                availability.AddCommand<AvailabilityCountersignCommand>("countersign").WithDescription("Countersign a version's executor for an environment as the tenant operator (ADR 0065 phase C): environment [baseWorkflowId versionNumber] --signing-key <pem> [--expect-digest <sha256:hex>]; without a version, every version available in the environment. The digest is computed from the executor the control plane serves.");
+                availability.AddCommand<AvailabilityCountersignaturesCommand>("countersignatures").WithDescription("List the executors countersigned for an environment (environment; --output json).");
+                availability.AddCommand<AvailabilityWithdrawCountersignatureCommand>("withdraw-countersignature").WithDescription("Withdraw a version's executor countersignature for an environment (environment baseWorkflowId versionNumber); the environment's runners stop executing the version there at their next check.");
             });
 
             c.AddBranch<CommandSettings>("runners", runners =>

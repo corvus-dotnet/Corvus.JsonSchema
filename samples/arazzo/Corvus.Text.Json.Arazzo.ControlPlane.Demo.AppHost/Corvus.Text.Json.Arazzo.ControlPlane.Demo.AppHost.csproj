@@ -31,6 +31,8 @@
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Samples.Onboarding.Host\Corvus.Text.Json.Arazzo.Samples.Onboarding.Host.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Samples.Ledger.Host\Corvus.Text.Json.Arazzo.Samples.Ledger.Host.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Arazzo.Samples.Kyc.Host\Corvus.Text.Json.Arazzo.Samples.Kyc.Host.csproj" />
+    <!-- The real CLI, run once per boot as the tenant operator countersigning production's executors (ADR 0065 phase C). -->
+    <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli\Corvus.Text.Json.Arazzo.Durability.ControlPlane.Cli.csproj" />
   </ItemGroup>
 
 </Project>

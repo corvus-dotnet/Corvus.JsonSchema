@@ -171,9 +171,10 @@ public sealed class LiveCompositionTests
         // fingerprint, exactly what `arazzo-runs start --sealed` takes (ADR 0065 decision 9).
         string handoff = Environment.GetEnvironmentVariable("ARAZZO_INITIATOR_HANDOFF_DIR")!;
 
-        // The tenant operator's countersignatures (ADR 0065 phase C): runner-production pins the tenant's
-        // executor-signing key and hands back every run of a version the tenant has not countersigned for production.
-        await CountersignProductionAsync(http, handoff);
+        // The tenant operator's countersignatures (ADR 0065 phase C): the AppHost's production-operator resource, the
+        // real CLI, countersigns every version available in production at boot; runner-production pins the tenant's
+        // executor-signing key and hands back every run of a version the tenant has not countersigned.
+        await WaitForOperatorCountersignaturesAsync(http);
         using var initiator = System.Security.Cryptography.ECDsa.Create();
         initiator.ImportFromPem(await File.ReadAllTextAsync(Path.Combine(handoff, "production-initiator.key.pem")));
         string pinnedFingerprint = (await File.ReadAllTextAsync(Path.Combine(handoff, "production-seal-key.fingerprint"))).Trim();
@@ -186,10 +187,10 @@ public sealed class LiveCompositionTests
 
         // Seal the onboarding inputs to it, sign as the initiator, and post the seal: the control plane never sees them.
         string runId = RunStartInitiator.NewRunId();
-        SealedInputs sealedInputs = RunStartInitiator.Seal(sealSpki, generation.GetProperty("keyId").GetString()!, "production", "onboard-customer", 2, runId, """{"email":"sealed@example.com","fullName":"Sealed Start","plan":"pro"}"""u8, initiator);
+        SealedInputs sealedInputs = RunStartInitiator.Seal(sealSpki, generation.GetProperty("keyId").GetString()!, "production", "onboard-customer", 1, runId, """{"email":"sealed@example.com","fullName":"Sealed Start","plan":"pro"}"""u8, initiator);
         using var body = new ByteArrayContent(SealedRunStart.Serialize(runId, sealedInputs));
         body.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
-        using HttpResponseMessage accepted = await http.PostAsync("/arazzo/v1/catalog/onboard-customer/versions/2/runs/sealed?environment=production", body);
+        using HttpResponseMessage accepted = await http.PostAsync("/arazzo/v1/catalog/onboard-customer/versions/1/runs/sealed?environment=production", body);
         accepted.StatusCode.ShouldBe(HttpStatusCode.Accepted, await accepted.Content.ReadAsStringAsync());
 
         // runner-production opens the seal, validates the inputs and runs the onboarding to completion; the run says
@@ -222,9 +223,10 @@ public sealed class LiveCompositionTests
         // current generation, the outgoing generation's private seal half and the successor's pair.
         string handoff = Environment.GetEnvironmentVariable("ARAZZO_INITIATOR_HANDOFF_DIR")!;
 
-        // The tenant operator's countersignatures (ADR 0065 phase C): runner-production pins the tenant's
-        // executor-signing key and hands back every run of a version the tenant has not countersigned for production.
-        await CountersignProductionAsync(http, handoff);
+        // The tenant operator's countersignatures (ADR 0065 phase C): the AppHost's production-operator resource, the
+        // real CLI, countersigns every version available in production at boot; runner-production pins the tenant's
+        // executor-signing key and hands back every run of a version the tenant has not countersigned.
+        await WaitForOperatorCountersignaturesAsync(http);
         using var initiator = System.Security.Cryptography.ECDsa.Create();
         initiator.ImportFromPem(await File.ReadAllTextAsync(Path.Combine(handoff, "production-initiator.key.pem")));
         string pinnedFingerprint = (await File.ReadAllTextAsync(Path.Combine(handoff, "production-seal-key.fingerprint"))).Trim();
@@ -272,11 +274,11 @@ public sealed class LiveCompositionTests
 
         // A sealed start pinned on the OLD fingerprint follows the chain to the successor and completes there.
         string chainedRunId = RunStartInitiator.NewRunId();
-        SealedInputs chained = RunStartInitiator.Seal(successorSpki, "production-2026-10", "production", "onboard-customer", 2, chainedRunId, """{"email":"rotated@example.com","fullName":"Rotated Start","plan":"pro"}"""u8, initiator);
+        SealedInputs chained = RunStartInitiator.Seal(successorSpki, "production-2026-10", "production", "onboard-customer", 1, chainedRunId, """{"email":"rotated@example.com","fullName":"Rotated Start","plan":"pro"}"""u8, initiator);
         using (var body = new ByteArrayContent(SealedRunStart.Serialize(chainedRunId, chained)))
         {
             body.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
-            using HttpResponseMessage accepted = await http.PostAsync("/arazzo/v1/catalog/onboard-customer/versions/2/runs/sealed?environment=production", body);
+            using HttpResponseMessage accepted = await http.PostAsync("/arazzo/v1/catalog/onboard-customer/versions/1/runs/sealed?environment=production", body);
             accepted.StatusCode.ShouldBe(HttpStatusCode.Accepted, await accepted.Content.ReadAsStringAsync());
         }
 
@@ -286,35 +288,96 @@ public sealed class LiveCompositionTests
         pinnedFingerprint.ShouldBe(RunStartInitiator.SealKeyFingerprint(currentSpki), "the operator's pin never changed");
     }
 
-    // The tenant operator countersigns the executors of the versions the tests run in production (ADR 0065 phase C):
-    // for each, the executor and its manifest are read from the control plane, the digest is computed from the served
-    // bytes and has to be the one the manifest records, and the framed tuple is signed with the handed-off
-    // executor-signing key. The control plane records it unverified; runner-production verifies it under its pin.
-    private static async Task CountersignProductionAsync(HttpClient http, string handoff)
+    [TestMethod]
+    [TestCategory("integration")]
+    public async Task A_version_the_tenant_has_not_countersigned_is_handed_back_until_the_operator_countersigns_it()
+    {
+        if (Environment.GetEnvironmentVariable("ARAZZO_APPHOST_E2E") != "1")
+        {
+            Assert.Inconclusive("Set ARAZZO_APPHOST_E2E=1 (and have a container runtime) to run the full two-process composition e2e.");
+        }
+
+        IDistributedApplicationTestingBuilder appHost =
+            await DistributedApplicationTestingBuilder.CreateAsync<Projects.Corvus_Text_Json_Arazzo_ControlPlane_Demo_AppHost>();
+        await using DistributedApplication app = await appHost.BuildAsync();
+        await app.StartAsync();
+        ResourceNotificationService notifications = app.Services.GetRequiredService<ResourceNotificationService>();
+        await notifications.WaitForResourceHealthyAsync("controlplane", default).WaitAsync(StartupTimeout);
+        await notifications.WaitForResourceHealthyAsync("runner-production", default).WaitAsync(StartupTimeout);
+        using HttpClient http = app.CreateHttpClient("controlplane");
+        http.DefaultRequestHeaders.Add("X-Api-Key", "demo-admin-key");
+        string handoff = Environment.GetEnvironmentVariable("ARAZZO_INITIATOR_HANDOFF_DIR")!;
+        await WaitForOperatorCountersignaturesAsync(http);
+
+        // The operator withdraws the countersignature of the onboarding's first version for production (ADR 0065 phase
+        // C). The version stays available, the platform's signature over its executor stays valid, and
+        // runner-production, which pins the tenant's executor-signing key, executes nothing there the tenant has not
+        // countersigned.
+        using (HttpResponseMessage withdrawn = await http.DeleteAsync("/arazzo/v1/environments/production/executors/onboard-customer/1"))
+        {
+            withdrawn.StatusCode.ShouldBe(HttpStatusCode.NoContent, await withdrawn.Content.ReadAsStringAsync());
+        }
+
+        using var initiator = System.Security.Cryptography.ECDsa.Create();
+        initiator.ImportFromPem(await File.ReadAllTextAsync(Path.Combine(handoff, "production-initiator.key.pem")));
+        Stj.JsonElement keys = await PollAsync(http, "/arazzo/v1/environments/production/keys?state=Active", doc => doc.GetProperty("keys").GetArrayLength() > 0, "production's seal key generation is registered");
+        Stj.JsonElement generation = keys.GetProperty("keys")[0];
+        byte[] sealSpki = generation.GetProperty("sealPublicKey").GetBytesFromBase64();
+        string runId = RunStartInitiator.NewRunId();
+        SealedInputs sealedInputs = RunStartInitiator.Seal(sealSpki, generation.GetProperty("keyId").GetString()!, "production", "onboard-customer", 1, runId, """{"email":"uncountersigned@example.com","fullName":"Held Back","plan":"pro"}"""u8, initiator);
+        using (var body = new ByteArrayContent(SealedRunStart.Serialize(runId, sealedInputs)))
+        {
+            body.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+            using HttpResponseMessage accepted = await http.PostAsync("/arazzo/v1/catalog/onboard-customer/versions/1/runs/sealed?environment=production", body);
+            accepted.StatusCode.ShouldBe(HttpStatusCode.Accepted, await accepted.Content.ReadAsStringAsync());
+        }
+
+        // The runner claims the run, loads and verifies the executor, finds no countersignature for it, and hands the
+        // run back unended, sweep after sweep: it is not faulted, and it is not run. The runner re-checks the advertised
+        // countersignature once a minute, so the window watched here is well inside one check.
+        await Task.Delay(TimeSpan.FromSeconds(20));
+        using (HttpResponseMessage held = await http.GetAsync($"/arazzo/v1/runs/{runId}"))
+        {
+            using Stj.JsonDocument doc = Stj.JsonDocument.Parse(await held.Content.ReadAsStringAsync());
+            doc.RootElement.GetProperty("status").GetString().ShouldBe("Pending", "an uncountersigned version's run is handed back, not run and not faulted");
+        }
+
+        // The operator countersigns the version again, and the runner executes it at its next check.
+        await CountersignAsync(http, handoff, "onboard-customer", 1);
+        Stj.JsonElement done = await PollAsync(http, $"/arazzo/v1/runs/{runId}", doc => doc.GetProperty("status").GetString() is "Completed" or "Faulted", "the production runner executes the countersigned version", attempts: 900);
+        done.GetProperty("status").GetString().ShouldBe("Completed");
+    }
+
+    // The production-operator resource countersigns the versions the seed made available in production; a test that
+    // starts a production run waits for that rather than racing it.
+    private static Task WaitForOperatorCountersignaturesAsync(HttpClient http)
+        => PollAsync(http, "/arazzo/v1/environments/production/executors", doc => doc.GetProperty("countersignatures").GetArrayLength() >= 2, "the production operator countersigned the available versions");
+
+    // The operator's countersignature over HTTP, as the CLI makes it (ADR 0065 phase C): the executor and its manifest
+    // are read from the control plane, the digest is computed from the served bytes and has to be the one the manifest
+    // records, and the framed tuple is signed with the handed-off executor-signing key.
+    private static async Task CountersignAsync(HttpClient http, string handoff, string baseWorkflowId, int versionNumber)
     {
         using var signer = System.Security.Cryptography.ECDsa.Create();
         signer.ImportFromPem(await File.ReadAllTextAsync(Path.Combine(handoff, "production-executor-signing.key.pem")));
-        foreach ((string baseWorkflowId, int versionNumber) in new[] { ("onboard-customer", 1), ("onboard-customer", 2), ("onboard-customer-async", 1) })
-        {
-            byte[] executor = await http.GetByteArrayAsync($"/arazzo/v1/catalog/{baseWorkflowId}/versions/{versionNumber}/executor");
-            string digest = "sha256:" + Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(executor));
-            using Stj.JsonDocument manifest = Stj.JsonDocument.Parse(await http.GetStringAsync($"/arazzo/v1/catalog/{baseWorkflowId}/versions/{versionNumber}/executorManifest"));
-            manifest.RootElement.GetProperty("assemblyDigest").GetString().ShouldBe(digest, "the manifest names the executor the control plane serves");
-            string packageHash = manifest.RootElement.GetProperty("packageHash").GetString()!;
-            byte[] signature = Corvus.Text.Json.Arazzo.Durability.Environments.ExecutorCountersignature.Sign(signer, "production", baseWorkflowId, versionNumber, packageHash, digest);
-            using var body = new StringContent(
-                $$"""{"packageHash":"{{packageHash}}","assemblyDigest":"{{digest}}","signature":"{{Convert.ToBase64String(signature)}}"}""",
-                System.Text.Encoding.UTF8,
-                "application/json");
-            using HttpResponseMessage recorded = await http.PutAsync($"/arazzo/v1/environments/production/executors/{baseWorkflowId}/{versionNumber}", body);
-            recorded.StatusCode.ShouldBe(HttpStatusCode.OK, await recorded.Content.ReadAsStringAsync());
-        }
+        byte[] executor = await http.GetByteArrayAsync($"/arazzo/v1/catalog/{baseWorkflowId}/versions/{versionNumber}/executor");
+        string digest = "sha256:" + Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(executor));
+        using Stj.JsonDocument manifest = Stj.JsonDocument.Parse(await http.GetStringAsync($"/arazzo/v1/catalog/{baseWorkflowId}/versions/{versionNumber}/executorManifest"));
+        manifest.RootElement.GetProperty("assemblyDigest").GetString().ShouldBe(digest, "the manifest names the executor the control plane serves");
+        string packageHash = manifest.RootElement.GetProperty("packageHash").GetString()!;
+        byte[] signature = Corvus.Text.Json.Arazzo.Durability.Environments.ExecutorCountersignature.Sign(signer, "production", baseWorkflowId, versionNumber, packageHash, digest);
+        using var body = new StringContent(
+            $$"""{"packageHash":"{{packageHash}}","assemblyDigest":"{{digest}}","signature":"{{Convert.ToBase64String(signature)}}"}""",
+            System.Text.Encoding.UTF8,
+            "application/json");
+        using HttpResponseMessage recorded = await http.PutAsync($"/arazzo/v1/environments/production/executors/{baseWorkflowId}/{versionNumber}", body);
+        recorded.StatusCode.ShouldBe(HttpStatusCode.OK, await recorded.Content.ReadAsStringAsync());
     }
 
-    private static async Task<Stj.JsonElement> PollAsync(HttpClient http, string path, Func<Stj.JsonElement, bool> settled, string what)
+    private static async Task<Stj.JsonElement> PollAsync(HttpClient http, string path, Func<Stj.JsonElement, bool> settled, string what, int attempts = 300)
     {
         Stj.JsonElement last = default;
-        for (int i = 0; i < 300; i++)
+        for (int i = 0; i < attempts; i++)
         {
             using HttpResponseMessage response = await http.GetAsync(path);
             if (response.StatusCode == HttpStatusCode.OK)

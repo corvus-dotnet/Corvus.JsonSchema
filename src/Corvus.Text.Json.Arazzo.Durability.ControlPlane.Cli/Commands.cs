@@ -26,6 +26,10 @@ internal class RunsSettings : CommandSettings
     [Description("OAuth2 bearer access token (or env ARAZZO_RUNS_TOKEN).")]
     public string? Token { get; init; }
 
+    [CommandOption("--api-key <KEY>")]
+    [Description("A development API key (or env ARAZZO_RUNS_API_KEY), sent as X-Api-Key for a deployment that authenticates the CLI with the development API-key scheme instead of a bearer token, such as the demo composition.")]
+    public string? ApiKey { get; init; }
+
     /// <inheritdoc/>
     public override Spectre.Console.ValidationResult Validate()
         => this.ResolveServer() is null
@@ -238,7 +242,13 @@ internal class RunsSettings : CommandSettings
             handler = new BasePathHandler(basePath) { InnerHandler = handler };
         }
 
-        return new HttpClient(handler) { BaseAddress = new Uri(server.GetLeftPart(UriPartial.Authority)) };
+        var http = new HttpClient(handler) { BaseAddress = new Uri(server.GetLeftPart(UriPartial.Authority)) };
+        if ((this.ApiKey ?? Environment.GetEnvironmentVariable("ARAZZO_RUNS_API_KEY")) is { Length: > 0 } apiKey)
+        {
+            http.DefaultRequestHeaders.Add("X-Api-Key", apiKey);
+        }
+
+        return http;
     }
 }
 

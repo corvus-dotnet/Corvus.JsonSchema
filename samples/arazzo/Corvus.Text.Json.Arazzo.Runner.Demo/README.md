@@ -75,7 +75,8 @@ version (recorded by the tenant operator through `countersignExecutor`, verified
 under a pinned key over the environment, the version and the loaded manifest's package hash and assembly digest;
 otherwise the run is handed back, unended, until the operator countersigns. A keyed entry needs a policy or the
 runner does not start. The AppHost pins the tenant's executor-signing key on `runner-production`
-(`Runner__Environments__0__ExecutorSigners__0`) and hands the operator the private half.
+(`Runner__Environments__0__ExecutorSigners__0`), hands the operator the private half, and runs the real CLI once as
+the `production-operator` resource to countersign every version available in production.
 
 ## Sealed starts
 
