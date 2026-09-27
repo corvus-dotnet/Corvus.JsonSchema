@@ -170,6 +170,21 @@ internal static class ServerThrowHelper
     public static void ThrowAuthenticationTelemetryRequired(ControlPlaneSecurityMode securityMode)
         => throw new InvalidOperationException(SR.Format(SR.AuthenticationTelemetryRequired, securityMode));
 
+    /// <summary>Throws when a secured security mode is mapped in a host that did not register the browser security headers (ADR 0073).</summary>
+    /// <param name="securityMode">The configured security mode.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowSecurityHeadersRequired(ControlPlaneSecurityMode securityMode)
+        => throw new InvalidOperationException(SR.Format(SR.SecurityHeadersRequired, securityMode));
+
+    /// <summary>Throws when a source configured for the browser security headers is not a single origin (ADR 0073).</summary>
+    /// <param name="optionName">The option that named the source.</param>
+    /// <param name="source">The source as configured.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowInvalidSecurityHeaderSource(string optionName, string source)
+        => throw new ArgumentException(SR.Format(SR.InvalidSecurityHeaderSource, optionName, source), optionName);
+
     /// <summary>Throws when a reach-enforcing security mode is given a persistent policy no hosted service refreshes on a bounded interval, so a revocation made on another replica would never take effect here (P1-14).</summary>
     /// <param name="securityMode">The configured security mode.</param>
     [DoesNotReturn]

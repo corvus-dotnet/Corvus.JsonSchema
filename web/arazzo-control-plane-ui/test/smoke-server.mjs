@@ -15,6 +15,20 @@ import { fileURLToPath } from 'node:url';
 const ROOT = normalize(fileURLToPath(new URL('..', import.meta.url))).replace(/[\\/]+$/, '');
 const PORT = Number(process.env.SMOKE_PORT ?? 8138);
 
+// The browser security headers the control plane's host sends (ADR 0073), so every smoke and UX test runs the kit
+// under the policy it ships under. Mirrors ControlPlaneSecurityHeaders.DefaultContentSecurityPolicy in
+// Corvus.Text.Json.Arazzo.Durability.ControlPlane.Server; change the two together.
+const SECURITY_HEADERS = {
+  'Content-Security-Policy':
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; "
+    + "connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+  'X-Frame-Options': 'DENY',
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'no-referrer',
+  'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+  'Cross-Origin-Resource-Policy': 'same-origin',
+};
+
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -42,7 +56,7 @@ const server = createServer(async (req, res) => {
     const info = await stat(abs).catch(() => null);
     if (!info?.isFile()) { res.writeHead(404).end('File not found'); return; }
 
-    res.writeHead(200, { 'Content-Type': MIME[extname(abs).toLowerCase()] ?? 'application/octet-stream' });
+    res.writeHead(200, { ...SECURITY_HEADERS, 'Content-Type': MIME[extname(abs).toLowerCase()] ?? 'application/octet-stream' });
     res.end(await readFile(abs));
   } catch {
     res.writeHead(500).end('Server error');

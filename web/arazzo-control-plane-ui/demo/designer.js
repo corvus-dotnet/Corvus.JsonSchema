@@ -1,0 +1,1852 @@
+import { designerFixture, paymentsOpenApi, orderEventsAsyncApi } from '/ui/demo/designer-fixture.js';
+import { projectWorkflow, listWorkflows } from '/ui/src/workflow-graph.js';
+import { EXPRESSION_ROOTS, resolveAgainstFrame, stepCompletionContext } from '/ui/src/expression-language.js';
+import { templatesFromResponses, payloadSkeletonFromSchema } from '/ui/src/operation-templates.js';
+import { WorkflowDocumentModel, inlineRequestBodyReplacements } from '/ui/src/workflow-document-model.js';
+import '/ui/src/components/design-surface.js';
+import '/ui/src/components/splitbar.js';
+import '/ui/src/components/expression-input.js';
+import '/ui/src/components/criteria-editor.js';
+import '/ui/src/components/action-editor.js';
+import '/ui/src/components/step-inspector.js';
+import '/ui/src/components/workflow-inspector.js';
+import '/ui/src/components/text-editor.js';
+import '/ui/src/components/workspace-table.js';
+import '/ui/src/components/operation-browser.js';
+import '/ui/src/components/source-acquisition-dialog.js';
+import '/ui/src/components/git-dialog.js';
+import '/ui/src/components/input-dialog.js';
+import '/ui/src/components/value-editor.js';
+import '/ui/src/components/document-inspector.js';
+import '/ui/src/components/workflow-add.js';
+import '/ui/src/components/debug-tray.js';
+import '/ui/src/components/resume-dialog.js';
+import '/ui/src/components/scenario-panel.js';
+import '/ui/src/components/auth-status.js';
+import { ArazzoControlPlaneClient } from '/ui/src/arazzo-client.js';
+import { createMockControlPlane } from '/ui/demo/mock-api.js';
+
+// By default the designer runs standalone against the in-memory mock control plane. Adding ?live points the SAME
+// designer at a REAL control-plane server on this origin under /arazzo/v1 (the samples/arazzo host, §18): the mock
+// is not created, and the fixture seed below is skipped — a working copy is created from a catalog version through
+// the real API instead, and a debug run executes on a real runner against a real dev environment.
+// The production entry (/designer, served by the control plane and linked from the app) is ALWAYS live; the
+// standalone spike page (/ui/demo/designer.html) stays mock unless ?live is passed.
+const isLive = new URLSearchParams(location.search).has('live')
+  || location.pathname === '/designer' || location.pathname === '/designer/';
+const mock = isLive ? null : createMockControlPlane({ latencyMs: 0 });
+// Live mode talks to the real control plane on this origin. Use the BFF auth fetch (same as the main app):
+// carry the session cookie + X-CSRF and bounce to /login on a 401 — so the designer is a genuinely
+// authenticated surface, not an anonymous one.
+const authFetch = async (input, init = {}) => {
+  const headers = new Headers(init.headers || {});
+  headers.set('X-CSRF', '1');
+  const res = await fetch(input, { credentials: 'include', ...init, headers });
+  if (res.status === 401) { location.assign('/login?returnUrl=' + encodeURIComponent(location.pathname + location.search)); return new Promise(() => {}); }
+  return res;
+};
+const client = isLive
+  ? new ArazzoControlPlaneClient({ baseUrl: '/arazzo/v1', fetch: authFetch })
+  : new ArazzoControlPlaneClient({ baseUrl: 'https://mock/arazzo/v1', fetch: mock.fetch });
+
+// The mock's authorize URL is a fake that self-completes when FETCHED — a real window.open would 404 in an actual
+// browser tab. Live mode omits it: the default opener pops the genuine authorize page.
+const mockAuthOpener = isLive ? undefined : (url) => { mock.fetch(url); return { closed: false, close() { this.closed = true; } }; };
+
+// The designer is an authenticated surface like the app: the shared <arazzo-auth-status> in the toolbar
+// self-discovers /me and shows the identity + Sign-out (or stays invisible in the standalone/mock demo where
+// there is no BFF). Browser Back returns to the control plane, so no bespoke Home link is needed.
+
+const surface = document.getElementById('surface');
+const textEditor = document.getElementById('text');
+const select = document.getElementById('workflow');
+const selectionPre = document.getElementById('selection');
+const log = document.getElementById('log');
+const undoBtn = document.getElementById('undo');
+const redoBtn = document.getElementById('redo');
+
+// ONE document model behind every editor (design §5.2): the canvas, the inspectors, and the
+// text tab all mutate through it and re-render from it. `doc` stays a stable reference for
+// reads — the model mutates in place via identity-addressed ops.
+const model = new WorkflowDocumentModel(designerFixture, { actor: 'you', designerState: { nodes: {} } });
+const doc = model.document;
+
+// The live operation index (operationId/channelPath → {responses, request}), rebuilt from the
+// operation browser's loaded surfaces — the REAL listSourceOperations data driving the step
+// inspector's criteria/failure-action templates and body skeletons.
+const opBrowser = document.getElementById('opbrowser');
+const acqDialog = document.getElementById('acqdialog');
+opBrowser.client = client;
+acqDialog.client = client;
+if (mockAuthOpener) { acqDialog.windowOpener = mockAuthOpener; } // live mode uses the default (real) window.open
+const operationIndex = new Map();
+function rebuildOperationIndex() {
+  operationIndex.clear();
+  for (const [, ops] of opBrowser.surfaces) {
+    for (const op of ops) {
+      const entry = { responses: op.responses, request: op.request, parameters: op.parameters };
+      if (op.operationId) operationIndex.set(op.operationId, entry);
+      if (op.channelPath) operationIndex.set(op.channelPath, entry);
+    }
+  }
+}
+
+// stepCompletionContext (imported from expression-language.js) builds a step's completion context
+// from that step's resolved operation, so $response.body#/… completes against the real schema.
+
+function refreshWorkflowOptions() {
+  select.innerHTML = '';
+  for (const w of listWorkflows(doc)) {
+    const opt = document.createElement('option');
+    opt.value = w.workflowId;
+    opt.textContent = w.workflowId;
+    select.append(opt);
+  }
+  if (select.options.length) select.value = select.options[0].value;
+}
+refreshWorkflowOptions();
+
+let refreshExpressionContext = () => {}; // assigned once the console exists; project() keeps it current
+function project() {
+  const graph = projectWorkflow(doc, select.value);
+  const workflows = doc.workflows ?? [];
+  const wf = workflows.find((w) => w.workflowId === select.value) ?? workflows[0];
+  const hasSteps = !!(wf?.steps?.length);
+  // Until the first step is added, keep the canvas truly empty: the start/end anchors would
+  // otherwise sit beneath the "empty canvas" prompt. They reappear the moment a step exists.
+  surface.graph = hasSteps ? graph : { ...graph, nodes: [], edges: [] };
+  // The empty canvas teaches the happy path instead of staring blankly. Two states: no
+  // workflows at all (create the first one) vs. a workflow with no steps yet (steps come from
+  // an attached source's operations).
+  const hasWorkflows = workflows.length > 0;
+  document.getElementById('canvas-empty').hidden = hasSteps;
+  document.getElementById('canvas-empty-noworkflows').hidden = hasWorkflows;
+  document.getElementById('canvas-empty-nosteps').hidden = !hasWorkflows;
+  // One name concept: the title bar shows the DOCUMENT's title, live (editing info.title on
+  // the settings page renames the working copy on the next save).
+  document.getElementById('wc-name').textContent = doc.info?.title || shell.name || 'untitled';
+  // The Sources panel lists the document's OTHER workflows as draggable sub-workflow steps.
+  opBrowser.documentWorkflows = (doc.workflows ?? []).map((w) => ({
+    workflowId: w.workflowId, summary: w.summary, current: w.workflowId === select.value,
+  }));
+  refreshExpressionContext();
+}
+document.getElementById('canvas-empty-cta').addEventListener('click', () => switchSideTab('sources'));
+// The empty-canvas overlay reuses the document inspector's workflow-add widget: add the first
+// workflow right here, then switch to it, rather than sending the author to the sidebar to do it.
+document.getElementById('canvas-empty-wfadd').addEventListener('workflow-add', (e) => {
+  const id = e.detail.workflowId;
+  const widget = document.getElementById('canvas-empty-wfadd');
+  if ((doc.workflows ?? []).some((w) => w.workflowId === id)) {
+    widget.setError('a workflow with this id already exists');
+    return;
+  }
+  model.update((d) => { (d.workflows ??= []).push({ workflowId: id, steps: [] }); },
+    { origin: 'canvas-empty', label: `add workflow ${id}` });
+  widget.clear();
+  refreshWorkflowOptions();
+  select.value = id;
+  project();
+});
+
+// The canvas key: notation must be learnable in the UI itself, not the design doc.
+const legendBtn = document.getElementById('legend-btn');
+const legendPop = document.getElementById('canvas-legend');
+const setLegend = (open) => {
+  if (open) {
+    // Bound against the CANVAS, not the pane: the card may never take more than 45% of the
+    // drawing area's height, whatever the viewport or dock state.
+    const surfaceBox = surface.getBoundingClientRect();
+    legendPop.style.maxHeight = `${Math.max(140, Math.round(surfaceBox.height * 0.45))}px`;
+  }
+  legendPop.hidden = !open;
+  legendBtn.setAttribute('aria-expanded', String(open));
+};
+legendBtn.addEventListener('click', () => setLegend(legendPop.hidden));
+// A reference card must never hold canvas hostage: any interaction outside it (or Escape)
+// dismisses — on a narrow viewport the card can cover half the drawing area.
+document.addEventListener('pointerdown', (e) => {
+  if (!legendPop.hidden && !legendPop.contains(e.target) && e.target !== legendBtn) setLegend(false);
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !legendPop.hidden) setLegend(false);
+});
+select.addEventListener('change', () => { project(); surface.fit(); });
+if ([...select.options].some((o) => o.value === 'place-order')) select.value = 'place-order';
+project();
+
+// ── the workspace shell: open/save/validate against the control plane ──────────────────────
+// The designer edits ONE working copy at a time; opening another resets the same model in
+// place (references everywhere stay valid) and clears history — a load is not an edit.
+const workspaceView = document.getElementById('workspace-view');
+const designerView = document.querySelector('main');
+const wctable = document.getElementById('wctable');
+const backBtn = document.getElementById('back');
+const wcName = document.getElementById('wc-name');
+let autosaveTimer = 0;
+const saveStatus = document.getElementById('save-status');
+const problemsEl = document.getElementById('problems');
+wctable.client = client;
+
+const shell = { id: null, etag: null, name: null, dirty: false };
+document.body.dataset.view = 'workspace';
+
+function showView(which) {
+  document.body.dataset.view = which;
+  workspaceView.hidden = which !== 'workspace';
+  designerView.hidden = which !== 'designer';
+  backBtn.hidden = which !== 'designer';
+  wcName.hidden = which !== 'designer';
+  if (which === 'workspace') wctable.refresh();
+}
+
+function setSaveUi(status = '') {
+  saveStatus.textContent = status || (shell.dirty ? 'unsaved…' : '');
+}
+
+// Durable feedback for the acts that deserve it (publish, git): a toast that stays long
+// enough to read, coloured by kind, on top of the transient save-status line.
+const toastEl = document.getElementById('toast');
+let toastTimer = 0;
+function showToast(message, kind = 'ok', { actionLabel, action } = {}) {
+  toastEl.textContent = message;
+  if (actionLabel && action) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = actionLabel;
+    btn.style.cssText = 'margin-left:10px; font:inherit; font-size:12px; padding:2px 10px; border:1px solid currentColor; border-radius:6px; background:none; color:inherit; cursor:pointer;';
+    btn.addEventListener('click', async () => { toastEl.hidden = true; await action(); });
+    toastEl.append(btn);
+  }
+  toastEl.style.borderColor = kind === 'error' ? 'var(--arazzo-status-faulted, #d4351c)'
+    : kind === 'warn' ? 'var(--arazzo-status-suspended, #b45309)' : 'var(--arazzo-status-completed, #2a8a4a)';
+  toastEl.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toastEl.hidden = true; }, kind === 'ok' ? 8000 : 20000);
+}
+
+// Autosave (undo/redo is the editing safety net; an explicit Save button is ceremony):
+// a short debounce after the last change, flushed when leaving the designer. A 409 pauses
+// autosaving — a collaborator saved first, and re-opening is the reconciliation.
+function scheduleAutosave() {
+  clearTimeout(autosaveTimer);
+  if (!shell.dirty || !shell.id || shell.conflicted) return;
+  autosaveTimer = setTimeout(async () => {
+    if (!shell.dirty || shell.conflicted) return;
+    setSaveUi('saving…');
+    await saveWorkingCopy();
+  }, 900);
+}
+
+async function openWorkingCopy(id) {
+  const wc = await client.getWorkingCopy(id);
+  shell.id = wc.id;
+  shell.etag = wc.etag;
+  shell.name = wc.name;
+  shell.dirty = false;
+  model.reset(wc.document, wc.designerState ?? { nodes: {} });
+  opBrowser.workingCopyId = wc.id;
+  scPanel.workingCopyId = wc.id;
+  refreshWorkflowOptions();
+  project();
+  problemsEl.textContent = '(not validated yet)';
+  showView('designer');
+  surface.fit();
+  surface.selection = null;
+  showSelection(null); // an open starts on the settings page (empty selection = the document)
+  resetDesignerView(); // ...and a fresh chrome: Inspect tab, design canvas, panels scrolled to top,
+                       // no stale Git binding from the previous draft (workflow-designer §4.6)
+  scheduleValidate(); // the Problems badge is live from the first look
+  shell.conflicted = false;
+  setSaveUi('all changes saved');
+  // Normalize-on-load: fold any placeholder-payload + replacements idiom into inline runtime
+  // expressions. Through the model like every edit, so a fold marks the copy dirty (autosave
+  // persists the normalized form) and sits on the undo stack; an already-clean document
+  // produces zero ops and nothing happens.
+  model.update((d) => { inlineRequestBodyReplacements(d); }, { origin: 'normalize', label: 'inline request-body expressions' });
+}
+
+async function saveWorkingCopy() {
+  if (!shell.id) return false;
+  try {
+    const saved = await client.saveWorkingCopy(shell.id, {
+      name: model.document?.info?.title || shell.name, // name ≡ the document's title
+      document: model.document,
+      designerState: model.designerState,
+      expectedEtag: shell.etag,
+    });
+    shell.etag = saved.etag;
+    shell.dirty = false;
+    setSaveUi(`saved ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+    scheduleValidate();
+    return true;
+  } catch (err) {
+    // A stale etag means a collaborator saved first: nothing was clobbered — re-open to reconcile.
+    if (err.status === 409) shell.conflicted = true;
+    setSaveUi(err.status === 409 ? '⚠ conflict — a collaborator saved first; go back and re-open' : `save failed: ${err.message}`);
+    return false;
+  }
+}
+
+// Validation is AUTOMATIC, like saving: every successful save (autosave included) schedules a
+// debounced validate of the STORED document; the Problems badge updates silently — no button.
+let validateTimer = 0;
+let validateSeq = 0;
+function scheduleValidate() {
+  clearTimeout(validateTimer);
+  validateTimer = setTimeout(() => { void validateWorkingCopy(); }, 400);
+}
+
+async function validateWorkingCopy() {
+  if (!shell.id) return;
+  if (shell.dirty && !(await saveWorkingCopy())) return; // validate runs on the STORED document
+  const seq = ++validateSeq;
+  try {
+    const outcome = await client.validateWorkingCopy(shell.id);
+    if (seq === validateSeq) renderProblems(outcome);
+  } catch (err) {
+    if (seq === validateSeq) problemsEl.textContent = `validation failed: ${err.message}`;
+  }
+}
+
+const SEVERITY_ICON = { error: '⛔', warning: '⚠️', info: 'ℹ️' };
+
+// Debug gating: a run may not START while the document carries error findings — ▶ Run / ⏭ Step
+// disable and steer to Problems. An attached durable run or an existing simulated trace stays
+// navigable (it snapshotted a document that was valid enough to run), so only a fresh start is
+// gated. Warnings and info never block.
+let lastDiagnostics = [];
+const hasBlockingProblems = () => lastDiagnostics.some((d) => d.severity === 'error');
+function blockedRunNotice() {
+  showToast('Resolve the Problems (error findings) before running.', 'error');
+  switchSideTab('problems');
+}
+function updateRunGating() {
+  const block = !shell.debugRun && !tray.trace && hasBlockingProblems();
+  for (const btn of [document.getElementById('simulate'), document.getElementById('step')]) {
+    if (!btn) continue;
+    if (btn.dataset.baseTitle === undefined) btn.dataset.baseTitle = btn.title;
+    btn.disabled = block;
+    btn.title = block ? 'Resolve the error findings in Problems before running' : btn.dataset.baseTitle;
+  }
+}
+
+function renderProblems(outcome, { reveal = false } = {}) {
+  const badge = document.getElementById('problems-badge');
+  lastDiagnostics = outcome.diagnostics;
+  updateRunGating();
+  badge.hidden = outcome.diagnostics.length === 0;
+  badge.textContent = outcome.diagnostics.length;
+  if (reveal) switchSideTab('problems'); // only a deliberate act steals the tab (§ item 29)
+  problemsEl.innerHTML = '';
+  if (outcome.diagnostics.length === 0) {
+    problemsEl.textContent = '✅ no findings — the document is valid';
+    return;
+  }
+  for (const d of outcome.diagnostics) {
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.style.cssText = 'display:block; text-align:left; border:none; background:none; padding:2px 0; cursor:pointer; font:inherit; color:inherit;';
+    row.textContent = `${SEVERITY_ICON[d.severity] ?? ''} [${d.category}] ${d.instancePath || '/'} — ${d.message}`;
+    row.addEventListener('click', () => revealFinding(d));
+    problemsEl.append(row);
+  }
+}
+
+// Click a finding → put the designer on it: switch to the pointed workflow, select the pointed
+// step on the canvas, and reveal it in the text tab when that is what's showing.
+function revealFinding(d) {
+  const path = d.instancePath || '';
+
+  // Non-workflow findings land on the panel that owns them.
+  if (path.startsWith('/sourceDescriptions') || d.category === 'source-integrity') { switchSideTab('sources'); return; }
+  if (path.startsWith('/components')) { refreshComponentsPanel(); switchSideTab('components'); return; }
+  if (path.startsWith('/info')) { showDocumentInspector(); switchSideTab('inspect'); return; }
+
+  const m = /^\/workflows\/(\d+)(?:\/steps\/(\d+))?/.exec(path);
+  if (!m) return;
+  const workflow = doc.workflows?.[Number(m[1])];
+  if (!workflow?.workflowId) return;
+  if (select.value !== workflow.workflowId) {
+    select.value = workflow.workflowId;
+    project();
+  }
+  // An inputs-schema finding (§5 pass 4) opens the workflow's inputs schema editor — the START anchor.
+  if (/^\/workflows\/\d+\/inputs(\/|$)/.test(path)) {
+    surface.selection = { type: 'node', id: '#start' };
+    showSelection(surface.selection);
+    switchSideTab('inspect');
+    return;
+  }
+  const stepId = m[2] != null ? workflow.steps?.[Number(m[2])]?.stepId : null;
+  if (stepId) {
+    surface.selection = { type: 'node', id: stepId };
+    showSelection(surface.selection);
+    if (!textEditor.hidden) textEditor.revealStep(stepId);
+  }
+
+  switchSideTab('inspect'); // the finding is now the selection — show it
+}
+
+// The working copy's jsonschema attachments (#94): attachment name → { id, defs }, feeding the schema
+// editors' "External schemas" picker. The PREFERRED reference base is the document's absolute root $id
+// (its canonical identity per JSON Schema 2020-12); the virtual schemas/<name> path is the fallback for
+// a document that declares none. Inline attachments carry their document; a registry attachment resolves
+// it from /sources. Best-effort — an unreadable document lists with no id and no named types.
+let externalSchemas = null;
+async function refreshExternalSchemas() {
+  try {
+    const { sources = [] } = await client.listWorkingCopySources(shell.id);
+    const map = {};
+    for (const s of sources.filter((x) => x.type === 'jsonschema')) {
+      let schemaDoc = null;
+      try {
+        if (s.kind === 'inline') schemaDoc = (await client.getWorkingCopySource(shell.id, s.name))?.document;
+        else if (s.sourceName) schemaDoc = (await client.getSource(s.sourceName))?.document;
+      } catch { /* unreadable — list with no id and no named types */ }
+      map[s.name] = {
+        id: typeof schemaDoc?.$id === 'string' && /^https?:\/\//.test(schemaDoc.$id) ? schemaDoc.$id : null,
+        defs: schemaDoc && schemaDoc.$defs ? Object.keys(schemaDoc.$defs) : [],
+      };
+    }
+    externalSchemas = Object.keys(map).length ? map : null;
+  } catch {
+    externalSchemas = null;
+  }
+  if (!docMode) showSelection(surface.selection); // re-render so open editors pick up the fresh picker
+}
+
+// The rail's surfaces feed the inspector templates; a re-render picks up fresh descriptors.
+opBrowser.addEventListener('loaded', () => {
+  rebuildOperationIndex();
+  void refreshExternalSchemas();
+  if (!docMode) showSelection(surface.selection); // don't stomp document mode on a rail refresh
+});
+opBrowser.addEventListener('add-source-requested', () => acqDialog.open({ workingCopyId: shell.id }));
+acqDialog.addEventListener('source-attached', (e) => {
+  shell.etag = e.detail.attachment.etag; // the attach bumped the working copy's etag
+  // An attached source must be DECLARED for the document to reference its operations (§4.1) —
+  // the same rule the drop gesture applies. Declare it now, through the model so the
+  // declaration rides the normal autosave/undo flow. jsonschema attachments are schema
+  // surfaces, not sourceDescriptions.
+  const { name, type } = e.detail.attachment;
+  if (type !== 'jsonschema' && !(model.document.sourceDescriptions ?? []).some((x) => x.name === name)) {
+    model.update((d) => {
+      d.sourceDescriptions = [...(d.sourceDescriptions ?? []),
+        { name, url: `./sources/${name}.json`, ...(type ? { type } : {}) }];
+    }, { origin: 'sources', label: `declare source ${name}` });
+  }
+  setSaveUi('source attached');
+  opBrowser.refresh();
+  logEvent('source-attached', { name, kind: e.detail.attachment.kind });
+});
+// A detached source is recoverable for the life of this working-copy visit: the browser
+// stashed the full attachment before detaching; the toast's Restore re-attaches it verbatim
+// (declaration and all). This is the undo story — attachments cannot ride the document's
+// undo stack (they are workspace state with their own etag lifecycle).
+// Registering an inline attachment (§7.6 promote): the re-attach as a registry reference bumped
+// the etag — refresh the save token and narrate.
+opBrowser.addEventListener('source-registered', (e) => {
+  shell.etag = e.detail.attachment?.etag ?? shell.etag;
+  setSaveUi('source registered');
+  showToast(`Source '${e.detail.name}' registered — this copy now references the registry.`);
+  logEvent('source-registered', { name: e.detail.name });
+});
+const detachedStash = new Map();
+opBrowser.addEventListener('source-detached', async (e) => {
+  const wc = await client.getWorkingCopy(shell.id); // the detach bumped the etag; refresh the save token
+  shell.etag = wc.etag;
+  setSaveUi('source detached');
+  if (e.detail.attachment) {
+    detachedStash.set(e.detail.name, e.detail.attachment);
+    showToast(`Source '${e.detail.name}' detached.`, 'warn', {
+      actionLabel: 'Restore',
+      action: async () => {
+        const a = detachedStash.get(e.detail.name);
+        if (!a) return;
+        const payload = a.kind === 'registry' ? { sourceName: a.sourceName ?? e.detail.name } : { document: a.document };
+        const restored = await client.attachWorkingCopySource(shell.id, e.detail.name, payload);
+        shell.etag = restored.etag ?? (await client.getWorkingCopy(shell.id)).etag;
+        detachedStash.delete(e.detail.name);
+        opBrowser.refresh();
+        setSaveUi('source restored');
+      },
+    });
+  }
+  logEvent('source-detached', { name: e.detail.name });
+});
+
+// Step creation (design §3.2): DRAG an operation onto the surface, or activate it from the rail —
+// both create the step at the AUTO-LAYOUT position, so a fresh step flows START -> step -> END
+// cleanly rather than being pinned wherever it was dropped (which left START/END stranded in a
+// different column). Drag an EXISTING node to pin/reposition it. Both paths make a step bound to
+// the operation, required parameters pre-populated, model-routed and selected.
+function createStepFromOperation(operation, position, sourceName) {
+  const wf = doc.workflows.find((w) => w.workflowId === select.value);
+  if (!wf) return;
+  const base = (operation.operationId ?? operation.channelPath ?? 'step')
+    .replace(/[^A-Za-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || 'step';
+  let stepId = base;
+  for (let n = 2; wf.steps.some((x) => x.stepId === stepId); n++) stepId = `${base}-${n}`;
+  const step = { stepId };
+  if (operation.kind === 'workflow') {
+    if (operation.workflowId === select.value) { setSaveUi('a workflow cannot run itself as a step'); return; }
+    step.workflowId = operation.workflowId;
+  } else if (operation.kind === 'asyncapi') step.channelPath = operation.channelPath;
+  else if (operation.operationId) step.operationId = operation.operationId;
+  // ALL declared parameters AND the body skeleton arrive with the step (user ruling: nothing
+  // schema-derivable hides behind a button) — values yours to fill, usually with expressions.
+  const params = operation.parameters ?? [];
+  if (params.length) step.parameters = params.map((x) => ({ name: x.name, in: x.in, value: '' }));
+  if (operation.request?.schema) {
+    const skeleton = payloadSkeletonFromSchema(operation.request.schema);
+    if (skeleton !== undefined) {
+      step.requestBody = {
+        ...(operation.request.contentType ? { contentType: operation.request.contentType } : {}),
+        payload: skeleton,
+      };
+    }
+  }
+  // The operation's documented responses ARE the step's starting contract: success criteria
+  // and per-response failure actions apply at creation — not behind a button.
+  const templates = templatesFromResponses(operation.responses);
+  if (templates) {
+    if (templates.successCriteria.length) step.successCriteria = templates.successCriteria;
+    if (templates.failureActions.length) step.onFailure = templates.failureActions;
+  }
+  model.update((d) => {
+    // The step's source must be DECLARED for its operations to resolve (§4.1): dropping an
+    // operation auto-declares its sourceDescription in the same undo unit as the step.
+    if (sourceName && operation.kind !== 'workflow' && !(d.sourceDescriptions ?? []).some((x) => x.name === sourceName)) {
+      d.sourceDescriptions = [...(d.sourceDescriptions ?? []),
+        { name: sourceName, url: `./sources/${sourceName}.json`, type: operation.kind === 'asyncapi' ? 'asyncapi' : 'openapi' }];
+    }
+
+    const w = d.workflows.find((x) => x.workflowId === select.value);
+    w.steps.push(step);
+  }, { origin: 'canvas', label: `add step ${stepId}` });
+  // Placement: every new step takes its AUTO-LAYOUT position (never pinned at the drop point),
+  // so the graph stays a clean flow whichever way the step was added. On a long chain that
+  // position sits below the fitted view — and a drop must never LOOK like a no-op — so when the
+  // new node landed outside the viewport, pan to it (centerOn keeps the user's zoom).
+  void position;
+  surface.selection = { type: 'node', id: stepId };
+  showSelection(surface.selection);
+  const nodeEl = surface.shadowRoot?.querySelector(`.node[data-id="${CSS.escape(stepId)}"]`);
+  if (nodeEl) {
+    const host = surface.getBoundingClientRect();
+    const r = nodeEl.getBoundingClientRect();
+    const inView = r.left >= host.left && r.right <= host.right && r.top >= host.top && r.bottom <= host.bottom;
+    if (!inView) surface.centerOn(stepId);
+  }
+
+  logEvent('step-created', { stepId, from: operation.operationId ?? operation.channelPath, dropped: !!position });
+}
+
+opBrowser.addEventListener('operation-selected', (e) => createStepFromOperation(e.detail.operation, undefined, e.detail.sourceName));
+surface.addEventListener('operation-dropped', (e) => createStepFromOperation(e.detail.operation, e.detail.position, e.detail.sourceName));
+
+// Double-tapping a navigable cross-workflow goto's exit chip switches the canvas to that target
+// workflow — the designer follows the same transfer the generated executor performs at runtime.
+surface.addEventListener('workflow-open', (e) => {
+  const { workflowId } = e.detail;
+  if (!(doc.workflows ?? []).some((w) => w.workflowId === workflowId)) return;
+  select.value = workflowId;
+  project();
+  surface.fit();
+  logEvent('workflow-open', { workflowId });
+});
+
+// Dragging from the start node's entry port onto a step makes it the workflow's FIRST step —
+// in Arazzo the entry point IS steps[0], so this is a reorder, not an action edge.
+surface.addEventListener('entry-changed', (e) => {
+  const { stepId } = e.detail;
+  const wf = doc.workflows.find((w) => w.workflowId === select.value);
+  const at = wf?.steps.findIndex((x) => x.stepId === stepId) ?? -1;
+  if (at <= 0) return; // absent or already first
+  model.update((d) => {
+    const w = d.workflows.find((x) => x.workflowId === select.value);
+    const [step] = w.steps.splice(at, 1);
+    w.steps.unshift(step);
+  }, { origin: 'canvas', label: `make ${stepId} the entry step` });
+  logEvent('entry-changed', { stepId });
+});
+
+// The document inspector (info · sourceDescriptions · workflows · components library) mounts in
+// the inspector pane on demand; selecting anything on the surface returns to selection mode.
+let docMode = false;
+function showDocumentInspector() {
+  docMode = true;
+  inspector.replaceChildren();
+  selectionPre.textContent = '(document)';
+  const ed = document.createElement('arazzo-document-inspector');
+  ed.setAttribute('sections', 'document'); // the reusable library lives in its own tab
+  ed.externalSchemas = externalSchemas; // jsonschema attachments for external $ref (#94)
+  ed.stepIds = doc.workflows.flatMap((w) => (w.steps || []).map((st) => st.stepId));
+  ed.workflowIds = doc.workflows.map((w) => w.workflowId);
+  ed.completionContext = expr.completionContext;
+  ed.value = doc;
+  inspector.append(heading('document'), ed);
+  ed.addEventListener('document-changed', (ev) => {
+    const workflowIdsBefore = doc.workflows.map((w) => w.workflowId).join('\u0000');
+    model.update((d) => {
+      const v = ev.detail.document;
+      for (const k of ['info', 'sourceDescriptions', 'components', 'workflows']) {
+        if (v[k] === undefined) delete d[k];
+        else d[k] = v[k];
+      }
+    }, { origin: 'doc-inspector', label: 'edit document', coalesce: true });
+    if (doc.workflows.map((w) => w.workflowId).join('\u0000') !== workflowIdsBefore) {
+      refreshWorkflowOptions();
+      project();
+    }
+  });
+}
+// ── the tabbed RHS sidebar: click to switch; the app auto-switches on INTENT (select →
+// Inspect, validate → Problems, run → Debug).
+const sideTabButtons = [...document.querySelectorAll('.side-tabs button')];
+function switchSideTab(name) {
+  for (const b of sideTabButtons) b.classList.toggle('active', b.dataset.tab === name);
+  for (const panel of document.querySelectorAll('.side-panel')) panel.hidden = panel.id !== `panel-${name}`;
+}
+sideTabButtons.forEach((b) => b.addEventListener('click', () => switchSideTab(b.dataset.tab)));
+
+// A draft switch is a fresh visit: reset the shared designer chrome so nothing from the previous
+// working copy lingers. Back to the Inspect tab and the design canvas (an open starts on the settings
+// page), which also hides a stale Git panel — it re-opens for the current draft on its next tab click,
+// via the Git tab handler — and every side panel scrolled back to the top.
+function resetDesignerView() {
+  switchSideTab('inspect');
+  showTab('design');
+  for (const panel of document.querySelectorAll('.side-panel')) panel.scrollTop = 0;
+}
+
+textEditor.addEventListener('undo-requested', () => { if (model.canUndo) model.undo(); });
+textEditor.addEventListener('redo-requested', () => { if (model.canRedo) model.redo(); });
+
+// Ctrl/Cmd-Z and Ctrl-Y / Ctrl-Shift-Z drive the DOCUMENT MODEL's undo stack anywhere in the
+// designer view — except inside text-editing surfaces (inputs, textareas, CM6 editors), where
+// native/editor keys keep their local meaning. App-shell listener, not the surface's (§6.3).
+document.addEventListener('keydown', (e) => {
+  if (designerView.hidden || !(e.ctrlKey || e.metaKey)) return;
+  const key = e.key.toLowerCase();
+  if (key !== 'z' && key !== 'y') return;
+  const target = e.composedPath()[0];
+  if (target instanceof HTMLElement
+    && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
+      || target.closest?.('.cm-editor'))) {
+    return; // the text tab routes through the editor's own keymap into the model
+  }
+
+  const redo = key === 'y' || (key === 'z' && e.shiftKey);
+  e.preventDefault();
+  if (redo) { if (model.canRedo) model.redo(); }
+  else if (model.canUndo) model.undo();
+});
+
+backBtn.addEventListener('click', () => { clearTimeout(autosaveTimer); if (shell.dirty && !shell.conflicted) saveWorkingCopy(); }, { capture: true });
+backBtn.addEventListener('click', () => {
+  // Leaving the designer ends any debug session — the dock, trace, staged triggers,
+  // overrides, and inputs all belong to the working-copy visit.
+  if (shell.debugRun) { void client.cancelDebugRun(shell.id, shell.debugRun.id).catch(() => {}); detachDebugRun(); }
+  tray.trace = null;
+  sessionTriggers.length = 0;
+  for (const k of Object.keys(sessionOutputOverrides)) delete sessionOutputOverrides[k];
+  sessionInputs = null;
+  document.getElementById('debug-dock').hidden = true;
+  applyDebugFrame();
+  setDebugUi();
+  showView('workspace');
+});
+wctable.addEventListener('working-copy-selected', (e) => openWorkingCopy(e.detail.workingCopy.id));
+wctable.addEventListener('working-copy-created', (e) => openWorkingCopy(e.detail.workingCopy.id));
+
+// Seed one working copy from the fixture — with its two sources attached inline, so the rail,
+// the operation browser, and the inspector templates all run on real listSourceOperations data.
+(async () => {
+  // §18 live mode: skip the fixture seed — a working copy is created from a catalog version through the real API.
+  if (isLive) { return; }
+  const wc = await client.createWorkingCopy({ name: designerFixture.info.title, document: designerFixture, designerState: { nodes: {} } });
+  await client.attachWorkingCopySource(wc.id, 'payments', { document: paymentsOpenApi });
+  await client.attachWorkingCopySource(wc.id, 'order-events', { document: orderEventsAsyncApi });
+  // A ready-made suite so the Scenarios tab (and the publish gate) demos populated: the happy
+  // path releases the confirmation wait with a staged event; the declined path exercises the
+  // 402 → manual-review branch.
+  await client.putScenario(wc.id, {
+    name: 'happy-path',
+    description: 'Authorize, confirm, capture — the order completes.',
+    inputs: { orderId: 'o-1001', amount: 42.5 },
+    mocks: [
+      { source: 'payments', operationId: 'validateOrder', responses: [{ status: 200, body: { validated: true } }] },
+      { source: 'payments', operationId: 'authorizePayment', responses: [{ status: 201, body: { status: 'authorized', authorizationId: 'auth-77' } }] },
+      { source: 'payments', operationId: 'capturePayment', responses: [{ status: 200, body: { receiptId: 'rcpt-9' } }] },
+    ],
+    triggers: [{ channel: '/channels/orderConfirmations', payload: { confirmed: true, at: '2026-07-01T09:30:00Z' } }],
+    expect: {
+      outcome: 'completed',
+      path: ['validate-order', 'authorize-payment', 'await-confirmation', 'capture-payment'],
+      pathMode: 'exact',
+      outputs: [
+        { condition: "$outputs.receiptId == 'rcpt-9'" },
+        { condition: "$steps.authorize-payment.outputs.authorizationId == 'auth-77'" },
+      ],
+    },
+  });
+  await client.putScenario(wc.id, {
+    name: 'declined-goes-to-review',
+    description: 'A 402 decline routes to manual review and halts there.',
+    inputs: { orderId: 'o-1002', amount: 9800 },
+    mocks: [
+      { source: 'payments', operationId: 'validateOrder', responses: [{ status: 200, body: { validated: true } }] },
+      { source: 'payments', operationId: 'authorizePayment', responses: [{ status: 402 }] },
+      { source: 'payments', operationId: 'createReviewTask', responses: [{ status: 201 }] },
+    ],
+    expect: {
+      outcome: 'completed',
+      path: ['validate-order', 'authorize-payment', 'manual-review'],
+      pathMode: 'exact',
+      steps: { 'manual-review': { reached: true, attempts: 1 } },
+      outputs: [{ condition: '$steps.validate-order.outputs.validated == true' }],
+    },
+  });
+  wctable.reload();
+})();
+
+const logEvent = (type, detail) => {
+  // Newest first, bounded by WHOLE lines (each event is one line — JSON.stringify has no newlines),
+  // so the oldest entry is never cut mid-text the way a raw character cap did (the "…count:" stub).
+  const lines = log.textContent ? log.textContent.split('\n') : [];
+  lines.unshift(`${type} ${JSON.stringify(detail)}`);
+  log.textContent = lines.slice(0, 200).join('\n');
+};
+for (const type of ['selection-changed', 'layout-changed', 'edge-created', 'breakpoint-toggled', 'node-activated', 'delete-requested']) {
+  surface.addEventListener(type, (e) => logEvent(type, e.detail));
+}
+
+// Layout moves go THROUGH the model like every other edit, so they land on the same undo/redo
+// stack (in gesture order) and the same op stream. The surface pins only manually-moved nodes
+// (its overrides map); the model's designer state is the single source of truth the render
+// seam reads back from — undoing a first move unpins the node back to auto-layout.
+surface.addEventListener('layout-changed', (e) => {
+  model.updateDesignerState((s) => { s.nodes = structuredClone(e.detail.overrides); },
+    { origin: 'canvas', label: 'move node', coalesce: true });
+});
+
+// The inspector: selection drives a real editor with write-back into the document — the
+// drop → select → conditions flow. Edits re-project with positions preserved and never
+// rebuild the editor mid-typing (only a selection change does).
+const inspector = document.getElementById('inspector');
+const heading = (text) => {
+  const h = document.createElement('div');
+  h.style.cssText = 'font-size:11px; color: var(--arazzo-muted, #6b7280); font-weight:600;';
+  h.textContent = text;
+  return h;
+};
+// The single render seam: every model change (canvas, inspector, text, undo/redo, remote)
+// re-projects the canvas with the model's pinned positions (manually-moved nodes; the rest
+// stay auto-layout); the text tab refreshes unless it made the edit; the inspector rebuilds
+// only for edits it did NOT make (focus survives typing).
+model.addEventListener('document-changed', (e) => {
+  if (e.detail.origin !== 'load') {
+    shell.dirty = true;
+    setSaveUi();
+    scheduleAutosave();
+  }
+  surface.layoutOverrides = structuredClone(model.designerState.nodes ?? {});
+  project();
+  if (docMode && e.detail.origin !== 'doc-inspector') {
+    showDocumentInspector(); // remount over fresh state (an undo, a remote edit)
+  }
+  if (e.detail.origin !== 'text' && !textEditor.hidden) {
+    textEditor.value = model.text;
+    textEditor.setProblem(null);
+  }
+  if (e.detail.origin !== 'inspector' && e.detail.origin !== 'canvas' && !docMode) {
+    showSelection(surface.selection);
+  }
+  undoBtn.disabled = !model.canUndo;
+  redoBtn.disabled = !model.canRedo;
+  logEvent('ops', { origin: e.detail.origin, label: e.detail.label, count: e.detail.ops.length });
+});
+undoBtn.addEventListener('click', () => model.undo());
+redoBtn.addEventListener('click', () => model.redo());
+
+// Design ↔ Text tabs over the same model.
+const tabDesign = document.getElementById('tab-design');
+const tabText = document.getElementById('tab-text');
+function showTab(which) {
+  tabDesign.classList.toggle('active', which === 'design');
+  tabText.classList.toggle('active', which === 'text');
+  surface.hidden = which !== 'design';
+  textEditor.hidden = which !== 'text';
+  if (which === 'text') {
+    textEditor.value = model.text;
+    textEditor.setProblem(null);
+    const sel = surface.selection;
+    if (sel?.type === 'node' && !sel.id.startsWith('#')) textEditor.revealStep(sel.id);
+  } else {
+    surface.fit();
+  }
+}
+tabDesign.addEventListener('click', () => showTab('design'));
+tabText.addEventListener('click', () => showTab('text'));
+textEditor.addEventListener('text-changed', (e) => {
+  const result = model.applyText(e.detail.text);
+  textEditor.setProblem(result.ok ? null : result.error);
+});
+
+surface.addEventListener('selection-changed', (e) => {
+  if (e.detail.selection) switchSideTab('inspect');
+  showSelection(e.detail.selection);
+});
+function showSelection(sel) {
+  // No selection IS a selection: the document itself. Clicking the canvas background lands on
+  // the settings page (info · source descriptions · workflows · components) — no ⚙ button.
+  if (!sel) { showDocumentInspector(); return; }
+  docMode = false;
+  inspector.replaceChildren();
+  selectionPre.textContent = '';
+  const wf = doc.workflows.find((w) => w.workflowId === select.value);
+  if (!wf) {
+    // The selected workflow left the document (a pull/rollback replaced it while a step was
+    // selected): clear the stale selection and land on the document inspector instead of
+    // dereferencing a workflow that no longer exists.
+    surface.selection = null;
+    showDocumentInspector();
+    return;
+  }
+
+  // Canvas anchors open the MATCHING editor (§3.2): start = the workflow's inputs, end = its
+  // outputs — nothing else (start "having outputs" read as a statement about start). The
+  // defaults card is the whole-workflow anchor and keeps the full editor.
+  const anchor = sel.type === 'node' && sel.id === '#start'
+    ? { only: ['inputs'], title: `workflow inputs — ${wf.workflowId}`, focus: 'inputs' }
+    : sel.type === 'node' && sel.id === '#end'
+      ? { only: ['outputs'], title: `workflow outputs — ${wf.workflowId}`, focus: 'outputs' }
+      : sel.type === 'defaults'
+        ? { only: null, title: `workflow — ${wf.workflowId}`, focus: 'failure' }
+        : null;
+  if (anchor) {
+    const wi = doc.workflows.indexOf(wf);
+    const ed = document.createElement('arazzo-workflow-inspector');
+    ed.stepIds = wf.steps.map((s) => s.stepId);
+    ed.workflowIds = doc.workflows.map((w) => w.workflowId).filter((id) => id !== wf.workflowId);
+    ed.components = doc.components;
+    ed.externalSchemas = externalSchemas; // jsonschema attachments for external $ref (#94)
+    ed.completionContext = expr.completionContext;
+    ed.only = anchor.only;
+    ed.value = wf;
+    ed.setAttribute('focus-section', anchor.focus);
+    inspector.append(heading(anchor.title), ed);
+    ed.addEventListener('component-changed', (ev) => {
+      model.update((d) => {
+        ((d.components ??= {})[ev.detail.kind] ??= {})[ev.detail.name] = ev.detail.action;
+      }, { origin: 'inspector', label: `edit shared action ${ev.detail.name}`, coalesce: true });
+    });
+    ed.addEventListener('workflow-changed', (ev) => {
+      model.update((d) => { d.workflows[wi] = ev.detail.workflow; },
+        { origin: 'inspector', label: `edit workflow ${wf.workflowId}`, coalesce: true });
+    });
+    return;
+  }
+  if (sel.type === 'node') {
+    const si = wf.steps.findIndex((s) => s.stepId === sel.id);
+    const step = wf.steps[si];
+    if (!step) {
+      // The selected step left the document (an undone add, a remote removal) — clear stale selection.
+      surface.selection = null;
+      selectionPre.textContent = '(nothing selected)';
+      return;
+    }
+
+    const ed = document.createElement('arazzo-step-inspector');
+    ed.stepIds = wf.steps.map((s) => s.stepId);
+    ed.workflowIds = doc.workflows.map((w) => w.workflowId).filter((id) => id !== wf.workflowId);
+    ed.workflowDefaults = { successActions: wf.successActions || [], failureActions: wf.failureActions || [] };
+    ed.components = doc.components;
+    // The live operation surface (listSourceOperations): documented responses drive the
+    // criteria templates, the request/message schema drives the body-skeleton template.
+    const op = operationIndex.get(step.operationId) ?? (step.channelPath ? operationIndex.get(step.channelPath) : undefined);
+    // THIS step's own operation surfaces feed the expression completions, so `$response.body#/…`
+    // completes against the real response body of the operation this step calls, not a stand-in.
+    ed.completionContext = stepCompletionContext(expr.completionContext, op, step);
+    if (op?.responses) ed.operationResponses = op.responses;
+    if (op?.request) ed.operationRequest = op.request;
+    if (op?.parameters) ed.operationParameters = op.parameters;
+    ed.value = step;
+    inspector.append(heading(`step — ${sel.id}`), ed);
+    ed.addEventListener('component-changed', (ev) => {
+      model.update((d) => {
+        ((d.components ??= {})[ev.detail.kind] ??= {})[ev.detail.name] = ev.detail.action;
+      }, { origin: 'inspector', label: `edit shared action ${ev.detail.name}`, coalesce: true });
+    });
+    ed.addEventListener('step-changed', (ev) => {
+      model.update((d) => {
+        const w = d.workflows.find((x) => x.workflowId === wf.workflowId);
+        w.steps[si] = ev.detail.step;
+      }, { origin: 'inspector', label: `edit step ${sel.id}`, coalesce: true });
+    });
+    return;
+  }
+  if (sel.type === 'edge') {
+    const edge = surface.graph.edges.find((x) => x.id === sel.id);
+    if (!edge || edge.kind === 'seq') {
+      selectionPre.textContent = 'implicit sequence edge — document order, not an action';
+      return;
+    }
+    if (edge.reusable) {
+      // A $components reference edge: show the RESOLVED shared action read-only, with the
+      // standard ✎ choice — edit for all instances (the library action) or just this one
+      // (localize the copy onto the step).
+      const kindKey = edge.kind === 'success' ? 'successActions' : 'failureActions';
+      const name = edge.actionName;
+      const resolved = doc.components?.[kindKey]?.[name];
+      if (!resolved) { selectionPre.textContent = `unresolvable reference $components.${kindKey}.${name}`; return; }
+      const refString = `$components.${kindKey}.${name}`;
+
+      const view = document.createElement('div');
+      view.style.cssText = 'display:grid; gap:8px; padding:10px; min-width:0;';
+      view.innerHTML = `
+        <div style="font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap:anywhere;">↺ ${refString} · shared</div>
+        <div style="display:grid; grid-template-columns:auto minmax(0,1fr); gap:4px 10px; font-size:12px;">
+          <span style="color:var(--arazzo-muted,#6b7280)">type</span><span>${resolved.type ?? ''}${resolved.stepId ? ` → ${resolved.stepId}` : ''}</span>
+          ${(resolved.criteria ?? []).map((c) => `<span style="color:var(--arazzo-muted,#6b7280)">when</span><span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace; overflow-wrap:anywhere;">${c.condition ?? ''}</span>`).join('')}
+          ${resolved.criteria?.length ? '' : '<span style="color:var(--arazzo-muted,#6b7280)">when</span><span>always (catch-all)</span>'}
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button class="re-edit ghost" type="button" style="font-size:12px;">✎ Edit…</button>
+        </div>
+        <div class="re-menu" hidden style="display:flex; gap:6px; padding-left:14px;">
+          <button class="re-all ghost" type="button" style="font-size:11px;" title="Edit the SHARED library action — every reference in the document follows">for all instances</button>
+          <button class="re-one ghost" type="button" style="font-size:11px;" title="Copy the shared action inline on this step so it can diverge — other references keep the shared one">just this instance</button>
+        </div>
+        <div class="re-editor" hidden style="display:grid; gap:6px;"></div>`;
+      view.querySelector('.re-menu').style.display = 'none';
+      const menu = view.querySelector('.re-menu');
+      view.querySelector('.re-edit').addEventListener('click', () => {
+        menu.hidden = !menu.hidden;
+        menu.style.display = menu.hidden ? 'none' : 'flex';
+      });
+      view.querySelector('.re-all').addEventListener('click', () => {
+        menu.hidden = true;
+        menu.style.display = 'none';
+        const slot = view.querySelector('.re-editor');
+        if (!slot.hidden) { slot.hidden = true; slot.replaceChildren(); return; }
+        const hint = document.createElement('div');
+        hint.style.cssText = 'font-size:10.5px; color:var(--arazzo-status-suspended,#b45309);';
+        hint.textContent = 'Editing the SHARED action — every reference in the document follows.';
+        const editor = document.createElement('arazzo-action-editor');
+        editor.kind = edge.kind;
+        editor.stepIds = wf.steps.map((x) => x.stepId).filter((id) => id !== edge.from);
+        editor.completionContext = expr.completionContext;
+        editor.value = resolved;
+        editor.addEventListener('action-changed', (ev) => {
+          ev.stopPropagation();
+          model.update((d) => {
+            ((d.components ??= {})[kindKey] ??= {})[name] = ev.detail.action;
+          }, { origin: 'inspector', label: `edit shared action ${name}`, coalesce: true });
+        });
+        slot.replaceChildren(hint, editor);
+        slot.hidden = false;
+      });
+      view.querySelector('.re-one').addEventListener('click', () => {
+        model.update((d) => {
+          const w = d.workflows.find((x) => x.workflowId === wf.workflowId);
+          const st = w.steps.find((x) => x.stepId === edge.from);
+          const list = edge.kind === 'success' ? 'onSuccess' : 'onFailure';
+          const at = (st?.[list] ?? []).findIndex((a) => a && a.reference === refString);
+          if (at >= 0) st[list][at] = structuredClone(resolved);
+        }, { origin: 'inspector', label: `localize ${name} on ${edge.from}` });
+        showSelection(surface.selection); // now a local action edge — re-inspect
+      });
+
+      inspector.append(heading(`${edge.from} · ${edge.kind} → shared`), view);
+      selectionPre.textContent = '';
+      return;
+    }
+    const step = wf.steps.find((s) => s.stepId === edge.from);
+    const list = edge.kind === 'success' ? 'onSuccess' : 'onFailure';
+    const idx = (step?.[list] || []).findIndex((a) => a && a.name === edge.actionName);
+    if (idx < 0) { selectionPre.textContent = '(action not found)'; return; }
+    const ed = document.createElement('arazzo-action-editor');
+    ed.kind = edge.kind;
+    ed.stepIds = wf.steps.map((s) => s.stepId).filter((id) => id !== edge.from);
+    ed.completionContext = expr.completionContext;
+    ed.value = step[list][idx];
+    inspector.append(heading(`${edge.from} · ${list}[${idx}]`), ed);
+    ed.addEventListener('action-changed', (ev) => {
+      model.update((d) => {
+        const w = d.workflows.find((x) => x.workflowId === wf.workflowId);
+        w.steps.find((s) => s.stepId === edge.from)[list][idx] = ev.detail.action;
+      }, { origin: 'inspector', label: `edit action on ${edge.from}`, coalesce: true });
+      const renamed = surface.graph.edges.find((x) =>
+        x.from === edge.from && x.kind === edge.kind && x.actionName === ev.detail.action.name);
+      if (renamed) surface.selection = { type: 'edge', id: renamed.id };
+    });
+    return;
+  }
+  selectionPre.textContent = JSON.stringify(sel, null, 2);
+}
+
+// Round-trip: drawing an edge writes a goto action — or, dropped on the end terminal, an
+// end action — into the document, re-projects, and SELECTS the new edge (the designer's
+// drop → select → edit-criteria flow; the inspector will open on the action's conditions).
+// An identical unconditional duplicate is meaningless, so it selects the existing edge instead.
+// Delete/Backspace removes the selection: a step, or an ACTION edge (its onSuccess/onFailure
+// entry). Sequence edges ARE the step order — deleting one means moving or removing a step.
+surface.addEventListener('delete-requested', (e) => {
+  const sel = e.detail.selection;
+  if (sel?.type === 'node' && !sel.id.startsWith('#')) {
+    model.update((d) => {
+      const w = d.workflows.find((x) => x.workflowId === select.value);
+      w.steps = w.steps.filter((st) => st.stepId !== sel.id);
+    }, { origin: 'canvas', label: `delete step ${sel.id}` });
+    surface.selection = null;
+    showSelection(null);
+    return;
+  }
+
+  if (sel?.type === 'edge') {
+    const edge = surface.graph.edges.find((x) => x.id === sel.id);
+    if (!edge) return;
+    if (edge.kind === 'seq' || !edge.actionName) {
+      setSaveUi('sequence edges follow the step order — delete or reorder the step instead');
+      return;
+    }
+
+    model.update((d) => {
+      const w = d.workflows.find((x) => x.workflowId === select.value);
+      const st = w.steps.find((x) => x.stepId === edge.from);
+      for (const list of ['onSuccess', 'onFailure']) {
+        if (!st?.[list]) continue;
+        const next = st[list].filter((a) => a.name !== edge.actionName && !(a.reference && a.reference.endsWith(`.${edge.actionName}`)));
+        if (next.length !== st[list].length) {
+          if (next.length) st[list] = next; else delete st[list];
+        }
+      }
+    }, { origin: 'canvas', label: `delete edge ${edge.actionName}` });
+    surface.selection = null;
+    showSelection(null);
+  }
+});
+
+// Dragging a selected action edge's arrowhead onto another node retargets the action; onto
+// the end terminal it becomes an `end`. Reusable (components) actions are shared — edit those
+// in the library, not by dragging one usage.
+surface.addEventListener('edge-retargeted', (e) => {
+  const { actionName, from, to } = e.detail;
+  const wf = doc.workflows.find((w) => w.workflowId === select.value);
+  const step = wf?.steps.find((st) => st.stepId === from);
+  const isShared = ['onSuccess', 'onFailure'].some((list) => (step?.[list] ?? []).some((a) => a.reference && a.reference.endsWith(`.${actionName}`)));
+  if (isShared) {
+    setSaveUi(`'${actionName}' is a shared components action — edit it in the library (settings page)`);
+    return;
+  }
+
+  model.update((d) => {
+    const w = d.workflows.find((x) => x.workflowId === select.value);
+    const st = w.steps.find((x) => x.stepId === from);
+    for (const list of ['onSuccess', 'onFailure']) {
+      const action = (st?.[list] ?? []).find((a) => a.name === actionName);
+      if (!action) continue;
+      if (to === '#end') {
+        action.type = 'end';
+        delete action.stepId;
+      } else {
+        action.type = 'goto';
+        action.stepId = to;
+      }
+    }
+  }, { origin: 'canvas', label: `retarget ${actionName} → ${to === '#end' ? 'end' : to}` });
+  const moved = surface.graph.edges.find((x) => x.from === from && x.actionName === actionName);
+  if (moved) surface.selection = { type: 'edge', id: moved.id };
+  logEvent('edge-retargeted', e.detail);
+});
+
+surface.addEventListener('edge-created', (e) => {
+  const { from, to, kind } = e.detail;
+  const wf = doc.workflows.find((w) => w.workflowId === select.value);
+  const step = wf.steps.find((s) => s.stepId === from);
+  const list = kind === 'success' ? 'onSuccess' : 'onFailure';
+  const actions = step[list] || [];
+
+  const existing = surface.graph.edges.find((x) =>
+    x.from === from && x.to === to && x.kind === kind && !x.criteriaSummary);
+  if (existing) {
+    surface.selection = { type: 'edge', id: existing.id };
+    logEvent('edge-exists', { id: existing.id, note: 'identical unconditional edge — selected it instead' });
+    return;
+  }
+
+  const baseName = to === '#end' ? `end-on-${kind}` : `goto-${to}`;
+  let name = baseName;
+  for (let n = 2; actions.some((a) => a.name === name); n++) name = `${baseName}-${n}`;
+  const action = to === '#end'
+    ? { name, type: 'end' }
+    : { name, type: 'goto', stepId: to };
+  model.update((d) => {
+    const w = d.workflows.find((x) => x.workflowId === select.value);
+    const s = w.steps.find((x) => x.stepId === from);
+    s[list] = [...(s[list] || []), action];
+  }, { origin: 'canvas', label: `draw ${kind} edge from ${from}` });
+  const created = surface.graph.edges.find((x) => x.from === from && x.actionName === name);
+  if (created) {
+    // Select AND show the new action in the inspector (the documented draw → select →
+    // edit-criteria flow), exactly as dropping an operation does for its new step.
+    surface.selection = { type: 'edge', id: created.id };
+    showSelection(surface.selection);
+  }
+});
+
+// ── The debug session: STATELESS replays of the real simulate endpoint (§8.2). ▶ Run
+// simulates the working copy against auto-scripted mocks (every bound operation answers with
+// its first documented success status); the COMPLETE trace comes back in one payload, so
+// stepping and time-travel scrubbing are pure cursor movement over it. Breakpoints ride the
+// request (`until.breakpoints`); "one more step" past a pause is a replay with the budget one
+// step further; double-clicking a node is run-to-here (`until.beforeStepId`).
+const tray = document.getElementById('debugtray');
+const simBtn = document.getElementById('simulate');
+const stepBtn = document.getElementById('step');
+const stopBtn = document.getElementById('stop');
+const retryBtn = document.getElementById('retry-faulted');
+// §18 R-UI-3b: Retry the faulted step — the ResumeRequest RetryFaultedStep verb; a transient fault recovers.
+retryBtn.addEventListener('click', () => { void advanceDebugRun({ action: { mode: 'RetryFaultedStep' }, pause: { afterEachStep: true } }); });
+// §18 R-UI-3b2: the full remediation menu — reuse the runs-view resume-dialog, but drive it against the DEBUG run
+// (resumeDebugRun) and feed it the WORKING-COPY steps (they are not in the catalog, so the picker takes them directly).
+const remediateBtn = document.getElementById('remediate');
+const remediateDialog = document.getElementById('debug-remediate-dialog');
+remediateDialog.client = client;
+remediateDialog.addEventListener('resume-submitted', (e) => { if (e.detail?.run) applyDebugRun(e.detail.run); void pumpDebugRun(); });
+remediateBtn.addEventListener('click', () => {
+  if (!shell.debugRun) return;
+  const wf = (doc.workflows ?? []).find((w) => w.workflowId === (shell.debugWorkflow ?? select.value)) ?? doc.workflows?.[0];
+  const faultStepId = tray.trace?.fault?.stepId;
+  const cursor = faultStepId ? (wf?.steps ?? []).findIndex((s) => s.stepId === faultStepId) : tray.cursor;
+  remediateDialog.open(
+    { id: shell.debugRun.id, workflowId: wf?.workflowId, cursor: cursor < 0 ? 0 : cursor, fault: tray.trace?.fault },
+    {
+      steps: (wf?.steps ?? []).map((s) => ({ stepId: s.stepId })),
+      resume: (request) => client.resumeDebugRun(shell.id, shell.debugRun.id, { action: request }),
+    },
+  );
+});
+const debugBreakpoints = new Set();
+// §3.5 scoped breakpoints: the designer holds them as SCOPED step paths, composed from the
+// tray's descent path; the canvas stays path-ignorant (it sees bare ids for its focused level).
+let debugFocusPath = [];
+surface.addEventListener('breakpoint-toggled', (e) => {
+  const scoped = [...debugFocusPath, e.detail.stepId].join('/');
+  if (e.detail.enabled) debugBreakpoints.add(scoped);
+  else debugBreakpoints.delete(scoped);
+});
+
+// §18 R-UI-3: derive a REMOTE debug run's pause from the canvas breakpoints (pause.beforeSteps = step ids), so
+// breakpoints govern the durable run, not only the simulator. 'step' = single-step (afterEachStep); 'start' and
+// 'continue' both run to the next breakpoint, or to the END when none are set. (▶ Run runs; ⏭ Step single-steps;
+// breakpoints pause — like the mock ▶, and like any debugger. Previously 'start' with no breakpoints single-stepped,
+// so a debug run "executed exactly one step and stopped".)
+function debugRunPause(mode) {
+  const beforeSteps = [...debugBreakpoints];
+  if (mode === 'step') return { afterEachStep: true };
+  if (beforeSteps.length) return { beforeSteps };
+  return {};
+}
+
+// Triggers injected mid-session (the tray's ⚡ form on a suspended message wait). Stateless
+// stepping means every replay re-supplies them; Stop/Clear ends the session and drops them.
+const sessionTriggers = [];
+// Step-over / what-if overrides (§3.3): stepId → provided outputs; the overridden step does
+// not execute on replay. Same session lifetime as the triggers.
+const sessionOutputOverrides = {};
+// The run's INPUTS, staged through the typed form the first ▶ of a session (sticky across
+// replays and re-asked on the next fresh run, pre-filled).
+let sessionInputs = null;
+
+function buildScenario() {
+  const mocks = [];
+  for (const [, ops] of opBrowser.surfaces) {
+    for (const op of ops) {
+      if (op.kind !== 'openapi' || !op.method || !op.path) continue;
+      const status = Object.keys(op.responses ?? {}).find((c) => /^2\d\d$/.test(c)) ?? '200';
+      // A SCHEMA-SHAPED body (not empty {}), so the workflow's $response.body#/… output pointers resolve and
+      // the trace shows values flowing between steps. Falls back to {} when the response documents no schema.
+      const schema = op.responses?.[status]?.schema;
+      const body = (schema && payloadSkeletonFromSchema(schema)) || {};
+      mocks.push({ method: op.method.toLowerCase(), path: op.path, status: Number(status), body });
+    }
+  }
+
+  return {
+    mocks,
+    ...(sessionInputs && Object.keys(sessionInputs).length ? { inputs: structuredClone(sessionInputs) } : {}),
+    ...(sessionTriggers.length ? { triggers: structuredClone(sessionTriggers) } : {}),
+  };
+}
+
+function applyDebugFrame() {
+  surface.debugState = tray.trace ? tray.frameAt(tray.cursor) : null;
+}
+
+function setDebugUi() {
+  stopBtn.hidden = !tray.trace;
+  saveScenarioBtn.disabled = !tray.trace;
+  // §18 R-UI-3b/3b2: fault-remediation — offer Retry (quick) and the full Remediate menu when the durable run faulted.
+  const faultedRun = !!(shell.debugRun && shell.debugRun.status === 'faulted');
+  retryBtn.hidden = !faultedRun;
+  remediateBtn.hidden = !faultedRun;
+  updateRunGating(); // an attached run / cleared trace changes whether ▶/⏭ may start
+}
+
+async function runSimulation({ until, stepPastEnd = false, workflowId } = {}) {
+  if (!shell.id) return;
+  try {
+    const command = { workflowId: workflowId ?? select.value, scenario: buildScenario() };
+    if (Object.keys(sessionOutputOverrides).length) command.overrides = { stepOutputs: structuredClone(sessionOutputOverrides) };
+    if (stepPastEnd && tray.trace) {
+      command.budget = { maxSteps: (tray.trace.stepsExecuted ?? 0) + 1 };
+    } else if (until) {
+      command.until = until;
+    } else if (debugBreakpoints.size) {
+      command.until = { breakpoints: [...debugBreakpoints] };
+    }
+
+    if (shell.dirty && !shell.conflicted) await saveWorkingCopy(); // simulate runs the STORED document
+    document.getElementById('debug-dock').hidden = false; // the session docks under the editor
+    void feedTraySchemas();
+    shell.debugWorkflow = command.workflowId; // stepping out of a sub-workflow restores this (a scoped rerun keeps the run's root)
+    tray.trace = await client.simulateWorkingCopy(shell.id, command);
+    applyDebugFrame();
+    logEvent('simulated', { outcome: tray.trace.outcome, steps: tray.trace.stepsExecuted });
+  } catch (err) {
+    logEvent('simulate-failed', { error: err.problem?.detail ?? err.message });
+  }
+
+  setDebugUi();
+}
+
+// §3.4: a debug session IS scenario authoring — capture the setup + expectations promoted
+// from observed reality (outcome, the visited path, per-step execution counts).
+const scPanel = document.getElementById('scpanel');
+scPanel.client = client;
+const saveScenarioBtn = document.getElementById('save-scenario');
+saveScenarioBtn.addEventListener('click', async () => {
+  const trace = tray.trace;
+  if (!trace || !shell.id) return;
+  const name = await document.getElementById('ask').ask({
+    title: 'Save as scenario',
+    message: 'Captures this session — its mocks, staged events, and expectations promoted from the observed trace.',
+    field: { label: 'Scenario name', value: `session-${new Date().toISOString().slice(11, 19).replaceAll(':', '')}` },
+    confirmLabel: 'Save',
+  });
+  if (!name) return;
+  const routes = new Map();
+  for (const [srcName, ops] of opBrowser.surfaces) {
+    for (const op of ops) {
+      if (op.kind === 'openapi' && op.operationId) routes.set(`${op.method?.toLowerCase()} ${op.path}`, { source: srcName, operationId: op.operationId });
+    }
+  }
+  const mocks = [];
+  for (const m of buildScenario().mocks) {
+    const key = `${m.method} ${m.path}`;
+    const bound = routes.get(key);
+    if (bound) mocks.push({ source: bound.source, operationId: bound.operationId, responses: [{ status: m.status, ...(m.body !== undefined ? { body: m.body } : {}) }] });
+  }
+  const attempts = {};
+  for (const step of trace.steps) attempts[step.stepId] = (attempts[step.stepId] ?? 0) + 1;
+  const scenario = {
+    name,
+    description: `Recorded from a debug session (${trace.outcome}).`,
+    mocks,
+    ...(sessionTriggers.length ? { triggers: structuredClone(sessionTriggers) } : {}),
+    expect: {
+      ...(trace.outcome === 'completed' || trace.outcome === 'faulted' || trace.outcome === 'suspended' ? { outcome: trace.outcome } : {}),
+      path: trace.steps.map((st) => st.stepId),
+      pathMode: 'exact',
+      steps: Object.fromEntries(Object.entries(attempts).map(([id, n]) => [id, { attempts: n }])),
+    },
+  };
+  try {
+    await client.putScenario(shell.id, scenario);
+    scPanel.refresh();
+    switchSideTab('scenarios');
+    logEvent('scenario-saved', { name });
+  } catch (err) {
+    logEvent('scenario-save-failed', { error: err.problem?.detail ?? err.message });
+  }
+});
+scPanel.addEventListener('run-trace', (e) => {
+  tray.trace = e.detail.trace;
+  applyDebugFrame();
+  setDebugUi();
+  document.getElementById('debug-dock').hidden = false;
+  void feedTraySchemas();
+});
+
+tray.addEventListener('output-override', (e) => {
+  if (shell.debugRun) {
+    // Attached: step over IS the runs Skip — the step's outputs are provided, it never executes.
+    void advanceDebugRun({ action: { mode: 'Skip', skipOutputs: e.detail.outputs }, pause: { afterEachStep: true } });
+    logEvent('step-over', { stepId: e.detail.stepId, live: true });
+    return;
+  }
+  sessionOutputOverrides[e.detail.stepId] = e.detail.outputs;
+  logEvent('step-over', { stepId: e.detail.stepId });
+  runSimulation();
+});
+
+// The tray's typed editors (step over, inject trigger) read the schemas endpoint: every
+// workflow's steps merged into one stepId map, channels mapped to their message payloads.
+async function feedTraySchemas() {
+  try {
+    const schemas = await client.getWorkingCopySchemas(shell.id);
+    const steps = {};
+    const channels = {};
+    for (const wf of Object.values(schemas.workflows ?? {})) {
+      for (const [stepId, entry] of Object.entries(wf.steps ?? {})) {
+        steps[stepId] ??= entry;
+        if (entry.message?.channel && entry.message.payload) channels[entry.message.channel] ??= entry.message.payload;
+      }
+    }
+    tray.stepSchemas = steps;
+    tray.channelSchemas = channels;
+  } catch { /* untyped editors still work */ }
+}
+
+tray.addEventListener('cursor-changed', applyDebugFrame);
+tray.addEventListener('workflow-focus', (e) => {
+  // Stepping into/out of a sub-workflow's trace: the canvas follows (null = the run's own).
+  debugFocusPath = e.detail.path ?? [];
+  const target = e.detail.workflowId ?? shell.debugWorkflow;
+  if (target && [...select.options].some((o) => o.value === target) && select.value !== target) {
+    select.value = target;
+    project();
+    surface.fit();
+  }
+
+  // The focused canvas shows the suffix set at the focus path — bare ids at the root (§3.5).
+  const prefix = debugFocusPath.length ? `${debugFocusPath.join('/')}/` : '';
+  surface.breakpoints = [...debugBreakpoints]
+    .filter((b) => (prefix ? b.startsWith(prefix) : true))
+    .map((b) => b.slice(prefix.length))
+    .filter((b) => !b.includes('/'));
+  applyDebugFrame();
+});
+tray.addEventListener('clear-requested', () => {
+  // §18 R-UI-2: clearing a REMOTE debug session PURGES the run — its captured draft, metadata trace, and durable
+  // run die with it (deleteDebugRun, §18 R5c) — distinct from Stop (cancel, which leaves the run inspectable).
+  if (shell.debugRun) { void client.deleteDebugRun(shell.id, shell.debugRun.id).catch(() => {}); detachDebugRun(); }
+  tray.trace = null; sessionTriggers.length = 0; for (const k of Object.keys(sessionOutputOverrides)) delete sessionOutputOverrides[k];
+  document.getElementById('debug-dock').hidden = true; applyDebugFrame(); setDebugUi();
+  saveStatus.textContent = ''; // the purged run's narration must not outlive it
+});
+tray.addEventListener('step-requested', () => runSimulation({ stepPastEnd: true }));
+tray.addEventListener('trigger-injected', (e) => {
+  logEvent('trigger-injected', e.detail);
+  // §18 / §3.3: on a REMOTE debug run a message wait is a genuine suspension. Deliver the message to the run
+  // through the control plane (which hands it STRAIGHT to the awaiting draft run — the debug stand-in for the
+  // real publisher; nothing is published to a broker), then pump it forward like a resume. Do NOT kick off a
+  // local simulation here, which would abandon the durable run.
+  if (shell.debugRun) {
+    void (async () => {
+      const fromCursor = shell.debugRun.cursor;
+      const message = { channel: e.detail.channel, payload: e.detail.payload ?? {}, ...(e.detail.correlationId ? { correlationId: e.detail.correlationId } : {}) };
+      try {
+        applyDebugRun(await client.injectDebugRunMessage(shell.id, shell.debugRun.id, message));
+        await pumpDebugRun({ awaitAdvanceFrom: fromCursor });
+      } catch (err) {
+        showToast(`Inject message: ${err.problem?.detail ?? err.problem?.title ?? err.message}`, 'error');
+      }
+    })();
+    return;
+  }
+  // Simulator: the injected message joins the session scenario; the replay delivers it at the wait and
+  // runs on to the next pause or the end (§3.3).
+  sessionTriggers.push(e.detail);
+  runSimulation();
+});
+// The run dialog + completions consume the server's BAKED, ref-resolved inputs schema (§6): a
+// $ref-rooted, combiner-rooted, or union inputs schema has no top-level `properties`, so gating on
+// raw wf.inputs.properties would never open the dialog. `bakedSchemas` caches the last fetch for the
+// (synchronous) completions; the run button fetches fresh.
+let bakedSchemas = null;
+async function fetchBakedInputs(wfId) {
+  try {
+    const schemas = await client.getWorkingCopySchemas(shell.id);
+    bakedSchemas = schemas;
+    return schemas?.workflows?.[wfId]?.inputs ?? null;
+  } catch { return null; }
+}
+function inputsRenderable(d) {
+  if (!d || typeof d !== 'object') return false;
+  if (d.type === 'union' || Array.isArray(d.variants)) return true;
+  if (d.properties && Object.keys(d.properties).length) return true;
+  if (Array.isArray(d.enum) || d.const !== undefined) return true;
+  return ['string', 'number', 'integer', 'boolean'].includes(d.type);
+}
+simBtn.addEventListener('click', async () => {
+  if (shell.debugRun) { void advanceDebugRun({ pause: debugRunPause('continue') }); return; } // attached ▶ = run to next breakpoint / end
+  if (hasBlockingProblems()) { blockedRunNotice(); return; } // no fresh run while errors stand
+  const wf = doc.workflows.find((w) => w.workflowId === select.value);
+  const baked = await fetchBakedInputs(select.value); // ref-resolved, so a $ref/combiner-rooted schema still opens
+  const envs = await loadDraftRunEnvironments();
+  if (!tray.trace && (inputsRenderable(baked ?? wf?.inputs) || envs.length)) {
+    const staged = await askForInputs(baked ?? wf?.inputs ?? { type: 'object' });
+    if (staged === null) return; // cancelled
+    sessionInputs = staged.inputs;
+    if (staged.environment) {
+      try {
+        applyDebugRun(await client.startDebugRun(shell.id, {
+          workflowId: select.value,
+          environment: staged.environment,
+          ...(sessionInputs && Object.keys(sessionInputs).length ? { inputs: sessionInputs } : {}),
+          ...(staged.simulateTransientFault ? { simulateTransientFault: true } : {}),
+          pause: debugRunPause('start'),
+        }));
+        logEvent('debug-run-started', { environment: staged.environment });
+        await pumpDebugRun();
+      } catch (err) {
+        showToast(`Debug run refused — ${err.problem?.detail ?? err.problem?.title ?? err.message}`, 'error');
+      }
+      return;
+    }
+  }
+  runSimulation();
+});
+
+// The pre-run inputs form: the value editor typed by the workflow's OWN inputs schema,
+// pre-filled from the last run.
+let draftRunEnvironments = null; // §18: environments whose administrators allow draft debug runs
+async function loadDraftRunEnvironments() {
+  if (draftRunEnvironments) return draftRunEnvironments;
+  try {
+    const { environments } = await client.listEnvironments();
+    draftRunEnvironments = environments.filter((e) => e.allowsDraftRuns);
+  } catch { draftRunEnvironments = []; }
+  return draftRunEnvironments;
+}
+
+// §18 R-UI-3c: per-source credential readiness — which sources have a credential bound in each environment, so the
+// run dialog shows "payments ✓ · order-events ✗" BEFORE the attempt (starting with gaps is a 409 at the runner).
+let credentialCoverage = null;
+async function loadCredentialCoverage() {
+  if (credentialCoverage) return credentialCoverage;
+  const map = new Map();
+  try {
+    for await (const page of client.listCredentialsPaged({ limit: 200 })) {
+      for (const b of page.credentials ?? []) {
+        if (!map.has(b.sourceName)) map.set(b.sourceName, new Set());
+        map.get(b.sourceName).add(b.environment);
+      }
+    }
+  } catch { /* no credentials:read → surface nothing rather than a false negative */ }
+  credentialCoverage = map;
+  return map;
+}
+
+function renderReadiness(container, envName, coverage) {
+  const sources = (doc.sourceDescriptions ?? []).map((s) => s.name);
+  if (!envName || !sources.length) { container.hidden = true; container.replaceChildren(); return; }
+  container.hidden = false;
+  const label = document.createElement('span');
+  label.textContent = `Credentials in ${envName}: `;
+  const parts = sources.map((s) => {
+    const ok = !!coverage.get(s)?.has(envName);
+    const span = document.createElement('span');
+    span.textContent = `${s} ${ok ? '✓' : '✗'}`;
+    span.style.color = ok ? 'var(--arazzo-status-online,#16a34a)' : 'var(--arazzo-status-faulted,#d4351c)';
+    return span;
+  });
+  container.replaceChildren(label, ...parts.flatMap((p, i) => (i ? [document.createTextNode(' · '), p] : [p])));
+}
+
+async function askForInputs(schema) {
+  const envs = await loadDraftRunEnvironments();
+  const coverage = await loadCredentialCoverage();
+  return new Promise((resolve) => {
+    const dlg = document.getElementById('run-inputs-dialog');
+    const editor = document.getElementById('run-inputs-editor');
+    const envSelect = document.getElementById('run-inputs-env');
+    const faultLabel = document.getElementById('run-inputs-fault');
+    const faultCb = document.getElementById('run-inputs-fault-cb');
+    faultCb.checked = false;
+    envSelect.innerHTML = '<option value="">Mocks (simulated)</option>'
+      + envs.map((e) => `<option value="${e.name}">${e.displayName ?? e.name} — debug run</option>`).join('');
+    // The transient-fault toggle + hint only apply to a real (durable) debug run, not the canned simulator.
+    const syncEnv = () => {
+      const dbg = !!envSelect.value;
+      document.getElementById('run-inputs-env-hint').hidden = !dbg;
+      faultLabel.hidden = !dbg;
+      renderReadiness(document.getElementById('run-inputs-readiness'), envSelect.value, coverage);
+    };
+    envSelect.onchange = syncEnv;
+    syncEnv();
+    editor.seed = sessionInputs ?? undefined;
+    editor.descriptor = schema;
+    const done = (value) => { dlg.close(); resolve(value); };
+    dlg.querySelector('.ri-run').onclick = () => {
+      try { done({ inputs: editor.value, environment: envSelect.value || null, simulateTransientFault: faultCb.checked }); } catch { /* invalid JSON stays open */ }
+    };
+    dlg.querySelector('.ri-cancel').onclick = () => done(null);
+    dlg.showModal();
+  });
+}
+
+// ── §18 attached mode: the dock drives a DURABLE debug run — forward-only ─────────────────────
+// §18 R5: the control plane MARKS the run claimable and returns the un-advanced state; a RUNNER advances it
+// out-of-band. The dock never trusts the enqueue/mark response's trace — it PUMPS get-debug-run until the run
+// reaches a settled status, painting each polled state (so a slow runner shows "waiting" then the result).
+const DEBUG_POLL_MS = 200;
+const DEBUG_SETTLED = new Set(['paused', 'suspended', 'completed', 'faulted', 'cancelled']);
+
+function applyDebugRun(run) {
+  shell.debugRun = { id: run.debugRunId, environment: run.environment, status: run.status, cursor: run.cursor };
+  tray.trace = run.trace;
+  document.getElementById('debug-dock').hidden = false;
+  void feedTraySchemas();
+  applyDebugFrame();
+  setDebugUi();
+  setSaveUi(DEBUG_SETTLED.has(run.status)
+    ? `debug run ${run.status} in ${run.environment} · step ${run.cursor}`
+    : `debug run in ${run.environment} — waiting for runner…`);
+}
+
+// Poll get-debug-run until the marked run reaches a settled status (a runner advanced it), painting each state.
+// Subtlety: a RESUME marks the run claimable and returns its CURRENT (pre-advance) pause — SAME cursor — before
+// the runner picks it up. 'paused' is a settled status, so without awaitAdvanceFrom the pump would exit at that
+// stale pause and never poll the runner's advance (Step/Run appear to "do nothing"). When resuming, pass the
+// cursor we are leaving: keep polling through the still-old pause until the cursor moves or the run terminates.
+function debugRunPumpDone(awaitAdvanceFrom) {
+  if (!shell.debugRun) return true;
+  const { status, cursor } = shell.debugRun;
+  if (!DEBUG_SETTLED.has(status)) return false;
+  if (awaitAdvanceFrom !== null && status === 'paused' && cursor === awaitAdvanceFrom) return false;
+  return true;
+}
+async function pumpDebugRun({ awaitAdvanceFrom = null } = {}) {
+  for (let i = 0; i < 150; i++) {
+    if (debugRunPumpDone(awaitAdvanceFrom)) return;
+    let run;
+    try { run = await client.getDebugRun(shell.id, shell.debugRun.id); }
+    catch (err) { showToast(`Debug run: ${err.problem?.detail ?? err.problem?.title ?? err.message}`, 'error'); return; }
+    if (!shell.debugRun) return; // detached mid-poll (stop / close)
+    applyDebugRun(run);
+    if (debugRunPumpDone(awaitAdvanceFrom)) return;
+    await new Promise((r) => setTimeout(r, DEBUG_POLL_MS));
+  }
+}
+
+function detachDebugRun() {
+  shell.debugRun = null;
+}
+
+async function advanceDebugRun(command) {
+  if (!shell.debugRun) return;
+  // completed/cancelled are terminal. A FAULTED run IS resumable — but only through a remediation action
+  // (Retry/Skip/Rewind/StatePatch, e.g. the ↻ Retry button); a plain step/continue on a fault would just re-fault,
+  // so guard against that but let the remediation through (the server allows resuming a faulted run).
+  const terminal = ['completed', 'cancelled'].includes(shell.debugRun.status);
+  const faultedWithoutRemediation = shell.debugRun.status === 'faulted' && !command.action;
+  if (terminal || faultedWithoutRemediation) {
+    showToast(`The debug run has ${shell.debugRun.status}. Press ■ Stop to start a new one.`, 'info');
+    return;
+  }
+  const fromCursor = shell.debugRun.cursor;
+  try {
+    applyDebugRun(await client.resumeDebugRun(shell.id, shell.debugRun.id, command));
+    await pumpDebugRun({ awaitAdvanceFrom: fromCursor });
+  } catch (err) {
+    showToast(`Debug run: ${err.problem?.detail ?? err.problem?.title ?? err.message}`, 'error');
+  }
+}
+stepBtn.addEventListener('click', () => {
+  if (shell.debugRun) { void advanceDebugRun({ pause: debugRunPause('step') }); return; } // forward-only single step
+  if (tray.trace && tray.cursor < tray.length) { tray.cursor += 1; return; } // navigate the existing trace
+  if (hasBlockingProblems()) { blockedRunNotice(); return; } // a fresh start / step-past-end needs a clean document
+  runSimulation({ stepPastEnd: !!tray.trace });
+});
+stopBtn.addEventListener('click', () => { if (shell.debugRun) { void client.cancelDebugRun(shell.id, shell.debugRun.id).catch(() => {}); detachDebugRun(); } tray.trace = null; sessionTriggers.length = 0; for (const k of Object.keys(sessionOutputOverrides)) delete sessionOutputOverrides[k]; document.getElementById('debug-dock').hidden = true; applyDebugFrame(); setDebugUi(); });
+surface.addEventListener('node-activated', (e) => {
+  // Run-to-here composes the same way breakpoints do: the focus path plus the node (§3.5).
+  // The surface emits {stepId} (the old read of e.detail.id matched nothing, so double-click
+  // run-to-here never fired — a pre-existing defect the scoped-stop smoke test now covers).
+  const stepId = e.detail.stepId;
+  if (!stepId || stepId.startsWith('#')) return;
+  // While focused inside a sub-workflow, the scoped until addresses the RUN'S root workflow —
+  // the focused canvas shows the child, but the replay always starts from the top (§8.2).
+  runSimulation({
+    until: { beforeStepId: [...debugFocusPath, stepId].join('/') },
+    workflowId: debugFocusPath.length ? shell.debugWorkflow : undefined,
+  });
+});
+
+// Expression console: completions from the SELECTED workflow of the OPEN document — never a
+// stale snapshot. project() refreshes this on every workflow switch and document edit, so
+// $steps offers exactly the steps you are looking at.
+const expr = document.getElementById('expr');
+refreshExpressionContext = () => {
+  const wf = (doc.workflows ?? []).find((w) => w.workflowId === select.value) ?? doc.workflows?.[0];
+  expr.completionContext = {
+    // Prefer the server's BAKED, ref-resolved inputs schema (§6) so $inputs completions work for a
+    // $ref/combiner-rooted schema; fall back to the raw schema until the first bake lands.
+    inputs: bakedSchemas?.workflows?.[wf?.workflowId]?.inputs ?? wf?.inputs,
+    outputs: Object.keys(wf?.outputs || {}),
+    steps: Object.fromEntries((wf?.steps ?? []).map((s) => [s.stepId, {
+      outputs: Object.keys(s.outputs || {}),
+      summary: s.description,
+    }])),
+    // $response.body / $request.body / $message.payload are PER-STEP surfaces — they depend on the
+    // operation a step calls — so they are not set on this workflow-wide console context. Each step's
+    // inspector builds them from that step's own operation (see stepCompletionContext).
+  };
+};
+refreshExpressionContext();
+expr.validator = async (value) => {
+  const bad = [...value.matchAll(/\$[A-Za-z_][A-Za-z0-9_]*/g)]
+    .map((m) => m[0])
+    .filter((root) => !EXPRESSION_ROOTS.includes(root));
+  return bad.length
+    ? { valid: false, errors: bad.map((b) => ({ message: `unknown root '${b}'` })) }
+    : { valid: true };
+};
+// ⏎ evaluates against the RECORDED trace at the scrub cursor — stateless like all stepping
+// (§8.2): the trace already holds every step's outputs and exchanges, so no server call.
+const exprResult = document.getElementById('expr-result');
+function debugFrame() {
+  if (!tray.trace) return null;
+  const k = tray.cursor;
+  const steps = {};
+  for (let i = 0; i < k; i++) steps[tray.trace.steps[i].stepId] = { outputs: tray.trace.steps[i].outputs };
+  const record = k > 0 ? tray.trace.steps[k - 1] : null;
+  const lastExchange = record?.requests?.length ? record.requests[record.requests.length - 1] : null;
+  return {
+    inputs: {}, // the demo session stages no inputs
+    outputs: k === tray.length ? tray.trace.outputs : undefined,
+    steps,
+    current: lastExchange ? { statusCode: lastExchange.status, responseBody: lastExchange.responseBody } : {},
+  };
+}
+
+const exprHistory = [];
+function renderExprHistory() {
+  exprResult.style.display = exprHistory.length ? 'grid' : 'none';
+  exprResult.replaceChildren(...exprHistory.map((entry) => {
+    const line = document.createElement('div');
+    line.style.color = entry.ok ? 'var(--arazzo-status-completed, #2a8a4a)' : 'var(--arazzo-muted, #6b7280)';
+    line.textContent = entry.text;
+    return line;
+  }));
+}
+
+expr.addEventListener('commit', (e) => {
+  logEvent('expression-commit', e.detail);
+  const frame = debugFrame();
+  let entry;
+  if (!frame) {
+    entry = { ok: false, text: 'no debug session — ▶ Run first, then evaluate at any scrub position' };
+  } else {
+    const resolved = resolveAgainstFrame(e.detail.value, frame);
+    entry = resolved.found
+      ? { ok: true, text: `${e.detail.value} @ ${tray.cursor}/${tray.length} = ${JSON.stringify(resolved.value)}` }
+      : { ok: false, text: `${e.detail.value} @ ${tray.cursor}/${tray.length} — ${resolved.reason}` };
+  }
+
+  exprHistory.unshift(entry);
+  exprHistory.length = Math.min(exprHistory.length, 5);
+  renderExprHistory();
+});
+
+// The Git round-trip (§4.7): autosave first (the dialog reads the STORED copy), then bind /
+// pull / commit through the caller's brokered session. binding-saved and pulled both bump the
+// etag (refresh the save token); pulled also replaced the document — reload the model like an
+// open, and let the scenario panel re-read its (possibly replaced) set.
+const gitDialog = document.getElementById('gitpanel');
+gitDialog.client = client;
+gitDialog.windowOpener = mockAuthOpener;
+// The compare dialog's merge target reads the LIVE model, never the panel's stale snapshot (§6.4),
+// and centres on the workflow being EDITED (the #workflow selector), not the document's first.
+gitDialog.documentSource = () => model.document;
+gitDialog.workflowIdSource = () => select.value || undefined;
+// The Components tab shows the document's reusable library, refreshed on each visit (and
+// whenever the model changes while it is showing). Persisting merges exactly like settings.
+const componentsPanel = document.getElementById('componentspanel');
+function refreshComponentsPanel() {
+  componentsPanel.externalSchemas = externalSchemas; // jsonschema attachments for external $ref (#94)
+  componentsPanel.stepIds = doc.workflows.flatMap((w) => (w.steps || []).map((st) => st.stepId));
+  componentsPanel.workflowIds = doc.workflows.map((w) => w.workflowId);
+  componentsPanel.completionContext = expr.completionContext;
+  componentsPanel.value = doc;
+}
+document.querySelector('.side-tabs [data-tab="components"]').addEventListener('click', () => { if (shell.id) refreshComponentsPanel(); });
+componentsPanel.addEventListener('document-changed', (ev) => {
+  model.update((d) => {
+    if (ev.detail.document.components === undefined) delete d.components;
+    else d.components = ev.detail.document.components;
+  }, { origin: 'components-panel', label: 'edit components', coalesce: true });
+});
+
+// "open in library" on a schema editor's $ref row (bubbles from the workflow inputs editor or the
+// components panel itself): jump to the Components tab and reveal + expand the referenced shared type.
+document.addEventListener('library-open', (e) => {
+  if (!shell.id) return;
+  const name = e.detail?.name;
+  refreshComponentsPanel();
+  switchSideTab('components');
+  if (name) requestAnimationFrame(() => componentsPanel.openEntry('inputs', name));
+});
+
+// The Git tab loads lazily on activation (flushing the autosave first — the panel reads the
+// STORED copy) and refreshes each visit; no GitHub call happens until you look.
+document.querySelector('.side-tabs [data-tab="git"]').addEventListener('click', async () => {
+  if (!shell.id) return;
+  clearTimeout(autosaveTimer);
+  if (shell.dirty && !shell.conflicted) await saveWorkingCopy();
+  gitDialog.open({ workingCopyId: shell.id });
+  logEvent('git-open', {});
+});
+gitDialog.addEventListener('binding-saved', (e) => {
+  shell.etag = e.detail.workingCopy.etag;
+  shell.dirty = false;
+  setSaveUi('git binding saved');
+  logEvent('git-bound', e.detail.workingCopy.gitBinding);
+});
+// Pull/rollback discard local edits by design. Cancel any pending autosave SYNCHRONOUSLY before the
+// pull reads the live etag, so a queued save of the about-to-be-discarded edit cannot fire mid-pull
+// (which would bump the etag and 409 the pull). clearTimeout is synchronous, so it completes before
+// the panel's emit() returns and the pull proceeds.
+gitDialog.addEventListener('pull-starting', () => { clearTimeout(autosaveTimer); });
+gitDialog.addEventListener('pulled', (e) => {
+  clearTimeout(autosaveTimer);
+  const wc = e.detail.workingCopy;
+  shell.etag = wc.etag;
+  shell.dirty = false;
+  shell.conflicted = false;
+  model.reset(wc.document, wc.designerState ?? { nodes: {} });
+  refreshWorkflowOptions();
+  project();
+  scPanel.refresh();
+  setSaveUi('pulled from GitHub');
+  logEvent('git-pulled', {});
+});
+gitDialog.addEventListener('committed', (e) => {
+  setSaveUi('committed to GitHub');
+  logEvent('git-committed', e.detail.result);
+});
+
+// Interactive merge (§6.4): the compare dialog (nested in the git panel) emits Take/Apply events that
+// BUBBLE composed to here. The host owns the ONE model — apply each as an ordinary, undoable, labelled
+// edit, then hand the fresh document back so the diff recomputes and the resolved entry disappears.
+function applyMergeAccept(apply, workflowId) {
+  model.update((d) => {
+    const wf = d.workflows.find((w) => w.workflowId === workflowId) || d.workflows[0];
+    if (!wf) return;
+    wf.steps = wf.steps || [];
+    switch (apply.kind) {
+      case 'insert-step': wf.steps.splice(apply.index, 0, apply.step); break;
+      case 'remove-step': wf.steps = wf.steps.filter((s) => s.stepId !== apply.stepId); break;
+      case 'replace-step': { const i = wf.steps.findIndex((s) => s.stepId === apply.stepId); if (i >= 0) wf.steps[i] = apply.step; break; }
+      case 'move-step': { const i = wf.steps.findIndex((s) => s.stepId === apply.stepId); if (i >= 0) { const [s] = wf.steps.splice(i, 1); wf.steps.splice(apply.index, 0, s); } break; }
+      case 'insert-action': { const st = wf.steps.find((s) => s.stepId === apply.stepId); if (st) { st[apply.list] = st[apply.list] || []; st[apply.list].splice(apply.index, 0, apply.action); } break; }
+      case 'remove-action': { const st = wf.steps.find((s) => s.stepId === apply.stepId); if (st && st[apply.list]) st[apply.list].splice(apply.index, 1); break; }
+      case 'replace-action': { const st = wf.steps.find((s) => s.stepId === apply.stepId); if (st && st[apply.list]) st[apply.list][apply.index] = apply.action; break; }
+      case 'set-area':
+        if (apply.area === 'defaults') {
+          if (apply.value.successActions === undefined) delete wf.successActions; else wf.successActions = apply.value.successActions;
+          if (apply.value.failureActions === undefined) delete wf.failureActions; else wf.failureActions = apply.value.failureActions;
+        } else if (apply.value === undefined) { delete wf[apply.area]; } else { wf[apply.area] = apply.value; }
+        break;
+      case 'set-component':
+        if (apply.value === undefined) { if (d.components?.[apply.list]) delete d.components[apply.list][apply.name]; }
+        else { d.components = d.components || {}; d.components[apply.list] = d.components[apply.list] || {}; d.components[apply.list][apply.name] = apply.value; }
+        break;
+    }
+  }, { origin: 'merge', label: `merge ${apply.kind}` });
+  gitDialog.compareDialog?.refresh({ left: { document: model.document } });
+}
+gitDialog.addEventListener('change-accepted', (e) => applyMergeAccept(e.detail.apply, e.detail.workflowId));
+gitDialog.addEventListener('merge-text-applied', (e) => {
+  model.applyText(e.detail.text, { origin: 'merge', label: 'merge text' });
+  gitDialog.compareDialog?.refresh({ left: { document: model.document } });
+});
+
+// The deliberate publish act (§4.6): autosave first (publish reads the STORED document), then
+// let the server validate + attest the suite. Refusals land where they are actionable:
+// validation diagnostics → Problems; a failing suite → Scenarios with its verdicts.
+document.getElementById('publish').addEventListener('click', async () => {
+  if (!shell.id) return;
+  const owner = await document.getElementById('ask').ask({
+    title: 'Publish to the catalog',
+    message: 'Validates the document and re-runs the scenario suite server-side; the new version starts as a draft. Who owns it?',
+    fields: [
+      { key: 'name', label: 'Owner name', value: 'You' },
+      { key: 'email', label: 'Owner email', value: 'you@example.com', placeholder: 'name@example.com' },
+    ],
+    confirmLabel: 'Publish',
+  });
+  if (!owner) return; // the publish dialog was cancelled
+  const ownerName = (owner.name ?? '').trim();
+  const ownerEmail = (owner.email ?? '').trim();
+  if (!ownerEmail) {
+    // The server requires an owner email; two fields make the requirement obvious (no format to mis-type).
+    logEvent('publish-invalid-owner', { owner });
+    showToast('Publish needs an owner email.', 'warn');
+    setSaveUi('⚠ publish needs an owner email');
+    return;
+  }
+  try {
+    if (shell.dirty && !shell.conflicted) await saveWorkingCopy();
+    const version = await client.publishWorkingCopy(shell.id, { owner: { name: ownerName || ownerEmail, email: ownerEmail } });
+    const suite = version.evidence?.suite;
+    showToast(`Published ${version.baseWorkflowId} v${version.versionNumber} (draft)${suite ? ` — ${suite.passed}/${suite.total} scenarios green` : ''}. Promote it from the catalog when ready.`);
+    setSaveUi(`published ${version.baseWorkflowId} v${version.versionNumber} (draft)`);
+    logEvent('published', { base: version.baseWorkflowId, version: version.versionNumber });
+  } catch (err) {
+    if (err.status === 422 && err.problem?.reason === 'validation') {
+      renderProblems({ diagnostics: err.problem.diagnostics ?? [] }, { reveal: true });
+      showToast('Publish refused — the document has validation findings (see Problems).', 'warn');
+      setSaveUi('⚠ publish refused — fix the validation findings');
+    } else if (err.status === 422 && err.problem?.reason === 'scenarios') {
+      switchSideTab('scenarios');
+      scPanel.refresh();
+      showToast(`Publish refused — ${err.problem.suite?.failed ?? '?'} scenario(s) failing (see Scenarios). Evidence is server-attested; fix or delete the failing scenarios.`, 'warn');
+      setSaveUi(`⚠ publish refused — ${err.problem.suite?.failed ?? '?'} scenario(s) failing`);
+    } else {
+      showToast(`Publish failed: ${err.problem?.detail ?? err.message}`, 'error');
+      setSaveUi(`publish failed: ${err.problem?.detail ?? err.message}`);
+    }
+    logEvent('publish-refused', { status: err.status, reason: err.problem?.reason });
+  }
+});
+
+document.getElementById('fit').addEventListener('click', () => surface.fit());
+document.getElementById('relayout').addEventListener('click', () => {
+  // Clear pins in the MODEL (the source of truth) — clearing only the surface's copy lets the
+  // next document-changed re-pin every node from designerState and auto-layout "doesn't work".
+  model.updateDesignerState((st) => { st.nodes = {}; }, { origin: 'canvas', label: 'auto-layout' });
+  surface.fit();
+});
+// Theme: the three-state cycle — the icon shows the CURRENT preference and the tooltip narrates the next
+// click. B&w outline SVGs (monitor · sun · moon), the same glyphs as the control-plane title-bar toggle.
+const THEME_ICONS = {
+  auto: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg>',
+  light: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  dark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>',
+};
+const themeBtn = document.getElementById('theme');
+const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
+let themePreference = 'auto';
+function applyTheme() {
+  const resolved = themePreference === 'auto' ? (systemDark.matches ? 'dark' : 'light') : themePreference;
+  document.documentElement.dataset.theme = resolved;
+  themeBtn.innerHTML = THEME_ICONS[themePreference];
+  themeBtn.title = {
+    light: 'Theme: Light (click for Dark)',
+    dark: 'Theme: Dark (click for System)',
+    auto: 'Theme: System (click for Light)',
+  }[themePreference];
+}
+systemDark.addEventListener('change', () => { if (themePreference === 'auto') applyTheme(); });
+themeBtn.addEventListener('click', () => {
+  themePreference = { auto: 'light', light: 'dark', dark: 'auto' }[themePreference];
+  applyTheme();
+});
+applyTheme();

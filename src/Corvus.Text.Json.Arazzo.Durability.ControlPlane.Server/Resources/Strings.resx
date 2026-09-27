@@ -192,4 +192,10 @@
   <data name="SecurityModeNotNamed" xml:space="preserve">
     <value>ControlPlaneSecurityMode.{0} is not a posture. Name the deployment's posture: Scoped, ScopesOnly, RowSecurityOnly, or Open (unsecured, for development). There is no default (ADR 0016).</value>
   </data>
+  <data name="SecurityHeadersRequired" xml:space="preserve">
+    <value>ControlPlaneSecurityMode.{0} requires the browser security headers (ADR 0073): call services.AddArazzoSecurityHeaders() before the host is built. Only Open may run without them.</value>
+  </data>
+  <data name="InvalidSecurityHeaderSource" xml:space="preserve">
+    <value>'{1}' in ControlPlaneSecurityHeadersOptions.{0} is not an origin. Name a scheme of http or https and a host with an optional port, with no path, query, wildcard or keyword (ADR 0073).</value>
+  </data>
 </root>

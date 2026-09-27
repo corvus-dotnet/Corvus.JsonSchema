@@ -489,6 +489,25 @@ const string SessionCookieName = "arazzo.session";
 bool requireAuthorization = builder.Configuration.GetValue<bool?>("ControlPlane:RequireAuthorization")
     ?? throw new InvalidOperationException(
         "ControlPlane:RequireAuthorization must be set explicitly to true or false. There is no default: it decides whether this host authenticates anyone at all (ADR 0016).");
+
+// The browser security headers (ADR 0073) on every response, the pages under /ui and /designer included, in either
+// posture: the pages run with no inline script and cannot be framed. Sign-out is a form POST whose response redirects
+// to Keycloak's end-session endpoint, and browsers hold that redirect to form-action too. The BFF reaches Keycloak
+// through service discovery, so each endpoint discovery may resolve it to is a form-action origin.
+builder.Services.AddArazzoSecurityHeaders(options =>
+{
+    if (requireAuthorization)
+    {
+        foreach (string scheme in (ReadOnlySpan<string>)["https", "http"])
+        {
+            if (builder.Configuration[$"services:keycloak:{scheme}:0"] is { Length: > 0 } endpoint)
+            {
+                options.FormActionSources.Add(endpoint);
+            }
+        }
+    }
+});
+
 if (requireAuthorization)
 {
     // Three ways in (§16.3): browser users via the BFF (interactive OIDC → an HttpOnly cookie session); API

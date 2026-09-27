@@ -67,6 +67,7 @@ public sealed class ControlPlaneAuthorizationTests
 
         WebApplicationBuilder unrefreshed = WebApplication.CreateBuilder();
         unrefreshed.Services.AddArazzoAuthenticationTelemetry();
+        unrefreshed.Services.AddArazzoSecurityHeaders();
         unrefreshed.Services.AddHttpContextAccessor();
         using WebApplication without = unrefreshed.Build();
         ArgumentException refusal = Should.Throw<ArgumentException>(() => without.MapArazzoControlPlane(management, catalog, runners, ControlPlaneSecurityMode.RowSecurityOnly, rowSecurity: policy, auditor: GovernanceAuditor.CreateInMemory()));
@@ -76,6 +77,7 @@ public sealed class ControlPlaneAuthorizationTests
         // Registering the refresh for THAT policy is what the mapping looks for; a registration for another one does not do.
         WebApplicationBuilder other = WebApplication.CreateBuilder();
         other.Services.AddArazzoAuthenticationTelemetry();
+        other.Services.AddArazzoSecurityHeaders();
         other.Services.AddHttpContextAccessor();
         other.Services.AddArazzoRowSecurityPolicyRefresh(new PersistentRowSecurityPolicy(new InMemorySecurityPolicyStore()));
         using WebApplication mismatched = other.Build();
@@ -84,6 +86,7 @@ public sealed class ControlPlaneAuthorizationTests
 
         WebApplicationBuilder refreshed = WebApplication.CreateBuilder();
         refreshed.Services.AddArazzoAuthenticationTelemetry();
+        refreshed.Services.AddArazzoSecurityHeaders();
         refreshed.Services.AddHttpContextAccessor();
         refreshed.Services.AddArazzoRowSecurityPolicyRefresh(policy);
         using WebApplication with = refreshed.Build();
@@ -167,6 +170,7 @@ public sealed class ControlPlaneAuthorizationTests
             .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { });
         builder.Services.AddArazzoControlPlaneAuthorization();
         builder.Services.AddArazzoAuthenticationTelemetry();
+        builder.Services.AddArazzoSecurityHeaders();
 
         // Every mode that authenticates needs the accessor, so a handler can name the acting principal.
         builder.Services.AddHttpContextAccessor();

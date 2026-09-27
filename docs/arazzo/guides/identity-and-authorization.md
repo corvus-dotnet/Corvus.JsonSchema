@@ -348,6 +348,18 @@ credential). Layers, matching the canonical .NET BFF (Duende) pattern:
 - **OIDC `state` + `nonce` + correlation cookie** protect the login flow itself; **`/logout` is POST-only**
   (not GET-forgeable, and SameSite blocks a cross-site logout-POST from carrying the cookie).
 
+**Browser security headers.** A secured host registers `services.AddArazzoSecurityHeaders()`
+([ADR 0073](../adr/0073-browser-security-headers-and-a-strict-csp.md)), and a secured control plane does not map
+without it. Every response then carries a Content-Security-Policy with no inline script, `frame-ancestors 'none'`
+and `X-Frame-Options: DENY`, so a governance action cannot be clicked through a frame. A BFF whose sign-out form
+redirects to the identity provider names that provider's origin, since browsers hold the redirect to `form-action`:
+
+```csharp
+builder.Services.AddArazzoSecurityHeaders(options => options.FormActionSources.Add("https://id.example.com"));
+```
+
+A host that serves the kit from another origin sends the same policy on its own pages.
+
 ### 16.4 Principals, humans and machines
 
 Both are *principals with claims*; only the authN flow and IdP-side registration differ, Arazzo's authz is

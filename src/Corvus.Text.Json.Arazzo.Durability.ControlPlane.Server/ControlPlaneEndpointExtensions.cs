@@ -181,6 +181,13 @@ public static class ControlPlaneEndpointExtensions
             ServerThrowHelper.ThrowAuthenticationTelemetryRequired(securityMode);
         }
 
+        // ADR 0073: a secured deployment whose pages can be framed, or run inline script, does not start. A framed click on
+        // Revoke or Approve is a governance mutation audited with the victim as its actor.
+        if (securityMode != ControlPlaneSecurityMode.Open && endpoints.ServiceProvider.GetService<ControlPlaneSecurityHeaders>() is null)
+        {
+            ServerThrowHelper.ThrowSecurityHeadersRequired(securityMode);
+        }
+
         // A weak checkpoint secret is caught where it is configured rather than on the first callback that presents a
         // token signed with it, which would be a silent downgrade of the one credential that surface has.
         if (!checkpointSecret.IsEmpty && checkpointSecret.Length < CheckpointToken.MinimumSecretBytes)

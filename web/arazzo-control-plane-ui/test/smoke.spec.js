@@ -724,3 +724,45 @@ test('§3.4 save-as-scenario: an observed trace promotes to a saved scenario tha
 
   expect(errors, `console/page errors: ${errors.join(' | ')}`).toEqual([]);
 });
+
+// ADR 0073: the kit runs under the Content-Security-Policy its host sends, with no inline script. The test proves the
+// policy is live (an injected inline script is refused and reported) before asserting the pages raised no violation of
+// their own, so a missing header fails it rather than passing it vacuously.
+for (const [path, ready] of [
+  ['/demo/index.html', 'arazzo-runs-table tbody tr[data-id]'],
+  ['/demo/designer.html', '#surface .node'],
+]) {
+  test(`${path} runs under the control plane's Content-Security-Policy with no violation`, async ({ page }) => {
+    await page.addInitScript(() => {
+      window.__cspViolations = [];
+      document.addEventListener('securitypolicyviolation', (e) => {
+        window.__cspViolations.push(`${e.effectiveDirective} ${e.blockedURI || 'inline'} ${e.sourceFile ?? ''}:${e.lineNumber ?? ''}`);
+      });
+    });
+    const response = await page.goto(path);
+    expect(response.headers()['content-security-policy']).toContain("script-src 'self'");
+    await page.locator(ready).first().waitFor({ state: 'attached' });
+
+    // The policy is enforced: an inline script is refused and reported, and never runs.
+    const injected = await page.evaluate(async () => {
+      window.__injectedRan = false;
+      const script = document.createElement('script');
+      script.textContent = 'window.__injectedRan = true;';
+      document.body.appendChild(script);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      return { ran: window.__injectedRan, violations: window.__cspViolations.splice(0) };
+    });
+    expect(injected.ran).toBe(false);
+    expect(injected.violations.some((v) => v.startsWith('script-src-elem inline'))).toBe(true);
+
+    expect(await page.evaluate(() => window.__cspViolations), 'violations raised by the page itself').toEqual([]);
+  });
+}
+
+test('a page of the kit refuses to be framed', async ({ page, baseURL }) => {
+  await page.setContent(`<iframe id="framed" src="${baseURL}/demo/index.html"></iframe>`);
+  const frame = await (await page.locator('#framed').elementHandle()).contentFrame();
+  // Chrome replaces a frame refused by frame-ancestors with its error page; the kit never loads in it.
+  await expect.poll(() => frame.url(), { timeout: 5000 }).toContain('chrome-error://');
+  expect(await frame.locator('arazzo-control-plane').count()).toBe(0);
+});

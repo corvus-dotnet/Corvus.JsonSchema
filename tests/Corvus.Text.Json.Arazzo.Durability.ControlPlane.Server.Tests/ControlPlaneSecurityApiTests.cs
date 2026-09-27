@@ -543,6 +543,7 @@ public sealed class ControlPlaneSecurityApiTests
             .AddScheme<AuthenticationSchemeOptions, ScopeAuthHandler>(ScopeAuthHandler.SchemeName, _ => { });
         builder.Services.AddArazzoControlPlaneAuthorization();
         builder.Services.AddArazzoAuthenticationTelemetry();
+        builder.Services.AddArazzoSecurityHeaders();
         builder.Services.AddHttpContextAccessor();
 
         // RowSecurityOnly: the row-security policy is active (so the security handler sees the caller for the
@@ -578,6 +579,7 @@ public sealed class ControlPlaneSecurityApiTests
             .AddScheme<AuthenticationSchemeOptions, ScopeAuthHandler>(ScopeAuthHandler.SchemeName, _ => { });
         builder.Services.AddArazzoControlPlaneAuthorization();
         builder.Services.AddArazzoAuthenticationTelemetry();
+        builder.Services.AddArazzoSecurityHeaders();
         builder.Services.AddHttpContextAccessor();
 
         WebApplication app = builder.Build();

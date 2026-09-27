@@ -1039,6 +1039,7 @@ public sealed class ControlPlaneRunnerAuthorizationsApiTests
             .AddScheme<AuthenticationSchemeOptions, ScopeTenantSubAuthHandler>(ScopeTenantSubAuthHandler.SchemeName, _ => { });
         builder.Services.AddArazzoControlPlaneAuthorization();
         builder.Services.AddArazzoAuthenticationTelemetry();
+        builder.Services.AddArazzoSecurityHeaders();
         builder.Services.AddHttpContextAccessor();
 
         var registry = new InMemoryRunnerRegistry();

@@ -407,6 +407,20 @@ public sealed class ControlPlaneAuditSinkTests
     }
 
     [TestMethod]
+    [DataRow(ControlPlaneSecurityMode.Scoped)]
+    [DataRow(ControlPlaneSecurityMode.RowSecurityOnly)]
+    [DataRow(ControlPlaneSecurityMode.ScopesOnly)]
+    public async Task A_secured_posture_does_not_start_in_a_host_that_does_not_send_the_browser_security_headers(ControlPlaneSecurityMode mode)
+    {
+        InvalidOperationException refused = await Should.ThrowAsync<InvalidOperationException>(async () => await StartAsync(mode, GovernanceAuditor.CreateInMemory(), securityHeaders: false));
+        refused.Message.ShouldContain("AddArazzoSecurityHeaders");
+        refused.Message.ShouldContain(mode.ToString());
+
+        // Open is the development posture, and the one that may run without them.
+        await using Host open = await StartAsync(ControlPlaneSecurityMode.Open, auditor: null, securityHeaders: false);
+    }
+
+    [TestMethod]
     public async Task A_failed_authentication_is_a_record_naming_the_scheme_the_reason_and_the_address_and_no_token()
     {
         var sink = new InMemoryAuditSink();
@@ -500,7 +514,7 @@ public sealed class ControlPlaneAuditSinkTests
     private static EcdsaExecutorPackageSigner Signer()
         => new(System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256), "audit-test");
 
-    private static async Task<Host> StartAsync(ControlPlaneSecurityMode mode, GovernanceAuditor? auditor, ControlPlaneRowSecurityPolicy? policy = null, bool authenticationTelemetry = true)
+    private static async Task<Host> StartAsync(ControlPlaneSecurityMode mode, GovernanceAuditor? auditor, ControlPlaneRowSecurityPolicy? policy = null, bool authenticationTelemetry = true, bool securityHeaders = true)
     {
         var store = new InMemoryWorkflowStateStore();
         var management = new SecuredWorkflowManagement(store, "ops");
@@ -516,6 +530,11 @@ public sealed class ControlPlaneAuditSinkTests
         if (authenticationTelemetry)
         {
             builder.Services.AddArazzoAuthenticationTelemetry();
+        }
+
+        if (securityHeaders)
+        {
+            builder.Services.AddArazzoSecurityHeaders();
         }
 
         builder.Services.AddHttpContextAccessor();

@@ -637,3 +637,20 @@ test('widening vs narrowing FOR REAL: a second single-rule grant widens oscar\'s
     await oscarCtx.close();
   }
 });
+
+// ADR 0073: sign-out is a form POST whose response redirects to Keycloak's end-session endpoint, and the browser holds
+// every hop of that chain to the page's form-action. The host names the Keycloak origin; were it missing, the redirect
+// would be refused and the browser would never reach Keycloak.
+test('sign-out completes under the host\'s Content-Security-Policy: the end-session redirect is admitted and the next visit signs in again', async ({ page }) => {
+  await signIn(page);
+  const violations = [];
+  page.on('console', (message) => { if (/Content Security Policy/i.test(message.text())) violations.push(message.text()); });
+
+  const signOut = page.locator('arazzo-auth-status').getByRole('button', { name: 'Sign out' });
+  await expect(signOut).toBeVisible({ timeout: 30_000 });
+  await signOut.click();
+
+  // Keycloak ends the SSO session and returns to the app, which is signed out, so the shell bounces to the challenge.
+  await expect(page.locator('#username')).toBeVisible({ timeout: 30_000 });
+  expect(violations, `CSP violations during sign-out:\n${violations.join('\n')}`).toEqual([]);
+});

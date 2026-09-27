@@ -545,6 +545,12 @@ runtime, so a CSP added today needs `'unsafe-inline'`. **Decide:** a nonce or ha
 a UI build step contradicting ADR 0041, or an explicit accepted risk. The cost grows with every
 component added.
 
+> **Decided 2026-09-27: [ADR 0073](../adr/0073-browser-security-headers-and-a-strict-csp.md).** The kit conforms
+> inside ADR 0041: page scripts as modules, component styles in constructable stylesheets, which CSP does not
+> govern. The library ships `AddArazzoSecurityHeaders()`, required in the secured postures. Built: the headers, the
+> script-strict policy and the moved page scripts. Not built: the constructable stylesheets, so `style-src` keeps
+> `'unsafe-inline'` until they land.
+
 ### GAP-2 · `TB-3` · Session hardening and revocable logout
 ADR 0042 assigns session ownership to the host but specifies no properties. Missing: a `Secure`
 cookie policy, since it defaults to `SameAsRequest` with no `UseForwardedHeaders` and so travels in

@@ -348,6 +348,48 @@ public sealed class LiveCompositionTests
         done.GetProperty("status").GetString().ShouldBe("Completed");
     }
 
+    [TestMethod]
+    [TestCategory("integration")]
+    public async Task The_host_sends_the_browser_security_headers_on_its_pages_its_kit_and_its_api()
+    {
+        if (Environment.GetEnvironmentVariable("ARAZZO_APPHOST_E2E") != "1")
+        {
+            Assert.Inconclusive("Set ARAZZO_APPHOST_E2E=1 (and have a container runtime) to run the full two-process composition e2e.");
+        }
+
+        IDistributedApplicationTestingBuilder appHost =
+            await DistributedApplicationTestingBuilder.CreateAsync<Projects.Corvus_Text_Json_Arazzo_ControlPlane_Demo_AppHost>();
+        await using DistributedApplication app = await appHost.BuildAsync();
+        await app.StartAsync();
+        ResourceNotificationService notifications = app.Services.GetRequiredService<ResourceNotificationService>();
+        await notifications.WaitForResourceHealthyAsync("controlplane", default).WaitAsync(StartupTimeout);
+        using HttpClient http = app.CreateHttpClient("controlplane");
+
+        // ADR 0073: the console, the designer, the kit's own modules and the API all carry the policy, so no page the
+        // host serves runs inline script or can be framed.
+        foreach (string path in (string[])["/", "/designer", "/ui/src/arazzo-client.js", "/arazzo/v1/catalog?limit=1"])
+        {
+            using HttpRequestMessage request = new(HttpMethod.Get, path);
+            request.Headers.Add("X-Api-Key", "demo-admin-key");
+            using HttpResponseMessage response = await http.SendAsync(request);
+            response.StatusCode.ShouldBe(HttpStatusCode.OK, path);
+            string policy = string.Join(",", response.Headers.GetValues("Content-Security-Policy"));
+            policy.ShouldContain("script-src 'self';", customMessage: path);
+            policy.ShouldContain("frame-ancestors 'none'", customMessage: path);
+            string.Join(",", response.Headers.GetValues("X-Frame-Options")).ShouldBe("DENY", path);
+            string.Join(",", response.Headers.GetValues("X-Content-Type-Options")).ShouldBe("nosniff", path);
+        }
+
+        // Sign-out is a form POST that redirects to Keycloak's end-session endpoint, and the browser holds the redirect to
+        // form-action. The origin the BFF sends a browser to at sign-in is the one sign-out redirects to.
+        using var noRedirect = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false }) { BaseAddress = http.BaseAddress };
+        using HttpResponseMessage login = await noRedirect.GetAsync("/login");
+        login.StatusCode.ShouldBe(HttpStatusCode.Redirect);
+        string keycloak = login.Headers.Location!.GetLeftPart(UriPartial.Authority);
+        string formAction = string.Join(",", login.Headers.GetValues("Content-Security-Policy")).Split("; ").Single(d => d.StartsWith("form-action ", StringComparison.Ordinal));
+        formAction.Split(' ').ShouldContain(keycloak);
+    }
+
     // The production-operator resource countersigns the versions the seed made available in production; a test that
     // starts a production run waits for that rather than racing it.
     private static Task WaitForOperatorCountersignaturesAsync(HttpClient http)

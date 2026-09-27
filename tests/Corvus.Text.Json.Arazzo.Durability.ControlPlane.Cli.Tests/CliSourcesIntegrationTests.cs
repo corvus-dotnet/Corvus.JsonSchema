@@ -143,6 +143,7 @@ public sealed partial class CliIntegrationTests
             .AddScheme<AuthenticationSchemeOptions, SourcesBearerHandler>(SourcesBearerHandler.SchemeName, _ => { });
         builder.Services.AddArazzoControlPlaneAuthorization();
         builder.Services.AddArazzoAuthenticationTelemetry();
+        builder.Services.AddArazzoSecurityHeaders();
         builder.Services.AddHttpContextAccessor();
 
         WebApplication app = builder.Build();
