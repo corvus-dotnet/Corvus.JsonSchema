@@ -109,6 +109,17 @@ internal static class RunnerRunAdvance
             CountRefusal(claim, SealedStartFault.Unopenable);
             return false;
         }
+        catch (ExecutorNotAdmittedException refused)
+        {
+            // The executor was loaded and verified against the platform's signature, and the tenant has not
+            // authorized it for this environment (ADR 0065 phase C): no countersignature yet, one that does not verify
+            // under the pinned key, or a digest the allowlist does not name. Nothing about the run is wrong, so it is
+            // handed back rather than faulted, and advances once the operator countersigns the version. Counted, since
+            // a stream of them is a version promoted ahead of its countersignature or an executor swapped underneath it.
+            System.Diagnostics.Activity.Current?.AddException(refused);
+            CountRefusal(claim, RefusalTagOf(refused.Admission));
+            return false;
+        }
         catch (Exception fault) when (fault is CheckpointAnchorException or CryptographicException)
         {
             // The tenant anchor refused the run (a rollback, a substitution, a replay, a claim on a finished run) or
@@ -129,6 +140,14 @@ internal static class RunnerRunAdvance
             await client.ReleaseAsync(claim.Address, CancellationToken.None).ConfigureAwait(false);
         }
     }
+
+    private static string RefusalTagOf(ExecutorAdmission admission) => admission switch
+    {
+        ExecutorAdmission.NotListed => "executor-not-listed",
+        ExecutorAdmission.NotCountersigned => "executor-not-countersigned",
+        ExecutorAdmission.CountersignatureInvalid => "executor-countersignature-invalid",
+        _ => "executor-countersignature-unavailable",
+    };
 
     private static string RefusalTagOf(RunnerAdmission admission) => admission switch
     {

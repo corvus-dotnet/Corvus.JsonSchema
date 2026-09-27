@@ -95,6 +95,66 @@ public class HostedWorkflowResumerTests
     }
 
     [TestMethod]
+    public async Task The_runners_executor_policy_is_consulted_with_the_loaded_manifest_and_a_refusal_hands_the_run_back_unended()
+    {
+        // ADR 0065 phase C: the resolver asks the runner's own policy, after the loader verified the executor, whether
+        // the executor may run in the run's environment. It asks with the manifest of the executor actually loaded,
+        // so what the policy admits is what runs, and a refusal is not an executor fault: the run is left as it was.
+        var catalog = new InMemoryWorkflowCatalogStore(executorProvider: new WorkflowExecutorProvider());
+        using ParsedJsonDocument<CatalogVersion> versionDoc = await catalog.AddAsync("adopt", Package(), Meta(), default);
+        CatalogVersion version = versionDoc.RootElement;
+        ReadOnlyMemory<byte> manifestUtf8 = (await catalog.GetDocumentAsync("adopt", 1, WorkflowPackage.ExecutorManifestDocumentName, default))!.Value;
+        WorkflowExecutorManifest baked = WorkflowExecutorManifest.Parse(manifestUtf8);
+
+        var runStore = new InMemoryWorkflowStateStore();
+        using ParsedJsonDocument<JsonElement> inputs = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("""{"petId":"42"}"""));
+        using WorkflowRun run = WorkflowRun.CreateNew(runStore, "run-1", version.Ref.WorkflowId, inputs.RootElement, "production");
+
+        var transport = new MockApiTransport();
+        transport.SetResponse(OperationMethod.Get, "/pets/{petId}", 200, """{"name":"Fido"}""");
+        WorkflowTransportBinder binder = (d, _tags) => new WorkflowTransports(d.Sources.ToDictionary(s => s, _ => (IApiTransport)transport, System.StringComparer.Ordinal), WorkflowTransports.NoMessageTransports);
+
+        // Refused: the resumer throws the refusal, the run is neither run nor faulted, and the policy saw the run's
+        // environment, the version and the baked executor's own manifest.
+        var refusing = new RecordingAdmission(ExecutorAdmission.NotCountersigned);
+        using (var loader = new WorkflowExecutorLoader())
+        {
+            var resumer = new HostedWorkflowResumer(new CatalogWorkflowArtifactSource(catalog), loader, binder, executorAdmission: refusing);
+            ExecutorNotAdmittedException refused = await Should.ThrowAsync<ExecutorNotAdmittedException>(async () => await resumer.AsResumer()(run, default));
+            refused.Environment.ShouldBe("production");
+            refused.WorkflowId.ShouldBe("adopt-v1");
+            refused.Admission.ShouldBe(ExecutorAdmission.NotCountersigned);
+            run.Status.ShouldBe(WorkflowRunStatus.Pending);
+            transport.Requests.Count.ShouldBe(0, "a refused executor never runs a step");
+            refusing.Seen.ShouldBe([("production", "adopt", 1, baked.AssemblyDigest, baked.PackageHash)]);
+        }
+
+        // Admitted: the same run completes, and the policy was asked once per resolve, cache or no cache.
+        var admitting = new RecordingAdmission(ExecutorAdmission.Admitted);
+        using (var loader = new WorkflowExecutorLoader())
+        {
+            var resumer = new HostedWorkflowResumer(new CatalogWorkflowArtifactSource(catalog), loader, binder, executorAdmission: admitting);
+            (await resumer.AsResumer()(run, default)).ShouldBe(WorkflowRunResultKind.Completed);
+            admitting.Seen.Count.ShouldBe(1);
+
+            // Warming the loader is not running anything, so it asks no policy.
+            await resumer.PrepareAsync("adopt", 1, default);
+            admitting.Seen.Count.ShouldBe(1);
+        }
+    }
+
+    private sealed class RecordingAdmission(ExecutorAdmission verdict) : IExecutorAdmission
+    {
+        public List<(string Environment, string BaseWorkflowId, int VersionNumber, string AssemblyDigest, string PackageHash)> Seen { get; } = [];
+
+        public ValueTask<ExecutorAdmission> AdmitAsync(string environment, string baseWorkflowId, int versionNumber, WorkflowExecutorManifest manifest, CancellationToken cancellationToken)
+        {
+            this.Seen.Add((environment, baseWorkflowId, versionNumber, manifest.AssemblyDigest, manifest.PackageHash));
+            return ValueTask.FromResult(verdict);
+        }
+    }
+
+    [TestMethod]
     public async Task A_version_whose_executor_cannot_be_built_is_catalogued_not_runnable_with_the_reason()
     {
         // A cross-document (arazzo) source cannot be compiled into a self-contained executor, so the package is still

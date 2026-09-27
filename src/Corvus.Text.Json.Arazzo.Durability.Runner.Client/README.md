@@ -172,6 +172,30 @@ status, a blinded wait re-parked under the current blinder) and releases it; a h
 sample dispatch service runs one pass per poll. The control plane's run detail reports `keyGeneration`, so an
 operator retires a generation once nothing rests under it.
 
+An entry also carries the runner's **executor policy** (ADR 0065 phase C): the tenant's executor-signing public keys
+the runner pins (`ExecutorSigners`, base64 SubjectPublicKeyInfo, P-256) and the assembly digests admitted outright
+(`Executors`, `sha256:<hex>`). The platform's signature over an executor manifest, which the loader verifies, proves
+only that the platform built the executor; the policy is where the tenant's authority is checked. For every run,
+after the loader has verified the executor, `runner.ExecutorAdmission` (an `IExecutorAdmission` the host hands to its
+`HostedWorkflowResumer`) admits the executor in the run's environment only when its digest is listed or the
+countersignature the runner API advertises for the version (`getEnvironmentExecutorCountersignature`, recorded by the
+tenant operator through the control plane's `countersignExecutor`) verifies under a pinned key over the framed tuple
+naming the environment, the version and the loaded manifest's package hash and assembly digest. A refusal hands the
+run back rather than faulting it (`executor-not-countersigned`, `executor-countersignature-invalid`,
+`executor-not-listed`, `executor-countersignature-unavailable`), since a version promoted before the operator
+countersigned it is the ordinary state; verdicts are cached for a minute. A keyed entry needs a policy or the client
+does not start; a clear entry without one runs what the loader verified.
+
+```csharp
+new RunnerKeyRingEntry(
+    "production",
+    Sealed: true,
+    KeyId: "k2",
+    PayloadKey: SecretRef.Parse("vault://secret/arazzo/payload-keys/production#key"),
+    SealKeyFingerprint: "q1n...=",
+    ExecutorSigners: [tenantExecutorSigningPublicKeyBase64Spki])
+```
+
 ## Sealing what the client saves
 
 A runner that serves a sealed environment passes its key ring to the client, and from then on every checkpoint row it
@@ -295,6 +319,7 @@ records which refusal and not the schema detail; an initiator validates its own 
 | A save lost the sequence predicate | `CheckpointSupersededException`, carrying the sequence the store will accept next. |
 | The claim is for an environment the allowlist does not admit, or a keyed environment whose advertised seal key is not the pinned one | Nothing to act on: the client handed the claim back and counted it (`allowlist`, `seal-key-mismatch`, `generation-not-active`, `seal-key-unavailable`). |
 | A sealed start did not open, or its inputs did not validate | Nothing to act on: the client faulted the run at its start (`sealed-start-unopenable`, `sealed-start-inputs-invalid`) and released it. The advance reports the run as not advanced. |
+| The executor the loader verified is not one the tenant authorized for the run's environment | Nothing to act on: the client handed the claim back unended and counted it (`executor-not-countersigned`, `executor-countersignature-invalid`, `executor-not-listed`, `executor-countersignature-unavailable`). The run advances once the operator countersigns the version. |
 | Anything else non-success | `RunnerApiException` with the status. |
 
 **A superseded save is raised, never swallowed.** Reporting it as durable would leave a runner committed to a

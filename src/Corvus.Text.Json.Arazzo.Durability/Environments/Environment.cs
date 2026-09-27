@@ -208,7 +208,8 @@ public readonly partial struct Environment
             (JsonElement)stored.RequiredIsolation,
             (JsonElement)stored.RuntimeIdentifier,
             (JsonElement)stored.ExecutionBudget,
-            (JsonElement)keyGenerations);
+            (JsonElement)keyGenerations,
+            (JsonElement)stored.ExecutorCountersignatures);
 
         return PersistedJson.ToPooledDocument<Environment, KeyGenerationElements>(
             state,
@@ -225,6 +226,7 @@ public readonly partial struct Environment
                 WriteValueIfPresent(writer, JsonPropertyNames.ExecutionBudgetUtf8, s.ExecutionBudget);
                 WriteValueIfPresent(writer, JsonPropertyNames.ManagementTagsUtf8, s.ManagementTags);
                 WriteValueIfPresent(writer, JsonPropertyNames.KeyGenerationsUtf8, s.KeyGenerations);
+                WriteValueIfPresent(writer, JsonPropertyNames.ExecutorCountersignaturesUtf8, s.ExecutorCountersignatures);
                 writer.WriteEndObject();
             });
     }
@@ -275,6 +277,176 @@ public readonly partial struct Environment
         in Environment stored, string keyId, string retiredBy, DateTimeOffset retiredAt, string? reason)
         => DraftWithKeyMutation(new KeyMutation(stored, keyId, sealPublicKey: default, algorithm: default, retiredBy, retiredAt, reason, retire: true, predecessorKeyId: null, rotationSignature: default));
 
+    /// <summary>
+    /// Builds a draft that records a tenant's executor countersignature for a version (ADR 0065 phase C), replacing
+    /// one already recorded for the same version, echoing every other mutable value and copying the other
+    /// countersignatures bytes-to-bytes. The set stays ordered by base workflow id, then version number.
+    /// </summary>
+    /// <param name="stored">The stored environment.</param>
+    /// <param name="baseWorkflowId">The base workflow id.</param>
+    /// <param name="versionNumber">The version number.</param>
+    /// <param name="packageHash">The version's content hash inside the signed tuple, as the request's own JSON value.</param>
+    /// <param name="assemblyDigest">The executor assembly's digest inside the signed tuple, as the request's own JSON value.</param>
+    /// <param name="signature">The countersignature, as the request's own JSON value.</param>
+    /// <param name="signedBy">The recording actor.</param>
+    /// <param name="signedAt">The recording instant.</param>
+    /// <returns>A pooled draft document.</returns>
+    public static ParsedJsonDocument<Environment> DraftWithExecutorCountersigned(
+        in Environment stored, string baseWorkflowId, int versionNumber, in JsonElement packageHash, in JsonElement assemblyDigest, in JsonElement signature, string signedBy, DateTimeOffset signedAt)
+        => DraftWithCountersignatureMutation(new CountersignatureMutation(stored, baseWorkflowId, versionNumber, packageHash, assemblyDigest, signature, signedBy, signedAt, withdraw: false));
+
+    /// <summary>
+    /// Builds a draft with a version's executor countersignature removed (ADR 0065 phase C), echoing every other
+    /// mutable value and copying the other countersignatures bytes-to-bytes. Withdrawing one that is not recorded
+    /// changes nothing.
+    /// </summary>
+    /// <param name="stored">The stored environment.</param>
+    /// <param name="baseWorkflowId">The base workflow id.</param>
+    /// <param name="versionNumber">The version number.</param>
+    /// <returns>A pooled draft document.</returns>
+    public static ParsedJsonDocument<Environment> DraftWithExecutorCountersignatureWithdrawn(in Environment stored, string baseWorkflowId, int versionNumber)
+        => DraftWithCountersignatureMutation(new CountersignatureMutation(stored, baseWorkflowId, versionNumber, packageHash: default, assemblyDigest: default, signature: default, signedBy: string.Empty, signedAt: default, withdraw: true));
+
+    /// <summary>Finds the executor countersignature recorded for a version (ADR 0065 phase C), if any.</summary>
+    /// <param name="environment">The environment.</param>
+    /// <param name="baseWorkflowId">The base workflow id.</param>
+    /// <param name="versionNumber">The version number.</param>
+    /// <returns>The countersignature, or <see langword="null"/> when none is recorded for the version.</returns>
+    public static EnvironmentExecutorCountersignature? FindExecutorCountersignature(in Environment environment, string baseWorkflowId, int versionNumber)
+    {
+        foreach (EnvironmentExecutorCountersignature countersignature in Enumerate(environment.ExecutorCountersignatures))
+        {
+            if (Names(countersignature, baseWorkflowId, versionNumber))
+            {
+                return countersignature;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Enumerates a countersignature set that may be absent, without allocating, for the same reason as
+    /// <see cref="Enumerate(EnvironmentKeyGenerationArray)"/>.
+    /// </summary>
+    /// <param name="countersignatures">The (possibly absent) set.</param>
+    /// <returns>The countersignatures, or nothing.</returns>
+    public static ExecutorCountersignatureSet Enumerate(EnvironmentExecutorCountersignatureArray countersignatures) => new(countersignatures);
+
+    /// <summary>A present-or-absent view over an executor countersignature set, enumerated without allocating.</summary>
+    public readonly struct ExecutorCountersignatureSet
+    {
+        private readonly EnvironmentExecutorCountersignatureArray countersignatures;
+        private readonly bool present;
+
+        internal ExecutorCountersignatureSet(EnvironmentExecutorCountersignatureArray countersignatures)
+        {
+            this.countersignatures = countersignatures;
+            this.present = ((JsonElement)countersignatures).ValueKind == JsonValueKind.Array;
+        }
+
+        /// <summary>Gets an enumerator over the countersignatures (empty when the set is absent).</summary>
+        /// <returns>The enumerator.</returns>
+        public Enumerator GetEnumerator()
+            => this.present ? new Enumerator(this.countersignatures.EnumerateArray()) : default;
+
+        /// <summary>Enumerates the countersignatures. Yields nothing when the set is absent.</summary>
+        public struct Enumerator
+        {
+            private ArrayEnumerator<EnvironmentExecutorCountersignature> inner;
+            private readonly bool present;
+
+            internal Enumerator(ArrayEnumerator<EnvironmentExecutorCountersignature> inner)
+            {
+                this.inner = inner;
+                this.present = true;
+            }
+
+            /// <summary>Gets the countersignature at the current position.</summary>
+            public readonly EnvironmentExecutorCountersignature Current => this.inner.Current;
+
+            /// <summary>Advances to the next countersignature.</summary>
+            /// <returns><see langword="true"/> if there is one.</returns>
+            public bool MoveNext() => this.present && this.inner.MoveNext();
+        }
+    }
+
+    private static bool Names(in EnvironmentExecutorCountersignature countersignature, string baseWorkflowId, int versionNumber)
+        => (int)countersignature.VersionNumber == versionNumber && countersignature.BaseWorkflowId.ValueEquals(baseWorkflowId);
+
+    // Whether a recorded countersignature sorts after the one being recorded: ordinal on the base workflow id, then by
+    // version number. Compared over UTF-8 so a stored id never becomes a string on the write path.
+    private static bool SortsAfter(in EnvironmentExecutorCountersignature countersignature, in CountersignatureMutation m)
+    {
+        using UnescapedUtf8JsonString stored = countersignature.BaseWorkflowId.GetUtf8String();
+        int order = stored.Span.SequenceCompareTo(m.BaseWorkflowIdUtf8);
+        return order > 0 || (order == 0 && (int)countersignature.VersionNumber > m.VersionNumber);
+    }
+
+    private static ParsedJsonDocument<Environment> DraftWithCountersignatureMutation(in CountersignatureMutation mutation)
+        => PersistedJson.ToPooledDocument<Environment, CountersignatureMutation>(
+            mutation,
+            static (Utf8JsonWriter writer, in CountersignatureMutation m) =>
+            {
+                writer.WriteStartObject();
+                WriteValueIfPresent(writer, JsonPropertyNames.NameUtf8, m.Name);
+                WriteValueIfPresent(writer, JsonPropertyNames.DisplayNameUtf8, m.DisplayName);
+                WriteValueIfPresent(writer, JsonPropertyNames.DescriptionUtf8, m.Description);
+                WriteValueIfPresent(writer, JsonPropertyNames.RequireEvidenceUtf8, m.RequireEvidence);
+                WriteValueIfPresent(writer, JsonPropertyNames.AllowsDraftRunsUtf8, m.AllowsDraftRuns);
+                WriteValueIfPresent(writer, JsonPropertyNames.RequiredIsolationUtf8, m.RequiredIsolation);
+                WriteValueIfPresent(writer, JsonPropertyNames.RuntimeIdentifierUtf8, m.RuntimeIdentifier);
+                WriteValueIfPresent(writer, JsonPropertyNames.ExecutionBudgetUtf8, m.ExecutionBudget);
+                WriteValueIfPresent(writer, JsonPropertyNames.ManagementTagsUtf8, m.ManagementTags);
+                WriteValueIfPresent(writer, JsonPropertyNames.KeyGenerationsUtf8, m.KeyGenerations);
+
+                writer.WritePropertyName(JsonPropertyNames.ExecutorCountersignaturesUtf8);
+                writer.WriteStartArray();
+
+                // The one being recorded or withdrawn is dropped from the copy; a recording is written into its sorted
+                // place, so the set stays ordered by base workflow id then version number. Untouched ones are copied
+                // verbatim: never reformatted, never re-realised.
+                bool written = m.Withdraw;
+                foreach (EnvironmentExecutorCountersignature existing in Enumerate(m.Existing))
+                {
+                    if (Names(existing, m.BaseWorkflowId, m.VersionNumber))
+                    {
+                        continue;
+                    }
+
+                    if (!written && SortsAfter(existing, m))
+                    {
+                        WriteCountersigned(writer, m);
+                        written = true;
+                    }
+
+                    ((JsonElement)existing).WriteTo(writer);
+                }
+
+                if (!written)
+                {
+                    WriteCountersigned(writer, m);
+                }
+
+                writer.WriteEndArray();
+                writer.WriteEndObject();
+            });
+
+    private static void WriteCountersigned(Utf8JsonWriter writer, in CountersignatureMutation m)
+    {
+        writer.WriteStartObject();
+        writer.WriteString(EnvironmentExecutorCountersignature.JsonPropertyNames.BaseWorkflowIdUtf8, m.BaseWorkflowIdUtf8);
+        writer.WriteNumber(EnvironmentExecutorCountersignature.JsonPropertyNames.VersionNumberUtf8, m.VersionNumber);
+
+        // The hash, digest and signature are the request's own JSON values, copied verbatim.
+        WriteValueIfPresent(writer, EnvironmentExecutorCountersignature.JsonPropertyNames.PackageHashUtf8, m.PackageHash);
+        WriteValueIfPresent(writer, EnvironmentExecutorCountersignature.JsonPropertyNames.AssemblyDigestUtf8, m.AssemblyDigest);
+        WriteValueIfPresent(writer, EnvironmentExecutorCountersignature.JsonPropertyNames.SignatureUtf8, m.Signature);
+        writer.WriteString(EnvironmentExecutorCountersignature.JsonPropertyNames.SignedByUtf8, m.SignedBy);
+        writer.WriteString(EnvironmentExecutorCountersignature.JsonPropertyNames.SignedAtUtf8, m.SignedAt);
+        writer.WriteEndObject();
+    }
+
     private static ParsedJsonDocument<Environment> DraftWithKeyMutation(in KeyMutation mutation)
         => PersistedJson.ToPooledDocument<Environment, KeyMutation>(
             mutation,
@@ -315,6 +487,10 @@ public readonly partial struct Environment
                 }
 
                 writer.WriteEndArray();
+
+                // The executor countersignatures (phase C) are the environment's other trust configuration, carried
+                // bytes-to-bytes through a key mutation exactly as the generations are carried through theirs.
+                WriteValueIfPresent(writer, JsonPropertyNames.ExecutorCountersignaturesUtf8, m.ExecutorCountersignatures);
                 writer.WriteEndObject();
             });
 
@@ -545,6 +721,11 @@ public readonly partial struct Environment
         // forward and cannot silently drop the last active one the tenancy invariant reads.
         WriteValuePreferringDraft(writer, JsonPropertyNames.KeyGenerationsUtf8, (JsonElement)draft.KeyGenerations, (JsonElement)this.KeyGenerations);
 
+        // Executor countersignatures (ADR 0065 phase C): the same replace-or-carry, and for the same reason. Only the
+        // executor endpoints supply them, through DraftWithExecutorCountersigned and its withdrawal; an ordinary update
+        // carries the stored set forward and cannot silently drop what a runner's pin depends on.
+        WriteValuePreferringDraft(writer, JsonPropertyNames.ExecutorCountersignaturesUtf8, (JsonElement)draft.ExecutorCountersignatures, (JsonElement)this.ExecutorCountersignatures);
+
         // created-* audit carried forward bytes-to-bytes (copy the stored tokens verbatim — no parse/reformat).
         WriteValueIfPresent(writer, JsonPropertyNames.CreatedByUtf8, (JsonElement)this.CreatedBy);
         WriteValueIfPresent(writer, JsonPropertyNames.CreatedAtUtf8, (JsonElement)this.CreatedAt);
@@ -609,6 +790,7 @@ public readonly partial struct Environment
             this.RequiredIsolation = (JsonElement)stored.RequiredIsolation;
             this.RuntimeIdentifier = (JsonElement)stored.RuntimeIdentifier;
             this.ExecutionBudget = (JsonElement)stored.ExecutionBudget;
+            this.ExecutorCountersignatures = (JsonElement)stored.ExecutorCountersignatures;
             this.Existing = stored.KeyGenerations;
             this.KeyId = keyId;
             this.SealPublicKey = sealPublicKey;
@@ -641,6 +823,8 @@ public readonly partial struct Environment
 
         public JsonElement ExecutionBudget { get; }
 
+        public JsonElement ExecutorCountersignatures { get; }
+
         public EnvironmentKeyGenerationArray Existing { get; }
 
         public string KeyId { get; }
@@ -658,6 +842,74 @@ public readonly partial struct Environment
         public bool Retire { get; }
     }
 
+    // One executor countersignature mutation, with every echoed value read once from the stored environment.
+    private readonly struct CountersignatureMutation
+    {
+        public CountersignatureMutation(in Environment stored, string baseWorkflowId, int versionNumber, in JsonElement packageHash, in JsonElement assemblyDigest, in JsonElement signature, string signedBy, DateTimeOffset signedAt, bool withdraw)
+        {
+            this.Name = (JsonElement)stored.Name;
+            this.DisplayName = (JsonElement)stored.DisplayName;
+            this.Description = (JsonElement)stored.Description;
+            this.ManagementTags = (JsonElement)stored.ManagementTags;
+            this.RequireEvidence = (JsonElement)stored.RequireEvidence;
+            this.AllowsDraftRuns = (JsonElement)stored.AllowsDraftRuns;
+            this.RequiredIsolation = (JsonElement)stored.RequiredIsolation;
+            this.RuntimeIdentifier = (JsonElement)stored.RuntimeIdentifier;
+            this.ExecutionBudget = (JsonElement)stored.ExecutionBudget;
+            this.KeyGenerations = (JsonElement)stored.KeyGenerations;
+            this.Existing = stored.ExecutorCountersignatures;
+            this.BaseWorkflowId = baseWorkflowId;
+            this.BaseWorkflowIdUtf8 = System.Text.Encoding.UTF8.GetBytes(baseWorkflowId);
+            this.VersionNumber = versionNumber;
+            this.PackageHash = packageHash;
+            this.AssemblyDigest = assemblyDigest;
+            this.Signature = signature;
+            this.SignedBy = signedBy;
+            this.SignedAt = signedAt;
+            this.Withdraw = withdraw;
+        }
+
+        public JsonElement Name { get; }
+
+        public JsonElement DisplayName { get; }
+
+        public JsonElement Description { get; }
+
+        public JsonElement ManagementTags { get; }
+
+        public JsonElement RequireEvidence { get; }
+
+        public JsonElement AllowsDraftRuns { get; }
+
+        public JsonElement RequiredIsolation { get; }
+
+        public JsonElement RuntimeIdentifier { get; }
+
+        public JsonElement ExecutionBudget { get; }
+
+        public JsonElement KeyGenerations { get; }
+
+        public EnvironmentExecutorCountersignatureArray Existing { get; }
+
+        public string BaseWorkflowId { get; }
+
+        public byte[] BaseWorkflowIdUtf8 { get; }
+
+        public int VersionNumber { get; }
+
+        public JsonElement PackageHash { get; }
+
+        public JsonElement AssemblyDigest { get; }
+
+        public JsonElement Signature { get; }
+
+        public string SignedBy { get; }
+
+        public DateTimeOffset SignedAt { get; }
+
+        public bool Withdraw { get; }
+    }
+
     // The key-generation draft context: every mutable value echoed from the stored environment, plus the new set.
     private readonly struct KeyGenerationElements(
         JsonElement name,
@@ -669,7 +921,8 @@ public readonly partial struct Environment
         JsonElement requiredIsolation,
         JsonElement runtimeIdentifier,
         JsonElement executionBudget,
-        JsonElement keyGenerations)
+        JsonElement keyGenerations,
+        JsonElement executorCountersignatures)
     {
         public JsonElement Name { get; } = name;
 
@@ -690,6 +943,8 @@ public readonly partial struct Environment
         public JsonElement ExecutionBudget { get; } = executionBudget;
 
         public JsonElement KeyGenerations { get; } = keyGenerations;
+
+        public JsonElement ExecutorCountersignatures { get; } = executorCountersignatures;
     }
 
     // The bytes-to-bytes draft context: the request body's already-parsed JSON values plus the resolved tag set.

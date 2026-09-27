@@ -216,7 +216,7 @@ public sealed class RunnerAllowlistTests
                 [new RunnerGenerationKeys(KeyId, PayloadKey, firstMac), new RunnerGenerationKeys("k3", SecondPayloadKey, secondMac)],
                 @sealed: true,
                 sealKeyFingerprint: pinnedFingerprint),
-        });
+        }, TestExecutorPolicies.Production);
     }
 
     private static RunnerKeyRing Ring(string pinnedFingerprint)
@@ -226,6 +226,6 @@ public sealed class RunnerAllowlistTests
         return RunnerKeyRing.From(new Dictionary<string, RunnerEnvironmentKeys>
         {
             [Fixture.Production] = new(KeyId, PayloadKey, envelopeMac, Sealed: true, SealKeyFingerprint: pinnedFingerprint),
-        });
+        }, TestExecutorPolicies.Production);
     }
 }

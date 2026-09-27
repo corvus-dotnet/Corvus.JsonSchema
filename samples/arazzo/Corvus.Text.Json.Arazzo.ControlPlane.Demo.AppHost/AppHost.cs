@@ -52,10 +52,21 @@ string productionSuccessorSealPrivateKey;
 string productionSuccessorSealPrivateKeyPem;
 string productionInitiatorPublicKey;
 string productionInitiatorPrivateKeyPem;
+
+// The tenant's EXECUTOR-SIGNING key pair (ADR 0065 phase C), distinct from the platform's executor-signing key in the
+// signing vault: the platform's signature says the platform built an executor, the tenant's countersignature says the
+// tenant authorizes it to run in production. Its public half is pinned on runner-production
+// (Runner:Environments:0:ExecutorSigners:0), so that runner executes nothing in production the tenant did not
+// countersign; its private half goes to the operator's handoff for `arazzo-runs availability countersign`.
+string productionExecutorSigningPublicKey;
+string productionExecutorSigningPrivateKeyPem;
 using (var sealKey = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256))
 using (var successorSealKey = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256))
 using (var initiatorKey = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256))
+using (var executorSigningKey = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256))
 {
+    productionExecutorSigningPublicKey = Convert.ToBase64String(executorSigningKey.ExportSubjectPublicKeyInfo());
+    productionExecutorSigningPrivateKeyPem = executorSigningKey.ExportPkcs8PrivateKeyPem();
     productionSealPublicKey = Convert.ToBase64String(sealKey.ExportSubjectPublicKeyInfo());
     productionSealPrivateKey = Convert.ToBase64String(sealKey.ExportPkcs8PrivateKey());
     productionSealPrivateKeyPem = sealKey.ExportPkcs8PrivateKeyPem();
@@ -218,6 +229,11 @@ File.WriteAllText(sealKeyFingerprintPath, productionSealKeyFingerprint);
 File.WriteAllText(Path.Combine(signingHandoffDir, $"production-seal-{productionKeyId}.key.pem"), productionSealPrivateKeyPem);
 File.WriteAllText(Path.Combine(signingHandoffDir, $"production-seal-{productionSuccessorKeyId}.key.pem"), productionSuccessorSealPrivateKeyPem);
 File.WriteAllText(Path.Combine(signingHandoffDir, $"production-seal-{productionSuccessorKeyId}.pub"), productionSuccessorSealPublicKey);
+
+// The executor countersigning handoff (ADR 0065 phase C): the tenant operator's executor-signing private half, which
+// countersigns each version's executor for production, beside the public half runner-production pins.
+File.WriteAllText(Path.Combine(signingHandoffDir, "production-executor-signing.key.pem"), productionExecutorSigningPrivateKeyPem);
+File.WriteAllText(Path.Combine(signingHandoffDir, "production-executor-signing.pub"), productionExecutorSigningPublicKey);
 Environment.SetEnvironmentVariable("ARAZZO_INITIATOR_HANDOFF_DIR", signingHandoffDir);
 Console.WriteLine($"Sealed-start initiator handoff: {initiatorKeyPath} (initiator key), {sealKeyFingerprintPath} (seal key fingerprint {productionSealKeyFingerprint})");
 
@@ -713,6 +729,10 @@ builder.AddProject<Projects.Corvus_Text_Json_Arazzo_Runner_Demo>("runner-product
     // runner pins, so a start the operator sealed with the handed-off initiator key opens here and a start anyone else
     // sealed faults at its start.
     .WithEnvironment("Runner__Environments__0__Initiators__0", productionInitiatorPublicKey)
+    // The executor policy (ADR 0065 phase C): the tenant's executor-signing public key this runner pins. A version
+    // runs in production on this runner only under the tenant's countersignature over the executor the runner
+    // loaded, whatever the platform signed; a keyed entry without a policy does not start.
+    .WithEnvironment("Runner__Environments__0__ExecutorSigners__0", productionExecutorSigningPublicKey)
     .WithEnvironment("Runner__Sources__Onboarding", onboarding.GetEndpoint("http"))
     .WithEnvironment("Runner__Sources__Ledger", ledger.GetEndpoint("http"))
     .WithEnvironment("Runner__Sources__Kyc", kyc.GetEndpoint("http"))

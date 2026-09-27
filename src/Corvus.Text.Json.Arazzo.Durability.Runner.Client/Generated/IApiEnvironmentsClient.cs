@@ -103,6 +103,16 @@ public interface IApiEnvironmentsClient : IAsyncDisposable
         public static readonly string[] GetEnvironmentSealKeyOpenIdConnectScopes = ["runner:execute"];
 
         /// <summary>
+        /// Gets the scopes required by <c>GetEnvironmentExecutorCountersignature</c> for the <c>Oauth2</c> scheme.
+        /// </summary>
+        public static readonly string[] GetEnvironmentExecutorCountersignatureOauth2Scopes = ["runner:execute"];
+
+        /// <summary>
+        /// Gets the scopes required by <c>GetEnvironmentExecutorCountersignature</c> for the <c>OpenIdConnect</c> scheme.
+        /// </summary>
+        public static readonly string[] GetEnvironmentExecutorCountersignatureOpenIdConnectScopes = ["runner:execute"];
+
+        /// <summary>
         /// Gets all scopes required by any operation for the <c>Oauth2</c> scheme.
         /// </summary>
         public static readonly string[] AllOauth2Scopes = ["runner:execute"];
@@ -124,4 +134,18 @@ public interface IApiEnvironmentsClient : IAsyncDisposable
     /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
     /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
     ValueTask<GetEnvironmentSealKeyResponse> GetEnvironmentSealKeyAsync(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName.Source environment, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Read the tenant's countersignature over a version's executor for an environment this runner serves
+    /// </summary>
+    /// <remarks>
+    /// <para>Serves the executor countersignature the tenant operator recorded for a version in an environment (ADR 0065 phase C), so a runner that pins the tenant's executor-signing key can verify, before it executes the version there, that the executor it loaded is the one the tenant authorized. The control plane recorded the countersignature without verifying it and is not the authority: the pin is, and the runner checks the signed package hash and assembly digest against the manifest of the executor it actually loaded.</para><para>Answered only for an environment the caller's principal is bound to, a version available in that environment, and a countersignature that is recorded; every other case is 404, and which of the three it was is not disclosed.</para>
+    /// </remarks>
+    /// <param name="environment">The environment parameter.</param>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="versionNumber">The versionNumber parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
+    ValueTask<GetEnvironmentExecutorCountersignatureResponse> GetEnvironmentExecutorCountersignatureAsync(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName.Source environment, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.Schema1.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.Schema2.Source versionNumber, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

@@ -96,7 +96,8 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
         RunnerKeyRing? keyRing = null,
         Corvus.Text.Json.Arazzo.Durability.Anchoring.ITenantAnchorStore? anchors = null,
         IReadOnlyDictionary<string, IReadOnlySet<string>>? sealedGenerations = null,
-        IReadOnlyDictionary<string, IReadOnlyList<RunnerSealKeyGeneration>>? sealKeys = null)
+        IReadOnlyDictionary<string, IReadOnlyList<RunnerSealKeyGeneration>>? sealKeys = null,
+        IReadOnlyDictionary<string, IReadOnlyList<RunnerExecutorCountersignature>>? executorCountersignatures = null)
     {
         var clock = new TestClock(T0);
         var store = new InMemoryWorkflowStateStore(clock);
@@ -109,7 +110,8 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
                 [Peer] = [Production],
             },
             sealedGenerations: sealedGenerations,
-            sealKeys: sealKeys);
+            sealKeys: sealKeys,
+            executorCountersignatures: executorCountersignatures);
 
         WebApplicationBuilder builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -254,4 +256,17 @@ internal sealed class RunnerApiFixture : IAsyncDisposable
 
         public void Advance(TimeSpan by) => this.now += by;
     }
+}
+
+/// <summary>
+/// The executor policy a keyed test ring carries (ADR 0065 phase C): the runner client refuses to start with a keyed
+/// environment that names none, and the tests of the other controls resolve no executor, so a digest nothing has is
+/// enough to say a policy exists.
+/// </summary>
+internal static class TestExecutorPolicies
+{
+    public static readonly Dictionary<string, RunnerExecutorPolicy> Production = new(StringComparer.Ordinal)
+    {
+        [RunnerApiFixture.Production] = RunnerExecutorPolicy.Listing("sha256:" + new string('0', 64)),
+    };
 }

@@ -23,8 +23,34 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 /// the deployment rather than to a tenant. Both count against the deployment rather than against a named group.
 /// </para>
 /// </remarks>
-public readonly record struct RunnerBindings(IReadOnlyList<string> Environments, string? Tenant, IReadOnlyDictionary<string, IReadOnlySet<string>>? SealedGenerations = null, IReadOnlyDictionary<string, IReadOnlyList<RunnerSealKeyGeneration>>? SealKeys = null)
+public readonly record struct RunnerBindings(IReadOnlyList<string> Environments, string? Tenant, IReadOnlyDictionary<string, IReadOnlySet<string>>? SealedGenerations = null, IReadOnlyDictionary<string, IReadOnlyList<RunnerSealKeyGeneration>>? SealKeys = null, IReadOnlyDictionary<string, IReadOnlyList<RunnerExecutorCountersignature>>? ExecutorCountersignatures = null)
 {
+    /// <summary>
+    /// Gets the executor countersignature the tenant recorded for a version in a bound environment (ADR 0065 phase C),
+    /// or <see langword="null"/> when none is recorded.
+    /// </summary>
+    /// <param name="environment">The environment.</param>
+    /// <param name="baseWorkflowId">The base workflow id.</param>
+    /// <param name="versionNumber">The version number.</param>
+    /// <returns>The countersignature, or <see langword="null"/>.</returns>
+    public RunnerExecutorCountersignature? ExecutorCountersignatureOf(string environment, string baseWorkflowId, int versionNumber)
+    {
+        if (this.ExecutorCountersignatures is not { } byEnvironment || !byEnvironment.TryGetValue(environment, out IReadOnlyList<RunnerExecutorCountersignature>? recorded))
+        {
+            return null;
+        }
+
+        foreach (RunnerExecutorCountersignature countersignature in recorded)
+        {
+            if (countersignature.VersionNumber == versionNumber && string.Equals(countersignature.BaseWorkflowId, baseWorkflowId, StringComparison.Ordinal))
+            {
+                return countersignature;
+            }
+        }
+
+        return null;
+    }
+
     private static readonly string[] NoEnvironments = [];
 
     /// <summary>The seal key generations the control plane advertises for a bound environment (ADR 0065 decision 10), or <see langword="null"/> when the environment is not bound or holds no registration.</summary>
@@ -60,3 +86,15 @@ public readonly record struct RunnerBindings(IReadOnlyList<string> Environments,
 /// <param name="PredecessorKeyId">The generation it was rotated from, or <see langword="null"/> on a first registration.</param>
 /// <param name="RotationSignature">The predecessor's signature over the rotation tuple, base64, or <see langword="null"/> with no predecessor.</param>
 public readonly record struct RunnerSealKeyGeneration(string KeyId, string SealPublicKey, bool Active, string? PredecessorKeyId = null, string? RotationSignature = null);
+
+/// <summary>
+/// An executor countersignature the control plane advertises for a version in an environment (ADR 0065 phase C), as
+/// the tenant operator recorded it: the signed package hash and assembly digest, and the ES256 signature (base64, IEEE
+/// P1363). Not authoritative; the runner verifies it under the key it pins.
+/// </summary>
+/// <param name="BaseWorkflowId">The base workflow id.</param>
+/// <param name="VersionNumber">The version number.</param>
+/// <param name="PackageHash">The package hash inside the signed tuple.</param>
+/// <param name="AssemblyDigest">The assembly digest inside the signed tuple.</param>
+/// <param name="Signature">The countersignature, base64.</param>
+public readonly record struct RunnerExecutorCountersignature(string BaseWorkflowId, int VersionNumber, string PackageHash, string AssemblyDigest, string Signature);

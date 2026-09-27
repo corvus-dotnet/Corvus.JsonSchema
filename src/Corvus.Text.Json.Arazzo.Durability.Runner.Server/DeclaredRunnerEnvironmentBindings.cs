@@ -29,7 +29,8 @@ public sealed class DeclaredRunnerEnvironmentBindings : IRunnerEnvironmentBindin
         IReadOnlyDictionary<string, IReadOnlyList<string>> bindings,
         IReadOnlyDictionary<string, string>? tenants = null,
         IReadOnlyDictionary<string, IReadOnlySet<string>>? sealedGenerations = null,
-        IReadOnlyDictionary<string, IReadOnlyList<RunnerSealKeyGeneration>>? sealKeys = null)
+        IReadOnlyDictionary<string, IReadOnlyList<RunnerSealKeyGeneration>>? sealKeys = null,
+        IReadOnlyDictionary<string, IReadOnlyList<RunnerExecutorCountersignature>>? executorCountersignatures = null)
     {
         ArgumentNullException.ThrowIfNull(bindings);
 
@@ -40,7 +41,7 @@ public sealed class DeclaredRunnerEnvironmentBindings : IRunnerEnvironmentBindin
                 ? declared
                 : null;
 
-            map[principal] = new RunnerBindings([.. environments], tenant, sealedGenerations, sealKeys);
+            map[principal] = new RunnerBindings([.. environments], tenant, sealedGenerations, sealKeys, executorCountersignatures);
         }
 
         this.bindings = map;

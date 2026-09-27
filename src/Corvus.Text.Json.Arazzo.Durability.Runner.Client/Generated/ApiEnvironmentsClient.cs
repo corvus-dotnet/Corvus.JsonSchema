@@ -51,6 +51,31 @@ public sealed class ApiEnvironmentsClient : IApiEnvironmentsClient
         return SendAsyncCore<GetEnvironmentSealKeyRequest, GetEnvironmentSealKeyResponse>(workspace, request, responseValidationMode, cancellationToken);
     }
 
+    /// <summary>
+    /// Read the tenant's countersignature over a version's executor for an environment this runner serves
+    /// </summary>
+    /// <remarks>
+    /// <para>Serves the executor countersignature the tenant operator recorded for a version in an environment (ADR 0065 phase C), so a runner that pins the tenant's executor-signing key can verify, before it executes the version there, that the executor it loaded is the one the tenant authorized. The control plane recorded the countersignature without verifying it and is not the authority: the pin is, and the runner checks the signed package hash and assembly digest against the manifest of the executor it actually loaded.</para><para>Answered only for an environment the caller's principal is bound to, a version available in that environment, and a countersignature that is recorded; every other case is 404, and which of the three it was is not disclosed.</para>
+    /// </remarks>
+    /// <param name="environment">The environment parameter.</param>
+    /// <param name="baseWorkflowId">The baseWorkflowId parameter.</param>
+    /// <param name="versionNumber">The versionNumber parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <param name="validationMode">The validation mode applied to the request before it is sent.</param>
+    /// <param name="responseValidationMode">The validation mode applied to the response body.</param>
+    public ValueTask<GetEnvironmentExecutorCountersignatureResponse> GetEnvironmentExecutorCountersignatureAsync(Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName.Source environment, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.Schema1.Source baseWorkflowId, Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.Schema2.Source versionNumber, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName EnvironmentValue = Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.EnvironmentName.CreateBuilder(workspace, environment, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.Schema1 BaseWorkflowIdValue = Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.Schema1.CreateBuilder(workspace, baseWorkflowId, 30).RootElement;
+        Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.Schema2 VersionNumberValue = Corvus.Text.Json.Arazzo.Durability.Runner.Client.Models.Schema2.CreateBuilder(workspace, versionNumber, 30).RootElement;
+        GetEnvironmentExecutorCountersignatureRequest request = new(EnvironmentValue, BaseWorkflowIdValue, VersionNumberValue);
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<GetEnvironmentExecutorCountersignatureRequest, GetEnvironmentExecutorCountersignatureResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => default;
 

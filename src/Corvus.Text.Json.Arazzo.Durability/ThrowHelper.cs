@@ -334,6 +334,15 @@ internal static class ThrowHelper
     public static InvalidOperationException GetAllowlistGenerationsAndShorthandException(string environment)
         => new(SR.Format(SR.AllowlistGenerationsAndShorthand, environment));
 
+    public static InvalidOperationException GetAllowlistExecutorSignerNotAKeyException(string environment)
+        => new(SR.Format(SR.AllowlistExecutorSignerNotAKey, environment));
+
+    public static InvalidOperationException GetAllowlistExecutorDigestNotADigestException(string environment, string digest)
+        => new(SR.Format(SR.AllowlistExecutorDigestNotADigest, environment, digest));
+
+    public static ExecutorNotAdmittedException GetExecutorNotAdmittedException(string environment, string workflowId, ExecutorAdmission admission)
+        => new(environment, workflowId, admission, SR.Format(SR.ExecutorNotAdmitted, environment, workflowId, admission));
+
     public static CheckpointEnvironmentNotAdmittedException GetCheckpointEnvironmentNotAdmittedException(in WorkflowRunAddress address)
         => new(address, SR.Format(SR.CheckpointEnvironmentNotAdmitted, address));
 

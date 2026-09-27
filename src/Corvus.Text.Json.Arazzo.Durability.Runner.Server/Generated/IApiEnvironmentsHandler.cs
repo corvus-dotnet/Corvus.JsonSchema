@@ -28,4 +28,13 @@ public interface IApiEnvironmentsHandler
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
     ValueTask<GetEnvironmentSealKeyResult> HandleGetEnvironmentSealKeyAsync(GetEnvironmentSealKeyParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Handles GET /environments/{environment}/executors/{baseWorkflowId}/{versionNumber} — Read the tenant's countersignature over a version's executor for an environment this runner serves
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<GetEnvironmentExecutorCountersignatureResult> HandleGetEnvironmentExecutorCountersignatureAsync(GetEnvironmentExecutorCountersignatureParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 }

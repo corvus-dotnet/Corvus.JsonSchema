@@ -686,4 +686,13 @@
   <data name="SealedStartNotFirst" xml:space="preserve">
     <value>Run '{0}' has already persisted a checkpoint, so its sealed start cannot be enqueued: the sealed genesis row is the run's first and only write, and a runner never re-serializes it (ADR 0065 decision 9).</value>
   </data>
+  <data name="ExecutorNotAdmitted" xml:space="preserve">
+    <value>The executor for '{1}' is not admitted in environment '{0}' ({2}): the tenant has not countersigned it for the environment under a key this runner pins, and its assembly digest is not on the runner's executor allowlist (ADR 0065 phase C). The run is handed back until the tenant operator countersigns the version.</value>
+  </data>
+  <data name="AllowlistExecutorSignerNotAKey" xml:space="preserve">
+    <value>A pinned executor-signing key for environment '{0}' is not a P-256 public key in base64 SubjectPublicKeyInfo (ADR 0065 phase C).</value>
+  </data>
+  <data name="AllowlistExecutorDigestNotADigest" xml:space="preserve">
+    <value>An allowlisted executor digest for environment '{0}' is not of the form sha256:&lt;64 lowercase hex digits&gt;: '{1}' (ADR 0065 phase C).</value>
+  </data>
 </root>

@@ -189,6 +189,37 @@ public sealed class RunnerCatalogCoordinator
         return hosted?.Hash;
     }
 
+    /// <summary>
+    /// Reads the executor countersignature the tenant recorded for a version in an environment (ADR 0065 phase C), if
+    /// the principal is bound to the environment, the version is available there, and one is recorded.
+    /// </summary>
+    /// <param name="principal">The authenticated machine principal.</param>
+    /// <param name="environment">The environment.</param>
+    /// <param name="baseWorkflowId">The base workflow id.</param>
+    /// <param name="versionNumber">The version number.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The countersignature, or <see langword="null"/> for every other case, which are one answer on purpose.</returns>
+    public async ValueTask<RunnerExecutorCountersignature?> GetExecutorCountersignatureAsync(string principal, string environment, string baseWorkflowId, int versionNumber, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(principal);
+        ArgumentException.ThrowIfNullOrEmpty(environment);
+        ArgumentException.ThrowIfNullOrEmpty(baseWorkflowId);
+
+        RunnerBindings bound = await this.bindings.ResolveAsync(principal, cancellationToken).ConfigureAwait(false);
+        if (!bound.Environments.Contains(environment, StringComparer.Ordinal))
+        {
+            return null;
+        }
+
+        using ParsedJsonDocument<AvailabilityEntry>? entry = await this.availability.GetAsync(baseWorkflowId, versionNumber, environment, cancellationToken).ConfigureAwait(false);
+        if (entry is null)
+        {
+            return null;
+        }
+
+        return bound.ExecutorCountersignatureOf(environment, baseWorkflowId, versionNumber);
+    }
+
     private static int IndexOf(IReadOnlyList<string> environments, string environment)
     {
         for (int i = 0; i < environments.Count; i++)

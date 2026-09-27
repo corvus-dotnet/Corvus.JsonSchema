@@ -93,7 +93,7 @@ public sealed class RunnerBlindWaitTests
         RunnerKeyRing ring = RunnerKeyRing.From(new Dictionary<string, RunnerEnvironmentKeys>
         {
             [Fixture.Production] = RunnerEnvironmentKeys.Holding([new RunnerGenerationKeys(KeyId, PayloadKey, olderMac), new RunnerGenerationKeys("k3", newerPayloadKey, newerMac)], @sealed: true),
-        });
+        }, TestExecutorPolicies.Production);
         await using Fixture fixture = await Fixture.StartAsync(
             keyRing: ring,
             anchors: anchors,
@@ -174,6 +174,6 @@ public sealed class RunnerBlindWaitTests
         return RunnerKeyRing.From(new Dictionary<string, RunnerEnvironmentKeys>
         {
             [Fixture.Production] = new(KeyId, PayloadKey, envelopeMac, Sealed: true),
-        });
+        }, TestExecutorPolicies.Production);
     }
 }

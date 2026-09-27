@@ -83,6 +83,18 @@ arazzo-runs start onboard-customer 2 --environment production \
   --server http://<controlplane>/ --token <token>
 ```
 
+The AppHost also provisions the tenant's **executor-signing key pair** (ADR 0065 phase C), distinct from the platform's
+executor-signing key in the signing vault: its public half is pinned on `runner-production`
+(`Runner__Environments__0__ExecutorSigners__0`) and its private half is written to the handoff directory as
+`production-executor-signing.key.pem` beside `production-executor-signing.pub`. The platform's signature over an
+executor says the platform built it; `runner-production` executes a version in production only under the tenant's
+countersignature over that executor's package hash and assembly digest, recorded through
+`PUT /environments/production/executors/{baseWorkflowId}/{versionNumber}` by an administrator of production, and
+hands every run of an uncountersigned version back until then. The live composition tests countersign
+`onboard-customer` 1 and 2 and `onboard-customer-async` 1 over HTTP with the handed-off key before they start
+production runs, computing each digest from the executor the control plane serves and refusing a manifest that names
+another; a plain `aspire run` leaves production's versions uncountersigned until the operator does the same.
+
 The CLI pins the fingerprint before it seals, so a control plane publishing a key of its own gets nothing; the runner
 pins the initiator, so a seal anyone else made faults the run at its start rather than running. The live composition
 test `A_sealed_start_of_a_production_run_is_opened_and_advanced_by_the_production_runner` does exactly this over HTTP

@@ -102,6 +102,10 @@
     "description": "Register, list, and retire an environment's checkpoint key generations (ADR 0065). A generation names the payload-key id a sealed environment's checkpoint payloads carry, and the public seal key run-start inputs are wrapped to. The symmetric payload key stays in the tenant's custody and never reaches the control plane, so registration proves possession of the private seal half rather than of the payload key: it establishes that a tenant controls a registered pair for the environment, and a missing payload key is caught at runtime by the runner failing closed rather than writing cleartext. Governed by the environment's administrators (scopes environments:read / environments:write)."
   },
   {
+    "name": "environmentExecutors",
+    "description": "Countersign, list and withdraw the executors a tenant authorizes to run in an environment (ADR 0065 phase C). The platform generates, compiles and signs a version's executor, and the platform's signature proves only that the platform produced it; a tenant operator countersigns the executor's assembly digest for one environment with the tenant's own executor-signing key, whose public half a runner pins, and a runner holding that pin executes nothing in the environment that the tenant did not countersign. The control plane stores and advertises the countersignature and verifies nothing about it beyond its shape and that the digest names the version's current executor: the runner verifies it against its pin, so a control plane that swapped the executor after the operator reviewed it gains nothing."
+  },
+  {
     "name": "identity",
     "description": "Resolve real grantees (person/team/role/workflow) to their exact deployment-stamped identity for the view/operate/administer grant pickers (design §16.5.4), and report the caller's own identity. Read-only: resolution uses a pluggable directory and a store-indexed typeahead of identities the control plane has already observed, so the picker never hand-assembles a {dimension,value} tuple that could silently match no one."
   }
@@ -3840,6 +3844,98 @@
               }
             }
           },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      }
+    },
+    "/environments/{name}/executors": {
+      "get": {
+        "operationId": "listExecutorCountersignatures",
+        "security": [
+          { "oauth2": ["environments:read"] },
+          { "openIdConnect": ["environments:read"] },
+          { "mtls": [] }
+        ],
+        "tags": ["environmentExecutors"],
+        "summary": "List the executors countersigned for an environment",
+        "description": "Returns the executor countersignatures recorded on the environment (ADR 0065 phase C), one per (baseWorkflowId, versionNumber), ordered by base workflow id then version number. The caller must have the environment in reach (404 otherwise).",
+        "parameters": [
+          { "$ref": "#/components/parameters/EnvironmentNamePath" },
+          { "$ref": "#/components/parameters/LimitQuery" },
+          { "$ref": "#/components/parameters/PageTokenQuery" }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of executor countersignatures.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ExecutorCountersignatureList" }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/environments/{name}/executors/{baseWorkflowId}/{versionNumber}": {
+      "put": {
+        "operationId": "countersignExecutor",
+        "security": [
+          { "oauth2": ["environments:write"] },
+          { "openIdConnect": ["environments:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["environmentExecutors"],
+        "summary": "Countersign a version's executor for an environment",
+        "description": "Records the tenant operator's countersignature over a version's executor for this environment (ADR 0065 phase C): an ES256 signature, made with the tenant's executor-signing private key, over the framed tuple (\"executor-countersignature\", environment, baseWorkflowId, versionNumber, packageHash, assemblyDigest). The environment is inside the tuple, so a countersignature for one environment admits nothing in another; the package hash and the assembly digest are both inside, so neither a repack nor a recompile is covered by an earlier signature. The control plane holds no tenant key and does not verify the signature: it checks the shape, and that the digest and hash name the version's current executor (409 executor-digest-mismatch otherwise, a courtesy for an operator who signed a stale manifest, not a control), and stores it opaque. A runner that pins the tenant's executor-signing key verifies it for itself before it executes the version in the environment. Replaces any countersignature already recorded for the version (200 either way). The caller must be a current administrator of the environment (403 otherwise; 404 if the environment is not in the caller's reach or the version does not exist).",
+        "parameters": [
+          { "$ref": "#/components/parameters/EnvironmentNamePath" },
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ExecutorCountersignature" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The recorded countersignature.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ExecutorCountersignatureView" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        }
+      },
+      "delete": {
+        "operationId": "withdrawExecutorCountersignature",
+        "security": [
+          { "oauth2": ["environments:write"] },
+          { "openIdConnect": ["environments:write"] },
+          { "mtls": [] }
+        ],
+        "tags": ["environmentExecutors"],
+        "summary": "Withdraw a version's executor countersignature for an environment",
+        "description": "Removes the countersignature recorded for the version in this environment (ADR 0065 phase C), so a runner pinning the tenant's executor-signing key stops executing the version there at its next check. Idempotent: withdrawing a countersignature that is not recorded is 204. The caller must be a current administrator of the environment (403 otherwise; 404 if the environment is not in the caller's reach).",
+        "parameters": [
+          { "$ref": "#/components/parameters/EnvironmentNamePath" },
+          { "$ref": "#/components/parameters/BaseWorkflowIdPath" },
+          { "$ref": "#/components/parameters/VersionNumberPath" }
+        ],
+        "responses": {
+          "204": { "description": "The countersignature is not recorded." },
           "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" }
@@ -8918,6 +9014,42 @@
           "nextPageToken": { "type": "string", "description": "An opaque token to fetch the next page, or null/absent if this is the last page." }
         },
         "required": ["keys"]
+      },
+      "ExecutorCountersignature": {
+        "type": "object",
+        "description": "A tenant operator's countersignature over a version's executor for one environment (ADR 0065 phase C): ES256 (IEEE P1363, base64) by the tenant's executor-signing private key over the framed tuple (\"executor-countersignature\", environment, baseWorkflowId, versionNumber, packageHash, assemblyDigest). The control plane records it without verifying it; the runner that pins the tenant's key does.",
+        "properties": {
+          "packageHash": { "type": "string", "maxLength": 256, "description": "The version's content hash the executor was built from, as the executor manifest records it and as it went into the signed tuple." },
+          "assemblyDigest": { "type": "string", "maxLength": 256, "description": "The executor assembly's digest (sha256:<hex>), as the executor manifest records it and as it went into the signed tuple. The digest of the assembly bytes, never the package content hash: the content hash is unchanged by a repack that bakes in a different executor." },
+          "signature": { "type": "string", "contentEncoding": "base64", "description": "The ES256 countersignature (base64, IEEE P1363) over the framed tuple." }
+        },
+        "required": ["packageHash", "assemblyDigest", "signature"]
+      },
+      "ExecutorCountersignatureView": {
+        "type": "object",
+        "description": "A recorded executor countersignature (ADR 0065 phase C). The environment is not repeated in the body: it is the path that scopes the resource, and the view is congruent with the record the environment holds.",
+        "properties": {
+          "baseWorkflowId": { "type": "string", "description": "The base workflow id the countersigned version belongs to." },
+          "versionNumber": { "type": "integer", "format": "int32", "description": "The countersigned version number." },
+          "packageHash": { "type": "string", "description": "The version's content hash inside the signed tuple." },
+          "assemblyDigest": { "type": "string", "description": "The executor assembly's digest (sha256:<hex>) inside the signed tuple." },
+          "signature": { "type": "string", "contentEncoding": "base64", "description": "The ES256 countersignature (base64, IEEE P1363) over the framed tuple." },
+          "signedBy": { "type": "string", "description": "The actor that recorded the countersignature." },
+          "signedAt": { "type": "string", "format": "date-time", "description": "When the countersignature was recorded." }
+        },
+        "required": ["baseWorkflowId", "versionNumber", "packageHash", "assemblyDigest", "signature", "signedBy", "signedAt"]
+      },
+      "ExecutorCountersignatureList": {
+        "type": "object",
+        "description": "A keyset page of an environment's executor countersignatures, ordered by base workflow id then version number.",
+        "properties": {
+          "countersignatures": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ExecutorCountersignatureView" }
+          },
+          "nextPageToken": { "type": "string", "description": "An opaque token to fetch the next page, or null/absent if this is the last page." }
+        },
+        "required": ["countersignatures"]
       },
       "EnvironmentKeyRetirementNote": {
         "type": "object",

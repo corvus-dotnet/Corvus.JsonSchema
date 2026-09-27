@@ -68,12 +68,13 @@ public sealed class HostedWorkflowResumer : IRunExecutionBackend
     /// <param name="loader">The loader that verifies, loads, and caches the executor assembly.</param>
     /// <param name="transportBinder">Binds a workflow's descriptor to the transports a run executes through.</param>
     /// <param name="scheduleWorkflow">The built-in scheduler workflow, or <see langword="null"/> on a host that does not serve schedules.</param>
-    public HostedWorkflowResumer(IWorkflowArtifactSource artifacts, WorkflowExecutorLoader loader, WorkflowTransportBinder transportBinder, ScheduleHostedWorkflow? scheduleWorkflow = null)
+    /// <param name="executorAdmission">The runner's own executor policy (ADR 0065 phase C), consulted with the loaded executor's manifest and the run's environment before a run is advanced; <see langword="null"/> on a host with no policy of its own.</param>
+    public HostedWorkflowResumer(IWorkflowArtifactSource artifacts, WorkflowExecutorLoader loader, WorkflowTransportBinder transportBinder, ScheduleHostedWorkflow? scheduleWorkflow = null, IExecutorAdmission? executorAdmission = null)
     {
         ArgumentNullException.ThrowIfNull(artifacts);
         ArgumentNullException.ThrowIfNull(loader);
         ArgumentNullException.ThrowIfNull(transportBinder);
-        this.resolver = new LoaderHostedWorkflowResolver(artifacts, loader);
+        this.resolver = new LoaderHostedWorkflowResolver(artifacts, loader, executorAdmission);
         this.transportBinder = transportBinder;
         this.scheduleWorkflow = scheduleWorkflow;
     }

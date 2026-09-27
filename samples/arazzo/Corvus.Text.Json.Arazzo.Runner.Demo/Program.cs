@@ -170,6 +170,12 @@ List<RunnerKeyRingEntry> keyRingEntries = [];
 foreach (IConfigurationSection entry in builder.Configuration.GetSection("Runner:Environments").GetChildren())
 {
     List<string> initiators = [.. entry.GetSection("Initiators").GetChildren().Select(initiator => initiator.Value).OfType<string>()];
+
+    // The executor policy (ADR 0065 phase C): the tenant's executor-signing public keys this runner pins, so a version
+    // runs here only under the tenant's countersignature, and the assembly digests admitted outright. A keyed entry
+    // needs one or the other, or the runner client does not start.
+    List<string> executorSigners = [.. entry.GetSection("ExecutorSigners").GetChildren().Select(signer => signer.Value).OfType<string>()];
+    List<string> executors = [.. entry.GetSection("Executors").GetChildren().Select(digest => digest.Value).OfType<string>()];
     List<RunnerKeyGeneration> generations = [];
     foreach (IConfigurationSection generation in entry.GetSection("Generations").GetChildren())
     {
@@ -188,7 +194,9 @@ foreach (IConfigurationSection entry in builder.Configuration.GetSection("Runner
         entry["SealKeyRef"] is { Length: > 0 } sealKeyRef ? SecretRef.Parse(sealKeyRef) : null,
         initiators.Count > 0 ? initiators : null,
         entry["MinimumKeyId"],
-        generations.Count > 0 ? generations : null));
+        generations.Count > 0 ? generations : null,
+        executorSigners.Count > 0 ? executorSigners : null,
+        executors.Count > 0 ? executors : null));
 }
 
 bool keyedEntries = keyRingEntries.Any(entry => entry.HeldGenerations.Count > 0);
@@ -373,7 +381,10 @@ if (options.ServesSchedules)
 // scheduler (when wired) rides the same loops — a schedule run is dispatched, resumed on its due timer, and re-fired.
 // The executor comes from the runner API too (ADR 0065), so the runner holds no catalog credential either; what it is
 // served is still verified against the manifest signature and the content hash before it is activated.
-var catalogResumerBackend = new HostedWorkflowResumer(new RunnerApiArtifactSource(runnerApiTransport), new WorkflowExecutorLoader(verifier: executorVerifier), binder, scheduleWorkflow);
+// The resumer runs an executor only after the loader verified it against the platform's signature AND the runner's
+// executor policy admitted it for the run's environment (ADR 0065 phase C): a version the tenant has not countersigned
+// for a policed environment is handed back, not run.
+var catalogResumerBackend = new HostedWorkflowResumer(new RunnerApiArtifactSource(runnerApiTransport), new WorkflowExecutorLoader(verifier: executorVerifier), binder, scheduleWorkflow, runnerClient.ExecutorAdmission);
 WorkflowResumer catalogResumer = catalogResumerBackend.AsResumer();
 builder.Services.AddSingleton(catalogResumer);
 

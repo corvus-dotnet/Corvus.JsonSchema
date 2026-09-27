@@ -109,6 +109,6 @@ public sealed class RunnerAnchorTests
         return RunnerKeyRing.From(new Dictionary<string, RunnerEnvironmentKeys>
         {
             [Fixture.Production] = new(KeyId, PayloadKey, envelopeMac, sealedProduction),
-        });
+        }, TestExecutorPolicies.Production);
     }
 }

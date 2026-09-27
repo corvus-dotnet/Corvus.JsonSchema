@@ -382,6 +382,10 @@ public static class ControlPlaneEndpointExtensions
         var runnerAuthorizationsHandler = new ArazzoControlPlaneRunnerAuthorizationsHandler(runnerAuthStore, envStore, runners, environmentAdministration, access, capacityGuard, workflowStateStore as IWorkflowLeaseAdministration, accessRequestSubjectClaimType, runnerEnrolmentSecret, auditor, runnerAuthorizationChanges);
         var environmentKeysHandler = new ArazzoControlPlaneEnvironmentKeysHandler(envStore, environmentAdministration, access, auditor: auditor);
 
+        // The executors a tenant countersigns for an environment (ADR 0065 phase C): recorded on the environment record
+        // beside its key generations, checked against the version's executor manifest, verified by the runner alone.
+        var environmentExecutorsHandler = new ArazzoControlPlaneEnvironmentExecutorsHandler(envStore, environmentAdministration, catalog, access, auditor: auditor);
+
         // The brokered GitHub API (workflow-designer design §4.7): user-to-server sign-in, session
         // status, and proxied contents reads. Deployment-configured; fails closed when no broker is
         // wired. Token custody keys by the same subject claim the request surfaces use.
@@ -417,6 +421,7 @@ public static class ControlPlaneEndpointExtensions
             environmentsHandler,
             runnerAuthorizationsHandler,
             environmentKeysHandler,
+            environmentExecutorsHandler,
             schedulesHandler,
             administratorsHandler,
             providersHandler,

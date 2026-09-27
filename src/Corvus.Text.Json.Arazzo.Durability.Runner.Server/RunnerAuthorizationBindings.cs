@@ -151,6 +151,7 @@ public sealed class RunnerAuthorizationBindings : IRunnerEnvironmentBindings, IR
         List<string>? live = null;
         Dictionary<string, IReadOnlySet<string>>? sealedGenerations = null;
         Dictionary<string, IReadOnlyList<RunnerSealKeyGeneration>>? sealKeys = null;
+        Dictionary<string, IReadOnlyList<RunnerExecutorCountersignature>>? countersignatures = null;
         bool holdsPlatform = false;
         bool holdsTenant = false;
         string? owner = null;
@@ -186,6 +187,13 @@ public sealed class RunnerAuthorizationBindings : IRunnerEnvironmentBindings, IR
                 if (SealKeysOf(record.RootElement) is { Count: > 0 } advertised)
                 {
                     (sealKeys ??= new Dictionary<string, IReadOnlyList<RunnerSealKeyGeneration>>(StringComparer.Ordinal))[environment] = advertised;
+                }
+
+                // The executors the tenant countersigned for the environment (phase C), off the same record, for a
+                // runner that pins the tenant's executor-signing key to verify before it executes a version here.
+                if (ExecutorCountersignaturesOf(record.RootElement) is { Count: > 0 } countersigned)
+                {
+                    (countersignatures ??= new Dictionary<string, IReadOnlyList<RunnerExecutorCountersignature>>(StringComparer.Ordinal))[environment] = countersigned;
                 }
             }
 
@@ -231,7 +239,7 @@ public sealed class RunnerAuthorizationBindings : IRunnerEnvironmentBindings, IR
             return RunnerBindings.None;
         }
 
-        return live is null ? RunnerBindings.None : new RunnerBindings(live, owner, sealedGenerations, sealKeys);
+        return live is null ? RunnerBindings.None : new RunnerBindings(live, owner, sealedGenerations, sealKeys, countersignatures);
     }
 
     // Whether the deployment has admitted at least one owner group: the tenancy ledger is the census, answered from
@@ -246,6 +254,22 @@ public sealed class RunnerAuthorizationBindings : IRunnerEnvironmentBindings, IR
 
     // Every registered generation with its public seal key, as the record holds it: what the runner API advertises to
     // a bound runner, which compares the active one it holds against the fingerprint it pinned (decision 10).
+    private static IReadOnlyList<RunnerExecutorCountersignature> ExecutorCountersignaturesOf(in Environments.Environment environment)
+    {
+        List<RunnerExecutorCountersignature>? recorded = null;
+        foreach (Environments.Environment.EnvironmentExecutorCountersignature countersignature in Environments.Environment.Enumerate(environment.ExecutorCountersignatures))
+        {
+            (recorded ??= []).Add(new RunnerExecutorCountersignature(
+                (string)countersignature.BaseWorkflowId,
+                (int)countersignature.VersionNumber,
+                (string)countersignature.PackageHash,
+                (string)countersignature.AssemblyDigest,
+                (string)countersignature.Signature));
+        }
+
+        return recorded ?? [];
+    }
+
     private static IReadOnlyList<RunnerSealKeyGeneration> SealKeysOf(in Environments.Environment environment)
     {
         List<RunnerSealKeyGeneration>? keys = null;

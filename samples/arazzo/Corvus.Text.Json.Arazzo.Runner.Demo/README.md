@@ -66,6 +66,17 @@ row on load, except a run's genesis row, which the control plane writes before a
 configured for sealing that has no Vault refuses to start rather than serve the environment clear. The AppHost runs
 a second instance of this project, `runner-production`, sealed for `production`.
 
+An entry also carries the runner's executor policy (ADR 0065 phase C): `ExecutorSigners:N`, the tenant's
+executor-signing public keys (base64 SPKI, P-256) this runner pins, and `Executors:N`, assembly digests
+(`sha256:<hex>`) admitted outright. The platform signs every executor it bakes, and the runner verifies that
+signature before loading; the policy is the tenant's say over what runs. For every production run the runner admits
+the loaded executor only when its digest is listed or the countersignature the control plane advertises for the
+version (recorded by the tenant operator through `countersignExecutor`, verified by nobody but the runner) verifies
+under a pinned key over the environment, the version and the loaded manifest's package hash and assembly digest;
+otherwise the run is handed back, unended, until the operator countersigns. A keyed entry needs a policy or the
+runner does not start. The AppHost pins the tenant's executor-signing key on `runner-production`
+(`Runner__Environments__0__ExecutorSigners__0`) and hands the operator the private half.
+
 ## Sealed starts
 
 A production run can be started sealed (ADR 0065 decision 9): an initiator the tenant controls seals the inputs to

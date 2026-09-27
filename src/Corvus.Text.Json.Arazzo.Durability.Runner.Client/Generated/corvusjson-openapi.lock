@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-09-26T14:59:29.9946496\u002B00:00",
+  "generatedAt": "2026-09-26T20:03:13.8872043\u002B00:00",
   "generatedFiles": [
     "ClaimRunRequest.cs",
     "ClaimRunResponse.cs",
@@ -26,6 +26,8 @@
     "GetHostedVersionResponse.cs",
     "GetEnvironmentSealKeyRequest.cs",
     "GetEnvironmentSealKeyResponse.cs",
+    "GetEnvironmentExecutorCountersignatureRequest.cs",
+    "GetEnvironmentExecutorCountersignatureResponse.cs",
     "IApiClaimsClient.cs",
     "ApiClaimsClient.cs",
     "IApiLeasesClient.cs",
@@ -93,6 +95,12 @@
     "Models/ClaimedRuns.ClaimedRunArray.cs",
     "Models/ClaimedRuns.ClaimedRunArray.Mutable.cs",
     "Models/ClaimedRuns.ClaimedRunArray.JsonSchema.cs",
+    "Models/EnvironmentExecutorCountersignature.cs",
+    "Models/EnvironmentExecutorCountersignature.Mutable.cs",
+    "Models/EnvironmentExecutorCountersignature.JsonSchema.cs",
+    "Models/EnvironmentExecutorCountersignature.CountersignedVersionNumber.cs",
+    "Models/EnvironmentExecutorCountersignature.CountersignedVersionNumber.Mutable.cs",
+    "Models/EnvironmentExecutorCountersignature.CountersignedVersionNumber.JsonSchema.cs",
     "Models/EnvironmentName.cs",
     "Models/EnvironmentName.Mutable.cs",
     "Models/EnvironmentName.JsonSchema.cs",
@@ -218,6 +226,6 @@
   "generatorVersion": "1.0.0\u002B7d256a6f28e8cfc5265ac45360a4e8ed9e055c51",
   "includePaths": [],
   "rootNamespace": "Corvus.Text.Json.Arazzo.Durability.Runner.Client",
-  "specFileHash": "b28d0cc577d790838af863742a98e77b6c15feefc8a51871dd1e56a773812d14",
+  "specFileHash": "d43ab24b243a82ae16717d2d56b02cc42044157b676c52e7e56e400a589c29ca",
   "specVersion": "3.2"
 }

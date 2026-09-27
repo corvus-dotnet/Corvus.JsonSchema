@@ -79,6 +79,40 @@ public sealed class RunnerApiEnvironmentBindingTests
     }
 
     [TestMethod]
+    public async Task A_countersignature_is_served_for_a_bound_environments_available_version_and_every_other_case_is_not_there()
+    {
+        // ADR 0065 phase C: the runner API advertises the tenant's countersignature over a version's executor for an
+        // environment, so a runner pinning the tenant's key can verify it; an unbound environment, a version not
+        // available there and a version never countersigned are one 404, none of which discloses the others.
+        await using Host host = await Host.StartAsync(
+            boundEnvironments: [Production],
+            executorCountersignatures: new Dictionary<string, IReadOnlyList<RunnerExecutorCountersignature>>
+            {
+                [Production] = [new RunnerExecutorCountersignature("adopt", 3, "sha256:aa", "sha256:bb", "c2ln"), new RunnerExecutorCountersignature("adopt", 4, "sha256:aa", "sha256:cc", "c2ln")],
+                [Development] = [new RunnerExecutorCountersignature("adopt", 3, "sha256:aa", "sha256:bb", "c2ln")],
+            });
+        await host.MakeAvailableAsync("adopt", 3, Production);
+        await host.MakeAvailableAsync("adopt", 3, Development);
+
+        HttpResponseMessage served = await host.GetExecutorCountersignatureAsync(Runner, Production, "adopt", 3);
+        served.StatusCode.ShouldBe(HttpStatusCode.OK);
+        using (System.Text.Json.JsonDocument doc = System.Text.Json.JsonDocument.Parse(await served.Content.ReadAsStringAsync()))
+        {
+            doc.RootElement.GetProperty("environment").GetString().ShouldBe(Production);
+            doc.RootElement.GetProperty("baseWorkflowId").GetString().ShouldBe("adopt");
+            doc.RootElement.GetProperty("versionNumber").GetInt32().ShouldBe(3);
+            doc.RootElement.GetProperty("packageHash").GetString().ShouldBe("sha256:aa");
+            doc.RootElement.GetProperty("assemblyDigest").GetString().ShouldBe("sha256:bb");
+            doc.RootElement.GetProperty("signature").GetString().ShouldBe("c2ln");
+        }
+
+        (await host.GetExecutorCountersignatureAsync(Runner, Production, "adopt", 4)).StatusCode.ShouldBe(HttpStatusCode.NotFound, "countersigned, but not available in production");
+        (await host.GetExecutorCountersignatureAsync(Runner, Production, "adopt", 5)).StatusCode.ShouldBe(HttpStatusCode.NotFound, "never countersigned");
+        (await host.GetExecutorCountersignatureAsync(Runner, Development, "adopt", 3)).StatusCode.ShouldBe(HttpStatusCode.NotFound, "not bound, so not there");
+        (await host.GetExecutorCountersignatureAsync("runner-unbound", Production, "adopt", 3)).StatusCode.ShouldBe(HttpStatusCode.NotFound, "a principal with no bindings");
+    }
+
+    [TestMethod]
     public async Task A_lease_on_a_run_outside_the_principals_bindings_does_not_grant_checkpoint_access()
     {
         // The principal is bound ONLY to development. The run is pinned to production, and the principal holds a
@@ -310,19 +344,21 @@ public sealed class RunnerApiEnvironmentBindingTests
         public override DateTimeOffset GetUtcNow() => now;
     }
 
-    private sealed class Host(WebApplication app, HttpClient client, InMemoryWorkflowStateStore store) : IAsyncDisposable
+    private sealed class Host(WebApplication app, HttpClient client, InMemoryWorkflowStateStore store, InMemoryAvailabilityStore availability) : IAsyncDisposable
     {
-        public static async Task<Host> StartAsync(IReadOnlyList<string> boundEnvironments, IReadOnlyDictionary<string, IReadOnlySet<string>>? sealedGenerations = null, IReadOnlyDictionary<string, IReadOnlyList<RunnerSealKeyGeneration>>? sealKeys = null)
+        public static async Task<Host> StartAsync(IReadOnlyList<string> boundEnvironments, IReadOnlyDictionary<string, IReadOnlySet<string>>? sealedGenerations = null, IReadOnlyDictionary<string, IReadOnlyList<RunnerSealKeyGeneration>>? sealKeys = null, IReadOnlyDictionary<string, IReadOnlyList<RunnerExecutorCountersignature>>? executorCountersignatures = null)
         {
             var clock = new TestClock(T0);
             var store = new InMemoryWorkflowStateStore(clock);
+            var availability = new InMemoryAvailabilityStore();
             var bindings = new DeclaredRunnerEnvironmentBindings(
                 new Dictionary<string, IReadOnlyList<string>>
                 {
                     [Runner] = boundEnvironments,
                 },
                 sealedGenerations: sealedGenerations,
-                sealKeys: sealKeys);
+                sealKeys: sealKeys,
+                executorCountersignatures: executorCountersignatures);
 
             WebApplicationBuilder builder = WebApplication.CreateBuilder();
             builder.WebHost.UseTestServer();
@@ -341,11 +377,17 @@ public sealed class RunnerApiEnvironmentBindingTests
                 await next(context);
             });
 
-            app.MapArazzoRunnerApi(store, new InMemoryWorkflowCatalogStore(), new InMemoryAvailabilityStore(), bindings, requireAuthorization: false, timeProvider: clock);
+            app.MapArazzoRunnerApi(store, new InMemoryWorkflowCatalogStore(), availability, bindings, requireAuthorization: false, timeProvider: clock);
             await app.StartAsync();
 
-            return new Host(app, app.GetTestClient(), store);
+            return new Host(app, app.GetTestClient(), store, availability);
         }
+
+        public async ValueTask MakeAvailableAsync(string baseWorkflowId, int versionNumber, string environment)
+            => (await availability.MakeAvailableAsync(baseWorkflowId, versionNumber, environment, "operator", default)).Entry.Dispose();
+
+        public Task<HttpResponseMessage> GetExecutorCountersignatureAsync(string principal, string environment, string baseWorkflowId, int versionNumber)
+            => this.SendAsync(new HttpRequestMessage(HttpMethod.Get, $"/environments/{environment}/executors/{baseWorkflowId}/{versionNumber}"), principal);
 
         public async ValueTask SeedAsync(string runId, string environment, WorkflowRunStatus status)
         {

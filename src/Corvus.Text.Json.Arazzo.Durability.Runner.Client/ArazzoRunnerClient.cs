@@ -105,6 +105,20 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
             }
         }
 
+        // Phase C: this client is the host that loads and executes IL, so every keyed environment it serves has to
+        // say which executors the tenant authorizes there. A keyed environment whose executor the platform alone
+        // chooses is exactly the residue the countersignature closes, and serving it would put the payload key in
+        // whatever the platform delivered.
+        foreach (string environment in ring.Environments)
+        {
+            if (ring.ExecutorPolicyOf(environment) is not { IsEmpty: false })
+            {
+                throw new InvalidOperationException($"Environment '{environment}' is on the key ring with a key and no executor policy. A runner executes in a keyed environment only what the tenant countersigned under an executor-signing key pinned on the entry, or an executor whose assembly digest the entry lists; without either, the executor that holds the payload key is the platform's choice alone (ADR 0065 phase C).");
+            }
+        }
+
+        this.ExecutorAdmission = new RunnerExecutorAdmission(ring, this.environments, this.timeProvider);
+
         IWorkflowCheckpointStore checkpointStore = new RunnerApiCheckpointStore(this);
         this.anchors = anchors;
         this.keyRing = ring;
@@ -641,6 +655,13 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
     public RunnerKeyRing Allowlist => this.keyRing;
 
     /// <summary>
+    /// Gets the runner's executor policy in force (ADR 0065 phase C), for the host to hand to its
+    /// <see cref="HostedWorkflowResumer"/>: an executor runs in a policed environment only when the tenant listed its
+    /// digest on the ring or countersigned it under a key the ring pins.
+    /// </summary>
+    public RunnerExecutorAdmission ExecutorAdmission { get; }
+
+    /// <summary>
     /// Whether this runner admits a claim for an environment (ADR 0065 decision 10): the environment is on its
     /// allowlist and, for a keyed entry with a pinned fingerprint, some generation the runner holds is advertised
     /// active by the control plane under the seal key the tenant pinned, or under one that reaches the pin along
@@ -755,6 +776,8 @@ public sealed class ArazzoRunnerClient : IAsyncDisposable
         => new((System.Net.HttpStatusCode)status, $"The runner API refused to {what} ({status}).");
 
     internal IApiCheckpointsClient CheckpointsClient => this.checkpoints;
+
+    internal IApiEnvironmentsClient EnvironmentsClient => this.environments;
 
     internal HeldLease RequireLease(in WorkflowRunAddress address)
         => this.heldLeases.TryGetValue(address, out HeldLease held)

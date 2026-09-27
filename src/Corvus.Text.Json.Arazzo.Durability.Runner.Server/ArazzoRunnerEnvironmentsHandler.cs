@@ -16,6 +16,7 @@ namespace Corvus.Text.Json.Arazzo.Durability.Runner.Server;
 public sealed class ArazzoRunnerEnvironmentsHandler : IApiEnvironmentsHandler
 {
     private readonly IRunnerEnvironmentBindings bindings;
+    private readonly RunnerCatalogCoordinator catalog;
     private readonly RunnerPrincipalAccessor principals;
     private readonly RunnerQuotaGate quotas;
 
@@ -23,14 +24,50 @@ public sealed class ArazzoRunnerEnvironmentsHandler : IApiEnvironmentsHandler
     /// <param name="bindings">The environments each principal is bound to, with what the deployment advertises for each.</param>
     /// <param name="principals">Resolves the caller's machine principal.</param>
     /// <param name="quotas">The per-tenant and per-runner quotas.</param>
-    public ArazzoRunnerEnvironmentsHandler(IRunnerEnvironmentBindings bindings, RunnerPrincipalAccessor principals, RunnerQuotaGate quotas)
+    public ArazzoRunnerEnvironmentsHandler(IRunnerEnvironmentBindings bindings, RunnerCatalogCoordinator catalog, RunnerPrincipalAccessor principals, RunnerQuotaGate quotas)
     {
         ArgumentNullException.ThrowIfNull(bindings);
+        ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(principals);
         ArgumentNullException.ThrowIfNull(quotas);
         this.bindings = bindings;
+        this.catalog = catalog;
         this.principals = principals;
         this.quotas = quotas;
+    }
+
+    /// <inheritdoc/>
+    public async ValueTask<GetEnvironmentExecutorCountersignatureResult> HandleGetEnvironmentExecutorCountersignatureAsync(GetEnvironmentExecutorCountersignatureParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        if (this.principals.Resolve() is not { } principal)
+        {
+            return GetEnvironmentExecutorCountersignatureResult.Forbidden(RunnerProblems.NoPrincipal(), workspace);
+        }
+
+        if (await this.quotas.TryAcquireAsync(RunnerQuotaKind.Catalog, principal, 1, cancellationToken).ConfigureAwait(false) is { } refused)
+        {
+            return GetEnvironmentExecutorCountersignatureResult.TooManyRequests(RunnerProblems.QuotaExceeded(refused), workspace, RunnerQuotaGate.RetryAfterSeconds(refused));
+        }
+
+        string environment = (string)parameters.Environment;
+        string baseWorkflowId = (string)parameters.BaseWorkflowId;
+        int versionNumber = (int)parameters.VersionNumber;
+        if (await this.catalog.GetExecutorCountersignatureAsync(principal, environment, baseWorkflowId, versionNumber, cancellationToken).ConfigureAwait(false) is not { } countersignature)
+        {
+            // Not bound, not available and not countersigned are one answer on purpose: the response says nothing about
+            // environments the principal does not serve or versions outside them.
+            return GetEnvironmentExecutorCountersignatureResult.NotFound(RunnerProblems.NoSuchDocument(), workspace);
+        }
+
+        return GetEnvironmentExecutorCountersignatureResult.Ok(
+            EnvironmentExecutorCountersignature.Build(
+                assemblyDigest: countersignature.AssemblyDigest,
+                baseWorkflowId: countersignature.BaseWorkflowId,
+                environment: environment,
+                packageHash: countersignature.PackageHash,
+                signature: (Corvus.Text.Json.Arazzo.Durability.Runner.Server.Models.JsonCorvusBase64String.Source)countersignature.Signature,
+                versionNumber: countersignature.VersionNumber),
+            workspace);
     }
 
     /// <inheritdoc/>

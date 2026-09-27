@@ -126,6 +126,6 @@ public sealed class RunnerRekeySweepTests
         return RunnerKeyRing.From(new Dictionary<string, RunnerEnvironmentKeys>
         {
             [Fixture.Production] = RunnerEnvironmentKeys.Holding([new RunnerGenerationKeys(Older, OlderKey, olderMac), new RunnerGenerationKeys(Newer, NewerKey, newerMac)], @sealed: true),
-        });
+        }, TestExecutorPolicies.Production);
     }
 }

@@ -240,6 +240,6 @@ public sealed class RunnerSealedStartTests
         return RunnerKeyRing.From(new Dictionary<string, RunnerEnvironmentKeys>
         {
             [Fixture.Production] = new(KeyId, PayloadKey, envelopeMac, Sealed: true, sealPrivateKey, initiators),
-        });
+        }, TestExecutorPolicies.Production);
     }
 }

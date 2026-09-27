@@ -30,16 +30,18 @@ public sealed class RunnerKeyRing
 
     private readonly FrozenDictionary<string, RunnerEnvironmentKeys> keys;
     private readonly FrozenSet<string> admitted;
+    private readonly FrozenDictionary<string, RunnerExecutorPolicy> executors;
     private readonly ConcurrentDictionary<string, string> writing = new(StringComparer.Ordinal);
 
-    private RunnerKeyRing(FrozenDictionary<string, RunnerEnvironmentKeys> keys, FrozenSet<string> admitted)
+    private RunnerKeyRing(FrozenDictionary<string, RunnerEnvironmentKeys> keys, FrozenSet<string> admitted, FrozenDictionary<string, RunnerExecutorPolicy> executors)
     {
         this.keys = keys;
         this.admitted = admitted;
+        this.executors = executors;
     }
 
     /// <summary>An empty ring: a runner that admits no environment and so serves nothing.</summary>
-    public static RunnerKeyRing Empty { get; } = new(FrozenDictionary<string, RunnerEnvironmentKeys>.Empty, FrozenSet<string>.Empty);
+    public static RunnerKeyRing Empty { get; } = new(FrozenDictionary<string, RunnerEnvironmentKeys>.Empty, FrozenSet<string>.Empty, FrozenDictionary<string, RunnerExecutorPolicy>.Empty);
 
     /// <summary>Gets a value indicating whether the ring admits no environment.</summary>
     public bool IsEmpty => this.admitted.Count == 0;
@@ -59,12 +61,22 @@ public sealed class RunnerKeyRing
         ArgumentNullException.ThrowIfNull(entries);
         var built = new Dictionary<string, RunnerEnvironmentKeys>(entries.Count, StringComparer.Ordinal);
         var admitted = new HashSet<string>(entries.Count, StringComparer.Ordinal);
+        var executors = new Dictionary<string, RunnerExecutorPolicy>(entries.Count, StringComparer.Ordinal);
         foreach (RunnerKeyRingEntry entry in entries)
         {
             ArgumentException.ThrowIfNullOrEmpty(entry.Environment);
             if (!admitted.Add(entry.Environment))
             {
                 throw ThrowHelper.GetAllowlistEntryDuplicateException(entry.Environment);
+            }
+
+            // The executor policy (ADR 0065 phase C) is the tenant's authority over what runs in the environment, on
+            // a clear entry as much as a keyed one: the pinned executor-signing keys a countersignature must verify
+            // under, and the assembly digests admitted outright. Read before the keys, so a malformed key or digest
+            // stops the runner whether or not the environment is keyed.
+            if (RunnerExecutorPolicy.Parse(entry.Environment, entry.ExecutorSigners, entry.Executors) is { } policy)
+            {
+                executors[entry.Environment] = policy;
             }
 
             IReadOnlyList<RunnerKeyGeneration> configured = entry.HeldGenerations;
@@ -163,7 +175,7 @@ public sealed class RunnerKeyRing
             built[entry.Environment] = RunnerEnvironmentKeys.Holding(held, entry.Sealed, initiatorKeys, entry.SealKeyFingerprint, entry.MinimumKeyId);
         }
 
-        return new RunnerKeyRing(built.ToFrozenDictionary(StringComparer.Ordinal), admitted.ToFrozenSet(StringComparer.Ordinal));
+        return new RunnerKeyRing(built.ToFrozenDictionary(StringComparer.Ordinal), admitted.ToFrozenSet(StringComparer.Ordinal), executors.ToFrozenDictionary(StringComparer.Ordinal));
     }
 
     /// <summary>Builds a ring from keys already in hand, for a host that holds them itself (tests, and a listener that unwraps its own). Every keyed environment is admitted; <paramref name="clearEnvironments"/> are admitted and served clear.</summary>
@@ -173,6 +185,21 @@ public sealed class RunnerKeyRing
     public static RunnerKeyRing From(IReadOnlyDictionary<string, RunnerEnvironmentKeys> keys, params string[] clearEnvironments)
     {
         ArgumentNullException.ThrowIfNull(keys);
+        return From(keys, FrozenDictionary<string, RunnerExecutorPolicy>.Empty, clearEnvironments);
+    }
+
+    /// <summary>
+    /// Builds a ring from keys and executor policies a host already holds (ADR 0065 phase C), plus the environments it
+    /// serves clear.
+    /// </summary>
+    /// <param name="keys">The keys, by environment.</param>
+    /// <param name="executorPolicies">The executor policies, by environment; an environment with none runs whatever the loader verified.</param>
+    /// <param name="clearEnvironments">The environments served clear.</param>
+    /// <returns>The ring.</returns>
+    public static RunnerKeyRing From(IReadOnlyDictionary<string, RunnerEnvironmentKeys> keys, IReadOnlyDictionary<string, RunnerExecutorPolicy> executorPolicies, params string[] clearEnvironments)
+    {
+        ArgumentNullException.ThrowIfNull(keys);
+        ArgumentNullException.ThrowIfNull(executorPolicies);
         var admitted = new HashSet<string>(keys.Keys, StringComparer.Ordinal);
         foreach (string environment in clearEnvironments)
         {
@@ -180,8 +207,18 @@ public sealed class RunnerKeyRing
             admitted.Add(environment);
         }
 
-        return new RunnerKeyRing(keys.ToFrozenDictionary(StringComparer.Ordinal), admitted.ToFrozenSet(StringComparer.Ordinal));
+        return new RunnerKeyRing(keys.ToFrozenDictionary(StringComparer.Ordinal), admitted.ToFrozenSet(StringComparer.Ordinal), executorPolicies.ToFrozenDictionary(StringComparer.Ordinal));
     }
+
+    /// <summary>
+    /// Gets the executor policy for an environment (ADR 0065 phase C): the executor-signing keys the tenant's
+    /// countersignature must verify under and the assembly digests admitted outright, or <see langword="null"/> for an
+    /// environment with no policy, whose executors run as the loader verified them.
+    /// </summary>
+    /// <param name="environment">The environment.</param>
+    /// <returns>The policy, or <see langword="null"/>.</returns>
+    public RunnerExecutorPolicy? ExecutorPolicyOf(string environment)
+        => this.executors.TryGetValue(environment, out RunnerExecutorPolicy? policy) ? policy : null;
 
     /// <summary>A ring that admits the named environments and serves each clear: the allowlist of a runner with no keys.</summary>
     /// <param name="environments">The environments served clear.</param>
@@ -330,7 +367,9 @@ public sealed record RunnerKeyRingEntry(
     SecretRef? SealKey = null,
     IReadOnlyList<string>? Initiators = null,
     string? MinimumKeyId = null,
-    IReadOnlyList<RunnerKeyGeneration>? Generations = null)
+    IReadOnlyList<RunnerKeyGeneration>? Generations = null,
+    IReadOnlyList<string>? ExecutorSigners = null,
+    IReadOnlyList<string>? Executors = null)
 {
     /// <summary>A clear entry: the environment is served, with no key.</summary>
     /// <param name="environment">The environment.</param>
@@ -371,6 +410,107 @@ public sealed record RunnerKeyRingEntry(
 /// <param name="PayloadKey">Where the runner reads the generation's payload key: a reference into its own secret store, holding the key's 32 bytes as base64.</param>
 /// <param name="SealKey">Where the runner reads the private half of the generation's seal key (decision 9), as base64 PKCS#8, or <see langword="null"/> when this runner opens no sealed starts under it.</param>
 public sealed record RunnerKeyGeneration(string KeyId, SecretRef PayloadKey, SecretRef? SealKey = null);
+
+/// <summary>
+/// A runner's executor policy for one environment (ADR 0065 phase C): the tenant's executor-signing public keys the
+/// runner pins, so an executor runs in the environment only under a countersignature that verifies under one of them,
+/// and the assembly digests admitted outright, the ADR's cheap partial. Either or both.
+/// </summary>
+/// <param name="Signers">The pinned executor-signing keys (P-256 SubjectPublicKeyInfo), possibly none.</param>
+/// <param name="Digests">The allowlisted assembly digests (<c>sha256:&lt;hex&gt;</c>), possibly none.</param>
+public sealed record RunnerExecutorPolicy(IReadOnlyList<byte[]> Signers, IReadOnlySet<string> Digests)
+{
+    private const string DigestPrefix = "sha256:";
+    private const int DigestHexLength = 64;
+
+    /// <summary>Gets a value indicating whether the policy pins no key and lists no digest.</summary>
+    public bool IsEmpty => this.Signers.Count == 0 && this.Digests.Count == 0;
+
+    /// <summary>A policy over pinned executor-signing keys.</summary>
+    /// <param name="signers">The keys (P-256 SubjectPublicKeyInfo).</param>
+    /// <returns>The policy.</returns>
+    public static RunnerExecutorPolicy Signed(params byte[][] signers) => new(signers, new HashSet<string>(StringComparer.Ordinal));
+
+    /// <summary>A policy over allowlisted assembly digests.</summary>
+    /// <param name="digests">The digests (<c>sha256:&lt;hex&gt;</c>).</param>
+    /// <returns>The policy.</returns>
+    public static RunnerExecutorPolicy Listing(params string[] digests) => new([], new HashSet<string>(digests, StringComparer.Ordinal));
+
+    /// <summary>Whether a digest is allowlisted.</summary>
+    /// <param name="assemblyDigest">The executor assembly's digest.</param>
+    /// <returns><see langword="true"/> if listed.</returns>
+    public bool Lists(string assemblyDigest) => this.Digests.Contains(assemblyDigest);
+
+    /// <summary>
+    /// Parses a ring entry's executor policy: each signer a base64 P-256 SubjectPublicKeyInfo, each digest
+    /// <c>sha256:</c> followed by 64 lowercase hex digits. A malformed value stops the runner rather than silently
+    /// narrowing or widening what it admits.
+    /// </summary>
+    /// <param name="environment">The entry's environment, for the message.</param>
+    /// <param name="signers">The configured signers, or <see langword="null"/>.</param>
+    /// <param name="digests">The configured digests, or <see langword="null"/>.</param>
+    /// <returns>The policy, or <see langword="null"/> when the entry configures neither.</returns>
+    public static RunnerExecutorPolicy? Parse(string environment, IReadOnlyList<string>? signers, IReadOnlyList<string>? digests)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(environment);
+        if (signers is not { Count: > 0 } && digests is not { Count: > 0 })
+        {
+            return null;
+        }
+
+        var keys = new List<byte[]>(signers?.Count ?? 0);
+        foreach (string signer in signers ?? [])
+        {
+            byte[] spki;
+            try
+            {
+                spki = Convert.FromBase64String(signer);
+            }
+            catch (FormatException)
+            {
+                throw ThrowHelper.GetAllowlistExecutorSignerNotAKeyException(environment);
+            }
+
+            if (!SealedStartSignature.IsP256PublicKey(spki))
+            {
+                throw ThrowHelper.GetAllowlistExecutorSignerNotAKeyException(environment);
+            }
+
+            keys.Add(spki);
+        }
+
+        var listed = new HashSet<string>(digests?.Count ?? 0, StringComparer.Ordinal);
+        foreach (string digest in digests ?? [])
+        {
+            if (!IsDigest(digest))
+            {
+                throw ThrowHelper.GetAllowlistExecutorDigestNotADigestException(environment, digest);
+            }
+
+            listed.Add(digest);
+        }
+
+        return new RunnerExecutorPolicy(keys, listed);
+    }
+
+    private static bool IsDigest(string value)
+    {
+        if (value.Length != DigestPrefix.Length + DigestHexLength || !value.StartsWith(DigestPrefix, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        foreach (char c in value.AsSpan(DigestPrefix.Length))
+        {
+            if (!char.IsAsciiHexDigitLower(c))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}
 
 /// <summary>The keys a runner holds for one generation of one environment (ADR 0065 decision 12).</summary>
 /// <param name="KeyId">The key generation.</param>

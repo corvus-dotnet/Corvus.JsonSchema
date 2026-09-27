@@ -623,6 +623,51 @@
           }
         }
       }
+    },
+    "/environments/{environment}/executors/{baseWorkflowId}/{versionNumber}": {
+      "get": {
+        "operationId": "getEnvironmentExecutorCountersignature",
+        "tags": [
+          "environments"
+        ],
+        "summary": "Read the tenant's countersignature over a version's executor for an environment this runner serves",
+        "description": "Serves the executor countersignature the tenant operator recorded for a version in an environment (ADR 0065 phase C), so a runner that pins the tenant's executor-signing key can verify, before it executes the version there, that the executor it loaded is the one the tenant authorized. The control plane recorded the countersignature without verifying it and is not the authority: the pin is, and the runner checks the signed package hash and assembly digest against the manifest of the executor it actually loaded.\n\nAnswered only for an environment the caller's principal is bound to, a version available in that environment, and a countersignature that is recorded; every other case is 404, and which of the three it was is not disclosed.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/EnvironmentPath"
+          },
+          {
+            "$ref": "#/components/parameters/BaseWorkflowIdPath"
+          },
+          {
+            "$ref": "#/components/parameters/VersionNumberPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The countersignature.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnvironmentExecutorCountersignature"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/QuotaExceeded"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1241,6 +1286,46 @@
             "type": "string",
             "contentEncoding": "base64",
             "description": "The predecessor's ES256 signature (base64, IEEE P1363) over the framed rotation tuple (environment, predecessorKeyId, keyId, sealPublicKey), present exactly when predecessorKeyId is. A runner pinned on an earlier generation writes under this one only when the links from it back to the pin verify under the predecessors' advertised keys."
+          }
+        }
+      },
+      "EnvironmentExecutorCountersignature": {
+        "type": "object",
+        "description": "The tenant operator's countersignature over a version's executor for an environment (ADR 0065 phase C): ES256 (IEEE P1363, base64) by the tenant's executor-signing private key over the framed tuple (\"executor-countersignature\", environment, baseWorkflowId, versionNumber, packageHash, assemblyDigest). Not authoritative: the runner's pinned key is, and the runner compares the signed hash and digest to the manifest of the executor it loaded.",
+        "required": [
+          "environment",
+          "baseWorkflowId",
+          "versionNumber",
+          "packageHash",
+          "assemblyDigest",
+          "signature"
+        ],
+        "properties": {
+          "environment": {
+            "$ref": "#/components/schemas/EnvironmentName"
+          },
+          "baseWorkflowId": {
+            "type": "string",
+            "description": "The base workflow id the countersigned version belongs to."
+          },
+          "versionNumber": {
+            "title": "CountersignedVersionNumber",
+            "type": "integer",
+            "minimum": 1,
+            "description": "The countersigned version number."
+          },
+          "packageHash": {
+            "type": "string",
+            "description": "The version's content hash inside the signed tuple."
+          },
+          "assemblyDigest": {
+            "type": "string",
+            "description": "The executor assembly's digest (sha256:<hex>) inside the signed tuple."
+          },
+          "signature": {
+            "type": "string",
+            "contentEncoding": "base64",
+            "description": "The ES256 countersignature (base64, IEEE P1363) over the framed tuple."
           }
         }
       },

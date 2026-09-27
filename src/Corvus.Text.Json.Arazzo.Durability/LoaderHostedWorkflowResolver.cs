@@ -17,31 +17,51 @@ public sealed class LoaderHostedWorkflowResolver : IHostedWorkflowResolver
 {
     private readonly IWorkflowArtifactSource artifacts;
     private readonly WorkflowExecutorLoader loader;
+    private readonly IExecutorAdmission? admission;
 
     /// <summary>Initializes a new instance of the <see cref="LoaderHostedWorkflowResolver"/> class over a catalog.</summary>
     /// <param name="catalog">The catalog the executor assembly + manifest + content hash are fetched from.</param>
     /// <param name="loader">The loader that verifies, loads, and caches the executor assembly.</param>
     public LoaderHostedWorkflowResolver(IWorkflowCatalogStore catalog, WorkflowExecutorLoader loader)
-        : this(new CatalogWorkflowArtifactSource(catalog), loader)
+        : this(new CatalogWorkflowArtifactSource(catalog), loader, admission: null)
     {
     }
 
     /// <summary>Initializes a new instance of the <see cref="LoaderHostedWorkflowResolver"/> class over any artifact source.</summary>
     /// <param name="artifacts">Where the content hash and the package's documents come from. A runner without a catalog credential passes the runner API's source (ADR 0065); a host that owns the catalog passes <see cref="CatalogWorkflowArtifactSource"/>.</param>
     /// <param name="loader">The loader that verifies, loads, and caches the executor assembly.</param>
-    public LoaderHostedWorkflowResolver(IWorkflowArtifactSource artifacts, WorkflowExecutorLoader loader)
+    /// <param name="admission">The runner's own executor policy (ADR 0065 phase C), consulted for every run with the manifest of the executor actually loaded and the run's environment; <see langword="null"/> for a host with no policy of its own, which runs whatever the loader verified.</param>
+    public LoaderHostedWorkflowResolver(IWorkflowArtifactSource artifacts, WorkflowExecutorLoader loader, IExecutorAdmission? admission = null)
     {
         ArgumentNullException.ThrowIfNull(artifacts);
         ArgumentNullException.ThrowIfNull(loader);
         this.artifacts = artifacts;
         this.loader = loader;
+        this.admission = admission;
     }
 
     /// <inheritdoc/>
-    public ValueTask<IHostedWorkflow> ResolveAsync(WorkflowRun run, CancellationToken cancellationToken)
+    public async ValueTask<IHostedWorkflow> ResolveAsync(WorkflowRun run, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(run);
-        return this.ResolveByIdAsync(run.WorkflowId, cancellationToken);
+        LoadedWorkflow loaded = await this.ResolveByIdAsync(run.WorkflowId, cancellationToken).ConfigureAwait(false);
+
+        // The tenant's authority (ADR 0065 phase C), checked after the platform's: the loader verified that the
+        // platform produced this executor, and the policy decides whether the tenant authorized it for the run's
+        // environment. It sees the manifest of the executor that was loaded, so what it admits is what runs. A refusal
+        // is not an executor fault: the run is handed back rather than ended, since a countersignature the operator
+        // has not yet recorded is the ordinary state of a version just promoted.
+        if (this.admission is { } admission)
+        {
+            (string baseWorkflowId, int versionNumber) = ParseVersionedId(run.WorkflowId);
+            ExecutorAdmission verdict = await admission.AdmitAsync(run.Environment, baseWorkflowId, versionNumber, loaded.Manifest, cancellationToken).ConfigureAwait(false);
+            if (verdict != ExecutorAdmission.Admitted)
+            {
+                throw ThrowHelper.GetExecutorNotAdmittedException(run.Environment, run.WorkflowId, verdict);
+            }
+        }
+
+        return loaded.Workflow;
     }
 
     /// <inheritdoc/>
@@ -62,12 +82,12 @@ public sealed class LoaderHostedWorkflowResolver : IHostedWorkflowResolver
 
     [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "The in-process resolver loads the version's IL executor through the loader by design, and runs only in in-process (non-AOT, non-trimmed) runner hosts. AOT execution backends use a baked resolver that has the executor at build time (ADR 0055).")]
     [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("AOT", "IL3050", Justification = "The in-process resolver loads the version's IL executor through the loader by design, and runs only in in-process (non-AOT) runner hosts. AOT execution backends use a baked resolver that has the executor at build time (ADR 0055).")]
-    private async ValueTask<IHostedWorkflow> ResolveByIdAsync(string workflowId, CancellationToken cancellationToken)
+    private async ValueTask<LoadedWorkflow> ResolveByIdAsync(string workflowId, CancellationToken cancellationToken)
     {
         (string baseWorkflowId, int versionNumber) = ParseVersionedId(workflowId);
         if (this.loader.TryGet(baseWorkflowId, versionNumber, out LoadedWorkflow? cached))
         {
-            return cached.Workflow;
+            return cached;
         }
 
         // RECOMPUTE the content hash from the version's actual workflow + sources rather than trusting the stored
@@ -93,7 +113,7 @@ public sealed class LoaderHostedWorkflowResolver : IHostedWorkflowResolver
         // it was configured with a verifier — a signing-required runner rejects an unsigned or badly-signed package.
         ReadOnlyMemory<byte> signature = await this.artifacts.GetDocumentAsync(baseWorkflowId, versionNumber, WorkflowPackage.ExecutorManifestSignatureDocumentName, cancellationToken).ConfigureAwait(false) ?? default;
 
-        return this.loader.Load(baseWorkflowId, versionNumber, assembly, manifest, hash, signature).Workflow;
+        return this.loader.Load(baseWorkflowId, versionNumber, assembly, manifest, hash, signature);
     }
 
     // Recomputes the version's content hash (ADR 0031: SHA-256 of the RFC 8785 canonical { workflow, sources })
